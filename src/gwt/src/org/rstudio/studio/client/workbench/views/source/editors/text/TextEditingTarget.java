@@ -108,7 +108,6 @@ import org.rstudio.studio.client.shiny.events.LaunchShinyApplicationEvent;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
-import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -117,7 +116,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
@@ -394,8 +392,7 @@ public class TextEditingTarget implements
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper,
-                            ConsoleEditorProvider consoleEditorProvider)
+                            SourceBuildHelper sourceBuildHelper)
    {
       commands_ = commands;
       server_ = server;
@@ -411,7 +408,6 @@ public class TextEditingTarget implements
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
       sourceBuildHelper_ = sourceBuildHelper;
-      consoleEditorProvider_ = consoleEditorProvider;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -831,15 +827,6 @@ public class TextEditingTarget implements
    private static final String getIncrementalSearchMessage()
    {
       return sIncrementalSearchMessage_;
-   }
-   
-   private void withCurrentlyFocusedEditor(CommandWithArg<DocDisplay> command)
-   {
-      InputEditorDisplay consoleEditor = consoleEditorProvider_.getConsoleEditor();
-      if (consoleEditor != null && consoleEditor.isFocused() && consoleEditor instanceof DocDisplay)
-         command.execute((DocDisplay) consoleEditor);
-      else if (docDisplay_.isFocused())
-         command.execute(docDisplay_);
    }
    
    private boolean moveCursorToNextSectionOrChunk()
@@ -5916,7 +5903,6 @@ public class TextEditingTarget implements
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
    private final SourceBuildHelper sourceBuildHelper_;
-   private final ConsoleEditorProvider consoleEditorProvider_;
    
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);
