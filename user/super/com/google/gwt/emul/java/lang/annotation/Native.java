@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2016 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,12 @@
 package java.lang.annotation;
 
 /**
- * Enumerates types of declared elements in a Java program <a
- * href="https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/ElementType.html">[Oracle
- * docs]</a>.
+ * Indicates that a field defining a constant value may be referenced from native code. <a
+ * href="https://docs.oracle.com/javase/8/docs/api/java/lang/annotation/Native.html">[Oracle
+ * docs]</a>
  */
-public enum ElementType {
-  ANNOTATION_TYPE, CONSTRUCTOR, FIELD, LOCAL_VARIABLE, METHOD, PACKAGE,
-  PARAMETER, TYPE, TYPE_PARAMETER, TYPE_USE,
+@Documented
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface Native {
 }
