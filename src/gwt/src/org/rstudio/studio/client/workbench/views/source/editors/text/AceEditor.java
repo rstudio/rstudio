@@ -651,6 +651,8 @@ public class AceEditor implements DocDisplay,
             fileType_.getEditorLanguage().getParserName(),
             false);
       
+      handlers_.fireEvent(new EditorModeChangedEvent(getModeId()));
+
       getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
    }
@@ -2537,6 +2539,12 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addAceClickHandler(Handler handler)
    {
       return widget_.addAceClickHandler(handler);
+   }
+   
+   public HandlerRegistration addEditorModeChangedHandler(
+         EditorModeChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(EditorModeChangedEvent.TYPE, handler);
    }
 
    public JavaScriptObject getCleanStateToken()

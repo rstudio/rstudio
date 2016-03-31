@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Brea
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
@@ -209,6 +210,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    
+   HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
+
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
    

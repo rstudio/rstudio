@@ -16,13 +16,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -32,7 +31,9 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.inject.Inject;
 
 public class TextEditingTargetChunks
-             implements PinnedLineWidget.Host
+             implements PinnedLineWidget.Host,
+                        ScopeTreeReadyEvent.Handler,
+                        EditorModeChangedEvent.Handler
 {
    public TextEditingTargetChunks(TextEditingTarget target)
    {
@@ -41,21 +42,22 @@ public class TextEditingTargetChunks
       initialized_ = false;
       lastRow_ = 0;
       renderPass_ = 0;
-      target.getDocDisplay().addScopeTreeReadyHandler(
-            new ScopeTreeReadyEvent.Handler()
-      {
-         @Override
-         public void onScopeTreeReady(ScopeTreeReadyEvent event)
-         {
-            syncWidgets();
-            initialized_ = true;
-         }
-      });
+      
+      target.getDocDisplay().addScopeTreeReadyHandler(this);
+      target.getDocDisplay().addEditorModeChangedHandler(this);
+      
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
    // Public methods ----------------------------------------------------------
    
+   @Override
+   public void onScopeTreeReady(ScopeTreeReadyEvent event)
+   {
+      if (target_.getDocDisplay().getModeId() == "mode/rmarkdown")
+         syncWidgets();
+   }
+
    @Override
    public void onLineWidgetRemoved(LineWidget widget)
    {
@@ -70,6 +72,16 @@ public class TextEditingTargetChunks
       }
    }
    
+
+   @Override
+   public void onEditorModeChanged(EditorModeChangedEvent event)
+   {
+      // clean up all chunks when moving out of rmarkdown mode
+      if (event.getMode() != "mode/rmarkdown")
+         removeAllToolbars();
+      else 
+         syncWidgets();
+   }
 
    public void setChunkState(int preambleRow, int state)
    {
@@ -105,10 +117,8 @@ public class TextEditingTargetChunks
                dark_ = isDark;
 
                // detach all widgets...
-               for (ChunkContextUi toolbar: toolbars_)
-                  toolbar.detach();
-               toolbars_.clear();
-               
+               removeAllToolbars();
+
                // .. and rebuild them
                syncWidgets();
             }
@@ -116,10 +126,18 @@ public class TextEditingTargetChunks
       });
    }
    
+   private void removeAllToolbars()
+   {
+      for (ChunkContextUi toolbar: toolbars_)
+         toolbar.detach();
+      toolbars_.clear();
+   }
+   
    private void syncWidgets()
    {
       Scope currentScope = target_.getDocDisplay().getCurrentScope();
-      if (initialized_ && lastRow_ == currentScope.getPreamble().getRow())
+      if (initialized_ && currentScope != null && 
+          lastRow_ == currentScope.getPreamble().getRow())
       {
          // if initialized and in the same scope as last sync, just sync the 
          // current scope
@@ -147,7 +165,9 @@ public class TextEditingTargetChunks
             }
          }
       }
-      lastRow_ = currentScope.getPreamble().getRow();
+
+      if (currentScope != null)
+         lastRow_ = currentScope.getPreamble().getRow();
    }
    
    private void syncChunkToolbar(Scope chunk)
@@ -227,9 +247,10 @@ public class TextEditingTargetChunks
    
    private boolean dark_;
    private boolean initialized_;
-   private int lastRow_;
    private int renderPass_;
    private AceThemes themes_;
+
+   private int lastRow_;
    
    private final static int RENDER_PASS_MOD = 255;
 }
