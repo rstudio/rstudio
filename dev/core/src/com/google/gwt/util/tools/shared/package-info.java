@@ -17,5 +17,4 @@
 /**
  * Utility classes shared between gwt-dev and gwt-servlet.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.util.tools.shared;

@@ -17,5 +17,4 @@
 /**
  * Utility classes for building GWT command-line applications.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.util.tools;
