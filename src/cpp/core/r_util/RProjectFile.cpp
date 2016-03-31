@@ -212,8 +212,6 @@ bool isWebsiteDirectory(const FilePath& projectDir)
 {
    // look for an index.Rmd or index.md
    FilePath indexFile = projectDir.childPath("index.Rmd");
-   if (!indexFile.exists())
-      indexFile = projectDir.childPath("index.md");
    if (indexFile.exists())
    {
       // look for _site.yml
