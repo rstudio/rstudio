@@ -426,6 +426,12 @@ public class AceEditor implements DocDisplay,
    
    public void yankBeforeCursor()
    {
+      if (isEmacsModeOn())
+         return;
+      
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
       Position cursorPos = getCursorPosition();
       setSelectionRange(Range.fromPoints(
             Position.create(cursorPos.getRow(), 0),
@@ -442,6 +448,12 @@ public class AceEditor implements DocDisplay,
    
    public void yankAfterCursor()
    {
+      if (isEmacsModeOn())
+         return;
+      
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
       Position cursorPos = getCursorPosition();
       int lineLength = getLine(cursorPos.getRow()).length();
       setSelectionRange(Range.fromPoints(
@@ -459,6 +471,12 @@ public class AceEditor implements DocDisplay,
    
    public void pasteLastYank()
    {
+      if (isEmacsModeOn())
+         return;
+      
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
       if (Desktop.isDesktop())
          commands_.pasteDummy().execute();
       else
