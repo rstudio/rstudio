@@ -1125,25 +1125,6 @@ bool knitParamsAvailable()
           module_context::isPackageVersionInstalled("knitr", "1.10.18");
 }
 
-bool isBookdownWebsite()
-{
-   if (!rmarkdownPackageAvailable())
-      return false;
-
-   if (projects::projectContext().config().buildType !=
-       r_util::kBuildTypeWebsite)
-      return false;
-
-   bool isBookdown = false;
-   std::string buildDir = string_utils::systemToUtf8(
-            projects::projectContext().buildTargetPath().absolutePath());
-   std::string encoding = projects::projectContext().defaultEncoding();
-   Error error = r::exec::RFunction(".rs.isBookdownWebsite", buildDir, encoding)
-                                                       .call(&isBookdown);
-   if (error)
-      LOG_ERROR(error);
-   return isBookdown;
-}
 
 bool rmarkdownPackageAvailable()
 {
@@ -1192,6 +1173,74 @@ Error initialize()
 
 } // namespace rmarkdown
 } // namespace modules
+
+namespace module_context {
+
+bool isWebsiteProject()
+{
+   if (!modules::rmarkdown::rmarkdownPackageAvailable())
+      return false;
+
+   return (projects::projectContext().config().buildType ==
+           r_util::kBuildTypeWebsite);
+}
+
+namespace {
+
+std::string projectBuildDir()
+{
+   return string_utils::utf8ToSystem(
+       projects::projectContext().buildTargetPath().absolutePath());
+}
+
+} // anonymous namespace
+
+bool isBookdownWebsite()
+{
+   if (!isWebsiteProject())
+      return false;
+
+   bool isBookdown = false;
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isBookdownWebsite",
+                              projectBuildDir(), encoding).call(&isBookdown);
+   if (error)
+      LOG_ERROR(error);
+   return isBookdown;
+}
+
+std::string websiteOutputDir()
+{
+   if (!isWebsiteProject())
+      return std::string();
+
+   static bool initialized = false;
+   static std::string outputDir;
+   if (!initialized)
+   {
+      initialized = true;
+
+      r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
+                                          projectBuildDir());
+      std::string outputDirFullPath;
+      Error error = websiteOutputDir.call(&outputDirFullPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         if (outputDirFullPath != projectBuildDir())
+            outputDir = FilePath(outputDirFullPath).filename();
+         else
+            outputDir = "";
+      }
+   }
+   return outputDir;
+}
+
+} // namespace module_context
+
 } // namespace session
 } // namespace rstudio
 

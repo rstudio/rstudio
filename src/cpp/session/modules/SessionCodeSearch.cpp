@@ -93,6 +93,10 @@ bool isWithinIgnoredDirectory(const FilePath& filePath)
       // packrat
       if (filename == "packrat" && parentPath.childPath("packrat.lock").exists())
          return true;
+
+      // websites
+      if (filename == module_context::websiteOutputDir())
+         return true;
    }
    
    return false;
