@@ -2004,6 +2004,16 @@ bool isUserFile(const FilePath& filePath)
              return false;
       }
 
+      // if we are in a website project then screen the output dir
+      if (!module_context::websiteOutputDir().empty())
+      {
+         FilePath sitePath = projects::projectContext().buildTargetPath();
+         std::string siteRelative = filePath.relativePath(sitePath);
+         if (boost::algorithm::starts_with(
+                siteRelative, module_context::websiteOutputDir() + "/"))
+            return false;
+      }
+
       // screen the packrat directory
       FilePath projPath = projects::projectContext().directory();
       std::string pkgRelative = filePath.relativePath(projPath);

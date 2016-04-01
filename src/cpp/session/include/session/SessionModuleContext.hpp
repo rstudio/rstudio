@@ -823,6 +823,10 @@ bool isLoadBalanced();
 
 bool usingMingwGcc49();
 
+bool isWebsiteProject();
+bool isBookdownWebsite();
+std::string websiteOutputDir();
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio
