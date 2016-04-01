@@ -1890,6 +1890,17 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public String getFoldState(int row)
+   {
+      AceFold fold = getSession().getFoldAt(row, 0);
+      if (fold == null)
+         return null;
+      
+      Position foldPos = fold.getStart();
+      return getSession().getState(foldPos.getRow());
+   }
+
+   @Override
    public void addFold(Range range)
    {
       getSession().addFold("...", range);

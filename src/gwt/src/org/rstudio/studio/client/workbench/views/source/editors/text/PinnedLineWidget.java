@@ -51,6 +51,7 @@ public class PinnedLineWidget
       lastWidgetRow_ = row;
       moving_ = false;
       shiftPending_ = false;
+      folded_ = folded();
 
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
@@ -97,6 +98,24 @@ public class PinnedLineWidget
    @Override
    public void onFoldChange(FoldChangeEvent event)
    {
+      // check to see whether we just became hidden by a fold collapse
+      if (folded_ != folded())
+      {
+         folded_ = folded();
+         if (folded_)
+         {
+            widget_.setVisible(false);
+         }
+         else
+         {
+            widget_.setVisible(true);
+         }
+         
+         // if this fold change event was a collapse, we know it can't also
+         // be a widget deletion
+         return;
+      }
+      
       // the FoldChangeEvent is fired at the moment that Ace removes the line
       // widget, but before our anchors are updated. set a flag so we know to
       // check for an attached widget next time.
@@ -210,6 +229,12 @@ public class PinnedLineWidget
       return false;
    }
    
+   private boolean folded()
+   {
+      String foldState = display_.getFoldState(lastWidgetRow_);
+      return foldState != null;
+   }
+   
    private final DocDisplay display_;
    private final LineWidget lineWidget_;
    private final Widget widget_;
@@ -223,4 +248,5 @@ public class PinnedLineWidget
    private boolean moving_;
    private boolean checkForRemove_;
    private boolean shiftPending_;
+   private boolean folded_;
 }

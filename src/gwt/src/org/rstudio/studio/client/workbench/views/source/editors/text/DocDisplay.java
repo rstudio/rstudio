@@ -187,6 +187,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean isRendered();
 
    JsArray<AceFold> getFolds();
+   String getFoldState(int row);
    void addFold(Range range);
    void addFoldFromRow(int row);
    void unfold(AceFold fold);
