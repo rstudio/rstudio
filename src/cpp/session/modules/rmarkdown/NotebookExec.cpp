@@ -60,11 +60,13 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
 } // anonymous namespace
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, const std::string& options, int width):
+      const std::string& chunkId, const std::string& options, int pixelWidth,
+      int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
-   width_(width),
-   prevWidth_(0),
+   pixelWidth_(pixelWidth),
+   charWidth_(charWidth),
+   prevCharWidth_(0),
    connected_(false)
 {
 }
@@ -116,14 +118,14 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
-   error = beginWidgetCapture(outputPath, 
+   error = beginWidgetCapture(pixelWidth_, outputPath,
          outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
 
    // reset width
-   prevWidth_ = r::options::getOptionWidth();
-   r::options::setOptionWidth(width_);
+   prevCharWidth_ = r::options::getOptionWidth();
+   r::options::setOptionWidth(charWidth_);
 
    // begin capturing console text
    connections_.push_back(module_context::events().onConsolePrompt.connect(
@@ -209,7 +211,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 void ChunkExecContext::disconnect()
 {
    // restore width value
-   r::options::setOptionWidth(prevWidth_);
+   r::options::setOptionWidth(prevCharWidth_);
 
    // unhook all our event handlers
    BOOST_FOREACH(const boost::signals::connection connection, connections_) 

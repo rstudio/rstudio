@@ -161,17 +161,18 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
 {
 
    std::string docId, chunkId, options;
-   int width = 0;
+   int pixelWidth = 0, charWidth = 0;
    bool replace = false;
    Error error = json::readParams(request.params, &docId, &chunkId, &options,
-         &width, &replace);
+         &pixelWidth, &charWidth, &replace);
    if (error)
       return error;
 
    cleanChunkOutput(docId, chunkId, true);
 
    // create the execution context and connect it immediately if necessary
-   s_execContext.reset(new ChunkExecContext(docId, chunkId, options, width));
+   s_execContext.reset(new ChunkExecContext(docId, chunkId, options, 
+            pixelWidth, charWidth));
    if (s_activeConsole == chunkId)
       s_execContext->connect();
 

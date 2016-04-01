@@ -393,7 +393,7 @@ public class TextEditingTargetNotebook
       // have the server start recording output from this chunk
       syncWidth(chunkDef.getChunkId());
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), options, charWidth_, false, 
+            chunkDef.getChunkId(), options, pixelWidth_, charWidth_, false, 
             new ServerRequestCallback<Void>()
       {
          @Override
@@ -660,6 +660,7 @@ public class TextEditingTargetNotebook
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
             unit.options,
+            pixelWidth_,
             charWidth_,
             true,
             new ServerRequestCallback<Void>()
