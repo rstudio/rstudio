@@ -58,3 +58,8 @@
          as.logical(asRelativePath),
          as.integer(maxCount))
 })
+
+.rs.addFunction("readLines", function(filePath)
+{
+   .Call(.rs.routines$rs_readLines, .rs.normalizePath(filePath, mustWork = TRUE))
+})
