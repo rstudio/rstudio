@@ -33,6 +33,7 @@ namespace rmarkdown {
 namespace notebook {
 
 core::Error beginWidgetCapture(
+              int pixelWidth,
               const core::FilePath& outputFolder,
               const core::FilePath& libraryFolder);
 

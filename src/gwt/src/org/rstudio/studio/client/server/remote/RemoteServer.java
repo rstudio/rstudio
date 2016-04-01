@@ -4209,15 +4209,16 @@ public class RemoteServer implements Server
 
    @Override
    public void setChunkConsole(String docId, String chunkId, String options,
-         int width, boolean replace, 
+         int pixelWidth, int charWidth, boolean replace, 
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
       params.set(2, new JSONString(options));
-      params.set(3, new JSONNumber(width));
-      params.set(4, JSONBoolean.getInstance(replace));
+      params.set(3, new JSONNumber(pixelWidth));
+      params.set(4, new JSONNumber(charWidth));
+      params.set(5, JSONBoolean.getInstance(replace));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,
