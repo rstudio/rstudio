@@ -279,6 +279,8 @@ inline std::wstring trimWhitespace(const std::wstring& string)
    return detail::trimWhitespace(string, std::wstring(L" \t\n\r\f\v"));
 }
 
+std::string makeRandomByteString(std::size_t n);
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio
