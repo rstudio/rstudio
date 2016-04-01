@@ -41,6 +41,10 @@ if(UNIX)
    # compiler flags
    add_definitions(-Wall -pthread)
 
+   if(CMAKE_BUILD_TYPE MATCHES Debug)
+      add_definitions(-g -O2)
+   endif()
+
    if(APPLE)
       add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs)
    endif()
