@@ -61,6 +61,7 @@ import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectUser;
+import org.rstudio.studio.client.rmarkdown.events.PreviewRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
@@ -774,6 +775,11 @@ public class ClientEventDispatcher
             EditorCommandEvent.Data data = event.getData();
             EditorCommandEvent payload = new EditorCommandEvent(data);
             eventBus_.fireEvent(new EditorCommandDispatchEvent(payload));
+         }
+         else if (type.equals(ClientEvent.PreviewRmd))
+         {
+            PreviewRmdEvent.Data data = event.getData();
+            eventBus_.fireEvent(new PreviewRmdEvent(data));
          }
          else
          {

@@ -662,9 +662,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
       return error;
 
    pOptions->makefileArgs = optionsFile.get("makefile_args");
-   //pOptions->previewWebsite = optionsFile.getBool("preview_website", false);
-   pOptions->previewWebsite = false; // see comment in SessionBuild on why
-                                     // this is disabled for now
+   pOptions->previewWebsite = optionsFile.getBool("preview_website", true);
    pOptions->websiteOutputFormat = optionsFile.get("website_output_format", "all");
    pOptions->autoRoxygenizeForCheck = optionsFile.getBool(
                                        "auto_roxygenize_for_check",

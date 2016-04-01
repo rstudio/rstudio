@@ -90,13 +90,14 @@ public:
                                               const std::string& paramsFile,
                                               bool sourceNavigation,
                                               bool asTempfile,
-                                              bool asShiny)
+                                              bool asShiny,
+                                              std::string existingOutputFile)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
-      pRender->start(format, encoding, paramsFile, asTempfile);
+      pRender->start(format, encoding, paramsFile, asTempfile, existingOutputFile);
       return pRender;
    }
 
@@ -144,7 +145,8 @@ private:
    void start(const std::string& format,
               const std::string& encoding,
               const std::string& paramsFile,
-              bool asTempfile)
+              bool asTempfile,
+              std::string existingOutputFile)
    {
       Error error;
       json::Object dataJson;
@@ -280,10 +282,18 @@ private:
       else
          LOG_ERROR(error);
 
-      // start the async R process with the render command
+      // render unless we were handed an existing output file
       allOutput_.clear();
-      async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
-                                    async_r::R_PROCESS_NO_RDATA);
+      if (existingOutputFile.empty())
+      {
+         async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
+                                       async_r::R_PROCESS_NO_RDATA);
+      }
+      else
+      {
+         outputFile_ = module_context::resolveAliasedPath(existingOutputFile);
+         terminate(true);
+      }
    }
 
    void onStdout(const std::string& output)
@@ -813,6 +823,7 @@ void doRenderRmd(const std::string& file,
                  bool sourceNavigation,
                  bool asTempfile,
                  bool asShiny,
+                 std::string existingOutputFile,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -830,7 +841,8 @@ void doRenderRmd(const std::string& file,
                paramsFile,
                sourceNavigation,
                asTempfile,
-               asShiny);
+               asShiny,
+               existingOutputFile);
       pResponse->setResult(true);
    }
 }
@@ -839,7 +851,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    int line = -1;
-   std::string file, format, encoding, paramsFile;
+   std::string file, format, encoding, paramsFile, existingOutputFile;
    bool asTempfile, asShiny = false;
    Error error = json::readParams(request.params,
                                   &file,
@@ -848,12 +860,13 @@ Error renderRmd(const json::JsonRpcRequest& request,
                                   &encoding,
                                   &paramsFile,
                                   &asTempfile,
-                                  &asShiny);
+                                  &asShiny,
+                                  &existingOutputFile);
    if (error)
       return error;
 
    doRenderRmd(file, line, format, encoding, paramsFile,
-               true, asTempfile, asShiny, pResponse);
+               true, asTempfile, asShiny, existingOutputFile, pResponse);
 
    return Success();
 }
@@ -873,7 +886,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
       return error;
 
    doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
-               false, false, false, pResponse);
+               false, false, false, "", pResponse);
 
    return Success();
 }

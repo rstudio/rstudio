@@ -149,6 +149,7 @@ const int kRprofStarted = 127;
 const int kRprofStopped = 128;
 const int kRprofCreated = 129;
 const int kEditorCommand = 131;
+const int kPreviewRmd = 132;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -406,6 +407,8 @@ std::string ClientEvent::typeName() const
          return "rprof_created";
       case client_events::kEditorCommand:
          return "editor_command";
+      case client_events::kPreviewRmd:
+         return "preview_rmd";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

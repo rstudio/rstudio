@@ -140,6 +140,7 @@ class ClientEvent extends JavaScriptObject
    public static final String RprofStopped = "rprof_stopped";
    public static final String RprofCreated = "rprof_created";
    public static final String EditorCommand = "editor_command";
+   public static final String PreviewRmd = "preview_rmd";
 
    protected ClientEvent()
    {

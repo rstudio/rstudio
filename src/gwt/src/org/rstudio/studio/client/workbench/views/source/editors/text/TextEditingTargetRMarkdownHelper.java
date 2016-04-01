@@ -264,7 +264,8 @@ public class TextEditingTargetRMarkdownHelper
                                              sourceDoc.getEncoding(),
                                              null,
                                              false,
-                                             false));
+                                             false,
+                                             null));
    }
    
    public void renderRMarkdown(final String sourceFile, 
@@ -288,7 +289,8 @@ public class TextEditingTargetRMarkdownHelper
                                                    encoding, 
                                                    paramsFile,
                                                    asTempfile,
-                                                   asShiny));
+                                                   asShiny,
+                                                   null));
          }
       });
    }

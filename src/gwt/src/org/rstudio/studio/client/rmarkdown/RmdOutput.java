@@ -34,6 +34,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
+import org.rstudio.studio.client.rmarkdown.events.PreviewRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
@@ -69,6 +70,7 @@ import com.google.inject.Singleton;
 public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RmdRenderCompletedEvent.Handler,
                                   RmdShinyDocStartedEvent.Handler,
+                                  PreviewRmdEvent.Handler,
                                   RenderRmdEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
                                   RestartStatusEvent.Handler,
@@ -99,6 +101,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
       eventBus.addHandler(RmdShinyDocStartedEvent.TYPE, this);
+      eventBus.addHandler(PreviewRmdEvent.TYPE, this);
       eventBus.addHandler(RenderRmdEvent.TYPE, this);
       eventBus.addHandler(RenderRmdSourceEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
@@ -195,6 +198,21 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    }
    
    @Override
+   public void onPreviewRmd(final PreviewRmdEvent event)
+   {
+      RenderRmdEvent renderEvent = new RenderRmdEvent(
+           event.getSourceFile(),
+           1,
+           null,
+           event.getEncoding(),
+           null,
+           false,
+           false,
+           event.getOutputFile());
+      events_.fireEvent(renderEvent);
+   }
+   
+   @Override
    public void onRenderRmd(final RenderRmdEvent event)
    {
       final Operation renderOperation = new Operation() {
@@ -208,6 +226,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getParamsFile(),
                               event.asTempfile(),
                               event.asShiny(),
+                              event.getExistingOutputFile(),
                   new SimpleRequestCallback<Boolean>());
          }
       };
@@ -337,7 +356,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
-            null, result.getTargetEncoding(), null, false, true));
+            null, result.getTargetEncoding(), null, false, true, null));
    }
    
    private void displayRenderResult(final RmdRenderResult result)
