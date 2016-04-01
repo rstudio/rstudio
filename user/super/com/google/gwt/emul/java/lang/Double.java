@@ -204,12 +204,12 @@ public final class Double extends Number implements Comparable<Double> {
   }
 
   public static boolean isInfinite(double x) {
-    return x == JsUtils.getInfinity() || x == -JsUtils.getInfinity();
+    return x == POSITIVE_INFINITY || x == NEGATIVE_INFINITY;
   }
 
-  public static native boolean isNaN(double x) /*-{
-    return isNaN(x);
-  }-*/;
+  public static boolean isNaN(double x) {
+    return JsUtils.isNaN(x);
+  }
 
   public static double longBitsToDouble(long bits) {
     long ihi = (long) (bits >> 32);

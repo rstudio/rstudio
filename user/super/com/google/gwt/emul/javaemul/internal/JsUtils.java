@@ -20,8 +20,8 @@ package javaemul.internal;
  */
 public class JsUtils {
 
-  public static native double getInfinity() /*-{
-    return Infinity;
+  public static native boolean isNaN(double d) /*-{
+    return isNaN(d);
   }-*/;
 
   public static native int parseInt(String s, int radix) /*-{

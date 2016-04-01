@@ -15,7 +15,6 @@
  */
 package java.lang;
 
-import javaemul.internal.JsUtils;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
@@ -223,15 +222,7 @@ public final class Math {
   }
 
   public static float scalb(float f, int scaleFactor) {
-    if (scaleFactor >= 31 || scaleFactor <= -31) {
-      return f * (float) Math.pow(2, scaleFactor);
-    } else if (scaleFactor > 0) {
-      return f * (1 << scaleFactor);
-    } else if (scaleFactor == 0) {
-      return f;
-    } else {
-      return f * 1.0f / (1 << -scaleFactor);
-    }
+    return (float) scalb((double) f, scaleFactor);
   }
 
   public static double signum(double d) {
@@ -245,13 +236,7 @@ public final class Math {
   }
 
   public static float signum(float f) {
-    if (f > 0.0f) {
-      return 1.0f;
-    } else if (f < 0.0f) {
-      return -1.0f;
-    } else {
-      return 0.0f;
-    }
+    return (float) signum((double) f);
   }
 
   public static double sin(double x) {
@@ -271,10 +256,8 @@ public final class Math {
   }
 
   public static double tanh(double x) {
-    if (x == JsUtils.getInfinity()) {
-      return 1.0d;
-    } else if (x == -JsUtils.getInfinity()) {
-      return -1.0d;
+    if (Double.isInfinite(x)) {
+      return signum(x);
     }
 
     double e2x = Math.exp(2.0 * x);
