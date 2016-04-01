@@ -72,6 +72,7 @@ context("Base64 Encoding")
    test_that("Contents are preserved in encode / decode process")
    {
       Error error;
+      ::srand(1);
       for (std::size_t i = 0; i < 100; ++i)
       {
          std::string random =
