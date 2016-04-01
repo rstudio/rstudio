@@ -1199,8 +1199,6 @@ Error initialize()
 
    initEnvironment();
 
-   initWebsiteOutputDir();
-
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);
    module_context::events().onClientInit.connect(onClientInit);
@@ -1218,7 +1216,13 @@ Error initialize()
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
-   return initBlock.execute();
+   Error error =  initBlock.execute();
+   if (error)
+      return error;
+
+   initWebsiteOutputDir();
+
+   return Success();
 }
 
 } // namespace rmarkdown
