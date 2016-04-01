@@ -52,6 +52,8 @@ public:
       init(table);
    }
    
+   // COPYING: copyable members
+   
 private:
    
    void init(const std::string& table)
@@ -160,6 +162,8 @@ public:
    {
       init(table);
    }
+   
+   // COPYING: copyable members
 
 private:
 
