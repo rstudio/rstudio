@@ -1530,7 +1530,7 @@
    pos <- match("tools:rstudio", search())
    if (is.na(pos))
    {
-      .rs.logErrorMessage("tools:rstudio not found on search path")
+      warning("tools:rstudio not found on search path")
       return(NULL)
    }
    
@@ -1542,7 +1542,7 @@
    
    if (is.null(routines))
    {
-      .rs.logErrorMessage("failed to register R routines")
+      warning("failed to register RStudio native routines")
       return(NULL)
    }
    
