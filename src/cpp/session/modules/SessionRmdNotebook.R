@@ -43,7 +43,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (!file.exists(rnbPath))
       stop("no file at path '", rnbPath, "'")
    
-   contents <- readLines(rnbPath, warn = FALSE)
+   contents <- .rs.readLines(rnbPath)
    
    # find the line hosting the encoded content
    marker <- paste('<!--', tag)
@@ -132,7 +132,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, "Rnb")
    
-   rmdContents <- readLines(inputFile, warn = FALSE)
+   rmdContents <- .rs.readLines(inputFile)
    
    # inject placeholders so we can track chunk locations after render
    # ensure that the comments are surrounded by newlines, as otherwise
@@ -199,7 +199,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
    cachePath <- .rs.normalizePath(cachePath, winslash = "/", mustWork = TRUE)
-   rmdContents <- suppressWarnings(readLines(rmdPath))
+   rmdContents <- .rs.readLines(rmdPath)
    
    # Begin collecting the units that form the Rnb data structure
    rnbData <- list()
@@ -418,7 +418,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    
    # read the rendered file
-   rnbContents <- readLines(renderOutput, warn = FALSE)
+   rnbContents <- .rs.readLines(renderOutput)
    
    # generate base64-encoded versions of .Rmd source, .md sidecar
    rmdEncoded <- .rs.base64encode(paste(rmdContents, collapse = "\n"))
@@ -460,7 +460,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                   envir = envir)
    
    # read the HTML
-   html <- readLines(outputTemp)
+   html <- .rs.readLines(outputTemp)
    
    # replace chunk placeholders with their actual data
    html <- .rs.rnb.fillChunks(html, rnbData)
@@ -672,7 +672,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
    
-   rnbContents <- readLines(rnbPath)
+   rnbContents <- .rs.readLines(rnbPath)
    startIdx <- grep("<!-- rnb-cache-data-begin", rnbContents) + 1
    endIdx   <- grep("rnb-cache-data-end -->", rnbContents) - 1
    
