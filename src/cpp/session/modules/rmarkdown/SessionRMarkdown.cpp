@@ -58,6 +58,41 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
+
+namespace {
+
+std::string projectBuildDir()
+{
+   return string_utils::utf8ToSystem(
+       projects::projectContext().buildTargetPath().absolutePath());
+}
+
+std::string s_websiteOutputDir;
+
+void initWebsiteOutputDir()
+{
+   if (!module_context::isWebsiteProject())
+      return;
+
+   r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
+                                       projectBuildDir());
+   std::string outputDirFullPath;
+   Error error = websiteOutputDir.call(&outputDirFullPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      if (outputDirFullPath != projectBuildDir())
+         s_websiteOutputDir = FilePath(outputDirFullPath).filename();
+      else
+         s_websiteOutputDir = "";
+   }
+}
+
+} // anonymous namespace
+
 namespace modules {
 namespace rmarkdown {
 
@@ -1164,6 +1199,8 @@ Error initialize()
 
    initEnvironment();
 
+   initWebsiteOutputDir();
+
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);
    module_context::events().onClientInit.connect(onClientInit);
@@ -1198,16 +1235,6 @@ bool isWebsiteProject()
            r_util::kBuildTypeWebsite);
 }
 
-namespace {
-
-std::string projectBuildDir()
-{
-   return string_utils::utf8ToSystem(
-       projects::projectContext().buildTargetPath().absolutePath());
-}
-
-} // anonymous namespace
-
 bool isBookdownWebsite()
 {
    if (!isWebsiteProject())
@@ -1224,32 +1251,7 @@ bool isBookdownWebsite()
 
 std::string websiteOutputDir()
 {
-   if (!isWebsiteProject())
-      return std::string();
-
-   static bool initialized = false;
-   static std::string outputDir;
-   if (!initialized)
-   {
-      initialized = true;
-
-      r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
-                                          projectBuildDir());
-      std::string outputDirFullPath;
-      Error error = websiteOutputDir.call(&outputDirFullPath);
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
-      else
-      {
-         if (outputDirFullPath != projectBuildDir())
-            outputDir = FilePath(outputDirFullPath).filename();
-         else
-            outputDir = "";
-      }
-   }
-   return outputDir;
+   return s_websiteOutputDir;
 }
 
 } // namespace module_context
