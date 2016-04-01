@@ -1199,8 +1199,8 @@ Error initialize()
 
    initEnvironment();
 
-   initWebsiteOutputDir();
-
+   module_context::events().onDeferredInit.connect(
+                                 boost::bind(initWebsiteOutputDir));
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);
    module_context::events().onClientInit.connect(onClientInit);
