@@ -26,10 +26,10 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
       void onViewerPreviewRmd(ViewerPreviewRmdEvent event);
    }
 
-   public ViewerPreviewRmdEvent(RmdPreviewParams params, boolean isRefresh)
+   public ViewerPreviewRmdEvent(RmdPreviewParams params, boolean maximize)
    {
       params_ = params;
-      isRefresh_ = isRefresh;
+      maximize_ = maximize;
    }
    
    public RmdPreviewParams getParams()
@@ -37,9 +37,9 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
       return params_;
    }
    
-   public boolean isRefresh()
+   public boolean getMaximize()
    {
-      return isRefresh_;
+      return params_.getResult().getForceMaximize() || maximize_;
    }
    
    @Override
@@ -55,7 +55,7 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
    }
    
    private final RmdPreviewParams params_;
-   private final boolean isRefresh_;
+   private final boolean maximize_;
   
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

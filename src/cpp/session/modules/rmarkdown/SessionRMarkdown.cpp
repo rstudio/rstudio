@@ -327,8 +327,20 @@ private:
       }
       else
       {
+         // if we are handed an existing output file then this is the build
+         // tab previewing a website. in this case the build tab opened
+         // for the build and forced the viewer pane to a smaller height. as
+         // a result we want to do a forceMaximize to restore the Viewer
+         // pane. Note that these two concerns happen to conflate here but
+         // it's conceivable that there would be other forceMaximize
+         // scenarios or that other types of previews where an output file
+         // was already in hand would NOT want to do a forceMaximize. We're
+         // leaving this coupling for now to minimze the scope of the change
+         // required to allow website previews to restore the viewer pane, we
+         // may want a more intrusive change if/when we discover other
+         // scenarios.
          outputFile_ = module_context::resolveAliasedPath(existingOutputFile);
-         terminate(true);
+         terminate(true, true);
       }
    }
 
@@ -453,6 +465,11 @@ private:
 
    void terminate(bool succeeded)
    {
+      terminate(succeeded, false);
+   }
+
+   void terminate(bool succeeded, bool forceMaximize)
+   {
       using namespace module_context;
 
       markCompleted();
@@ -496,6 +513,8 @@ private:
       {
          resultJson["rpubs_published"] = false;
       }
+
+      resultJson["force_maximize"] = forceMaximize;
 
       // allow for format specific additions to the result json
       std::string formatName =  outputFormat_["format_name"].get_str();
