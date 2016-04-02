@@ -39,6 +39,8 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -84,6 +86,7 @@ public class BuildPresenter extends BasePresenter
    public BuildPresenter(Display display, 
                          GlobalDisplay globalDisplay,
                          UIPrefs uiPrefs,
+                         WorkbenchContext workbenchContext,
                          BuildServerOperations server,
                          final Commands commands,
                          EventBus eventBus,
@@ -97,6 +100,7 @@ public class BuildPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       uiPrefs_ = uiPrefs;
+      workbenchContext_ = workbenchContext;
       eventBus_ = eventBus;
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -161,6 +165,8 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onBuildCompleted(BuildCompletedEvent event)
          {
+            workbenchContext_.setBuildInProgress(false);
+            
             commands.stopBuild().setEnabled(false);
             
             view_.bringToFront();
@@ -337,6 +343,7 @@ public class BuildPresenter extends BasePresenter
    {
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
+      workbenchContext_.setBuildInProgress(true);
       sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
@@ -348,6 +355,14 @@ public class BuildPresenter extends BasePresenter
                {
 
                }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  super.onError(error);
+                  workbenchContext_.setBuildInProgress(false);
+               }
+              
             });
          }
       }, "Build");
@@ -417,4 +432,5 @@ public class BuildPresenter extends BasePresenter
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final SourceBuildHelper sourceBuildHelper_;
+   private final WorkbenchContext workbenchContext_;
 }

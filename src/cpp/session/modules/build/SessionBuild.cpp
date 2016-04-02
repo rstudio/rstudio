@@ -127,10 +127,34 @@ bool isPackageHeaderFile(const FilePath& filePath)
 
 void onFileChanged(FilePath sourceFilePath)
 {
+   // set package rebuild flag
    if (!s_forcePackageRebuild)
    {
       if (isPackageHeaderFile(sourceFilePath))
          s_forcePackageRebuild = true;
+   }
+}
+
+void onSourceEditorFileSaved(FilePath sourceFilePath)
+{
+   onFileChanged(sourceFilePath);
+
+   // see if this is a website file and fire an event if it is
+   if (module_context::isWebsiteProject())
+   {
+      FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+      if (sourceFilePath.isWithin(buildTargetPath))
+      {
+         std::string outputDir = module_context::websiteOutputDir();
+         FilePath outputDirPath = buildTargetPath.childPath(outputDir);
+         if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
+         {
+            json::Object fileJson =
+                module_context::createFileSystemItem(sourceFilePath);
+            ClientEvent event(client_events::kWebsiteFileSaved, fileJson);
+            module_context::enqueClientEvent(event);
+         }
+      }
    }
 }
 
@@ -1823,7 +1847,7 @@ Error initialize()
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("", cb);
-   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+   module_context::events().onSourceEditorFileSaved.connect(onSourceEditorFileSaved);
 
    // add suspend handler
    addSuspendHandler(module_context::SuspendHandler(boost::bind(onSuspend, _2),

@@ -31,6 +31,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
+import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
@@ -52,10 +54,13 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
@@ -74,6 +79,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RenderRmdEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
                                   RestartStatusEvent.Handler,
+                                  WebsiteFileSavedEvent.Handler,
                                   UiPrefsChangedHandler
 {
    public interface Binder
@@ -82,8 +88,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Inject
    public RmdOutput(EventBus eventBus, 
                     Commands commands,
+                    Session session,
                     GlobalDisplay globalDisplay,
                     FileTypeRegistry fileTypeRegistry,
+                    SourceBuildHelper sourceBuildHelper,
+                    WorkbenchContext workbenchContext,
                     Provider<ViewFilePanel> pViewFilePanel,
                     Binder binder,
                     UIPrefs prefs,
@@ -92,11 +101,15 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
+      sourceBuildHelper_ = sourceBuildHelper;
+      workbenchContext_ = workbenchContext;
       pViewFilePanel_ = pViewFilePanel;
       prefs_ = prefs;
       pdfViewer_ = pdfViewer;
       server_ = server;
       events_ = eventBus;
+      session_ = session;
+      commands_ = commands;
       
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
@@ -106,6 +119,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(RenderRmdSourceEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
+      eventBus.addHandler(WebsiteFileSavedEvent.TYPE, this);
 
       prefs_.rmdViewerType().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -138,6 +152,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
+      renderInProgress_ = false;
+      
       // if there's a custom operation to be run when render completes, run
       // that instead
       if (onRenderCompleted_ != null)
@@ -219,6 +235,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          @Override
          public void execute()
          {
+            renderInProgress_ = true;
             server_.renderRmd(event.getSourceFile(), 
                               event.getSourceLine(),
                               event.getFormat(),
@@ -227,7 +244,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.asTempfile(),
                               event.asShiny(),
                               event.getExistingOutputFile(),
-                  new SimpleRequestCallback<Boolean>());
+                  new SimpleRequestCallback<Boolean>() {
+                       @Override 
+                       public void onError(ServerError error)
+                       {
+                          renderInProgress_ = false;
+                       }
+                  });
          }
       };
 
@@ -251,6 +274,73 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          performRenderOperation(renderOperation);
       }
    }
+   
+   
+   @Override
+   public void onWebsiteFileSaved(WebsiteFileSavedEvent event)
+   {
+      // auto reload/rerender on file saves (first apply various 
+      // filters to not auto reload)
+      
+      // skip if there is a build in progress
+      if (workbenchContext_.isBuildInProgress())
+         return;
+      
+      // skip if there is a render in progress
+      if (renderInProgress_)
+         return;
+      
+      // skip if it's markdown (that requires an explicit render)
+      FileSystemItem file = event.getFileSystemItem();
+      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
+      if (fileType.isMarkdown())
+         return;
+      
+      // is there an output frame?
+      if (outputFrame_ == null || outputFrame_.getWindowObject() == null)
+         return;
+      
+      // is it showing a page from the current site?
+      final RmdPreviewParams params = outputFrame_.getPreviewParams();
+      if (!params.getTargetFile().startsWith(session_.getSessionInfo().getBuildTargetDir()))
+         return;
+      
+      // is it showing a file type that results in a refresh?
+      String typeId = fileType.getTypeId();
+      if (typeId.equals(FileTypeRegistry.CSS.getTypeId()) || 
+          typeId.equals(FileTypeRegistry.JS.getTypeId()))
+      {
+         server_.copyWebsiteAsset(file.getPath(), 
+               new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean success)
+                  {
+                     if (success)
+                        outputFrame_.showRmdPreview(params);
+                  }
+                });
+        
+      } 
+      
+      // is it showing a file type that requires a rebuild?
+      if (typeId.equals(FileTypeRegistry.HTML.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.YAML.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.JSON.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.R.getTypeId()))
+      {
+         RenderRmdEvent renderEvent = new RenderRmdEvent(
+               params.getTargetFile(),
+               1,
+               params.getResult().getFormatName(),
+               params.getResult().getTargetEncoding(),
+               null,
+               false,
+               false,
+               null);
+          events_.fireEvent(renderEvent);
+      }
+   }
+ 
    
    @Override
    public void onRenderRmdSource(final RenderRmdSourceEvent event)
@@ -614,7 +704,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final PDFViewer pdfViewer_;
    private final Provider<ViewFilePanel> pViewFilePanel_;
    private final RMarkdownServerOperations server_;
+   private final Session session_;
    private final EventBus events_;
+   private final Commands commands_;
+   private final SourceBuildHelper sourceBuildHelper_;
+   private final WorkbenchContext workbenchContext_;
    private boolean restarting_ = false;
 
    // stores the last scroll position of each document we know about: map
@@ -627,6 +721,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private RmdShinyDocInfo shinyDoc_;
    private Operation onRenderCompleted_;
    private RmdOutputFrame outputFrame_;
+   private boolean renderInProgress_ = false;
    
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;
    public final static int RMD_VIEWER_TYPE_PANE = 1;

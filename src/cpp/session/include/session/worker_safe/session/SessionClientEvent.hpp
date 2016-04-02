@@ -151,6 +151,7 @@ extern const int kRprofStopped;
 extern const int kRprofCreated;
 extern const int kEditorCommand;
 extern const int kPreviewRmd;
+extern const int kWebsiteFileSaved;
 }
    
 class ClientEvent

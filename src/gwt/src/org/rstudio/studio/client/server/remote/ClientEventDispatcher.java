@@ -72,6 +72,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
@@ -780,6 +781,11 @@ public class ClientEventDispatcher
          {
             PreviewRmdEvent.Data data = event.getData();
             eventBus_.fireEvent(new PreviewRmdEvent(data));
+         }
+         else if (type.equals(ClientEvent.WebsiteFileSaved))
+         {
+            FileSystemItem fsi = event.getData();
+            eventBus_.fireEvent(new WebsiteFileSavedEvent(fsi));
          }
          else
          {

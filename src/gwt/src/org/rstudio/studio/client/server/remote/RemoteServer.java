@@ -4095,6 +4095,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
    }
 
+   
+   @Override
+   public void copyWebsiteAsset(String file,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copy_website_asset", file, requestCallback);
+   }
 
    @Override
    public void terminateRenderRmd(boolean normal, 

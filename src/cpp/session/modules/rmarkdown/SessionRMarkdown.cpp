@@ -1028,15 +1028,8 @@ void handleRmdOutputRequest(const http::Request& request,
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
       html_preview::addFileSpecificHeaders(filePath, pResponse);
-      if (session::options().programMode() == kSessionProgramModeDesktop)
-      {
-         pResponse->setNoCacheHeaders();
-         pResponse->setFile(filePath, request);
-      }
-      else
-      {
-         pResponse->setCacheableFile(filePath, request);
-      }
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(filePath, request);
    }
 }
 
@@ -1150,6 +1143,46 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
 }
 
 
+Error copyWebsiteAsset(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+
+   // get the path relative to the website dir
+   FilePath websiteDir = projects::projectContext().buildTargetPath();
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   std::string relativePath = filePath.relativePath(websiteDir);
+   FilePath outputDir = FilePath(module_context::websiteOutputDir());
+   FilePath outputFile = outputDir.childPath(relativePath);
+   if (outputFile.exists())
+   {
+      error = outputFile.remove();
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setResult(false);
+      }
+   }
+   error = filePath.copy(outputFile);
+   if (error)
+   {
+      LOG_ERROR(error);
+      pResponse->setResult(false);
+   }
+   else
+   {
+      pResponse->setResult(true);
+   }
+
+   return Success();
+}
+
+
+
+
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1215,6 +1248,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
+      (bind(registerRpcMethod, "copy_website_asset", copyWebsiteAsset))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
