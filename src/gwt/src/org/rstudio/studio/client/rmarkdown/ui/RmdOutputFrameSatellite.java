@@ -34,20 +34,22 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    }
 
    @Override
-   public void showRmdPreview(RmdPreviewParams params)
+   public void showRmdPreview(RmdPreviewParams params, boolean activate)
    {
       super.showRmdPreview(params);
       WindowEx win = getWindowObject();
-      if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+      if (activate && win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
       {
          satelliteManager_.forceReopenSatellite(RmdOutputSatellite.NAME, 
-                                                params);
+                                                params,
+                                                activate);
       }
       else
       {
          satelliteManager_.openSatellite(RmdOutputSatellite.NAME,     
                                          params,
-                                         params.getPreferredSize());   
+                                         params.getPreferredSize(),
+                                         activate);   
       }
    }
 

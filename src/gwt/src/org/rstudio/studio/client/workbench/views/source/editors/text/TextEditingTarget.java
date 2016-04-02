@@ -89,6 +89,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
@@ -4623,6 +4624,8 @@ public class TextEditingTarget implements
    
    void renderRmd(final String paramsFile)
    { 
+      events_.fireEvent(new RmdRenderPendingEvent());
+      
       saveThenExecute(null, new Command() {
          @Override
          public void execute()

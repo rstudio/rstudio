@@ -43,6 +43,7 @@ import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -82,6 +83,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
                                   RestartStatusEvent.Handler,
                                   WebsiteFileSavedEvent.Handler,
+                                  RmdRenderPendingEvent.Handler,
                                   QuitInitiatedHandler,
                                   UiPrefsChangedHandler
 {
@@ -124,6 +126,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(WebsiteFileSavedEvent.TYPE, this);
       eventBus.addHandler(QuitInitiatedEvent.TYPE, this);
+      eventBus.addHandler(RmdRenderPendingEvent.TYPE, this);
 
       prefs_.rmdViewerType().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -137,6 +140,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       binder.bind(commands, this);
       
       exportRmdOutputClosedCallback();
+   }
+   
+   @Override
+   public void onRmdRenderPending(RmdRenderPendingEvent event)
+   {
+      renderInProgress_ = true;
    }
    
    @Override
@@ -349,7 +358,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                   public void onResponseReceived(Boolean copied)
                   {
                      if (copied)
-                        outputFrame_.showRmdPreview(params);
+                        outputFrame_.showRmdPreview(params, false);
                   }
                 }); 
       } 
@@ -364,6 +373,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       if (outputFrame_ == null)
          return;
+      
+      livePreviewRenderInProgress_ = true;
       
       RmdPreviewParams params = outputFrame_.getPreviewParams();
       if (targetFile == null)
@@ -445,7 +456,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
-         outputFrame_.showRmdPreview(params);
+         outputFrame_.showRmdPreview(params, true);
       }
       else if (outputFrame_ != null && 
                outputFrame_.getWindowObject() == null &&
@@ -678,11 +689,15 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          params.setAnchor(outputFrame_.getAnchor());
       }
 
-      outputFrame_.showRmdPreview(params);
+      boolean activate = !livePreviewRenderInProgress_;
+      outputFrame_.showRmdPreview(params, activate);
+      
+      // reset live preview state
+      livePreviewRenderInProgress_ = false;
 
       // save the result so we know if the next render is a re-render of the
       // same document
-      result_ = result;
+      result_ = result; 
    }
  
    private final native void exportRmdOutputClosedCallback()/*-{
@@ -770,6 +785,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private Operation onRenderCompleted_;
    private RmdOutputFrame outputFrame_;
    private boolean renderInProgress_ = false;
+   private boolean livePreviewRenderInProgress_ = false;
    private boolean quitInitiatedAfterLastRender_ = false;
    
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;

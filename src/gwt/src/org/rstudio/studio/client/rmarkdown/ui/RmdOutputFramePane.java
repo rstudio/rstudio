@@ -61,7 +61,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    }
 
    @Override
-   public void showRmdPreview(RmdPreviewParams params)
+   public void showRmdPreview(RmdPreviewParams params, boolean activate)
    {
       super.showRmdPreview(params);
       isShiny_ = params.isShinyDocument();
