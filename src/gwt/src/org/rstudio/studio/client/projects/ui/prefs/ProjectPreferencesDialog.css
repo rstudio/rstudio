@@ -101,6 +101,12 @@
    margin-top: 8px;
 }
 
+.infoLabel {
+   margin-top: 6px;
+   font-style: italic;
+   font-size: 0.9em; 
+}
+
 .websiteOutputFormat {
    margin-top: 16px;
 }

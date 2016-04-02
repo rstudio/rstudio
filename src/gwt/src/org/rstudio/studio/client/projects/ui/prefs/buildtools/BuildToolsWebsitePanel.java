@@ -26,6 +26,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 
 public class BuildToolsWebsitePanel extends BuildToolsPanel
 {
@@ -44,9 +45,15 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
       add(chkPreviewAfterBuilding_); 
       
-      chkLivePreviewSite_ = checkBox("Live update preview on save");
+      chkLivePreviewSite_ = checkBox(
+            "Update preview when supporting files change");
       chkLivePreviewSite_.addStyleName(RES.styles().previewWebsite());
       add(chkLivePreviewSite_); 
+      
+      Label infoLabel = new Label(
+         "Supporting files include HTML, JavaScript, CSS, R scripts, etc.");
+      infoLabel.addStyleName(RES.styles().infoLabel());
+      add(infoLabel);
    }
 
    @Override

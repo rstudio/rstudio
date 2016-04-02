@@ -344,9 +344,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          if (!file.getParentPathString().equals(websiteDir))
             reRenderPreview();
          
-         // otherwise render whatever file was saved
-         else 
-            reRenderPreview(file.getPath());
+         // ...otherwise leave it alone (requires a knit)
       }
       
       // see if this should result in a copy + refresh
@@ -358,7 +356,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                   public void onResponseReceived(Boolean copied)
                   {
                      if (copied)
-                        outputFrame_.showRmdPreview(params, false);
+                        outputFrame_.showRmdPreview(params, true);
                   }
                 }); 
       } 
@@ -689,8 +687,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          params.setAnchor(outputFrame_.getAnchor());
       }
 
-      boolean activate = !livePreviewRenderInProgress_;
-      outputFrame_.showRmdPreview(params, activate);
+      outputFrame_.showRmdPreview(params, true);
       
       // reset live preview state
       livePreviewRenderInProgress_ = false;

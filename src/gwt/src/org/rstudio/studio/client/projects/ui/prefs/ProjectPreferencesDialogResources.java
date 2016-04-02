@@ -43,6 +43,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String previewWebsite();
       String directorySelector();
       String websiteOutputFormat();
+      String infoLabel();
    }
   
    @Source("ProjectPreferencesDialog.css")
