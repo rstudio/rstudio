@@ -44,7 +44,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
       add(chkPreviewAfterBuilding_); 
       
-      chkLivePreviewSite_ = checkBox("Live preview changes while editing");
+      chkLivePreviewSite_ = checkBox("Live update preview on save");
       chkLivePreviewSite_.addStyleName(RES.styles().previewWebsite());
       add(chkLivePreviewSite_); 
    }

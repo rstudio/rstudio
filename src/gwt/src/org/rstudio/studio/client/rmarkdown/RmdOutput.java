@@ -335,8 +335,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          if (!file.getParentPathString().equals(websiteDir))
             reRenderPreview();
          
-         // otherwise render the current file 
-         else
+         // otherwise render whatever file was saved
+         else 
             reRenderPreview(file.getPath());
       }
       
