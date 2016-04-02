@@ -1151,11 +1151,19 @@ Error copyWebsiteAsset(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // don't copy if we build inline
+   std::string websiteOutputDir = module_context::websiteOutputDir();
+   if (websiteOutputDir.empty())
+   {
+      pResponse->setResult(true);
+      return Success();
+   }
+
    // get the path relative to the website dir
    FilePath websiteDir = projects::projectContext().buildTargetPath();
    FilePath filePath = module_context::resolveAliasedPath(file);
    std::string relativePath = filePath.relativePath(websiteDir);
-   FilePath outputDir = FilePath(module_context::websiteOutputDir());
+   FilePath outputDir = FilePath(websiteOutputDir);
    FilePath outputFile = outputDir.childPath(relativePath);
    if (outputFile.exists())
    {
