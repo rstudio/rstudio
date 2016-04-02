@@ -84,6 +84,8 @@ public abstract class BuildToolsPanel extends VerticalPanel
       {
          super(label, "(Project Root)");
          
+         addStyleName(RES.styles().directorySelector());
+         
          // allow user to clear out a value
          setReadOnly(false);
          

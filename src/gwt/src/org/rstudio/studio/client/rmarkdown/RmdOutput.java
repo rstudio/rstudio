@@ -27,6 +27,8 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
+import org.rstudio.studio.client.application.events.QuitInitiatedHandler;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -80,6 +82,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
                                   RestartStatusEvent.Handler,
                                   WebsiteFileSavedEvent.Handler,
+                                  QuitInitiatedHandler,
                                   UiPrefsChangedHandler
 {
    public interface Binder
@@ -120,6 +123,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(WebsiteFileSavedEvent.TYPE, this);
+      eventBus.addHandler(QuitInitiatedEvent.TYPE, this);
 
       prefs_.rmdViewerType().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -231,6 +235,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRenderRmd(final RenderRmdEvent event)
    {
+      quitInitiatedAfterLastRender_ = false;
+      
       final Operation renderOperation = new Operation() {
          @Override
          public void execute()
@@ -280,7 +286,9 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public void onWebsiteFileSaved(WebsiteFileSavedEvent event)
    {
       // auto reload/rerender on file saves (first apply various 
-      // filters to not auto reload)
+      // filters to not auto reload). note that before we even
+      // receive this event we know the file is one that is contained
+      // in the website directory
       
       // skip if there is a build in progress
       if (workbenchContext_.isBuildInProgress())
@@ -290,25 +298,51 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (renderInProgress_)
          return;
       
-      // skip if it's markdown (that requires an explicit render)
-      FileSystemItem file = event.getFileSystemItem();
-      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
-      if (fileType.isMarkdown())
+      // skip if there was a quit initiated since the last render
+      if (quitInitiatedAfterLastRender_)
          return;
-      
+        
       // is there an output frame?
       if (outputFrame_ == null || outputFrame_.getWindowObject() == null)
          return;
       
       // is it showing a page from the current site?
+      String websiteDir = session_.getSessionInfo().getBuildTargetDir();
       final RmdPreviewParams params = outputFrame_.getPreviewParams();
-      if (!params.getTargetFile().startsWith(session_.getSessionInfo().getBuildTargetDir()))
+      if (!params.getTargetFile().startsWith(websiteDir))
          return;
-      
-      // is it showing a file type that results in a refresh?
+            
+      // is the changed file one that should always produce a rebuild?
+      FileSystemItem file = event.getFileSystemItem();
+      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
       String typeId = fileType.getTypeId();
-      if (typeId.equals(FileTypeRegistry.CSS.getTypeId()) || 
-          typeId.equals(FileTypeRegistry.JS.getTypeId()))
+      if (fileType.isR() ||
+          typeId.equals(FileTypeRegistry.HTML.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.YAML.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.JSON.getTypeId()))
+      {
+         reRenderPreview();
+      }
+      
+      // is the changed file a markdown document
+      else if (fileType.isMarkdown())
+      {
+         // included Rmd files always produce a rebuild of the current file
+         if (file.getStem().startsWith("_"))
+            reRenderPreview();
+         
+         // files in subdirectories are also includes so re-render them also
+         if (!file.getParentPathString().equals(websiteDir))
+            reRenderPreview();
+         
+         // otherwise render the current file 
+         else
+            reRenderPreview(file.getPath());
+      }
+      
+      // is it showing a file type that results in a copy + refresh?
+      else if (typeId.equals(FileTypeRegistry.CSS.getTypeId()) || 
+               typeId.equals(FileTypeRegistry.JS.getTypeId()))
       {
          server_.copyWebsiteAsset(file.getPath(), 
                new SimpleRequestCallback<Boolean>() {
@@ -321,30 +355,46 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                 });
         
       } 
+   }
+   
+   private void reRenderPreview()
+   {
+      reRenderPreview(null);
+   }
+   
+   private void reRenderPreview(String targetFile)
+   {
+      if (outputFrame_ == null)
+         return;
       
-      // is it showing a file type that requires a rebuild?
-      if (typeId.equals(FileTypeRegistry.HTML.getTypeId()) ||
-          typeId.equals(FileTypeRegistry.YAML.getTypeId()) ||
-          typeId.equals(FileTypeRegistry.JSON.getTypeId()) ||
-          typeId.equals(FileTypeRegistry.R.getTypeId()))
-      {
-         RenderRmdEvent renderEvent = new RenderRmdEvent(
-               params.getTargetFile(),
-               1,
-               params.getResult().getFormatName(),
-               params.getResult().getTargetEncoding(),
-               null,
-               false,
-               false,
-               null);
-          events_.fireEvent(renderEvent);
-      }
+      RmdPreviewParams params = outputFrame_.getPreviewParams();
+      if (targetFile == null)
+         targetFile = params.getTargetFile();
+      
+      RenderRmdEvent renderEvent = new RenderRmdEvent(
+            targetFile,
+            1,
+            params.getResult().getFormatName(),
+            params.getResult().getTargetEncoding(),
+            null,
+            false,
+            false,
+            null);
+       events_.fireEvent(renderEvent);
+   }
+   
+   @Override
+   public void onQuitInitiated(QuitInitiatedEvent event)
+   {
+      quitInitiatedAfterLastRender_ = true;
    }
  
    
    @Override
    public void onRenderRmdSource(final RenderRmdSourceEvent event)
    {
+      quitInitiatedAfterLastRender_ = false;
+      
       performRenderOperation(new Operation() {
          @Override
          public void execute()
@@ -722,6 +772,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private Operation onRenderCompleted_;
    private RmdOutputFrame outputFrame_;
    private boolean renderInProgress_ = false;
+   private boolean quitInitiatedAfterLastRender_ = false;
    
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;
    public final static int RMD_VIEWER_TYPE_PANE = 1;

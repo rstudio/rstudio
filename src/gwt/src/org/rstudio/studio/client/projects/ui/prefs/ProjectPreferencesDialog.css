@@ -67,6 +67,10 @@
    color: #494949;
 }
 
+.directorySelector {
+   width: 375px;
+}
+
 .buildToolsAdditionalArguments {
    width: 375px;
    margin-bottom: 12px;

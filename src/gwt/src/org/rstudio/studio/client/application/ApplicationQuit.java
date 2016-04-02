@@ -32,6 +32,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
+import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
@@ -123,6 +124,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
+      eventBus_.fireEvent(new QuitInitiatedEvent());
+      
       if (workbenchContext_.isServerBusy() && !forceSaveAll)
       {
          globalDisplay_.showYesNoMessage(
@@ -164,6 +167,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    {
       handleUnsavedChanges(saveAction_.getAction(), caption, forceSaveAll,
             sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
+   }
+   
+   
+   private static boolean handlingUnsavedChanges_;
+   public static boolean isHandlingUnsavedChanges()
+   {
+      return handlingUnsavedChanges_;
    }
    
    public static void handleUnsavedChanges(final int saveAction, 

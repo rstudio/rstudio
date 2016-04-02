@@ -34,7 +34,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       pathSelector_ = new DirectorySelector("Site directory:");
       add(pathSelector_);    
        
-      websiteOutputFormat_ = new SelectWidget("Output format(s):",
+      websiteOutputFormat_ = new SelectWidget("Book output format(s):",
                                               new String[]{"all"});
       websiteOutputFormat_.addStyleName(RES.styles().websiteOutputFormat());
       add(websiteOutputFormat_);
