@@ -42,8 +42,11 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       chkPreviewAfterBuilding_ = checkBox("Preview site after building");
       chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
-
       add(chkPreviewAfterBuilding_); 
+      
+      chkLivePreviewSite_ = checkBox("Live preview changes while editing");
+      chkLivePreviewSite_.addStyleName(RES.styles().previewWebsite());
+      add(chkLivePreviewSite_); 
    }
 
    @Override
@@ -54,6 +57,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       RProjectBuildOptions buildOptions = options.getBuildOptions();
       chkPreviewAfterBuilding_.setValue(buildOptions.getPreviewWebsite());
+      chkLivePreviewSite_.setValue(buildOptions.getLivePreviewWebsite());
       
       RProjectBuildContext buildContext = options.getBuildContext();
       if (buildContext.isBookdownSite())
@@ -89,12 +93,14 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       RProjectBuildOptions buildOptions = options.getBuildOptions();
       buildOptions.setPreviewWebsite(chkPreviewAfterBuilding_.getValue());
+      buildOptions.setLivePreviewWebsite(chkLivePreviewSite_.getValue());
       buildOptions.setWebsiteOutputFormat(websiteOutputFormat_.getValue());
    }
 
    private PathSelector pathSelector_;
    
    private CheckBox chkPreviewAfterBuilding_;
+   private CheckBox chkLivePreviewSite_;
    
    
    private SelectWidget websiteOutputFormat_;

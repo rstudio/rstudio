@@ -64,6 +64,7 @@ struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
       previewWebsite(true),
+      livePreviewWebsite(true),
       websiteOutputFormat(),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
@@ -73,6 +74,7 @@ struct RProjectBuildOptions
 
    std::string makefileArgs;
    bool previewWebsite;
+   bool livePreviewWebsite;
    std::string websiteOutputFormat;
    bool autoRoxygenizeForCheck;
    bool autoRoxygenizeForBuildPackage;

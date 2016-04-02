@@ -142,6 +142,17 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
    // see if this is a website file and fire an event if it is
    if (module_context::isWebsiteProject())
    {
+      // see if the option is enabled for live preview
+      projects::RProjectBuildOptions options;
+      Error error = projects::projectContext().readBuildOptions(&options);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      if (!options.livePreviewWebsite)
+         return;
+
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       if (sourceFilePath.isWithin(buildTargetPath))
       {
