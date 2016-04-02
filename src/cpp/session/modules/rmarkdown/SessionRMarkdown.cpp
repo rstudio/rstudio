@@ -28,6 +28,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Algorithm.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -1143,7 +1144,7 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
 }
 
 
-Error copyWebsiteAsset(const json::JsonRpcRequest& request,
+Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    std::string file;
@@ -1163,6 +1164,36 @@ Error copyWebsiteAsset(const json::JsonRpcRequest& request,
    FilePath websiteDir = projects::projectContext().buildTargetPath();
    FilePath filePath = module_context::resolveAliasedPath(file);
    std::string relativePath = filePath.relativePath(websiteDir);
+
+   // get the list of copyable site resources
+   std::vector<std::string> copyableResources;
+   r::exec::RFunction func("rmarkdown:::copyable_site_resources");
+   func.addParam("input", string_utils::utf8ToSystem(websiteDir.absolutePath()));
+   func.addParam("encoding", projects::projectContext().config().encoding);
+   error = func.call(&copyableResources);
+   if (error)
+   {
+      LOG_ERROR(error);
+      pResponse->setResult(false);
+      return Success();
+   }
+
+   // get the name to target -- if it's in the root dir it's the filename
+   // otherwise it's the directory name
+   std::string search;
+   if (filePath.parent() == websiteDir)
+      search = filePath.filename();
+   else
+      search = relativePath.substr(0, relativePath.find_first_of('/'));
+
+   // if it's not in the list we don't copy it
+   if (!algorithm::contains(copyableResources, search))
+   {
+       pResponse->setResult(false);
+       return Success();
+   }
+
+   // copy the file (removing it first)
    FilePath outputDir = FilePath(websiteOutputDir);
    FilePath outputFile = outputDir.childPath(relativePath);
    if (outputFile.exists())
@@ -1172,8 +1203,18 @@ Error copyWebsiteAsset(const json::JsonRpcRequest& request,
       {
          LOG_ERROR(error);
          pResponse->setResult(false);
+         return Success();
       }
    }
+
+   error = outputFile.parent().ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      pResponse->setResult(false);
+      return Success();
+   }
+
    error = filePath.copy(outputFile);
    if (error)
    {
@@ -1256,7 +1297,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
-      (bind(registerRpcMethod, "copy_website_asset", copyWebsiteAsset))
+      (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

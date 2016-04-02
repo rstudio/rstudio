@@ -4097,10 +4097,10 @@ public class RemoteServer implements Server
 
    
    @Override
-   public void copyWebsiteAsset(String file,
+   public void maybeCopyWebsiteAsset(String file,
                                 ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "copy_website_asset", file, requestCallback);
+      sendRequest(RPC_SCOPE, "maybe_copy_website_asset", file, requestCallback);
    }
 
    @Override

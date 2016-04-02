@@ -340,20 +340,18 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             reRenderPreview(file.getPath());
       }
       
-      // is it showing a file type that results in a copy + refresh?
-      else if (typeId.equals(FileTypeRegistry.CSS.getTypeId()) || 
-               typeId.equals(FileTypeRegistry.JS.getTypeId()))
+      // see if this should result in a copy + refresh
+      else
       {
-         server_.copyWebsiteAsset(file.getPath(), 
+         server_.maybeCopyWebsiteAsset(file.getPath(), 
                new SimpleRequestCallback<Boolean>() {
                   @Override
-                  public void onResponseReceived(Boolean success)
+                  public void onResponseReceived(Boolean copied)
                   {
-                     if (success)
+                     if (copied)
                         outputFrame_.showRmdPreview(params);
                   }
-                });
-        
+                }); 
       } 
    }
    
