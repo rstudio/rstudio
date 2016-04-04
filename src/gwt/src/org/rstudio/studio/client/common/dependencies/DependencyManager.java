@@ -550,7 +550,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
            Dependency.embeddedPackage("profvis")
           
         }, 
-        false,
+        true, // update profvis if needed
         new CommandWithArg<Boolean>()
         {
            @Override

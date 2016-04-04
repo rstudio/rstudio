@@ -70,6 +70,7 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
@@ -393,7 +394,8 @@ public class TextEditingTarget implements
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper)
+                            SourceBuildHelper sourceBuildHelper,
+                            DependencyManager dependencyManager)
    {
       commands_ = commands;
       server_ = server;
@@ -409,6 +411,7 @@ public class TextEditingTarget implements
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
       sourceBuildHelper_ = sourceBuildHelper;
+      dependencyManager_ = dependencyManager;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -3794,7 +3797,14 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
-      codeExecution_.executeSelection(false, false, "profvis::profvis");
+      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            codeExecution_.executeSelection(false, false, "profvis::profvis");
+         }
+      });
    }
    
    @Handler
@@ -5905,6 +5915,7 @@ public class TextEditingTarget implements
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
    private final SourceBuildHelper sourceBuildHelper_;
+   private final DependencyManager dependencyManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
