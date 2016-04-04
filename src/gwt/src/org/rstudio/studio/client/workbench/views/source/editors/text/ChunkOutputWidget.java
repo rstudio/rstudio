@@ -222,13 +222,16 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() != EXPANDED)
          return;
       
-      int height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
-            root_.getElement().getScrollHeight());
+      // clamp chunk height to min/max
+      int height = Math.min(
+            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
+                     root_.getElement().getScrollHeight()), 
+            ChunkOutputUi.MAX_CHUNK_HEIGHT);
       if (height == renderedHeight_)
          return;
       renderedHeight_ = height;
       if (scrollToBottom)
-         root_.getElement().setScrollTop(height);
+         root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
       onRenderCompleted_.execute(height);
    }
