@@ -1441,6 +1441,16 @@ bool closesArgumentList(const RTokenCursor& cursor,
    }
 }
 
+void checkAssignmentOperatorUsage(RTokenCursor& cursor, ParseStatus& status)
+{
+   // Prefer '<-' to '=' for assignment.
+   if (cursor.contentEquals(L"="))
+   {
+      LintItem lint(cursor, LintTypeStyle, "prefer '<-' to '=' in assignment");
+      status.lint().push_back(lint);
+   }
+}
+
 void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
                                    ParseStatus& status)
 {
@@ -2312,6 +2322,7 @@ START:
 BINARY_OPERATOR:
       
       checkBinaryOperatorWhitespace(cursor, status);
+      checkAssignmentOperatorUsage(cursor, status);
       if (!cursor.isAtEndOfDocument() && !canFollowBinaryOperator(cursor.nextSignificantToken()))
          status.lint().unexpectedToken(cursor.nextSignificantToken());
       
