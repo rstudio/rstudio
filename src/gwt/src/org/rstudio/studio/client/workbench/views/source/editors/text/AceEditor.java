@@ -47,7 +47,6 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -87,6 +86,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent.ExecutionPolicy;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
@@ -371,43 +371,6 @@ public class AceEditor implements DocDisplay,
          }
       });
       
-      addCapturingKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent event)
-         {
-            if (isVimModeOn() && !isVimInInsertMode())
-               return;
-            
-            if (isEmacsModeOn())
-               return;
-            
-            int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-            boolean isCtrl = modifier == KeyboardShortcut.CTRL;
-            if (isCtrl)
-            {
-               switch (event.getNativeKeyCode())
-               {
-               case KeyCodes.KEY_K:
-                  event.stopPropagation();
-                  event.preventDefault();
-                  yankAfterCursor();
-                  break;
-               case KeyCodes.KEY_U:
-                  event.stopPropagation();
-                  event.preventDefault();
-                  yankBeforeCursor();
-                  break;
-               case KeyCodes.KEY_Y:
-                  event.stopPropagation();
-                  event.preventDefault();
-                  pasteLastYank();
-                  break;
-               }
-            }
-         }
-      });
-      
       widget_.addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -437,10 +400,38 @@ public class AceEditor implements DocDisplay,
                   AceEditor.this.getWidget().getElement().getId());
          }
       });
+      
+      events_.addHandler(
+            AceEditorCommandEvent.TYPE,
+            new AceEditorCommandEvent.Handler()
+            {
+               @Override
+               public void onEditorCommand(AceEditorCommandEvent event)
+               {
+                  if (event.getExecutionPolicy() == ExecutionPolicy.FOCUSED &&
+                      !AceEditor.this.isFocused())
+                  {
+                     return;
+                  }
+                  
+                  switch (event.getCommand())
+                  {
+                  case PASTE_LAST_YANK:    pasteLastYank();    break;
+                  case YANK_BEFORE_CURSOR: yankBeforeCursor(); break;
+                  case YANK_AFTER_CURSOR:  yankAfterCursor();  break;
+                  }
+               }
+            });
    }
    
    public void yankBeforeCursor()
    {
+      if (isEmacsModeOn())
+         return;
+      
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
       Position cursorPos = getCursorPosition();
       setSelectionRange(Range.fromPoints(
             Position.create(cursorPos.getRow(), 0),
@@ -457,6 +448,12 @@ public class AceEditor implements DocDisplay,
    
    public void yankAfterCursor()
    {
+      if (isEmacsModeOn())
+         return;
+      
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
       Position cursorPos = getCursorPosition();
       int lineLength = getLine(cursorPos.getRow()).length();
       setSelectionRange(Range.fromPoints(
@@ -474,6 +471,12 @@ public class AceEditor implements DocDisplay,
    
    public void pasteLastYank()
    {
+      if (isEmacsModeOn())
+         return;
+      
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
       if (Desktop.isDesktop())
          commands_.pasteDummy().execute();
       else

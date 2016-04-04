@@ -5001,6 +5001,7 @@ public class TextEditingTarget implements
    {
       docDisplay_.quickAddNext();
    }
+
    @Handler
    void onFindReplace()
    {
