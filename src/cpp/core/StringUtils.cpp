@@ -653,6 +653,15 @@ bool isPrefixOf(const std::string& self, const std::string& prefix)
    return boost::algorithm::starts_with(self, prefix);
 }
 
+std::string makeRandomByteString(std::size_t n)
+{
+   std::string result;
+   result.resize(n);
+   for (std::size_t i = 0; i < n; ++i)
+      result[i] = (unsigned char) (::rand() % UCHAR_MAX);
+   return result;
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

@@ -13,51 +13,123 @@
  *
  */
 
-#include <sstream>
-
-#include <algorithm>
-
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/archive/iterators/ostream_iterator.hpp>
-
+#include <core/Macros.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <boost/scoped_array.hpp>
 
 namespace rstudio {
 namespace core {
 namespace base64 {
 
-Error encode(const std::string& input, std::string* pOutput)
+typedef unsigned char Byte;
+
+namespace {
+
+std::string table()
 {
-   using namespace boost::archive::iterators;
+   return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+}
 
-   try
+std::size_t encoded_size(std::size_t n)
+{
+   return (n + 2) / 3 * 4;
+}
+
+class Encoder
+{
+public:
+
+   Encoder()
    {
-      typedef base64_from_binary<transform_width<const char *,6,8> > b64_text;
-      std::stringstream os;
-      std::copy(b64_text(input.c_str()),
-                b64_text(input.c_str() + input.size()),
-                ostream_iterator<char>(os));
+      init(table());
+   }
 
-      pOutput->clear();
-      pOutput->reserve(((input.size() * 4) / 3) + 3);
-      pOutput->append(os.str());
+   explicit Encoder(const std::string& table)
+   {
+      init(table);
+   }
+   
+   // COPYING: copyable members
+   
+private:
+   
+   void init(const std::string& table)
+   {
+      const Byte* pData = (const Byte*) table.c_str();
+      table_.assign(pData, pData + table.size());
+   }
 
-      std::size_t mod = input.size() % 3;
-      if (mod == 1)
-         pOutput->append("==");
-      else if(mod == 2)
-         pOutput->append("=");
+public:
+   
+   Error operator()(const std::string& string, std::string* pOutput)
+   {
+      return (*this)(string.c_str(), string.size(), pOutput);
+   }
 
+   Error operator()(const char* pData, std::size_t n, std::string* pOutput)
+   {
+      return (*this)((const Byte*) pData, n, pOutput);
+   }
+   
+   Error operator()(const Byte* pData, std::size_t n, std::string* pOutput)
+   {
+      std::size_t size = encoded_size(n);
+      boost::scoped_array<Byte> pBuffer(new Byte[size + 1]);
+      pBuffer[size] = '\0';
+      
+      Byte* pTable = &table_[0];
+      Byte* it = pBuffer.get();
+      while (n >= 3)
+      {
+         *it++ = pTable[pData[0] >> 2];
+         *it++ = pTable[((pData[0] & 0x03) << 4) | ((pData[1] & 0xF0) >> 4)];
+         *it++ = pTable[((pData[1] & 0x0F) << 2) | ((pData[2] & 0xC0) >> 6)];
+         *it++ = pTable[pData[2] & 0x3F];
+
+         n -= 3;
+         pData += 3;
+      }
+
+      if (n == 0)
+         goto FINISH;
+
+      *it++ = pTable[pData[0] >> 2];
+      if (n == 1)
+      {
+         *it++ = pTable[(pData[0] & 0x03) << 4];
+         *it++ = '=';
+         *it++ = '=';
+         goto FINISH;
+      }
+
+      *it++ = pTable[((pData[0] & 0x03) << 4) | ((pData[1] & 0xF0) >> 4)];
+      *it++ = pTable[(pData[1] & 0x0F) << 2];
+      *it++ = '=';
+
+FINISH:
+      pOutput->assign((const char*) pBuffer.get(), size);
       return Success();
    }
-   CATCH_UNEXPECTED_EXCEPTION
 
-   // keep compiler happy
-   return Success();
+private:
+   std::vector<Byte> table_;
+};
+
+} // end anonymous namesapce
+
+Error encode(const char* pData, std::size_t n, std::string* pOutput)
+{
+   Encoder encode;
+   return encode(pData, n, pOutput);
+}
+
+Error encode(const std::string& input, std::string* pOutput)
+{
+   Encoder encode;
+   return encode(input, pOutput);
 }
 
 Error encode(const FilePath& inputFile, std::string* pOutput)
@@ -70,45 +142,189 @@ Error encode(const FilePath& inputFile, std::string* pOutput)
    return encode(contents, pOutput);
 }
 
+namespace {
+
+std::size_t decoded_size(std::size_t n)
+{
+   return n * 3 / 4;
+}
+
+class Decoder
+{
+public:
+
+   Decoder()
+   {
+      init(table());
+   }
+
+   explicit Decoder(const std::string& table)
+   {
+      init(table);
+   }
+   
+   // COPYING: copyable members
+
+private:
+
+   void init(const std::string& table)
+   {
+      table_.resize(1 << CHAR_BIT, (Byte) -1);
+      const Byte* pData = reinterpret_cast<const Byte*>(table.c_str());
+      for (Byte i = 0, n = table.size(); i < n; ++i)
+         table_[pData[i]] = i;
+   }
+   
+   bool invalid(Byte byte)
+   {
+      return byte == (Byte) -1;
+   }
+   
+   Error decodeError(const ErrorLocation& location, const std::string& reason)
+   {
+      Error error = systemError(
+               boost::system::errc::illegal_byte_sequence,
+               location);
+      error.addProperty("reason", reason);
+      return error;
+   }
+   
+   Error decodeLengthError(std::size_t size, const ErrorLocation& location)
+   {
+      std::stringstream ss;
+      ss << "string length " << size << " is not a multiple of 4";
+      return decodeError(location, ss.str());
+   }
+   
+   Error decodeByteError(Byte byte, const ErrorLocation& location)
+   {
+      std::stringstream ss;
+      ss << "invalid byte '" << byte << "'";
+      return decodeError(location, ss.str());
+   }
+
+public:
+
+   Error operator()(const std::string& input, std::string* pOutput)
+   {
+      return (*this)(
+               reinterpret_cast<const Byte*>(input.c_str()),
+               input.size(),
+               pOutput);
+   }
+
+   Error operator()(const char* pEncoded,
+                    std::size_t n,
+                    std::string* pOutput)
+   {
+      return (*this)(
+               reinterpret_cast<const Byte*>(pEncoded),
+               n,
+               pOutput);
+   }
+   
+   Error operator()(const Byte* pEncoded,
+                    std::size_t n,
+                    std::string* pOutput)
+   {
+      if (n % 4 != 0)
+         return decodeLengthError(n, ERROR_LOCATION);
+
+      std::size_t size = decoded_size(n);
+      boost::scoped_array<Byte> pBuffer(new Byte[size + 1]);
+      pBuffer.get()[size] = '\0';
+      Byte* it = pBuffer.get();
+
+      Byte* pTable = &table_[0];
+      
+      Byte lhsByte, rhsByte;
+      while (n != 4)
+      {
+         lhsByte = pTable[pEncoded[0]];
+         if (UNLIKELY(invalid(lhsByte)))
+            return decodeByteError(pEncoded[0], ERROR_LOCATION);
+         
+         rhsByte = pTable[pEncoded[1]];
+         if (UNLIKELY(invalid(rhsByte)))
+            return decodeByteError(pEncoded[1], ERROR_LOCATION);
+         
+         *it++ = (lhsByte << 2) | (rhsByte >> 4);
+
+         lhsByte = pTable[pEncoded[2]];
+         if (UNLIKELY(invalid(lhsByte)))
+            return decodeByteError(pEncoded[2], ERROR_LOCATION);
+         
+         *it++ = (rhsByte << 4) | (lhsByte >> 2);
+
+         rhsByte = pTable[pEncoded[3]];
+         if (UNLIKELY(invalid(rhsByte)))
+            return decodeByteError(pEncoded[3], ERROR_LOCATION);
+         
+         *it++ = (lhsByte << 6) | rhsByte;
+
+         n -= 4;
+         pEncoded += 4;
+      }
+      
+      lhsByte = pTable[pEncoded[0]];
+      if (UNLIKELY(invalid(lhsByte)))
+         return decodeByteError(pEncoded[0], ERROR_LOCATION);
+      
+      rhsByte = pTable[pEncoded[1]];
+      if (UNLIKELY(invalid(rhsByte)))
+         return decodeByteError(pEncoded[1], ERROR_LOCATION);
+      
+      *it++ = (lhsByte << 2) | (rhsByte >> 4);
+
+      if (pEncoded[2] == '=')
+      {
+         size -= 2;
+         goto FINISH;
+      }
+
+      lhsByte = pTable[pEncoded[2]];
+      if (UNLIKELY(invalid(lhsByte)))
+         return decodeByteError(pEncoded[2], ERROR_LOCATION);
+      
+      *it++ = (rhsByte << 4) | (lhsByte >> 2);
+
+      if (pEncoded[3] == '=')
+      {
+         size -= 1;
+         goto FINISH;
+      }
+
+      rhsByte = pTable[pEncoded[3]];
+      if (UNLIKELY(invalid(rhsByte)))
+         return decodeByteError(pEncoded[3], ERROR_LOCATION);
+
+      *it++ = (lhsByte << 6) | rhsByte;
+
+FINISH:
+      pOutput->assign(
+               reinterpret_cast<const char*>(pBuffer.get()),
+               size);
+      return Success();
+   }
+
+private:
+   std::vector<Byte> table_;
+};
+
+} // end anonymous namespace
 
 Error decode(const std::string& input, std::string* pOutput)
 {
-   using namespace boost::archive::iterators;
+   Decoder decode;
+   return decode(input, pOutput);
+}
 
-   typedef transform_width<binary_from_base64<
-                           std::string::const_iterator>, 8, 6 > text_b64;
-
-   // cast away const so we can temporarily manipulate the input string without
-   // making a copy 
-   std::string& base64 = const_cast<std::string&>(input);
-   unsigned pad = 0;
-
-   try
-   {
-      // remove = padding from end and replace with base64 encoding for 0
-      // (count instances removed)
-      while (base64.at(base64.size() - (pad + 1)) == '=')
-        base64[base64.size() - (pad++ + 1)] = 'A';
-
-      // perform the decoding
-      *pOutput = std::string(text_b64(base64.begin()), text_b64(base64.end()));
-
-      // erase padding from output
-      pOutput->erase(pOutput->end() - pad, pOutput->end());
-   }
-   CATCH_UNEXPECTED_EXCEPTION
-
-   // restore the input string contents
-   for (size_t i = 0; i < pad; i++)
-      base64[base64.size() - (i + 1)] = '=';
-
-   return Success();
+Error decode(const char* pData, std::size_t n, std::string* pOutput)
+{
+   Decoder decode;
+   return decode(pData, n, pOutput);
 }
 
 } // namespace base64
 } // namespace core
 } // namespace rstudio
-
-
-
-
