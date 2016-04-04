@@ -50,8 +50,9 @@ Error getPublicKey(const json::JsonRpcRequest& request,
    return Success();
 }
 
-SEXP rs_base64encode(SEXP dataSEXP)
+SEXP rs_base64encode(SEXP dataSEXP, SEXP binarySEXP)
 {
+   bool binary = r::sexp::asLogical(binarySEXP);
    const char* pData;
    std::size_t n;
    
@@ -78,11 +79,15 @@ SEXP rs_base64encode(SEXP dataSEXP)
       LOG_ERROR(error);
    
    r::sexp::Protect protect;
-   return r::sexp::create(output, &protect);
+   if (binary)
+      return r::sexp::createRawVector(output, &protect);
+   else
+      return r::sexp::create(output, &protect);
 }
 
-SEXP rs_base64decode(SEXP dataSEXP)
+SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
 {
+   bool binary = r::sexp::asLogical(binarySEXP);
    const char* pData;
    std::size_t n;
    
@@ -109,7 +114,10 @@ SEXP rs_base64decode(SEXP dataSEXP)
       LOG_ERROR(error);
    
    r::sexp::Protect protect;
-   return r::sexp::create(output, &protect);
+   if (binary)
+      return r::sexp::createRawVector(output, &protect);
+   else
+      return r::sexp::create(output, &protect);
 }
 
 } // anonymous namespace
@@ -130,8 +138,8 @@ json::Object publicKeyInfoJson()
 Error initialize()
 {
    // install rpc methods
-   RS_REGISTER_CALL_METHOD(rs_base64encode, 1);
-   RS_REGISTER_CALL_METHOD(rs_base64decode, 1);
+   RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
+   RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
    
    using boost::bind;
    using namespace module_context;

@@ -1704,7 +1704,7 @@
 .rs.addFunction("evalWithAvailableArguments", function(fn, args)
 {
    filtered <- args[names(args) %in% names(formals(fn))]
-   call <- c(substitute(fn), args)
+   call <- c(substitute(fn), filtered)
    mode(call) <- "call"
    eval(call, envir = parent.frame())
 })
@@ -1712,4 +1712,14 @@
 .rs.addFunction("transposeList", function(list)
 {
    do.call(Map, c(c, list, USE.NAMES = FALSE))
+})
+
+.rs.addFunction("base64encode", function(data, binary = FALSE)
+{
+   .Call(.rs.routines$rs_base64encode, data, binary)
+})
+
+.rs.addFunction("base64decode", function(data, binary = FALSE)
+{
+   .Call(.rs.routines$rs_base64decode, data, binary)
 })

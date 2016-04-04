@@ -597,16 +597,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    paste(unlist(html), collapse = "\n")
 })
 
-.rs.addFunction("base64encode", function(data)
-{
-   caTools::base64encode(data)
-})
-
-.rs.addFunction("base64decode", function(data, type = character())
-{
-   caTools::base64decode(data, type)
-})
-
 .rs.addFunction("scrapeHtmlAttributes", function(line)
 {
    reData <- '([[:alnum:]_-]+)[[:space:]]*=[[:space:]]*"(\\\\.|[^"])+"'
@@ -646,7 +636,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    scraped <- .rs.scrapeHtmlAttributes(line)
    element <- scraped[[attribute]]
    data <- sub("^.*;base64,", "", element)
-   decoded <- .rs.base64decode(data, raw())
+   decoded <- .rs.base64decode(data, TRUE)
    writeBin(decoded, con = targetPath)
    
    TRUE
@@ -660,7 +650,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (!dir.create(parentPath, recursive = TRUE))
          stop("failed to create cache path '", parentPath, "'")
    
-   decoded <- .rs.base64decode(encodedContents, raw())
+   decoded <- .rs.base64decode(encodedContents, TRUE)
    writeBin(decoded, con = targetPath)
    TRUE
 })
