@@ -159,6 +159,8 @@ public class ChunkOutputWidget extends Composite
       events.addHandler(InterruptStatusEvent.TYPE, this);
    }
    
+   // Public methods ----------------------------------------------------------
+   
    public void showChunkOutputUnit(RmdChunkOutputUnit unit)
    {
       initializeOutput(unit.getType());
@@ -188,9 +190,12 @@ public class ChunkOutputWidget extends Composite
       else
          toggleExpansionState();
    }
-
-   // Public methods ----------------------------------------------------------
    
+   public int getState()
+   {
+      return state_;
+   }
+
    public HandlerRegistration addExpansionStateChangeHandler(
          ValueChangeHandler<Integer> handler)
    {
@@ -222,15 +227,18 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() != EXPANDED)
          return;
       
-      int height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
-            root_.getElement().getScrollHeight());
+      // clamp chunk height to min/max
+      int height = Math.min(
+            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
+                     root_.getElement().getScrollHeight()), 
+            ChunkOutputUi.MAX_CHUNK_HEIGHT);
       if (height == renderedHeight_)
          return;
       renderedHeight_ = height;
       if (scrollToBottom)
-         root_.getElement().setScrollTop(height);
+         root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
-      onRenderCompleted_.execute(height);
+      onRenderCompleted_.execute(height + FRAME_HEIGHT_PAD);
    }
 
    
@@ -698,6 +706,8 @@ public class ChunkOutputWidget extends Composite
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
+   
+   private final static int FRAME_HEIGHT_PAD = 7;
    
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;

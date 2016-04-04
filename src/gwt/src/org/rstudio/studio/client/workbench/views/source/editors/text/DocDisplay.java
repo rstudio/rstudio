@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
@@ -45,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Brea
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FindRequestedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasDocumentChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
@@ -115,6 +117,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    // This returns null for most file types, but for Sweave it returns "R" or
    // "TeX". Use SweaveFileType constants to test for these values.
    String getLanguageMode(Position position);
+   String getModeId();
    
    boolean inMultiSelectMode();
    void exitMultiSelectMode();
@@ -188,6 +191,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean isRendered();
 
    JsArray<AceFold> getFolds();
+   String getFoldState(int row);
    void addFold(Range range);
    void addFoldFromRow(int row);
    void unfold(AceFold fold);
@@ -211,6 +215,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    
+   HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
+
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
    
@@ -312,6 +318,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
+   TokenIterator getTokenIterator(Position pos);
 
    Anchor createAnchor(Position pos);
    

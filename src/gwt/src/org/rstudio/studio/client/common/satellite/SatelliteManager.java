@@ -79,29 +79,48 @@ public class SatelliteManager implements CloseHandler<Window>
       // handle onClosed to automatically close all satellites
       Window.addCloseHandler(this);
    }
-    
-   // open a satellite window (re-activate existing if possible)
+   
    public void openSatellite(String name,
                              JavaScriptObject params,
                              Size preferredSize)
    {
-      openSatellite(name, params, preferredSize, true, null);
+      openSatellite(name, params, preferredSize, true);
+   }
+    
+   public void openSatellite(String name,
+                             JavaScriptObject params,
+                             Size preferredSize,
+                             boolean activate)
+   {
+      openSatellite(name, params, preferredSize, true, null, activate);
    }
    
    public void openSatellite(String name,
                              JavaScriptObject params,
                              Size preferredSize,
-                             Point position)
+                             Point position,
+                             boolean activate)
    {
-      openSatellite(name, params, preferredSize, true, position);
+      openSatellite(name, params, preferredSize, true, position, activate);
    }
+   
 
-   // open a satellite window (re-activate existing if possible)
    public void openSatellite(String name,
                              JavaScriptObject params,
                              Size preferredSize, 
                              boolean adjustSize, 
                              Point position)
+   {
+      openSatellite(name, params, preferredSize, adjustSize, position, true);
+   }
+   
+   // open a satellite window (optionally activate existing)
+   public void openSatellite(String name,
+                             JavaScriptObject params,
+                             Size preferredSize, 
+                             boolean adjustSize, 
+                             Point position,
+                             boolean activate)
    {
       // satellites can't launch other satellites -- this is because the 
       // delegating/forwarding of remote server calls and events doesn't
@@ -131,9 +150,10 @@ public class SatelliteManager implements CloseHandler<Window>
                   // window.focus). for chrome we'll just fall through
                   // and openSatelliteWindow will be called and the 
                   // window will be reloaded)
-                  if (!BrowseCap.isChrome())
+                  if (!BrowseCap.isChrome() || !activate)
                   {
-                     window.focus();
+                     if (activate)
+                        window.focus();
                      callNotifyReactivated(window, params);
                      return;
                   }
@@ -147,8 +167,11 @@ public class SatelliteManager implements CloseHandler<Window>
                // desktop mode: activate and return
                else
                {
-                  Desktop.getFrame().activateSatelliteWindow(
-                    SatelliteUtils.getSatelliteWindowName(satellite.getName()));
+                  if (activate) 
+                  {
+                     Desktop.getFrame().activateSatelliteWindow(
+                       SatelliteUtils.getSatelliteWindowName(satellite.getName()));
+                  }
                   callNotifyReactivated(window, params);
                   return;
                }
@@ -174,6 +197,7 @@ public class SatelliteManager implements CloseHandler<Window>
             ScreenUtils.getAdjustedWindowSize(preferredSize) : 
             preferredSize;
       NewWindowOptions options = new NewWindowOptions();
+      options.setFocus(activate);
       if (position != null)
          options.setPosition(position);
 
@@ -191,7 +215,8 @@ public class SatelliteManager implements CloseHandler<Window>
    // if responding to a UI event, use openSatellite instead, since Chrome
    // permits window.open to reactivate windows in that context. 
    public void forceReopenSatellite(final String name, 
-                                    final JavaScriptObject params)
+                                    final JavaScriptObject params,
+                                    boolean activate)
    {
       Size preferredSize = null;
       Point preferredPos = null;
@@ -220,7 +245,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // but with the newly supplied set of parameters
       final Size windowSize = preferredSize;
       final Point windowPos = preferredPos;
-      openSatellite(name, params, windowSize, false, windowPos);
+      openSatellite(name, params, windowSize, false, windowPos, activate);
    }
 
    public boolean satelliteWindowExists(String name)

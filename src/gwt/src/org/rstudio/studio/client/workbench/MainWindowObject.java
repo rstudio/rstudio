@@ -26,14 +26,16 @@ public class MainWindowObject
 {
    public static final <T> void set(String key, T value)
    {
-      setImpl(key, value, RSTUDIO);
+      JavaScriptObject rstudioObject = getRStudioObject(getMainWindow());
+      setImpl(key, value, rstudioObject);
    }
    
    @SuppressWarnings("unchecked")
    public static final <T> T get(String key)
    {
       // work around cast errors with older JDK (1.6)
-      JavaScriptObject object = getImpl(key, RSTUDIO);
+      JavaScriptObject rstudioObject = getRStudioObject(getMainWindow());
+      JavaScriptObject object = getImpl(key, rstudioObject);
       T casted = (T) object;
       return casted;
    }
@@ -65,9 +67,6 @@ public class MainWindowObject
          wnd.$RStudio = {};
       return wnd.$RStudio;
    }-*/;
-   
-   private static final Window MAIN_WINDOW = getMainWindow();
-   private static final JavaScriptObject RSTUDIO = getRStudioObject(MAIN_WINDOW);
    
    public static final String LAST_FOCUSED_EDITOR        = "last_focused_editor";
    public static final String LAST_FOCUSED_WINDOW        = "last_focused_window";

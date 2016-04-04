@@ -38,7 +38,7 @@ class ChunkExecContext
 public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
-         const std::string& options, int width);
+         const std::string& options, int pixelWidth, int charWidth);
    ~ChunkExecContext();
 
    // connect or disconnect the execution context to events
@@ -61,8 +61,9 @@ private:
 
    std::string docId_;
    std::string chunkId_;
-   int width_;
-   int prevWidth_;
+   int pixelWidth_;
+   int charWidth_;
+   int prevCharWidth_;
    bool connected_;
    std::vector<boost::signals::connection> connections_;
 };

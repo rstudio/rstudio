@@ -246,6 +246,7 @@ json::Object projectBuildOptionsJson()
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
    buildOptionsJson["preview_website"] = buildOptions.previewWebsite;
+   buildOptionsJson["live_preview_website"] = buildOptions.livePreviewWebsite;
    buildOptionsJson["website_output_format"] = buildOptions.websiteOutputFormat;
    json::Object autoRoxJson;
    autoRoxJson["run_on_check"] = buildOptions.autoRoxygenizeForCheck;
@@ -363,6 +364,7 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
        optionsJson,
        "makefile_args", &(pOptions->makefileArgs),
        "preview_website", &(pOptions->previewWebsite),
+       "live_preview_website", &(pOptions->livePreviewWebsite),
        "website_output_format", &(pOptions->websiteOutputFormat),
        "auto_roxygenize_options", &autoRoxJson);
    if (error)

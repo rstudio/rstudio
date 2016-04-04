@@ -1,5 +1,5 @@
 /*
- * ExecuteChunksEvent.java
+ * WebsiteFileSavedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,35 +12,30 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
+package org.rstudio.studio.client.rmarkdown.events;
+
+import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ExecuteChunksEvent extends GwtEvent<ExecuteChunksEvent.Handler>
+public class WebsiteFileSavedEvent extends GwtEvent<WebsiteFileSavedEvent.Handler>
 {
-   public static enum Scope 
-   {
-      Current,
-      Previous
-   }
-   
    public interface Handler extends EventHandler
    {
-      void onExecuteChunks(ExecuteChunksEvent event);
+      void onWebsiteFileSaved(WebsiteFileSavedEvent event);
    }
 
-   public ExecuteChunksEvent(Scope scope, int pageX, int pageY)
+   public WebsiteFileSavedEvent(FileSystemItem fsi)
    {
-      scope_ = scope;
-      pageX_ = pageX;
-      pageY_ = pageY;
+     fsi_ = fsi;
    }
    
-   public Scope getScope() { return scope_; }
-   public int getPageX() { return pageX_; }
-   public int getPageY() { return pageY_; }
-   
+   public FileSystemItem getFileSystemItem()
+   {
+      return fsi_;
+   }
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -50,12 +45,10 @@ public class ExecuteChunksEvent extends GwtEvent<ExecuteChunksEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onExecuteChunks(this);
+      handler.onWebsiteFileSaved(this);
    }
-
-   private final Scope scope_;
-   private final int pageX_;
-   private final int pageY_;
    
+   private FileSystemItem fsi_;
+
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -63,7 +63,8 @@ struct RProjectVcsOptions
 struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
-      previewWebsite(false),
+      previewWebsite(true),
+      livePreviewWebsite(true),
       websiteOutputFormat(),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
@@ -73,6 +74,7 @@ struct RProjectBuildOptions
 
    std::string makefileArgs;
    bool previewWebsite;
+   bool livePreviewWebsite;
    std::string websiteOutputFormat;
    bool autoRoxygenizeForCheck;
    bool autoRoxygenizeForBuildPackage;

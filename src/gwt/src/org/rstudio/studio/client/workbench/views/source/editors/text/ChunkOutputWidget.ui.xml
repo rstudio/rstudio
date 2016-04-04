@@ -57,10 +57,9 @@
       position: relative;
    }
 
-   }
-   
    .root
    {
+      position: relative;
       overflow: auto;
       max-height: 750px;
       transition: opacity 400ms ease;

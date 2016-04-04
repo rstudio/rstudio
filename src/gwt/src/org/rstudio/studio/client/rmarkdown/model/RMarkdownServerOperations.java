@@ -27,10 +27,14 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
        
    void renderRmd(String file, int line, String format, String encoding,
                   String paramsFile, boolean asTempfile, boolean asShiny,
+                  String existingOutputFile,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,
                         ServerRequestCallback<Boolean> requestCallback);
+   
+   void maybeCopyWebsiteAsset(String file,
+                         ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(boolean normal, 
                            ServerRequestCallback<Void> requestCallback);
@@ -68,6 +72,6 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                            ServerRequestCallback<Void> requestCallback);
    
    void setChunkConsole(String docId, String chunkId, String options, 
-                        int width, boolean replace,
+                        int pixelWidth, int characterWidth, boolean replace,
                         ServerRequestCallback<Void> requestCallback);
 }

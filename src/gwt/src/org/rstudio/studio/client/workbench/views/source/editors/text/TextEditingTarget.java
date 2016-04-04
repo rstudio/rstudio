@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,6 +70,7 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
@@ -89,6 +90,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
@@ -392,7 +394,8 @@ public class TextEditingTarget implements
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper)
+                            SourceBuildHelper sourceBuildHelper,
+                            DependencyManager dependencyManager)
    {
       commands_ = commands;
       server_ = server;
@@ -408,6 +411,7 @@ public class TextEditingTarget implements
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
       sourceBuildHelper_ = sourceBuildHelper;
+      dependencyManager_ = dependencyManager;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -1214,9 +1218,11 @@ public class TextEditingTarget implements
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
       // create notebook and forward resize events
-      notebook_ = new TextEditingTargetNotebook(this, view_, docDisplay_,
-            docUpdateSentinel_, document, releaseOnDismiss_);
+      chunks_ = new TextEditingTargetChunks(this);
+      notebook_ = new TextEditingTargetNotebook(this, chunks_, view_, 
+            docDisplay_, docUpdateSentinel_, document, releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
+      
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -3793,7 +3799,14 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
-      codeExecution_.executeSelection(false, false, "profvis::profvis");
+      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            codeExecution_.executeSelection(false, false, "profvis::profvis");
+         }
+      });
    }
    
    @Handler
@@ -4011,6 +4024,11 @@ public class TextEditingTarget implements
    {
       docDisplay_.getScopeTree();
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), false);
+   }
+   
+   public void dequeueChunk(int row)
+   {
+      notebook_.dequeueChunk(row);
    }
    
    @Handler
@@ -4623,6 +4641,8 @@ public class TextEditingTarget implements
    
    void renderRmd(final String paramsFile)
    { 
+      events_.fireEvent(new RmdRenderPendingEvent());
+      
       saveThenExecute(null, new Command() {
          @Override
          public void execute()
@@ -5903,7 +5923,7 @@ public class TextEditingTarget implements
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
    private final SourceBuildHelper sourceBuildHelper_;
-   
+   private final DependencyManager dependencyManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
@@ -5926,6 +5946,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;
+   private TextEditingTargetChunks chunks_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;

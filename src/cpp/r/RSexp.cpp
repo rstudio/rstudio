@@ -987,6 +987,14 @@ SEXP create(const std::map<std::string, std::string>& map, Protect* pProtect)
    return listSEXP;
 }
 
+SEXP createRawVector(const std::string& data, Protect* pProtect)
+{
+   SEXP rawSEXP;
+   pProtect->add(rawSEXP = Rf_allocVector(RAWSXP, data.size()));
+   ::memcpy(RAW(rawSEXP), data.c_str(), data.size());
+   return rawSEXP;
+}
+
 SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 {
    std::size_t n = names.size();

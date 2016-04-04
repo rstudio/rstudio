@@ -169,8 +169,5 @@ public interface ThemeStyles extends CssResource
    
    String handCursor();
    
-   String inlineChunkToolbar();
-   String highlightIcon();
-   
    String borderedIFrame();
 }

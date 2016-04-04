@@ -24,7 +24,7 @@ public interface RmdOutputFrame
 {
    public void closeOutputFrame(boolean forReopen);
    public WindowEx getWindowObject();
-   public void showRmdPreview(RmdPreviewParams params);
+   public void showRmdPreview(RmdPreviewParams params, boolean activate);
    public int getViewerType();
    RmdPreviewParams getPreviewParams();
    public int getScrollPosition();

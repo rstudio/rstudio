@@ -26,6 +26,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 
 public class BuildToolsWebsitePanel extends BuildToolsPanel
 {
@@ -34,7 +35,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       pathSelector_ = new DirectorySelector("Site directory:");
       add(pathSelector_);    
        
-      websiteOutputFormat_ = new SelectWidget("Output format(s):",
+      websiteOutputFormat_ = new SelectWidget("Book output format(s):",
                                               new String[]{"all"});
       websiteOutputFormat_.addStyleName(RES.styles().websiteOutputFormat());
       add(websiteOutputFormat_);
@@ -42,12 +43,17 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       chkPreviewAfterBuilding_ = checkBox("Preview site after building");
       chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
-      
-      // NOTE: we've disabled preview after buidling (see SessionBuild.cpp
-      // for comment on why)
-      chkPreviewAfterBuilding_.setVisible(false);
-
       add(chkPreviewAfterBuilding_); 
+      
+      chkLivePreviewSite_ = checkBox(
+            "Update preview when supporting files change");
+      chkLivePreviewSite_.addStyleName(RES.styles().previewWebsite());
+      add(chkLivePreviewSite_); 
+      
+      Label infoLabel = new Label(
+         "Supporting files include HTML, JavaScript, CSS, R scripts, etc.");
+      infoLabel.addStyleName(RES.styles().infoLabel());
+      add(infoLabel);
    }
 
    @Override
@@ -58,6 +64,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       RProjectBuildOptions buildOptions = options.getBuildOptions();
       chkPreviewAfterBuilding_.setValue(buildOptions.getPreviewWebsite());
+      chkLivePreviewSite_.setValue(buildOptions.getLivePreviewWebsite());
       
       RProjectBuildContext buildContext = options.getBuildContext();
       if (buildContext.isBookdownSite())
@@ -93,12 +100,14 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       
       RProjectBuildOptions buildOptions = options.getBuildOptions();
       buildOptions.setPreviewWebsite(chkPreviewAfterBuilding_.getValue());
+      buildOptions.setLivePreviewWebsite(chkLivePreviewSite_.getValue());
       buildOptions.setWebsiteOutputFormat(websiteOutputFormat_.getValue());
    }
 
    private PathSelector pathSelector_;
    
    private CheckBox chkPreviewAfterBuilding_;
+   private CheckBox chkLivePreviewSite_;
    
    
    private SelectWidget websiteOutputFormat_;

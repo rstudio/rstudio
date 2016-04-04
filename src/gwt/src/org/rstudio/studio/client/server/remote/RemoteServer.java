@@ -4070,6 +4070,7 @@ public class RemoteServer implements Server
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
                          String paramsFile, boolean asTempfile, boolean asShiny,
+                         String existingOutputFile,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4080,6 +4081,7 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(StringUtil.notNull(paramsFile)));
       params.set(5, JSONBoolean.getInstance(asTempfile));
       params.set(6, JSONBoolean.getInstance(asShiny));
+      params.set(7, new JSONString(StringUtil.notNull(existingOutputFile)));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,
@@ -4093,6 +4095,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
    }
 
+   
+   @Override
+   public void maybeCopyWebsiteAsset(String file,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "maybe_copy_website_asset", file, requestCallback);
+   }
 
    @Override
    public void terminateRenderRmd(boolean normal, 
@@ -4207,15 +4216,16 @@ public class RemoteServer implements Server
 
    @Override
    public void setChunkConsole(String docId, String chunkId, String options,
-         int width, boolean replace, 
+         int pixelWidth, int charWidth, boolean replace, 
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
       params.set(2, new JSONString(options));
-      params.set(3, new JSONNumber(width));
-      params.set(4, JSONBoolean.getInstance(replace));
+      params.set(3, new JSONNumber(pixelWidth));
+      params.set(4, new JSONNumber(charWidth));
+      params.set(5, JSONBoolean.getInstance(replace));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,

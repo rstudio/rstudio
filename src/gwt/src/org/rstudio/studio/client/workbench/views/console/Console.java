@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 
@@ -22,6 +23,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
+import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
@@ -140,12 +142,32 @@ public class Console
    
    private void activateConsole(boolean focusWindow)
    {
+      // ensure we don't leave focus in the console
+      final FocusContext focusContext = new FocusContext();
+      if (!focusWindow)
+         focusContext.record();
+      
       if (focusWindow)
          WindowEx.get().focus();
       
       view_.bringToFront();
       view_.focus();
       view_.ensureCursorVisible();
+      
+      // the above code seems to always leave focus in the console
+      // (haven't been able to sort out why). this ensure it's restored
+      // if that's what the caller requested.
+      if (!focusWindow) 
+      {
+         new Timer() {
+   
+            @Override
+            public void run()
+            {
+               focusContext.restore(); 
+            }
+         }.schedule(100);
+      }    
    }
    
    @Handler

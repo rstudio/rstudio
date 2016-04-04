@@ -1529,7 +1529,10 @@
 {
    pos <- match("tools:rstudio", search())
    if (is.na(pos))
-      return()
+   {
+      warning("tools:rstudio not found on search path")
+      return(NULL)
+   }
    
    routineEnv <- new.env(parent = emptyenv())
    routines <- tryCatch(
@@ -1538,7 +1541,10 @@
    )
    
    if (is.null(routines))
+   {
+      warning("failed to register RStudio native routines")
       return(NULL)
+   }
    
    .CallRoutines <- routines[[".Call"]]
    lapply(.CallRoutines, function(routine) {
@@ -1698,7 +1704,7 @@
 .rs.addFunction("evalWithAvailableArguments", function(fn, args)
 {
    filtered <- args[names(args) %in% names(formals(fn))]
-   call <- c(substitute(fn), args)
+   call <- c(substitute(fn), filtered)
    mode(call) <- "call"
    eval(call, envir = parent.frame())
 })
@@ -1706,4 +1712,14 @@
 .rs.addFunction("transposeList", function(list)
 {
    do.call(Map, c(c, list, USE.NAMES = FALSE))
+})
+
+.rs.addFunction("base64encode", function(data, binary = FALSE)
+{
+   .Call(.rs.routines$rs_base64encode, data, binary)
+})
+
+.rs.addFunction("base64decode", function(data, binary = FALSE)
+{
+   .Call(.rs.routines$rs_base64decode, data, binary)
 })

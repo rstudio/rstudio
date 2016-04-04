@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -68,7 +67,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -336,10 +334,9 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    @Inject
-   private void initialize(EventBus events, ChunkIconsManager manager)
+   private void initialize(EventBus events)
    {
       events_ = events;
-      chunkIconsManager_ = manager;
    }
    
    public HandlerRegistration addCursorChangedHandler(
@@ -505,11 +502,6 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addAceClickHandler(AceClickEvent.Handler handler)
    {
       return addHandler(handler, AceClickEvent.TYPE);
-   }
-   
-   public HandlerRegistration addExecuteChunkHandler(ExecuteChunksEvent.Handler handler)
-   {
-      return addHandler(handler, ExecuteChunksEvent.TYPE);
    }
    
    public void forceResize()
@@ -1098,6 +1090,5 @@ public class AceEditorWidget extends Composite
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
-   private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
 }

@@ -22,10 +22,14 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/Base64.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Crypto.hpp>
+
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -46,6 +50,76 @@ Error getPublicKey(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_base64encode(SEXP dataSEXP, SEXP binarySEXP)
+{
+   bool binary = r::sexp::asLogical(binarySEXP);
+   const char* pData;
+   std::size_t n;
+   
+   if (TYPEOF(dataSEXP) == STRSXP)
+   {
+      SEXP charSEXP = STRING_ELT(dataSEXP, 0);
+      pData = CHAR(charSEXP);
+      n = r::sexp::length(charSEXP);
+   }
+   else if (TYPEOF(dataSEXP) == RAWSXP)
+   {
+      pData = reinterpret_cast<const char*>(RAW(dataSEXP));
+      n = r::sexp::length(dataSEXP);
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("Unexpected data type");
+      return R_NilValue;
+   }
+   
+   std::string output;
+   Error error = base64::encode(pData, n, &output);
+   if (error)
+      LOG_ERROR(error);
+   
+   r::sexp::Protect protect;
+   if (binary)
+      return r::sexp::createRawVector(output, &protect);
+   else
+      return r::sexp::create(output, &protect);
+}
+
+SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
+{
+   bool binary = r::sexp::asLogical(binarySEXP);
+   const char* pData;
+   std::size_t n;
+   
+   if (TYPEOF(dataSEXP) == STRSXP)
+   {
+      SEXP charSEXP = STRING_ELT(dataSEXP, 0);
+      pData = CHAR(charSEXP);
+      n = r::sexp::length(charSEXP);
+   }
+   else if (TYPEOF(dataSEXP) == RAWSXP)
+   {
+      pData = reinterpret_cast<const char*>(RAW(dataSEXP));
+      n = r::sexp::length(dataSEXP);
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("Unexpected data type");
+      return R_NilValue;
+   }
+   
+   std::string output;
+   Error error = base64::decode(pData, n, &output);
+   if (error)
+      LOG_ERROR(error);
+   
+   r::sexp::Protect protect;
+   if (binary)
+      return r::sexp::createRawVector(output, &protect);
+   else
+      return r::sexp::create(output, &protect);
+}
+
 } // anonymous namespace
 
 
@@ -64,6 +138,9 @@ json::Object publicKeyInfoJson()
 Error initialize()
 {
    // install rpc methods
+   RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
+   RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
+   
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;
