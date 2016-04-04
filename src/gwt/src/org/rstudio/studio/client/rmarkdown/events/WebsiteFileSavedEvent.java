@@ -1,7 +1,7 @@
 /*
- * ViewerPreviewRmdEvent.java
+ * WebsiteFileSavedEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,36 +12,30 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.viewer.events;
+package org.rstudio.studio.client.rmarkdown.events;
 
-import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handler>
+public class WebsiteFileSavedEvent extends GwtEvent<WebsiteFileSavedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onViewerPreviewRmd(ViewerPreviewRmdEvent event);
+      void onWebsiteFileSaved(WebsiteFileSavedEvent event);
    }
 
-   public ViewerPreviewRmdEvent(RmdPreviewParams params, boolean maximize)
+   public WebsiteFileSavedEvent(FileSystemItem fsi)
    {
-      params_ = params;
-      maximize_ = maximize;
+     fsi_ = fsi;
    }
    
-   public RmdPreviewParams getParams()
+   public FileSystemItem getFileSystemItem()
    {
-      return params_;
+      return fsi_;
    }
-   
-   public boolean getMaximize()
-   {
-      return params_.getResult().getForceMaximize() || maximize_;
-   }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -51,11 +45,10 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onViewerPreviewRmd(this);
+      handler.onWebsiteFileSaved(this);
    }
    
-   private final RmdPreviewParams params_;
-   private final boolean maximize_;
-  
+   private FileSystemItem fsi_;
+
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

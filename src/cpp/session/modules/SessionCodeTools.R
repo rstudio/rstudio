@@ -1529,7 +1529,10 @@
 {
    pos <- match("tools:rstudio", search())
    if (is.na(pos))
-      return()
+   {
+      warning("tools:rstudio not found on search path")
+      return(NULL)
+   }
    
    routineEnv <- new.env(parent = emptyenv())
    routines <- tryCatch(
@@ -1538,7 +1541,10 @@
    )
    
    if (is.null(routines))
+   {
+      warning("failed to register RStudio native routines")
       return(NULL)
+   }
    
    .CallRoutines <- routines[[".Call"]]
    lapply(.CallRoutines, function(routine) {

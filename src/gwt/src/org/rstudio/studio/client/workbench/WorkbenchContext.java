@@ -205,6 +205,15 @@ public class WorkbenchContext
       return isRestartInProgress_;
    }
    
+   public boolean isBuildInProgress()
+   {
+      return isBuildInProgress_;
+   }
+   
+   public void setBuildInProgress(boolean inProgress)
+   {
+      isBuildInProgress_ = inProgress;
+   }
    
    public String createWindowTitle()
    {
@@ -226,6 +235,7 @@ public class WorkbenchContext
    
    private boolean isServerBusy_ = false;
    private boolean isRestartInProgress_ = false;
+   private boolean isBuildInProgress_ = false;
    private FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
    private FileSystemItem activeProjectDir_ = null;

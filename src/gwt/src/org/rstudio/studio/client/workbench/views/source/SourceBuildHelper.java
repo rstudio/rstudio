@@ -36,9 +36,24 @@ public class SourceBuildHelper
       uiPrefs_ = uiPrefs;
       sourceShim_ = sourceShim;
    }
+   
 
    public void withSaveFilesBeforeCommand(final Command command, 
                                           String commandSource)
+   {
+      withSaveFilesBeforeCommand(
+         command,
+         new Command() { 
+            public void execute() 
+            {
+            }
+         },
+         commandSource);
+   }
+
+   private void withSaveFilesBeforeCommand(final Command command, 
+                                           final Command cancelCommand,
+                                           String commandSource)
    {     
       if (uiPrefs_.saveAllBeforeBuild().getValue())
       {
@@ -75,7 +90,7 @@ public class SourceBuildHelper
                         
                      }
                    },
-                   null
+                   cancelCommand
             ).showModal(); 
          }
          else

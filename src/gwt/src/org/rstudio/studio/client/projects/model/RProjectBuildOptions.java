@@ -43,6 +43,14 @@ public class RProjectBuildOptions extends JavaScriptObject
       this.preview_website = preview;
    }-*/;
    
+   public native final boolean getLivePreviewWebsite() /*-{
+      return this.live_preview_website;
+   }-*/;
+
+   public native final void setLivePreviewWebsite(boolean preview) /*-{
+      this.live_preview_website = preview;
+   }-*/;
+   
    public native final String getWebsiteOutputFormat() /*-{
       return this.website_output_format;
    }-*/;

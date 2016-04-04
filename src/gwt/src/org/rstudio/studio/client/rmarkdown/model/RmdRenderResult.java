@@ -34,6 +34,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         output_url: doc.url, 
         output_format: doc.output_format, 
         rpubs_published: false, 
+        force_maximize: false,
         knitr_errors: [],
         is_shiny_document: true,
         preview_slide: doc.preview_slide,
@@ -71,6 +72,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    
    public native final boolean getRpubsPublished() /*-{
       return this.rpubs_published;
+   }-*/;
+   
+   public native final boolean getForceMaximize() /*-{
+      return this.force_maximize;
    }-*/;
    
    public final boolean isHtml()

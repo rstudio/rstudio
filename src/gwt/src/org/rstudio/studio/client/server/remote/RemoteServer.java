@@ -4070,6 +4070,7 @@ public class RemoteServer implements Server
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
                          String paramsFile, boolean asTempfile, boolean asShiny,
+                         String existingOutputFile,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4080,6 +4081,7 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(StringUtil.notNull(paramsFile)));
       params.set(5, JSONBoolean.getInstance(asTempfile));
       params.set(6, JSONBoolean.getInstance(asShiny));
+      params.set(7, new JSONString(StringUtil.notNull(existingOutputFile)));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,
@@ -4093,6 +4095,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
    }
 
+   
+   @Override
+   public void maybeCopyWebsiteAsset(String file,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "maybe_copy_website_asset", file, requestCallback);
+   }
 
    @Override
    public void terminateRenderRmd(boolean normal, 

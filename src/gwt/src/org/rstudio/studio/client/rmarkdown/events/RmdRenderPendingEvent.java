@@ -1,5 +1,5 @@
 /*
- * ViewerPreviewRmdEvent.java
+ * RmdRenderPendingEvent.java.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,36 +12,23 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.viewer.events;
 
-import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+package org.rstudio.studio.client.rmarkdown.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handler>
-{
+public class RmdRenderPendingEvent extends GwtEvent<RmdRenderPendingEvent.Handler>
+{  
    public interface Handler extends EventHandler
    {
-      void onViewerPreviewRmd(ViewerPreviewRmdEvent event);
+      void onRmdRenderPending(RmdRenderPendingEvent event);
    }
 
-   public ViewerPreviewRmdEvent(RmdPreviewParams params, boolean maximize)
+   public RmdRenderPendingEvent()
    {
-      params_ = params;
-      maximize_ = maximize;
    }
-   
-   public RmdPreviewParams getParams()
-   {
-      return params_;
-   }
-   
-   public boolean getMaximize()
-   {
-      return params_.getResult().getForceMaximize() || maximize_;
-   }
-   
+    
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -51,11 +38,8 @@ public class ViewerPreviewRmdEvent extends GwtEvent<ViewerPreviewRmdEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onViewerPreviewRmd(this);
+      handler.onRmdRenderPending(this);
    }
-   
-   private final RmdPreviewParams params_;
-   private final boolean maximize_;
-  
+
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
