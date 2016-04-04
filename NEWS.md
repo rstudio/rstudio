@@ -30,6 +30,7 @@
 * Improvements to refactoring utility 'Rename in Scope'
 * Expand selection command learns how to expand to current statement
 * Added (as unbound command) Sublime Text style 'Quick Add Next'
+* The various 'yank' commands are now rebindable (Ctrl + Y, Ctrl + K, Ctrl + U)
 
 ### R Markdown
 
