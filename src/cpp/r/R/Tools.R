@@ -82,10 +82,24 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 .rs.addFunction("restoreGlobalEnvFromFile", function(path)
 {
    status <- try(load(path, envir = .GlobalEnv), silent = TRUE)
-   if (inherits(status, "try-error"))
-      paste(attr(status, "condition")$message, collapse = "\n")
-   else
-      ""
+   if (!inherits(status, "try-error"))
+      return("")
+   
+   # older versions of R don't provide a 'condition' attribute
+   # for 'try()' errors
+   condition <- attr(status, "condition")
+   if (is.null(condition)) {
+      if (is.character(status))
+         return(paste(c(status), collapse = "\n"))
+      else
+         return("Unknown Error")
+   }
+   
+   # has condition, but no message? should not happen
+   if (!"message" %in% names(condition))
+      return("Unknown Error")
+   
+   paste(condition$message, collapse = "\n")
 })
 
 # save current state of options() to file
