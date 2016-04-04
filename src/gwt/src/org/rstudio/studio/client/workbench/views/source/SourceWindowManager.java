@@ -214,9 +214,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          @Override
          public void onFocus(FocusEvent event)
          {
-            MainWindowObject.set(
-                  MainWindowObject.LAST_FOCUSED_WINDOW,
-                  getSourceWindowId());
+            MainWindowObject.lastFocusedWindow().set(getSourceWindowId());
          }
       });
    }
@@ -269,12 +267,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    public String getLastFocusedSourceWindowId()
    {
-      return MainWindowObject.get(MainWindowObject.LAST_FOCUSED_SOURCE_WINDOW);
+      return MainWindowObject.lastFocusedSourceWindow().get();
    }
    
    public String getLastFocusedWindowId()
    {
-      return MainWindowObject.get(MainWindowObject.LAST_FOCUSED_WINDOW);
+      return MainWindowObject.lastFocusedWindow().get();
    }
    
    public int getSourceWindowOrdinal()
@@ -772,7 +770,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   ? ""
                   : sourceWindowId(event.originWindowName());
 
-            MainWindowObject.set(MainWindowObject.LAST_FOCUSED_SOURCE_WINDOW, id);
+            MainWindowObject.lastFocusedSourceWindow().set(id);
          }
       });
    }
@@ -1252,7 +1250,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private WindowEx getLastFocusedSourceWindow()
    {
       String lastFocusedSourceWindow =
-            MainWindowObject.get(MainWindowObject.LAST_FOCUSED_SOURCE_WINDOW);
+            MainWindowObject.lastFocusedSourceWindow().get();
             
       // if the last window focused was the main one, or there's no longer an
       // addressable window, there's nothing to do

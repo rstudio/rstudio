@@ -14,33 +14,49 @@
  */
 package org.rstudio.studio.client.workbench;
 
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 
 /**
  * This class can be used to get / set fields on the main window from satellite
- * windows. You should only use this when passing along POD JavaScript objects;
- * e.g. don't use this with GWT objects.
+ * windows. You should only use this when passing along POD JavaScript objects
+ * or 'primitive' Java types that GWT can easily handle, e.g. String, Integer.
  */
-public class MainWindowObject
+public class MainWindowObject<T>
 {
-   public static final <T> void set(String key, T value)
+   private interface DefaultProvider<V>
+   {
+      V defaultValue();
+   }
+   
+   private MainWindowObject(String key, DefaultProvider<T> provider)
+   {
+      key_ = key;
+      provider_ = provider;
+   }
+   
+   public final void set(T value)
    {
       JavaScriptObject rstudioObject = getRStudioObject(getMainWindow());
-      setImpl(key, value, rstudioObject);
+      setImpl(key_, value, rstudioObject);
    }
    
    @SuppressWarnings("unchecked")
-   public static final <T> T get(String key)
+   public final T get()
    {
-      // work around cast errors with older JDK (1.6)
       JavaScriptObject rstudioObject = getRStudioObject(getMainWindow());
-      JavaScriptObject object = getImpl(key, rstudioObject);
+      if (!hasImpl(key_, rstudioObject))
+         return provider_.defaultValue();
+      
+      // Work around JDK 1.6 compiler issues with casting from JSO to T
+      JavaScriptObject object = getImpl(key_, rstudioObject);
       T casted = (T) object;
       return casted;
    }
    
-   // Private ----
+   // Private Methods ----
    
    private static final native <T> void setImpl(String key,
                                                 T value,
@@ -50,9 +66,14 @@ public class MainWindowObject
    }-*/;
    
    private static final native JavaScriptObject getImpl(String key,
-                                                JavaScriptObject object)
+                                                        JavaScriptObject object)
    /*-{
       return object[key];
+   }-*/;
+   
+   private static final native boolean hasImpl(String key, JavaScriptObject object)
+   /*-{
+      return object.hasOwnProperty(key);
    }-*/;
    
    private static final native Window getMainWindow() /*-{
@@ -68,7 +89,61 @@ public class MainWindowObject
       return wnd.$RStudio;
    }-*/;
    
-   public static final String LAST_FOCUSED_EDITOR        = "last_focused_editor";
-   public static final String LAST_FOCUSED_WINDOW        = "last_focused_window";
-   public static final String LAST_FOCUSED_SOURCE_WINDOW = "last_focused_source_window";
+   private final String key_;
+   private final DefaultProvider<T> provider_;
+   
+   // Helper Classes ----
+   
+   public static final MainWindowObject<String> lastFocusedEditor()
+   {
+      return new MainWindowObject<String>(LAST_FOCUSED_EDITOR, new DefaultProvider<String>()
+      {
+         @Override
+         public String defaultValue()
+         {
+            return "";
+         }
+      });
+   }
+   
+   public static final MainWindowObject<String> lastFocusedWindow()
+   {
+      return new MainWindowObject<String>(LAST_FOCUSED_WINDOW, new DefaultProvider<String>()
+      {
+         @Override
+         public String defaultValue()
+         {
+            return "";
+         }
+      });
+   }
+   
+   public static final MainWindowObject<String> lastFocusedSourceWindow()
+   {
+      return new MainWindowObject<String>(LAST_FOCUSED_SOURCE_WINDOW, new DefaultProvider<String>()
+      {
+         @Override
+         public String defaultValue()
+         {
+            return "";
+         }
+      });
+   }
+   
+   public static final MainWindowObject<RAddins> rAddins()
+   {
+      return new MainWindowObject<RAddins>(R_ADDINS, new DefaultProvider<RAddins>()
+      {
+         @Override
+         public RAddins defaultValue()
+         {
+            return RAddins.createDefault();
+         }
+      });
+   }
+   
+   private static final String LAST_FOCUSED_EDITOR        = "last_focused_editor";
+   private static final String LAST_FOCUSED_WINDOW        = "last_focused_window";
+   private static final String LAST_FOCUSED_SOURCE_WINDOW = "last_focused_source_window";
+   private static final String R_ADDINS                   = "r_addins";
 }
