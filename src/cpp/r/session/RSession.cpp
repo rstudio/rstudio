@@ -292,27 +292,30 @@ void deferredRestoreNewSession()
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
       std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+      std::string aliasedPath = createAliasedPath(globalEnvPath);
       
       std::string errMessage;
       Error error = restoreGlobalEnvFromFile(path, &errMessage);
       if (error)
       {
+         ::REprintf(
+                  "WARNING: Failed to restore workspace from '%s' "
+                  "(an internal error occurred)\n",
+                  aliasedPath.c_str());
          LOG_ERROR(error);
       }
       else if (!errMessage.empty())
       {
          std::stringstream ss;
-         std::string aliasedPath = createAliasedPath(globalEnvPath);
-         ss << "WARNING: Failed to restore workspace from '" << aliasedPath << "'.\n"
+         ss << "WARNING: Failed to restore workspace from "
+            << "'" << aliasedPath << "'" << std::endl
             << "Reason: " << errMessage << std::endl;
-         
-         ::REprintf(ss.str().c_str());
-         LOG_ERROR_MESSAGE(ss.str());
+         std::string message = ss.str();
+         ::REprintf(message.c_str());
+         LOG_ERROR_MESSAGE(message);
       }
       else
       {
-         // print path to console
-         std::string aliasedPath = createAliasedPath(globalEnvPath);
          Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
       }
    }
