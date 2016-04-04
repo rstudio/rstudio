@@ -267,6 +267,13 @@ Error saveDefaultGlobalEnvironment()
       return Success();
    }
 }
+
+Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage)
+{
+   r::exec::RFunction fn(".rs.restoreGlobalEnvFromFile");
+   fn.addParam(path);
+   return fn.call(pErrMessage);
+}
    
 void deferredRestoreNewSession()
 {
@@ -285,13 +292,22 @@ void deferredRestoreNewSession()
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
       std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
-      Error error = r::exec::executeSafely(boost::bind(
-                                        R_RestoreGlobalEnvFromFile,
-                                        path.c_str(),
-                                        TRUE));
-      if (error)   
+      
+      std::string errMessage;
+      Error error = restoreGlobalEnvFromFile(path, &errMessage);
+      if (error)
       {
-         reportDeferredDeserializationError(error);
+         LOG_ERROR(error);
+      }
+      else if (!errMessage.empty())
+      {
+         std::stringstream ss;
+         std::string aliasedPath = createAliasedPath(globalEnvPath);
+         ss << "WARNING: Failed to restore workspace from '" << aliasedPath << "'.\n"
+            << "Reason: " << errMessage << std::endl;
+         
+         ::REprintf(ss.str().c_str());
+         LOG_ERROR_MESSAGE(ss.str());
       }
       else
       {

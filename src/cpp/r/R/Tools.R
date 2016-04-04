@@ -76,6 +76,18 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    eval(parse(text=code), envir=globalenv())
 })
 
+# attempts to restore the global environment from a file
+# on success, returns an empty string; on failure, returns
+# the error message
+.rs.addFunction("restoreGlobalEnvFromFile", function(path)
+{
+   status <- try(load(path, envir = .GlobalEnv), silent = TRUE)
+   if (inherits(status, "try-error"))
+      paste(attr(status, "condition")$message, collapse = "\n")
+   else
+      ""
+})
+
 # save current state of options() to file
 .rs.addFunction( "saveOptions", function(filename)
 {
