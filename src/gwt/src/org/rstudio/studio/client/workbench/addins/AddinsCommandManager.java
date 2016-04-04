@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEve
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +74,10 @@ public class AddinsCommandManager
                @Override
                public void onAddinRegistryUpdated(AddinRegistryUpdatedEvent event)
                {
-                  MainWindowObject.rAddins().set(event.getData());
+                  // all windows will receive this event, so just let the main window
+                  // cache the addins in its own window
+                  if (SourceWindowManager.isMainSourceWindow())
+                     MainWindowObject.rAddins().set(event.getData());
                   loadBindings();
                }
             });
