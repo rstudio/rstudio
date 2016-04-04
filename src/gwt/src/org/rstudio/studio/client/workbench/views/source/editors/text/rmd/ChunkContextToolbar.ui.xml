@@ -34,7 +34,8 @@
       margin-right: 5px;
    }
 
-   .button:hover 
+   .button:hover,
+   .prevButton:hover
    {
       background-color: rgba(160, 160, 160, 0.25);
       box-shadow: 0 0 3px rgb(160, 160, 160);
