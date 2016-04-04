@@ -9,10 +9,10 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rsconnect master
-call:install rmarkdown master
+call:install rsconnect v0.99-1000-preview
+call:install rmarkdown v0.99-1000-preview
 
-call:install profvis master --no-build-vignettes
+call:install profvis v0.99-1000-preview --no-build-vignettes
 
 GOTO:EOF
 
