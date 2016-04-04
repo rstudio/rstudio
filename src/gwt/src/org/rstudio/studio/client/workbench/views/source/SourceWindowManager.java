@@ -210,7 +210,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       }
       
       // signal that this window has focus
-      MainWindowObject.lastFocusedWindow().set(getSourceWindowId());
+      if (WindowEx.get().getDocument().hasFocus())
+         MainWindowObject.lastFocusedWindow().set(getSourceWindowId());
+      
       WindowEx.addFocusHandler(new FocusHandler()
       {
          @Override
