@@ -17,6 +17,7 @@ package java.lang;
 
 import static javaemul.internal.InternalPreconditions.checkArrayType;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.isTypeChecked;
 
 import java.io.PrintStream;
 
@@ -61,13 +62,13 @@ public final class System {
     if (srcOfs < 0 || destOfs < 0 || len < 0 || srcOfs + len > srclen || destOfs + len > destlen) {
       throw new IndexOutOfBoundsException();
     }
+
     /*
      * If the arrays are not references or if they are exactly the same type, we
      * can copy them in native code for speed. Otherwise, we have to copy them
      * in Java so we get appropriate errors.
      */
-    if ((!srcComp.isPrimitive() || srcComp.isArray())
-        && !srcType.equals(destType)) {
+    if (isTypeChecked() && !srcComp.isPrimitive() && !srcType.equals(destType)) {
       // copy in Java to make sure we get ArrayStoreExceptions if the values
       // aren't compatible
       Object[] srcArray = (Object[]) src;

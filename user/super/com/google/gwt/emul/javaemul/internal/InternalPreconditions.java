@@ -31,6 +31,17 @@ public final class InternalPreconditions {
   private static final boolean BOUND_CHECK =
       System.getProperty("jre.checks.bounds", "ENABLED").equals("ENABLED");
 
+  /**
+   * This method reports if the code is compiled with type checks.
+   * It must be used in places where code can be replaced with a simpler one
+   * when we know that no checks will occur.
+   * See {@link System#arraycopy(Object, int, Object, int, int)} for example.
+   * Please note that {@link #checkType(boolean)} should be preferred where feasible.
+   */
+  public static boolean isTypeChecked() {
+    return TYPE_CHECK || CHECKED_MODE;
+  }
+
   public static void checkType(boolean expression) {
     if (TYPE_CHECK) {
       checkCriticalType(expression);
