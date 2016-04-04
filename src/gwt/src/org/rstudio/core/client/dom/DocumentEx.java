@@ -21,6 +21,10 @@ public class DocumentEx extends Document
    protected DocumentEx()
    {
    }
+   
+   public final native boolean hasFocus() /*-{
+      return this.hasFocus && this.hasFocus();
+   }-*/;
 
    public final native String getReadyState() /*-{
       return this.readyState || null;

@@ -88,6 +88,7 @@ public class Addins
    public static class RAddins extends JsMap<RAddin>
    {
       protected RAddins() {}
+      public static final native RAddins createDefault() /*-{ return {}; }-*/;
    }
    
    public static class AddinExecutor
