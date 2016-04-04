@@ -24,7 +24,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void initOptions(Command afterInit)
    {
-      originalLine_ = widget_.getEditor().getSession().getLine(position_.getRow());
+      originalLine_ = display_.getLine(position_.getRow());
       parseChunkHeader(originalLine_, originalChunkOptions_);
       for (Map.Entry<String, String> pair : originalChunkOptions_.entrySet())
          chunkOptions_.put(pair.getKey(), pair.getValue());
@@ -34,7 +34,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    @Override
    protected void synchronize()
    {
-      String modeId = widget_.getEditor().getSession().getMode().getId();
+      String modeId = display_.getModeId();
       Pair<String, String> chunkHeaderBounds = getChunkHeaderBounds(modeId);
       if (chunkHeaderBounds == null)
          return;
@@ -68,7 +68,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             chunkHeaderBounds.second +
             "\n";
       
-      widget_.getEditor().getSession().replace(
+      display_.replaceRange(
             Range.fromPoints(
                   Position.create(position_.getRow(), 0),
                   Position.create(position_.getRow() + 1, 0)), newLine);
@@ -84,7 +84,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             Position.create(position_.getRow(), 0),
             Position.create(position_.getRow() + 1, 0));
       
-      widget_.getEditor().getSession().replace(
+      display_.replaceRange(
             replaceRange,
             originalLine_ + "\n");
    }
@@ -140,7 +140,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    
    private void parseChunkHeader(String line, HashMap<String, String> chunkOptions)
    {
-      String modeId = widget_.getEditor().getSession().getMode().getId();
+      String modeId = display_.getModeId();
       
       Pattern pattern = null;
       if (modeId.equals("mode/rmarkdown"))

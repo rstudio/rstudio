@@ -19,8 +19,8 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
@@ -33,15 +33,13 @@ import com.google.gwt.user.client.Command;
 
 public class ChunkOutputUi
 {
-   public ChunkOutputUi(String docId, DocDisplay display, ChunkDefinition def)
+   public ChunkOutputUi(String docId, DocDisplay display, ChunkDefinition def,
+         PinnedLineWidget.Host lineWidgetHost)
    {
       display_ = display;
       chunkId_ = def.getChunkId();
       docId_ = docId;
       def_ = def;
-      startAnchor_ = display_.createAnchor(
-            Position.create(def.getRow(), 0));
-      createEndAnchor();
 
       outputWidget_ = new ChunkOutputWidget(def.getChunkId(), 
             def.getExpansionState(),
@@ -56,7 +54,7 @@ public class ChunkOutputUi
                      Math.max(MIN_CHUNK_HEIGHT, 
                        Math.min(arg.intValue(), MAX_CHUNK_HEIGHT));
             outputWidget_.getElement().getStyle().setHeight(height, Unit.PX);
-            display_.onLineWidgetChanged(lineWidget_);
+            display_.onLineWidgetChanged(lineWidget_.getLineWidget());
          }
       },
       new Command()
@@ -86,11 +84,9 @@ public class ChunkOutputUi
       ele.addClassName(ThemeStyles.INSTANCE.selectableText());
       ele.getStyle().setHeight(MIN_CHUNK_HEIGHT, Unit.PX);
       
-      lineWidget_ = LineWidget.create(ChunkDefinition.LINE_WIDGET_TYPE, 
-            def.getRow(), ele, def);
-      lineWidget_.setFixedWidth(true);
-      display_.addLineWidget(lineWidget_);
-
+      lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
+            display_, outputWidget_, def.getRow(), def, lineWidgetHost);
+      
       attached_ = true;
    }
    
@@ -101,6 +97,11 @@ public class ChunkOutputUi
       return lineWidget_.getRow();
    }
    
+   public String getChunkId()
+   {
+      return def_.getChunkId();
+   }
+   
    public Scope getScope()
    {
       return display_.getCurrentChunk(Position.create(getCurrentRow(), 1));
@@ -108,7 +109,7 @@ public class ChunkOutputUi
 
    public LineWidget getLineWidget()
    {
-      return lineWidget_;
+      return lineWidget_.getLineWidget();
    }
 
    public ChunkOutputWidget getOutputWidget()
@@ -122,79 +123,27 @@ public class ChunkOutputUi
          return;
       attached_ = false;
 
-      startAnchor_.detach();
-      endAnchor_.detach();
-      
       // note that this triggers an event which causes us to clean up the line
       // widget if we haven't already, so it's important that remove() can't
       // be reentrant.
-      display_.removeLineWidget(lineWidget_);
+      lineWidget_.detach();
    }
    
    public boolean moving()
    {
-      return moving_;
+      return lineWidget_.moving();
    }
    
    // Private methods ---------------------------------------------------------
-   private void syncAnchor()
-   {
-      int delta = endAnchor_.getRow() - startAnchor_.getRow();
-      if (delta == 0)
-      {
-         // this happens if the line beneath the chunk output is deleted; when
-         // it happens, our anchors wind up on the same line, so reset the
-         // end anchor
-         endAnchor_.detach();
-         createEndAnchor();
-      }
-      else if (delta > 1)
-      {
-         // this happens if a line is inserted between the chunk and the 
-         // output; when it happens, we need to move the output so it remains
-         // glued to the end of the chunk.
-         
-         // mark the chunk as moving (so we don't process this as an actual
-         // chunk remove when events are triggered)
-         moving_ = true;
 
-         // move the chunk to the start anchor
-         endAnchor_.detach();
-         display_.removeLineWidget(lineWidget_);
-         lineWidget_.setRow(startAnchor_.getRow());
-         display_.addLineWidget(lineWidget_);
-         createEndAnchor();
-
-         // restore state
-         moving_ = false;
-      }
-   }
-   
-   private void createEndAnchor()
-   {
-      endAnchor_ = display_.createAnchor(
-            Position.create(startAnchor_.getRow() + 1, 0));
-      endAnchor_.addOnChangeHandler(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            syncAnchor();
-         }
-      });
-   }
-
-   private final Anchor startAnchor_;
-   private final LineWidget lineWidget_;
+   private final PinnedLineWidget lineWidget_;
    private final ChunkOutputWidget outputWidget_;
    private final DocDisplay display_;
    private final String chunkId_;
    private final String docId_;
    private final ChunkDefinition def_;
 
-   private Anchor endAnchor_;
    private boolean attached_ = false;
-   private boolean moving_ = false;
 
    public final static int MIN_CHUNK_HEIGHT = 25;
    public final static int CHUNK_COLLAPSED_HEIGHT = 10;

@@ -651,6 +651,8 @@ public class AceEditor implements DocDisplay,
             fileType_.getEditorLanguage().getParserName(),
             false);
       
+      handlers_.fireEvent(new EditorModeChangedEvent(getModeId()));
+
       getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
    }
@@ -1437,6 +1439,12 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getMode().getLanguageMode(position);
    }
+   
+   @Override
+   public String getModeId()
+   {
+     return getSession().getMode().getId();
+   }
 
    public void replaceCode(String code)
    {
@@ -1879,6 +1887,17 @@ public class AceEditor implements DocDisplay,
    public JsArray<AceFold> getFolds()
    {
       return getSession().getAllFolds();
+   }
+
+   @Override
+   public String getFoldState(int row)
+   {
+      AceFold fold = getSession().getFoldAt(row, 0);
+      if (fold == null)
+         return null;
+      
+      Position foldPos = fold.getStart();
+      return getSession().getState(foldPos.getRow());
    }
 
    @Override
@@ -2532,6 +2551,12 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addAceClickHandler(handler);
    }
+   
+   public HandlerRegistration addEditorModeChangedHandler(
+         EditorModeChangedEvent.Handler handler)
+   {
+      return handlers_.addHandler(EditorModeChangedEvent.TYPE, handler);
+   }
 
    public JavaScriptObject getCleanStateToken()
    {
@@ -2915,6 +2940,15 @@ public class AceEditor implements DocDisplay,
    public boolean isPositionVisible(Position position)
    {
       return widget_.getEditor().isRowFullyVisible(position.getRow());
+   }
+   
+   public TokenIterator getTokenIterator(Position pos)
+   {
+      if (pos == null)
+         return TokenIterator.create(getSession());
+      else
+         return TokenIterator.create(getSession(),
+               pos.getRow(), pos.getColumn());
    }
 
    @Override

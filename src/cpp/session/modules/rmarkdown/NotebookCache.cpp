@@ -89,7 +89,19 @@ void cleanUnusedCaches()
       error = notebookIdToPath(parts[1], nbCtxId, &path);
       if (error)
       {
-         LOG_ERROR(error);
+         if (error.code() == boost::system::errc::no_such_file_or_directory)
+         {
+            // we have no idea what notebook this cache is for, so it's 
+            // unusable; delete it
+            error = cache.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
+         else 
+         {
+            LOG_ERROR(error);
+         }
+
          continue;
       }
 
@@ -112,7 +124,6 @@ void cleanUnusedCaches()
       {
          // the cache is old and the document hasn't been opened in a while --
          // remove it.
-         continue;
          error = cache.remove();
          if (error)
             LOG_ERROR(error);

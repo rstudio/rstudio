@@ -19,7 +19,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -133,8 +132,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DisplayChunkOptionsEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
@@ -143,7 +140,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.File
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
@@ -255,7 +251,6 @@ public class Source implements InsertSourceHandler,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
-                 ChunkIconsManager chunkIconsManager,
                  DependencyManager dependencyManager,
                  SourceWindowManager windowManager)
    {
@@ -276,7 +271,6 @@ public class Source implements InsertSourceHandler,
       uiPrefs_ = uiPrefs;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
-      chunkIconsManager_ = chunkIconsManager;
       dependencyManager_ = dependencyManager;
       windowManager_ = windowManager;
       
@@ -486,30 +480,6 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events.addHandler(ExecuteChunksEvent.TYPE, new ExecuteChunksEvent.Handler()
-      {
-         @Override
-         public void onExecuteChunks(ExecuteChunksEvent event)
-         {
-            if (activeEditor_ == null)
-               return;
-            
-            if (!(activeEditor_ instanceof TextEditingTarget))
-               return;
-            
-            TextEditingTarget target = (TextEditingTarget) activeEditor_;
-            Position position =
-                  target.screenCoordinatesToDocumentPosition(0, event.getPageY());
-            
-            if (event.getScope() == ExecuteChunksEvent.Scope.Current)
-               target.executeChunk(position);
-            else if (event.getScope() == ExecuteChunksEvent.Scope.Previous)
-               target.executePreviousChunks(position);
-            
-            target.focus();
-         }
-      });
-      
       events.addHandler(CollabEditStartedEvent.TYPE, 
             new CollabEditStartedEvent.Handler() 
       {
@@ -649,9 +619,6 @@ public class Source implements InsertSourceHandler,
       
       // add vim commands
       initVimCommands();
-      
-      // handle chunk options event
-      handleChunkOptionsEvent();
    }
    
    private boolean consoleEditorHadFocusLast()
@@ -3974,37 +3941,6 @@ public class Source implements InsertSourceHandler,
       return activeEditor_;
    }
    
-   public void handleChunkOptionsEvent()
-   {
-      events_.addHandler(
-            DisplayChunkOptionsEvent.TYPE,
-            new DisplayChunkOptionsEvent.Handler()
-            {
-               
-               @Override
-               public void onDisplayChunkOptions(DisplayChunkOptionsEvent event)
-               {
-                  // Ensure the source pane (not the console) is activated
-                  if (activeEditor_ == null)
-                     return;
-                  
-                  // Ensure we have an Ace Editor
-                  if (!(activeEditor_ instanceof TextEditingTarget))
-                     return;
-                  
-                  TextEditingTarget target = (TextEditingTarget) activeEditor_;
-                  AceEditor editor = (AceEditor) target.getDocDisplay();
-                  if (editor == null)
-                     return;
-                  
-                  NativeEvent nativeEvent = event.getNativeEvent();
-                  chunkIconsManager_.displayChunkOptions(
-                        editor,
-                        nativeEvent);
-               }
-            });
-   }
-   
    public void onOpenProfileEvent(OpenProfileEvent event)
    {
       onShowProfiler(event);
@@ -4199,7 +4135,6 @@ public class Source implements InsertSourceHandler,
    // If positive, a new tab is about to be created
    private int newTabPending_;
    
-   private ChunkIconsManager chunkIconsManager_;
    private DependencyManager dependencyManager_;
    
 }

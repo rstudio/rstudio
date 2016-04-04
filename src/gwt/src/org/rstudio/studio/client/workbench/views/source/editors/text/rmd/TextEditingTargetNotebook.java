@@ -17,10 +17,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Set;
 
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Rectangle;
@@ -56,14 +54,15 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -95,7 +94,8 @@ public class TextEditingTargetNotebook
                           ConsoleWriteInputHandler,
                           ResizeHandler,
                           InterruptStatusEvent.Handler,
-                          RestartStatusEvent.Handler
+                          RestartStatusEvent.Handler,
+                          PinnedLineWidget.Host
 {
    public interface Binder
    extends CommandBinder<Commands, TextEditingTargetNotebook> {}
@@ -121,6 +121,7 @@ public class TextEditingTargetNotebook
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
+                                    TextEditingTargetChunks chunks,
                                     TextEditingTarget.Display editingDisplay,
                                     DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
@@ -135,6 +136,7 @@ public class TextEditingTargetNotebook
       chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
+      chunks_ = chunks;
       editingDisplay_ = editingDisplay;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -286,6 +288,8 @@ public class TextEditingTargetNotebook
       // decorate the gutter to show the chunk is queued
       docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
             chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
+      chunks_.setChunkState(chunk.getPreamble().getRow(), 
+            ChunkContextToolbar.STATE_QUEUED);
 
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
@@ -320,6 +324,28 @@ public class TextEditingTargetNotebook
       commands_.notebookExpandAllOutput().setEnabled(inlineOutput);
       commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
       editingDisplay_.setNotebookUIVisible(inlineOutput);
+   }
+   
+   public void dequeueChunk(int preambleRow)
+   {
+      // clean up the toolbar on the chunk
+      chunks_.setChunkState(preambleRow, ChunkContextToolbar.STATE_RESTING);
+      
+      // find the chunk's ID
+      String chunkId = getRowChunkId(preambleRow);
+      if (StringUtil.isNullOrEmpty(chunkId))
+         return;
+      
+      // clear from the execution queue and update display
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         if (unit.chunkId == chunkId)
+         {
+            chunkExecQueue_.remove(unit);
+            cleanChunkExecState(unit.chunkId);
+            break;
+         }
+      }
    }
 
    // Command handlers --------------------------------------------------------
@@ -557,6 +583,10 @@ public class TextEditingTargetNotebook
          return;
       
       // when the user interrupts R, clear any pending chunk executions
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         cleanChunkExecState(unit.chunkId);
+      }
       chunkExecQueue_.clear();
    }
 
@@ -568,6 +598,25 @@ public class TextEditingTargetNotebook
           !StringUtil.isNullOrEmpty(setupCrc32_))
       {
          writeSetupCrc32("");
+      }
+   }
+   
+   @Override
+   public void onLineWidgetRemoved(LineWidget widget)
+   {
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         // ignore moving widgets -- ACE doesn't have a way to move a line 
+         // widget from one row to another, but we occasionally need to do this
+         // to keep the output pinned to the end of the chunk
+         if (output.moving())
+            continue;
+         if (output.getLineWidget() == widget && !output.moving())
+         {
+            output.remove();
+            outputs_.remove(output.getChunkId());
+            break;
+         }
       }
    }
 
@@ -598,6 +647,14 @@ public class TextEditingTargetNotebook
             docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
                   (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)));
          }
+      }
+      
+      // draw UI on chunk
+      Scope chunk = getChunkScope(executingChunk_.chunkId);
+      if (chunk != null)
+      {
+         chunks_.setChunkState(chunk.getPreamble().getRow(), 
+               ChunkContextToolbar.STATE_EXECUTING);
       }
       
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
@@ -666,20 +723,6 @@ public class TextEditingTargetNotebook
       if (state_ != STATE_NONE)
          return;
       
-      // start listening for fold change events 
-      docDisplay_.addFoldChangeHandler(new FoldChangeEvent.Handler()
-      {
-         @Override
-         public void onFoldChange(FoldChangeEvent event)
-         {
-            // the Ace line widget manage emits a 'changeFold' event when a line
-            // widget is destroyed; this is our only signal that it's been
-            // removed, so when it happens, we need to synchronize the notebook
-            // state in this class with the state in the document.
-            syncLineWidgets();
-         }
-      });
-
       state_ = STATE_INITIALIZING;
       requestId_ = nextRequestId_++;
       server_.refreshChunkOutput(
@@ -820,7 +863,7 @@ public class TextEditingTargetNotebook
    {
       outputs_.put(def.getChunkId(), 
                    new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
-                                     def));
+                                     def, this));
    }
    
    private void ensureSetupChunkExecuted()
@@ -876,45 +919,6 @@ public class TextEditingTargetNotebook
       docUpdateSentinel_.setProperty(LAST_SETUP_CRC32, crc32);
    }
    
-   private void syncLineWidgets()
-   {
-      // no work to do if we don't have any output widgets
-      if (outputs_.size() == 0)
-        return;
-      
-      JsArray<LineWidget> widgets = docDisplay_.getLineWidgets();
-      Set<String> newChunkIds = new HashSet<String>();
-      for (int i = 0; i < widgets.length(); i++)
-      {
-         // only handle our own line widget type
-         LineWidget widget = widgets.get(i);
-         if (!widget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
-            continue;
-         
-         ChunkDefinition def = widget.getData();
-         if (def != null && !StringUtil.isNullOrEmpty(def.getChunkId()))
-         {
-            newChunkIds.add(def.getChunkId());
-         }
-      }
-      
-      // remove all the chunk IDs that are actually in the document; any that
-      // are remaining are stale and need to be cleaned up
-      Set<String> oldChunkIds = new HashSet<String>();
-      oldChunkIds.addAll(outputs_.keySet());
-      oldChunkIds.removeAll(newChunkIds);
-      for (String chunkId: oldChunkIds)
-      {
-         // ignore moving widgets -- ACE doesn't have a way to move a line 
-         // widget from one row to another, but we occasionally need to do this
-         // to keep the output pinned to the end of the chunk
-         if (outputs_.get(chunkId).moving())
-            continue;
-         outputs_.get(chunkId).remove();
-         outputs_.remove(chunkId);
-      }
-   }
-   
    private void cleanChunkExecState(String chunkId)
    {
       Scope chunk = getChunkScope(chunkId);
@@ -924,6 +928,9 @@ public class TextEditingTargetNotebook
                chunk.getBodyStart().getRow(), 
                chunk.getEnd().getRow(), 
                ChunkRowExecState.LINE_RESTING);
+
+         chunks_.setChunkState(chunk.getPreamble().getRow(), 
+               ChunkContextToolbar.STATE_RESTING);
       }
    }
    
@@ -962,6 +969,27 @@ public class TextEditingTargetNotebook
       return null;
    }
    
+   private String getRowChunkId(int preambleRow)
+   {
+      // find the chunk corresponding to the row
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         if (output.getScope().getPreamble().getRow() == preambleRow)
+            return output.getChunkId();
+      }
+      
+      // no row mapped -- how about the setup chunk?
+      JsArray<Scope> scopes = docDisplay_.getScopeTree();
+      for (int i = 0; i < scopes.length(); i++)
+      {
+         if (isSetupChunkScope(scopes.get(i)) && 
+             scopes.get(i).getPreamble().getRow() == preambleRow)
+            return SETUP_CHUNK_ID;
+      }
+      
+      return null;
+   }
+   
    private void setAllExpansionStates(int state)
    {
       for (ChunkOutputUi output: outputs_.values())
@@ -980,6 +1008,7 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final TextEditingTarget editingTarget_;
    private final TextEditingTarget.Display editingDisplay_;
+   private final TextEditingTargetChunks chunks_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private UIPrefs prefs_;

@@ -192,12 +192,19 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    if (output.empty())
       return;
 
+   // determine output filename and ensure it exists
    FilePath outputCsv = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
+   Error error = outputCsv.ensureFile();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
-   Error error = core::writeStringToFile(outputCsv, 
+   error = core::writeStringToFile(outputCsv, 
          text::encodeCsvLine(vals) + "\n", 
          string_utils::LineEndingPassthrough, truncate);
    if (error)
