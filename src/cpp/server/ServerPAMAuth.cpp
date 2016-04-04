@@ -17,9 +17,11 @@
 
 #include <core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixUser.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -126,7 +128,39 @@ std::string getUserIdentifier(const core::http::Request& request)
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
 {
-   return userIdentifier;
+   static core::thread::ThreadsafeMap<std::string, std::string> cache;
+   std::string username = userIdentifier;
+
+   if (cache.contains(userIdentifier)) 
+   {
+      username = cache.get(userIdentifier);
+   }
+   else
+   {
+      // The username returned from this function is eventually used to create
+      // a local stream path, so it's important that it agree with the system
+      // view of the username (as that's what the session uses to form the
+      // stream path), which is why we do a username => username transform
+      // here. See case 5413 for details.
+      core::system::user::User user;
+      Error error = core::system::user::userFromUsername(userIdentifier, &user);
+      if (error) 
+      {
+         // log the error and return the PAM user identifier as a fallback
+         LOG_ERROR(error);
+      }
+      else
+      {
+         username = user.username;
+      }
+
+      // cache the username -- we do this even if the lookup fails since
+      // otherwise we're likely to keep hitting (and logging) the error on
+      // every request
+      cache.set(userIdentifier, username);
+   }
+
+   return username;
 }
 
 bool mainPageFilter(const http::Request& request,
