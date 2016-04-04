@@ -45,6 +45,9 @@
 #define kChunkId           "chunk_id"
 #define kChunkDocId        "doc_id"
 
+#define MAX_ORDINAL        16777215
+#define OUTPUT_THRESHOLD   25
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -152,20 +155,17 @@ Error handleChunkOutputRequest(const http::Request& request,
       return Success();
    }
 
-   if (parts[0] == kChunkLibDir)
+   if (parts[0] == kChunkLibDir ||
+       options().programMode() == kSessionProgramModeServer)
    {
-      // if a reference to the chunk library folder, we can reuse the contents
-      // (let the browser cache the file)
+      // in server mdoe, or if a reference to the chunk library folder, we can
+      // reuse the contents (let the browser cache the file)
       pResponse->setCacheableFile(target, request);
    }
    else
    {
-      // otherwise, use ETag cache (only for server mode, since Qt doesn't
-      // handle ETag caching; see case 4546)
-      if (options().programMode() == kSessionProgramModeServer)
-         pResponse->setCacheableBody(target, request);
-      else
-         pResponse->setBody(target);
+      // no cache necessary in desktop mode
+      pResponse->setBody(target);
    }
 
    return Success();
@@ -188,7 +188,9 @@ OutputPair lastChunkOutput(const std::string& docId,
    // check our cache 
    LastChunkOutput::iterator it = s_lastChunkOutputs.find(docId + chunkId);
    if (it != s_lastChunkOutputs.end())
+   {
       return it->second;
+   }
    
    std::string docPath;
    source_database::getPath(docId, &docPath);
@@ -244,8 +246,8 @@ FilePath chunkOutputFile(const std::string& docId,
                          const OutputPair& output)
 {
    return chunkOutputPath(docId, chunkId).complete(
-         (boost::format("%|1$05x|%2%") 
-                     % output.ordinal 
+         (boost::format("%|1$06x|%2%") 
+                     % (output.ordinal % MAX_ORDINAL)
                      % chunkOutputExt(output.outputType)).str());
 }
 
@@ -346,6 +348,13 @@ core::Error cleanChunkOutput(const std::string& docId,
    if (!outputPath.exists())
       return Success();
 
+   // reset counter if we're getting close to the end of our range (rare)
+   OutputPair pair = lastChunkOutput(docId, chunkId);
+   if ((MAX_ORDINAL - pair.ordinal) < OUTPUT_THRESHOLD)
+   {
+      updateLastChunkOutput(docId, chunkId, OutputPair());
+   }
+
    Error error = outputPath.remove();
    if (error)
       return error;
@@ -355,7 +364,6 @@ core::Error cleanChunkOutput(const std::string& docId,
       if (error)
          return error;
    }
-   updateLastChunkOutput(docId, chunkId, OutputPair());
    return Success();
 }
 
