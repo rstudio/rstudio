@@ -891,15 +891,18 @@ private:
                ext == ".rhtml" || ext == ".rd" ||
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
-               ext == ".json" ||
+               ext == ".json" || ext == ".tex" ||
                filename == "DESCRIPTION" ||
                filename == "NAMESPACE" ||
                filename == "README" ||
                filename == "NEWS" ||
                filename == "Makefile" ||
                filename == "configure" ||
+               filename == "configure.win" ||
                filename == "cleanup" ||
+               filename == "cleanup.win" ||
                filename == "Makevars" ||
+               filename == "Makevars.win" ||
                filePath.hasTextMimeType());
    }
 
