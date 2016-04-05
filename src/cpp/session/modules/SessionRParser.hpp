@@ -380,7 +380,14 @@ public:
    {
       addLintItem(token,
                   LintTypeStyle,
-                  "expected whitespace around '" + token.contentAsUtf8() + "' token");
+                  "expected whitespace around '" + token.contentAsUtf8() + "' operator");
+   }
+   
+   void inconsistentWhitespaceAroundOperator(const RToken& token)
+   {
+      addLintItem(token,
+                  LintTypeStyle,
+                  "inconsistent whitespace around '" + token.contentAsUtf8() + "' operator");
    }
 
    void tooManyErrors(const Position& position)

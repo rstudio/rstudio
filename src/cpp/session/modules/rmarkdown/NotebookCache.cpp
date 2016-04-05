@@ -259,20 +259,6 @@ FilePath unsavedNotebookCache()
    return module_context::sessionScratchPath().childPath("unsaved-notebooks");
 }
 
-SEXP rs_populateNotebookCache(SEXP fileSEXP)
-{
-   std::string file = r::sexp::safeAsString(fileSEXP);
-   FilePath cacheFolder = 
-      chunkCacheFolder(file, "", notebookCtxId());
-   Error error = parseRnb(module_context::resolveAliasedPath(file), 
-                          cacheFolder);
-   if (error) 
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(cacheFolder.absolutePath(), &rProtect);
-}
-
 SEXP rs_chunkCacheFolder(SEXP fileSEXP)
 {
    std::string file = r::sexp::safeAsString(fileSEXP);
@@ -331,7 +317,6 @@ Error initCache()
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
 
-   RS_REGISTER_CALL_METHOD(rs_populateNotebookCache, 1);
    RS_REGISTER_CALL_METHOD(rs_chunkCacheFolder, 1);
 
    module_context::scheduleDelayedWork(boost::posix_time::seconds(30),

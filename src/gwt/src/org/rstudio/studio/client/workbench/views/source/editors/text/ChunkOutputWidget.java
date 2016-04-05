@@ -40,7 +40,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
@@ -238,9 +237,9 @@ public class ChunkOutputWidget extends Composite
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
+      setVisible(true);
       onRenderCompleted_.execute(height + FRAME_HEIGHT_PAD);
    }
-
    
    public static boolean isEditorStyleCached()
    {
@@ -290,10 +289,8 @@ public class ChunkOutputWidget extends Composite
    {
       s_backgroundColor = editorStyle.getBackgroundColor();
       s_color = editorStyle.getColor();
-      JsArrayString classes = JsArrayString.createArray().cast();
-      classes.push("ace_marker-layer");
-      classes.push("ace_foreign_line");
-      s_outlineColor = DomUtils.extractCssValue(classes, "backgroundColor");
+      s_outlineColor = DomUtils.extractCssValue("ace_print-margin", 
+                                                "backgroundColor");
    }
    
    public void showServerError(ServerError error)
