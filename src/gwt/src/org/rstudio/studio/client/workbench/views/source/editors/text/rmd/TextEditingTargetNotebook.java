@@ -635,11 +635,24 @@ public class TextEditingTargetNotebook
       if (outputs_.containsKey(unit.chunkId))
       {
          ChunkOutputUi output = outputs_.get(unit.chunkId);
+         boolean visible = output.getOutputWidget().isVisible();
 
          output.getOutputWidget().setCodeExecuting(true);
          syncWidth(unit.chunkId);
+         
+         // we want to be sure the user can see the row beneath the output 
+         // (this is just a convenient way to determine whether the entire 
+         // output is visible)
+         int targetRow = output.getCurrentRow() + 1;
+         
+         // if the output is not visible, we have to guess at how big it will
+         // become -- guess ~10 rows of text
+         if (!visible)
+         {
+            targetRow = Math.min(docDisplay_.getRowCount(), targetRow + 10);
+         }
       
-         if (docDisplay_.getLastVisibleRow() < (output.getCurrentRow() + 1))
+         if (docDisplay_.getLastVisibleRow() < targetRow)
          {
             Scope chunk = output.getScope();
             Rectangle bounds = docDisplay_.getPositionBounds(
