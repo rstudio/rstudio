@@ -475,7 +475,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    if (!file.exists(cachePath))
-      stop("no cache data associated with '", rmdPath, "'")
+      return(FALSE)
    
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
    html <- .rs.createNotebookFromCacheData(rnbData, outputPath)
