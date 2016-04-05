@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
+import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -126,12 +127,14 @@ public class TextEditingTargetNotebook
                                     TextEditingTargetChunks chunks,
                                     TextEditingTarget.Display editingDisplay,
                                     DocDisplay docDisplay,
+                                    DirtyState dirtyState,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document,
                                     ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
+      dirtyState_ = dirtyState;
       releaseOnDismiss_ = releaseOnDismiss;
       initialChunkDefs_ = JsArrayUtil.deepCopy(document.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
@@ -495,6 +498,10 @@ public class TextEditingTargetNotebook
          {
             outputs_.get(data.getChunkId()).getOutputWidget()
                                            .onOutputFinished();
+
+            // mark the document dirty since it now contains cache changes that
+            // haven't been committed to the notebook 
+            dirtyState_.markDirty(false);
          }
       }
    }
@@ -1039,10 +1046,12 @@ public class TextEditingTargetNotebook
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
-   ArrayList<HandlerRegistration> releaseOnDismiss_;
    private final TextEditingTarget editingTarget_;
    private final TextEditingTarget.Display editingDisplay_;
    private final TextEditingTargetChunks chunks_;
+   private final DirtyState dirtyState_;
+   
+   ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
    private UIPrefs prefs_;

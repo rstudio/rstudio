@@ -1220,7 +1220,8 @@ public class TextEditingTarget implements
       // create notebook and forward resize events
       chunks_ = new TextEditingTargetChunks(this);
       notebook_ = new TextEditingTargetNotebook(this, chunks_, view_, 
-            docDisplay_, docUpdateSentinel_, document, releaseOnDismiss_);
+            docDisplay_, dirtyState_, docUpdateSentinel_, document, 
+            releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
       
       
