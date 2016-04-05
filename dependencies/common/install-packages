@@ -64,14 +64,14 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
-install rsconnect v0.99-1000-preview
-install rmarkdown v0.99-1000-preview
+install rsconnect master
+install rmarkdown master
 
 # temporary pointer to profvis until cran transition
 if R CMD build --help | grep --quiet no-build-vignettes; then
-	install profvis v0.99-1000-preview --no-build-vignettes
+	install profvis master --no-build-vignettes
 else
-	install profvis v0.99-1000-preview --no-vignettes
+	install profvis master --no-vignettes
 fi 
 
 # back to install-dir
