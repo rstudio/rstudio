@@ -70,6 +70,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -544,25 +545,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          // within the browser, so just offer to download the file.
          else
          {
-            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO, 
-                  "R Markdown Render Completed", 
-                  "R Markdown has finished rendering " + 
-                  result.getTargetFile() + " to " + 
-                  result.getOutputFile() + ".", 
-                  false, 
-                  new ProgressOperation()
-                  {
-                     @Override
-                     public void execute(ProgressIndicator indicator)
-                     {
-                        globalDisplay_.showWordDoc(result.getOutputFile());
-                        indicator.onCompleted();
-                     }
-                  },
-                  null, 
-                  "Download File", 
-                  "OK", 
-                  false);
+            showDownloadPreviewFileDialog(result, new Command() {
+               @Override
+               public void execute()
+               {
+                  globalDisplay_.showWordDoc(result.getOutputFile());  
+               }  
+            });
          }
       }
       else if (".html".equals(extension))
@@ -582,8 +571,43 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          if (Desktop.isDesktop())
             Desktop.getFrame().showFile(result.getOutputFile());
          else
-            globalDisplay_.openWindow(result.getOutputUrl());
+         {
+            showDownloadPreviewFileDialog(result, new Command() {
+               @Override
+               public void execute()
+               {
+                  String url = server_.getFileUrl(
+                        FileSystemItem.createFile(result.getOutputFile()));
+                  globalDisplay_.openWindow(url);  
+               }  
+            });
+         }
+           
       }
+   }
+   
+   private void showDownloadPreviewFileDialog(
+         final RmdRenderResult result, final Command onDownload)
+   {
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO, 
+            "R Markdown Render Completed", 
+            "R Markdown has finished rendering " + 
+            result.getTargetFile() + " to " + 
+            result.getOutputFile() + ".", 
+            false, 
+            new ProgressOperation()
+            {
+               @Override
+               public void execute(ProgressIndicator indicator)
+               {
+                  onDownload.execute();
+                  indicator.onCompleted();
+               }
+            },
+            null, 
+            "Download File", 
+            "OK", 
+            false);
    }
    
    private void displayHTMLRenderResult(RmdRenderResult result)

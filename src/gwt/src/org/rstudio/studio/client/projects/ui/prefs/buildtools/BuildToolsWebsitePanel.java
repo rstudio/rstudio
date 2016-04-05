@@ -46,12 +46,12 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       add(chkPreviewAfterBuilding_); 
       
       chkLivePreviewSite_ = checkBox(
-            "Update preview when supporting files change");
+            "Re-knit current preview when supporting files change");
       chkLivePreviewSite_.addStyleName(RES.styles().previewWebsite());
       add(chkLivePreviewSite_); 
       
       Label infoLabel = new Label(
-         "Supporting files include HTML, JavaScript, CSS, R scripts, etc.");
+         "Supporting files include Rmd partials, R scripts, YAML config files, etc.");
       infoLabel.addStyleName(RES.styles().infoLabel());
       add(infoLabel);
    }

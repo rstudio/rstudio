@@ -150,8 +150,6 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
          LOG_ERROR(error);
          return;
       }
-      if (!options.livePreviewWebsite)
-         return;
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       if (sourceFilePath.isWithin(buildTargetPath))
@@ -160,10 +158,21 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
          FilePath outputDirPath = buildTargetPath.childPath(outputDir);
          if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
          {
-            json::Object fileJson =
-                module_context::createFileSystemItem(sourceFilePath);
-            ClientEvent event(client_events::kWebsiteFileSaved, fileJson);
-            module_context::enqueClientEvent(event);
+            // are we live previewing?
+            bool livePreview = options.livePreviewWebsite;
+
+            // force live preview for JS and CSS
+            std::string mimeType = sourceFilePath.mimeContentType();
+            if (mimeType == "text/css" || mimeType == "text/javascript")
+               livePreview = true;
+
+            if (livePreview)
+            {
+               json::Object fileJson =
+                   module_context::createFileSystemItem(sourceFilePath);
+               ClientEvent event(client_events::kWebsiteFileSaved, fileJson);
+               module_context::enqueClientEvent(event);
+            }
          }
       }
    }
@@ -1159,23 +1168,17 @@ private:
 
    void showWebsitePreview(const FilePath& websitePath)
    {
-      // determine the output dir
-      r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
-            string_utils::utf8ToSystem(websitePath.absolutePath()));
-      std::string outputDir;
-      Error error = websiteOutputDir.call(&outputDir);
-      if (error)
+      // determine source file
+      std::string output = outputAsText();
+      FilePath sourceFile = websitePath.childPath("index.Rmd");
+      if (!sourceFile.exists())
+         sourceFile = websitePath.childPath("index.md");
+
+      // look for Output created message
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+                                                                     output);
+      if (!outputFile.empty())
       {
-         std::string msg = "Error attempting to determine website "
-                           "output directory: " + r::endUserErrorMessage(error);
-         terminateWithError(msg);
-      }
-      else
-      {
-         FilePath sourceFile = websitePath.childPath("index.Rmd");
-         if (!sourceFile.exists())
-            sourceFile = websitePath.childPath("index.md");
-         FilePath outputFile = FilePath(outputDir).childPath("index.html");
          json::Object previewRmdJson;
          using namespace module_context;
          previewRmdJson["source_file"] = createAliasedPath(sourceFile);

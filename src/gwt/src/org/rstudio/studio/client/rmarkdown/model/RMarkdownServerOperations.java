@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -60,6 +61,8 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                        ServerRequestCallback<RmdTemplateContent> requestCallback);
    
    public String getApplicationURL(String pathName);
+   
+   public String getFileUrl(FileSystemItem file);
    
    void prepareForRmdChunkExecution(String id,
                                     ServerRequestCallback<Void> requestCallback);
