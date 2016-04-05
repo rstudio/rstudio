@@ -39,8 +39,8 @@
 * Use "Run Document" for custom formats with runtime: shiny
 * Add option to suppress Knit preview entirely
 * Add R Markdown pane to global options dialog
-* Enhance R Markdown preview to work well with bookdown
-* Fixed highlighting with multiple Markdown links on one line
+* Build tab and preview support for R Markdown websites
+* Various enhancements for authoring with the bookdown package
 
 ### C/C++
 
@@ -60,6 +60,7 @@
 ### Bug Fixes
 
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
+* R Markdown: fixed highlighting with multiple Markdown links on one line
 * SVN: avoid recursive revert when reverting changes to modified directory properties
 * Fix hang caused by large, heavily-nested S4 objects
 * Fix for 'httpdPort' detection error sometimes seen with R built from source
