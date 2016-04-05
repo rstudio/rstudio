@@ -582,7 +582,7 @@ public class Files
    private void navigateToFile(final FileSystemItem file)
    {
       String ext = file.getExtension().toLowerCase();
-      if (ext.equals(".htm") || ext.equals(".html"))
+      if (ext.equals(".htm") || ext.equals(".html") || ext.equals(".nb.html"))
       {
          view_.showHtmlFileChoice(
             file,

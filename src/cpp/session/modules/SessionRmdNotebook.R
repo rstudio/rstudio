@@ -692,3 +692,4 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    cachePath
    
 })
+

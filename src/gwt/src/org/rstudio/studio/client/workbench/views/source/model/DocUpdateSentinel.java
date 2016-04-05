@@ -466,6 +466,7 @@ public class DocUpdateSentinel
                         progress.onCompleted();
                      
                      // let anyone interested know we just saved 
+                     docDisplay_.fireEvent(new SaveFileEvent());
                      eventBus_.fireEvent(new SaveFileEvent());
                   }
                   else if (!hash.equals(sourceDoc_.getHash()))

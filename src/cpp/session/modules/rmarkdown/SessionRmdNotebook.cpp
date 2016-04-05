@@ -179,6 +179,30 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error createNotebookFromCache(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   std::string rmdPath, outputPath;
+   Error error = json::readParams(request.params, &rmdPath, &outputPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
+   createNotebook.addParam(rmdPath);
+   createNotebook.addParam(outputPath);
+   error = createNotebook.call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   return Success();
+}
+
 } // anonymous namespace
 
 Events& events()
@@ -212,6 +236,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
       (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
+      (bind(registerRpcMethod, "create_notebook_from_cache", createNotebookFromCache))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))

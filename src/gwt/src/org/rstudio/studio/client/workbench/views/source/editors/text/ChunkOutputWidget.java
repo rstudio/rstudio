@@ -231,8 +231,16 @@ public class ChunkOutputWidget extends Composite
             Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
                      root_.getElement().getScrollHeight()), 
             ChunkOutputUi.MAX_CHUNK_HEIGHT);
+
+      // if we have plots pending, don't shrink until they're loaded 
+      if (pendingPlots_ > 0 && height < renderedHeight_)
+         return;
+      
+      // don't report height if it hasn't changed
       if (height == renderedHeight_)
          return;
+
+      // cache last reported render size
       renderedHeight_ = height;
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
@@ -416,6 +424,7 @@ public class ChunkOutputWidget extends Composite
       plot.getElement().getStyle().setDisplay(Display.NONE);
 
       root_.add(plot);
+      pendingPlots_++;
       
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot.getElement(), new EventListener()
@@ -436,6 +445,7 @@ public class ChunkOutputWidget extends Composite
             // show the image
             plot.getElement().getStyle().setDisplay(Display.BLOCK);
 
+            pendingPlots_--;
             completeUnitRender();
          }
       });
@@ -694,6 +704,7 @@ public class ChunkOutputWidget extends Composite
    private int state_ = CHUNK_EMPTY;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
+   private int pendingPlots_ = 0;
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private Timer collapseTimer_ = null;
