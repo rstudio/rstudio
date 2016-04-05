@@ -38,7 +38,7 @@ import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.cellview.client.ColumnSortList;
@@ -46,7 +46,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.ColumnSortEvent.Handler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
@@ -65,20 +65,20 @@ public class FilesList extends Composite
                                                       dataProvider_.getList());
       
       // create cell table
-      filesCellTable_ = new CellTable<FileSystemItem>(
+      filesDataGrid_ = new DataGrid<FileSystemItem>(
                                           15,
-                                          FilesListCellTableResources.INSTANCE,
+                                          FilesListDataGridResources.INSTANCE,
                                           KEY_PROVIDER);
       selectionModel_ = new MultiSelectionModel<FileSystemItem>(KEY_PROVIDER);
-      filesCellTable_.setSelectionModel(
+      filesDataGrid_.setSelectionModel(
          selectionModel_, 
          DefaultSelectionEventManager.<FileSystemItem> createCheckboxManager());
-      filesCellTable_.setWidth("100%", false);
+      filesDataGrid_.setWidth("100%");
       
-      filesCellTable_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
+      filesDataGrid_.getElement().getStyle().setWhiteSpace(WhiteSpace.NOWRAP);
       
       // hook-up data provider 
-      dataProvider_.addDataDisplay(filesCellTable_);
+      dataProvider_.addDataDisplay(filesDataGrid_);
       
       // add columns
       addSelectionColumn();
@@ -91,9 +91,9 @@ public class FilesList extends Composite
       addColumnSortHandler();
       
       // enclose in scroll panel
-      scrollPanel_ = new ScrollPanel();
-      initWidget(scrollPanel_);
-      scrollPanel_.setWidget(filesCellTable_);   
+      layoutPanel_ = new ResizeLayoutPanel();
+      initWidget(layoutPanel_);
+      layoutPanel_.setWidget(filesDataGrid_);   
    }
    
    private Column<FileSystemItem, Boolean> addSelectionColumn()
@@ -118,8 +118,8 @@ public class FilesList extends Composite
             
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
-      filesCellTable_.addColumn(checkColumn); 
-      filesCellTable_.setColumnWidth(checkColumn, 20, Unit.PX);
+      filesDataGrid_.addColumn(checkColumn); 
+      filesDataGrid_.setColumnWidth(checkColumn, DEFAULT_COLUMN_WIDTH_PIXELS, Unit.PX);
       
       return checkColumn;
    }
@@ -141,9 +141,9 @@ public class FilesList extends Composite
             }
          };
       iconColumn.setSortable(true);
-      filesCellTable_.addColumn(iconColumn, 
+      filesDataGrid_.addColumn(iconColumn, 
                                 SafeHtmlUtils.fromSafeConstant("<br/>"));
-      filesCellTable_.setColumnWidth(iconColumn, 20, Unit.PX);
+      filesDataGrid_.setColumnWidth(iconColumn, DEFAULT_COLUMN_WIDTH_PIXELS, Unit.PX);
     
       sortHandler_.setComparator(iconColumn, new FilesListComparator() {
          @Override
@@ -183,7 +183,7 @@ public class FilesList extends Composite
             }
          };
       nameColumn.setSortable(true);
-      filesCellTable_.addColumn(nameColumn, "Name");
+      filesDataGrid_.addColumn(nameColumn, "Name");
       
       sortHandler_.setComparator(nameColumn, new FilesListComparator() {
          @Override
@@ -209,8 +209,8 @@ public class FilesList extends Composite
          } 
       };  
       sizeColumn.setSortable(true);
-      filesCellTable_.addColumn(sizeColumn, "Size");
-      filesCellTable_.setColumnWidth(sizeColumn, 80, Unit.PX);
+      filesDataGrid_.addColumn(sizeColumn, "Size");
+      filesDataGrid_.setColumnWidth(sizeColumn, 80, Unit.PX);
       
       sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
          @Override
@@ -237,8 +237,8 @@ public class FilesList extends Composite
          } 
       };  
       modColumn.setSortable(true);
-      filesCellTable_.addColumn(modColumn, "Modified");
-      filesCellTable_.setColumnWidth(modColumn, 160, Unit.PX); 
+      filesDataGrid_.addColumn(modColumn, "Modified");
+      filesDataGrid_.setColumnWidth(modColumn, 160, Unit.PX); 
       
       sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {
          @Override
@@ -253,7 +253,7 @@ public class FilesList extends Composite
    
    private void addColumnSortHandler()
    {
-      filesCellTable_.addColumnSortHandler(new Handler() {
+      filesDataGrid_.addColumnSortHandler(new Handler() {
          @Override
          public void onColumnSort(ColumnSortEvent event)
          {     
@@ -293,9 +293,9 @@ public class FilesList extends Composite
                com.google.gwt.user.cellview.client.ColumnSortList.ColumnSortInfo sortInfo = sortList.get(i);
                Object column = sortInfo.getColumn();
                
-               for (int c=0; c<filesCellTable_.getColumnCount(); c++)
+               for (int c=0; c<filesDataGrid_.getColumnCount(); c++)
                {
-                  if (filesCellTable_.getColumn(c).equals(column))
+                  if (filesDataGrid_.getColumn(c).equals(column))
                   { 
                      boolean ascending = sortInfo.isAscending();
                      sortOrder.push(ColumnSortInfo.create(c, ascending));
@@ -327,11 +327,11 @@ public class FilesList extends Composite
    {
       if (sortOrder != null)
       {
-         ColumnSortInfo.setSortList(filesCellTable_, sortOrder);
+         ColumnSortInfo.setSortList(filesDataGrid_, sortOrder);
       }
       else
       {
-         ColumnSortList columnSortList = filesCellTable_.getColumnSortList();
+         ColumnSortList columnSortList = filesDataGrid_.getColumnSortList();
          columnSortList.clear();
          columnSortList.push(nameColumn_);
       }
@@ -349,7 +349,7 @@ public class FilesList extends Composite
       parentPath_ = containingPath_.getParentPath();
       
       // set page size (+1 for parent path)
-      filesCellTable_.setPageSize(files.length() + 1);
+      filesDataGrid_.setPageSize(files.length() + 1);
       
       // get underlying list
       List<FileSystemItem> fileList = dataProvider_.getList();
@@ -407,7 +407,7 @@ public class FilesList extends Composite
             if (row == -1)
             {
                files.add(file);
-               filesCellTable_.setPageSize(files.size() + 1);
+               filesDataGrid_.setPageSize(files.size() + 1);
             }
             else
             {
@@ -481,8 +481,8 @@ public class FilesList extends Composite
    private void applyColumnSortList()
    {
       applyingProgrammaticSort_ = true;
-      ColumnSortEvent.fire(filesCellTable_, 
-                           filesCellTable_.getColumnSortList());
+      ColumnSortEvent.fire(filesDataGrid_, 
+                           filesDataGrid_.getColumnSortList());
       applyingProgrammaticSort_ = false;
    }
    
@@ -562,7 +562,7 @@ public class FilesList extends Composite
    private FileSystemItem containingPath_ = null;
    private FileSystemItem parentPath_ = null;
   
-   private final CellTable<FileSystemItem> filesCellTable_; 
+   private final DataGrid<FileSystemItem> filesDataGrid_; 
    private final LinkColumn<FileSystemItem> nameColumn_;
    private final TextColumn<FileSystemItem> sizeColumn_;
    private final TextColumn<FileSystemItem> modifiedColumn_;
@@ -575,8 +575,8 @@ public class FilesList extends Composite
    private final ColumnSortEvent.ListHandler<FileSystemItem> sortHandler_;
 
    private final Files.Display.Observer observer_ ;
-   private final ScrollPanel scrollPanel_ ;  
+   private final ResizeLayoutPanel layoutPanel_ ;  
    
- 
+   private static final int DEFAULT_COLUMN_WIDTH_PIXELS = 26;
    
 }
