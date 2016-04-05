@@ -96,7 +96,7 @@ public class SimpleEventBusTest extends HandlerTestBase {
           eventBus.addHandler(MouseDownEvent.getType(), mouse1);
         }
       });
-      fail("expected AssertionFailedError");
+      throw new Error("expected AssertionFailedError");
     } catch (AssertionFailedError e) {
       /* pass */
     }

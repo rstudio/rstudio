@@ -132,7 +132,7 @@ public class SimpleEventBusTest extends EventBusTestBase {
           FooEvent.register(eventBus, fooHandler1);
         }
       });
-      fail("expected AssertionFailedError");
+      throw new Error("expected AssertionFailedError");
     } catch (AssertionFailedError e) {
       /* pass */
     }

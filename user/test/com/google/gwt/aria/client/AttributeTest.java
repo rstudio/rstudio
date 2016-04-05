@@ -76,7 +76,7 @@ public class AttributeTest extends GWTTestCase {
   public void testSetDefaultValue_noSet() {
     try {
       attribute3.setDefault(div);
-      fail();
+      throw new Error();
     } catch (AssertionError e) {
       // Expected -- no default value for attribute2
     }

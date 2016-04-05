@@ -269,7 +269,7 @@ public class JStaticEvalTest extends GWTTestCase {
     try {
       assertEquals(0.0, throwError() * returnDoubleZero());
       fail("Expected an exception");
-    } catch (Error e) {
+    } catch (IllegalArgumentException e) {
     }
 
     assertEquals(0.0, returnDoubleZero() * fieldIntFive);
@@ -278,7 +278,7 @@ public class JStaticEvalTest extends GWTTestCase {
     try {
       assertEquals(0.0, returnDoubleZero() * throwError());
       fail("Expected an exception");
-    } catch (Error e) {
+    } catch (IllegalArgumentException e) {
     }
 
     assertTrue(fieldIntArray != null);
@@ -425,6 +425,6 @@ public class JStaticEvalTest extends GWTTestCase {
   }
 
   private int throwError() {
-    throw new Error();
+    throw new IllegalArgumentException();
   }
 }

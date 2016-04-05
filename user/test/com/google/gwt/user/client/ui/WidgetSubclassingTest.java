@@ -234,7 +234,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenAnchor();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -248,7 +248,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenButton();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -262,7 +262,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenFileUpload();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -276,7 +276,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenFormPanel();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -290,7 +290,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenFrame();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -304,7 +304,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenHidden();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -318,7 +318,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenHTML();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -332,7 +332,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenImage();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -346,7 +346,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenInlineHTML();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -360,7 +360,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenInlineLabel();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -374,7 +374,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenLabel();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -388,7 +388,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenListBox();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -402,7 +402,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenPasswordTextBox();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -416,7 +416,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenSimpleCheckBox();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -430,7 +430,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenSimpleRadioButton();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }
@@ -444,7 +444,7 @@ public class WidgetSubclassingTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         new BrokenTextBox();
-        fail(ASSERTION_ERROR);
+        throw new Error(ASSERTION_ERROR);
       } catch (AssertionError e) {
       }
     }

@@ -153,7 +153,7 @@ public abstract class StorageTest extends GWTTestCase {
     if (!GWT.isScript()) {
       try {
         storage.setItem("", "baz");
-        fail("Empty string should be disallowed as a key.");
+        throw new Error("Empty string should be disallowed as a key.");
       } catch (AssertionError e) {
         // expected
       }

@@ -72,7 +72,7 @@ public class ElementWrappingTest extends GWTTestCase {
         Anchor a = Anchor.wrap(Document.get().getElementById("foo"));
         RootPanel.detachNow(a); // pass
         RootPanel.detachNow(a); // fail
-        fail("Expected assertion failure calling detachNow() twice");
+        throw new Error("Expected assertion failure calling detachNow() twice");
       } catch (AssertionError e) {
       }
     }
@@ -93,7 +93,7 @@ public class ElementWrappingTest extends GWTTestCase {
             "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
         Anchor a = Anchor.wrap(Document.get().getElementById("foo")); // pass
         RootPanel.detachOnWindowClose(a); // fail
-        fail("Expected assertion failure calling detachOnLoad() twice");
+        throw new Error("Expected assertion failure calling detachOnLoad() twice");
       } catch (AssertionError e) {
       }
     }
@@ -318,7 +318,7 @@ public class ElementWrappingTest extends GWTTestCase {
         // Get the element and try to wrap it.
         Element unwrappableElement = Document.get().getElementById("twcef_id");
         Anchor.wrap(unwrappableElement);
-        fail("Attempting to wrap the above element should have failed.");
+        throw new Error("Attempting to wrap the above element should have failed.");
       } catch (AssertionError e) {
         // Expected error.
       }
@@ -339,7 +339,7 @@ public class ElementWrappingTest extends GWTTestCase {
         // occurs.
         AnchorElement aElem = Document.get().createAnchorElement();
         Anchor.wrap(aElem);
-        fail("Expected assertion failure wrapping unattached element");
+        throw new Error("Expected assertion failure wrapping unattached element");
       } catch (AssertionError e) {
       }
     }

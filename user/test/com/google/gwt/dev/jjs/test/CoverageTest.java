@@ -176,7 +176,7 @@ public class CoverageTest extends CoverageBase {
       i = 1;
       try {
         assert i == 2;
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
       }
 

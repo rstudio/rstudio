@@ -200,42 +200,42 @@ public class ElementTest extends GWTTestCase {
       div.setClassName("primary");
       try {
         div.addClassName("");
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
         // This *should* throw.
       }
 
       try {
         div.addClassName(" ");
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
         // This *should* throw.
       }
 
       try {
         div.addClassName(null);
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
         // This *should* throw.
       }
 
       try {
         div.removeClassName("");
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
         // This *should* throw.
       }
 
       try {
         div.removeClassName(" ");
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
         // This *should* throw.
       }
 
       try {
         div.removeClassName(null);
-        fail();
+        throw new Error();
       } catch (AssertionError e) {
         // This *should* throw.
       }
@@ -412,7 +412,7 @@ public class ElementTest extends GWTTestCase {
       Element notHeading = Document.get().createDivElement();
       try {
         HeadingElement.as(notHeading);
-        fail("Expected assertion failure");
+        throw new Error("Expected assertion failure");
       } catch (AssertionError e) {
         // this *should* happen.
       }
@@ -712,19 +712,19 @@ public class ElementTest extends GWTTestCase {
     if (Style.class.desiredAssertionStatus()) {
       try {
         div.getStyle().setProperty("background-color", "red");
-        fail("Expected assertion error: background-color should be in camelCase");
+        throw new Error("Expected assertion error: background-color should be in camelCase");
       } catch (AssertionError e) {
         // expected
       }
       try {
         div.getStyle().setPropertyPx("margin-left", 20);
-        fail("Expected assertion error: margin-left should be in camelCase");
+        throw new Error("Expected assertion error: margin-left should be in camelCase");
       } catch (AssertionError e) {
         // expected
       }
       try {
         div.getStyle().getProperty("margin-right");
-        fail("Expected assertion error: margin-right should be in camelCase");
+        throw new Error("Expected assertion error: margin-right should be in camelCase");
       } catch (AssertionError e) {
         // expected
       }
