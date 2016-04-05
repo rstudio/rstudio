@@ -4231,6 +4231,17 @@ public class RemoteServer implements Server
             params,
             requestCallback);
    }
+   
+   @Override
+   public void createNotebookFromCache(String rmdPath,
+                                       String outputPath,
+                                       ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rmdPath));
+      params.set(1, new JSONString(outputPath));
+      sendRequest(RPC_SCOPE, "create_notebook_from_cache", params, requestCallback);
+   }
 
    @Override
    public void getRmdOutputInfo(String input,

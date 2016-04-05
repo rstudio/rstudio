@@ -32,6 +32,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
@@ -65,6 +66,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -204,6 +207,29 @@ public class TextEditingTargetNotebook
                editingTarget.addEditorThemeStyleChangedHandler(
                                              TextEditingTargetNotebook.this);
             }
+         }
+      }));
+      
+      releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(new SaveFileHandler()
+      {
+         @Override
+         public void onSaveFile(SaveFileEvent event)
+         {
+            // bail if not an .Rmd
+            if (!docDisplay_.getFileType().isRmd())
+               return;
+            
+            // bail if we don't render chunks inline
+            if (!prefs_.showRmdChunkOutputInline().getGlobalValue())
+               return;
+            
+            String rmdPath = docUpdateSentinel_.getPath();
+            String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + ".nb.html";
+            
+            server_.createNotebookFromCache(
+                  rmdPath,
+                  outputPath,
+                  new VoidServerRequestCallback());
          }
       }));
    }

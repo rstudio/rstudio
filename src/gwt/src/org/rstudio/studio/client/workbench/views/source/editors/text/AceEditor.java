@@ -99,6 +99,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDe
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -1949,6 +1951,11 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addCursorChangedHandler(final CursorChangedHandler handler)
    {
       return widget_.addCursorChangedHandler(handler);
+   }
+   
+   public HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler)
+   {
+      return handlers_.addHandler(SaveFileEvent.TYPE, handler);
    }
 
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.Rectangle;
+
 import java.util.List;
 
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Scop
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -216,6 +218,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
+   
+   HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler);
 
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
