@@ -4,8 +4,8 @@
 	<classpathentry kind="src" path="codeserver/javatests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-18.0/guava-18.0-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118.json.rebased/sourcemap-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118.json.rebased/compiler-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/sourcemap-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/compiler-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>

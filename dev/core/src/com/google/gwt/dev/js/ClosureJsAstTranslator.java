@@ -71,13 +71,14 @@ import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.NodeKind;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.javascript.jscomp.AbstractCompiler;
 import com.google.gwt.thirdparty.javascript.jscomp.AstValidator;
 import com.google.gwt.thirdparty.javascript.rhino.IR;
 import com.google.gwt.thirdparty.javascript.rhino.InputId;
 import com.google.gwt.thirdparty.javascript.rhino.Node;
+import com.google.gwt.thirdparty.javascript.rhino.SimpleSourceFile;
+import com.google.gwt.thirdparty.javascript.rhino.StaticSourceFile;
 import com.google.gwt.thirdparty.javascript.rhino.Token;
-import com.google.gwt.thirdparty.javascript.rhino.jstype.SimpleSourceFile;
-import com.google.gwt.thirdparty.javascript.rhino.jstype.StaticSourceFile;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,7 +99,7 @@ public class ClosureJsAstTranslator {
     }
   }
 
-  private final Map<String, StaticSourceFile> sourceCache = new HashMap<String, StaticSourceFile>();
+  private final Map<String, StaticSourceFile> sourceCache = new HashMap<>();
 
   private final boolean validate;
   private final Set<String> globalVars = Sets.newHashSet();
@@ -107,10 +108,12 @@ public class ClosureJsAstTranslator {
   private final Set<String> externalVars = Sets.newHashSet();
 
   private final JsProgram program;
+  private final AbstractCompiler compiler;
 
-  ClosureJsAstTranslator(boolean validate, JsProgram program) {
+  ClosureJsAstTranslator(boolean validate, JsProgram program, AbstractCompiler compiler) {
     this.program = program;
     this.validate = validate;
+    this.compiler = compiler;
   }
 
   public Node translate(JsProgramFragment fragment, InputId inputId, String source) {
@@ -123,7 +126,7 @@ public class ClosureJsAstTranslator {
     }
     // Validate the structural integrity of the AST.
     if (validate) {
-      new AstValidator().validateScript(script);
+      new AstValidator(compiler).validateScript(script);
     }
     return script;
   }
