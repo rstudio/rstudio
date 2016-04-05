@@ -150,8 +150,6 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
          LOG_ERROR(error);
          return;
       }
-      if (!options.livePreviewWebsite)
-         return;
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       if (sourceFilePath.isWithin(buildTargetPath))
@@ -160,10 +158,21 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
          FilePath outputDirPath = buildTargetPath.childPath(outputDir);
          if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
          {
-            json::Object fileJson =
-                module_context::createFileSystemItem(sourceFilePath);
-            ClientEvent event(client_events::kWebsiteFileSaved, fileJson);
-            module_context::enqueClientEvent(event);
+            // are we live previewing?
+            bool livePreview = options.livePreviewWebsite;
+
+            // force live preview for JS and CSS
+            std::string mimeType = sourceFilePath.mimeContentType();
+            if (mimeType == "text/css" || mimeType == "text/javascript")
+               livePreview = true;
+
+            if (livePreview)
+            {
+               json::Object fileJson =
+                   module_context::createFileSystemItem(sourceFilePath);
+               ClientEvent event(client_events::kWebsiteFileSaved, fileJson);
+               module_context::enqueClientEvent(event);
+            }
          }
       }
    }
