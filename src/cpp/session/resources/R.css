@@ -100,3 +100,7 @@ table p {
    margin-bottom: 6px;
 }
 
+table[summary="R argblock"] tr td:first-child {
+   min-width: 24px;
+   padding-right: 12px;
+}
