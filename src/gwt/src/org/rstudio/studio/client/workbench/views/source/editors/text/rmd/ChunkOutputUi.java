@@ -82,7 +82,10 @@ public class ChunkOutputUi
       
       Element ele = outputWidget_.getElement();
       ele.addClassName(ThemeStyles.INSTANCE.selectableText());
-      ele.getStyle().setHeight(MIN_CHUNK_HEIGHT, Unit.PX);
+      
+      // make the widget initially invisible (until it gets some output)
+      ele.getStyle().setHeight(0, Unit.PX);
+      outputWidget_.setVisible(false);
       
       lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
             display_, outputWidget_, def.getRow(), def, lineWidgetHost);
