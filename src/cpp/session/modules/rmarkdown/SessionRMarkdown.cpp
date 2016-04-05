@@ -94,6 +94,43 @@ void initWebsiteOutputDir()
 
 } // anonymous namespace
 
+namespace module_context {
+
+FilePath extractOutputFileCreated(const FilePath& inputFile,
+                                  const std::string& output)
+{
+   // check each line of the emitted output; if it starts with a token
+   // indicating rendering is complete, store the remainder of the emitted
+   // line as the file we rendered
+   std::vector<std::string> completeMarkers;
+   completeMarkers.push_back("Preview created: ");
+   completeMarkers.push_back("Output created: ");
+   std::string renderLine;
+   std::stringstream outputStream(output);
+   while (std::getline(outputStream, renderLine))
+   {
+      BOOST_FOREACH(const std::string& marker, completeMarkers)
+      {
+         if (boost::algorithm::starts_with(renderLine, marker))
+         {
+            std::string fileName = renderLine.substr(marker.length());
+
+            // trim any whitespace from the end of the filename (on Windows
+            // this includes part of CR-LF)
+            boost::algorithm::trim(fileName);
+
+            // if the path looks absolute, use it as-is; otherwise, presume
+            // it to be in the same directory as the input file
+            return inputFile.parent().complete(fileName);
+         }
+      }
+   }
+
+   return FilePath();
+}
+
+} // namespace module_context
+
 namespace modules {
 namespace rmarkdown {
 
@@ -409,37 +446,11 @@ private:
 
    void onCompleted(int exitStatus)
    {
-      // check each line of the emitted output; if it starts with a token
-      // indicating rendering is complete, store the remainder of the emitted
-      // line as the file we rendered
-      std::vector<std::string> completeMarkers;
-      completeMarkers.push_back("Preview created: ");
-      completeMarkers.push_back("Output created: ");
-      std::string renderLine;
-      std::stringstream outputStream(allOutput_);
-      while (std::getline(outputStream, renderLine))
-      {
-         bool markerFound = false;
-         BOOST_FOREACH(const std::string& marker, completeMarkers)
-         {
-            if (boost::algorithm::starts_with(renderLine, marker))
-            {
-               std::string fileName = renderLine.substr(marker.length());
-
-               // trim any whitespace from the end of the filename (on Windows
-               // this includes part of CR-LF)
-               boost::algorithm::trim(fileName);
-
-               // if the path looks absolute, use it as-is; otherwise, presume
-               // it to be in the same directory as the input file
-               outputFile_ = targetFile_.parent().complete(fileName);
-               markerFound = true;
-               break;
-            }
-         }
-         if (markerFound)
-            break;
-      }
+      // see if we can determine the output file
+      FilePath outputFile = module_context::extractOutputFileCreated
+                                                   (targetFile_, allOutput_);
+      if (!outputFile.empty())
+         outputFile_ = outputFile;
 
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if

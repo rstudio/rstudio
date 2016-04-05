@@ -827,6 +827,9 @@ bool isWebsiteProject();
 bool isBookdownWebsite();
 std::string websiteOutputDir();
 
+core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
+                                        const std::string& output);
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

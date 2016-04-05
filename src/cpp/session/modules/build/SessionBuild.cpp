@@ -1159,23 +1159,17 @@ private:
 
    void showWebsitePreview(const FilePath& websitePath)
    {
-      // determine the output dir
-      r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
-            string_utils::utf8ToSystem(websitePath.absolutePath()));
-      std::string outputDir;
-      Error error = websiteOutputDir.call(&outputDir);
-      if (error)
+      // determine source file
+      std::string output = outputAsText();
+      FilePath sourceFile = websitePath.childPath("index.Rmd");
+      if (!sourceFile.exists())
+         sourceFile = websitePath.childPath("index.md");
+
+      // look for Output created message
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+                                                                     output);
+      if (!outputFile.empty())
       {
-         std::string msg = "Error attempting to determine website "
-                           "output directory: " + r::endUserErrorMessage(error);
-         terminateWithError(msg);
-      }
-      else
-      {
-         FilePath sourceFile = websitePath.childPath("index.Rmd");
-         if (!sourceFile.exists())
-            sourceFile = websitePath.childPath("index.md");
-         FilePath outputFile = FilePath(outputDir).childPath("index.html");
          json::Object previewRmdJson;
          using namespace module_context;
          previewRmdJson["source_file"] = createAliasedPath(sourceFile);
