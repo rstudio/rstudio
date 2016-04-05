@@ -297,8 +297,17 @@ public class ChunkOutputWidget extends Composite
    {
       s_backgroundColor = editorStyle.getBackgroundColor();
       s_color = editorStyle.getColor();
-      s_outlineColor = DomUtils.extractCssValue("ace_print-margin", 
-                                                "backgroundColor");
+      
+      // use a muted version of the text color for the outline
+      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(
+            DomUtils.extractCssValue("ace_editor", "color"));
+      
+      // dark themes require a slightly more pronounced color
+      ColorUtil.RGBColor outline = new ColorUtil.RGBColor(
+            text.red(), text.green(), text.blue(),
+            text.isDark() ? 0.12: 0.18);
+
+      s_outlineColor = outline.asRgb();
    }
    
    public void showServerError(ServerError error)
@@ -329,6 +338,7 @@ public class ChunkOutputWidget extends Composite
             bodyStyle.setColor(s_color);
          }
       }
+      getElement().getStyle().setBackgroundColor(s_backgroundColor);
       frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
    }
    

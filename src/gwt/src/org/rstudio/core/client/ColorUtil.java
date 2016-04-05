@@ -70,6 +70,21 @@ public class ColorUtil
          this(0, 0, 0, 1);
       }
       
+      public int red()
+      {
+         return red_;
+      }
+      
+      public int green()
+      {
+         return green_;
+      }
+      
+      public int blue()
+      {
+         return blue_;
+      }
+      
       public RGBColor mixedWith(RGBColor other, double ratio, double mode)
       {
          ratio = clamp(ratio, 0, 1);
