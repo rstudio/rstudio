@@ -38,9 +38,9 @@
       
       cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
 
-      # leave some breathing room, then clamp width to [400, 900] and set the
+      # leave some breathing room, then clamp width to [350, 700] and set the
       # height accordingly (use golden ratio)
-      x$width <- min(max(pixelWidth - 20, 400), 900)
+      x$width <- min(max(pixelWidth - 20, 350), 700)
       x$height <- x$width / 1.618
       
       # save the widget to HTML 

@@ -72,7 +72,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
@@ -417,7 +416,7 @@ public class TextEditingTargetNotebook
             event.getScope(), docDisplay_);
       
       // have the server start recording output from this chunk
-      syncWidth(chunkDef.getChunkId());
+      syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             chunkDef.getChunkId(), options, pixelWidth_, charWidth_, false, 
             new ServerRequestCallback<Void>()
@@ -664,7 +663,7 @@ public class TextEditingTargetNotebook
          boolean visible = output.getOutputWidget().isVisible();
 
          output.getOutputWidget().setCodeExecuting(true);
-         syncWidth(unit.chunkId);
+         syncWidth();
          
          // we want to be sure the user can see the row beneath the output 
          // (this is just a convenient way to determine whether the entire 
@@ -973,20 +972,16 @@ public class TextEditingTargetNotebook
       }
    }
    
-   private void syncWidth(String chunkId)
+   private void syncWidth()
    {
-      if (!outputs_.containsKey(chunkId))
-         return;
-      
       // check the width and see if it's already synced
-      Element ele = outputs_.get(chunkId).getOutputWidget().getElement();
-      int width = ele.getOffsetWidth();
+      int width = docDisplay_.getPixelWidth();
       if (pixelWidth_ == width)
          return;
       
       // it's not synced, so compute the new width
       pixelWidth_ = width;
-      charWidth_ = DomUtils.getCharacterWidth(ele, 
+      charWidth_ = DomUtils.getCharacterWidth(pixelWidth_, pixelWidth_,
             ConsoleResources.INSTANCE.consoleStyles().console());
    }
    

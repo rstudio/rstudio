@@ -301,6 +301,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    int getLength(int row);
    int getRowCount();
    String getLine(int row);
+   int getPixelWidth();
    
    char getCharacterAtCursor();
    char getCharacterBeforeCursor();

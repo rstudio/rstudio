@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.dom.client.Style.Unit;
@@ -1146,6 +1147,17 @@ public class AceEditor implements DocDisplay,
    public int getRowCount()
    {
       return getSession().getDocument().getLength();
+   }
+
+   @Override
+   public int getPixelWidth()
+   {
+      Element[] content = DomUtils.getElementsByClassName(
+            widget_.getElement(), "ace_content");
+      if (content.length < 1)
+         return widget_.getElement().getOffsetWidth();
+      else
+         return content[0].getOffsetWidth();
    }
 
    public String getLine(int row)

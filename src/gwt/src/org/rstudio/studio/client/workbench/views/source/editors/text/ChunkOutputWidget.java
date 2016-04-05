@@ -456,7 +456,7 @@ public class ChunkOutputWidget extends Composite
    private void showHtmlOutput(String url)
    {
       final ChunkOutputFrame frame = new ChunkOutputFrame();
-      frame.getElement().getStyle().setHeight(500, Unit.PX);
+      frame.getElement().getStyle().setHeight(200, Unit.PX);
       frame.getElement().getStyle().setWidth(100, Unit.PCT);
       root_.add(frame);
 
@@ -465,7 +465,15 @@ public class ChunkOutputWidget extends Composite
          @Override
          public void execute()
          {
-            Style bodyStyle = frame.getDocument().getBody().getStyle();
+            Element body = frame.getDocument().getBody();
+            Style bodyStyle = body.getStyle();
+
+            // sync html widget height to outer frame
+            frame.getElement().getStyle().setHeight(
+                  body.getOffsetHeight() + 20, Unit.PX);
+            frame.getElement().getStyle().setWidth(
+                  body.getOffsetWidth() + 20, Unit.PX);
+
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
             bodyStyle.setColor(s_color);

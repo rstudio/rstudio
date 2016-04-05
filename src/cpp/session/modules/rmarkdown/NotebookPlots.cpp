@@ -39,6 +39,19 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
+class PlotState
+{
+public:
+   PlotState():
+      hasPlots(false),
+      sexpMargins(R_NilValue)
+   { }
+
+   bool hasPlots;
+   SEXP sexpMargins;
+   r::sexp::Protect protect;
+};
+
 bool isPlotPath(const FilePath& path)
 {
    return path.hasExtensionLowerCase(".png") &&
@@ -72,11 +85,19 @@ void processPlots(const FilePath& plotFolder, bool fireEvents)
    }
 }
 
-void removeGraphicsDevice(const FilePath& plotFolder, bool hasPlots)
+void removeGraphicsDevice(const FilePath& plotFolder, 
+                          boost::shared_ptr<PlotState> pPlotState)
 {
    // turn off the graphics device -- this has the side effect of writing the
    // device's remaining output to files
    Error error = r::exec::RFunction("dev.off").call();
+   if (error)
+      LOG_ERROR(error);
+
+   // restore the figure margins
+   r::exec::RFunction par("par");
+   par.addParam("mar", pPlotState->sexpMargins);
+   error = par.call();
    if (error)
       LOG_ERROR(error);
 
@@ -96,23 +117,23 @@ void removeGraphicsDevice(const FilePath& plotFolder, bool hasPlots)
 }
 
 void onNewPlot(const FilePath& plotFolder,
-               boost::shared_ptr<bool> pHasPlots)
+               boost::shared_ptr<PlotState> pPlotState)
 {
-   *pHasPlots = true;
+   pPlotState->hasPlots = true;
    processPlots(plotFolder, true);
 }
 
 void onConsolePrompt(const FilePath& plotFolder,
-                     boost::shared_ptr<bool> pHasPlots,
+                     boost::shared_ptr<PlotState> pPlotState,
                      const std::string& )
 {
-   removeGraphicsDevice(plotFolder, *pHasPlots);
+   removeGraphicsDevice(plotFolder, pPlotState);
 
    module_context::events().onConsolePrompt.disconnect(
-         boost::bind(onConsolePrompt, plotFolder, pHasPlots, _1));
+         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
 
    plots::events().onNewPlot.disconnect(
-         boost::bind(onNewPlot, pHasPlots, _1));
+         boost::bind(onNewPlot, pPlotState, _1));
 }
 
 } // anonymous namespace
@@ -139,18 +160,18 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
          }
       }
    }
-   
+
    // generate code for creating PNG device
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 8, height = 5, "
+                     "  width = 6.5, height = 4, "
                      "  units=\"in\", res = 96 %2%)"
                      "}");
 
    // marker for content; this is necessary because on Windows, turning off
    // the png device writes an empty PNG file even if nothing was plotted, and
    // we need to avoid treating that file as though it were an actual plot
-   boost::shared_ptr<bool> pHasPlots = boost::make_shared<bool>(false);
+   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>();
 
    // create the PNG device
    error = r::exec::executeString(
@@ -159,12 +180,24 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    if (error)
       return error;
 
+   // save old figure margins
+   error = r::exec::RFunction("par", "mar").call(&pPlotState->sexpMargins, 
+         &pPlotState->protect);
+   if (error)
+      LOG_ERROR(error);
+
+   // set notebook-friendly figure margins
+   //                                          bot  left top  right
+   error = r::exec::executeString("par(mar = c(5.1, 4.1, 2.1, 2.1))");
+   if (error)
+      LOG_ERROR(error);
+   
    // complete the capture on the next console prompt
    module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, plotFolder, pHasPlots, _1));
+         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
 
    plots::events().onNewPlot.connect(
-         boost::bind(onNewPlot, plotFolder, pHasPlots));
+         boost::bind(onNewPlot, plotFolder, pPlotState));
 
    return Success();
 }

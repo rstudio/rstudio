@@ -965,7 +965,8 @@ public class DomUtils
       return result;
    }-*/;
 
-   public static int getCharacterWidth(Element ele, String style)
+   public static int getCharacterWidth(int clientWidth, int offsetWidth,
+         String style)
    {
       // create width checker label and add it to the root panel
       Label widthChecker = new Label();
@@ -983,8 +984,6 @@ public class DomUtils
       float pointsPerCharacter = (float)labelWidth / (float)text.length();
       
       // compute client width
-      int clientWidth = ele.getClientWidth();
-      int offsetWidth = ele.getOffsetWidth();
       if (clientWidth == offsetWidth)
       {
          // if the two widths are the same then there are no scrollbars.
@@ -1002,6 +1001,12 @@ public class DomUtils
       // enforce a minimum width
       final int MINIMUM_WIDTH = 30;
       return Math.max(width, MINIMUM_WIDTH);
+   }
+
+   public static int getCharacterWidth(Element ele, String style)
+   {
+      return getCharacterWidth(ele.getClientWidth(), ele.getOffsetWidth(), 
+            style);
    }
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
