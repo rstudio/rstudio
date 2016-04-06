@@ -1009,16 +1009,5 @@ public class DomUtils
             style);
    }
 
-   public final native static int requestAnimationFrame(RenderFrameCallback callback) /*-{
-      return $wnd.requestAnimationFrame($entry(function(t) 
-      {
-         callback.@org.rstudio.core.client.dom.RenderFrameCallback::renderFrame(D)(t);
-      }));
-   }-*/;
-   
-   public final native static void cancelAnimationFrame(int id) /*-{
-      $wnd.cancelAnimationFrame(id);
-   }-*/;
-
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
 }

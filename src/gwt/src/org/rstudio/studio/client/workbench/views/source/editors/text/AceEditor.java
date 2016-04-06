@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -50,7 +51,6 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.RenderFrameCallback;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
@@ -3181,7 +3181,7 @@ public class AceEditor implements DocDisplay,
    }
 
    private class ScrollAnimator 
-                 implements RenderFrameCallback
+                 implements AnimationScheduler.AnimationCallback
    {
       public ScrollAnimator(int targetY, int ms)
       {
@@ -3189,17 +3189,17 @@ public class AceEditor implements DocDisplay,
          startY_ = widget_.getEditor().getRenderer().getScrollTop();
          delta_ = targetY_ - startY_;
          ms_ = ms;
-         timerId_ = DomUtils.requestAnimationFrame(this);
+         handle_ = AnimationScheduler.get().requestAnimationFrame(this);
       }
       
       public void complete()
       {
-         DomUtils.cancelAnimationFrame(timerId_);
+         handle_.cancel();
          scrollAnimator_ = null;
       }
       
       @Override
-      public void renderFrame(double timestamp)
+      public void execute(double timestamp)
       {
          if (startTime_ < 0)
             startTime_ = timestamp;
@@ -3216,7 +3216,7 @@ public class AceEditor implements DocDisplay,
                (int)(delta_ * (-Math.pow(2, -10 * elapsed / ms_) + 1)) + startY_);
 
          // request next frame
-         timerId_ = DomUtils.requestAnimationFrame(this);
+         handle_ = AnimationScheduler.get().requestAnimationFrame(this);
       }
 
       private final int ms_;
@@ -3224,7 +3224,7 @@ public class AceEditor implements DocDisplay,
       private final int startY_;
       private final int delta_;
       private double startTime_ = -1;
-      private int timerId_;
+      private AnimationScheduler.AnimationHandle handle_;
    }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
