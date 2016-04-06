@@ -78,11 +78,6 @@ void registerAll()
    
    DllInfo *info = R_getEmbeddingDllInfo() ;
    R_registerRoutines(info, pCMethods, pCallMethods, NULL, NULL);
-   
-   exec::RFunction registerNativeRoutines(".rs.registerNativeRoutines");
-   core::Error error = registerNativeRoutines.call();
-   if (error)
-      LOG_ERROR(error);
 }
    
    

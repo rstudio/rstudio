@@ -1525,35 +1525,6 @@
    symbols
 })
 
-.rs.addFunction("registerNativeRoutines", function()
-{
-   pos <- match("tools:rstudio", search())
-   if (is.na(pos))
-   {
-      warning("tools:rstudio not found on search path")
-      return(NULL)
-   }
-   
-   routineEnv <- new.env(parent = emptyenv())
-   routines <- tryCatch(
-      getDLLRegisteredRoutines("(embedding)"),
-      error = function(e) NULL
-   )
-   
-   if (is.null(routines))
-   {
-      warning("failed to register RStudio native routines")
-      return(NULL)
-   }
-   
-   .CallRoutines <- routines[[".Call"]]
-   lapply(.CallRoutines, function(routine) {
-      routineEnv[[routine$name]] <- routine
-   })
-   assign(".rs.routines", routineEnv, pos = which(search() == "tools:rstudio"))
-   routineEnv
-})
-
 .rs.addFunction("setEncodingUnknownToUTF8", function(object)
 {
    if (is.character(object) && Encoding(object) == "unknown")
