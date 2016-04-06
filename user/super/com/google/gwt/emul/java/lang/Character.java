@@ -226,6 +226,10 @@ public final class Character implements Comparable<Character>, Serializable {
     return c;
   }
 
+  public static boolean isBmpCodePoint(int codePoint) {
+    return codePoint >= MIN_VALUE && codePoint <= MAX_VALUE;
+  }
+
   /*
    * TODO: correct Unicode handling.
    */
