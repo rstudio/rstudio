@@ -3805,7 +3805,7 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            codeExecution_.executeSelection(false, false, "profvis::profvis");
+            codeExecution_.executeSelection(false, false, "profvis::profvis", true);
          }
       });
    }
@@ -4365,7 +4365,7 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
-      codeExecution_.executeSelection(true, true, "profvis::profvis");
+      codeExecution_.executeSelection(true, true, "profvis::profvis", true);
    }
   
    private void sourceActiveDocument(final boolean echo)
