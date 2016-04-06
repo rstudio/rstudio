@@ -366,7 +366,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       {
          contents <- .rs.readFile(jsPath, binary = TRUE)
          encoded <- .rs.base64encode(contents)
-         scriptHtml <- sprintf("<script src=\"data:application/x-javascript;base64,%s\"></script>", encoded)
+         htmlAttributes <- list(
+            "data-rnb-id" = sprintf("lib/%s-%s/%s", dep$name, dep$version, dep$script),
+            "src" = sprintf("data:application/x-javascript;base64,%s", encoded)
+         )
+         scriptHtml <- sprintf("<script %s></script>", .rs.listToHtmlAttributes(htmlAttributes))
          injection <- c(injection, scriptHtml)
       }
       
@@ -491,7 +495,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                                              rnbData,
                                                              cachePath)
 {
-   encoded <- if (.rs.endsWith(file, ".png"))
+   encoded <- if (.rs.endsWith(file, ".png") || .rs.endsWith(file, ".js"))
    {
       "@src"
    }
