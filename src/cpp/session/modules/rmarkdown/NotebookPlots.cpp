@@ -88,14 +88,15 @@ void processPlots(const FilePath& plotFolder, bool fireEvents)
 void removeGraphicsDevice(const FilePath& plotFolder, 
                           boost::shared_ptr<PlotState> pPlotState)
 {
-   // turn off the graphics device -- this has the side effect of writing the
-   // device's remaining output to files
-   Error error = r::exec::RFunction("dev.off").call();
+
+   // restore the figure margins
+   Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
    if (error)
       LOG_ERROR(error);
 
-   // restore the figure margins
-   error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
+   // turn off the graphics device -- this has the side effect of writing the
+   // device's remaining output to files
+   error = r::exec::RFunction("dev.off").call();
    if (error)
       LOG_ERROR(error);
 
