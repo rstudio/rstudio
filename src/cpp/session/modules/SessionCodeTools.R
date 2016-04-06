@@ -316,7 +316,7 @@
 
 .rs.addFunction("getPendingInput", function()
 {
-   .Call(.rs.routines$rs_getPendingInput)
+   .Call("rs_getPendingInput")
 })
 
 .rs.addFunction("doStripSurrounding", function(string, complements)
@@ -653,7 +653,7 @@
 
 .rs.addFunction("isSubsequence", function(strings, string)
 {
-   .Call(.rs.routines$rs_isSubsequence, strings, string)
+   .Call("rs_isSubsequence", strings, string)
 })
 
 .rs.addFunction("whichIsSubsequence", function(strings, string)
@@ -744,12 +744,12 @@
 
 .rs.addFunction("packageNameForSourceFile", function(filePath)
 {
-   .Call(.rs.routines$rs_packageNameForSourceFile, filePath)
+   .Call("rs_packageNameForSourceFile", filePath)
 })
 
 .rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
 {
-   .Call(.rs.routines$rs_isRScriptInPackageBuildTarget, filePath)
+   .Call("rs_isRScriptInPackageBuildTarget", filePath)
 })
 
 .rs.addFunction("namedVectorAsList", function(vector)
@@ -828,17 +828,17 @@
 
 .rs.addFunction("scoreMatches", function(strings, string)
 {
-   .Call(.rs.routines$rs_scoreMatches, strings, string)
+   .Call("rs_scoreMatches", strings, string)
 })
 
 .rs.addFunction("getProjectDirectory", function()
 {
-   .Call(.rs.routines$rs_getProjectDirectory)
+   .Call("rs_getProjectDirectory")
 })
 
 .rs.addFunction("hasFileMonitor", function()
 {
-   .Call(.rs.routines$rs_hasFileMonitor)
+   .Call("rs_hasFileMonitor")
 })
 
 .rs.addFunction("listIndexedFiles", function(term = "",
@@ -848,7 +848,7 @@
    if (is.null(.rs.getProjectDirectory()))
       return(NULL)
    
-   .Call(.rs.routines$rs_listIndexedFiles,
+   .Call("rs_listIndexedFiles",
          term,
          suppressWarnings(.rs.normalizePath(inDirectory)),
          as.integer(maxCount))
@@ -861,7 +861,7 @@
    if (is.null(inDirectory))
       return(character())
    
-   .Call(.rs.routines$rs_listIndexedFolders, term, inDirectory, maxCount)
+   .Call("rs_listIndexedFolders", term, inDirectory, maxCount)
 })
 
 .rs.addFunction("listIndexedFilesAndFolders", function(term = "",
@@ -871,7 +871,7 @@
    if (is.null(inDirectory))
       return(character())
    
-   .Call(.rs.routines$rs_listIndexedFilesAndFolders, term, inDirectory, maxCount)
+   .Call("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
 })
 
 .rs.addFunction("doGetIndex", function(term = "",
@@ -1716,10 +1716,10 @@
 
 .rs.addFunction("base64encode", function(data, binary = FALSE)
 {
-   .Call(.rs.routines$rs_base64encode, data, binary)
+   .Call("rs_base64encode", data, binary)
 })
 
 .rs.addFunction("base64decode", function(data, binary = FALSE)
 {
-   .Call(.rs.routines$rs_base64decode, data, binary)
+   .Call("rs_base64decode", data, binary)
 })

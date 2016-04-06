@@ -36,7 +36,7 @@
       options("profvis.prof_extension" = ".Rprof")
    }
 
-   tempPath <- .Call(.rs.routines$rs_profilesPath)
+   tempPath <- .Call("rs_profilesPath")
    if (!.rs.dirExists(tempPath)) {
       dir.create(tempPath, recursive = TRUE)
    }
