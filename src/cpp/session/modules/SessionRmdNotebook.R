@@ -383,24 +383,26 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    html
 })
 
+.rs.addFunction("rnb.htmlNotebook", function(...)
+{
+   if ("rmarkdown" %in% loadedNamespaces() &&
+       exists("html_notebook", envir = asNamespace("rmarkdown")))
+   {
+      return(rmarkdown::html_notebook)
+   }
+   
+   rmarkdown::html_document(code_folding = "show",
+                            theme = "cerulean",
+                            highlight = "textmate",
+                            ...)
+})
+
 .rs.addFunction("rnb.render", function(inputFile,
                                        outputFile,
                                        rmdContents = .rs.readFile(inputFile),
                                        envir = .GlobalEnv)
 {
-   # TODO: Move to 'rmarkdown' package when appropriate
-   html_notebook <- function(code_folding = "show",
-                             theme = "cerulean",
-                             highlight = "textmate",
-                             ...)
-   {
-      rmarkdown::html_document(code_folding = code_folding,
-                               theme = theme,
-                               highlight = highlight,
-                               ...)
-   }
-   
-   outputFormat <- html_notebook()
+   outputFormat <- .rs.rnb.htmlNotebook()
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
    outputOptions <- list(self_contained = TRUE, keep_md = TRUE)
    
