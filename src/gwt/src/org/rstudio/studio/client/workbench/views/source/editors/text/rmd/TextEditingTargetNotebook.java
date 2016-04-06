@@ -226,7 +226,13 @@ public class TextEditingTargetNotebook
                return;
             
             String rmdPath = docUpdateSentinel_.getPath();
-            String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + ".nb.html";
+            
+            // bail if unsaved doc (no point in generating notebooks for those)
+            if (StringUtil.isNullOrEmpty(rmdPath))
+               return;
+            
+            String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + 
+                                ".nb.html";
             
             server_.createNotebookFromCache(
                   rmdPath,
