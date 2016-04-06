@@ -700,7 +700,8 @@ public class TextEditingTargetNotebook
             Rectangle bounds = docDisplay_.getPositionBounds(
                   chunk.getPreamble());
             docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
-                  (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)));
+                  (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)),
+                  400);
          }
       }
       

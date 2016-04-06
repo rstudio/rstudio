@@ -280,7 +280,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       docDisplay_.setCode(snippets.getSnippetText(), false);
       activeSnippets_ = snippets;
       editorDirty_ = false;
-      docDisplay_.scrollToY(activeSnippets_.getScrollPosition());
+      docDisplay_.scrollToY(activeSnippets_.getScrollPosition(), 0);
    }
    
    private void recordEditorState()

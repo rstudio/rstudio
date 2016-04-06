@@ -50,6 +50,7 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.RenderFrameCallback;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
@@ -880,9 +881,16 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getRenderer().getScrollTop();
    }
 
-   public void scrollToY(int y)
+   public void scrollToY(int y, int animateMs)
    {
-      widget_.getEditor().getRenderer().scrollToY(y);
+      // cancel any existing scroll animation
+      if (scrollAnimator_ != null)
+         scrollAnimator_.complete();
+      
+      if (animateMs == 0)
+         widget_.getEditor().getRenderer().scrollToY(y);
+      else
+         scrollAnimator_ = new ScrollAnimator(y, animateMs);
    }
 
    public void insertCode(String code)
@@ -2451,7 +2459,7 @@ public class AceEditor implements DocDisplay,
 
       // scroll as necessary
       if (srcPosition.getScrollPosition() != -1)
-         scrollToY(srcPosition.getScrollPosition());
+         scrollToY(srcPosition.getScrollPosition(), 0);
       else if (position.getRow() != previousCursorPos.getRow())
          moveCursorNearTop();
       else
@@ -3171,11 +3179,59 @@ public class AceEditor implements DocDisplay,
       private static final int DELAY_MS = 5;
       private static final int ROWS_TOKENIZED_PER_ITERATION = 200;
    }
+
+   private class ScrollAnimator 
+                 implements RenderFrameCallback
+   {
+      public ScrollAnimator(int targetY, int ms)
+      {
+         targetY_ = targetY;
+         startY_ = widget_.getEditor().getRenderer().getScrollTop();
+         delta_ = targetY_ - startY_;
+         ms_ = ms;
+         timerId_ = DomUtils.requestAnimationFrame(this);
+      }
+      
+      public void complete()
+      {
+         DomUtils.cancelAnimationFrame(timerId_);
+         scrollAnimator_ = null;
+      }
+      
+      @Override
+      public void renderFrame(double timestamp)
+      {
+         if (startTime_ < 0)
+            startTime_ = timestamp;
+         double elapsed = timestamp - startTime_;
+         if (elapsed >= ms_)
+         {
+            widget_.getEditor().getRenderer().scrollToY(targetY_);
+            complete();
+            return;
+         }
+
+         // ease-out exponential
+         widget_.getEditor().getRenderer().scrollToY(
+               (int)(delta_ * (-Math.pow(2, -10 * elapsed / ms_) + 1)) + startY_);
+
+         // request next frame
+         timerId_ = DomUtils.requestAnimationFrame(this);
+      }
+
+      private final int ms_;
+      private final int targetY_;
+      private final int startY_;
+      private final int delta_;
+      private double startTime_ = -1;
+      private int timerId_;
+   }
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
+   private ScrollAnimator scrollAnimator_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
    private UIPrefs uiPrefs_;
@@ -3239,6 +3295,7 @@ public class AceEditor implements DocDisplay,
    private long lastCursorChangedTime_;
    private long lastModifiedTime_;
    private String yankedText_ = null;
+   
    
    private final List<HandlerRegistration> editorEventListeners_;
 }

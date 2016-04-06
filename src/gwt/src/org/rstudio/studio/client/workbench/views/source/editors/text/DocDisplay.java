@@ -261,7 +261,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void scrollToX(int x);
    
    int getScrollTop();
-   void scrollToY(int y);
+   void scrollToY(int y, int animateMs);
    
    void scrollToLine(int row, boolean center);
    
