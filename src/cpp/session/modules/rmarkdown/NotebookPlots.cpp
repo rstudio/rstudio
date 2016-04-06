@@ -57,7 +57,8 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void processPlots(const FilePath& plotFolder, bool fireEvents)
+void processPlots(const FilePath& plotFolder, 
+                  boost::shared_ptr<PlotState> pPlotState)
 {
    // ensure plot folder exists
    if (!plotFolder.exists())
@@ -73,7 +74,18 @@ void processPlots(const FilePath& plotFolder, bool fireEvents)
    {
       if (isPlotPath(path))
       {
-         if (fireEvents)
+
+#ifndef _WIN32
+   // on Windows, turning off the PNG device writes an empty PNG file if no 
+   // plot output occurs; we avoid treating that empty file as an actual plot
+   // by only emitting an event if a plot occurred.
+   //
+   // TODO: not all plot libraries cause the new plot hooks to invoke, so this
+   // heuristic may cause us to miss a plot on Windows; we may need some
+   // mechanism by which we can determine whether the device or its output is
+   // empty.
+         if (pPlotState->hasPlots)
+#endif
             events().onPlotOutput(path);
 
          // clean up the plot so it isn't emitted twice
@@ -99,26 +111,14 @@ void removeGraphicsDevice(const FilePath& plotFolder,
    if (error)
       LOG_ERROR(error);
 
-#ifdef _WIN32
-   // on Windows, turning off the PNG device writes an empty PNG file if no 
-   // plot output occurs; we avoid treating that empty file as an actual plot
-   // by only emitting an event if a plot occurred.
-   //
-   // TODO: not all plot libraries cause the new plot hooks to invoke, so this
-   // heuristic may cause us to miss a plot on Windows; we may need some
-   // mechanism by which we can determine whether the device or its output is
-   // empty.
-   processPlots(plotFolder, hasPlots);
-#else
-   processPlots(plotFolder, true);
-#endif
+   processPlots(plotFolder, pPlotState);
 }
 
 void onNewPlot(const FilePath& plotFolder,
                boost::shared_ptr<PlotState> pPlotState)
 {
    pPlotState->hasPlots = true;
-   processPlots(plotFolder, true);
+   processPlots(plotFolder, pPlotState);
 }
 
 void onConsolePrompt(const FilePath& plotFolder,
