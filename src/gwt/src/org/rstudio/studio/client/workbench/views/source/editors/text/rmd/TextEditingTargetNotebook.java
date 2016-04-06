@@ -222,7 +222,7 @@ public class TextEditingTargetNotebook
                return;
             
             // bail if we don't render chunks inline
-            if (!prefs_.showRmdChunkOutputInline().getGlobalValue())
+            if (!docDisplay_.showChunkOutputInline())
                return;
             
             String rmdPath = docUpdateSentinel_.getPath();
