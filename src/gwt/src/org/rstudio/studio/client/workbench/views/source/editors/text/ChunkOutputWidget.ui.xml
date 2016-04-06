@@ -17,13 +17,13 @@
    
    .clear
    {
-      right: 10px;
+      right: 12px;
       padding: 5px;
    }
    
    .expand 
    {
-      right: 31px;
+      right: 35px;
       transition: transform 400ms ease, -webkit-transform 400ms ease;
    }
    
@@ -40,7 +40,7 @@
    
    .overflowY .expand
    {
-      right: 44px;
+      right: 48px;
    }
 
    .frame
