@@ -26,6 +26,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 #include <r/session/RGraphics.hpp>
 
 #define kPlotPrefix "_rs_chunk_plot_"
@@ -43,13 +44,11 @@ class PlotState
 {
 public:
    PlotState():
-      hasPlots(false),
-      sexpMargins(R_NilValue)
+      hasPlots(false)
    { }
 
    bool hasPlots;
-   SEXP sexpMargins;
-   r::sexp::Protect protect;
+   r::sexp::PreservedSEXP sexpMargins;
 };
 
 bool isPlotPath(const FilePath& path)
@@ -182,9 +181,14 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // save old plot state
    r::exec::RFunction par("par");
    par.addParam("no.readonly", true);
-   error = par.call(&pPlotState->sexpMargins, &pPlotState->protect);
+   r::sexp::Protect protect;
+   SEXP sexpMargins;
+   error = par.call(&sexpMargins, &protect);
    if (error)
       LOG_ERROR(error);
+
+   // preserve until chunk is finished executing
+   pPlotState->sexpMargins.set(sexpMargins);
 
    // set notebook-friendly figure margins
    //                                          bot  left top  right
