@@ -232,8 +232,8 @@ public class ChunkOutputWidget extends Composite
                      root_.getElement().getScrollHeight()), 
             ChunkOutputUi.MAX_CHUNK_HEIGHT);
 
-      // if we have plots pending, don't shrink until they're loaded 
-      if (pendingPlots_ > 0 && height < renderedHeight_)
+      // if we have renders pending, don't shrink until they're loaded 
+      if (pendingRenders_ > 0 && height < renderedHeight_)
          return;
       
       // don't report height if it hasn't changed
@@ -434,7 +434,7 @@ public class ChunkOutputWidget extends Composite
       plot.getElement().getStyle().setDisplay(Display.NONE);
 
       root_.add(plot);
-      pendingPlots_++;
+      final Timer renderTimeout = new RenderTimer();
       
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot.getElement(), new EventListener()
@@ -455,7 +455,7 @@ public class ChunkOutputWidget extends Composite
             // show the image
             plot.getElement().getStyle().setDisplay(Display.BLOCK);
 
-            pendingPlots_--;
+            renderTimeout.cancel();
             completeUnitRender();
          }
       });
@@ -463,12 +463,40 @@ public class ChunkOutputWidget extends Composite
       plot.setUrl(url);
    }
    
+   private class RenderTimer extends Timer
+   {
+      public RenderTimer()
+      {
+         pendingRenders_++;
+
+         // ensure we decrement the counter eventually even if content never
+         // renders
+         schedule(15000);
+      }
+
+      @Override
+      public void cancel()
+      {
+         if (isRunning())
+            pendingRenders_--;
+         super.cancel();
+      }
+
+      @Override
+      public void run()
+      {
+         pendingRenders_--;
+      }
+   };
+   
    private void showHtmlOutput(String url)
    {
       final ChunkOutputFrame frame = new ChunkOutputFrame();
       frame.getElement().getStyle().setHeight(200, Unit.PX);
       frame.getElement().getStyle().setWidth(100, Unit.PCT);
       root_.add(frame);
+
+      final Timer renderTimeout = new RenderTimer();
 
       frame.loadUrl(url, new Command() 
       {
@@ -487,6 +515,8 @@ public class ChunkOutputWidget extends Composite
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
             bodyStyle.setColor(s_color);
+            
+            renderTimeout.cancel();
             completeUnitRender();
          };
       });
@@ -722,7 +752,7 @@ public class ChunkOutputWidget extends Composite
    private int state_ = CHUNK_EMPTY;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
-   private int pendingPlots_ = 0;
+   private int pendingRenders_ = 0;
    
    private CommandWithArg<Integer> onRenderCompleted_;
    private Timer collapseTimer_ = null;
