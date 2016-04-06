@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -217,6 +218,10 @@ public class TextEditingTargetNotebook
          @Override
          public void onSaveFile(SaveFileEvent event)
          {
+            // bail if this was an autosave
+            if (event.isAutosave())
+               return;
+            
             // bail if not an .Rmd
             if (!docDisplay_.getFileType().isRmd())
                return;
