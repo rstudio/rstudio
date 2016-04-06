@@ -95,9 +95,7 @@ void removeGraphicsDevice(const FilePath& plotFolder,
       LOG_ERROR(error);
 
    // restore the figure margins
-   r::exec::RFunction par("par");
-   par.addParam("mar", pPlotState->sexpMargins);
-   error = par.call();
+   error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
    if (error)
       LOG_ERROR(error);
 
@@ -180,9 +178,10 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    if (error)
       return error;
 
-   // save old figure margins
-   error = r::exec::RFunction("par", "mar").call(&pPlotState->sexpMargins, 
-         &pPlotState->protect);
+   // save old plot state
+   r::exec::RFunction par("par");
+   par.addParam("no.readonly", true);
+   error = par.call(&pPlotState->sexpMargins, &pPlotState->protect);
    if (error)
       LOG_ERROR(error);
 
