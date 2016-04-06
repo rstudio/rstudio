@@ -704,7 +704,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getSourceIndexCompletions", function(token)
 {
-   .Call(.rs.routines$rs_getSourceIndexCompletions, token)
+   .Call("rs_getSourceIndexCompletions", token)
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
@@ -1381,7 +1381,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getNAMESPACEImportedSymbols", function(documentId)
 {
-   .Call(.rs.routines$rs_getNAMESPACEImportedSymbols, documentId)
+   .Call("rs_getNAMESPACEImportedSymbols", documentId)
 })
 
 .rs.addFunction("getCompletionsNAMESPACE", function(token, documentId)
@@ -1477,7 +1477,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("finishExpression", function(string)
 {
-   .Call(.rs.routines$rs_finishExpression, as.character(string))
+   .Call("rs_finishExpression", as.character(string))
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
@@ -1512,7 +1512,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("isBrowserActive", function()
 {
-   .Call(.rs.routines$rs_isBrowserActive)
+   .Call("rs_isBrowserActive")
 })
 
 # NOTE: This function attempts to find an active frame (if
@@ -1585,7 +1585,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getKnitParamsForDocument", function(documentId)
 {
-   .Call(.rs.routines$rs_getKnitParamsForDocument, documentId)
+   .Call("rs_getKnitParamsForDocument", documentId)
 })
 
 .rs.addFunction("knitParams", function(content)
@@ -2881,13 +2881,13 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listInferredPackages", function(documentId)
 {
-   .Call(.rs.routines$rs_listInferredPackages, documentId)
+   .Call("rs_listInferredPackages", documentId)
 })
 
 .rs.addFunction("getInferredCompletions", function(packages = character(),
                                                    simplify = TRUE)
 {
-   result <- .Call(.rs.routines$rs_getInferredCompletions, as.character(packages))
+   result <- .Call("rs_getInferredCompletions", as.character(packages))
    if (simplify && length(result) == 1)
       return(result[[1]])
    result

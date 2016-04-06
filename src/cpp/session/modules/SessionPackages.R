@@ -54,12 +54,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    notifyPackageLoaded <- function(pkgname, ...)
    {
-      .Call(.rs.routines$rs_packageLoaded, pkgname)
+      .Call("rs_packageLoaded", pkgname)
    }
 
    notifyPackageUnloaded <- function(pkgname, ...)
    {
-      .Call(.rs.routines$rs_packageUnloaded, pkgname)
+      .Call("rs_packageUnloaded", pkgname)
    }
    
    # NOTE: `list.dirs()` was introduced with R 2.13 but was buggy until 3.0
@@ -140,7 +140,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # do housekeeping after we execute the original
       on.exit({
          .rs.updatePackageEvents()
-         .Call(.rs.routines$rs_packageLibraryMutated)
+         .Call("rs_packageLibraryMutated")
          .rs.restorePreviousPath()
       })
 
@@ -166,12 +166,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction( "addRToolsToPath", function()
 {
-    .Call(.rs.routines$rs_addRToolsToPath)
+    .Call("rs_addRToolsToPath")
 })
 
 .rs.addFunction( "restorePreviousPath", function()
 {
-    .Call(.rs.routines$rs_restorePreviousPath)
+    .Call("rs_restorePreviousPath")
 })
 
 .rs.addFunction( "uniqueLibraryPaths", function()
@@ -531,7 +531,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
 {
-   .Call(.rs.routines$rs_enqueLoadedPackageUpdates, installCmd)
+   .Call("rs_enqueLoadedPackageUpdates", installCmd)
 })
 
 .rs.addJsonRpcHandler("loaded_package_updates_required", function(pkgs)
@@ -546,12 +546,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("getCachedAvailablePackages", function(contribUrl)
 {
-   .Call(.rs.routines$rs_getCachedAvailablePackages, contribUrl)
+   .Call("rs_getCachedAvailablePackages", contribUrl)
 })
 
 .rs.addFunction("downloadAvailablePackages", function(contribUrl)
 {
-   .Call(.rs.routines$rs_downloadAvailablePackages, contribUrl)
+   .Call("rs_downloadAvailablePackages", contribUrl)
 })
 
 .rs.addJsonRpcHandler("package_skeleton", function(packageName,
@@ -963,7 +963,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # NOTE: this file is not always generated (e.g. people who have implicitly opted
    # into using devtools won't need the template file)
    if (file.exists(file.path(packageDirectory, "R", "hello.R")))
-      .Call(.rs.routines$rs_addFirstRunDoc, RprojPath, "R/hello.R")
+      .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
 
    ## NOTE: This must come last to ensure the other package
    ## infrastructure bits have been generated; otherwise
@@ -974,7 +974,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    {
       Rcpp::compileAttributes(packageDirectory)
       if (file.exists(file.path(packageDirectory, "src/rcpp_hello.cpp")))
-         .Call(.rs.routines$rs_addFirstRunDoc, RprojPath, "src/rcpp_hello.cpp")
+         .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello.cpp")
    }
    
    .rs.success()
