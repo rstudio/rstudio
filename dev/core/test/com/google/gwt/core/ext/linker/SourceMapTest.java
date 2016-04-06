@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.linker;
 
+import com.google.gson.JsonPrimitive;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.soyc.coderef.ClassDescriptor;
 import com.google.gwt.core.ext.soyc.coderef.EntityDescriptor;
@@ -39,7 +40,6 @@ import com.google.gwt.util.tools.Utility;
 import junit.framework.TestCase;
 
 import org.eclipse.jdt.internal.compiler.problem.ShouldNotImplement;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -234,7 +234,8 @@ public class SourceMapTest extends TestCase {
       SourceMapConsumerV3 sourceMap = new SourceMapConsumerV3();
       sourceMap.parse(stringContent(sourceMapFile));
       if (firstIteration) {
-        Integer permutationId = (Integer) sourceMap.getExtensions().get("x_gwt_permutation");
+        Integer permutationId =
+            ((JsonPrimitive) sourceMap.getExtensions().get("x_gwt_permutation")).getAsInt();
         assertNotNull(permutationId);
         mapping.put(permutationId, symbolTable);
         firstIteration = false;

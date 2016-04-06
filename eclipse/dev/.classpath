@@ -23,6 +23,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/htmlunit/htmlunit-2.19/htmlunit-core-js-2.15.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/protobuf/protobuf-2.5.0/protobuf-java-rebased-2.5.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-18.0/guava-18.0-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/gson/gson-2.6.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/sourcemap-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/compiler-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android-rebased.jar"/>

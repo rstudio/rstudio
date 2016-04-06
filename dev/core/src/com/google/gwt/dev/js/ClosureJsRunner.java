@@ -67,33 +67,70 @@ public class ClosureJsRunner {
       // JS externs
       "es3.js",
       "es5.js",
+      "es6.js",
+      "es6_collections.js",
 
       // Event APIs
-      "w3c_event.js", "w3c_event3.js", "w3c_device_sensor_event.js",
       "gecko_event.js",
       "ie_event.js",
+      "w3c_device_sensor_event.js",
+      "w3c_event.js",
+      "w3c_event3.js",
+      "w3c_touch_event.js",
       "webkit_event.js",
 
       // DOM apis
-      "w3c_dom1.js", "w3c_dom2.js", "w3c_dom3.js",
       "gecko_dom.js",
       "ie_dom.js",
+      "w3c_dom1.js",
+      "w3c_dom2.js",
+      "w3c_dom3.js",
       "webkit_dom.js",
 
       // CSS apis
-      "w3c_css.js",
       "gecko_css.js",
       "ie_css.js",
+      "w3c_css.js",
       "webkit_css.js",
 
       // Top-level namespaces
-      "chrome.js", "google.js",
+      "chrome.js",
+      "google.js",
 
-      "deprecated.js", "fileapi.js", "flash.js", "gears_symbols.js", "gears_types.js",
-      "gecko_xml.js", "html5.js", "ie_vml.js", "iphone.js", "webstorage.js", "w3c_anim_timing.js",
-      "w3c_css3d.js", "w3c_elementtraversal.js", "w3c_geolocation.js", "w3c_indexeddb.js",
-      "w3c_navigation_timing.js", "w3c_range.js", "w3c_selectors.js", "w3c_xml.js", "window.js",
-      "webkit_notifications.js", "webgl.js");
+      // Miscellaneous
+      "deprecated.js",
+      "fetchapi.js",
+      "fileapi.js",
+      "flash.js",
+      "gecko_xml.js",
+      "html5.js",
+      "ie_vml.js",
+      "intl.js",
+      "iphone.js",
+      "mediasource.js",
+      "page_visibility.js",
+      "streamsapi.js",
+      "url.js",
+      "v8.js",
+      "w3c_anim_timing.js",
+      "w3c_audio.js",
+      "w3c_batterystatus.js",
+      "w3c_css3d.js",
+      "w3c_elementtraversal.js",
+      "w3c_geolocation.js",
+      "w3c_indexeddb.js",
+      "w3c_navigation_timing.js",
+      "w3c_range.js",
+      "w3c_rtc.js",
+      "w3c_selectors.js",
+      "w3c_serviceworker.js",
+      "w3c_webcrypto.js",
+      "w3c_xml.js",
+      "webstorage.js",
+      "webkit_notifications.js",
+      "webgl.js",
+      "whatwg_encoding.js",
+      "window.js");
 
   /**
    * @return a mutable list

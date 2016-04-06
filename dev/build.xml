@@ -69,6 +69,7 @@
           <include name="guava/guava-18.0/guava-18.0-rebased.jar"/>
           <include name="icu4j/50.1.1/icu4j.jar"/>
           <include name="jetty/jetty-9.2.14.v20151106/jetty-all-9.2.14.v20151106.jar"/>
+          <include name="gson/gson-2.6.2.jar"/>
           <include name="jscomp/20160315/compiler-rebased.jar"/>
           <include name="jscomp/20160315/sourcemap-rebased.jar"/>
           <include name="jsr305/jsr305.jar"/>
@@ -122,6 +123,7 @@
           <zipfileset src="${gwt.tools.lib}/icu4j/50.1.1/icu4j.jar"/>
           <zipfileset
               src="${gwt.tools.lib}/jetty/jetty-9.2.14.v20151106/jetty-all-9.2.14.v20151106.jar"/>
+          <zipfileset src="${gwt.tools.lib}/gson/gson-2.6.2.jar"/>
           <zipfileset src="${gwt.tools.lib}/jscomp/20160315/compiler-rebased.jar"/>
           <zipfileset src="${gwt.tools.lib}/jscomp/20160315/sourcemap-rebased.jar"/>
           <zipfileset src="${gwt.tools.lib}/jsr305/jsr305.jar"/>
@@ -206,6 +208,7 @@
             location="${gwt.tools.lib}/eclipse/jdtCompilerAdapter_3.11.2-CUSTOM-GWT-2.8-20160205.jar"/>
         <pathelement
             location="${gwt.tools.lib}/guava/guava-18.0/guava-18.0-rebased.jar"/>
+        <pathelement location="${gwt.tools.lib}/gson/gson-2.6.2.jar"/>
         <pathelement location="${gwt.tools.lib}/jscomp/20160315/compiler-rebased.jar"/>
         <pathelement location="${gwt.tools.lib}/jscomp/20160315/sourcemap-rebased.jar"/>
         <pathelement location="${gwt.tools.lib}/json/android-sdk-19.1/json-android-rebased.jar"/>
