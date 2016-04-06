@@ -389,16 +389,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                        envir = .GlobalEnv)
 {
    # TODO: Move to 'rmarkdown' package when appropriate
-   html_notebook <- function(toc = TRUE,
-                             toc_float = TRUE,
-                             code_folding = "show",
+   html_notebook <- function(code_folding = "show",
                              theme = "cerulean",
                              highlight = "textmate",
                              ...)
    {
-      rmarkdown::html_document(toc = toc,
-                               toc_float = toc_float,
-                               code_folding = code_folding,
+      rmarkdown::html_document(code_folding = code_folding,
                                theme = theme,
                                highlight = highlight,
                                ...)
