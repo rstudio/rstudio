@@ -19,6 +19,7 @@
 
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
+#include <boost/signals/connection.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/StringUtils.hpp>
@@ -45,10 +46,13 @@ class PlotState
 public:
    PlotState():
       hasPlots(false)
-   { }
+   {
+   }
 
    bool hasPlots;
    r::sexp::PreservedSEXP sexpMargins;
+   boost::signals::connection onConsolePrompt;
+   boost::signals::connection onNewPlot;
 };
 
 bool isPlotPath(const FilePath& path)
@@ -126,12 +130,8 @@ void onConsolePrompt(const FilePath& plotFolder,
                      const std::string& )
 {
    removeGraphicsDevice(plotFolder, pPlotState);
-
-   module_context::events().onConsolePrompt.disconnect(
-         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
-
-   plots::events().onNewPlot.disconnect(
-         boost::bind(onNewPlot, pPlotState, _1));
+   pPlotState->onConsolePrompt.disconnect();
+   pPlotState->onNewPlot.disconnect();
 }
 
 } // anonymous namespace
@@ -197,10 +197,10 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
       LOG_ERROR(error);
    
    // complete the capture on the next console prompt
-   module_context::events().onConsolePrompt.connect(
+   pPlotState->onConsolePrompt = module_context::events().onConsolePrompt.connect(
          boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
 
-   plots::events().onNewPlot.connect(
+   pPlotState->onNewPlot = plots::events().onNewPlot.connect(
          boost::bind(onNewPlot, plotFolder, pPlotState));
 
    return Success();
