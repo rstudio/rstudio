@@ -311,7 +311,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       .rs.endsWith(html, "-->"))
    
    # Record htmlwidget dependencies as we fill chunks
-   jsDependencies <- list()
+   htmlDependencies <- list()
    
    for (chunkIdx in seq_along(indices))
    {
@@ -341,7 +341,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             # parse and record JSON dependencies
             jsonPath <- .rs.withChangedExtension(fileName, "json")
             jsonString <- chunkData[[jsonPath]]
-            jsDependencies <<- c(jsDependencies, .rs.fromJSON(jsonString))
+            htmlDependencies <<- c(htmlDependencies, .rs.fromJSON(jsonString))
             
             # emit body of HTML content
             bodyEl <- .rs.extractHTMLBodyElement(value)
@@ -358,7 +358,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # Inject JSON dependency information into document
    # TODO: Resolve duplicates
-   htmlDeps <- unlist(lapply(jsDependencies, function(dep) {
+   htmlInjection <- unlist(lapply(htmlDependencies, function(dep) {
       
       injection <- c()
       
@@ -391,13 +391,19 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          injection <- c(injection, scriptHtml)
       }
       
+      # Inject other header contents
+      rendered <- htmltools:::renderTags(dep)
+      headContent <- as.character(rendered$head)
+      if (length(headContent) && any(nzchar(headContent)))
+         injection <- c(injection, headContent)
+      
       paste(injection, collapse = "\n")
    }))
    
-   bodyIdx <- tail(grep("^\\s*</body>\\s*$", html, perl = TRUE), n = 1)
+   bodyIdx <- tail(grep("^\\s*</head>\\s*$", html, perl = TRUE), n = 1)
    html <- c(
       html[1:(bodyIdx - 1)],
-      htmlDeps,
+      htmlInjection,
       html[bodyIdx:length(html)]
    )
    
