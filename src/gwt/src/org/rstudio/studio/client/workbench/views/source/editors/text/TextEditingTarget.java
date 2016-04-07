@@ -4228,7 +4228,7 @@ public class TextEditingTarget implements
       };
       
       // Rmd allows server-side prep for chunk execution
-      if (fileType_.isRmd())
+      if (fileType_.isRmd() && !docDisplay_.showChunkOutputInline())
       {
          // ensure source is synced with server
          docUpdateSentinel_.withSavedDoc(new Command() {

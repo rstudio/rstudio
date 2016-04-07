@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 
 import org.rstudio.core.client.Barrier.Token;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.js.JsObject;
@@ -192,6 +193,12 @@ public class DocUpdateSentinel
 
    public void withSavedDoc(final Command onSaved)
    {
+      withSavedDoc(onSaved, null);
+   }
+   
+   public void withSavedDoc(final Command onSaved, 
+         final CommandWithArg<String> onError)
+   {
       if (changeTracker_.hasChanged())
       {
          boolean saved = doSave(null, null, null, new ProgressIndicator() {
@@ -199,12 +206,18 @@ public class DocUpdateSentinel
             @Override
             public void onCompleted()
             {
-               onSaved.execute(); 
+               if (onSaved != null)
+                  onSaved.execute(); 
             }
    
+            @Override public void onError(String message) 
+            {
+               if (onError != null)
+                  onError.execute(message);
+            }
+
             @Override public void onProgress(String message) {}
             @Override public void onProgress(String message, Operation onCancel) {}
-            @Override public void onError(String message) {}
             @Override public void clearProgress() {}
          });
          
@@ -216,7 +229,6 @@ public class DocUpdateSentinel
          onSaved.execute();
       }
    }
-   
    private boolean maybeAutoSave()
    {
       if (changeTracker_.hasChanged())

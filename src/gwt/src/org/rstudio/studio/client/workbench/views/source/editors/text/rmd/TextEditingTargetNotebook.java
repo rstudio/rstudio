@@ -18,8 +18,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Queue;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -105,11 +106,12 @@ public class TextEditingTargetNotebook
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, String codeIn, 
-            String optionsIn, String setupCrc32In)
+            String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
          options = optionsIn;
          code = codeIn;
+         row = rowIn;
          setupCrc32 = setupCrc32In;
          pos = 0;
          linesExecuted = 0;
@@ -119,6 +121,7 @@ public class TextEditingTargetNotebook
       public String code;
       public String setupCrc32;
       public int pos;
+      public int row;
       public int linesExecuted;
    };
 
@@ -309,7 +312,7 @@ public class TextEditingTargetNotebook
       String setupCrc32 = "";
       if (isSetupChunkScope(chunk))
       {
-         setupCrc32 = setupCrc32_;
+         setupCrc32 = getChunkCrc32(chunk);
          chunkId = SETUP_CHUNK_ID;
       }
       else
@@ -322,12 +325,6 @@ public class TextEditingTargetNotebook
          ensureSetupChunkExecuted();
       }
       
-      // decorate the gutter to show the chunk is queued
-      docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
-            chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
-      chunks_.setChunkState(chunk.getPreamble().getRow(), 
-            ChunkContextToolbar.STATE_QUEUED);
-
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
       for (ChunkExecQueueUnit unit: chunkExecQueue_)
@@ -337,16 +334,89 @@ public class TextEditingTargetNotebook
             unit.code = code;
             unit.options = options;
             unit.setupCrc32 = setupCrc32;
+            unit.row = row;
             return;
          }
       }
 
-      // put it in the queue 
-      chunkExecQueue_.add(new ChunkExecQueueUnit(chunkId, code,
-            options, setupCrc32));
+      // if this is the currently executing chunk, don't queue it again
+      if (executingChunk_ != null && executingChunk_.chunkId == chunkId)
+         return;
+
+      // decorate the gutter to show the chunk is queued
+      docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
+            chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
+      chunks_.setChunkState(chunk.getPreamble().getRow(), 
+            ChunkContextToolbar.STATE_QUEUED);
       
-      // initiate queue processing
-      processChunkExecQueue();
+      // find the appropriate place in the queue for this chunk
+      int idx = chunkExecQueue_.size();
+      for (int i = 0; i < chunkExecQueue_.size(); i++)
+      {
+         if (chunkExecQueue_.get(i).row > row)
+         {
+            idx = i;
+            break;
+         }
+      }
+
+      // put it in the queue 
+      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, code,
+            options, row, setupCrc32));
+
+      // if there are other chunks in the queue, let them run
+      if (chunkExecQueue_.size() > 1)
+         return;
+      
+      // if this is the first chunk in the queue, make sure the doc is saved
+      // and check for param eval before we continue. since we suppress the
+      // execution of additional chunks while waiting for param evaluation, we
+      // need to guarantee that this state gets cleaned up correctly on error
+      evaluatingParams_ = true;
+      final Command completeEval = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            evaluatingParams_ = false;
+            processChunkExecQueue();
+         }
+      };
+
+      docUpdateSentinel_.withSavedDoc(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            server_.prepareForRmdChunkExecution(docUpdateSentinel_.getId(), 
+               new ServerRequestCallback<Void>()
+               {
+                  @Override
+                  public void onResponseReceived(Void v)
+                  {
+                     completeEval.execute();
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // if we couldn't evaluate the parameters, process the queue
+                     // anyway
+                     Debug.logError(error);
+                     completeEval.execute();
+                  }
+               });
+         }
+      }, 
+      new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String arg)
+         {
+            Debug.logWarning(arg);
+            completeEval.execute();
+         }
+      });
    }
    
    public void manageCommands()
@@ -629,6 +699,9 @@ public class TextEditingTargetNotebook
          cleanChunkExecState(unit.chunkId);
       }
       chunkExecQueue_.clear();
+      
+      // clear currently executing chunk
+      executingChunk_ = null;
    }
 
    @Override
@@ -665,7 +738,13 @@ public class TextEditingTargetNotebook
    
    private void processChunkExecQueue()
    {
+      // do nothing if we're currently executing a chunk or there are no chunks
+      // to execute
       if (chunkExecQueue_.isEmpty() || executingChunk_ != null)
+         return;
+      
+      // do nothing if we're waiting for params to evaluate
+      if (evaluatingParams_)
          return;
       
       // begin chunk execution
@@ -905,36 +984,61 @@ public class TextEditingTargetNotebook
       if (!prefs_.autoRunSetupChunk().getValue())
          return;
 
+      // ignore if setup chunk currently running or already in the execution
+      // queue
+      if (executingChunk_ != null &&
+          executingChunk_.chunkId == SETUP_CHUNK_ID)
+      {
+         return;
+      }
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         if (unit.chunkId == SETUP_CHUNK_ID)
+         {
+            return;
+         }
+      }
+      
       // no reason to do work if we don't need to re-validate the setup chunk
       if (!validateSetupChunk_ && !StringUtil.isNullOrEmpty(setupCrc32_))
          return;
       validateSetupChunk_ = false;
-
+      
       // find the setup chunk
       JsArray<Scope> scopes = docDisplay_.getScopeTree();
       for (int i = 0; i < scopes.length(); i++)
       {
          if (isSetupChunkScope(scopes.get(i)))
          {
-            // extract the body of the chunk
-            String setupCode = docDisplay_.getCode(
-                  scopes.get(i).getBodyStart(),
-                  Position.create(scopes.get(i).getEnd().getRow(), 0));
-            
-            // hash the body and prefix with the virtual session ID (so all
-            // hashes are automatically invalidated when the session changes)
-            String crc32 = session_.getSessionInfo().getSessionId() +
-                  StringUtil.crc32(setupCode);
-            
+            String crc32 = getChunkCrc32(scopes.get(i));
+
             // compare with previously known hash; if it differs, re-run the
             // setup chunk
             if (crc32 != setupCrc32_)
             {
                setupCrc32_ = crc32;
-               executeChunk(scopes.get(i), setupCode, "");
+               executeChunk(scopes.get(i), getChunkCode(scopes.get(i)), "");
             }
          }
       }
+   }
+   
+   private String getChunkCode(Scope chunk)
+   {
+      return docDisplay_.getCode(
+            chunk.getBodyStart(),
+            Position.create(chunk.getEnd().getRow(), 0));
+   }
+   
+   private String getChunkCrc32(Scope chunk)
+   {
+      // extract the body of the chunk
+      String code = getChunkCode(chunk);
+      
+      // hash the body and prefix with the virtual session ID (so all
+      // hashes are automatically invalidated when the session changes)
+      return session_.getSessionInfo().getSessionId() +
+            StringUtil.crc32(code);
    }
    
    private static boolean isSetupChunkScope(Scope scope)
@@ -1029,7 +1133,7 @@ public class TextEditingTargetNotebook
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
-   private Queue<ChunkExecQueueUnit> chunkExecQueue_;
+   private LinkedList<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
    
    private final DocDisplay docDisplay_;
@@ -1060,6 +1164,7 @@ public class TextEditingTargetNotebook
    private int charWidth_ = 65;
    private int pixelWidth_ = 0;
    private boolean executedSinceActivate_ = false;
+   private boolean evaluatingParams_ = false;
    
    private int state_ = STATE_NONE;
 
