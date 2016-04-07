@@ -1,18 +1,18 @@
-           GOOGLE WEB TOOLKIT LICENSE INFORMATION
+           GWT LICENSE INFORMATION
 
 March 3, 2008
 
-The Google Web Toolkit software and sample code developed by Google is 
-licensed under the Apache License, v. 2.0. Other software included in this 
-distribution is provided under other licenses, as listed in the Included 
-Software and Licenses section at the bottom of this page. Source code for 
-software included in this distribution is available from the Google Web 
-Toolkit project or as otherwise indicated at the bottom of this page. 
+The GWT software and sample code developed by the GWT authors is
+licensed under the Apache License, v. 2.0. Other software included in this
+distribution is provided under other licenses, as listed in the Included
+Software and Licenses section at the bottom of this page. Source code for
+software included in this distribution is available from the GWT
+project or as otherwise indicated at the bottom of this page.
 
-Please note that the executable version of the Google Web Toolkit 
-distributed by Google will communicate with Google's servers to check for 
-available updates. If updates are available, you will receive the option to 
-install them. 
+Please note that the executable version of the GWT SDK
+distributed by Google will communicate with Google's servers to check for
+available updates. If updates are available, you will receive the option to
+install them.
 
 =====
 
@@ -182,8 +182,8 @@ reason of your accepting any such warranty or additional liability.
 
 LICENSE INFORMATION REGARDING BUNDLED THIRD-PARTY SOFTWARE
 
-The following third party software is distributed with Google Web 
-Toolkit and is provided under other licenses and/or has source 
+The following third party software is distributed with GWT
+and is provided under other licenses and/or has source 
 available from other locations. Where "gwt-dev.jar" is listed, 
 substitute in the name of the jar corresponding to your platform, 
 e.g. "gwt-dev-linux.jar".

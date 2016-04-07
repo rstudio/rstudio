@@ -1,7 +1,7 @@
-Google Web Toolkit @GWT_VERSION@
+GWT @GWT_VERSION@
 (git revision @GWT_GITREV@)
 Copyright (c) Google, Inc. 2009.  All rights reserved.
-Visit Google Code (http://code.google.com/webtoolkit/).
+Visit http://www.gwtproject.org.
 
 This product includes software developed by:
  - The Apache Software Foundation (http://www.apache.org/).
