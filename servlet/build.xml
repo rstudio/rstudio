@@ -25,7 +25,7 @@
     <gwt.jar>
       <!-- Rebased dependencies go in gwt-servlet too -->
       <zipfileset src="${gwt.tools.lib}/colt/colt-1.2.jar" />
-      <zipfileset src="${gwt.tools.lib}/guava/guava-18.0/guava-18.0-rebased.jar" />
+      <zipfileset src="${gwt.tools.lib}/guava/guava-19.0/guava-19.0-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/jscomp/20160315/sourcemap-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/json/android-sdk-19.1/json-android-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar" />

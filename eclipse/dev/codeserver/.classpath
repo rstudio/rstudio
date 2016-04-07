@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="codeserver/java"/>
 	<classpathentry kind="src" path="codeserver/javatests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-18.0/guava-18.0-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-19.0/guava-19.0-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/gson-2.6.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/sourcemap-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/compiler-rebased.jar"/>
