@@ -16,9 +16,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
 {
-  if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
-  if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
-
+   if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
+   if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
+   
    # if 'output' already exists, compare file write times to determine
    # whether we really want to overwrite a pre-existing .Rmd
    if (file.exists(output)) {
@@ -34,7 +34,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    cachePath <- .rs.rnb.cachePathFromRmdPath(output)
    .rs.hydrateCacheFromNotebook(input, cachePath)
-
+   
    .rs.scalar(TRUE)
 })
 
@@ -59,7 +59,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    if (!length(idx))
       stop("no encoded content with tag '", tag, "' in '", rnbPath, "'")
-      
+   
    reDocument <- paste('<!--', tag, '(\\S+) -->')
    rmdEncoded <- sub(reDocument, "\\1", contents[idx])
    .rs.base64decode(rmdEncoded)
@@ -359,11 +359,28 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Inject JSON dependency information into document
    # TODO: Resolve duplicates
    htmlDeps <- unlist(lapply(jsDependencies, function(dep) {
-      injection <- character()
       
-      jsPath <- file.path(dep$src$file, dep$script)
-      if (file.exists(jsPath))
+      injection <- c()
+      
+      # Inject a CSS resource
+      if (!is.null(dep$stylesheet)) {
+         cssPath <- file.path(dep$src$file, dep$stylesheet)
+         contents <- .rs.readFile(cssPath, binary = TRUE)
+         encoded <- .rs.base64encode(contents)
+         htmlAttributes <- list(
+            "data-rnb-id" = sprintf("lib/%s-%s/%s", dep$name, dep$version, dep$stylesheet),
+            "href" = sprintf("data:text/css;charset=utf8;base64,%s", encoded),
+            "rel" = "stylesheet",
+            "tyle" = "text/css"
+         )
+         cssHtml <- sprintf("<link %s />", .rs.listToHtmlAttributes(htmlAttributes))
+         injection <- c(injection, cssHtml)
+      }
+      
+      # Inject a JS resource
+      if (!is.null(dep$script))
       {
+         jsPath <- file.path(dep$src$file, dep$script)
          contents <- .rs.readFile(jsPath, binary = TRUE)
          encoded <- .rs.base64encode(contents)
          htmlAttributes <- list(
@@ -534,7 +551,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
 {
-  .Call("rs_chunkCacheFolder", rmdPath)
+   .Call("rs_chunkCacheFolder", rmdPath)
 })
 
 .rs.addFunction("rnb.parseConsoleData", function(data)
