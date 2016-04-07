@@ -1392,7 +1392,6 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.emptyCompletions())
    
    n <- vapply(symbols, function(x) length(x[[1]]), USE.NAMES = FALSE, FUN.VALUE = numeric(1))
-   total <- sum(n)
    
    output <- list(
       exports = unlist(lapply(symbols, `[[`, "exports"), use.names = FALSE),
@@ -2428,6 +2427,26 @@ assign(x = ".rs.acCompletionTypes",
       getNamespaceImports(asNamespace(pkgName)),
       error = function(e) NULL
    )
+   
+   # workaround for devtools::load_all() clobbering the
+   # namespace imports
+   if (length(importCompletions) && is.null(names(importCompletions))) {
+      try({
+         env <- new.env(parent = emptyenv())
+         for (el in importCompletions) {
+            # Length one element: get all exports from that package
+            if (length(el) == 1) {
+               env[[el]] <- c(env[[el]], getNamespaceExports(asNamespace(el)))
+            }
+            
+            # Length >1 element: 'importFrom()'.
+            else if (length(el) > 1) {
+               env[[el]] <- c(env[[el]], tail(el, n = -1))
+            }
+         }
+         importCompletions <- as.list(env)
+      }, silent = TRUE)
+   }
    
    # remove 'base' element if it's just TRUE
    if (length(importCompletions))
