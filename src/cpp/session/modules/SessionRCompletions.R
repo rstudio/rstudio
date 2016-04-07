@@ -1550,6 +1550,9 @@ assign(x = ".rs.acCompletionTypes",
       names(x[[interface]])
    })
    
+   if (is.null(names(dynRoutineNames)))
+      return(.rs.emptyCompletions())
+   
    dynResults <- .rs.namedVectorAsList(dynRoutineNames)
    dynIndices <- .rs.fuzzyMatches(dynResults$values, token)
    
@@ -2434,7 +2437,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # if we have import completions, use them
-   if (length(importCompletions))
+   if (length(importCompletions) && !is.null(names(importCompletions)))
    {
       importCompletionsList <- .rs.namedVectorAsList(importCompletions)
       
