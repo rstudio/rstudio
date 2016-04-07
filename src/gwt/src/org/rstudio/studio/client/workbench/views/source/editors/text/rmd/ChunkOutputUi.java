@@ -134,9 +134,14 @@ public class ChunkOutputUi
       {
          Scope chunk = getScope();
          Rectangle bounds = display_.getPositionBounds(chunk.getPreamble());
-         display_.scrollToY(display_.getScrollTop() + 
-               (bounds.getTop() - (display_.getBounds().getTop() + 60)),
-               400);
+         
+         // compute the distance we need to scroll 
+         int delta = bounds.getTop() - (display_.getBounds().getTop() + 60);
+
+         // scroll down to see the output, but not up (if the chunk is large 
+         // this could obscure the output rather than show it!)
+         if (delta > 0)
+            display_.scrollToY(display_.getScrollTop() + delta, 400);
       }
    }
 
@@ -155,7 +160,7 @@ public class ChunkOutputUi
       // loop to finish (so Ace gets a chance to adjust the line widgets and
       // do a render pass), then make sure the line beneath our widget is 
       // visible
-      if (ensureVisible)
+      if (ensureVisible && renderHandlerReg_ == null)
          renderHandlerReg_ = display_.addRenderFinishedHandler(this);
    }
 
@@ -172,6 +177,8 @@ public class ChunkOutputUi
    {
       // single-shot ensure visible
       renderHandlerReg_.removeHandler();
+      renderHandlerReg_ = null;
+      
       ensureVisible();
    }
 
@@ -185,7 +192,7 @@ public class ChunkOutputUi
    private final ChunkDefinition def_;
 
    private boolean attached_ = false;
-   private HandlerRegistration renderHandlerReg_;
+   private HandlerRegistration renderHandlerReg_ = null;
 
    public final static int MIN_CHUNK_HEIGHT = 25;
    public final static int CHUNK_COLLAPSED_HEIGHT = 10;
