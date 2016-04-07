@@ -85,7 +85,8 @@ void enqueueChunkOutput(const std::string& docId,
       const core::FilePath& path);
 core::Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& nbCtxId);
+      const std::string& chunkId, const std::string& requestId,
+      const std::string& nbCtxId);
 
 core::Error initOutput();
 

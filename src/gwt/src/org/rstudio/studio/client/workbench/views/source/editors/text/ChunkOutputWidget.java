@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ImageElementEx;
@@ -36,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErro
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
@@ -100,10 +100,10 @@ public class ChunkOutputWidget extends Composite
    }
 
    public ChunkOutputWidget(String chunkId, int expansionState,
-         CommandWithArg<Integer> onRenderCompleted,
-         final Command onChunkCleared)
+         ChunkOutputHost host)
    {
       chunkId_ = chunkId;
+      host_ = host;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
@@ -115,8 +115,6 @@ public class ChunkOutputWidget extends Composite
                   ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
                   ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
       
-      onRenderCompleted_ = onRenderCompleted;
-      
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
       {
@@ -127,7 +125,7 @@ public class ChunkOutputWidget extends Composite
             {
             case Event.ONCLICK:
                destroyConsole();
-               onChunkCleared.execute();
+               host_.onOutputRemoved();
                break;
             };
          }
@@ -160,7 +158,8 @@ public class ChunkOutputWidget extends Composite
    
    // Public methods ----------------------------------------------------------
    
-   public void showChunkOutputUnit(RmdChunkOutputUnit unit)
+   public void showChunkOutputUnit(RmdChunkOutputUnit unit, 
+         boolean ensureVisible)
    {
       initializeOutput(unit.getType());
       switch(unit.getType())
@@ -169,10 +168,10 @@ public class ChunkOutputWidget extends Composite
          showConsoleOutput(unit.getArray());
          break;
       case RmdChunkOutputUnit.TYPE_HTML:
-         showHtmlOutput(unit.getString());
+         showHtmlOutput(unit.getString(), ensureVisible);
          break;
       case RmdChunkOutputUnit.TYPE_PLOT:
-         showPlotOutput(unit.getString());
+         showPlotOutput(unit.getString(), ensureVisible);
          break;
       }
    }
@@ -210,17 +209,20 @@ public class ChunkOutputWidget extends Composite
          JsArray<RmdChunkOutputUnit> units = output.getUnits();
          for (int i = 0; i < units.length(); i++)
          {
-            showChunkOutputUnit(units.get(i));
+            showChunkOutputUnit(units.get(i), !output.isReplay());
          }
-         onOutputFinished();
+
+         // ensure the output is visible if there's a replay request ID 
+         // associated with this chunk
+         onOutputFinished(!output.isReplay());
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit());
+         showChunkOutputUnit(output.getUnit(), !output.isReplay());
       }
    }
    
-   public void syncHeight(boolean scrollToBottom)
+   public void syncHeight(boolean scrollToBottom, boolean ensureVisible)
    {
       // don't sync if we're collapsed
       if (expansionState_.getValue() != EXPANDED)
@@ -246,7 +248,8 @@ public class ChunkOutputWidget extends Composite
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
       setVisible(true);
-      onRenderCompleted_.execute(height + FRAME_HEIGHT_PAD);
+      host_.onOutputHeightChanged(height + FRAME_HEIGHT_PAD,
+            ensureVisible);
    }
    
    public static boolean isEditorStyleCached()
@@ -256,7 +259,7 @@ public class ChunkOutputWidget extends Composite
              s_outlineColor != null;
    }
    
-   public void onOutputFinished()
+   public void onOutputFinished(boolean ensureVisible)
    {
       if (state_ == CHUNK_PRE_OUTPUT)
       {
@@ -267,7 +270,7 @@ public class ChunkOutputWidget extends Composite
             vconsole_.clear();
          root_.clear();
       }
-      syncHeight(true);
+      syncHeight(true, ensureVisible);
       state_ = CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
@@ -349,7 +352,8 @@ public class ChunkOutputWidget extends Composite
    {
       if (event.getConsole() != chunkId_)
          return;
-      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT));
+      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
+            true);
    }
    
    @Override
@@ -357,7 +361,8 @@ public class ChunkOutputWidget extends Composite
    {
       if (event.getConsole() != chunkId_)
          return;
-      renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR));
+      renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR), 
+            true);
    }
    
    @Override
@@ -378,7 +383,7 @@ public class ChunkOutputWidget extends Composite
       // as though the server told us it's done
       if (state_ != CHUNK_READY)
       {
-         onOutputFinished();
+         onOutputFinished(false);
       }
    }
 
@@ -419,12 +424,12 @@ public class ChunkOutputWidget extends Composite
       setOverflowStyle();
    }
    
-   private void completeUnitRender()
+   private void completeUnitRender(boolean ensureVisible)
    {
-      syncHeight(true);
+      syncHeight(true, ensureVisible);
    }
    
-   private void showPlotOutput(String url)
+   private void showPlotOutput(String url, final boolean ensureVisible)
    {
       final Image plot = new Image();
 
@@ -456,7 +461,7 @@ public class ChunkOutputWidget extends Composite
             plot.getElement().getStyle().setDisplay(Display.BLOCK);
 
             renderTimeout.cancel();
-            completeUnitRender();
+            completeUnitRender(ensureVisible);
          }
       });
 
@@ -489,7 +494,7 @@ public class ChunkOutputWidget extends Composite
       }
    };
    
-   private void showHtmlOutput(String url)
+   private void showHtmlOutput(String url, final boolean ensureVisible)
    {
       final ChunkOutputFrame frame = new ChunkOutputFrame();
       frame.getElement().getStyle().setHeight(200, Unit.PX);
@@ -517,17 +522,18 @@ public class ChunkOutputWidget extends Composite
             bodyStyle.setColor(s_color);
             
             renderTimeout.cancel();
-            completeUnitRender();
+            completeUnitRender(ensureVisible);
          };
       });
    }
    
-   private void renderConsoleOutput(String text, String clazz)
+   private void renderConsoleOutput(String text, String clazz, 
+         boolean ensureVisible)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
-      syncHeight(true);
+      syncHeight(true, ensureVisible);
    }
    
    private void initializeOutput(int outputType)
@@ -698,7 +704,7 @@ public class ChunkOutputWidget extends Composite
             {
                renderedHeight_ = 
                      ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
-               onRenderCompleted_.execute(renderedHeight_);
+               host_.onOutputHeightChanged(renderedHeight_, true);
             }
             
          };
@@ -708,7 +714,7 @@ public class ChunkOutputWidget extends Composite
       {
          clearCollapsedStyles();
          expansionState_.setValue(EXPANDED, true);
-         syncHeight(true);
+         syncHeight(true, true);
          collapseTimer_ = new Timer()
          {
             @Override
@@ -754,10 +760,10 @@ public class ChunkOutputWidget extends Composite
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    
-   private CommandWithArg<Integer> onRenderCompleted_;
    private Timer collapseTimer_ = null;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
+   private final ChunkOutputHost host_;
 
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;

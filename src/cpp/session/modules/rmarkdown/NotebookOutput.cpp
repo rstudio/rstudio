@@ -44,6 +44,7 @@
 #define kChunkUrl          "url"
 #define kChunkId           "chunk_id"
 #define kChunkDocId        "doc_id"
+#define kRequestId         "request_id"
 
 #define MAX_ORDINAL        16777215
 #define OUTPUT_THRESHOLD   25
@@ -277,13 +278,15 @@ void enqueueChunkOutput(const std::string& docId,
    result[kChunkId]         = chunkId;
    result[kChunkDocId]      = docId;
    result[kChunkOutputPath] = output;
+   result[kRequestId]       = "";
    ClientEvent event(client_events::kChunkOutput, result);
    module_context::enqueClientEvent(event);
 }
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& nbCtxId)
+      const std::string& chunkId, const std::string& requestId, 
+      const std::string& nbCtxId)
 {
    FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId);
 
@@ -335,6 +338,7 @@ Error enqueueChunkOutput(
    result[kChunkId]      = chunkId;
    result[kChunkDocId]   = docId;
    result[kChunkOutputs] = outputs;
+   result[kRequestId]    = requestId;
    ClientEvent event(client_events::kChunkOutput, result);
    module_context::enqueClientEvent(event);
 

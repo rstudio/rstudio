@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -507,7 +506,7 @@ public class TextEditingTargetNotebook
          if (outputs_.containsKey(data.getChunkId()))
          {
             outputs_.get(data.getChunkId()).getOutputWidget()
-                                           .onOutputFinished();
+                                           .onOutputFinished(true);
 
             // mark the document dirty since it now contains cache changes that
             // haven't been committed to the notebook 
@@ -614,7 +613,7 @@ public class TextEditingTargetNotebook
       
       for (ChunkOutputUi output: outputs_.values())
       {
-         output.getOutputWidget().syncHeight(false);
+         output.getOutputWidget().syncHeight(false, false);
       }
    }
 
@@ -677,32 +676,10 @@ public class TextEditingTargetNotebook
       if (outputs_.containsKey(unit.chunkId))
       {
          ChunkOutputUi output = outputs_.get(unit.chunkId);
-         boolean visible = output.getOutputWidget().isVisible();
 
          output.getOutputWidget().setCodeExecuting(true);
          syncWidth();
-         
-         // we want to be sure the user can see the row beneath the output 
-         // (this is just a convenient way to determine whether the entire 
-         // output is visible)
-         int targetRow = output.getCurrentRow() + 1;
-         
-         // if the output is not visible, we have to guess at how big it will
-         // become -- guess ~10 rows of text
-         if (!visible)
-         {
-            targetRow = Math.min(docDisplay_.getRowCount(), targetRow + 10);
-         }
-      
-         if (docDisplay_.getLastVisibleRow() < targetRow)
-         {
-            Scope chunk = output.getScope();
-            Rectangle bounds = docDisplay_.getPositionBounds(
-                  chunk.getPreamble());
-            docDisplay_.scrollToY(docDisplay_.getScrollTop() + 
-                  (bounds.getTop() - (docDisplay_.getBounds().getTop() + 60)),
-                  400);
-         }
+         output.ensureVisible();
       }
       
       // draw UI on chunk
@@ -741,7 +718,7 @@ public class TextEditingTargetNotebook
                      if (outputs_.containsKey(executingChunk_.chunkId))
                      {
                         outputs_.get(executingChunk_.chunkId)
-                                .getOutputWidget().onOutputFinished();
+                                .getOutputWidget().onOutputFinished(false);
                      }
                      cleanChunkExecState(executingChunk_.chunkId);
                   }

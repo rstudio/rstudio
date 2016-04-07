@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -38,6 +40,10 @@ public class RmdChunkOutput extends JavaScriptObject
       return this.chunk_output;
    }-*/;
    
+   public final native String getRequestId() /*-{
+      return this.request_id;
+   }-*/;
+   
    public final int getType() 
    {
       if (getUnit() == null)
@@ -49,6 +55,11 @@ public class RmdChunkOutput extends JavaScriptObject
    {
       return (getUnits() == null || getUnits().length() == 0) &&
              getUnit() == null;
+   }
+   
+   public final boolean isReplay()
+   {
+      return !StringUtil.isNullOrEmpty(getRequestId());
    }
    
    public static final int TYPE_SINGLE_UNIT   = 0;
