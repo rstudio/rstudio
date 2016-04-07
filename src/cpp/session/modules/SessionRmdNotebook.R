@@ -371,7 +371,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             "data-rnb-id" = sprintf("lib/%s-%s/%s", dep$name, dep$version, dep$stylesheet),
             "href" = sprintf("data:text/css;charset=utf8;base64,%s", encoded),
             "rel" = "stylesheet",
-            "tyle" = "text/css"
+            "type" = "text/css"
          )
          cssHtml <- sprintf("<link %s />", .rs.listToHtmlAttributes(htmlAttributes))
          injection <- c(injection, cssHtml)
