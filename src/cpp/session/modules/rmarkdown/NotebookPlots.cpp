@@ -79,7 +79,7 @@ void processPlots(const FilePath& plotFolder,
       if (isPlotPath(path))
       {
 
-#ifndef _WIN32
+#ifdef _WIN32
    // on Windows, turning off the PNG device writes an empty PNG file if no 
    // plot output occurs; we avoid treating that empty file as an actual plot
    // by only emitting an event if a plot occurred.
