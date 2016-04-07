@@ -35,6 +35,8 @@ import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.WhiteSpace;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -93,7 +95,34 @@ public class FilesList extends Composite
       // enclose in scroll panel
       layoutPanel_ = new ResizeLayoutPanel();
       initWidget(layoutPanel_);
-      layoutPanel_.setWidget(filesDataGrid_);   
+      layoutPanel_.setWidget(filesDataGrid_);
+      
+      layoutPanel_.addResizeHandler(new ResizeHandler()
+      {
+         private static final int STATE_UNKNOWN = 0;
+         private static final int STATE_SMALL   = 1;
+         private static final int STATE_LARGE   = 2;
+         
+         private int state_ = STATE_UNKNOWN;
+         
+         @Override
+         public void onResize(ResizeEvent event)
+         {
+            // Enforce a minimum column width on the name column.
+            int width = event.getWidth();
+            int newState = width < BOUNDARY_WIDTH_PIXELS ? STATE_SMALL : STATE_LARGE;
+            
+            // Avoid over-eager updating of column widths
+            if (newState == state_)
+               return;
+            
+            state_ = newState;
+            if (state_ == STATE_SMALL)
+               filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
+            else
+               filesDataGrid_.setColumnWidth(nameColumn_, "auto");
+         }
+      });
    }
    
    private Column<FileSystemItem, Boolean> addSelectionColumn()
@@ -210,7 +239,7 @@ public class FilesList extends Composite
       };  
       sizeColumn.setSortable(true);
       filesDataGrid_.addColumn(sizeColumn, "Size");
-      filesDataGrid_.setColumnWidth(sizeColumn, 80, Unit.PX);
+      filesDataGrid_.setColumnWidth(sizeColumn, DEFAULT_SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
       
       sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
          @Override
@@ -238,7 +267,7 @@ public class FilesList extends Composite
       };  
       modColumn.setSortable(true);
       filesDataGrid_.addColumn(modColumn, "Modified");
-      filesDataGrid_.setColumnWidth(modColumn, 160, Unit.PX); 
+      filesDataGrid_.setColumnWidth(modColumn, DEFAULT_MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX); 
       
       sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {
          @Override
@@ -578,5 +607,10 @@ public class FilesList extends Composite
    private final ResizeLayoutPanel layoutPanel_ ;  
    
    private static final int DEFAULT_COLUMN_WIDTH_PIXELS = 26;
+   private static final int DEFAULT_SIZE_COLUMN_WIDTH_PIXELS = 80;
+   private static final int DEFAULT_MODIFIED_COLUMN_WIDTH_PIXELS = 160;
+   
+   private static final int BOUNDARY_WIDTH_PIXELS = 500;
+   private static final int MINIMUM_NAME_COLUMN_WIDTH_PIXELS = 208;
    
 }
