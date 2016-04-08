@@ -593,6 +593,11 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    // extract the portion of the column vector requested by the client
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, ncol);
    protect.add(formattedDataSEXP);
+   
+   // reprotect dataSEXP
+   // TODO: figure out why upstream it's not protected
+   protect.add(dataSEXP);
+   
    for (unsigned i = 0; i < static_cast<unsigned>(ncol); i++)
    {
       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
