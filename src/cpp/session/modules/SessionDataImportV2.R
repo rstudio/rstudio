@@ -274,7 +274,9 @@
          cacheVariableName <- options$cacheVariableNames[[resource]]
          cacheUrlName <- options$cacheUrlNames[[resource]]
          downloadResource <- options[[resource]]
-         resourceExtension <- sub(".*([.][^.]*$)", "\\1", basename(downloadResource), perl = TRUE)
+         resourceExtension <- sub("[^\\?]*([.][^.\\?]*)(\\?.*)?$", "\\1", basename(downloadResource), perl = TRUE)
+         if (!(resourceExtension %in% functionInfo$cacheFileExtension))
+            resourceExtension <- functionInfo$cacheFileExtension[[1]]
 
          cacheDataCode <- append(
             cacheDataCode,
@@ -387,7 +389,8 @@
             package = "readr",
             paramsPackage = "readr",
             options = options,
-            optionTypes = optionTypes
+            optionTypes = optionTypes,
+            cacheFileExtension = c(".txt")
          ))
       },
       "statistics" = function() {
@@ -416,7 +419,8 @@
             reference = havenFunction$ref,
             package = "haven",
             options = options,
-            optionTypes = optionTypes
+            optionTypes = optionTypes,
+            cacheFileExtension = c(".dat")
          ))
       },
       "xls" = function() {
@@ -442,7 +446,8 @@
             package = "readxl",
             paramsPackage = NULL,
             options = options,
-            optionTypes = optionTypes
+            optionTypes = optionTypes,
+            cacheFileExtension = c(".xls", ".xlsx")
          ))
       }
    )
