@@ -64,6 +64,7 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
       int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
+   prevWorkingDir_(""),
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
@@ -126,6 +127,23 @@ void ChunkExecContext::connect()
    // reset width
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
+
+   // reset working directory to doc path, if it has one
+   std::string docPath;
+   source_database::getPath(docId_, &docPath);
+   if (!docPath.empty())
+   {
+      FilePath targetDir = module_context::resolveAliasedPath(docPath).parent();
+      FilePath currentDir = FilePath::safeCurrentPath(targetDir);
+      if (currentDir != targetDir)
+      {
+         error = FilePath::makeCurrent(targetDir.absolutePath());
+         if (error)
+            LOG_ERROR(error);
+         else
+            prevWorkingDir_ = currentDir.absolutePath();
+      }
+   }
 
    // begin capturing console text
    connections_.push_back(module_context::events().onConsolePrompt.connect(
@@ -220,6 +238,14 @@ void ChunkExecContext::disconnect()
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
+   // restore working directory, if we saved one
+   if (!prevWorkingDir_.empty())
+   {
+      Error error = FilePath::makeCurrent(prevWorkingDir_);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // unhook all our event handlers
    BOOST_FOREACH(const boost::signals::connection connection, connections_) 
    {
@@ -229,7 +255,6 @@ void ChunkExecContext::disconnect()
    connected_ = false;
 
    events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
-
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 

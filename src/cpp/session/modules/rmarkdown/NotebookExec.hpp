@@ -61,10 +61,14 @@ private:
 
    std::string docId_;
    std::string chunkId_;
+   std::string prevWorkingDir_;
+
    int pixelWidth_;
    int charWidth_;
    int prevCharWidth_;
+
    bool connected_;
+
    std::vector<boost::signals::connection> connections_;
 };
 
