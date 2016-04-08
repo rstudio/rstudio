@@ -71,66 +71,66 @@ public class ClosureJsRunner {
       "es6_collections.js",
 
       // Event APIs
-      "gecko_event.js",
-      "ie_event.js",
-      "w3c_device_sensor_event.js",
-      "w3c_event.js",
-      "w3c_event3.js",
-      "w3c_touch_event.js",
-      "webkit_event.js",
+      "browser/gecko_event.js",
+      "browser/ie_event.js",
+      "browser/w3c_device_sensor_event.js",
+      "browser/w3c_event.js",
+      "browser/w3c_event3.js",
+      "browser/w3c_touch_event.js",
+      "browser/webkit_event.js",
 
       // DOM apis
-      "gecko_dom.js",
-      "ie_dom.js",
-      "w3c_dom1.js",
-      "w3c_dom2.js",
-      "w3c_dom3.js",
-      "webkit_dom.js",
+      "browser/gecko_dom.js",
+      "browser/ie_dom.js",
+      "browser/w3c_dom1.js",
+      "browser/w3c_dom2.js",
+      "browser/w3c_dom3.js",
+      "browser/webkit_dom.js",
 
       // CSS apis
-      "gecko_css.js",
-      "ie_css.js",
-      "w3c_css.js",
-      "webkit_css.js",
+      "browser/gecko_css.js",
+      "browser/ie_css.js",
+      "browser/w3c_css.js",
+      "browser/webkit_css.js",
 
       // Top-level namespaces
-      "chrome.js",
-      "google.js",
+      "browser/chrome.js",
+      "browser/google.js",
 
       // Miscellaneous
-      "deprecated.js",
-      "fetchapi.js",
-      "fileapi.js",
-      "flash.js",
-      "gecko_xml.js",
-      "html5.js",
-      "ie_vml.js",
-      "intl.js",
-      "iphone.js",
-      "mediasource.js",
-      "page_visibility.js",
-      "streamsapi.js",
-      "url.js",
-      "v8.js",
-      "w3c_anim_timing.js",
-      "w3c_audio.js",
-      "w3c_batterystatus.js",
-      "w3c_css3d.js",
-      "w3c_elementtraversal.js",
-      "w3c_geolocation.js",
-      "w3c_indexeddb.js",
-      "w3c_navigation_timing.js",
-      "w3c_range.js",
-      "w3c_rtc.js",
-      "w3c_selectors.js",
-      "w3c_serviceworker.js",
-      "w3c_webcrypto.js",
-      "w3c_xml.js",
-      "webstorage.js",
-      "webkit_notifications.js",
-      "webgl.js",
-      "whatwg_encoding.js",
-      "window.js");
+      "browser/deprecated.js",
+      "browser/fetchapi.js",
+      "browser/fileapi.js",
+      "browser/flash.js",
+      "browser/gecko_xml.js",
+      "browser/html5.js",
+      "browser/ie_vml.js",
+      "browser/intl.js",
+      "browser/iphone.js",
+      "browser/mediasource.js",
+      "browser/page_visibility.js",
+      "browser/streamsapi.js",
+      "browser/url.js",
+      "browser/v8.js",
+      "browser/w3c_anim_timing.js",
+      "browser/w3c_audio.js",
+      "browser/w3c_batterystatus.js",
+      "browser/w3c_css3d.js",
+      "browser/w3c_elementtraversal.js",
+      "browser/w3c_geolocation.js",
+      "browser/w3c_indexeddb.js",
+      "browser/w3c_navigation_timing.js",
+      "browser/w3c_range.js",
+      "browser/w3c_rtc.js",
+      "browser/w3c_selectors.js",
+      "browser/w3c_serviceworker.js",
+      "browser/w3c_webcrypto.js",
+      "browser/w3c_xml.js",
+      "browser/webgl.js",
+      "browser/webkit_notifications.js",
+      "browser/webstorage.js",
+      "browser/whatwg_encoding.js",
+      "browser/window.js");
 
   /**
    * @return a mutable list
@@ -149,12 +149,14 @@ public class ClosureJsRunner {
     ZipInputStream zip = new ZipInputStream(input);
     Map<String, SourceFile> externsMap = Maps.newHashMap();
     for (ZipEntry entry = null; (entry = zip.getNextEntry()) != null;) {
-      BufferedInputStream entryStream =
-          new BufferedInputStream(ByteStreams.limit(zip, entry.getSize()));
-      externsMap.put(entry.getName(), SourceFile.fromInputStream(
-      // Give the files an odd prefix, so that they do not conflict
-      // with the user's files.
-          "externs.zip//" + entry.getName(), entryStream, Charset.defaultCharset()));
+      if (!entry.isDirectory()) {
+        BufferedInputStream entryStream =
+            new BufferedInputStream(ByteStreams.limit(zip, entry.getSize()));
+        externsMap.put(entry.getName(), SourceFile.fromInputStream(
+            // Give the files an odd prefix, so that they do not conflict
+            // with the user's files.
+            "externs.zip//" + entry.getName(), entryStream, Charset.defaultCharset()));
+      }
     }
 
     Preconditions.checkState(externsMap.keySet().equals(Sets.newHashSet(DEFAULT_EXTERNS_NAMES)),
