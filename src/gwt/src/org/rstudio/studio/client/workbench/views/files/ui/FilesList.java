@@ -148,7 +148,7 @@ public class FilesList extends Composite
          };
       checkColumn.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       filesDataGrid_.addColumn(checkColumn); 
-      filesDataGrid_.setColumnWidth(checkColumn, DEFAULT_COLUMN_WIDTH_PIXELS, Unit.PX);
+      filesDataGrid_.setColumnWidth(checkColumn, CHECK_COLUMN_WIDTH_PIXELS, Unit.PX);
       
       return checkColumn;
    }
@@ -172,7 +172,7 @@ public class FilesList extends Composite
       iconColumn.setSortable(true);
       filesDataGrid_.addColumn(iconColumn, 
                                 SafeHtmlUtils.fromSafeConstant("<br/>"));
-      filesDataGrid_.setColumnWidth(iconColumn, DEFAULT_COLUMN_WIDTH_PIXELS, Unit.PX);
+      filesDataGrid_.setColumnWidth(iconColumn, ICON_COLUMN_WIDTH_PIXELS, Unit.PX);
     
       sortHandler_.setComparator(iconColumn, new FilesListComparator() {
          @Override
@@ -239,7 +239,7 @@ public class FilesList extends Composite
       };  
       sizeColumn.setSortable(true);
       filesDataGrid_.addColumn(sizeColumn, "Size");
-      filesDataGrid_.setColumnWidth(sizeColumn, DEFAULT_SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+      filesDataGrid_.setColumnWidth(sizeColumn, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
       
       sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
          @Override
@@ -267,7 +267,7 @@ public class FilesList extends Composite
       };  
       modColumn.setSortable(true);
       filesDataGrid_.addColumn(modColumn, "Modified");
-      filesDataGrid_.setColumnWidth(modColumn, DEFAULT_MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX); 
+      filesDataGrid_.setColumnWidth(modColumn, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX); 
       
       sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {
          @Override
@@ -606,11 +606,17 @@ public class FilesList extends Composite
    private final Files.Display.Observer observer_ ;
    private final ResizeLayoutPanel layoutPanel_ ;  
    
-   private static final int DEFAULT_COLUMN_WIDTH_PIXELS = 26;
-   private static final int DEFAULT_SIZE_COLUMN_WIDTH_PIXELS = 80;
-   private static final int DEFAULT_MODIFIED_COLUMN_WIDTH_PIXELS = 160;
+   private static final int CHECK_COLUMN_WIDTH_PIXELS = 30;
+   private static final int ICON_COLUMN_WIDTH_PIXELS = 26;
+   private static final int SIZE_COLUMN_WIDTH_PIXELS = 80;
+   private static final int MODIFIED_COLUMN_WIDTH_PIXELS = 160;
    
    private static final int BOUNDARY_WIDTH_PIXELS = 500;
-   private static final int MINIMUM_NAME_COLUMN_WIDTH_PIXELS = 208;
+   private static final int MINIMUM_NAME_COLUMN_WIDTH_PIXELS = 
+         BOUNDARY_WIDTH_PIXELS -
+         CHECK_COLUMN_WIDTH_PIXELS -
+         ICON_COLUMN_WIDTH_PIXELS -
+         SIZE_COLUMN_WIDTH_PIXELS -
+         MODIFIED_COLUMN_WIDTH_PIXELS;
    
 }
