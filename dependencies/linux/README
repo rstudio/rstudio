@@ -85,5 +85,5 @@ Desktop version and don't have Qt 4.8 installed on the system:
 4) If your system doesn't meet the minimum version requirements for CMake (2.8)
 you can download a Linux binary of the latest version of CMake here:
 
-  - http://www.cmake.org/cmake/resources/software.html
+  - https://cmake.org/download/
 
