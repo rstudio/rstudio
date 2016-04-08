@@ -387,8 +387,7 @@
             package = "readr",
             paramsPackage = "readr",
             options = options,
-            optionTypes = optionTypes,
-            cacheFileExtension = ".txt"
+            optionTypes = optionTypes
          ))
       },
       "statistics" = function() {
@@ -417,8 +416,7 @@
             reference = havenFunction$ref,
             package = "haven",
             options = options,
-            optionTypes = optionTypes,
-            cacheFileExtension = ".dat"
+            optionTypes = optionTypes
          ))
       },
       "xls" = function() {
@@ -444,8 +442,7 @@
             package = "readxl",
             paramsPackage = NULL,
             options = options,
-            optionTypes = optionTypes,
-            cacheFileExtension = ".xls"
+            optionTypes = optionTypes
          ))
       }
    )
