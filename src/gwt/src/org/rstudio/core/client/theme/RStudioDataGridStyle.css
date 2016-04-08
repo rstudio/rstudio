@@ -13,6 +13,11 @@
    outline: none;
 }
 
+.dataGridWidget > div {
+	/* Override GWT styling set on element */
+	min-height: 16px !important;
+}
+
 .dataGridFirstColumn {
 }
 
@@ -124,14 +129,10 @@
 }
 
 .dataGridKeyboardSelectedRowCell {
-   border-top: 1px dotted gray !important;
-   border-bottom: 1px dotted gray !important;
 }
 .dataGridKeyboardSelectedRowCell:first-child {
-   border-left: 1px dotted gray;
 }
 .dataGridKeyboardSelectedRowCell:first-child + td + td {
-   border-right: 1px dotted gray;
 }
 
 .dataGridSelectedRow {

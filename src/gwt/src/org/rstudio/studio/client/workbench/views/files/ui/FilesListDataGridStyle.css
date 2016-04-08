@@ -1,0 +1,24 @@
+@def selectionBorderWidth 2px;
+
+.dataGridCell {
+  padding: 0 1px;
+}
+
+.dataGridCell input[type=checkbox] {
+   margin-top: 0;
+   margin-bottom: 0;
+}
+
+.dataGridLastColumnHeader {
+  border-right: none;
+}
+
+.dataGridEvenRow, .dataGridOddRow, .dataGridHoveredRow, .dataGridSelectedRow, .dataGridKeyboardSelectedRow {
+  background: #ffffff;
+  color: #606060;
+}
+
+.dataGridEvenRowCell, .dataGridOddRowCell, .dataGridHoveredRowCell, .dataGridSelectedRowCell, .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedCell   {
+  border: selectionBorderWidth solid #ffffff;
+  color: #606060;
+}

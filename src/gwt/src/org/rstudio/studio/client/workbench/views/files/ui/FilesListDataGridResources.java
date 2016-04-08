@@ -1,5 +1,5 @@
 /*
- * FilesListCellTableResources.java
+ * FilesListDataGridResources.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -18,13 +18,13 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.user.cellview.client.CellTable;
-import org.rstudio.core.client.theme.RStudioCellTableStyle;
+import com.google.gwt.user.cellview.client.DataGrid;
+import org.rstudio.core.client.theme.RStudioDataGridStyle;
 
-public interface FilesListCellTableResources extends CellTable.Resources 
+public interface FilesListDataGridResources extends DataGrid.Resources 
 {
-   static FilesListCellTableResources INSTANCE =
-    (FilesListCellTableResources)GWT.create(FilesListCellTableResources.class);
+   static FilesListDataGridResources INSTANCE =
+    (FilesListDataGridResources)GWT.create(FilesListDataGridResources.class);
 
    @Source("ascendingArrow.png")
    @ImageOptions(flipRtl = true)
@@ -37,10 +37,10 @@ public interface FilesListCellTableResources extends CellTable.Resources
    @ImageOptions(flipRtl = true)
    ImageResource cellTableSortDescending();
    
-   interface FilesListCellTableStyle extends CellTable.Style
+   interface FilesListDataGridStyle extends DataGrid.Style
    {
    }
    
-   @Source({RStudioCellTableStyle.RSTUDIO_DEFAULT_CSS, "FilesListCellTableStyle.css"})
-   FilesListCellTableStyle cellTableStyle();
+   @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "FilesListDataGridStyle.css"})
+   FilesListDataGridStyle dataGridStyle();
 }

@@ -16,6 +16,7 @@ package org.rstudio.core.client.cellview;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.ColumnSortList;
 
@@ -41,21 +42,21 @@ public class ColumnSortInfo extends JavaScriptObject
       return this.ascending;
    }-*/;
 
-   public final ColumnSortList.ColumnSortInfo toGwtSortInfo(CellTable<?> table)
+   public final ColumnSortList.ColumnSortInfo toGwtSortInfo(AbstractCellTable<?> table)
    {
       return new ColumnSortList.ColumnSortInfo(
             table.getColumn(getColumnIndex()), getAscending());
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
-   public static ColumnSortInfo fromGwtSortInfo(CellTable table,
+   public static ColumnSortInfo fromGwtSortInfo(AbstractCellTable table,
                                                ColumnSortList.ColumnSortInfo si)
    {
       return ColumnSortInfo.create(table.getColumnIndex(si.getColumn()),
                                    si.isAscending());
    }
 
-   public static ColumnSortList setSortList(CellTable<?> table,
+   public static ColumnSortList setSortList(AbstractCellTable<?> table,
                                             JsArray<ColumnSortInfo> sortArray)
    {
       ColumnSortList list = table.getColumnSortList();

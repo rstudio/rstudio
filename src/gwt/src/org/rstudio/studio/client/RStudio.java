@@ -75,7 +75,7 @@ import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.files.ui.FilesListCellTableResources;
+import org.rstudio.studio.client.workbench.views.files.ui.FilesListDataGridResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
@@ -221,7 +221,7 @@ public class RStudio implements EntryPoint
       FileDialogResources.INSTANCE.styles().ensureInjected();
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
       PackagesCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
-      FilesListCellTableResources.INSTANCE.cellTableStyle().ensureInjected();
+      FilesListDataGridResources.INSTANCE.dataGridStyle().ensureInjected();
       ExportPlotResources.INSTANCE.styles().ensureInjected();
       CodeSearchResources.INSTANCE.styles().ensureInjected();
       SourceMarkerListResources.INSTANCE.styles().ensureInjected();
