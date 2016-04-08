@@ -48,6 +48,7 @@
 
 ### Miscellaneous
 
+* Files pane now has a fixed header row
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
 * Always provide file completions for top-level current directory
 * Prevent wrapping of text in Files pane display
