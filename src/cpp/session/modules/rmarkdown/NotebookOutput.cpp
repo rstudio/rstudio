@@ -159,14 +159,14 @@ Error handleChunkOutputRequest(const http::Request& request,
    if (parts[0] == kChunkLibDir ||
        options().programMode() == kSessionProgramModeServer)
    {
-      // in server mdoe, or if a reference to the chunk library folder, we can
+      // in server mode, or if a reference to the chunk library folder, we can
       // reuse the contents (let the browser cache the file)
       pResponse->setCacheableFile(target, request);
    }
    else
    {
       // no cache necessary in desktop mode
-      pResponse->setBody(target);
+      pResponse->setFile(target, request);
    }
 
    return Success();

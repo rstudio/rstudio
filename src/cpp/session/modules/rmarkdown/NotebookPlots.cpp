@@ -61,7 +61,8 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void processPlots(const FilePath& plotFolder, 
+void processPlots(const FilePath& plotFolder,
+                  bool ignoreEmpty,
                   boost::shared_ptr<PlotState> pPlotState)
 {
    // ensure plot folder exists
@@ -78,6 +79,10 @@ void processPlots(const FilePath& plotFolder,
    {
       if (isPlotPath(path))
       {
+         // we might find an empty plot file if it hasn't been flushed to disk
+         // yet--ignore these
+         if (ignoreEmpty && path.size() == 0)
+            continue;
 
 #ifdef _WIN32
    // on Windows, turning off the PNG device writes an empty PNG file if no 
@@ -115,14 +120,14 @@ void removeGraphicsDevice(const FilePath& plotFolder,
    if (error)
       LOG_ERROR(error);
 
-   processPlots(plotFolder, pPlotState);
+   processPlots(plotFolder, false, pPlotState);
 }
 
 void onNewPlot(const FilePath& plotFolder,
                boost::shared_ptr<PlotState> pPlotState)
 {
    pPlotState->hasPlots = true;
-   processPlots(plotFolder, pPlotState);
+   processPlots(plotFolder, true, pPlotState);
 }
 
 void onConsolePrompt(const FilePath& plotFolder,
