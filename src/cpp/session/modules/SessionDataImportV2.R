@@ -390,7 +390,7 @@
             paramsPackage = "readr",
             options = options,
             optionTypes = optionTypes,
-            cacheFileExtension = c(".txt")
+            cacheFileExtension = ".txt"
          ))
       },
       "statistics" = function() {
@@ -420,7 +420,7 @@
             package = "haven",
             options = options,
             optionTypes = optionTypes,
-            cacheFileExtension = c(".dat")
+            cacheFileExtension = ".dat"
          ))
       },
       "xls" = function() {
