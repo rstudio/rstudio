@@ -247,6 +247,10 @@ public class MathTest extends GWTTestCase {
     assertEquals(-2, Math.floorDiv(4, -3));
     assertEquals(-2, Math.floorDiv(-4, 3));
     assertEquals(1, Math.floorDiv(-4, -3));
+    assertEquals(1, Math.floorDiv(Integer.MIN_VALUE, Integer.MIN_VALUE));
+    assertEquals(1, Math.floorDiv(Integer.MAX_VALUE, Integer.MAX_VALUE));
+    assertEquals(Integer.MIN_VALUE, Math.floorDiv(Integer.MIN_VALUE, 1));
+    assertEquals(Integer.MAX_VALUE, Math.floorDiv(Integer.MAX_VALUE, 1));
 
     // special case
     assertEquals(Integer.MIN_VALUE, Math.floorDiv(Integer.MIN_VALUE, -1));
@@ -264,6 +268,10 @@ public class MathTest extends GWTTestCase {
     assertEquals(-2L, Math.floorDiv(4L, -3L));
     assertEquals(-2L, Math.floorDiv(-4L, 3L));
     assertEquals(1L, Math.floorDiv(-4L, -3L));
+    assertEquals(1L, Math.floorDiv(Long.MIN_VALUE, Long.MIN_VALUE));
+    assertEquals(1L, Math.floorDiv(Long.MAX_VALUE, Long.MAX_VALUE));
+    assertEquals(Long.MIN_VALUE, Math.floorDiv(Long.MIN_VALUE, 1L));
+    assertEquals(Long.MAX_VALUE, Math.floorDiv(Long.MAX_VALUE, 1L));
 
     // special case
     assertEquals(Long.MIN_VALUE, Math.floorDiv(Long.MIN_VALUE, -1));
@@ -281,6 +289,10 @@ public class MathTest extends GWTTestCase {
     assertEquals(-2, Math.floorMod(4, -3));
     assertEquals(2, Math.floorMod(-4, 3));
     assertEquals(-1, Math.floorMod(-4, -3));
+    assertEquals(0, Math.floorMod(Integer.MIN_VALUE, Integer.MIN_VALUE));
+    assertEquals(0, Math.floorMod(Integer.MAX_VALUE, Integer.MAX_VALUE));
+    assertEquals(0, Math.floorMod(Integer.MIN_VALUE, 1));
+    assertEquals(0, Math.floorMod(Integer.MAX_VALUE, 1));
 
     try {
       Math.floorMod(1, 0);
@@ -295,6 +307,10 @@ public class MathTest extends GWTTestCase {
     assertEquals(-2L, Math.floorMod(4L, -3L));
     assertEquals(2L, Math.floorMod(-4L, 3L));
     assertEquals(-1L, Math.floorMod(-4L, -3L));
+    assertEquals(0L, Math.floorMod(Long.MIN_VALUE, Long.MIN_VALUE));
+    assertEquals(0L, Math.floorMod(Long.MAX_VALUE, Long.MAX_VALUE));
+    assertEquals(0L, Math.floorMod(Long.MIN_VALUE, 1L));
+    assertEquals(0L, Math.floorMod(Long.MAX_VALUE, 1L));
 
     try {
       Math.floorMod(1L, 0L);

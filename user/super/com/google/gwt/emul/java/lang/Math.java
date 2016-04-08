@@ -69,10 +69,9 @@ public final class Math {
   }
 
   public static int addExact(int x, int y) {
-    int r = x + y;
-    // "Hacker's Delight" 2-12 Overflow if both arguments have the opposite sign of the result
-    throwOverflowIf(((x ^ r) & (y ^ r)) < 0);
-    return r;
+    double r = (double) x + (double) y;
+    throwOverflowIf(!isSafeIntegerRange(r));
+    return (int) r;
   }
 
   public static long addExact(long x, long y) {
@@ -142,30 +141,24 @@ public final class Math {
 
   public static int floorDiv(int dividend, int divisor) {
     throwDivByZeroIf(divisor == 0);
-    int r = dividend / divisor;
-    // if the signs are different and modulo not zero, round down
-    if ((dividend ^ divisor) < 0 && (r * divisor != dividend)) {
-      r--;
-    }
-    return r;
+    // round down division if the signs are different and modulo not zero
+    return ((dividend ^ divisor) >= 0 ? dividend / divisor : ((dividend + 1) / divisor) - 1);
   }
 
   public static long floorDiv(long dividend, long divisor) {
     throwDivByZeroIf(divisor == 0);
-    long r = dividend / divisor;
-    // if the signs are different and modulo not zero, round down
-    if ((dividend ^ divisor) < 0 && (r * divisor != dividend)) {
-      r--;
-    }
-    return r;
+    // round down division if the signs are different and modulo not zero
+    return ((dividend ^ divisor) >= 0 ? dividend / divisor : ((dividend + 1) / divisor) - 1);
   }
 
   public static int floorMod(int dividend, int divisor) {
-    return dividend - floorDiv(dividend, divisor) * divisor;
+    throwDivByZeroIf(divisor == 0);
+    return ((dividend % divisor) + divisor) % divisor;
   }
 
   public static long floorMod(long dividend, long divisor) {
-    return dividend - floorDiv(dividend, divisor) * divisor;
+    throwDivByZeroIf(divisor == 0);
+    return ((dividend % divisor) + divisor) % divisor;
   }
 
   public static double hypot(double x, double y) {
@@ -227,15 +220,20 @@ public final class Math {
   }
 
   public static int multiplyExact(int x, int y) {
-    long r = (long) x * (long) y;
-    int ir = (int) r;
-    throwOverflowIf(ir != r);
-    return ir;
+    double r = (double) x * (double) y;
+    throwOverflowIf(!isSafeIntegerRange(r));
+    return (int) r;
   }
 
   public static long multiplyExact(long x, long y) {
+    if (y == -1) {
+      return negateExact(x);
+    }
+    if (y == 0) {
+      return 0;
+    }
     long r = x * y;
-    throwOverflowIf((x == Long.MIN_VALUE && y == -1) || (y != 0 && (r / y != x)));
+    throwOverflowIf(r / y != x);
     return r;
   }
 
@@ -280,11 +278,9 @@ public final class Math {
   }-*/;
 
   public static int subtractExact(int x, int y) {
-    int r = x - y;
-    // "Hacker's Delight" Overflow if the arguments have different signs and
-    // the sign of the result is different than the sign of x
-    throwOverflowIf(((x ^ y) & (x ^ r)) < 0);
-    return r;
+    double r = (double) x - (double) y;
+    throwOverflowIf(!isSafeIntegerRange(r));
+    return (int) r;
   }
 
   public static long subtractExact(long x, long y) {
@@ -360,6 +356,10 @@ public final class Math {
 
   public static double toRadians(double x) {
     return x * PI_OVER_180;
+  }
+
+  private static boolean isSafeIntegerRange(double value) {
+    return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
   }
 
   private static void throwDivByZeroIf(boolean condition) {

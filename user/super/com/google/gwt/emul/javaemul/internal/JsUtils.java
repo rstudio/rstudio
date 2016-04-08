@@ -20,6 +20,10 @@ package javaemul.internal;
  */
 public class JsUtils {
 
+  public static native boolean isFinite(double d) /*-{
+    return isFinite(d);
+  }-*/;
+
   public static native boolean isNaN(double d) /*-{
     return isNaN(d);
   }-*/;

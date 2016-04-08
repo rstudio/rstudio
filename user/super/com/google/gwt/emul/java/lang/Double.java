@@ -202,11 +202,11 @@ public final class Double extends Number implements Comparable<Double> {
   }
 
   public static boolean isFinite(double x) {
-    return NEGATIVE_INFINITY < x && x < POSITIVE_INFINITY;
+    return JsUtils.isFinite(x);
   }
 
   public static boolean isInfinite(double x) {
-    return x == POSITIVE_INFINITY || x == NEGATIVE_INFINITY;
+    return !isNaN(x) && !isFinite(x);
   }
 
   public static boolean isNaN(double x) {
