@@ -51,13 +51,12 @@ class DisableErrorHandlerScope : boost::noncopyable
 {
 public:
    DisableErrorHandlerScope()
-      : didDisable_(false),
-        previousErrorHandlerSEXP_(R_NilValue)
+      : didDisable_(false)
    {
-      previousErrorHandlerSEXP_ = r::options::setErrorOption(R_NilValue);
-      if (previousErrorHandlerSEXP_ != R_NilValue)
+      SEXP handlerSEXP = r::options::setErrorOption(R_NilValue);
+      if (handlerSEXP != R_NilValue)
       {
-         rProtect_.add(previousErrorHandlerSEXP_);
+         preservedSEXP_.set(handlerSEXP);
          didDisable_ = true;
       }
    }
@@ -66,7 +65,7 @@ public:
       try
       {
          if (didDisable_)
-            r::options::setErrorOption(previousErrorHandlerSEXP_);
+            r::options::setErrorOption(preservedSEXP_.get());
       }
       catch(...)
       {
@@ -75,8 +74,7 @@ public:
 
 private:
    bool didDisable_;
-   r::sexp::Protect rProtect_;
-   SEXP previousErrorHandlerSEXP_;
+   r::sexp::PreservedSEXP preservedSEXP_;
 };
 
 
@@ -284,7 +282,7 @@ bool atTopLevelContext()
 RFunction::RFunction(SEXP functionSEXP)
 {
    functionSEXP_ = functionSEXP;
-   rProtect_.add(functionSEXP_);
+   preserver_.add(functionSEXP_);
 }
    
 RFunction::~RFunction()
@@ -318,7 +316,7 @@ void RFunction::commonInit(const std::string& functionName)
    // lookup function
    functionSEXP_ = sexp::findFunction(name, ns);
    if (functionSEXP_ != R_UnboundValue)
-      rProtect_.add(functionSEXP_);
+      preserver_.add(functionSEXP_);
 }
    
 Error RFunction::callUnsafe()
