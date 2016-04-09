@@ -30,8 +30,8 @@ import java.util.Set;
  * <li>{@code <b>}, {@code <em>}, {@code <i>}</li>
  * <li>{@code <h1>}, {@code <h2>}, {@code <h3>},
  *     {@code <h4>}, {@code <h5>}, {@code <h6>}</li>
- * <li>{@code <ul>}, {@code <ol>}. {@code <li>}</li>
- * <li>{@code <hr>}, {@code <strong>}</li>
+ * <li>{@code <ul>}, {@code <ol>}, {@code <li>}</li>
+ * <li>{@code <br>}, {@code <hr>}, {@code <strong>}</li>
  * </ul>
  *
  * as well as numeric HTML entities and HTML entity references. Any HTML
@@ -44,7 +44,7 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
 
   private static final Set<String> TAG_WHITELIST = new HashSet<String>(
       Arrays.asList("b", "em", "i", "h1", "h2", "h3", "h4", "h5", "h6", "hr",
-          "ul", "ol", "li", "strong"));
+          "ul", "ol", "li", "strong", "br"));
 
   /**
    * Return a singleton SimpleHtmlSanitizer instance.
@@ -159,6 +159,7 @@ public final class SimpleHtmlSanitizer implements HtmlSanitizer {
   private SimpleHtmlSanitizer() {
   }
 
+  @Override
   public SafeHtml sanitize(String html) {
     return sanitizeHtml(html);
   }
