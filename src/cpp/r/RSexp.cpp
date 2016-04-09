@@ -1067,6 +1067,22 @@ void PreservedSEXP::releaseNow()
    }
 }
 
+SEXP SEXPPreserver::add(SEXP dataSEXP)
+{
+   if (dataSEXP != R_NilValue)
+   {
+      ::R_PreserveObject(dataSEXP);
+      preservedSEXPs_.push_back(dataSEXP);
+   }
+   return dataSEXP;
+}
+
+SEXPPreserver::~SEXPPreserver()
+{
+   for (std::size_t i = 0, n = preservedSEXPs_.size(); i < n; ++i)
+      ::R_ReleaseObject(preservedSEXPs_[n - i - 1]);
+}
+
 void printValue(SEXP object)
 {
    Error error = r::exec::executeSafely(

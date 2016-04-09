@@ -299,6 +299,17 @@ private:
    SEXP sexp_;
 };
 
+class SEXPPreserver : boost::noncopyable
+{
+public:
+   SEXPPreserver() {}
+   ~SEXPPreserver();
+   SEXP add(SEXP dataSEXP);
+   
+private:
+   std::vector<SEXP> preservedSEXPs_;
+};
+
 class ListBuilder : boost::noncopyable
 {
 public:

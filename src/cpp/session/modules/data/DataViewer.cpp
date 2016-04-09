@@ -728,7 +728,7 @@ Error getGridData(const http::Request& request,
       {
          LOG_ERROR(error);
       }
-
+      
       // couldn't find the original object
       if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
