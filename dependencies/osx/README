@@ -6,7 +6,7 @@ Building RStudio requires installations of a number of applications
 (including R). These applications include:
 
 - R:         http://www.r-project.org/
-- XCode:     http://developer.apple.com/technologies/xcode.html
+- XCode:     https://developer.apple.com/xcode/
 - CMake:     http://www.cmake.org/
 
 Note that after installing XCode you should also be sure to install the XCode
