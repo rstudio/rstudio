@@ -58,6 +58,7 @@
 
 ### Bug Fixes
 
+* Data Viewer: fixed a crash that could occur when calling 'View()' on matrix
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
 * R Markdown: fixed highlighting with multiple Markdown links on one line
 * SVN: avoid recursive revert when reverting changes to modified directory properties
