@@ -113,7 +113,8 @@ b) RStudio Server uses PAM to authenticate users. Some Unix systems (such
 
 
 c) Register RStudio as a daemon using an init.d (for most systems) or 
-   upstart (for Ubuntu) script appropriate to your system. 
+   systemd(for Ubuntu from 15.04, RHEL from 7) or upstart (for Ubuntu
+   before 15.04) script appropriate to your system.
    The rstudio/server/extras directory contains the following scripts:
 
    extras
@@ -124,8 +125,12 @@ c) Register RStudio as a daemon using an init.d (for most systems) or
             rstudio-server
          /suse
             rstudio-server
+      /systemd
+            rstudio-server.redhat.service
+            rstudio-server.service
       /upstart
-         rstudio-server.conf
+            rstudio-server.redhat.conf
+            rstudio-server.conf
 
    NOTE: installation of init.d scripts require both copying them
    into /etc/init.d, making them executable (chmod +x), as well as
