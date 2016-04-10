@@ -1447,7 +1447,7 @@ void checkAssignmentOperatorUsage(RTokenCursor& cursor, ParseStatus& status)
    if (cursor.contentEquals(L"="))
    {
       LintItem lint(cursor, LintTypeStyle, "prefer '<-' to '=' for assignment");
-      status.lint().push_back(lint);
+      status.lint().add(lint);
    }
 }
 
