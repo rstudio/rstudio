@@ -21,6 +21,7 @@
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookExec.hpp"
+#include "NotebookErrors.hpp"
 
 #include <iostream>
 
@@ -240,7 +241,8 @@ Error initialize()
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))
-      (bind(initHtmlWidgets));
+      (bind(initHtmlWidgets))
+      (bind(initErrors));
 
    return initBlock.execute();
 }
