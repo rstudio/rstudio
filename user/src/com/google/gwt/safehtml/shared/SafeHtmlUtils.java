@@ -16,6 +16,8 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.safehtml.shared.annotations.IsSafeHtml;
+import com.google.gwt.safehtml.shared.annotations.SuppressIsSafeHtmlCastCheck;
 
 /**
  * Utility class containing static methods for escaping and sanitizing strings.
@@ -190,6 +192,8 @@ public final class SafeHtmlUtils {
    *         exception that ampersand characters are not double-escaped if they
    *         form the start of an HTML Entity Reference
    */
+  @IsSafeHtml
+  @SuppressIsSafeHtmlCastCheck
   public static String htmlEscapeAllowEntities(String text) {
     StringBuilder escaped = new StringBuilder();
 
