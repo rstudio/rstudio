@@ -72,7 +72,11 @@ options(buildtools.with = .rs.withBuildTools)
       siteDir
 })
 
-
+.rs.addFunction("builtWithRtoolsGcc493", function() {
+   identical(.Platform$OS.type, "windows") &&
+   getRversion() >= "3.3" && 
+   .rs.haveRequiredRSvnRev(70462)
+})
 
 
 
