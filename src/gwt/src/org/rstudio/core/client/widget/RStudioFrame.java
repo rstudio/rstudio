@@ -15,6 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 
@@ -29,7 +30,14 @@ public class RStudioFrame extends Frame
    
    public RStudioFrame(String url)
    {
+      this(url, false, null);
+   }
+   
+   public RStudioFrame(String url, boolean sandbox, String sandboxAllow)
+   {
       super();
+      if (sandbox)
+         getElement().setAttribute("sandbox", StringUtil.notNull(sandboxAllow));
       if (url != null)
          setUrl(url);
    }
