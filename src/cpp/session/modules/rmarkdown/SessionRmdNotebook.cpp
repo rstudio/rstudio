@@ -21,6 +21,7 @@
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookExec.hpp"
+#include "NotebookErrors.hpp"
 
 #include <iostream>
 
@@ -170,6 +171,10 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
 
    cleanChunkOutput(docId, chunkId, true);
 
+   // clean up the old execution context if we still have one
+   if (s_execContext)
+      s_execContext->disconnect();
+
    // create the execution context and connect it immediately if necessary
    s_execContext.reset(new ChunkExecContext(docId, chunkId, options, 
             pixelWidth, charWidth));
@@ -240,7 +245,8 @@ Error initialize()
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))
-      (bind(initHtmlWidgets));
+      (bind(initHtmlWidgets))
+      (bind(initErrors));
 
    return initBlock.execute();
 }

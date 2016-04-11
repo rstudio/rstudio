@@ -160,6 +160,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/SessionRnbParser.cpp
    modules/rmarkdown/NotebookCache.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
+   modules/rmarkdown/NotebookErrors.cpp
    modules/rmarkdown/NotebookExec.cpp
    modules/rmarkdown/NotebookHtmlWidgets.cpp
    modules/rmarkdown/NotebookOutput.cpp

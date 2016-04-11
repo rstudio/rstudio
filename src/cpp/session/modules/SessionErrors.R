@@ -1,7 +1,7 @@
 #
 # SessionErrors.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@
            fun == "debugSource")
 })
 
-.rs.addFunction("recordTraceback", function(userOnly)
+.rs.addFunction("recordTraceback", function(userOnly, errorReporter)
 {
    calls <- sys.calls()
    foundUserCode <- FALSE
@@ -88,10 +88,10 @@
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
-      event <- list(
+      err <- list(
          frames = stack,
          message = .rs.scalar(geterrmessage()))
-      .rs.enqueClientEvent("unhandled_error", event)
+      errorReporter(err)
    }
 })
 
@@ -153,16 +153,20 @@
 },
 attrs = list(hideFromDebugger = TRUE))
 
+.rs.addFunction("enqueueError", function(err) {
+  .rs.enqueClientEvent("unhandled_error", err)
+})
+
 .rs.addFunction("recordAnyTraceback", function()
 {
-   .rs.recordTraceback(FALSE)
+   .rs.recordTraceback(FALSE, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = 1L))
 
 .rs.addFunction("recordUserTraceback", function()
 {
-   .rs.recordTraceback(TRUE)
+   .rs.recordTraceback(TRUE, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = 1L))
