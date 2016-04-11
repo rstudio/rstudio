@@ -171,6 +171,10 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
 
    cleanChunkOutput(docId, chunkId, true);
 
+   // clean up the old execution context if we still have one
+   if (s_execContext)
+      s_execContext->disconnect();
+
    // create the execution context and connect it immediately if necessary
    s_execContext.reset(new ChunkExecContext(docId, chunkId, options, 
             pixelWidth, charWidth));
