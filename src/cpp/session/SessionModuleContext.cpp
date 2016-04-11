@@ -2153,9 +2153,18 @@ bool isLoadBalanced()
 #ifdef _WIN32
 bool usingMingwGcc49()
 {
-   // temporarily determine this using a setting (eventually we'll want to check the
-   // R version and SVN revision number)
-   return userSettings().usingMingwGcc49();
+   // return true if the setting is true
+   bool gcc49 = userSettings().usingMingwGcc49();
+   if (gcc49)
+      return true;
+
+   // otherwise check R version
+   r::exec::RFunction func(".rs.builtWithRtoolsGcc493");
+   Error error = func.call(&gcc49);
+   if (error)
+      LOG_ERROR(error);
+   return gcc49;
+
 }
 #else
 bool usingMingwGcc49()
