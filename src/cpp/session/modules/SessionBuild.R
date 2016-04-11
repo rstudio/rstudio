@@ -61,6 +61,22 @@ options(buildtools.check = .rs.checkBuildTools)
 options(buildtools.with = .rs.withBuildTools)
 
 
+.rs.addFunction("websiteOutputDir", function(siteDir) {
+   siteGenerator <- rmarkdown::site_generator(siteDir)
+   if (!is.null(siteGenerator))
+      if (siteGenerator$output_dir != ".")
+         file.path(siteDir, siteGenerator$output_dir)
+      else
+         siteDir
+   else
+      siteDir
+})
+
+.rs.addFunction("builtWithRtoolsGcc493", function() {
+   identical(.Platform$OS.type, "windows") &&
+   getRversion() >= "3.3" && 
+   .rs.haveRequiredRSvnRev(70462)
+})
 
 
 

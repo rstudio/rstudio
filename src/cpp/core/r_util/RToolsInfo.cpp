@@ -152,7 +152,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
          if (installPath_.childPath("mingw_32").exists())
          {
             versionMin = "3.3.0";
-            versionMax = "3.3.99";
+            versionMax = "3.4.99";
             relativePathEntries.push_back("bin");
 
             // set environment variables
