@@ -358,6 +358,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.restartRRunAllChunks());
       dynamicCommands_.add(commands.notebookCollapseAllOutput());
       dynamicCommands_.add(commands.notebookExpandAllOutput());
+      dynamicCommands_.add(commands.notebookClearAllOutput());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

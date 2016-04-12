@@ -440,6 +440,8 @@ public class TextEditingTargetNotebook
       commands_.notebookCollapseAllOutput().setVisible(inlineOutput);
       commands_.notebookExpandAllOutput().setEnabled(inlineOutput);
       commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
+      commands_.notebookClearAllOutput().setEnabled(inlineOutput); 
+      commands_.notebookClearAllOutput().setVisible(inlineOutput); 
       editingDisplay_.setNotebookUIVisible(inlineOutput);
    }
    
@@ -479,6 +481,11 @@ public class TextEditingTargetNotebook
       setAllExpansionStates(ChunkOutputWidget.EXPANDED);
    }
    
+   @Handler
+   public void onNotebookClearAllOutput()
+   {
+      removeAllChunks();
+   }
    // Event handlers ----------------------------------------------------------
    
    @Override
