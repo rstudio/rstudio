@@ -28,8 +28,9 @@ IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" call rebuild-install-win64.bat "%PACKAG
 
 REM create packages
 cd "%BUILD_DIR%"
-cpack -G NSIS
-IF "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP
+
+REM creating the NSIS installer takes a long time, so we just make a zip
+cpack -G ZIP
 cd ..
 
 REM unzip to devel directory
