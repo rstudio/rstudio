@@ -68,12 +68,14 @@ void handleProfilerResReq(const http::Request& request,
 void onDocPendingRemove(
         boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   // check to see if there is html cached data
+   // check to see if there is cached data
+   std::string path = pDoc->getProperty("path");
    std::string htmlLocalPath = pDoc->getProperty("htmlLocalPath");
-   if (htmlLocalPath.empty())
+   if (htmlLocalPath.empty() && path.empty())
       return;
 
    r::exec::RFunction rFunction(".rs.rpc.clear_profile");
+   rFunction.addParam(path);
    rFunction.addParam(htmlLocalPath);
 
    Error error = rFunction.call();

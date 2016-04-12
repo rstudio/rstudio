@@ -150,14 +150,15 @@
    .rs.enqueClientEvent("rprof_created", result);
 })
 
-.rs.addJsonRpcHandler("clear_profile", function(filePath)
+.rs.addJsonRpcHandler("clear_profile", function(filePath, htmlPath)
 {
    tryCatch({
       resources <- .rs.profileResources()
 
-      filePrefix <- tools::file_path_sans_ext(basename(filePath))
+      pathPrefix <- tools::file_path_sans_ext(basename(filePath))
+      filePrefix <- tools::file_path_sans_ext(basename(htmlPath))
       
-      rprofFile <- file.path(resources$tempPath, paste(filePrefix, ".Rprof", sep = ""))
+      rprofFile <- file.path(resources$tempPath, paste(pathPrefix, ".Rprof", sep = ""))
       if (file.exists(rprofFile)) {
          file.remove(rprofFile)
       }
