@@ -261,7 +261,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    void onDiagnosticsReport()
    {
       eventBus_.fireEvent(
-         new SendToConsoleEvent("rstudio::diagnosticsReport()", true));
+         new SendToConsoleEvent("rstudioDiagnosticsReport()", true));
       
       new Timer() {
          @Override

@@ -278,3 +278,8 @@
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {
   invisible(.Call("rs_setUsingMingwGcc49", usingMingwGcc49))
 })
+
+
+.rs.addGlobalFunction("rstudioDiagnosticsReport", function() {
+  invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
+})
