@@ -19,10 +19,11 @@
 
 #include <string>
 
-#define kChunkOutputNone 0
-#define kChunkOutputText 1
-#define kChunkOutputPlot 2
-#define kChunkOutputHtml 3
+#define kChunkOutputNone  0
+#define kChunkOutputText  1
+#define kChunkOutputPlot  2
+#define kChunkOutputHtml  3
+#define kChunkOutputError 4
 
 #define kChunkConsoleInput  0
 #define kChunkConsoleOutput 1

@@ -71,6 +71,8 @@ unsigned chunkOutputType(const FilePath& outputPath)
       outputType = kChunkOutputPlot;
    else if (outputPath.extensionLowerCase() == ".html")
       outputType = kChunkOutputHtml;
+   else if (outputPath.extensionLowerCase() == ".error")
+      outputType = kChunkOutputError;
    return outputType;
 }
 
@@ -84,6 +86,8 @@ std::string chunkOutputExt(unsigned outputType)
          return ".png";
       case kChunkOutputHtml:
          return ".html";
+      case kChunkOutputError:
+         return ".error";
    }
    return "";
 }
@@ -116,6 +120,40 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
       }
       // read next line
       line = text::parseCsvLine(line.second, contents.end());
+   }
+
+   return Success();
+}
+
+Error fillOutputObject(const std::string& docId, const std::string& chunkId,
+      int outputType, const FilePath& path, json::Object* pObj)
+{
+   (*pObj)[kChunkOutputType]  = outputType;
+   if (outputType == kChunkOutputError)
+   {
+      // error outputs can be directly read from the file
+      std::string fileContents;
+      json::Value errorVal;
+      Error error = core::readStringFromFile(path, &fileContents);
+      if (error)
+         return error;
+      if (!json::parse(fileContents, &errorVal))
+         return Error(json::errc::ParseError, ERROR_LOCATION);
+
+     (*pObj)[kChunkOutputValue] = errorVal;
+   } 
+   else if (outputType == kChunkOutputText)
+   {
+      // deserialize console output
+      json::Array consoleOutput;
+      Error error = chunkConsoleContents(path, &consoleOutput);
+      (*pObj)[kChunkOutputValue] = consoleOutput;
+   }
+   else if (outputType == kChunkOutputPlot || outputType == kChunkOutputHtml)
+   {
+      // plot/HTML outputs should be requested by the client, so pass the path
+      (*pObj)[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
+         chunkId + "/" + path.filename();
    }
 
    return Success();
@@ -270,9 +308,12 @@ void enqueueChunkOutput(const std::string& docId,
       const FilePath& path)
 {
    json::Object output;
-   output[kChunkOutputType]  = outputType;
-   output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-      chunkId + "/" + path.filename();
+   Error error = fillOutputObject(docId, chunkId, outputType, path, &output);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    json::Object result;
    result[kChunkId]         = chunkId;
@@ -314,21 +355,12 @@ Error enqueueChunkOutput(
          continue;
 
       // format/parse chunk output for client consumption
-      output[kChunkOutputType] = outputType;
-      if (outputType == kChunkOutputText)
-      {
-         json::Array consoleOutput;
-         error = chunkConsoleContents(outputPath, &consoleOutput);
-         output[kChunkOutputValue] = consoleOutput;
-      }
-      else if (outputType == kChunkOutputPlot ||
-               outputType == kChunkOutputHtml)
-      {
-         output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-            chunkId + "/" + outputPath.filename();
-      }
-
-      outputs.push_back(output);
+      Error error = fillOutputObject(docId, chunkId, outputType, outputPath, 
+            &output);
+      if (error)
+         LOG_ERROR(error);
+      else
+         outputs.push_back(output);
    }
    
    // note that if we find that this chunk has no output we can display, we

@@ -97,10 +97,34 @@ SEXP rs_recordNotebookError(SEXP errData)
    return R_NilValue;
 }
 
+void onConsolePrompt(const std::string&)
+{
+   // if we're still listening for errors, disconnect
+   if (s_pErrorState)
+   {
+      s_pErrorState->disconnect();
+      s_pErrorState.reset();
+   }
+
+   // clean up listener
+   module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
+}
+
 } // anonymous namespace
 
 core::Error beginErrorCapture()
 {
+   // disconnect old error state if present
+   if (s_pErrorState)
+      s_pErrorState->disconnect();
+
+   // create and connect new error state
+   s_pErrorState.reset(new ErrorState());
+   s_pErrorState->connect();
+
+   // diconnect when statement finishes
+   module_context::events().onConsolePrompt.connect(onConsolePrompt);
+
    return Success();
 }
 

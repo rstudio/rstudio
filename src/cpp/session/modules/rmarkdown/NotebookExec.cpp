@@ -19,6 +19,7 @@
 #include "NotebookPlots.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookCache.hpp"
+#include "NotebookErrors.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -55,6 +56,17 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
    if (error)
       LOG_ERROR(error);
    return true;
+}
+
+FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
+   int outputType)
+{
+   OutputPair pair = lastChunkOutput(docId, chunkId);
+   pair.ordinal++;
+   pair.outputType = outputType;
+   FilePath target = chunkOutputFile(docId, chunkId, pair);
+   updateLastChunkOutput(docId, chunkId, pair);
+   return target;
 }
 
 } // anonymous namespace
@@ -145,6 +157,11 @@ void ChunkExecContext::connect()
       }
    }
 
+   // begin capturing errors
+   connections_.push_back(events().onErrorOutput.connect(
+         boost::bind(&ChunkExecContext::onError, this, _1)));
+   beginErrorCapture();
+
    // begin capturing console text
    connections_.push_back(module_context::events().onConsolePrompt.connect(
          boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
@@ -165,10 +182,7 @@ void ChunkExecContext::onConsolePrompt(const std::string& )
 void ChunkExecContext::onFileOutput(const FilePath& file, 
       const FilePath& metadata, int outputType)
 {
-   OutputPair pair = lastChunkOutput(docId_, chunkId_);
-   pair.ordinal++;
-   pair.outputType = outputType;
-   FilePath target = chunkOutputFile(docId_, chunkId_, pair);
+   FilePath target = getNextOutputFile(docId_, chunkId_, outputType);
    Error error = file.move(target);
    if (error)
    {
@@ -201,7 +215,26 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    }
 
    enqueueChunkOutput(docId_, chunkId_, outputType, target);
-   updateLastChunkOutput(docId_, chunkId_, pair);
+}
+
+void ChunkExecContext::onError(const core::json::Object& err)
+{
+   // write the error to a file 
+   FilePath target = getNextOutputFile(docId_, chunkId_, kChunkOutputError);
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = target.open_w(&pOfs, true);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   json::write(err, *pOfs);
+   
+   pOfs->flush();
+   pOfs.reset();
+
+   // send to client
+   enqueueChunkOutput(docId_, chunkId_, kChunkOutputError, target);
 }
 
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 

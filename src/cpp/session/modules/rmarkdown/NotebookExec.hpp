@@ -20,6 +20,8 @@
 
 #include <boost/signal.hpp>
 
+#include <core/json/Json.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -58,6 +60,7 @@ private:
    void onConsoleText(int type, const std::string& output, bool truncate);
    void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
          int outputType);
+   void onError(const core::json::Object& err);
 
    std::string docId_;
    std::string chunkId_;
