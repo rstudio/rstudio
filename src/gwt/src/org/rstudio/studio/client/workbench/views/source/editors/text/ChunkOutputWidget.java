@@ -479,11 +479,16 @@ public class ChunkOutputWidget extends Composite
          return;
       }
 
-      // if this error was queued for output, remove it
-      if (queuedError_.trim() == err.getErrorMessage().trim())
-         queuedError_ = "";
-      
-      flushQueuedErrors();
+      if (queuedError_.startsWith(err.getErrorMessage()))
+      {
+         // if this error was queued for output, remove it
+         queuedError_ = queuedError_.substring(err.getErrorMessage().length());
+      }
+      else
+      {
+         // flush any irrelevant messages from the stream
+         flushQueuedErrors();
+      }
       
       ConsoleError error = new ConsoleError(err, 
             RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass(), this, 
@@ -491,7 +496,9 @@ public class ChunkOutputWidget extends Composite
       error.setTracebackVisible(true);
 
       root_.add(error);
+      flushQueuedErrors();
       completeUnitRender(ensureVisible);
+
    }
    
    private void showPlotOutput(String url, final boolean ensureVisible)
