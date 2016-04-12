@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -235,6 +236,10 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() != EXPANDED)
          return;
       
+      // don't sync if we're the setup chunk and we don't have any errors
+      if (chunkId_ == TextEditingTargetNotebook.SETUP_CHUNK_ID && !hasErrors_)
+         return;
+      
       // clamp chunk height to min/max
       int height = Math.min(
             Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
@@ -254,6 +259,7 @@ public class ChunkOutputWidget extends Composite
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
+      
       setVisible(true);
       host_.onOutputHeightChanged(height + FRAME_HEIGHT_PAD,
             ensureVisible);
@@ -456,6 +462,17 @@ public class ChunkOutputWidget extends Composite
    
    private void showErrorOutput(UnhandledError err, final boolean ensureVisible)
    {
+      hasErrors_ = true;
+      
+      // if there's only one error frame, it's not worth showing dedicated 
+      // error UX
+      if (err.getErrorFrames() != null &&
+          err.getErrorFrames().length() < 2)
+      {
+         flushQueuedErrors();
+         return;
+      }
+
       // if this error was queued for output, remove it
       if (queuedError_.trim() == err.getErrorMessage().trim())
          queuedError_ = "";
@@ -468,6 +485,7 @@ public class ChunkOutputWidget extends Composite
       error.setTracebackVisible(true);
 
       root_.add(error);
+      completeUnitRender(ensureVisible);
    }
    
    private void showPlotOutput(String url, final boolean ensureVisible)
@@ -817,6 +835,7 @@ public class ChunkOutputWidget extends Composite
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
+   private boolean hasErrors_ = false;
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;

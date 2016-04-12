@@ -323,14 +323,15 @@ public class TextEditingTargetNotebook
       }
       else
       {
-         // find or create a matching chunk definition 
-         ChunkDefinition chunkDef = getChunkDefAtRow(row);
-         if (chunkDef == null)
-            return;
-         chunkId = chunkDef.getChunkId();
          ensureSetupChunkExecuted();
       }
-      
+
+      // find or create a matching chunk definition 
+      ChunkDefinition chunkDef = getChunkDefAtRow(row, chunkId);
+      if (chunkDef == null)
+         return;
+      chunkId = chunkDef.getChunkId();
+
       // check to see if this chunk is already in the execution queue--if so
       // just update the code and leave it queued
       for (ChunkExecQueueUnit unit: chunkExecQueue_)
@@ -499,7 +500,7 @@ public class TextEditingTargetNotebook
          return;
       
       // create or update the chunk at the given row
-      final ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow());
+      final ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow(), null);
       String options = TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
             event.getScope(), docDisplay_);
       
@@ -873,7 +874,7 @@ public class TextEditingTargetNotebook
             new VoidServerRequestCallback());
    }
    
-   private ChunkDefinition getChunkDefAtRow(int row)
+   private ChunkDefinition getChunkDefAtRow(int row, String newId)
    {
       ChunkDefinition chunkDef;
       
@@ -887,14 +888,14 @@ public class TextEditingTargetNotebook
       // otherwise create a new one
       else
       {
+         if (StringUtil.isNullOrEmpty(newId))
+            newId = "c" + StringUtil.makeRandomId(12);
          chunkDef = ChunkDefinition.create(row, 1, true, 
-               ChunkOutputWidget.EXPANDED,
-               "c" + StringUtil.makeRandomId(12));
+               ChunkOutputWidget.EXPANDED, newId);
          
          events_.fireEvent(new ChunkChangeEvent(
                docUpdateSentinel_.getId(), chunkDef.getChunkId(), row, 
                ChunkChangeEvent.CHANGE_CREATE));
-         
       }
       return chunkDef;
    }
@@ -1209,6 +1210,6 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
    
-   private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
-   private final static String SETUP_CHUNK_ID = "csetup_chunk";
+   public final static String LAST_SETUP_CRC32 = "last_setup_crc32";
+   public final static String SETUP_CHUNK_ID = "csetup_chunk";
 }
