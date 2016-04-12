@@ -548,18 +548,21 @@ public class TextEditingTargetNotebook
          return;
       }
       
-      // if this is the currently executing chunk and it has an error,
-      // draw the error
+      // if this is the currently executing chunk and it has an error...
       if (executingChunk_ != null &&
           executingChunk_.chunkId == event.getOutput().getChunkId() &&
           event.getOutput().getType() == RmdChunkOutput.TYPE_SINGLE_UNIT &&
           event.getOutput().getUnit().getType() == 
              RmdChunkOutputUnit.TYPE_ERROR)
       {
+         // draw the error 
          docDisplay_.setChunkLineExecState(
                executingChunk_.executingRowStart,
                executingChunk_.executingRowEnd,
                ChunkRowExecState.LINE_ERROR);
+         
+         // don't execute any more chunks
+         clearChunkExecQueue();
       }
 
       // show output in matching chunk
@@ -723,11 +726,7 @@ public class TextEditingTargetNotebook
          return;
       
       // when the user interrupts R, clear any pending chunk executions
-      for (ChunkExecQueueUnit unit: chunkExecQueue_)
-      {
-         cleanChunkExecState(unit.chunkId);
-      }
-      chunkExecQueue_.clear();
+      clearChunkExecQueue();
       
       // clear currently executing chunk
       executingChunk_ = null;
@@ -1158,6 +1157,15 @@ public class TextEditingTargetNotebook
       {
          output.getOutputWidget().setExpansionState(state);
       }
+   }
+   
+   private void clearChunkExecQueue()
+   {
+      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      {
+         cleanChunkExecState(unit.chunkId);
+      }
+      chunkExecQueue_.clear();
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
