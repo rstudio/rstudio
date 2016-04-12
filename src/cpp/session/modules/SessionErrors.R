@@ -20,21 +20,13 @@
            fun == "debugSource")
 })
 
-.rs.addFunction("recordTraceback", function(userOnly, errorReporter)
+.rs.addFunction("recordTraceback", function(userOnly, minDepth, errorReporter)
 {
    calls <- sys.calls()
    foundUserCode <- FALSE
    inSource <- FALSE
 
-   # When this handler is invoked for an unhandled error happening at
-   # the top level, there are four calls on the stack:
-   # 1. This function
-   # 2. The anonymous error handler (set via options below)
-   # 3. The error invoker (e.g. stop)
-   # 4. The function from which the error was raised
-   # So we want there to be at least 5 calls on the stack--otherwise the error
-   # is likely to be top-level.
-   if (length(calls) < 5)
+   if (length(calls) < minDepth)
       return()
 
    # create the traceback for the client
@@ -159,14 +151,22 @@ attrs = list(hideFromDebugger = TRUE))
 
 .rs.addFunction("recordAnyTraceback", function()
 {
-   .rs.recordTraceback(FALSE, .rs.enqueueError)
+   # When this handler is invoked for an unhandled error happening at
+   # the top level, there are four calls on the stack:
+   # 1. The traceback recorder
+   # 2. The anonymous error handler (set via options below)
+   # 3. The error invoker (e.g. stop)
+   # 4. The function from which the error was raised
+   # So we want there to be at least 5 calls on the stack--otherwise the error
+   # is likely to be top-level.
+   .rs.recordTraceback(FALSE, 5, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = 1L))
 
 .rs.addFunction("recordUserTraceback", function()
 {
-   .rs.recordTraceback(TRUE, .rs.enqueueError)
+   .rs.recordTraceback(TRUE, 5, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = 1L))

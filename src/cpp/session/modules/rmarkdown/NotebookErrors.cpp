@@ -18,6 +18,8 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/ROptions.hpp>
+#include <r/RJson.hpp>
 
 #include <core/Exec.hpp>
 
@@ -32,8 +34,66 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
+class ErrorState
+{
+public:
+   ErrorState():
+      connected_(false)
+   { }
+
+   ~ErrorState()
+   {
+      if (connected_)
+         disconnect();
+   }
+
+   void connect()
+   {
+      // store old handler
+      sexpErrHandler_.set(r::options::getOption("error"));
+
+      // set new handler
+      Error error = r::exec::RFunction(".rs.registerNotebookErrHandler")
+                                     .callUnsafe();
+      if (error)
+         LOG_ERROR(error);
+
+      // mark as connected
+      connected_ = true;
+   }
+
+   void onError(SEXP sexpErr)
+   {
+      json::Value jsonErr; 
+      Error error = r::json::jsonValueFromList(sexpErr, &jsonErr);
+      if (error)
+         LOG_ERROR(error);
+      if (jsonErr.type() != json::ObjectType)
+         return;
+      events().onErrorOutput(jsonErr.get_obj());
+   }
+
+   void disconnect()
+   {
+      if (connected_)
+      {
+         r::options::setErrorOption(sexpErrHandler_.get());
+         connected_ = false;
+      }
+   }
+
+private:
+   bool connected_;
+   r::sexp::PreservedSEXP sexpErrHandler_;
+};
+
+boost::shared_ptr<ErrorState> s_pErrorState;
+
 SEXP rs_recordNotebookError(SEXP errData)
 {
+   if (s_pErrorState)
+      s_pErrorState->onError(errData);
+
    return R_NilValue;
 }
 
