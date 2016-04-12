@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -34,6 +35,10 @@ public class RmdChunkOutputUnit extends JavaScriptObject
    }-*/;
    
    public final native JsArray<JsArrayEx> getArray() /*-{
+      return this.output_val;
+   }-*/;
+   
+   public final native UnhandledError getUnhandledError() /*-{
       return this.output_val;
    }-*/;
    

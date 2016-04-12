@@ -16,7 +16,7 @@
 	
 	.frameNumber {
 	  vertical-align: top;
-	  float: left;
+	  display: inline-block; 
 	  font-size: 80%;
 	  width: 1.5em; 
 	  text-align: right;
@@ -29,7 +29,7 @@
 	}
 	</ui:style>
 	<g:HTMLPanel styleName="{style.frame}">
-	   <g:Label styleName="{style.frameNumber} ace_constant ace_numeric"
+	    <g:Label styleName="{style.frameNumber} ace_constant ace_numeric"
 	            ui:field="frameNumber"></g:Label>
 		<g:HTMLPanel styleName="{style.functionBlock}">
 		  <g:Label ui:field="functionName" styleName="{style.function}"></g:Label>

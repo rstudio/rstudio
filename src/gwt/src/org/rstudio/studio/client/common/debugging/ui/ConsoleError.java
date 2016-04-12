@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
-import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.GWT;
@@ -42,7 +41,6 @@ public class ConsoleError extends Composite
    public interface Observer
    {
       void onErrorBoxResize();
-      void showSourceForFrame(ErrorFrame frame);
       void runCommandWithDebug(String command);
    }
 
@@ -80,13 +78,15 @@ public class ConsoleError extends Composite
       
       showTracebackText.addClickHandler(showHideTraceback);
       showTracebackImage.addClickHandler(showHideTraceback);
+      rerunText.setVisible(command_ != null);
+      rerunImage.setVisible(command_ != null);
       rerunText.addClickHandler(rerunWithDebug);
       rerunImage.addClickHandler(rerunWithDebug);
       
       for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {
          ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1, 
-               err.getErrorFrames().get(i), observer_);
+               err.getErrorFrames().get(i));
          framePanel.add(frame);
       }
    }

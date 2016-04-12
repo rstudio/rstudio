@@ -31,12 +31,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
@@ -44,12 +42,8 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
@@ -287,21 +281,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          scrollPanel_.onContentSizeChanged();
          errorNodes_.remove(error);
       }
-   }
-   
-   @Override
-   public void showSourceForFrame(ErrorFrame frame)
-   {
-      if (events_ == null)
-         return;
-      FileSystemItem sourceFile = FileSystemItem.createFile(
-            frame.getFileName());
-      events_.fireEvent(new OpenSourceFileEvent(sourceFile,
-                             FilePosition.create(
-                                   frame.getLineNumber(),
-                                   frame.getCharacterNumber()),
-                             FileTypeRegistry.R,
-                             NavigationMethods.HIGHLIGHT_LINE));
    }
    
    @Override

@@ -555,9 +555,6 @@ public class TextEditingTargetNotebook
           event.getOutput().getUnit().getType() == 
              RmdChunkOutputUnit.TYPE_ERROR)
       {
-         Debug.devlog("drawing error from " + 
-               executingChunk_.executingRowStart + ", " +
-               executingChunk_.executingRowEnd);
          docDisplay_.setChunkLineExecState(
                executingChunk_.executingRowStart,
                executingChunk_.executingRowEnd,

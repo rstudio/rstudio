@@ -26,6 +26,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -68,7 +70,8 @@ public class ChunkOutputWidget extends Composite
                                           ConsoleWriteErrorHandler,
                                           ConsolePromptHandler,
                                           RestartStatusEvent.Handler,
-                                          InterruptStatusEvent.Handler
+                                          InterruptStatusEvent.Handler,
+                                          ConsoleError.Observer
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -104,6 +107,7 @@ public class ChunkOutputWidget extends Composite
    {
       chunkId_ = chunkId;
       host_ = host;
+      queuedError_ = "";
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
@@ -172,6 +176,9 @@ public class ChunkOutputWidget extends Composite
          break;
       case RmdChunkOutputUnit.TYPE_PLOT:
          showPlotOutput(unit.getString(), ensureVisible);
+         break;
+      case RmdChunkOutputUnit.TYPE_ERROR:
+         showErrorOutput(unit.getUnhandledError(), ensureVisible);
          break;
       }
    }
@@ -352,6 +359,10 @@ public class ChunkOutputWidget extends Composite
    {
       if (event.getConsole() != chunkId_)
          return;
+
+      // flush any queued errors
+      flushQueuedErrors();
+
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
             true);
    }
@@ -361,8 +372,10 @@ public class ChunkOutputWidget extends Composite
    {
       if (event.getConsole() != chunkId_)
          return;
-      renderConsoleOutput(event.getError(), classOfOutput(CONSOLE_ERROR), 
-            true);
+      
+      // queue the error -- we don't emit errors right away since a more 
+      // detailed error event may be forthcoming
+      queuedError_ += event.getError();
    }
    
    @Override
@@ -394,6 +407,18 @@ public class ChunkOutputWidget extends Composite
          return;
       
       completeInterrupt();
+   }
+
+   @Override
+   public void onErrorBoxResize()
+   {
+      syncHeight(true, true);
+   }
+
+   @Override
+   public void runCommandWithDebug(String command)
+   {
+      // Not implemented
    }
 
    // Private methods ---------------------------------------------------------
@@ -429,10 +454,29 @@ public class ChunkOutputWidget extends Composite
       syncHeight(true, ensureVisible);
    }
    
+   private void showErrorOutput(UnhandledError err, final boolean ensureVisible)
+   {
+      // if this error was queued for output, remove it
+      if (queuedError_.trim() == err.getErrorMessage().trim())
+         queuedError_ = "";
+      
+      flushQueuedErrors();
+      
+      ConsoleError error = new ConsoleError(err, 
+            RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass(), this, 
+            null);
+      error.setTracebackVisible(true);
+
+      root_.add(error);
+   }
+   
    private void showPlotOutput(String url, final boolean ensureVisible)
    {
-      final Image plot = new Image();
+      // flush any queued errors
+      flushQueuedErrors();
 
+      final Image plot = new Image();
+      
       // set to auto height and hidden -- we need the image to load so we can 
       // compute its natural width before showing it
       plot.getElement().getStyle().setProperty("height", "auto");
@@ -496,6 +540,9 @@ public class ChunkOutputWidget extends Composite
    
    private void showHtmlOutput(String url, final boolean ensureVisible)
    {
+      // flush any queued errors
+      flushQueuedErrors();
+
       final ChunkOutputFrame frame = new ChunkOutputFrame();
       frame.getElement().getStyle().setHeight(200, Unit.PX);
       frame.getElement().getStyle().setWidth(100, Unit.PCT);
@@ -743,6 +790,16 @@ public class ChunkOutputWidget extends Composite
       root_.getElement().getStyle().clearOpacity();
    }
    
+   private void flushQueuedErrors()
+   {
+      if (!queuedError_.isEmpty())
+      {
+         renderConsoleOutput(queuedError_, classOfOutput(CONSOLE_ERROR), 
+               true);
+         queuedError_ = "";
+      }
+   }
+   
    @UiField Image clear_;
    @UiField Image expand_;
    @UiField Label emptyIndicator_;
@@ -754,6 +811,7 @@ public class ChunkOutputWidget extends Composite
    private PreWidget console_;
    private VirtualConsole vconsole_;
    private ProgressSpinner spinner_;
+   private String queuedError_;
    
    private int state_ = CHUNK_EMPTY;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;

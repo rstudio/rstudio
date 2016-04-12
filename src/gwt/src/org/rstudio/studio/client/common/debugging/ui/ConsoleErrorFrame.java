@@ -15,8 +15,13 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -39,13 +44,11 @@ public class ConsoleErrorFrame extends Composite
    {
    }
 
-   public ConsoleErrorFrame(int number, ErrorFrame frame, 
-                            ConsoleError.Observer observer)
+   public ConsoleErrorFrame(int number, ErrorFrame frame)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
       frame_ = frame;
-      observer_ = observer;
       
       boolean hasSource = !frame.getFileName().isEmpty();
       functionName.setText(frame.getFunctionName() + (hasSource ? " at" : ""));
@@ -62,13 +65,26 @@ public class ConsoleErrorFrame extends Composite
             {
                if (frame_ != null)
                {
-                  observer_.showSourceForFrame(frame_);
+                  showSourceForFrame(frame_);
                }
             }
          });
       }
    }
 
+   private void showSourceForFrame(ErrorFrame frame)
+   {
+      FileSystemItem sourceFile = FileSystemItem.createFile(
+            frame.getFileName());
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+            new OpenSourceFileEvent(sourceFile,
+                             FilePosition.create(
+                                   frame.getLineNumber(),
+                                   frame.getCharacterNumber()),
+                             FileTypeRegistry.R,
+                             NavigationMethods.HIGHLIGHT_LINE));
+   }
+   
    @UiField
    Label functionName;
    @UiField
@@ -76,6 +92,5 @@ public class ConsoleErrorFrame extends Composite
    @UiField
    Label frameNumber;
 
-   private ConsoleError.Observer observer_;
    private ErrorFrame frame_ = null;
 }
