@@ -244,6 +244,22 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    save(plot, file=filename)
 })
 
+.rs.addFunction("GEplayDisplayList", function()
+{
+   tryCatch(
+      .Call("rs_GEplayDisplayList"),
+      error = function(e) warning(e)
+   )
+})
+
+.rs.addFunction("GEcopyDisplayList", function(fromDevice)
+{
+   tryCatch(
+      .Call("rs_GEcopyDisplayList", fromDevice),
+      error = function(e) warning(e)
+   )
+})
+
 # record an object to a file
 .rs.addFunction( "saveGraphics", function(filename)
 {

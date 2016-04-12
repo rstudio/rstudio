@@ -52,6 +52,7 @@
 #include "RRestartContext.hpp"
 #include "REmbedded.hpp"
 
+#include "graphics/RGraphicsDevDesc.hpp"
 #include "graphics/RGraphicsUtils.hpp"
 #include "graphics/RGraphicsDevice.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
@@ -1354,6 +1355,22 @@ bool win32Quit(const std::string& saveAction,
 }
 #endif
 
+namespace {
+
+SEXP rs_GEcopyDisplayList(SEXP fromDeviceSEXP)
+{
+   int fromDevice = r::sexp::asInteger(fromDeviceSEXP);
+   GEcopyDisplayList(fromDevice);
+   return Rf_ScalarLogical(1);
+}
+
+SEXP rs_GEplayDisplayList()
+{
+   graphics::device::playDisplayList();
+   return Rf_ScalarLogical(1);
+}
+
+} // end anonymous namespace
    
 Error run(const ROptions& options, const RCallbacks& callbacks) 
 {   
@@ -1466,6 +1483,9 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    saveHistoryMethodDef.numArgs = 1;
    r::routines::addCallMethod(saveHistoryMethodDef);
 
+   // register graphics methods
+   RS_REGISTER_CALL_METHOD(rs_GEcopyDisplayList, 1);
+   RS_REGISTER_CALL_METHOD(rs_GEplayDisplayList, 0);
 
    // run R
 
