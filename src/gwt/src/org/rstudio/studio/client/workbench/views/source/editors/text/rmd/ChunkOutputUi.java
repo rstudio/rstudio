@@ -181,6 +181,11 @@ public class ChunkOutputUi
       
       ensureVisible();
    }
+   
+   public boolean hasErrors()
+   {
+      return outputWidget_.hasErrors();
+   }
 
    // Private methods ---------------------------------------------------------
 

@@ -563,10 +563,11 @@ public class AceEditorWidget extends Composite
             int row = lineExecState_.get(j).getRow();
             if (row == i)
             {
-               if (state == ChunkRowExecState.LINE_QUEUED)
+               if (state == ChunkRowExecState.LINE_QUEUED ||
+                   state == ChunkRowExecState.LINE_NONE)
                {
-                  // we're queuing a line that still has state -- detach it
-                  // immediately
+                  // we're cleaning up state, or queuing a line that still has
+                  // state -- detach it immediately
                   lineExecState_.get(j).detach();
                }
                else

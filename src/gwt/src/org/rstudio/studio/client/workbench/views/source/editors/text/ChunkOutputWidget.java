@@ -282,6 +282,7 @@ public class ChunkOutputWidget extends Composite
          if (vconsole_ != null)
             vconsole_.clear();
          root_.clear();
+         hasErrors_ = false;
       }
       syncHeight(true, ensureVisible);
       state_ = CHUNK_READY;
@@ -356,6 +357,11 @@ public class ChunkOutputWidget extends Composite
       }
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
       frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
+   }
+   
+   public boolean hasErrors()
+   {
+      return hasErrors_;
    }
    
    // Event handlers ----------------------------------------------------------
@@ -609,6 +615,7 @@ public class ChunkOutputWidget extends Composite
          if (vconsole_ != null)
             vconsole_.clear();
          root_.clear();
+         hasErrors_ = false;
          emptyIndicator_.setVisible(false);
          lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
          state_ = CHUNK_POST_OUTPUT;

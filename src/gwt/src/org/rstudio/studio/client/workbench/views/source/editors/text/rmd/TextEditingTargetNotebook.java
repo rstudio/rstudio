@@ -48,8 +48,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -84,6 +82,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -95,7 +94,6 @@ public class TextEditingTargetNotebook
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
-                          ConsolePromptHandler,
                           ConsoleWriteInputHandler,
                           ResizeHandler,
                           InterruptStatusEvent.Handler,
@@ -188,7 +186,13 @@ public class TextEditingTargetNotebook
          @Override
          public void onValueChange(ValueChangeEvent<Void> arg0)
          {
+            // check the setup chunk's CRC32 next time we run a chunk
             validateSetupChunk_ = true;
+            
+            // if the change happened in one of our scopes, clean up gutter
+            // indicators for that scope (debounce this so it doesn't fire on
+            // every keystroke)
+            cleanErrorGutter_.schedule(250);
          }
       }));
       
@@ -278,7 +282,6 @@ public class TextEditingTargetNotebook
       events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
       events_.addHandler(ChunkChangeEvent.TYPE, this);
       events_.addHandler(ChunkContextChangeEvent.TYPE, this);
-      events_.addHandler(ConsolePromptEvent.TYPE, this);
       events_.addHandler(ConsoleWriteInputEvent.TYPE, this);
       events_.addHandler(InterruptStatusEvent.TYPE, this);
       events_.addHandler(RestartStatusEvent.TYPE, this);
@@ -586,9 +589,23 @@ public class TextEditingTargetNotebook
           event.getData().getChunkId() == executingChunk_.chunkId)
       {
          cleanChunkExecState(executingChunk_.chunkId);
+
+         // if this was the setup chunk, and no errors were encountered while
+         // executing it, mark it clean
+         if (!StringUtil.isNullOrEmpty(executingChunk_.setupCrc32) &&
+              outputs_.containsKey(executingChunk_.chunkId))
+         {
+            if (!outputs_.get(executingChunk_.chunkId).hasErrors())
+               writeSetupCrc32(executingChunk_.setupCrc32);
+            else
+            {
+               validateSetupChunk_ = true;
+            }
+         }
+      
          executingChunk_ = null;
       }
-      
+
       RmdChunkOutputFinishedEvent.Data data = event.getData();
       if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_REPLAY &&
           data.getRequestId() == Integer.toHexString(requestId_)) 
@@ -648,19 +665,6 @@ public class TextEditingTargetNotebook
       }
    }
    
-   @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
-   {
-      // mark chunk execution as finished
-      if (executingChunk_ != null)
-      {
-         cleanChunkExecState(executingChunk_.chunkId);
-         executingChunk_ = null;
-      }
-      
-      processChunkExecQueue();
-   }
-
    @Override
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
@@ -810,10 +814,6 @@ public class TextEditingTargetNotebook
                {
                   console_.consoleInput(unit.code, unit.chunkId, 
                         new VoidServerRequestCallback());
-
-                  // if this was the setup chunk, mark it
-                  if (!StringUtil.isNullOrEmpty(unit.setupCrc32))
-                     writeSetupCrc32(unit.setupCrc32);
                }
 
                @Override
@@ -1044,7 +1044,6 @@ public class TextEditingTargetNotebook
             // setup chunk
             if (crc32 != setupCrc32_)
             {
-               setupCrc32_ = crc32;
                executeChunk(scopes.get(i), getChunkCode(scopes.get(i)), "");
             }
          }
@@ -1167,6 +1166,31 @@ public class TextEditingTargetNotebook
       }
       chunkExecQueue_.clear();
    }
+   
+   private Timer cleanErrorGutter_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // get the doc's current scope and see if it matches any of our 
+         // known chunk outputs
+         Scope current = docDisplay_.getCurrentChunk();
+         if (current == null)
+            return;
+         
+         for (ChunkOutputUi output: outputs_.values())
+         {
+            if (output.getScope().getPreamble() == current.getPreamble())
+            {
+               docDisplay_.setChunkLineExecState(
+                     current.getBodyStart().getRow(), 
+                     current.getEnd().getRow(), 
+                     ChunkRowExecState.LINE_NONE);
+               return;
+            }
+         }
+      }
+   };
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
