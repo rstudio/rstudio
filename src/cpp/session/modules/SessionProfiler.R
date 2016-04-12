@@ -96,8 +96,6 @@
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
             profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
-
-            file.remove(profilerOptions$fileName)
          }
          else {
             .rs.rpc.copy_profile(profilerOptions$fileName, htmlFile)
@@ -106,11 +104,6 @@
       else {
          profvis <- profilerOptions$profvis
          htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
-
-         if (resources$tempPath == substr(profilerOptions$profvis$x$message$prof_output, 1, nchar(resources$tempPath)))
-         {
-            file.remove(profilerOptions$profvis$x$message$prof_output)
-         }
       }
 
       return(list(
