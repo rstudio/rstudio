@@ -24,10 +24,11 @@ import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
@@ -58,15 +59,18 @@ public class ConsoleErrorFrame extends Composite
          sourceLink.setText(
                FileSystemItem.getNameFromPath(frame.getFileName()) + 
                "#" + frame.getLineNumber());
-         sourceLink.addClickHandler(new ClickHandler()
-         {            
+         DOM.sinkEvents(sourceLink.getElement(), Event.ONCLICK);
+         DOM.setEventListener(sourceLink.getElement(), new EventListener()
+         {
             @Override
-            public void onClick(ClickEvent event)
+            public void onBrowserEvent(Event event)
             {
-               if (frame_ != null)
+               if (DOM.eventGetType(event) == Event.ONCLICK &&
+                   frame_ != null)
                {
                   showSourceForFrame(frame_);
                }
+               
             }
          });
       }

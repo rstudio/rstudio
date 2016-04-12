@@ -44,6 +44,7 @@
       display: inline;
       word-wrap: break-word;
       word-break: break-word;
+      margin-left: 0.3em;
    }
 
    .errorMessage:before {
