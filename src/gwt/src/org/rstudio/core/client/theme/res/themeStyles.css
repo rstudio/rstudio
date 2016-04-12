@@ -5,7 +5,7 @@
 @external ace_editor, ace_text-layer, ace_gutter, ace_gutter-layer, ace_gutter-cell, ace_info;
 @external ace_info, ace_warning, ace_error;
 @external ace_breakpoint, ace_inactive-breakpoint, ace_pending-breakpoint, ace_executing-line;
-@external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line;
+@external ace_chunk-queued-line, ace_chunk-executed-line, ace_chunk-resting-line, ace_chunk-error-line;
 @external ace_sb;
 @external cueText;
 @external search;
@@ -283,12 +283,14 @@ pre {
 }
 
 
-.ace_gutter-cell.ace_chunk-queued-line
+.ace_gutter-cell.ace_chunk-queued-line,
+.ace_gutter-cell.ace_chunk-error-line
 {
    position: relative;
 }
 
-.ace_chunk-queued-line:before
+.ace_chunk-queued-line:before,
+.ace_chunk-error-line:before
 {
    position: absolute;
    top: 0;
@@ -296,12 +298,22 @@ pre {
    content: '';
    display: block;
    height: 100%;
-   opacity: 0.3;
    width: 7px;
    z-index: -100;
-   background-color: rgb(24, 163, 82);
 }
 
+.ace_chunk-queued-line:before
+{
+   background-color: rgb(24, 163, 82);
+   opacity: 0.3;
+}
+
+.ace_chunk-error-line:before
+{
+   background-color: rgb(201, 90, 96);
+}
+
+.ace_chunk-error-line:before,
 .ace_chunk-executed-line:before
 {
    opacity: 1;
@@ -312,6 +324,7 @@ pre {
    transition: opacity 500ms ease;
    opacity: 0;
 }
+
 
 .ace_sb
 {

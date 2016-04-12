@@ -38,6 +38,8 @@ import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -115,6 +117,8 @@ public class TextEditingTargetNotebook
          setupCrc32 = setupCrc32In;
          pos = 0;
          linesExecuted = 0;
+         executingRowStart = 0;
+         executingRowEnd = 0;
       }
       public String chunkId;
       public String options;
@@ -123,6 +127,8 @@ public class TextEditingTargetNotebook
       public int pos;
       public int row;
       public int linesExecuted;
+      public int executingRowStart;
+      public int executingRowEnd;
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
@@ -531,14 +537,6 @@ public class TextEditingTargetNotebook
       if (event.getOutput().getDocId() != docUpdateSentinel_.getId())
          return;
       
-      // mark chunk execution as finished
-      if (executingChunk_ != null &&
-          event.getOutput().getChunkId() == executingChunk_.chunkId)
-      {
-         cleanChunkExecState(executingChunk_.chunkId);
-         executingChunk_ = null;
-      }
-      
       // if nothing at all was returned, this means the chunk doesn't exist on
       // the server, so clean it up here.
       if (event.getOutput().isEmpty())
@@ -548,6 +546,23 @@ public class TextEditingTargetNotebook
                ChunkChangeEvent.CHANGE_REMOVE));
          return;
       }
+      
+      // if this is the currently executing chunk and it has an error,
+      // draw the error
+      if (executingChunk_ != null &&
+          executingChunk_.chunkId == event.getOutput().getChunkId() &&
+          event.getOutput().getType() == RmdChunkOutput.TYPE_SINGLE_UNIT &&
+          event.getOutput().getUnit().getType() == 
+             RmdChunkOutputUnit.TYPE_ERROR)
+      {
+         Debug.devlog("drawing error from " + 
+               executingChunk_.executingRowStart + ", " +
+               executingChunk_.executingRowEnd);
+         docDisplay_.setChunkLineExecState(
+               executingChunk_.executingRowStart,
+               executingChunk_.executingRowEnd,
+               ChunkRowExecState.LINE_ERROR);
+      }
 
       // show output in matching chunk
       String chunkId = event.getOutput().getChunkId();
@@ -556,14 +571,23 @@ public class TextEditingTargetNotebook
          outputs_.get(chunkId).getOutputWidget()
                               .showChunkOutput(event.getOutput());
       }
-      
-      // process next chunk in execution queue
-      processChunkExecQueue();
    }
 
    @Override
    public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
    {
+      // ignore if not targeted at this document
+      if (event.getData().getDocId() != docUpdateSentinel_.getId())
+         return;
+      
+      // mark chunk execution as finished
+      if (executingChunk_ != null &&
+          event.getData().getChunkId() == executingChunk_.chunkId)
+      {
+         cleanChunkExecState(executingChunk_.chunkId);
+         executingChunk_ = null;
+      }
+      
       RmdChunkOutputFinishedEvent.Data data = event.getData();
       if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_REPLAY &&
           data.getRequestId() == Integer.toHexString(requestId_)) 
@@ -582,6 +606,9 @@ public class TextEditingTargetNotebook
             // haven't been committed to the notebook 
             dirtyState_.markDirty(false);
          }
+
+         // process next chunk in execution queue
+         processChunkExecQueue();
       }
    }
 
@@ -661,7 +688,11 @@ public class TextEditingTargetNotebook
       // update display 
       int start = chunk.getBodyStart().getRow() + 
                   executingChunk_.linesExecuted;
-      docDisplay_.setChunkLineExecState(start + 1, start + lines,
+      executingChunk_.executingRowStart = start + 1;
+      executingChunk_.executingRowEnd = start + lines;
+      docDisplay_.setChunkLineExecState(
+            executingChunk_.executingRowStart, 
+            executingChunk_.executingRowEnd,
             ChunkRowExecState.LINE_EXECUTED);
       
       // advance internal input indicator past the text just emitted

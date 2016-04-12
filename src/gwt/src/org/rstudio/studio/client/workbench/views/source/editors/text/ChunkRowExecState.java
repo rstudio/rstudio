@@ -51,9 +51,16 @@ public class ChunkRowExecState
             // the new line
             removeClazz();
             row_ = anchor_.getRow();
-            for (int i = LINE_QUEUED; i <= state_; i++)
+            if (state_ == LINE_ERROR)
             {
-               addClazz(i);
+               addClazz(state_);
+            }
+            else
+            {
+               for (int i = LINE_QUEUED; i <= state_; i++)
+               {
+                  addClazz(i);
+               }
             }
          }
       });
@@ -97,12 +104,22 @@ public class ChunkRowExecState
          return LINE_EXECUTED_CLASS;
       case LINE_RESTING:
          return LINE_RESTING_CLASS;
+      case LINE_ERROR:
+         return LINE_ERROR_CLASS;
       }
       return "";
    }
    
    public void setState(int state)
    {
+      // if the moving to the error state, clean other states
+      if (state == LINE_ERROR)
+         removeClazz();
+      
+      // if this is the error state, there's no transition to the resting state
+      if (state_ == LINE_ERROR && state == LINE_RESTING)
+         return;
+      
       state_ = state;
       if (state_ == LINE_RESTING)
       {
@@ -177,8 +194,11 @@ public class ChunkRowExecState
    public final static String LINE_QUEUED_CLASS   = "ace_chunk-queued-line";
    public final static String LINE_EXECUTED_CLASS = "ace_chunk-executed-line";
    public final static String LINE_RESTING_CLASS  = "ace_chunk-resting-line";
+   public final static String LINE_ERROR_CLASS    = "ace_chunk-error-line";
    
    public final static int LINE_QUEUED   = 0;
    public final static int LINE_EXECUTED = 1;
    public final static int LINE_RESTING  = 2;
+   public final static int LINE_ERROR    = 3;
+   public final static int LINE_NONE     = 4;
 }
