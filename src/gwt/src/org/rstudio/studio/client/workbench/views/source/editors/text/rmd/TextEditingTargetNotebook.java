@@ -915,6 +915,9 @@ public class TextEditingTargetNotebook
       if (output == null)
          return;
       
+      // remove any errors in the gutter associated with this chunk
+      cleanScopeErrorState(output.getScope());
+
       ArrayList<Widget> widgets = new ArrayList<Widget>();
       widgets.add(output.getOutputWidget());
       FadeOutAnimation anim = new FadeOutAnimation(widgets, new Command()
@@ -1189,15 +1192,20 @@ public class TextEditingTargetNotebook
          {
             if (output.getScope().getPreamble() == current.getPreamble())
             {
-               docDisplay_.setChunkLineExecState(
-                     current.getBodyStart().getRow(), 
-                     current.getEnd().getRow(), 
-                     ChunkRowExecState.LINE_NONE);
+               cleanScopeErrorState(current);
                return;
             }
          }
       }
    };
+   
+   private void cleanScopeErrorState(Scope scope)
+   {
+      docDisplay_.setChunkLineExecState(
+            scope.getBodyStart().getRow(), 
+            scope.getEnd().getRow(), 
+            ChunkRowExecState.LINE_NONE);
+   }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
