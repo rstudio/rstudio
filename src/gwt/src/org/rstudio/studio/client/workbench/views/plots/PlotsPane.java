@@ -84,7 +84,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
                  final Size size = ZoomUtils.getZoomedSize(
                        getPlotFrameSize(), 
                        new Size(400, 350), 
-                       new Size(750, 600));
+                       new Size(800, 700));
                   server_.plotsCreateRPubsHtml(
                      "Plot", 
                      "", 

@@ -125,6 +125,12 @@ public:
                                        int heightPx,
                                        bool useDevicePixelRatio = false) = 0;
 
+   virtual core::Error savePlotAsImage(const core::FilePath& filePath,
+                                       const std::string& format,
+                                       int widthPx,
+                                       int heightPx,
+                                       double devicePixelRatio) = 0;
+
    virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
                                      double widthInches,
                                      double heightInches,
