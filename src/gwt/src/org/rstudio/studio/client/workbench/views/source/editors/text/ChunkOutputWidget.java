@@ -241,10 +241,11 @@ public class ChunkOutputWidget extends Composite
       if (chunkId_ == TextEditingTargetNotebook.SETUP_CHUNK_ID && !hasErrors_)
          return;
       
-      // clamp chunk height to min/max
+      // clamp chunk height to min/max (the +19 is the sum of the vertical
+      // padding on the element)
+      int contentHeight = root_.getElement().getScrollHeight() + 19;
       int height = Math.min(
-            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
-                     root_.getElement().getScrollHeight()), 
+            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
             ChunkOutputUi.MAX_CHUNK_HEIGHT);
 
       // if we have renders pending, don't shrink until they're loaded 
@@ -262,8 +263,9 @@ public class ChunkOutputWidget extends Composite
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
       
       setVisible(true);
-      host_.onOutputHeightChanged(height + FRAME_HEIGHT_PAD,
-            ensureVisible);
+      
+      // allocate some extra space so the cursor doesn't touch the output frame
+      host_.onOutputHeightChanged(height + 7, ensureVisible);
    }
    
    public static boolean isEditorStyleCached()
@@ -863,8 +865,6 @@ public class ChunkOutputWidget extends Composite
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
-   
-   private final static int FRAME_HEIGHT_PAD = 7;
    
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;
