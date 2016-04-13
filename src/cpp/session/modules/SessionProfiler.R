@@ -96,8 +96,6 @@
          if (identical(tools::file_ext(profilerOptions$fileName), "Rprof")) {
             profvis <- profvis::profvis(prof_input = profilerOptions$fileName, split="h")
             htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
-
-            file.remove(profilerOptions$fileName)
          }
          else {
             .rs.rpc.copy_profile(profilerOptions$fileName, htmlFile)
@@ -106,11 +104,6 @@
       else {
          profvis <- profilerOptions$profvis
          htmlwidgets::saveWidget(profvis, htmlFile, selfcontained = TRUE)
-
-         if (resources$tempPath == substr(profilerOptions$profvis$x$message$prof_output, 1, nchar(resources$tempPath)))
-         {
-            file.remove(profilerOptions$profvis$x$message$prof_output)
-         }
       }
 
       return(list(
@@ -157,14 +150,15 @@
    .rs.enqueClientEvent("rprof_created", result);
 })
 
-.rs.addJsonRpcHandler("clear_profile", function(filePath)
+.rs.addJsonRpcHandler("clear_profile", function(filePath, htmlPath)
 {
    tryCatch({
       resources <- .rs.profileResources()
 
-      filePrefix <- tools::file_path_sans_ext(basename(filePath))
+      pathPrefix <- tools::file_path_sans_ext(basename(filePath))
+      filePrefix <- tools::file_path_sans_ext(basename(htmlPath))
       
-      rprofFile <- file.path(resources$tempPath, paste(filePrefix, ".Rprof", sep = ""))
+      rprofFile <- file.path(resources$tempPath, paste(pathPrefix, ".Rprof", sep = ""))
       if (file.exists(rprofFile)) {
          file.remove(rprofFile)
       }
