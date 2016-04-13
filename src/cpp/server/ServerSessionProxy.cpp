@@ -519,7 +519,7 @@ void proxyRequest(
 
    // create client
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
-    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath, uid));
+    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath, false, uid));
 
    // setup retry context
    if (!connectionRetryProfile.empty())
