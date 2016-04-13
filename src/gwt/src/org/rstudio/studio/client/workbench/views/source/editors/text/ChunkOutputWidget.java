@@ -237,9 +237,16 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() != EXPANDED)
          return;
       
-      // don't sync if we're the setup chunk and we don't have any errors
+      // special behavior for setup chunk
       if (chunkId_ == TextEditingTargetNotebook.SETUP_CHUNK_ID && !hasErrors_)
+      {
+         if (isVisible())
+         {
+            setVisible(false);
+            host_.onOutputHeightChanged(0, ensureVisible);
+         }
          return;
+      }
       
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
@@ -279,7 +286,7 @@ public class ChunkOutputWidget extends Composite
    {
       // flush any remaining queued errors
       flushQueuedErrors();
-
+      
       if (state_ == CHUNK_PRE_OUTPUT)
       {
          // if no output was produced, clear the contents and show the empty
