@@ -114,6 +114,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    find_chunks <- function(contents) {
       chunkStarts <- grep(.rs.reRmdChunkBegin(), contents, perl = TRUE)
       chunkEnds <- grep(.rs.reRmdChunkEnd(), contents, perl = TRUE)
+      
+      n <- min(length(chunkStarts), length(chunkEnds))
+      chunkStarts <- chunkStarts[seq_len(n)]
+      chunkEnds <- chunkEnds[seq_len(n)]
+      
       chunkRanges <- Map(list, start = chunkStarts, end = chunkEnds)
       lapply(chunkRanges, function(range) {
          list(start = range$start,
@@ -290,6 +295,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # TODO: respect chunk options here (e.g. 'include = TRUE')
    chunkStarts <- grep(.rs.reRmdChunkBegin(), masked, perl = TRUE)
    chunkEnds   <- grep(.rs.reRmdChunkEnd(), masked, perl = TRUE)
+   
+   n <- min(length(chunkStarts), length(chunkEnds))
+   chunkStarts <- chunkStarts[seq_len(n)]
+   chunkEnds   <- chunkEnds[seq_len(n)]
+   
    ranges <- mapply(function(x, y) list(start = x, end = y),
                     chunkStarts, chunkEnds, SIMPLIFY = FALSE)
    
