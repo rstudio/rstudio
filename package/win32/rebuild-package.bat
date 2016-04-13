@@ -39,7 +39,7 @@ cpack -G ZIP
 cd ..
 
 REM unzip to devel directory
-rmdir /S /Q "C:\RStudio-devel"
+rmdir /S /Q "%USERPROFILE%\RStudio-devel"
 cd "%BUILD_DIR%"
 7z x RStudio-99.9.9.zip -y -o"%USERPROFILE%\RStudio-devel"
 cd ..
