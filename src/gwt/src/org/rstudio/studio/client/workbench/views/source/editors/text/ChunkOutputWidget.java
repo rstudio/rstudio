@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
@@ -493,10 +494,10 @@ public class ChunkOutputWidget extends Composite
          flushQueuedErrors();
       }
       
-      ConsoleError error = new ConsoleError(err, 
-            RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass(), this, 
-            null);
-      error.setTracebackVisible(true);
+      UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
+      ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
+            this, null);
+      error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
 
       root_.add(error);
       flushQueuedErrors();
