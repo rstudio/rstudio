@@ -49,8 +49,8 @@ struct NetworkReply::Impl
  #else
       : pClient(new http::LocalStreamAsyncClient(ioService(),
                                                  FilePath(localPeer),
-                                                 boost::none,
                                                  false,
+                                                 boost::none,
                                                  retryProfile())),
  #endif
         replyReadOffset(0)
