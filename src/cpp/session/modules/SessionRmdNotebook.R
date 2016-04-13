@@ -718,3 +718,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
 })
 
+.rs.addFunction("evaluateChunkOptions", function(options)
+{
+  opts <- list()
+  tryCatch({
+    # remove leading text from the options
+    options <- sub("^[^,]*,\\s*", "", options)
+
+    # parse them
+    opts <- eval(parse(text = paste("list(", options, ")")))
+  },
+  error = function(e) {})
+
+  .rs.scalarListFromList(opts)
+})
+

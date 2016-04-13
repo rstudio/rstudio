@@ -38,6 +38,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -520,10 +521,10 @@ public class TextEditingTargetNotebook
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             chunkDef.getChunkId(), options, pixelWidth_, charWidth_, false, 
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<RmdChunkOptions>()
       {
          @Override
-         public void onResponseReceived(Void v)
+         public void onResponseReceived(RmdChunkOptions options)
          {
             // execute the input
             console_.consoleInput(event.getCode(), chunkDef.getChunkId(), 
@@ -777,6 +778,20 @@ public class TextEditingTargetNotebook
 
    // Private methods --------------------------------------------------------
    
+   private void cleanCurrentExecChunk()
+   {
+      if (executingChunk_ == null)
+         return;
+      
+      if (outputs_.containsKey(executingChunk_.chunkId))
+      {
+         outputs_.get(executingChunk_.chunkId)
+                 .getOutputWidget().onOutputFinished(false);
+      }
+      cleanChunkExecState(executingChunk_.chunkId);
+      executingChunk_ = null;
+   }
+   
    private void processChunkExecQueue()
    {
       // do nothing if we're currently executing a chunk or there are no chunks
@@ -816,28 +831,30 @@ public class TextEditingTargetNotebook
             pixelWidth_,
             charWidth_,
             true,
-            new ServerRequestCallback<Void>()
+            new ServerRequestCallback<RmdChunkOptions>()
             {
                @Override
-               public void onResponseReceived(Void v)
+               public void onResponseReceived(RmdChunkOptions options)
                {
-                  console_.consoleInput(unit.code, unit.chunkId, 
-                        new VoidServerRequestCallback());
+                  if (!options.eval())
+                  {
+                     // if this chunk doesn't want to be evaluated, clean its
+                     // execution state and move on
+                     cleanCurrentExecChunk();
+                     processChunkExecQueue();
+                  }
+                  else 
+                  {
+                     console_.consoleInput(unit.code, unit.chunkId, 
+                           new VoidServerRequestCallback());
+                  }
                }
 
                @Override
                public void onError(ServerError error)
                {
                   // don't leave the chunk hung in execution state
-                  if (executingChunk_ != null)
-                  {
-                     if (outputs_.containsKey(executingChunk_.chunkId))
-                     {
-                        outputs_.get(executingChunk_.chunkId)
-                                .getOutputWidget().onOutputFinished(false);
-                     }
-                     cleanChunkExecState(executingChunk_.chunkId);
-                  }
+                  cleanCurrentExecChunk();
 
                   // if the queue is empty, show an error; if it's not, prompt
                   // for continuing
