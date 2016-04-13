@@ -85,13 +85,18 @@ core::Error executeSafely(boost::function<T()> function, T* pReturn)
 //
 // note that it is the responsibility of the caller to inspect
 // a returned SEXP value to see if it is an error / condition object
-core::Error tryCatch(boost::function<void()> function);
+core::Error tryCatch(boost::function<void()> function,
+                     SEXP* pStatus = NULL,
+                     r::sexp::Protect* pProtect = NULL);
 
 template <typename T>
-core::Error tryCatch(boost::function<T()> function, T* pReturn)
+core::Error tryCatch(boost::function<T()> function,
+                     T* pReturn,
+                     SEXP* pStatus = NULL,
+                     r::sexp::Protect* pProtect = NULL)
 {
    ExecuteTargetWithReturn<T> target(function, pReturn);
-   return tryCatch(target);
+   return tryCatch(target, pStatus, pProtect);
 }
 
 namespace detail {

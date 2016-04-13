@@ -242,14 +242,19 @@ SEXP executeActiveFunction()
 
 } // end namespace detail
 
-core::Error tryCatch(boost::function<void()> function)
+core::Error tryCatch(boost::function<void()> function,
+                     SEXP* pStatus,
+                     r::sexp::Protect* pProtect)
 {
    detail::s_activeFunction = function;
    
    RFunction rsExecuteActiveFunction(".rs.executeActiveFunction");
+   if (pStatus && pProtect)
+      return rsExecuteActiveFunction.call(pStatus, pProtect);
+   
+   SEXP status;
    r::sexp::Protect protect;
-   SEXP result;
-   return rsExecuteActiveFunction.call(&result, &protect);
+   return rsExecuteActiveFunction.call(&status, &protect);
 }
   
 Error executeString(const std::string& str)
