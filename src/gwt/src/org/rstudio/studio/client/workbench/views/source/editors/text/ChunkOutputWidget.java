@@ -274,6 +274,9 @@ public class ChunkOutputWidget extends Composite
    
    public void onOutputFinished(boolean ensureVisible)
    {
+      // flush any remaining queued errors
+      flushQueuedErrors();
+
       if (state_ == CHUNK_PRE_OUTPUT)
       {
          // if no output was produced, clear the contents and show the empty
