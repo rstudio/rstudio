@@ -71,6 +71,18 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    .rs.Env[[fullName]]
 })
 
+.rs.addFunction("executeActiveFunction", function()
+{
+   tryCatch(
+      .Call("rs_executeActiveFunction"),
+      error     = identity,
+      warning   = identity,
+      message   = identity,
+      interrupt = identity,
+      condition = identity
+   )
+})
+
 .rs.addFunction( "evalInGlobalEnv", function(code)
 {
    eval(parse(text=code), envir=globalenv())

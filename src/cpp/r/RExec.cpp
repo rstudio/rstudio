@@ -185,7 +185,7 @@ void SEXPTopLevelExec(void *data)
    SEXPTopLevelExecContext* pContext = (SEXPTopLevelExecContext*)data;
    *(pContext->pReturnSEXP) = pContext->function();
 }
-   
+
 } // anonymous namespace
    
 Error executeSafely(boost::function<void()> function)
@@ -223,6 +223,33 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
    {
       return Success();
    }
+}
+
+namespace detail {
+
+boost::function<void()> s_activeFunction;
+SEXP executeActiveFunction()
+{
+   try
+   {
+      if (s_activeFunction)
+         s_activeFunction();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+   
+   return R_NilValue;
+}
+
+} // end namespace detail
+
+core::Error tryCatch(boost::function<void()> function)
+{
+   detail::s_activeFunction = function;
+   
+   RFunction rsExecuteActiveFunction(".rs.executeActiveFunction");
+   r::sexp::Protect protect;
+   SEXP result;
+   return rsExecuteActiveFunction.call(&result, &protect);
 }
   
 Error executeString(const std::string& str)

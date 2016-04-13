@@ -44,9 +44,6 @@ namespace rstudio {
 namespace r {
 namespace exec {
    
-// safe (no r error longjump) execution of abritrary nullary function
-core::Error executeSafely(boost::function<void()> function);
-
 // helper class for variation of executeSafely w/ return value (impl below)
 template <typename T>
 class ExecuteTargetWithReturn 
@@ -64,6 +61,9 @@ private:
    T* pReturn_ ;
 };
  
+// safe (no r error longjump) execution of abritrary nullary function
+core::Error executeSafely(boost::function<void()> function);
+
 // safe (no r error longjump) execution of abritrary nullary function w/ return
 template <typename T>
 core::Error executeSafely(boost::function<T()> function, T* pReturn)
@@ -72,6 +72,31 @@ core::Error executeSafely(boost::function<T()> function, T* pReturn)
    return executeSafely(target);
 }
 
+// evaluate a function in the context of an R 'tryCatch()' execution.
+// the execution process is as follows:
+//
+//    1. a static boost::function 's_activeFunction' is set in this call,
+//    2. an R function '.rs.executeActiveFunction()' is called,
+//    3. that R function executes '.Call("rs_executeActiveFunction")'
+//       within a proper 'tryCatch()' block that captures all R conditions,
+//    4. the 'rs_executeActiveFunction' calls the aforementioned 
+//       's_activeFunction()' -- this evaluates R code and may longjmp
+//       to a handler registered by 'tryCatch()'.
+//
+// note that it is the responsibility of the caller to inspect
+// a returned SEXP value to see if it is an error / condition object
+core::Error tryCatch(boost::function<void()> function);
+
+template <typename T>
+core::Error tryCatch(boost::function<T()> function, T* pReturn)
+{
+   ExecuteTargetWithReturn<T> target(function, pReturn);
+   return tryCatch(target);
+}
+
+namespace detail {
+SEXP executeActiveFunction();
+} // end namespace detail
    
 // parse and evaluate expressions  
 core::Error executeString(const std::string& str);

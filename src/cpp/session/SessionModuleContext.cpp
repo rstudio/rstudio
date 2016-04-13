@@ -347,6 +347,11 @@ SEXP rs_generateShortUuid()
    return r::sexp::create(uuid, &rProtect);
 }
 
+SEXP rs_executeActiveFunction()
+{
+   return r::exec::detail::executeActiveFunction();
+}
+
 } // anonymous namespace
 
 
@@ -2317,6 +2322,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
    RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
+   RS_REGISTER_CALL_METHOD(rs_executeActiveFunction, 0);
 
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

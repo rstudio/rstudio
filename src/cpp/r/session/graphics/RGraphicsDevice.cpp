@@ -404,8 +404,7 @@ void resyncDisplayList()
    // replay the display list onto the resized surface
    {
       SuppressDeviceEventsScope scope(plotManager());
-      Error error = r::exec::executeSafely(
-                              boost::bind(GEplayDisplayList,s_pGEDevDesc));
+      Error error = r::exec::tryCatch(boost::bind(GEplayDisplayList, s_pGEDevDesc));
       if (error)
       {
          std::string errMsg;
@@ -550,8 +549,7 @@ Error makeActive()
    if (s_pGEDevDesc == NULL)
    {
       SEXP ignoredSEXP;
-      Error error = r::exec::executeSafely<SEXP>(boost::bind(createGD), 
-                                                 &ignoredSEXP);
+      Error error = r::exec::tryCatch<SEXP>(boost::bind(createGD), &ignoredSEXP);
       if (error)
          return error;
    }
@@ -651,7 +649,7 @@ Error restoreSnapshot(const core::FilePath& snapshotFile)
 void copyToActiveDevice()
 {
    int rsDeviceNumber = GEdeviceNumber(s_pGEDevDesc);
-   GEcopyDisplayList(rsDeviceNumber);
+   r::exec::tryCatch(boost::bind(GEcopyDisplayList, rsDeviceNumber));
 }
    
 std::string imageFileExtension()

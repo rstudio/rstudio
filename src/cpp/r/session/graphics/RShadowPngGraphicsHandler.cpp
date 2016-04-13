@@ -195,9 +195,8 @@ void shadowDevSync(DeviceContext* pDC)
    // the invalid name warning in checkValidSymbolId in dotcode.c
    {
       r::session::utils::SuppressOutputInScope scope;
-      error = r::exec::executeSafely(boost::bind(GEcopyDisplayList,
-                                                    rsDeviceNumber));
-      if (error && !r::isCodeExecutionError(error))
+      error = r::exec::tryCatch(boost::bind(GEcopyDisplayList, rsDeviceNumber));
+      if (error)
          LOG_ERROR(error);
    }
 }

@@ -5,9 +5,14 @@ REM Prepend Qt 5.4 SDK Mingw to path
 setlocal
 set PATH=C:\Qt\Qt5.4.1\Tools\mingw491_32\bin;%PATH%
 
-REM Strip Rtools out of the path (persume it's in the default location)
+REM Strip Rtools out of the path (presume it's in the default location)
 CALL SET PATH=%PATH:C:\Rtools\bin;=%
 CALL SET PATH=%PATH:C:\Rtools\gcc-4.6.3\bin;=%
+
+REM Remove Git from PATH (otherwise cmake complains about
+REM finding 'sh.exe')
+CALL set PATH=%PATH:C:\Program Files (x86)\Git\bin=%
+CALL set PATH=%PATH:C:\Program Files\Git\bin=%
 
 REM Establish build dir
 set BUILD_DIR=build
