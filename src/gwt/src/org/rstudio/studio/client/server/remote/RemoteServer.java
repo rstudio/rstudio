@@ -96,6 +96,7 @@ import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
@@ -4217,7 +4218,7 @@ public class RemoteServer implements Server
    @Override
    public void setChunkConsole(String docId, String chunkId, String options,
          int pixelWidth, int charWidth, boolean replace, 
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<RmdChunkOptions> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));

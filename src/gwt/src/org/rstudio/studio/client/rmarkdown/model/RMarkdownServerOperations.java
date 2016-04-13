@@ -1,7 +1,7 @@
 /*
  * RMarkdownServerOperations.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,7 +76,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void setChunkConsole(String docId, String chunkId, String options, 
                         int pixelWidth, int characterWidth, boolean replace,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<RmdChunkOptions> requestCallback);
    
    void createNotebookFromCache(String rmdPath, String outputPath, ServerRequestCallback<Void> requestCallback);
 }

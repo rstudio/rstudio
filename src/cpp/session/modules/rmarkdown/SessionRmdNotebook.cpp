@@ -158,9 +158,8 @@ void onChunkExecCompleted(const std::string& docId,
 
 // called by the client to set the active chunk console
 Error setChunkConsole(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse*)
+                      json::JsonRpcResponse* pResponse)
 {
-
    std::string docId, chunkId, options;
    int pixelWidth = 0, charWidth = 0;
    bool replace = false;
@@ -168,6 +167,33 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
          &pixelWidth, &charWidth, &replace);
    if (error)
       return error;
+
+   // evaluate this chunk's options
+   r::sexp::Protect protect;
+   SEXP sexpOptions = R_NilValue;
+   error = r::exec::RFunction(".rs.evaluateChunkOptions", options)
+                             .call(&sexpOptions, &protect);
+   if (error)
+      return error;
+
+   // convert to JSON for client
+   json::Value jsonOptions;
+   error = r::json::jsonValueFromList(sexpOptions, &jsonOptions);
+   if (error)
+      return error;
+   pResponse->setResult(jsonOptions);
+
+   // if the options indicated that this chunk shouldn't be evaluated, don't
+   // evaluate it
+   if (jsonOptions.type() == json::ObjectType)
+   {
+      bool eval = true;
+      error = json::readObject(jsonOptions.get_obj(), "eval", &eval);
+      if (!error && !eval) 
+      {
+         return Success();
+      }
+   }
 
    cleanChunkOutput(docId, chunkId, true);
 
