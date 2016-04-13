@@ -845,6 +845,11 @@ public class TextEditingTargetNotebook
                   }
                   else 
                   {
+                     if (outputs_.containsKey(unit.chunkId))
+                     {
+                        outputs_.get(unit.chunkId).getOutputWidget()
+                                .setInclude(options.include());
+                     }
                      console_.consoleInput(unit.code, unit.chunkId, 
                            new VoidServerRequestCallback());
                   }
@@ -1031,8 +1036,8 @@ public class TextEditingTargetNotebook
    private void createChunkOutput(ChunkDefinition def)
    {
       outputs_.put(def.getChunkId(), 
-                   new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
-                                     def, this));
+             new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
+                               def, def.getChunkId() != SETUP_CHUNK_ID, this));
    }
    
    private void ensureSetupChunkExecuted()

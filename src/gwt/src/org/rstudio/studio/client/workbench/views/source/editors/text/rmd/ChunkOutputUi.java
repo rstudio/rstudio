@@ -37,7 +37,7 @@ public class ChunkOutputUi
                         RenderFinishedEvent.Handler
 {
    public ChunkOutputUi(String docId, DocDisplay display, ChunkDefinition def,
-         PinnedLineWidget.Host lineWidgetHost)
+         boolean include, PinnedLineWidget.Host lineWidgetHost)
    {
       display_ = display;
       chunkId_ = def.getChunkId();
@@ -45,7 +45,7 @@ public class ChunkOutputUi
       def_ = def;
 
       outputWidget_ = new ChunkOutputWidget(def.getChunkId(), 
-            def.getExpansionState(), this);
+            def.getExpansionState(), include, this);
       
       // sync the widget's expanded/collapsed state to the underlying chunk
       // definition (which is persisted)

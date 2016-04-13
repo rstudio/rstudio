@@ -40,7 +40,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -105,11 +104,12 @@ public class ChunkOutputWidget extends Composite
    }
 
    public ChunkOutputWidget(String chunkId, int expansionState,
-         ChunkOutputHost host)
+         boolean include, ChunkOutputHost host)
    {
       chunkId_ = chunkId;
       host_ = host;
       queuedError_ = "";
+      include_ = include;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
@@ -203,6 +203,15 @@ public class ChunkOutputWidget extends Composite
       return state_;
    }
 
+   public void setInclude(boolean include)
+   {
+      if (include == include_)
+         return;
+
+      include_ = include;
+      syncHeight(false, false);
+   }
+
    public HandlerRegistration addExpansionStateChangeHandler(
          ValueChangeHandler<Integer> handler)
    {
@@ -237,8 +246,9 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() != EXPANDED)
          return;
       
-      // special behavior for setup chunk
-      if (chunkId_ == TextEditingTargetNotebook.SETUP_CHUNK_ID && !hasErrors_)
+      // special behavior for chunks which don't have output included by 
+      // default
+      if (!include_ && !hasErrors_)
       {
          if (isVisible())
          {
@@ -863,6 +873,7 @@ public class ChunkOutputWidget extends Composite
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
+   private boolean include_ = true;
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;
