@@ -29,13 +29,20 @@ endif()
 
 # install root docs
 if (NOT RSTUDIO_SESSION_WIN64)
+
    # dynamically configure SOURCE with the git revision hash
-   INSTALL(CODE "
-      exec_program(git ARGS rev-parse HEAD
-                   OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
-      configure_file (\"${CMAKE_CURRENT_SOURCE_DIR}/SOURCE.in\"
-                      \"${CMAKE_CURRENT_BINARY_DIR}/SOURCE\")
-    ")
+   if (NOT GIT_FOUND)
+     find_package(git QUIET)
+   endif()
+
+   if(GIT_FOUND)
+      INSTALL(CODE "
+         exec_program(\"${GIT_EXECUTABLE}\" ARGS rev-parse HEAD
+                      OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+         configure_file (\"${CMAKE_CURRENT_SOURCE_DIR}/SOURCE.in\"
+                         \"${CMAKE_CURRENT_BINARY_DIR}/SOURCE\")
+      ")
+   endif()
 
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/VERSION.in
                   ${CMAKE_CURRENT_BINARY_DIR}/VERSION)
