@@ -845,7 +845,8 @@ public class TextEditingTargetNotebook
                   }
                   else 
                   {
-                     if (outputs_.containsKey(unit.chunkId))
+                     if (outputs_.containsKey(unit.chunkId) &&
+                         unit.chunkId != SETUP_CHUNK_ID)
                      {
                         outputs_.get(unit.chunkId).getOutputWidget()
                                 .setInclude(options.include());
@@ -1282,10 +1283,10 @@ public class TextEditingTargetNotebook
    // chunk state synchronized
    private final static int STATE_INITIALIZED = 1;
    
+   private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
+   private final static String SETUP_CHUNK_ID = "csetup_chunk";
+   
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
-   
-   public final static String LAST_SETUP_CRC32 = "last_setup_crc32";
-   public final static String SETUP_CHUNK_ID = "csetup_chunk";
 }

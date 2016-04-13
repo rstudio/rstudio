@@ -2951,6 +2951,11 @@ public class AceEditor implements DocDisplay,
       return lastCursorChangedTime_;
    }
    
+   public int getFirstVisibleRow()
+   {
+      return widget_.getEditor().getFirstVisibleRow();
+   }
+
    public int getLastVisibleRow()
    {
       return widget_.getEditor().getLastVisibleRow();

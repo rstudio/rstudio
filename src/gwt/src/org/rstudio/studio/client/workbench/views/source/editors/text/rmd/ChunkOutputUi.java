@@ -129,19 +129,27 @@ public class ChunkOutputUi
       {
          targetRow = Math.min(display_.getRowCount(), targetRow + 1);
       }
-   
-      if (display_.getLastVisibleRow() < targetRow)
+      
+      // if the chunk and output are already taking up the whole viewport, don't
+      // do any auto-scrolling
+      if (display_.getLastVisibleRow() <= targetRow && 
+          display_.getFirstVisibleRow() >= getScope().getPreamble().getRow())
+      {
+         return;
+      }
+      
+      // scroll into view if the output is not visible (in either direction)
+      if (display_.getLastVisibleRow() < targetRow ||
+          display_.getFirstVisibleRow() > getCurrentRow())
       {
          Scope chunk = getScope();
          Rectangle bounds = display_.getPositionBounds(chunk.getPreamble());
-         
+
          // compute the distance we need to scroll 
          int delta = bounds.getTop() - (display_.getBounds().getTop() + 60);
 
-         // scroll down to see the output, but not up (if the chunk is large 
-         // this could obscure the output rather than show it!)
-         if (delta > 0)
-            display_.scrollToY(display_.getScrollTop() + delta, 400);
+         // scroll!
+         display_.scrollToY(display_.getScrollTop() + delta, 400);
       }
    }
 
