@@ -200,6 +200,6 @@ public class ChunkOutputUi
    private HandlerRegistration renderHandlerReg_ = null;
 
    public final static int MIN_CHUNK_HEIGHT = 25;
-   public final static int CHUNK_COLLAPSED_HEIGHT = 10;
+   public final static int CHUNK_COLLAPSED_HEIGHT = 15;
    public final static int MAX_CHUNK_HEIGHT = 650;
 }

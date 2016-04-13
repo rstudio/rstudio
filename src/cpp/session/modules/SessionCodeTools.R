@@ -416,8 +416,10 @@
       return(object)
    
    body <- body(object)
+   if (is.symbol(body))
+     return(object)
+
    env <- environment(object)
-   
    if (length(body) && .rs.isSymbolCalled(body[[1]], ".rs.callAs"))
       return(env$original)
    

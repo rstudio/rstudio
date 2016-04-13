@@ -24,6 +24,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
+import com.google.gwt.regexp.shared.RegExp;
+
 public class ChunkContextUi implements ChunkContextToolbar.Host
 {
    public ChunkContextUi(TextEditingTarget target, int renderPass, 
@@ -32,6 +34,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       target_ = target;
       int preambleRow = chunk.getPreamble().getRow();
       isSetup_ = isSetupChunk(preambleRow);
+      isEval_ = isEvalChunk(preambleRow);
       host_ = lineWidgetHost;
       dark_ = dark;
       renderPass_ = renderPass;
@@ -68,6 +71,12 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       {
          isSetup_ = isSetup;
          toolbar_.setRunPrevious(!isSetup_);
+      }
+      boolean isEval = isEvalChunk(row);
+      if (isEval != isEval_)
+      {
+         isEval_ = isEval;
+         toolbar_.setRun(isEval);
       }
    }
    
@@ -150,9 +159,16 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       return line.contains("r setup");
    }
    
+   private boolean isEvalChunk(int row) 
+   {
+      String line = target_.getDocDisplay().getLine(row);
+      RegExp evalFalseReg = RegExp.compile("\\beval\\s*=\\s*FALSE\\b");
+      return evalFalseReg.exec(line) == null;
+   }
+   
    private void createToolbar(int row)
    {
-      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, true);
+      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, isEval_);
       toolbar_.setHeight("0px"); 
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
@@ -168,4 +184,5 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    private int renderPass_;
    
    private boolean isSetup_;
+   private boolean isEval_;
 }

@@ -99,6 +99,11 @@ public class ChunkContextToolbar extends Composite
       runPrevious_.setVisible(visible);
    }
    
+   public void setRun(boolean visible)
+   {
+      run_.setVisible(visible);
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void initOptions(boolean dark)

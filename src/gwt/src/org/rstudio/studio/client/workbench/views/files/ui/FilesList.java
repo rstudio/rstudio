@@ -112,15 +112,50 @@ public class FilesList extends Composite
             int width = event.getWidth();
             int newState = width < BOUNDARY_WIDTH_PIXELS ? STATE_SMALL : STATE_LARGE;
             
-            // Avoid over-eager updating of column widths
-            if (newState == state_)
+            // Avoid over-eager updating of column widths.
+            if (state_ == STATE_LARGE && state_ == newState)
                return;
             
             state_ = newState;
-            if (state_ == STATE_SMALL)
-               filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
-            else
+            if (state_ == STATE_LARGE)
+            {
                filesDataGrid_.setColumnWidth(nameColumn_, "auto");
+               filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+               filesDataGrid_.setColumnWidth(modifiedColumn_, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX);
+               return;
+            }
+            
+            // Otherwise, we need to update column widths one by one.
+            // The right-most columns lose width first.
+            // TODO: Properly abstract this out into some kind of sizing
+            // policy that DataGrids can adopt / use.
+            int leftoverWidth = width
+                  - MINIMUM_NAME_COLUMN_WIDTH_PIXELS
+                  - CHECK_COLUMN_WIDTH_PIXELS
+                  - ICON_COLUMN_WIDTH_PIXELS;
+            
+            if (leftoverWidth < 0)
+            {
+              filesDataGrid_.setColumnWidth(sizeColumn_, 0, Unit.PX);
+              filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
+              
+              // Adjust the name column width
+              int nameWidth = width - CHECK_COLUMN_WIDTH_PIXELS - ICON_COLUMN_WIDTH_PIXELS;
+              filesDataGrid_.setColumnWidth(nameColumn_, nameWidth < 0 ? 0 : nameWidth, Unit.PX);
+            }
+            else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS)
+            {
+              filesDataGrid_.setColumnWidth(sizeColumn_, leftoverWidth, Unit.PX);
+              filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
+              filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
+            }
+            else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS + MODIFIED_COLUMN_WIDTH_PIXELS)
+            {
+              filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+              filesDataGrid_.setColumnWidth(modifiedColumn_, leftoverWidth - SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+              filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
+            }
+            
          }
       });
    }

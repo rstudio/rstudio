@@ -57,6 +57,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExe
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ScopePredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
@@ -1043,19 +1045,16 @@ public class TextEditingTargetNotebook
       validateSetupChunk_ = false;
       
       // find the setup chunk
-      JsArray<Scope> scopes = docDisplay_.getScopeTree();
-      for (int i = 0; i < scopes.length(); i++)
+      Scope setupScope = getSetupChunkScope();
+      if (setupScope != null)
       {
-         if (isSetupChunkScope(scopes.get(i)))
-         {
-            String crc32 = getChunkCrc32(scopes.get(i));
+         String crc32 = getChunkCrc32(setupScope);
 
-            // compare with previously known hash; if it differs, re-run the
-            // setup chunk
-            if (crc32 != setupCrc32_)
-            {
-               executeChunk(scopes.get(i), getChunkCode(scopes.get(i)), "");
-            }
+         // compare with previously known hash; if it differs, re-run the
+         // setup chunk
+         if (crc32 != setupCrc32_)
+         {
+            executeChunk(setupScope, getChunkCode(setupScope), "");
          }
       }
    }
@@ -1125,12 +1124,7 @@ public class TextEditingTargetNotebook
    {
       if (chunkId == SETUP_CHUNK_ID)
       {
-         JsArray<Scope> scopes = docDisplay_.getScopeTree();
-         for (int i = 0; i < scopes.length(); i++)
-         {
-            if (isSetupChunkScope(scopes.get(i)))
-               return scopes.get(i);
-         }
+         return getSetupChunkScope();
       }
       else if (outputs_.containsKey(chunkId))
       {
@@ -1149,15 +1143,28 @@ public class TextEditingTargetNotebook
       }
       
       // no row mapped -- how about the setup chunk?
-      JsArray<Scope> scopes = docDisplay_.getScopeTree();
-      for (int i = 0; i < scopes.length(); i++)
+      Scope setupScope = getSetupChunkScope();
+      if (setupScope != null &&
+          setupScope.getPreamble().getRow() == preambleRow)
       {
-         if (isSetupChunkScope(scopes.get(i)) && 
-             scopes.get(i).getPreamble().getRow() == preambleRow)
-            return SETUP_CHUNK_ID;
+         return SETUP_CHUNK_ID;
       }
       
       return null;
+   }
+   
+   
+   private Scope getSetupChunkScope()
+   {
+      ScopeList scopes = new ScopeList(docDisplay_);
+      return scopes.findFirst(new ScopePredicate()
+      {
+         @Override
+         public boolean test(Scope scope)
+         {
+            return isSetupChunkScope(scope);
+         }
+      });
    }
    
    private void setAllExpansionStates(int state)

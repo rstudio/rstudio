@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
@@ -236,14 +237,22 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() != EXPANDED)
          return;
       
-      // don't sync if we're the setup chunk and we don't have any errors
+      // special behavior for setup chunk
       if (chunkId_ == TextEditingTargetNotebook.SETUP_CHUNK_ID && !hasErrors_)
+      {
+         if (isVisible())
+         {
+            setVisible(false);
+            host_.onOutputHeightChanged(0, ensureVisible);
+         }
          return;
+      }
       
-      // clamp chunk height to min/max
+      // clamp chunk height to min/max (the +19 is the sum of the vertical
+      // padding on the element)
+      int contentHeight = root_.getElement().getScrollHeight() + 19;
       int height = Math.min(
-            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, 
-                     root_.getElement().getScrollHeight()), 
+            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
             ChunkOutputUi.MAX_CHUNK_HEIGHT);
 
       // if we have renders pending, don't shrink until they're loaded 
@@ -261,8 +270,9 @@ public class ChunkOutputWidget extends Composite
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
       
       setVisible(true);
-      host_.onOutputHeightChanged(height + FRAME_HEIGHT_PAD,
-            ensureVisible);
+      
+      // allocate some extra space so the cursor doesn't touch the output frame
+      host_.onOutputHeightChanged(height + 7, ensureVisible);
    }
    
    public static boolean isEditorStyleCached()
@@ -274,6 +284,9 @@ public class ChunkOutputWidget extends Composite
    
    public void onOutputFinished(boolean ensureVisible)
    {
+      // flush any remaining queued errors
+      flushQueuedErrors();
+      
       if (state_ == CHUNK_PRE_OUTPUT)
       {
          // if no output was produced, clear the contents and show the empty
@@ -490,10 +503,10 @@ public class ChunkOutputWidget extends Composite
          flushQueuedErrors();
       }
       
-      ConsoleError error = new ConsoleError(err, 
-            RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass(), this, 
-            null);
-      error.setTracebackVisible(true);
+      UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
+      ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
+            this, null);
+      error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
 
       root_.add(error);
       flushQueuedErrors();
@@ -859,8 +872,6 @@ public class ChunkOutputWidget extends Composite
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
-   
-   private final static int FRAME_HEIGHT_PAD = 7;
    
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;
