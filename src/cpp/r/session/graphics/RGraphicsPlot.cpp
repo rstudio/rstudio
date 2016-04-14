@@ -128,7 +128,7 @@ Error Plot::renderFromDisplay()
    {
       return Success();
    }
-    
+   
    // generate a new storage uuid
    std::string storageUuid = core::system::generateUuid();
    

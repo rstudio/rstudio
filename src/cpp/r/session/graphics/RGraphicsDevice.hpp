@@ -46,6 +46,12 @@ int getWidth();
 int getHeight();
 double devicePixelRatio();
 
+// NOTE: should not be called directly!
+// use RFunction(".rs.GEplayDisplayList") instead to ensure
+// appropriate R calling handlers are active (that function will
+// then call through to this)
+void playDisplayList();
+
 // reset
 void close();
 
