@@ -108,10 +108,11 @@ public class TextEditingTargetNotebook
 
    private class ChunkExecQueueUnit
    {
-      public ChunkExecQueueUnit(String chunkIdIn, String codeIn, 
+      public ChunkExecQueueUnit(String chunkIdIn, int modeIn, String codeIn, 
             String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
+         mode = modeIn;
          options = optionsIn;
          code = codeIn;
          row = rowIn;
@@ -127,6 +128,7 @@ public class TextEditingTargetNotebook
       public String setupCrc32;
       public int pos;
       public int row;
+      public int mode;
       public int linesExecuted;
       public int executingRowStart;
       public int executingRowEnd;
@@ -307,7 +309,8 @@ public class TextEditingTargetNotebook
       executedSinceActivate_ = false;
    }
    
-   public void executeChunk(Scope chunk, String code, String options)
+   public void executeChunk(Scope chunk, String code, String options,
+         int mode)
    {
       // maximize the source window if it's paired with the console and this
       // is the first chunk we've executed since we were activated
@@ -374,7 +377,7 @@ public class TextEditingTargetNotebook
       }
 
       // put it in the queue 
-      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, code,
+      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, mode, code,
             options, row, setupCrc32));
 
       // if there are other chunks in the queue, let them run
@@ -520,7 +523,8 @@ public class TextEditingTargetNotebook
       // have the server start recording output from this chunk
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), options, pixelWidth_, charWidth_, false, 
+            chunkDef.getChunkId(), MODE_SINGLE, options, pixelWidth_, 
+            charWidth_, false, 
             new ServerRequestCallback<RmdChunkOptions>()
       {
          @Override
@@ -833,6 +837,7 @@ public class TextEditingTargetNotebook
       
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             unit.chunkId, 
+            unit.mode,
             unit.options,
             pixelWidth_,
             charWidth_,
@@ -842,10 +847,10 @@ public class TextEditingTargetNotebook
                @Override
                public void onResponseReceived(RmdChunkOptions options)
                {
-                  if (!options.eval())
+                  if (!options.eval() && unit.mode == MODE_BATCH)
                   {
-                     // if this chunk doesn't want to be evaluated, clean its
-                     // execution state and move on
+                     // if this chunk doesn't want to be evaluated and we're in
+                     // batch mode, clean its execution state and move on
                      cleanCurrentExecChunk();
                      processChunkExecQueue();
                   }
@@ -1083,7 +1088,7 @@ public class TextEditingTargetNotebook
          // setup chunk
          if (crc32 != setupCrc32_)
          {
-            executeChunk(setupScope, getChunkCode(setupScope), "");
+            executeChunk(setupScope, getChunkCode(setupScope), "", MODE_BATCH);
          }
       }
    }
@@ -1295,4 +1300,7 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
+   
+   public final static int MODE_SINGLE = 0;
+   public final static int MODE_BATCH  = 1;
 }

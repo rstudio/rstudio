@@ -4024,7 +4024,8 @@ public class TextEditingTarget implements
    public void executeChunk(Position position)
    {
       docDisplay_.getScopeTree();
-      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), false);
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), 
+            TextEditingTargetNotebook.MODE_SINGLE, false);
    }
    
    public void dequeueChunk(int row)
@@ -4040,7 +4041,8 @@ public class TextEditingTarget implements
       // a Scope with an end.
       docDisplay_.getScopeTree();
       
-      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), false);
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), 
+           TextEditingTargetNotebook.MODE_SINGLE, false);
    }
    
    @Handler
@@ -4052,7 +4054,8 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       Scope nextChunk = scopeHelper_.getNextSweaveChunk();
-      executeSweaveChunk(nextChunk, true);
+      executeSweaveChunk(nextChunk, TextEditingTargetNotebook.MODE_SINGLE, 
+            true);
       docDisplay_.setCursorPosition(nextChunk.getBodyStart());
       docDisplay_.ensureCursorVisible();
    }
@@ -4134,7 +4137,7 @@ public class TextEditingTarget implements
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
       for (Scope scope : previousScopes)
-         executeSweaveChunk(scope, false);
+         executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
    }
    
    @Handler
@@ -4146,7 +4149,8 @@ public class TextEditingTarget implements
          Scope scope = scopes.get(i);
          if (scope.isChunk())
          {
-            executeSweaveChunk(scope, false);
+            executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, 
+                  false);
             return;
          }
       }
@@ -4187,6 +4191,7 @@ public class TextEditingTarget implements
    }
    
    private void executeSweaveChunk(final Scope chunk, 
+                                   final int mode, 
                                    final boolean scrollNearTop)
    {
       if (chunk == null)
@@ -4216,7 +4221,7 @@ public class TextEditingTarget implements
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code, options);
+                  notebook_.executeChunk(chunk, code, options, mode);
                }
                else
                {

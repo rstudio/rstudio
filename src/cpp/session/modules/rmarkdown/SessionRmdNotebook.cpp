@@ -45,6 +45,10 @@
 #define kFinishedReplay      0
 #define kFinishedInteractive 1
 
+// symmetric with client
+#define kExecModeSingle 0
+#define kExecModeBatch  1
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -161,10 +165,10 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string docId, chunkId, options;
-   int pixelWidth = 0, charWidth = 0;
+   int pixelWidth = 0, charWidth = 0, execMode = 0;
    bool replace = false;
-   Error error = json::readParams(request.params, &docId, &chunkId, &options,
-         &pixelWidth, &charWidth, &replace);
+   Error error = json::readParams(request.params, &docId, &chunkId, &execMode,
+         &options, &pixelWidth, &charWidth, &replace);
    if (error)
       return error;
 
@@ -183,9 +187,11 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
       return error;
    pResponse->setResult(jsonOptions);
 
-   // if the options indicated that this chunk shouldn't be evaluated, don't
+   // if this chunk is going to be evaluated in batch mode, and the options
+   // indicate that it shouldn't be evaluated, don't
    // evaluate it
-   if (jsonOptions.type() == json::ObjectType)
+   if (execMode == kExecModeBatch &&
+       jsonOptions.type() == json::ObjectType)
    {
       bool eval = true;
       error = json::readObject(jsonOptions.get_obj(), "eval", &eval);
