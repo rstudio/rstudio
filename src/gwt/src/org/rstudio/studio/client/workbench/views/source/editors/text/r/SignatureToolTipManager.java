@@ -21,10 +21,13 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.MouseDragHandler.MouseCoordinates;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -34,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -172,13 +176,25 @@ public class SignatureToolTipManager
             }
          }
       }));
+      
+      handlers_.add(events_.addHandler(ConsoleWriteInputEvent.TYPE, new ConsoleWriteInputHandler()
+      {
+         @Override
+         public void onConsoleWriteInput(ConsoleWriteInputEvent event)
+         {
+            anchor_ = null;
+            toolTip_.hide();
+         }
+      }));
    }
    
    @Inject
    public void initialize(UIPrefs uiPrefs,
+                          EventBus events,
                           CodeToolsServerOperations server)
    {
       uiPrefs_ = uiPrefs;
+      events_ = events;
       server_ = server;
    }
    
@@ -530,6 +546,7 @@ public class SignatureToolTipManager
    private boolean ready_;
 
    private UIPrefs uiPrefs_;
+   private EventBus events_;
    private CodeToolsServerOperations server_;
    
    private static final int MONITOR_DELAY_MS = 200;
