@@ -560,6 +560,8 @@ public class TextEditingTargetNotebook
                ChunkChangeEvent.CHANGE_REMOVE));
          return;
       }
+
+      String chunkId = event.getOutput().getChunkId();
       
       // if this is the currently executing chunk and it has an error...
       if (executingChunk_ != null &&
@@ -574,12 +576,16 @@ public class TextEditingTargetNotebook
                executingChunk_.executingRowEnd,
                ChunkRowExecState.LINE_ERROR);
          
-         // don't execute any more chunks
-         clearChunkExecQueue();
+         // don't execute any more chunks if this chunk's options includes
+         // error = FALSE
+         if (!outputs_.containsKey(chunkId) ||
+             !outputs_.get(chunkId).getOutputWidget().getOptions().error())
+         {
+            clearChunkExecQueue();
+         }
       }
 
       // show output in matching chunk
-      String chunkId = event.getOutput().getChunkId();
       if (outputs_.containsKey(chunkId))
       {
          outputs_.get(chunkId).getOutputWidget()
@@ -849,7 +855,7 @@ public class TextEditingTargetNotebook
                          unit.chunkId != SETUP_CHUNK_ID)
                      {
                         outputs_.get(unit.chunkId).getOutputWidget()
-                                .setInclude(options.include());
+                                .setOptions(options);
                      }
                      console_.consoleInput(unit.code, unit.chunkId, 
                            new VoidServerRequestCallback());

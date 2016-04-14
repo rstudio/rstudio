@@ -22,10 +22,20 @@ public class RmdChunkOptions extends JavaScriptObject
    {
    }
    
+   public final static native RmdChunkOptions create() /*-{
+      return {};
+   }-*/;
+   
    public final native boolean eval() /*-{
       if (typeof(this.eval) !== "undefined")
         return !!this.eval;
       return true;
+   }-*/;
+   
+   public final native boolean error() /*-{
+      if (typeof(this.error) !== "undefined")
+        return !!this.error;
+      return false;
    }-*/;
 
    public final native boolean include() /*-{

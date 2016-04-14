@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
@@ -103,13 +104,13 @@ public class ChunkOutputWidget extends Composite
       String spinner();
    }
 
-   public ChunkOutputWidget(String chunkId, int expansionState,
-         boolean include, ChunkOutputHost host)
+   public ChunkOutputWidget(String chunkId, RmdChunkOptions options, 
+         int expansionState, ChunkOutputHost host)
    {
       chunkId_ = chunkId;
       host_ = host;
       queuedError_ = "";
-      include_ = include;
+      options_ = options;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
@@ -203,13 +204,18 @@ public class ChunkOutputWidget extends Composite
       return state_;
    }
 
-   public void setInclude(boolean include)
+   public void setOptions(RmdChunkOptions options)
    {
-      if (include == include_)
-         return;
-
-      include_ = include;
-      syncHeight(false, false);
+      boolean needsSync = options_.include() != options.include();
+      options_ = options;
+      
+      if (needsSync)
+         syncHeight(false, false);
+   }
+   
+   public RmdChunkOptions getOptions()
+   {
+      return options_;
    }
 
    public HandlerRegistration addExpansionStateChangeHandler(
@@ -248,7 +254,7 @@ public class ChunkOutputWidget extends Composite
       
       // special behavior for chunks which don't have output included by 
       // default
-      if (!include_ && !hasErrors_)
+      if (!options_.include() && !hasErrors_)
       {
          if (isVisible())
          {
@@ -867,13 +873,13 @@ public class ChunkOutputWidget extends Composite
    private VirtualConsole vconsole_;
    private ProgressSpinner spinner_;
    private String queuedError_;
+   private RmdChunkOptions options_;
    
    private int state_ = CHUNK_EMPTY;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
-   private boolean include_ = true;
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;

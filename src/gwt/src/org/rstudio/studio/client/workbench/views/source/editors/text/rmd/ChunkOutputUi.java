@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -45,7 +46,7 @@ public class ChunkOutputUi
       def_ = def;
 
       outputWidget_ = new ChunkOutputWidget(def.getChunkId(), 
-            def.getExpansionState(), include, this);
+            RmdChunkOptions.create(), def.getExpansionState(), this);
       
       // sync the widget's expanded/collapsed state to the underlying chunk
       // definition (which is persisted)
