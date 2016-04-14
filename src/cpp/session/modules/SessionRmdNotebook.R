@@ -111,66 +111,24 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                            outputFile = NULL,
                                            envir = .GlobalEnv)
 {
-   find_chunks <- function(contents) {
-      chunkStarts <- grep(.rs.reRmdChunkBegin(), contents, perl = TRUE)
-      chunkEnds <- grep(.rs.reRmdChunkEnd(), contents, perl = TRUE)
-      
-      n <- min(length(chunkStarts), length(chunkEnds))
-      chunkStarts <- chunkStarts[seq_len(n)]
-      chunkEnds <- chunkEnds[seq_len(n)]
-      
-      chunkRanges <- Map(list, start = chunkStarts, end = chunkEnds)
-      lapply(chunkRanges, function(range) {
-         list(start = range$start,
-              end = range$end,
-              header = contents[range$start],
-              contents = contents[(range$start + 1):(range$end - 1)])
-      })
+   # Render to HTML
+   .rs.rnb.render(inputFile, outputFile, envir = envir)
+   
+   # Retrieve metadata from recorder
+   recorder <- .rs.getVar("rnbRecorder")
+   data <- recorder$data()
+   str(as.list(data))
+   recorder$clear()
+   
+   # Collect into more structured format
+   chunkOutput <- list()
+   for (i in as.character(seq_len(length(data)))) {
+      element <- data[[i]]
+      chunkOutput[[element$label]] <- c(chunkOutput[[element$label]], element)
    }
    
-   chunk_annotation <- function(name, index, row) {
-      sprintf("\n\n<!-- rnb-chunk-%s-%s %s -->\n\n", name, index, row)
-   }
    
-   # resolve input, output paths
-   inputFile <- normalizePath(inputFile, winslash = "/", mustWork = TRUE)
-   if (is.null(outputFile))
-      outputFile <- .rs.withChangedExtension(inputFile, "Rnb")
-   
-   rmdContents <- .rs.readLines(inputFile)
-   
-   # inject placeholders so we can track chunk locations after render
-   # ensure that the comments are surrounded by newlines, as otherwise
-   # strange render errors can occur
-   rmdModified <- rmdContents
-   rmdChunks <- find_chunks(rmdModified)
-   for (i in seq_along(rmdChunks)) {
-      startIdx <- rmdChunks[[i]]$start
-      rmdModified[startIdx] <- paste(
-         chunk_annotation("start", i, startIdx),
-         rmdModified[startIdx],
-         sep = ""
-      )
-      
-      endIdx <- rmdChunks[[i]]$end
-      rmdModified[endIdx] <- paste(
-         rmdModified[endIdx],
-         chunk_annotation("end", i, endIdx),
-         sep = ""
-      )
-   }
-   
-   # write out file and prepare for render
-   renderInput  <- tempfile("rnb-render-input-", fileext = ".Rmd")
-   writeLines(rmdModified, renderInput)
-   on.exit(unlink(renderInput), add = TRUE)
-   
-   # perform render
-   .rs.rnb.render(inputFile = renderInput,
-                  outputFile = outputFile,
-                  rmdContents = rmdContents)
-   
-   invisible(outputFile)
+   browser()
    
 })
 
@@ -420,7 +378,68 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    html
 })
 
-.rs.addFunction("rnb.htmlNotebook", function(...)
+.rs.setVar("rnbRecorder", (function() {
+   
+   .env   <- new.env(parent = emptyenv())
+   .count <- 0
+   
+   add <- function(...) {
+      .count <<- .count + 1
+      .env[[as.character(.count)]] <<- list(...)
+   }
+   
+   data <- function() {
+      .env
+   }
+   
+   clear <- function() {
+      .env   <<- new.env(parent = emptyenv())
+      .count <<- 0
+   }
+   
+   list(add = add, data = data, clear = clear)
+   
+})())
+
+.rs.addFunction("rnb.getRecoreder", function()
+{
+   .rs.getVar("rnbRecorder")
+})
+
+.rs.addFunction("rnb.knitrHooks", function(recorder = .rs.getVar("rnbRecorder"))
+{
+   knit_hooks <- list(
+      
+      plot = function(x, options) {
+         output <- paste(x, collapse = ".")
+         recorder$add(
+            input  = x,
+            output = output,
+            label = options$label,
+            hook  = "knit_hooks$plot"
+         )
+         output
+      }
+      
+   )
+   
+   opts_chunk <- list(
+      render = function(x, ...) {
+         output <- knitr::knit_print(x, ...)
+         recorder$add(
+            input  = x,
+            output = output,
+            label  = list(...)$options$label,
+            hook   = "opts_chunk$render"
+         )
+         output
+      }
+   )
+   
+   list(knit_hooks = knit_hooks, opts_chunk = opts_chunk)
+})
+
+.rs.addFunction("rnb.htmlNotebook", function(..., hooks = .rs.rnb.knitrHooks())
 {
    if ("rmarkdown" %in% loadedNamespaces() &&
        exists("html_notebook", envir = asNamespace("rmarkdown")))
@@ -428,18 +447,34 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       return(rmarkdown::html_notebook)
    }
    
-   rmarkdown::html_document(code_folding = "show",
-                            theme = "cerulean",
-                            highlight = "textmate",
-                            ...)
+   format <- rmarkdown::html_document(code_folding = "show",
+                                      theme = "cerulean",
+                                      highlight = "textmate",
+                                      ...)
+   
+   knitrHooks <- format$knitr
+   .rs.enumerate(hooks, function(hookName, hookObject) {
+      .rs.enumerate(hookObject, function(optionName, optionValue) {
+         
+         newHooks <- knitrHooks[[hookName]]
+         if (is.null(newHooks))
+            newHooks <- list()
+         
+         newHooks[[optionName]] <- optionValue
+         knitrHooks[[hookName]] <<- newHooks
+      })
+   })
+   
+   format$knitr <- knitrHooks
+   format
 })
 
 .rs.addFunction("rnb.render", function(inputFile,
                                        outputFile,
+                                       outputFormat = .rs.rnb.htmlNotebook(),
                                        rmdContents = .rs.readFile(inputFile),
                                        envir = .GlobalEnv)
 {
-   outputFormat <- .rs.rnb.htmlNotebook()
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
    outputOptions <- list(self_contained = TRUE, keep_md = TRUE)
    
@@ -528,7 +563,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                                              rnbData,
                                                              cachePath)
 {
-   encoded <- if (.rs.endsWith(file, ".png") || .rs.endsWith(file, ".js"))
+   ext <- tools::file_ext(file)
+   encoded <- if (ext %in% c("png", "js"))
    {
       "@src"
    }
@@ -751,4 +787,3 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
   .rs.scalarListFromList(opts)
 })
-
