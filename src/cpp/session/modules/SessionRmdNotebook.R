@@ -732,11 +732,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
   opts <- list()
   tryCatch({
+    # if this is the setup chunk, it's not included by default
+    setupIndicator <- "r setup"
+    if (identical(substring(options, 1, nchar(setupIndicator)), 
+                  setupIndicator)) {
+      opts$include <- FALSE
+    }
+
     # remove leading text from the options
     options <- sub("^[^,]*,\\s*", "", options)
 
-    # parse them
-    opts <- eval(parse(text = paste("list(", options, ")")))
+    # parse them, then merge with the defaults
+    opts <- .rs.mergeLists(opts,
+                           eval(parse(text = paste("list(", options, ")"))))
+                           
   },
   error = function(e) {})
 

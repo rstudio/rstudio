@@ -860,3 +860,28 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    
    TRUE
 })
+
+# adapted from merge_lists in the rmarkdown package
+.rs.addFunction("mergeLists", function(baseList, overlayList, recursive = TRUE) {
+  if (length(baseList) == 0)
+    overlayList
+  else if (length(overlayList) == 0)
+    baseList
+  else {
+    mergedList <- baseList
+    for (name in names(overlayList)) {
+      base <- baseList[[name]]
+      overlay <- overlayList[[name]]
+      if (is.list(base) && is.list(overlay) && recursive)
+        mergedList[[name]] <- merge_lists(base, overlay)
+      else {
+        mergedList[[name]] <- NULL
+        mergedList <- append(mergedList,
+                              overlayList[which(names(overlayList) %in% name)])
+      }
+    }
+    mergedList
+  }
+})
+
+

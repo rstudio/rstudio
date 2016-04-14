@@ -856,8 +856,7 @@ public class TextEditingTargetNotebook
                   }
                   else 
                   {
-                     if (outputs_.containsKey(unit.chunkId) &&
-                         unit.chunkId != SETUP_CHUNK_ID)
+                     if (outputs_.containsKey(unit.chunkId))
                      {
                         outputs_.get(unit.chunkId).getOutputWidget()
                                 .setOptions(options);
