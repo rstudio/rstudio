@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -69,10 +70,10 @@ public class ChunkContextToolbar extends Composite
       initOptions(dark);
 
       initRunPrevious(dark);
-      runPrevious_.setVisible(runPrevious);
+      setRunPrevious(runPrevious);
       
       initRun();
-      run_.setVisible(run);
+      setRun(run);
    }
 
    // Public methods ----------------------------------------------------------
@@ -102,6 +103,8 @@ public class ChunkContextToolbar extends Composite
    public void setRun(boolean visible)
    {
       run_.setVisible(visible);
+      runPrevious_.getElement().getStyle().setMarginRight(visible ? 5 : 33, 
+            Unit.PX);
    }
    
    // Private methods ---------------------------------------------------------
