@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.util.arg.ArgHandlerBindAddress;
 import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
@@ -28,6 +29,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
+import com.google.gwt.dev.util.arg.OptionBindAddress;
 import com.google.gwt.dev.util.arg.OptionClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.OptionGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
@@ -46,11 +48,8 @@ import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerInt;
-import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -74,8 +73,8 @@ public class Options {
   private final List<String> moduleNames = new ArrayList<String>();
   private boolean allowMissingSourceDir = false;
   private final List<File> sourcePath = new ArrayList<File>();
-  private String bindAddress = "127.0.0.1";
-  private String preferredHost = "localhost";
+  private String bindAddress = ArgHandlerBindAddress.DEFAULT_BIND_ADDRESS;
+  private String preferredHost = ArgHandlerBindAddress.DEFAULT_BIND_ADDRESS;
   private int port = 9876;
 
   private RecompileListener recompileListener = RecompileListener.NONE;
@@ -325,7 +324,6 @@ public class Options {
 
     public ArgProcessor() {
       registerHandler(new AllowMissingSourceDirFlag());
-      registerHandler(new BindAddressFlag());
       registerHandler(new CompileTestFlag());
       registerHandler(new CompileTestRecompilesFlag());
       registerHandler(new FailOnErrorFlag());
@@ -335,6 +333,27 @@ public class Options {
       registerHandler(new SourceFlag());
       registerHandler(new WorkDirFlag());
       registerHandler(new LauncherDir());
+      registerHandler(new ArgHandlerBindAddress(new OptionBindAddress() {
+        @Override
+        public String getBindAddress() {
+          return Options.this.bindAddress;
+        }
+
+        @Override
+        public String getConnectAddress() {
+          return Options.this.preferredHost;
+        }
+
+        @Override
+        public void setBindAddress(String bindAddress) {
+          Options.this.bindAddress = bindAddress;
+        }
+
+        @Override
+        public void setConnectAddress(String connectAddress) {
+          Options.this.preferredHost = connectAddress;
+        }
+      }));
       registerHandler(new ArgHandlerScriptStyle(new OptionScriptStyle() {
         @Override
         public JsOutputOption getOutput() {
@@ -501,43 +520,6 @@ public class Options {
     @Override
     public void setInt(int value) {
       compileTestRecompiles = value;
-    }
-  }
-
-  private class BindAddressFlag extends ArgHandlerString {
-
-    @Override
-    public String getTag() {
-      return "-bindAddress";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"address"};
-    }
-
-    @Override
-    public String getPurpose() {
-      return "The ip address of the code server. Defaults to 127.0.0.1.";
-    }
-
-    @Override
-    public boolean setString(String newValue) {
-      try {
-        InetAddress newBindAddress = InetAddress.getByName(newValue);
-        if (newBindAddress.isAnyLocalAddress()) {
-          preferredHost = InetAddress.getLocalHost().getHostName();
-        } else {
-          preferredHost = newValue;
-        }
-      } catch (UnknownHostException e) {
-        System.err.println("Can't resolve bind address: " + newValue);
-        return false;
-      }
-
-      // Save the original since there's no way to get it back from an InetAddress.
-      bindAddress = newValue;
-      return true;
     }
   }
 
