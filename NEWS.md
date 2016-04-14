@@ -64,6 +64,7 @@
 * R Markdown: fixed highlighting with multiple Markdown links on one line
 * SVN: avoid recursive revert when reverting changes to modified directory properties
 * Autocompletion: fixed errors printed in console when 'devtools::load_all()' active
+* Autocompletion: fixed errors printed in console for functions 'force', 'identity'
 * Viewer: Fixed issue in 'Export -> Copy to Clipboard' when IDE not at default zoom level
 * Fix hang caused by large, heavily-nested S4 objects
 * Fix for 'httpdPort' detection error sometimes seen with R built from source
