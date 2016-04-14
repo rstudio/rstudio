@@ -15,6 +15,7 @@
  */
 package com.google.gwt.validation;
 
+import com.google.gwt.validation.client.impl.ConstraintViolationImplTest;
 import com.google.gwt.validation.client.impl.NodeImplTest;
 import com.google.gwt.validation.client.impl.PathImplTest;
 import com.google.gwt.validation.client.impl.metadata.ValidationGroupsMetadataTest;
@@ -33,6 +34,7 @@ public class ValidationClientJreSuite {
     suite.addTestSuite(PathImplTest.class);
     suite.addTestSuite(NodeImplTest.class);
     suite.addTestSuite(ValidationGroupsMetadataTest.class);
+    suite.addTestSuite(ConstraintViolationImplTest.class);
     return suite;
   }
 }

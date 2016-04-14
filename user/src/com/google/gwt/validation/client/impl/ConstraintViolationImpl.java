@@ -17,6 +17,7 @@ package com.google.gwt.validation.client.impl;
 
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
+import java.util.Objects;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;
@@ -150,14 +151,12 @@ public final class ConstraintViolationImpl<T> implements ConstraintViolation<T>,
       return false;
     }
     ConstraintViolationImpl<?> other = (ConstraintViolationImpl<?>) o;
-    return (message == null ? other.message == null : message.equals(other.message)
-        && propertyPath == null ? other.propertyPath == null :
-          propertyPath.equals(other.propertyPath)
-        && rootBean == null ? other.rootBean == null : rootBean.equals(other.rootBean)
-        && leafBean == null ? other.leafBean == null : leafBean.equals(other.leafBean)
-        && elementType == null ? other.elementType == null : elementType.equals(other.elementType)
-        && invalidValue == null ? other.invalidValue == null :
-          invalidValue.equals(other.invalidValue));
+    return Objects.equals(message, other.message)
+        && Objects.equals(propertyPath, other.propertyPath)
+        && Objects.equals(rootBean, other.rootBean)
+        && Objects.equals(leafBean, other.leafBean)
+        && Objects.equals(elementType, other.elementType)
+        && Objects.equals(invalidValue, other.invalidValue);
   }
 
   @Override
