@@ -95,6 +95,10 @@ function maven-gwt() {
   # Remove bundled org/objectweb/asm classes from gwt-dev
   echo "Removing ASM classes from gwt-dev"
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "org/objectweb/asm/*"
+  echo "Removing Jetty (et al.) classes from gwt-dev"
+  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar \
+      "META-INF/services/javax.servlet.*" "META-INF/services/javax.websocket.*" "META-INF/services/org.eclipse.jetty.*" "META-INF/services/org.apache.juli.*" \
+      "org/eclipse/jetty/*" "javax/servlet/*" "javax/el/*" "org/apache/jasper/*" "org/apache/el/*" "org/apache/juli/*" "org/apache/tomcat/*"
 
   # Silently skip Elemental if it doesn't exist
   gwtLibs='dev user servlet codeserver'
