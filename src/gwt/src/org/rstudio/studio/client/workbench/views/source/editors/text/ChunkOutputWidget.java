@@ -306,7 +306,7 @@ public class ChunkOutputWidget extends Composite
    public void onOutputFinished(boolean ensureVisible)
    {
       // flush any remaining queued errors
-      flushQueuedErrors();
+      flushQueuedErrors(ensureVisible);
       
       if (state_ == CHUNK_PRE_OUTPUT)
       {
@@ -407,7 +407,7 @@ public class ChunkOutputWidget extends Composite
          return;
 
       // flush any queued errors
-      flushQueuedErrors();
+      flushQueuedErrors(true);
 
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
             true);
@@ -480,16 +480,32 @@ public class ChunkOutputWidget extends Composite
    
    private void showConsoleOutput(JsArray<JsArrayEx> output)
    {
-      initConsole();
       for (int i = 0; i < output.length(); i++)
       {
+         // the first element is the output, and the second is the text; if we
+         // don't have at least 2 elements, it's not a valid entry
          if (output.get(i).length() < 2)
             continue;
-         vconsole_.submit(
-               (output.get(i).getInt(0) == CONSOLE_INPUT ? 
-                     "> " + output.get(i).getString(1)  + "\n" :
-                     output.get(i).getString(1)), 
-               classOfOutput(output.get(i).getInt(0)));
+
+         int outputType = output.get(i).getInt(0);
+         String outputText = output.get(i).getString(1);
+         
+         // we don't currently render input as output
+         if (outputType == CONSOLE_INPUT)
+            continue;
+         
+         if (outputType == CONSOLE_ERROR)
+         {
+            queuedError_ += outputText;
+         }
+         else
+         {
+            // release any queued errors
+            if (!queuedError_.isEmpty())
+               vconsole_.submit(outputText, classOfOutput(CONSOLE_ERROR));
+
+            vconsole_.submit(outputText, classOfOutput(outputType));
+         }
       }
       vconsole_.redraw(console_.getElement());
       setOverflowStyle();
@@ -509,7 +525,7 @@ public class ChunkOutputWidget extends Composite
       if (err.getErrorFrames() != null &&
           err.getErrorFrames().length() < 2)
       {
-         flushQueuedErrors();
+         flushQueuedErrors(ensureVisible);
          return;
       }
 
@@ -521,7 +537,7 @@ public class ChunkOutputWidget extends Composite
       else
       {
          // flush any irrelevant messages from the stream
-         flushQueuedErrors();
+         flushQueuedErrors(ensureVisible);
       }
       
       UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
@@ -530,7 +546,7 @@ public class ChunkOutputWidget extends Composite
       error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
 
       root_.add(error);
-      flushQueuedErrors();
+      flushQueuedErrors(ensureVisible);
       completeUnitRender(ensureVisible);
 
    }
@@ -538,7 +554,7 @@ public class ChunkOutputWidget extends Composite
    private void showPlotOutput(String url, final boolean ensureVisible)
    {
       // flush any queued errors
-      flushQueuedErrors();
+      flushQueuedErrors(ensureVisible);
 
       final Image plot = new Image();
       
@@ -606,7 +622,7 @@ public class ChunkOutputWidget extends Composite
    private void showHtmlOutput(String url, final boolean ensureVisible)
    {
       // flush any queued errors
-      flushQueuedErrors();
+      flushQueuedErrors(ensureVisible);
 
       final ChunkOutputFrame frame = new ChunkOutputFrame();
       frame.getElement().getStyle().setHeight(200, Unit.PX);
@@ -856,12 +872,13 @@ public class ChunkOutputWidget extends Composite
       root_.getElement().getStyle().clearOpacity();
    }
    
-   private void flushQueuedErrors()
+   private void flushQueuedErrors(boolean ensureVisible)
    {
       if (!queuedError_.isEmpty())
       {
+         initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
          renderConsoleOutput(queuedError_, classOfOutput(CONSOLE_ERROR), 
-               true);
+               ensureVisible);
          queuedError_ = "";
       }
    }
