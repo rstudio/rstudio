@@ -228,9 +228,14 @@ public class ChunkOutputWidget extends Composite
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
+         JsArray<RmdChunkOutputUnit> units = output.getUnits();
+      
+         // prepare chunk for output on replay
+         if (output.isReplay() && state_ == CHUNK_EMPTY && units.length() > 0)
+            state_ = CHUNK_PRE_OUTPUT;
+
          // loop over the output units and emit the appropriate contents for
          // each
-         JsArray<RmdChunkOutputUnit> units = output.getUnits();
          for (int i = 0; i < units.length(); i++)
          {
             showChunkOutputUnit(units.get(i), !output.isReplay());
