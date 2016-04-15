@@ -216,7 +216,7 @@ public class CodeSplitter {
   private final TreeLogger logger;
   private final boolean logFragmentMap;
   private final JavaToJavaScriptMap map;
-  private final Set<JMethod> methodsInJavaScript;
+  private final Set<JMethod> methodsStillInJavaScript;
 
   private final List<Fragment> fragments = Lists.newArrayList();
 
@@ -238,7 +238,7 @@ public class CodeSplitter {
 
     initiallyLiveCfa = computeInitiallyLive(jprogram, dependencyRecorder);
 
-    methodsInJavaScript = fragmentExtractor.findAllMethodsInJavaScript();
+    methodsStillInJavaScript = fragmentExtractor.findAllMethodsStillInJavaScript();
 
     // TODO(rluble): expected fragment count is not enforced. the actual number
     // of fragments may be more or less....
@@ -341,7 +341,7 @@ public class CodeSplitter {
         computeNotExclusiveCfaForFragments(exclusiveFragments);
     ExclusivityMap exclusivityMap =  ExclusivityMap.computeExclusivityMap(exclusiveFragments,
         completeCfa, notExclusiveCfaByFragment);
-    exclusivityMap.fixUpLoadOrderDependencies(logger, jprogram, methodsInJavaScript);
+    exclusivityMap.fixUpLoadOrderDependencies(logger, jprogram, methodsStillInJavaScript);
     return exclusivityMap;
   }
 

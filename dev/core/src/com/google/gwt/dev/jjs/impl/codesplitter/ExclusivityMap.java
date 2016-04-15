@@ -25,7 +25,9 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
@@ -156,18 +158,31 @@ class ExclusivityMap {
   private Map<JDeclaredType, Fragment> fragmentForType = Maps.newHashMap();
 
   /**
-   * Traverse {@code exp} and find all referenced JFields.
+   * Traverse {@code exp} and find all referenced class literals.
    */
-  private static Set<JClassLiteral> classLiteralsIn(JExpression exp) {
+  private static Set<JClassLiteral> classLiteralsIn(JExpression expression) {
     final Set<JClassLiteral> literals = Sets.newHashSet();
-    class ClassLiteralFinder extends JVisitor {
+    new JVisitor() {
       @Override
       public void endVisit(JClassLiteral classLiteral, Context ctx) {
         literals.add(classLiteral);
       }
-    }
-    (new ClassLiteralFinder()).accept(exp);
+    }.accept(expression);
     return literals;
+  }
+
+  /**
+   * Traverse {@code exp} and find all referenced JMethods.
+   */
+  private static Set<JMethod> methodsReferencesIn(JExpression expression) {
+    final Set<JMethod> methods = Sets.newHashSet();
+    new JVisitor() {
+      @Override
+      public void endVisit(JsniMethodRef jsniMethodRef, Context ctx) {
+        methods.add(jsniMethodRef.getTarget());
+      }
+    }.accept(expression);
+    return methods;
   }
 
   /**
@@ -217,10 +232,10 @@ class ExclusivityMap {
    * </p>
    */
   public void fixUpLoadOrderDependencies(TreeLogger logger, JProgram jprogram,
-      Set<JMethod> methodsInJavaScript) {
-    fixUpLoadOrderDependenciesForMethods(logger, jprogram, methodsInJavaScript);
+      Set<JMethod> methodsStillInJavaScript) {
+    fixUpLoadOrderDependenciesForMethods(logger, jprogram, methodsStillInJavaScript);
     fixUpLoadOrderDependenciesForTypes(logger, jprogram);
-    fixUpLoadOrderDependenciesForClassLiterals(logger, jprogram);
+    fixUpLoadOrderDependenciesForClassLiterals(logger, jprogram, methodsStillInJavaScript);
   }
 
   /**
@@ -263,7 +278,8 @@ class ExclusivityMap {
    * Make sure that the strings are available for all class literals at the time they are
    * loaded and make sure that superclass class literals are loaded before.
    */
-  private void fixUpLoadOrderDependenciesForClassLiterals(TreeLogger logger, JProgram jprogram) {
+  private void fixUpLoadOrderDependenciesForClassLiterals(
+      TreeLogger logger, JProgram jprogram, Set<JMethod> methodsStillInJavaScript) {
     int numFixups = 0;
     /**
      * Consider all static fields of ClassLiteralHolder; the majority if not all its static
@@ -280,31 +296,61 @@ class ExclusivityMap {
       }
 
       Fragment classLiteralFragment = fragmentForField.get(field);
+
+      // In -XenableClosureFormat creation of class literals needs to happen before or with class
+      // definition. This fixup takes care when it is not the case.
+      JType type = jprogram.getTypeByClassLiteralField(field);
+      Fragment classLiteralTypeFragment = fragmentForType.get(type);
+      if (!canReferenceAtomsFrom(classLiteralTypeFragment, classLiteralFragment)) {
+        numFixups++;
+        fragmentForField.put(field, NOT_EXCLUSIVE);
+        classLiteralFragment = NOT_EXCLUSIVE;
+      }
+
       JExpression initializer = field.getInitializer();
 
-      // Fixup the class literals.
+      // Fixup the superclass class literals.
       for (JClassLiteral superclassClassLiteral : classLiteralsIn(initializer)) {
         JField superclassClassLiteralField = superclassClassLiteral.getField();
         // Fix the super class literal and add it to the reexamined.
         Fragment superclassClassLiteralFragment = fragmentForField.get(superclassClassLiteralField);
-        if (!fragmentsAreConsistent(classLiteralFragment, superclassClassLiteralFragment)) {
+        if (!canReferenceAtomsFrom(classLiteralFragment, superclassClassLiteralFragment)) {
           numFixups++;
           fragmentForField.put(superclassClassLiteralField, NOT_EXCLUSIVE);
-          // Add the field back so that its superclass classliteral gets fixed if necessary.
+          // Add the field back so that its superclass class literal gets fixed if necessary.
           potentialClassLiteralFields.add(superclassClassLiteralField);
         }
       }
+
+      // If there are references to methods move those as well. In particular the enum class
+      // literals reference the static methods values() and valueOf() for the particular enum type
+      // those methods need to be defined before the class literal.
+      for (JMethod referencedMethod : methodsReferencesIn(initializer)) {
+        // Move the referenced methods if necessary.
+        Fragment referencedMethodFragment = fragmentForMethod.get(referencedMethod);
+        if (methodsStillInJavaScript.contains(referencedMethod)
+            && !canReferenceAtomsFrom(classLiteralFragment, referencedMethodFragment)) {
+          assert referencedMethod.isStatic();
+          numFixups++;
+          fragmentForMethod.put(referencedMethod, NOT_EXCLUSIVE);
+        }
+      }
     }
+
     logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving " +
         numFixups + " fields in class literal constructors to fragment 0, out of " +
         numClassLiterals);
   }
 
   /**
-   * Fixes up the load-order dependencies from instance methods to their enclosing types.
+   * Fixes up the load-order dependencies from instance methods to their enclosing types, in some
+   * cases there is some freedom to place instance methods in one of two or more exclusive
+   * fragment. That scenario arises when an instance method is only accessible after two or
+   * more exclusive fragments have been loaded. In such scenario this fixup will move the method
+   * to the fragment where the type is instantiated.
    */
   private void fixUpLoadOrderDependenciesForMethods(TreeLogger logger, JProgram jprogram,
-      Set<JMethod> methodsInJavaScript) {
+      Set<JMethod> methodsStillInJavaScript) {
     int numFixups = 0;
 
     for (JDeclaredType type : jprogram.getDeclaredTypes()) {
@@ -313,11 +359,11 @@ class ExclusivityMap {
         continue;
       }
       /*
-      * If the type is in an exclusive fragment, all its instance methods
-      * must be in the same one.
+      * If the type is in an exclusive fragment, all its instance methods must be in the same one;
+      * if this is not the case move the type to the NOT_EXCLUSIVE fragment.
       */
       for (JMethod method : type.getMethods()) {
-        if (method.needsDynamicDispatch() && methodsInJavaScript.contains(method)
+        if (method.needsDynamicDispatch() && methodsStillInJavaScript.contains(method)
             && typeFrag != fragmentForMethod.get(method)) {
           fragmentForType.put(type, NOT_EXCLUSIVE);
           numFixups++;
@@ -345,7 +391,7 @@ class ExclusivityMap {
       if (type.getSuperClass() != null) {
         Fragment typeFrag = fragmentForType.get(type);
         Fragment supertypeFrag = fragmentForType.get(type.getSuperClass());
-        if (!fragmentsAreConsistent(typeFrag, supertypeFrag)) {
+        if (!canReferenceAtomsFrom(typeFrag, supertypeFrag)) {
           numFixups++;
           fragmentForType.put(type.getSuperClass(), NOT_EXCLUSIVE);
           typesToCheck.add(type.getSuperClass());
@@ -364,7 +410,7 @@ class ExclusivityMap {
   /**
    * Returns true if atoms in thatFragment are visible from thisFragment.
    */
-  private static boolean fragmentsAreConsistent(Fragment thisFragment, Fragment thatFragment) {
+  private static boolean canReferenceAtomsFrom(Fragment thisFragment, Fragment thatFragment) {
     return thisFragment == null || thisFragment == thatFragment || !thatFragment.isExclusive();
   }
 
