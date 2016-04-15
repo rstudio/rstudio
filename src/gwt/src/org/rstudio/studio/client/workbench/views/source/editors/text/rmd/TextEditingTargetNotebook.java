@@ -282,14 +282,22 @@ public class TextEditingTargetNotebook
       binder.bind(commands, this);
       pSourceWindowManager_ = pSourceWindowManager;
       
-      events_.addHandler(RmdChunkOutputEvent.TYPE, this);
-      events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
-      events_.addHandler(SendToChunkConsoleEvent.TYPE, this);
-      events_.addHandler(ChunkChangeEvent.TYPE, this);
-      events_.addHandler(ChunkContextChangeEvent.TYPE, this);
-      events_.addHandler(ConsoleWriteInputEvent.TYPE, this);
-      events_.addHandler(InterruptStatusEvent.TYPE, this);
-      events_.addHandler(RestartStatusEvent.TYPE, this);
+      releaseOnDismiss_.add(
+            events_.addHandler(RmdChunkOutputEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(SendToChunkConsoleEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChunkChangeEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChunkContextChangeEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ConsoleWriteInputEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(InterruptStatusEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(RestartStatusEvent.TYPE, this));
       
       // subscribe to global rmd output inline preference and sync
       // again when it changes
