@@ -110,19 +110,29 @@ inline Error initTcpIpAcceptor(
 }
 
 inline bool isAvailableTcpIpPort(
-            SocketAcceptorService<boost::asio::ip::tcp>& acceptorService,
             const std::string& address,
-            const std::string& port)
+            int port)
 {
    using boost::asio::ip::tcp;
-   
-   tcp::resolver resolver(acceptorService.ioService());
-   tcp::resolver::query query(address, port);
-   
+   SocketAcceptorService<boost::asio::ip::tcp> acceptorService;
+
    boost::system::error_code ec;
-   tcp::resolver::iterator entries = resolver.resolve(query, ec);
-   
-   return ec ? TRUE : FALSE;
+
+   tcp::acceptor& acceptor = acceptorService.acceptor();
+   tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
+
+   acceptor.open(endpoint.protocol(), ec) ;
+   if (ec)
+      return false;
+
+   acceptor.bind(endpoint, ec) ;
+   if (ec)
+   {
+      return false;
+   }
+
+   acceptor.close();
+   return true;
 }
    
 } // namespace http
