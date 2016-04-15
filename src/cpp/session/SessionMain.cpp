@@ -3243,11 +3243,25 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-         
-      // start http connection listener
-      error = startHttpConnectionListener();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
+
+      int retries = 10;
+      while (retries > 0)
+      {
+          // start http connection listener
+          error = startHttpConnectionListener();
+          if (error)
+          {
+             boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+             retries--;
+          }
+          else
+          {
+              break;
+          }
+      }
+
+      if (retries == 0)
+          return sessionExitFailure(error, ERROR_LOCATION);
 
       // run optional preflight script -- needs to be after the http listeners
       // so the proxy server sees that we have startup up
