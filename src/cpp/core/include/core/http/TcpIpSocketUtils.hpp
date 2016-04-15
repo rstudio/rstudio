@@ -108,6 +108,22 @@ inline Error initTcpIpAcceptor(
    
    return Success() ;
 }
+
+inline bool isAvailableTcpIpPort(
+            SocketAcceptorService<boost::asio::ip::tcp>& acceptorService,
+            const std::string& address,
+            const std::string& port)
+{
+   using boost::asio::ip::tcp;
+   
+   tcp::resolver resolver(acceptorService.ioService());
+   tcp::resolver::query query(address, port);
+   
+   boost::system::error_code ec;
+   tcp::resolver::iterator entries = resolver.resolve(query, ec);
+   
+   return ec ? TRUE : FALSE;
+}
    
 } // namespace http
 } // namespace core

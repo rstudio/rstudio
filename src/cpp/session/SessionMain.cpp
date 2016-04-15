@@ -1574,12 +1574,25 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
    return extractConsoleInput(request);
 }
 
+void waitForSessionPortToClose()
+{
+   int retries = 10;
+   int port = rsession::options().wwwPort();
+   while (isAvailableTcpIpPort(port) && retries > 0) {
+      Thread.sleep(100);
+      retries--;
+   }
+}
 
 void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
    module_context::consoleWriteOutput("\nRestarting R session...\n\n");
 
    rstudio::r::session::suspendForRestart(options);
+
+   if (rsession::options().programMode() == kSessionProgramModeDesktop) {
+      waitForDesktopPortToClose();
+   }
 }
 
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
