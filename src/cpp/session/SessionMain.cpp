@@ -3243,7 +3243,9 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-
+      
+      // Wait for port to be ready, if needed. This triggers when the
+      // rsession restarts but takes the port a few ms to become available
       int retries = 10;
       while (retries > 0)
       {
