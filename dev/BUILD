@@ -78,7 +78,6 @@ java_library(
         exclude = [
             "**/junit/**",
             "**/super/**",
-            "**/package-info.java",
         ],
     ),
     deps = [
@@ -125,12 +124,10 @@ AugmentedJar(
 # They must be jarjar-ed and dependencies stripped before exposing to google3.
 java_library(
     name = "gwt-dev-bare",
-    srcs = glob(
-        ["core/src/**/*.java"],
-        exclude = ["**/package-info.java"],
-    ),
+    srcs = glob(["core/src/**/*.java"]),
     deps = [
         ":compiler.standalone.super",
+        "//third_party/java/gson",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
     ],
@@ -154,10 +151,6 @@ Zip(
             "core/src/**/*.xsd",
             "core/src/**/*.txt",
             "core/src/com/google/gwt/dev/js/globals/globals.html",  # for testing
-        ],
-        exclude = [
-            "**/package-info.java",
-            "README.txt",
         ],
     ),
     root = "core/src",
@@ -202,6 +195,7 @@ java_library(
     ),
     deps = [
         ":compiler.standalone.super",
+        "//third_party/java/gson",
         "//third_party/java_src/gwt/svn/tools:compiler_deps",
     ],
 )
@@ -215,7 +209,6 @@ java_library(
         ["core/super/**/*.java"],
         exclude = [
             "core/super/com/google/gwt/dev/jjs/intrinsic/**",
-            "**/package-info.java",
         ],
     ),
     compatible_with = ["//buildenv/target:android"],
@@ -230,7 +223,6 @@ Zip(
             "core/super/**/*.java",
             "core/super/**/*.xml",
         ],
-        exclude = ["**/package-info.java"],
     ),
     root = "core/super",
 )
@@ -303,6 +295,7 @@ java_library(
     deps = [
         ":compiler.standalone.super",
         ":gwt-dev-bare",
+        "//third_party/java/gson",
         "//third_party/java/junit",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
     ],
