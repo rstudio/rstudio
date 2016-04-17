@@ -169,6 +169,7 @@ public class JreJsonArray extends JreJsonValue implements JsonArray {
     visitor.endVisit(this, ctx);
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void readObject(ObjectInputStream stream)
           throws IOException, ClassNotFoundException {
     JreJsonArray instance = parseJson(stream);
@@ -176,8 +177,8 @@ public class JreJsonArray extends JreJsonValue implements JsonArray {
     this.arrayValues = instance.arrayValues;
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.writeObject(toJson());
   }
-
 }

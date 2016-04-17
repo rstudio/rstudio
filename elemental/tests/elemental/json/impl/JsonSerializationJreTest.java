@@ -13,7 +13,7 @@ import elemental.json.JsonNull;
 import elemental.json.JsonObject;
 import elemental.json.JsonValue;
 
-public class JreJsonSerialization extends TestCase {
+public class JsonSerializationJreTest extends TestCase {
 
   public void testSerializeNull() throws Exception {
     JsonNull null1 = Json.createNull();

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import elemental.json.Json;
 import elemental.json.JsonNumber;
 import elemental.json.JsonType;
 import elemental.json.JsonValue;
@@ -82,12 +81,14 @@ public class JreJsonNumber extends JreJsonValue implements JsonNumber {
     return toReturn;
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void readObject(ObjectInputStream stream)
           throws IOException, ClassNotFoundException {
     JreJsonNumber instance = parseJson(stream);
     this.number = instance.number;
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.writeObject(toJson());
   }

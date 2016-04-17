@@ -15,9 +15,6 @@
  */
 package elemental.json.impl;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 
 import elemental.json.JsonNull;
@@ -70,8 +67,8 @@ public class JreJsonNull extends JreJsonValue implements JsonNull {
     return null;
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private Object readResolve() throws ObjectStreamException {
     return NULL_INSTANCE;
   }
-
 }

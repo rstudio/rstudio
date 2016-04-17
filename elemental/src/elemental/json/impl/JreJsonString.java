@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import elemental.json.Json;
 import elemental.json.JsonString;
 import elemental.json.JsonType;
 import elemental.json.JsonValue;
@@ -86,14 +85,15 @@ public class JreJsonString extends JreJsonValue implements JsonString {
     return JsonUtil.quote(getString());
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void readObject(ObjectInputStream stream) throws IOException,
       ClassNotFoundException {
     JreJsonString instance = parseJson(stream);
     this.string = instance.string;
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.writeObject(toJson());
   }
-
 }

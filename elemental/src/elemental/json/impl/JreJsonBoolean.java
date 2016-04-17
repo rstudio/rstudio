@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import elemental.json.Json;
 import elemental.json.JsonBoolean;
 import elemental.json.JsonType;
 import elemental.json.JsonValue;
@@ -77,12 +76,14 @@ public class JreJsonBoolean extends JreJsonValue implements JsonBoolean {
     return String.valueOf(bool);
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void readObject(ObjectInputStream stream)
           throws IOException, ClassNotFoundException {
     JreJsonBoolean instance = parseJson(stream);
     this.bool = instance.bool;
   }
 
+  @com.google.gwt.core.shared.GwtIncompatible
   private void writeObject(ObjectOutputStream stream) throws IOException {
     stream.writeObject(toJson());
   }
