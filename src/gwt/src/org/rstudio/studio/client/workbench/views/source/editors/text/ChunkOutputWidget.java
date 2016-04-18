@@ -502,7 +502,10 @@ public class ChunkOutputWidget extends Composite
          {
             // release any queued errors
             if (!queuedError_.isEmpty())
-               vconsole_.submit(outputText, classOfOutput(CONSOLE_ERROR));
+            {
+               vconsole_.submit(queuedError_, classOfOutput(CONSOLE_ERROR));
+               queuedError_ = "";
+            }
 
             vconsole_.submit(outputText, classOfOutput(outputType));
          }
@@ -529,10 +532,20 @@ public class ChunkOutputWidget extends Composite
          return;
       }
 
-      if (queuedError_.startsWith(err.getErrorMessage()))
+      int idx = queuedError_.indexOf(err.getErrorMessage());
+      if (idx >= 0)
       {
-         // if this error was queued for output, remove it
-         queuedError_ = queuedError_.substring(err.getErrorMessage().length());
+         // emit any messages queued prior to the error
+         if (idx > 0)
+         {
+            renderConsoleOutput(queuedError_.substring(0, idx), 
+                  classOfOutput(CONSOLE_ERROR),
+                  ensureVisible);
+            initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
+         }
+         // leave messages following the error in the queue
+         queuedError_ = queuedError_.substring(
+               idx + err.getErrorMessage().length());
       }
       else
       {
@@ -548,7 +561,6 @@ public class ChunkOutputWidget extends Composite
       root_.add(error);
       flushQueuedErrors(ensureVisible);
       completeUnitRender(ensureVisible);
-
    }
    
    private void showPlotOutput(String url, final boolean ensureVisible)
