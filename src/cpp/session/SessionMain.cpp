@@ -3080,6 +3080,8 @@ bool ensureUtf8Charset()
 #endif
 #endif
 }
+
+
 } // anonymous namespace
 
 // run session
@@ -3256,7 +3258,7 @@ int main (int argc, char * const argv[])
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
-      
+         
       // start http connection listener
       error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1000);
       if (error)
