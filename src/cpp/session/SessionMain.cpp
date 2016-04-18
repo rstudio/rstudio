@@ -68,6 +68,7 @@
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/REnvironment.hpp>
+#include <core/WaitUtils.hpp>
 
 #include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
@@ -1612,6 +1613,19 @@ Error startHttpConnectionListener()
    return httpConnectionListener().start();
 }
 
+WaitResult startHttpConnectionListenerWithTimeout()
+{
+   Error error = startHttpConnectionListener();
+
+   // Retry connection, but only for address_in_use error
+   if (!error)
+       return WaitResult(WaitSuccess, Success());
+   else if (error.code() != boost::system::errc::address_in_use)
+      return WaitResult(WaitError, error);
+   else
+      return WaitResult(WaitContinue, error);
+}
+
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
@@ -3065,25 +3079,6 @@ bool ensureUtf8Charset()
 #endif
 #endif
 }
-
-Error retry(boost::function<Error()> function,
-            boost::system::errc::errc_t errorCode,
-            int retries,
-            int sleep)
-{
-    Error error = function();
-    if (error.code() != errorCode)
-        return error;
-
-    while (retries-- > 0 && error)
-    {
-        boost::this_thread::sleep(boost::posix_time::milliseconds(sleep));
-        error = function();
-    }
-
-    return error;
-}
-
 } // anonymous namespace
 
 // run session
@@ -3264,8 +3259,7 @@ int main (int argc, char * const argv[])
       // start http connection listener and wait for the port to be ready,
       // if needed. For instance, when the rsession restarts but takes the
       // port a few ms to become available
-      error = retry(boost::bind(startHttpConnectionListener),
-                                boost::system::errc::address_in_use, 10, 100);
+      error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1000);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
