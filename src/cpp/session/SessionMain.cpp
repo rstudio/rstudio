@@ -3066,6 +3066,23 @@ bool ensureUtf8Charset()
 #endif
 }
 
+Error retry(boost::function<Error()> function,
+            boost::system::errc::errc_t errorCode,
+            int retries,
+            int sleep)
+{
+    Error error = function();
+    if (error.code() != errorCode)
+        return error;
+
+    while (retries-- > 0 && error)
+    {
+        boost::this_thread::sleep(boost::posix_time::milliseconds(sleep));
+        error = function();
+    }
+
+    return error;
+}
 
 } // anonymous namespace
 
@@ -3244,26 +3261,13 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
       
-      // Wait for port to be ready, if needed. This triggers when the
-      // rsession restarts but takes the port a few ms to become available
-      int retries = 10;
-      while (retries > 0)
-      {
-          // start http connection listener
-          error = startHttpConnectionListener();
-          if (error)
-          {
-             boost::this_thread::sleep(boost::posix_time::milliseconds(100));
-             retries--;
-          }
-          else
-          {
-              break;
-          }
-      }
-
-      if (retries == 0)
-          return sessionExitFailure(error, ERROR_LOCATION);
+      // start http connection listener and wait for the port to be ready,
+      // if needed. For instance, when the rsession restarts but takes the
+      // port a few ms to become available
+      error = retry(boost::bind(startHttpConnectionListener),
+                                boost::system::errc::address_in_use, 10, 100);
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // run optional preflight script -- needs to be after the http listeners
       // so the proxy server sees that we have startup up
