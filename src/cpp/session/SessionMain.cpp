@@ -1617,7 +1617,8 @@ WaitResult startHttpConnectionListenerWithTimeout()
 {
    Error error = startHttpConnectionListener();
 
-   // Retry connection, but only for address_in_use error
+   // When the rsession restarts, it may take a few ms for the port to become
+   // available; therefore, retry connection, but only for address_in_use error
    if (!error)
        return WaitResult(WaitSuccess, Success());
    else if (error.code() != boost::system::errc::address_in_use)
@@ -3256,9 +3257,7 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
       
-      // start http connection listener and wait for the port to be ready,
-      // if needed. For instance, when the rsession restarts but takes the
-      // port a few ms to become available
+      // start http connection listener
       error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1000);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
