@@ -69,6 +69,7 @@ private:
    int pixelWidth_;
    int charWidth_;
    int prevCharWidth_;
+   int prevWarnLevel_;
 
    bool connected_;
 

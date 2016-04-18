@@ -80,6 +80,7 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
+   prevWarnLevel_(0),
    connected_(false)
 {
 }
@@ -135,6 +136,12 @@ void ChunkExecContext::connect()
          outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
+
+   // log warnings immediately (unless user's changed the default warning
+   // level)
+   prevWarnLevel_ = r::options::getOption<int>("warn", 0);
+   if (prevWarnLevel_  == 0)
+      r::options::setOption<int>("warn", 1);
 
    // reset width
    prevCharWidth_ = r::options::getOptionWidth();
@@ -270,6 +277,10 @@ void ChunkExecContext::disconnect()
 {
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
+
+   // restore warning level
+   if (prevWarnLevel_ >= 0)
+      r::options::setOption("warn", prevWarnLevel_);
 
    // restore working directory, if we saved one
    if (!prevWorkingDir_.empty())
