@@ -4370,7 +4370,14 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
-      codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+         }
+      });
    }
   
    private void sourceActiveDocument(final boolean echo)
