@@ -324,12 +324,10 @@ public final class Math {
   }
 
   public static double signum(double d) {
-    if (d > 0.0d) {
-      return 1.0d;
-    } else if (d < 0.0d) {
-      return -1.0d;
+    if (d == 0. || Double.isNaN(d)) {
+      return d;
     } else {
-      return 0.0d;
+      return d < 0 ? -1 : 1;
     }
   }
 

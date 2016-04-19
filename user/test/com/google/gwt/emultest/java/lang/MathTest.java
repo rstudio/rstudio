@@ -475,6 +475,18 @@ public class MathTest extends GWTTestCase {
     }
   }
 
+  public void testSignum() {
+    assertTrue(Double.isNaN(Math.signum(Double.NaN)));
+    assertTrue(isNegativeZero(Math.signum(-0.)));
+    assertEquals(0., Math.signum(0.), 0);
+    assertEquals(-1, Math.signum(-2), 0);
+    assertEquals(1, Math.signum(2), 0);
+    assertEquals(-1., Math.signum(-Double.MAX_VALUE), 0);
+    assertEquals(1., Math.signum(Double.MAX_VALUE), 0);
+    assertEquals(-1., Math.signum(Double.NEGATIVE_INFINITY), 0);
+    assertEquals(1., Math.signum(Double.POSITIVE_INFINITY), 0);
+  }
+
   public void testSin() {
     double v = Math.sin(0.0);
     assertEquals(0.0, v, 1e-7);
