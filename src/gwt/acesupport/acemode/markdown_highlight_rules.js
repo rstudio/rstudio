@@ -226,7 +226,7 @@ var MarkdownHighlightRules = function() {
             next: "allowBlock"
         }, { // list
             token : "text",
-            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+(?:\\[[ x]\\])?",
+            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock"
         }, { // html comment
             token : "comment",
@@ -271,7 +271,7 @@ var MarkdownHighlightRules = function() {
         }, { // list
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock-start"
+            next  : "listblock"
         }, {
             include : "basic", noEscape: true
         }, { // Github style block
