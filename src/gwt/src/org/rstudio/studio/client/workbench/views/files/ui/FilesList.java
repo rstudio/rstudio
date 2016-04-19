@@ -33,6 +33,8 @@ import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -99,63 +101,10 @@ public class FilesList extends Composite
       
       layoutPanel_.addResizeHandler(new ResizeHandler()
       {
-         private static final int STATE_UNKNOWN = 0;
-         private static final int STATE_SMALL   = 1;
-         private static final int STATE_LARGE   = 2;
-         
-         private int state_ = STATE_UNKNOWN;
-         
          @Override
          public void onResize(ResizeEvent event)
          {
-            // Enforce a minimum column width on the name column.
-            int width = event.getWidth();
-            int newState = width < BOUNDARY_WIDTH_PIXELS ? STATE_SMALL : STATE_LARGE;
-            
-            // Avoid over-eager updating of column widths.
-            if (state_ == STATE_LARGE && state_ == newState)
-               return;
-            
-            state_ = newState;
-            if (state_ == STATE_LARGE)
-            {
-               filesDataGrid_.setColumnWidth(nameColumn_, "auto");
-               filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
-               filesDataGrid_.setColumnWidth(modifiedColumn_, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX);
-               return;
-            }
-            
-            // Otherwise, we need to update column widths one by one.
-            // The right-most columns lose width first.
-            // TODO: Properly abstract this out into some kind of sizing
-            // policy that DataGrids can adopt / use.
-            int leftoverWidth = width
-                  - MINIMUM_NAME_COLUMN_WIDTH_PIXELS
-                  - CHECK_COLUMN_WIDTH_PIXELS
-                  - ICON_COLUMN_WIDTH_PIXELS;
-            
-            if (leftoverWidth < 0)
-            {
-              filesDataGrid_.setColumnWidth(sizeColumn_, 0, Unit.PX);
-              filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
-              
-              // Adjust the name column width
-              int nameWidth = width - CHECK_COLUMN_WIDTH_PIXELS - ICON_COLUMN_WIDTH_PIXELS;
-              filesDataGrid_.setColumnWidth(nameColumn_, nameWidth < 0 ? 0 : nameWidth, Unit.PX);
-            }
-            else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS)
-            {
-              filesDataGrid_.setColumnWidth(sizeColumn_, leftoverWidth, Unit.PX);
-              filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
-              filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
-            }
-            else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS + MODIFIED_COLUMN_WIDTH_PIXELS)
-            {
-              filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
-              filesDataGrid_.setColumnWidth(modifiedColumn_, leftoverWidth - SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
-              filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
-            }
-            
+            FilesList.this.onResize(event.getWidth(), event.getHeight());
          }
       });
    }
@@ -550,6 +499,78 @@ public class FilesList extends Composite
       applyingProgrammaticSort_ = false;
    }
    
+   public void redraw()
+   {
+      onResize();
+      
+      // deferred to ensure that browser has responded to our
+      // resize request
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            filesDataGrid_.redraw();
+         }
+      });
+   }
+   
+   public void onResize()
+   {
+      onResize(layoutPanel_.getOffsetWidth(), layoutPanel_.getOffsetHeight());
+   }
+   
+   private void onResize(int width, int height)
+   {
+      // Enforce a minimum column width on the name column.
+      int newState = width < BOUNDARY_WIDTH_PIXELS ? STATE_SMALL : STATE_LARGE;
+
+      // Avoid over-eager updating of column widths.
+      if (state_ == STATE_LARGE && state_ == newState)
+         return;
+
+      state_ = newState;
+      if (state_ == STATE_LARGE)
+      {
+         filesDataGrid_.setColumnWidth(nameColumn_, "auto");
+         filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+         filesDataGrid_.setColumnWidth(modifiedColumn_, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX);
+         return;
+      }
+
+      // Otherwise, we need to update column widths one by one.
+      // The right-most columns lose width first.
+      // TODO: Properly abstract this out into some kind of sizing
+      // policy that DataGrids can adopt / use.
+      int leftoverWidth = width
+            - MINIMUM_NAME_COLUMN_WIDTH_PIXELS
+            - CHECK_COLUMN_WIDTH_PIXELS
+            - ICON_COLUMN_WIDTH_PIXELS;
+
+      if (leftoverWidth < 0)
+      {
+         filesDataGrid_.setColumnWidth(sizeColumn_, 0, Unit.PX);
+         filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
+
+         // Adjust the name column width
+         int nameWidth = width - CHECK_COLUMN_WIDTH_PIXELS - ICON_COLUMN_WIDTH_PIXELS;
+         filesDataGrid_.setColumnWidth(nameColumn_, nameWidth < 0 ? 0 : nameWidth, Unit.PX);
+      }
+      else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS)
+      {
+         filesDataGrid_.setColumnWidth(sizeColumn_, leftoverWidth, Unit.PX);
+         filesDataGrid_.setColumnWidth(modifiedColumn_, 0, Unit.PX);
+         filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
+      }
+      else if (leftoverWidth < SIZE_COLUMN_WIDTH_PIXELS + MODIFIED_COLUMN_WIDTH_PIXELS)
+      {
+         filesDataGrid_.setColumnWidth(sizeColumn_, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+         filesDataGrid_.setColumnWidth(modifiedColumn_, leftoverWidth - SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
+         filesDataGrid_.setColumnWidth(nameColumn_, MINIMUM_NAME_COLUMN_WIDTH_PIXELS, Unit.PX);
+      }
+
+   }
+   
    private static final ProvidesKey<FileSystemItem> KEY_PROVIDER = 
       new ProvidesKey<FileSystemItem>() {
          @Override
@@ -653,5 +674,11 @@ public class FilesList extends Composite
          ICON_COLUMN_WIDTH_PIXELS -
          SIZE_COLUMN_WIDTH_PIXELS -
          MODIFIED_COLUMN_WIDTH_PIXELS;
+   
+   private static final int STATE_UNKNOWN = 0;
+   private static final int STATE_SMALL   = 1;
+   private static final int STATE_LARGE   = 2;
+
+   private int state_ = STATE_UNKNOWN;
    
 }
