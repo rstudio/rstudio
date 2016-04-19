@@ -405,12 +405,18 @@ public class DocumentOutlineWidget extends Composite
       if (node.isNamespace())
          return false;
       
-      // don't show R functions in non-R files
+      // don't show R functions or R sections in non-R files
       TextFileType fileType = target_.getDocDisplay().getFileType();
       if (!fileType.isR())
+      {
          if (node.isFunction())
             return false;
+         
+         if (node.isSection() && !node.isMarkdownHeader())
+            return false;
+      }
       
+      // Filter out anonymous functions.
       // TODO: Annotate scope tree in such a way that this isn't necessary
       if (node.getLabel() != null && node.getLabel().startsWith("<function>"))
          return false;
