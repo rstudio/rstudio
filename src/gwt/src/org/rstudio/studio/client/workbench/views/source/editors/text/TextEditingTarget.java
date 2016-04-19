@@ -95,6 +95,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
@@ -3575,9 +3576,14 @@ public class TextEditingTarget implements
             }
          }
          
+         boolean isNotebook = selTemplate != null &&
+                              selTemplate.template.getName() == 
+                                 RmdTemplateData.NOTEBOOK_TEMPLATE;
+
          view_.setFormatOptions(fileType_, 
-                                getCustomKnit().length() == 0,
-                                selTemplate != null, // can edit format options
+                                !isNotebook && getCustomKnit().length() == 0,
+                                // can edit format options
+                                !isNotebook && selTemplate != null,
                                 formatList, 
                                 valueList, 
                                 extensionList,
