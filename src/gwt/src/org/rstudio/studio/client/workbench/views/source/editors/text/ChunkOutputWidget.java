@@ -168,6 +168,12 @@ public class ChunkOutputWidget extends Composite
    public void showChunkOutputUnit(RmdChunkOutputUnit unit, 
          boolean ensureVisible)
    {
+      // no-op for empty console objects (avoid initializing output when we have
+      // nothing to show)
+      if (unit.getType() == RmdChunkOutputUnit.TYPE_TEXT && 
+          unit.getArray().length() < 1)
+         return;
+      
       initializeOutput(unit.getType());
       switch(unit.getType())
       {
