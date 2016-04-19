@@ -1095,7 +1095,14 @@ public class TextEditingTargetNotebook
          // setup chunk
          if (crc32 != setupCrc32_)
          {
-            executeChunk(setupScope, getChunkCode(setupScope), "", MODE_BATCH);
+            // extract current options from setup chunk
+            String options = 
+               TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
+                  setupScope, docDisplay_);
+            
+            // push it into the execution queue
+            executeChunk(setupScope, getChunkCode(setupScope), options, 
+                         MODE_BATCH);
          }
       }
    }
