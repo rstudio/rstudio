@@ -17,7 +17,9 @@
   .rs.recordTraceback(FALSE, 2, function(err) {
     .Call("rs_recordNotebookError", err)
   })
-})
+},
+attrs = list(hideFromDebugger = TRUE,
+             errorHandlerType = 4L))
 
 .rs.addFunction("registerNotebookErrHandler", function() {
   options(error = .rs.handleNotebookError)
