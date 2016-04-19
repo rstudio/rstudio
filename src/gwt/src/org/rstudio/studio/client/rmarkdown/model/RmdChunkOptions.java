@@ -43,4 +43,15 @@ public class RmdChunkOptions extends JavaScriptObject
         return !!this.include;
       return true;
    }-*/;
+   
+   public final native void setInclude(boolean include) /*-{
+      this.include = include;
+   }-*/;
+   
+   public final boolean equalTo(RmdChunkOptions other)
+   {
+      return eval()    == other.eval() &&
+             error()   == other.error() &&
+             include() == other.include();
+   }
 }

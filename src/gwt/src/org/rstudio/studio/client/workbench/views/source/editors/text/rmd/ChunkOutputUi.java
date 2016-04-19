@@ -46,7 +46,7 @@ public class ChunkOutputUi
       def_ = def;
 
       outputWidget_ = new ChunkOutputWidget(def.getChunkId(), 
-            RmdChunkOptions.create(), def.getExpansionState(), this);
+            def_.getOptions(), def.getExpansionState(), this);
       
       // sync the widget's expanded/collapsed state to the underlying chunk
       // definition (which is persisted)
@@ -98,6 +98,17 @@ public class ChunkOutputUi
    public ChunkOutputWidget getOutputWidget()
    {
       return outputWidget_;
+   }
+   
+   public RmdChunkOptions getOptions()
+   {
+      return def_.getOptions();
+   }
+   
+   public void setOptions(RmdChunkOptions options)
+   {
+      def_.setOptions(options);
+      outputWidget_.setOptions(options);
    }
    
    public void remove()

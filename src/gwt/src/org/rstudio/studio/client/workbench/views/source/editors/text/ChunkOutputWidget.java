@@ -213,11 +213,6 @@ public class ChunkOutputWidget extends Composite
          syncHeight(false, false);
    }
    
-   public RmdChunkOptions getOptions()
-   {
-      return options_;
-   }
-
    public HandlerRegistration addExpansionStateChangeHandler(
          ValueChangeHandler<Integer> handler)
    {

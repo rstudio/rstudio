@@ -591,7 +591,7 @@ public class TextEditingTargetNotebook
          // don't execute any more chunks if this chunk's options includes
          // error = FALSE
          if (!outputs_.containsKey(chunkId) ||
-             !outputs_.get(chunkId).getOutputWidget().getOptions().error())
+             !outputs_.get(chunkId).getOptions().error())
          {
             clearChunkExecQueue();
          }
@@ -668,7 +668,8 @@ public class TextEditingTargetNotebook
       {
          case ChunkChangeEvent.CHANGE_CREATE:
             createChunkOutput(ChunkDefinition.create(event.getRow(), 
-                  1, true, ChunkOutputWidget.EXPANDED, event.getChunkId()));
+                  1, true, ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(),
+                  event.getChunkId()));
             break;
          case ChunkChangeEvent.CHANGE_REMOVE:
             removeChunk(event.getChunkId());
@@ -866,8 +867,7 @@ public class TextEditingTargetNotebook
                   {
                      if (outputs_.containsKey(unit.chunkId))
                      {
-                        outputs_.get(unit.chunkId).getOutputWidget()
-                                .setOptions(options);
+                        outputs_.get(unit.chunkId).setOptions(options);
                      }
                      console_.consoleInput(unit.code, unit.chunkId, 
                            new VoidServerRequestCallback());
@@ -940,7 +940,10 @@ public class TextEditingTargetNotebook
          if (StringUtil.isNullOrEmpty(newId))
             newId = "c" + StringUtil.makeRandomId(12);
          chunkDef = ChunkDefinition.create(row, 1, true, 
-               ChunkOutputWidget.EXPANDED, newId);
+               ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(), newId);
+         
+         if (newId == SETUP_CHUNK_ID)
+            chunkDef.getOptions().setInclude(false);
          
          events_.fireEvent(new ChunkChangeEvent(
                docUpdateSentinel_.getId(), chunkDef.getChunkId(), row, 
