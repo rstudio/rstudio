@@ -130,10 +130,10 @@ var MarkdownHighlightRules = function() {
             next: "fieldblock"
         }, { // h1
             token: "markup.heading.1",
-            regex: "^=+(?=\\s*$)"
+            regex: "^={3,}(?=\\s*$)"
         }, { // h2
             token: "markup.heading.2",
-            regex: "^\\-+(?=\\s*$)"
+            regex: "^\\-{3,}(?=\\s*$)"
         }, {
             token : function(value) {
                 return "markup.heading." + value.length;
@@ -226,8 +226,8 @@ var MarkdownHighlightRules = function() {
             next: "allowBlock"
         }, { // list
             token : "text",
-            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock-start"
+            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+(?:\\[[ x]\\])?",
+            next  : "listblock"
         }, { // html comment
             token : "comment",
             regex : "<\\!--",
@@ -262,12 +262,6 @@ var MarkdownHighlightRules = function() {
             include: "basic"
         }, {
             defaultToken : "heading"
-        }],
-
-        "listblock-start" : [{
-            token : "text",
-            regex : /(?:\[[ x]\])?/,
-            next  : "listblock"
         }],
 
         "listblock" : [ { // Lists only escape on completely blank lines.
