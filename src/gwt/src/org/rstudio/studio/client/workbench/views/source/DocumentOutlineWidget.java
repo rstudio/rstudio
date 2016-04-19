@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -403,6 +404,12 @@ public class DocumentOutlineWidget extends Composite
       // Don't show namespaces in the scope tree
       if (node.isNamespace())
          return false;
+      
+      // don't show R functions in non-R files
+      TextFileType fileType = target_.getDocDisplay().getFileType();
+      if (!fileType.isR())
+         if (node.isFunction())
+            return false;
       
       // TODO: Annotate scope tree in such a way that this isn't necessary
       if (node.getLabel() != null && node.getLabel().startsWith("<function>"))
