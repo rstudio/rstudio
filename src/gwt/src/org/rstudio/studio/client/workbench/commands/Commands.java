@@ -30,6 +30,7 @@ public abstract class
    // Source
    public abstract AppCommand reformatCode();
    public abstract AppCommand newSourceDoc();
+   public abstract AppCommand newRNotebook();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
    public abstract AppCommand newSweaveDoc();

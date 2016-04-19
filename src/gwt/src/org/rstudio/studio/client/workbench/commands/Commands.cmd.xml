@@ -39,6 +39,7 @@ well as menu structures (for main menu and popup menus).
       <menu label="_File">
          <menu label="New _File">
             <cmd refid="newSourceDoc"/>
+            <cmd refid="newRNotebook"/>
             <separator/>
             <cmd refid="newRMarkdownDoc"/>
             <cmd refid="newRShinyApp"/>
@@ -797,6 +798,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="_R Script"
         desc="Create a new R script"/>
+
+   <cmd id="newRNotebook"
+        menuLabel="R _Notebook"
+        desc="Create a new R Markdown notebook" />
 
    <cmd id="newTextDoc"
         menuLabel="_Text File"

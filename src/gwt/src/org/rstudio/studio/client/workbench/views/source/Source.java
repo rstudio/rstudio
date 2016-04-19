@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -365,12 +365,19 @@ public class Source implements InsertSourceHandler,
          command.setEnabled(false);
       }
       
+      // feature flag for notebook
+      if (!uiPrefs_.showRmdChunkOutputInline().getValue())
+      {
+         commands.newRNotebook().setEnabled(false);
+         commands.newRNotebook().setVisible(false);
+      }
+
       // fake shortcuts for commands which we handle at a lower level
       commands.goToHelp().setShortcut(new KeyboardShortcut(112));
       commands.goToFunctionDefinition().setShortcut(new KeyboardShortcut(113));
       commands.codeCompletion().setShortcut(
                                     new KeyboardShortcut(KeyCodes.KEY_TAB));
-
+      
       // See bug 3673 and https://bugs.webkit.org/show_bug.cgi?id=41016
       if (BrowseCap.isMacintosh())
       {
@@ -1054,6 +1061,22 @@ public class Source implements InsertSourceHandler,
    public void onNewTextDoc()
    {
       newDoc(FileTypeRegistry.TEXT, null);
+   }
+   
+   @Handler
+   public void onNewRNotebook()
+   {
+      dependencyManager_.withRMarkdown("Create R Notebook", new Command() {
+         @Override
+         public void execute()
+         {
+            newSourceDocWithTemplate(
+                  FileTypeRegistry.RMARKDOWN,
+                  "",
+                  "r_markdown_notebook.Rmd",
+                  Position.create(3, 0));
+         }
+      });
    }
    
    @Handler
