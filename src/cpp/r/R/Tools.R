@@ -174,9 +174,13 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 # save an environment to a file
 .rs.addFunction( "saveEnvironment", function(env, filename)
 {
-   save(list = ls(envir = env, all.names = TRUE),
-        file = filename,
-        envir = env)
+   # suppress warnings emitted here, as they are not actionable
+   # by the user (and seem to be harmless)
+   suppressWarnings(
+      save(list = ls(envir = env, all.names = TRUE),
+           file = filename,
+           envir = env)
+   )
    
    invisible (NULL)
 })
