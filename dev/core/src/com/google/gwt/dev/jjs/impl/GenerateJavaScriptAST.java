@@ -2193,7 +2193,8 @@ public class GenerateJavaScriptAST {
       JsName classVar = topScope.declareName(JjsUtils.mangledNameString(x));
       JsFunction closureCtor = JsUtils.createEmptyFunctionLiteral(sourceInfo, topScope, classVar);
       JsExprStmt statement = closureCtor.makeStmt();
-      addTypeDefinitionStatement(x, statement);
+      // This synthetic statement must be in the initial fragment, do not add to typeDefinitions
+      getGlobalStatements().add(statement);
       names.put(x, classVar);
       return classVar;
     }
