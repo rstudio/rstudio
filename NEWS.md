@@ -57,6 +57,7 @@
 * Improved keyboard navigation in browser file widgets
 * Added option to limit length of lines in console history
 * Improved performance when many lines of code sent to console
+* 'save()' warnings no longer emitted when saving session state
 
 ### Bug Fixes
 
