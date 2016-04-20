@@ -868,6 +868,19 @@ public class TextEditingTargetWidget
          publishButton_.setIsStatic(false);
    }
    
+   @Override
+   public void setIsNotebookFormat()
+   {
+      knitCommandText_ = "Preview";
+      knitDocumentButton_.setTitle("Preview the notebook " +
+            DomUtils.htmlToText(
+                  commands_.knitDocument().getShortcutPrettyHtml()) + ")");
+      knitDocumentButton_.setText(knitCommandText_);
+      knitDocumentButton_.setLeftImage(
+            commands_.previewHTML().getImageResource());
+      setRmdFormatButtonVisible(false);
+   }
+   
    private void setRmdFormatButtonVisible(boolean visible)
    {
       rmdFormatButton_.setVisible(visible);

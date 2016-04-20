@@ -214,6 +214,7 @@ public class TextEditingTarget implements
       void debug_importDump();
       
       void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
+      void setIsNotebookFormat();
       void setFormatOptions(TextFileType fileType,
                             boolean showRmdFormatMenu,
                             boolean canEditFormatOptions,
@@ -3588,6 +3589,10 @@ public class TextEditingTarget implements
                                 valueList, 
                                 extensionList,
                                 formatUiName);
+
+         // update notebook-specific options
+         if (isNotebook)
+            view_.setIsNotebookFormat();
       }
    }
    
@@ -4580,7 +4585,18 @@ public class TextEditingTarget implements
                                                          fileType_);
       
       if (extendedType == SourceDocument.XT_RMARKDOWN)
-         renderRmd();
+      {
+         RmdSelectedTemplate template = getSelectedTemplate();
+         if (template != null &&
+             template.template.getName() == RmdTemplateData.NOTEBOOK_TEMPLATE)
+         {
+            notebook_.previewNotebook();
+         }
+         else
+         {
+            renderRmd();
+         }
+      }
       else if (fileType_.isRd())
          previewRd();
       else if (fileType_.isRpres())
