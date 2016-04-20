@@ -469,6 +469,7 @@ MimeType s_mimeTypes[] =
    { "gitignore", "text/plain"},
    { "Rbuildignore", "text/plain"},
    { "Rprofile", "text/x-r-source"},
+   { "Renviron", "text/x-shell" },
    { "rprofvis",   "text/x-r-profile" },
 
    { "tif",   "image/tiff" },
