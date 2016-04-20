@@ -56,6 +56,7 @@
 * Indicate when object details in environment pane have been truncated
 * Improved keyboard navigation in browser file widgets
 * Added option to limit length of lines in console history
+* Improved performance when many lines of code sent to console
 
 ### Bug Fixes
 
