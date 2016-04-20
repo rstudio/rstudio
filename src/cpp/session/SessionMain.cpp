@@ -3260,7 +3260,7 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
          
       // start http connection listener
-      error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1000);
+      error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
