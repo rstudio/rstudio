@@ -194,6 +194,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       appNameLabel_.addStyleName(RES.styles().label());
       
       appNameTextBox_ = new TextBox();
+      appNameTextBox_.getElement().setAttribute("spellcheck", "false");
       appNameTextBox_.addStyleName(RES.styles().textBox());
       appNameTextBox_.addStyleName(RES.styles().appNameTextBox());
       appNameTextBox_.getElement().setAttribute("placeholder", "Name");
