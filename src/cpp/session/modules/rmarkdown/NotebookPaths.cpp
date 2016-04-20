@@ -47,13 +47,16 @@ void cleanNotebookPathMap()
    FilePath cache = cachePath(notebookCtxId());
    Error error = core::readStringMapFromFile(cache, &s_idCache);
 
+   // loop over entries (conditionalize increment so we don't attempt to
+   // move forward over an invalidated iterator)
    for (std::map<std::string, std::string>::iterator it = s_idCache.begin();
-        it != s_idCache.end(); 
-        it++)
+        it != s_idCache.end();)
    {
       // clean up cache entries that refer to files that don't exist
       if (!FilePath(it->first).exists())
-         s_idCache.erase(it->first);
+         s_idCache.erase(it++);
+      else
+         ++it;
    }
 
    // write out updated cache
