@@ -306,7 +306,7 @@ public class RmdTemplateData
             },
             {
             option_name: "fig_height",
-            option_ui_name: "Default figure width (in inches)", 
+            option_ui_name: "Default figure height (in inches)",
             option_category: "Figures",
             option_type: "float", 
             option_default: "4.5"
@@ -322,7 +322,7 @@ public class RmdTemplateData
             {
             option_name: "fig_height",
             option_format: "beamer_presentation",
-            option_ui_name: "Default figure width (in inches)", 
+            option_ui_name: "Default figure height (in inches)",
             option_category: "Figures",
             option_type: "float", 
             option_default: "7"
