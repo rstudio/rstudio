@@ -88,6 +88,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
@@ -3577,9 +3578,7 @@ public class TextEditingTarget implements
             }
          }
          
-         boolean isNotebook = selTemplate != null &&
-                              selTemplate.template.getName() == 
-                                 RmdTemplateData.NOTEBOOK_TEMPLATE;
+         boolean isNotebook = isRmdNotebook();
 
          view_.setFormatOptions(fileType_, 
                                 !isNotebook && getCustomKnit().length() == 0,
@@ -4678,6 +4677,10 @@ public class TextEditingTarget implements
    { 
       events_.fireEvent(new RmdRenderPendingEvent());
       
+      final int type = isShinyDoc() ? RmdOutput.TYPE_SHINY:
+                                      isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:
+                                                        RmdOutput.TYPE_STATIC;
+      
       saveThenExecute(null, new Command() {
          @Override
          public void execute()
@@ -4691,12 +4694,21 @@ public class TextEditingTarget implements
                docUpdateSentinel_.getEncoding(),
                paramsFile,
                asTempfile,
-               isShinyDoc(),
+               type,
                false);
          }
       });  
    }
    
+   
+   private boolean isRmdNotebook()
+   {
+       RmdSelectedTemplate selTemplate = getSelectedTemplate();
+       return selTemplate != null &&
+              selTemplate.template.getName() == 
+                                 RmdTemplateData.NOTEBOOK_TEMPLATE;
+   }
+
    private boolean isShinyDoc()
    {
       try

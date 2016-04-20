@@ -35,9 +35,6 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.htmlpreview.events.ShowHTMLPreviewEvent;
-import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
-import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -271,7 +268,6 @@ public class TextEditingTargetNotebook
    public void initialize(EventBus events, 
          RMarkdownServerOperations server,
          ConsoleServerOperations console,
-         HTMLPreviewServerOperations htmlServer,
          Session session,
          UIPrefs prefs,
          Commands commands,
@@ -281,7 +277,6 @@ public class TextEditingTargetNotebook
       events_ = events;
       server_ = server;
       console_ = console;
-      htmlServer_ = htmlServer;
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
@@ -1307,7 +1302,6 @@ public class TextEditingTargetNotebook
 
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;
-   private HTMLPreviewServerOperations htmlServer_;
    private EventBus events_;
    
    private Style editorStyle_;

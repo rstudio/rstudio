@@ -237,7 +237,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
            event.getEncoding(),
            null,
            false,
-           false,
+           RmdOutput.TYPE_STATIC,
            event.getOutputFile());
       events_.fireEvent(renderEvent);
    }
@@ -258,7 +258,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getEncoding(), 
                               event.getParamsFile(),
                               event.asTempfile(),
-                              event.asShiny(),
+                              event.getType() == RmdOutput.TYPE_SHINY,
                               event.getExistingOutputFile(),
                   new SimpleRequestCallback<Boolean>() {
                        @Override 
@@ -386,7 +386,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             params.getResult().getTargetEncoding(),
             null,
             false,
-            false,
+            RmdOutput.TYPE_STATIC,
             null);
        events_.fireEvent(renderEvent);
    }
@@ -504,7 +504,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
-            null, result.getTargetEncoding(), null, false, true, null));
+            null, result.getTargetEncoding(), null, false, 
+            RmdOutput.TYPE_SHINY, null));
    }
    
    private void displayRenderResult(final RmdRenderResult result)
@@ -809,7 +810,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private boolean livePreviewRenderInProgress_ = false;
    private boolean quitInitiatedAfterLastRender_ = false;
    
+   public final static int TYPE_STATIC   = 0;
+   public final static int TYPE_SHINY    = 1;
+   public final static int TYPE_NOTEBOOK = 2;
+   
+   
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;
-   public final static int RMD_VIEWER_TYPE_PANE = 1;
-   public final static int RMD_VIEWER_TYPE_NONE = 2;
+   public final static int RMD_VIEWER_TYPE_PANE   = 1;
+   public final static int RMD_VIEWER_TYPE_NONE   = 2;
 }
