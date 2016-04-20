@@ -64,6 +64,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
@@ -84,6 +85,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
                                   RestartStatusEvent.Handler,
                                   WebsiteFileSavedEvent.Handler,
+                                  NotebookRenderFinishedEvent.Handler,
                                   RmdRenderPendingEvent.Handler,
                                   QuitInitiatedHandler,
                                   UiPrefsChangedHandler
@@ -128,6 +130,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       eventBus.addHandler(WebsiteFileSavedEvent.TYPE, this);
       eventBus.addHandler(QuitInitiatedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderPendingEvent.TYPE, this);
+      eventBus.addHandler(NotebookRenderFinishedEvent.TYPE, this);
 
       prefs_.rmdViewerType().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -291,6 +294,21 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
    }
    
+   @Override
+   public void onNotebookRenderFinished(NotebookRenderFinishedEvent event)
+   {
+      // ignore if no result, no output frame/closed output frame, or frame not
+      // associated with this document
+      if (result_ == null ||
+          outputFrame_ == null || 
+          outputFrame_.getWindowObject() == null ||
+          outputFrame_.getWindowObject().isClosed() ||
+          outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath())
+        return;
+      
+      // redisplay the result
+      displayRenderResult(result_);
+   }
    
    @Override
    public void onWebsiteFileSaved(WebsiteFileSavedEvent event)

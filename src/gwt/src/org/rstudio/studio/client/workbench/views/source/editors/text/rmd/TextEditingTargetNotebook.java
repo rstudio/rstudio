@@ -69,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
@@ -258,7 +259,22 @@ public class TextEditingTargetNotebook
             server_.createNotebookFromCache(
                   rmdPath,
                   outputPath,
-                  new VoidServerRequestCallback());
+                  new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onResponseReceived(Void v)
+                     {
+                        events_.fireEvent(new NotebookRenderFinishedEvent(
+                              docUpdateSentinel_.getId(), 
+                              docUpdateSentinel_.getPath()));
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
          }
       }));
    }
