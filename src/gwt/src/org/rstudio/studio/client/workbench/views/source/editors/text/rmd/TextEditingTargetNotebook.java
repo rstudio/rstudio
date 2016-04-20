@@ -26,7 +26,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -482,22 +481,6 @@ public class TextEditingTargetNotebook
       }
    }
    
-   public void previewNotebook()
-   {
-      docUpdateSentinel_.withSavedDoc(new Command() 
-      {
-         @Override
-         public void execute()
-         {
-            FileSystemItem nb = FileSystemItem.createFile(
-                  docUpdateSentinel_.getPath());
-            String nbHtml = nb.getParentPath().completePath(
-                  nb.getStem() + ".nb.html");
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showHtmlFile(nbHtml);
-         }
-      });
-   }
-
    // Command handlers --------------------------------------------------------
    
    @Handler

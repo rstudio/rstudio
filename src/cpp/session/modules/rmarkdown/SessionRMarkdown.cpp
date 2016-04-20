@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -146,12 +146,67 @@ enum RenderTerminateType
 
 // s_renderOutputs is a rotating buffer that maps an output identifier to a
 // target location on disk, to give the client access to the last few renders
-// that occurred in this session. it's unlikely that the client will ever 
-// request a render output other than the one that was just completed, so 
-// keeping > 2 render paths is conservative.
+// that occurred in this session without exposing disk paths in the URL. it's
+// unlikely that the client will ever request a render output other than the
+// one that was just completed, so keeping > 2 render paths is conservative.
 #define kMaxRenderOutputs 5
 std::string s_renderOutputs[kMaxRenderOutputs];
 int s_currentRenderOutput = 0;
+
+
+std::string assignOutputUrl(const std::string& outputFile)
+{
+   std::string outputUrl(kRmdOutput "/");
+   s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
+   s_renderOutputs[s_currentRenderOutput] = outputFile;
+   outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
+   outputUrl.append("/");
+   return outputUrl;
+}
+
+void getOutputFormat(const std::string& path,
+                     const std::string& encoding,
+                     json::Object* pResultJson)
+{
+   // query rmarkdown for the output format
+   json::Object& resultJson = *pResultJson;
+   r::sexp::Protect protect;
+   SEXP sexpOutputFormat;
+   Error error = r::exec::RFunction("rmarkdown:::default_output_format",
+                                    string_utils::utf8ToSystem(path), encoding)
+                                   .call(&sexpOutputFormat, &protect);
+   if (error)
+   {
+      resultJson["format_name"] = "";
+      resultJson["self_contained"] = false;
+   }
+   else
+   {
+      std::string formatName;
+      error = r::sexp::getNamedListElement(sexpOutputFormat, "name",
+                                           &formatName);
+      if (error)
+         LOG_ERROR(error);
+      resultJson["format_name"] = formatName;
+
+      SEXP sexpOptions;
+      bool selfContained = false;
+      error = r::sexp::getNamedListSEXP(sexpOutputFormat, "options",
+                                        &sexpOptions);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         error = r::sexp::getNamedListElement(sexpOptions, "self_contained",
+                                              &selfContained, false);
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      resultJson["self_contained"] = selfContained;
+   }
+}
+
 
 class RenderRmd : public async_r::AsyncRProcess
 {
@@ -499,16 +554,7 @@ private:
       resultJson["output_file"] = outputFile;
       resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors_);
 
-      std::string outputUrl(kRmdOutput "/");
-
-      // assign the result to one of our output slots
-      s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
-      s_renderOutputs[s_currentRenderOutput] = outputFile;
-      outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
-      outputUrl.append("/");
-
-      resultJson["output_url"] = outputUrl;
-
+      resultJson["output_url"] = assignOutputUrl(outputFile);
       resultJson["output_format"] = outputFormat_;
 
       resultJson["is_shiny_document"] = isShiny_;
@@ -556,49 +602,6 @@ private:
             "  Mac OS X: TexLive 2013 (Full) - http://tug.org/mactex/\n"
             "  (NOTE: Download with Safari rather than Chrome _strongly_ recommended)\n\n"
             "  Linux: Use system package manager\n\n");
-      }
-   }
-
-   void getOutputFormat(const std::string& path,
-                        const std::string& encoding,
-                        json::Object* pResultJson)
-   {
-      // query rmarkdown for the output format
-      json::Object& resultJson = *pResultJson;
-      r::sexp::Protect protect;
-      SEXP sexpOutputFormat;
-      Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       string_utils::utf8ToSystem(path), encoding)
-                                      .call(&sexpOutputFormat, &protect);
-      if (error)
-      {
-         resultJson["format_name"] = "";
-         resultJson["self_contained"] = false;
-      }
-      else
-      {
-         std::string formatName;
-         error = r::sexp::getNamedListElement(sexpOutputFormat, "name",
-                                              &formatName);
-         if (error)
-            LOG_ERROR(error);
-         resultJson["format_name"] = formatName;
-
-         SEXP sexpOptions;
-         bool selfContained = false;
-         error = r::sexp::getNamedListSEXP(sexpOutputFormat, "options",
-                                           &sexpOptions);
-         if (error)
-            LOG_ERROR(error);
-         else
-         {
-            error = r::sexp::getNamedListElement(sexpOptions, "self_contained",
-                                                 &selfContained, false);
-            if (error)
-               LOG_ERROR(error);
-         }
-
-         resultJson["self_contained"] = selfContained;
       }
    }
 
@@ -916,9 +919,9 @@ void doRenderRmd(const std::string& file,
 Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   int line = -1;
+   int line = -1, type = kRenderTypeStatic;
    std::string file, format, encoding, paramsFile, existingOutputFile;
-   bool asTempfile, asShiny = false;
+   bool asTempfile = false;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
@@ -926,13 +929,51 @@ Error renderRmd(const json::JsonRpcRequest& request,
                                   &encoding,
                                   &paramsFile,
                                   &asTempfile,
-                                  &asShiny,
+                                  &type,
                                   &existingOutputFile);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, paramsFile,
-               true, asTempfile, asShiny, existingOutputFile, pResponse);
+   if (type == kRenderTypeNotebook)
+   {
+      // if this is a notebook, it's pre-rendered
+      FilePath inputFile = module_context::resolveAliasedPath(file); 
+      FilePath outputFile = inputFile.parent().complete(inputFile.stem() + 
+                                                        ".nb.html");
+
+      // extract the output format
+      json::Object outputFormat;
+
+      // TODO: this should use getOutputFormat(), but we can't read format
+      // defaults yet since the html_notebook type doesn't exist in the
+      // rmarkdown package yet
+      outputFormat["format_name"] = "html_notebook";
+      outputFormat["self_contained"] = true;
+
+      json::Object resultJson;
+      resultJson["succeeded"] = outputFile.exists();
+      resultJson["target_file"] = file;
+      resultJson["target_encoding"] = encoding;
+      resultJson["target_line"] = line;
+      resultJson["output_file"] = module_context::createAliasedPath(outputFile);
+      resultJson["knitr_errors"] = json::Array();
+      resultJson["output_url"] = assignOutputUrl(outputFile.absolutePath());
+      resultJson["output_format"] = outputFormat;
+      resultJson["is_shiny_document"] = false;
+      resultJson["has_shiny_content"] = false;
+      resultJson["rpubs_published"] =
+            !module_context::previousRpubsUploadId(outputFile).empty();
+      resultJson["force_maximize"] = false;
+      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
+      module_context::enqueClientEvent(event);
+   }
+   else
+   {
+      // not a notebook, do render work
+      doRenderRmd(file, line, format, encoding, paramsFile,
+                  true, asTempfile, type == kRenderTypeShiny, existingOutputFile, 
+                  pResponse);
+   }
 
    return Success();
 }

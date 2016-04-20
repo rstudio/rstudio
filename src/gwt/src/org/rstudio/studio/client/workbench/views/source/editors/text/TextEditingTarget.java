@@ -4585,16 +4585,7 @@ public class TextEditingTarget implements
       
       if (extendedType == SourceDocument.XT_RMARKDOWN)
       {
-         RmdSelectedTemplate template = getSelectedTemplate();
-         if (template != null &&
-             template.template.getName() == RmdTemplateData.NOTEBOOK_TEMPLATE)
-         {
-            notebook_.previewNotebook();
-         }
-         else
-         {
-            renderRmd();
-         }
+         renderRmd();
       }
       else if (fileType_.isRd())
          previewRd();

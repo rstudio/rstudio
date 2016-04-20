@@ -258,7 +258,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getEncoding(), 
                               event.getParamsFile(),
                               event.asTempfile(),
-                              event.getType() == RmdOutput.TYPE_SHINY,
+                              event.getType(),
                               event.getExistingOutputFile(),
                   new SimpleRequestCallback<Boolean>() {
                        @Override 
@@ -555,7 +555,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             });
          }
       }
-      else if (".html".equals(extension))
+      else if (".html".equals(extension) ||
+               ".nb.html".equals(extension))
       {
          displayHTMLRenderResult(result);
       }
@@ -813,7 +814,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public final static int TYPE_STATIC   = 0;
    public final static int TYPE_SHINY    = 1;
    public final static int TYPE_NOTEBOOK = 2;
-   
    
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;
    public final static int RMD_VIEWER_TYPE_PANE   = 1;
