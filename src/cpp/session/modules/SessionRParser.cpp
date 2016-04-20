@@ -1754,10 +1754,10 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
          if (!cursor.fwdToMatchingToken())
             return false;
 
-         if (!cursor.moveToNextSignificantToken())
-            break;
-
          if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
+            break;
+         
+         if (!cursor.moveToNextSignificantToken())
             break;
       }
 
