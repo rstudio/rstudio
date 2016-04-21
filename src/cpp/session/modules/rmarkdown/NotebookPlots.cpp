@@ -164,24 +164,10 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
       }
    }
 
-   // generate code for creating PNG device
-   boost::format fmt("{ require(grDevices, quietly=TRUE); "
-                     "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 6.5, height = 4, "
-                     "  units=\"in\", res = 96 %2%)"
-                     "}");
-
    // marker for content; this is necessary because on Windows, turning off
    // the png device writes an empty PNG file even if nothing was plotted, and
    // we need to avoid treating that file as though it were an actual plot
    boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>();
-
-   // create the PNG device
-   error = r::exec::executeString(
-         (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
-              % r::session::graphics::extraBitmapParams()).str());
-   if (error)
-      return error;
 
    // save old plot state
    r::exec::RFunction par("par");

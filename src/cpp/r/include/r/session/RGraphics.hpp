@@ -19,6 +19,8 @@
 #include <boost/system/error_code.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
+typedef struct SEXPREC *SEXP;
+
 namespace rstudio {
 namespace r {
 namespace session {
@@ -71,7 +73,20 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
-   
+namespace device {
+
+struct Events
+{
+   boost::signal<void (SEXP)> onNewPage; 
+   boost::signal<void ()> onDrawing;
+   boost::signal<void ()> onResized;
+   boost::signal<void ()> onClosed;
+};
+
+Events& events();
+
+} // namespace device
+
 struct DisplayState
 {
    DisplayState(const std::string& imageFilename, 

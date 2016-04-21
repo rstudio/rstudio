@@ -84,8 +84,7 @@ PlotManager::PlotManager()
 }
       
 Error PlotManager::initialize(const FilePath& graphicsPath,
-                              const GraphicsDeviceFunctions& graphicsDevice,
-                              GraphicsDeviceEvents* pEvents)
+                              const GraphicsDeviceFunctions& graphicsDevice)
 {
    // initialize plot manipulator manager
    Error error = plotManipulatorManager().initialize(graphicsDevice.convert);
@@ -106,10 +105,10 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
    
    // sign up for graphics device events
    using boost::bind;
-   pEvents->onNewPage.connect(bind(&PlotManager::onDeviceNewPage, this, _1));
-   pEvents->onDrawing.connect(bind(&PlotManager::onDeviceDrawing, this));
-   pEvents->onResized.connect(bind(&PlotManager::onDeviceResized, this));
-   pEvents->onClosed.connect(bind(&PlotManager::onDeviceClosed, this));
+   device::events().onNewPage.connect(bind(&PlotManager::onDeviceNewPage, this, _1));
+   device::events().onDrawing.connect(bind(&PlotManager::onDeviceDrawing, this));
+   device::events().onResized.connect(bind(&PlotManager::onDeviceResized, this));
+   device::events().onClosed.connect(bind(&PlotManager::onDeviceClosed, this));
 
    return Success();
 }

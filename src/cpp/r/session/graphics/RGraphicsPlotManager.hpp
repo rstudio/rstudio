@@ -43,14 +43,6 @@ namespace graphics {
 class PlotManager;
 PlotManager& plotManager();   
 
-struct GraphicsDeviceEvents
-{
-   boost::signal<void (SEXP)> onNewPage; 
-   boost::signal<void ()> onDrawing;
-   boost::signal<void ()> onResized;
-   boost::signal<void ()> onClosed;
-};
-
 class PlotManipulatorManager;
  
 class PlotManager : boost::noncopyable, public r::session::graphics::Display
@@ -63,8 +55,7 @@ public:
    virtual ~PlotManager() {}
    
    core::Error initialize(const core::FilePath& graphicsPath,
-                          const GraphicsDeviceFunctions& graphicsDevice,
-                          GraphicsDeviceEvents* pEvents);
+                          const GraphicsDeviceFunctions& graphicsDevice);
    
    // plot list
    virtual int plotCount() const;

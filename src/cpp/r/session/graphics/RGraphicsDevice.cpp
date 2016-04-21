@@ -75,9 +75,6 @@ int s_width = 0;
 int s_height = 0;   
 double s_devicePixelRatio = 1.0;
    
-// provide GraphicsDeviceEvents for plot manager
-GraphicsDeviceEvents s_graphicsDeviceEvents;   
-   
 using namespace handler;
 
    
@@ -90,7 +87,7 @@ void GD_NewPage(const pGEcontext gc, pDevDesc dev)
 
    // fire event (pass previousPageSnapshot)
    SEXP previousPageSnapshot = s_pGEDevDesc->savedSnapshot;
-   s_graphicsDeviceEvents.onNewPage(previousPageSnapshot);
+   events().onNewPage(previousPageSnapshot);
 }
 
 Rboolean GD_NewFrameConfirm(pDevDesc dd)
@@ -114,7 +111,7 @@ void GD_Mode(int mode, pDevDesc dev)
 
    handler::mode(mode, dev);
 
-   s_graphicsDeviceEvents.onDrawing();
+   events().onDrawing();
 }
 
 void GD_Size(double *left, 
@@ -292,7 +289,7 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
 
    if (s_locatorFunction)
    {
-      s_graphicsDeviceEvents.onDrawing();
+      events().onDrawing();
 
       if(s_locatorFunction(x,y))
       {
@@ -306,7 +303,7 @@ Rboolean GD_Locator(double *x, double *y, pDevDesc dev)
       }
       else
       {
-         s_graphicsDeviceEvents.onDrawing();
+         events().onDrawing();
          return FALSE;
       }
    }
@@ -347,7 +344,7 @@ void GD_Close(pDevDesc dev)
       s_pGEDevDesc = NULL;
    }
 
-   s_graphicsDeviceEvents.onClosed();
+   events().onClosed();
 }
    
 void GD_OnExit(pDevDesc dd)
@@ -423,7 +420,7 @@ void resizeGraphicsDevice()
    resyncDisplayList();
 
    // notify listeners of resize
-   s_graphicsDeviceEvents.onResized();
+   events().onResized();
 }   
    
 // routine which creates device  
@@ -706,8 +703,7 @@ Error initialize(
    graphicsDevice.close = close;
    graphicsDevice.onBeforeExecute = onBeforeExecute;
    Error error = plotManager().initialize(graphicsPath,
-                                          graphicsDevice,
-                                          &s_graphicsDeviceEvents);
+                                          graphicsDevice);
    if (error)
       return error;
    
@@ -784,8 +780,12 @@ void close()
    if (s_pGEDevDesc != NULL)
       Rf_killDevice(Rf_ndevNumber(s_pGEDevDesc->dev));
 }
-   
 
+Events& events()
+{
+   static Events instance;
+   return instance;
+}
  
 } // namespace device
 
