@@ -52,12 +52,14 @@ public:
    std::string docId();
    bool connected();
 
+   // inject console input manually
+   void onConsoleInput(const std::string& input);
+
 private:
    void onConsoleOutput(module_context::ConsoleOutputType type, 
          const std::string& output);
-   void onConsoleInput(const std::string& input);
-   void onConsolePrompt(const std::string&);
    void onConsoleText(int type, const std::string& output, bool truncate);
+   void onConsolePrompt(const std::string&);
    void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
          int outputType);
    void onError(const core::json::Object& err);

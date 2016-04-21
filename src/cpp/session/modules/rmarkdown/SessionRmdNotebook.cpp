@@ -137,6 +137,7 @@ void onActiveConsoleChanged(const std::string& consoleId,
       if (s_execContext->connected()) 
          return;
       s_execContext->connect();
+      s_execContext->onConsoleInput(text);
    }
    else if (s_execContext->connected())
    {
