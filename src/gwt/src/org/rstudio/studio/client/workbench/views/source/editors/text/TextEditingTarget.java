@@ -3591,7 +3591,18 @@ public class TextEditingTarget implements
 
          // update notebook-specific options
          if (isNotebook)
+         {
+            // chunk output should always be inline in notebooks
+            String outputType = docUpdateSentinel_.getProperty(
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE);
+            if (outputType != TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE)
+            {
+               docUpdateSentinel_.setProperty(
+                     TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+                     TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE);
+            }
             view_.setIsNotebookFormat();
+         }
       }
    }
    
