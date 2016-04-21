@@ -544,8 +544,32 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
    
    cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
-   if (!file.exists(cachePath))
-      return(FALSE)
+   if (!file.exists(cachePath)) {
+      
+      # generate version of document with no chunks
+      code <- .rs.readLines(rmdPath)
+      
+      splat <- try(knitr:::split_file(
+         lines = code,
+         set.preamble = FALSE, patterns = knitr::all_patterns$md
+      ), silent = TRUE)
+      
+      if (inherits(splat, "try-error"))
+         return()
+      
+      md <- unlist(splat)
+      
+      # write to tempfile
+      maskedFile <- tempfile("rnb-tempfile-input-", fileext = ".md")
+      cat(md, file = maskedFile, sep = "\n")
+      
+      # render our notebook
+      .rs.rnb.render(inputFile = maskedFile,
+                     outputFile = outputPath,
+                     rmdContents = code)
+      
+      return(TRUE)
+   }
    
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
    html <- .rs.createNotebookFromCacheData(rnbData, outputPath)
