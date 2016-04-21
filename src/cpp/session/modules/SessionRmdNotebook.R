@@ -367,7 +367,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    knitHooks <- list()
    optsChunk <- list()
-   chunkCount <- 0
    
    # NOTE: we must install our hooks lazily as the rmarkdown
    # package will install (and override) hooks set here, as
@@ -378,32 +377,25 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       knitHooks <<- knitr::knit_hooks$get()
       optsChunk <<- knitr::opts_chunk$get()
       
-      # update hooks
-      knitr::knit_hooks$set(
-         
-         chunk = function(x, ...) {
-            knitHooks$chunk(x, ...)
-            chunkCount <<- chunkCount + 1
-            before <- paste("\n<!-- rnb-chunk-begin", chunkCount, "-->\n")
-            after  <- paste("\n<!-- rnb-chunk-end", chunkCount, "-->\n")
-            paste(before, x, after, sep = "\n")
-         },
-         
-         plot = function(x, ...) {
-            output <- knitHooks$plot(x, ...)
-            before <- paste("\n<!-- rnb-plot-begin -->\n")
-            after  <- paste("\n<!-- rnb-plot-end -->\n")
-            paste(before, output, after, sep = "\n")
-         }
-         
-      )
+      # generic hooks for knitr output
+      hookNames <- c("source", "chunk", "plot", "text", "output",
+                     "warning", "error", "message", "error")
       
+      newKnitHooks <- lapply(hookNames, function(hookName) {
+         .rs.rnb.annotatedKnitrHook(hookName, knitHooks[[hookName]])
+      })
+      names(newKnitHooks) <- hookNames
+      
+      knitr::knit_hooks$set(newKnitHooks)
+      
+      # hook into 'render' for htmlwidgets
       knitr::opts_chunk$set(
          
          render = function(x, ...) {
-            # TODO: track HTML widget dependencies make easy
-            # to de-serialize
-            knitr::knit_print(x, ...)
+            output <- knitr::knit_print(x, ...)
+            if (inherits(x, "htmlwidget"))
+               return(.rs.rnb.renderHtmlWidget(output))
+            output
          }
       )
    }
@@ -422,6 +414,41 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    ))
    
    hooks
+})
+
+.rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label)
+{
+   before <- sprintf("\n<!-- rnb-%s-begin -->\n", label)
+   after  <- sprintf("\n<!-- rnb-%s-end -->\n", label)
+   paste(before, output, after, sep = "\n")
+})
+
+.rs.addFunction("rnb.annotatedKnitrHook", function(label, hook) {
+   force(label)
+   force(hook)
+   function(x, ...) {
+      output <- hook(x, ...)
+      .rs.rnb.htmlAnnotatedOutput(output, label)
+   }
+})
+
+.rs.addFunction("rnb.renderHtmlWidget", function(output)
+{
+   unpreserved <- substring(
+      output,
+      nchar("<!--html_preserve-->", type = "bytes") + 1,
+      nchar(output, type = "bytes") - nchar("<!--/html_preserve-->", type = "bytes")
+   )
+   
+   annotated <- htmltools::htmlPreserve(paste(
+      "\n<!-- rnb-htmlwidget-begin -->\n",
+      unpreserved,
+      "\n<!-- rnb-htmlwidget-end -->\n",
+      sep = "\n"
+   ))
+   
+   attributes(annotated) <- attributes(output)
+   return(annotated)
 })
 
 .rs.addFunction("rnb.htmlNotebook", function(...)
