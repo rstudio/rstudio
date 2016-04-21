@@ -15,13 +15,14 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
 public class NotebookRenderFinishedEvent 
-             extends GwtEvent<NotebookRenderFinishedEvent.Handler>
+             extends CrossWindowEvent<NotebookRenderFinishedEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
