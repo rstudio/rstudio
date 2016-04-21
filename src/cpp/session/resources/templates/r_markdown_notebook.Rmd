@@ -4,26 +4,14 @@ output: html_notebook
 
 ## R Notebook
 
-This is an R Notebook. Notebook content is written using Markdown, a simple formatting syntax. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This is an R Markdown Notebook.
 
-You can execute R code inside the notebook and see the results immediately beneath. Try executing this chunk by placing your cursor inside it and pressing **Ctrl+Shift+Enter** (Cmd+Shift+Enter on OS X).
+When you execute R code inside the notebook, the results appear beneath the code. Try executing this chunk by placing your cursor inside it and pressing **Ctrl+Shift+Enter** (Cmd+Shift+Enter on OS X).
 
-```{r cars}
+```{r}
 summary(cars)
 ```
 
-## Output Types
+Add a new chunk here with **Ctrl+Alt+I** (Cmd+Option+I on OS X).
 
-R code chunks can also produce plots and even HTML widgets. Try running this chunk, which produces a plot:
-
-```{r pressure}
-plot(pressure)
-```
-
-## Viewing and Sharing
-
-When you save an R Notebook, a file with the extension `.nb.html` containing a rendered copy of the notebook is placed alongside your source file. Press the **Preview** button in the toolbar to see this file at any time. 
-
-This self-contained HTML file includes both the notebook's source code and its output.
-
-
+For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
