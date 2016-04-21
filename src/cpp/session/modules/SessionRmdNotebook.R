@@ -111,25 +111,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                            outputFile = NULL,
                                            envir = .GlobalEnv)
 {
-   # Render to HTML
+   if (is.null(outputFile))
+      outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
+   
    .rs.rnb.render(inputFile, outputFile, envir = envir)
-   
-   # Retrieve metadata from recorder
-   recorder <- .rs.getVar("rnbRecorder")
-   data <- recorder$data()
-   str(as.list(data))
-   recorder$clear()
-   
-   # Collect into more structured format
-   chunkOutput <- list()
-   for (i in as.character(seq_len(length(data)))) {
-      element <- data[[i]]
-      chunkOutput[[element$label]] <- c(chunkOutput[[element$label]], element)
-   }
-   
-   
-   browser()
-   
 })
 
 .rs.addFunction("rnb.withChunkLocations", function(rmdContents, chunkInfo)
@@ -378,73 +363,65 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    html
 })
 
-.rs.setVar("rnbRecorder", (function() {
-   
-   .env   <- new.env(parent = emptyenv())
-   .count <- 0
-   
-   add <- function(...) {
-      .count <<- .count + 1
-      .env[[as.character(.count)]] <<- list(...)
-   }
-   
-   data <- function() {
-      .env
-   }
-   
-   clear <- function() {
-      .env   <<- new.env(parent = emptyenv())
-      .count <<- 0
-   }
-   
-   list(add = add, data = data, clear = clear)
-   
-})())
-
-.rs.addFunction("rnb.getRecoreder", function()
+.rs.addFunction("rnb.augmentKnitrHooks", function(hooks)
 {
-   .rs.getVar("rnbRecorder")
+   knitHooks <- list()
+   chunkCount <- 0
+   
+   # NOTE: we must install our hooks lazily as the rmarkdown
+   # package will install (and override) hooks set here, as
+   # hooks set by 'render_markdown()' take precedence. If you
+   # modify the tracer to add hooks, make sure you reset them
+   # in the exit function below as well
+   tracer <- function(...) {
+      
+      # save hooks
+      knitHooks <<- knitr::knit_hooks$get()
+      
+      # update hooks
+      knitr::knit_hooks$set(
+         
+         chunk = function(x, ...) {
+            knitHooks$chunk(x, ...)
+            chunkCount <<- chunkCount + 1
+            
+            before <- paste("\n<!-- rnb-chunk-begin", chunkCount, "-->\n")
+            after  <- paste("\n<!-- rnb-chunk-end", chunkCount, "-->\n")
+            paste(before, x, after, sep = "\n")
+         },
+         
+         plot = function(x, ...) {
+            output <- knitHooks$plot(x, ...)
+            label <- list(...)$label
+            before <- paste("\n<!-- rnb-plot-begin -->\n")
+            after  <- paste("\n<!-- rnb-plot-end -->\n")
+            paste(before, output, after, sep = "\n")
+         }
+         
+      )
+   }
+   
+   exit <- function(...) {
+      # restore hooks
+      knitr::knit_hooks$restore(knitHooks)
+   }
+   
+   suppressMessages(trace(
+      knitr::knit,
+      tracer = substitute(tracer),
+      exit = substitute(exit),
+      print = FALSE
+   ))
+   
+   hooks
 })
 
-.rs.addFunction("rnb.knitrHooks", function(recorder = .rs.getVar("rnbRecorder"))
-{
-   knit_hooks <- list(
-      
-      plot = function(x, options) {
-         output <- paste(x, collapse = ".")
-         recorder$add(
-            input  = x,
-            output = output,
-            label = options$label,
-            hook  = "knit_hooks$plot"
-         )
-         output
-      }
-      
-   )
-   
-   opts_chunk <- list(
-      render = function(x, ...) {
-         output <- knitr::knit_print(x, ...)
-         recorder$add(
-            input  = x,
-            output = output,
-            label  = list(...)$options$label,
-            hook   = "opts_chunk$render"
-         )
-         output
-      }
-   )
-   
-   list(knit_hooks = knit_hooks, opts_chunk = opts_chunk)
-})
-
-.rs.addFunction("rnb.htmlNotebook", function(..., hooks = .rs.rnb.knitrHooks())
+.rs.addFunction("rnb.htmlNotebook", function(...)
 {
    if ("rmarkdown" %in% loadedNamespaces() &&
        exists("html_notebook", envir = asNamespace("rmarkdown")))
    {
-      return(rmarkdown::html_notebook)
+      return(rmarkdown::html_notebook(...))
    }
    
    format <- rmarkdown::html_document(code_folding = "show",
@@ -452,20 +429,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                       highlight = "textmate",
                                       ...)
    
-   knitrHooks <- format$knitr
-   .rs.enumerate(hooks, function(hookName, hookObject) {
-      .rs.enumerate(hookObject, function(optionName, optionValue) {
-         
-         newHooks <- knitrHooks[[hookName]]
-         if (is.null(newHooks))
-            newHooks <- list()
-         
-         newHooks[[optionName]] <- optionValue
-         knitrHooks[[hookName]] <<- newHooks
-      })
-   })
-   
-   format$knitr <- knitrHooks
+   format$knitr <- .rs.rnb.augmentKnitrHooks(format$knitr)
    format
 })
 
