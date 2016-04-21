@@ -987,8 +987,12 @@ public class TextEditingTargetNotebook
          @Override
          public void execute()
          {
+            // physically remove chunk output
             output.remove();
             outputs_.remove(chunkId);
+
+            // mark doc dirty (this is not undoable)
+            dirtyState_.markDirty(false);
          }
       });
       anim.run(400);
