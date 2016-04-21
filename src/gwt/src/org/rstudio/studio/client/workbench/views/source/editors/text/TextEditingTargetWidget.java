@@ -839,7 +839,8 @@ public class TextEditingTargetWidget
       }
       
       
-      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false);
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
+            RmdOutput.TYPE_STATIC);
      
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
@@ -851,7 +852,8 @@ public class TextEditingTargetWidget
    {
       setRmdFormatButtonVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true);
+      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, 
+            RmdOutput.TYPE_SHINY);
    
       String docType = isPresentation ? "Presentation" : "Document";
       
@@ -879,6 +881,8 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setLeftImage(
             commands_.previewHTML().getImageResource());
       setRmdFormatButtonVisible(false);
+      showRmdViewerMenuItems(true, false, true, RmdOutput.TYPE_NOTEBOOK);
+     
    }
    
    private void setRmdFormatButtonVisible(boolean visible)
@@ -1030,7 +1034,8 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, boolean isRmd, boolean isShinyDoc)
+   private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, 
+         boolean isRmd, int type)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
@@ -1059,7 +1064,8 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
-      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      if (uiPrefs_.showRmdChunkOutputInline().getValue() &&
+          type != RmdOutput.TYPE_NOTEBOOK)
       {
          menu.addItem(new DocPropMenuItem(
                "Chunk Output Inline", docUpdateSentinel_, 
