@@ -150,9 +150,13 @@ enum RenderTerminateType
 // unlikely that the client will ever request a render output other than the
 // one that was just completed, so keeping > 2 render paths is conservative.
 #define kMaxRenderOutputs 5
-std::string s_renderOutputs[kMaxRenderOutputs];
+std::vector<std::string> s_renderOutputs(kMaxRenderOutputs);
 int s_currentRenderOutput = 0;
 
+FilePath outputCachePath()
+{
+   return module_context::sessionScratchPath().childPath("rmd-outputs");
+}
 
 std::string assignOutputUrl(const std::string& outputFile)
 {
@@ -1318,6 +1322,23 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 }
 
 
+void onShutdown(bool terminatedNormally)
+{
+   Error error = core::writeStringVectorToFile(outputCachePath(), 
+                                               s_renderOutputs);
+   if (error)
+      LOG_ERROR(error);
+}
+ 
+void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+{
+   onShutdown(true);
+}
+
+void onResume(const Settings&)
+{
+}
+
 } // anonymous namespace
 
 bool knitParamsAvailable()
@@ -1357,6 +1378,22 @@ Error initialize()
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);
    module_context::events().onClientInit.connect(onClientInit);
+   module_context::events().onShutdown.connect(onShutdown);
+   module_context::addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   // load output paths if saved
+   FilePath cachePath = outputCachePath();
+   if (cachePath.exists())
+   {
+      Error error = core::readStringVectorFromFile(cachePath, &s_renderOutputs);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         s_currentRenderOutput = s_renderOutputs.size();
+         s_renderOutputs.reserve(kMaxRenderOutputs);
+      }
+   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()
