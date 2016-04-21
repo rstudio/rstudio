@@ -888,4 +888,6 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
   }
 })
 
-
+.rs.addFunction("nBytes", function(x) {
+   nchar(x, type = "bytes")
+})

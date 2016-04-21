@@ -436,8 +436,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    unpreserved <- substring(
       output,
-      nchar("<!--html_preserve-->", type = "bytes") + 1,
-      nchar(output, type = "bytes") - nchar("<!--/html_preserve-->", type = "bytes")
+      .rs.nBytes("<!--html_preserve-->") + 1,
+      .rs.nBytes(output) - .rs.nBytes("<!--/html_preserve-->")
    )
    
    annotated <- htmltools::htmlPreserve(paste(
