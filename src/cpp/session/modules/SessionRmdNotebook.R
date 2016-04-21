@@ -366,17 +366,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("rnb.augmentKnitrHooks", function(hooks)
 {
    knitHooks <- list()
+   optsChunk <- list()
    chunkCount <- 0
    
    # NOTE: we must install our hooks lazily as the rmarkdown
    # package will install (and override) hooks set here, as
-   # hooks set by 'render_markdown()' take precedence. If you
-   # modify the tracer to add hooks, make sure you reset them
-   # in the exit function below as well
+   # hooks set by 'render_markdown()' take precedence.
    tracer <- function(...) {
       
       # save hooks
       knitHooks <<- knitr::knit_hooks$get()
+      optsChunk <<- knitr::opts_chunk$get()
       
       # update hooks
       knitr::knit_hooks$set(
@@ -384,7 +384,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          chunk = function(x, ...) {
             knitHooks$chunk(x, ...)
             chunkCount <<- chunkCount + 1
-            
             before <- paste("\n<!-- rnb-chunk-begin", chunkCount, "-->\n")
             after  <- paste("\n<!-- rnb-chunk-end", chunkCount, "-->\n")
             paste(before, x, after, sep = "\n")
@@ -392,18 +391,27 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          plot = function(x, ...) {
             output <- knitHooks$plot(x, ...)
-            label <- list(...)$label
             before <- paste("\n<!-- rnb-plot-begin -->\n")
             after  <- paste("\n<!-- rnb-plot-end -->\n")
             paste(before, output, after, sep = "\n")
          }
          
       )
+      
+      knitr::opts_chunk$set(
+         
+         render = function(x, ...) {
+            # TODO: track HTML widget dependencies make easy
+            # to de-serialize
+            knitr::knit_print(x, ...)
+         }
+      )
    }
    
    exit <- function(...) {
       # restore hooks
       knitr::knit_hooks$restore(knitHooks)
+      knitr::opts_chunk$restore(optsChunk)
    }
    
    suppressMessages(trace(
