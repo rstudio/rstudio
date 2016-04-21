@@ -882,7 +882,6 @@ public class TextEditingTargetWidget
             commands_.previewHTML().getImageResource());
       setRmdFormatButtonVisible(false);
       showRmdViewerMenuItems(true, false, true, RmdOutput.TYPE_NOTEBOOK);
-     
    }
    
    private void setRmdFormatButtonVisible(boolean visible)

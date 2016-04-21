@@ -1070,10 +1070,14 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
+            String basename = "r_markdown_notebook";
+            if (BrowseCap.isMacintosh())
+               basename += "_osx";
+
             newSourceDocWithTemplate(
                   FileTypeRegistry.RMARKDOWN,
                   "",
-                  "r_markdown_notebook.Rmd",
+                  basename + ".Rmd",
                   Position.create(3, 0));
          }
       });

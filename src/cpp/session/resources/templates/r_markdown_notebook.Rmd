@@ -1,17 +1,16 @@
 ---
 output: html_notebook
+title: R Notebook
 ---
-
-## R Notebook
 
 This is an R Markdown Notebook.
 
-When you execute R code inside the notebook, the results appear beneath the code. Try executing this chunk by placing your cursor inside it and pressing **Ctrl+Shift+Enter** (Cmd+Shift+Enter on OS X).
+When you execute R code inside the notebook, the results appear beneath the code. Try executing this chunk by placing your cursor inside it and pressing **Ctrl+Shift+Enter**.
 
 ```{r}
 summary(cars)
 ```
 
-Add a new chunk here with **Ctrl+Alt+I** (Cmd+Option+I on OS X).
+Add a new chunk here with **Ctrl+Alt+I**.
 
 For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
