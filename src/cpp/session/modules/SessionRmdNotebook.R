@@ -546,27 +546,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    if (!file.exists(cachePath)) {
       
-      # generate version of document with no chunks
-      code <- .rs.readLines(rmdPath)
-      
-      splat <- try(knitr:::split_file(
-         lines = code,
-         set.preamble = FALSE, patterns = knitr::all_patterns$md
-      ), silent = TRUE)
-      
-      if (inherits(splat, "try-error"))
-         return()
-      
-      md <- unlist(splat)
-      
-      # write to tempfile
-      maskedFile <- tempfile("rnb-tempfile-input-", fileext = ".md")
-      cat(md, file = maskedFile, sep = "\n")
+      # render our notebook, but don't evaluate any R code
+      eval <- knitr::opts_chunk$get("eval")
+      knitr::opts_chunk$set(eval = FALSE)
+      on.exit(knitr::opts_chunk$set(eval = eval), add = TRUE)
       
       # render our notebook
-      .rs.rnb.render(inputFile = maskedFile,
-                     outputFile = outputPath,
-                     rmdContents = code)
+      .rs.rnb.render(inputFile = rmdPath,
+                     outputFile = outputPath)
       
       return(TRUE)
    }
