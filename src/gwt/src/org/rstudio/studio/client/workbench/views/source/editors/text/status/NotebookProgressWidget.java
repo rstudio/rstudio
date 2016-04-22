@@ -15,6 +15,15 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Style.Cursor;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Anchor;
@@ -23,6 +32,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NotebookProgressWidget extends Composite
+                                    implements HasClickHandlers
 {
 
    private static NotebookProgressWidgetUiBinder uiBinder = GWT
@@ -45,12 +55,38 @@ public class NotebookProgressWidget extends Composite
       
       chunkName_.setText(chunkName);
    }
+   
+   public HandlerRegistration addClickHandler(ClickHandler handler)
+   {
+      return manager_.addHandler(ClickEvent.getType(), handler);
+   }
 
    public NotebookProgressWidget()
    {
+      manager_ = new HandlerManager(this);
+
       initWidget(uiBinder.createAndBindUi(this));
+
+      // ensure widget looks clickable
+      getElement().getStyle().setCursor(Cursor.POINTER);
+
+      // connect native click handler
+      addDomHandler(new MouseDownHandler()
+      {
+         public void onMouseDown(MouseDownEvent event)
+         {
+            event.preventDefault();
+            event.stopPropagation();
+
+            ClickEvent.fireNativeEvent(
+                  Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, 
+                        false, false),
+                  manager_);
+         }
+      }, MouseDownEvent.getType());
    }
    
    @UiField HTMLPanel progressBar_;
    @UiField Anchor chunkName_;
+   private final HandlerManager manager_;
 }

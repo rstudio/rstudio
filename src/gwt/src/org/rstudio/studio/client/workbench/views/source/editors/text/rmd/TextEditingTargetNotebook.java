@@ -78,6 +78,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -1344,12 +1346,32 @@ public class TextEditingTargetNotebook
                                            executingChunk_.name.isEmpty() ? 
                                            "" : (": " + executingChunk_.name)));
       
+      // register click callback if necessary
+      if (progressClickReg_ == null)
+      {
+         progressClickReg_ = editingTarget_.getStatusBar()
+               .addProgressClickHandler(new ClickHandler()
+               {
+                  
+                  @Override
+                  public void onClick(ClickEvent arg0)
+                  {
+                     if (executingChunk_ != null &&
+                         outputs_.containsKey(executingChunk_.chunkId))
+                     {
+                        outputs_.get(executingChunk_.chunkId).ensureVisible();
+                     }
+                  }
+               });
+         releaseOnDismiss_.add(progressClickReg_);
+      }
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
    private LinkedList<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
+   private HandlerRegistration progressClickReg_;
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;

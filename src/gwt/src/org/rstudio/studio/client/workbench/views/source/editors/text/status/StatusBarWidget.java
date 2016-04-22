@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
@@ -247,6 +248,12 @@ public class StatusBarWidget extends Composite
       {
          hideProgressTimer_.schedule(400);
       }
+   }
+
+   @Override
+   public HandlerRegistration addProgressClickHandler(ClickHandler handler)
+   {
+      return progress_.addClickHandler(handler);
    }
    
    @UiField StatusBarElementWidget position_;
