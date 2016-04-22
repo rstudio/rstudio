@@ -110,10 +110,11 @@ public class TextEditingTargetNotebook
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, int modeIn, String codeIn, 
-            String optionsIn, int rowIn, String setupCrc32In)
+            String nameIn, String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
          mode = modeIn;
+         name = nameIn;
          options = optionsIn;
          code = codeIn;
          row = rowIn;
@@ -124,6 +125,7 @@ public class TextEditingTargetNotebook
          executingRowEnd = 0;
       }
       public String chunkId;
+      public String name;
       public String options;
       public String code;
       public String setupCrc32;
@@ -402,7 +404,21 @@ public class TextEditingTargetNotebook
 
       // put it in the queue 
       chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, mode, code,
-            options, row, setupCrc32));
+            chunk.getChunkLabel(), options, row, setupCrc32));
+      
+      // record maximum queue size (for scaling progress when we start popping
+      // chunks from the list)
+      if (chunkExecQueue_.size() == 1)
+      {
+         // first item in the queue resets the max recorded size
+         execQueueMaxSize_ = 1;
+      }
+      else
+      {
+         // otherwise, maintain the high water mark until the queue is empty
+         execQueueMaxSize_ = Math.max(execQueueMaxSize_, 
+                                      chunkExecQueue_.size());
+      }
 
       // if there are other chunks in the queue, let them run
       if (chunkExecQueue_.size() > 1)
@@ -841,6 +857,15 @@ public class TextEditingTargetNotebook
       // begin chunk execution
       final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
       executingChunk_ = unit;
+      
+      // update status bar
+      editingTarget_.getStatusBar().showNotebookProgress(
+           (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
+                                           chunkExecQueue_.size()) / 
+                                  (double) execQueueMaxSize_)), 
+           "Chunk " + (execQueueMaxSize_ - chunkExecQueue_.size()) + " / " + 
+                      execQueueMaxSize_ + (executingChunk_.name.isEmpty() ? 
+                                           "" : (": " + executingChunk_.name)));
       
       // let the chunk widget know it's started executing
       if (outputs_.containsKey(unit.chunkId))
@@ -1319,6 +1344,7 @@ public class TextEditingTargetNotebook
    private int pixelWidth_ = 0;
    private boolean executedSinceActivate_ = false;
    private boolean evaluatingParams_ = false;
+   private int execQueueMaxSize_ = 0;
    
    private int state_ = STATE_NONE;
 

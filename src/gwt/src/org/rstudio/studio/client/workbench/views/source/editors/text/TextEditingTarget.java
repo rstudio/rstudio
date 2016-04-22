@@ -5955,6 +5955,11 @@ public class TextEditingTarget implements
       return commandHandlerReg_ != null;
    }
    
+   public StatusBar getStatusBar()
+   {
+      return statusBar_;
+   }
+   
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;

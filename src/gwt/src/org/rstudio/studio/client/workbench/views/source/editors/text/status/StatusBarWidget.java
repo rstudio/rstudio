@@ -1,7 +1,7 @@
 /*
  * StatusBarWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -213,11 +213,36 @@ public class StatusBarWidget extends Composite
       endMessage();
    }
 
+   @Override
+   public void showNotebookProgress(int percent, String chunkName)
+   {
+      // at 100%, hide the progress bar
+      if (percent >= 100)
+      {
+         if (progress_.isVisible())
+         {
+            progress_.setVisible(false);
+            language_.setVisible(true);
+         }
+         return;
+      }
+      // ensure notebook progress widget is visible
+      if (!progress_.isVisible())
+      {
+         language_.setVisible(false);
+         progress_.setVisible(true);
+      }
+      
+      // update the status bar
+      progress_.setPercent(percent, chunkName);
+   }
+   
    @UiField StatusBarElementWidget position_;
    @UiField StatusBarElementWidget scope_;
    @UiField StatusBarElementWidget message_;
    @UiField StatusBarElementWidget language_;
    @UiField Image scopeIcon_;
+   @UiField NotebookProgressWidget progress_;
    
    public interface Resources extends ClientBundle
    {
@@ -233,5 +258,4 @@ public class StatusBarWidget extends Composite
    private int height_;
    private HandlerRegistration handler_;
    private int scopeType_;
-   
 }

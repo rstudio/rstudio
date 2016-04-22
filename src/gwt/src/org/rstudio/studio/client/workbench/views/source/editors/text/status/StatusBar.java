@@ -45,4 +45,5 @@ public interface StatusBar
    void showMessage(String message, HideMessageHandler handler);
    void hideMessage();
    
+   void showNotebookProgress(int percent, String text);
 }
