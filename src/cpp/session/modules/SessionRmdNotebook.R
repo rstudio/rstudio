@@ -367,9 +367,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       data = .rs.base64encode(.rs.toJSON(attr(output, "knit_meta"), unbox = TRUE))
    ))
    
-   before <- sprintf("\n<!-- rnb-htmlwidget-begin %s-->\n", meta)
-   after  <- "\n<!-- rnb-htmlwidget-end -->\n"
-   annotated <- htmltools::htmlPreserve(paste(before, unpreserved, after))
+   before <- sprintf("\n<!-- rnb-htmlwidget-begin %s-->", meta)
+   after  <- "<!-- rnb-htmlwidget-end -->\n"
+   annotated <- htmltools::htmlPreserve(paste(before, unpreserved, after, sep = "\n"))
    attributes(annotated) <- attributes(output)
    return(annotated)
 })
