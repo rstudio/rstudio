@@ -364,7 +364,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
    
    meta <- .rs.listToHtmlAttributes(list(
-      data = .rs.base64encode(attr(output, "knit_meta"))
+      data = .rs.base64encode(.rs.toJSON(attr(output, "knit_meta"), unbox = TRUE))
    ))
    
    before <- sprintf("\n<!-- rnb-htmlwidget-begin %s-->\n", meta)
