@@ -419,6 +419,10 @@ public class TextEditingTargetNotebook
          execQueueMaxSize_ = Math.max(execQueueMaxSize_, 
                                       chunkExecQueue_.size());
       }
+      
+      // draw progress meter for the new queue in batch mode
+      if (mode == MODE_BATCH)
+         updateProgress();
 
       // if there are other chunks in the queue, let them run
       if (chunkExecQueue_.size() > 1)
@@ -858,10 +862,16 @@ public class TextEditingTargetNotebook
    
    private void processChunkExecQueue()
    {
-      // do nothing if we're currently executing a chunk or there are no chunks
-      // to execute
-      if (chunkExecQueue_.isEmpty() || executingChunk_ != null)
+      // do nothing if we're currently executing a chunk 
+      if (executingChunk_ != null)
          return;
+
+      // if the queue is empty, just make sure we've hidden the progress UI
+      if (chunkExecQueue_.isEmpty())
+      {
+         editingTarget_.getStatusBar().hideNotebookProgress();
+         return;
+      }
       
       // do nothing if we're waiting for params to evaluate
       if (evaluatingParams_)
@@ -871,15 +881,8 @@ public class TextEditingTargetNotebook
       final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
       executingChunk_ = unit;
       
-      // update status bar
-      editingTarget_.getStatusBar().showNotebookProgress(
-           (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
-                                           chunkExecQueue_.size()) / 
-                                  (double) execQueueMaxSize_)), 
-           "Chunk " + (execQueueMaxSize_ - chunkExecQueue_.size()) + " / " + 
-                      execQueueMaxSize_ + (executingChunk_.name.isEmpty() ? 
-                                           "" : (": " + executingChunk_.name)));
-      
+      updateProgress();
+
       // let the chunk widget know it's started executing
       if (outputs_.containsKey(unit.chunkId))
       {
@@ -1324,6 +1327,20 @@ public class TextEditingTargetNotebook
             scope.getBodyStart().getRow(), 
             scope.getEnd().getRow(), 
             ChunkRowExecState.LINE_NONE);
+   }
+   
+   private void updateProgress()
+   {
+      // update progress meter on status bar
+      editingTarget_.getStatusBar().showNotebookProgress(
+           (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
+                                           chunkExecQueue_.size()) / 
+                                  (double) execQueueMaxSize_)), 
+           "Chunk " + (execQueueMaxSize_ - chunkExecQueue_.size()) + " / " + 
+                      execQueueMaxSize_ + (executingChunk_ == null ||
+                                           executingChunk_.name.isEmpty() ? 
+                                           "" : (": " + executingChunk_.name)));
+      
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

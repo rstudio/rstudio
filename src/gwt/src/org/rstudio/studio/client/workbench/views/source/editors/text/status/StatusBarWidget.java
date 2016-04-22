@@ -57,6 +57,16 @@ public class StatusBarWidget extends Composite
          }
       };
       
+      hideProgressTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            progress_.setVisible(false);
+            language_.setVisible(true);
+         }
+      };
+      
       // The message widget should initially be hidden, but be shown in lieu of
       // the scope tree when requested.
       show(scope_);
@@ -216,16 +226,9 @@ public class StatusBarWidget extends Composite
    @Override
    public void showNotebookProgress(int percent, String chunkName)
    {
-      // at 100%, hide the progress bar
-      if (percent >= 100)
-      {
-         if (progress_.isVisible())
-         {
-            progress_.setVisible(false);
-            language_.setVisible(true);
-         }
-         return;
-      }
+      // cancel the hide timer if it's running
+      hideProgressTimer_.cancel();
+      
       // ensure notebook progress widget is visible
       if (!progress_.isVisible())
       {
@@ -235,6 +238,15 @@ public class StatusBarWidget extends Composite
       
       // update the status bar
       progress_.setPercent(percent, chunkName);
+   }
+
+   @Override
+   public void hideNotebookProgress()
+   {
+      if (progress_.isVisible())
+      {
+         hideProgressTimer_.schedule(400);
+      }
    }
    
    @UiField StatusBarElementWidget position_;
@@ -254,6 +266,7 @@ public class StatusBarWidget extends Composite
    public static Resources RES = GWT.create(Resources.class);
    private final HorizontalPanel panel_;
    private final Timer hideTimer_;
+   private final Timer hideProgressTimer_;
    
    private int height_;
    private HandlerRegistration handler_;
