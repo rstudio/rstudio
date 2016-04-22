@@ -166,7 +166,7 @@ public class ChunkOutputWidget extends Composite
    
    // Public methods ----------------------------------------------------------
    
-   public void showChunkOutputUnit(RmdChunkOutputUnit unit, 
+   public void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
          boolean ensureVisible)
    {
       // no-op for empty console objects (avoid initializing output when we have
@@ -188,6 +188,9 @@ public class ChunkOutputWidget extends Composite
          showPlotOutput(unit.getString(), ensureVisible);
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
+         // override visibility flag when there's an error in batch mode
+         if (!options_.error() && mode == TextEditingTargetNotebook.MODE_BATCH)
+            ensureVisible = true;
          showErrorOutput(unit.getUnhandledError(), ensureVisible);
          break;
       }
@@ -226,7 +229,8 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.addValueChangeHandler(handler);
    }
     
-   public void showChunkOutput(RmdChunkOutput output, boolean ensureVisible)
+   public void showChunkOutput(RmdChunkOutput output, int mode, 
+         boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -240,7 +244,7 @@ public class ChunkOutputWidget extends Composite
          // each
          for (int i = 0; i < units.length(); i++)
          {
-            showChunkOutputUnit(units.get(i), ensureVisible);
+            showChunkOutputUnit(units.get(i), mode, ensureVisible);
          }
 
          // ensure the output is visible if requested
@@ -248,7 +252,7 @@ public class ChunkOutputWidget extends Composite
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit(), ensureVisible);
+         showChunkOutputUnit(output.getUnit(), mode, ensureVisible);
       }
    }
    
@@ -408,8 +412,8 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
 
-      // flush any queued errors
-      flushQueuedErrors(true);
+      // flush any queued errors 
+      flushQueuedErrors(false);
 
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
             execMode_ == TextEditingTargetNotebook.MODE_SINGLE);

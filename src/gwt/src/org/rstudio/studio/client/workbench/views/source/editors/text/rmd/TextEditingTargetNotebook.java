@@ -639,17 +639,19 @@ public class TextEditingTargetNotebook
          // by default, ensure chunks are visible if we aren't replaying them
          // from the cache
          boolean ensureVisible = !event.getOutput().isReplay();
-         if (ensureVisible &&
-             executingChunk_ != null &&
-             executingChunk_.chunkId == event.getOutput().getChunkId() &&
-             executingChunk_.mode == MODE_BATCH)
+         int mode = MODE_SINGLE;
+         if (executingChunk_ != null &&
+             executingChunk_.chunkId == event.getOutput().getChunkId())
          {
-            // if this is a chunk executing in batch mode, we don't want to
-            // scroll it into view
-            ensureVisible = false;
+            mode = executingChunk_.mode;
          }
+         
+         // no need to make chunks visible in batch mode
+         if (ensureVisible && mode == MODE_BATCH)
+            ensureVisible = false;
+         
          outputs_.get(chunkId).getOutputWidget()
-                              .showChunkOutput(event.getOutput(), 
+                              .showChunkOutput(event.getOutput(), mode,
                                                ensureVisible);
       }
    }
@@ -881,7 +883,8 @@ public class TextEditingTargetNotebook
       final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
       executingChunk_ = unit;
       
-      updateProgress();
+      if (unit.mode == MODE_BATCH)
+         updateProgress();
 
       // let the chunk widget know it's started executing
       if (outputs_.containsKey(unit.chunkId))
