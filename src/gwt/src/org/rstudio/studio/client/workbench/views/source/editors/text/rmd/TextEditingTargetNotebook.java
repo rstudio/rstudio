@@ -815,17 +815,22 @@ public class TextEditingTargetNotebook
       clearChunkExecQueue();
       
       // clear currently executing chunk
-      executingChunk_ = null;
+      cleanCurrentExecChunk();
    }
 
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
-      // if we had recorded a run of the setup chunk prior to restart, clear it
-      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED &&
-          !StringUtil.isNullOrEmpty(setupCrc32_))
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
       {
-         writeSetupCrc32("");
+         // if we had recorded a run of the setup chunk prior to restart, clear
+         // it
+         if (!StringUtil.isNullOrEmpty(setupCrc32_))
+            writeSetupCrc32("");
+         
+         // clean execution state
+         clearChunkExecQueue();
+         cleanCurrentExecChunk();
       }
    }
    
@@ -1302,6 +1307,8 @@ public class TextEditingTargetNotebook
          cleanChunkExecState(unit.chunkId);
       }
       chunkExecQueue_.clear();
+
+      editingTarget_.getStatusBar().hideNotebookProgress();
    }
    
    private Timer cleanErrorGutter_ = new Timer()
