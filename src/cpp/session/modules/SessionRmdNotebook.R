@@ -506,7 +506,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.renderBase64StyleSheet", function(path = NULL, bytes = NULL)
 {
-   format <- '<link href="data:text/css;charset=utf8;base64,%s />'
+   format <- '<link href="data:text/css;charset=utf8;base64,%s" />'
    .rs.rnb.renderBase64Html(path, bytes, format)
 })
 
