@@ -3961,11 +3961,30 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
+      // record current selection before manipulating text
+      String sel = docDisplay_.getSelectionValue();
+      Range selRange = docDisplay_.getSelectionRange();
+      
       Position pos = moveCursorToNextInsertLocation();
       InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
       if (insertChunkInfo != null)
       {
+         // inject the chunk skeleton
          docDisplay_.insertCode(insertChunkInfo.getValue(), false);
+
+         // if we had text selected, inject it into the chunk
+         if (!StringUtil.isNullOrEmpty(sel))
+         {
+            Position contentPosition = insertChunkInfo.getContentPosition();
+            docDisplay_.replaceRange(selRange, "");
+            Position docContentPos = Position.create(
+                  pos.getRow() + contentPosition.getRow(), 
+                  contentPosition.getColumn());
+            docDisplay_.replaceRange(
+                  Range.fromPoints(docContentPos, 
+                         Position.create(docContentPos.getRow() + 1, 0)), sel);
+         }
+               
          Position cursorPosition = insertChunkInfo.getCursorPosition();
          docDisplay_.setCursorPosition(Position.create(
                pos.getRow() + cursorPosition.getRow(),

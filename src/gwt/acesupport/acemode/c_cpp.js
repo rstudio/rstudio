@@ -120,7 +120,8 @@ oop.inherits(Mode, TextMode);
 
    this.insertChunkInfo = {
       value: "/*** R\n\n*/\n",
-      position: {row: 1, column: 0}
+      position: {row: 1, column: 0},
+      content_position: {row: 1, column: 0}
    };
 
    this.toggleCommentLines = function(state, doc, startRow, endRow) {
