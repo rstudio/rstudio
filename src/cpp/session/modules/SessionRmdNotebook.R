@@ -456,13 +456,31 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
-.rs.addFunction("rnb.renderBase64Png", function(path = NULL, bytes = NULL)
+.rs.addFunction("rnb.renderBase64Html", function(path = NULL, bytes = NULL, format)
 {
    if (is.null(bytes))
       bytes <- .rs.readFile(path, binary = TRUE)
    
    encoded <- .rs.base64encode(bytes)
-   sprintf('<img src="data:image/png;base64,%s" />', encoded)
+   sprintf(format, encoded)
+})
+
+.rs.addFunction("rnb.renderBase64Png", function(path = NULL, bytes = NULL)
+{
+   format <- '<img src="data:image/png;base64,%s" />'
+   .rs.rnb.renderBase64Html(path, bytes, format)
+})
+
+.rs.addFunction("rnb.renderBase64JavaScript", function(path = NULL, bytes = NULL)
+{
+   format <- '<script src="data:application/x-javascript;base64,%s"></script>'
+   .rs.rnb.renderBase64Html(path, bytes, format)
+})
+
+.rs.addFunction("rnb.renderBase64StyleSheet", function(path = NULL, bytes = NULL)
+{
+   format <- '<link href="data:text/css;charset=utf8;base64,%s />'
+   .rs.rnb.renderBase64Html(path, bytes, format)
 })
 
 .rs.addFunction("rnb.consoleDataToHtml", function(data, prefix = knitr::opts_chunk$get("comment"))
