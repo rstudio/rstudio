@@ -32,9 +32,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    contents <- .rs.extractFromNotebook("rnb-document-source", input)
    cat(contents, file = output, sep = "\n")
    
-   cachePath <- .rs.rnb.cachePathFromRmdPath(output)
-   .rs.hydrateCacheFromNotebook(input, cachePath)
-   
    .rs.scalar(TRUE)
 })
 
@@ -178,24 +175,66 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.trimWhitespace(contents)
 })
 
-.rs.addFunction("rnb.cacheAugmentKnitrHooks", function()
+.rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData)
 {
    # ensure pre-requisite version of knitr
    if (!.rs.isPackageVersionInstalled("knitr", "1.12.25"))
       return()
    
-   evaluateHook <- evaluate::evaluate
+   # order chunk info by row in rnbData
+   chunkDefn <- rnbData$chunk_info$chunk_definitions
+   chunkRows <- vapply(chunkDefn, `[[`, "row", FUN.VALUE = numeric(1))
+   chunkOrder <- order(chunkRows)
+   chunkDefn <- chunkDefn[chunkOrder]
+   rnbData$chunk_info$chunk_definitions <- chunkDefn
+   
+   chunkCount <- 1
+   knitHooks <- knitr::knit_hooks$get()
    
    tracer <- function(...) {
-      evaluateHook <<- knitr::knit_hooks$get("evaluate")
-      knitr::knit_hooks$set(evaluate = function(...) {
-         browser()
-         evaluateHook(...)
-      })
+      
+      knitr::knit_hooks$set(
+         
+         evaluate = function(code, ...) {
+            activeChunkId <- names(rnbData$chunk_info$chunk_definitions)[chunkCount]
+            activeChunkData <- rnbData$chunk_data[[activeChunkId]]
+            
+            # collect output for knitr
+            # TODO: respect output options?
+            htmlOutput <- .rs.enumerate(activeChunkData, function(key, val) {
+               
+               # png output: create base64 encoded image
+               if (.rs.endsWith(key, "png")) {
+                  return(.rs.rnb.renderBase64Png(bytes = val))
+               }
+               
+               # console output
+               if (.rs.endsWith(key, "")) {
+                  return(.rs.rnb.consoleDataToHtml(val))
+               }
+               
+               # html widget -- TODO
+               val
+               
+            })
+            
+            list(
+               structure(list(src = NULL), class = "source"),
+               knitr::asis_output(paste(htmlOutput, collapse = "\n"))
+            )
+         },
+         
+         chunk = function(...) {
+            chunkCount <<- chunkCount + 1
+            knitHooks$chunk(...)
+         }
+      
+      )
+      
    }
    
    exit <- function(...) {
-      knitr::knit_hooks$set(evaluate = evaluateHook)
+      knitr::knit_hooks$set(knitHooks)
    }
    
    suppressMessages(trace(
@@ -225,8 +264,22 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       hookNames <- c("source", "chunk", "plot", "text", "output",
                      "warning", "error", "message", "error")
       
+      # metadata for hooks
+      metaFns <- list(
+         
+         source = function(input, output, ...) {
+            list(data = .rs.base64encode(input))
+         },
+         
+         output = function(input, output, ...) {
+            list(data = .rs.base64encode(input))
+         }
+      )
+      
       newKnitHooks <- lapply(hookNames, function(hookName) {
-         .rs.rnb.annotatedKnitrHook(hookName, knitHooks[[hookName]])
+         .rs.rnb.annotatedKnitrHook(hookName,
+                                    knitHooks[[hookName]],
+                                    metaFns[[hookName]])
       })
       names(newKnitHooks) <- hookNames
       
@@ -258,19 +311,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    ))
 })
 
-.rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label)
+.rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label, meta = NULL)
 {
-   before <- sprintf("\n<!-- rnb-%s-begin -->\n", label)
+   meta <- .rs.listToHtmlAttributes(meta)
+   before <- sprintf("\n<!-- rnb-%s-begin %s-->\n", label, meta)
    after  <- sprintf("\n<!-- rnb-%s-end -->\n", label)
    paste(before, output, after, sep = "\n")
 })
 
-.rs.addFunction("rnb.annotatedKnitrHook", function(label, hook) {
-   force(label)
-   force(hook)
+.rs.addFunction("rnb.annotatedKnitrHook", function(label, hook, meta = NULL) {
+   force(list(label, hook, meta))
    function(x, ...) {
       output <- hook(x, ...)
-      .rs.rnb.htmlAnnotatedOutput(output, label)
+      meta <- if (is.function(meta)) meta(x, output, ...)
+      .rs.rnb.htmlAnnotatedOutput(output, label, meta)
    }
 })
 
@@ -361,7 +415,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                                         outputFile,
                                                         envir = .GlobalEnv)
 {
-   .rs.rnb.cacheAugmentKnitrHooks()
+   .rs.rnb.cacheAugmentKnitrHooks(rnbData)
    .rs.rnb.render(inputFile, outputFile, envir = envir)
 })
 
@@ -386,62 +440,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    }
    
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
-   html <- .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
-   
-   # inject cache data
-   html <- .rs.rnb.injectCacheData(html, rnbData, cachePath)
-   
-   # write to file
-   cat(html, file = outputPath, sep = "\n")
-   outputPath
-})
-
-.rs.addFunction("rnb.generateEncodedCacheResource", function(file,
-                                                             html,
-                                                             rnbData,
-                                                             cachePath)
-{
-   ext <- tools::file_ext(file)
-   encoded <- if (ext %in% c("png", "js"))
-   {
-      "@src"
-   }
-   else
-   {
-      fullPath <- file.path(cachePath, file)
-      contents <- .rs.readFile(fullPath, binary = TRUE)
-      .rs.base64encode(contents)
-   }
-   
-   paste(file, encoded, sep = ":")
-})
-
-.rs.addFunction("rnb.injectCacheData", function(html, rnbData, cachePath)
-{
-   files <- list.files(cachePath, recursive = TRUE)
-   contents <- unlist(lapply(files, function(file) {
-      .rs.rnb.generateEncodedCacheResource(file, html, rnbData, cachePath)
-   }))
-   
-   injection <- paste(
-      "<!-- rnb-cache-data-begin",
-      paste(paste("   ", contents), collapse = "\n"),
-      "rnb-cache-data-end -->",
-      sep = "\n"
-   )
-   
-   idx <- grep("</body>", html)
-   html <- c(
-      html[1:idx],
-      injection,
-      html[(idx + 1):length(html)])
-   
-   html
-})
-
-.rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
-{
-   .Call("rs_chunkCacheFolder", rmdPath)
+   .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
 })
 
 .rs.addFunction("rnb.parseConsoleData", function(data)
@@ -457,7 +456,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
-.rs.addFunction("rnb.consoleDataToHtml", function(data, chunkId, fileName)
+.rs.addFunction("rnb.renderBase64Png", function(path = NULL, bytes = NULL)
+{
+   if (is.null(bytes))
+      bytes <- .rs.readFile(path, binary = TRUE)
+   
+   encoded <- .rs.base64encode(bytes)
+   sprintf('<img src="data:image/png;base64,%s" />', encoded)
+})
+
+.rs.addFunction("rnb.consoleDataToHtml", function(data, prefix = knitr::opts_chunk$get("comment"))
 {
    csvData <- .rs.rnb.parseConsoleData(data)
    cutpoints <- .rs.cutpoints(csvData$type)
@@ -479,7 +487,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          return(NULL)
       
       if (type == 1 || type == 2)
-         result <- paste("##", gsub("\n", "\n## ", result, fixed = TRUE))
+         result <- paste(prefix, gsub("\n", paste0("\n", prefix, " "), result, fixed = TRUE))
       
       attr(result, ".class") <- if (type == 0) "r"
       result
@@ -520,86 +528,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    as.list(rhs)
 })
 
-.rs.addFunction("listToHtmlAttributes", function(list)
+.rs.addFunction("listToHtmlAttributes", function(list, sep = "=", collapse = " ")
 {
+   if (!length(list))
+      return("")
+   
    paste(
       names(list),
       .rs.surround(unlist(list), with = "\""),
-      sep = "=",
-      collapse = " "
+      sep = sep,
+      collapse = collapse
    )
-})
-
-.rs.addFunction("rnb.hydrateFromAttribute", function(id,
-                                                     attribute,
-                                                     rnbContents,
-                                                     targetPath)
-{
-   target <- sprintf('data-rnb-id="%s"', id)
-   idx <- grep(target, rnbContents, fixed = TRUE)
-   
-   if (length(idx) != 1)
-      stop("failed to discover element with chunk id '", id, "'")
-   
-   line <- rnbContents[[idx]]
-   scraped <- .rs.scrapeHtmlAttributes(line)
-   element <- scraped[[attribute]]
-   data <- sub("^.*;base64,", "", element)
-   decoded <- .rs.base64decode(data, TRUE)
-   writeBin(decoded, con = targetPath)
-   
-   TRUE
-})
-
-.rs.addFunction("rnb.hydrateFromBase64", function(encodedContents,
-                                                  targetPath)
-{
-   parentPath <- dirname(targetPath)
-   if (!dir.exists(parentPath))
-      if (!dir.create(parentPath, recursive = TRUE))
-         stop("failed to create cache path '", parentPath, "'")
-   
-   decoded <- .rs.base64decode(encodedContents, TRUE)
-   writeBin(decoded, con = targetPath)
-   TRUE
-})
-
-.rs.addFunction("hydrateCacheFromNotebook", function(rnbPath, cachePath = NULL)
-{
-   if (is.null(cachePath)) {
-      rmdPath <- .rs.withChangedExtension(rnbPath, "Rmd")
-      cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
-   }
-   
-   rnbContents <- .rs.readLines(rnbPath)
-   startIdx <- grep("<!-- rnb-cache-data-begin", rnbContents) + 1
-   endIdx   <- grep("rnb-cache-data-end -->", rnbContents) - 1
-   
-   status <- lapply(startIdx:endIdx, function(i) {
-      
-      line <- rnbContents[[i]]
-      colonIdx <- regexpr(":", line, fixed = TRUE)
-      filePath <- .rs.trimWhitespace(substring(line, 1, colonIdx - 1))
-      encodedContents <- substring(line, colonIdx + 1)
-      targetPath <- file.path(cachePath, filePath)
-      .rs.ensureDirectory(dirname(targetPath))
-      
-      if (.rs.startsWith(encodedContents, "@")) {
-         .rs.rnb.hydrateFromAttribute(
-            filePath,
-            substring(encodedContents, 2),
-            rnbContents,
-            targetPath)
-      } else {
-         .rs.rnb.hydrateFromBase64(
-            encodedContents,
-            targetPath)
-      }
-      
-   })
-   
-   cachePath
-   
 })
 
 .rs.addFunction("evaluateChunkOptions", function(options)
