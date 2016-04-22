@@ -175,58 +175,83 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.trimWhitespace(contents)
 })
 
+.rs.addFunction("rnb.getActiveChunkId", function(rnbData, row)
+{
+   chunkDefns <- rnbData$chunk_info$chunk_definitions
+   chunkRows <- vapply(chunkDefns, `[[`, "row", FUN.VALUE = numeric(1))
+   idx <- match(row, chunkRows)
+   if (is.na(idx)) NULL else names(chunkRows)[[idx]]
+})
+
 .rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData)
 {
    # ensure pre-requisite version of knitr
    if (!.rs.isPackageVersionInstalled("knitr", "1.12.25"))
       return()
    
-   # order chunk info by row in rnbData
-   chunkDefn <- rnbData$chunk_info$chunk_definitions
-   chunkRows <- vapply(chunkDefn, `[[`, "row", FUN.VALUE = numeric(1))
-   chunkOrder <- order(chunkRows)
-   chunkDefn <- chunkDefn[chunkOrder]
-   rnbData$chunk_info$chunk_definitions <- chunkDefn
-   
-   chunkCount <- 1
+   linesProcessed <- 1
    knitHooks <- knitr::knit_hooks$get()
    
    tracer <- function(...) {
       
       knitr::knit_hooks$set(
          
+         text = function(x, ...) {
+            newLineMatches <- gregexpr('\n', x, fixed = TRUE)[[1]]
+            linesProcessed <<- linesProcessed + length(newLineMatches) + 1
+            knitHooks$text(x, ...)
+         },
+         
          evaluate = function(code, ...) {
-            activeChunkId <- names(rnbData$chunk_info$chunk_definitions)[chunkCount]
+            
+            linesProcessed <<- linesProcessed + length(code)
+            activeChunkId <- .rs.rnb.getActiveChunkId(rnbData, linesProcessed)
+            linesProcessed <<- linesProcessed + 2
+            
+            if (is.null(activeChunkId))
+               return(evaluate::evaluate(""))
+            
             activeChunkData <- rnbData$chunk_data[[activeChunkId]]
             
             # collect output for knitr
             # TODO: respect output options?
+            
             htmlOutput <- .rs.enumerate(activeChunkData, function(key, val) {
                
                # png output: create base64 encoded image
-               if (.rs.endsWith(key, "png")) {
-                  return(.rs.rnb.renderBase64Png(bytes = val))
+               if (.rs.endsWith(key, ".png")) {
+                  return(knitr::asis_output(.rs.rnb.renderBase64Png(bytes = val)))
                }
                
                # console output
-               if (.rs.endsWith(key, "")) {
-                  return(.rs.rnb.consoleDataToHtml(val))
+               if (.rs.endsWith(key, ".csv")) {
+                  return(knitr::asis_output(.rs.rnb.consoleDataToHtml(val)))
                }
                
-               # html widget -- TODO
-               val
+               # html widgets
+               if (.rs.endsWith(key, ".html")) {
+                  jsonName <- .rs.withChangedExtension(key, ".json")
+                  jsonPath <- file.path(rnbData$cache_path, activeChunkId, jsonName)
+                  jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
+                  for (i in seq_along(jsonContents))
+                     class(jsonContents[[i]]) <- "html_dependency"
+                  
+                  bodyEl <- .rs.extractHTMLBodyElement(val)
+                  
+                  output <- knitr::asis_output(
+                     htmltools::htmlPreserve(bodyEl),
+                     meta = jsonContents
+                  )
+                  return(output)
+               }
                
+               NULL
             })
             
             list(
                structure(list(src = NULL), class = "source"),
-               knitr::asis_output(paste(htmlOutput, collapse = "\n"))
+               htmlOutput
             )
-         },
-         
-         chunk = function(...) {
-            chunkCount <<- chunkCount + 1
-            knitHooks$chunk(...)
          }
       
       )
@@ -265,15 +290,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                      "warning", "error", "message", "error")
       
       # metadata for hooks
+      textMetaHook <- function(input, output, ...) {
+         list(data = .rs.base64encode(input))
+      }
+      
       metaFns <- list(
-         
-         source = function(input, output, ...) {
-            list(data = .rs.base64encode(input))
-         },
-         
-         output = function(input, output, ...) {
-            list(data = .rs.base64encode(input))
-         }
+         source = textMetaHook,
+         output = textMetaHook,
+         warning = textMetaHook,
+         message = textMetaHook,
+         error = textMetaHook
       )
       
       newKnitHooks <- lapply(hookNames, function(hookName) {
@@ -294,6 +320,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                return(.rs.rnb.renderHtmlWidget(output))
             output
          }
+         
       )
    }
    
@@ -336,13 +363,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       .rs.nBytes(output) - .rs.nBytes("<!--/html_preserve-->")
    )
    
-   annotated <- htmltools::htmlPreserve(paste(
-      "\n<!-- rnb-htmlwidget-begin -->\n",
-      unpreserved,
-      "\n<!-- rnb-htmlwidget-end -->\n",
-      sep = "\n"
-   ))
-   
+   before <- sprintf("\n<!-- rnb-htmlwidget-begin%s -->\n", meta)
+   after  <- "\n<!-- rnb-htmlwidget-end -->\n"
+   annotated <- htmltools::htmlPreserve(paste(before, unpreserved, after))
    attributes(annotated) <- attributes(output)
    return(annotated)
 })
