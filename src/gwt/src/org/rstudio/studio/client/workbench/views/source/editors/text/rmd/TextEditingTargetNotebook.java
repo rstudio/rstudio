@@ -585,7 +585,7 @@ public class TextEditingTargetNotebook
       
       if (outputs_.containsKey(chunkDef.getChunkId()))
          outputs_.get(chunkDef.getChunkId()).getOutputWidget()
-                                            .setCodeExecuting(false);
+                                         .setCodeExecuting(false, MODE_SINGLE);
    }
    
    @Override
@@ -632,8 +632,21 @@ public class TextEditingTargetNotebook
       // show output in matching chunk
       if (outputs_.containsKey(chunkId))
       {
+         // by default, ensure chunks are visible if we aren't replaying them
+         // from the cache
+         boolean ensureVisible = !event.getOutput().isReplay();
+         if (ensureVisible &&
+             executingChunk_ != null &&
+             executingChunk_.chunkId == event.getOutput().getChunkId() &&
+             executingChunk_.mode == MODE_BATCH)
+         {
+            // if this is a chunk executing in batch mode, we don't want to
+            // scroll it into view
+            ensureVisible = false;
+         }
          outputs_.get(chunkId).getOutputWidget()
-                              .showChunkOutput(event.getOutput());
+                              .showChunkOutput(event.getOutput(), 
+                                               ensureVisible);
       }
    }
 
@@ -872,9 +885,12 @@ public class TextEditingTargetNotebook
       {
          ChunkOutputUi output = outputs_.get(unit.chunkId);
 
-         output.getOutputWidget().setCodeExecuting(true);
+         output.getOutputWidget().setCodeExecuting(true, executingChunk_.mode);
          syncWidth();
-         output.ensureVisible();
+         
+         // scroll the widget into view if it's a single-shot exec
+         if (executingChunk_.mode == MODE_SINGLE)
+            output.ensureVisible();
       }
       
       // draw UI on chunk

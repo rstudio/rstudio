@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -225,7 +226,7 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.addValueChangeHandler(handler);
    }
     
-   public void showChunkOutput(RmdChunkOutput output)
+   public void showChunkOutput(RmdChunkOutput output, boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -239,16 +240,15 @@ public class ChunkOutputWidget extends Composite
          // each
          for (int i = 0; i < units.length(); i++)
          {
-            showChunkOutputUnit(units.get(i), !output.isReplay());
+            showChunkOutputUnit(units.get(i), ensureVisible);
          }
 
-         // ensure the output is visible if there's a replay request ID 
-         // associated with this chunk
-         onOutputFinished(!output.isReplay());
+         // ensure the output is visible if requested
+         onOutputFinished(ensureVisible);
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit(), !output.isReplay());
+         showChunkOutputUnit(output.getUnit(), ensureVisible);
       }
    }
    
@@ -326,7 +326,7 @@ public class ChunkOutputWidget extends Composite
       showReadyState();
    }
 
-   public void setCodeExecuting(boolean entireChunk)
+   public void setCodeExecuting(boolean entireChunk, int mode)
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)
@@ -341,6 +341,7 @@ public class ChunkOutputWidget extends Composite
 
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
+      execMode_ = mode;
       showBusyState();
    }
    
@@ -411,7 +412,7 @@ public class ChunkOutputWidget extends Composite
       flushQueuedErrors(true);
 
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
-            true);
+            execMode_ == TextEditingTargetNotebook.MODE_SINGLE);
    }
    
    @Override
@@ -911,6 +912,7 @@ public class ChunkOutputWidget extends Composite
    private RmdChunkOptions options_;
    
    private int state_ = CHUNK_EMPTY;
+   private int execMode_ = TextEditingTargetNotebook.MODE_SINGLE;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
