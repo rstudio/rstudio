@@ -879,7 +879,7 @@ public class TextEditingTargetWidget
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(
-            commands_.previewHTML().getImageResource());
+            commands_.newRNotebook().getImageResource());
       setRmdFormatButtonVisible(false);
       showRmdViewerMenuItems(true, false, true, RmdOutput.TYPE_NOTEBOOK);
    }
