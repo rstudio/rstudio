@@ -1063,22 +1063,30 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
-      if (uiPrefs_.showRmdChunkOutputInline().getValue() &&
-          type != RmdOutput.TYPE_NOTEBOOK)
+      if (uiPrefs_.showRmdChunkOutputInline().getValue())
       {
-         menu.addItem(new DocPropMenuItem(
-               "Chunk Output Inline", docUpdateSentinel_, 
-               true, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-         menu.addItem(new DocPropMenuItem(
-               "Chunk Output in Console", docUpdateSentinel_, 
-               false, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+         if (type != RmdOutput.TYPE_NOTEBOOK)
+         {
+            menu.addItem(new DocPropMenuItem(
+                  "Chunk Output Inline", docUpdateSentinel_, 
+                  true, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+            menu.addItem(new DocPropMenuItem(
+                  "Chunk Output in Console", docUpdateSentinel_, 
+                  false, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+            menu.addSeparator();
+         }
+         
+         menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
+         menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
+         menu.addSeparator();
+         menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
          menu.addSeparator();
       }
-      
+           
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }
