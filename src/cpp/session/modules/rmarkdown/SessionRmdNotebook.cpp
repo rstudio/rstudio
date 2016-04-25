@@ -258,7 +258,6 @@ SEXP rs_parseNotebook(SEXP nbPathSEXP)
    boost::smatch match;
    std::string activeChunkId = "unknown";
    
-   std::cout << "Size: " << contents.size() << std::endl;
    std::istringstream iss(contents);
    std::string line;
    while (std::getline(iss, line))

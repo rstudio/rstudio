@@ -363,8 +363,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label, meta = NULL)
 {
-   meta <- .rs.listToHtmlAttributes(meta)
-   before <- sprintf("\n<!-- rnb-%s-begin %s-->\n", label, meta)
+   before <- if (is.null(meta)) {
+      sprintf("\n<!-- rnb-%s-begin -->\n", label)
+   } else {
+      meta <- .rs.listToHtmlAttributes(meta)
+      sprintf("\n<!-- rnb-%s-begin %s -->\n", label, meta)
+   }
    after  <- sprintf("\n<!-- rnb-%s-end -->\n", label)
    paste(before, output, after, sep = "\n")
 })
