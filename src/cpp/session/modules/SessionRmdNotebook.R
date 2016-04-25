@@ -137,6 +137,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Read the chunk information
    chunkInfoPath <- file.path(cachePath, "chunks.json")
    chunkInfo <- .rs.fromJSON(.rs.readFile(chunkInfoPath))
+   names(chunkInfo$chunk_definitions) <-
+      unlist(lapply(chunkInfo$chunk_definitions, `[[`, "chunk_id"))
+   
    rnbData[["chunk_info"]] <- chunkInfo
    
    # Read the chunk data
