@@ -207,30 +207,47 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             knitHooks$text(x, ...)
          },
          
+         chunk = function(...) {
+            output <- knitHooks$chunk(...)
+            annotated <- .rs.rnb.htmlAnnotatedOutput(output, "chunk")
+            annotated
+         },
+         
          evaluate = function(code, ...) {
             
             linesProcessed <<- linesProcessed + length(code)
             activeChunkId <- .rs.rnb.getActiveChunkId(rnbData, linesProcessed)
             linesProcessed <<- linesProcessed + 2
             
+            # TODO: this implies there was no chunk output associated
+            # with this chunk, but it would be pertinent to validate
             if (is.null(activeChunkId))
-               return(evaluate::evaluate(""))
+               return(knitr::asis_output(""))
             
             activeChunkData <- rnbData$chunk_data[[activeChunkId]]
             
             # collect output for knitr
             # TODO: respect output options?
-            
             htmlOutput <- .rs.enumerate(activeChunkData, function(key, val) {
                
                # png output: create base64 encoded image
                if (.rs.endsWith(key, ".png")) {
-                  return(knitr::asis_output(.rs.rnb.renderBase64Png(bytes = val)))
+                  rendered <- .rs.rnb.renderBase64Png(bytes = val)
+                  annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "plot")
+                  return(knitr::asis_output(annotated))
                }
                
                # console output
                if (.rs.endsWith(key, ".csv")) {
-                  return(knitr::asis_output(.rs.rnb.consoleDataToHtml(val)))
+                  htmlList <- .rs.rnb.consoleDataToHtmlList(val)
+                  transformed <- lapply(htmlList, function(el) {
+                     output <- el$output
+                     label <- if (el$type == "input") "source" else "output"
+                     meta <- list(data = .rs.base64encode(el$input))
+                     .rs.rnb.htmlAnnotatedOutput(output, label, meta)
+                  })
+                  output <- paste(transformed, collapse = "\n")
+                  return(knitr::asis_output(output))
                }
                
                # html widgets
@@ -243,10 +260,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                   
                   bodyEl <- .rs.extractHTMLBodyElement(val)
                   
-                  output <- knitr::asis_output(
-                     htmltools::htmlPreserve(bodyEl),
-                     meta = jsonContents
-                  )
+                  rendered <- htmltools::htmlPreserve(bodyEl)
+                  annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "htmlwidget")
+                  output <- knitr::asis_output(annotated, meta = jsonContents)
                   return(output)
                }
                
@@ -515,7 +531,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.rnb.renderBase64Html(path, bytes, format)
 })
 
-.rs.addFunction("rnb.consoleDataToHtml", function(data, prefix = knitr::opts_chunk$get("comment"))
+.rs.addFunction("rnb.consoleDataToHtmlList", function(data, prefix = knitr::opts_chunk$get("comment"))
 {
    csvData <- .rs.rnb.parseConsoleData(data)
    cutpoints <- .rs.cutpoints(csvData$type)
@@ -544,7 +560,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
    
    filtered <- Filter(Negate(is.null), splat)
-   html <- lapply(filtered, function(el) {
+   htmlList <- lapply(filtered, function(el) {
       class <- attr(el, ".class")
       result <- if (is.null(class)) {
          sprintf(
@@ -558,10 +574,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             el
          )
       }
-      result
+      
+      list(input = el,
+           output = result,
+           type = if (is.null(class)) "output" else "input")
    })
    
-   paste(unlist(html), collapse = "\n")
+   htmlList
 })
 
 .rs.addFunction("scrapeHtmlAttributes", function(line)
