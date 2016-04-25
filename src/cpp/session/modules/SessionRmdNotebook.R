@@ -104,6 +104,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    contents
 })
 
+.rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
+{
+   .Call("rs_chunkCacheFolder", rmdPath)
+})
+
 .rs.addFunction("readRnbCache", function(rmdPath, cachePath)
 {
    if (Encoding(rmdPath) == "unknown")   Encoding(rmdPath) <- "UTF-8"
@@ -132,9 +137,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Read the chunk information
    chunkInfoPath <- file.path(cachePath, "chunks.json")
    chunkInfo <- .rs.fromJSON(.rs.readFile(chunkInfoPath))
-   
-   # Augment with start, end locations of chunks
-   chunkInfo <- .rs.rnb.withChunkLocations(rmdContents, chunkInfo)
    rnbData[["chunk_info"]] <- chunkInfo
    
    # Read the chunk data
