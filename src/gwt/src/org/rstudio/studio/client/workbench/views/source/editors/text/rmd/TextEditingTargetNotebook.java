@@ -268,9 +268,12 @@ public class TextEditingTargetNotebook
                      @Override
                      public void onResponseReceived(Void v)
                      {
-                        events_.fireEvent(new NotebookRenderFinishedEvent(
-                              docUpdateSentinel_.getId(), 
-                              docUpdateSentinel_.getPath()));
+                        if (editingTarget_.isRmdNotebook())
+                        {
+                           events_.fireEvent(new NotebookRenderFinishedEvent(
+                                 docUpdateSentinel_.getId(), 
+                                 docUpdateSentinel_.getPath()));
+                        }
                      }
 
                      @Override

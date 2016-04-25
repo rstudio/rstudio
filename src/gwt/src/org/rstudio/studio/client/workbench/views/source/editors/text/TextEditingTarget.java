@@ -4722,7 +4722,7 @@ public class TextEditingTarget implements
    }
    
    
-   private boolean isRmdNotebook()
+   public boolean isRmdNotebook()
    {
        RmdSelectedTemplate selTemplate = getSelectedTemplate();
        return selTemplate != null &&
