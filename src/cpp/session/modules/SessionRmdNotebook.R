@@ -599,17 +599,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    as.list(rhs)
 })
 
-.rs.addFunction("listToHtmlAttributes", function(list, sep = "=", collapse = " ")
+.rs.addFunction("listToHtmlAttributes", function(list, sep = "=", collapse = ",")
 {
    if (!length(list))
-      return("")
+      return("[]")
    
-   paste(
+   paste("[", paste(
       names(list),
       .rs.surround(unlist(list), with = "\""),
       sep = sep,
       collapse = collapse
-   )
+   ), "]", sep = "")
 })
 
 .rs.addFunction("evaluateChunkOptions", function(options)

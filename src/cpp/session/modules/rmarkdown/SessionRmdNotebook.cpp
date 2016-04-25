@@ -30,12 +30,15 @@
 
 #include <r/RJson.hpp>
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
-#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -241,6 +244,40 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    return Success();
 }
 
+SEXP rs_parseNotebook(SEXP nbPathSEXP)
+{
+   FilePath nbPath(r::sexp::asString(nbPathSEXP));
+   
+   std::string contents;
+   Error error = core::readStringFromFile(nbPath, &contents);
+   if (error)
+      LOG_ERROR(error);
+   
+   boost::regex reHtmlCommentStart("^\\s*<!--\\s*");
+   boost::regex reHtmlCommentEnd("\\s*-->\\s*$");
+   boost::smatch match;
+   std::string activeChunkId = "unknown";
+   
+   std::cout << "Size: " << contents.size() << std::endl;
+   std::istringstream iss(contents);
+   std::string line;
+   while (std::getline(iss, line))
+   {
+      if (!regex_utils::search(reHtmlCommentStart, line, &match))
+         continue;
+      
+      std::string::const_iterator begin = match[0].second;
+      if (!regex_utils::search(reHtmlCommentEnd, line, &match))
+         continue;
+      
+      std::string::const_iterator end = match[0].first;
+      
+      std::string metadata(begin, end);
+   }
+   
+   return R_NilValue;
+}
+
 } // anonymous namespace
 
 Events& events()
@@ -264,6 +301,8 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+   
+   RS_REGISTER_CALL_METHOD(rs_parseNotebook, 1);
 
    module_context::events().onActiveConsoleChanged.connect(
          onActiveConsoleChanged);
