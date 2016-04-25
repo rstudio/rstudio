@@ -1066,7 +1066,8 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRNotebook()
    {
-      dependencyManager_.withRMarkdown("Create R Notebook", new Command() {
+      dependencyManager_.withRMarkdown("R Notebook",
+         "Create R Notebook", new Command() {
          @Override
          public void execute()
          {

@@ -133,8 +133,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
    
    public void withRMarkdown(String userAction, final Command command)
    {
+      withRMarkdown("R Markdown", userAction, command);
+   }
+
+   public void withRMarkdown(String progressCaption, String userAction, 
+         final Command command)
+   {
      withDependencies(   
-        "R Markdown",
+        progressCaption,
         userAction, 
         rmarkdownDependenciesArray(), 
         true, // we want to update to the embedded versoin if needed
