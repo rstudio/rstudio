@@ -80,7 +80,6 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
-   prevWarnLevel_(0),
    connected_(false)
 {
 }
@@ -139,10 +138,17 @@ void ChunkExecContext::connect()
 
    // log warnings immediately (unless user's changed the default warning
    // level)
-   prevWarnLevel_ = r::options::getOption<int>("warn", 0);
-   if (prevWarnLevel_  == 0)
-      r::options::setOption<int>("warn", 1);
-
+   r::sexp::Protect protect;
+   SEXP warnSEXP;
+   error = r::exec::RFunction("getOption", "warn").call(&warnSEXP, &protect);
+   if (!error)
+   {
+      prevWarn_.set(warnSEXP);
+      error = r::options::setOption<int>("warn", 1);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
    // reset width
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
@@ -275,17 +281,23 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
 void ChunkExecContext::disconnect()
 {
+   Error error;
+
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
-   // restore warning level
-   if (prevWarnLevel_ >= 0)
-      r::options::setOption("warn", prevWarnLevel_);
+   // restore preserved warning level, if any
+   if (!prevWarn_.isNil())
+   {
+      error = r::options::setOption("warn", prevWarn_.get());
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // restore working directory, if we saved one
    if (!prevWorkingDir_.empty())
    {
-      Error error = FilePath::makeCurrent(prevWorkingDir_);
+      error = FilePath::makeCurrent(prevWorkingDir_);
       if (error)
          LOG_ERROR(error);
    }
