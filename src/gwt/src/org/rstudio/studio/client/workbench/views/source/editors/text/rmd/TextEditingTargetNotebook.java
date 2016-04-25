@@ -34,6 +34,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -258,7 +259,7 @@ public class TextEditingTargetNotebook
                return;
             
             String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + 
-                                ".nb.html";
+                                RmdOutput.NOTEBOOK_EXT;
             
             server_.createNotebookFromCache(
                   rmdPath,
