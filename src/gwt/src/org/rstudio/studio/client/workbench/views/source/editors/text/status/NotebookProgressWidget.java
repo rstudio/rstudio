@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.studio.client.RStudioGinjector;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -29,6 +31,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NotebookProgressWidget extends Composite
@@ -53,7 +56,7 @@ public class NotebookProgressWidget extends Composite
               "rgba(" + color + ", 0.3) " + percent + "%, " +
               "rgba(" + color + ", 0.3) 100%");
       
-      chunkName_.setText(chunkName);
+      progressLabel_.setText(chunkName);
    }
    
    public HandlerRegistration addClickHandler(ClickHandler handler)
@@ -66,12 +69,13 @@ public class NotebookProgressWidget extends Composite
       manager_ = new HandlerManager(this);
 
       initWidget(uiBinder.createAndBindUi(this));
-
-      // ensure widget looks clickable
-      getElement().getStyle().setCursor(Cursor.POINTER);
+      
+      // ensure elements look clickable
+      progressBar_.getElement().getStyle().setCursor(Cursor.POINTER);
+      interruptButton_.getElement().getStyle().setCursor(Cursor.POINTER);
 
       // connect native click handler
-      addDomHandler(new MouseDownHandler()
+      progressBar_.addDomHandler(new MouseDownHandler()
       {
          public void onMouseDown(MouseDownEvent event)
          {
@@ -84,9 +88,20 @@ public class NotebookProgressWidget extends Composite
                   manager_);
          }
       }, MouseDownEvent.getType());
+      
+      interruptButton_.addDomHandler(new MouseDownHandler()
+      {
+         @Override
+         public void onMouseDown(MouseDownEvent event)
+         {
+            RStudioGinjector.INSTANCE.getCommands().interruptR().execute();
+         }
+      }, MouseDownEvent.getType());
    }
    
    @UiField HTMLPanel progressBar_;
-   @UiField Anchor chunkName_;
+   @UiField HTMLPanel root_;
+   @UiField Anchor progressLabel_;
+   @UiField Image interruptButton_;
    private final HandlerManager manager_;
 }
