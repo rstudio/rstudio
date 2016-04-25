@@ -1,0 +1,30 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:style>
+   div.progressBar
+   {
+      height: 5px;
+      width: 100px;
+      display: inline-block;
+      position: relative;
+      top: -3px;
+      margin-right: 3px;
+   }
+   
+   .chunkName
+   {
+      width: 150px;
+      display: inline-block;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+   }
+   </ui:style>
+   <g:HTMLPanel>
+     <g:HTMLPanel styleName="{style.progressBar}" ui:field="progressBar_">
+     </g:HTMLPanel>
+     <g:Anchor styleName="{style.chunkName}" ui:field="chunkName_">
+     </g:Anchor>
+   </g:HTMLPanel>
+</ui:UiBinder> 

@@ -34,6 +34,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -78,6 +79,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -110,10 +113,11 @@ public class TextEditingTargetNotebook
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, int modeIn, String codeIn, 
-            String optionsIn, int rowIn, String setupCrc32In)
+            String nameIn, String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
          mode = modeIn;
+         name = nameIn;
          options = optionsIn;
          code = codeIn;
          row = rowIn;
@@ -124,6 +128,7 @@ public class TextEditingTargetNotebook
          executingRowEnd = 0;
       }
       public String chunkId;
+      public String name;
       public String options;
       public String code;
       public String setupCrc32;
@@ -254,7 +259,7 @@ public class TextEditingTargetNotebook
                return;
             
             String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + 
-                                ".nb.html";
+                                RmdOutput.NOTEBOOK_EXT;
             
             server_.createNotebookFromCache(
                   rmdPath,
@@ -264,9 +269,12 @@ public class TextEditingTargetNotebook
                      @Override
                      public void onResponseReceived(Void v)
                      {
-                        events_.fireEvent(new NotebookRenderFinishedEvent(
-                              docUpdateSentinel_.getId(), 
-                              docUpdateSentinel_.getPath()));
+                        if (editingTarget_.isRmdNotebook())
+                        {
+                           events_.fireEvent(new NotebookRenderFinishedEvent(
+                                 docUpdateSentinel_.getId(), 
+                                 docUpdateSentinel_.getPath()));
+                        }
                      }
 
                      @Override
@@ -402,7 +410,25 @@ public class TextEditingTargetNotebook
 
       // put it in the queue 
       chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, mode, code,
-            options, row, setupCrc32));
+            chunk.getChunkLabel(), options, row, setupCrc32));
+      
+      // record maximum queue size (for scaling progress when we start popping
+      // chunks from the list)
+      if (chunkExecQueue_.size() == 1)
+      {
+         // first item in the queue resets the max recorded size
+         execQueueMaxSize_ = 1;
+      }
+      else
+      {
+         // otherwise, maintain the high water mark until the queue is empty
+         execQueueMaxSize_ = Math.max(execQueueMaxSize_, 
+                                      chunkExecQueue_.size());
+      }
+      
+      // draw progress meter for the new queue in batch mode
+      if (mode == MODE_BATCH)
+         updateProgress();
 
       // if there are other chunks in the queue, let them run
       if (chunkExecQueue_.size() > 1)
@@ -569,7 +595,7 @@ public class TextEditingTargetNotebook
       
       if (outputs_.containsKey(chunkDef.getChunkId()))
          outputs_.get(chunkDef.getChunkId()).getOutputWidget()
-                                            .setCodeExecuting(false);
+                                         .setCodeExecuting(false, MODE_SINGLE);
    }
    
    @Override
@@ -616,8 +642,23 @@ public class TextEditingTargetNotebook
       // show output in matching chunk
       if (outputs_.containsKey(chunkId))
       {
+         // by default, ensure chunks are visible if we aren't replaying them
+         // from the cache
+         boolean ensureVisible = !event.getOutput().isReplay();
+         int mode = MODE_SINGLE;
+         if (executingChunk_ != null &&
+             executingChunk_.chunkId == event.getOutput().getChunkId())
+         {
+            mode = executingChunk_.mode;
+         }
+         
+         // no need to make chunks visible in batch mode
+         if (ensureVisible && mode == MODE_BATCH)
+            ensureVisible = false;
+         
          outputs_.get(chunkId).getOutputWidget()
-                              .showChunkOutput(event.getOutput());
+                              .showChunkOutput(event.getOutput(), mode,
+                                               ensureVisible);
       }
    }
 
@@ -778,17 +819,22 @@ public class TextEditingTargetNotebook
       clearChunkExecQueue();
       
       // clear currently executing chunk
-      executingChunk_ = null;
+      cleanCurrentExecChunk();
    }
 
    @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
-      // if we had recorded a run of the setup chunk prior to restart, clear it
-      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED &&
-          !StringUtil.isNullOrEmpty(setupCrc32_))
+      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
       {
-         writeSetupCrc32("");
+         // if we had recorded a run of the setup chunk prior to restart, clear
+         // it
+         if (!StringUtil.isNullOrEmpty(setupCrc32_))
+            writeSetupCrc32("");
+         
+         // clean execution state
+         clearChunkExecQueue();
+         cleanCurrentExecChunk();
       }
    }
    
@@ -829,10 +875,16 @@ public class TextEditingTargetNotebook
    
    private void processChunkExecQueue()
    {
-      // do nothing if we're currently executing a chunk or there are no chunks
-      // to execute
-      if (chunkExecQueue_.isEmpty() || executingChunk_ != null)
+      // do nothing if we're currently executing a chunk 
+      if (executingChunk_ != null)
          return;
+
+      // if the queue is empty, just make sure we've hidden the progress UI
+      if (chunkExecQueue_.isEmpty())
+      {
+         editingTarget_.getStatusBar().hideNotebookProgress();
+         return;
+      }
       
       // do nothing if we're waiting for params to evaluate
       if (evaluatingParams_)
@@ -842,14 +894,20 @@ public class TextEditingTargetNotebook
       final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
       executingChunk_ = unit;
       
+      if (unit.mode == MODE_BATCH)
+         updateProgress();
+
       // let the chunk widget know it's started executing
       if (outputs_.containsKey(unit.chunkId))
       {
          ChunkOutputUi output = outputs_.get(unit.chunkId);
 
-         output.getOutputWidget().setCodeExecuting(true);
+         output.getOutputWidget().setCodeExecuting(true, executingChunk_.mode);
          syncWidth();
-         output.ensureVisible();
+         
+         // scroll the widget into view if it's a single-shot exec
+         if (executingChunk_.mode == MODE_SINGLE)
+            output.ensureVisible();
       }
       
       // draw UI on chunk
@@ -1253,6 +1311,8 @@ public class TextEditingTargetNotebook
          cleanChunkExecState(unit.chunkId);
       }
       chunkExecQueue_.clear();
+
+      editingTarget_.getStatusBar().hideNotebookProgress();
    }
    
    private Timer cleanErrorGutter_ = new Timer()
@@ -1285,10 +1345,44 @@ public class TextEditingTargetNotebook
             ChunkRowExecState.LINE_NONE);
    }
    
+   private void updateProgress()
+   {
+      // update progress meter on status bar
+      editingTarget_.getStatusBar().showNotebookProgress(
+           (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
+                                           chunkExecQueue_.size()) / 
+                                  (double) execQueueMaxSize_)), 
+           "Chunk " + (execQueueMaxSize_ - chunkExecQueue_.size()) + " / " + 
+                      execQueueMaxSize_ + (executingChunk_ == null ||
+                                           executingChunk_.name.isEmpty() ? 
+                                           "" : (": " + executingChunk_.name)));
+      
+      // register click callback if necessary
+      if (progressClickReg_ == null)
+      {
+         progressClickReg_ = editingTarget_.getStatusBar()
+               .addProgressClickHandler(new ClickHandler()
+               {
+                  
+                  @Override
+                  public void onClick(ClickEvent arg0)
+                  {
+                     if (executingChunk_ != null &&
+                         outputs_.containsKey(executingChunk_.chunkId))
+                     {
+                        outputs_.get(executingChunk_.chunkId).ensureVisible();
+                     }
+                  }
+               });
+         releaseOnDismiss_.add(progressClickReg_);
+      }
+   }
+   
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
    private LinkedList<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
+   private HandlerRegistration progressClickReg_;
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
@@ -1319,6 +1413,7 @@ public class TextEditingTargetNotebook
    private int pixelWidth_ = 0;
    private boolean executedSinceActivate_ = false;
    private boolean evaluatingParams_ = false;
+   private int execQueueMaxSize_ = 0;
    
    private int state_ = STATE_NONE;
 

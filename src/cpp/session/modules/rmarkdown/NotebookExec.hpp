@@ -22,6 +22,8 @@
 
 #include <core/json/Json.hpp>
 
+#include <r/RSexp.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -71,7 +73,7 @@ private:
    int pixelWidth_;
    int charWidth_;
    int prevCharWidth_;
-   int prevWarnLevel_;
+   r::sexp::PreservedSEXP prevWarn_;
 
    bool connected_;
 

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 
 public interface StatusBar
@@ -45,4 +47,7 @@ public interface StatusBar
    void showMessage(String message, HideMessageHandler handler);
    void hideMessage();
    
+   void showNotebookProgress(int percent, String text);
+   void hideNotebookProgress();
+   HandlerRegistration addProgressClickHandler(ClickHandler handler);
 }

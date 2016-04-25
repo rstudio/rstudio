@@ -87,7 +87,8 @@ oop.inherits(Mode, TextMode);
 
    this.insertChunkInfo = {
       value: "<<>>=\n\n@\n",
-      position: {row: 0, column: 2}
+      position: {row: 0, column: 2}, 
+      content_position: {row: 1, column: 0}
    };
 
    this.getLanguageMode = function(position)

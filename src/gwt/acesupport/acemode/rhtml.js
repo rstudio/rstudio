@@ -63,7 +63,8 @@ oop.inherits(Mode, HtmlMode);
 
    this.insertChunkInfo = {
       value: "<!--begin.rcode\n\nend.rcode-->\n",
-      position: {row: 0, column: 15}
+      position: {row: 0, column: 15},
+      content_position: {row: 1, column: 0}
    };
 
    this.checkOutdent = function(state, line, input)

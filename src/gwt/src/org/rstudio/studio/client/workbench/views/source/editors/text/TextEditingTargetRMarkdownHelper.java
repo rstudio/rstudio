@@ -144,10 +144,18 @@ public class TextEditingTargetRMarkdownHelper
           final boolean isShinyDoc,
           final CommandWithArg<RMarkdownContext> onReady)
    {
+      withRMarkdownPackage("R Markdown", userAction, isShinyDoc, onReady);
+   }
+
+   public void withRMarkdownPackage(
+          String progressCaption,
+          final String userAction, 
+          final boolean isShinyDoc,
+          final CommandWithArg<RMarkdownContext> onReady)
+   {
       dependencyManager_.withRMarkdown(
-         
+         progressCaption,
          userAction,  
-         
          new Command() {
             
             @Override
@@ -278,7 +286,10 @@ public class TextEditingTargetRMarkdownHelper
                                final int type,
                                final boolean asShiny)
    {
-      withRMarkdownPackage("Rendering R Markdown documents", 
+      withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
+                              "R Notebook" :
+                              "R Markdown", 
+                           "Rendering R Markdown documents", 
                            type == RmdOutput.TYPE_SHINY,
                            new CommandWithArg<RMarkdownContext>() {
          @Override
