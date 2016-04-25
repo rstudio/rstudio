@@ -113,11 +113,10 @@ public class TextEditingTargetNotebook
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, int modeIn, String codeIn, 
-            String nameIn, String optionsIn, int rowIn, String setupCrc32In)
+            String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
          mode = modeIn;
-         name = nameIn;
          options = optionsIn;
          code = codeIn;
          row = rowIn;
@@ -128,7 +127,6 @@ public class TextEditingTargetNotebook
          executingRowEnd = 0;
       }
       public String chunkId;
-      public String name;
       public String options;
       public String code;
       public String setupCrc32;
@@ -410,7 +408,7 @@ public class TextEditingTargetNotebook
 
       // put it in the queue 
       chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, mode, code,
-            chunk.getChunkLabel(), options, row, setupCrc32));
+             options, row, setupCrc32));
       
       // record maximum queue size (for scaling progress when we start popping
       // chunks from the list)
@@ -1348,14 +1346,10 @@ public class TextEditingTargetNotebook
    private void updateProgress()
    {
       // update progress meter on status bar
-      editingTarget_.getStatusBar().showNotebookProgress(
+      editingTarget_.getStatusBar().updateNotebookProgress(
            (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
                                            chunkExecQueue_.size()) / 
-                                  (double) execQueueMaxSize_)), 
-           "Chunk " + (execQueueMaxSize_ - chunkExecQueue_.size()) + " / " + 
-                      execQueueMaxSize_ + (executingChunk_ == null ||
-                                           executingChunk_.name.isEmpty() ? 
-                                           "" : (": " + executingChunk_.name)));
+                                  (double) execQueueMaxSize_)));
       
       // register click callback if necessary
       if (progressClickReg_ == null)

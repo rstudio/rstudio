@@ -46,7 +46,7 @@ public class NotebookProgressWidget extends Composite
    {
    }
    
-   public void setPercent(int percent, String chunkName)
+   public void setPercent(int percent)
    {
       String color = "24, 163, 82";
       progressBar_.getElement().getStyle().setBackgroundImage(
@@ -55,8 +55,11 @@ public class NotebookProgressWidget extends Composite
               "rgba(" + color + ", 1.0) " + percent + "%, " +
               "rgba(" + color + ", 0.3) " + percent + "%, " +
               "rgba(" + color + ", 0.3) 100%");
-      
-      progressLabel_.setText(chunkName);
+   }
+   
+   public void setLabel(String label)
+   {
+      progressLabel_.setText(label + ": ");
    }
    
    public HandlerRegistration addClickHandler(ClickHandler handler)

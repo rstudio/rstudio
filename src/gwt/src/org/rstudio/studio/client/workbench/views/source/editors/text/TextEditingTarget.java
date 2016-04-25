@@ -4176,6 +4176,17 @@ public class TextEditingTarget implements
       
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+
+      // prepare the status bar
+      if (previousScopes.length > 0)
+      {
+         if (position != null &&
+             position.getRow() > docDisplay_.getDocumentEnd().getRow())
+            statusBar_.showNotebookProgress("Run All");
+         else
+            statusBar_.showNotebookProgress("Run Previous");
+      }
+
       for (Scope scope : previousScopes)
          executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
    }

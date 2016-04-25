@@ -21,6 +21,7 @@
       text-overflow: ellipsis;
       overflow: hidden;
       text-align: right;
+      margin-right: 3px;
    }
    
    img.interrupt
