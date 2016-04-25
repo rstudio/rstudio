@@ -204,7 +204,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          text = function(x, ...) {
             newLineMatches <- gregexpr('\n', x, fixed = TRUE)[[1]]
             linesProcessed <<- linesProcessed + length(newLineMatches) + 1
-            knitHooks$text(x, ...)
+            output <- knitHooks$text(x, ...)
+            annotated <- .rs.rnb.htmlAnnotatedOutput(output, "text")
+            annotated
          },
          
          chunk = function(...) {
