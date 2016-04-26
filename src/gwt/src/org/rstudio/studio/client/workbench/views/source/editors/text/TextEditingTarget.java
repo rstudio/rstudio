@@ -3961,15 +3961,18 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
-      // record current selection before manipulating text
-      String sel = docDisplay_.getSelectionValue();
-      Range selRange = docDisplay_.getSelectionRange();
+      String sel = null;
+      Range selRange = null;
       
       // if currently in a chunk, add a blank line (for padding) and insert 
       // beneath it
       Scope currentChunk = docDisplay_.getCurrentChunk();
       if (currentChunk != null)
       {
+         // record current selection before manipulating text
+         sel = docDisplay_.getSelectionValue();
+         selRange = docDisplay_.getSelectionRange();
+         
          docDisplay_.setCursorPosition(currentChunk.getEnd());
          docDisplay_.insertCode("\n");
          docDisplay_.moveCursorForward(1);
