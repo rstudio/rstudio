@@ -67,6 +67,7 @@
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
 * R Markdown: fixed highlighting with multiple Markdown links on one line
 * R Markdown: fixed issue where sections did not display in document outline when following empty bulleted list
+* Reformat code: fixed an issue where '\*\*' was not recognized as a single token
 * SVN: avoid recursive revert when reverting changes to modified directory properties
 * Autocompletion: fixed errors printed in console when 'devtools::load_all()' active
 * Autocompletion: fixed errors printed in console for functions 'force', 'identity'
