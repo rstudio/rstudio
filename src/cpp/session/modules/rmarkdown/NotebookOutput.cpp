@@ -331,6 +331,11 @@ Error enqueueChunkOutput(
 {
    FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId);
 
+   // if the contextual output path doesn't exist, check the persisted output
+   // path
+   if (!outputPath.exists())
+      outputPath = chunkOutputPath(docPath, docId, chunkId, kSavedCtx);
+
    // scan the directory for output
    std::vector<FilePath> outputPaths;
    Error error = outputPath.children(&outputPaths);

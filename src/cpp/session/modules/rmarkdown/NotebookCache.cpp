@@ -254,6 +254,30 @@ void onDocAdded(const std::string& id)
    // contents of the notebook?
 }
 
+void onDocSaved(FilePath &path)
+{
+   // ignore non-R Markdown saves
+   if (!path.hasExtensionLowerCase(".rmd"))
+      return;
+
+   // find cache folder (bail out if it doesn't exist)
+   FilePath cache = chunkCacheFolder(path, "", notebookCtxId());
+   if (!cache.exists())
+      return;
+
+   // find and remove the old saved folder (TODO: consider being less 
+   // destructive by moving it to a different name temporarily until we've
+   // successfully swapped in the cache)
+   FilePath saved = chunkCacheFolder(path, "", kSavedCtx);
+   Error error = saved.removeIfExists();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+}
+
 FilePath unsavedNotebookCache()
 {
    return module_context::sessionScratchPath().childPath("unsaved-notebooks");
@@ -276,13 +300,13 @@ FilePath notebookCacheRoot()
    return module_context::sharedScratchPath().childPath("notebooks");
 }
 
-FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
+FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
       const std::string& nbCtxId)
 {
    FilePath folder;
    std::string stem;
 
-   if (docPath.empty()) 
+   if (path.empty()) 
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
@@ -290,20 +314,26 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
    }
    else
    {
-      // the doc has been saved, so keep its chunk output alongside the doc
-      // itself
-      FilePath path = module_context::resolveAliasedPath(docPath);
-
       std::string id;
       Error error = notebookPathToId(path, nbCtxId, &id);
       if (error)
          LOG_ERROR(error);
       
-      folder = notebookCacheRoot().childPath(nbCtxId + "-" + id + "-" +
-            path.stem());
+      // use the 
+      folder = notebookCacheRoot().childPath(id + "-" + path.stem())
+                                  .childPath(nbCtxId);
    }
 
    return folder.childPath(kCacheVersion);
+}
+
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
+      const std::string& nbCtxId)
+{
+   return chunkCacheFolder(
+         docPath.empty() ? FilePath() : 
+                           module_context::resolveAliasedPath(docPath),
+         docId, nbCtxId);
 }
 
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
@@ -316,6 +346,8 @@ Error initCache()
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
+
+   module_context::events().onSourceEditorFileSaved.connect(onDocSaved);
 
    RS_REGISTER_CALL_METHOD(rs_chunkCacheFolder, 1);
 
