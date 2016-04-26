@@ -20,6 +20,10 @@
 
 #include <boost/signal.hpp>
 
+#include <core/json/Json.hpp>
+
+#include <r/RSexp.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -37,7 +41,8 @@ class ChunkExecContext
 {
 public:
    // initialize a new execution context
-   ChunkExecContext(const std::string& docId, const std::string& chunkId);
+   ChunkExecContext(const std::string& docId, const std::string& chunkId,
+         const std::string& options, int pixelWidth, int charWidth);
    ~ChunkExecContext();
 
    // connect or disconnect the execution context to events
@@ -49,18 +54,29 @@ public:
    std::string docId();
    bool connected();
 
+   // inject console input manually
+   void onConsoleInput(const std::string& input);
+
 private:
    void onConsoleOutput(module_context::ConsoleOutputType type, 
          const std::string& output);
-   void onConsoleInput(const std::string& input);
-   void onConsolePrompt(const std::string&);
    void onConsoleText(int type, const std::string& output, bool truncate);
+   void onConsolePrompt(const std::string&);
    void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
          int outputType);
+   void onError(const core::json::Object& err);
 
    std::string docId_;
    std::string chunkId_;
+   std::string prevWorkingDir_;
+
+   int pixelWidth_;
+   int charWidth_;
+   int prevCharWidth_;
+   r::sexp::PreservedSEXP prevWarn_;
+
    bool connected_;
+
    std::vector<boost::signals::connection> connections_;
 };
 

@@ -235,52 +235,95 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
       });
       
-      if (!htmlPathInitialized_) {
-         htmlPathInitialized_ = true;
+      final Operation activateOperation = new Operation()
+      {
          
-         htmlPath_ = getContents().getHtmlPath();
-         htmlLocalPath_ = getContents().getHtmlLocalPath();
-         isUserSaved_ = getContents().isUserSaved();
-         
-         if (htmlPath_ == null)
+         @Override
+         public void execute()
          {
-            presenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
-            {
-               @Override
-               public void execute(ProfileOperationResponse response)
-               {
-                  htmlPath_ = response.getHtmlPath();
-                  htmlLocalPath_ = response.getHtmlLocalPath();
-                  
-                  persistDocumentProperty("htmlPath", htmlPath_);
-                  persistDocumentProperty("htmlLocalPath", htmlLocalPath_);
-                  
-                  view_.showProfilePage(htmlPath_);
-                  
-                  pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
-               }
+            if (!htmlPathInitialized_) {
+               htmlPathInitialized_ = true;
                
-            }, new Operation()
-            {
-               @Override
-               public void execute()
+               htmlPath_ = getContents().getHtmlPath();
+               htmlLocalPath_ = getContents().getHtmlLocalPath();
+               isUserSaved_ = getContents().isUserSaved();
+               
+               if (htmlPath_ == null)
                {
-                  commands_.closeSourceDoc().execute();
+                  presenter_.buildHtmlPath(new OperationWithInput<ProfileOperationResponse>()
+                  {
+                     @Override
+                     public void execute(ProfileOperationResponse response)
+                     {
+                        htmlPath_ = response.getHtmlPath();
+                        htmlLocalPath_ = response.getHtmlLocalPath();
+                        
+                        persistDocumentProperty("htmlPath", htmlPath_);
+                        persistDocumentProperty("htmlLocalPath", htmlLocalPath_);
+                        
+                        view_.showProfilePage(htmlPath_);
+                        
+                        pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+                     }
+                     
+                  }, new Operation()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        server_.clearProfile(getPath(), new ServerRequestCallback<JavaScriptObject>()
+                        {
+                           @Override
+                           public void onResponseReceived(JavaScriptObject response)
+                           {
+                              commands_.closeSourceDoc().execute();
+                           }
+                           
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                              commands_.closeSourceDoc().execute();
+                           }
+                        });
+                     }
+                  }, getPath());
                }
-            }, getPath());
+               else
+               {
+                  view_.showProfilePage(htmlPath_);
+      
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     public void execute()
+                     {
+                        pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+                     }
+                  });
+               }
+            }
          }
-         else
+      };
+      
+      if (getId() != null && !SourceWindowManager.isMainSourceWindow()) {
+         sourceServer_.getSourceDocument(getId(), new ServerRequestCallback<SourceDocument>()
          {
-            view_.showProfilePage(htmlPath_);
-
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            @Override
+            public void onResponseReceived(SourceDocument document)
             {
-               public void execute()
-               {
-                  pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
-               }
-            });
-         }
+               doc_ = document;
+               activateOperation.execute();
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+      else {
+         activateOperation.execute();
       }
       
       // If we're already hooked up for some reason, unhook. 
@@ -761,7 +804,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       var handler = $entry(function(e) {
          if (typeof e.data != 'object')
             return;
-         if (!e.origin.startsWith($wnd.location.origin))
+         if (e.origin.substr(0, e.origin.length) != $wnd.location.origin)
             return;
          if (e.data.source != "profvis")
             return;

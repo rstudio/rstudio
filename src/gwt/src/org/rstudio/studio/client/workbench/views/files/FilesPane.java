@@ -259,6 +259,10 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          FileSystemItem home = FileSystemItem.home();
          observer_.onFileNavigation(home);
       }
+      else
+      {
+         filesList_.redraw();
+      }
    }
 
    @Override

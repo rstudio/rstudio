@@ -52,9 +52,14 @@
                                       asRelativePath = TRUE,
                                       maxCount = 200L)
 {
-   .Call(.rs.routines$rs_scanFiles,
+   .Call("rs_scanFiles",
          as.character(path),
          as.character(pattern),
          as.logical(asRelativePath),
          as.integer(maxCount))
+})
+
+.rs.addFunction("readLines", function(filePath)
+{
+   .Call("rs_readLines", .rs.normalizePath(filePath, mustWork = TRUE))
 })

@@ -27,6 +27,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
+#include <core/YamlUtil.hpp>
 #include <core/text/DcfParser.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
@@ -46,6 +47,7 @@ const char * const kLineEndingPosix = "Posix";
 const char * const kBuildTypeNone = "None";
 const char * const kBuildTypePackage = "Package";
 const char * const kBuildTypeMakefile = "Makefile";
+const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
 
 namespace {
@@ -136,6 +138,7 @@ bool interpretBuildTypeValue(const std::string& value, std::string* pValue)
        value == kBuildTypeNone ||
        value == kBuildTypePackage ||
        value == kBuildTypeMakefile ||
+       value == kBuildTypeWebsite ||
        value == kBuildTypeCustom)
    {
       *pValue = value;
@@ -205,6 +208,34 @@ void setBuildPackageDefaults(const std::string& packagePath,
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
 
+bool isWebsiteDirectory(const FilePath& projectDir)
+{
+   // look for an index.Rmd or index.md
+   FilePath indexFile = projectDir.childPath("index.Rmd");
+   if (!indexFile.exists())
+      indexFile = projectDir.childPath("index.md");
+   if (indexFile.exists())
+   {
+      // look for _site.yml
+      FilePath siteFile = projectDir.childPath("_site.yml");
+      if (siteFile.exists())
+      {
+         return true;
+      }
+      // no _site.yml, is there a custom site generator?
+      else
+      {
+         static const boost::regex reSite("^site:.*$");
+         std::string yaml = yaml::extractYamlHeader(indexFile);
+         return boost::regex_search(yaml.begin(), yaml.end(), reSite);
+      }
+   }
+   else
+   {
+      return false;
+   }
+}
+
 std::string detectBuildType(const FilePath& projectFilePath,
                             const RProjectBuildDefaults& buildDefaults,
                             RProjectConfig* pConfig)
@@ -222,7 +253,11 @@ std::string detectBuildType(const FilePath& projectFilePath,
    {
       pConfig->buildType = kBuildTypeMakefile;
       pConfig->makefilePath = "";
-
+   }
+   else if (isWebsiteDirectory(projectDir))
+   {
+      pConfig->buildType = kBuildTypeWebsite;
+      pConfig->websitePath = "";
    }
    else
    {
@@ -640,6 +675,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->makefilePath = "";
    }
 
+   // extract websitepath
+   it = dcfFields.find("WebsitePath");
+   if (it != dcfFields.end())
+   {
+      pConfig->websitePath = it->second;
+   }
+   else
+   {
+      pConfig->websitePath = "";
+   }
+
+
    // extract custom script path
    it = dcfFields.find("CustomScriptPath");
    if (it != dcfFields.end())
@@ -833,6 +880,14 @@ Error writeProjectFile(const FilePath& projectFilePath,
             {
                boost::format makefileFmt("MakefilePath: %1%\n");
                build.append(boost::str(makefileFmt % config.makefilePath));
+            }
+         }
+         else if (config.buildType == kBuildTypeWebsite)
+         {
+            if (!config.websitePath.empty())
+            {
+               boost::format websiteFmt("WebsitePath: %1%\n");
+               build.append(boost::str(websiteFmt % config.websitePath));
             }
          }
          else if (config.buildType == kBuildTypeCustom)

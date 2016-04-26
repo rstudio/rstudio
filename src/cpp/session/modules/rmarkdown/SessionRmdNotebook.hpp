@@ -54,6 +54,7 @@ struct Events : boost::noncopyable
 
    boost::signal<void(const core::FilePath&)> onPlotOutput;
    boost::signal<void(const core::FilePath&, const core::FilePath&)> onHtmlOutput;
+   boost::signal<void(const core::json::Object&)> onErrorOutput;
 };
 
 Events& events();

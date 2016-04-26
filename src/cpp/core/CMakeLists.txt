@@ -53,6 +53,7 @@ set (CORE_SOURCE_FILES
    ColorUtils.cpp
    Thread.cpp
    Trace.cpp
+   YamlUtil.cpp
    WaitUtils.cpp
    file_lock/FileLock.cpp
    file_lock/AdvisoryFileLock.cpp

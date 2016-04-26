@@ -40,6 +40,10 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String buildToolsRoxygenize();
       String buildToolsCheckBox();
       String buildToolsDevtools();
+      String previewWebsite();
+      String directorySelector();
+      String websiteOutputFormat();
+      String infoLabel();
    }
   
    @Source("ProjectPreferencesDialog.css")

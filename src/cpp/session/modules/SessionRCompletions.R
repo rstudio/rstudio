@@ -704,7 +704,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getSourceIndexCompletions", function(token)
 {
-   .Call(.rs.routines$rs_getSourceIndexCompletions, token)
+   .Call("rs_getSourceIndexCompletions", token)
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
@@ -1381,7 +1381,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getNAMESPACEImportedSymbols", function(documentId)
 {
-   .Call(.rs.routines$rs_getNAMESPACEImportedSymbols, documentId)
+   .Call("rs_getNAMESPACEImportedSymbols", documentId)
 })
 
 .rs.addFunction("getCompletionsNAMESPACE", function(token, documentId)
@@ -1392,7 +1392,6 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.emptyCompletions())
    
    n <- vapply(symbols, function(x) length(x[[1]]), USE.NAMES = FALSE, FUN.VALUE = numeric(1))
-   total <- sum(n)
    
    output <- list(
       exports = unlist(lapply(symbols, `[[`, "exports"), use.names = FALSE),
@@ -1477,7 +1476,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("finishExpression", function(string)
 {
-   .Call(.rs.routines$rs_finishExpression, as.character(string))
+   .Call("rs_finishExpression", as.character(string))
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
@@ -1512,7 +1511,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("isBrowserActive", function()
 {
-   .Call(.rs.routines$rs_isBrowserActive)
+   .Call("rs_isBrowserActive")
 })
 
 # NOTE: This function attempts to find an active frame (if
@@ -1550,6 +1549,9 @@ assign(x = ".rs.acCompletionTypes",
       names(x[[interface]])
    })
    
+   if (is.null(names(dynRoutineNames)))
+      return(.rs.emptyCompletions())
+   
    dynResults <- .rs.namedVectorAsList(dynRoutineNames)
    dynIndices <- .rs.fuzzyMatches(dynResults$values, token)
    
@@ -1585,7 +1587,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getKnitParamsForDocument", function(documentId)
 {
-   .Call(.rs.routines$rs_getKnitParamsForDocument, documentId)
+   .Call("rs_getKnitParamsForDocument", documentId)
 })
 
 .rs.addFunction("knitParams", function(content)
@@ -2426,6 +2428,26 @@ assign(x = ".rs.acCompletionTypes",
       error = function(e) NULL
    )
    
+   # workaround for devtools::load_all() clobbering the
+   # namespace imports
+   if (length(importCompletions) && is.null(names(importCompletions))) {
+      try({
+         env <- new.env(parent = emptyenv())
+         for (el in importCompletions) {
+            # Length one element: get all exports from that package
+            if (length(el) == 1) {
+               env[[el]] <- c(env[[el]], getNamespaceExports(asNamespace(el)))
+            }
+            
+            # Length >1 element: 'importFrom()'.
+            else if (length(el) > 1) {
+               env[[el]] <- c(env[[el]], tail(el, n = -1))
+            }
+         }
+         importCompletions <- as.list(env)
+      }, silent = TRUE)
+   }
+   
    # remove 'base' element if it's just TRUE
    if (length(importCompletions))
    {
@@ -2434,7 +2456,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # if we have import completions, use them
-   if (length(importCompletions))
+   if (length(importCompletions) && !is.null(names(importCompletions)))
    {
       importCompletionsList <- .rs.namedVectorAsList(importCompletions)
       
@@ -2881,13 +2903,13 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listInferredPackages", function(documentId)
 {
-   .Call(.rs.routines$rs_listInferredPackages, documentId)
+   .Call("rs_listInferredPackages", documentId)
 })
 
 .rs.addFunction("getInferredCompletions", function(packages = character(),
                                                    simplify = TRUE)
 {
-   result <- .Call(.rs.routines$rs_getInferredCompletions, as.character(packages))
+   result <- .Call("rs_getInferredCompletions", as.character(packages))
    if (simplify && length(result) == 1)
       return(result[[1]])
    result

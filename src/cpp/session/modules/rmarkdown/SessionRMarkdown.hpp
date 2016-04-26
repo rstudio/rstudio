@@ -16,6 +16,10 @@
 #ifndef SESSION_SESSION_RMARKDOWN_HPP
 #define SESSION_SESSION_RMARKDOWN_HPP
 
+#define kRenderTypeStatic   0
+#define kRenderTypeShiny    1
+#define kRenderTypeNotebook 2
+
 namespace rstudio {
 namespace core {
    class Error;

@@ -21,10 +21,11 @@ public class ErrorHandlerType extends JavaScriptObject
 {
    // Error handler types understood by the server. These values are persisted
    // in user settings, so their meaning must be preserved.
-   public static final int ERRORS_MESSAGE = 0;
+   public static final int ERRORS_MESSAGE   = 0;
    public static final int ERRORS_TRACEBACK = 1;
-   public static final int ERRORS_BREAK = 2;
-   public static final int ERRORS_CUSTOM = 3;
+   public static final int ERRORS_BREAK     = 2;
+   public static final int ERRORS_CUSTOM    = 3;
+   public static final int ERRORS_NOTEBOOK  = 4;
    
    protected ErrorHandlerType() {}
 

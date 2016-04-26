@@ -15,6 +15,7 @@
 
 
 #include "SessionConsole.hpp"
+#include "rmarkdown/SessionRmdNotebook.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -125,6 +126,13 @@ void onDetectChanges(module_context::ChangeSource source)
    detectWorkingDirectoryChanged();
 }
 
+void onChunkExecCompleted()
+{
+   // notebook chunks restore the working directory when they're done executing,
+   // so check when they're finished
+   detectWorkingDirectoryChanged();
+}
+
 Error resetConsoleActions(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -166,6 +174,9 @@ Error initialize()
    using namespace module_context;
    events().onClientInit.connect(bind(onClientInit));
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
+
+   rmarkdown::notebook::events().onChunkExecCompleted.connect(
+         bind(onChunkExecCompleted));
 
    // more initialization 
    using boost::bind;

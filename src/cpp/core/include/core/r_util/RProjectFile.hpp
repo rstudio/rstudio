@@ -42,6 +42,7 @@ extern const int kLineEndingsUseDefault;
 extern const char * const kBuildTypeNone;
 extern const char * const kBuildTypePackage;
 extern const char * const kBuildTypeMakefile;
+extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
 
 std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
@@ -82,6 +83,7 @@ struct RProjectConfig
         packageRoxygenize(),
         packageUseDevtools(false),
         makefilePath(),
+        websitePath(),
         customScriptPath(),
         tutorialPath()
    {
@@ -111,6 +113,7 @@ struct RProjectConfig
    std::string packageRoxygenize;
    bool packageUseDevtools;
    std::string makefilePath;
+   std::string websitePath;
    std::string customScriptPath;
    std::string tutorialPath;
 };

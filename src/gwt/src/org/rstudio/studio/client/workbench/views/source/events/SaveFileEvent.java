@@ -18,6 +18,24 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class SaveFileEvent extends GwtEvent<SaveFileHandler>
 {
+   public SaveFileEvent(String path, String fileType, String encoding)
+   {
+      path_ = path;
+      fileType_ = fileType;
+      encoding_ = encoding;
+   }
+   
+   public final String getPath() { return path_; }
+   public final String getFileType() { return fileType_; }
+   public final String getEncoding() { return encoding_; }
+   public final boolean isAutosave() { return path_ == null; }
+   
+   private final String path_;
+   private final String fileType_;
+   private final String encoding_;
+   
+   // Boilerplate ----
+   
    public static final GwtEvent.Type<SaveFileHandler> TYPE =
       new GwtEvent.Type<SaveFileHandler>();
    

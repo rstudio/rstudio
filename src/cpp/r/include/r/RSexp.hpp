@@ -146,6 +146,9 @@ SEXP create(const core::json::Object& value, Protect* pProtect);
 SEXP create(const ListBuilder& builder, Protect* pProtect);
 SEXP create(const std::map<std::string, std::string>& value, Protect* pProtect);
 
+// Create a raw vector (binary data)
+SEXP createRawVector(const std::string& data, Protect* pProtect);
+
 // Create a named list
 SEXP createList(const std::vector<std::string>& names, Protect* pProtect);
 
@@ -297,6 +300,17 @@ public:
 
 private:
    SEXP sexp_;
+};
+
+class SEXPPreserver : boost::noncopyable
+{
+public:
+   SEXPPreserver() {}
+   ~SEXPPreserver();
+   SEXP add(SEXP dataSEXP);
+   
+private:
+   std::vector<SEXP> preservedSEXPs_;
 };
 
 class ListBuilder : boost::noncopyable

@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -404,6 +405,18 @@ public class DocumentOutlineWidget extends Composite
       if (node.isNamespace())
          return false;
       
+      // don't show R functions or R sections in non-R files
+      TextFileType fileType = target_.getDocDisplay().getFileType();
+      if (!fileType.isR())
+      {
+         if (node.isFunction())
+            return false;
+         
+         if (node.isSection() && !node.isMarkdownHeader())
+            return false;
+      }
+      
+      // Filter out anonymous functions.
       // TODO: Annotate scope tree in such a way that this isn't necessary
       if (node.getLabel() != null && node.getLabel().startsWith("<function>"))
          return false;

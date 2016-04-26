@@ -15,14 +15,14 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
-import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -42,7 +42,6 @@ public class ConsoleError extends Composite
    public interface Observer
    {
       void onErrorBoxResize();
-      void showSourceForFrame(ErrorFrame frame);
       void runCommandWithDebug(String command);
    }
 
@@ -59,34 +58,47 @@ public class ConsoleError extends Composite
       errorMessage.setText(err.getErrorMessage().trim());
       errorMessage.addStyleName(errorClass);
       
-      ClickHandler showHideTraceback = new ClickHandler()
-      {         
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            setTracebackVisible(!showingTraceback_);
-            observer_.onErrorBoxResize();
-         }
-      };
-      
-      ClickHandler rerunWithDebug = new ClickHandler()
+      EventListener showHideTraceback = new EventListener()
       {
          @Override
-         public void onClick(ClickEvent event)
+         public void onBrowserEvent(Event event)
          {
-            observer_.runCommandWithDebug(command_);
+            if (DOM.eventGetType(event) == Event.ONCLICK)
+            {
+               setTracebackVisible(!showingTraceback_);
+               observer_.onErrorBoxResize();
+            }
          }
       };
       
-      showTracebackText.addClickHandler(showHideTraceback);
-      showTracebackImage.addClickHandler(showHideTraceback);
-      rerunText.addClickHandler(rerunWithDebug);
-      rerunImage.addClickHandler(rerunWithDebug);
+      EventListener rerunWithDebug = new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONCLICK)
+            {
+               observer_.onErrorBoxResize();
+               observer_.runCommandWithDebug(command_);
+            }
+         }
+      };
+      
+      DOM.sinkEvents(showTracebackText.getElement(), Event.ONCLICK);
+      DOM.setEventListener(showTracebackText.getElement(), showHideTraceback);
+      DOM.sinkEvents(showTracebackImage.getElement(), Event.ONCLICK);
+      DOM.setEventListener(showTracebackImage.getElement(), showHideTraceback);
+      rerunText.setVisible(command_ != null);
+      rerunImage.setVisible(command_ != null);
+      DOM.sinkEvents(rerunText.getElement(), Event.ONCLICK);
+      DOM.setEventListener(rerunText.getElement(), rerunWithDebug);
+      DOM.sinkEvents(rerunImage.getElement(), Event.ONCLICK);
+      DOM.setEventListener(rerunImage.getElement(), rerunWithDebug);
       
       for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
       {
          ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1, 
-               err.getErrorFrames().get(i), observer_);
+               err.getErrorFrames().get(i));
          framePanel.add(frame);
       }
    }

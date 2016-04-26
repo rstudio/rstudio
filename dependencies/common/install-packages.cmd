@@ -9,7 +9,8 @@ set "PATH=C:\Program Files (x86)\Git\bin;%PATH%"
 
 set PATH=%PATH%;%CD%\tools
 
-call:install rsconnect master
+call:install rsconnect master --no-build-vignettes
+call:install rmarkdown master --no-build-vignettes
 
 call:install profvis master --no-build-vignettes
 

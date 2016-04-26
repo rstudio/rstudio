@@ -76,6 +76,32 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    eval(parse(text=code), envir=globalenv())
 })
 
+# attempts to restore the global environment from a file
+# on success, returns an empty string; on failure, returns
+# the error message
+.rs.addFunction("restoreGlobalEnvFromFile", function(path)
+{
+   status <- try(load(path, envir = .GlobalEnv), silent = TRUE)
+   if (!inherits(status, "try-error"))
+      return("")
+   
+   # older versions of R don't provide a 'condition' attribute
+   # for 'try()' errors
+   condition <- attr(status, "condition")
+   if (is.null(condition)) {
+      if (is.character(status))
+         return(paste(c(status), collapse = "\n"))
+      else
+         return("Unknown Error")
+   }
+   
+   # has condition, but no message? should not happen
+   if (!"message" %in% names(condition))
+      return("Unknown Error")
+   
+   paste(condition$message, collapse = "\n")
+})
+
 # save current state of options() to file
 .rs.addFunction( "saveOptions", function(filename)
 {
@@ -148,9 +174,13 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 # save an environment to a file
 .rs.addFunction( "saveEnvironment", function(env, filename)
 {
-   save(list = ls(envir = env, all.names = TRUE),
-        file = filename,
-        envir = env)
+   # suppress warnings emitted here, as they are not actionable
+   # by the user (and seem to be harmless)
+   suppressWarnings(
+      save(list = ls(envir = env, all.names = TRUE),
+           file = filename,
+           envir = env)
+   )
    
    invisible (NULL)
 })
@@ -174,7 +204,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addGlobalFunction( "RStudioGD", function()
 {
-   .Call(.rs.routines$rs_createGD)
+   .Call("rs_createGD")
 })
 
 # set our graphics device as the default and cause it to be created/set
@@ -216,6 +246,22 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    class(plot) <- "recordedplot"
    
    save(plot, file=filename)
+})
+
+.rs.addFunction("GEplayDisplayList", function()
+{
+   tryCatch(
+      .Call("rs_GEplayDisplayList"),
+      error = function(e) warning(e)
+   )
+})
+
+.rs.addFunction("GEcopyDisplayList", function(fromDevice)
+{
+   tryCatch(
+      .Call("rs_GEcopyDisplayList", fromDevice),
+      error = function(e) warning(e)
+   )
 })
 
 # record an object to a file
@@ -288,7 +334,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 # generate a uuid
 .rs.addFunction( "createUUID", function()
 {
-  .Call(.rs.routines$rs_createUUID)
+  .Call("rs_createUUID")
 })
 
 # check the current R architecture
@@ -306,7 +352,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       else
          fileTitle <- header[[i]]
 
-      .Call(.rs.routines$rs_showFile, fileTitle, files[[i]], delete.file)
+      .Call("rs_showFile", fileTitle, files[[i]], delete.file)
    }
 })
 
@@ -736,7 +782,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addFunction("fromJSON", function(string)
 {
-   .Call(.rs.routines$rs_fromJSON, string)
+   .Call("rs_fromJSON", string)
 })
 
 .rs.addFunction("stringBuilder", function()
@@ -790,10 +836,58 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 .rs.addFunction("withChangedExtension", function(path, ext)
 {
-   paste(tools::file_path_sans_ext(path), ext, sep = ".")
+   ext <- sub("^\\.+", "", ext)
+   if (.rs.endsWith(path, ".nb.html"))
+      paste(substring(path, 1, nchar(path) - 8), ext, sep = ".")
+   else if (.rs.endsWith(path, ".tar.gz"))
+      paste(substring(path, 1, nchar(path) - 7), ext, sep = ".")
+   else
+      paste(tools::file_path_sans_ext(path), ext, sep = ".")
 })
 
 .rs.addFunction("dirExists", function(path)
 {
    utils::file_test('-d', path)
+})
+
+.rs.addFunction("ensureDirectory", function(path)
+{
+   if (file.exists(path)) {
+      if (!utils::file_test("-d", path))
+         stop("file at path '", path, "' exists but is not a directory")
+      return(TRUE)
+   }
+   
+   success <- dir.create(path, recursive = TRUE)
+   if (!success)
+      stop("failed to create directory at path '", path, "'")
+   
+   TRUE
+})
+
+# adapted from merge_lists in the rmarkdown package
+.rs.addFunction("mergeLists", function(baseList, overlayList, recursive = TRUE) {
+  if (length(baseList) == 0)
+    overlayList
+  else if (length(overlayList) == 0)
+    baseList
+  else {
+    mergedList <- baseList
+    for (name in names(overlayList)) {
+      base <- baseList[[name]]
+      overlay <- overlayList[[name]]
+      if (is.list(base) && is.list(overlay) && recursive)
+        mergedList[[name]] <- merge_lists(base, overlay)
+      else {
+        mergedList[[name]] <- NULL
+        mergedList <- append(mergedList,
+                              overlayList[which(names(overlayList) %in% name)])
+      }
+    }
+    mergedList
+  }
+})
+
+.rs.addFunction("nBytes", function(x) {
+   nchar(x, type = "bytes")
 })

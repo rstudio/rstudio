@@ -55,9 +55,13 @@ FilePath contentUrlPath()
 std::string buildContentUrl(const std::string& title,
                             const std::string& contentFile)
 {
+   // sanitize and encode title
+   std::string encodedTitle =
+            http::util::urlEncode(string_utils::htmlEscape(title), true);
+
    // calculate and return content url
    std::string url = std::string("content") +
-                     "?title=" + http::util::urlEncode(title, true) +
+                     "?title=" + encodedTitle +
                      "&file=" + http::util::urlEncode(contentFile, true);
    return url;
 }

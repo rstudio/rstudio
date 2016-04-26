@@ -89,7 +89,19 @@ void cleanUnusedCaches()
       error = notebookIdToPath(parts[1], nbCtxId, &path);
       if (error)
       {
-         LOG_ERROR(error);
+         if (error.code() == boost::system::errc::no_such_file_or_directory)
+         {
+            // we have no idea what notebook this cache is for, so it's 
+            // unusable; delete it
+            error = cache.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
+         else 
+         {
+            LOG_ERROR(error);
+         }
+
          continue;
       }
 
@@ -112,7 +124,6 @@ void cleanUnusedCaches()
       {
          // the cache is old and the document hasn't been opened in a while --
          // remove it.
-         continue;
          error = cache.remove();
          if (error)
             LOG_ERROR(error);
@@ -248,20 +259,6 @@ FilePath unsavedNotebookCache()
    return module_context::sessionScratchPath().childPath("unsaved-notebooks");
 }
 
-SEXP rs_populateNotebookCache(SEXP fileSEXP)
-{
-   std::string file = r::sexp::safeAsString(fileSEXP);
-   FilePath cacheFolder = 
-      chunkCacheFolder(file, "", notebookCtxId());
-   Error error = parseRnb(module_context::resolveAliasedPath(file), 
-                          cacheFolder);
-   if (error) 
-      LOG_ERROR(error);
-
-   r::sexp::Protect rProtect;
-   return r::sexp::create(cacheFolder.absolutePath(), &rProtect);
-}
-
 SEXP rs_chunkCacheFolder(SEXP fileSEXP)
 {
    std::string file = r::sexp::safeAsString(fileSEXP);
@@ -320,7 +317,6 @@ Error initCache()
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
 
-   RS_REGISTER_CALL_METHOD(rs_populateNotebookCache, 1);
    RS_REGISTER_CALL_METHOD(rs_chunkCacheFolder, 1);
 
    module_context::scheduleDelayedWork(boost::posix_time::seconds(30),

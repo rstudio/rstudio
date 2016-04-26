@@ -44,6 +44,10 @@
 #define kChunkUrl          "url"
 #define kChunkId           "chunk_id"
 #define kChunkDocId        "doc_id"
+#define kRequestId         "request_id"
+
+#define MAX_ORDINAL        16777215
+#define OUTPUT_THRESHOLD   25
 
 using namespace rstudio::core;
 
@@ -67,6 +71,8 @@ unsigned chunkOutputType(const FilePath& outputPath)
       outputType = kChunkOutputPlot;
    else if (outputPath.extensionLowerCase() == ".html")
       outputType = kChunkOutputHtml;
+   else if (outputPath.extensionLowerCase() == ".error")
+      outputType = kChunkOutputError;
    return outputType;
 }
 
@@ -80,6 +86,8 @@ std::string chunkOutputExt(unsigned outputType)
          return ".png";
       case kChunkOutputHtml:
          return ".html";
+      case kChunkOutputError:
+         return ".error";
    }
    return "";
 }
@@ -112,6 +120,40 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
       }
       // read next line
       line = text::parseCsvLine(line.second, contents.end());
+   }
+
+   return Success();
+}
+
+Error fillOutputObject(const std::string& docId, const std::string& chunkId,
+      int outputType, const FilePath& path, json::Object* pObj)
+{
+   (*pObj)[kChunkOutputType]  = outputType;
+   if (outputType == kChunkOutputError)
+   {
+      // error outputs can be directly read from the file
+      std::string fileContents;
+      json::Value errorVal;
+      Error error = core::readStringFromFile(path, &fileContents);
+      if (error)
+         return error;
+      if (!json::parse(fileContents, &errorVal))
+         return Error(json::errc::ParseError, ERROR_LOCATION);
+
+     (*pObj)[kChunkOutputValue] = errorVal;
+   } 
+   else if (outputType == kChunkOutputText)
+   {
+      // deserialize console output
+      json::Array consoleOutput;
+      Error error = chunkConsoleContents(path, &consoleOutput);
+      (*pObj)[kChunkOutputValue] = consoleOutput;
+   }
+   else if (outputType == kChunkOutputPlot || outputType == kChunkOutputHtml)
+   {
+      // plot/HTML outputs should be requested by the client, so pass the path
+      (*pObj)[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
+         chunkId + "/" + path.filename();
    }
 
    return Success();
@@ -152,20 +194,17 @@ Error handleChunkOutputRequest(const http::Request& request,
       return Success();
    }
 
-   if (parts[0] == kChunkLibDir)
+   if (parts[0] == kChunkLibDir ||
+       options().programMode() == kSessionProgramModeServer)
    {
-      // if a reference to the chunk library folder, we can reuse the contents
-      // (let the browser cache the file)
+      // in server mode, or if a reference to the chunk library folder, we can
+      // reuse the contents (let the browser cache the file)
       pResponse->setCacheableFile(target, request);
    }
    else
    {
-      // otherwise, use ETag cache (only for server mode, since Qt doesn't
-      // handle ETag caching; see case 4546)
-      if (options().programMode() == kSessionProgramModeServer)
-         pResponse->setCacheableBody(target, request);
-      else
-         pResponse->setBody(target);
+      // no cache necessary in desktop mode
+      pResponse->setFile(target, request);
    }
 
    return Success();
@@ -188,7 +227,9 @@ OutputPair lastChunkOutput(const std::string& docId,
    // check our cache 
    LastChunkOutput::iterator it = s_lastChunkOutputs.find(docId + chunkId);
    if (it != s_lastChunkOutputs.end())
+   {
       return it->second;
+   }
    
    std::string docPath;
    source_database::getPath(docId, &docPath);
@@ -244,8 +285,8 @@ FilePath chunkOutputFile(const std::string& docId,
                          const OutputPair& output)
 {
    return chunkOutputPath(docId, chunkId).complete(
-         (boost::format("%|1$05x|%2%") 
-                     % output.ordinal 
+         (boost::format("%|1$06x|%2%") 
+                     % (output.ordinal % MAX_ORDINAL)
                      % chunkOutputExt(output.outputType)).str());
 }
 
@@ -267,21 +308,26 @@ void enqueueChunkOutput(const std::string& docId,
       const FilePath& path)
 {
    json::Object output;
-   output[kChunkOutputType]  = outputType;
-   output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-      chunkId + "/" + path.filename();
+   Error error = fillOutputObject(docId, chunkId, outputType, path, &output);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    json::Object result;
    result[kChunkId]         = chunkId;
    result[kChunkDocId]      = docId;
    result[kChunkOutputPath] = output;
+   result[kRequestId]       = "";
    ClientEvent event(client_events::kChunkOutput, result);
    module_context::enqueClientEvent(event);
 }
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& nbCtxId)
+      const std::string& chunkId, const std::string& requestId, 
+      const std::string& nbCtxId)
 {
    FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId);
 
@@ -309,21 +355,12 @@ Error enqueueChunkOutput(
          continue;
 
       // format/parse chunk output for client consumption
-      output[kChunkOutputType] = outputType;
-      if (outputType == kChunkOutputText)
-      {
-         json::Array consoleOutput;
-         error = chunkConsoleContents(outputPath, &consoleOutput);
-         output[kChunkOutputValue] = consoleOutput;
-      }
-      else if (outputType == kChunkOutputPlot ||
-               outputType == kChunkOutputHtml)
-      {
-         output[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-            chunkId + "/" + outputPath.filename();
-      }
-
-      outputs.push_back(output);
+      Error error = fillOutputObject(docId, chunkId, outputType, outputPath, 
+            &output);
+      if (error)
+         LOG_ERROR(error);
+      else
+         outputs.push_back(output);
    }
    
    // note that if we find that this chunk has no output we can display, we
@@ -333,6 +370,7 @@ Error enqueueChunkOutput(
    result[kChunkId]      = chunkId;
    result[kChunkDocId]   = docId;
    result[kChunkOutputs] = outputs;
+   result[kRequestId]    = requestId;
    ClientEvent event(client_events::kChunkOutput, result);
    module_context::enqueClientEvent(event);
 
@@ -346,6 +384,13 @@ core::Error cleanChunkOutput(const std::string& docId,
    if (!outputPath.exists())
       return Success();
 
+   // reset counter if we're getting close to the end of our range (rare)
+   OutputPair pair = lastChunkOutput(docId, chunkId);
+   if ((MAX_ORDINAL - pair.ordinal) < OUTPUT_THRESHOLD)
+   {
+      updateLastChunkOutput(docId, chunkId, OutputPair());
+   }
+
    Error error = outputPath.remove();
    if (error)
       return error;
@@ -355,7 +400,6 @@ core::Error cleanChunkOutput(const std::string& docId,
       if (error)
          return error;
    }
-   updateLastChunkOutput(docId, chunkId, OutputPair());
    return Success();
 }
 

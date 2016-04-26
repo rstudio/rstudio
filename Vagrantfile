@@ -77,6 +77,19 @@ Vagrant.configure(2) do |config|
     end
   end
 
+  # define CentOS development box -- similar to primary box, but currently only
+  # operates in standalone mode
+  config.vm.define "centos", autostart: false do |c|
+    c.vm.box = "puphpet/centos65-x64"
+    c.vm.network "forwarded_port", guest: 8787, host: 8787, auto_correct: true
+    c.vm.provision :shell, path: "vagrant/bootstrap-centos.sh", args: 8787
+    c.vm.provision :shell, path: "vagrant/provision-primary.sh"
+    c.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+      vb.cpus = "2"
+    end
+  end
+
   # less generous resources (and a box that supports hyperv) on hyper-v
   config.vm.provider "hyperv" do |hv|
     hv.vm.box = "ericmann/trusty64"

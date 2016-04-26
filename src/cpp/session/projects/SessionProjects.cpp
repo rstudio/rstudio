@@ -231,6 +231,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["package_check_args"] = config.packageCheckArgs;
    configJson["package_roxygenize"] = config.packageRoxygenize;
    configJson["makefile_path"] = config.makefilePath;
+   configJson["website_path"] = config.websitePath;
    configJson["custom_script_path"] = config.customScriptPath;
    configJson["tutorial_path"] = config.tutorialPath;
    return configJson;
@@ -244,7 +245,9 @@ json::Object projectBuildOptionsJson()
       LOG_ERROR(error);
    json::Object buildOptionsJson;
    buildOptionsJson["makefile_args"] = buildOptions.makefileArgs;
-
+   buildOptionsJson["preview_website"] = buildOptions.previewWebsite;
+   buildOptionsJson["live_preview_website"] = buildOptions.livePreviewWebsite;
+   buildOptionsJson["website_output_format"] = buildOptions.websiteOutputFormat;
    json::Object autoRoxJson;
    autoRoxJson["run_on_check"] = buildOptions.autoRoxygenizeForCheck;
    autoRoxJson["run_on_package_builds"] =
@@ -292,6 +295,7 @@ json::Object projectBuildContextJson()
    json::Object contextJson;
    contextJson["roxygen2_installed"] = isMinimumRoxygenInstalled();
    contextJson["devtools_installed"] = isMinimumDevtoolsInstalled();
+   contextJson["website_output_formats"] = websiteOutputFormatsJson();
    return contextJson;
 }
 
@@ -359,6 +363,9 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
    Error error = json::readObject(
        optionsJson,
        "makefile_args", &(pOptions->makefileArgs),
+       "preview_website", &(pOptions->previewWebsite),
+       "live_preview_website", &(pOptions->livePreviewWebsite),
+       "website_output_format", &(pOptions->websiteOutputFormat),
        "auto_roxygenize_options", &autoRoxJson);
    if (error)
       return error;
@@ -427,6 +434,7 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
                     "package_check_args", &(config.packageCheckArgs),
                     "package_roxygenize", &(config.packageRoxygenize),
                     "makefile_path", &(config.makefilePath),
+                    "website_path", &(config.websitePath),
                     "custom_script_path", &(config.customScriptPath),
                     "tutorial_path", &(config.tutorialPath));
    if (error)
@@ -736,6 +744,24 @@ Error initialize()
 ProjectContext& projectContext()
 {
    return s_projectContext;
+}
+
+json::Array websiteOutputFormatsJson()
+{
+   json::Array formatsJson;
+   if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
+   {
+      r::exec::RFunction getFormats(".rs.getAllOutputFormats");
+      getFormats.addParam(string_utils::utf8ToSystem(
+              projectContext().buildTargetPath().absolutePath()));
+      getFormats.addParam(projectContext().defaultEncoding());
+      std::vector<std::string> formats;
+      Error error = getFormats.call(&formats);
+      if (error)
+         LOG_ERROR(error);
+      formatsJson = json::toJsonArray(formats);
+   }
+   return formatsJson;
 }
 
 } // namespace projects

@@ -192,7 +192,9 @@ public:
    template <typename T>
    void addParam(const std::string& name, const T& param)
    {
-      SEXP paramSEXP = sexp::create(param, &rProtect_);
+      r::sexp::Protect protect;
+      SEXP paramSEXP = sexp::create(param, &protect);
+      preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
    }
                         
@@ -228,8 +230,8 @@ private:
    void commonInit(const std::string& functionName);
    
 private:
-   // protect included SEXPs
-   sexp::Protect rProtect_ ;
+   // preserve SEXPs
+   r::sexp::SEXPPreserver preserver_;
    
    // function 
    SEXP functionSEXP_;

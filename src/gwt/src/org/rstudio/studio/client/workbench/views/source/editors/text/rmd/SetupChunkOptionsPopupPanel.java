@@ -68,10 +68,10 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    {
       int row = position_.getRow();
       
-      int max = widget_.getEditor().getSession().getLength();
+      int max = display_.getRowCount();
       for (int i = row; i < max; i++)
       {
-         String line = widget_.getEditor().getSession().getLine(i);
+         String line = display_.getLine(i);
          if (line.equals("```"))
             return i;
       }
@@ -120,10 +120,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    
    private Range findOptsChunk()
    {
-      TokenIterator iterator = TokenIterator.create(
-            widget_.getEditor().getSession(),
-            position_.getRow(),
-            position_.getColumn());
+      TokenIterator iterator = display_.getTokenIterator(position_);
       
       while (true)
       {
@@ -172,15 +169,16 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       Range range = findOptsChunk();
       if (range == null)
       {
-         widget_.getEditor().clearSelection();
-         widget_.getEditor().moveCursorTo(position_.getRow() + 1, 0);
+         display_.clearSelection();
+         display_.setCursorPosition(
+               Position.create(position_.getRow() + 1, 0));
       }
       else
       {
-         widget_.getEditor().getSession().getSelection().setSelectionRange(range);
+         display_.setSelectionRange(range);
       }
       
-      return widget_.getEditor().getSession().getSelection().getRange();
+      return display_.getSelectionRange();
    }
    
    private String joinOptions(Map<String, String> options)
@@ -192,8 +190,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    {
       int chunkStart = position_.getRow();
       int chunkEnd = findEndOfChunk();
-      JsArrayString chunkText =
-            widget_.getEditor().getSession().getLines(chunkStart + 1, chunkEnd - 1);
+      JsArrayString chunkText = display_.getLines(chunkStart + 1, chunkEnd - 1);
       return chunkText.join("\n");
    }
    
@@ -244,7 +241,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
       if (options.isEmpty())
       {
-         widget_.getEditor().insert("");
+         display_.insertCode("");
          return;
       }
       
@@ -253,7 +250,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       {
          String joined = StringUtil.collapse(options, " = ", ", ");
          String code = "knitr::opts_chunk$set(" + joined + ")\n";
-         widget_.getEditor().insert(code);
+         display_.insertCode(code);
          return;
       }
       
@@ -264,7 +261,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
             joinOptions(sorted) +
             "\n)\n";
       
-      widget_.getEditor().insert(code);
+      display_.insertCode(code);
    }
    
    @Override

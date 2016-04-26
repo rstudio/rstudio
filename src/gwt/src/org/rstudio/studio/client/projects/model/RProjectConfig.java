@@ -156,6 +156,7 @@ public class RProjectConfig extends JavaScriptObject
    public static final String BUILD_TYPE_NONE = "None";
    public static final String BUILD_TYPE_PACKAGE = "Package";
    public static final String BUILD_TYPE_MAKEFILE = "Makefile";
+   public static final String BUILD_TYPE_WEBSITE = "Website";
    public static final String BUILD_TYPE_CUSTOM = "Custom";
    
    public native final String getBuildType() /*-{
@@ -290,6 +291,14 @@ public class RProjectConfig extends JavaScriptObject
 
    public native final void setMakefilePath(String makefilePath) /*-{
       this.makefile_path = makefilePath;
+   }-*/;
+   
+   public native final String getWebsitePath() /*-{
+      return this.website_path;
+   }-*/;
+
+   public native final void setWebsitePath(String websitePath) /*-{
+      this.website_path = websitePath;
    }-*/;
    
    public native final String getCustomScriptPath() /*-{

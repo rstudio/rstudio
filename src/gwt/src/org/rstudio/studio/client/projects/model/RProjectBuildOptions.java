@@ -34,6 +34,30 @@ public class RProjectBuildOptions extends JavaScriptObject
    public native final void setMakefileArgs(String makefileArgs) /*-{
       this.makefile_args = makefileArgs;
    }-*/;   
+   
+   public native final boolean getPreviewWebsite() /*-{
+      return this.preview_website;
+   }-*/;
+   
+   public native final void setPreviewWebsite(boolean preview) /*-{
+      this.preview_website = preview;
+   }-*/;
+   
+   public native final boolean getLivePreviewWebsite() /*-{
+      return this.live_preview_website;
+   }-*/;
+
+   public native final void setLivePreviewWebsite(boolean preview) /*-{
+      this.live_preview_website = preview;
+   }-*/;
+   
+   public native final String getWebsiteOutputFormat() /*-{
+      return this.website_output_format;
+   }-*/;
+
+   public native final void setWebsiteOutputFormat(String format) /*-{
+      this.website_output_format = format;
+   }-*/;   
   
    public native final RProjectAutoRoxygenizeOptions getAutoRogyginizeOptions() /*-{
       return this.auto_roxygenize_options;

@@ -874,6 +874,38 @@ SEXP rs_pathInfo(SEXP pathSEXP)
    return R_NilValue;
 }
 
+SEXP rs_readLines(SEXP filePathSEXP)
+{
+   FilePath filePath(r::sexp::asString(filePathSEXP));
+   if (!filePath.exists())
+   {
+      LOG_ERROR(core::fileNotFoundError(ERROR_LOCATION));
+      return R_NilValue;
+   }
+   
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      LOG_ERROR(error);
+   
+   r::sexp::Protect protect;
+   if (contents.empty())
+      return r::sexp::create(contents, &protect);
+   
+   std::vector<std::string> splat = core::algorithm::split(contents, "\n");
+   if (splat[splat.size() - 1].empty())
+      splat.pop_back();
+   
+   for (std::size_t i = 0, n = splat.size(); i < n; ++i)
+   {
+      std::string& rElement = splat[i];
+      if (rElement[rElement.size() - 1] == '\r')
+         rElement.erase(rElement.size() - 1);
+   }
+   
+   return r::sexp::create(splat, &protect);
+}
+
 } // anonymous namespace
 
 bool isMonitoringDirectory(const FilePath& directory)
@@ -974,12 +1006,8 @@ Error initialize()
    // subscribe to events
    events().onClientInit.connect(bind(onClientInit));
 
-   // register path info function
-   R_CallMethodDef pathInfoMethodDef ;
-   pathInfoMethodDef.name = "rs_pathInfo" ;
-   pathInfoMethodDef.fun = (DL_FUNC) rs_pathInfo ;
-   pathInfoMethodDef.numArgs = 1;
-   r::routines::addCallMethod(pathInfoMethodDef);
+   RS_REGISTER_CALL_METHOD(rs_readLines, 1);
+   RS_REGISTER_CALL_METHOD(rs_pathInfo, 1);
 
    // install handlers
    using boost::bind;

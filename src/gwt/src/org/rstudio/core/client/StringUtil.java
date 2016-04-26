@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.Window;
@@ -1051,6 +1052,10 @@ public class StringUtil
    
    public static final native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");
+   }-*/;
+   
+   public static final native JsArrayString split(String string, String delimiter) /*-{
+      return string.split(delimiter);
    }-*/;
    
    public static final HashMap<String, String> COMPLEMENTS =

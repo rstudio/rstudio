@@ -217,11 +217,6 @@ public interface ThemeResources extends ClientBundle
    DataResource handCursor();
    
    ImageResource executeChunk();
-   ImageResource runChunk();
-   ImageResource runPreviousChunksLight();
-   ImageResource runPreviousChunksDark();
-   ImageResource chunkOptionsLight();
-   ImageResource chunkOptionsDark();
    
    ImageResource checkboxOff();
    ImageResource checkboxOn();

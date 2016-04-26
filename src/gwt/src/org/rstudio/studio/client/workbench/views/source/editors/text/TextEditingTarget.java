@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,6 +70,7 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
@@ -87,12 +88,15 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
+import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
@@ -211,6 +215,7 @@ public class TextEditingTarget implements
       void debug_importDump();
       
       void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
+      void setIsNotebookFormat();
       void setFormatOptions(TextFileType fileType,
                             boolean showRmdFormatMenu,
                             boolean canEditFormatOptions,
@@ -392,7 +397,8 @@ public class TextEditingTarget implements
                             DocDisplay docDisplay,
                             UIPrefs prefs, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper)
+                            SourceBuildHelper sourceBuildHelper,
+                            DependencyManager dependencyManager)
    {
       commands_ = commands;
       server_ = server;
@@ -408,6 +414,7 @@ public class TextEditingTarget implements
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
       sourceBuildHelper_ = sourceBuildHelper;
+      dependencyManager_ = dependencyManager;
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
@@ -1214,9 +1221,12 @@ public class TextEditingTarget implements
       roxygenHelper_ = new RoxygenHelper(docDisplay_, view_);
       
       // create notebook and forward resize events
-      notebook_ = new TextEditingTargetNotebook(this, view_, docDisplay_,
-            docUpdateSentinel_, document, releaseOnDismiss_);
+      chunks_ = new TextEditingTargetChunks(this);
+      notebook_ = new TextEditingTargetNotebook(this, chunks_, view_, 
+            docDisplay_, dirtyState_, docUpdateSentinel_, document, 
+            releaseOnDismiss_);
       view_.addResizeHandler(notebook_);
+      
       
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -2022,6 +2032,10 @@ public class TextEditingTarget implements
                   docUpdateSentinel_.getPath() != null);
          }
       });
+      
+      // let the notebook know we activated (if necessary)
+      if (notebook_ != null)
+         notebook_.onActivate();
 
       view_.onActivate();
    }
@@ -3564,13 +3578,31 @@ public class TextEditingTarget implements
             }
          }
          
+         boolean isNotebook = isRmdNotebook();
+
          view_.setFormatOptions(fileType_, 
-                                getCustomKnit().length() == 0,
-                                selTemplate != null, // can edit format options
+                                !isNotebook && getCustomKnit().length() == 0,
+                                // can edit format options
+                                !isNotebook && selTemplate != null,
                                 formatList, 
                                 valueList, 
                                 extensionList,
                                 formatUiName);
+
+         // update notebook-specific options
+         if (isNotebook)
+         {
+            // chunk output should always be inline in notebooks
+            String outputType = docUpdateSentinel_.getProperty(
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE);
+            if (outputType != TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE)
+            {
+               docUpdateSentinel_.setProperty(
+                     TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+                     TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE);
+            }
+            view_.setIsNotebookFormat();
+         }
       }
    }
    
@@ -3789,7 +3821,14 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCodeWithoutFocus()
    {
-      codeExecution_.executeSelection(false, false, "profvis::profvis");
+      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            codeExecution_.executeSelection(false, false, "profvis::profvis", true);
+         }
+      });
    }
    
    @Handler
@@ -3922,11 +3961,48 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
+      String sel = null;
+      Range selRange = null;
+      
+      // if currently in a chunk, add a blank line (for padding) and insert 
+      // beneath it
+      Scope currentChunk = docDisplay_.getCurrentChunk();
+      if (currentChunk != null)
+      {
+         // record current selection before manipulating text
+         sel = docDisplay_.getSelectionValue();
+         selRange = docDisplay_.getSelectionRange();
+         
+         docDisplay_.setCursorPosition(currentChunk.getEnd());
+         docDisplay_.insertCode("\n");
+         docDisplay_.moveCursorForward(1);
+      }
+      
       Position pos = moveCursorToNextInsertLocation();
       InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
       if (insertChunkInfo != null)
       {
+         // inject the chunk skeleton
          docDisplay_.insertCode(insertChunkInfo.getValue(), false);
+
+         // if we had text selected, inject it into the chunk
+         if (!StringUtil.isNullOrEmpty(sel))
+         {
+            Position contentPosition = insertChunkInfo.getContentPosition();
+            Position docContentPos = Position.create(
+                  pos.getRow() + contentPosition.getRow(), 
+                  contentPosition.getColumn());
+            Position endPos = Position.create(docContentPos.getRow(), 
+                  docContentPos.getColumn());
+            
+            // move over newline if selected
+            if (sel.endsWith("\n"))
+               endPos.setRow(endPos.getRow() + 1);
+            docDisplay_.replaceRange(
+                  Range.fromPoints(docContentPos, endPos), sel);
+            docDisplay_.replaceRange(selRange, "");
+         }
+               
          Position cursorPosition = insertChunkInfo.getCursorPosition();
          docDisplay_.setCursorPosition(Position.create(
                pos.getRow() + cursorPosition.getRow(),
@@ -4006,7 +4082,13 @@ public class TextEditingTarget implements
    public void executeChunk(Position position)
    {
       docDisplay_.getScopeTree();
-      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), false);
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), 
+            TextEditingTargetNotebook.MODE_SINGLE, false);
+   }
+   
+   public void dequeueChunk(int row)
+   {
+      notebook_.dequeueChunk(row);
    }
    
    @Handler
@@ -4017,7 +4099,8 @@ public class TextEditingTarget implements
       // a Scope with an end.
       docDisplay_.getScopeTree();
       
-      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), false);
+      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), 
+           TextEditingTargetNotebook.MODE_SINGLE, false);
    }
    
    @Handler
@@ -4029,7 +4112,8 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       Scope nextChunk = scopeHelper_.getNextSweaveChunk();
-      executeSweaveChunk(nextChunk, true);
+      executeSweaveChunk(nextChunk, TextEditingTargetNotebook.MODE_SINGLE, 
+            true);
       docDisplay_.setCursorPosition(nextChunk.getBodyStart());
       docDisplay_.ensureCursorVisible();
    }
@@ -4110,8 +4194,19 @@ public class TextEditingTarget implements
       
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+
+      // prepare the status bar
+      if (previousScopes.length > 0)
+      {
+         if (position != null &&
+             position.getRow() > docDisplay_.getDocumentEnd().getRow())
+            statusBar_.showNotebookProgress("Run All");
+         else
+            statusBar_.showNotebookProgress("Run Previous");
+      }
+
       for (Scope scope : previousScopes)
-         executeSweaveChunk(scope, false);
+         executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
    }
    
    @Handler
@@ -4123,7 +4218,8 @@ public class TextEditingTarget implements
          Scope scope = scopes.get(i);
          if (scope.isChunk())
          {
-            executeSweaveChunk(scope, false);
+            executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, 
+                  false);
             return;
          }
       }
@@ -4164,6 +4260,7 @@ public class TextEditingTarget implements
    }
    
    private void executeSweaveChunk(final Scope chunk, 
+                                   final int mode, 
                                    final boolean scrollNearTop)
    {
       if (chunk == null)
@@ -4193,7 +4290,7 @@ public class TextEditingTarget implements
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code, options);
+                  notebook_.executeChunk(chunk, code, options, mode);
                }
                else
                {
@@ -4205,7 +4302,7 @@ public class TextEditingTarget implements
       };
       
       // Rmd allows server-side prep for chunk execution
-      if (fileType_.isRmd())
+      if (fileType_.isRmd() && !docDisplay_.showChunkOutputInline())
       {
          // ensure source is synced with server
          docUpdateSentinel_.withSavedDoc(new Command() {
@@ -4342,7 +4439,14 @@ public class TextEditingTarget implements
    @Handler
    void onProfileCode()
    {
-      codeExecution_.executeSelection(true, true, "profvis::profvis");
+      dependencyManager_.withProfvis("Preparing profiler", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            codeExecution_.executeSelection(true, true, "profvis::profvis", true);
+         }
+      });
    }
   
    private void sourceActiveDocument(final boolean echo)
@@ -4539,7 +4643,9 @@ public class TextEditingTarget implements
                                                          fileType_);
       
       if (extendedType == SourceDocument.XT_RMARKDOWN)
+      {
          renderRmd();
+      }
       else if (fileType_.isRd())
          previewRd();
       else if (fileType_.isRpres())
@@ -4619,6 +4725,12 @@ public class TextEditingTarget implements
    
    void renderRmd(final String paramsFile)
    { 
+      events_.fireEvent(new RmdRenderPendingEvent());
+      
+      final int type = isShinyDoc() ? RmdOutput.TYPE_SHINY:
+                                      isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:
+                                                        RmdOutput.TYPE_STATIC;
+      
       saveThenExecute(null, new Command() {
          @Override
          public void execute()
@@ -4632,12 +4744,21 @@ public class TextEditingTarget implements
                docUpdateSentinel_.getEncoding(),
                paramsFile,
                asTempfile,
-               isShinyDoc(),
+               type,
                false);
          }
       });  
    }
    
+   
+   public boolean isRmdNotebook()
+   {
+       RmdSelectedTemplate selTemplate = getSelectedTemplate();
+       return selTemplate != null &&
+              selTemplate.template.getName() == 
+                                 RmdTemplateData.NOTEBOOK_TEMPLATE;
+   }
+
    private boolean isShinyDoc()
    {
       try
@@ -4937,19 +5058,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onNotebookCollapseAllOutput()
-   {
-      globalDisplay_.showNotYetImplemented();
-   }
-   
-   @Handler
-   void onNotebookExpandAllOutput()
-   {
-      globalDisplay_.showNotYetImplemented();
-   }
-   
-
-   @Handler
    void onSynctexSearch()
    {
       doSynctexSearch(true);
@@ -4983,6 +5091,12 @@ public class TextEditingTarget implements
       int line = selPos.getRow() + 1;
       int column = selPos.getColumn() + 1;
       return SourceLocation.create(file, line, column, fromClick);
+   }
+   
+   @Handler
+   void onQuickAddNext()
+   {
+      docDisplay_.quickAddNext();
    }
 
    @Handler
@@ -5889,6 +6003,11 @@ public class TextEditingTarget implements
       return commandHandlerReg_ != null;
    }
    
+   public StatusBar getStatusBar()
+   {
+      return statusBar_;
+   }
+   
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
    private final UIPrefs prefs_;
@@ -5906,6 +6025,7 @@ public class TextEditingTarget implements
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
    private final SourceBuildHelper sourceBuildHelper_;
+   private final DependencyManager dependencyManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);
    private TextFileType fileType_;
@@ -5928,6 +6048,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;
+   private TextEditingTargetChunks chunks_;
    private BreakpointManager breakpointManager_;
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;

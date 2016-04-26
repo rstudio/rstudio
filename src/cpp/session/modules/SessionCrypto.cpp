@@ -27,6 +27,9 @@
 
 #include <core/system/Crypto.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;

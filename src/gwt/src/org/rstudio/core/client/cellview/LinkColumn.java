@@ -62,7 +62,7 @@ public abstract class LinkColumn<T> extends Column<T, String>
               div.append(ThemeResources.INSTANCE.themeStyles().handCursor());
               if (alwaysUnderline)
                  div.append(" " + styles.linkUnderlined());
-              div.append("\">");
+              div.append("\" title=\"" + value.asString() + "\">");
               
               sb.appendHtmlConstant(div.toString());
               sb.append(value);

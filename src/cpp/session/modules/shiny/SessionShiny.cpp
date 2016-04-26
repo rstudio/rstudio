@@ -22,6 +22,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/YamlUtil.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -391,7 +392,7 @@ ShinyFileType getShinyFileType(const FilePath& filePath,
    static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
    
    // Check for 'runtime: shiny' in a YAML header.
-   std::string yamlHeader = r_utils::extractYamlHeader(contents);
+   std::string yamlHeader = yaml::extractYamlHeader(contents);
    if (boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny))
       return ShinyDocument;
    
@@ -444,7 +445,7 @@ bool isShinyRMarkdownDocument(const FilePath& filePath)
    
    static const boost::regex reRuntimeShiny("runtime:\\s*shiny");
    
-   std::string yamlHeader = r_utils::extractYamlHeader(contents);
+   std::string yamlHeader = yaml::extractYamlHeader(contents);
    return boost::regex_search(yamlHeader.begin(), yamlHeader.end(), reRuntimeShiny);
 }
 

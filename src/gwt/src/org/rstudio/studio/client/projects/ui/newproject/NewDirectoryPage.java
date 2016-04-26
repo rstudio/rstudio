@@ -77,6 +77,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       namePanel.add(dirNameLabel_);
       txtProjectName_ = new TextBox();
       txtProjectName_.setWidth("100%");
+      txtProjectName_.getElement().setAttribute("spellcheck", "false");
       namePanel.add(txtProjectName_);
       panel.add(namePanel);
       addWidget(panel);

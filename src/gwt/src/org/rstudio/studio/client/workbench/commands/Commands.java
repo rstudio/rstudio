@@ -30,6 +30,7 @@ public abstract class
    // Source
    public abstract AppCommand reformatCode();
    public abstract AppCommand newSourceDoc();
+   public abstract AppCommand newRNotebook();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
    public abstract AppCommand newSweaveDoc();
@@ -93,6 +94,7 @@ public abstract class
    public abstract AppCommand vcsFileRevert();
    public abstract AppCommand popoutDoc();
    public abstract AppCommand returnDocToMain();
+   public abstract AppCommand quickAddNext();
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
@@ -129,9 +131,13 @@ public abstract class
    public abstract AppCommand knitWithParameters();
    public abstract AppCommand notebookExpandAllOutput();
    public abstract AppCommand notebookCollapseAllOutput();
+   public abstract AppCommand notebookClearAllOutput();
    public abstract AppCommand renameInScope();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
+   public abstract AppCommand yankBeforeCursor();
+   public abstract AppCommand yankAfterCursor();
+   public abstract AppCommand pasteLastYank();
  
    // Projects
    public abstract AppCommand newProject();

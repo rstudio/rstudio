@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -28,11 +30,15 @@ public class ChunkDefinition extends JavaScriptObject
    public static native final ChunkDefinition create(int row,
                                                  int rowCount,
                                                  boolean visible,
+                                                 int expansionState,
+                                                 RmdChunkOptions options,
                                                  String chunkId) /*-{
       return {
         row: row,
         row_count: rowCount,
         visible: visible,
+        expansion_state: expansionState,
+        options: options,
         chunk_id: chunkId
       };
    }-*/;
@@ -40,7 +46,7 @@ public class ChunkDefinition extends JavaScriptObject
    public final ChunkDefinition withRow(int row)
    {
       return ChunkDefinition.create(row, getRowCount(), getVisible(), 
-            getChunkId());
+            getExpansionState(), getOptions(), getChunkId());
    }
    
    public native final int getRow()  /*-{
@@ -55,19 +61,35 @@ public class ChunkDefinition extends JavaScriptObject
       return this.visible;
    }-*/;   
    
+   public native final int getExpansionState() /*-{
+      return this.expansion_state || 0;
+   }-*/;
+   
    public native final String getChunkId() /*-{
       return this.chunk_id;
    }-*/;
    
+   public native final void setExpansionState(int state) /*-{
+      this.expansion_state = state;
+   }-*/;
+   
+   public native final RmdChunkOptions getOptions() /*-{
+      return this.options || {};
+   }-*/;
+   
+   public native final void setOptions(RmdChunkOptions options) /*-{
+      this.options = options;
+   }-*/;
    
    public final boolean equalTo(ChunkDefinition other)
    {
       return getRow() == other.getRow() &&
              getRowCount() == other.getRowCount() &&
              getVisible() == other.getVisible() &&
-             getChunkId() == other.getChunkId();
+             getChunkId() == other.getChunkId() &&
+             getExpansionState() == other.getExpansionState() &&
+             getOptions().equalTo(other.getOptions());
    }
-   
    
    public final static boolean equalTo(JsArray<ChunkDefinition> a, 
                                        JsArray<ChunkDefinition> b)
@@ -81,6 +103,4 @@ public class ChunkDefinition extends JavaScriptObject
       
       return true;
    }
-   
-   
 }

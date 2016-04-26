@@ -77,7 +77,7 @@ import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
+import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewParams;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
@@ -96,6 +96,7 @@ import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
@@ -137,6 +138,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -1393,10 +1395,10 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_SHINY_APP, params, requestCallback);
    }
    
-   public void getActiveDocumentContextCompleted(GetActiveDocumentContextEvent.Data data,
-                                                 ServerRequestCallback<Void> requestCallback)
+   public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
+                                         ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED, data, requestCallback);
+      sendRequest(RPC_SCOPE, GET_EDITOR_CONTEXT_COMPLETED, data, requestCallback);
    }
    
    public void setSourceDocumentDirty(String docId, 
@@ -3521,9 +3523,13 @@ public class RemoteServer implements Server
    
    @Override
    public void startBuild(String type,
+                          String subType,
                           ServerRequestCallback<Boolean> requestCallback)
    {
-      sendRequest(RPC_SCOPE, START_BUILD, type, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(type));
+      params.set(1, new JSONString(subType));
+      sendRequest(RPC_SCOPE, START_BUILD, params, requestCallback);
    }
 
    @Override
@@ -3537,6 +3543,13 @@ public class RemoteServer implements Server
                               ServerRequestCallback<String> requestCallback)
    {
       sendRequest(RPC_SCOPE, DEVTOOLS_LOAD_ALL_PATH, requestCallback);
+   }
+   
+   @Override
+   public void getBookdownFormats(
+                  ServerRequestCallback<BookdownFormats> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_bookdown_formats", requestCallback);
    }
    
    @Override
@@ -4057,7 +4070,8 @@ public class RemoteServer implements Server
 
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
-                         String paramsFile, boolean asTempfile, boolean asShiny,
+                         String paramsFile, boolean asTempfile, int type,
+                         String existingOutputFile,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4067,7 +4081,8 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(paramsFile)));
       params.set(5, JSONBoolean.getInstance(asTempfile));
-      params.set(6, JSONBoolean.getInstance(asShiny));
+      params.set(6, new JSONNumber(type));
+      params.set(7, new JSONString(StringUtil.notNull(existingOutputFile)));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,
@@ -4081,6 +4096,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, RENDER_RMD_SOURCE, source, requestCallback);
    }
 
+   
+   @Override
+   public void maybeCopyWebsiteAsset(String file,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "maybe_copy_website_asset", file, requestCallback);
+   }
 
    @Override
    public void terminateRenderRmd(boolean normal, 
@@ -4194,18 +4216,33 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setChunkConsole(String docId, String chunkId, String options,
-         boolean replace, ServerRequestCallback<Void> requestCallback)
+   public void setChunkConsole(String docId, String chunkId, int execMode, 
+         String options, int pixelWidth, int charWidth, boolean replace, 
+         ServerRequestCallback<RmdChunkOptions> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
-      params.set(2, new JSONString(options));
-      params.set(3, JSONBoolean.getInstance(replace));
+      params.set(2, new JSONNumber(execMode));
+      params.set(3, new JSONString(options));
+      params.set(4, new JSONNumber(pixelWidth));
+      params.set(5, new JSONNumber(charWidth));
+      params.set(6, JSONBoolean.getInstance(replace));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,
             requestCallback);
+   }
+   
+   @Override
+   public void createNotebookFromCache(String rmdPath,
+                                       String outputPath,
+                                       ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(rmdPath));
+      params.set(1, new JSONString(outputPath));
+      sendRequest(RPC_SCOPE, "create_notebook_from_cache", params, requestCallback);
    }
 
    @Override
@@ -4733,7 +4770,7 @@ public class RemoteServer implements Server
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
    
-   private static final String GET_ACTIVE_DOCUMENT_CONTEXT_COMPLETED = "get_active_document_context_completed";
+   private static final String GET_EDITOR_CONTEXT_COMPLETED = "get_editor_context_completed";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";

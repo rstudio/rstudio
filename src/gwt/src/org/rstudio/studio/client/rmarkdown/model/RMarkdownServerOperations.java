@@ -1,7 +1,7 @@
 /*
  * RMarkdownServerOperations.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -26,11 +27,15 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
             ServerRequestCallback<RMarkdownContext> requestCallback);
        
    void renderRmd(String file, int line, String format, String encoding,
-                  String paramsFile, boolean asTempfile, boolean asShiny,
+                  String paramsFile, boolean asTempfile, int type,
+                  String existingOutputFile,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,
                         ServerRequestCallback<Boolean> requestCallback);
+   
+   void maybeCopyWebsiteAsset(String file,
+                         ServerRequestCallback<Boolean> requestCallback);
    
    void terminateRenderRmd(boolean normal, 
                            ServerRequestCallback<Void> requestCallback);
@@ -57,6 +62,8 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    public String getApplicationURL(String pathName);
    
+   public String getFileUrl(FileSystemItem file);
+   
    void prepareForRmdChunkExecution(String id,
                                     ServerRequestCallback<Void> requestCallback);
 
@@ -67,7 +74,10 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                            String requestId, 
                            ServerRequestCallback<Void> requestCallback);
    
-   void setChunkConsole(String docId, String chunkId, String options, 
+   void setChunkConsole(String docId, String chunkId, int execMode,
+                        String options, int pixelWidth, int characterWidth, 
                         boolean replace,
-                        ServerRequestCallback<Void> requestCallback);
+                        ServerRequestCallback<RmdChunkOptions> requestCallback);
+   
+   void createNotebookFromCache(String rmdPath, String outputPath, ServerRequestCallback<Void> requestCallback);
 }

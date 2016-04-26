@@ -106,6 +106,8 @@ public class FilePathUtils
    {
       if (path.endsWith(".tar.gz"))
          return path.length() - 7;
+      else if (path.endsWith(".nb.html"))
+         return path.length() - 8;
       
       int lastDotIndex = path.lastIndexOf('.');
       if (lastDotIndex == -1 || lastDotIndex < fromIndex)

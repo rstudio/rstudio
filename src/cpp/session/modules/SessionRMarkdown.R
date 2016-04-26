@@ -38,7 +38,7 @@
 {
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
-  .Call(.rs.routines$rs_installPackage,  archive, dirname(pkgDir))
+  .Call("rs_installPackage",  archive, dirname(pkgDir))
 })
 
 .rs.addFunction("getCustomRenderFunction", function(file) {
@@ -72,8 +72,15 @@
         ""
      })
   }
-  else
-    ""
+  else {
+    # return render_site if we are in a website
+    siteGenerator <- tryCatch(rmarkdown::site_generator(file),
+                              error = function(e) NULL)
+    if (!is.null(siteGenerator))
+      "rmarkdown::render_site"
+    else
+      ""
+  }
 })
 
 # given an input file, return the associated output file, and attempt to deduce
@@ -235,4 +242,41 @@
 .rs.addJsonRpcHandler("get_rmd_output_info", function(target) {
   return(.rs.getRmdOutputInfo(target))
 })
+
+.rs.addFunction("inputDirToIndexFile", function(input_dir) {
+   index <- file.path(input_dir, "index.Rmd")
+   if (file.exists(index))
+      index
+   else {
+      index <- file.path(input_dir, "index.md")
+      if (file.exists(index))
+         index
+      else
+         NULL
+   }
+})
+
+.rs.addFunction("getAllOutputFormats", function(input_dir, encoding) {
+   index <- .rs.inputDirToIndexFile(input_dir)
+   if (!is.null(index))
+      rmarkdown:::enumerate_output_formats(input = index,
+                                           envir = parent.frame(),
+                                           encoding = encoding)
+   else
+      character()
+})
+
+.rs.addFunction("isBookdownWebsite", function(input_dir, encoding) {
+   index <- .rs.inputDirToIndexFile(input_dir)
+   if (!is.null(index)) {
+      
+      formats <- rmarkdown:::enumerate_output_formats(input = index,
+                                                      envir = parent.frame(),
+                                                      encoding = encoding)
+      any(grepl("^bookdown", formats))
+   }
+   else
+      FALSE
+})
+
 

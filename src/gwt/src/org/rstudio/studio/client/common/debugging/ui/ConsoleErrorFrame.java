@@ -15,14 +15,20 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
@@ -39,36 +45,50 @@ public class ConsoleErrorFrame extends Composite
    {
    }
 
-   public ConsoleErrorFrame(int number, ErrorFrame frame, 
-                            ConsoleError.Observer observer)
+   public ConsoleErrorFrame(int number, ErrorFrame frame)
    {
       initWidget(uiBinder.createAndBindUi(this));
       
       frame_ = frame;
-      observer_ = observer;
       
       boolean hasSource = !frame.getFileName().isEmpty();
       functionName.setText(frame.getFunctionName() + (hasSource ? " at" : ""));
-      frameNumber.setText((new Integer(number)).toString());
+      frameNumber.setText((new Integer(number)).toString() + ".");
       if (hasSource)
       {
          sourceLink.setText(
                FileSystemItem.getNameFromPath(frame.getFileName()) + 
                "#" + frame.getLineNumber());
-         sourceLink.addClickHandler(new ClickHandler()
-         {            
+         DOM.sinkEvents(sourceLink.getElement(), Event.ONCLICK);
+         DOM.setEventListener(sourceLink.getElement(), new EventListener()
+         {
             @Override
-            public void onClick(ClickEvent event)
+            public void onBrowserEvent(Event event)
             {
-               if (frame_ != null)
+               if (DOM.eventGetType(event) == Event.ONCLICK &&
+                   frame_ != null)
                {
-                  observer_.showSourceForFrame(frame_);
+                  showSourceForFrame(frame_);
                }
+               
             }
          });
       }
    }
 
+   private void showSourceForFrame(ErrorFrame frame)
+   {
+      FileSystemItem sourceFile = FileSystemItem.createFile(
+            frame.getFileName());
+      RStudioGinjector.INSTANCE.getEventBus().fireEvent(
+            new OpenSourceFileEvent(sourceFile,
+                             FilePosition.create(
+                                   frame.getLineNumber(),
+                                   frame.getCharacterNumber()),
+                             FileTypeRegistry.R,
+                             NavigationMethods.HIGHLIGHT_LINE));
+   }
+   
    @UiField
    Label functionName;
    @UiField
@@ -76,6 +96,5 @@ public class ConsoleErrorFrame extends Composite
    @UiField
    Label frameNumber;
 
-   private ConsoleError.Observer observer_;
    private ErrorFrame frame_ = null;
 }

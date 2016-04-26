@@ -27,18 +27,24 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
+import org.rstudio.studio.client.application.events.QuitInitiatedHandler;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.viewfile.ViewFilePanel;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
+import org.rstudio.studio.client.rmarkdown.events.PreviewRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
+import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
@@ -51,16 +57,21 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -69,9 +80,14 @@ import com.google.inject.Singleton;
 public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   RmdRenderCompletedEvent.Handler,
                                   RmdShinyDocStartedEvent.Handler,
+                                  PreviewRmdEvent.Handler,
                                   RenderRmdEvent.Handler,
                                   RenderRmdSourceEvent.Handler,
                                   RestartStatusEvent.Handler,
+                                  WebsiteFileSavedEvent.Handler,
+                                  NotebookRenderFinishedEvent.Handler,
+                                  RmdRenderPendingEvent.Handler,
+                                  QuitInitiatedHandler,
                                   UiPrefsChangedHandler
 {
    public interface Binder
@@ -80,8 +96,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Inject
    public RmdOutput(EventBus eventBus, 
                     Commands commands,
+                    Session session,
                     GlobalDisplay globalDisplay,
                     FileTypeRegistry fileTypeRegistry,
+                    SourceBuildHelper sourceBuildHelper,
+                    WorkbenchContext workbenchContext,
                     Provider<ViewFilePanel> pViewFilePanel,
                     Binder binder,
                     UIPrefs prefs,
@@ -90,19 +109,28 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
+      sourceBuildHelper_ = sourceBuildHelper;
+      workbenchContext_ = workbenchContext;
       pViewFilePanel_ = pViewFilePanel;
       prefs_ = prefs;
       pdfViewer_ = pdfViewer;
       server_ = server;
       events_ = eventBus;
+      session_ = session;
+      commands_ = commands;
       
       eventBus.addHandler(RmdRenderStartedEvent.TYPE, this);
       eventBus.addHandler(RmdRenderCompletedEvent.TYPE, this);
       eventBus.addHandler(RmdShinyDocStartedEvent.TYPE, this);
+      eventBus.addHandler(PreviewRmdEvent.TYPE, this);
       eventBus.addHandler(RenderRmdEvent.TYPE, this);
       eventBus.addHandler(RenderRmdSourceEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
       eventBus.addHandler(UiPrefsChangedEvent.TYPE, this);
+      eventBus.addHandler(WebsiteFileSavedEvent.TYPE, this);
+      eventBus.addHandler(QuitInitiatedEvent.TYPE, this);
+      eventBus.addHandler(RmdRenderPendingEvent.TYPE, this);
+      eventBus.addHandler(NotebookRenderFinishedEvent.TYPE, this);
 
       prefs_.rmdViewerType().addValueChangeHandler(new ValueChangeHandler<Integer>()
       {
@@ -116,6 +144,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       binder.bind(commands, this);
       
       exportRmdOutputClosedCallback();
+   }
+   
+   @Override
+   public void onRmdRenderPending(RmdRenderPendingEvent event)
+   {
+      renderInProgress_ = true;
    }
    
    @Override
@@ -135,6 +169,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    @Override
    public void onRmdRenderCompleted(RmdRenderCompletedEvent event)
    {
+      renderInProgress_ = false;
+      
       // if there's a custom operation to be run when render completes, run
       // that instead
       if (onRenderCompleted_ != null)
@@ -195,20 +231,45 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    }
    
    @Override
+   public void onPreviewRmd(final PreviewRmdEvent event)
+   {
+      RenderRmdEvent renderEvent = new RenderRmdEvent(
+           event.getSourceFile(),
+           1,
+           null,
+           event.getEncoding(),
+           null,
+           false,
+           RmdOutput.TYPE_STATIC,
+           event.getOutputFile());
+      events_.fireEvent(renderEvent);
+   }
+   
+   @Override
    public void onRenderRmd(final RenderRmdEvent event)
    {
+      quitInitiatedAfterLastRender_ = false;
+      
       final Operation renderOperation = new Operation() {
          @Override
          public void execute()
          {
+            renderInProgress_ = true;
             server_.renderRmd(event.getSourceFile(), 
                               event.getSourceLine(),
                               event.getFormat(),
                               event.getEncoding(), 
                               event.getParamsFile(),
                               event.asTempfile(),
-                              event.asShiny(),
-                  new SimpleRequestCallback<Boolean>());
+                              event.getType(),
+                              event.getExistingOutputFile(),
+                  new SimpleRequestCallback<Boolean>() {
+                       @Override 
+                       public void onError(ServerError error)
+                       {
+                          renderInProgress_ = false;
+                       }
+                  });
          }
       };
 
@@ -234,8 +295,132 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    }
    
    @Override
+   public void onNotebookRenderFinished(NotebookRenderFinishedEvent event)
+   {
+      // ignore if no result, no output frame/closed output frame, or frame not
+      // associated with this document
+      if (result_ == null ||
+          outputFrame_ == null || 
+          outputFrame_.getWindowObject() == null ||
+          outputFrame_.getWindowObject().isClosed() ||
+          outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath())
+        return;
+      
+      // redisplay the result
+      displayRenderResult(result_);
+   }
+   
+   @Override
+   public void onWebsiteFileSaved(WebsiteFileSavedEvent event)
+   {
+      // auto reload/rerender on file saves (first apply various 
+      // filters to not auto reload). note that before we even
+      // receive this event we know the file is one that is contained
+      // in the website directory
+      
+      // skip if there is a build in progress
+      if (workbenchContext_.isBuildInProgress())
+         return;
+      
+      // skip if there is a render in progress
+      if (renderInProgress_)
+         return;
+      
+      // skip if there was a quit initiated since the last render
+      if (quitInitiatedAfterLastRender_)
+         return;
+        
+      // is there an output frame?
+      if (outputFrame_ == null || outputFrame_.getWindowObject() == null)
+         return;
+      
+      // is it showing a page from the current site?
+      String websiteDir = session_.getSessionInfo().getBuildTargetDir();
+      final RmdPreviewParams params = outputFrame_.getPreviewParams();
+      if (!params.getTargetFile().startsWith(websiteDir))
+         return;
+            
+      // is the changed file one that should always produce a rebuild?
+      FileSystemItem file = event.getFileSystemItem();
+      TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
+      String typeId = fileType.getTypeId();
+      if (fileType.isR() ||
+          typeId.equals(FileTypeRegistry.HTML.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.YAML.getTypeId()) ||
+          typeId.equals(FileTypeRegistry.JSON.getTypeId()))
+      {
+         reRenderPreview();
+      }
+      
+      // is the changed file a markdown document
+      else if (fileType.isMarkdown())
+      {
+         // included Rmd files always produce a rebuild of the current file
+         if (file.getStem().startsWith("_"))
+            reRenderPreview();
+         
+         // files in subdirectories are also includes so re-render them also
+         if (!file.getParentPathString().equals(websiteDir))
+            reRenderPreview();
+         
+         // ...otherwise leave it alone (requires a knit)
+      }
+      
+      // see if this should result in a copy + refresh
+      else
+      {
+         server_.maybeCopyWebsiteAsset(file.getPath(), 
+               new SimpleRequestCallback<Boolean>() {
+                  @Override
+                  public void onResponseReceived(Boolean copied)
+                  {
+                     if (copied)
+                        outputFrame_.showRmdPreview(params, true);
+                  }
+                }); 
+      } 
+   }
+   
+   private void reRenderPreview()
+   {
+      reRenderPreview(null);
+   }
+   
+   private void reRenderPreview(String targetFile)
+   {
+      if (outputFrame_ == null)
+         return;
+      
+      livePreviewRenderInProgress_ = true;
+      
+      RmdPreviewParams params = outputFrame_.getPreviewParams();
+      if (targetFile == null)
+         targetFile = params.getTargetFile();
+      
+      RenderRmdEvent renderEvent = new RenderRmdEvent(
+            targetFile,
+            1,
+            params.getResult().getFormatName(),
+            params.getResult().getTargetEncoding(),
+            null,
+            false,
+            RmdOutput.TYPE_STATIC,
+            null);
+       events_.fireEvent(renderEvent);
+   }
+   
+   @Override
+   public void onQuitInitiated(QuitInitiatedEvent event)
+   {
+      quitInitiatedAfterLastRender_ = true;
+   }
+ 
+   
+   @Override
    public void onRenderRmdSource(final RenderRmdSourceEvent event)
    {
+      quitInitiatedAfterLastRender_ = false;
+      
       performRenderOperation(new Operation() {
          @Override
          public void execute()
@@ -288,7 +473,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
-         outputFrame_.showRmdPreview(params);
+         outputFrame_.showRmdPreview(params, true);
       }
       else if (outputFrame_ != null && 
                outputFrame_.getWindowObject() == null &&
@@ -337,7 +522,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
-            null, result.getTargetEncoding(), null, false, true));
+            null, result.getTargetEncoding(), null, false, 
+            RmdOutput.TYPE_SHINY, null));
    }
    
    private void displayRenderResult(final RmdRenderResult result)
@@ -378,28 +564,17 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          // within the browser, so just offer to download the file.
          else
          {
-            globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO, 
-                  "R Markdown Render Completed", 
-                  "R Markdown has finished rendering " + 
-                  result.getTargetFile() + " to " + 
-                  result.getOutputFile() + ".", 
-                  false, 
-                  new ProgressOperation()
-                  {
-                     @Override
-                     public void execute(ProgressIndicator indicator)
-                     {
-                        globalDisplay_.showWordDoc(result.getOutputFile());
-                        indicator.onCompleted();
-                     }
-                  },
-                  null, 
-                  "Download File", 
-                  "OK", 
-                  false);
+            showDownloadPreviewFileDialog(result, new Command() {
+               @Override
+               public void execute()
+               {
+                  globalDisplay_.showWordDoc(result.getOutputFile());  
+               }  
+            });
          }
       }
-      else if (".html".equals(extension))
+      else if (".html".equals(extension) ||
+               NOTEBOOK_EXT.equals(extension))
       {
          displayHTMLRenderResult(result);
       }
@@ -416,8 +591,43 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          if (Desktop.isDesktop())
             Desktop.getFrame().showFile(result.getOutputFile());
          else
-            globalDisplay_.openWindow(result.getOutputUrl());
+         {
+            showDownloadPreviewFileDialog(result, new Command() {
+               @Override
+               public void execute()
+               {
+                  String url = server_.getFileUrl(
+                        FileSystemItem.createFile(result.getOutputFile()));
+                  globalDisplay_.openWindow(url);  
+               }  
+            });
+         }
+           
       }
+   }
+   
+   private void showDownloadPreviewFileDialog(
+         final RmdRenderResult result, final Command onDownload)
+   {
+      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO, 
+            "R Markdown Render Completed", 
+            "R Markdown has finished rendering " + 
+            result.getTargetFile() + " to " + 
+            result.getOutputFile() + ".", 
+            false, 
+            new ProgressOperation()
+            {
+               @Override
+               public void execute(ProgressIndicator indicator)
+               {
+                  onDownload.execute();
+                  indicator.onCompleted();
+               }
+            },
+            null, 
+            "Download File", 
+            "OK", 
+            false);
    }
    
    private void displayHTMLRenderResult(RmdRenderResult result)
@@ -521,11 +731,20 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          params.setAnchor(outputFrame_.getAnchor());
       }
 
-      outputFrame_.showRmdPreview(params);
+      boolean isNotebook = result_ != null &&
+            FileSystemItem.getExtensionFromPath(result_.getOutputFile()) ==
+            NOTEBOOK_EXT;
+
+      // show the preview; activate the window (but not for auto-refresh of 
+      // notebook preview)
+      outputFrame_.showRmdPreview(params, !(isRefresh && isNotebook));
+      
+      // reset live preview state
+      livePreviewRenderInProgress_ = false;
 
       // save the result so we know if the next render is a re-render of the
       // same document
-      result_ = result;
+      result_ = result; 
    }
  
    private final native void exportRmdOutputClosedCallback()/*-{
@@ -595,7 +814,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final PDFViewer pdfViewer_;
    private final Provider<ViewFilePanel> pViewFilePanel_;
    private final RMarkdownServerOperations server_;
+   private final Session session_;
    private final EventBus events_;
+   private final Commands commands_;
+   private final SourceBuildHelper sourceBuildHelper_;
+   private final WorkbenchContext workbenchContext_;
    private boolean restarting_ = false;
 
    // stores the last scroll position of each document we know about: map
@@ -608,8 +831,17 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private RmdShinyDocInfo shinyDoc_;
    private Operation onRenderCompleted_;
    private RmdOutputFrame outputFrame_;
+   private boolean renderInProgress_ = false;
+   private boolean livePreviewRenderInProgress_ = false;
+   private boolean quitInitiatedAfterLastRender_ = false;
+   
+   public final static String NOTEBOOK_EXT = ".nb.html";
+   
+   public final static int TYPE_STATIC   = 0;
+   public final static int TYPE_SHINY    = 1;
+   public final static int TYPE_NOTEBOOK = 2;
    
    public final static int RMD_VIEWER_TYPE_WINDOW = 0;
-   public final static int RMD_VIEWER_TYPE_PANE = 1;
-   public final static int RMD_VIEWER_TYPE_NONE = 2;
+   public final static int RMD_VIEWER_TYPE_PANE   = 1;
+   public final static int RMD_VIEWER_TYPE_NONE   = 2;
 }

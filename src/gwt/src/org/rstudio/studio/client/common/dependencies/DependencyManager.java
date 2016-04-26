@@ -133,11 +133,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
    
    public void withRMarkdown(String userAction, final Command command)
    {
+      withRMarkdown("R Markdown", userAction, command);
+   }
+
+   public void withRMarkdown(String progressCaption, String userAction, 
+         final Command command)
+   {
      withDependencies(   
-        "R Markdown",
+        progressCaption,
         userAction, 
         rmarkdownDependenciesArray(), 
-        false,
+        true, // we want to update to the embedded versoin if needed
         new CommandWithArg<Boolean>()
         {
          @Override
@@ -163,8 +169,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("htmltools", "0.2.4"));
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
-      deps.add(Dependency.cranPackage("knitr", "1.11", true));
-      deps.add(Dependency.cranPackage("rmarkdown", "0.9.2", true));
+      deps.add(Dependency.cranPackage("knitr", "1.12", true));
+      deps.add(Dependency.embeddedPackage("rmarkdown"));
       return deps;
    }
    
@@ -550,7 +556,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
            Dependency.embeddedPackage("profvis")
           
         }, 
-        false,
+        true, // update profvis if needed
         new CommandWithArg<Boolean>()
         {
            @Override

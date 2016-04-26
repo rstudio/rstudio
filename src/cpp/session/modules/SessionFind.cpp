@@ -317,6 +317,10 @@ private:
       if (recordsToProcess < 0)
          recordsToProcess = 0;
 
+      std::string websiteOutputDir = module_context::websiteOutputDir();
+      if (!websiteOutputDir.empty())
+         websiteOutputDir = "/" + websiteOutputDir + "/";
+
       stdOutBuf_.append(data);
       size_t nextLineStart = 0;
       size_t pos = -1;
@@ -341,6 +345,10 @@ private:
             if (file.find("/packrat/lib/") != std::string::npos)
                continue;
             if (file.find("/packrat/src/") != std::string::npos)
+               continue;
+
+            if (!websiteOutputDir.empty() &&
+                file.find(websiteOutputDir) != std::string::npos)
                continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);

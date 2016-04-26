@@ -260,12 +260,24 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    int heightPx,
                                    bool useDevicePixelRatio)
 {
+   double pixelRatio = useDevicePixelRatio ?
+                         r::session::graphics::device::devicePixelRatio() : 1;
+   return savePlotAsImage(filePath, format, widthPx, heightPx, pixelRatio);
+}
+
+
+Error PlotManager::savePlotAsImage(const FilePath& filePath,
+                                   const std::string& format,
+                                   int widthPx,
+                                   int heightPx,
+                                   double pixelRatio)
+{
    if (format == kPngFormat ||
        format == kBmpFormat ||
        format == kJpegFormat ||
        format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, useDevicePixelRatio);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, pixelRatio);
    }
    else if (format == kSvgFormat)
    {
@@ -289,19 +301,15 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         const std::string& bitmapFileType,
                                         int width,
                                         int height,
-                                        bool useDevicePixelRatio)
+                                        double pixelRatio)
 {
    // default res
    int res = 96;
 
-   // adjust for device pixel ratio if necessary
-   if (useDevicePixelRatio)
-   {
-      double pixelRatio = r::session::graphics::device::devicePixelRatio();
-      width = width * pixelRatio;
-      height = height * pixelRatio;
-      res = res * pixelRatio;
-   }
+   // adjust for device pixel ratio
+   width = width * pixelRatio;
+   height = height * pixelRatio;
+   res = res * pixelRatio;
 
    // optional format specific extra params
    std::string extraParams;

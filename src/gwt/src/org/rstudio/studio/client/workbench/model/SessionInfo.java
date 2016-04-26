@@ -272,10 +272,15 @@ public class SessionInfo extends JavaScriptObject
    public final static String BUILD_TOOLS_NONE = "None";
    public final static String BUILD_TOOLS_PACKAGE = "Package";
    public final static String BUILD_TOOLS_MAKEFILE = "Makefile";
+   public final static String BUILD_TOOLS_WEBSITE = "Website";
    public final static String BUILD_TOOLS_CUSTOM = "Custom";
    
    public final native String getBuildToolsType() /*-{
       return this.build_tools_type;
+   }-*/;
+  
+   public final native boolean getBuildToolsBookdownWebsite() /*-{
+      return this.build_tools_bookdown_website;
    }-*/;
    
    public final native String getBuildTargetDir() /*-{

@@ -19,11 +19,14 @@
 #include "NotebookPlots.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookCache.hpp"
+#include "NotebookErrors.hpp"
 
 #include <boost/foreach.hpp>
 
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -55,12 +58,28 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
    return true;
 }
 
+FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
+   int outputType)
+{
+   OutputPair pair = lastChunkOutput(docId, chunkId);
+   pair.ordinal++;
+   pair.outputType = outputType;
+   FilePath target = chunkOutputFile(docId, chunkId, pair);
+   updateLastChunkOutput(docId, chunkId, pair);
+   return target;
+}
+
 } // anonymous namespace
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId):
+      const std::string& chunkId, const std::string& options, int pixelWidth,
+      int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
+   prevWorkingDir_(""),
+   pixelWidth_(pixelWidth),
+   charWidth_(charWidth),
+   prevCharWidth_(0),
    connected_(false)
 {
 }
@@ -112,10 +131,49 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
-   error = beginWidgetCapture(outputPath, 
+   error = beginWidgetCapture(pixelWidth_, outputPath,
          outputPath.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
+
+   // log warnings immediately (unless user's changed the default warning
+   // level)
+   r::sexp::Protect protect;
+   SEXP warnSEXP;
+   error = r::exec::RFunction("getOption", "warn").call(&warnSEXP, &protect);
+   if (!error)
+   {
+      prevWarn_.set(warnSEXP);
+      error = r::options::setOption<int>("warn", 1);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   // reset width
+   prevCharWidth_ = r::options::getOptionWidth();
+   r::options::setOptionWidth(charWidth_);
+
+   // reset working directory to doc path, if it has one
+   std::string docPath;
+   source_database::getPath(docId_, &docPath);
+   if (!docPath.empty())
+   {
+      FilePath targetDir = module_context::resolveAliasedPath(docPath).parent();
+      FilePath currentDir = FilePath::safeCurrentPath(targetDir);
+      if (currentDir != targetDir)
+      {
+         error = FilePath::makeCurrent(targetDir.absolutePath());
+         if (error)
+            LOG_ERROR(error);
+         else
+            prevWorkingDir_ = currentDir.absolutePath();
+      }
+   }
+
+   // begin capturing errors
+   connections_.push_back(events().onErrorOutput.connect(
+         boost::bind(&ChunkExecContext::onError, this, _1)));
+   beginErrorCapture();
 
    // begin capturing console text
    connections_.push_back(module_context::events().onConsolePrompt.connect(
@@ -137,10 +195,7 @@ void ChunkExecContext::onConsolePrompt(const std::string& )
 void ChunkExecContext::onFileOutput(const FilePath& file, 
       const FilePath& metadata, int outputType)
 {
-   OutputPair pair = lastChunkOutput(docId_, chunkId_);
-   pair.ordinal++;
-   pair.outputType = outputType;
-   FilePath target = chunkOutputFile(docId_, chunkId_, pair);
+   FilePath target = getNextOutputFile(docId_, chunkId_, outputType);
    Error error = file.move(target);
    if (error)
    {
@@ -173,7 +228,26 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    }
 
    enqueueChunkOutput(docId_, chunkId_, outputType, target);
-   updateLastChunkOutput(docId_, chunkId_, pair);
+}
+
+void ChunkExecContext::onError(const core::json::Object& err)
+{
+   // write the error to a file 
+   FilePath target = getNextOutputFile(docId_, chunkId_, kChunkOutputError);
+   boost::shared_ptr<std::ostream> pOfs;
+   Error error = target.open_w(&pOfs, true);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   json::write(err, *pOfs);
+   
+   pOfs->flush();
+   pOfs.reset();
+
+   // send to client
+   enqueueChunkOutput(docId_, chunkId_, kChunkOutputError, target);
 }
 
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 
@@ -182,12 +256,19 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    if (output.empty())
       return;
 
+   // determine output filename and ensure it exists
    FilePath outputCsv = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
+   Error error = outputCsv.ensureFile();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    std::vector<std::string> vals; 
    vals.push_back(safe_convert::numberToString(type));
    vals.push_back(output);
-   Error error = core::writeStringToFile(outputCsv, 
+   error = core::writeStringToFile(outputCsv, 
          text::encodeCsvLine(vals) + "\n", 
          string_utils::LineEndingPassthrough, truncate);
    if (error)
@@ -200,6 +281,27 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
 void ChunkExecContext::disconnect()
 {
+   Error error;
+
+   // restore width value
+   r::options::setOptionWidth(prevCharWidth_);
+
+   // restore preserved warning level, if any
+   if (!prevWarn_.isNil())
+   {
+      error = r::options::setOption("warn", prevWarn_.get());
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // restore working directory, if we saved one
+   if (!prevWorkingDir_.empty())
+   {
+      error = FilePath::makeCurrent(prevWorkingDir_);
+      if (error)
+         LOG_ERROR(error);
+   }
+
    // unhook all our event handlers
    BOOST_FOREACH(const boost::signals::connection connection, connections_) 
    {
@@ -209,7 +311,6 @@ void ChunkExecContext::disconnect()
    connected_ = false;
 
    events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
-
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 

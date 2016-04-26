@@ -134,7 +134,7 @@ public class AceEditorNative extends JavaScriptObject {
    public native final boolean isVimInInsertMode() /*-{
       return this.state.cm.state.vim.insertMode;
    }-*/;
-
+   
    public native final void onChange(CommandWithArg<AceDocumentChangeEventNative> command) /*-{
       this.getSession().on("change",
         $entry(function (arg) {

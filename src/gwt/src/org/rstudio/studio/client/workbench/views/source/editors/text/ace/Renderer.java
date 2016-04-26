@@ -125,6 +125,14 @@ public class Renderer extends JavaScriptObject
    public native final void scrollToX(int scrollLeft) /*-{
       this.scrollToX(scrollLeft);
    }-*/;
+   
+   public native final void setAnimatedScroll(boolean animate) /*-{
+      this.setAnimatedScroll(animate);
+   }-*/;
+   
+   public native final boolean getAnimatedScroll() /*-{
+      return this.getAnimatedScroll();
+   }-*/;
 
    public native final void forceImmediateRender() /*-{
       this.$renderChanges(this.CHANGE_FULL);
@@ -155,11 +163,11 @@ public class Renderer extends JavaScriptObject
    }-*/;
    
    public native final void addGutterDecoration(int line, String clazz) /*-{
-      this.addGutterDecoration(line, clazz);
+      this.session.addGutterDecoration(line, clazz);
    }-*/;
    
    public native final void removeGutterDecoration(int line, String clazz) /*-{
-      this.removeGutterDecoration(line, clazz);
+      this.session.removeGutterDecoration(line, clazz);
    }-*/;
    
    public final native void alignCursor(Position position, double ratio) /*-{

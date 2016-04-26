@@ -274,6 +274,9 @@
          cacheVariableName <- options$cacheVariableNames[[resource]]
          cacheUrlName <- options$cacheUrlNames[[resource]]
          downloadResource <- options[[resource]]
+         resourceExtension <- sub("[^\\?]*([.][^.\\?]*)(\\?.*)?$", "\\1", basename(downloadResource), perl = TRUE)
+         if (!(resourceExtension %in% functionInfo$cacheFileExtension))
+            resourceExtension <- functionInfo$cacheFileExtension[[1]]
 
          cacheDataCode <- append(
             cacheDataCode,
@@ -293,7 +296,7 @@
                   cacheVariableName,
                   " <- \"",
                   options$dataName,
-                  functionInfo$cacheFileExtension,
+                  resourceExtension,
                   "\"",
                   sep = "")
             )
@@ -304,7 +307,7 @@
             {
                localFile <- tempfile(
                   tmpdir = dirname(tempdir()),
-                  fileext = functionInfo$cacheFileExtension
+                  fileext = resourceExtension
                )
             }
 
@@ -444,7 +447,7 @@
             paramsPackage = NULL,
             options = options,
             optionTypes = optionTypes,
-            cacheFileExtension = ".xls"
+            cacheFileExtension = c(".xls", ".xlsx")
          ))
       }
    )

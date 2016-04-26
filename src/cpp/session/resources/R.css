@@ -1,7 +1,7 @@
 /*
  * R.css
  *
- * Copyright (C) 2009-11 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,6 +58,7 @@ h6 {
 }
 
 img.toplogo {
+   max-width: 4em;
    vertical-align: middle;
 }
 
@@ -100,3 +101,7 @@ table p {
    margin-bottom: 6px;
 }
 
+table[summary="R argblock"] tr td:first-child {
+   min-width: 24px;
+   padding-right: 12px;
+}

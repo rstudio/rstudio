@@ -172,7 +172,7 @@ public class ViewerPresenter extends BasePresenter
    {
       manageCommands(true);
       display_.bringToFront();
-      if (!event.isRefresh())
+      if (event.getMaximize())
          display_.maximize();
       rmdPreviewParams_ = event.getParams();
       if (Desktop.isDesktop())

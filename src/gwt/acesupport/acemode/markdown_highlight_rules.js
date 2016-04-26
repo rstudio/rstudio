@@ -65,7 +65,7 @@ var escaped = function(ch) {
 function github_embed(tag, prefix) {
     return { // Github style block
         token : "support.function",
-        regex : "^\\s*```" + tag + "\\s*$",
+        regex : "^\\s*```(?:" + "\\{" + tag + "[^\\}]*\\}" + "|" + tag + ")\\s*$",
         push  : prefix + "start"
     };
 }
@@ -96,7 +96,7 @@ var MarkdownHighlightRules = function() {
             regex : "(\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
         }, { // link by url
             token : ["text", "keyword", "text", "markup.underline", "string", "text"],
-            regex : "(\\[)(" +                                        // [
+            regex : "(\\[)(" +                                    // [
                 escaped("]") +                                    // link text
                 ")(\\]\\()"+                                      // ](
                 '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
@@ -130,10 +130,10 @@ var MarkdownHighlightRules = function() {
             next: "fieldblock"
         }, { // h1
             token: "markup.heading.1",
-            regex: "^=+(?=\\s*$)"
+            regex: "^={3,}(?=\\s*$)"
         }, { // h2
             token: "markup.heading.2",
-            regex: "^\\-+(?=\\s*$)"
+            regex: "^\\-{3,}(?=\\s*$)"
         }, {
             token : function(value) {
                 return "markup.heading." + value.length;
@@ -162,14 +162,6 @@ var MarkdownHighlightRules = function() {
         }, { // link by reference
             token : ["text", "keyword", "text", "constant", "text"],
             regex : "(\\[)((?:[[^\\]]*\\]|[^\\[\\]])*)(\\][ ]?(?:\\n[ ]*)?\\[)(.*?)(\\])"
-        }, { // link by url
-            token : ["text", "keyword", "text", "markup.underline", "string", "text"],
-            regex : "(\\[)"+
-                "(\\[[^\\]]*\\]|[^\\[\\]]*)"+
-                "(\\]\\([ \\t]*)"+
-                "(<?(?:(?:[^\\(]*?\\([^\\)]*?\\)\\S*?)|(?:.*?))>?)"+
-                "((?:[ \t]*\"(?:.*?)\"[ \\t]*)?)"+
-                "(\\))"
         }, { // HR *
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\*[ ]?){3,}\\s*$"
@@ -235,7 +227,7 @@ var MarkdownHighlightRules = function() {
         }, { // list
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock-start"
+            next  : "listblock"
         }, { // html comment
             token : "comment",
             regex : "<\\!--",
@@ -272,12 +264,6 @@ var MarkdownHighlightRules = function() {
             defaultToken : "heading"
         }],
 
-        "listblock-start" : [{
-            token : "text",
-            regex : /(?:\[[ x]\])?/,
-            next  : "listblock"
-        }],
-
         "listblock" : [ { // Lists only escape on completely blank lines.
             token : "empty_line",
             regex : "^\\s*$",
@@ -285,7 +271,7 @@ var MarkdownHighlightRules = function() {
         }, { // list
             token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
-            next  : "listblock-start"
+            next  : "listblock"
         }, {
             include : "basic", noEscape: true
         }, { // Github style block

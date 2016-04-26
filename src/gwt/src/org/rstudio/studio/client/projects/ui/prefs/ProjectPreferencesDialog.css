@@ -67,6 +67,10 @@
    color: #494949;
 }
 
+.directorySelector {
+   width: 375px;
+}
+
 .buildToolsAdditionalArguments {
    width: 375px;
    margin-bottom: 12px;
@@ -91,6 +95,20 @@
 
 .buildToolsDevtools {
    margin-bottom: 10px;
+}
+
+.previewWebsite {
+   margin-top: 8px;
+}
+
+.infoLabel {
+   margin-top: 6px;
+   font-style: italic;
+   font-size: 0.9em; 
+}
+
+.websiteOutputFormat {
+   margin-top: 16px;
 }
 
 

@@ -30,7 +30,6 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.SimplePanel;
-
 import com.google.inject.Inject;
 
 public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
@@ -58,6 +57,9 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_MAKEFILE, 
                             new BuildToolsMakefilePanel());
+      
+      buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_WEBSITE, 
+                            new BuildToolsWebsitePanel());
       
       buildToolsPanels_.put(RProjectConfig.BUILD_TYPE_CUSTOM, 
                             new BuildToolsCustomPanel());
@@ -105,7 +107,10 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
          panel.save(options);
      
       // require reload if the build type or roxygen settings changed
-      return !initialConfig_.getBuildType().equals(buildTypeSelect_.getValue());
+      String initialBuildType = initialConfig_.getBuildType();
+      String selectedBuildType = buildTypeSelect_.getValue();
+        
+      return !initialBuildType.equals(selectedBuildType);
    }
    
    
@@ -136,10 +141,12 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
                new String[]{"(" + RProjectConfig.BUILD_TYPE_NONE + ")", 
                              RProjectConfig.BUILD_TYPE_PACKAGE, 
                              RProjectConfig.BUILD_TYPE_MAKEFILE,
+                             RProjectConfig.BUILD_TYPE_WEBSITE,
                              RProjectConfig.BUILD_TYPE_CUSTOM},
                new String[]{RProjectConfig.BUILD_TYPE_NONE, 
                             RProjectConfig.BUILD_TYPE_PACKAGE, 
                             RProjectConfig.BUILD_TYPE_MAKEFILE,
+                            RProjectConfig.BUILD_TYPE_WEBSITE,
                             RProjectConfig.BUILD_TYPE_CUSTOM},
                false,
                true,

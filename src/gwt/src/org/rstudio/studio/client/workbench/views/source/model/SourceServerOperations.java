@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
-import org.rstudio.studio.client.events.GetActiveDocumentContextEvent;
+import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
@@ -228,8 +228,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                               String appDir,
                               ServerRequestCallback<JsArrayString> requestCallback);
    
-   public void getActiveDocumentContextCompleted(GetActiveDocumentContextEvent.Data data,
-                                                 ServerRequestCallback<Void> requestCallback);
+   public void getEditorContextCompleted(GetEditorContextEvent.SelectionData data,
+                                         ServerRequestCallback<Void> requestCallback);
    
    public void setSourceDocumentDirty(String docId, boolean dirty,
          ServerRequestCallback<Void> requestCallback);

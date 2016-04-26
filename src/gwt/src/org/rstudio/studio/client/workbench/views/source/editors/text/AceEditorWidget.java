@@ -44,6 +44,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.Void;
@@ -58,7 +59,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.ExecuteChunksEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -66,7 +66,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -367,10 +366,9 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    @Inject
-   private void initialize(EventBus events, ChunkIconsManager manager)
+   private void initialize(EventBus events)
    {
       events_ = events;
-      chunkIconsManager_ = manager;
    }
    
    public HandlerRegistration addCursorChangedHandler(
@@ -538,11 +536,6 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, AceClickEvent.TYPE);
    }
    
-   public HandlerRegistration addExecuteChunkHandler(ExecuteChunksEvent.Handler handler)
-   {
-      return addHandler(handler, ExecuteChunksEvent.TYPE);
-   }
-   
    public void forceResize()
    {
       editor_.getRenderer().onResize(true);
@@ -591,6 +584,49 @@ public class AceEditorWidget extends Composite
          removeBreakpointMarker(breakpoint);
       }
       breakpoints_.clear();
+   }
+   
+   public void setChunkLineExecState(int start, int end, int state)
+   {
+      for (int i = start; i <= end; i++)
+      {
+         for (int j = 0; j < lineExecState_.size(); j++)
+         {
+            int row = lineExecState_.get(j).getRow();
+            if (row == i)
+            {
+               if (state == ChunkRowExecState.LINE_QUEUED ||
+                   state == ChunkRowExecState.LINE_NONE)
+               {
+                  // we're cleaning up state, or queuing a line that still has
+                  // state -- detach it immediately
+                  lineExecState_.get(j).detach();
+               }
+               else
+               {
+                  lineExecState_.get(j).setState(state);
+               }
+               break;
+            }
+         }
+
+         if (state == ChunkRowExecState.LINE_QUEUED)
+         {
+            // queued state: introduce to the editor
+            final Value<ChunkRowExecState> execState = 
+                  new Value<ChunkRowExecState>(null);
+            execState.setValue(
+                  new ChunkRowExecState(editor_, i, state, new Command()
+                        {
+                           @Override
+                           public void execute()
+                           {
+                              lineExecState_.remove(execState.getValue());
+                           }
+                        }));
+            lineExecState_.add(execState.getValue());
+         }
+      }
    }
    
    public boolean hasBreakpoints()
@@ -1080,13 +1116,13 @@ public class AceEditorWidget extends Composite
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
    private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   
    private ArrayList<AnchoredAceAnnotation> annotations_ =
          new ArrayList<AnchoredAceAnnotation>();
+   private ArrayList<ChunkRowExecState> lineExecState_ = 
+         new ArrayList<ChunkRowExecState>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
-   private ChunkIconsManager chunkIconsManager_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
    
    private static boolean hasEditHandlers_ = false;

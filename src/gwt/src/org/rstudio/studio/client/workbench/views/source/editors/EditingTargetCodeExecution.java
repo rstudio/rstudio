@@ -71,12 +71,14 @@ public class EditingTargetCodeExecution
    {
       executeSelectionMaybeNoFocus(consoleExecuteWhenNotFocused,
             moveCursorAfter,
-            null);
+            null,
+            false);
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
          boolean moveCursorAfter,
-         String functionWrapper)
+         String functionWrapper,
+         boolean onlyUseConsole)
    {  
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
@@ -88,7 +90,7 @@ public class EditingTargetCodeExecution
                Position.create(row, docDisplay_.getLength(row)));
       }
 
-      executeRange(selectionRange, functionWrapper);
+      executeRange(selectionRange, functionWrapper, onlyUseConsole);
       
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
@@ -103,12 +105,13 @@ public class EditingTargetCodeExecution
    {
       executeSelectionMaybeNoFocus(consoleExecuteWhenNotFocused,
             true,
-            null);
+            null,
+            false);
    }
    
    public void executeRange(Range range)
    {
-      executeRange(range, null);
+      executeRange(range, null, false);
    }
    
    public void profileSelection()
@@ -121,12 +124,13 @@ public class EditingTargetCodeExecution
          return;
       }
       
-      executeSelection(false, false, "profvis::profvis");
+      executeSelection(false, false, "profvis::profvis", true);
    }
    
    private void executeSelectionMaybeNoFocus(boolean consoleExecuteWhenNotFocused,
                                              boolean moveCursorAfter,
-                                             String functionWrapper)
+                                             String functionWrapper,
+                                             boolean onlyUseConsole)
    {
       // allow console a chance to execute code if we aren't focused
       if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
@@ -136,10 +140,10 @@ public class EditingTargetCodeExecution
          return;
       }
       
-      executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper);
+      executeSelection(consoleExecuteWhenNotFocused, moveCursorAfter, functionWrapper, false);
    }
    
-   private void executeRange(Range range, String functionWrapper)
+   private void executeRange(Range range, String functionWrapper, boolean onlyUseConsole)
    {
       String code = codeExtractor_.extractCode(docDisplay_, range);
      
@@ -158,7 +162,7 @@ public class EditingTargetCodeExecution
       }
       
       // if we're in a chunk with in-line output, execute it there instead
-      if (docDisplay_.showChunkOutputInline())
+      if (!onlyUseConsole && docDisplay_.showChunkOutputInline())
       {
          Scope scope = docDisplay_.getCurrentChunk(range.getStart());
          if (scope != null)

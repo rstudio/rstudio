@@ -213,6 +213,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          {
             img = resources.presentationIcon();
          }
+         else
+         {
+            // don't advertise if no icon
+            continue;
+         }
 
          // Add an image if we have one
          if (img != null)

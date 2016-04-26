@@ -987,6 +987,14 @@ SEXP create(const std::map<std::string, std::string>& map, Protect* pProtect)
    return listSEXP;
 }
 
+SEXP createRawVector(const std::string& data, Protect* pProtect)
+{
+   SEXP rawSEXP;
+   pProtect->add(rawSEXP = Rf_allocVector(RAWSXP, data.size()));
+   ::memcpy(RAW(rawSEXP), data.c_str(), data.size());
+   return rawSEXP;
+}
+
 SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
 {
    std::size_t n = names.size();
@@ -1065,6 +1073,22 @@ void PreservedSEXP::releaseNow()
       ::R_ReleaseObject(sexp_);
       sexp_ = R_NilValue;
    }
+}
+
+SEXP SEXPPreserver::add(SEXP dataSEXP)
+{
+   if (dataSEXP != R_NilValue)
+   {
+      ::R_PreserveObject(dataSEXP);
+      preservedSEXPs_.push_back(dataSEXP);
+   }
+   return dataSEXP;
+}
+
+SEXPPreserver::~SEXPPreserver()
+{
+   for (std::size_t i = 0, n = preservedSEXPs_.size(); i < n; ++i)
+      ::R_ReleaseObject(preservedSEXPs_[n - i - 1]);
 }
 
 void printValue(SEXP object)

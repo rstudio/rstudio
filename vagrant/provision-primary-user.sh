@@ -3,16 +3,21 @@
 # install dependencies
 export QT_SDK_DIR=/home/vagrant/Qt5.4.0
 cd /rstudio/dependencies/linux
-./install-dependencies-debian
 
-# resiliency (in case the above aborts early)
-./install-dependencies-debian
+LINUX_SYS=debian
+if [ -f /etc/redhat-release ]; then
+    LINUX_SYS=yum
+else
+
+./install-dependencies-$LINUX_SYS
+
+# resiliency
+./install-dependencies-$LINUX_SYS
 
 # run overlay script if present
-if [ -f ./install-overlay-debian ]; then
-    ./install-overlay-debian
+if [ -f ./install-overlay-$LINUX_SYS ]; then
+    ./install-overlay-$LINUX_SYS
 fi 
-
 
 cd /rstudio/vagrant
 

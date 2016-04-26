@@ -1,6 +1,22 @@
 ## v0.99c - Release Notes
 
-### Editor
+### Data Import
+
+* Import dataset from text via readr
+* Import dataset from Excel via readxl
+* Import dataset from SAS, SPSS, and Stata via haven
+* Preview data while importing datasets
+* Explicitly set column types while importing datasets
+* Preview and copy code while importing datasets
+
+### Profiler
+
+* Profiling features based on the [profvis](https://github.com/rstudio/profvis) package
+* Visualize profiling results within the IDE
+* Profile menu enables easy stop/start of profiling or profiling of selected lines.
+* Save and load of previous profiling sessions
+
+### Source Editor
 
 * Enabled auto-pairing of backticks (\`\`) in R documents
 * Fixed regression re: folding of unnamed sections, e.g. '#####'
@@ -11,17 +27,8 @@
 * Autocompletion allows mismatch between '.', '\_' in token
 * Improvements to refactoring utility 'Rename in Scope'
 * Expand selection command learns how to expand to current statement
-
-### Data Import
-
-* Import dataset from text via readr
-* Import dataset from Excel via readxl
-* Import dataset from SAS, SPSS, and Stata via haven
-* Preview data while importing datasets
-* Explicitly set column types while importing datasets
-* Preview and copy code while importing datasets
-* Enable data import preview to be cancelled
-* Enable data import to cache web files
+* Added (as unbound command) Sublime Text style 'Quick Add Next'
+* The various 'yank' commands are now rebindable (Ctrl + Y, Ctrl + K, Ctrl + U)
 
 ### R Markdown
 
@@ -30,35 +37,44 @@
 * Use "Run Document" for custom formats with runtime: shiny
 * Add option to suppress Knit preview entirely
 * Add R Markdown pane to global options dialog
-* Enhance R Markdown preview to work well with bookdown
+* Build tab and preview support for R Markdown websites
+* Various enhancements for authoring with the bookdown package
+* Update pandoc to 1.17.0.3
 
-### C / C++
+### C/C++
 
 * Provide autocompletion of header paths
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
 
-### Profiler
-
-* Add profiler menu and profiling indicators
-* Add start-profiling and stop-profiling commands
-* Add save-profile, load-profile for new rprofvis files
-* Add profile-this-code command to execute code in the profiler
-* Add go-to-sources, profiler-help and publish commands
-
 ### Miscellaneous
 
+* Files pane now has a fixed header row
+* Published plots are larger and responsive to changes in browser size
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
 * Always provide file completions for top-level current directory
 * Prevent wrapping of text in Files pane display
 * Indicate when object details in environment pane have been truncated
 * Improved keyboard navigation in browser file widgets
+* Added option to limit length of lines in console history
+* Improved performance when many lines of code sent to console
+* 'save()' warnings no longer emitted when saving session state
 
 ### Bug Fixes
 
+* Fixed a hang on Windows + 64bit R when errors occurred while resizing Plots pane
+* Data Viewer: fixed a crash that could occur when calling 'View()' on matrix
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
+* R Markdown: fixed highlighting with multiple Markdown links on one line
+* R Markdown: fixed issue where sections did not display in document outline when following empty bulleted list
 * SVN: avoid recursive revert when reverting changes to modified directory properties
+* Autocompletion: fixed errors printed in console when 'devtools::load_all()' active
+* Autocompletion: fixed errors printed in console for functions 'force', 'identity'
+* Viewer: Fixed issue in 'Export -> Copy to Clipboard' when IDE not at default zoom level
+* Fix hang caused by large, heavily-nested S4 objects
 * Fix for 'httpdPort' detection error sometimes seen with R built from source
+* Fixed a hang on Windows with 64-bit R when attempting to load a corrupted workspace
+* Fixed an issue where non-interactive addins could not be executed in popped out windows
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
 * Improved performance of document tokenization (fix laggy typing)
@@ -86,6 +102,7 @@
 * Fix unlinked directories in Files pane when other users' folders are browseable
 * Prevent lines terminated by \r\n from entering editor (cause of many subtle problems)
 * Fix error message when invoking View() on an object with no columns
+* Fix blank screen on log-in when PAM username capitalization doesn't match system
 
 
 

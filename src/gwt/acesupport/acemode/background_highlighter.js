@@ -40,6 +40,12 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
       }.bind(this);
       this.$doc.on('change', onDocChange);
 
+      var onChangeFold = function(evt)
+      {
+         this.$onChangeFold(evt);
+      }.bind(this);
+      this.$session.on('changeFold', onChangeFold);
+
       // When the session's mode is changed, a new background
       // highlighter will get attached. In that case, we need
       // to detach this (now the old) highlighter.
@@ -51,10 +57,12 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
             this.$clearMarkers();
             this.$doc.off('change', onDocChange);
             this.$session.off('changeMode', onChangeMode);
+            this.$session.off('changeFold', onChangeFold);
          }
          $attached = true;
       }.bind(this);
       this.$session.on('changeMode', onChangeMode);
+
 
       // Initialize other state in the highlighter.
       this.$rowState = new Array(this.$doc.getLength());
@@ -185,6 +193,15 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
                this.$markers[row] = null;
             }
 
+            // Don't show background highlighting if this chunk lies within a fold.
+            var foldLine = this.$session.getFoldLine(row);
+            if (foldLine !== null)
+            {
+               var startRow = foldLine.start.row;
+               if (startRow < row)
+                  continue;
+            }
+
             if (isForeign) {
 
                var isChunkStart = state === STATE_CHUNK_START;
@@ -245,6 +262,12 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
 
          this.$synchronize(range.start.row);
       };
+
+      this.$onChangeFold = function(evt)
+      {
+         var row = evt.data.start.row;
+         this.$synchronize(row);
+      }
 
    }).call(BackgroundHighlighter.prototype);
 

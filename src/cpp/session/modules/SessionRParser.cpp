@@ -1444,16 +1444,27 @@ bool closesArgumentList(const RTokenCursor& cursor,
 void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
                                    ParseStatus& status)
 {
+   
+   // Allow both whitespace styles for certain binary operators, but
+   // ensure that the whitespace around is consistent.
+   if (cursor.contentEquals(L'/') ||
+       cursor.contentEquals(L'*') ||
+       cursor.contentEquals(L'^') ||
+       cursor.contentEquals(L"**"))
+   {
+      bool lhsWhitespace = isWhitespace(cursor.previousToken());
+      bool rhsWhitespace = isWhitespace(cursor.nextToken());
+      
+      if (lhsWhitespace != rhsWhitespace)
+         status.lint().inconsistentWhitespaceAroundOperator(cursor);
+      return;
+   }
+   
    // There should not be whitespace around extraction operators.
    //
    //    x $ foo
    //
    // is bad style.
-   
-   // Allow 'both' styles for division, multiplication
-   if (cursor.contentEquals(L'/') || cursor.contentEquals(L'*'))
-      return;
-   
    bool isExtraction = isExtractionOperator(cursor);
    bool isColon = cursor.contentEquals(L':');
    if (isExtraction || isColon)
@@ -1743,10 +1754,10 @@ bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
          if (!cursor.fwdToMatchingToken())
             return false;
 
-         if (!cursor.moveToNextSignificantToken())
-            break;
-
          if (cursor.isAtEndOfStatement(status.isInParentheticalScope()))
+            break;
+         
+         if (!cursor.moveToNextSignificantToken())
             break;
       }
 

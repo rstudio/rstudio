@@ -99,7 +99,7 @@ public class FileTypeRegistry
    
    public static final RWebContentFileType RNOTEBOOK =
          new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
-                                 ".Rnb", ICONS.iconRnotebook(), true);
+                                 ".nb.html", ICONS.iconRnotebook(), true);
 
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
@@ -297,8 +297,10 @@ public class FileTypeRegistry
       register("*.r", R, icons.iconRdoc());
       register("*.q", R, icons.iconRdoc());
       register("*.s", R, icons.iconRdoc());
-      register(".rprofile", R, icons.iconRprofile());
+      register(".Rprofile", R, icons.iconRprofile());
       register("Rprofile.site", R, icons.iconRprofile());
+      register(".Renviron", SH, icons.iconSh());
+      register("Renviron.site", SH, icons.iconSh());
       register("DESCRIPTION", DCF, icons.iconDCF());
       register("INDEX", TEXT, icons.iconText());
       register("LICENCE", TEXT, icons.iconText());
@@ -328,6 +330,7 @@ public class FileTypeRegistry
       register("*.rhistory", RHISTORY, icons.iconRhistory());
       register("*.rproj", RPROJECT, icons.iconRproject());
       register("*.rnw", SWEAVE, icons.iconRsweave());
+      register("*.rtex", SWEAVE, icons.iconRsweave());
       register("*.snw", SWEAVE, icons.iconRsweave());
       register("*.nw", SWEAVE, icons.iconRsweave());
       register("*.tex", TEX, icons.iconTex());
@@ -345,7 +348,7 @@ public class FileTypeRegistry
       register("*.json", JSON, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
-      register("*.rnb", RNOTEBOOK, icons.iconRnotebook());
+      register("*.nb.html", RNOTEBOOK, icons.iconRnotebook());
       register("*.rpres", RPRESENTATION, icons.iconRpresentation());
       register("*.md", MARKDOWN, icons.iconMarkdown());
       register("*.mdtxt", MARKDOWN, icons.iconMarkdown());

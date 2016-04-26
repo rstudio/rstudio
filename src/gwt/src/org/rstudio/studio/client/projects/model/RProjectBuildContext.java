@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class RProjectBuildContext extends JavaScriptObject
 {
@@ -29,4 +30,18 @@ public class RProjectBuildContext extends JavaScriptObject
    public native final boolean isDevtoolsInstalled() /*-{
       return this.devtools_installed;
    }-*/;
+   
+   public native final JsArrayString getWebsiteOutputFormats() /*-{
+      return this.website_output_formats;
+   }-*/;
+   
+   public final boolean isBookdownSite() 
+   {
+      JsArrayString formats = getWebsiteOutputFormats();
+      for (int i = 0; i<formats.length(); i++)
+         if (formats.get(i).startsWith("bookdown"))
+            return true;
+      
+      return false;
+   }
 }

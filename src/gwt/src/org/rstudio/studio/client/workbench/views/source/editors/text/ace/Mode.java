@@ -33,6 +33,15 @@ public class Mode extends JavaScriptObject
       public native final Position getCursorPosition() /*-{
          return this.position || {row: 0, column: 0};
       }-*/;
+      
+      /**
+       * @return Position of content, relative to the beginning of the value.
+       */
+      public native final Position getContentPosition() /*-{
+         return this.content_position || {row: 0, column: 0};
+      }-*/;
+      
+      
    }
 
    protected Mode()

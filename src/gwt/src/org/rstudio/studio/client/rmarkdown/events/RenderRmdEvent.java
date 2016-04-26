@@ -38,7 +38,8 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
                          String encoding,
                          String paramsFile,
                          boolean asTempfile,
-                         boolean asShiny)
+                         int type,
+                         String existingOutputFile)
    {
       sourceFile_ = sourceFile;
       sourceLine_ = sourceLine;
@@ -46,7 +47,8 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
       encoding_ = encoding;
       paramsFile_ = paramsFile;
       asTempfile_ = asTempfile;
-      asShiny_ = asShiny;
+      type_ = type;
+      existingOutputFile_ = existingOutputFile;
    }
 
    public String getSourceFile()
@@ -79,9 +81,14 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
       return asTempfile_;
    }
     
-   public boolean asShiny()
+   public int getType()
    {
-      return asShiny_;
+      return type_;
+   }
+   
+   public String getExistingOutputFile()
+   {
+      return existingOutputFile_;
    }
     
    @Override
@@ -102,7 +109,8 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
    private String encoding_;
    private String paramsFile_;
    private boolean asTempfile_;
-   private boolean asShiny_;
+   private int type_;
+   private String existingOutputFile_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

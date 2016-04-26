@@ -127,10 +127,54 @@ bool isPackageHeaderFile(const FilePath& filePath)
 
 void onFileChanged(FilePath sourceFilePath)
 {
+   // set package rebuild flag
    if (!s_forcePackageRebuild)
    {
       if (isPackageHeaderFile(sourceFilePath))
          s_forcePackageRebuild = true;
+   }
+}
+
+void onSourceEditorFileSaved(FilePath sourceFilePath)
+{
+   onFileChanged(sourceFilePath);
+
+   // see if this is a website file and fire an event if it is
+   if (module_context::isWebsiteProject())
+   {
+      // see if the option is enabled for live preview
+      projects::RProjectBuildOptions options;
+      Error error = projects::projectContext().readBuildOptions(&options);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      FilePath buildTargetPath = projects::projectContext().buildTargetPath();
+      if (sourceFilePath.isWithin(buildTargetPath))
+      {
+         std::string outputDir = module_context::websiteOutputDir();
+         FilePath outputDirPath = buildTargetPath.childPath(outputDir);
+         if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
+         {
+            // are we live previewing?
+            bool livePreview = options.livePreviewWebsite;
+
+            // force live preview for JS and CSS
+            std::string mimeType = sourceFilePath.mimeContentType();
+            if (mimeType == "text/css" || mimeType == "text/javascript")
+               livePreview = true;
+
+            if (livePreview)
+            {
+               json::Object fileJson =
+                   module_context::createFileSystemItem(sourceFilePath);
+               ClientEvent event(client_events::kWebsiteFileSaved, fileJson);
+               module_context::enqueClientEvent(event);
+            }
+         }
+      }
    }
 }
 
@@ -172,10 +216,11 @@ class Build : boost::noncopyable,
               public boost::enable_shared_from_this<Build>
 {
 public:
-   static boost::shared_ptr<Build> create(const std::string& type)
+   static boost::shared_ptr<Build> create(const std::string& type,
+                                          const std::string& subType)
    {
       boost::shared_ptr<Build> pBuild(new Build());
-      pBuild->start(type);
+      pBuild->start(type, subType);
       return pBuild;
    }
 
@@ -186,7 +231,7 @@ private:
    {
    }
 
-   void start(const std::string& type)
+   void start(const std::string& type, const std::string& subType)
    {
       ClientEvent event(client_events::kBuildStarted);
       module_context::enqueClientEvent(event);
@@ -214,11 +259,12 @@ private:
                                 _1);
 
       // execute build
-      executeBuild(type, cb);
+      executeBuild(type, subType, cb);
    }
 
 
    void executeBuild(const std::string& type,
+                     const std::string& subType,
                      const core::system::ProcessCallbacks& cb)
    {
       // options
@@ -236,6 +282,11 @@ private:
       {
          options.workingDir = buildTargetPath;
          executeMakefileBuild(type, buildTargetPath, options, cb);
+      }
+      else if (config.buildType == r_util::kBuildTypeWebsite)
+      {
+         options.workingDir = buildTargetPath;
+         executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
@@ -754,10 +805,10 @@ private:
                                                      buildCb);
    }
 
-   bool devtoolsExecute(const std::string& command,
-                        const FilePath& packagePath,
-                        core::system::ProcessOptions pkgOptions,
-                        const core::system::ProcessCallbacks& cb)
+   bool rExecute(const std::string& command,
+                 const FilePath& workingDir,
+                 core::system::ProcessOptions pkgOptions,
+                 const core::system::ProcessCallbacks& cb)
    {
       // Find the path to R
       FilePath rProgramPath;
@@ -769,7 +820,7 @@ private:
       }
 
       // execute within the package directory
-      pkgOptions.workingDir = packagePath;
+      pkgOptions.workingDir = workingDir;
 
       // build args
       std::vector<std::string> args;
@@ -785,8 +836,18 @@ private:
                pkgOptions,
                cb);
 
-      usedDevtools_ = true;
+      return true;
+   }
 
+   bool devtoolsExecute(const std::string& command,
+                        const FilePath& packagePath,
+                        core::system::ProcessOptions pkgOptions,
+                        const core::system::ProcessCallbacks& cb)
+   {
+      if (!rExecute(command, packagePath, pkgOptions, cb))
+         return false;
+
+      usedDevtools_ = true;
       return true;
    }
 
@@ -1064,6 +1125,69 @@ private:
                            cb);
    }
 
+
+   void executeWebsiteBuild(const std::string& type,
+                            const std::string& subType,
+                            const FilePath& websitePath,
+                            const core::system::ProcessOptions& options,
+                            const core::system::ProcessCallbacks& cb)
+   {
+      std::string command;
+
+      if (type == "build-all")
+      {
+         if (options_.previewWebsite)
+         {
+            successFunction_ = boost::bind(&Build::showWebsitePreview,
+                                           Build::shared_from_this(),
+                                           websitePath);
+         }
+
+         // if there is a subType then use it to set the output format
+         if (!subType.empty())
+         {
+            projects::projectContext().setWebsiteOutputFormat(subType);
+            options_.websiteOutputFormat = subType;
+         }
+
+         boost::format fmt("rmarkdown::render_site(%1%)");
+         std::string format;
+         if (options_.websiteOutputFormat != "all")
+            format = "output_format = '" + options_.websiteOutputFormat + "'";
+         command = boost::str(fmt % format);
+      }
+      else if (type == "clean-all")
+      {
+         command = "rmarkdown::clean_site()";
+      }
+
+      // execute command
+      enqueCommandString(command);
+      rExecute(command, websitePath, options, cb);
+   }
+
+   void showWebsitePreview(const FilePath& websitePath)
+   {
+      // determine source file
+      std::string output = outputAsText();
+      FilePath sourceFile = websitePath.childPath("index.Rmd");
+      if (!sourceFile.exists())
+         sourceFile = websitePath.childPath("index.md");
+
+      // look for Output created message
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+                                                                     output);
+      if (!outputFile.empty())
+      {
+         json::Object previewRmdJson;
+         using namespace module_context;
+         previewRmdJson["source_file"] = createAliasedPath(sourceFile);
+         previewRmdJson["encoding"] = projects::projectContext().config().encoding;
+         previewRmdJson["output_file"] = createAliasedPath(outputFile);
+         ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
+         enqueClientEvent(event);
+      }
+   }
 
    void terminateWithErrorStatus(int exitStatus)
    {
@@ -1394,8 +1518,8 @@ Error startBuild(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    // get type
-   std::string type;
-   Error error = json::readParam(request.params, 0, &type);
+   std::string type, subType;
+   Error error = json::readParams(request.params, &type, &subType);
    if (error)
       return error;
 
@@ -1406,7 +1530,7 @@ Error startBuild(const json::JsonRpcRequest& request,
    }
    else
    {
-      s_pBuild = Build::create(type);
+      s_pBuild = Build::create(type, subType);
       pResponse->setResult(true);
    }
 
@@ -1630,6 +1754,17 @@ SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
    return R_NilValue;
 }
 
+Error getBookdownFormats(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   json::Object responseJson;
+   responseJson["output_format"] = projects::projectContext().buildOptions().websiteOutputFormat;
+   responseJson["website_output_formats"] = projects::websiteOutputFormatsJson();
+   pResponse->setResult(responseJson);
+   return Success();
+}
+
+
 
 } // anonymous namespace
 
@@ -1726,7 +1861,7 @@ Error initialize()
    session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("", cb);
-   module_context::events().onSourceEditorFileSaved.connect(onFileChanged);
+   module_context::events().onSourceEditorFileSaved.connect(onSourceEditorFileSaved);
 
    // add suspend handler
    addSuspendHandler(module_context::SuspendHandler(boost::bind(onSuspend, _2),
@@ -1742,6 +1877,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_cpp_capabilities", getCppCapabilities))
       (bind(registerRpcMethod, "install_build_tools", installBuildTools))
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
+      (bind(registerRpcMethod, "get_bookdown_formats", getBookdownFormats))
       (bind(sourceModuleRFile, "SessionBuild.R"))
       (bind(source_cpp::initialize));
    return initBlock.execute();

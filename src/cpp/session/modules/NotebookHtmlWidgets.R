@@ -13,7 +13,8 @@
 #
 #
 
-.rs.addFunction("initHtmlCapture", function(outputFolder, libraryFolder)
+.rs.addFunction("initHtmlCapture",
+                function(pixelWidth, outputFolder, libraryFolder)
 {
    assign("print.htmlwidget", function(x, ...) {
       
@@ -36,6 +37,11 @@
                           fileext = ".json")
       
       cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
+
+      # leave some breathing room, then clamp width to [200, 550] and set the
+      # height accordingly (use golden ratio)
+      x$width <- min(max(pixelWidth - 20, 200), 550)
+      x$height <- x$width / 1.618
       
       # save the widget to HTML 
       htmlwidgets::saveWidget(
@@ -44,7 +50,7 @@
          selfcontained = FALSE, 
          libdir = libraryFolder
       )
-      .Call(.rs.routines$rs_recordHtmlWidget, htmlfile, depfile)
+      .Call("rs_recordHtmlWidget", htmlfile, depfile)
       
    }, envir = as.environment("tools:rstudio"))
 })

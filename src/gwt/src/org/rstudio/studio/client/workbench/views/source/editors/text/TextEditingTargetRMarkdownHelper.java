@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Options;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2Prefs;
+import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdParamsReadyEvent;
@@ -143,10 +144,18 @@ public class TextEditingTargetRMarkdownHelper
           final boolean isShinyDoc,
           final CommandWithArg<RMarkdownContext> onReady)
    {
+      withRMarkdownPackage("R Markdown", userAction, isShinyDoc, onReady);
+   }
+
+   public void withRMarkdownPackage(
+          String progressCaption,
+          final String userAction, 
+          final boolean isShinyDoc,
+          final CommandWithArg<RMarkdownContext> onReady)
+   {
       dependencyManager_.withRMarkdown(
-         
+         progressCaption,
          userAction,  
-         
          new Command() {
             
             @Override
@@ -264,7 +273,8 @@ public class TextEditingTargetRMarkdownHelper
                                              sourceDoc.getEncoding(),
                                              null,
                                              false,
-                                             false));
+                                             RmdOutput.TYPE_STATIC,
+                                             null));
    }
    
    public void renderRMarkdown(final String sourceFile, 
@@ -273,11 +283,14 @@ public class TextEditingTargetRMarkdownHelper
                                final String encoding, 
                                final String paramsFile,
                                final boolean asTempfile,
-                               final boolean isShinyDoc,
+                               final int type,
                                final boolean asShiny)
    {
-      withRMarkdownPackage("Rendering R Markdown documents", 
-                           isShinyDoc,
+      withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
+                              "R Notebook" :
+                              "R Markdown", 
+                           "Rendering R Markdown documents", 
+                           type == RmdOutput.TYPE_SHINY,
                            new CommandWithArg<RMarkdownContext>() {
          @Override
          public void execute(RMarkdownContext arg)
@@ -288,7 +301,8 @@ public class TextEditingTargetRMarkdownHelper
                                                    encoding, 
                                                    paramsFile,
                                                    asTempfile,
-                                                   asShiny));
+                                                   type,
+                                                   null));
          }
       });
    }

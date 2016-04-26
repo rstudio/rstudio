@@ -90,8 +90,8 @@ public class TextEditingTargetRenameHelper
                break;
             
             String functionName = clone.currentValue();
-            return renameFunctionArgument(functionName, argName);
-            
+            if (!functionName.equals("function"))
+               return renameFunctionArgument(functionName, argName);
          }
       }
       
@@ -147,7 +147,7 @@ public class TextEditingTargetRenameHelper
                continue;
             
             if (cursor.currentPosition().isAfterOrEqualTo(scope.getEnd()) ||
-                cursor.currentPosition().isAfterOrEqualTo(startPosition))
+                cursor.currentPosition().isAfter(startPosition))
             {
                break;
             }
@@ -291,6 +291,11 @@ public class TextEditingTargetRenameHelper
              !cursor.peekBwd(1).isExtractionOperator())
          {
             Scope candidate = editor_.getScopeAtPosition(cursor.currentPosition());
+            
+            // Skip default arguments for nested functions
+            if (peekState() == STATE_FUNCTION_DEFINITION && scope != candidate)
+               continue;
+            
             if (cursor.peekFwd(2).valueEquals("function") && !candidate.isTopLevel())
                candidate = candidate.getParentScope();
             
@@ -310,6 +315,15 @@ public class TextEditingTargetRenameHelper
             // Skip 'protected' names. These are names that have been overwritten
             // either as assignments, or exist as names to newly defined functions.
             if (isProtectedName(cursor.currentValue()))
+               continue;
+            
+            // Skip variables following an 'extraction' operator.
+            if (cursor.peekBwd(1).isExtractionOperator())
+               continue;
+            
+            // Skip default arguments for nested functions
+            Scope candidate = editor_.getScopeAtPosition(cursor.currentPosition());
+            if (peekState() == STATE_FUNCTION_DEFINITION && scope != candidate)
                continue;
             
             // Don't rename the argument names for named function calls.

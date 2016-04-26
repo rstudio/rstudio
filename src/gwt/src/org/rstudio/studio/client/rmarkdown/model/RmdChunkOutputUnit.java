@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -37,9 +38,14 @@ public class RmdChunkOutputUnit extends JavaScriptObject
       return this.output_val;
    }-*/;
    
+   public final native UnhandledError getUnhandledError() /*-{
+      return this.output_val;
+   }-*/;
+   
    // symmetric with server-side enumeration
-   public final static int TYPE_NONE = 0;
-   public final static int TYPE_TEXT = 1; 
-   public final static int TYPE_PLOT = 2;
-   public final static int TYPE_HTML = 3;
+   public final static int TYPE_NONE  = 0;
+   public final static int TYPE_TEXT  = 1; 
+   public final static int TYPE_PLOT  = 2;
+   public final static int TYPE_HTML  = 3;
+   public final static int TYPE_ERROR = 4;
 }

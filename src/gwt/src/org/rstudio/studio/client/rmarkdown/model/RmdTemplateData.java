@@ -48,7 +48,7 @@ public class RmdTemplateData
             format_options: [ "toc", "toc_depth", "highlight", "fig_width", "fig_height", 
                               "fig_caption", "keep_md" ],
             format_notes: "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)."
-            } 
+            }         
          ],
          template_options: [ 
             {
@@ -306,7 +306,7 @@ public class RmdTemplateData
             },
             {
             option_name: "fig_height",
-            option_ui_name: "Default figure width (in inches)", 
+            option_ui_name: "Default figure height (in inches)",
             option_category: "Figures",
             option_type: "float", 
             option_default: "4.5"
@@ -322,7 +322,7 @@ public class RmdTemplateData
             {
             option_name: "fig_height",
             option_format: "beamer_presentation",
-            option_ui_name: "Default figure width (in inches)", 
+            option_ui_name: "Default figure height (in inches)",
             option_category: "Figures",
             option_type: "float", 
             option_default: "7"
@@ -421,10 +421,24 @@ public class RmdTemplateData
             option_default: "null"
             },
          ]
+         },
+         {
+         template_name: "Notebook", 
+         template_formats: [ 
+            {
+            format_name: "html_notebook",
+            format_ui_name: "Notebook",
+            format_extension: "html",
+            format_options: [],
+            format_notes: ""
+            } 
+         ],
+         template_options: [ ]
          }
    ];
    }-*/;
    
    public final static String DOCUMENT_TEMPLATE = "Document";
    public final static String PRESENTATION_TEMPLATE = "Presentation";
+   public final static String NOTEBOOK_TEMPLATE = "Notebook";
 }

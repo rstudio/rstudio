@@ -28,6 +28,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
+#include <core/Base64.hpp>
 #include <core/Hash.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
@@ -135,18 +136,16 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kRmdParamsReady;
       else if (name == "jump_to_function")
          type = session::client_events::kJumpToFunction;
-      else if (name == "replace_ranges")
-         type = session::client_events::kReplaceRanges;
       else if (name == "send_to_console")
          type = session::client_events::kSendToConsole;
-      else if (name == "get_active_document_context")
-         type = session::client_events::kGetActiveDocumentContext;
       else if (name == "rprof_started")
         type = session::client_events::kRprofStarted;
       else if (name == "rprof_stopped")
         type = session::client_events::kRprofStopped;
       else if (name == "rprof_created")
         type = session::client_events::kRprofCreated;
+      else if (name == "editor_command")
+         type = session::client_events::kEditorCommand;
 
       if (type != -1)
       {
@@ -1261,6 +1260,77 @@ SEXP rs_packageNameForSourceFile(SEXP sourceFilePathSEXP)
    return r::sexp::create(packageNameForSourceFile(sourceFilePath), &protect);
 }
 
+SEXP rs_base64encode(SEXP dataSEXP, SEXP binarySEXP)
+{
+   bool binary = r::sexp::asLogical(binarySEXP);
+   const char* pData;
+   std::size_t n;
+
+   if (TYPEOF(dataSEXP) == STRSXP)
+   {
+      SEXP charSEXP = STRING_ELT(dataSEXP, 0);
+      pData = CHAR(charSEXP);
+      n = r::sexp::length(charSEXP);
+   }
+   else if (TYPEOF(dataSEXP) == RAWSXP)
+   {
+      pData = reinterpret_cast<const char*>(RAW(dataSEXP));
+      n = r::sexp::length(dataSEXP);
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("Unexpected data type");
+      return R_NilValue;
+   }
+
+   std::string output;
+   Error error = base64::encode(pData, n, &output);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect protect;
+   if (binary)
+      return r::sexp::createRawVector(output, &protect);
+   else
+      return r::sexp::create(output, &protect);
+}
+
+SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
+{
+   bool binary = r::sexp::asLogical(binarySEXP);
+   const char* pData;
+   std::size_t n;
+
+   if (TYPEOF(dataSEXP) == STRSXP)
+   {
+      SEXP charSEXP = STRING_ELT(dataSEXP, 0);
+      pData = CHAR(charSEXP);
+      n = r::sexp::length(charSEXP);
+   }
+   else if (TYPEOF(dataSEXP) == RAWSXP)
+   {
+      pData = reinterpret_cast<const char*>(RAW(dataSEXP));
+      n = r::sexp::length(dataSEXP);
+   }
+   else
+   {
+      LOG_ERROR_MESSAGE("Unexpected data type");
+      return R_NilValue;
+   }
+
+   std::string output;
+   Error error = base64::decode(pData, n, &output);
+   if (error)
+      LOG_ERROR(error);
+
+   r::sexp::Protect protect;
+   if (binary)
+      return r::sexp::createRawVector(output, &protect);
+   else
+      return r::sexp::create(output, &protect);
+}
+
+
 json::Object createFileSystemItem(const FileInfo& fileInfo)
 {
    json::Object entry ;
@@ -2006,6 +2076,16 @@ bool isUserFile(const FilePath& filePath)
              return false;
       }
 
+      // if we are in a website project then screen the output dir
+      if (!module_context::websiteOutputDir().empty())
+      {
+         FilePath sitePath = projects::projectContext().buildTargetPath();
+         std::string siteRelative = filePath.relativePath(sitePath);
+         if (boost::algorithm::starts_with(
+                siteRelative, module_context::websiteOutputDir() + "/"))
+            return false;
+      }
+
       // screen the packrat directory
       FilePath projPath = projects::projectContext().directory();
       std::string pkgRelative = filePath.relativePath(projPath);
@@ -2073,9 +2153,18 @@ bool isLoadBalanced()
 #ifdef _WIN32
 bool usingMingwGcc49()
 {
-   // temporarily determine this using a setting (eventually we'll want to check the
-   // R version and SVN revision number)
-   return userSettings().usingMingwGcc49();
+   // return true if the setting is true
+   bool gcc49 = userSettings().usingMingwGcc49();
+   if (gcc49)
+      return true;
+
+   // otherwise check R version
+   r::exec::RFunction func(".rs.builtWithRtoolsGcc493");
+   Error error = func.call(&gcc49);
+   if (error)
+      LOG_ERROR(error);
+   return gcc49;
+
 }
 #else
 bool usingMingwGcc49()
@@ -2225,7 +2314,10 @@ Error initialize()
             "rs_generateShortUuid",
             (DL_FUNC)rs_generateShortUuid, 
             0);
-   
+
+   RS_REGISTER_CALL_METHOD(rs_base64encode, 2);
+   RS_REGISTER_CALL_METHOD(rs_base64decode, 2);
+
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();
 

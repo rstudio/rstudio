@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Algorithm.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -38,6 +39,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+
+#include <session/projects/SessionProjects.hpp>
 
 #include "RMarkdownPresentation.hpp"
 
@@ -56,6 +59,78 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
+
+namespace {
+
+std::string projectBuildDir()
+{
+   return string_utils::utf8ToSystem(
+       projects::projectContext().buildTargetPath().absolutePath());
+}
+
+std::string s_websiteOutputDir;
+
+void initWebsiteOutputDir()
+{
+   if (!module_context::isWebsiteProject())
+      return;
+
+   r::exec::RFunction websiteOutputDir(".rs.websiteOutputDir",
+                                       projectBuildDir());
+   std::string outputDirFullPath;
+   Error error = websiteOutputDir.call(&outputDirFullPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      if (outputDirFullPath != projectBuildDir())
+         s_websiteOutputDir = FilePath(outputDirFullPath).filename();
+      else
+         s_websiteOutputDir = "";
+   }
+}
+
+} // anonymous namespace
+
+namespace module_context {
+
+FilePath extractOutputFileCreated(const FilePath& inputFile,
+                                  const std::string& output)
+{
+   // check each line of the emitted output; if it starts with a token
+   // indicating rendering is complete, store the remainder of the emitted
+   // line as the file we rendered
+   std::vector<std::string> completeMarkers;
+   completeMarkers.push_back("Preview created: ");
+   completeMarkers.push_back("Output created: ");
+   std::string renderLine;
+   std::stringstream outputStream(output);
+   while (std::getline(outputStream, renderLine))
+   {
+      BOOST_FOREACH(const std::string& marker, completeMarkers)
+      {
+         if (boost::algorithm::starts_with(renderLine, marker))
+         {
+            std::string fileName = renderLine.substr(marker.length());
+
+            // trim any whitespace from the end of the filename (on Windows
+            // this includes part of CR-LF)
+            boost::algorithm::trim(fileName);
+
+            // if the path looks absolute, use it as-is; otherwise, presume
+            // it to be in the same directory as the input file
+            return inputFile.parent().complete(fileName);
+         }
+      }
+   }
+
+   return FilePath();
+}
+
+} // namespace module_context
+
 namespace modules {
 namespace rmarkdown {
 
@@ -71,12 +146,71 @@ enum RenderTerminateType
 
 // s_renderOutputs is a rotating buffer that maps an output identifier to a
 // target location on disk, to give the client access to the last few renders
-// that occurred in this session. it's unlikely that the client will ever 
-// request a render output other than the one that was just completed, so 
-// keeping > 2 render paths is conservative.
+// that occurred in this session without exposing disk paths in the URL. it's
+// unlikely that the client will ever request a render output other than the
+// one that was just completed, so keeping > 2 render paths is conservative.
 #define kMaxRenderOutputs 5
-std::string s_renderOutputs[kMaxRenderOutputs];
+std::vector<std::string> s_renderOutputs(kMaxRenderOutputs);
 int s_currentRenderOutput = 0;
+
+FilePath outputCachePath()
+{
+   return module_context::sessionScratchPath().childPath("rmd-outputs");
+}
+
+std::string assignOutputUrl(const std::string& outputFile)
+{
+   std::string outputUrl(kRmdOutput "/");
+   s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
+   s_renderOutputs[s_currentRenderOutput] = outputFile;
+   outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
+   outputUrl.append("/");
+   return outputUrl;
+}
+
+void getOutputFormat(const std::string& path,
+                     const std::string& encoding,
+                     json::Object* pResultJson)
+{
+   // query rmarkdown for the output format
+   json::Object& resultJson = *pResultJson;
+   r::sexp::Protect protect;
+   SEXP sexpOutputFormat;
+   Error error = r::exec::RFunction("rmarkdown:::default_output_format",
+                                    string_utils::utf8ToSystem(path), encoding)
+                                   .call(&sexpOutputFormat, &protect);
+   if (error)
+   {
+      resultJson["format_name"] = "";
+      resultJson["self_contained"] = false;
+   }
+   else
+   {
+      std::string formatName;
+      error = r::sexp::getNamedListElement(sexpOutputFormat, "name",
+                                           &formatName);
+      if (error)
+         LOG_ERROR(error);
+      resultJson["format_name"] = formatName;
+
+      SEXP sexpOptions;
+      bool selfContained = false;
+      error = r::sexp::getNamedListSEXP(sexpOutputFormat, "options",
+                                        &sexpOptions);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         error = r::sexp::getNamedListElement(sexpOptions, "self_contained",
+                                              &selfContained, false);
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      resultJson["self_contained"] = selfContained;
+   }
+}
+
 
 class RenderRmd : public async_r::AsyncRProcess
 {
@@ -88,13 +222,14 @@ public:
                                               const std::string& paramsFile,
                                               bool sourceNavigation,
                                               bool asTempfile,
-                                              bool asShiny)
+                                              bool asShiny,
+                                              std::string existingOutputFile)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
-      pRender->start(format, encoding, paramsFile, asTempfile);
+      pRender->start(format, encoding, paramsFile, asTempfile, existingOutputFile);
       return pRender;
    }
 
@@ -142,7 +277,8 @@ private:
    void start(const std::string& format,
               const std::string& encoding,
               const std::string& paramsFile,
-              bool asTempfile)
+              bool asTempfile,
+              std::string existingOutputFile)
    {
       Error error;
       json::Object dataJson;
@@ -278,10 +414,30 @@ private:
       else
          LOG_ERROR(error);
 
-      // start the async R process with the render command
+      // render unless we were handed an existing output file
       allOutput_.clear();
-      async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
-                                    async_r::R_PROCESS_NO_RDATA);
+      if (existingOutputFile.empty())
+      {
+         async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
+                                       async_r::R_PROCESS_NO_RDATA);
+      }
+      else
+      {
+         // if we are handed an existing output file then this is the build
+         // tab previewing a website. in this case the build tab opened
+         // for the build and forced the viewer pane to a smaller height. as
+         // a result we want to do a forceMaximize to restore the Viewer
+         // pane. Note that these two concerns happen to conflate here but
+         // it's conceivable that there would be other forceMaximize
+         // scenarios or that other types of previews where an output file
+         // was already in hand would NOT want to do a forceMaximize. We're
+         // leaving this coupling for now to minimze the scope of the change
+         // required to allow website previews to restore the viewer pane, we
+         // may want a more intrusive change if/when we discover other
+         // scenarios.
+         outputFile_ = module_context::resolveAliasedPath(existingOutputFile);
+         terminate(true, true);
+      }
    }
 
    void onStdout(const std::string& output)
@@ -349,37 +505,11 @@ private:
 
    void onCompleted(int exitStatus)
    {
-      // check each line of the emitted output; if it starts with a token
-      // indicating rendering is complete, store the remainder of the emitted
-      // line as the file we rendered
-      std::vector<std::string> completeMarkers;
-      completeMarkers.push_back("Preview created: ");
-      completeMarkers.push_back("Output created: ");
-      std::string renderLine;
-      std::stringstream outputStream(allOutput_);
-      while (std::getline(outputStream, renderLine))
-      {
-         bool markerFound = false;
-         BOOST_FOREACH(const std::string& marker, completeMarkers)
-         {
-            if (boost::algorithm::starts_with(renderLine, marker))
-            {
-               std::string fileName = renderLine.substr(marker.length());
-
-               // trim any whitespace from the end of the filename (on Windows
-               // this includes part of CR-LF)
-               boost::algorithm::trim(fileName);
-
-               // if the path looks absolute, use it as-is; otherwise, presume
-               // it to be in the same directory as the input file
-               outputFile_ = targetFile_.parent().complete(fileName);
-               markerFound = true;
-               break;
-            }
-         }
-         if (markerFound)
-            break;
-      }
+      // see if we can determine the output file
+      FilePath outputFile = module_context::extractOutputFileCreated
+                                                   (targetFile_, allOutput_);
+      if (!outputFile.empty())
+         outputFile_ = outputFile;
 
       // the process may be terminated normally by the IDE (e.g. to stop the
       // Shiny server); alternately, a termination is considered normal if
@@ -405,6 +535,11 @@ private:
 
    void terminate(bool succeeded)
    {
+      terminate(succeeded, false);
+   }
+
+   void terminate(bool succeeded, bool forceMaximize)
+   {
       using namespace module_context;
 
       markCompleted();
@@ -423,16 +558,7 @@ private:
       resultJson["output_file"] = outputFile;
       resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors_);
 
-      std::string outputUrl(kRmdOutput "/");
-
-      // assign the result to one of our output slots
-      s_currentRenderOutput = (s_currentRenderOutput + 1) % kMaxRenderOutputs;
-      s_renderOutputs[s_currentRenderOutput] = outputFile;
-      outputUrl.append(boost::lexical_cast<std::string>(s_currentRenderOutput));
-      outputUrl.append("/");
-
-      resultJson["output_url"] = outputUrl;
-
+      resultJson["output_url"] = assignOutputUrl(outputFile);
       resultJson["output_format"] = outputFormat_;
 
       resultJson["is_shiny_document"] = isShiny_;
@@ -448,6 +574,8 @@ private:
       {
          resultJson["rpubs_published"] = false;
       }
+
+      resultJson["force_maximize"] = forceMaximize;
 
       // allow for format specific additions to the result json
       std::string formatName =  outputFormat_["format_name"].get_str();
@@ -478,49 +606,6 @@ private:
             "  Mac OS X: TexLive 2013 (Full) - http://tug.org/mactex/\n"
             "  (NOTE: Download with Safari rather than Chrome _strongly_ recommended)\n\n"
             "  Linux: Use system package manager\n\n");
-      }
-   }
-
-   void getOutputFormat(const std::string& path,
-                        const std::string& encoding,
-                        json::Object* pResultJson)
-   {
-      // query rmarkdown for the output format
-      json::Object& resultJson = *pResultJson;
-      r::sexp::Protect protect;
-      SEXP sexpOutputFormat;
-      Error error = r::exec::RFunction("rmarkdown:::default_output_format",
-                                       string_utils::utf8ToSystem(path), encoding)
-                                      .call(&sexpOutputFormat, &protect);
-      if (error)
-      {
-         resultJson["format_name"] = "";
-         resultJson["self_contained"] = false;
-      }
-      else
-      {
-         std::string formatName;
-         error = r::sexp::getNamedListElement(sexpOutputFormat, "name",
-                                              &formatName);
-         if (error)
-            LOG_ERROR(error);
-         resultJson["format_name"] = formatName;
-
-         SEXP sexpOptions;
-         bool selfContained = false;
-         error = r::sexp::getNamedListSEXP(sexpOutputFormat, "options",
-                                           &sexpOptions);
-         if (error)
-            LOG_ERROR(error);
-         else
-         {
-            error = r::sexp::getNamedListElement(sexpOptions, "self_contained",
-                                                 &selfContained, false);
-            if (error)
-               LOG_ERROR(error);
-         }
-
-         resultJson["self_contained"] = selfContained;
       }
    }
 
@@ -811,6 +896,7 @@ void doRenderRmd(const std::string& file,
                  bool sourceNavigation,
                  bool asTempfile,
                  bool asShiny,
+                 std::string existingOutputFile,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -828,7 +914,8 @@ void doRenderRmd(const std::string& file,
                paramsFile,
                sourceNavigation,
                asTempfile,
-               asShiny);
+               asShiny,
+               existingOutputFile);
       pResponse->setResult(true);
    }
 }
@@ -836,9 +923,9 @@ void doRenderRmd(const std::string& file,
 Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
-   int line = -1;
-   std::string file, format, encoding, paramsFile;
-   bool asTempfile, asShiny = false;
+   int line = -1, type = kRenderTypeStatic;
+   std::string file, format, encoding, paramsFile, existingOutputFile;
+   bool asTempfile = false;
    Error error = json::readParams(request.params,
                                   &file,
                                   &line,
@@ -846,12 +933,51 @@ Error renderRmd(const json::JsonRpcRequest& request,
                                   &encoding,
                                   &paramsFile,
                                   &asTempfile,
-                                  &asShiny);
+                                  &type,
+                                  &existingOutputFile);
    if (error)
       return error;
 
-   doRenderRmd(file, line, format, encoding, paramsFile,
-               true, asTempfile, asShiny, pResponse);
+   if (type == kRenderTypeNotebook)
+   {
+      // if this is a notebook, it's pre-rendered
+      FilePath inputFile = module_context::resolveAliasedPath(file); 
+      FilePath outputFile = inputFile.parent().complete(inputFile.stem() + 
+                                                        ".nb.html");
+
+      // extract the output format
+      json::Object outputFormat;
+
+      // TODO: this should use getOutputFormat(), but we can't read format
+      // defaults yet since the html_notebook type doesn't exist in the
+      // rmarkdown package yet
+      outputFormat["format_name"] = "html_notebook";
+      outputFormat["self_contained"] = true;
+
+      json::Object resultJson;
+      resultJson["succeeded"] = outputFile.exists();
+      resultJson["target_file"] = file;
+      resultJson["target_encoding"] = encoding;
+      resultJson["target_line"] = line;
+      resultJson["output_file"] = module_context::createAliasedPath(outputFile);
+      resultJson["knitr_errors"] = json::Array();
+      resultJson["output_url"] = assignOutputUrl(outputFile.absolutePath());
+      resultJson["output_format"] = outputFormat;
+      resultJson["is_shiny_document"] = false;
+      resultJson["has_shiny_content"] = false;
+      resultJson["rpubs_published"] =
+            !module_context::previousRpubsUploadId(outputFile).empty();
+      resultJson["force_maximize"] = false;
+      ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
+      module_context::enqueClientEvent(event);
+   }
+   else
+   {
+      // not a notebook, do render work
+      doRenderRmd(file, line, format, encoding, paramsFile,
+                  true, asTempfile, type == kRenderTypeShiny, existingOutputFile, 
+                  pResponse);
+   }
 
    return Success();
 }
@@ -871,7 +997,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
       return error;
 
    doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
-               false, false, false, pResponse);
+               false, false, false, "", pResponse);
 
    return Success();
 }
@@ -978,15 +1104,8 @@ void handleRmdOutputRequest(const http::Request& request,
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
       html_preview::addFileSpecificHeaders(filePath, pResponse);
-      if (session::options().programMode() == kSessionProgramModeDesktop)
-      {
-         pResponse->setNoCacheHeaders();
-         pResponse->setFile(filePath, request);
-      }
-      else
-      {
-         pResponse->setCacheableFile(filePath, request);
-      }
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(filePath, request);
    }
 }
 
@@ -1100,6 +1219,94 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
 }
 
 
+Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+
+   // don't copy if we build inline
+   std::string websiteOutputDir = module_context::websiteOutputDir();
+   if (websiteOutputDir.empty())
+   {
+      pResponse->setResult(true);
+      return Success();
+   }
+
+   // get the path relative to the website dir
+   FilePath websiteDir = projects::projectContext().buildTargetPath();
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   std::string relativePath = filePath.relativePath(websiteDir);
+
+   // get the list of copyable site resources
+   std::vector<std::string> copyableResources;
+   r::exec::RFunction func("rmarkdown:::copyable_site_resources");
+   func.addParam("input", string_utils::utf8ToSystem(websiteDir.absolutePath()));
+   func.addParam("encoding", projects::projectContext().config().encoding);
+   error = func.call(&copyableResources);
+   if (error)
+   {
+      LOG_ERROR(error);
+      pResponse->setResult(false);
+      return Success();
+   }
+
+   // get the name to target -- if it's in the root dir it's the filename
+   // otherwise it's the directory name
+   std::string search;
+   if (filePath.parent() == websiteDir)
+      search = filePath.filename();
+   else
+      search = relativePath.substr(0, relativePath.find_first_of('/'));
+
+   // if it's not in the list we don't copy it
+   if (!algorithm::contains(copyableResources, search))
+   {
+       pResponse->setResult(false);
+       return Success();
+   }
+
+   // copy the file (removing it first)
+   FilePath outputDir = FilePath(websiteOutputDir);
+   FilePath outputFile = outputDir.childPath(relativePath);
+   if (outputFile.exists())
+   {
+      error = outputFile.remove();
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setResult(false);
+         return Success();
+      }
+   }
+
+   error = outputFile.parent().ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      pResponse->setResult(false);
+      return Success();
+   }
+
+   error = filePath.copy(outputFile);
+   if (error)
+   {
+      LOG_ERROR(error);
+      pResponse->setResult(false);
+   }
+   else
+   {
+      pResponse->setResult(true);
+   }
+
+   return Success();
+}
+
+
+
+
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1115,6 +1322,23 @@ SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 }
 
 
+void onShutdown(bool terminatedNormally)
+{
+   Error error = core::writeStringVectorToFile(outputCachePath(), 
+                                               s_renderOutputs);
+   if (error)
+      LOG_ERROR(error);
+}
+ 
+void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+{
+   onShutdown(true);
+}
+
+void onResume(const Settings&)
+{
+}
+
 } // anonymous namespace
 
 bool knitParamsAvailable()
@@ -1122,6 +1346,7 @@ bool knitParamsAvailable()
    return module_context::isPackageVersionInstalled("rmarkdown", "0.7.3") &&
           module_context::isPackageVersionInstalled("knitr", "1.10.18");
 }
+
 
 bool rmarkdownPackageAvailable()
 {
@@ -1148,9 +1373,27 @@ Error initialize()
 
    initEnvironment();
 
+   module_context::events().onDeferredInit.connect(
+                                 boost::bind(initWebsiteOutputDir));
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);
    module_context::events().onClientInit.connect(onClientInit);
+   module_context::events().onShutdown.connect(onShutdown);
+   module_context::addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   // load output paths if saved
+   FilePath cachePath = outputCachePath();
+   if (cachePath.exists())
+   {
+      Error error = core::readStringVectorFromFile(cachePath, &s_renderOutputs);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         s_currentRenderOutput = s_renderOutputs.size();
+         s_renderOutputs.reserve(kMaxRenderOutputs);
+      }
+   }
 
    ExecBlock initBlock;
    initBlock.addFunctions()
@@ -1162,6 +1405,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
+      (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
@@ -1170,6 +1414,39 @@ Error initialize()
 
 } // namespace rmarkdown
 } // namespace modules
+
+namespace module_context {
+
+bool isWebsiteProject()
+{
+   if (!modules::rmarkdown::rmarkdownPackageAvailable())
+      return false;
+
+   return (projects::projectContext().config().buildType ==
+           r_util::kBuildTypeWebsite);
+}
+
+bool isBookdownWebsite()
+{
+   if (!isWebsiteProject())
+      return false;
+
+   bool isBookdown = false;
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isBookdownWebsite",
+                              projectBuildDir(), encoding).call(&isBookdown);
+   if (error)
+      LOG_ERROR(error);
+   return isBookdown;
+}
+
+std::string websiteOutputDir()
+{
+   return s_websiteOutputDir;
+}
+
+} // namespace module_context
+
 } // namespace session
 } // namespace rstudio
 

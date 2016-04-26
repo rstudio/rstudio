@@ -138,8 +138,6 @@ extern const int kRVersionsChanged;
 extern const int kShinyGadgetDialog;
 extern const int kRmdParamsReady;
 extern const int kRegisterUserCommand;
-extern const int kReplaceRanges;
-extern const int kGetActiveDocumentContext;
 extern const int kSendToConsole;
 extern const int kUserFollowStarted;
 extern const int kUserFollowEnded;
@@ -151,6 +149,9 @@ extern const int kChunkOutputFinished;
 extern const int kRprofStarted;
 extern const int kRprofStopped;
 extern const int kRprofCreated;
+extern const int kEditorCommand;
+extern const int kPreviewRmd;
+extern const int kWebsiteFileSaved;
 }
    
 class ClientEvent

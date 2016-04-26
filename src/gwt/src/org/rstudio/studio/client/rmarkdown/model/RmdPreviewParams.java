@@ -78,7 +78,7 @@ public class RmdPreviewParams extends JavaScriptObject
           format.equals(RmdOutputFormat.OUTPUT_SLIDY_PRESENTATION))
          return new Size(1100, 900 + chromeHeight);
       if (format.endsWith(RmdOutputFormat.OUTPUT_REVEALJS_PRESENTATION))
-         return new Size(960, 700 + chromeHeight);
+         return new Size(1100, 900 + chromeHeight);
       
       // default size (html_document and others)
       return new Size(1100, 1000 + chromeHeight);

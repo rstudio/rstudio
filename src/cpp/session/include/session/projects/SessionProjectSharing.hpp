@@ -26,6 +26,7 @@
 #define kProjectEntryDir        "project_dir"
 #define kProjectEntryFile       "project_file"
 #define kProjectEntryOwner      "project_owner"
+#define kProjectEntryUpdatedBy  "updated_by"
 #define kProjectEntrySharedWith "shared_with"
 
 namespace rstudio {

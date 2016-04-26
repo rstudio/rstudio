@@ -30,6 +30,7 @@ import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
 import org.rstudio.core.client.command.KeyboardShortcut.KeySequence;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.events.NativeKeyDownHandler;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -525,6 +526,10 @@ public class ShortcutManager implements NativePreviewHandler,
             }
          }
       }
+      
+      // Prevent backspace from performing a browser 'back'
+      if (DomUtils.preventBackspaceCausingBrowserBack(event))
+         return;
       
       // Suppress save / quit events from reaching the browser
       KeyCombination keys = new KeyCombination(event);

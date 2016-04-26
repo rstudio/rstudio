@@ -21,6 +21,7 @@
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookExec.hpp"
+#include "NotebookErrors.hpp"
 
 #include <iostream>
 
@@ -43,6 +44,10 @@
 
 #define kFinishedReplay      0
 #define kFinishedInteractive 1
+
+// symmetric with client
+#define kExecModeSingle 0
+#define kExecModeBatch  1
 
 using namespace rstudio::core;
 
@@ -67,7 +72,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const std::string& chunkId, chunkIds)
    {
-      enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId());
+      enqueueChunkOutput(docPath, docId, chunkId, requestId, notebookCtxId());
    }
 
    json::Object result;
@@ -132,6 +137,7 @@ void onActiveConsoleChanged(const std::string& consoleId,
       if (s_execContext->connected()) 
          return;
       s_execContext->connect();
+      s_execContext->onConsoleInput(text);
    }
    else if (s_execContext->connected())
    {
@@ -157,23 +163,81 @@ void onChunkExecCompleted(const std::string& docId,
 
 // called by the client to set the active chunk console
 Error setChunkConsole(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse*)
+                      json::JsonRpcResponse* pResponse)
 {
-
    std::string docId, chunkId, options;
+   int pixelWidth = 0, charWidth = 0, execMode = 0;
    bool replace = false;
-   Error error = json::readParams(request.params, &docId, &chunkId, &options,
-         &replace);
+   Error error = json::readParams(request.params, &docId, &chunkId, &execMode,
+         &options, &pixelWidth, &charWidth, &replace);
    if (error)
       return error;
 
+   // evaluate this chunk's options
+   r::sexp::Protect protect;
+   SEXP sexpOptions = R_NilValue;
+   error = r::exec::RFunction(".rs.evaluateChunkOptions", options)
+                             .call(&sexpOptions, &protect);
+   if (error)
+      return error;
+
+   // convert to JSON for client
+   json::Value jsonOptions;
+   error = r::json::jsonValueFromList(sexpOptions, &jsonOptions);
+   if (error)
+      return error;
+   pResponse->setResult(jsonOptions);
+
+   // if this chunk is going to be evaluated in batch mode, and the options
+   // indicate that it shouldn't be evaluated, don't
+   // evaluate it
+   if (execMode == kExecModeBatch &&
+       jsonOptions.type() == json::ObjectType)
+   {
+      bool eval = true;
+      error = json::readObject(jsonOptions.get_obj(), "eval", &eval);
+      if (!error && !eval) 
+      {
+         return Success();
+      }
+   }
+
    cleanChunkOutput(docId, chunkId, true);
 
+   // clean up the old execution context if we still have one
+   if (s_execContext)
+      s_execContext->disconnect();
+
    // create the execution context and connect it immediately if necessary
-   s_execContext.reset(new ChunkExecContext(docId, chunkId));
+   s_execContext.reset(new ChunkExecContext(docId, chunkId, options, 
+            pixelWidth, charWidth));
    if (s_activeConsole == chunkId)
       s_execContext->connect();
 
+   return Success();
+}
+
+Error createNotebookFromCache(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   std::string rmdPath, outputPath;
+   Error error = json::readParams(request.params, &rmdPath, &outputPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
+   createNotebook.addParam(rmdPath);
+   createNotebook.addParam(outputPath);
+   error = createNotebook.call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
    return Success();
 }
 
@@ -210,10 +274,12 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
       (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
+      (bind(registerRpcMethod, "create_notebook_from_cache", createNotebookFromCache))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))
-      (bind(initHtmlWidgets));
+      (bind(initHtmlWidgets))
+      (bind(initErrors));
 
    return initBlock.execute();
 }

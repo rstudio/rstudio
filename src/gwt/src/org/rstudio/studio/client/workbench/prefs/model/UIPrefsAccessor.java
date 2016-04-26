@@ -296,6 +296,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("highlight_r_function_calls", false);
    }
    
+   public PrefValue<Integer> truncateLongLinesInConsoleHistory()
+   {
+      return integer("truncate_long_lines_in_console", 1000);
+   }
+   
    public PrefValue<Boolean> showInlineToolbarForRCodeChunks()
    {
       return bool("show_inline_toolbar_for_r_code_chunks", true);

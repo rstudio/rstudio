@@ -187,7 +187,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandDispatcher;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
@@ -257,6 +257,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ApplicationCommandManager.class).in(Singleton.class);
       bind(CodeSearchLauncher.class).in(Singleton.class);
       bind(AddinsMRUList.class).asEagerSingleton();
+      bind(AceEditorCommandDispatcher.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -382,8 +383,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 
       bind(DocDisplay.class).to(AceEditor.class);
-      
-      bind(ChunkIconsManager.class).in(Singleton.class);
       
       install(new GinFactoryModuleBuilder()
          .implement(CompileOutputPaneDisplay.class, CompileOutputPane.class)

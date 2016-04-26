@@ -282,6 +282,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          highlightRFunctionCalls().setGlobalValue(
                              newUiPrefs.highlightRFunctionCalls().getGlobalValue());
          
+         // truncate long lines in console history
+         truncateLongLinesInConsoleHistory().setGlobalValue(
+                             newUiPrefs.truncateLongLinesInConsoleHistory().getGlobalValue());
+         
          // chunk toolbar
          showInlineToolbarForRCodeChunks().setGlobalValue(
                newUiPrefs.showInlineToolbarForRCodeChunks().getGlobalValue());

@@ -28,12 +28,14 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
    public OpenProfileEvent(String filePath,
                            String htmlPath,
                            String htmlLocalPath,
-                           boolean createProfile)
+                           boolean createProfile,
+                           String docId)
    {
       filePath_ = filePath;
       htmlPath_ = htmlPath;
       htmlLocalPath_ = htmlLocalPath;
       createProfile_ = createProfile;
+      docId_ = docId;
    }
    
    @Override
@@ -68,9 +70,15 @@ public class OpenProfileEvent extends GwtEvent<OpenProfileEvent.Handler>
       return createProfile_;
    }
    
+   public String getDocId()
+   {
+      return docId_;
+   }
+   
    public static final Type<Handler> TYPE = new Type<Handler>();
    private String filePath_;
    private String htmlPath_;
    private String htmlLocalPath_;
    private boolean createProfile_ = false;
+   private String docId_;
 }

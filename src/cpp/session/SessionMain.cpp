@@ -68,6 +68,7 @@
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/REnvironment.hpp>
+#include <core/WaitUtils.hpp>
 
 #include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
@@ -568,6 +569,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
       std::string type = projects::projectContext().config().buildType;
       sessionInfo["build_tools_type"] = type;
 
+      sessionInfo["build_tools_bookdown_website"] =
+                              module_context::isBookdownWebsite();
+
       FilePath buildTargetDir = projects::projectContext().buildTargetPath();
       if (!buildTargetDir.empty())
       {
@@ -590,6 +594,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    else
    {
       sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
+      sessionInfo["build_tools_bookdown_website"] = false;
       sessionInfo["build_target_dir"] = json::Value();
       sessionInfo["has_pkg_src"] = false;
       sessionInfo["has_pkg_vig"] = false;
@@ -1606,6 +1611,20 @@ Error startHttpConnectionListener()
 {
    initializeHttpConnectionListener();
    return httpConnectionListener().start();
+}
+
+WaitResult startHttpConnectionListenerWithTimeout()
+{
+   Error error = startHttpConnectionListener();
+
+   // When the rsession restarts, it may take a few ms for the port to become
+   // available; therefore, retry connection, but only for address_in_use error
+   if (!error)
+       return WaitResult(WaitSuccess, Success());
+   else if (error.code() != boost::system::errc::address_in_use)
+      return WaitResult(WaitError, error);
+   else
+      return WaitResult(WaitContinue, error);
 }
 
 Error startClientEventService()
@@ -3241,7 +3260,7 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION);
          
       // start http connection listener
-      error = startHttpConnectionListener();
+      error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 

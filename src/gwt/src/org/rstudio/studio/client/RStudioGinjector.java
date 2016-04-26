@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.command.AddinCommandBinding;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -92,6 +93,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
@@ -100,7 +102,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkIconsManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
@@ -137,6 +138,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(TextEditingTargetCppHelper cppHelper);
+   void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);
@@ -151,7 +153,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(RSConnectPublishButton publishButton);
    void injectMembers(RSConnectDeploy deploy);
    void injectMembers(AceEditorWidget widget);
-   void injectMembers(ChunkIconsManager manager);
    void injectMembers(WebApplicationHeaderOverlay headerOverlay);
    void injectMembers(DocumentOutlineWidget widget);
    void injectMembers(SetupChunkOptionsPopupPanel panel);
@@ -174,6 +175,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImportOptionsUiCsv dataImport);
    void injectMembers(CppCompletion completion);
    void injectMembers(ConsoleTabPanel consoleTabPanel);
+   void injectMembers(VirtualConsole console);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

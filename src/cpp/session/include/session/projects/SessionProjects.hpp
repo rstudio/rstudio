@@ -63,6 +63,9 @@ struct RProjectVcsOptions
 struct RProjectBuildOptions
 {
    RProjectBuildOptions() :
+      previewWebsite(true),
+      livePreviewWebsite(true),
+      websiteOutputFormat(),
       autoRoxygenizeForCheck(true),
       autoRoxygenizeForBuildPackage(true),
       autoRoxygenizeForBuildAndReload(false)
@@ -70,6 +73,9 @@ struct RProjectBuildOptions
    }
 
    std::string makefileArgs;
+   bool previewWebsite;
+   bool livePreviewWebsite;
+   std::string websiteOutputFormat;
    bool autoRoxygenizeForCheck;
    bool autoRoxygenizeForBuildPackage;
    bool autoRoxygenizeForBuildAndReload;
@@ -117,6 +123,9 @@ public:
 
    core::Error readBuildOptions(RProjectBuildOptions* pOptions);
    core::Error writeBuildOptions(const RProjectBuildOptions& options);
+
+   // update the website output type
+   void setWebsiteOutputFormat(const std::string& websiteOutputFormat);
 
    // code which needs to rely on the encoding should call this method
    // rather than getting the encoding off of the config (because the
@@ -218,6 +227,7 @@ private:
 
 ProjectContext& projectContext();
 
+core::json::Array websiteOutputFormatsJson();
 
 } // namespace projects
 } // namesapce session

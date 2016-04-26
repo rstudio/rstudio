@@ -36,6 +36,7 @@ const int ERRORS_MESSAGE = 0;
 const int ERRORS_TRACEBACK = 1;
 const int ERRORS_BREAK = 2;
 const int ERRORS_CUSTOM = 3;
+const int ERRORS_NOTEBOOK = 4;
 
 core::Error initialize();
 core::json::Value errorStateAsJson();

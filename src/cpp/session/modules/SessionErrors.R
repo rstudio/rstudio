@@ -1,7 +1,7 @@
 #
 # SessionErrors.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -20,21 +20,13 @@
            fun == "debugSource")
 })
 
-.rs.addFunction("recordTraceback", function(userOnly)
+.rs.addFunction("recordTraceback", function(userOnly, minDepth, errorReporter)
 {
    calls <- sys.calls()
    foundUserCode <- FALSE
    inSource <- FALSE
 
-   # When this handler is invoked for an unhandled error happening at
-   # the top level, there are four calls on the stack:
-   # 1. This function
-   # 2. The anonymous error handler (set via options below)
-   # 3. The error invoker (e.g. stop)
-   # 4. The function from which the error was raised
-   # So we want there to be at least 5 calls on the stack--otherwise the error
-   # is likely to be top-level.
-   if (length(calls) < 5)
+   if (length(calls) < minDepth)
       return()
 
    # create the traceback for the client
@@ -88,10 +80,10 @@
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
-      event <- list(
+      err <- list(
          frames = stack,
          message = .rs.scalar(geterrmessage()))
-      .rs.enqueClientEvent("unhandled_error", event)
+      errorReporter(err)
    }
 })
 
@@ -153,16 +145,28 @@
 },
 attrs = list(hideFromDebugger = TRUE))
 
+.rs.addFunction("enqueueError", function(err) {
+  .rs.enqueClientEvent("unhandled_error", err)
+})
+
 .rs.addFunction("recordAnyTraceback", function()
 {
-   .rs.recordTraceback(FALSE)
+   # When this handler is invoked for an unhandled error happening at
+   # the top level, there are four calls on the stack:
+   # 1. The traceback recorder
+   # 2. The anonymous error handler (set via options below)
+   # 3. The error invoker (e.g. stop)
+   # 4. The function from which the error was raised
+   # So we want there to be at least 5 calls on the stack--otherwise the error
+   # is likely to be top-level.
+   .rs.recordTraceback(FALSE, 5, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = 1L))
 
 .rs.addFunction("recordUserTraceback", function()
 {
-   .rs.recordTraceback(TRUE)
+   .rs.recordTraceback(TRUE, 5, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = 1L))

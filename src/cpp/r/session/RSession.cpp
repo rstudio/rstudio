@@ -52,6 +52,7 @@
 #include "RRestartContext.hpp"
 #include "REmbedded.hpp"
 
+#include "graphics/RGraphicsDevDesc.hpp"
 #include "graphics/RGraphicsUtils.hpp"
 #include "graphics/RGraphicsDevice.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
@@ -267,6 +268,13 @@ Error saveDefaultGlobalEnvironment()
       return Success();
    }
 }
+
+Error restoreGlobalEnvFromFile(const std::string& path, std::string* pErrMessage)
+{
+   r::exec::RFunction fn(".rs.restoreGlobalEnvFromFile");
+   fn.addParam(path);
+   return fn.call(pErrMessage);
+}
    
 void deferredRestoreNewSession()
 {
@@ -285,18 +293,30 @@ void deferredRestoreNewSession()
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
       std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
-      Error error = r::exec::executeSafely(boost::bind(
-                                        R_RestoreGlobalEnvFromFile,
-                                        path.c_str(),
-                                        TRUE));
-      if (error)   
+      std::string aliasedPath = createAliasedPath(globalEnvPath);
+      
+      std::string errMessage;
+      Error error = restoreGlobalEnvFromFile(path, &errMessage);
+      if (error)
       {
-         reportDeferredDeserializationError(error);
+         ::REprintf(
+                  "WARNING: Failed to restore workspace from '%s' "
+                  "(an internal error occurred)\n",
+                  aliasedPath.c_str());
+         LOG_ERROR(error);
+      }
+      else if (!errMessage.empty())
+      {
+         std::stringstream ss;
+         ss << "WARNING: Failed to restore workspace from "
+            << "'" << aliasedPath << "'" << std::endl
+            << "Reason: " << errMessage << std::endl;
+         std::string message = ss.str();
+         ::REprintf(message.c_str());
+         LOG_ERROR_MESSAGE(message);
       }
       else
       {
-         // print path to console
-         std::string aliasedPath = createAliasedPath(globalEnvPath);
          Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
       }
    }
@@ -1335,6 +1355,22 @@ bool win32Quit(const std::string& saveAction,
 }
 #endif
 
+namespace {
+
+SEXP rs_GEcopyDisplayList(SEXP fromDeviceSEXP)
+{
+   int fromDevice = r::sexp::asInteger(fromDeviceSEXP);
+   GEcopyDisplayList(fromDevice);
+   return Rf_ScalarLogical(1);
+}
+
+SEXP rs_GEplayDisplayList()
+{
+   graphics::device::playDisplayList();
+   return Rf_ScalarLogical(1);
+}
+
+} // end anonymous namespace
    
 Error run(const ROptions& options, const RCallbacks& callbacks) 
 {   
@@ -1447,6 +1483,9 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    saveHistoryMethodDef.numArgs = 1;
    r::routines::addCallMethod(saveHistoryMethodDef);
 
+   // register graphics methods
+   RS_REGISTER_CALL_METHOD(rs_GEcopyDisplayList, 1);
+   RS_REGISTER_CALL_METHOD(rs_GEplayDisplayList, 0);
 
    // run R
 

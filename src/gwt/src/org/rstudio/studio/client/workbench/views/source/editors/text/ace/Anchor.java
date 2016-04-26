@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.user.client.Command;
 
 public class Anchor extends JavaScriptObject
 {
@@ -29,11 +30,19 @@ public class Anchor extends JavaScriptObject
    }-*/;
 
    public native final void detach() /*-{
+      this.removeAllListeners("change");
       this.detach();
    }-*/;
    
    public native final void setInsertRight(boolean insertRight) /*-{
       this.$insertRight = insertRight;
+   }-*/;
+
+   public native final void addOnChangeHandler(Command onChange) /*-{
+      this.on("change", 
+             $entry(function () {
+                onChange.@com.google.gwt.user.client.Command::execute()();
+             }));
    }-*/;
 
    public native static Anchor createAnchor(Document document, int row, int column) /*-{

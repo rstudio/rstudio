@@ -92,6 +92,10 @@ public class LineWidget extends JavaScriptObject
    public native final void setRowCount(int rowCount) /*-{
       this.rowCount = rowCount;
    }-*/;
+   
+   public native final void setRow(int row) /*-{
+      this.row = row;
+   }-*/;
 
    public native final boolean getFixedWidth()  /*-{
       return this.fixedWidth;

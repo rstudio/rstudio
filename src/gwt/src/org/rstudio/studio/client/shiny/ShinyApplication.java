@@ -447,7 +447,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          // we have a window and we're Chrome, so force a close and reopen
          satelliteManager_.forceReopenSatellite(ShinyApplicationSatellite.NAME, 
-                                                params_);
+                                                params_,
+                                                true);
       }
       else
       {

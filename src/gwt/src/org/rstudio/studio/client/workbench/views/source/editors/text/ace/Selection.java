@@ -16,11 +16,16 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
+
 import org.rstudio.core.client.CommandWithArg;
 
 public class Selection extends JavaScriptObject
 {
    protected Selection() {}
+   
+   public native final void selectWord() /*-{
+      this.selectWord();
+   }-*/;
 
    public native final Range getRange() /*-{
       return this.getRange();
@@ -29,7 +34,7 @@ public class Selection extends JavaScriptObject
    public native final void addRange(Range range, boolean blockChangeEvents) /*-{
       this.addRange(range, blockChangeEvents);
    }-*/;
-
+   
    public native final void setSelectionRange(Range range) /*-{
       this.session.unfold(range, true);
       this.setSelectionRange(range);

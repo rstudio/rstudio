@@ -839,7 +839,8 @@ public class TextEditingTargetWidget
       }
       
       
-      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false);
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
+            RmdOutput.TYPE_STATIC);
      
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
@@ -851,7 +852,8 @@ public class TextEditingTargetWidget
    {
       setRmdFormatButtonVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true);
+      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, 
+            RmdOutput.TYPE_SHINY);
    
       String docType = isPresentation ? "Presentation" : "Document";
       
@@ -866,6 +868,20 @@ public class TextEditingTargetWidget
       isShiny_ = true;
       if (publishButton_ != null)
          publishButton_.setIsStatic(false);
+   }
+   
+   @Override
+   public void setIsNotebookFormat()
+   {
+      knitCommandText_ = "Preview";
+      knitDocumentButton_.setTitle("Preview the notebook " +
+            DomUtils.htmlToText(
+                  commands_.knitDocument().getShortcutPrettyHtml()) + ")");
+      knitDocumentButton_.setText(knitCommandText_);
+      knitDocumentButton_.setLeftImage(
+            commands_.newRNotebook().getImageResource());
+      setRmdFormatButtonVisible(false);
+      showRmdViewerMenuItems(true, false, true, RmdOutput.TYPE_NOTEBOOK);
    }
    
    private void setRmdFormatButtonVisible(boolean visible)
@@ -1017,7 +1033,8 @@ public class TextEditingTargetWidget
             RmdOutputFormatChangedEvent.TYPE, handler);
    }
    
-   private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, boolean isRmd, boolean isShinyDoc)
+   private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, 
+         boolean isRmd, int type)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UIPrefMenuItem<Integer>(
@@ -1048,19 +1065,28 @@ public class TextEditingTargetWidget
       
       if (uiPrefs_.showRmdChunkOutputInline().getValue())
       {
-         menu.addItem(new DocPropMenuItem(
-               "Chunk Output Inline", docUpdateSentinel_, 
-               true, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-         menu.addItem(new DocPropMenuItem(
-               "Chunk Output in Console", docUpdateSentinel_, 
-               false, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
-               TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+         if (type != RmdOutput.TYPE_NOTEBOOK)
+         {
+            menu.addItem(new DocPropMenuItem(
+                  "Chunk Output Inline", docUpdateSentinel_, 
+                  true, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+            menu.addItem(new DocPropMenuItem(
+                  "Chunk Output in Console", docUpdateSentinel_, 
+                  false, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+            menu.addSeparator();
+         }
+         
+         menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
+         menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
+         menu.addSeparator();
+         menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
          menu.addSeparator();
       }
-      
+           
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
    }

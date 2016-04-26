@@ -467,6 +467,28 @@ void handleEventsError(
    ptrConnection->writeResponse();
 }
 
+Error userIdForUsername(const std::string& username, UidType* pUID)
+{
+   static core::thread::ThreadsafeMap<std::string, UidType> cache;
+
+   if (cache.contains(username))
+   {
+      *pUID = cache.get(username);
+   }
+   else
+   {
+      core::system::user::User user;
+      Error error = core::system::user::userFromUsername(username, &user);
+      if (error)
+         return error;
+
+      *pUID = user.userId;
+      cache.set(username, *pUID);
+   }
+
+   return Success();
+}
+
 void proxyRequest(
       const r_util::SessionContext& context,
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -477,11 +499,27 @@ void proxyRequest(
    if (applyProxyFilter(ptrConnection, context))
       return;
 
-   // create async client
+   // determine path to user stream
    std::string streamFile = r_util::sessionContextFile(context);
    FilePath streamPath = session::local_streams::streamPath(streamFile);
+
+   // determine the uid for the username (for validation)
+   UidType uid;
+   Error error = userIdForUsername(context.username, &uid);
+   if (error)
+   {
+      Error permissionError(boost::system::error_code(
+                               boost::system::errc::permission_denied,
+                               boost::system::get_system_category()),
+                            error,
+                            ERROR_LOCATION);
+      errorHandler(permissionError);
+      return;
+   }
+
+   // create client
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
-    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
+    new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath, false, uid));
 
    // setup retry context
    if (!connectionRetryProfile.empty())
