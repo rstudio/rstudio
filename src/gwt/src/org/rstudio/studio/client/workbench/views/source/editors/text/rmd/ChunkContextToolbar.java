@@ -16,8 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -47,18 +45,8 @@ public class ChunkContextToolbar extends Composite
       void dequeueChunk();
    }
    
-   public interface Resources extends ClientBundle
-   {
-      ImageResource runChunk();
-      ImageResource runChunkPending();
-      ImageResource runPreviousChunksLight();
-      ImageResource runPreviousChunksDark();
-      ImageResource interruptChunk();
-      ImageResource chunkOptionsLight();
-      ImageResource chunkOptionsDark();
-   }
-   
-   public final static Resources RES = GWT.create(Resources.class);
+   public final static ChunkContextResources RES = 
+         GWT.create(ChunkContextResources.class);
 
    public ChunkContextToolbar(Host host, boolean dark, boolean runPrevious, 
          boolean run)

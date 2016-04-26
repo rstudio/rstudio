@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextResources" />
    <ui:style>
    div.progressBar
    {
@@ -12,19 +13,31 @@
       margin-right: 3px;
    }
    
-   .chunkName
+   .progressLabel
    {
       width: 150px;
       display: inline-block;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
+      text-align: right;
+      margin-right: 3px;
+   }
+   
+   img.interrupt
+   {
+      margin: 0px;
+      position: relative;
+      top: 1px;
    }
    </ui:style>
-   <g:HTMLPanel>
+   <g:HTMLPanel ui:field="root_">
+     <g:Anchor styleName="{style.progressLabel}" ui:field="progressLabel_">
+     </g:Anchor>
      <g:HTMLPanel styleName="{style.progressBar}" ui:field="progressBar_">
      </g:HTMLPanel>
-     <g:Anchor styleName="{style.chunkName}" ui:field="chunkName_">
-     </g:Anchor>
+     <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk}" 
+              ui:field="interruptButton_">
+     </g:Image>
    </g:HTMLPanel>
 </ui:UiBinder> 
