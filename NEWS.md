@@ -39,6 +39,7 @@
 * Add R Markdown pane to global options dialog
 * Build tab and preview support for R Markdown websites
 * Various enhancements for authoring with the bookdown package
+* Update pandoc to 1.17.0.3
 
 ### C/C++
 
