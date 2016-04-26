@@ -112,10 +112,11 @@ public class TextEditingTargetNotebook
 
    private class ChunkExecQueueUnit
    {
-      public ChunkExecQueueUnit(String chunkIdIn, int modeIn, String codeIn, 
-            String optionsIn, int rowIn, String setupCrc32In)
+      public ChunkExecQueueUnit(String chunkIdIn, String labelIn, int modeIn, 
+            String codeIn, String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
+         label = labelIn;
          mode = modeIn;
          options = optionsIn;
          code = codeIn;
@@ -127,6 +128,7 @@ public class TextEditingTargetNotebook
          executingRowEnd = 0;
       }
       public String chunkId;
+      public String label;
       public String options;
       public String code;
       public String setupCrc32;
@@ -407,8 +409,10 @@ public class TextEditingTargetNotebook
       }
 
       // put it in the queue 
-      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, mode, code,
-             options, row, setupCrc32));
+      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, 
+            StringUtil.isNullOrEmpty(chunk.getChunkLabel()) ? 
+                  chunk.getLabel() : chunk.getChunkLabel(),
+            mode, code, options, row, setupCrc32));
       
       // record maximum queue size (for scaling progress when we start popping
       // chunks from the list)
@@ -1347,6 +1351,7 @@ public class TextEditingTargetNotebook
    {
       // update progress meter on status bar
       editingTarget_.getStatusBar().updateNotebookProgress(
+           executingChunk_ == null ? "" : executingChunk_.label,
            (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
                                            chunkExecQueue_.size()) / 
                                   (double) execQueueMaxSize_)));
