@@ -366,7 +366,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    before <- if (is.null(meta)) {
       sprintf("\n<!-- rnb-%s-begin -->\n", label)
    } else {
-      meta <- .rs.listToHtmlAttributes(meta)
+      meta <- .rs.rnb.encode(meta)
       sprintf("\n<!-- rnb-%s-begin %s -->\n", label, meta)
    }
    after  <- sprintf("\n<!-- rnb-%s-end -->\n", label)
@@ -390,9 +390,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       .rs.nBytes(output) - .rs.nBytes("<!--/html_preserve-->")
    )
    
-   meta <- .rs.listToHtmlAttributes(list(
-      data = .rs.base64encode(.rs.toJSON(attr(output, "knit_meta"), unbox = TRUE))
-   ))
+   meta <- .rs.rnb.encode(attr(output, "knit_meta"))
    
    before <- sprintf("\n<!-- rnb-htmlwidget-begin %s-->", meta)
    after  <- "<!-- rnb-htmlwidget-end -->\n"
@@ -486,9 +484,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       knitr::opts_chunk$set(eval = FALSE)
       on.exit(knitr::opts_chunk$set(eval = eval), add = TRUE)
       
-      # render our notebook
-      .rs.rnb.render(inputFile = rmdPath,
-                     outputFile = outputPath)
+      # create the notebook
+      .rs.createNotebook(inputFile = rmdPath,
+                         outputFile = outputPath)
       
       return(TRUE)
    }
@@ -603,17 +601,23 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    as.list(rhs)
 })
 
-.rs.addFunction("listToHtmlAttributes", function(list, sep = "=", collapse = ",")
+.rs.addFunction("listToHtmlAttributes", function(data)
 {
-   if (!length(list))
-      return("[]")
-   
-   paste("[", paste(
-      names(list),
-      .rs.surround(unlist(list), with = "\""),
-      sep = sep,
-      collapse = collapse
-   ), "]", sep = "")
+   paste(
+      names(data),
+      .rs.surround(unlist(data), with = "\""),
+      sep = "="
+   )
+})
+
+.rs.addFunction("rnb.encode", function(data)
+{
+   .rs.base64encode(.rs.toJSON(data, unbox = TRUE))
+})
+
+.rs.addFunction("rnb.decode", function(encoded)
+{
+   .rs.fromJSON(.rs.base64decode(encoded))
 })
 
 .rs.addFunction("evaluateChunkOptions", function(options)
