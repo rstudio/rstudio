@@ -244,12 +244,13 @@ public class TextEditingTargetNotebook
             if (event.isAutosave())
                return;
             
-            // bail if not an .Rmd
-            if (!docDisplay_.getFileType().isRmd())
+            // bail if we don't render chunks inline (for safety--notebooks
+            // are always in this mode)
+            if (!docDisplay_.showChunkOutputInline())
                return;
             
-            // bail if we don't render chunks inline
-            if (!docDisplay_.showChunkOutputInline())
+            // bail if not notebook output format
+            if (!editingTarget_.isRmdNotebook())
                return;
             
             String rmdPath = docUpdateSentinel_.getPath();
@@ -269,12 +270,9 @@ public class TextEditingTargetNotebook
                      @Override
                      public void onResponseReceived(Void v)
                      {
-                        if (editingTarget_.isRmdNotebook())
-                        {
-                           events_.fireEvent(new NotebookRenderFinishedEvent(
-                                 docUpdateSentinel_.getId(), 
-                                 docUpdateSentinel_.getPath()));
-                        }
+                        events_.fireEvent(new NotebookRenderFinishedEvent(
+                              docUpdateSentinel_.getId(), 
+                              docUpdateSentinel_.getPath()));
                      }
 
                      @Override
