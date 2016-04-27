@@ -48,7 +48,7 @@ public interface StatusBar
    void hideMessage();
    
    void showNotebookProgress(String label);
-   void updateNotebookProgress(int percent);
+   void updateNotebookProgress(String chunkName, int percent);
    void hideNotebookProgress();
    HandlerRegistration addProgressClickHandler(ClickHandler handler);
 }

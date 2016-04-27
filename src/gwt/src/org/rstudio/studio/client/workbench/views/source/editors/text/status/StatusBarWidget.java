@@ -238,14 +238,14 @@ public class StatusBarWidget extends Composite
       }
       
       progress_.setLabel(label);
-      progress_.setPercent(0);
+      progress_.setPercent("", 0);
    }
 
    @Override
-   public void updateNotebookProgress(int percent)
+   public void updateNotebookProgress(String chunkName, int percent)
    {
       // just update the status bar
-      progress_.setPercent(percent);
+      progress_.setPercent(chunkName, percent);
    }
 
    @Override

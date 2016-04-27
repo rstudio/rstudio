@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NotebookProgressWidget extends Composite
@@ -46,7 +47,7 @@ public class NotebookProgressWidget extends Composite
    {
    }
    
-   public void setPercent(int percent)
+   public void setPercent(String chunkName, int percent)
    {
       String color = "24, 163, 82";
       progressBar_.getElement().getStyle().setBackgroundImage(
@@ -55,6 +56,7 @@ public class NotebookProgressWidget extends Composite
               "rgba(" + color + ", 1.0) " + percent + "%, " +
               "rgba(" + color + ", 0.3) " + percent + "%, " +
               "rgba(" + color + ", 0.3) 100%");
+      chunkAnchor_.setText(chunkName);
    }
    
    public void setLabel(String label)
@@ -77,8 +79,7 @@ public class NotebookProgressWidget extends Composite
       progressBar_.getElement().getStyle().setCursor(Cursor.POINTER);
       interruptButton_.getElement().getStyle().setCursor(Cursor.POINTER);
 
-      // connect native click handler
-      progressBar_.addDomHandler(new MouseDownHandler()
+      MouseDownHandler handler = new MouseDownHandler()
       {
          public void onMouseDown(MouseDownEvent event)
          {
@@ -90,7 +91,24 @@ public class NotebookProgressWidget extends Composite
                         false, false),
                   manager_);
          }
-      }, MouseDownEvent.getType());
+      };
+
+      // connect native click handler
+      progressBar_.addDomHandler(handler, MouseDownEvent.getType());
+      chunkAnchor_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            event.preventDefault();
+            event.stopPropagation();
+
+            ClickEvent.fireNativeEvent(
+                  Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, 
+                        false, false),
+                  manager_);
+         }
+      });
       
       interruptButton_.addDomHandler(new MouseDownHandler()
       {
@@ -102,9 +120,11 @@ public class NotebookProgressWidget extends Composite
       }, MouseDownEvent.getType());
    }
    
+   @UiField Anchor chunkAnchor_;
    @UiField HTMLPanel progressBar_;
    @UiField HTMLPanel root_;
-   @UiField Anchor progressLabel_;
+   @UiField Label progressLabel_;
    @UiField Image interruptButton_;
+
    private final HandlerManager manager_;
 }
