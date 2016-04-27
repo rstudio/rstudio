@@ -131,6 +131,31 @@ void cleanUnusedCaches()
    }
 }
 
+Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
+{
+   Error error;
+   if (!cachePath.exists())
+      return Success();
+
+   // extract the set of chunk IDs from the definition files
+   json::Value oldDefs;
+   json::Value newDefs;
+   error = getChunkDefs(docPath, kSavedCtx, NULL, &oldDefs);
+   if (error)
+      return error;
+   error = getChunkDefs(docPath, notebookCtxId(), NULL, &newDefs);
+   if (error)
+      return error;
+
+   // ensure we got the arrays we expected
+   if (oldDefs.type() != json::ArrayType ||
+       newDefs.type() != json::ArrayType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   cleanChunks(cachePath, oldDefs.get_array(), newDefs.get_array());
+   return Success();
+}
+
 void onDocRemoved(const std::string& docId, const std::string& docPath)
 {
    Error error;
@@ -256,6 +281,7 @@ void onDocAdded(const std::string& id)
 
 void onDocSaved(FilePath &path)
 {
+   Error error;
    // ignore non-R Markdown saves
    if (!path.hasExtensionLowerCase(".rmd"))
       return;
@@ -265,40 +291,54 @@ void onDocSaved(FilePath &path)
    if (!cache.exists())
       return;
 
-   // find and remove the old saved folder (TODO: consider being less 
-   // destructive by moving it to a different name temporarily until we've
-   // successfully swapped in the cache)
+   // tidy up: remove any saved chunks that no longer exist
    FilePath saved = chunkCacheFolder(path, "", kSavedCtx);
-   Error error = saved.removeIfExists();
+   error = removeStaleSavedChunks(path, saved);
+   if (error)
+      LOG_ERROR(error);
+
+   // move all the chunk definitions over to the saved context
+   std::vector<FilePath> children;
+   error = cache.children(&children);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
-
-   // move the cache folder over 
-   error = cache.move(saved);
-   if (error)
+   BOOST_FOREACH(const FilePath source, children)
    {
-      LOG_ERROR(error);
-      return;
+      // compute the target path 
+      FilePath target = saved.complete(source.filename());
+
+      if (source.filename() == kNotebookChunkDefFilename) 
+      {
+         // the definitions should be copied (we always want them in both
+         // contexts)
+         error = source.copy(target);
+      }
+      else if (source.isDirectory())
+      {
+         // the chunk output folders should be moved; destroy the old copy
+         error = target.removeIfExists();
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+         
+         // replace with new contents
+         error = source.move(target);
+      }
+      else
+      {
+         // nothing besides the chunks.json and chunk folders should be here,
+         // so ignore other files/content
+         continue;
+      }
+
+      if (error)
+         LOG_ERROR(error);
    }
-
-   // copy the chunk definitions back into the unsaved folder 
-   error = cache.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   // clone the chunk defs (we always want a copy of these in our working
-   // cache)
-   error = chunkDefinitionsPath(path, kSavedCtx).copy(
-              chunkDefinitionsPath(path, notebookCtxId()));
-
-   if (error)
-      LOG_ERROR(error);
 }
 
 FilePath unsavedNotebookCache()
