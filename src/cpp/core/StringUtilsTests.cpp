@@ -15,11 +15,14 @@
 
 #include <tests/TestThat.hpp>
 
+#include <iostream>
+
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace core {
 namespace string_utils {
+namespace unit_tests {
 
 context("isSubsequence")
 {
@@ -55,8 +58,20 @@ context("isSubsequence")
       expect_true(trimWhitespace("abc") == "abc");
       expect_true(trimWhitespace("") == "");
    }
+   
+   test_that("quotedValue extracts inner string (handling escaped quotes)")
+   {
+      std::string noQuotes = "abcdef";
+      expect_true(quotedValue(noQuotes) == noQuotes);
+      
+      expect_true(quotedValue("\"abcdef\"") == "abcdef");
+      expect_true(quotedValue("\"abc\\\"def\"") == "abc\"def");
+      expect_true(quotedValue("\"\\\"\"") == "\"");
+      expect_true(quotedValue("\"\\\"\\\"\"") == "\"\"");
+   }
 }
 
+} // end namespace unit_tests
 } // end namespace string_utils
 } // end namespace core
 } // end namespace rstudio
