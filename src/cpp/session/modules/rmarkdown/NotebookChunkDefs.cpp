@@ -69,6 +69,13 @@ void cleanChunks(const FilePath& cacheDir,
 
 } // anonymous namespace
 
+FilePath chunkDefinitionsPath(const core::FilePath& docPath,
+                              const std::string& nbCtxId)
+{
+   std::string fileName = std::string() + kNotebookChunkDefFilename;
+   return chunkCacheFolder(docPath, "", nbCtxId).childPath(fileName);
+}
+
 FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
                               const std::string& nbCtxId)

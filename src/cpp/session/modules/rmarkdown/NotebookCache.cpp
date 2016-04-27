@@ -275,7 +275,30 @@ void onDocSaved(FilePath &path)
       LOG_ERROR(error);
       return;
    }
-   
+
+   // move the cache folder over 
+   error = cache.move(saved);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // copy the chunk definitions back into the unsaved folder 
+   error = cache.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // clone the chunk defs (we always want a copy of these in our working
+   // cache)
+   error = chunkDefinitionsPath(path, kSavedCtx).copy(
+              chunkDefinitionsPath(path, notebookCtxId()));
+
+   if (error)
+      LOG_ERROR(error);
 }
 
 FilePath unsavedNotebookCache()
@@ -310,7 +333,8 @@ FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
-      folder = unsavedNotebookCache().childPath(docId);
+      folder = unsavedNotebookCache().childPath(docId)
+                                     .childPath(kCacheVersion);
    }
    else
    {
@@ -319,12 +343,12 @@ FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
       if (error)
          LOG_ERROR(error);
       
-      // use the 
       folder = notebookCacheRoot().childPath(id + "-" + path.stem())
+                                  .childPath(kCacheVersion)
                                   .childPath(nbCtxId);
    }
 
-   return folder.childPath(kCacheVersion);
+   return folder;
 }
 
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,

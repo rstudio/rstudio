@@ -34,6 +34,9 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+core::FilePath chunkDefinitionsPath(const core::FilePath& docPath,
+      const std::string& nbCtxId);
+
 core::FilePath chunkDefinitionsPath(const std::string& docPath,
       const std::string& docId, const std::string& nbCtxId);
 

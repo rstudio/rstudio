@@ -50,7 +50,6 @@
 #define SESSION_NOTEBOOK_CACHE_HPP
 
 #define kSavedCtx "s"
-#define kUnsavedPrefix "u"
 
 #include <string>
 
