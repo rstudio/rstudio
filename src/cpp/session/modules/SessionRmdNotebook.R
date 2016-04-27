@@ -245,7 +245,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                   transformed <- lapply(htmlList, function(el) {
                      output <- el$output
                      label <- if (el$type == "input") "source" else "output"
-                     meta <- list(data = .rs.base64encode(el$input))
+                     meta <- list(data = el$input)
                      .rs.rnb.htmlAnnotatedOutput(output, label, meta)
                   })
                   output <- paste(transformed, collapse = "\n")
@@ -314,7 +314,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # metadata for hooks
       textMetaHook <- function(input, output, ...) {
-         list(data = .rs.base64encode(input))
+         list(data = input)
       }
       
       metaFns <- list(
@@ -642,4 +642,88 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
   error = function(e) {})
 
   .rs.scalarListFromList(opts)
+})
+
+# TODO: Consider re-implementing in C++ if processing
+# in R is too slow.
+.rs.addFunction("parseNotebook", function(nbPath)
+{
+   contents <- .rs.readLines(nbPath)
+   
+   reComment <- paste(
+      "^\\s*",
+      "<!--",
+      "\\s*",
+      "rnb-([^-]+)-(begin|end)",
+      "\\s*",
+      "([^\\s-]+)?",
+      "\\s*",
+      "-->",
+      "\\s*$",
+      sep = ""
+   )
+   
+   reDocument <- paste(
+      "^\\s*",
+      "<!--",
+      "\\s*",
+      "rnb-document-source",
+      "\\s*",
+      "([^\\s-]+)",
+      "\\s*",
+      "-->",
+      "\\s*$",
+      sep = ""
+   )
+   
+   rmdContents <- NULL
+   annotations <- list()
+   
+   for (row in seq_along(contents)) {
+      line <- contents[[row]]
+      
+      # extract document contents
+      matches <- gregexpr(reDocument, line, perl = TRUE)[[1]]
+      if (!identical(c(matches), -1L)) {
+         start <- c(attr(matches, "capture.start"))
+         end   <- start + c(attr(matches, "capture.length")) - 1
+         rmdContents <- .rs.base64decode(substring(line, start, end))
+         next
+      }
+      
+      # extract information from comment
+      matches <- gregexpr(reComment, line, perl = TRUE)[[1]]
+      if (identical(c(matches), -1L))
+         next
+      
+      starts <- c(attr(matches, "capture.start"))
+      ends   <- starts + c(attr(matches, "capture.length")) - 1
+      strings <- substring(line, starts, ends)
+      n <- length(strings)
+      if (n < 2)
+         stop("invalid rnb comment")
+      
+      # decode comment information and update stack
+      annotations <- c(annotations, list(
+         row = row,
+         label = strings[[1]],
+         state = strings[[2]],
+         meta  = if (n >= 3) .rs.rnb.decode(strings[[3]])
+      ))
+   }
+   
+   list(source = contents,
+        rmd = rmdContents,
+        annotations = annotations)
+   
+})
+
+.rs.addFunction("hydrateCacheFromNotebook", function(nbPath, cachePath = NULL)
+{
+   if (is.null(cachePath)) {
+      rmdPath <- .rs.withChangedExtension(nbPath, ".Rmd")
+      cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
+   }
+   
+   nbData <- .rs.parseNotebook(nbPath)
 })
