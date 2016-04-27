@@ -126,7 +126,8 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
 }
 
 Error fillOutputObject(const std::string& docId, const std::string& chunkId,
-      int outputType, const FilePath& path, json::Object* pObj)
+      const std::string& nbCtxId, int outputType, const FilePath& path, 
+      json::Object* pObj)
 {
    (*pObj)[kChunkOutputType]  = outputType;
    if (outputType == kChunkOutputError)
@@ -152,8 +153,9 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
    else if (outputType == kChunkOutputPlot || outputType == kChunkOutputHtml)
    {
       // plot/HTML outputs should be requested by the client, so pass the path
-      (*pObj)[kChunkOutputValue] = kChunkOutputPath "/" + docId + "/" +
-         chunkId + "/" + path.filename();
+      (*pObj)[kChunkOutputValue] = kChunkOutputPath "/" + nbCtxId + "/" + 
+                                   docId + "/" + chunkId + "/" + 
+                                   path.filename();
    }
 
    return Success();
@@ -162,15 +164,17 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
-   // uri format is: /chunk_output/<doc-id>/...
+   // uri format is: /chunk_output/<ctx-id>/<doc-id>/...
    
    // split URI into pieces, extract the document ID, and remove that part of
    // the URI
    std::vector<std::string> parts = algorithm::split(request.uri(), "/");
-   if (parts.size() < 4) 
+   if (parts.size() < 5) 
       return Success();
-   std::string docId = parts[2];
-   for (int i = 0; i < 3; i++)
+
+   std::string ctxId = parts[2];
+   std::string docId = parts[3];
+   for (int i = 0; i < 4; i++)
       parts.erase(parts.begin());
 
    // the chunks all share one library folder, so redirect requests for a 
@@ -184,10 +188,9 @@ Error handleChunkOutputRequest(const http::Request& request,
    std::string path;
    source_database::getPath(docId, &path);
 
-   FilePath target = chunkCacheFolder(path, docId).complete(
+   FilePath target = chunkCacheFolder(path, docId, ctxId).complete(
          algorithm::join(parts, "/"));
 
-   // ensure the target exists 
    if (!target.exists())
    {
       pResponse->setNotFoundError(request.uri());
@@ -304,11 +307,12 @@ FilePath chunkOutputFile(const std::string& docId,
 }
 
 void enqueueChunkOutput(const std::string& docId,
-      const std::string& chunkId, int outputType, 
+      const std::string& chunkId, const std::string& nbCtxId, int outputType, 
       const FilePath& path)
 {
    json::Object output;
-   Error error = fillOutputObject(docId, chunkId, outputType, path, &output);
+   Error error = fillOutputObject(docId, chunkId, nbCtxId, outputType, path, 
+         &output);
    if (error)
    {
       LOG_ERROR(error);
@@ -326,15 +330,18 @@ void enqueueChunkOutput(const std::string& docId,
 
 Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& requestId, 
-      const std::string& nbCtxId)
+      const std::string& chunkId, const std::string& nbCtxId,
+      const std::string& requestId)
 {
+   std::string ctxId(nbCtxId);
    FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId);
 
-   // if the contextual output path doesn't exist, check the persisted output
-   // path
+   // if the contextual output path doesn't exist, try the saved context
    if (!outputPath.exists())
+   {
+      ctxId = kSavedCtx;
       outputPath = chunkOutputPath(docPath, docId, chunkId, kSavedCtx);
+   }
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;
@@ -360,8 +367,8 @@ Error enqueueChunkOutput(
          continue;
 
       // format/parse chunk output for client consumption
-      Error error = fillOutputObject(docId, chunkId, outputType, outputPath, 
-            &output);
+      Error error = fillOutputObject(docId, chunkId, ctxId, outputType, 
+            outputPath, &output);
       if (error)
          LOG_ERROR(error);
       else
