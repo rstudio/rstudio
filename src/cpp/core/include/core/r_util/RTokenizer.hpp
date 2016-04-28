@@ -412,7 +412,7 @@ inline bool isId(const RToken& rToken)
    return rToken.isType(RToken::ID);
 }
 
-inline bool isNamespace(const RToken& rToken)
+inline bool isNamespaceExtractionOperator(const RToken& rToken)
 {
    return rToken.isType(RToken::OPER) && (
             rToken.contentEquals(L"::") ||
@@ -476,7 +476,7 @@ inline bool canStartExpression(const RToken& rToken)
 
 inline bool isExtractionOperator(const RToken& rToken)
 {
-   return isNamespace(rToken) ||
+   return isNamespaceExtractionOperator(rToken) ||
           isDollar(rToken) ||
           isAt(rToken);
 }

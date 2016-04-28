@@ -82,7 +82,7 @@ void cleanUnusedCaches()
 
       // get the path of the notebook associated with the cache
       FilePath path;
-      error = notebookIdToPath(parts[0], nbCtxId, &path);
+      error = notebookIdToPath(parts[0], &path);
       if (error)
       {
          if (error.code() == boost::system::errc::no_such_file_or_directory)
@@ -380,7 +380,7 @@ FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
    else
    {
       std::string id;
-      Error error = notebookPathToId(path, nbCtxId, &id);
+      Error error = notebookPathToId(path, &id);
       if (error)
          LOG_ERROR(error);
       
