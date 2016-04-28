@@ -1348,6 +1348,12 @@ public class TextEditingTargetNotebook
    
    private void cleanScopeErrorState(Scope scope)
    {
+      // this can be called on a timer, so ensure the scope is still valid
+      if (scope == null ||
+          scope.getBodyStart() == null ||
+          scope.getEnd() == null)
+         return;
+
       docDisplay_.setChunkLineExecState(
             scope.getBodyStart().getRow(), 
             scope.getEnd().getRow(), 
