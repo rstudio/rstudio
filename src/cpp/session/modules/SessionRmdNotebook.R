@@ -719,9 +719,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    nbData <- .rs.parseNotebook(nbPath)
    
-   # State ----
+   # State, etc. ----
    activeChunkId <- "unknown"
-   outputIndex <- 1
+   activeIndex <- 1
+   headerContent <- nbData$source[`:`(
+      grep("^\\s*<head>\\s*$", nbData$source, perl = TRUE)[[1]] + 1,
+      grep("^\\s*</head>\\s*$", nbData$source, perl = TRUE)[[1]] - 1
+   )]
    outputPath <- function(cachePath, chunkId, index, ext) {
       file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
    }
@@ -739,7 +743,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       df$type[df$type == "input"]  <- "0"
       df$type[df$type == "output"] <- "1"
       
-      path <- outputPath(cachePath, activeChunkId, outputIndex, "csv")
+      path <- outputPath(cachePath, activeChunkId, activeIndex, "csv")
       .rs.ensureDirectory(dirname(path))
       write.table(df,
                   file = path,
@@ -751,7 +755,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # update state
       builder$clear()
-      outputIndex <<- outputIndex + 1
+      activeIndex <<- activeIndex + 1
    }
    
    onSource <- function(annotation) {
@@ -780,7 +784,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    onChunk <- function(annotation) {
       if (annotation$state == "begin") {
          activeChunkId <<- .rs.randomString("c", n = 12)
-         outputIndex   <<- 1
+         activeIndex   <<- 1
       } else {
          writeConsoleData(consoleDataBuilder)
          activeChunkId <<- "unknown"
@@ -803,12 +807,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       pngData <- .rs.base64decode(pngDataEncoded, binary = TRUE)
       
       # write to file
-      path <- outputPath(cachePath, activeChunkId, outputIndex, "png")
+      path <- outputPath(cachePath, activeChunkId, activeIndex, "png")
       .rs.ensureDirectory(dirname(path))
       writeBin(pngData, path, useBytes = TRUE)
       
       # update state
-      outputIndex <<- outputIndex + 1
+      activeIndex <<- activeIndex + 1
    }
    onPlot <- function(annotation) {
       if (annotation$state == "begin") {
@@ -832,9 +836,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          range$end - 1
       )]
       
-      # get header content
-      header <- "<!-- TODO -->"
-      
       fmt <- paste(
          '<!DOCTYPE html>',
          '<html>',
@@ -849,17 +850,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       )
       
       htmlOutput <- sprintf(fmt,
-                            paste(header, collapse = "\n"),
+                            paste(headerContent, collapse = "\n"),
                             paste(htmlBody, collapse = "\n"))
       
-      htmlPath <- outputPath(cachePath, activeChunkId, outputIndex, "html")
+      htmlPath <- outputPath(cachePath, activeChunkId, activeIndex, "html")
       cat(htmlOutput, file = htmlPath, sep = "\n")
       
-      jsonPath <- outputPath(cachePath, activeChunkId, outputIndex, "json")
+      jsonPath <- outputPath(cachePath, activeChunkId, activeIndex, "json")
       cat(.rs.toJSON(meta, unbox = TRUE), file = jsonPath, sep = "\n")
       
       # update state
-      outputIndex <<- outputIndex + 1
+      activeIndex <<- activeIndex + 1
    }
    onWidget <- function(annotation) {
       if (annotation$state == "begin") {
