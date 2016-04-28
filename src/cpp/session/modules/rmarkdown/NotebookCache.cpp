@@ -351,8 +351,7 @@ FilePath unsavedNotebookCache()
 SEXP rs_chunkCacheFolder(SEXP fileSEXP)
 {
    std::string file = r::sexp::safeAsString(fileSEXP);
-   FilePath cacheFolder =
-         chunkCacheFolder(file, "", userSettings().contextId());
+   FilePath cacheFolder = chunkCacheFolder(file, "", kSavedCtx);
    
    r::sexp::Protect protect;
    return r::sexp::create(cacheFolder.absolutePath(), &protect);
