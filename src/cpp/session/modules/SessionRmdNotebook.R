@@ -677,10 +677,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
    
    rmdContents <- NULL
-   
-   n <- 1024
-   index <- 1
-   annotations <- vector("list", n)
+   builder <- .rs.listBuilder()
    
    for (row in seq_along(contents)) {
       line <- contents[[row]]
@@ -702,32 +699,40 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       starts <- c(attr(matches, "capture.start"))
       ends   <- starts + c(attr(matches, "capture.length")) - 1
       strings <- substring(line, starts, ends)
+      
       n <- length(strings)
       if (n < 2)
          stop("invalid rnb comment")
       
       # decode comment information and update stack
-      annotations[[index]] <- list(
-         row = row,
-         label = strings[[1]],
-         state = strings[[2]],
-         meta  = if (n >= 3) .rs.rnb.decode(strings[[3]])
-      )
+      data <- list(row = row,
+                   label = strings[[1]],
+                   state = strings[[2]])
       
-      # grow list
-      index <- index + 1
-      if (index > n) {
-         n <- n * 2
-         annotations[n * 2] <- list(NULL)
-      }
+      # add metadata if available
+      if (n >= 3 && nzchar(strings[[3]]))
+         data[["meta"]] <- .rs.rnb.decode(strings[[3]])
+      else
+         data["meta"] <- list(NULL)
+      
+      # append
+      builder$append(data)
    }
    
-   annotations <- annotations[seq_len(index - 1)]
-   
+   annotations <- builder$data()
    list(source = contents,
         rmd = rmdContents,
         annotations = annotations)
    
+})
+
+.rs.addFunction("randomString", function(prefix  = "",
+                                         postfix = "",
+                                         candidates = c(letters, LETTERS, 0:9),
+                                         n = 16L)
+{
+   sampled <- sample(candidates, n, TRUE)
+   paste(prefix, paste(sampled, collapse = ""), postfix, sep = "")
 })
 
 .rs.addFunction("hydrateCacheFromNotebook", function(nbPath, cachePath = NULL)
@@ -739,11 +744,84 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    nbData <- .rs.parseNotebook(nbPath)
    
-   chunkLabel <- "unknown"
+   # state variables as we parse annotations
+   consoleDataBuilder <- .rs.listBuilder()
+   activeChunkLabel <- "unknown"
+   
+   # begin looping through annotations and building cache
    annotations <- nbData$annotations
    for (i in seq_along(annotations)) {
+      
       annotation <- annotations[[i]]
       label <- annotation$label
       state <- annotation$state
+      begin <- state == "begin"
+      
+      # handle chunk begin, end
+      if (label == "chunk") {
+         activeChunkLabel <- if (begin)
+            .rs.randomString(prefix = "c")
+         else
+            "unknown"
+      }
+      
+      # handle console input
+      if (label == "source" && begin) {
+         ls
+      }
+      
+      # handle console output
+      if (label == "output" && begin) {
+         ls
+      }
+      
+      # handle plot
+      if (label == "plot" && begin) {
+         ls
+      }
+      
+      # handle html widget
+      if (label == "htmlwidget" && begin) {
+         ls
+      }
    }
 })
+
+.rs.addFunction("listBuilder", function()
+{
+   (function() {
+      capacity_ <- 1024
+      index_ <- 0
+      data_ <- vector("list", capacity_)
+      
+      append <- function(data) {
+         
+         # increment index and check capacity
+         index_ <<- index_ + 1
+         if (index_ > capacity_) {
+            capacity_ <<- capacity_ * 2
+            data_[capacity_] <<- list(NULL)
+         }
+         
+         # append data
+         if (is.null(data))
+            data_[index_] <<- list(NULL)
+         else
+            data_[[index_]] <<- data
+      }
+      
+      data <- function() {
+         data_[seq_len(index_)]
+      }
+      
+      clear <- function() {
+         capacity_ <<- 1024
+         index_ <<- 0
+         data_ <<- vector("list", capacity_)
+      }
+      
+      list(append = append, clear = clear, data = data)
+      
+   })()
+})
+
