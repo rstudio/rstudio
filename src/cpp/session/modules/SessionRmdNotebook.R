@@ -735,35 +735,102 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    nbData <- .rs.parseNotebook(nbPath)
    
-   # state variables as we parse annotations
-   consoleDataBuilder <- .rs.listBuilder()
-   activeChunkLabel <- "unknown"
+   # Output Indexing ----
    outputIndex <- 1
+   outputPath <- function(cachePath, chunkId, index, ext) {
+      file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
+   }
    
-   plotStart <- plotEnd <- NULL
-   htmlWidgetStart <- htmlWidgetEnd <- NULL
+   # Chunk Handling ----
+   activeChunkId <- "unknown"
+   onChunk <- function(annotation) {
+      if (annotation$state == "begin") {
+         activeChunkId <<- .rs.randomString("c", n = 12)
+         outputIndex   <<- 1
+      } else {
+         activeChunkId <<- "unknown"
+      }
+   }
    
-   # flush console data to cache
-   writeConsoleData <- function() {
-      
-      # TODO: this shouldn't happen; should we warn / err?
-      if (consoleDataBuilder$empty())
+   # Console I/O ----
+   consoleDataBuilder <- .rs.listBuilder()
+   writeConsoleData <- function(builder) {
+      if (builder$empty())
          return()
       
-      # construct path to cache file
-      filename <- sprintf("%06s.csv", outputIndex)
-      path <- file.path(cachePath, activeChunkLabel, filename)
+      pasted <- paste(builder$data(), sep = "\n")
+      
+      path <- outputPath(cachePath, activeChunkId, outputIndex, "csv")
       .rs.ensureDirectory(dirname(path))
-      
-      # convert console data back to expected cache format
-      data <- consoleDataBuilder$data()
-      pasted <- paste(data, collapse = "\n") # TODO
-      
-      # write data
       cat(pasted, file = path, sep = "\n")
-      
-      # clear data
-      consoleDataBuilder$clear()
+      outputIndex <<- outputIndex + 1
+   }
+   
+   onSource <- function(annotation) {
+      if (annotation$state == "begin") {
+         consoleDataBuilder$append(list(
+            data = annotation$meta$data,
+            type = "input"
+         ))
+      } else {
+         # nothing to do?
+      }
+   }
+   
+   onOutput <- function(annotation) {
+      if (annotation$state == "begin") {
+         consoleDataBuilder$append(list(
+            data = annotation$meta$data,
+            type = "output"
+         ))
+      } else {
+         # nothing to do?
+      }
+   }
+   
+   # Plot Handling ----
+   plotRange <- list(start = NULL, end = NULL)
+   writePlot <- function(source, range) {
+      html <- source[`:`(
+         range$start + 1,
+         range$end - 1
+      )]
+      path <- outputPath(cachePath, activeChunkId, outputIndex, "png")
+      .rs.ensureDirectory(dirname(path))
+      cat(html, file = path, sep = "\n")
+   }
+   onPlot <- function(annotation) {
+      if (annotation$state == "begin") {
+         writeConsoleData(consoleDataBuilder)
+         plotRange$start <<- annotation$row
+      } else {
+         plotRange$end <<- annotation$row
+         writePlot(nbData$source, plotRange)
+         plotRange <<- list(start = NULL, end = NULL)
+      }
+   }
+   
+   # HTML Widget Handling ----
+   widgetRange <- list(start = NULL, end = NULL)
+   widgetData  <- NULL
+   writeWidget <- function(data, range) {
+      html <- data[`:`(
+         range$start + 1,
+         range$end - 1
+      )]
+      browser()
+   }
+   onWidget <- function(annotation) {
+      if (annotation$state == "begin") {
+         writeConsoleData(consoleDataBuilder)
+         widgetRange$start <<- annotation$row
+         widgetData        <<- annotation$meta
+      } else {
+         widgetRange$end <- annotation$row
+         writeWidget(widgetData, widgetRange)
+         widgetRange <<- list(start = NULL, end = NULL)
+         widgetData  <<- NULL
+      }
    }
    
    # begin looping through annotations and building cache
@@ -772,66 +839,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       annotation <- annotations[[i]]
       label <- annotation$label
-      state <- annotation$state
-      begin <- state == "begin"
       
-      # handle chunk begin, end
-      if (label == "chunk") {
-         activeChunkLabel <- if (begin)
-            .rs.randomString(prefix = "c")
-         else
-            "unknown"
-      }
-      
-      # handle console input
-      if (label == "source" && begin) {
-         consoleDataBuilder$append(list(
-            type = "input",
-            data = annotation$meta$data
-         ))
-      }
-      
-      # handle console output
-      if (label == "output" && begin) {
-         consoleDataBuilder$append(list(
-            type = "output",
-            data = annotation$meta$data
-         ))
-      }
-      
-      # handle plot
-      if (label == "plot") {
-         
-         # mark plot begin
-         if (begin) {
-            writeConsoleData()
-            plotStart <- annotation$row
-         }
-         
-         # plot end -- write output
-         if (!begin) {
-            plotEnd <- annotation$row
-            writePlotData()
-            browser()
-            plotStart <- NULL
-         }
-      }
-      
-      # handle html widget
-      if (label == "htmlwidget") {
-         
-         # mark widget begin
-         if (begin) {
-            writeConsoleData()
-            htmlWidgetStart <- annotation$row
-         }
-         
-         # widget end -- write output
-         if (!begin) {
-            htmlWidgetEnd <- annotation$row
-            browser()
-            htmlWidgetStart <- NULL
-         }
-      }
+      switch(label,
+             "chunk"      = onChunk(annotation),
+             "source"     = onSource(annotation),
+             "output"     = onOutput(annotation),
+             "plot"       = onPlot(annotation),
+             "htmlwidget" = onWidget(annotation))
    }
 })
