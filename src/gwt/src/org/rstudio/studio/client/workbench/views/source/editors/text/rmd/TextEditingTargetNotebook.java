@@ -76,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
@@ -289,6 +290,7 @@ public class TextEditingTargetNotebook
    public void initialize(EventBus events, 
          RMarkdownServerOperations server,
          ConsoleServerOperations console,
+         SourceServerOperations source,
          Session session,
          UIPrefs prefs,
          Commands commands,
@@ -298,6 +300,7 @@ public class TextEditingTargetNotebook
       events_ = events;
       server_ = server;
       console_ = console;
+      source_ = source;
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
@@ -705,9 +708,15 @@ public class TextEditingTargetNotebook
             outputs_.get(data.getChunkId()).getOutputWidget()
                                            .onOutputFinished(true);
 
-            // mark the document dirty since it now contains cache changes that
-            // haven't been committed to the notebook 
-            dirtyState_.markDirty(false);
+            // mark the document dirty (if it isn't already) since it now
+            // contains notebook cache changes that haven't been committed 
+            if (!dirtyState_.getValue())
+            {
+               dirtyState_.markDirty(false);
+               source_.setSourceDocumentDirty(
+                     docUpdateSentinel_.getId(), true, 
+                     new VoidServerRequestCallback());
+            }
          }
 
          // process next chunk in execution queue
@@ -1396,6 +1405,7 @@ public class TextEditingTargetNotebook
 
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;
+   private SourceServerOperations source_;
    private EventBus events_;
    
    private Style editorStyle_;
