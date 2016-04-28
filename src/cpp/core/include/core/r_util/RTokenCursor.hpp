@@ -766,7 +766,7 @@ public:
          cursor.isType(RToken::STRING))
      {
         const RToken& prev = cursor.previousSignificantToken();
-        if (isNamespace(prev))
+        if (token_utils::isNamespaceExtractionOperator(prev))
         {
            const RToken& beforeNs = cursor.previousSignificantToken(2);
            return beforeNs.isType(RToken::ID) ||

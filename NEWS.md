@@ -78,6 +78,7 @@
 * Fixed an issue where non-interactive addins could not be executed in popped out windows
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
+* Diagnostics: engine better understands 'data()' calls (fixes 'no symbol in scope' false positive)
 * Improved performance of document tokenization (fix laggy typing)
 * Fix block commenting of Sweave chunks
 * Fix highlighting of escaped '$' in inline Mathjax expressions

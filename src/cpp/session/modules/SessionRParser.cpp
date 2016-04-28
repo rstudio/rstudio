@@ -773,10 +773,19 @@ void handleIdentifier(RTokenCursor& cursor,
    // TODO: Handle namespaced symbols (e.g. for package lookup) and
    // provide lint appropriately.
    if (isExtractionOperator(cursor.previousSignificantToken()) ||
-       isNamespace(cursor.nextSignificantToken()))
+       isNamespaceExtractionOperator(cursor.nextSignificantToken()))
    {
       DEBUG("--- Symbol preceded by extraction op; not adding");
       return;
+   }
+   
+   // If we're in a call to e.g. 'data(foo)', assume that this
+   // call will succeed, and add a reference to a symbol 'foo'.
+   if (cursor.previousSignificantToken(1).isType(RToken::LPAREN))
+   {
+      const RToken& callToken = cursor.previousSignificantToken(2);
+      if (callToken.isType(RToken::ID) && callToken.contentEquals(L"data"))
+         status.node()->addDefinedSymbol(cursor);
    }
    
    // Don't add references to '.' -- in most situations where it's used,
