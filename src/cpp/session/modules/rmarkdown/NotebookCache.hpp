@@ -14,21 +14,29 @@
  */
 
 
-// A notebook .Rmd is accompanied by a sidecar .Rnb.cached folder, which has
-// the following structure:
+// A notebook .Rmd is accompanied by a cache folder, which has the following
+// structure:
 //
-// - foo.Rmd
-// + .foo.Rnd.cached
-//   - chunks.json
-//   + cwiaiw9i4f0
-//     - 00001.png
-//     - 00002.csv
-//   + lib
-//     + htmlwidgets
-//       - htmlwidget.js
+// - 490293-foo
+//   + s
+//     - chunks.json
+//     + cwiaiw9i4f0
+//       - 00001.csv
+//   + u-93029-i81023
+//     - chunks.json
+//     + cwiaiw9i4f0
+//       - 00001.png
+//       - 00002.csv
+//     + lib
+//       + htmlwidgets
+//         - htmlwidget.js
 // 
 // That is:
-// - each chunk has an ID and a folder of content
+// - the name of the cache folder is formed by its id and the base name of
+//   the document
+// - there are two types of cache folders -- one for content which has been
+//   committed ("s") and one for content which has not been committed ("u");
+//   there may be many uncomitted folders, but only one committed folder.
 // - the folder contains a sequence of files which represent the content inside
 //   the chunk -- textual output, plots, and HTML; this content's output order
 //   is implied in the filenames 
@@ -40,6 +48,8 @@
 
 #ifndef SESSION_NOTEBOOK_CACHE_HPP
 #define SESSION_NOTEBOOK_CACHE_HPP
+
+#define kSavedCtx "s"
 
 #include <string>
 
@@ -63,6 +73,9 @@ core::FilePath chunkCacheFolder(const std::string& docPath,
 
 core::FilePath chunkCacheFolder(const std::string& docPath, 
       const std::string& docId);
+
+core::FilePath chunkCacheFolder(const core::FilePath& path, 
+      const std::string& docId, const std::string& nbCtxId);
 
 core::Error initCache();
 

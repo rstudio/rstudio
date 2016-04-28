@@ -112,12 +112,12 @@ public class TextEditingTargetNotebook
 
    private class ChunkExecQueueUnit
    {
-      public ChunkExecQueueUnit(String chunkIdIn, int modeIn, String codeIn, 
-            String nameIn, String optionsIn, int rowIn, String setupCrc32In)
+      public ChunkExecQueueUnit(String chunkIdIn, String labelIn, int modeIn, 
+            String codeIn, String optionsIn, int rowIn, String setupCrc32In)
       {
          chunkId = chunkIdIn;
+         label = labelIn;
          mode = modeIn;
-         name = nameIn;
          options = optionsIn;
          code = codeIn;
          row = rowIn;
@@ -128,7 +128,7 @@ public class TextEditingTargetNotebook
          executingRowEnd = 0;
       }
       public String chunkId;
-      public String name;
+      public String label;
       public String options;
       public String code;
       public String setupCrc32;
@@ -244,12 +244,13 @@ public class TextEditingTargetNotebook
             if (event.isAutosave())
                return;
             
-            // bail if not an .Rmd
-            if (!docDisplay_.getFileType().isRmd())
+            // bail if we don't render chunks inline (for safety--notebooks
+            // are always in this mode)
+            if (!docDisplay_.showChunkOutputInline())
                return;
             
-            // bail if we don't render chunks inline
-            if (!docDisplay_.showChunkOutputInline())
+            // bail if not notebook output format
+            if (!editingTarget_.isRmdNotebook())
                return;
             
             String rmdPath = docUpdateSentinel_.getPath();
@@ -269,12 +270,9 @@ public class TextEditingTargetNotebook
                      @Override
                      public void onResponseReceived(Void v)
                      {
-                        if (editingTarget_.isRmdNotebook())
-                        {
-                           events_.fireEvent(new NotebookRenderFinishedEvent(
-                                 docUpdateSentinel_.getId(), 
-                                 docUpdateSentinel_.getPath()));
-                        }
+                        events_.fireEvent(new NotebookRenderFinishedEvent(
+                              docUpdateSentinel_.getId(), 
+                              docUpdateSentinel_.getPath()));
                      }
 
                      @Override
@@ -409,8 +407,10 @@ public class TextEditingTargetNotebook
       }
 
       // put it in the queue 
-      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, mode, code,
-            chunk.getChunkLabel(), options, row, setupCrc32));
+      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, 
+            StringUtil.isNullOrEmpty(chunk.getChunkLabel()) ? 
+                  chunk.getLabel() : chunk.getChunkLabel(),
+            mode, code, options, row, setupCrc32));
       
       // record maximum queue size (for scaling progress when we start popping
       // chunks from the list)
@@ -1348,14 +1348,11 @@ public class TextEditingTargetNotebook
    private void updateProgress()
    {
       // update progress meter on status bar
-      editingTarget_.getStatusBar().showNotebookProgress(
+      editingTarget_.getStatusBar().updateNotebookProgress(
+           executingChunk_ == null ? "" : executingChunk_.label,
            (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
                                            chunkExecQueue_.size()) / 
-                                  (double) execQueueMaxSize_)), 
-           "Chunk " + (execQueueMaxSize_ - chunkExecQueue_.size()) + " / " + 
-                      execQueueMaxSize_ + (executingChunk_ == null ||
-                                           executingChunk_.name.isEmpty() ? 
-                                           "" : (": " + executingChunk_.name)));
+                                  (double) execQueueMaxSize_)));
       
       // register click callback if necessary
       if (progressClickReg_ == null)

@@ -227,7 +227,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
                target.stem() + metadata.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, outputType, target);
+   enqueueChunkOutput(docId_, chunkId_, notebookCtxId(), outputType, target);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)
@@ -247,7 +247,8 @@ void ChunkExecContext::onError(const core::json::Object& err)
    pOfs.reset();
 
    // send to client
-   enqueueChunkOutput(docId_, chunkId_, kChunkOutputError, target);
+   enqueueChunkOutput(docId_, chunkId_, notebookCtxId(), kChunkOutputError, 
+                      target);
 }
 
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 

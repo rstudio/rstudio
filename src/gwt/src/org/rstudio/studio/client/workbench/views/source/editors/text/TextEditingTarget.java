@@ -3961,9 +3961,22 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
-      // record current selection before manipulating text
-      String sel = docDisplay_.getSelectionValue();
-      Range selRange = docDisplay_.getSelectionRange();
+      String sel = null;
+      Range selRange = null;
+      
+      // if currently in a chunk, add a blank line (for padding) and insert 
+      // beneath it
+      Scope currentChunk = docDisplay_.getCurrentChunk();
+      if (currentChunk != null)
+      {
+         // record current selection before manipulating text
+         sel = docDisplay_.getSelectionValue();
+         selRange = docDisplay_.getSelectionRange();
+         
+         docDisplay_.setCursorPosition(currentChunk.getEnd());
+         docDisplay_.insertCode("\n");
+         docDisplay_.moveCursorForward(1);
+      }
       
       Position pos = moveCursorToNextInsertLocation();
       InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
@@ -3976,13 +3989,18 @@ public class TextEditingTarget implements
          if (!StringUtil.isNullOrEmpty(sel))
          {
             Position contentPosition = insertChunkInfo.getContentPosition();
-            docDisplay_.replaceRange(selRange, "");
             Position docContentPos = Position.create(
                   pos.getRow() + contentPosition.getRow(), 
                   contentPosition.getColumn());
+            Position endPos = Position.create(docContentPos.getRow(), 
+                  docContentPos.getColumn());
+            
+            // move over newline if selected
+            if (sel.endsWith("\n"))
+               endPos.setRow(endPos.getRow() + 1);
             docDisplay_.replaceRange(
-                  Range.fromPoints(docContentPos, 
-                         Position.create(docContentPos.getRow() + 1, 0)), sel);
+                  Range.fromPoints(docContentPos, endPos), sel);
+            docDisplay_.replaceRange(selRange, "");
          }
                
          Position cursorPosition = insertChunkInfo.getCursorPosition();
@@ -4176,6 +4194,17 @@ public class TextEditingTarget implements
       
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+
+      // prepare the status bar
+      if (previousScopes.length > 0)
+      {
+         if (position != null &&
+             position.getRow() > docDisplay_.getDocumentEnd().getRow())
+            statusBar_.showNotebookProgress("Run All");
+         else
+            statusBar_.showNotebookProgress("Run Previous");
+      }
+
       for (Scope scope : previousScopes)
          executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
    }

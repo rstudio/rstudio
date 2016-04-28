@@ -39,6 +39,54 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
+Error getChunkDefs(const FilePath& defs, time_t *pDocTime, 
+      core::json::Value* pDefs)
+{
+   // read the defs file 
+   std::string contents;
+   Error error = readStringFromFile(defs, &contents);
+   if (error)
+      return error;
+
+   // pull out the contents
+   json::Value defContents;
+   if (!json::parse(contents, &defContents) || 
+       defContents.type() != json::ObjectType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   // extract the chunk definitions
+   if (pDefs)
+   {
+      json::Array chunkDefs;
+      error = json::readObject(defContents.get_obj(), kChunkDefs, &chunkDefs);
+      if (error)
+         return error;
+
+      // return to caller
+      *pDefs = chunkDefs;
+   }
+
+   // extract the doc write time 
+   if (pDocTime)
+   {
+      json::Object::iterator it = 
+         defContents.get_obj().find(kChunkDocWriteTime);
+      if (it != defContents.get_obj().end() &&
+          it->second.type() == json::IntegerType)
+      {
+         *pDocTime = static_cast<std::time_t>(it->second.get_int64());
+      }
+      else
+      {
+         return Error(json::errc::ParamMissing, ERROR_LOCATION);
+      }
+   }
+   return Success();
+}
+
+
+}
+
 // given and old and new set of chunk definitions, cleans up all the chunks
 // files in the old set but not in the new set
 void cleanChunks(const FilePath& cacheDir,
@@ -67,7 +115,12 @@ void cleanChunks(const FilePath& cacheDir,
    }
 }
 
-} // anonymous namespace
+FilePath chunkDefinitionsPath(const core::FilePath& docPath,
+                              const std::string& nbCtxId)
+{
+   std::string fileName = std::string() + kNotebookChunkDefFilename;
+   return chunkCacheFolder(docPath, "", nbCtxId).childPath(fileName);
+}
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& docId,
@@ -132,55 +185,26 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
    return Success();
 }
 
+core::Error getChunkDefs(const core::FilePath& docPath, 
+      const std::string& nbCtxId, std::time_t *pDocTime, 
+      core::json::Value* pDefs)
+{
+   FilePath defs = chunkDefinitionsPath(docPath, nbCtxId);
+   if (!defs.exists())
+      return Success();
+
+   return getChunkDefs(defs, pDocTime, pDefs);
+}
+
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
                    const std::string& nbCtxId, time_t *pDocTime, 
                    core::json::Value* pDefs)
 {
-   Error error;
    FilePath defs = chunkDefinitionsPath(docPath, docId, nbCtxId);
    if (!defs.exists())
       return Success();
 
-   // read the defs file 
-   std::string contents;
-   error = readStringFromFile(defs, &contents);
-   if (error)
-      return error;
-
-   // pull out the contents
-   json::Value defContents;
-   if (!json::parse(contents, &defContents) || 
-       defContents.type() != json::ObjectType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
-   // extract the chunk definitions
-   if (pDefs)
-   {
-      json::Array chunkDefs;
-      error = json::readObject(defContents.get_obj(), kChunkDefs, &chunkDefs);
-      if (error)
-         return error;
-
-      // return to caller
-      *pDefs = chunkDefs;
-   }
-
-   // extract the doc write time 
-   if (pDocTime)
-   {
-      json::Object::iterator it = 
-         defContents.get_obj().find(kChunkDocWriteTime);
-      if (it != defContents.get_obj().end() &&
-          it->second.type() == json::IntegerType)
-      {
-         *pDocTime = static_cast<std::time_t>(it->second.get_int64());
-      }
-      else
-      {
-         return Error(json::errc::ParamMissing, ERROR_LOCATION);
-      }
-   }
-   return Success();
+   return getChunkDefs(defs, pDocTime, pDefs);
 }
 
 Error getChunkDefs(const std::string& docPath, const std::string& docId,

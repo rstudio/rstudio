@@ -34,6 +34,13 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+void cleanChunks(const core::FilePath& cacheDir,
+                 const core::json::Array &oldDefs, 
+                 const core::json::Array &newDefs);
+
+core::FilePath chunkDefinitionsPath(const core::FilePath& docPath,
+      const std::string& nbCtxId);
+
 core::FilePath chunkDefinitionsPath(const std::string& docPath,
       const std::string& docId, const std::string& nbCtxId);
 
@@ -41,6 +48,10 @@ core::Error getChunkDefs(const std::string& docPath, const std::string& docId,
       std::time_t *pDocTime, core::json::Value* pDefs);
 
 core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
+      const std::string& nbCtxId, std::time_t *pDocTime, 
+      core::json::Value* pDefs);
+
+core::Error getChunkDefs(const core::FilePath& docPath, 
       const std::string& nbCtxId, std::time_t *pDocTime, 
       core::json::Value* pDefs);
 

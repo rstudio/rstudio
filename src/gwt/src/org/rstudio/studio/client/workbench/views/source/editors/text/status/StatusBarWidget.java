@@ -225,7 +225,7 @@ public class StatusBarWidget extends Composite
    }
 
    @Override
-   public void showNotebookProgress(int percent, String chunkName)
+   public void showNotebookProgress(String label)
    {
       // cancel the hide timer if it's running
       hideProgressTimer_.cancel();
@@ -237,8 +237,15 @@ public class StatusBarWidget extends Composite
          progress_.setVisible(true);
       }
       
-      // update the status bar
-      progress_.setPercent(percent, chunkName);
+      progress_.setLabel(label);
+      progress_.setPercent("", 0);
+   }
+
+   @Override
+   public void updateNotebookProgress(String chunkName, int percent)
+   {
+      // just update the status bar
+      progress_.setPercent(chunkName, percent);
    }
 
    @Override
