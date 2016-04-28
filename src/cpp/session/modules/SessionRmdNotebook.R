@@ -677,7 +677,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    )
    
    rmdContents <- NULL
-   annotations <- list()
+   
+   n <- 1024
+   index <- 1
+   annotations <- vector("list", n)
    
    for (row in seq_along(contents)) {
       line <- contents[[row]]
@@ -704,13 +707,22 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          stop("invalid rnb comment")
       
       # decode comment information and update stack
-      annotations <- c(annotations, list(
+      annotations[[index]] <- list(
          row = row,
          label = strings[[1]],
          state = strings[[2]],
          meta  = if (n >= 3) .rs.rnb.decode(strings[[3]])
-      ))
+      )
+      
+      # grow list
+      index <- index + 1
+      if (index > n) {
+         n <- n * 2
+         annotations[n * 2] <- list(NULL)
+      }
    }
+   
+   annotations <- annotations[seq_len(index - 1)]
    
    list(source = contents,
         rmd = rmdContents,
@@ -726,4 +738,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    }
    
    nbData <- .rs.parseNotebook(nbPath)
+   
+   chunkLabel <- "unknown"
+   annotations <- nbData$annotations
+   for (i in seq_along(annotations)) {
+      annotation <- annotations[[i]]
+      label <- annotation$label
+      state <- annotation$state
+   }
 })
