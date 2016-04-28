@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -25,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -88,6 +90,21 @@ public class EditingTargetCodeExecution
          selectionRange = Range.fromPoints(
                Position.create(row, 0),
                Position.create(row, docDisplay_.getLength(row)));
+         
+         // make it harder to step off the end of a chunk
+         InsertChunkInfo insert = docDisplay_.getInsertChunkInfo();
+         if (insert != null && !StringUtil.isNullOrEmpty(insert.getValue()))
+         {
+            // get the selection we're about to execute; if it's the same as
+            // the last line of the chunk template, don't run it
+            String code = codeExtractor_.extractCode(docDisplay_, 
+                  selectionRange);
+            String[] chunkLines = insert.getValue().split("\n");
+            if (!StringUtil.isNullOrEmpty(code) &&
+                chunkLines.length > 0 &&
+                code.trim() == chunkLines[chunkLines.length - 1].trim())
+               return;
+         }
       }
 
       executeRange(selectionRange, functionWrapper, onlyUseConsole);
