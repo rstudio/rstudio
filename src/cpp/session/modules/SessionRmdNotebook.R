@@ -719,21 +719,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    nbData <- .rs.parseNotebook(nbPath)
    
-   # Output Indexing ----
+   # State ----
+   activeChunkId <- "unknown"
    outputIndex <- 1
    outputPath <- function(cachePath, chunkId, index, ext) {
       file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
-   }
-   
-   # Chunk Handling ----
-   activeChunkId <- "unknown"
-   onChunk <- function(annotation) {
-      if (annotation$state == "begin") {
-         activeChunkId <<- .rs.randomString("c", n = 12)
-         outputIndex   <<- 1
-      } else {
-         activeChunkId <<- "unknown"
-      }
    }
    
    # Console I/O ----
@@ -783,6 +773,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          ))
       } else {
          # nothing to do?
+      }
+   }
+   
+   # Chunk Handling ----
+   onChunk <- function(annotation) {
+      if (annotation$state == "begin") {
+         activeChunkId <<- .rs.randomString("c", n = 12)
+         outputIndex   <<- 1
+      } else {
+         writeConsoleData(consoleDataBuilder)
+         activeChunkId <<- "unknown"
       }
    }
    
