@@ -726,15 +726,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
 })
 
-.rs.addFunction("randomString", function(prefix  = "",
-                                         postfix = "",
-                                         candidates = c(letters, LETTERS, 0:9),
-                                         n = 16L)
-{
-   sampled <- sample(candidates, n, TRUE)
-   paste(prefix, paste(sampled, collapse = ""), postfix, sep = "")
-})
-
 .rs.addFunction("hydrateCacheFromNotebook", function(nbPath, cachePath = NULL)
 {
    if (is.null(cachePath)) {
@@ -747,6 +738,33 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # state variables as we parse annotations
    consoleDataBuilder <- .rs.listBuilder()
    activeChunkLabel <- "unknown"
+   outputIndex <- 1
+   
+   plotStart <- plotEnd <- NULL
+   htmlWidgetStart <- htmlWidgetEnd <- NULL
+   
+   # flush console data to cache
+   writeConsoleData <- function() {
+      
+      # TODO: this shouldn't happen; should we warn / err?
+      if (consoleDataBuilder$empty())
+         return()
+      
+      # construct path to cache file
+      filename <- sprintf("%06s.csv", outputIndex)
+      path <- file.path(cachePath, activeChunkLabel, filename)
+      .rs.ensureDirectory(dirname(path))
+      
+      # convert console data back to expected cache format
+      data <- consoleDataBuilder$data()
+      pasted <- paste(data, collapse = "\n") # TODO
+      
+      # write data
+      cat(pasted, file = path, sep = "\n")
+      
+      # clear data
+      consoleDataBuilder$clear()
+   }
    
    # begin looping through annotations and building cache
    annotations <- nbData$annotations
@@ -767,22 +785,53 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # handle console input
       if (label == "source" && begin) {
-         ls
+         consoleDataBuilder$append(list(
+            type = "input",
+            data = annotation$meta$data
+         ))
       }
       
       # handle console output
       if (label == "output" && begin) {
-         ls
+         consoleDataBuilder$append(list(
+            type = "output",
+            data = annotation$meta$data
+         ))
       }
       
       # handle plot
-      if (label == "plot" && begin) {
-         ls
+      if (label == "plot") {
+         
+         # mark plot begin
+         if (begin) {
+            writeConsoleData()
+            plotStart <- annotation$row
+         }
+         
+         # plot end -- write output
+         if (!begin) {
+            plotEnd <- annotation$row
+            writePlotData()
+            browser()
+            plotStart <- NULL
+         }
       }
       
       # handle html widget
-      if (label == "htmlwidget" && begin) {
-         ls
+      if (label == "htmlwidget") {
+         
+         # mark widget begin
+         if (begin) {
+            writeConsoleData()
+            htmlWidgetStart <- annotation$row
+         }
+         
+         # widget end -- write output
+         if (!begin) {
+            htmlWidgetEnd <- annotation$row
+            browser()
+            htmlWidgetStart <- NULL
+         }
       }
    }
 })

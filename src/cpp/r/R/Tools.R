@@ -860,7 +860,11 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
          data_ <<- vector("list", capacity_)
       }
       
-      list(append = append, clear = clear, data = data)
+      empty <- function() {
+         index_ == 0
+      }
+      
+      list(append = append, clear = clear, empty = empty, data = data)
       
    })()
 })
@@ -929,3 +933,13 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 .rs.addFunction("nBytes", function(x) {
    nchar(x, type = "bytes")
 })
+
+.rs.addFunction("randomString", function(prefix = "",
+                                         postfix = "",
+                                         candidates = c(letters, LETTERS, 0:9),
+                                         n = 16L)
+{
+   sampled <- sample(candidates, n, TRUE)
+   paste(prefix, paste(sampled, collapse = ""), postfix, sep = "")
+})
+
