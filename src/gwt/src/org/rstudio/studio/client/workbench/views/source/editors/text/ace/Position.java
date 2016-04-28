@@ -23,6 +23,12 @@ public class Position extends JavaScriptObject
    public static native Position create(int row, int column) /*-{
       return {row: row, column: column};
    }-*/;
+   
+   public static native Position create(Position other) /*-{
+      if (other === null)
+        return null;
+      return {row: other.row, column: other.column };
+   }-*/;
 
    public native final int getRow() /*-{
       return this.row;
