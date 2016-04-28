@@ -37,14 +37,14 @@ namespace {
 std::map<std::string, std::string> s_idCache;
 std::time_t s_cacheWriteTime = 0;
 
-FilePath cachePath(const std::string& nbCtxId)
+FilePath cachePath()
 {
-   return notebookCacheRoot().childPath("paths-" + nbCtxId);
+   return notebookCacheRoot().childPath("paths");
 }
 
 void cleanNotebookPathMap()
 {
-   FilePath cache = cachePath(notebookCtxId());
+   FilePath cache = cachePath();
    Error error = core::readStringMapFromFile(cache, &s_idCache);
 
    // loop over entries (conditionalize increment so we don't attempt to
@@ -66,10 +66,10 @@ void cleanNotebookPathMap()
    s_cacheWriteTime = std::time(NULL);
 }
 
-Error synchronizeCache(const std::string& nbCtxId)
+Error synchronizeCache()
 {
    Error error;
-   FilePath cache = cachePath(nbCtxId);
+   FilePath cache = cachePath();
    if (!cache.exists())
    {
       // create folder to host cache if necessary
@@ -85,7 +85,6 @@ Error synchronizeCache(const std::string& nbCtxId)
       // the cache exists; see if we need to reload
       if (cache.lastWriteTime() > s_cacheWriteTime) 
       {
-         // TODO: this needs to be sensitive to the context ID 
          error = core::readStringMapFromFile(cache, &s_idCache);
          if (error)
             return error;
@@ -102,10 +101,9 @@ Error synchronizeCache(const std::string& nbCtxId)
 
 } // anonymous namespace
 
-Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
-      std::string *pId)
+Error notebookPathToId(const core::FilePath& path, std::string *pId)
 {
-   Error error = synchronizeCache(nbCtxId);
+   Error error = synchronizeCache();
    if (error)
       return error;
    
@@ -138,7 +136,7 @@ Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
 
    // insert the new ID and update caches
    s_idCache[path.absolutePath()] = id;
-   error = writeStringMapToFile(cachePath(nbCtxId), s_idCache);
+   error = writeStringMapToFile(cachePath(), s_idCache);
    if (error)
       return error;
    s_cacheWriteTime = std::time(NULL);
@@ -147,10 +145,9 @@ Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
    return Success();
 }
 
-core::Error notebookIdToPath(const std::string& id, 
-      const std::string& nbCtxId, core::FilePath* pPath)
+core::Error notebookIdToPath(const std::string& id, core::FilePath* pPath)
 {
-   Error error = synchronizeCache(nbCtxId);
+   Error error = synchronizeCache();
    if (error)
       return error;
    
