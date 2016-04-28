@@ -77,16 +77,12 @@ void cleanUnusedCaches()
          continue;
       std::vector<std::string> parts = core::algorithm::split(
             cache.stem(), "-");
-      if (parts.size() != 3)
-         continue;
-
-      // ignore caches from other contexts
-      if (parts[0] != nbCtxId)
+      if (parts.size() < 2)
          continue;
 
       // get the path of the notebook associated with the cache
       FilePath path;
-      error = notebookIdToPath(parts[1], nbCtxId, &path);
+      error = notebookIdToPath(parts[0], nbCtxId, &path);
       if (error)
       {
          if (error.code() == boost::system::errc::no_such_file_or_directory)
@@ -114,19 +110,34 @@ void cleanUnusedCaches()
          continue;
       }
 
-      // check the write time on the chunk defs file (updated when the doc is
-      // mutated or saved)
-      FilePath chunkDefs = cache.complete(kCacheVersion)
-                                .complete(kNotebookChunkDefFilename);
-      if (!chunkDefs.exists())
-         continue;
-      if ((std::time(NULL) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
+      std::vector<FilePath> contexts;
+      error = cache.complete(kCacheVersion).children(&contexts);
+      if (error)
       {
-         // the cache is old and the document hasn't been opened in a while --
-         // remove it.
-         error = cache.remove();
-         if (error)
-            LOG_ERROR(error);
+         LOG_ERROR(error);
+         continue;
+      }
+
+      BOOST_FOREACH(const FilePath context, contexts)
+      {
+         // skip if not our context or the saved context
+         if (context.filename() != kSavedCtx &&
+             context.filename() != nbCtxId)
+            continue;
+
+         // check the write time on the chunk defs file (updated when the doc is
+         // mutated or saved)
+         FilePath chunkDefs = context.complete(kNotebookChunkDefFilename);
+         if (!chunkDefs.exists())
+            continue;
+         if ((std::time(NULL) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
+         {
+            // the cache is old and the document hasn't been opened in a while --
+            // remove it.
+            error = context.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
       }
    }
 }
@@ -243,14 +254,13 @@ void onDocAdded(const std::string& id)
       return;
 
    FilePath cachePath = chunkCacheFolder(path, id);
-   FilePath nbPath = docPath.parent().complete(docPath.stem() + ".Rnb");
 
    // clean up incompatible cache versions (as we're about to invalidate them
    // by mutating the document without updating them) 
-   if (cachePath.parent().exists())
+   if (cachePath.exists())
    {
       std::vector<FilePath> versions;
-      cachePath.parent().children(&versions);
+      cachePath.children(&versions);
       BOOST_FOREACH(const FilePath& version, versions)
       {
          if (version.isDirectory() && version.filename() != kCacheVersion)
@@ -259,18 +269,6 @@ void onDocAdded(const std::string& id)
             if (error)
                LOG_ERROR(error);
          }
-      }
-   }
-
-   if (!cachePath.exists() && nbPath.exists())
-   {
-      // we have a saved representation, but no cache -- populate the cache
-      // from the saved representation
-      error = parseRnb(nbPath, cachePath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
       }
    }
 
@@ -291,11 +289,19 @@ void onDocSaved(FilePath &path)
    if (!cache.exists())
       return;
 
-   // tidy up: remove any saved chunks that no longer exist
    FilePath saved = chunkCacheFolder(path, "", kSavedCtx);
-   error = removeStaleSavedChunks(path, saved);
-   if (error)
-      LOG_ERROR(error);
+   if (saved.exists())
+   {
+      // tidy up: remove any saved chunks that no longer exist
+      error = removeStaleSavedChunks(path, saved);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      // no saved context yet; ensure we have a place to put it
+      saved.ensureDirectory();
+   }
 
    // move all the chunk definitions over to the saved context
    std::vector<FilePath> children;
@@ -314,20 +320,16 @@ void onDocSaved(FilePath &path)
       {
          // the definitions should be copied (we always want them in both
          // contexts)
-         error = source.copy(target);
+         error = target.removeIfExists();
+         if (!error)
+            error = source.copy(target);
       }
       else if (source.isDirectory())
       {
          // the chunk output folders should be moved; destroy the old copy
          error = target.removeIfExists();
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
-         
-         // replace with new contents
-         error = source.move(target);
+         if (!error)
+            error = source.move(target);
       }
       else
       {
