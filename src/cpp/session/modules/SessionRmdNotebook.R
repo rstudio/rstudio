@@ -263,11 +263,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                   bodyEl <- .rs.extractHTMLBodyElement(val)
                   
                   rendered <- htmltools::htmlPreserve(bodyEl)
-                  annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "htmlwidget")
+                  annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "htmlwidget", meta = jsonContents)
                   output <- knitr::asis_output(annotated, meta = jsonContents)
                   return(output)
                }
                
+               # TODO: shouldn't get here?
                NULL
             })
             
@@ -650,31 +651,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    contents <- .rs.readLines(nbPath)
    
-   reComment <- paste(
-      "^\\s*",
-      "<!--",
-      "\\s*",
-      "rnb-([^-]+)-(begin|end)",
-      "\\s*",
-      "([^\\s-]+)?",
-      "\\s*",
-      "-->",
-      "\\s*$",
-      sep = ""
-   )
-   
-   reDocument <- paste(
-      "^\\s*",
-      "<!--",
-      "\\s*",
-      "rnb-document-source",
-      "\\s*",
-      "([^\\s-]+)",
-      "\\s*",
-      "-->",
-      "\\s*$",
-      sep = ""
-   )
+   reComment  <- "^\\s*<!--\\s*rnb-([^-]+)-(begin|end)\\s*([^\\s-]+)?\\s*-->\\s*$"
+   reDocument <- "^\\s*<!--\\s*rnb-document-source\\s*([^\\s-]+)\\s*-->\\s*$"
    
    rmdContents <- NULL
    builder <- .rs.listBuilder()
@@ -720,8 +698,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    }
    
    annotations <- builder$data()
+   
+   # extract header content
+   headStart <- grep("^\\s*<head>\\s*$", contents, perl = TRUE)[[1]]
+   headEnd   <- grep("^\\s*</head>\\s*$", contents, perl = TRUE)[[1]]
+   
    list(source = contents,
         rmd = rmdContents,
+        header = contents[headStart:headEnd],
         annotations = annotations)
    
 })
@@ -755,14 +739,28 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Console I/O ----
    consoleDataBuilder <- .rs.listBuilder()
    writeConsoleData <- function(builder) {
-      if (builder$empty())
-         return()
+      if (builder$empty()) return()
       
-      pasted <- paste(builder$data(), sep = "\n")
+      # convert to .csv file
+      df <- .rs.rbindList(builder$data())
+      
+      # reorder and rename type column
+      df <- df[c("type", "data")]
+      df$type[df$type == "input"]  <- "0"
+      df$type[df$type == "output"] <- "1"
       
       path <- outputPath(cachePath, activeChunkId, outputIndex, "csv")
       .rs.ensureDirectory(dirname(path))
-      cat(pasted, file = path, sep = "\n")
+      write.table(df,
+                  file = path,
+                  quote = TRUE,
+                  sep = ",",
+                  row.names = FALSE,
+                  col.names = FALSE,
+                  fileEncoding = "UTF-8")
+      
+      # update state
+      builder$clear()
       outputIndex <<- outputIndex + 1
    }
    
@@ -791,13 +789,25 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Plot Handling ----
    plotRange <- list(start = NULL, end = NULL)
    writePlot <- function(source, range) {
-      html <- source[`:`(
+      
+      # get html plot output
+      html <- paste(source[`:`(
          range$start + 1,
          range$end - 1
-      )]
+      )], collapse = " ")
+      
+      # extract base64 encoded content
+      scraped <- .rs.scrapeHtmlAttributes(html)
+      pngDataEncoded <- substring(scraped$src, nchar("data:image/png;base64,") + 1)
+      pngData <- .rs.base64decode(pngDataEncoded, binary = TRUE)
+      
+      # write to file
       path <- outputPath(cachePath, activeChunkId, outputIndex, "png")
       .rs.ensureDirectory(dirname(path))
-      cat(html, file = path, sep = "\n")
+      writeBin(pngData, path, useBytes = TRUE)
+      
+      # update state
+      outputIndex <<- outputIndex + 1
    }
    onPlot <- function(annotation) {
       if (annotation$state == "begin") {
@@ -812,24 +822,54 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # HTML Widget Handling ----
    widgetRange <- list(start = NULL, end = NULL)
-   widgetData  <- NULL
-   writeWidget <- function(data, range) {
-      html <- data[`:`(
+   widgetMeta  <- NULL
+   writeWidget <- function(source, range, meta) {
+      
+      # get inner (body) HTML
+      htmlBody <- source[`:`(
          range$start + 1,
          range$end - 1
       )]
-      browser()
+      
+      # get header content
+      header <- "<!-- TODO -->"
+      
+      fmt <- paste(
+         '<!DOCTYPE html>',
+         '<html>',
+         '<head>',
+         '%s',
+         '</head>',
+         '<body style="background-color:white;">',
+         '%s',
+         '</body>',
+         '</html>',
+         sep = "\n"
+      )
+      
+      htmlOutput <- sprintf(fmt,
+                            paste(header, collapse = "\n"),
+                            paste(htmlBody, collapse = "\n"))
+      
+      htmlPath <- outputPath(cachePath, activeChunkId, outputIndex, "html")
+      cat(htmlOutput, file = htmlPath, sep = "\n")
+      
+      jsonPath <- outputPath(cachePath, activeChunkId, outputIndex, "json")
+      cat(.rs.toJSON(meta, unbox = TRUE), file = jsonPath, sep = "\n")
+      
+      # update state
+      outputIndex <<- outputIndex + 1
    }
    onWidget <- function(annotation) {
       if (annotation$state == "begin") {
          writeConsoleData(consoleDataBuilder)
          widgetRange$start <<- annotation$row
-         widgetData        <<- annotation$meta
+         widgetMeta        <<- annotation$meta
       } else {
          widgetRange$end <- annotation$row
-         writeWidget(widgetData, widgetRange)
+         writeWidget(nbData$source, widgetRange, widgetMeta)
          widgetRange <<- list(start = NULL, end = NULL)
-         widgetData  <<- NULL
+         widgetMeta  <<- NULL
       }
    }
    
@@ -847,4 +887,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
              "plot"       = onPlot(annotation),
              "htmlwidget" = onWidget(annotation))
    }
+})
+
+.rs.addFunction("rbindList", function(data)
+{
+   result <- do.call(Map, c(c, data))
+   as.data.frame(result, stringsAsFactors = FALSE)
 })
