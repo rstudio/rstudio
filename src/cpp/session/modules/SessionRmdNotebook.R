@@ -29,9 +29,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          stop("'", output, "' exists and is newer than '", input, "'")
    }
    
+   # extract rmd contents and populate file
    contents <- .rs.extractFromNotebook("rnb-document-source", input)
    cat(contents, file = output, sep = "\n")
    
+   # extract and populate cache
+   .rs.hydrateCacheFromNotebook(input)
+   
+   # return TRUE to indicate success
    .rs.scalar(TRUE)
 })
 
@@ -734,6 +739,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
 })
 
+.rs.addFunction("generateRandomChunkId", function()
+{
+   candidates <- c(letters, 0:9)
+   .rs.randomString("c", candidates = candidates, n = 12L)
+})
+
 .rs.addFunction("hydrateCacheFromNotebook", function(nbPath, cachePath = NULL)
 {
    if (is.null(cachePath)) {
@@ -741,20 +752,49 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
    
+   # ensure cache directory
+   if (!.rs.dirExists(cachePath))
+      dir.create(cachePath, recursive = TRUE)
+   
    # parse the notebook file
    nbData <- .rs.parseNotebook(nbPath)
    
+   # clear out old cache
+   unlink(list.files(cachePath, full.names = TRUE), recursive = TRUE)
+   
    # State, etc. ----
-   activeChunkId    <- "unknown"
-   activeChunkIndex <- 0
-   activeIndex      <- 1
+   lastActiveAnnotation   <- list()
+   activeChunkId          <- "unknown"
+   activeChunkIndex       <- 0
+   activeIndex            <- 1
+   
    headerContent <- nbData$source[`:`(
       grep("^\\s*<head>\\s*$", nbData$source, perl = TRUE)[[1]] + 1,
       grep("^\\s*</head>\\s*$", nbData$source, perl = TRUE)[[1]] - 1
    )]
+   
    chunkInfo <- .rs.extractRmdChunkInformation(nbData$rmd)
+   
    outputPath <- function(cachePath, chunkId, index, ext) {
       file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
+   }
+   
+   # Text ----
+   onText <- function(annotation) {
+      # HACK: the 'chunk' hook is not fired for chunks that
+      # produce no output on execution, and so such chunks
+      # are not annotated within the generated .nb.html file.
+      # fortunately, we can detect two sequential 'text'
+      # blocks as an indicator that there was an 'invisible'
+      # chunk within.
+      if (identical(annotation$state, "begin") &&
+          identical(lastActiveAnnotation$label, "text") &&
+          identical(lastActiveAnnotation$state, "end"))
+      {
+         activeChunkId    <<- .rs.generateRandomChunkId()
+         activeChunkIndex <<- activeChunkIndex + 1
+         activeIndex      <<- 1
+      }
    }
    
    # Console I/O ----
@@ -813,12 +853,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (annotation$state == "begin") {
          
          # update state re: active chunk + number of processed outputs
-         activeChunkId    <<- .rs.randomString("c", n = 12)
          activeChunkIndex <<- activeChunkIndex + 1
          activeIndex      <<- 1
          
          # create chunk defn for this chunk
          info <- chunkInfo[[activeChunkIndex]]
+         
+         # get active chunk id (special handling for setup chunk)
+         candidates <- c(letters, 0:9)
+         if (grepl("^\\s*```{[Rr]\\s+setup", info$contents[[1]], perl = TRUE))
+            activeChunkId <<- "csetup_chunk"
+         else
+            activeChunkId <<- .rs.generateRandomChunkId()
+         
+         # add our chunk defn
          chunkDefnsBuilder$append(list(
             chunk_id = activeChunkId,
             expansion_state = 1,      # TODO
@@ -929,11 +977,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       label <- annotation$label
       
       switch(label,
+             "text"       = onText(annotation),
              "chunk"      = onChunk(annotation),
              "source"     = onSource(annotation),
              "output"     = onOutput(annotation),
              "plot"       = onPlot(annotation),
              "htmlwidget" = onWidget(annotation))
+      
+      lastActiveAnnotation <- annotation
    }
    
    # write 'chunks.json' based on gathered chunk info
@@ -946,10 +997,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunksJsonPath <- file.path(cachePath, "chunks.json")
    cat(chunksJson, file = chunksJsonPath, sep = "\n")
    
+   # NOTE: we don't bother writing a libs folder as we'll just dump
+   # the base64 encoded headers into all HTML widget elements
+   
 })
 
 .rs.addFunction("rbindList", function(data)
 {
-   result <- do.call(Map, c(c, data))
-   as.data.frame(result, stringsAsFactors = FALSE)
+   result <- do.call(Map, c(c, data, USE.NAMES = FALSE))
+   df <- as.data.frame(result, stringsAsFactors = FALSE)
+   names(df) <- names(data[[1]])
+   df
 })
