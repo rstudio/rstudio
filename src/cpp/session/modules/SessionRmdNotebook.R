@@ -665,7 +665,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (!identical(c(matches), -1L)) {
          start <- c(attr(matches, "capture.start"))
          end   <- start + c(attr(matches, "capture.length")) - 1
-         rmdContents <- .rs.base64decode(substring(line, start, end))
+         decoded <- .rs.base64decode(substring(line, start, end))
+         rmdContents <- strsplit(decoded, "\\r?\\n", perl = TRUE)[[1]]
          next
       }
       
@@ -710,6 +711,29 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
 })
 
+.rs.addFunction("extractRmdChunkInformation", function(rmd)
+{
+   starts <- grep(.rs.reRmdChunkBegin(), rmd, perl = TRUE)
+   ends   <- grep(.rs.reRmdChunkEnd(), rmd, perl = TRUE)
+   
+   # TODO: how to handle invalid document?
+   n <- min(length(starts), length(ends))
+   if (length(starts) != n) starts <- starts[seq_len(n)]
+   if (length(ends) != n)   ends <- ends[seq_len(n)]
+   
+   # collect chunk information
+   lapply(seq_len(n), function(i) {
+      begin    <- starts[[i]]
+      end      <- ends[[i]]
+      contents <- rmd[begin:end]
+      list(
+         begin    = starts[[i]],
+         end      = ends[[i]],
+         contents = contents
+      )
+   })
+})
+
 .rs.addFunction("hydrateCacheFromNotebook", function(nbPath, cachePath = NULL)
 {
    if (is.null(cachePath)) {
@@ -717,15 +741,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
    
+   # parse the notebook file
    nbData <- .rs.parseNotebook(nbPath)
    
    # State, etc. ----
-   activeChunkId <- "unknown"
-   activeIndex <- 1
+   activeChunkId    <- "unknown"
+   activeChunkIndex <- 0
+   activeIndex      <- 1
    headerContent <- nbData$source[`:`(
       grep("^\\s*<head>\\s*$", nbData$source, perl = TRUE)[[1]] + 1,
       grep("^\\s*</head>\\s*$", nbData$source, perl = TRUE)[[1]] - 1
    )]
+   chunkInfo <- .rs.extractRmdChunkInformation(nbData$rmd)
    outputPath <- function(cachePath, chunkId, index, ext) {
       file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
    }
@@ -781,12 +808,31 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    }
    
    # Chunk Handling ----
+   chunkDefnsBuilder <- .rs.listBuilder()
    onChunk <- function(annotation) {
       if (annotation$state == "begin") {
-         activeChunkId <<- .rs.randomString("c", n = 12)
-         activeIndex   <<- 1
+         
+         # update state re: active chunk + number of processed outputs
+         activeChunkId    <<- .rs.randomString("c", n = 12)
+         activeChunkIndex <<- activeChunkIndex + 1
+         activeIndex      <<- 1
+         
+         # create chunk defn for this chunk
+         info <- chunkInfo[[activeChunkIndex]]
+         chunkDefnsBuilder$append(list(
+            chunk_id = activeChunkId,
+            expansion_state = 1,      # TODO
+            options = list(),         # TODO
+            row = info$end,
+            row_count = 1,            # TODO: ever not 1?
+            visible = TRUE
+         ))
+         
       } else {
+         # flush console data
          writeConsoleData(consoleDataBuilder)
+         
+         # leaving active chunk
          activeChunkId <<- "unknown"
       }
    }
@@ -889,6 +935,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
              "plot"       = onPlot(annotation),
              "htmlwidget" = onWidget(annotation))
    }
+   
+   # write 'chunks.json' based on gathered chunk info
+   mtime <- file.info(nbPath)$mtime
+   chunks <- list(
+      chunk_definitions = chunkDefnsBuilder$data(),
+      doc_write_time    = as.numeric(mtime)
+   )
+   chunksJson <- .rs.toJSON(chunks, unbox = TRUE)
+   chunksJsonPath <- file.path(cachePath, "chunks.json")
+   cat(chunksJson, file = chunksJsonPath, sep = "\n")
+   
 })
 
 .rs.addFunction("rbindList", function(data)
