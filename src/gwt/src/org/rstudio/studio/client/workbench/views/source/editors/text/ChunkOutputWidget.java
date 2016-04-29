@@ -269,7 +269,9 @@ public class ChunkOutputWidget extends Composite
          }
          return;
       }
-     
+      
+      setVisible(true);
+      
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
       int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
@@ -295,8 +297,6 @@ public class ChunkOutputWidget extends Composite
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
          
-      setVisible(true);
-      
       // allocate some extra space so the cursor doesn't touch the output frame
       host_.onOutputHeightChanged(height + 7, ensureVisible);
    }
