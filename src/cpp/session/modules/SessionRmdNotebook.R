@@ -403,7 +403,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("rnb.htmlNotebook", function(...)
 {
    if ("rmarkdown" %in% loadedNamespaces() &&
-       exists("html_notebook", envir = asNamespace("rmarkdown")))
+       "html_notebook" %in% getNamespaceExports("rmarkdown"))
    {
       return(rmarkdown::html_notebook(...))
    }
