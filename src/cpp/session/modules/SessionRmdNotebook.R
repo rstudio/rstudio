@@ -766,7 +766,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    lastActiveAnnotation   <- list()
    activeChunkId          <- "unknown"
    activeChunkIndex       <- 0
-   activeIndex            <- 1
+   activeIndex            <- 2
    
    headerContent <- nbData$source[`:`(
       grep("^\\s*<head>\\s*$", nbData$source, perl = TRUE)[[1]] + 1,
@@ -793,7 +793,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       {
          activeChunkId    <<- .rs.generateRandomChunkId()
          activeChunkIndex <<- activeChunkIndex + 1
-         activeIndex      <<- 1
+         activeIndex      <<- 2
       }
    }
    
@@ -828,7 +828,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    onSource <- function(annotation) {
       if (annotation$state == "begin") {
          consoleDataBuilder$append(list(
-            data = annotation$meta$data,
+            data = paste(annotation$meta$data, collapse = "\n"),
             type = "input"
          ))
       } else {
@@ -839,7 +839,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    onOutput <- function(annotation) {
       if (annotation$state == "begin") {
          consoleDataBuilder$append(list(
-            data = annotation$meta$data,
+            data = paste(annotation$meta$data, collapse = "\n"),
             type = "output"
          ))
       } else {
@@ -854,7 +854,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # update state re: active chunk + number of processed outputs
          activeChunkIndex <<- activeChunkIndex + 1
-         activeIndex      <<- 1
+         activeIndex      <<- 2
          
          # create chunk defn for this chunk
          info <- chunkInfo[[activeChunkIndex]]
@@ -1004,8 +1004,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rbindList", function(data)
 {
-   result <- do.call(Map, c(c, data, USE.NAMES = FALSE))
-   df <- as.data.frame(result, stringsAsFactors = FALSE)
-   names(df) <- names(data[[1]])
-   df
+   result <- do.call(mapply, c(c, data, USE.NAMES = FALSE, SIMPLIFY = FALSE))
+   names(result) <- names(data[[1]])
+   as.data.frame(result, stringsAsFactors = FALSE)
 })
