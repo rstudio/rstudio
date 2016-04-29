@@ -869,9 +869,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # add our chunk defn
          chunkDefnsBuilder$append(list(
             chunk_id = activeChunkId,
-            expansion_state = 1,      # TODO
-            options = list(),         # TODO
-            row = info$end,
+            expansion_state = 0,
+            options = list(),         # TODO: parse from chunk header?
+            row = info$end - 1,
             row_count = 1,            # TODO: ever not 1?
             visible = TRUE
          ))
