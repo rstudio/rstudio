@@ -84,6 +84,7 @@
 * Fix highlighting of escaped '$' in inline Mathjax expressions
 * Fix editor preview vanishing on zoom level change
 * Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
+* Emacs mode: C-r now performs a reverse isearch on Windows (rather than running code)
 * Ensure that modal dialogs capture all input even in the presence of multiple modals
 * Filter out "00LOCK" directories from package name completions
 * Provide completions for 'lazydata' objects within namespaces

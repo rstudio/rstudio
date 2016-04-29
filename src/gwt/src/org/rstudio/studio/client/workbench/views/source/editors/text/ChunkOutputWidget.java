@@ -258,10 +258,6 @@ public class ChunkOutputWidget extends Composite
    
    public void syncHeight(boolean scrollToBottom, boolean ensureVisible)
    {
-      // don't sync if we're collapsed
-      if (expansionState_.getValue() != EXPANDED)
-         return;
-      
       // special behavior for chunks which don't have output included by 
       // default
       if (!options_.include() && !hasErrors_)
@@ -273,18 +269,22 @@ public class ChunkOutputWidget extends Composite
          }
          return;
       }
-      
+     
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
-      int contentHeight = root_.getElement().getScrollHeight() + 19;
-      int height = Math.min(
-            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
-            ChunkOutputUi.MAX_CHUNK_HEIGHT);
+      int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
+      if (expansionState_.getValue() == EXPANDED)
+      {
+         int contentHeight = root_.getElement().getScrollHeight() + 19;
+         height = Math.min(
+               Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
+               ChunkOutputUi.MAX_CHUNK_HEIGHT);
 
-      // if we have renders pending, don't shrink until they're loaded 
-      if (pendingRenders_ > 0 && height < renderedHeight_)
-         return;
-      
+         // if we have renders pending, don't shrink until they're loaded 
+         if (pendingRenders_ > 0 && height < renderedHeight_)
+            return;
+      }
+
       // don't report height if it hasn't changed
       if (height == renderedHeight_)
          return;
@@ -294,7 +294,7 @@ public class ChunkOutputWidget extends Composite
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
-      
+         
       setVisible(true);
       
       // allocate some extra space so the cursor doesn't touch the output frame
