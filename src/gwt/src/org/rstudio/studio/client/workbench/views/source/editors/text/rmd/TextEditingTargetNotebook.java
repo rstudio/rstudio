@@ -673,12 +673,14 @@ public class TextEditingTargetNotebook
       // ignore if not targeted at this document
       if (event.getData().getDocId() != docUpdateSentinel_.getId())
          return;
+      boolean ensureVisible = true;
       
       // mark chunk execution as finished
       if (executingChunk_ != null &&
           event.getData().getChunkId() == executingChunk_.chunkId)
       {
          cleanChunkExecState(executingChunk_.chunkId);
+         ensureVisible = executingChunk_.mode == MODE_SINGLE;
 
          // if this was the setup chunk, and no errors were encountered while
          // executing it, mark it clean
@@ -686,9 +688,12 @@ public class TextEditingTargetNotebook
               outputs_.containsKey(executingChunk_.chunkId))
          {
             if (!outputs_.get(executingChunk_.chunkId).hasErrors())
+            {
                writeSetupCrc32(executingChunk_.setupCrc32);
+            }
             else
             {
+               ensureVisible = true;
                validateSetupChunk_ = true;
             }
          }
@@ -708,7 +713,7 @@ public class TextEditingTargetNotebook
          if (outputs_.containsKey(data.getChunkId()))
          {
             outputs_.get(data.getChunkId()).getOutputWidget()
-                                           .onOutputFinished(true);
+                                           .onOutputFinished(ensureVisible);
 
             // mark the document dirty (if it isn't already) since it now
             // contains notebook cache changes that haven't been committed 
