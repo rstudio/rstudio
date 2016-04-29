@@ -281,8 +281,6 @@ inline std::wstring trimWhitespace(const std::wstring& string)
 
 std::string makeRandomByteString(std::size_t n);
 
-std::string quotedValue(const std::string& string);
-
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

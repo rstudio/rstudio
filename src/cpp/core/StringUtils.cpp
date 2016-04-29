@@ -662,32 +662,6 @@ std::string makeRandomByteString(std::size_t n)
    return result;
 }
 
-std::string quotedValue(const std::string& string)
-{
-   std::size_t n = string.size();
-   if (n < 3 || string[0] != '"' || string[n - 1] != '"')
-      return string;
-   
-   std::string result;
-   std::string::const_iterator it  = string.begin() + 1;
-   std::string::const_iterator end = string.end() - 1;
-   
-   std::string::const_iterator tmp = std::find(it, end, '"');
-   if (tmp == end)
-      return std::string(it, end);
-   
-   result.append(std::string(it, tmp - 1));
-   it = tmp;
-   while (it != end)
-   {
-      tmp = std::find(it + 1, end, '"');
-      result.append(std::string(it, tmp - (tmp == end ? 0 : 1)));
-      it = tmp;
-   }
-   
-   return result;
-}
-
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio
