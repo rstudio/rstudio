@@ -67,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
@@ -76,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
@@ -105,6 +107,7 @@ public class TextEditingTargetNotebook
                           ResizeHandler,
                           InterruptStatusEvent.Handler,
                           RestartStatusEvent.Handler,
+                          ScopeTreeReadyEvent.Handler,
                           PinnedLineWidget.Host
 {
    public interface Binder
@@ -289,6 +292,7 @@ public class TextEditingTargetNotebook
    public void initialize(EventBus events, 
          RMarkdownServerOperations server,
          ConsoleServerOperations console,
+         SourceServerOperations source,
          Session session,
          UIPrefs prefs,
          Commands commands,
@@ -298,6 +302,7 @@ public class TextEditingTargetNotebook
       events_ = events;
       server_ = server;
       console_ = console;
+      source_ = source;
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
@@ -705,9 +710,15 @@ public class TextEditingTargetNotebook
             outputs_.get(data.getChunkId()).getOutputWidget()
                                            .onOutputFinished(true);
 
-            // mark the document dirty since it now contains cache changes that
-            // haven't been committed to the notebook 
-            dirtyState_.markDirty(false);
+            // mark the document dirty (if it isn't already) since it now
+            // contains notebook cache changes that haven't been committed 
+            if (!dirtyState_.getValue())
+            {
+               dirtyState_.markDirty(false);
+               source_.setSourceDocumentDirty(
+                     docUpdateSentinel_.getId(), true, 
+                     new VoidServerRequestCallback());
+            }
          }
 
          // process next chunk in execution queue
@@ -853,6 +864,66 @@ public class TextEditingTargetNotebook
             output.remove();
             outputs_.remove(output.getChunkId());
             break;
+         }
+      }
+   }
+
+   @Override
+   public void onScopeTreeReady(ScopeTreeReadyEvent event)
+   {
+      Scope thisScope = event.getCurrentScope();
+      
+      // initialization 
+      if (lastStart_ == null && lastEnd_ == null)
+      {
+         if (thisScope != null)
+         {
+            lastStart_ = Position.create(thisScope.getBodyStart());
+            lastEnd_ = Position.create(thisScope.getEnd());
+         }
+         return;
+      }
+      
+      // if the cursor is in the same scope as it was before and that 
+      // scope hasn't changed, there's no need to revalidate all the chunk 
+      // scopes (this is purely an optimization to avoid revalidating 
+      // constantly, since scope tree ready events fire as the user types
+      // and we don't want to do proportional work on the UI thread if we can
+      // avoid it)
+      if (thisScope != null)
+      {
+         Position thisStart = thisScope.getBodyStart();
+         Position thisEnd = thisScope.getEnd();
+         if (((lastStart_ == null && thisStart == null) ||
+              (lastStart_ != null && lastStart_.compareTo(thisStart) == 0)) &&
+             ((lastEnd_ == null && thisEnd == null) ||
+              (lastEnd_ != null && lastEnd_.compareTo(thisEnd) == 0))) 
+         {
+            return;
+         }
+
+         lastStart_ = Position.create(thisScope.getBodyStart());
+         lastEnd_ = Position.create(thisScope.getEnd());
+      }
+      else
+      {
+         lastStart_ = null;
+         lastEnd_ = null;
+      }
+      
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         Scope scope = output.getScope();
+         // if the scope associated with this output no longer looks like a 
+         // valid chunk scope, or is considerably out of sync with the widget,
+         // remove the widget
+         if (scope == null || !scope.isChunk() ||
+             scope.getBodyStart() == null || scope.getEnd() == null ||
+             scope.getEnd().getRow() - output.getCurrentRow() > 1)
+         {
+            events_.fireEvent(new ChunkChangeEvent(
+                  docUpdateSentinel_.getId(), output.getChunkId(), 0, 
+                  ChunkChangeEvent.CHANGE_REMOVE));
          }
       }
    }
@@ -1114,14 +1185,25 @@ public class TextEditingTargetNotebook
          // if the document property is set, apply it directly
          docDisplay_.setShowChunkOutputInline(
                outputType == CHUNK_OUTPUT_INLINE);
-         
       }
       else
       {
          // otherwise, use the global preference to set the value
          docDisplay_.setShowChunkOutputInline(
+            docDisplay_.getModeId() == "mode/rmarkdown" &&
             RStudioGinjector.INSTANCE.getUIPrefs()
                                      .showRmdChunkOutputInline().getValue());
+      }
+
+      // watch for scope tree changes if showing output inline
+      if (docDisplay_.showChunkOutputInline() && scopeTreeReg_ == null)
+      {
+         scopeTreeReg_ = docDisplay_.addScopeTreeReadyHandler(this);
+      }
+      else if (!docDisplay_.showChunkOutputInline() && scopeTreeReg_ != null)
+      {
+         scopeTreeReg_.removeHandler();
+         scopeTreeReg_ = null;
       }
    }
    
@@ -1137,7 +1219,7 @@ public class TextEditingTargetNotebook
    {
       outputs_.put(def.getChunkId(), 
              new ChunkOutputUi(docUpdateSentinel_.getId(), docDisplay_,
-                               def, def.getChunkId() != SETUP_CHUNK_ID, this));
+                               def, this));
    }
    
    private void ensureSetupChunkExecuted()
@@ -1339,6 +1421,12 @@ public class TextEditingTargetNotebook
    
    private void cleanScopeErrorState(Scope scope)
    {
+      // this can be called on a timer, so ensure the scope is still valid
+      if (scope == null ||
+          scope.getBodyStart() == null ||
+          scope.getEnd() == null)
+         return;
+
       docDisplay_.setChunkLineExecState(
             scope.getBodyStart().getRow(), 
             scope.getEnd().getRow(), 
@@ -1380,6 +1468,9 @@ public class TextEditingTargetNotebook
    private LinkedList<ChunkExecQueueUnit> chunkExecQueue_;
    private ChunkExecQueueUnit executingChunk_;
    private HandlerRegistration progressClickReg_;
+   private HandlerRegistration scopeTreeReg_;
+   private Position lastStart_;
+   private Position lastEnd_;
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
@@ -1396,6 +1487,7 @@ public class TextEditingTargetNotebook
 
    private RMarkdownServerOperations server_;
    private ConsoleServerOperations console_;
+   private SourceServerOperations source_;
    private EventBus events_;
    
    private Style editorStyle_;
