@@ -169,28 +169,10 @@ Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
 
 void onDocRemoved(const std::string& docId, const std::string& docPath)
 {
-   Error error;
-
-   FilePath cacheFolder = chunkCacheFolder(docPath, docId);
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
-         notebookCtxId());
-   if (!docPath.empty() && defFile.exists())
-   {
-      // for saved documents, we want to keep the cache folder around even when
-      // the document is closed, but only if the chunk definitions aren't out
-      // of sync.
-      FilePath docFile = module_context::resolveAliasedPath(docPath);
-      std::time_t writeTime;
-      error = getChunkDefs(docPath, docId, &writeTime, NULL);
-
-      if (writeTime <= docFile.lastWriteTime())
-      {
-         // the doc has been saved since the last time the chunks defs were
-         // updated, so no work to do here
-         return;
-      }
-   }
-   error = cacheFolder.removeIfExists();
+   // always remove the uncommitted cache when the doc is closed; if it's 
+   // opened again, the committed cache will be used to supply its outputs
+   FilePath cacheFolder = chunkCacheFolder(docPath, docId, notebookCtxId());
+   Error error = cacheFolder.removeIfExists();
    if (error)
       LOG_ERROR(error);
 }
