@@ -56,6 +56,20 @@ void onConsolePrompt(const std::string&)
    module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
 }
 
+bool moveLibFile(const FilePath& from, const FilePath& to, 
+      const FilePath& path)
+{
+   std::string relativePath = path.relativePath(from);
+   FilePath target = to.complete(relativePath);
+
+   Error error = path.isDirectory() ?
+                     target.ensureDirectory() :
+                     path.move(target);
+   if (error)
+      LOG_ERROR(error);
+   return true;
+}
+
 
 } // anonymous namespace
 
@@ -86,6 +100,13 @@ core::Error initHtmlWidgets()
       (boost::bind(module_context::sourceModuleRFile, "NotebookHtmlWidgets.R"));
 
    return initBlock.execute();
+}
+
+core::Error mergeLib(const core::FilePath& source, 
+                     const core::FilePath& target)
+{
+   return source.childrenRecursive(
+         boost::bind(moveLibFile, source, target, _2));
 }
 
 } // namespace notebook

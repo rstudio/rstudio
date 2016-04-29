@@ -39,6 +39,9 @@ core::Error beginWidgetCapture(
 
 core::Error initHtmlWidgets();
 
+core::Error mergeLib(const core::FilePath& source, 
+                     const core::FilePath& target);
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

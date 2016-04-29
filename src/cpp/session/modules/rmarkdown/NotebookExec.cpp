@@ -44,20 +44,6 @@ namespace notebook {
 
 namespace {
 
-bool moveLibFile(const FilePath& from, const FilePath& to, 
-      const FilePath& path)
-{
-   std::string relativePath = path.relativePath(from);
-   FilePath target = to.complete(relativePath);
-
-   Error error = path.isDirectory() ?
-                     target.ensureDirectory() :
-                     path.move(target);
-   if (error)
-      LOG_ERROR(error);
-   return true;
-}
-
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
    int outputType)
 {
@@ -210,9 +196,8 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    {
       std::string docPath;
       source_database::getPath(docId_, &docPath);
-      error = fileLib.childrenRecursive(boost::bind(moveLibFile, fileLib,
-            chunkCacheFolder(docPath, docId_)
-                           .complete(kChunkLibDir), _2));
+      error = mergeLib(fileLib, chunkCacheFolder(docPath, docId_)
+                                   .complete(kChunkLibDir));
       if (error)
          LOG_ERROR(error);
       error = fileLib.remove();
