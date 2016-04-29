@@ -1466,6 +1466,25 @@ public class TextEditingTargetNotebook
                });
          releaseOnDismiss_.add(progressClickReg_);
       }
+      
+      if (progressCancelReg_ == null)
+      {
+         progressCancelReg_ = editingTarget_.getStatusBar()
+               .addProgressCancelHandler(new Command()
+                {
+                  @Override
+                  public void execute()
+                  {
+                     // interrupt R if it's busy
+                     if (commands_.interruptR().isEnabled())
+                         commands_.interruptR().execute();
+                     
+                     // don't execute any more chunks
+                     clearChunkExecQueue();
+                  }
+                });
+         releaseOnDismiss_.add(progressCancelReg_);
+      }
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
@@ -1474,6 +1493,7 @@ public class TextEditingTargetNotebook
    private ChunkExecQueueUnit executingChunk_;
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
+   private HandlerRegistration progressCancelReg_;
    private Position lastStart_;
    private Position lastEnd_;
    
