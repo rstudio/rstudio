@@ -56,7 +56,7 @@ public class ColorUtil
       {
          red_ = clamp(red, 0, 255);
          green_ = clamp(green, 0, 255);
-         blue_ = clamp(green, 0, 255);
+         blue_ = clamp(blue, 0, 255);
          alpha_ = clamp(alpha, 0, 1);
       }
       

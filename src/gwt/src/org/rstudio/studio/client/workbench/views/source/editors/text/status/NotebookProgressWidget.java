@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 
+import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -28,6 +30,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -47,16 +50,57 @@ public class NotebookProgressWidget extends Composite
    {
    }
    
+   @Override
+   public void setVisible(boolean visible)
+   {
+      super.setVisible(visible);
+      if (visible)
+      {
+         AnimationScheduler.get().requestAnimationFrame(
+               new AnimationScheduler.AnimationCallback()
+         {
+            @Override
+            public void execute(double pos)
+            {
+               if (start_ == 0)
+               {
+                  // initialization
+                  start_ = pos;
+               }
+               else if (pos - start_ > STEP_MS)
+               {
+                  highlight_ += Math.round(pos - start_) / STEP_MS;
+                  start_ = pos;
+                  updateProgressBar(false);
+               }
+               
+               // request another frame if we're still showing
+               if (isVisible())
+               {
+                  final AnimationScheduler.AnimationCallback callback = this;
+                  new Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        AnimationScheduler.get().requestAnimationFrame(
+                              callback);
+                     }
+                  }.schedule(STEP_MS);
+               }
+            }
+            
+            private double start_ = 0;
+            private final int STEP_MS = 15;
+         });
+      }
+   }
+   
    public void setPercent(String chunkName, int percent)
    {
-      String color = "24, 163, 82";
-      progressBar_.getElement().getStyle().setBackgroundImage(
-            "linear-gradient(to right, " +
-              "rgba(" + color + ", 1.0), " +
-              "rgba(" + color + ", 1.0) " + percent + "%, " +
-              "rgba(" + color + ", 0.3) " + percent + "%, " +
-              "rgba(" + color + ", 0.3) 100%");
+      percent_ = percent;
       chunkAnchor_.setText(chunkName);
+      updateProgressBar(true);
    }
    
    public void setLabel(String label)
@@ -120,11 +164,59 @@ public class NotebookProgressWidget extends Composite
       }, MouseDownEvent.getType());
    }
    
+   private void updateProgressBar(boolean resetHighlight)
+   {
+      ColorUtil.RGBColor barColor = ColorUtil.RGBColor.fromCss(
+            "rgba(24, 163, 82, 1.0)");
+      ColorUtil.RGBColor highColor = ColorUtil.RGBColor.fromCss(
+            "rgba(208, 233, 201, 1.0)");
+      ColorUtil.RGBColor emptyColor = ColorUtil.RGBColor.fromCss(
+            "rgba(24, 163, 82, 0.3)");
+      
+      int end = Math.round((float)progressBar_.getOffsetWidth() *
+            ((float) percent_ / (float) 100));
+      
+      final int HEAD_WIDTH = 10;
+      final int TAIL_WIDTH = 35;
+      
+      int high = highlight_ % (progressBar_.getOffsetWidth() + TAIL_WIDTH);
+      int highStart = Math.max(high - TAIL_WIDTH, 0);
+      int highEnd = Math.min(high + HEAD_WIDTH, end);
+      highlight_ = high; // avoid overflow
+      if (high > end && highStart <= end)
+      {
+         highColor = highColor.mixedWith(barColor, 
+               (float)(end - highStart) / (float) TAIL_WIDTH, 1);
+         high = end;
+      }
+      else if (highStart > end)
+      {
+         // don't draw highlight bar if it's fully out past the edge
+         if (resetHighlight)
+            highlight_ = 0;
+         high = 0;
+         highStart = 0;
+         highEnd = 0;
+      }
+      
+      progressBar_.getElement().getStyle().setBackgroundImage(
+            "linear-gradient(to right, " +
+              barColor.asRgb()   + ", " +
+              barColor.asRgb()   + " " + highStart + "px, " +
+              highColor.asRgb()  + " " + high      + "px, " +
+              barColor.asRgb()   + " " + highEnd   + "px, " +
+              barColor.asRgb()   + " " + end       + "px, " +
+              emptyColor.asRgb() + " " + end       + "px, " +
+              emptyColor.asRgb() + " 100%");
+   }
+   
    @UiField Anchor chunkAnchor_;
    @UiField HTMLPanel progressBar_;
    @UiField HTMLPanel root_;
    @UiField Label progressLabel_;
    @UiField Image interruptButton_;
 
+   private int percent_ = 0;
+   private int highlight_ = 0;
    private final HandlerManager manager_;
 }
