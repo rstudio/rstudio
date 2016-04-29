@@ -38,7 +38,7 @@ public class ChunkOutputUi
                         RenderFinishedEvent.Handler
 {
    public ChunkOutputUi(String docId, DocDisplay display, ChunkDefinition def,
-         boolean include, PinnedLineWidget.Host lineWidgetHost)
+          PinnedLineWidget.Host lineWidgetHost)
    {
       display_ = display;
       chunkId_ = def.getChunkId();

@@ -44,20 +44,6 @@ namespace notebook {
 
 namespace {
 
-bool moveLibFile(const FilePath& from, const FilePath& to, 
-      const FilePath& path)
-{
-   std::string relativePath = path.relativePath(from);
-   FilePath target = to.complete(relativePath);
-
-   Error error = path.isDirectory() ?
-                     target.ensureDirectory() :
-                     path.move(target);
-   if (error)
-      LOG_ERROR(error);
-   return true;
-}
-
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
    int outputType)
 {
@@ -80,7 +66,6 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
-   prevWarnLevel_(0),
    connected_(false)
 {
 }
@@ -139,10 +124,17 @@ void ChunkExecContext::connect()
 
    // log warnings immediately (unless user's changed the default warning
    // level)
-   prevWarnLevel_ = r::options::getOption<int>("warn", 0);
-   if (prevWarnLevel_  == 0)
-      r::options::setOption<int>("warn", 1);
-
+   r::sexp::Protect protect;
+   SEXP warnSEXP;
+   error = r::exec::RFunction("getOption", "warn").call(&warnSEXP, &protect);
+   if (!error)
+   {
+      prevWarn_.set(warnSEXP);
+      error = r::options::setOption<int>("warn", 1);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
    // reset width
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
@@ -204,9 +196,8 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    {
       std::string docPath;
       source_database::getPath(docId_, &docPath);
-      error = fileLib.childrenRecursive(boost::bind(moveLibFile, fileLib,
-            chunkCacheFolder(docPath, docId_)
-                           .complete(kChunkLibDir), _2));
+      error = mergeLib(fileLib, chunkCacheFolder(docPath, docId_)
+                                   .complete(kChunkLibDir));
       if (error)
          LOG_ERROR(error);
       error = fileLib.remove();
@@ -221,7 +212,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
                target.stem() + metadata.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, outputType, target);
+   enqueueChunkOutput(docId_, chunkId_, notebookCtxId(), outputType, target);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)
@@ -241,7 +232,8 @@ void ChunkExecContext::onError(const core::json::Object& err)
    pOfs.reset();
 
    // send to client
-   enqueueChunkOutput(docId_, chunkId_, kChunkOutputError, target);
+   enqueueChunkOutput(docId_, chunkId_, notebookCtxId(), kChunkOutputError, 
+                      target);
 }
 
 void ChunkExecContext::onConsoleText(int type, const std::string& output, 
@@ -275,17 +267,23 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
 void ChunkExecContext::disconnect()
 {
+   Error error;
+
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
 
-   // restore warning level
-   if (prevWarnLevel_ >= 0)
-      r::options::setOption("warn", prevWarnLevel_);
+   // restore preserved warning level, if any
+   if (!prevWarn_.isNil())
+   {
+      error = r::options::setOption("warn", prevWarn_.get());
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // restore working directory, if we saved one
    if (!prevWorkingDir_.empty())
    {
-      Error error = FilePath::makeCurrent(prevWorkingDir_);
+      error = FilePath::makeCurrent(prevWorkingDir_);
       if (error)
          LOG_ERROR(error);
    }

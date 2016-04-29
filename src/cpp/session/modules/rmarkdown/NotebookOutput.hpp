@@ -82,12 +82,12 @@ core::Error cleanChunkOutput(const std::string& docId,
 
 // send chunk output to client
 void enqueueChunkOutput(const std::string& docId,
-      const std::string& chunkId, int outputType, 
-      const core::FilePath& path);
+      const std::string& chunkId, const std::string& nbCtxId, 
+      int outputType, const core::FilePath& path);
 core::Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& requestId,
-      const std::string& nbCtxId);
+      const std::string& chunkId, const std::string& nbCtxId,
+      const std::string& requestId);
 
 core::Error initOutput();
 

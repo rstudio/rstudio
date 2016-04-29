@@ -39,6 +39,7 @@
 * Add R Markdown pane to global options dialog
 * Build tab and preview support for R Markdown websites
 * Various enhancements for authoring with the bookdown package
+* Update pandoc to 1.17.0.3
 
 ### C/C++
 
@@ -66,6 +67,7 @@
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
 * R Markdown: fixed highlighting with multiple Markdown links on one line
 * R Markdown: fixed issue where sections did not display in document outline when following empty bulleted list
+* Reformat code: fixed an issue where '\*\*' was not recognized as a single token
 * SVN: avoid recursive revert when reverting changes to modified directory properties
 * Autocompletion: fixed errors printed in console when 'devtools::load_all()' active
 * Autocompletion: fixed errors printed in console for functions 'force', 'identity'
@@ -76,11 +78,13 @@
 * Fixed an issue where non-interactive addins could not be executed in popped out windows
 * Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
+* Diagnostics: engine better understands 'data()' calls (fixes 'no symbol in scope' false positive)
 * Improved performance of document tokenization (fix laggy typing)
 * Fix block commenting of Sweave chunks
 * Fix highlighting of escaped '$' in inline Mathjax expressions
 * Fix editor preview vanishing on zoom level change
 * Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
+* Emacs mode: C-r now performs a reverse isearch on Windows (rather than running code)
 * Ensure that modal dialogs capture all input even in the presence of multiple modals
 * Filter out "00LOCK" directories from package name completions
 * Provide completions for 'lazydata' objects within namespaces

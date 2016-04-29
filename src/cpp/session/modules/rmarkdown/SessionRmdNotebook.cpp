@@ -72,7 +72,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const std::string& chunkId, chunkIds)
    {
-      enqueueChunkOutput(docPath, docId, chunkId, requestId, notebookCtxId());
+      enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
    }
 
    json::Object result;
@@ -95,13 +95,14 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // use our own context ID if none supplied
-   if (nbCtxId.empty())
-      nbCtxId = notebookCtxId();
-
    json::Object result;
    json::Value chunkDefs; 
-   error = getChunkDefs(docPath, docId, nbCtxId, NULL, &chunkDefs);
+   // use our own context ID if none supplied
+   if (nbCtxId.empty())
+      error = getChunkDefs(docPath, docId, NULL, &chunkDefs);
+   else
+      error = getChunkDefs(docPath, docId, nbCtxId, NULL, &chunkDefs);
+
 
    // schedule the work to play back the chunks
    if (!error && chunkDefs.type() == json::ArrayType) 

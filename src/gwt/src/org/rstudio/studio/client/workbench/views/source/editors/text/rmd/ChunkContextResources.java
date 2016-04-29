@@ -1,5 +1,5 @@
 /*
- * NotebookPaths.hpp
+ * ChunkContextResources.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,29 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 
-#include <string>
-
-namespace rstudio {
-namespace core {
-   class FilePath;
-   class Error;
+public interface ChunkContextResources extends ClientBundle
+{
+   ImageResource runChunk();
+   ImageResource runChunkPending();
+   ImageResource runPreviousChunksLight();
+   ImageResource runPreviousChunksDark();
+   ImageResource interruptChunk();
+   ImageResource chunkOptionsLight();
+   ImageResource chunkOptionsDark();
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace rmarkdown {
-namespace notebook {
-
-core::Error notebookPathToId(const core::FilePath& path, std::string* pId);
-
-core::Error notebookIdToPath(const std::string& id, core::FilePath* pPath);
-
-} // namespace notebook
-} // namespace rmarkdown
-} // namespace modules
-} // namespace session
-} // namespace rstudio

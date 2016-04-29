@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -165,7 +166,7 @@ public class ChunkOutputWidget extends Composite
    
    // Public methods ----------------------------------------------------------
    
-   public void showChunkOutputUnit(RmdChunkOutputUnit unit, 
+   public void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
          boolean ensureVisible)
    {
       // no-op for empty console objects (avoid initializing output when we have
@@ -187,6 +188,9 @@ public class ChunkOutputWidget extends Composite
          showPlotOutput(unit.getString(), ensureVisible);
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
+         // override visibility flag when there's an error in batch mode
+         if (!options_.error() && mode == TextEditingTargetNotebook.MODE_BATCH)
+            ensureVisible = true;
          showErrorOutput(unit.getUnhandledError(), ensureVisible);
          break;
       }
@@ -225,7 +229,8 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.addValueChangeHandler(handler);
    }
     
-   public void showChunkOutput(RmdChunkOutput output)
+   public void showChunkOutput(RmdChunkOutput output, int mode, 
+         boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -239,25 +244,20 @@ public class ChunkOutputWidget extends Composite
          // each
          for (int i = 0; i < units.length(); i++)
          {
-            showChunkOutputUnit(units.get(i), !output.isReplay());
+            showChunkOutputUnit(units.get(i), mode, ensureVisible);
          }
 
-         // ensure the output is visible if there's a replay request ID 
-         // associated with this chunk
-         onOutputFinished(!output.isReplay());
+         // ensure the output is visible if requested
+         onOutputFinished(ensureVisible);
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit(), !output.isReplay());
+         showChunkOutputUnit(output.getUnit(), mode, ensureVisible);
       }
    }
    
    public void syncHeight(boolean scrollToBottom, boolean ensureVisible)
    {
-      // don't sync if we're collapsed
-      if (expansionState_.getValue() != EXPANDED)
-         return;
-      
       // special behavior for chunks which don't have output included by 
       // default
       if (!options_.include() && !hasErrors_)
@@ -270,17 +270,23 @@ public class ChunkOutputWidget extends Composite
          return;
       }
       
+      setVisible(true);
+      
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
-      int contentHeight = root_.getElement().getScrollHeight() + 19;
-      int height = Math.min(
-            Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
-            ChunkOutputUi.MAX_CHUNK_HEIGHT);
+      int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
+      if (expansionState_.getValue() == EXPANDED)
+      {
+         int contentHeight = root_.getElement().getScrollHeight() + 19;
+         height = Math.min(
+               Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
+               ChunkOutputUi.MAX_CHUNK_HEIGHT);
 
-      // if we have renders pending, don't shrink until they're loaded 
-      if (pendingRenders_ > 0 && height < renderedHeight_)
-         return;
-      
+         // if we have renders pending, don't shrink until they're loaded 
+         if (pendingRenders_ > 0 && height < renderedHeight_)
+            return;
+      }
+
       // don't report height if it hasn't changed
       if (height == renderedHeight_)
          return;
@@ -290,9 +296,7 @@ public class ChunkOutputWidget extends Composite
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
-      
-      setVisible(true);
-      
+         
       // allocate some extra space so the cursor doesn't touch the output frame
       host_.onOutputHeightChanged(height + 7, ensureVisible);
    }
@@ -326,7 +330,7 @@ public class ChunkOutputWidget extends Composite
       showReadyState();
    }
 
-   public void setCodeExecuting(boolean entireChunk)
+   public void setCodeExecuting(boolean entireChunk, int mode)
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)
@@ -341,6 +345,7 @@ public class ChunkOutputWidget extends Composite
 
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
+      execMode_ = mode;
       showBusyState();
    }
    
@@ -407,11 +412,11 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
 
-      // flush any queued errors
-      flushQueuedErrors(true);
+      // flush any queued errors 
+      flushQueuedErrors(false);
 
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
-            true);
+            execMode_ == TextEditingTargetNotebook.MODE_SINGLE);
    }
    
    @Override
@@ -911,6 +916,7 @@ public class ChunkOutputWidget extends Composite
    private RmdChunkOptions options_;
    
    private int state_ = CHUNK_EMPTY;
+   private int execMode_ = TextEditingTargetNotebook.MODE_SINGLE;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;

@@ -20,6 +20,7 @@
 #include <ctime>
 
 #include <core/FileSerializer.hpp>
+#include <core/FileLock.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -37,15 +38,65 @@ namespace {
 std::map<std::string, std::string> s_idCache;
 std::time_t s_cacheWriteTime = 0;
 
-FilePath cachePath(const std::string& nbCtxId)
+// lock instance for protecting paths mapping file from concurrent writes/reads
+// in multiple sessions
+FileLock& nbPathLock()
 {
-   return notebookCacheRoot().childPath("paths-" + nbCtxId);
+   static boost::shared_ptr<FileLock> instance = FileLock::createDefault();
+   return *instance;
+}
+
+// scope guard for above
+class PathLockGuard : boost::noncopyable
+{
+public:
+   PathLockGuard()
+   {
+      error_ = nbPathLock().acquire(
+            notebookCacheRoot().childPath("lock_file"));
+   }
+
+   ~PathLockGuard()
+   {
+      if (!error_)
+      {
+         error_ = nbPathLock().release();
+         if (error_)
+            LOG_ERROR(error_);
+      }
+   }
+
+   Error error()
+   {
+      return error_;
+   }
+
+private:
+   Error error_;
+};
+
+FilePath cachePath()
+{
+   return notebookCacheRoot().childPath("paths");
 }
 
 void cleanNotebookPathMap()
 {
-   FilePath cache = cachePath(notebookCtxId());
+   PathLockGuard guard;
+   if (guard.error())
+   {
+      // this work is janitoral and runs on every session boot so no need to
+      // reschedule aggressively if we can't lock the map
+      return;
+   }
+
+   FilePath cache = cachePath();
    Error error = core::readStringMapFromFile(cache, &s_idCache);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    // loop over entries (conditionalize increment so we don't attempt to
    // move forward over an invalidated iterator)
@@ -66,10 +117,10 @@ void cleanNotebookPathMap()
    s_cacheWriteTime = std::time(NULL);
 }
 
-Error synchronizeCache(const std::string& nbCtxId)
+Error synchronizeCache()
 {
    Error error;
-   FilePath cache = cachePath(nbCtxId);
+   FilePath cache = cachePath();
    if (!cache.exists())
    {
       // create folder to host cache if necessary
@@ -85,7 +136,11 @@ Error synchronizeCache(const std::string& nbCtxId)
       // the cache exists; see if we need to reload
       if (cache.lastWriteTime() > s_cacheWriteTime) 
       {
-         // TODO: this needs to be sensitive to the context ID 
+         // attempt to lock the file for reading
+         PathLockGuard guard;
+         if (guard.error())
+            return guard.error();
+
          error = core::readStringMapFromFile(cache, &s_idCache);
          if (error)
             return error;
@@ -102,10 +157,9 @@ Error synchronizeCache(const std::string& nbCtxId)
 
 } // anonymous namespace
 
-Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
-      std::string *pId)
+Error notebookPathToId(const core::FilePath& path, std::string *pId)
 {
-   Error error = synchronizeCache(nbCtxId);
+   Error error = synchronizeCache();
    if (error)
       return error;
    
@@ -136,9 +190,14 @@ Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
       }
    } while (existing); 
 
+   // lock and update the cache
+   PathLockGuard guard;
+   if (guard.error())
+      return error;
+
    // insert the new ID and update caches
    s_idCache[path.absolutePath()] = id;
-   error = writeStringMapToFile(cachePath(nbCtxId), s_idCache);
+   error = writeStringMapToFile(cachePath(), s_idCache);
    if (error)
       return error;
    s_cacheWriteTime = std::time(NULL);
@@ -147,10 +206,9 @@ Error notebookPathToId(const core::FilePath& path, const std::string& nbCtxId,
    return Success();
 }
 
-core::Error notebookIdToPath(const std::string& id, 
-      const std::string& nbCtxId, core::FilePath* pPath)
+core::Error notebookIdToPath(const std::string& id, core::FilePath* pPath)
 {
-   Error error = synchronizeCache(nbCtxId);
+   Error error = synchronizeCache();
    if (error)
       return error;
    

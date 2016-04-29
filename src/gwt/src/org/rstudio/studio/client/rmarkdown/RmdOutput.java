@@ -574,7 +574,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          }
       }
       else if (".html".equals(extension) ||
-               ".nb.html".equals(extension))
+               NOTEBOOK_EXT.equals(extension))
       {
          displayHTMLRenderResult(result);
       }
@@ -731,7 +731,13 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          params.setAnchor(outputFrame_.getAnchor());
       }
 
-      outputFrame_.showRmdPreview(params, true);
+      boolean isNotebook = result_ != null &&
+            FileSystemItem.getExtensionFromPath(result_.getOutputFile()) ==
+            NOTEBOOK_EXT;
+
+      // show the preview; activate the window (but not for auto-refresh of 
+      // notebook preview)
+      outputFrame_.showRmdPreview(params, !(isRefresh && isNotebook));
       
       // reset live preview state
       livePreviewRenderInProgress_ = false;
@@ -828,6 +834,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private boolean renderInProgress_ = false;
    private boolean livePreviewRenderInProgress_ = false;
    private boolean quitInitiatedAfterLastRender_ = false;
+   
+   public final static String NOTEBOOK_EXT = ".nb.html";
    
    public final static int TYPE_STATIC   = 0;
    public final static int TYPE_SHINY    = 1;

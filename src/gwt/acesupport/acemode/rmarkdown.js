@@ -120,7 +120,8 @@ oop.inherits(Mode, MarkdownMode);
 
    this.insertChunkInfo = {
       value: "```{r}\n\n```\n",
-      position: {row: 0, column: 5}
+      position: {row: 0, column: 5},
+      content_position: {row: 1, column: 0}
    };
 
    this.getLanguageMode = function(position)

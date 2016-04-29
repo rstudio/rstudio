@@ -18,6 +18,8 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 #include "NotebookPaths.hpp"
+#include "NotebookOutput.hpp"
+#include "NotebookHtmlWidgets.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -77,16 +79,12 @@ void cleanUnusedCaches()
          continue;
       std::vector<std::string> parts = core::algorithm::split(
             cache.stem(), "-");
-      if (parts.size() != 3)
-         continue;
-
-      // ignore caches from other contexts
-      if (parts[0] != nbCtxId)
+      if (parts.size() < 2)
          continue;
 
       // get the path of the notebook associated with the cache
       FilePath path;
-      error = notebookIdToPath(parts[1], nbCtxId, &path);
+      error = notebookIdToPath(parts[0], &path);
       if (error)
       {
          if (error.code() == boost::system::errc::no_such_file_or_directory)
@@ -114,47 +112,69 @@ void cleanUnusedCaches()
          continue;
       }
 
-      // check the write time on the chunk defs file (updated when the doc is
-      // mutated or saved)
-      FilePath chunkDefs = cache.complete(kCacheVersion)
-                                .complete(kNotebookChunkDefFilename);
-      if (!chunkDefs.exists())
-         continue;
-      if ((std::time(NULL) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
+      std::vector<FilePath> contexts;
+      error = cache.complete(kCacheVersion).children(&contexts);
+      if (error)
       {
-         // the cache is old and the document hasn't been opened in a while --
-         // remove it.
-         error = cache.remove();
-         if (error)
-            LOG_ERROR(error);
+         LOG_ERROR(error);
+         continue;
+      }
+
+      BOOST_FOREACH(const FilePath context, contexts)
+      {
+         // skip if not our context or the saved context
+         if (context.filename() != kSavedCtx &&
+             context.filename() != nbCtxId)
+            continue;
+
+         // check the write time on the chunk defs file (updated when the doc is
+         // mutated or saved)
+         FilePath chunkDefs = context.complete(kNotebookChunkDefFilename);
+         if (!chunkDefs.exists())
+            continue;
+         if ((std::time(NULL) - chunkDefs.lastWriteTime()) > kCacheAgeThresholdMs) 
+         {
+            // the cache is old and the document hasn't been opened in a while --
+            // remove it.
+            error = context.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
       }
    }
 }
 
-void onDocRemoved(const std::string& docId, const std::string& docPath)
+Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
 {
    Error error;
+   if (!cachePath.exists())
+      return Success();
 
-   FilePath cacheFolder = chunkCacheFolder(docPath, docId);
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
-         notebookCtxId());
-   if (!docPath.empty() && defFile.exists())
-   {
-      // for saved documents, we want to keep the cache folder around even when
-      // the document is closed, but only if the chunk definitions aren't out
-      // of sync.
-      FilePath docFile = module_context::resolveAliasedPath(docPath);
-      std::time_t writeTime;
-      error = getChunkDefs(docPath, docId, &writeTime, NULL);
+   // extract the set of chunk IDs from the definition files
+   json::Value oldDefs;
+   json::Value newDefs;
+   error = getChunkDefs(docPath, kSavedCtx, NULL, &oldDefs);
+   if (error)
+      return error;
+   error = getChunkDefs(docPath, notebookCtxId(), NULL, &newDefs);
+   if (error)
+      return error;
 
-      if (writeTime <= docFile.lastWriteTime())
-      {
-         // the doc has been saved since the last time the chunks defs were
-         // updated, so no work to do here
-         return;
-      }
-   }
-   error = cacheFolder.removeIfExists();
+   // ensure we got the arrays we expected
+   if (oldDefs.type() != json::ArrayType ||
+       newDefs.type() != json::ArrayType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   cleanChunks(cachePath, oldDefs.get_array(), newDefs.get_array());
+   return Success();
+}
+
+void onDocRemoved(const std::string& docId, const std::string& docPath)
+{
+   // always remove the uncommitted cache when the doc is closed; if it's 
+   // opened again, the committed cache will be used to supply its outputs
+   FilePath cacheFolder = chunkCacheFolder(docPath, docId, notebookCtxId());
+   Error error = cacheFolder.removeIfExists();
    if (error)
       LOG_ERROR(error);
 }
@@ -218,14 +238,13 @@ void onDocAdded(const std::string& id)
       return;
 
    FilePath cachePath = chunkCacheFolder(path, id);
-   FilePath nbPath = docPath.parent().complete(docPath.stem() + ".Rnb");
 
    // clean up incompatible cache versions (as we're about to invalidate them
    // by mutating the document without updating them) 
-   if (cachePath.parent().exists())
+   if (cachePath.exists())
    {
       std::vector<FilePath> versions;
-      cachePath.parent().children(&versions);
+      cachePath.children(&versions);
       BOOST_FOREACH(const FilePath& version, versions)
       {
          if (version.isDirectory() && version.filename() != kCacheVersion)
@@ -237,21 +256,86 @@ void onDocAdded(const std::string& id)
       }
    }
 
-   if (!cachePath.exists() && nbPath.exists())
-   {
-      // we have a saved representation, but no cache -- populate the cache
-      // from the saved representation
-      error = parseRnb(nbPath, cachePath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-   }
-
    // TODO: consider write times of document, cache, and .Rnb -- are there
    // combinations which would suggest we should overwrite the cache with the
    // contents of the notebook?
+}
+
+void onDocSaved(FilePath &path)
+{
+   Error error;
+   // ignore non-R Markdown saves
+   if (!path.hasExtensionLowerCase(".rmd"))
+      return;
+
+   // find cache folder (bail out if it doesn't exist)
+   FilePath cache = chunkCacheFolder(path, "", notebookCtxId());
+   if (!cache.exists())
+      return;
+
+   FilePath saved = chunkCacheFolder(path, "", kSavedCtx);
+   if (saved.exists())
+   {
+      // tidy up: remove any saved chunks that no longer exist
+      error = removeStaleSavedChunks(path, saved);
+      if (error)
+         LOG_ERROR(error);
+   }
+   else
+   {
+      // no saved context yet; ensure we have a place to put it
+      saved.ensureDirectory();
+   }
+
+   // move all the chunk definitions over to the saved context
+   std::vector<FilePath> children;
+   error = cache.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   BOOST_FOREACH(const FilePath source, children)
+   {
+      // compute the target path 
+      FilePath target = saved.complete(source.filename());
+
+      if (source.filename() == kNotebookChunkDefFilename) 
+      {
+         // the definitions should be copied (we always want them in both
+         // contexts)
+         error = target.removeIfExists();
+         if (!error)
+            error = source.copy(target);
+      }
+      else if (source.isDirectory())
+      {
+         // library folders should be merged and then removed, so we don't
+         // lose library contents 
+         if (source.filename() == kChunkLibDir)
+         {
+            error = mergeLib(source, target);
+            if (!error)
+               error = source.remove();
+         }
+         else
+         {
+            // the chunk output folders should be moved; destroy the old copy
+            error = target.removeIfExists();
+            if (!error)
+               error = source.move(target);
+         }
+      }
+      else
+      {
+         // nothing besides the chunks.json and chunk folders should be here,
+         // so ignore other files/content
+         continue;
+      }
+
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 FilePath unsavedNotebookCache()
@@ -262,8 +346,7 @@ FilePath unsavedNotebookCache()
 SEXP rs_chunkCacheFolder(SEXP fileSEXP)
 {
    std::string file = r::sexp::safeAsString(fileSEXP);
-   FilePath cacheFolder =
-         chunkCacheFolder(file, "", userSettings().contextId());
+   FilePath cacheFolder = chunkCacheFolder(file, "", kSavedCtx);
    
    r::sexp::Protect protect;
    return r::sexp::create(cacheFolder.absolutePath(), &protect);
@@ -276,34 +359,41 @@ FilePath notebookCacheRoot()
    return module_context::sharedScratchPath().childPath("notebooks");
 }
 
-FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
+FilePath chunkCacheFolder(const FilePath& path, const std::string& docId,
       const std::string& nbCtxId)
 {
    FilePath folder;
    std::string stem;
 
-   if (docPath.empty()) 
+   if (path.empty()) 
    {
       // the doc hasn't been saved, so keep its chunk output in the scratch
       // path
-      folder = unsavedNotebookCache().childPath(docId);
+      folder = unsavedNotebookCache().childPath(docId)
+                                     .childPath(kCacheVersion);
    }
    else
    {
-      // the doc has been saved, so keep its chunk output alongside the doc
-      // itself
-      FilePath path = module_context::resolveAliasedPath(docPath);
-
       std::string id;
-      Error error = notebookPathToId(path, nbCtxId, &id);
+      Error error = notebookPathToId(path, &id);
       if (error)
          LOG_ERROR(error);
       
-      folder = notebookCacheRoot().childPath(nbCtxId + "-" + id + "-" +
-            path.stem());
+      folder = notebookCacheRoot().childPath(id + "-" + path.stem())
+                                  .childPath(kCacheVersion)
+                                  .childPath(nbCtxId);
    }
 
-   return folder.childPath(kCacheVersion);
+   return folder;
+}
+
+FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId,
+      const std::string& nbCtxId)
+{
+   return chunkCacheFolder(
+         docPath.empty() ? FilePath() : 
+                           module_context::resolveAliasedPath(docPath),
+         docId, nbCtxId);
 }
 
 FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
@@ -316,6 +406,8 @@ Error initCache()
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
+
+   module_context::events().onSourceEditorFileSaved.connect(onDocSaved);
 
    RS_REGISTER_CALL_METHOD(rs_chunkCacheFolder, 1);
 
