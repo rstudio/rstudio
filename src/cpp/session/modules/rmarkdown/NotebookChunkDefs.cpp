@@ -210,8 +210,16 @@ Error getChunkDefs(const std::string& docPath, const std::string& docId,
 Error getChunkDefs(const std::string& docPath, const std::string& docId,
                    time_t *pDocTime, core::json::Value* pDefs)
 {
-   return getChunkDefs(docPath, docId, notebookCtxId(), 
-                       pDocTime, pDefs);
+   // try local context first
+   FilePath defs = chunkDefinitionsPath(docPath, docId, notebookCtxId());
+   if (!defs.exists())
+   {
+      // if no definitions, try the saved context
+      defs = chunkDefinitionsPath(docPath, docId, kSavedCtx);
+      if (!defs.exists())
+         return Success();
+   }
+   return getChunkDefs(defs, pDocTime, pDefs);
 }
 
 void extractChunkIds(const json::Array& chunkOutputs, 
