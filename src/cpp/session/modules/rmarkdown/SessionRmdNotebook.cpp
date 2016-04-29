@@ -33,9 +33,9 @@
 
 #include <core/Exec.hpp>
 #include <core/Algorithm.hpp>
-#include <core/StringUtils.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -265,7 +265,7 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-   
+
    module_context::events().onActiveConsoleChanged.connect(
          onActiveConsoleChanged);
 

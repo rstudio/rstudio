@@ -196,7 +196,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData)
 {
    # ensure pre-requisite version of knitr
-   if (!.rs.isPackageVersionInstalled("knitr", "1.12.25"))
+   if (!.rs.isPackageVersionInstalled("knitr", "1.12.27"))
       return()
    
    linesProcessed <- 1

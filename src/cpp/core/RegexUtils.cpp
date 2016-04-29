@@ -120,6 +120,7 @@ Error filterString(const std::string& input,
    return filterString(input, filters, pOutput);
 }
 
+
 } // namespace regex_utils
 } // namespace core 
 } // namespace rstudio
