@@ -240,6 +240,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       return(rmarkdown::html_notebook(...))
    }
    
+   # make sure 'html_notebook' available on search path
+   toolsEnv <- .rs.toolsEnv()
+   if (!exists("html_notebook", envir = toolsEnv))
+      assign("html_notebook", .rs.rnb.htmlNotebook, envir = toolsEnv)
+   
+   # generate actual format
    rmarkdown::html_document(code_folding = "show",
                             theme = "cerulean",
                             highlight = "textmate",
@@ -980,7 +986,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # HTML Widget Handling ----
    widgetRange <- list(start = NULL, end = NULL)
    widgetMeta  <- NULL
-   writeWidget <- function(source, range, meta) {
+   writeHtmlWidget <- function(source, range, meta) {
       
       # get inner (body) HTML
       htmlBody <- source[`:`(
@@ -1014,14 +1020,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # update state
       activeIndex <<- activeIndex + 1
    }
-   onWidget <- function(annotation) {
+   onHtmlWidget <- function(annotation) {
       if (annotation$state == "begin") {
          writeConsoleData(consoleDataBuilder)
          widgetRange$start <<- annotation$row
          widgetMeta        <<- annotation$meta
       } else {
          widgetRange$end <- annotation$row
-         writeWidget(nbData$source, widgetRange, widgetMeta)
+         writeHtmlWidget(nbData$source, widgetRange, widgetMeta)
          widgetRange <<- list(start = NULL, end = NULL)
          widgetMeta  <<- NULL
       }
@@ -1040,7 +1046,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
              "source"     = onSource(annotation),
              "output"     = onOutput(annotation),
              "plot"       = onPlot(annotation),
-             "htmlwidget" = onWidget(annotation))
+             "htmlwidget" = onHtmlWidget(annotation))
       
       lastActiveAnnotation <- annotation
    }
