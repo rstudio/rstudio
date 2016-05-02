@@ -545,6 +545,17 @@ public class AceEditorNative extends JavaScriptObject {
       this.$surroundSelection = value;
    }-*/;
    
+   public final native boolean isVimModeOn() /*-{
+      return this.$vimModeHandler != null;
+   }-*/;
+   
+   public final native boolean isEmacsModeOn() /*-{
+      return this.$emacsModeHandler != null;
+   }-*/;
+   
+   // Get the underlying Ace instance associated with a DOM element.
+   // This element may either be a child of the parent Ace container,
+   // or the element itself.
    public static final native AceEditorNative getEditor(Element el) /*-{
       while (el != null) {
          if (el.env && el.env.editor)
