@@ -357,6 +357,38 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
 })
 
+.rs.addFunction("replaceBinding", function(binding, package, override)
+{
+   # override in namespace
+   if (!requireNamespace(package, quietly = TRUE))
+      stop(sprintf("Failed to load namespace for package '%s'", package))
+   
+   namespace <- asNamespace(package)
+   
+   # get reference to original binding
+   original <- get(binding, envir = namespace)
+   
+   # replace the binding
+   if (is.function(override))
+      environment(override) <- namespace
+   
+   do.call("unlockBinding", list(binding, namespace))
+   assign(binding, override, envir = namespace)
+   do.call("lockBinding", list(binding, namespace))
+   
+   # if package is attached, override there as well
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search()) {
+      env <- as.environment(searchPathName)
+      do.call("unlockBinding", list(binding, env))
+      assign(binding, override, envir = env)
+      do.call("lockBinding", list(binding, env))
+   }
+   
+   # return original
+   original
+})
+
 .rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData, format)
 {
    # ensure pre-requisite version of knitr
@@ -379,6 +411,24 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # track number of lines processed (so we can correctly map
    # chunks in document back to chunks in cache)
    linesProcessed <- 1
+   
+   original <- evaluate::evaluate
+   
+   # override 'evaluate' for duration of knit
+   evaluateOverride <- function(...) {
+      knitr::knit_hooks$get("evaluate")(...)
+   }
+   
+   # set and unset with pre/post hooks
+   format$pre_knit <- function(...) {
+      .rs.replaceBinding("evaluate", "evaluate", evaluateOverride)
+      NULL
+   }
+   
+   format$post_knit <- function(...) {
+      .rs.replaceBinding("evaluate", "evaluate", original)
+      NULL
+   }
    
    # generate our custom hooks
    newKnitHooks <- list(
