@@ -429,9 +429,6 @@ public class AceEditor implements DocDisplay,
    
    public void yankBeforeCursor()
    {
-      if (isEmacsModeOn())
-         return;
-      
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
@@ -451,9 +448,6 @@ public class AceEditor implements DocDisplay,
    
    public void yankAfterCursor()
    {
-      if (isEmacsModeOn())
-         return;
-      
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
@@ -474,9 +468,6 @@ public class AceEditor implements DocDisplay,
    
    public void pasteLastYank()
    {
-      if (isEmacsModeOn())
-         return;
-      
       if (isVimModeOn() && !isVimInInsertMode())
          return;
       
