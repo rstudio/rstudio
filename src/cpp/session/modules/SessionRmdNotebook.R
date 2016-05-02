@@ -301,71 +301,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 })
 
 .rs.addFunction("rnb.augmentKnitrHooks", function()
-{
-   knitHooks <- list()
-   optsChunk <- list()
-   
-   # NOTE: we must install our hooks lazily as the rmarkdown
-   # package will install (and override) hooks set here, as
-   # hooks set by 'render_markdown()' take precedence.
-   tracer <- function(...) {
-      
-      # save hooks
-      knitHooks <<- knitr::knit_hooks$get()
-      optsChunk <<- knitr::opts_chunk$get()
-      
-      # generic hooks for knitr output
-      hookNames <- c("source", "chunk", "plot", "text", "output",
-                     "warning", "error", "message", "error")
-      
-      # metadata for hooks
-      textMetaHook <- function(input, output, ...) {
-         list(data = input)
-      }
-      
-      metaFns <- list(
-         source = textMetaHook,
-         output = textMetaHook,
-         warning = textMetaHook,
-         message = textMetaHook,
-         error = textMetaHook
-      )
-      
-      newKnitHooks <- lapply(hookNames, function(hookName) {
-         .rs.rnb.annotatedKnitrHook(hookName,
-                                    knitHooks[[hookName]],
-                                    metaFns[[hookName]])
-      })
-      names(newKnitHooks) <- hookNames
-      
-      knitr::knit_hooks$set(newKnitHooks)
-      
-      # hook into 'render' for htmlwidgets
-      knitr::opts_chunk$set(
-         
-         render = function(x, ...) {
-            output <- knitr::knit_print(x, ...)
-            if (inherits(x, "htmlwidget"))
-               return(.rs.rnb.renderHtmlWidget(output))
-            output
-         }
-         
-      )
-   }
-   
-   exit <- function(...) {
-      # restore hooks
-      knitr::knit_hooks$restore(knitHooks)
-      knitr::opts_chunk$restore(optsChunk)
-   }
-   
-   suppressMessages(trace(
-      knitr::knit,
-      tracer = substitute(tracer),
-      exit = substitute(exit),
-      print = FALSE
-   ))
-})
+{})
 
 .rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label, meta = NULL)
 {
@@ -464,8 +400,84 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
    
-   .rs.rnb.augmentKnitrHooks()
-   .rs.rnb.render(inputFile, outputFile, envir = envir)
+   # generate format
+   format <- .rs.rnb.htmlNotebook()
+   
+   # augment hooks for createNotebook()
+   format <- .rs.rnb.augmentKnitrHooks(format)
+   
+   # call render with our special format hooks
+   .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
+})
+
+.rs.addFunction("rnb.augmentKnitrHooks", function(format)
+{
+   savedKnitHooks <- list()
+   savedOptsChunk <- list()
+   
+   knitHooks <- list()
+   optsChunk <- list()
+   
+   # augment hooks
+   format$pre_knit <- function(input) {
+      
+      # save original (pre-render markdown) hooks
+      savedKnitHooks <<- knitr::knit_hooks$get()
+      savedOptsChunk <<- knitr::opts_chunk$get()
+      
+      # call knitr::render_markdown() to update hooks
+      knitr::render_markdown()
+      
+      # save original (pre-render markdown) hooks
+      knitHooks <<- knitr::knit_hooks$get()
+      optsChunk <<- knitr::opts_chunk$get()
+      
+      # now, set knitr hooks that call the original hooks,
+      # but overlay with annotations
+      
+      # generic hooks for knitr output
+      hookNames <- c("source", "chunk", "plot", "text", "output",
+                     "warning", "error", "message", "error")
+      
+      # metadata for hooks
+      textMetaHook <- function(input, output, ...) {
+         list(data = input)
+      }
+      
+      metaFns <- list(
+         source = textMetaHook,
+         output = textMetaHook,
+         warning = textMetaHook,
+         message = textMetaHook,
+         error = textMetaHook
+      )
+      
+      newKnitHooks <- lapply(hookNames, function(hookName) {
+         .rs.rnb.annotatedKnitrHook(hookName,
+                                    knitHooks[[hookName]],
+                                    metaFns[[hookName]])
+      })
+      names(newKnitHooks) <- hookNames
+      
+      # set knitr hooks on output format
+      format$knitr$knit_hooks <- newKnitHooks
+      
+      # hook into 'render' for htmlwidgets
+      format$knitr$opts_chunk$render <- function(x, ...) {
+         output <- knitr::knit_print(x, ...)
+         if (inherits(x, "htmlwidget"))
+            return(.rs.rnb.renderHtmlWidget(output))
+         output
+      }
+   }
+   
+   # restore saved hooks after knit
+   format$post_knit <- function(...) {
+      knitr::knit_hooks$set(savedKnitHooks)
+      knitr::opts_chunk$set(savedOptsChunk)
+   }
+   
+   format
 })
 
 .rs.addFunction("createNotebookFromCacheData", function(rnbData,
