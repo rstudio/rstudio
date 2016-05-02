@@ -869,7 +869,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # get active chunk id (special handling for setup chunk)
          candidates <- c(letters, 0:9)
-         if (grepl("^\\s*```{[Rr]\\s+setup", info$contents[[1]], perl = TRUE))
+         if (.rs.isSetupChunk(info$contents))
             activeChunkId <<- "csetup_chunk"
          else
             activeChunkId <<- .rs.rnb.generateRandomChunkId()
@@ -1008,4 +1008,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # NOTE: we don't bother writing a libs folder as we'll just dump
    # the base64 encoded headers into all HTML widget elements
    
+})
+
+.rs.addFunction("isSetupChunk", function(lines)
+{
+   if (!is.character(lines) || !length(lines))
+      return(FALSE)
+   
+   grepl("^\\s*```{[Rr]\\s+setup[\\s,}]", lines[[1]], perl = TRUE)
 })
