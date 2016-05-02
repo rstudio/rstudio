@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageConte
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
@@ -346,7 +347,7 @@ public class ViewerPresenter extends BasePresenter
    public void onViewerSaveAllAndRefresh()
    {
       sourceShim_.handleUnsavedChangesBeforeExit(
-         sourceShim_.getUnsavedChanges(),
+         sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED),
          new Command() {
             @Override
             public void execute()

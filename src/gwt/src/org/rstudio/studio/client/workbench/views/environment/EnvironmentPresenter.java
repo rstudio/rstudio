@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentCo
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
@@ -788,7 +789,7 @@ public class EnvironmentPresenter extends BasePresenter
    private boolean fileContainsUnsavedChanges(String path)
    {
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-         sourceShim_.getUnsavedChanges();
+         sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
       for (UnsavedChangesTarget target: unsavedSourceDocs)
       {

@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 import com.google.gwt.core.client.GWT;
@@ -186,7 +187,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    {   
       // see what the unsaved changes situation is and prompt accordingly
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                                             sourceShim.getUnsavedChanges();
+                        sourceShim.getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
       // force save all
       if (forceSaveAll)
@@ -409,7 +410,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       
       // get unsaved source docs
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                                          sourceShim_.getUnsavedChanges();
+                        sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
       if (unsavedSourceDocs.size() == 1)
       {
