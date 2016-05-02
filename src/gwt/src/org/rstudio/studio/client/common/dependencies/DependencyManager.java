@@ -119,7 +119,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
       deps.add(Dependency.cranPackage("packrat", "0.4.7", true));
-      deps.add(Dependency.embeddedPackage("rsconnect"));
+      deps.add(Dependency.cranPackage("rsconnect", "0.4.3", true));
       
       withDependencies(
         "Publishing",
@@ -170,7 +170,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
       deps.add(Dependency.cranPackage("knitr", "1.12", true));
-      deps.add(Dependency.embeddedPackage("rmarkdown"));
+      deps.add(Dependency.cranPackage("rmarkdown", "0.9.6", true));
       return deps;
    }
    
