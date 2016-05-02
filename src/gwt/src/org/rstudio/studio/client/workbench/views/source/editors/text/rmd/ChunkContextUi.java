@@ -96,12 +96,14 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    public void runPreviousChunks()
    {
       target_.executePreviousChunks(chunkPosition());
+      target_.focus();
    }
 
    @Override
    public void runChunk()
    {
       target_.executeChunk(chunkPosition());
+      target_.focus();
    }
 
    @Override

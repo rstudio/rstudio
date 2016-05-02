@@ -68,10 +68,6 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    setUnifiedTitleAndToolBarOnMac(true);
 
    desktop::enableFullscreenMode(this, false);
-
-   QShortcut* copyShortcut = new QShortcut(QKeySequence::Copy, this);
-   connect(copyShortcut, SIGNAL(activated()),
-           pView_->pageAction(QWebPage::Copy), SLOT(trigger()));
 }
 
 void BrowserWindow::printRequested(QWebFrame* frame)

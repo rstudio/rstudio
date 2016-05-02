@@ -22,6 +22,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -263,6 +264,12 @@ public class StatusBarWidget extends Composite
       return progress_.addClickHandler(handler);
    }
    
+   @Override
+   public HandlerRegistration addProgressCancelHandler(Command onCanceled)
+   {
+      return progress_.addCancelHandler(onCanceled);
+   }
+
    @UiField StatusBarElementWidget position_;
    @UiField StatusBarElementWidget scope_;
    @UiField StatusBarElementWidget message_;

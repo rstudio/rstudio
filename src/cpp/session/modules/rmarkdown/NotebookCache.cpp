@@ -18,6 +18,8 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 #include "NotebookPaths.hpp"
+#include "NotebookOutput.hpp"
+#include "NotebookHtmlWidgets.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -308,10 +310,21 @@ void onDocSaved(FilePath &path)
       }
       else if (source.isDirectory())
       {
-         // the chunk output folders should be moved; destroy the old copy
-         error = target.removeIfExists();
-         if (!error)
-            error = source.move(target);
+         // library folders should be merged and then removed, so we don't
+         // lose library contents 
+         if (source.filename() == kChunkLibDir)
+         {
+            error = mergeLib(source, target);
+            if (!error)
+               error = source.remove();
+         }
+         else
+         {
+            // the chunk output folders should be moved; destroy the old copy
+            error = target.removeIfExists();
+            if (!error)
+               error = source.move(target);
+         }
       }
       else
       {

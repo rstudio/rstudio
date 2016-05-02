@@ -100,6 +100,7 @@
 * Fix highlighting in R mode for numbers with only a trailing decimal (e.g. '1.')
 * Ensure that SparkR DataFrames appear as data in environment pane
 * Avoid firing active bindings in completion system
+* Fix copy, cut, paste handling when Emacs mode enabled
 * Avoid perturbing RNG state when invoking View()
 * Fix unlinked directories in Files pane when other users' folders are browseable
 * Prevent lines terminated by \r\n from entering editor (cause of many subtle problems)

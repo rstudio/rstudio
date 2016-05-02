@@ -14,8 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.ColorUtil;
-import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.core.client.GWT;
@@ -30,6 +31,7 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
@@ -112,10 +114,24 @@ public class NotebookProgressWidget extends Composite
    {
       return manager_.addHandler(ClickEvent.getType(), handler);
    }
+   
+   public HandlerRegistration addCancelHandler(final Command onCanceled)
+   {
+      cancelCommands_.add(onCanceled);
+      return new HandlerRegistration()
+      {
+         @Override
+         public void removeHandler()
+         {
+            cancelCommands_.remove(onCanceled);
+         }
+      };
+   }
 
    public NotebookProgressWidget()
    {
       manager_ = new HandlerManager(this);
+      cancelCommands_ = new ArrayList<Command>();
 
       initWidget(uiBinder.createAndBindUi(this));
       
@@ -159,7 +175,8 @@ public class NotebookProgressWidget extends Composite
          @Override
          public void onMouseDown(MouseDownEvent event)
          {
-            RStudioGinjector.INSTANCE.getCommands().interruptR().execute();
+            for (Command cancelCommand: cancelCommands_)
+               cancelCommand.execute();
          }
       }, MouseDownEvent.getType());
    }
@@ -219,4 +236,5 @@ public class NotebookProgressWidget extends Composite
    private int percent_ = 0;
    private int highlight_ = 0;
    private final HandlerManager manager_;
+   private final ArrayList<Command> cancelCommands_;
 }
