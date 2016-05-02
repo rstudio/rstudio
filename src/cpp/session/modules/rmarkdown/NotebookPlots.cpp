@@ -44,11 +44,13 @@ namespace {
 class PlotState
 {
 public:
-   PlotState():
+   PlotState(FilePath folder):
+      plotFolder(folder),
       hasPlots(false)
    {
    }
 
+   FilePath plotFolder;
    bool hasPlots;
    r::sexp::PreservedSEXP sexpMargins;
    boost::signals::connection onConsolePrompt;
@@ -61,17 +63,16 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void processPlots(const FilePath& plotFolder,
-                  bool ignoreEmpty,
+void processPlots(bool ignoreEmpty,
                   boost::shared_ptr<PlotState> pPlotState)
 {
    // ensure plot folder exists
-   if (!plotFolder.exists())
+   if (pPlotState->plotFolder.exists())
       return;
 
    // collect plots from the folder
    std::vector<FilePath> folderContents;
-   Error error = plotFolder.children(&folderContents);
+   Error error = pPlotState->plotFolder.children(&folderContents);
    if (error)
       LOG_ERROR(error);
 
@@ -108,34 +109,31 @@ void processPlots(const FilePath& plotFolder,
 void removeGraphicsDevice(const FilePath& plotFolder, 
                           boost::shared_ptr<PlotState> pPlotState)
 {
-
    // restore the figure margins
    Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
    if (error)
       LOG_ERROR(error);
 }
 
-void onNewPage(const FilePath& plotFolder,
-               boost::shared_ptr<PlotState> pPlotState,
+void onNewPage(boost::shared_ptr<PlotState> pPlotState,
                SEXP previousPageSnapshot)
 {
    pPlotState->hasPlots = true;
 
    // save the snapshot to a file for later replay
-   FilePath snapshotFile = plotFolder.childPath(core::system::generateUuid());
+   FilePath snapshotFile = pPlotState->plotFolder.childPath(
+         core::system::generateUuid());
    Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot",
                previousPageSnapshot,
                string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
    if (error)
       LOG_ERROR(error);
-   std::cerr << "saved snapshot to " << snapshotFile << std::cerr;
 }
 
-void onConsolePrompt(const FilePath& plotFolder,
-                     boost::shared_ptr<PlotState> pPlotState,
+void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
                      const std::string& )
 {
-   removeGraphicsDevice(plotFolder, pPlotState);
+   removeGraphicsDevice(pPlotState->plotFolder, pPlotState);
    pPlotState->onConsolePrompt.disconnect();
    pPlotState->onNewPage.disconnect();
 }
@@ -165,26 +163,11 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
       }
    }
 
-   // generate code for creating PNG device
-   boost::format fmt("{ require(grDevices, quietly=TRUE); "
-                     "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 6.5, height = 4, "
-                     "  units=\"in\", res = 96 %2%)"
-                     "}");
+   // initialize state needed inside plot accumulators
+   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>(
+         plotFolder);
 
-   // marker for content; this is necessary because on Windows, turning off
-   // the png device writes an empty PNG file even if nothing was plotted, and
-   // we need to avoid treating that file as though it were an actual plot
-   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>();
-
-   // create the PNG device
-   error = r::exec::executeString(
-         (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
-              % r::session::graphics::extraBitmapParams()).str());
-   if (error)
-      return error;
-
-   // save old plot state
+   // save old plot figure margin parameters
    r::exec::RFunction par("par");
    par.addParam("no.readonly", true);
    r::sexp::Protect protect;
@@ -205,12 +188,12 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // begin capturing new page events
    pPlotState->onNewPage = 
       r::session::graphics::device::events().onNewPage.connect(
-         boost::bind(onNewPage, plotFolder, pPlotState, _1));
+         boost::bind(onNewPage, pPlotState, _1));
 
    // complete the capture on the next console prompt
    pPlotState->onConsolePrompt = 
       module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
+         boost::bind(onConsolePrompt, pPlotState, _1));
 
    return Success();
 }
