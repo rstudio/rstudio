@@ -2194,12 +2194,15 @@ public class Source implements InsertSourceHandler,
       
    }
    
-   private boolean isUnsavedFileBackedTarget(EditingTarget target)
+   private boolean isUnsavedTarget(EditingTarget target, int type)
    {
-      return target.dirtyState().getValue() && (target.getPath() != null);
+      boolean fileBacked = target.getPath() != null;
+      return target.dirtyState().getValue() && 
+              ((type == TYPE_FILE_BACKED &&  fileBacked) ||
+               (type == TYPE_UNTITLED    && !fileBacked));
    }
    
-   public ArrayList<UnsavedChangesTarget> getUnsavedChanges()
+   public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type)
    {
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
@@ -2208,11 +2211,11 @@ public class Source implements InsertSourceHandler,
       // the satellite windows as well
       if (SourceWindowManager.isMainSourceWindow())
       {
-         targets.addAll(windowManager_.getAllSatelliteUnsavedChanges());
+         targets.addAll(windowManager_.getAllSatelliteUnsavedChanges(type));
       }
 
       for (EditingTarget target : editors_)
-         if (isUnsavedFileBackedTarget(target))
+         if (isUnsavedTarget(target, type))
             targets.add(target);
       
       return targets;
@@ -2225,7 +2228,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            saveChanges(getUnsavedChanges(), onCompleted);
+            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED), onCompleted);
          }
       };
 
@@ -2310,7 +2313,7 @@ public class Source implements InsertSourceHandler,
       // collect up unsaved targets
       ArrayList<EditingTarget> unsavedTargets =  new ArrayList<EditingTarget>();
       for (EditingTarget target : editors_)
-         if (isUnsavedFileBackedTarget(target))
+         if (isUnsavedTarget(target, TYPE_FILE_BACKED))
             unsavedTargets.add(target);
       
       // revert all of them
@@ -4013,4 +4016,7 @@ public class Source implements InsertSourceHandler,
    
    private ChunkIconsManager chunkIconsManager_;
    private DependencyManager dependencyManager_;
+ 
+   public final static int TYPE_FILE_BACKED = 0;
+   public final static int TYPE_UNTITLED    = 1;
 }

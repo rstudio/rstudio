@@ -50,7 +50,7 @@ public class SourceBuildHelper
                                     "Always save files before build" : null;
          
          ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-               sourceShim_.getUnsavedChanges();
+               sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
 
          if (unsavedSourceDocs.size() > 0)
          {
