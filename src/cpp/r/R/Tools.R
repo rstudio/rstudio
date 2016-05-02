@@ -943,3 +943,9 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    paste(prefix, paste(sampled, collapse = ""), postfix, sep = "")
 })
 
+.rs.addFunction("rbindList", function(data)
+{
+   result <- do.call(mapply, c(c, data, USE.NAMES = FALSE, SIMPLIFY = FALSE))
+   names(result) <- names(data[[1]])
+   as.data.frame(result, stringsAsFactors = FALSE)
+})

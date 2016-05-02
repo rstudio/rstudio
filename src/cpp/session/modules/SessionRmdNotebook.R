@@ -739,7 +739,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
 })
 
-.rs.addFunction("generateRandomChunkId", function()
+.rs.addFunction("rnb.generateRandomChunkId", function()
 {
    candidates <- c(letters, 0:9)
    .rs.randomString("c", candidates = candidates, n = 12L)
@@ -791,7 +791,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
           identical(lastActiveAnnotation$label, "text") &&
           identical(lastActiveAnnotation$state, "end"))
       {
-         activeChunkId    <<- .rs.generateRandomChunkId()
+         activeChunkId    <<- .rs.rnb.generateRandomChunkId()
          activeChunkIndex <<- activeChunkIndex + 1
          activeIndex      <<- 2
       }
@@ -864,7 +864,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          if (grepl("^\\s*```{[Rr]\\s+setup", info$contents[[1]], perl = TRUE))
             activeChunkId <<- "csetup_chunk"
          else
-            activeChunkId <<- .rs.generateRandomChunkId()
+            activeChunkId <<- .rs.rnb.generateRandomChunkId()
          
          # add our chunk defn
          chunkDefnsBuilder$append(list(
@@ -1000,11 +1000,4 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # NOTE: we don't bother writing a libs folder as we'll just dump
    # the base64 encoded headers into all HTML widget elements
    
-})
-
-.rs.addFunction("rbindList", function(data)
-{
-   result <- do.call(mapply, c(c, data, USE.NAMES = FALSE, SIMPLIFY = FALSE))
-   names(result) <- names(data[[1]])
-   as.data.frame(result, stringsAsFactors = FALSE)
 })
