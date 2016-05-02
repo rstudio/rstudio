@@ -511,6 +511,9 @@ public class Layout {
         l.heightUnit = l.targetHeightUnit;
 
         impl.layout(l);
+        if (callback != null) {
+          callback.onLayout(l, 1.0);
+        }
       }
 
       impl.finalizeLayout(parentElem);

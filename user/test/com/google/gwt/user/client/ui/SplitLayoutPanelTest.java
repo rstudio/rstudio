@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -207,6 +209,24 @@ public class SplitLayoutPanelTest extends DockLayoutPanelTest {
     dragSplitter(westSplitter, -10, 0);
     p.forceLayout();
     assertEquals(390, west.getOffsetWidth());
+  }
+
+  /**
+   * Test that forcing layout will call onResize only once.
+   */
+  public void testForceLayoutNoRedundantOnResize() {
+    final List<Boolean> called = new ArrayList<>();
+    SplitLayoutPanel panel = new SplitLayoutPanel();
+    SimpleLayoutPanel child = new SimpleLayoutPanel() {
+      @Override
+      public void onResize() {
+        super.onResize();
+        called.add(true);
+      }
+    };
+    panel.addWest(child,123.4);
+    panel.forceLayout();
+    assertEquals(1,called.size());
   }
 
   @Override

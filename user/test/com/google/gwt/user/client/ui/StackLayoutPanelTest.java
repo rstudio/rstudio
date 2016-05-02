@@ -386,6 +386,24 @@ public class StackLayoutPanelTest extends WidgetTestBase {
   }
 
   /**
+   * Test that forcing layout will call onResize only once.
+   */
+  public void testForceLayoutNoRedundantOnResize() {
+    final List<Boolean> called = new ArrayList<>();
+    StackLayoutPanel panel = new StackLayoutPanel(Unit.EM);
+    SimpleLayoutPanel child = new SimpleLayoutPanel() {
+      @Override
+      public void onResize() {
+        super.onResize();
+        called.add(true);
+      }
+    };
+    panel.add(child,"foo", 1);
+    panel.forceLayout();
+    assertEquals(1,called.size());
+  }
+
+  /**
    * Asserts that <b>widget</b> is attached to <b>panel</b> as a child in the
    * logical representation of <b>panel</b>.
    * 

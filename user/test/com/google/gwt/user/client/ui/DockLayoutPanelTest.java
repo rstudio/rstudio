@@ -18,6 +18,9 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.DockLayoutPanel.Direction;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tests for {@link DockLayoutPanel}.
  */
@@ -179,6 +182,24 @@ public class DockLayoutPanelTest extends WidgetTestBase {
     Widget widget = new Label();
     panel.insertLineStart(widget, 10, null);
     assertEquals(Direction.LINE_START, panel.getWidgetDirection(widget));
+  }
+
+  /**
+   * Test that forcing layout will call onResize only once.
+   */
+  public void testForceLayoutNoRedundantOnResize() {
+    final List<Boolean> called = new ArrayList<>();
+    DockLayoutPanel panel = createDockLayoutPanel();
+    SimpleLayoutPanel child = new SimpleLayoutPanel() {
+      @Override
+      public void onResize() {
+        super.onResize();
+        called.add(true);
+      }
+    };
+    panel.addWest(child,123.4);
+    panel.forceLayout();
+    assertEquals(1,called.size());
   }
 
   protected DockLayoutPanel createDockLayoutPanel() {

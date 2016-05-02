@@ -25,6 +25,9 @@ import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tests for {@link LayoutPanel}. Note that this only tests LayoutPanel-specific
  * behavior, not general layout correctness, which is covered by
@@ -309,6 +312,24 @@ public class LayoutPanelTest extends WidgetTestBase {
         label,
         new LayerProperties().top(10.0).topUnit(Unit.PX).height(15.0).heightUnit(
             Unit.PX));
+  }
+
+  /**
+   * Test that forcing layout will call onResize only once.
+   */
+  public void testForceLayoutNoRedundantOnResize() {
+    final List<Boolean> called = new ArrayList<>();
+    LayoutPanel layoutPanel = new LayoutPanel();
+    SimpleLayoutPanel child = new SimpleLayoutPanel() {
+      @Override
+      public void onResize() {
+        super.onResize();
+        called.add(true);
+      }
+    };
+    layoutPanel.add(child);
+    layoutPanel.forceLayout();
+    assertEquals(1,called.size());
   }
 
   protected LayoutPanel createLayoutPanel() {

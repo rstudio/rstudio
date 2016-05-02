@@ -38,6 +38,9 @@ import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.ResizeHelper;
 import com.google.gwt.user.client.Window;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Tests for the {@link Layout} class.
  */
@@ -272,6 +275,28 @@ public class LayoutTest extends GWTTestCase {
     assertTrue(nh > ch);
 
     parent.getStyle().clearFontSize();
+  }
+
+  /**
+   * Make sure to call onLayout on the AnimationCallback, when there is
+   * no animation (duration =0). This will make sure that onResize will be
+   * called on the child panels.
+   */
+  public void testOnLayoutWhenNoAnimation() {
+    final Map<Layer,Double> called = new HashMap();
+    layout.layout(0, new Layout.AnimationCallback() {
+      @Override
+      public void onAnimationComplete() {
+      }
+
+      @Override
+      public void onLayout(Layer layer, double progress) {
+        called.put(layer,progress);
+      }
+    });
+    assertEquals(2,called.size());
+    assertEquals(1.0,called.get(layer0));
+    assertEquals(1.0,called.get(layer1));
   }
 
   /**

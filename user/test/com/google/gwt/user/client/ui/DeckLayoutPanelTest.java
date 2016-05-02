@@ -16,6 +16,9 @@
 
 package com.google.gwt.user.client.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Test for {@link DeckLayoutPanel}.
  */
@@ -47,6 +50,24 @@ public class DeckLayoutPanelTest extends PanelTestBase<DeckLayoutPanel> {
     assertEquals(labels[1], deck.getVisibleWidget());
     assertFalse(labels[0].isVisible());
     assertTrue(labels[1].isVisible());
+  }
+
+  /**
+   * Test that forcing layout will call onResize only once.
+   */
+  public void testForceLayoutNoRedundantOnResize() {
+    final List<Boolean> called = new ArrayList<>();
+    DeckLayoutPanel deck = createPanel();
+    SimpleLayoutPanel child = new SimpleLayoutPanel() {
+      @Override
+      public void onResize() {
+        super.onResize();
+        called.add(true);
+      }
+    };
+    deck.add(child);
+    deck.forceLayout();
+    assertEquals(1,called.size());
   }
 
   public void testSetWidget() {

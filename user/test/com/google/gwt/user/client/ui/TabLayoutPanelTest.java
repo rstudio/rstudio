@@ -508,4 +508,22 @@ public class TabLayoutPanelTest extends GWTTestCase {
 
     delayTestFinish(200);
   }
+
+  /**
+   * Test that forcing layout will call onResize only once.
+   */
+  public void testForceLayoutNoRedundantOnResize() {
+    final List<Boolean> called = new ArrayList<>();
+    final TabLayoutPanel panel = new TabLayoutPanel(2, Unit.EM);
+    SimpleLayoutPanel child = new SimpleLayoutPanel() {
+      @Override
+      public void onResize() {
+        super.onResize();
+        called.add(true);
+      }
+    };
+    panel.add(child,"Tab1");
+    panel.forceLayout();
+    assertEquals(1,called.size());
+  }
 }
