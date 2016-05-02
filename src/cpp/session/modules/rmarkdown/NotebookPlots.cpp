@@ -52,7 +52,7 @@ public:
    bool hasPlots;
    r::sexp::PreservedSEXP sexpMargins;
    boost::signals::connection onConsolePrompt;
-   boost::signals::connection onNewPlot;
+   boost::signals::connection onNewPage;
 };
 
 bool isPlotPath(const FilePath& path)
@@ -113,21 +113,22 @@ void removeGraphicsDevice(const FilePath& plotFolder,
    Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
    if (error)
       LOG_ERROR(error);
-
-   // turn off the graphics device -- this has the side effect of writing the
-   // device's remaining output to files
-   error = r::exec::RFunction("dev.off").call();
-   if (error)
-      LOG_ERROR(error);
-
-   processPlots(plotFolder, false, pPlotState);
 }
 
-void onNewPlot(const FilePath& plotFolder,
-               boost::shared_ptr<PlotState> pPlotState)
+void onNewPage(const FilePath& plotFolder,
+               boost::shared_ptr<PlotState> pPlotState,
+               SEXP previousPageSnapshot)
 {
    pPlotState->hasPlots = true;
-   processPlots(plotFolder, true, pPlotState);
+
+   // save the snapshot to a file for later replay
+   FilePath snapshotFile = plotFolder.childPath(core::system::generateUuid());
+   Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot",
+               previousPageSnapshot,
+               string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+   if (error)
+      LOG_ERROR(error);
+   std::cerr << "saved snapshot to " << snapshotFile << std::cerr;
 }
 
 void onConsolePrompt(const FilePath& plotFolder,
@@ -136,7 +137,7 @@ void onConsolePrompt(const FilePath& plotFolder,
 {
    removeGraphicsDevice(plotFolder, pPlotState);
    pPlotState->onConsolePrompt.disconnect();
-   pPlotState->onNewPlot.disconnect();
+   pPlotState->onNewPage.disconnect();
 }
 
 } // anonymous namespace
@@ -164,10 +165,24 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
       }
    }
 
+   // generate code for creating PNG device
+   boost::format fmt("{ require(grDevices, quietly=TRUE); "
+                     "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
+                     "  width = 6.5, height = 4, "
+                     "  units=\"in\", res = 96 %2%)"
+                     "}");
+
    // marker for content; this is necessary because on Windows, turning off
    // the png device writes an empty PNG file even if nothing was plotted, and
    // we need to avoid treating that file as though it were an actual plot
    boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>();
+
+   // create the PNG device
+   error = r::exec::executeString(
+         (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
+              % r::session::graphics::extraBitmapParams()).str());
+   if (error)
+      return error;
 
    // save old plot state
    r::exec::RFunction par("par");
@@ -187,12 +202,15 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    if (error)
       LOG_ERROR(error);
    
-   // complete the capture on the next console prompt
-   pPlotState->onConsolePrompt = module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
+   // begin capturing new page events
+   pPlotState->onNewPage = 
+      r::session::graphics::device::events().onNewPage.connect(
+         boost::bind(onNewPage, plotFolder, pPlotState, _1));
 
-   pPlotState->onNewPlot = plots::events().onNewPlot.connect(
-         boost::bind(onNewPlot, plotFolder, pPlotState));
+   // complete the capture on the next console prompt
+   pPlotState->onConsolePrompt = 
+      module_context::events().onConsolePrompt.connect(
+         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
 
    return Success();
 }
