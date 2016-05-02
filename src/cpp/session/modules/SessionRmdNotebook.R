@@ -193,115 +193,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.na(idx)) NULL else names(chunkRows)[[idx]]
 })
 
-.rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData)
-{
-   # ensure pre-requisite version of knitr
-   if (!.rs.isPackageVersionInstalled("knitr", "1.12.27"))
-      return()
-   
-   linesProcessed <- 1
-   knitHooks <- knitr::knit_hooks$get()
-   
-   tracer <- function(...) {
-      
-      knitr::knit_hooks$set(
-         
-         text = function(x, ...) {
-            newLineMatches <- gregexpr('\n', x, fixed = TRUE)[[1]]
-            linesProcessed <<- linesProcessed + length(newLineMatches) + 1
-            output <- knitHooks$text(x, ...)
-            annotated <- .rs.rnb.htmlAnnotatedOutput(output, "text")
-            annotated
-         },
-         
-         chunk = function(...) {
-            output <- knitHooks$chunk(...)
-            annotated <- .rs.rnb.htmlAnnotatedOutput(output, "chunk")
-            annotated
-         },
-         
-         evaluate = function(code, ...) {
-            
-            linesProcessed <<- linesProcessed + length(code)
-            activeChunkId <- .rs.rnb.getActiveChunkId(rnbData, linesProcessed)
-            linesProcessed <<- linesProcessed + 2
-            
-            # TODO: this implies there was no chunk output associated
-            # with this chunk, but it would be pertinent to validate
-            if (is.null(activeChunkId))
-               return(knitr::asis_output(""))
-            
-            activeChunkData <- rnbData$chunk_data[[activeChunkId]]
-            
-            # collect output for knitr
-            # TODO: respect output options?
-            htmlOutput <- .rs.enumerate(activeChunkData, function(key, val) {
-               
-               # png output: create base64 encoded image
-               if (.rs.endsWith(key, ".png")) {
-                  rendered <- .rs.rnb.renderBase64Png(bytes = val)
-                  annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "plot")
-                  return(knitr::asis_output(annotated))
-               }
-               
-               # console output
-               if (.rs.endsWith(key, ".csv")) {
-                  htmlList <- .rs.rnb.consoleDataToHtmlList(val)
-                  transformed <- lapply(htmlList, function(el) {
-                     output <- el$output
-                     label <- if (el$type == "input") "source" else "output"
-                     meta <- list(data = el$input)
-                     .rs.rnb.htmlAnnotatedOutput(output, label, meta)
-                  })
-                  output <- paste(transformed, collapse = "\n")
-                  return(knitr::asis_output(output))
-               }
-               
-               # html widgets
-               if (.rs.endsWith(key, ".html")) {
-                  jsonName <- .rs.withChangedExtension(key, ".json")
-                  jsonPath <- file.path(rnbData$cache_path, activeChunkId, jsonName)
-                  jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
-                  for (i in seq_along(jsonContents))
-                     class(jsonContents[[i]]) <- "html_dependency"
-                  
-                  bodyEl <- .rs.extractHTMLBodyElement(val)
-                  
-                  rendered <- htmltools::htmlPreserve(bodyEl)
-                  annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "htmlwidget", meta = jsonContents)
-                  output <- knitr::asis_output(annotated, meta = jsonContents)
-                  return(output)
-               }
-               
-               # TODO: shouldn't get here?
-               NULL
-            })
-            
-            list(
-               structure(list(src = NULL), class = "source"),
-               htmlOutput
-            )
-         }
-      
-      )
-      
-   }
-   
-   exit <- function(...) {
-      knitr::knit_hooks$set(knitHooks)
-   }
-   
-   suppressMessages(trace(
-      knitr::knit,
-      tracer = substitute(tracer),
-      exit = substitute(exit),
-      print = FALSE
-   ))
-   
-})
-
-.rs.addFunction("rnb.augmentKnitrHooks", function()
-{})
 
 .rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label, meta = NULL)
 {
@@ -393,6 +284,62 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
 })
 
+.rs.addFunction("rnb.augmentKnitrHooks", function(format)
+{
+   # save original hooks
+   savedKnitHooks <- knitr::knit_hooks$get()
+   on.exit(knitr::knit_hooks$set(savedKnitHooks), add = TRUE)
+   
+   savedOptsChunk <- knitr::opts_chunk$get()
+   on.exit(knitr::opts_chunk$set(savedOptsChunk), add = TRUE)
+   
+   # use 'render_markdown()' to get default hooks
+   knitr::render_markdown()
+   
+   # store original hooks and annotate in format
+   knitHooks <- knitr::knit_hooks$get()
+   
+   # generic hooks for knitr output
+   hookNames <- c("source", "chunk", "plot", "text", "output",
+                  "warning", "error", "message", "error")
+   
+   # metadata for hooks
+   textMetaHook <- function(input, output, ...) {
+      list(data = input)
+   }
+   
+   metaFns <- list(
+      source = textMetaHook,
+      output = textMetaHook,
+      warning = textMetaHook,
+      message = textMetaHook,
+      error = textMetaHook
+   )
+   
+   newKnitHooks <- lapply(hookNames, function(hookName) {
+      .rs.rnb.annotatedKnitrHook(hookName,
+                                 knitHooks[[hookName]],
+                                 metaFns[[hookName]])
+   })
+   names(newKnitHooks) <- hookNames
+   
+   format$knitr$knit_hooks <- newKnitHooks
+   
+   # hook into 'render' for htmlwidgets
+   renderHook <- function(x, ...) {
+      output <- knitr::knit_print(x, ...)
+      if (inherits(x, "htmlwidget"))
+         return(.rs.rnb.renderHtmlWidget(output))
+      output
+   }
+   
+   # set hooks on format
+   format$knitr$knit_hooks <- newKnitHooks
+   format$knitr$opts_chunk$render <- renderHook
+   
+   format
+})
+
 .rs.addFunction("createNotebook", function(inputFile,
                                            outputFile = NULL,
                                            envir = .GlobalEnv)
@@ -410,83 +357,132 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
 })
 
-.rs.addFunction("rnb.augmentKnitrHooks", function(format)
+.rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData, format)
 {
-   savedKnitHooks <- list()
-   savedOptsChunk <- list()
+   # ensure pre-requisite version of knitr
+   if (!.rs.isPackageVersionInstalled("knitr", "1.12.27"))
+      return()
    
-   knitHooks <- list()
-   optsChunk <- list()
+   # save original hooks
+   savedKnitHooks <- knitr::knit_hooks$get()
+   on.exit(knitr::knit_hooks$set(savedKnitHooks), add = TRUE)
    
-   # augment hooks
-   format$pre_knit <- function(input) {
+   savedOptsChunk <- knitr::opts_chunk$get()
+   on.exit(knitr::opts_chunk$set(savedOptsChunk), add = TRUE)
+   
+   # use 'render_markdown()' to get default hooks
+   knitr::render_markdown()
+   
+   # store original hooks and annotate in format
+   knitHooks <- knitr::knit_hooks$get()
+   
+   # track number of lines processed (so we can correctly map
+   # chunks in document back to chunks in cache)
+   linesProcessed <- 1
+   
+   # generate our custom hooks
+   newKnitHooks <- list(
       
-      # save original (pre-render markdown) hooks
-      savedKnitHooks <<- knitr::knit_hooks$get()
-      savedOptsChunk <<- knitr::opts_chunk$get()
+      text = function(x, ...) {
+         newLineMatches <- gregexpr('\n', x, fixed = TRUE)[[1]]
+         linesProcessed <<- linesProcessed + length(newLineMatches) + 1
+         output <- knitHooks$text(x, ...)
+         annotated <- .rs.rnb.htmlAnnotatedOutput(output, "text")
+         annotated
+      },
       
-      # call knitr::render_markdown() to update hooks
-      knitr::render_markdown()
+      chunk = function(...) {
+         output <- knitHooks$chunk(...)
+         annotated <- .rs.rnb.htmlAnnotatedOutput(output, "chunk")
+         annotated
+      },
       
-      # save original (pre-render markdown) hooks
-      knitHooks <<- knitr::knit_hooks$get()
-      optsChunk <<- knitr::opts_chunk$get()
-      
-      # now, set knitr hooks that call the original hooks,
-      # but overlay with annotations
-      
-      # generic hooks for knitr output
-      hookNames <- c("source", "chunk", "plot", "text", "output",
-                     "warning", "error", "message", "error")
-      
-      # metadata for hooks
-      textMetaHook <- function(input, output, ...) {
-         list(data = input)
+      evaluate = function(code, ...) {
+         
+         linesProcessed <<- linesProcessed + length(code)
+         activeChunkId <- .rs.rnb.getActiveChunkId(rnbData, linesProcessed)
+         linesProcessed <<- linesProcessed + 2
+         
+         # TODO: this implies there was no chunk output associated
+         # with this chunk, but it would be pertinent to validate
+         if (is.null(activeChunkId))
+            return(knitr::asis_output(""))
+         
+         activeChunkData <- rnbData$chunk_data[[activeChunkId]]
+         
+         # collect output for knitr
+         # TODO: respect output options?
+         htmlOutput <- .rs.enumerate(activeChunkData, function(key, val) {
+            
+            # png output: create base64 encoded image
+            if (.rs.endsWith(key, ".png")) {
+               rendered <- .rs.rnb.renderBase64Png(bytes = val)
+               annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "plot")
+               return(knitr::asis_output(annotated))
+            }
+            
+            # console output
+            if (.rs.endsWith(key, ".csv")) {
+               htmlList <- .rs.rnb.consoleDataToHtmlList(val)
+               transformed <- lapply(htmlList, function(el) {
+                  output <- el$output
+                  label <- if (el$type == "input") "source" else "output"
+                  meta <- list(data = el$input)
+                  .rs.rnb.htmlAnnotatedOutput(output, label, meta)
+               })
+               output <- paste(transformed, collapse = "\n")
+               return(knitr::asis_output(output))
+            }
+            
+            # html widgets
+            if (.rs.endsWith(key, ".html")) {
+               jsonName <- .rs.withChangedExtension(key, ".json")
+               jsonPath <- file.path(rnbData$cache_path, activeChunkId, jsonName)
+               jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
+               for (i in seq_along(jsonContents))
+                  class(jsonContents[[i]]) <- "html_dependency"
+               
+               bodyEl <- .rs.extractHTMLBodyElement(val)
+               
+               rendered <- htmltools::htmlPreserve(bodyEl)
+               annotated <- .rs.rnb.htmlAnnotatedOutput(rendered, "htmlwidget", meta = jsonContents)
+               output <- knitr::asis_output(annotated, meta = jsonContents)
+               return(output)
+            }
+            
+            # TODO: shouldn't get here?
+            NULL
+         })
+         
+         list(
+            structure(list(src = NULL), class = "source"),
+            htmlOutput
+         )
       }
-      
-      metaFns <- list(
-         source = textMetaHook,
-         output = textMetaHook,
-         warning = textMetaHook,
-         message = textMetaHook,
-         error = textMetaHook
-      )
-      
-      newKnitHooks <- lapply(hookNames, function(hookName) {
-         .rs.rnb.annotatedKnitrHook(hookName,
-                                    knitHooks[[hookName]],
-                                    metaFns[[hookName]])
-      })
-      names(newKnitHooks) <- hookNames
-      
-      # set knitr hooks on output format
-      format$knitr$knit_hooks <- newKnitHooks
-      
-      # hook into 'render' for htmlwidgets
-      format$knitr$opts_chunk$render <- function(x, ...) {
-         output <- knitr::knit_print(x, ...)
-         if (inherits(x, "htmlwidget"))
-            return(.rs.rnb.renderHtmlWidget(output))
-         output
-      }
-   }
+   )
    
-   # restore saved hooks after knit
-   format$post_knit <- function(...) {
-      knitr::knit_hooks$set(savedKnitHooks)
-      knitr::opts_chunk$set(savedOptsChunk)
-   }
+   # save to format
+   format$knitr$knit_hooks <- newKnitHooks
    
    format
 })
-
+   
 .rs.addFunction("createNotebookFromCacheData", function(rnbData,
                                                         inputFile,
-                                                        outputFile,
+                                                        outputFile = NULL,
                                                         envir = .GlobalEnv)
 {
-   .rs.rnb.cacheAugmentKnitrHooks(rnbData)
-   .rs.rnb.render(inputFile, outputFile, envir = envir)
+   if (is.null(outputFile))
+      outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
+   
+   # generate format
+   format <- .rs.rnb.htmlNotebook()
+   
+   # augment hooks
+   format <- .rs.rnb.cacheAugmentKnitrHooks(rnbData, format)
+   
+   # call render with special format hooks
+   .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
