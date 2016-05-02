@@ -1,5 +1,5 @@
 /*
- * EndPasteEvent.java
+ * EditEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,11 +17,36 @@ package org.rstudio.studio.client.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class EndPasteEvent extends GwtEvent<EndPasteEvent.Handler>
+public class EditEvent extends GwtEvent<EditEvent.Handler>
 {
+   public EditEvent(boolean before, int type)
+   {
+      before_ = before;
+      type_ = type;
+   }
+   
+   public boolean isBeforeEdit()
+   {
+      return before_;
+   }
+   
+   public int getType()
+   {
+      return type_;
+   }
+   
+   private final boolean before_;
+   private final int type_;
+   
+   public static final int TYPE_NONE  = 0;
+   public static final int TYPE_CUT   = 1;
+   public static final int TYPE_COPY  = 2;
+   public static final int TYPE_PASTE = 4;
+	
+   // Boilerplate ----
    public interface Handler extends EventHandler
    {
-      void onEndPaste(EndPasteEvent event);
+      void onEdit(EditEvent event);
    }
 
    @Override
@@ -33,7 +58,7 @@ public class EndPasteEvent extends GwtEvent<EndPasteEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onEndPaste(this);
+      handler.onEdit(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

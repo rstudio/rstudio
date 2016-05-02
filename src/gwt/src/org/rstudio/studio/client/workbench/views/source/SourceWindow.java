@@ -17,9 +17,12 @@ package org.rstudio.studio.client.workbench.views.source;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
@@ -27,6 +30,7 @@ import org.rstudio.studio.client.application.MacZoomHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -129,23 +133,29 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                }
                
                ArrayList<UnsavedChangesTarget> unsaved = 
-                     sourceShim_.getUnsavedChanges();
+                     sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
 
+               // in a source window, we need to look for untitled docs too
+               if (!SourceWindowManager.isMainSourceWindow())
+               {
+                  ArrayList<UnsavedChangesTarget> untitled = 
+                        sourceShim_.getUnsavedChanges(Source.TYPE_UNTITLED);
+                  unsaved.addAll(untitled);
+               }
+               
                if (unsaved.size() > 0)
                {
                   String msg = "Your edits to the ";
                   if (unsaved.size() == 1)
                   {
-                     msg += "file " + FilePathUtils.friendlyFileName(
-                           unsaved.get(0).getPath());
+                     msg += "file " + unsavedTargetDesc(unsaved.get(0));
                   }
                   else
                   {
                      msg += "files ";
                      for (int i = 0; i < unsaved.size(); i++)
                      {
-                        msg += FilePathUtils.friendlyFileName(
-                           unsaved.get(i).getPath());
+                        msg += unsavedTargetDesc(unsaved.get(i));
                         if (i == unsaved.size() - 2)
                            msg += " and ";
                         else if (i < unsaved.size() - 2)
@@ -276,7 +286,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
    private JsArray<UnsavedChangesItem> getUnsavedChanges()
    {
       JsArray<UnsavedChangesItem> items = JsArray.createArray().cast();
-      ArrayList<UnsavedChangesTarget> targets = sourceShim_.getUnsavedChanges();
+      ArrayList<UnsavedChangesTarget> targets = sourceShim_.getUnsavedChanges(
+            Source.TYPE_FILE_BACKED);
       for (UnsavedChangesTarget target: targets)
       {
          items.push(UnsavedChangesItem.create(target));
@@ -296,7 +307,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
 
    private void closeSourceWindow()
    {
-      ApplicationQuit.QuitContext quitContext = 
+      final ApplicationQuit.QuitContext quitContext = 
             new ApplicationQuit.QuitContext()
             {
                @Override
@@ -317,13 +328,72 @@ public class SourceWindow implements LastSourceDocClosedHandler,
                   });
                }
             };
-
+            
+      // collect titled and untitled changes -- we don't prompt for untitled 
+      // changes in the main window, but we do in the source window 
+      ArrayList<UnsavedChangesTarget> untitled = 
+            sourceShim_.getUnsavedChanges(Source.TYPE_UNTITLED);
+      ArrayList<UnsavedChangesTarget> fileBacked =
+            sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
+      
+     if (Desktop.isDesktop() && untitled.size() > 0)
+     {
+        // single untitled, unsaved doc in desktop mode is the most common case
+        // so handle that gracefully
+        if (fileBacked.size() == 0 && untitled.size() == 1)
+        {
+           sourceShim_.saveWithPrompt(untitled.get(0),
+                 new Command()
+                 {
+                    @Override
+                    public void execute()
+                    {
+                       quitContext.onReadyToQuit(false);
+                    }
+                 }, null);
+           return;
+        }
+        else
+        {
+           // if we have multiple unsaved untitled targets or a mix of untitled
+           // and file backed targets, we just fall back to a generic prompt
+           RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
+                 GlobalDisplay.MSG_WARNING, 
+                 "Unsaved Changes", 
+                 "There are unsaved documents in this window. Are you sure " +
+                 "you want to close it?", 
+                 false,  // include cancel
+                 new Operation()
+                 {
+                    @Override
+                    public void execute()
+                    {
+                       quitContext.onReadyToQuit(false);
+                    }
+                 },
+                 null,
+                 null, 
+                 "Close and Discard Changes", 
+                 "Cancel", 
+                 false);
+           return;
+        }
+      }
+     
       // prompt to save any unsaved documents
-      if (sourceShim_.getUnsavedChanges().size() == 0)
+      if (fileBacked.size() == 0)
          quitContext.onReadyToQuit(false);
       else
          ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK, 
                "Close Source Window", false, sourceShim_, null, null, quitContext);
+   }
+   
+   private String unsavedTargetDesc(UnsavedChangesTarget item)
+   {
+      if (StringUtil.isNullOrEmpty(item.getPath()))
+         return item.getTitle();
+      else
+         return FilePathUtils.friendlyFileName(item.getPath());
    }
    
    private final native void markReadyToClose() /*-{

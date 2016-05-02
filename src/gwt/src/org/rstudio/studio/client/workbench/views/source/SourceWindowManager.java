@@ -425,7 +425,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       });
    }
    
-   public ArrayList<UnsavedChangesTarget> getAllSatelliteUnsavedChanges()
+   public ArrayList<UnsavedChangesTarget> getAllSatelliteUnsavedChanges(
+         final int type)
    {
       final ArrayList<UnsavedChangesTarget> targets = 
             new ArrayList<UnsavedChangesTarget>();
@@ -435,7 +436,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          public void execute(Pair<String, WindowEx> input)
          {
             targets.addAll(JsArrayUtil.toArrayList(
-                  getUnsavedChanges(input.second)));
+                  getUnsavedChanges(input.second, type)));
          }
       });
       return targets;
@@ -921,8 +922,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    }-*/;
 
    private final native JsArray<UnsavedChangesItem> getUnsavedChanges(
-         WindowEx satellite) /*-{
-      return satellite.rstudioGetUnsavedChanges();
+         WindowEx satellite, int type) /*-{
+      return satellite.rstudioGetUnsavedChanges(type);
    }-*/;
    
    private final native String getCurrentDocPath(WindowEx satellite) /*-{
