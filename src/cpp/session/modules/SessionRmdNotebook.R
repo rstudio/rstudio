@@ -433,6 +433,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       NULL
    }
    
+   # just in case there is an error during the knit process --
+   # don't leave a stale 'evaluate' lying around
+   addTaskCallback(function(...) {
+      .rs.replaceBinding("evaluate", "evaluate", original)
+      FALSE
+   })
+   
    # generate our custom hooks
    newKnitHooks <- list(
       
