@@ -422,18 +422,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # chunk hook to fire + include output, but we can make sure
    # that only the annotations are included in such a case
    include <- TRUE
-   knitr::opts_hooks$set(include = function(options) {
+   format$knitr$opts_hooks$include <- function(options) {
       include <<- options$include
-      options$include <- TRUE
       options
-   })
+   }
    
    # generate our custom hooks
    newKnitHooks <- list(
       
       text = function(x, ...) {
          newLineMatches <- gregexpr('\n', x, fixed = TRUE)[[1]]
-         linesProcessed <<- linesProcessed + length(newLineMatches) + 1
+         n <- if (identical(c(newLineMatches), -1L)) 0 else length(newLineMatches)
+         linesProcessed <<- linesProcessed + n + 1
          output <- knitHooks$text(x, ...)
          annotated <- .rs.rnb.htmlAnnotatedOutput(output, "text")
          annotated
@@ -446,7 +446,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       },
       
       evaluate = function(code, ...) {
-         
          # restore original hook temporarily (so that any sub-calls
          # to 'evaluate' go to the correct function)
          hook <- evaluate::evaluate
@@ -457,15 +456,23 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          activeChunkId <- .rs.rnb.getActiveChunkId(rnbData, linesProcessed)
          linesProcessed <<- linesProcessed + 2
          
+         # return placeholder when include is FALSE (don't include
+         # plain empty output as we want to still insert something
+         # into document)
+         if (!include)
+            return(knitr::asis_output("<!-- placeholder -->"))
+         
          # TODO: this implies there was no chunk output associated
-         # with this chunk, but it would be pertinent to validate
-         if (is.null(activeChunkId))
-            return(knitr::asis_output(""))
+         # with this chunk, but it would be pertinent to validate.
+         if (is.null(activeChunkId)) {
+            pasted <- htmltools::htmlEscape(paste(code, collapse = "\n"))
+            output <- sprintf('<pre class="r"><code>%s</code></pre>', pasted)
+            return(knitr::asis_output(output))
+         }
          
-         activeChunkData <- rnbData$chunk_data[[activeChunkId]]
-         
-         # collect output for knitr
+         # attempt to pull output from cache
          # TODO: respect output options?
+         activeChunkData <- rnbData$chunk_data[[activeChunkId]]
          htmlOutput <- .rs.enumerate(activeChunkData, function(key, val) {
             
             # png output: create base64 encoded image
