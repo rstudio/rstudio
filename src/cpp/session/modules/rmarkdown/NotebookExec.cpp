@@ -105,7 +105,7 @@ void ChunkExecContext::connect()
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, FilePath(), 
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      kChunkOutputPlot)));
 
    error = beginPlotCapture(outputPath);
@@ -205,7 +205,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
          LOG_ERROR(error);
    }
 
-   // if JSON metadata was provided, write it out
+   // if output metadata was provided, write it out
    if (!metadata.empty())
    {
       metadata.move(target.parent().complete(

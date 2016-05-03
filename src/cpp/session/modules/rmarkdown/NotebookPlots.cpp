@@ -87,18 +87,17 @@ void processPlots(bool ignoreEmpty,
          if (ignoreEmpty && path.size() == 0)
             continue;
 
-#ifdef _WIN32
-   // on Windows, turning off the PNG device writes an empty PNG file if no 
-   // plot output occurs; we avoid treating that empty file as an actual plot
-   // by only emitting an event if a plot occurred.
-   //
-   // TODO: not all plot libraries cause the new plot hooks to invoke, so this
-   // heuristic may cause us to miss a plot on Windows; we may need some
-   // mechanism by which we can determine whether the device or its output is
-   // empty.
+         // it's possible for a PNG to get written that has no content 
+         // (on Windows in particular closing the PNG device always generates
+         // a PNG) so make sure we have something to write 
          if (pPlotState->hasPlots)
-#endif
-            events().onPlotOutput(path);
+         {
+            // emit the plot and the snapshot file
+            events().onPlotOutput(path, pPlotState->snapshotFile);
+
+            // we've consumed the snapshot file, so clear it
+            pPlotState->snapshotFile = FilePath();
+         }
 
          // clean up the plot so it isn't emitted twice
          error = path.removeIfExists();
@@ -108,8 +107,32 @@ void processPlots(bool ignoreEmpty,
    }
 }
 
+void saveSnapshot(boost::shared_ptr<PlotState> pPlotState)
+{
+   // if there's a plot on the device, write its display list before it's
+   // cleared for the next page
+   FilePath outputFile = pPlotState->plotFolder.complete(
+         core::system::generateUuid(false) + ".snapshot");
+   Error error = r::exec::RFunction(".rs.saveGraphics", 
+         outputFile.absolutePath()).call();
+   if (error)
+   {
+      pPlotState->snapshotFile = FilePath();
+      LOG_ERROR(error);
+   }
+   else
+   {
+      pPlotState->snapshotFile = outputFile;
+   }
+}
+
 void removeGraphicsDevice(boost::shared_ptr<PlotState> pPlotState)
 {
+   // take a snapshot of the last plot's display list before we turn off the
+   // device (if we haven't emitted it yet)
+   if (pPlotState->hasPlots && pPlotState->snapshotFile.empty())
+      saveSnapshot(pPlotState);
+
    // restore the figure margins
    Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
    if (error)
@@ -128,21 +151,7 @@ void onBeforeNewPlot(boost::shared_ptr<PlotState> pPlotState)
 {
    if (pPlotState->hasPlots)
    {
-      // if there's a plot on the device, write its display list before it's
-      // cleared for the next page
-      FilePath outputFile = pPlotState->plotFolder.complete(
-            core::system::generateUuid(false) + ".snapshot");
-      Error error = r::exec::RFunction(".rs.saveGraphics", 
-            outputFile.absolutePath()).call();
-      if (error)
-      {
-         pPlotState->snapshotFile = FilePath();
-         LOG_ERROR(error);
-      }
-      else
-      {
-         pPlotState->snapshotFile = outputFile;
-      }
+      saveSnapshot(pPlotState);
    }
    pPlotState->hasPlots = true;
 }
