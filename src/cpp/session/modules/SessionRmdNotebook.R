@@ -433,13 +433,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       NULL
    }
    
-   # just in case there is an error during the knit process --
-   # don't leave a stale 'evaluate' lying around
-   addTaskCallback(function(...) {
-      .rs.replaceBinding("evaluate", "evaluate", original)
-      FALSE
-   })
-   
    # generate our custom hooks
    newKnitHooks <- list(
       
@@ -458,6 +451,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       },
       
       evaluate = function(code, ...) {
+         
+         # restore original hook temporarily (so that any sub-calls
+         # to 'evaluate' go to the correct function)
+         hook <- evaluate::evaluate
+         .rs.replaceBinding("evaluate", "evaluate", original)
+         on.exit(.rs.replaceBinding("evaluate", "evaluate", hook), add = TRUE)
          
          linesProcessed <<- linesProcessed + length(code)
          activeChunkId <- .rs.rnb.getActiveChunkId(rnbData, linesProcessed)
