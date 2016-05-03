@@ -949,3 +949,35 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    names(result) <- names(data[[1]])
    as.data.frame(result, stringsAsFactors = FALSE)
 })
+
+.rs.addFunction("replaceBinding", function(binding, package, override)
+{
+   # override in namespace
+   if (!requireNamespace(package, quietly = TRUE))
+      stop(sprintf("Failed to load namespace for package '%s'", package))
+   
+   namespace <- asNamespace(package)
+   
+   # get reference to original binding
+   original <- get(binding, envir = namespace)
+   
+   # replace the binding
+   if (is.function(override))
+      environment(override) <- namespace
+   
+   do.call("unlockBinding", list(binding, namespace))
+   assign(binding, override, envir = namespace)
+   do.call("lockBinding", list(binding, namespace))
+   
+   # if package is attached, override there as well
+   searchPathName <- paste("package", package, sep = ":")
+   if (searchPathName %in% search()) {
+      env <- as.environment(searchPathName)
+      do.call("unlockBinding", list(binding, env))
+      assign(binding, override, envir = env)
+      do.call("lockBinding", list(binding, env))
+   }
+   
+   # return original
+   original
+})

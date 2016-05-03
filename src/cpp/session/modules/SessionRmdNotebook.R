@@ -290,14 +290,34 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
 })
 
+.rs.addFunction("rnb.getKnitrHookList", function()
+{
+   hookNames <- c("knit_hooks", "opts_chunk", "opts_hooks")
+   knitrNamespace <- asNamespace("knitr")
+   hookList <- lapply(hookNames, function(hookName) {
+      hooks <- get(hookName, envir = knitrNamespace, inherits = FALSE)
+      hooks$get()
+   })
+   names(hookList) <- hookNames
+   hookList
+})
+
+.rs.addFunction("rnb.setKnitrHookList", function(hookList)
+{
+   knitrNamespace <- asNamespace("knitr")
+   .rs.enumerate(hookList, function(hookName, hookValue)
+   {
+      hook <- get(hookName, envir = knitrNamespace, inherits = FALSE)
+      hook$set(hookValue)
+   })
+})
+
 .rs.addFunction("rnb.augmentKnitrHooks", function(format)
 {
-   # save original hooks
-   savedKnitHooks <- knitr::knit_hooks$get()
-   on.exit(knitr::knit_hooks$set(savedKnitHooks), add = TRUE)
-   
-   savedOptsChunk <- knitr::opts_chunk$get()
-   on.exit(knitr::opts_chunk$set(savedOptsChunk), add = TRUE)
+   # save original hooks (restore after we've stored requisite
+   # hooks in our output format)
+   savedHookList <- .rs.rnb.getKnitrHookList()
+   on.exit(.rs.rnb.setKnitrHookList(savedHookList), add = TRUE)
    
    # use 'render_markdown()' to get default hooks
    knitr::render_markdown()
@@ -363,46 +383,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
 })
 
-.rs.addFunction("replaceBinding", function(binding, package, override)
-{
-   # override in namespace
-   if (!requireNamespace(package, quietly = TRUE))
-      stop(sprintf("Failed to load namespace for package '%s'", package))
-   
-   namespace <- asNamespace(package)
-   
-   # get reference to original binding
-   original <- get(binding, envir = namespace)
-   
-   # replace the binding
-   if (is.function(override))
-      environment(override) <- namespace
-   
-   do.call("unlockBinding", list(binding, namespace))
-   assign(binding, override, envir = namespace)
-   do.call("lockBinding", list(binding, namespace))
-   
-   # if package is attached, override there as well
-   searchPathName <- paste("package", package, sep = ":")
-   if (searchPathName %in% search()) {
-      env <- as.environment(searchPathName)
-      do.call("unlockBinding", list(binding, env))
-      assign(binding, override, envir = env)
-      do.call("lockBinding", list(binding, env))
-   }
-   
-   # return original
-   original
-})
-
 .rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData, format)
 {
-   # save original hooks
-   savedKnitHooks <- knitr::knit_hooks$get()
-   on.exit(knitr::knit_hooks$set(savedKnitHooks), add = TRUE)
-   
-   savedOptsChunk <- knitr::opts_chunk$get()
-   on.exit(knitr::opts_chunk$set(savedOptsChunk), add = TRUE)
+   # save original hooks (to be restored after knit)
+   savedHookList <- .rs.rnb.getKnitrHookList()
+   on.exit(.rs.rnb.setKnitrHookList(savedHookList), add = TRUE)
    
    # use 'render_markdown()' to get default hooks
    knitr::render_markdown()
@@ -433,6 +418,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       NULL
    }
    
+   # capture + override include hooks -- we always want our
+   # chunk hook to fire + include output, but we can make sure
+   # that only the annotations are included in such a case
+   include <- TRUE
+   knitr::opts_hooks$set(include = function(options) {
+      include <<- options$include
+      options$include <- TRUE
+      options
+   })
+   
    # generate our custom hooks
    newKnitHooks <- list(
       
@@ -445,7 +440,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       },
       
       chunk = function(...) {
-         output <- knitHooks$chunk(...)
+         output <- if (include) knitHooks$chunk(...) else ""
          annotated <- .rs.rnb.htmlAnnotatedOutput(output, "chunk")
          annotated
       },
