@@ -142,7 +142,6 @@
 
 .rs.addFunction("profilePrint", function(x)
 {
-   x$x$message$split <- "h"
    result <- .rs.rpc.open_profile(list(
       profvis = x
    ))
