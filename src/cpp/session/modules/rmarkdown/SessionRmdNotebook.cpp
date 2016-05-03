@@ -16,6 +16,7 @@
 #include "SessionRmdNotebook.hpp"
 #include "SessionRnbParser.hpp"
 #include "NotebookPlots.hpp"
+#include "NotebookPlotReplay.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 #include "NotebookOutput.hpp"
@@ -280,7 +281,8 @@ Error initialize()
       (bind(initOutput))
       (bind(initCache))
       (bind(initHtmlWidgets))
-      (bind(initErrors));
+      (bind(initErrors))
+      (bind(initPlotReplay));
 
    return initBlock.execute();
 }

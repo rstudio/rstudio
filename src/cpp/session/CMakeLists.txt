@@ -159,6 +159,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookHtmlWidgets.cpp
    modules/rmarkdown/NotebookOutput.cpp
    modules/rmarkdown/NotebookPaths.cpp
+   modules/rmarkdown/NotebookPlotReplay.cpp
    modules/rmarkdown/NotebookPlots.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
