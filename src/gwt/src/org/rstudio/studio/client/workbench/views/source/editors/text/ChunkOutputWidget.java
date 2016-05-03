@@ -596,9 +596,11 @@ public class ChunkOutputWidget extends Composite
             ImageElementEx img = plot.getElement().cast();
 
             // grow the image to fill the container, but not beyond its
-            // natural width
+            // natural width. also clamp image width to avoid overly-large
+            // images in a wide editor buffer
+            int maxWidth = Math.min(624, img.naturalWidth());
             img.getStyle().setWidth(100, Unit.PCT);
-            img.getStyle().setProperty("maxWidth", img.naturalWidth() + "px");
+            img.getStyle().setProperty("maxWidth", maxWidth + "px");
 
             // show the image
             plot.getElement().getStyle().setDisplay(Display.BLOCK);
