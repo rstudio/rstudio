@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.UnstableNestedAnonymousGenerator.OutputVersion;
 import com.google.gwt.dev.cfg.EntryMethodHolderGenerator;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
@@ -2341,7 +2342,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       options.setExtraDir(new File(compileWorkDir, "extra"));
 
       // Run the compiler once here.
-      new Compiler(options).run(logger);
+      Compiler.compile(logger, options);
     } finally {
       Util.recursiveDelete(compileWorkDir, false);
       if (oldPersistentUnitCacheValue == null) {
@@ -2369,14 +2370,14 @@ public class CompilerTest extends ArgProcessorTestBase {
       TreeLogger logger = TreeLogger.NULL;
 
       // Run the compiler once here.
-      new Compiler(options).run(logger);
+      Compiler.compile(logger, options);
       Set<String> firstTimeOutput =
           Sets.newHashSet(new File(options.getWarDir() + "/hello").list());
 
       options.setWarDir(new File(secondCompileWorkDir, "war"));
       options.setExtraDir(new File(secondCompileWorkDir, "extra"));
       // Run the compiler for a second time here.
-      new Compiler(options).run(logger);
+      Compiler.compile(logger, options);
       Set<String> secondTimeOutput =
           Sets.newHashSet(new File(options.getWarDir() + "/hello").list());
 
@@ -2520,11 +2521,10 @@ public class CompilerTest extends ArgProcessorTestBase {
     // Cause the module to be cached with a reference to the prefixed resource loader so that the
     // compile process will see those resources.
     ModuleDefLoader.clearModuleCache();
-    ModuleDefLoader.loadFromResources(logger, moduleName, resourceLoader, true);
+    ModuleDef moduleDef = ModuleDefLoader.loadFromResources(logger, moduleName, resourceLoader, true);
 
     // Run the compile.
-    Compiler compiler = new Compiler(compilerOptions, minimalRebuildCache);
-    compiler.run(logger);
+    Compiler.compile(logger, compilerOptions, minimalRebuildCache, moduleDef);
 
     // Find, read and return the created JS.
     File outputJsFile = null;

@@ -46,6 +46,7 @@ import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.FutureTask;
 
@@ -114,7 +115,7 @@ public class Compiler {
             updater = CheckForUpdates.checkForUpdatesInBackgroundThread(logger,
                 CheckForUpdates.ONE_DAY);
           }
-          boolean success = new Compiler(options).run(logger);
+          boolean success = Compiler.compile(logger, options);
           if (success) {
             CheckForUpdates.logUpdateAvailable(logger, updater);
           }
@@ -129,35 +130,39 @@ public class Compiler {
     // Exit w/ non-success code.
     System.exit(1);
   }
-  private CompilerContext compilerContext;
-  private final CompilerContext.Builder compilerContextBuilder;
 
-  private final CompilerOptionsImpl options;
-
-  public Compiler(CompilerOptions compilerOptions) {
-    this(compilerOptions, compilerOptions.isIncrementalCompileEnabled() ? new MinimalRebuildCache()
-        : new NullRebuildCache());
-  }
-
-  public Compiler(CompilerOptions compilerOptions, MinimalRebuildCache minimalRebuildCache) {
-    this.options = new CompilerOptionsImpl(compilerOptions);
-    this.compilerContextBuilder = new CompilerContext.Builder();
-    this.compilerContext = compilerContextBuilder.options(options)
-        .minimalRebuildCache(minimalRebuildCache).build();
-  }
-
-  public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
-    int i = 0;
-    for (String moduleName : options.getModuleNames()) {
-      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
-      modules[i++] = module;
-    }
-    return run(logger, modules);
-  }
-
-  public boolean run(TreeLogger logger, ModuleDef... modules)
+  public static boolean compile(
+      TreeLogger logger, CompilerOptions compilerOptions)
       throws UnableToCompleteException {
+    List<ModuleDef> moduleDefs = new ArrayList<>();
+    for (String moduleName : compilerOptions.getModuleNames()) {
+      moduleDefs.add(ModuleDefLoader.loadFromClassPath(logger, moduleName, true));
+    }
+
+    boolean result = true;
+    for (ModuleDef moduleDef : moduleDefs) {
+      result &= compile(logger, compilerOptions, moduleDef);
+    }
+    return result;
+  }
+
+  public static boolean compile(
+      TreeLogger logger, CompilerOptions compilerOptions, ModuleDef moduleDef)
+      throws UnableToCompleteException {
+    MinimalRebuildCache minimalRebuildCache = compilerOptions.isIncrementalCompileEnabled()
+        ? new MinimalRebuildCache()
+        : new NullRebuildCache();
+    return compile(logger, compilerOptions, minimalRebuildCache, moduleDef);
+  }
+
+  public static boolean compile(
+      TreeLogger logger,
+      CompilerOptions compilerOptions,
+      MinimalRebuildCache minimalRebuildCache,
+      ModuleDef moduleDef)
+      throws UnableToCompleteException {
+
+    CompilerOptionsImpl  options = new CompilerOptionsImpl(compilerOptions);
     boolean tempWorkDir = false;
     try {
       if (options.getWorkDir() == null) {
@@ -179,69 +184,70 @@ public class Compiler {
         options.setNamespace(JsNamespaceOption.NONE);
       }
 
-      compilerContext =
-          compilerContextBuilder.unitCache(getOrCreateUnitCache(logger, options)).build();
-
-      for (ModuleDef module : modules) {
-        compilerContext = compilerContextBuilder.module(module).build();
-        String moduleName = module.getCanonicalName();
-        if (options.isValidateOnly()) {
-          if (!Precompile.validate(logger, compilerContext)) {
-            return false;
-          }
-        } else {
-          long beforeCompileMs = System.currentTimeMillis();
-          TreeLogger branch = logger.branch(TreeLogger.INFO,
-              "Compiling module " + moduleName);
-
-          Precompilation precompilation = Precompile.precompile(branch, compilerContext);
-          if (precompilation == null) {
-            return false;
-          }
-          // TODO: move to precompile() after params are refactored
-          if (!options.shouldSaveSource()) {
-            precompilation.removeSourceArtifacts(branch);
-          }
-
-          Event compilePermutationsEvent =
-              SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
-          Permutation[] allPerms = precompilation.getPermutations();
-          List<PersistenceBackedObject<PermutationResult>> resultFiles =
-              CompilePerms.makeResultFiles(
-                  options.getCompilerWorkDir(moduleName), allPerms, options);
-          CompilePerms.compile(branch, compilerContext, precompilation, allPerms,
-              options.getLocalWorkers(), resultFiles);
-          compilePermutationsEvent.end();
-
-          ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
-          PrecompileTaskOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
-
-          precompilation = null; // No longer needed, so save the memory
-          long afterCompileMs = System.currentTimeMillis();
-          double compileSeconds = (afterCompileMs - beforeCompileMs) / 1000d;
-          branch.log(TreeLogger.INFO,
-              String.format("Compilation succeeded -- %.3fs", compileSeconds));
-
-          long beforeLinkMs = System.currentTimeMillis();
-          Event linkEvent = SpeedTracerLogger.start(CompilerEventType.LINK);
-          File absPath = new File(options.getWarDir(), module.getName());
-          absPath = absPath.getAbsoluteFile();
-
-          String logMessage = "Linking into " + absPath;
-          if (options.getExtraDir() != null) {
-            File absExtrasPath = new File(options.getExtraDir(),
-                module.getName());
-            absExtrasPath = absExtrasPath.getAbsoluteFile();
-            logMessage += "; Writing extras to " + absExtrasPath;
-          }
-          Link.link(logger.branch(TreeLogger.TRACE, logMessage), module,
-              module.getPublicResourceOracle(), generatedArtifacts, allPerms, resultFiles,
-              Sets.<PermutationResult>newHashSet(), precompileOptions, options);
-          linkEvent.end();
-          long afterLinkMs = System.currentTimeMillis();
-          double linkSeconds = (afterLinkMs - beforeLinkMs) / 1000d;
-          branch.log(TreeLogger.INFO, String.format("Linking succeeded -- %.3fs", linkSeconds));
+      CompilerContext compilerContext =
+          new CompilerContext.Builder()
+              .options(options)
+              .minimalRebuildCache(minimalRebuildCache)
+              .unitCache(getOrCreateUnitCache(logger, options))
+              .module(moduleDef)
+              .build();
+      String moduleName = moduleDef.getCanonicalName();
+      if (options.isValidateOnly()) {
+        if (!Precompile.validate(logger, compilerContext)) {
+          return false;
         }
+      } else {
+        long beforeCompileMs = System.currentTimeMillis();
+        TreeLogger branch = logger.branch(TreeLogger.INFO,
+            "Compiling module " + moduleName);
+
+        Precompilation precompilation = Precompile.precompile(branch, compilerContext);
+        if (precompilation == null) {
+          return false;
+        }
+        // TODO: move to precompile() after params are refactored
+        if (!options.shouldSaveSource()) {
+          precompilation.removeSourceArtifacts(branch);
+        }
+
+        Event compilePermutationsEvent =
+            SpeedTracerLogger.start(CompilerEventType.COMPILE_PERMUTATIONS);
+        Permutation[] allPerms = precompilation.getPermutations();
+        List<PersistenceBackedObject<PermutationResult>> resultFiles =
+            CompilePerms.makeResultFiles(
+                options.getCompilerWorkDir(moduleName), allPerms, options);
+        CompilePerms.compile(branch, compilerContext, precompilation, allPerms,
+            options.getLocalWorkers(), resultFiles);
+        compilePermutationsEvent.end();
+
+        ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
+        PrecompileTaskOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
+
+        precompilation = null; // No longer needed, so save the memory
+        long afterCompileMs = System.currentTimeMillis();
+        double compileSeconds = (afterCompileMs - beforeCompileMs) / 1000d;
+        branch.log(TreeLogger.INFO,
+            String.format("Compilation succeeded -- %.3fs", compileSeconds));
+
+        long beforeLinkMs = System.currentTimeMillis();
+        Event linkEvent = SpeedTracerLogger.start(CompilerEventType.LINK);
+        File absPath = new File(options.getWarDir(), moduleDef.getName());
+        absPath = absPath.getAbsoluteFile();
+
+        String logMessage = "Linking into " + absPath;
+        if (options.getExtraDir() != null) {
+          File absExtrasPath = new File(options.getExtraDir(),
+              moduleDef.getName());
+          absExtrasPath = absExtrasPath.getAbsoluteFile();
+          logMessage += "; Writing extras to " + absExtrasPath;
+        }
+        Link.link(logger.branch(TreeLogger.TRACE, logMessage), moduleDef,
+            moduleDef.getPublicResourceOracle(), generatedArtifacts, allPerms, resultFiles,
+            Sets.<PermutationResult>newHashSet(), precompileOptions, options);
+        linkEvent.end();
+        long afterLinkMs = System.currentTimeMillis();
+        double linkSeconds = (afterLinkMs - beforeLinkMs) / 1000d;
+        branch.log(TreeLogger.INFO, String.format("Linking succeeded -- %.3fs", linkSeconds));
       }
 
     } catch (IOException e) {

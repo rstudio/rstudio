@@ -1089,7 +1089,7 @@ public class JUnitShell extends DevMode {
 
     boolean success = false;
     try {
-      success = new Compiler(options).run(getTopLogger(), module);
+      success = Compiler.compile(getTopLogger(), options, module);
     } catch (Exception e) {
       getTopLogger().log(Type.ERROR, "Compiler aborted with an exception ", e);
     }

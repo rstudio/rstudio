@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.CompilerOptionsImpl;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.OptionOptimize;
@@ -217,7 +218,7 @@ public class SymbolMapTest extends TestCase {
       options.setOptimizationLevel(optimizeLevel);
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.ERROR);
-      new com.google.gwt.dev.Compiler(options).run(logger);
+      Compiler.compile(logger, options);
       // Change parentDir for cached/pre-built reports
       String parentDir = options.getExtraDir() + "/" + benchmark;
       for (Map<String, SimpleSymbolData> symbolDataByJsniIdentifier :

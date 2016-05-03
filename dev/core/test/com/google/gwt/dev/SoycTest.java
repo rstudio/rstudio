@@ -42,7 +42,7 @@ public class SoycTest extends TestCase {
       options.setExtraDir(new File(work, "extra"));
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.ERROR);
-      new Compiler(options).run(logger);
+      Compiler.compile(logger, options);
 
       // make sure the files have been produced
       assertTrue(new File(options.getExtraDir() + "/hello/soycReport/compile-report/index.html").exists());

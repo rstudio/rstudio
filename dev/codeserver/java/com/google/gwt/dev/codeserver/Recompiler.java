@@ -359,7 +359,7 @@ public class Recompiler {
     job.setCompileStrategy(minimalRebuildCache.isPopulated() ? CompileStrategy.INCREMENTAL
         : CompileStrategy.FULL);
 
-    boolean success = new Compiler(runOptions, minimalRebuildCache).run(compileLogger, module);
+    boolean success = Compiler.compile(compileLogger, runOptions, minimalRebuildCache, module);
     if (success) {
       publishedCompileDir = compileDir;
       previousInputSummary = inputSummary;

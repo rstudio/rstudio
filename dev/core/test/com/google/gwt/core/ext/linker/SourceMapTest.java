@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.soyc.coderef.EntityDescriptor.Fragment;
 import com.google.gwt.core.ext.soyc.coderef.EntityDescriptorJsonTranslator;
 import com.google.gwt.core.ext.soyc.coderef.EntityRecorder;
 import com.google.gwt.core.ext.soyc.coderef.MethodDescriptor;
+import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.CompilerOptionsImpl;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -520,7 +521,7 @@ public class SourceMapTest extends TestCase {
       options.setExtraDir(new File(work, "extra"));
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.ERROR);
-      new com.google.gwt.dev.Compiler(options).run(logger);
+      Compiler.compile(logger, options);
       // Change parentDir for cached/pre-built reports
       String parentDir = options.getExtraDir() + "/" + benchmark;
       testSymbolMapsCorrespondence(new File(parentDir + "/symbolMaps/"));
