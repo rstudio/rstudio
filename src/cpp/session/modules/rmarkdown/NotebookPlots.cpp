@@ -44,14 +44,18 @@ namespace {
 class PlotState
 {
 public:
-   PlotState():
+   PlotState(const FilePath& folder):
+      plotFolder(folder),
       hasPlots(false)
    {
    }
 
+   FilePath plotFolder;
    bool hasPlots;
+   FilePath snapshotFile;
    r::sexp::PreservedSEXP sexpMargins;
    boost::signals::connection onConsolePrompt;
+   boost::signals::connection onBeforeNewPlot;
    boost::signals::connection onNewPlot;
 };
 
@@ -61,17 +65,16 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void processPlots(const FilePath& plotFolder,
-                  bool ignoreEmpty,
+void processPlots(bool ignoreEmpty,
                   boost::shared_ptr<PlotState> pPlotState)
 {
    // ensure plot folder exists
-   if (!plotFolder.exists())
+   if (!pPlotState->plotFolder.exists())
       return;
 
    // collect plots from the folder
    std::vector<FilePath> folderContents;
-   Error error = plotFolder.children(&folderContents);
+   Error error = pPlotState->plotFolder.children(&folderContents);
    if (error)
       LOG_ERROR(error);
 
@@ -105,10 +108,8 @@ void processPlots(const FilePath& plotFolder,
    }
 }
 
-void removeGraphicsDevice(const FilePath& plotFolder, 
-                          boost::shared_ptr<PlotState> pPlotState)
+void removeGraphicsDevice(boost::shared_ptr<PlotState> pPlotState)
 {
-
    // restore the figure margins
    Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
    if (error)
@@ -120,23 +121,45 @@ void removeGraphicsDevice(const FilePath& plotFolder,
    if (error)
       LOG_ERROR(error);
 
-   processPlots(plotFolder, false, pPlotState);
+   processPlots(false, pPlotState);
 }
 
-void onNewPlot(const FilePath& plotFolder,
-               boost::shared_ptr<PlotState> pPlotState)
+void onBeforeNewPlot(boost::shared_ptr<PlotState> pPlotState)
+{
+   if (pPlotState->hasPlots)
+   {
+      // if there's a plot on the device, write its display list before it's
+      // cleared for the next page
+      FilePath outputFile = pPlotState->plotFolder.complete(
+            core::system::generateUuid(false) + ".snapshot");
+      Error error = r::exec::RFunction(".rs.saveGraphics", 
+            outputFile.absolutePath()).call();
+      if (error)
+      {
+         pPlotState->snapshotFile = FilePath();
+         LOG_ERROR(error);
+      }
+      else
+      {
+         pPlotState->snapshotFile = outputFile;
+      }
+   }
+   pPlotState->hasPlots = true;
+}
+
+void onNewPlot(boost::shared_ptr<PlotState> pPlotState)
 {
    pPlotState->hasPlots = true;
-   processPlots(plotFolder, true, pPlotState);
+   processPlots(true, pPlotState);
 }
 
-void onConsolePrompt(const FilePath& plotFolder,
-                     boost::shared_ptr<PlotState> pPlotState,
+void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
                      const std::string& )
 {
-   removeGraphicsDevice(plotFolder, pPlotState);
+   removeGraphicsDevice(pPlotState);
    pPlotState->onConsolePrompt.disconnect();
    pPlotState->onNewPlot.disconnect();
+   pPlotState->onBeforeNewPlot.disconnect();
 }
 
 } // anonymous namespace
@@ -174,7 +197,8 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // marker for content; this is necessary because on Windows, turning off
    // the png device writes an empty PNG file even if nothing was plotted, and
    // we need to avoid treating that file as though it were an actual plot
-   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>();
+   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>(
+         plotFolder);
 
    // create the PNG device
    error = r::exec::executeString(
@@ -203,10 +227,13 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    
    // complete the capture on the next console prompt
    pPlotState->onConsolePrompt = module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
+         boost::bind(onConsolePrompt, pPlotState, _1));
+
+   pPlotState->onBeforeNewPlot = plots::events().onBeforeNewPlot.connect(
+         boost::bind(onBeforeNewPlot, pPlotState));
 
    pPlotState->onNewPlot = plots::events().onNewPlot.connect(
-         boost::bind(onNewPlot, plotFolder, pPlotState));
+         boost::bind(onNewPlot, pPlotState));
 
    return Success();
 }
