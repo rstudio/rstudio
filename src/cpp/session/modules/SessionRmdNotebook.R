@@ -397,10 +397,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData, format)
 {
-   # ensure pre-requisite version of knitr
-   if (!.rs.isPackageVersionInstalled("knitr", "1.12.27"))
-      return()
-   
    # save original hooks
    savedKnitHooks <- knitr::knit_hooks$get()
    on.exit(knitr::knit_hooks$set(savedKnitHooks), add = TRUE)
@@ -421,6 +417,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    original <- evaluate::evaluate
    
    # override 'evaluate' for duration of knit
+   # TODO: this code can be removed once knitr hits CRAN
    evaluateOverride <- function(...) {
       knitr::knit_hooks$get("evaluate")(...)
    }
