@@ -28,7 +28,7 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error initializePlotReplay();
+core::Error initPlotReplay();
 
 } // namespace notebook
 } // namespace rmarkdown

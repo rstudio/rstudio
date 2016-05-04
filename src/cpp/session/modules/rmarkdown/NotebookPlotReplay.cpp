@@ -16,8 +16,16 @@
 #include "SessionRmdNotebook.hpp"
 #include "NotebookPlotReplay.hpp"
 
-#include <core/StringUtils.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/foreach.hpp>
 
+#include <core/StringUtils.hpp>
+#include <core/Exec.hpp>
+
+#include <r/RExec.hpp>
+#include <r/RJSon.hpp>
+
+#include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionOptions.hpp>
 
@@ -50,10 +58,11 @@ public:
 
       // create path to cache folder
       std::string path = string_utils::utf8ToSystem(cacheFolder.absolutePath());
+      std::string cmd(".rs.replayNotebokPlots(\"" + path + "\")");
       
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
-      pReplayer->start(".rs.replayNotebokPlots(\"" + path + "\")", FilePath(),
+      pReplayer->start(cmd.c_str(), FilePath(),
                        async_r::R_PROCESS_VANILLA,
                        sources);
       return pReplayer;
@@ -73,6 +82,12 @@ private:
          // TODO: parse & emit client event  
       }
    }
+
+   void onCompleted(int exitStatus)
+   {
+      // TODO: let client know we've done all the plot resizing we're going
+      // to do
+   }
 };
 
 
@@ -87,16 +102,19 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       return error;
 
    // TODO: create replayer
+   return Success();
 }
 
 
 } // anonymous namespace
 
-core::Error initializePlotReplay()
+core::Error initPlotReplay()
 {
+   using namespace module_context;
+
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput))
+      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput));
 
    return initBlock.execute();
 }
