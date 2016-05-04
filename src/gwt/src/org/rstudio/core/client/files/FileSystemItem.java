@@ -385,7 +385,6 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "rmd",   "text/x-r-markdown");
       MIME_TYPES.put( "rhtml", "text/x-r-html");
       MIME_TYPES.put( "rpres", "text/x-r-presentation");
-      MIME_TYPES.put( "nb.html", "text/x-r-notebook");
       MIME_TYPES.put( "rout",  "text/plain");
       MIME_TYPES.put( "po",    "text/plain");
       MIME_TYPES.put( "pot",   "text/plain");

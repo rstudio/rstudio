@@ -471,7 +471,6 @@ MimeType s_mimeTypes[] =
    { "Rprofile", "text/x-r-source"},
    { "Renviron", "text/x-shell" },
    { "rprofvis",   "text/x-r-profile" },
-   { "nb.html", "text/x-r-notebook" },
 
    { "tif",   "image/tiff" },
    { "tiff",  "image/tiff" },
