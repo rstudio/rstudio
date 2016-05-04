@@ -754,7 +754,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                            FileSystemItem.createFile(navigationTarget.getFile()),
                            filePosition);
                   }
-                  else
+                  else if (selectedPath_.indexOf("<expr>") == -1)
                   {
                      globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                            "Error while opening profiler source",
