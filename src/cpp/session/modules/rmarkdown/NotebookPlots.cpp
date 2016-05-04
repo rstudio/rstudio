@@ -112,7 +112,7 @@ void saveSnapshot(boost::shared_ptr<PlotState> pPlotState)
    // if there's a plot on the device, write its display list before it's
    // cleared for the next page
    FilePath outputFile = pPlotState->plotFolder.complete(
-         core::system::generateUuid(false) + ".snapshot");
+         core::system::generateUuid(false) + kDisplayListExt);
    Error error = r::exec::RFunction(".rs.saveGraphics", 
          outputFile.absolutePath()).call();
    if (error)

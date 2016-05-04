@@ -19,6 +19,8 @@
 
 #include <boost/function.hpp>
 
+#define kDisplayListExt ".snapshot"
+
 namespace rstudio {
 namespace core {
    class Error;

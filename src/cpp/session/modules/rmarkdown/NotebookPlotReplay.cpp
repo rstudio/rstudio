@@ -14,7 +14,10 @@
  */
 
 #include "SessionRmdNotebook.hpp"
+#include "NotebookPlots.hpp"
 #include "NotebookPlotReplay.hpp"
+#include "NotebookChunkDefs.hpp"
+#include "NotebookOutput.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -44,7 +47,8 @@ namespace {
 class ReplayPlots : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<ReplayPlots> create(const FilePath& cacheFolder)
+   static boost::shared_ptr<ReplayPlots> create(
+         const std::vector<FilePath>& snapshotFiles)
    {
       // load the files which contain the R scripts needed to replay plots 
       std::vector<core::FilePath> sources;
@@ -57,8 +61,7 @@ public:
       sources.push_back(modulesPath.complete("NotebookPlots.R"));
 
       // create path to cache folder
-      std::string path = string_utils::utf8ToSystem(cacheFolder.absolutePath());
-      std::string cmd(".rs.replayNotebokPlots(\"" + path + "\")");
+      std::string cmd(".rs.replayNotebokPlots()");
       
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
@@ -90,18 +93,70 @@ private:
    }
 };
 
+boost::shared_ptr<ReplayPlots> s_pPlotReplayer;
 
 Error replayPlotOutput(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    std::string docId;
    int pixelWidth = 0;
-   bool replace = false;
    Error error = json::readParams(request.params, &docId, &pixelWidth);
    if (error)
       return error;
 
-   // TODO: create replayer
+   // do nothing if we're already replaying plots (consider: maybe better to
+   // abort and restart with the new pixel width?)
+   if (s_pPlotReplayer && s_pPlotReplayer->isRunning())
+   {
+      pResponse->setResult(false);
+      return Success();
+   }
+
+   // extract the list of chunks to replay
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+   core::json::Value chunkIdVals;
+   error = getChunkDefs(docPath, docId, NULL, &chunkIdVals);
+   if (error)
+      return error;
+
+   // very unlikely, but important to bail out if it happens so client doesn't
+   // wait for replay to complete
+   if (chunkIdVals.type() != json::ArrayType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   // convert to chunk IDs
+   std::vector<std::string> chunkIds;
+   extractChunkIds(chunkIdVals.get_array(), &chunkIds);
+
+   // look for snapshot files
+   std::vector<FilePath> snapshotFiles;
+   BOOST_FOREACH(const std::string chunkId, chunkIds)
+   {
+      // find the storage location for this chunk output
+      FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
+            ContextSaved);
+      if (!path.exists())
+         continue;
+
+      // look for snapshot files
+      std::vector<FilePath> contents;
+      error = path.children(&contents);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      BOOST_FOREACH(const FilePath content, contents)
+      {
+         if (content.hasExtensionLowerCase(kDisplayListExt))
+            snapshotFiles.push_back(content);
+      }
+   }
+
+   s_pPlotReplayer = ReplayPlots::create(snapshotFiles);
+   pResponse->setResult(true);
+
    return Success();
 }
 
