@@ -47,9 +47,19 @@ namespace {
 class ReplayPlots : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<ReplayPlots> create(
+   static boost::shared_ptr<ReplayPlots> create(int width,
          const std::vector<FilePath>& snapshotFiles)
    {
+      // create the text to send to the process (it'll be read by scan()
+      // inside R)
+      std::string input;
+      BOOST_FOREACH(const FilePath snapshot, snapshotFiles)
+      {
+         input.append(string_utils::utf8ToSystem(snapshot.absolutePath()));
+         input.append("\n");
+      }
+      input.append("\n");
+      
       // load the files which contain the R scripts needed to replay plots 
       std::vector<core::FilePath> sources;
 
@@ -61,7 +71,8 @@ public:
       sources.push_back(modulesPath.complete("NotebookPlots.R"));
 
       // create path to cache folder
-      std::string cmd(".rs.replayNotebokPlots()");
+      std::string cmd(".rs.replayNotebokPlots(" + 
+                      safe_convert::numberToString(width) + ")");
       
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
@@ -154,7 +165,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       }
    }
 
-   s_pPlotReplayer = ReplayPlots::create(snapshotFiles);
+   s_pPlotReplayer = ReplayPlots::create(pixelWidth, snapshotFiles);
    pResponse->setResult(true);
 
    return Success();
