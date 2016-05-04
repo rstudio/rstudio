@@ -240,7 +240,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       return(rmarkdown::html_notebook(...))
    }
    
-   # make sure 'html_notebook' available on search path
+   # make sure 'html_notebook' available on search path (this
+   # is so that 'rmarkdown::render()' will discover it)
    toolsEnv <- .rs.toolsEnv()
    if (!exists("html_notebook", envir = toolsEnv))
       assign("html_notebook", .rs.rnb.htmlNotebook, envir = toolsEnv)
@@ -312,6 +313,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
 })
 
+# These hooks are used for a regular 'rmarkdown::render()'. The idea
+# here is that we want to annotate any output produced by knitr in
+# such a way that we can easily recover / extract the outputs
+# chunk-by-chunk from the generated HTML document.
 .rs.addFunction("rnb.augmentKnitrHooks", function(format)
 {
    # save original hooks (restore after we've stored requisite
@@ -335,11 +340,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    }
    
    metaFns <- list(
-      source = textMetaHook,
-      output = textMetaHook,
+      source  = textMetaHook,
+      output  = textMetaHook,
       warning = textMetaHook,
       message = textMetaHook,
-      error = textMetaHook
+      error   = textMetaHook
    )
    
    newKnitHooks <- lapply(hookNames, function(hookName) {
@@ -383,6 +388,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
 })
 
+# The hooks here are used to pull output from a cache directory, rather
+# than based on evaluating the R code within each chunk. To this end, we
+# override the 'evaluate' hook and, instead of evaluating the R code within,
+# we instead recover output(s) from the cache and return those instead.
 .rs.addFunction("rnb.cacheAugmentKnitrHooks", function(rnbData, format)
 {
    # save original hooks (to be restored after knit)
