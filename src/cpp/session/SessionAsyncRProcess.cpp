@@ -176,6 +176,9 @@ void AsyncRProcess::start(const char* rCommand,
                               AsyncRProcess::shared_from_this(),
                               _1);
 
+   // forward input if requested
+   input_ = input;
+
    error = module_context::processSupervisor().runProgram(
             rProgramPath.absolutePath(),
             args,

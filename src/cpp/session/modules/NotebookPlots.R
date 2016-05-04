@@ -14,13 +14,12 @@
 #
 
 .rs.addFunction("replayNotebookPlots", function(width) {
-  # read the names of the snapshot files from standard input -- these are 
-  # passed one per line from the parent process
-  snapshots <- scan(what = character())
+  # open stdin (for consuming snapshots from parent process)
+  stdin <- file("stdin")
 
-  require(grDevices, quietly=TRUE)
+  require(grDevices, quietly = TRUE)
 
-  lapply(snapshots, function(snapshot) {
+  while (length(snapshot <- readLines(stdin, n = 1)) > 0) {
     # create the PNG device on which we'll regenerate the plot -- it's somewhat
     # wasteful to use a separate device per plot, but the alternative is
     # doing a lot of state management and post-processing of the files
@@ -53,7 +52,7 @@
         cat(final, "\n")
       }
     }
-  })
+  }
 
   invisible(NULL)
 })

@@ -819,10 +819,13 @@ public class TextEditingTargetNotebook
          return;
       }
       
-      for (ChunkOutputUi output: outputs_.values())
-      {
-         output.getOutputWidget().syncHeight(false, false);
-      }
+      // lightly debounce local resizes since they're somewhat expensive
+      resizePlotsLocal_.schedule(50);
+      
+      // heavily debounce remote resizes since they're very expensive
+      // (this actually spins up a separate R process to re-render all the
+      // plots at the new resolution)
+      resizePlotsRemote_.schedule(500);
    }
 
    @Override
@@ -1421,6 +1424,43 @@ public class TextEditingTargetNotebook
                return;
             }
          }
+      }
+   };
+   
+   private Timer resizePlotsLocal_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         for (ChunkOutputUi output: outputs_.values())
+         {
+            output.getOutputWidget().syncHeight(false, false);
+         }
+      }
+   };
+   
+   private Timer resizePlotsRemote_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // TODO: avoid re-entrancy
+         server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
+               docDisplay_.getPixelWidth(),
+               new ServerRequestCallback<Boolean>()
+               {
+                  @Override
+                  public void onResponseReceived(Boolean started)
+                  {
+                     // TODO: if started, draw all plots as "pending"
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
       }
    };
    

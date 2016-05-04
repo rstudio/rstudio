@@ -73,9 +73,9 @@ public:
       sources.push_back(modulesPath.complete("NotebookPlots.R"));
 
       // create path to cache folder
-      std::string cmd(".rs.replayNotebokPlots(" + 
+      std::string cmd(".rs.replayNotebookPlots(" + 
                       safe_convert::numberToString(width) + ")");
-      
+
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
       pReplayer->docId_ = docId;
@@ -99,7 +99,7 @@ private:
       BOOST_FOREACH(std::string& path, paths)
       {
          // ensure path exists
-         FilePath png(path);
+         FilePath png(string_utils::trimWhitespace(path));
          if (!png.exists())
             continue;
 
