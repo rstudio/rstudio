@@ -34,7 +34,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    cat(contents, file = output, sep = "\n")
    
    # extract and populate cache
-   .rs.hydrateCacheFromNotebook(input)
+   status <- try(.rs.hydrateCacheFromNotebook(input), silent = TRUE)
+   if (inherits(status, "try-error"))
+      warning("failed to read cache data from notebook file; no chunk outputs will be displayed")
    
    # return TRUE to indicate success
    .rs.scalar(TRUE)
