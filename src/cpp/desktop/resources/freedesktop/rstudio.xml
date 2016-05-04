@@ -45,6 +45,12 @@
     <glob pattern="*.rpres"/>
   </mime-type>
 
+  <mime-type type="text/x-r-notebook">
+    <sub-class-of type="text/html"/>
+    <comment>R Notebook</comment>
+    <glob pattern="*.nb.html"/>
+  </mime-type>
+
   <mime-type type="application/x-r-data">
     <comment>R Data File</comment>
     <glob pattern="*.RData"/>

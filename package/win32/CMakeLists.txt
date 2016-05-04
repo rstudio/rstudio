@@ -34,6 +34,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rhtml' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rpres' ''
    WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.Rproj' ''
+   WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.nb.html' ''
 
    WriteRegStr HKCR '.R\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.RData\\\\OpenWithList\\\\rstudio.exe' '' ''
@@ -45,6 +46,7 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.Rhtml\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rpres\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.nb.html\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.tex\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.md\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.mdtxt\\\\OpenWithList\\\\rstudio.exe' '' ''
@@ -79,6 +81,7 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.Rhtml\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rpres\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.Rproj\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.nb.html\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.tex\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.md\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.mdtxt\\\\OpenWithList\\\\rstudio.exe'

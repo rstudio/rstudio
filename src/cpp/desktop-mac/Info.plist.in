@@ -139,6 +139,20 @@
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>
+             <string>nb.html</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>RNotebook.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>R Notebook</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
+      <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
              <string>tex</string>
          </array>
          <key>CFBundleTypeIconFile</key>
