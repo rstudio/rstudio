@@ -152,6 +152,8 @@ extern const int kRprofCreated;
 extern const int kEditorCommand;
 extern const int kPreviewRmd;
 extern const int kWebsiteFileSaved;
+extern const int kChunkPlotRefreshed;
+extern const int kChunkPlotRefreshFinished;
 }
    
 class ClientEvent

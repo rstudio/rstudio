@@ -142,6 +142,8 @@ class ClientEvent extends JavaScriptObject
    public static final String EditorCommand = "editor_command";
    public static final String PreviewRmd = "preview_rmd";
    public static final String WebsiteFileSaved = "website_file_saved";
+   public static final String ChunkPlotRefreshed = "chunk_plot_refreshed";
+   public static final String ChunkPlotRefreshFinished = "chunk_plot_refresh_finished";
 
    protected ClientEvent()
    {
