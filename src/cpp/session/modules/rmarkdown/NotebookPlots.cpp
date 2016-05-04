@@ -115,9 +115,20 @@ void saveSnapshot(boost::shared_ptr<PlotState> pPlotState)
          core::system::generateUuid(false) + kDisplayListExt);
    Error error = r::exec::RFunction(".rs.saveGraphics", 
          outputFile.absolutePath()).call();
+
+   // if there's already an unconsumed display list, remove it, since this
+   // display list replaces it
+   if (pPlotState->snapshotFile.empty())
+   {
+      error = pPlotState->snapshotFile.removeIfExists();
+      if (error) 
+         LOG_ERROR(error);
+      else
+         pPlotState->snapshotFile = FilePath();
+   }
+
    if (error)
    {
-      pPlotState->snapshotFile = FilePath();
       LOG_ERROR(error);
    }
    else

@@ -47,7 +47,9 @@ namespace {
 class ReplayPlots : public async_r::AsyncRProcess
 {
 public:
-   static boost::shared_ptr<ReplayPlots> create(int width,
+   static boost::shared_ptr<ReplayPlots> create(
+         const std::string& docId, 
+         int width,
          const std::vector<FilePath>& snapshotFiles)
    {
       // create the text to send to the process (it'll be read by scan()
@@ -76,9 +78,11 @@ public:
       
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
+      pReplayer->docId_ = docId;
       pReplayer->start(cmd.c_str(), FilePath(),
                        async_r::R_PROCESS_VANILLA,
-                       sources);
+                       sources,
+                       input);
       return pReplayer;
    }
 
@@ -88,20 +92,42 @@ private:
       r::sexp::Protect protect;
       Error error;
 
+      // output is queued/buffered so multiple paths may be emitted
       std::vector<std::string> paths;
       boost::algorithm::split(paths, output,
                               boost::algorithm::is_any_of("\n\r"));
       BOOST_FOREACH(std::string& path, paths)
       {
-         // TODO: parse & emit client event  
+         // ensure path exists
+         FilePath png(path);
+         if (!png.exists())
+            continue;
+
+         // create the event and send to the client. consider: this makes some
+         // assumptions about the way output URLs are formed and some
+         // assumptions about cache structure that might be better localized.
+         json::Object result;
+         result["chunk_id"] = png.parent().filename();
+         result["doc_id"] = docId_;
+         result["plot_url"] = kChunkOutputPath "/" + 
+            png.parent().parent().filename() + "/" + // context ID = folder name
+            docId_ + "/" + 
+            png.parent().filename() + "/" + 
+            png.filename();
+
+         ClientEvent event(client_events::kChunkPlotRefreshed, result);
+         module_context::enqueClientEvent(event);
       }
    }
 
    void onCompleted(int exitStatus)
    {
-      // TODO: let client know we've done all the plot resizing we're going
-      // to do
+      // let client know the process is completed (even if it failed)
+      module_context::enqueClientEvent(ClientEvent(
+               client_events::kChunkPlotRefreshFinished, docId_));
    }
+
+   std::string docId_;
 };
 
 boost::shared_ptr<ReplayPlots> s_pPlotReplayer;
@@ -165,7 +191,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       }
    }
 
-   s_pPlotReplayer = ReplayPlots::create(pixelWidth, snapshotFiles);
+   s_pPlotReplayer = ReplayPlots::create(docId, pixelWidth, snapshotFiles);
    pResponse->setResult(true);
 
    return Success();

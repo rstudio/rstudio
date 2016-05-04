@@ -27,7 +27,7 @@
     # output from the device
     output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
                     sep = ".")
-    png(file = output, width = width, height = width / 1.618, units="px", 
+    png(file = output, width = width, height = width / 1.618, units = "px", 
         res = 96)
 
     # actually replay the plot onto the device

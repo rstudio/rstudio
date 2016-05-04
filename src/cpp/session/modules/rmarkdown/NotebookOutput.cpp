@@ -37,7 +37,6 @@
 
 #include <map>
 
-#define kChunkOutputPath   "chunk_output"
 #define kChunkOutputType   "output_type"
 #define kChunkOutputValue  "output_val"
 #define kChunkOutputs      "chunk_outputs"

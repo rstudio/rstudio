@@ -19,6 +19,8 @@
 
 #include <string>
 
+#define kChunkOutputPath   "chunk_output"
+
 #define kChunkOutputNone  0
 #define kChunkOutputText  1
 #define kChunkOutputPlot  2
