@@ -97,6 +97,7 @@ void initializeSystemPrefs()
    NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
    [defaults setBool:YES forKey: @"WebKitWebGLEnabled"];
    [defaults setBool:YES forKey: @"WebKitDeveloperExtras"];
+   [defaults setBool:YES forKey: @"WebKitJavaScriptCanAccessClipboard"];
 }
  
 // PORT: from DesktopUtils.cpp
