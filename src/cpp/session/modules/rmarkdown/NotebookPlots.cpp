@@ -200,7 +200,8 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
                      "  width = 6.5, height = 4, "
-                     "  units=\"in\", res = 96 %2%)"
+                     "  units=\"in\", res = 96 %2%); "
+                     "  dev.control(displaylist = \"enable\") "
                      "}");
 
    // marker for content; this is necessary because on Windows, turning off
