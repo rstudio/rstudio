@@ -430,15 +430,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # capture + override include hooks -- we always want our
    # chunk hook to fire + include output, but we can make sure
    # that only the annotations are included in such a case
-   include <- TRUE
+   #
+   # we hook the 'include' option but this is just an excuse
+   # + nice location to capture chunk options (before they're
+   # handled anywhere else)
+   chunkOptions <- list()
    format$knitr$opts_hooks$include <- function(options) {
-      include <<- options$include
-      options
-   }
-   
-   echo <- TRUE
-   format$knitr$opts_hooks$echo <- function(options) {
-      echo <<- options$echo
+      chunkOptions <<- options
       options
    }
    
@@ -455,7 +453,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       },
       
       chunk = function(...) {
-         output <- if (include) knitHooks$chunk(...) else ""
+         output <- if (chunkOptions$include) knitHooks$chunk(...) else ""
          annotated <- .rs.rnb.htmlAnnotatedOutput(output, "chunk")
          annotated
       },
@@ -474,13 +472,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # return placeholder when include is FALSE (don't include
          # plain empty output as we want to still insert something
          # into document)
-         if (!include)
+         if (!chunkOptions$include)
             return(knitr::asis_output("<!-- placeholder -->"))
          
          # no output associated with this chunk -- only display
          # source code
          if (is.null(activeChunkId)) {
-            output <- if (echo) .rs.rnb.renderCode(code, list(class = "r"))
+            output <- if (chunkOptions$echo) .rs.rnb.renderCode(code, list(class = "r"))
             return(output)
          }
          
@@ -503,7 +501,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                htmlList <- .rs.rnb.consoleDataToHtmlList(val)
                
                # drop input if echo is false
-               if (!echo) {
+               if (!chunkOptions$echo) {
                   htmlList <- Filter(function(el) {
                      el$type != "input"
                   }, htmlList)
