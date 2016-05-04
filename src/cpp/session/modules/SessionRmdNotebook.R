@@ -292,7 +292,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.getKnitrHookList", function()
 {
-   hookNames <- c("knit_hooks", "opts_chunk", "opts_hooks")
+   hookNames <- c("knit_hooks", "opts_chunk", "opts_hooks", "opts_knit")
    knitrNamespace <- asNamespace("knitr")
    hookList <- lapply(hookNames, function(hookName) {
       hooks <- get(hookName, envir = knitrNamespace, inherits = FALSE)
@@ -462,13 +462,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          if (!include)
             return(knitr::asis_output("<!-- placeholder -->"))
          
-         # TODO: this implies there was no chunk output associated
-         # with this chunk, but it would be pertinent to validate.
-         if (is.null(activeChunkId)) {
-            pasted <- htmltools::htmlEscape(paste(code, collapse = "\n"))
-            output <- sprintf('<pre class="r"><code>%s</code></pre>', pasted)
-            return(knitr::asis_output(output))
-         }
+         # no output associated with this chunk -- only display
+         # source code
+         if (is.null(activeChunkId))
+            return(.rs.rnb.renderCode(code))
          
          # attempt to pull output from cache
          # TODO: respect output options?
@@ -610,6 +607,21 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.rnb.renderBase64Html(path, bytes, format)
 })
 
+.rs.addFunction("rnb.renderCode", function(code, attributes = NULL)
+{
+   # convert attributes list to string
+   attributes <- if (length(attributes))
+      paste(" ", .rs.listToHtmlAttributes(attributes, sep = ""))
+   else
+      ""
+   
+   # escape output
+   pasted <- htmltools::htmlEscape(paste(code, collapse = "\n"))
+   
+   # produce html
+   sprintf('<pre%s><code>%s</code></pre>', attributes, pasted)
+})
+
 .rs.addFunction("rnb.consoleDataToHtmlList", function(data, prefix = knitr::opts_chunk$get("comment"))
 {
    csvData <- .rs.rnb.parseConsoleData(data)
@@ -678,11 +690,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("listToHtmlAttributes", function(data)
 {
-   paste(
-      names(data),
-      .rs.surround(unlist(data), with = "\""),
-      sep = "="
-   )
+   if (!length(data)) return("")
+   
+   # escape if necessary
+   escaped <- unlist(lapply(data, function(el) {
+      htmltools::htmlEscape(as.character(el), attribute = TRUE)
+   }))
+   
+   # produce output
+   quoted <- .rs.surround(escaped, with = "\"")
+   paste(names(data), quoted, sep = "=")
 })
 
 .rs.addFunction("rnb.encode", function(data)
