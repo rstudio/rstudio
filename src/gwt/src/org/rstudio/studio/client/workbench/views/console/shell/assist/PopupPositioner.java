@@ -102,6 +102,11 @@ public class PopupPositioner implements PositionCallback
       return new Coordinates(left, top);
    }
    
+   public static void setPopupPosition(PopupPanel panel, int pageX, int pageY)
+   {
+      setPopupPosition(panel, pageX, pageY, 0);
+   }
+   
    public static void setPopupPosition(PopupPanel panel,
                                        int pageX,
                                        int pageY,
