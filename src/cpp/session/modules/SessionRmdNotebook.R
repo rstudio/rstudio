@@ -465,7 +465,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # no output associated with this chunk -- only display
          # source code
          if (is.null(activeChunkId))
-            return(.rs.rnb.renderCode(code))
+            return(.rs.rnb.renderCode(code, list(class = "r")))
          
          # attempt to pull output from cache
          # TODO: respect output options?
@@ -611,7 +611,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    # convert attributes list to string
    attributes <- if (length(attributes))
-      paste(" ", .rs.listToHtmlAttributes(attributes, sep = ""))
+      paste(" ", .rs.listToHtmlAttributes(attributes), sep = "")
    else
       ""
    
@@ -619,7 +619,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    pasted <- htmltools::htmlEscape(paste(code, collapse = "\n"))
    
    # produce html
-   sprintf('<pre%s><code>%s</code></pre>', attributes, pasted)
+   knitr::asis_output(sprintf('<pre%s><code>%s</code></pre>', attributes, pasted))
 })
 
 .rs.addFunction("rnb.consoleDataToHtmlList", function(data, prefix = knitr::opts_chunk$get("comment"))
