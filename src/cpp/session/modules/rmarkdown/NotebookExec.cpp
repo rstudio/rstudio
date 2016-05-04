@@ -93,7 +93,7 @@ bool ChunkExecContext::connected()
 
 void ChunkExecContext::connect()
 {
-   FilePath outputPath = chunkOutputPath(docId_, chunkId_);
+   FilePath outputPath = chunkOutputPath(docId_, chunkId_, ContextExact);
    Error error = outputPath.ensureDirectory();
    if (error)
    {

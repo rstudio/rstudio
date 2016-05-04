@@ -44,6 +44,13 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+// forms for requesting the chunk output folder
+enum ChunkOutputContext
+{
+   ContextExact = 0,   // always use the requested context
+   ContextSaved        // fall back to saved context if exact doesn't exist
+};
+
 struct OutputPair
 {
    OutputPair() :
@@ -63,12 +70,14 @@ OutputPair lastChunkOutput(const std::string& docId,
 void updateLastChunkOutput(const std::string& docId, 
                            const std::string& chunkId,
                            const OutputPair& pair);
-// compute chunk output folder paths
+
+// compute chunk output folder paths for specific contexts
 core::FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& nbCtxId);
+      const std::string& chunkId, const std::string& nbCtxId,
+      ChunkOutputContext ctxType);
 core::FilePath chunkOutputPath(const std::string& docId, 
-      const std::string& chunkId);
+      const std::string& chunkId, ChunkOutputContext ctxType);
 
 // compute individual chunk output unit paths
 core::FilePath chunkOutputFile(const std::string& docId, 
