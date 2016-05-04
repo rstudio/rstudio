@@ -427,6 +427,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       options
    }
    
+   echo <- TRUE
+   format$knitr$opts_hooks$echo <- function(options) {
+      echo <<- options$echo
+      options
+   }
+   
    # generate our custom hooks
    newKnitHooks <- list(
       
@@ -464,8 +470,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # no output associated with this chunk -- only display
          # source code
-         if (is.null(activeChunkId))
-            return(.rs.rnb.renderCode(code, list(class = "r")))
+         if (is.null(activeChunkId)) {
+            output <- if (echo) .rs.rnb.renderCode(code, list(class = "r"))
+            return(output)
+         }
          
          # attempt to pull output from cache
          # TODO: respect output options?
@@ -481,13 +489,26 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             
             # console output
             if (.rs.endsWith(key, ".csv")) {
+               
+               # convert console data to HTML
                htmlList <- .rs.rnb.consoleDataToHtmlList(val)
+               
+               # drop input if echo is false
+               if (!echo) {
+                  htmlList <- Filter(function(el) {
+                     el$type != "input"
+                  }, htmlList)
+               }
+               
+               # transform into html string
                transformed <- lapply(htmlList, function(el) {
                   output <- el$output
                   label <- if (el$type == "input") "source" else "output"
                   meta <- list(data = el$input)
                   .rs.rnb.htmlAnnotatedOutput(output, label, meta)
                })
+               
+               # return output
                output <- paste(transformed, collapse = "\n")
                return(knitr::asis_output(output))
             }
