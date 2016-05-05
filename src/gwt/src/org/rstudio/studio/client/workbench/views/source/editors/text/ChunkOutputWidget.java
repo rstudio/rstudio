@@ -644,7 +644,8 @@ public class ChunkOutputWidget extends Composite
             // grow the image to fill the container, but not beyond its
             // natural width. also clamp image width to avoid overly-large
             // images in a wide editor buffer
-            int maxWidth = Math.min(624, img.naturalWidth());
+            int maxWidth = Math.min(ChunkOutputUi.MAX_PLOT_WIDTH, 
+                  img.naturalWidth());
             img.getStyle().setWidth(100, Unit.PCT);
             img.getStyle().setProperty("maxWidth", maxWidth + "px");
 

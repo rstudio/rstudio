@@ -586,7 +586,7 @@ public class TextEditingTargetNotebook
       // have the server start recording output from this chunk
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), MODE_SINGLE, options, pixelWidth_, 
+            chunkDef.getChunkId(), MODE_SINGLE, options, getPlotWidth(), 
             charWidth_, false, 
             new ServerRequestCallback<RmdChunkOptions>()
       {
@@ -1041,7 +1041,7 @@ public class TextEditingTargetNotebook
             unit.chunkId, 
             unit.mode,
             unit.options,
-            pixelWidth_,
+            getPlotWidth(),
             charWidth_,
             true,
             new ServerRequestCallback<RmdChunkOptions>()
@@ -1467,6 +1467,14 @@ public class TextEditingTargetNotebook
       }
    };
    
+   private int getPlotWidth()
+   {
+      // subtract some space to account for padding (10px on either side) and
+      // ensure the plot doesn't grow arbitrarily large
+      return Math.min(docDisplay_.getPixelWidth() - 30,
+                      ChunkOutputUi.MAX_PLOT_WIDTH);
+   }
+   
    private Timer resizePlotsLocal_ = new Timer()
    {
       @Override
@@ -1488,14 +1496,28 @@ public class TextEditingTargetNotebook
          if (resizingPlotsRemote_)
             return;
          
+         // avoid unnecessary work
+         final int plotWidth = getPlotWidth();
+         if (plotWidth == lastPlotWidth_)
+            return;
+         
          // make the request
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
-               docDisplay_.getPixelWidth(),
+               plotWidth,
                new ServerRequestCallback<Boolean>()
                {
                   @Override
                   public void onResponseReceived(Boolean started)
                   {
+                     // server returns false in the case wherein there's already
+                     // a resize RPC in process (could be from e.g. another 
+                     // notebook in this session)
+                     if (!started)
+                        return;
+                     
+                     // don't replay a request for this width again
+                     lastPlotWidth_ = plotWidth;
+                     
                      // mark all plots as queued for resize
                      for (ChunkOutputUi output: outputs_.values())
                         output.getOutputWidget().setPlotPending(true);
@@ -1612,6 +1634,7 @@ public class TextEditingTargetNotebook
    private String setupCrc32_ = "";
    private int charWidth_ = 65;
    private int pixelWidth_ = 0;
+   private int lastPlotWidth_ = 0;
    private boolean executedSinceActivate_ = false;
    private boolean evaluatingParams_ = false;
    private int execQueueMaxSize_ = 0;
