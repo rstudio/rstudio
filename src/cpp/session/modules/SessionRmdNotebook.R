@@ -275,14 +275,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
    outputOptions <- list(self_contained = TRUE, keep_md = TRUE)
    
-   renderOutput <- rmarkdown::render(input = inputFile,
-                     output_format = outputFormat,
-                     output_file = renderOutput,
-                     output_options = outputOptions,
-                     encoding = "UTF-8",
-                     envir = envir,
-                     quiet = TRUE)
-   
+   renderOutput <- rmarkdown::render(
+      input = inputFile,
+      output_format = outputFormat,
+      output_file = renderOutput,
+      output_options = outputOptions,
+      encoding = "UTF-8",
+      envir = envir,
+      quiet = TRUE
+   )
    
    # read the rendered file
    rnbContents <- .rs.readLines(renderOutput)
