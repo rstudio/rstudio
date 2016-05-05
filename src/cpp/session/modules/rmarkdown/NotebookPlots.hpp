@@ -34,7 +34,9 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error beginPlotCapture(const core::FilePath& plotFolder);
+core::Error beginPlotCapture(int pixelWidth, const core::FilePath& plotFolder);
+
+core::Error initPlots();
 
 } // namespace notebook
 } // namespace rmarkdown

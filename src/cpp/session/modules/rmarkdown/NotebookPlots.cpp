@@ -23,6 +23,7 @@
 
 #include <core/system/FileMonitor.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -185,7 +186,7 @@ void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
 } // anonymous namespace
 
 // begins capturing plot output
-core::Error beginPlotCapture(const FilePath& plotFolder)
+core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
 {
    // clean up any stale plots from the folder
    std::vector<FilePath> folderContents;
@@ -207,28 +208,13 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
       }
    }
 
-   // generate code for creating PNG device
-   boost::format fmt("{ require(grDevices, quietly=TRUE); "
-                     "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 6.5, height = 4, "
-                     "  units=\"in\", res = 96 %2%); "
-                     "  dev.control(displaylist = \"enable\") "
-                     "}");
-
    // marker for content; this is necessary because on Windows, turning off
    // the png device writes an empty PNG file even if nothing was plotted, and
    // we need to avoid treating that file as though it were an actual plot
    boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>(
          plotFolder);
 
-   // create the PNG device
-   error = r::exec::executeString(
-         (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
-              % r::session::graphics::extraBitmapParams()).str());
-   if (error)
-      return error;
-
-   // save old plot state
+   // save old figure parameters
    r::exec::RFunction par("par");
    par.addParam("no.readonly", true);
    r::sexp::Protect protect;
@@ -240,9 +226,29 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // preserve until chunk is finished executing
    pPlotState->sexpMargins.set(sexpMargins);
 
-   // set notebook-friendly figure margins
-   //                                          bot  left top  right
-   error = r::exec::executeString("par(mar = c(5.1, 4.1, 2.1, 2.1))");
+   // create the notebook graphics device
+   error = r::exec::RFunction(".rs.createNotebookGraphicsDevice",
+         plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png",
+         pixelWidth, r::session::graphics::extraBitmapParams()).call();
+   if (error)
+   {
+      // this is fatal; without a graphics device we can't capture plots
+      return error;
+   }
+
+   // turn on display list recording so we can do intelligent resizing later
+   r::exec::RFunction devControl("dev.control");
+   devControl.addParam("displaylist", "enable");
+   error = devControl.call();
+   if (error)
+   {
+      // non-fatal since we'll do best-effort resizing in the absence of
+      // display lists
+      LOG_ERROR(error);
+   }
+
+   // set notebook-friendly figure margins 
+   error = r::exec::RFunction(".rs.setNotebookMargins").call();
    if (error)
       LOG_ERROR(error);
    
@@ -257,6 +263,15 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
          boost::bind(onNewPlot, pPlotState));
 
    return Success();
+}
+
+core::Error initPlots()
+{
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(module_context::sourceModuleRFile, "NotebookPlots.R"));
+
+   return initBlock.execute();
 }
 
 

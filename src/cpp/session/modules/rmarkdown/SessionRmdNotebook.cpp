@@ -282,6 +282,7 @@ Error initialize()
       (bind(initCache))
       (bind(initHtmlWidgets))
       (bind(initErrors))
+      (bind(initPlots))
       (bind(initPlotReplay));
 
    return initBlock.execute();

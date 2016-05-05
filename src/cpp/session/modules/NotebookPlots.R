@@ -13,22 +13,69 @@
 #
 #
 
-.rs.addFunction("replayNotebookPlots", function(width) {
+# creates the notebook graphics device 
+.rs.addFunction("createNotebookGraphicsDevice", function(filename,
+  width, extraArgs)
+{
+  require(grDevices, quietly = TRUE)
+  args <- list(
+    file   = filename,
+    width  = width,
+    height = width / 1.618, 
+    units  = "px",
+    res    = 96)
+  
+  if (nchar(extraArgs) > 0)
+  {
+    # trim leading comma from extra args if present
+    if (identical(substr(extraArgs, 1, 1), ","))
+      extraArgs <- substring(extraArgs, 2)
+
+    # parse extra args and merge with existing args
+    extraList <- NULL
+    tryCatch({
+      extraList <- eval(parse(text = paste("list(", extraArgs, ")")))
+    }, error = function(e) {
+      # failure to parse implies we won't merge below
+    })
+
+    if (is.list(extraList))
+      args <- c(args, extraList)
+  }
+
+  # create the device
+  do.call(what = png, args = args)
+})
+
+.rs.addFunction("setNotebookMargins", function() {
+  #           bot  left top  right
+  par(mar = c(5.1, 4.1, 2.1, 2.1))
+})
+
+.rs.addFunction("replayNotebookPlots", function(width, extraArgs) {
   # open stdin (for consuming snapshots from parent process)
   stdin <- file("stdin")
+  cat(width, "\n", extraArgs, "\n")
 
   require(grDevices, quietly = TRUE)
 
   snapshots <- readLines(stdin, warn = FALSE)
   lapply(snapshots, function(snapshot) {
+
+    # ignore empty lines
+    if (nchar(tools::file_ext(snapshot)) < 1)
+      return(invisible(NULL))
+
+    cat("processing snapshot '", snapshot, "' (", nchar(tools::file_ext(snapshot)), ")\n")
+
     # create the PNG device on which we'll regenerate the plot -- it's somewhat
     # wasteful to use a separate device per plot, but the alternative is
     # doing a lot of state management and post-processing of the files
     # output from the device
     output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
                     sep = ".")
-    png(file = output, width = width, height = width / 1.618, units = "px", 
-        res = 96)
+    .rs.createNotebookGraphicsDevice(output, width, extraArgs);
+    cat("created graphics device for ", output, "\n")
 
     # actually replay the plot onto the device
     tryCatch({

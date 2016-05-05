@@ -27,10 +27,12 @@
 
 #include <r/RExec.hpp>
 #include <r/RJSon.hpp>
+#include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionOptions.hpp>
+
 
 using namespace rstudio::core;
 
@@ -72,9 +74,15 @@ public:
       sources.push_back(modulesPath.complete("ModuleTools.R"));
       sources.push_back(modulesPath.complete("NotebookPlots.R"));
 
-      // create path to cache folder
+      // form extra bitmap params 
+      std::string extraParams = r::session::graphics::extraBitmapParams();
+      if (!extraParams.empty())
+         extraParams = string_utils::singleQuotedStrEscape(extraParams);
+
+      // form command to pass to R 
       std::string cmd(".rs.replayNotebookPlots(" + 
-                      safe_convert::numberToString(width) + ")");
+                      safe_convert::numberToString(width) + ", '" + 
+                      extraParams + "')");
 
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
@@ -87,10 +95,16 @@ public:
    }
 
 private:
+   void onStderr(const std::string& output)
+   {
+      std::cerr << "cerr: " << output << std::endl;
+   }
+
    void onStdout(const std::string& output)
    {
       r::sexp::Protect protect;
       Error error;
+      std::cerr << "cout: " << output << std::endl;
 
       // output is queued/buffered so multiple paths may be emitted
       std::vector<std::string> paths;

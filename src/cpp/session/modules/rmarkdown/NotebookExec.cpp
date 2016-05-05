@@ -108,7 +108,7 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      kChunkOutputPlot)));
 
-   error = beginPlotCapture(outputPath);
+   error = beginPlotCapture(pixelWidth_, outputPath);
    if (error)
       LOG_ERROR(error);
 
