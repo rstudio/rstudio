@@ -743,8 +743,18 @@ public class TextEditingTargetNotebook
    @Override
    public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
    {
-     // TODO: unmark any still-pending plots 
-      
+      // ignore if targeted at another document
+      if (event.getDocId() != docUpdateSentinel_.getId())
+         return;
+
+      // clean up flag
+      resizingPlotsRemote_ = false;
+
+      // mark any plots as no longer queued for resize
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         output.getOutputWidget().setPlotPending(false);
+      }
    }
 
    @Override
@@ -1474,7 +1484,11 @@ public class TextEditingTargetNotebook
       @Override
       public void run()
       {
-         // TODO: avoid re-entrancy
+         // avoid reentrancy
+         if (resizingPlotsRemote_)
+            return;
+         
+         // make the request
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
                docDisplay_.getPixelWidth(),
                new ServerRequestCallback<Boolean>()
@@ -1482,7 +1496,10 @@ public class TextEditingTargetNotebook
                   @Override
                   public void onResponseReceived(Boolean started)
                   {
-                     // TODO: if started, draw all plots as "pending"
+                     // mark all plots as queued for resize
+                     for (ChunkOutputUi output: outputs_.values())
+                        output.getOutputWidget().setPlotPending(true);
+                     resizingPlotsRemote_ = true;
                   }
 
                   @Override
@@ -1598,6 +1615,7 @@ public class TextEditingTargetNotebook
    private boolean executedSinceActivate_ = false;
    private boolean evaluatingParams_ = false;
    private int execQueueMaxSize_ = 0;
+   private boolean resizingPlotsRemote_ = false;
    
    private int state_ = STATE_NONE;
 

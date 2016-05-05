@@ -19,7 +19,8 @@
 
   require(grDevices, quietly = TRUE)
 
-  while (length(snapshot <- readLines(stdin, n = 1)) > 0) {
+  snapshots <- readLines(stdin, warn = FALSE)
+  lapply(snapshots, function(snapshot) {
     # create the PNG device on which we'll regenerate the plot -- it's somewhat
     # wasteful to use a separate device per plot, but the alternative is
     # doing a lot of state management and post-processing of the files
@@ -52,7 +53,7 @@
         cat(final, "\n")
       }
     }
-  }
+  })
 
   invisible(NULL)
 })

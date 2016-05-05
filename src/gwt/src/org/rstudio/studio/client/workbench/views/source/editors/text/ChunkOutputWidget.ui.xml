@@ -114,6 +114,12 @@
       margin: -10px 0 0 -10px;
       transition: opacity 400ms ease;
    }
+   
+   .pendingResize
+   {
+      opacity: 0.5;
+      transition: opacity 400ms ease;
+   }
    </ui:style>
    <g:HTMLPanel styleName="{style.outer}">
       <g:HTMLPanel styleName="{style.expander}"

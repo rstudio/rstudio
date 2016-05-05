@@ -104,6 +104,7 @@ public class ChunkOutputWidget extends Composite
       String overflowY();
       String collapsed();
       String spinner();
+      String pendingResize();
    }
 
    public ChunkOutputWidget(String chunkId, RmdChunkOptions options, 
@@ -405,6 +406,20 @@ public class ChunkOutputWidget extends Composite
       return hasErrors_;
    }
    
+   public void setPlotPending(boolean pending)
+   {
+      for (Widget w: root_)
+      {
+         if (w instanceof Image)
+         {
+            if (pending)
+               w.addStyleName(style.pendingResize());
+            else
+               w.removeStyleName(style.pendingResize());
+         }
+      }
+   }
+   
    public void updatePlot(String plotUrl)
    {
       String plotFile = FilePathUtils.friendlyFileName(plotUrl);
@@ -429,6 +444,7 @@ public class ChunkOutputWidget extends Composite
             // the only purpose of this resize counter is to ensure that the
             // plot URL changes when its geometry does (it's not consumed by
             // the server)
+            w.removeStyleName(style.pendingResize());
             plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
          }
       }
