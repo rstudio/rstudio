@@ -35,6 +35,8 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
+import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -100,6 +102,8 @@ public class TextEditingTargetNotebook
                implements EditorThemeStyleChangedEvent.Handler,
                           RmdChunkOutputEvent.Handler,
                           RmdChunkOutputFinishedEvent.Handler,
+                          ChunkPlotRefreshedEvent.Handler,
+                          ChunkPlotRefreshFinishedEvent.Handler,
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
@@ -313,6 +317,10 @@ public class TextEditingTargetNotebook
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChunkPlotRefreshedEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChunkPlotRefreshFinishedEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(SendToChunkConsoleEvent.TYPE, this));
       releaseOnDismiss_.add(
@@ -729,6 +737,28 @@ public class TextEditingTargetNotebook
          // process next chunk in execution queue
          processChunkExecQueue();
       }
+   }
+
+
+   @Override
+   public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
+   {
+     // TODO: unmark any still-pending plots 
+      
+   }
+
+   @Override
+   public void onChunkPlotRefreshed(ChunkPlotRefreshedEvent event)
+   {
+      // ignore if targeted at another document
+      if (event.getData().getDocId() != docUpdateSentinel_.getId())
+         return;
+      
+      // find chunk containing plot and push the new plot in
+      String chunkId = event.getData().getChunkId();
+      if (outputs_.containsKey(chunkId))
+         outputs_.get(chunkId).getOutputWidget().updatePlot(
+               event.getData().getPlotUrl());
    }
 
    @Override

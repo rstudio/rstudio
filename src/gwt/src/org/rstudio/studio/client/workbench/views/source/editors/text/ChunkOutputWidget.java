@@ -25,6 +25,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
@@ -402,6 +403,35 @@ public class ChunkOutputWidget extends Composite
    public boolean hasErrors()
    {
       return hasErrors_;
+   }
+   
+   public void updatePlot(String plotUrl)
+   {
+      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
+      
+      for (Widget w: root_)
+      {
+         if (w instanceof Image)
+         {
+            Image plot = (Image)w;
+            
+            // get the existing URL and strip off the query string 
+            String url = plot.getUrl();
+            int idx = url.lastIndexOf('?');
+            if (idx > 0)
+               url = url.substring(0, idx);
+            
+            // verify that the plot being refreshed is the same one this widget
+            // contains
+            if (FilePathUtils.friendlyFileName(url) != plotFile)
+               continue;
+            
+            // the only purpose of this resize counter is to ensure that the
+            // plot URL changes when its geometry does (it's not consumed by
+            // the server)
+            plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
+         }
+      }
    }
    
    // Event handlers ----------------------------------------------------------
@@ -923,6 +953,7 @@ public class ChunkOutputWidget extends Composite
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
+   private int resizeCounter_ = 0;
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;
