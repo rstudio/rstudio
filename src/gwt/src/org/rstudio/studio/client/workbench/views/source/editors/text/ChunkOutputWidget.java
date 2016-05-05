@@ -661,9 +661,9 @@ public class ChunkOutputWidget extends Composite
 
             // sync html widget height to outer frame
             frame.getElement().getStyle().setHeight(
-                  body.getOffsetHeight() + 20, Unit.PX);
+                  body.getOffsetHeight(), Unit.PX);
             frame.getElement().getStyle().setWidth(
-                  body.getOffsetWidth() + 20, Unit.PX);
+                  body.getOffsetWidth(), Unit.PX);
 
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
