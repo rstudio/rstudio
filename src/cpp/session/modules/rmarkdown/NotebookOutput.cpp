@@ -164,6 +164,12 @@ Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
    // uri format is: /chunk_output/<ctx-id>/<doc-id>/...
+      
+   // strip the querystring from the uri
+   std::string uri = request.uri();
+   size_t idx = uri.find_last_of("?");
+   if (idx != std::string::npos)
+      uri = uri.substr(0, idx);
    
    // strip the querystring from the uri
    std::string uri = request.uri();

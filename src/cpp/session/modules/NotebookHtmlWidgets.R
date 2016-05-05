@@ -14,7 +14,7 @@
 #
 
 .rs.addFunction("initHtmlCapture",
-                function(pixelWidth, outputFolder, libraryFolder)
+                function(outputFolder, libraryFolder)
 {
    assign("print.htmlwidget", function(x, ...) {
       
@@ -38,11 +38,6 @@
       
       cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
 
-      # leave some breathing room, then clamp width to [200, 550] and set the
-      # height accordingly (use golden ratio)
-      x$width <- min(max(pixelWidth - 20, 200), 550)
-      x$height <- x$width / 1.618
-      
       # save the widget to HTML 
       htmlwidgets::saveWidget(
          widget = x, 

@@ -19,6 +19,7 @@ import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -690,11 +691,20 @@ public class ChunkOutputWidget extends Composite
    {
       // flush any queued errors
       flushQueuedErrors(ensureVisible);
+      
+      // amend the URL to cause any contained widget to use the RStudio viewer
+      // sizing policy
+      if (url.indexOf('?') > 0)
+         url += "&";
+      else
+         url += "?";
+      url += "viewer_pane=1";
 
-      final ChunkOutputFrame frame = new ChunkOutputFrame();
-      frame.getElement().getStyle().setHeight(200, Unit.PX);
-      frame.getElement().getStyle().setWidth(100, Unit.PCT);
-      root_.add(frame);
+      ChunkOutputFrame frame = new ChunkOutputFrame();
+      final FixedRatioWidget<ChunkOutputFrame> fixedFrame = 
+            new FixedRatioWidget<ChunkOutputFrame>(frame, 1.618, 650);
+
+      root_.add(fixedFrame);
 
       final Timer renderTimeout = new RenderTimer();
 
@@ -703,15 +713,9 @@ public class ChunkOutputWidget extends Composite
          @Override
          public void execute()
          {
-            Element body = frame.getDocument().getBody();
+            Element body = fixedFrame.getWidget().getDocument().getBody();
             Style bodyStyle = body.getStyle();
-
-            // sync html widget height to outer frame
-            frame.getElement().getStyle().setHeight(
-                  body.getOffsetHeight(), Unit.PX);
-            frame.getElement().getStyle().setWidth(
-                  body.getOffsetWidth(), Unit.PX);
-
+            
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
             bodyStyle.setColor(s_color);

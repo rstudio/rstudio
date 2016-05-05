@@ -74,12 +74,10 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
 } // anonymous namespace
 
 core::Error beginWidgetCapture(
-              int pixelWidth,
               const core::FilePath& outputFolder,
               const core::FilePath& libraryFolder)
 {
    Error error = r::exec::RFunction(".rs.initHtmlCapture", 
-         pixelWidth,
          outputFolder.absolutePath(),
          outputFolder.complete(kChunkLibDir).absolutePath()).call();
    if (error)
