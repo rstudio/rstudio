@@ -53,6 +53,7 @@ public class GlobalToolbar extends Toolbar
       // add new source doc commands
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
+      newMenu_.addSeparator();
       newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
