@@ -170,7 +170,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
       deps.add(Dependency.cranPackage("knitr", "1.12", true));
-      deps.add(Dependency.cranPackage("rmarkdown", "0.9.6", true));
+      deps.add(Dependency.embeddedPackage("rmarkdown"));
       return deps;
    }
    

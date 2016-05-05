@@ -28,6 +28,9 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown")
+  message(FATAL_ERROR "rmarkdown package not found (re-run install-dependencies script to install)")
+endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/profvis")
   message(FATAL_ERROR "profvis package not found (re-run install-dependencies script to install)")
 endif()
@@ -419,6 +422,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
+
+   # install rmarkdown package
+   file(GLOB RMARKDOWN_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rmarkdown*.tar.gz")
+   install(FILES ${RMARKDOWN_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install profvis package
    file(GLOB PROFVIS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/profvis*.tar.gz")
