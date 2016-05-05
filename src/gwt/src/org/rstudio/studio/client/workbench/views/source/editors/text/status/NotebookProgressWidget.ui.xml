@@ -7,25 +7,22 @@
    {
       height: 6px;
       width: 100px;
-      display: inline-block;
-      position: relative;
-      top: -5px;
+      margin-top: 4px;
       margin-right: 3px;
+      display: block;
    }
    
    div.progressLabel,
    a.chunkAnchor
    {
-      display: inline-block;
       white-space: nowrap;
-      position: relative;
       text-overflow: ellipsis;
       overflow: hidden;
+      display: block;
    }
    
    div.progressLabel
    {
-      width: 100px;
       text-align: right;
       margin-right: 3px;
       top: 1px;
@@ -34,7 +31,6 @@
    a.chunkAnchor
    {
       width: 100px;
-      top: -2px;
       color: #0000aa;
       cursor: pointer;
    }
@@ -42,19 +38,28 @@
    img.interrupt
    {
       margin: 0px;
-      position: relative;
-      top: -2px;
+      margin-top: -2px;
+   }
+   
+   .root
+   {
+      margin-top: 1px;
    }
    </ui:style>
-   <g:HTMLPanel ui:field="root_">
-     <g:Label styleName="{style.progressLabel}" ui:field="progressLabel_">
-     </g:Label>
-     <g:Anchor styleName="{style.chunkAnchor}" ui:field="chunkAnchor_">
-     </g:Anchor>
-     <g:HTMLPanel styleName="{style.progressBar}" ui:field="progressBar_">
-     </g:HTMLPanel>
-     <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk}" 
-              ui:field="interruptButton_">
-     </g:Image>
+   <g:HTMLPanel>
+     <g:HorizontalPanel styleName="{style.root}" ui:field="root_">
+       <g:Label styleName="{style.progressLabel}" ui:field="progressLabel_"
+                width="100px">
+       </g:Label>
+       <g:Anchor styleName="{style.chunkAnchor}" ui:field="chunkAnchor_"
+                  width="75px">
+       </g:Anchor>
+       <g:HTMLPanel styleName="{style.progressBar}" ui:field="progressBar_"
+                    width="100px">
+       </g:HTMLPanel>
+       <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk}" 
+                ui:field="interruptButton_">
+       </g:Image>
+     </g:HorizontalPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

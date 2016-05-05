@@ -36,6 +36,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -218,18 +219,18 @@ public class NotebookProgressWidget extends Composite
       
       progressBar_.getElement().getStyle().setBackgroundImage(
             "linear-gradient(to right, " +
-              barColor.asRgb()   + ", " +
+              barColor.asRgb()   + " 0, " +
               barColor.asRgb()   + " " + highStart + "px, " +
               highColor.asRgb()  + " " + high      + "px, " +
               barColor.asRgb()   + " " + highEnd   + "px, " +
               barColor.asRgb()   + " " + end       + "px, " +
               emptyColor.asRgb() + " " + end       + "px, " +
-              emptyColor.asRgb() + " 100%");
+              emptyColor.asRgb() + " 100%)");
    }
    
    @UiField Anchor chunkAnchor_;
    @UiField HTMLPanel progressBar_;
-   @UiField HTMLPanel root_;
+   @UiField HorizontalPanel root_;
    @UiField Label progressLabel_;
    @UiField Image interruptButton_;
 
