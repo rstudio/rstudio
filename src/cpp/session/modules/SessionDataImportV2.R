@@ -452,13 +452,18 @@
       }
    )
 
-   dataName <- .rs.assemble_data_import_name(dataImportOptions)
-   if (is.null(dataName) || identical(dataName, ""))
+   dataName <- dataImportOptions$dataName
+   if (identical(dataName, NULL) || identical(dataName, ""))
    {
-      dataName <- "dataset"
+      dataName <- tolower(.rs.assemble_data_import_name(dataImportOptions))
+      if (is.null(dataName) || identical(dataName, ""))
+      {
+         dataName <- "dataset"
+      }
    }
 
-   dataName <- tolower(gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE))
+   dataName <- gsub("[\\._]+", "_", c(make.names(dataName)), perl=TRUE)
+
    importInfo$dataName <- dataImportOptions$dataName <- dataName
 
    dataImportOptions$cacheUrlNames <- list()

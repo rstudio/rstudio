@@ -27,7 +27,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class DataImportOptionsUiSav extends DataImportOptionsUi
@@ -100,6 +99,8 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    @Override
    public void setImportLocation(String importLocation)
    {
+      nameTextBox_.setText("");
+      
       String[] components = importLocation.split("\\.");
       if (components.length > 0)
       {
@@ -169,9 +170,6 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
          fileChooser_.setEnabled(false);
       }
    }
-   
-   @UiField
-   TextBox nameTextBox_;
    
    @UiField
    ListBox formatListBox_;

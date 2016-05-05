@@ -170,7 +170,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
       deps.add(Dependency.cranPackage("knitr", "1.12", true));
-      deps.add(Dependency.cranPackage("rmarkdown", "0.9.6", true));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
+      deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
+      deps.add(Dependency.embeddedPackage("rmarkdown"));
       return deps;
    }
    
@@ -265,7 +267,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("httpuv", "1.3.3"));
       deps.add(Dependency.cranPackage("mime", "0.3"));
-      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("xtable", "1.7"));
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
@@ -532,7 +534,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("mongolite", "0.8"));
-      deps.add(Dependency.cranPackage("jsonlite", "0.9.16"));
+      deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       return deps;
    }
    
@@ -549,7 +551,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
         userAction, 
         new Dependency[] {
            Dependency.cranPackage("stringr", "0.6"),
-           Dependency.cranPackage("jsonlite", "0.9.16"),
+           Dependency.cranPackage("jsonlite", "0.9.19"),
            Dependency.cranPackage("htmltools", "0.3"),
            Dependency.cranPackage("yaml", "2.1.5"),
            Dependency.cranPackage("htmlwidgets", "0.6", true),

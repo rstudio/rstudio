@@ -234,26 +234,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    return(annotated)
 })
 
-.rs.addFunction("rnb.htmlNotebook", function(...)
+.rs.addFunction("rnb.htmlNotebook", function(code_folding = "show",
+                                             highlight = "textmate", ...)
 {
    if ("rmarkdown" %in% loadedNamespaces() &&
        "html_notebook" %in% getNamespaceExports("rmarkdown"))
    {
       return(rmarkdown::html_notebook(...))
    }
-   
-   # make sure 'html_notebook' available on search path (this
-   # is so that 'rmarkdown::render()' will discover it)
-   toolsEnv <- .rs.toolsEnv()
-   if (!exists("html_notebook", envir = toolsEnv))
-      assign("html_notebook", .rs.rnb.htmlNotebook, envir = toolsEnv)
-   
+    
+   # custom knitr options
+   knitr_options <- list()
+
+   # post-processor to rename output file if necessary
+   post_processor <- function(metadata, input_file, output_file, clean, verbose) {
+      nb_output_file <- gsub("\\.html$", ".nb.html", output_file)
+      file.rename(output_file, nb_output_file)
+      nb_output_file
+   }
+
    # generate actual format
-   rmarkdown::html_document(code_folding = "show",
-                            theme = "cerulean",
-                            highlight = "textmate",
-                            ...)
+   rmarkdown::output_format(
+      knitr = knitr_options,
+      pandoc = NULL,
+      post_processor = post_processor,
+      base_format =  rmarkdown::html_document(code_folding = code_folding,
+                                              highlight = highlight,
+                                              ...)
+   )
 })
+
+.rs.addGlobalFunction("html_notebook", .rs.rnb.htmlNotebook)
 
 .rs.addFunction("rnb.render", function(inputFile,
                                        outputFile,
@@ -264,14 +275,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
    outputOptions <- list(self_contained = TRUE, keep_md = TRUE)
    
-   rmarkdown::render(input = inputFile,
-                     output_format = outputFormat,
-                     output_file = renderOutput,
-                     output_options = outputOptions,
-                     encoding = "UTF-8",
-                     envir = envir,
-                     quiet = TRUE)
-   
+   renderOutput <- rmarkdown::render(
+      input = inputFile,
+      output_format = outputFormat,
+      output_file = renderOutput,
+      output_options = outputOptions,
+      encoding = "UTF-8",
+      envir = envir,
+      quiet = TRUE
+   )
    
    # read the rendered file
    rnbContents <- .rs.readLines(renderOutput)

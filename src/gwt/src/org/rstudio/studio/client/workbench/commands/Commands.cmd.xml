@@ -39,6 +39,7 @@ well as menu structures (for main menu and popup menus).
       <menu label="_File">
          <menu label="New _File">
             <cmd refid="newSourceDoc"/>
+            <separator/>
             <cmd refid="newRNotebook"/>
             <separator/>
             <cmd refid="newRMarkdownDoc"/>
