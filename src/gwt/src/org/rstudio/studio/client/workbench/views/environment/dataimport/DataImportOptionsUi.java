@@ -24,7 +24,9 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.TextBox;
 
 public class DataImportOptionsUi extends Composite implements HasValueChangeHandlers<DataImportOptions>
 {
@@ -57,7 +59,7 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
    
    public void setImportLocation(String importLocation)
    {
-      
+      nameTextBox_.setText("");
    }
    
    void triggerChange()
@@ -72,4 +74,7 @@ public class DataImportOptionsUi extends Composite implements HasValueChangeHand
    {
       handlerManager_.fireEvent(event);
    }
+   
+   @UiField
+   protected TextBox nameTextBox_;
 }

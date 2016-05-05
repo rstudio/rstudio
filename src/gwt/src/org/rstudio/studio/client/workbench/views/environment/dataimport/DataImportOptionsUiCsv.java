@@ -230,9 +230,6 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    }
    
    @UiField
-   TextBox nameTextBox_;
-   
-   @UiField
    TextBox skipTextBox_;
    
    @UiField
