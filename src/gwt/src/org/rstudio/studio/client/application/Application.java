@@ -785,6 +785,10 @@ public class Application implements ApplicationEventHandlers
             commands_.newSession().remove();
       }
       
+      // remove restart r notebook commands until they are implemented
+      commands_.restartRClearOutput().remove();
+      commands_.restartRRunAllChunks().remove();
+      
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
       showToolbar( uiPrefs_.get().toolbarVisible().getValue());
