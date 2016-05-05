@@ -19,18 +19,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
    if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
    
-   # if 'output' already exists, compare file write times to determine
-   # whether we really want to overwrite a pre-existing .Rmd
-   if (file.exists(output)) {
-      inputInfo  <- file.info(input)
-      outputInfo <- file.info(output)
-      
-      if (outputInfo$mtime > inputInfo$mtime)
-         stop("'", output, "' exists and is newer than '", input, "'")
-   }
-   
    # extract rmd contents and populate file
-   contents <- .rs.extractFromNotebook("rnb-document-source", input)
+   contents <- "# Failed to parse notebook"
+   parsed <- try(rmarkdown::parse_html_notebook(input), silent = TRUE)
+   if (inherits(parsed, "try-error") || is.null(parsed$rmd)) {
+      warning("failed to parse notebook; source document will not be recovered")
+   } else {
+      contents <- parsed$rmd
+   }
    cat(contents, file = output, sep = "\n")
    
    # extract and populate cache
@@ -42,33 +38,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.scalar(TRUE)
 })
 
-.rs.addFunction("extractFromNotebook", function(tag, rnbPath)
-{
-   if (!file.exists(rnbPath))
-      stop("no file at path '", rnbPath, "'")
-   
-   contents <- .rs.readLines(rnbPath)
-   
-   # find the line hosting the encoded content
-   marker <- paste('<!--', tag)
-   idx <- NULL
-   for (i in seq_along(contents))
-   {
-      if (.rs.startsWith(contents[[i]], marker))
-      {
-         idx <- i
-         break
-      }
-   }
-   
-   if (!length(idx))
-      stop("no encoded content with tag '", tag, "' in '", rnbPath, "'")
-   
-   reDocument <- paste('<!--', tag, '(\\S+) -->')
-   rmdEncoded <- sub(reDocument, "\\1", contents[idx])
-   .rs.base64decode(rmdEncoded)
-})
-
 .rs.addFunction("reRmdChunkBegin", function()
 {
    "^[\t >]*```+\\s*\\{[.]?([a-zA-Z]+.*)\\}\\s*$"
@@ -77,38 +46,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("reRmdChunkEnd", function()
 {
    "^[\t >]*```+\\s*$"
-})
-
-.rs.addFunction("injectHTMLComments", function(contents,
-                                               location,
-                                               inject)
-{
-   # find the injection location
-   idx <- NULL
-   for (i in seq_along(contents))
-   {
-      if (contents[[i]] == location)
-      {
-         idx <- i
-         break
-      }
-   }
-   
-   if (is.null(idx))
-      stop("failed to find injection location '", location, "'")
-   
-   # generate injection strings
-   injection <- paste(vapply(seq_along(inject), FUN.VALUE = character(1), function(i) {
-      sprintf('<!-- %s %s -->', names(inject)[i], inject[[i]])
-   }), collapse = "\n")
-   
-   contents <- c(
-      contents[1:idx],
-      injection,
-      contents[(idx + 1):length(contents)]
-   )
-   
-   contents
 })
 
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
@@ -195,28 +132,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.na(idx)) NULL else names(chunkRows)[[idx]]
 })
 
-
-.rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label, meta = NULL)
-{
-   before <- if (is.null(meta)) {
-      sprintf("\n<!-- rnb-%s-begin -->\n", label)
-   } else {
-      meta <- .rs.rnb.encode(meta)
-      sprintf("\n<!-- rnb-%s-begin %s -->\n", label, meta)
-   }
-   after  <- sprintf("\n<!-- rnb-%s-end -->\n", label)
-   paste(before, output, after, sep = "\n")
-})
-
-.rs.addFunction("rnb.annotatedKnitrHook", function(label, hook, meta = NULL) {
-   force(list(label, hook, meta))
-   function(x, ...) {
-      output <- hook(x, ...)
-      meta <- if (is.function(meta)) meta(x, output, ...)
-      .rs.rnb.htmlAnnotatedOutput(output, label, meta)
-   }
-})
-
 .rs.addFunction("rnb.renderHtmlWidget", function(output)
 {
    unpreserved <- substring(
@@ -232,77 +147,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    annotated <- htmltools::htmlPreserve(paste(before, unpreserved, after, sep = "\n"))
    attributes(annotated) <- attributes(output)
    return(annotated)
-})
-
-.rs.addFunction("rnb.htmlNotebook", function(code_folding = "show",
-                                             highlight = "textmate", ...)
-{
-   if ("rmarkdown" %in% loadedNamespaces() &&
-       "html_notebook" %in% getNamespaceExports("rmarkdown"))
-   {
-      return(rmarkdown::html_notebook(...))
-   }
-    
-   # custom knitr options
-   knitr_options <- list()
-
-   # post-processor to rename output file if necessary
-   post_processor <- function(metadata, input_file, output_file, clean, verbose) {
-      nb_output_file <- gsub("\\.html$", ".nb.html", output_file)
-      file.rename(output_file, nb_output_file)
-      nb_output_file
-   }
-
-   # generate actual format
-   rmarkdown::output_format(
-      knitr = knitr_options,
-      pandoc = NULL,
-      post_processor = post_processor,
-      base_format =  rmarkdown::html_document(code_folding = code_folding,
-                                              highlight = highlight,
-                                              ...)
-   )
-})
-
-.rs.addGlobalFunction("html_notebook", .rs.rnb.htmlNotebook)
-
-.rs.addFunction("rnb.render", function(inputFile,
-                                       outputFile,
-                                       outputFormat = .rs.rnb.htmlNotebook(),
-                                       rmdContents = .rs.readFile(inputFile),
-                                       envir = .GlobalEnv)
-{
-   renderOutput <- tempfile("rnb-render-output-", fileext = ".html")
-   outputOptions <- list(self_contained = TRUE, keep_md = TRUE)
-   
-   renderOutput <- rmarkdown::render(
-      input = inputFile,
-      output_format = outputFormat,
-      output_file = renderOutput,
-      output_options = outputOptions,
-      encoding = "UTF-8",
-      envir = envir,
-      quiet = TRUE
-   )
-   
-   # read the rendered file
-   rnbContents <- .rs.readLines(renderOutput)
-   
-   # generate base64-encoded versions of .Rmd source, .md sidecar
-   rmdEncoded <- .rs.base64encode(paste(rmdContents, collapse = "\n"))
-   
-   # inject document contents into rendered file
-   # (i heard you like documents, so i put a document in your document)
-   rnbContents <- .rs.injectHTMLComments(
-      rnbContents,
-      "</body>",
-      list("rnb-document-source" = rmdEncoded)
-   )
-   
-   # write our .Rnb to file and we're done!
-   cat(rnbContents, file = outputFile, sep = "\n")
-   invisible(outputFile)
-   
 })
 
 .rs.addFunction("rnb.getKnitrHookList", function()
@@ -327,79 +171,25 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    })
 })
 
-# These hooks are used for a regular 'rmarkdown::render()'. The idea
-# here is that we want to annotate any output produced by knitr in
-# such a way that we can easily recover / extract the outputs
-# chunk-by-chunk from the generated HTML document.
-.rs.addFunction("rnb.augmentKnitrHooks", function(format)
+.rs.addFunction("rnb.htmlAnnotatedOutput", function(output, label, meta = NULL)
 {
-   # save original hooks (restore after we've stored requisite
-   # hooks in our output format)
-   savedHookList <- .rs.rnb.getKnitrHookList()
-   on.exit(.rs.rnb.setKnitrHookList(savedHookList), add = TRUE)
-   
-   # use 'render_markdown()' to get default hooks
-   knitr::render_markdown()
-   
-   # store original hooks and annotate in format
-   knitHooks <- knitr::knit_hooks$get()
-   
-   # generic hooks for knitr output
-   hookNames <- c("source", "chunk", "plot", "text", "output",
-                  "warning", "error", "message", "error")
-   
-   # metadata for hooks
-   textMetaHook <- function(input, output, ...) {
-      list(data = input)
+   before <- if (is.null(meta)) {
+      sprintf("\n<!-- rnb-%s-begin -->\n", label)
+   } else {
+      meta <- .rs.rnb.encode(meta)
+      sprintf("\n<!-- rnb-%s-begin %s -->\n", label, meta)
    }
-   
-   metaFns <- list(
-      source  = textMetaHook,
-      output  = textMetaHook,
-      warning = textMetaHook,
-      message = textMetaHook,
-      error   = textMetaHook
-   )
-   
-   newKnitHooks <- lapply(hookNames, function(hookName) {
-      .rs.rnb.annotatedKnitrHook(hookName,
-                                 knitHooks[[hookName]],
-                                 metaFns[[hookName]])
-   })
-   names(newKnitHooks) <- hookNames
-   
-   format$knitr$knit_hooks <- newKnitHooks
-   
-   # hook into 'render' for htmlwidgets
-   renderHook <- function(x, ...) {
-      output <- knitr::knit_print(x, ...)
-      if (inherits(x, "htmlwidget"))
-         return(.rs.rnb.renderHtmlWidget(output))
-      output
-   }
-   
-   # set hooks on format
-   format$knitr$knit_hooks <- newKnitHooks
-   format$knitr$opts_chunk$render <- renderHook
-   
-   format
+   after  <- sprintf("\n<!-- rnb-%s-end -->\n", label)
+   paste(before, output, after, sep = "\n")
 })
 
-.rs.addFunction("createNotebook", function(inputFile,
-                                           outputFile = NULL,
-                                           envir = .GlobalEnv)
-{
-   if (is.null(outputFile))
-      outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
-   
-   # generate format
-   format <- .rs.rnb.htmlNotebook()
-   
-   # augment hooks for createNotebook()
-   format <- .rs.rnb.augmentKnitrHooks(format)
-   
-   # call render with our special format hooks
-   .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
+.rs.addFunction("rnb.annotatedKnitrHook", function(label, hook, meta = NULL) {
+   force(list(label, hook, meta))
+   function(x, ...) {
+      output <- hook(x, ...)
+      meta <- if (is.function(meta)) meta(x, output, ...)
+      .rs.rnb.htmlAnnotatedOutput(output, label, meta)
+   }
 })
 
 # The hooks here are used to pull output from a cache directory, rather
@@ -430,15 +220,19 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       knitr::knit_hooks$get("evaluate")(...)
    }
    
-   # set and unset with pre/post hooks
+   # set and unset 'evaluate' with pre/post hooks
+   preKnit <- format$pre_knit
    format$pre_knit <- function(...) {
+      result <- if (is.function(preKnit)) preKnit(...)
       .rs.replaceBinding("evaluate", "evaluate", evaluateOverride)
-      NULL
+      result
    }
    
+   postKnit <- format$post_knit
    format$post_knit <- function(...) {
+      result <- if (is.function(postKnit)) postKnit(...)
       .rs.replaceBinding("evaluate", "evaluate", original)
-      NULL
+      result
    }
    
    # capture + override include hooks -- we always want our
@@ -576,13 +370,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
    
    # generate format
-   format <- .rs.rnb.htmlNotebook()
+   outputFormat <- rmarkdown::html_notebook()
    
    # augment hooks
-   format <- .rs.rnb.cacheAugmentKnitrHooks(rnbData, format)
+   outputFormat <- .rs.rnb.cacheAugmentKnitrHooks(rnbData, outputFormat)
    
    # call render with special format hooks
-   .rs.rnb.render(inputFile, outputFile, outputFormat = format, envir = envir)
+   rmarkdown::render(input = inputFile,
+                     output_format = outputFormat,
+                     output_file = outputFile,
+                     quiet = TRUE,
+                     envir = envir)
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
@@ -664,7 +462,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    knitr::asis_output(sprintf('<pre%s><code>%s</code></pre>', attributes, pasted))
 })
 
-.rs.addFunction("rnb.consoleDataToHtmlList", function(data, prefix = knitr::opts_chunk$get("comment"))
+.rs.addFunction("rnb.consoleDataToHtmlList", function(data)
 {
    csvData <- .rs.rnb.parseConsoleData(data)
    cutpoints <- .rs.cutpoints(csvData$type)
@@ -684,10 +482,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       result <- .rs.trimWhitespace(pasted)
       if (!nzchar(result))
          return(NULL)
-      
-      if (type == 1 || type == 2)
-         result <- paste(prefix, gsub("\n", paste0("\n", prefix, " "), result, fixed = TRUE))
-      
       attr(result, ".class") <- if (type == 0) "r"
       result
    })
