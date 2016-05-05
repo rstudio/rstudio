@@ -146,9 +146,6 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    }
    
    @UiField
-   TextBox nameTextBox_;
-   
-   @UiField
    ListBox sheetListBox_;
    
    @UiField
