@@ -2693,8 +2693,8 @@ public class Source implements InsertSourceHandler,
                              final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       // construct path to .Rmd
-      String rnbPath = rnbFile.getPath();
-      String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
+      final String rnbPath = rnbFile.getPath();
+      final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
       final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
       
       // if we already have associated .Rmd file open, then just edit it
@@ -2703,23 +2703,32 @@ public class Source implements InsertSourceHandler,
          return;
       
       // ask the server to extract the .Rmd, then open that
-      server_.extractRmdFromNotebook(
-            rnbPath,
-            rmdPath,
-            new ServerRequestCallback<Boolean>()
-            {
-               @Override
-               public void onResponseReceived(Boolean success)
-               {
-                  openFileFromServer(rmdFile, FileTypeRegistry.RMARKDOWN, resultCallback);
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
+      Command extractRmdCommand = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            server_.extractRmdFromNotebook(
+                  rnbPath,
+                  rmdPath,
+                  new ServerRequestCallback<Boolean>()
+                  {
+                     @Override
+                     public void onResponseReceived(Boolean success)
+                     {
+                        openFileFromServer(rmdFile, FileTypeRegistry.RMARKDOWN, resultCallback);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+         }
+      };
+      
+      dependencyManager_.withRMarkdown("R Notebook", "Using R Notebooks", extractRmdCommand);
    }
    
    private boolean openFileAlreadyOpen(final FileSystemItem file,

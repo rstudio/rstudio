@@ -34,6 +34,8 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
@@ -265,6 +267,18 @@ public class TextEditingTargetNotebook
             String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + 
                                 RmdOutput.NOTEBOOK_EXT;
             
+            createNotebookFromCache(rmdPath, outputPath);
+         }
+      }));
+   }
+   
+   public void createNotebookFromCache(final String rmdPath, final String outputPath)
+   {
+      Command createNotebookCmd = new Command()
+      {
+         @Override
+         public void execute()
+         {
             server_.createNotebookFromCache(
                   rmdPath,
                   outputPath,
@@ -285,7 +299,9 @@ public class TextEditingTargetNotebook
                      }
                   });
          }
-      }));
+      };
+      
+      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", createNotebookCmd);
    }
    
    @Inject
@@ -297,7 +313,8 @@ public class TextEditingTargetNotebook
          UIPrefs prefs,
          Commands commands,
          Binder binder,
-         Provider<SourceWindowManager> pSourceWindowManager)
+         Provider<SourceWindowManager> pSourceWindowManager,
+         DependencyManager dependencyManager)
    {
       events_ = events;
       server_ = server;
@@ -308,6 +325,7 @@ public class TextEditingTargetNotebook
       commands_ = commands;
       binder.bind(commands, this);
       pSourceWindowManager_ = pSourceWindowManager;
+      dependencyManager_ = dependencyManager;
       
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
@@ -1507,6 +1525,7 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
+   private DependencyManager dependencyManager_;
    private UIPrefs prefs_;
    private Commands commands_;
 
