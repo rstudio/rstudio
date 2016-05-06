@@ -446,6 +446,12 @@ public class ChunkOutputWidget extends Composite
             // plot URL changes when its geometry does (it's not consumed by
             // the server)
             w.removeStyleName(style.pendingResize());
+            
+            // sync height (etc) when render is complete, but don't scroll to 
+            // this point
+            DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
+                  false));
+
             plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
          }
       }
@@ -629,34 +635,9 @@ public class ChunkOutputWidget extends Composite
       plot.getElement().getStyle().setDisplay(Display.NONE);
 
       root_.add(plot);
-      final Timer renderTimeout = new RenderTimer();
-      
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            if (DOM.eventGetType(event) != Event.ONLOAD)
-               return;
-            
-            ImageElementEx img = plot.getElement().cast();
-
-            // grow the image to fill the container, but not beyond its
-            // natural width. also clamp image width to avoid overly-large
-            // images in a wide editor buffer
-            int maxWidth = Math.min(ChunkOutputUi.MAX_PLOT_WIDTH, 
-                  img.naturalWidth());
-            img.getStyle().setWidth(100, Unit.PCT);
-            img.getStyle().setProperty("maxWidth", maxWidth + "px");
-
-            // show the image
-            plot.getElement().getStyle().setDisplay(Display.BLOCK);
-
-            renderTimeout.cancel();
-            completeUnitRender(ensureVisible);
-         }
-      });
+      DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
+            ensureVisible));
 
       plot.setUrl(url);
    }
@@ -952,6 +933,37 @@ public class ChunkOutputWidget extends Composite
                ensureVisible);
          queuedError_ = "";
       }
+   }
+   
+   private EventListener createPlotListener(final Image plot, 
+         final boolean ensureVisible)
+   {
+      final Timer renderTimeout = new RenderTimer();
+      return new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) != Event.ONLOAD)
+               return;
+            
+            ImageElementEx img = plot.getElement().cast();
+
+            // grow the image to fill the container, but not beyond its
+            // natural width. also clamp image width to avoid overly-large
+            // images in a wide editor buffer
+            int maxWidth = Math.min(ChunkOutputUi.MAX_PLOT_WIDTH, 
+                  img.naturalWidth());
+            img.getStyle().setWidth(100, Unit.PCT);
+            img.getStyle().setProperty("maxWidth", maxWidth + "px");
+
+            // show the image
+            plot.getElement().getStyle().setDisplay(Display.BLOCK);
+
+            renderTimeout.cancel();
+            completeUnitRender(ensureVisible);
+         }
+      };
    }
    
    @UiField Image clear_;
