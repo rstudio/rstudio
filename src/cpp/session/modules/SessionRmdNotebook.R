@@ -369,8 +369,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
    
+   # TODO: pass encoding through from front end
+   encoding = getOption("encoding")
+
    # generate format
-   outputFormat <- rmarkdown::html_notebook()
+   outputFormat <- rmarkdown::resolve_output_format(inputFile,
+                                                    "html_notebook",
+                                                    encoding = encoding)
    
    # augment hooks
    outputFormat <- .rs.rnb.cacheAugmentKnitrHooks(rnbData, outputFormat)
@@ -380,7 +385,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                      output_format = outputFormat,
                      output_file = outputFile,
                      quiet = TRUE,
-                     envir = envir)
+                     envir = envir,
+                     encoding = encoding)
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
