@@ -98,6 +98,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionHandler;
@@ -3088,13 +3089,16 @@ public class AceEditor implements DocDisplay,
       
       JsArray<ChunkDefinition> chunks = JsArray.createArray().cast();
       JsArray<LineWidget> lineWidgets = getLineWidgets();
+      ScopeList scopes = new ScopeList(this);
       for (int i = 0; i<lineWidgets.length(); i++)
       {
          LineWidget lineWidget = lineWidgets.get(i);
          if (lineWidget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
          {
             ChunkDefinition chunk = lineWidget.getData();
-            chunks.push(chunk.withRow(lineWidget.getRow()));
+            chunks.push(chunk.with(lineWidget.getRow(), 
+                  TextEditingTargetNotebook.getKnitrChunkLabel(
+                        lineWidget.getRow(), this, scopes)));
          }
       }
       

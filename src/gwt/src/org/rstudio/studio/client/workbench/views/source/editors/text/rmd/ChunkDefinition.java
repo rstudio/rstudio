@@ -32,21 +32,23 @@ public class ChunkDefinition extends JavaScriptObject
                                                  boolean visible,
                                                  int expansionState,
                                                  RmdChunkOptions options,
-                                                 String chunkId) /*-{
+                                                 String chunkId,
+                                                 String chunkLabel) /*-{
       return {
         row: row,
         row_count: rowCount,
         visible: visible,
         expansion_state: expansionState,
         options: options,
-        chunk_id: chunkId
+        chunk_id: chunkId,
+        chunk_label: chunkLabel
       };
    }-*/;
    
-   public final ChunkDefinition withRow(int row)
+   public final ChunkDefinition with(int row, String chunkLabel)
    {
       return ChunkDefinition.create(row, getRowCount(), getVisible(), 
-            getExpansionState(), getOptions(), getChunkId());
+            getExpansionState(), getOptions(), getChunkId(), chunkLabel);
    }
    
    public native final int getRow()  /*-{
@@ -69,10 +71,18 @@ public class ChunkDefinition extends JavaScriptObject
       return this.chunk_id;
    }-*/;
    
+   public native final String getChunkLabel() /*-{
+      return this.chunk_label;
+   }-*/;
+   
+   public native final void setChunkLabel(String label) /*-{
+      this.chunk_label = label;
+   }-*/;
+   
    public native final void setExpansionState(int state) /*-{
       this.expansion_state = state;
    }-*/;
-   
+
    public native final RmdChunkOptions getOptions() /*-{
       return this.options || {};
    }-*/;
