@@ -298,7 +298,7 @@ FilePath currentCSIDLPersonalHomePath()
    }
    else
    {
-      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_WARNING_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToString(hr));
       return FilePath();
    }
@@ -321,7 +321,7 @@ FilePath defaultCSIDLPersonalHomePath()
    }
    else
    {
-      LOG_WARNING_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_WARNING_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToString(hr));
       return FilePath();
    }
@@ -413,7 +413,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
 
    if (hr != S_OK)
    {
-      LOG_ERROR_MESSAGE("Unable to retreive user home path. HRESULT:  " +
+      LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
                         safe_convert::numberToString(hr));
       return FilePath();
    }
