@@ -38,6 +38,19 @@
       
       cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
 
+      # we simulate the viewer pane in the editor surface; create a sizing
+      # policy which fills this space but keeps the widget constrained in
+      # other contexts
+      x$sizingPolicy <- htmlwidgets::sizingPolicy(
+        viewer.padding        = 0,
+        viewer.fill           = TRUE,
+        browser.defaultWidth  = 650,
+        browser.defaultHeight = 400,
+        browser.fill          = FALSE,
+        browser.padding       = 0,
+        knitr.defaultWidth    = 650,
+        knitr.defaultHeight   = 400)
+
       # save the widget to HTML 
       htmlwidgets::saveWidget(
          widget = x, 
