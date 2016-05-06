@@ -19,13 +19,21 @@ package java.util;
 import static javaemul.internal.Coercions.ensureInt;
 import static javaemul.internal.InternalPreconditions.checkArgument;
 import static javaemul.internal.InternalPreconditions.checkArraySize;
+import static javaemul.internal.InternalPreconditions.checkCriticalArrayBounds;
 import static javaemul.internal.InternalPreconditions.checkCriticalPositionIndexes;
 import static javaemul.internal.InternalPreconditions.checkElementIndex;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
-import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
 
 import java.io.Serializable;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.IntBinaryOperator;
+import java.util.function.IntFunction;
+import java.util.function.IntToDoubleFunction;
+import java.util.function.IntToLongFunction;
+import java.util.function.IntUnaryOperator;
+import java.util.function.LongBinaryOperator;
 import java.util.function.UnaryOperator;
 
 import javaemul.internal.ArrayHelper;
@@ -129,15 +137,27 @@ public class Arrays {
    * Perform a binary search on a sorted byte array.
    *
    * @param sortedArray byte array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final byte[] sortedArray, final byte key) {
-    int low = 0;
-    int high = sortedArray.length - 1;
+  public static int binarySearch(byte[] sortedArray, int fromIndex, int toIndex, byte key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(byte[] sortedArray, byte key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final byte[] sortedArray, int fromIndex, int toIndex,
+      final byte key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -159,20 +179,32 @@ public class Arrays {
   /**
    * Perform a binary search on a sorted char array.
    *
-   * @param a char array to search
+   * @param sortedArray char array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final char[] a, final char key) {
-    int low = 0;
-    int high = a.length - 1;
+  public static int binarySearch(char[] sortedArray, int fromIndex, int toIndex, char key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(char[] sortedArray, char key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final char[] sortedArray, int fromIndex, int toIndex,
+      final char key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
-      final char midVal = a[mid];
+      final char midVal = sortedArray[mid];
 
       if (midVal < key) {
         low = mid + 1;
@@ -191,15 +223,27 @@ public class Arrays {
    * Perform a binary search on a sorted double array.
    *
    * @param sortedArray double array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final double[] sortedArray, final double key) {
-    int low = 0;
-    int high = sortedArray.length - 1;
+  public static int binarySearch(double[] sortedArray, int fromIndex, int toIndex, double key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(double[] sortedArray, double key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final double[] sortedArray, int fromIndex, int toIndex,
+      final double key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -227,15 +271,27 @@ public class Arrays {
    * to/from double may change the values slightly.
    *
    * @param sortedArray float array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final float[] sortedArray, final float key) {
-    int low = 0;
-    int high = sortedArray.length - 1;
+  public static int binarySearch(float[] sortedArray, int fromIndex, int toIndex, float key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(float[] sortedArray, float key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final float[] sortedArray, int fromIndex, int toIndex,
+      final float key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -258,15 +314,27 @@ public class Arrays {
    * Perform a binary search on a sorted int array.
    *
    * @param sortedArray int array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final int[] sortedArray, final int key) {
-    int low = 0;
-    int high = sortedArray.length - 1;
+  public static int binarySearch(int[] sortedArray, int fromIndex, int toIndex, int key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(int[] sortedArray, int key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final int[] sortedArray, int fromIndex, int toIndex,
+      final int key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -295,15 +363,27 @@ public class Arrays {
    * representable as doubles.
    *
    * @param sortedArray long array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final long[] sortedArray, final long key) {
-    int low = 0;
-    int high = sortedArray.length - 1;
+  public static int binarySearch(long[] sortedArray, int fromIndex, int toIndex, long key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(long[] sortedArray, long key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final long[] sortedArray, int fromIndex, int toIndex,
+      final long key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -326,6 +406,8 @@ public class Arrays {
    * Perform a binary search on a sorted object array, using natural ordering.
    *
    * @param sortedArray object array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
@@ -334,23 +416,39 @@ public class Arrays {
    * @throws ClassCastException if <code>key</code> is not comparable to
    *           <code>sortedArray</code>'s elements.
    */
-  public static int binarySearch(final Object[] sortedArray, final Object key) {
-    return binarySearch(sortedArray, key, Comparators.natural());
+  public static int binarySearch(Object[] sortedArray, int fromIndex, int toIndex, Object key) {
+    return binarySearch(sortedArray, fromIndex, toIndex, key, null);
+  }
+
+  public static int binarySearch(Object[] sortedArray, Object key) {
+    return binarySearch(sortedArray, key, null);
   }
 
   /**
    * Perform a binary search on a sorted short array.
    *
    * @param sortedArray short array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    */
-  public static int binarySearch(final short[] sortedArray, final short key) {
-    int low = 0;
-    int high = sortedArray.length - 1;
+  public static int binarySearch(short[] sortedArray, int fromIndex, int toIndex, short key) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key);
+  }
+
+  public static int binarySearch(short[] sortedArray, short key) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key);
+  }
+
+  private static int binarySearch0(final short[] sortedArray, int fromIndex, int toIndex,
+      final short key) {
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -374,6 +472,8 @@ public class Arrays {
    * comparison function.
    *
    * @param sortedArray object array to search
+   * @param fromIndex index of the first element to search
+   * @param toIndex index (exclusive) of the last element to search
    * @param key value to search for
    * @param comparator comparision function, <code>null</code> indicates
    *          <i>natural ordering</i> should be used.
@@ -385,13 +485,23 @@ public class Arrays {
    *           <code>sortedArray</code>'s elements cannot be compared by
    *           <code>comparator</code>.
    */
-  public static <T> int binarySearch(final T[] sortedArray, final T key,
+  public static <T> int binarySearch(T[] sortedArray, int fromIndex, int toIndex, T key,
       Comparator<? super T> comparator) {
+    checkCriticalArrayBounds(fromIndex, toIndex, sortedArray.length);
+    return binarySearch0(sortedArray, fromIndex, toIndex, key, comparator);
+  }
+
+  public static <T> int binarySearch(T[] sortedArray, T key, Comparator<? super T> c) {
+    return binarySearch0(sortedArray, 0, sortedArray.length, key, c);
+  }
+
+  private static <T> int binarySearch0(final T[] sortedArray, int fromIndex, int toIndex,
+      final T key, Comparator<? super T> comparator) {
     if (comparator == null) {
       comparator = Comparators.natural();
     }
-    int low = 0;
-    int high = sortedArray.length - 1;
+    int low = fromIndex;
+    int high = toIndex - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) >> 1);
@@ -788,93 +898,138 @@ public class Arrays {
   }
 
   public static void fill(boolean[] a, boolean val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(boolean[] a, int fromIndex, int toIndex, boolean val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(boolean[] a, int fromIndex, int toIndex, boolean val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(byte[] a, byte val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(byte[] a, int fromIndex, int toIndex, byte val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(byte[] a, int fromIndex, int toIndex, byte val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(char[] a, char val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(char[] a, int fromIndex, int toIndex, char val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(char[] a, int fromIndex, int toIndex, char val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(double[] a, double val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(double[] a, int fromIndex, int toIndex, double val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(double[] a, int fromIndex, int toIndex, double val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(float[] a, float val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(float[] a, int fromIndex, int toIndex, float val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(float[] a, int fromIndex, int toIndex, float val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(int[] a, int val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(int[] a, int fromIndex, int toIndex, int val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(int[] a, int fromIndex, int toIndex, int val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(long[] a, int fromIndex, int toIndex, long val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(long[] a, int fromIndex, int toIndex, long val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(long[] a, long val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(Object[] a, int fromIndex, int toIndex, Object val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(Object[] a, int fromIndex, int toIndex, Object val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(Object[] a, Object val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static void fill(short[] a, int fromIndex, int toIndex, short val) {
+    checkCriticalArrayBounds(fromIndex, toIndex, a.length);
+    fill0(a, fromIndex, toIndex, val);
+  }
+
+  private static void fill0(short[] a, int fromIndex, int toIndex, short val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
   }
 
   public static void fill(short[] a, short val) {
-    fill(a, 0, a.length, val);
+    fill0(a, 0, a.length, val);
   }
 
   public static int hashCode(boolean[] a) {
@@ -985,12 +1140,132 @@ public class Arrays {
     return hashCode;
   }
 
+  public static void parallelPrefix(double[] array, DoubleBinaryOperator op) {
+    parallelPrefix0(array, 0, array.length, op);
+  }
+
+  public static void parallelPrefix(double[] array, int fromIndex, int toIndex,
+      DoubleBinaryOperator op) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
+    parallelPrefix0(array, fromIndex, toIndex, op);
+  }
+
+  private static void parallelPrefix0(double[] array, int fromIndex, int toIndex,
+      DoubleBinaryOperator op) {
+    checkNotNull(op);
+    double acc = array[fromIndex];
+    for (int i = fromIndex + 1; i < toIndex; i++) {
+      array[i] = acc = op.applyAsDouble(acc, array[i]);
+    }
+  }
+
+  public static void parallelPrefix(int[] array, IntBinaryOperator op) {
+    parallelPrefix0(array, 0, array.length, op);
+  }
+
+  public static void parallelPrefix(int[] array, int fromIndex, int toIndex,
+      IntBinaryOperator op) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
+    parallelPrefix0(array, fromIndex, toIndex, op);
+  }
+
+  private static void parallelPrefix0(int[] array, int fromIndex, int toIndex,
+      IntBinaryOperator op) {
+    checkNotNull(op);
+    int acc = array[fromIndex];
+    for (int i = fromIndex + 1; i < toIndex; i++) {
+      array[i] = acc = op.applyAsInt(acc, array[i]);
+    }
+  }
+
+  public static void parallelPrefix(long[] array, LongBinaryOperator op) {
+    parallelPrefix0(array, 0, array.length, op);
+  }
+
+  public static void parallelPrefix(long[] array, int fromIndex, int toIndex,
+      LongBinaryOperator op) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
+    parallelPrefix0(array, fromIndex, toIndex, op);
+  }
+
+  private static void parallelPrefix0(long[] array, int fromIndex, int toIndex,
+      LongBinaryOperator op) {
+    checkNotNull(op);
+    long acc = array[fromIndex];
+    for (int i = fromIndex + 1; i < toIndex; i++) {
+      array[i] = acc = op.applyAsLong(acc, array[i]);
+    }
+  }
+
+  public static <T> void parallelPrefix(T[] array, BinaryOperator<T> op) {
+    parallelPrefix0(array, 0, array.length, op);
+  }
+
+  public static <T> void parallelPrefix(T[] array, int fromIndex, int toIndex,
+      BinaryOperator<T> op) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
+    parallelPrefix0(array, fromIndex, toIndex, op);
+  }
+
+  private static <T> void parallelPrefix0(T[] array, int fromIndex, int toIndex,
+      BinaryOperator<T> op) {
+    checkNotNull(op);
+    T acc = array[fromIndex];
+    for (int i = fromIndex + 1; i < toIndex; i++) {
+      array[i] = acc = op.apply(acc, array[i]);
+    }
+  }
+
+  public static <T> void setAll(T[] array, IntFunction<? extends T> generator) {
+    checkNotNull(generator);
+    for (int i = 0; i < array.length; i++) {
+      array[i] = generator.apply(i);
+    }
+  }
+
+  public static void setAll(double[] array, IntToDoubleFunction generator) {
+    checkNotNull(generator);
+    for (int i = 0; i < array.length; i++) {
+      array[i] = generator.applyAsDouble(i);
+    }
+  }
+
+  public static void setAll(int[] array, IntUnaryOperator generator) {
+    checkNotNull(generator);
+    for (int i = 0; i < array.length; i++) {
+      array[i] = generator.applyAsInt(i);
+    }
+  }
+
+  public static void setAll(long[] array, IntToLongFunction generator) {
+    checkNotNull(generator);
+    for (int i = 0; i < array.length; i++) {
+      array[i] = generator.applyAsLong(i);
+    }
+  }
+
+  public static <T> void parallelSetAll(T[] array, IntFunction<? extends T> generator) {
+    setAll(array, generator);
+  }
+
+  public static void parallelSetAll(double[] array, IntToDoubleFunction generator) {
+    setAll(array, generator);
+  }
+
+  public static void parallelSetAll(int[] array, IntUnaryOperator generator) {
+    setAll(array, generator);
+  }
+
+  public static void parallelSetAll(long[] array, IntToLongFunction generator) {
+    setAll(array, generator);
+  }
+
   public static void sort(byte[] array) {
     nativeNumberSort(array);
   }
 
   public static void sort(byte[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -999,7 +1274,7 @@ public class Arrays {
   }
 
   public static void sort(char[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1008,7 +1283,7 @@ public class Arrays {
   }
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1017,7 +1292,7 @@ public class Arrays {
   }
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1026,7 +1301,7 @@ public class Arrays {
   }
 
   public static void sort(int[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1035,16 +1310,16 @@ public class Arrays {
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeLongSort(array, fromIndex, toIndex);
   }
 
   public static void sort(Object[] array) {
-    mergeSort(array, 0, array.length, Comparators.natural());
+    sort(array, null);
   }
 
-  public static void sort(Object[] x, int fromIndex, int toIndex) {
-    mergeSort(x, fromIndex, toIndex, Comparators.natural());
+  public static void sort(Object[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex, null);
   }
 
   public static void sort(short[] array) {
@@ -1052,7 +1327,7 @@ public class Arrays {
   }
 
   public static void sort(short[] array, int fromIndex, int toIndex) {
-    checkPositionIndexes(fromIndex, toIndex, array.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1062,8 +1337,82 @@ public class Arrays {
 
   public static <T> void sort(T[] x, int fromIndex, int toIndex,
       Comparator<? super T> c) {
-    checkPositionIndexes(fromIndex, toIndex, x.length);
+    checkCriticalArrayBounds(fromIndex, toIndex, x.length);
     mergeSort(x, fromIndex, toIndex, c);
+  }
+
+  public static void parallelSort(byte[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(byte[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static void parallelSort(char[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(char[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static void parallelSort(double[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(double[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static void parallelSort(float[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(float[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static void parallelSort(int[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(int[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static void parallelSort(long[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(long[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static void parallelSort(short[] array) {
+    sort(array);
+  }
+
+  public static void parallelSort(short[] array, int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static <T extends Comparable<? super T>> void parallelSort(T[] array) {
+    sort(array);
+  }
+
+  public static <T> void parallelSort(T[] array, Comparator<? super T> c) {
+    sort(array, c);
+  }
+
+  public static <T extends Comparable<? super T>> void parallelSort(T[] array,
+      int fromIndex, int toIndex) {
+    sort(array, fromIndex, toIndex);
+  }
+
+  public static <T> void parallelSort(T[] array, int fromIndex, int toIndex,
+      Comparator<? super T> c) {
+    sort(array, fromIndex, toIndex, c);
   }
 
   public static Spliterator.OfDouble spliterator(double[] array) {
