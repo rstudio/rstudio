@@ -76,23 +76,32 @@ public class ComparatorTest extends EmulTestBase {
     // pre-sorted lists to test against, named for which char (1-indexed) they are sorted on
     String[] first = {"1b3", "2a1", "3c2"};
     String[] second = {"2a1", "1b3", "3c2"};
-    String[] secondReversed = {"3c2", "1b3", "2a1"};
     String[] third = {"2a1", "3c2", "1b3"};
 
     // keyextractor
     assertSortedEquals(first, strings, Comparator.comparing(Function.identity()));
+    Comparator<String> comparing = Comparator.comparing(Function.identity());
+    assertSortedEquals(reverse(first), strings, comparing.reversed());
     assertSortedEquals(second, strings, Comparator.comparing(a -> a.substring(1)));
     assertSortedEquals(third, strings, Comparator.comparing(a -> a.substring(2)));
 
     // keyextractor, keycomparator
-    assertSortedEquals(secondReversed, strings, Comparator.comparing(a -> a.substring(1), Comparator.<String>reverseOrder()));
+    assertSortedEquals(reverse(second), strings, Comparator.comparing(a -> a.substring(1), Comparator.reverseOrder()));
+    comparing = Comparator.comparing(a -> a.substring(1));
+    assertSortedEquals(reverse(second), strings, comparing.reversed());
 
     // double key extractor
-    assertSortedEquals(third, strings, Comparator.comparingDouble(a -> Double.parseDouble(a.substring(2))));
+    comparing = Comparator.comparingDouble(a -> Double.parseDouble(a.substring(2)));
+    assertSortedEquals(third, strings, comparing);
+    assertSortedEquals(reverse(third), strings, comparing.reversed());
     // int key extractor
-    assertSortedEquals(third, strings, Comparator.comparingInt(a -> Integer.parseInt(a.substring(2))));
+    comparing = Comparator.comparingInt(a -> Integer.parseInt(a.substring(2)));
+    assertSortedEquals(third, strings, comparing);
+    assertSortedEquals(reverse(third), strings, comparing.reversed());
     // long key extractor
-    assertSortedEquals(third, strings, Comparator.comparingLong(a -> Long.parseLong(a.substring(2))));
+    comparing = Comparator.comparingLong(a -> Long.parseLong(a.substring(2)));
+    assertSortedEquals(third, strings, comparing);
+    assertSortedEquals(reverse(third), strings, comparing.reversed());
   }
 
   public void testNullsFirst() {
@@ -127,5 +136,14 @@ public class ComparatorTest extends EmulTestBase {
     String[] presortedArray = presort.get();
     Arrays.sort(presortedArray, comparator);
     assertEquals(expected, presortedArray);
+  }
+
+  private static String[] reverse(String[] array) {
+    int length = array.length;
+    String[] reversed = new String[length];
+    for (int i = 0, j = length - 1; i < length; ++i, --j) {
+      reversed[i] = array[j];
+    }
+    return reversed;
   }
 }

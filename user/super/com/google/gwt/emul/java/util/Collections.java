@@ -199,15 +199,6 @@ public class Collections {
     }
   }
 
-  private static final class ReverseComparator implements Comparator<Comparable<Object>> {
-    static final ReverseComparator INSTANCE = new ReverseComparator();
-
-    @Override
-    public int compare(Comparable<Object> o1, Comparable<Object> o2) {
-      return o2.compareTo(o1);
-    }
-  }
-
   private static final class SetFromMap<E> extends AbstractSet<E>
       implements Serializable {
 
@@ -963,9 +954,7 @@ public class Collections {
      * in the JDK docs for non-RandomAccess Lists. Until GWT provides a
      * LinkedList, this shouldn't be an issue.
      */
-    if (comparator == null) {
-      comparator = Comparators.natural();
-    }
+    comparator = Comparators.nullToNaturalOrder(comparator);
     int low = 0;
     int high = sortedList.size() - 1;
 
@@ -1091,9 +1080,7 @@ public class Collections {
   public static <T> T max(Collection<? extends T> coll,
       Comparator<? super T> comp) {
 
-    if (comp == null) {
-      comp = Comparators.natural();
-    }
+    comp = Comparators.nullToNaturalOrder(comp);
 
     Iterator<? extends T> it = coll.iterator();
 
@@ -1165,19 +1152,11 @@ public class Collections {
 
   @SuppressWarnings("unchecked")
   public static <T> Comparator<T> reverseOrder() {
-    return (Comparator<T>) ReverseComparator.INSTANCE;
+    return (Comparator<T>) Comparator.reverseOrder();
   }
 
-  public static <T> Comparator<T> reverseOrder(final Comparator<T> cmp) {
-    if (cmp == null) {
-      return reverseOrder();
-    }
-    return new Comparator<T>() {
-      @Override
-      public int compare(T t1, T t2) {
-        return cmp.compare(t2, t1);
-      }
-    };
+  public static <T> Comparator<T> reverseOrder(Comparator<T> cmp) {
+    return cmp == null ? reverseOrder() : cmp.reversed();
   }
 
   /**

@@ -70,11 +70,8 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   }
 
   public PriorityQueue(int initialCapacity, Comparator<? super E> cmp) {
-    heap = new ArrayList<E>(initialCapacity);
-    if (cmp == null) {
-      cmp = Comparators.natural();
-    }
-    this.cmp = cmp;
+    heap = new ArrayList<>(initialCapacity);
+    this.cmp = Comparators.nullToNaturalOrder(cmp);
   }
 
   public PriorityQueue(Comparator<? super E> comparator) {
@@ -112,7 +109,7 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   }
 
   public Comparator<? super E> comparator() {
-    return cmp == Comparators.natural() ? null : cmp;
+    return Comparators.naturalOrderToNull(cmp);
   }
 
   @Override
@@ -123,11 +120,6 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   @Override
   public boolean containsAll(Collection<?> c) {
     return heap.containsAll(c);
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return heap.isEmpty();
   }
 
   @Override
@@ -158,19 +150,15 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
 
   @Override
   public E peek() {
-    if (heap.size() == 0) {
-      return null;
-    }
-    return heap.get(0);
+    return heap.isEmpty() ? null : heap.get(0);
   }
 
   @Override
   public E poll() {
-    if (heap.size() == 0) {
-      return null;
+    E value = peek();
+    if (value != null) {
+      removeAtIndex(0);
     }
-    E value = heap.get(0);
-    removeAtIndex(0);
     return value;
   }
 
@@ -222,14 +210,9 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     return heap.toArray(a);
   }
 
-  @Override
-  public String toString() {
-    return heap.toString();
-  }
-
   /**
    * Make the subtree rooted at <code>node</code> a valid heap. O(n) time
-   * 
+   *
    * @param node
    */
   protected void makeHeap(int node) {

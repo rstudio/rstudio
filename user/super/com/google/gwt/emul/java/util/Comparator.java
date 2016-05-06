@@ -39,7 +39,7 @@ public interface Comparator<T> {
   boolean equals(Object other);
 
   default Comparator<T> reversed() {
-    return (a, b) -> compare(b, a);
+    return new Comparators.ReversedComparator<T>(this);
   }
 
   default Comparator<T> thenComparing(Comparator<? super T> other) {
@@ -104,7 +104,7 @@ public interface Comparator<T> {
   }
 
   static <T extends Comparable<? super T>> Comparator<T> naturalOrder() {
-    return Comparators.natural();
+    return Comparators.naturalOrder();
   }
 
   static <T> Comparator<T> nullsFirst(Comparator<? super T> comparator) {
@@ -116,6 +116,6 @@ public interface Comparator<T> {
   }
 
   static <T extends Comparable<? super T>> Comparator<T> reverseOrder() {
-    return Comparators.reverseOrder();
+    return Comparators.reverseNaturalOrder();
   }
 }

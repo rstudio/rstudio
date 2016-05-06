@@ -322,6 +322,32 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     } else {
       assertEquals(getComparator(), sortedMap.comparator());
     }
+
+    TreeMap<K, V> treeMap = new TreeMap<>();
+    TreeMap<K, V> secondTreeMap = new TreeMap<>(treeMap);
+    assertNull(treeMap.comparator());
+    assertNull(secondTreeMap.comparator());
+
+    treeMap = new TreeMap<>((Comparator<? super K>) null);
+    secondTreeMap = new TreeMap<>(treeMap);
+    assertNull(treeMap.comparator());
+    assertNull(secondTreeMap.comparator());
+
+    final Comparator<? super K> customComparator = new Comparator<K>() {
+      @Override
+      public int compare(K o1, K o2) {
+        return o1.compareTo(o2);
+      }
+    };
+    treeMap = new TreeMap<>(customComparator);
+    secondTreeMap = new TreeMap<>(treeMap);
+    assertSame(customComparator, treeMap.comparator());
+    assertSame(customComparator, secondTreeMap.comparator());
+
+    treeMap = new TreeMap<>(new HashMap<K, V>());
+    secondTreeMap = new TreeMap<>(treeMap);
+    assertNull(treeMap.comparator());
+    assertNull(secondTreeMap.comparator());
   }
 
   /**

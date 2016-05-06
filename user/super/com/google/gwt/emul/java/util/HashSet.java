@@ -103,9 +103,4 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable,
     return map.size();
   }
 
-  @Override
-  public String toString() {
-    return map.keySet().toString();
-  }
-
 }

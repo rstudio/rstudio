@@ -15,6 +15,7 @@
  */
 package com.google.gwt.emultest.java8.util;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -22,6 +23,13 @@ import java.util.TreeMap;
  * Tests for java.util.TreeMap Java 8 API emulation.
  */
 public class TreeMapTest extends AbstractJava8MapTest {
+
+  public void testComparator() {
+    TreeMap<Integer, Object> treeMap = new TreeMap<>(Comparator.naturalOrder());
+    TreeMap<Integer, Object> secondTreeMap = new TreeMap<>(treeMap);
+    assertSame(Comparator.naturalOrder(), treeMap.comparator());
+    assertSame(Comparator.naturalOrder(), secondTreeMap.comparator());
+  }
 
   @Override
   protected Map<String, String> createMap() {
