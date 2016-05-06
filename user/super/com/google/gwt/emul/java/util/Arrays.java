@@ -25,14 +25,16 @@ import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkPositionIndexes;
 
 import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 import javaemul.internal.ArrayHelper;
 import javaemul.internal.LongCompareHolder;
 
 /**
- * Utility methods related to native arrays. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html">[Sun
- * docs]</a>
+ * Utility methods related to native arrays.
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html">
+ * the official Java API doc</a> for details.
  */
 public class Arrays {
 
@@ -56,9 +58,25 @@ public class Arrays {
     }
 
     @Override
+    public void forEach(Consumer<? super E> consumer) {
+      checkNotNull(consumer);
+      for (E e : array) {
+        consumer.accept(e);
+      }
+    }
+
+    @Override
     public E get(int index) {
       checkElementIndex(index, size());
       return array[index];
+    }
+
+    @Override
+    public void replaceAll(UnaryOperator<E> operator) {
+      checkNotNull(operator);
+      for (int i = 0; i < array.length; i++) {
+        array[i] = operator.apply(array[i]);
+      }
     }
 
     @Override
@@ -71,6 +89,11 @@ public class Arrays {
     @Override
     public int size() {
       return array.length;
+    }
+
+    @Override
+    public void sort(Comparator<? super E> c) {
+      Arrays.sort(array, 0, array.length, c);
     }
 
     @Override

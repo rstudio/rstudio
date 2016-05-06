@@ -15,8 +15,11 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import static java.util.Arrays.asList;
+
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -124,6 +127,20 @@ public class ArrayListTest extends ListTestBase {
 
     l.removeRange(0, 1);
     assertEquals(0, l.size());
+  }
+
+  public void testSort() {
+    ArrayList<String> list = new ArrayList<>();
+    list.sort(null);
+
+    Collections.addAll(list, "b", "a", "c");
+    list.sort(null);
+    assertEquals(asList("a", "b", "c"), list);
+
+    list = new ArrayList<>();
+    Collections.addAll(list, "b", "a", "c");
+    list.sort(Collections.reverseOrder());
+    assertEquals(asList("c", "b", "a"), list);
   }
 
   @Override

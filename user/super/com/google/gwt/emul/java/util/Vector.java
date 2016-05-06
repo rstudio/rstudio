@@ -18,12 +18,15 @@ package java.util;
 import static javaemul.internal.InternalPreconditions.checkElement;
 
 import java.io.Serializable;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * To keep performance characteristics in line with Java community expectations,
- * <code>Vector</code> is a wrapper around <code>ArrayList</code>. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Vector.html">[Sun
- * docs]</a>
+ * <code>Vector</code> is a wrapper around <code>ArrayList</code>.
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Vector.html">
+ * the official Java API doc</a> for details.
  *
  * @param <E> element type.
  */
@@ -135,6 +138,11 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   @Override
+  public void forEach(Consumer<? super E> consumer) {
+    arrayList.forEach(consumer);
+  }
+
+  @Override
   public E get(int index) {
     checkArrayElementIndex(index, size());
     return arrayList.get(index);
@@ -203,6 +211,16 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   @Override
+  public boolean removeIf(Predicate<? super E> filter) {
+    return arrayList.removeIf(filter);
+  }
+
+  @Override
+  public void replaceAll(UnaryOperator<E> operator) {
+    arrayList.replaceAll(operator);
+  }
+
+  @Override
   public E set(int index, E elem) {
     checkArrayElementIndex(index, size());
     return arrayList.set(index, elem);
@@ -220,6 +238,11 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   @Override
   public int size() {
     return arrayList.size();
+  }
+
+  @Override
+  public void sort(Comparator<? super E> c) {
+    arrayList.sort(c);
   }
 
   @Override

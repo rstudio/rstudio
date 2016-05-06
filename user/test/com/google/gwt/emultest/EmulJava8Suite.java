@@ -16,12 +16,15 @@
 package com.google.gwt.emultest;
 
 import com.google.gwt.emultest.java8.math.BigIntegerConvertTest;
+import com.google.gwt.emultest.java8.util.ArrayListTest;
 import com.google.gwt.emultest.java8.util.ComparatorTest;
 import com.google.gwt.emultest.java8.util.DoubleSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.HashMapTest;
 import com.google.gwt.emultest.java8.util.IdentityHashMapTest;
 import com.google.gwt.emultest.java8.util.IntSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.LinkedHashMapTest;
+import com.google.gwt.emultest.java8.util.LinkedListTest;
+import com.google.gwt.emultest.java8.util.ListTest;
 import com.google.gwt.emultest.java8.util.LongSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.MapEntryTest;
 import com.google.gwt.emultest.java8.util.MapTest;
@@ -33,6 +36,7 @@ import com.google.gwt.emultest.java8.util.PrimitiveIteratorTest;
 import com.google.gwt.emultest.java8.util.SpliteratorsTest;
 import com.google.gwt.emultest.java8.util.StringJoinerTest;
 import com.google.gwt.emultest.java8.util.TreeMapTest;
+import com.google.gwt.emultest.java8.util.VectorTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -49,6 +53,10 @@ public class EmulJava8Suite {
     suite.addTestSuite(BigIntegerConvertTest.class);
 
     //-- java.util
+    suite.addTestSuite(ArrayListTest.class);
+    suite.addTestSuite(LinkedListTest.class);
+    suite.addTestSuite(ListTest.class);
+    suite.addTestSuite(VectorTest.class);
     suite.addTestSuite(ComparatorTest.class);
     suite.addTestSuite(MapTest.class);
     suite.addTestSuite(MapEntryTest.class);

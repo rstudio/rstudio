@@ -23,9 +23,9 @@ import static javaemul.internal.InternalPreconditions.checkNotNull;
 import java.io.Serializable;
 
 /**
- * Utility methods that operate on collections. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collections.html">[Sun
- * docs]</a>
+ * Utility methods that operate on collections.
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Collections.html">
+ * the official Java API doc</a> for details.
  */
 public class Collections {
 
@@ -1276,14 +1276,11 @@ public class Collections {
   }
 
   public static <T> void sort(List<T> target) {
-    sort(target, null);
+    target.sort(null);
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> void sort(List<T> target, Comparator<? super T> c) {
-    Object[] x = target.toArray();
-    Arrays.sort(x, (Comparator<Object>) c);
-    replaceContents(target, x);
+    target.sort(c);
   }
 
   public static void swap(List<?> list, int i, int j) {
@@ -1342,22 +1339,6 @@ public class Collections {
       hashCode = ensureInt(hashCode); // make sure we don't overflow
     }
     return hashCode;
-  }
-
-  /**
-   * Replace contents of a list from an array.
-   *
-   * @param <T> element type
-   * @param target list to replace contents from an array
-   * @param x an Object array which can contain only T instances
-   */
-  @SuppressWarnings("unchecked")
-  private static <T> void replaceContents(List<T> target, Object[] x) {
-    int size = target.size();
-    assert (x.length == size);
-    for (int i = 0; i < size; i++) {
-      target.set(i, (T) x[i]);
-    }
   }
 
   private static <T> void swapImpl(List<T> list, int i, int j) {

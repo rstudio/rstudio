@@ -15,10 +15,14 @@
  */
 package java.util;
 
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+
+import java.util.function.Predicate;
+
 /**
- * General-purpose interface for storing collections of objects. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collection.html">[Sun
- * docs]</a>
+ * General-purpose interface for storing collections of objects.
+ * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html">
+ * the official Java API doc</a> for details.
  *
  * @param <E> element type
  */
@@ -48,6 +52,18 @@ public interface Collection<E> extends Iterable<E> {
   boolean remove(Object o);
 
   boolean removeAll(Collection<?> c);
+
+  default boolean removeIf(Predicate<? super E> filter) {
+    checkNotNull(filter);
+    boolean removed = false;
+    for (Iterator<E> it = iterator(); it.hasNext();) {
+      if (filter.test(it.next())) {
+        it.remove();
+        removed = true;
+      }
+    }
+    return removed;
+  }
 
   boolean retainAll(Collection<?> c);
 
