@@ -18,6 +18,7 @@ package com.google.gwt.emultest.java.util;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
@@ -32,6 +33,40 @@ public class PriorityQueueTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
+  }
+
+  public void testAdd() {
+    PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
+
+    try {
+      queue.add(null);
+    } catch (NullPointerException expected) {
+    }
+
+    queue.add(1);
+    assertTrue(Arrays.asList(1).containsAll(queue));
+    queue.add(2);
+    assertTrue(Arrays.asList(1, 2).containsAll(queue));
+  }
+
+  public void testAddAll() {
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+    try {
+      queue.addAll(queue);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    queue = new PriorityQueue<>();
+    try {
+      queue.addAll(Arrays.asList(1, null));
+      fail();
+    } catch (NullPointerException expected) {
+    }
+
+    queue = new PriorityQueue<>();
+    queue.addAll(Arrays.asList(2, 1, 3));
+    assertTrue(Arrays.asList(1, 2, 3).containsAll(queue));
   }
 
   public void testBasic() {
@@ -136,18 +171,69 @@ public class PriorityQueueTest extends GWTTestCase {
     assertEquals(13, pq.remove().intValue());
     assertTrue(pq.isEmpty());
   }
-  
-  public void testPollRemove() {
-    PriorityQueue<Integer> pq = new PriorityQueue<Integer>();
-    try {
-      pq.remove();
-      fail("Expected NoSuchElementException");
-    } catch (NoSuchElementException e) {
-      // expected
-    }
-    assertNull(pq.poll());
+
+  public void testContains() {
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+
+    assertFalse(queue.contains(null));
+
+    queue.add(3);
+    queue.add(1);
+    queue.add(2);
+    assertTrue(queue.contains(1));
+    assertTrue(queue.contains(2));
+    assertTrue(queue.contains(3));
+    assertFalse(queue.contains(4));
   }
   
+  public void testPeekElement() {
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+    try {
+      queue.element();
+      fail();
+    } catch (NoSuchElementException expected) {
+    }
+    assertNull(queue.peek());
+
+    queue.add(3);
+    queue.add(1);
+    queue.add(2);
+    assertEquals(1, (int) queue.element());
+    assertEquals(1, (int) queue.peek());
+    assertEquals(3, queue.size());
+  }
+
+  public void testPollRemove() {
+    PriorityQueue<Integer> queue = new PriorityQueue<>();
+    try {
+      queue.remove();
+      fail();
+    } catch (NoSuchElementException expected) {
+    }
+    assertNull(queue.poll());
+
+    queue.add(3);
+    queue.add(1);
+    queue.add(2);
+    assertEquals(1, (int) queue.remove());
+    assertEquals(2, queue.size());
+    assertEquals(2, (int) queue.remove());
+    assertEquals(1, queue.size());
+    assertEquals(3, (int) queue.remove());
+    assertTrue(queue.isEmpty());
+
+    queue = new PriorityQueue<>();
+    queue.add(1);
+    queue.add(2);
+    queue.add(3);
+    assertEquals(1, (int) queue.poll());
+    assertEquals(2, queue.size());
+    assertEquals(2, (int) queue.poll());
+    assertEquals(1, queue.size());
+    assertEquals(3, (int) queue.poll());
+    assertTrue(queue.isEmpty());
+  }
+
   private void addArray(Collection<Integer> col, int... values) {
     for (int val : values) {
       col.add(val);

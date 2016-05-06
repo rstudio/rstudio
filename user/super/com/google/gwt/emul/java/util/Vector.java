@@ -78,6 +78,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean addAll(int index, Collection<? extends E> c) {
+    checkArrayElementIndex(index, size() + 1);
     return arrayList.addAll(index, c);
   }
 
