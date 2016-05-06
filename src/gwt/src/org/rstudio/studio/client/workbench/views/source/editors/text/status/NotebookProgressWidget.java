@@ -33,7 +33,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -101,8 +100,8 @@ public class NotebookProgressWidget extends Composite
    
    public void setPercent(String chunkName, int percent)
    {
+      // we don't currently display the chunk name anywhere
       percent_ = percent;
-      chunkAnchor_.setText(chunkName);
       updateProgressBar(true);
    }
    
@@ -156,21 +155,7 @@ public class NotebookProgressWidget extends Composite
 
       // connect native click handler
       progressBar_.addDomHandler(handler, MouseDownEvent.getType());
-      chunkAnchor_.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
 
-            ClickEvent.fireNativeEvent(
-                  Document.get().createClickEvent(0, 0, 0, 0, 0, false, false, 
-                        false, false),
-                  manager_);
-         }
-      });
-      
       interruptButton_.addDomHandler(new MouseDownHandler()
       {
          @Override
@@ -228,7 +213,6 @@ public class NotebookProgressWidget extends Composite
               emptyColor.asRgb() + " 100%)");
    }
    
-   @UiField Anchor chunkAnchor_;
    @UiField HTMLPanel progressBar_;
    @UiField HorizontalPanel root_;
    @UiField Label progressLabel_;
