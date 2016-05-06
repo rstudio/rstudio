@@ -212,29 +212,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # chunks in document back to chunks in cache)
    linesProcessed <- 1
    
-   original <- evaluate::evaluate
-   
-   # override 'evaluate' for duration of knit
-   # TODO: this code can be removed once knitr hits CRAN
-   evaluateOverride <- function(...) {
-      knitr::knit_hooks$get("evaluate")(...)
-   }
-   
-   # set and unset 'evaluate' with pre/post hooks
-   preKnit <- format$pre_knit
-   format$pre_knit <- function(...) {
-      result <- if (is.function(preKnit)) preKnit(...)
-      .rs.replaceBinding("evaluate", "evaluate", evaluateOverride)
-      result
-   }
-   
-   postKnit <- format$post_knit
-   format$post_knit <- function(...) {
-      result <- if (is.function(postKnit)) postKnit(...)
-      .rs.replaceBinding("evaluate", "evaluate", original)
-      result
-   }
-   
    # capture + override include hooks -- we always want our
    # chunk hook to fire + include output, but we can make sure
    # that only the annotations are included in such a case
@@ -267,10 +244,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       },
       
       evaluate = function(code, ...) {
+         
          # restore original hook temporarily (so that any sub-calls
          # to 'evaluate' go to the correct function)
-         hook <- evaluate::evaluate
-         .rs.replaceBinding("evaluate", "evaluate", original)
+         evaluate <- .rs.getVar("evaluate")
+         hook <- .rs.replaceBinding("evaluate", "evaluate", evaluate)
          on.exit(.rs.replaceBinding("evaluate", "evaluate", hook), add = TRUE)
          
          linesProcessed <<- linesProcessed + length(code)
@@ -379,6 +357,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # augment hooks
    outputFormat <- .rs.rnb.cacheAugmentKnitrHooks(rnbData, outputFormat)
+   
+   # override evaluate (so that we can use 'evaluate' knitr hook)
+   # TODO: this code can be removed once knitr hits CRAN
+   evaluate <- .rs.replaceBinding("evaluate", "evaluate", function(...) {
+      knitr::knit_hooks$get("evaluate")(...)
+   })
+   .rs.setVar("evaluate", evaluate)
+   on.exit(.rs.replaceBinding("evaluate", "evaluate", evaluate), add = TRUE)
    
    # call render with special format hooks
    rmarkdown::render(input = inputFile,
