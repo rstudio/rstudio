@@ -61,11 +61,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (!file.exists(rmdPath))
       stop("No file at path '", rmdPath, "'")
    
-   if (!file.exists(cachePath))
-      stop("No cache directory at path '", cachePath, "'")
-   
+   # tolerate missing cache (implies there's no chunk outputs)
    rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
-   cachePath <- .rs.normalizePath(cachePath, winslash = "/", mustWork = TRUE)
    rmdContents <- .rs.readLines(rmdPath)
    
    # Begin collecting the units that form the Rnb data structure
@@ -78,12 +75,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # Keep the original source data
    rnbData[["contents"]] <- rmdContents
    
+   # Set up rnbData structure (if we have a cache, these entries will be filled)
+   rnbData[["chunk_info"]] <- list()
+   rnbData[["chunk_data"]] <- list()
+   rnbData[["lib"]] <- list()
+   
+   # early return if we have no cache
+   if (!file.exists(cachePath))
+      return(rnbData)
+   
    # Read the chunk information
    chunkInfoPath <- file.path(cachePath, "chunks.json")
    chunkInfo <- .rs.fromJSON(.rs.readFile(chunkInfoPath))
    names(chunkInfo$chunk_definitions) <-
       unlist(lapply(chunkInfo$chunk_definitions, `[[`, "chunk_id"))
-   
    rnbData[["chunk_info"]] <- chunkInfo
    
    # Read the chunk data
@@ -381,21 +386,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
    
    cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
-   if (!file.exists(cachePath)) {
-      
-      # render our notebook, but don't evaluate any R code
-      format <- rmarkdown::html_notebook()
-      format$knitr$opts_chunk$eval <- FALSE
-      on.exit(knitr::opts_chunk$set(eval = eval), add = TRUE)
-      
-      # create the notebook
-      rmarkdown::render(rmdPath,
-                        output_format = format,
-                        output_file = outputPath)
-      
-      return(TRUE)
-   }
-   
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
    .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
 })
