@@ -12,27 +12,15 @@
       display: block;
    }
    
-   div.progressLabel,
-   a.chunkAnchor
+   div.progressLabel
    {
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
       display: block;
-   }
-   
-   div.progressLabel
-   {
       text-align: right;
       margin-right: 3px;
       top: 1px;
-   }
-   
-   a.chunkAnchor
-   {
-      width: 100px;
-      color: #0000aa;
-      cursor: pointer;
    }
    
    img.interrupt
@@ -49,13 +37,10 @@
    <g:HTMLPanel>
      <g:HorizontalPanel styleName="{style.root}" ui:field="root_">
        <g:Label styleName="{style.progressLabel}" ui:field="progressLabel_"
-                width="100px">
+                width="75px">
        </g:Label>
-       <g:Anchor styleName="{style.chunkAnchor}" ui:field="chunkAnchor_"
-                  width="75px">
-       </g:Anchor>
        <g:HTMLPanel styleName="{style.progressBar}" ui:field="progressBar_"
-                    width="100px">
+                    width="150px">
        </g:HTMLPanel>
        <g:Image styleName="{style.interrupt}" resource="{res.interruptChunk}" 
                 ui:field="interruptButton_">

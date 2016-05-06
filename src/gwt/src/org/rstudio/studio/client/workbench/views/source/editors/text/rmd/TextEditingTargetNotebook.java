@@ -34,6 +34,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
@@ -269,6 +270,18 @@ public class TextEditingTargetNotebook
             String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + 
                                 RmdOutput.NOTEBOOK_EXT;
             
+            createNotebookFromCache(rmdPath, outputPath);
+         }
+      }));
+   }
+   
+   public void createNotebookFromCache(final String rmdPath, final String outputPath)
+   {
+      Command createNotebookCmd = new Command()
+      {
+         @Override
+         public void execute()
+         {
             server_.createNotebookFromCache(
                   rmdPath,
                   outputPath,
@@ -289,7 +302,9 @@ public class TextEditingTargetNotebook
                      }
                   });
          }
-      }));
+      };
+      
+      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", createNotebookCmd);
    }
    
    @Inject
@@ -301,7 +316,8 @@ public class TextEditingTargetNotebook
          UIPrefs prefs,
          Commands commands,
          Binder binder,
-         Provider<SourceWindowManager> pSourceWindowManager)
+         Provider<SourceWindowManager> pSourceWindowManager,
+         DependencyManager dependencyManager)
    {
       events_ = events;
       server_ = server;
@@ -312,6 +328,7 @@ public class TextEditingTargetNotebook
       commands_ = commands;
       binder.bind(commands, this);
       pSourceWindowManager_ = pSourceWindowManager;
+      dependencyManager_ = dependencyManager;
       
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
@@ -782,7 +799,9 @@ public class TextEditingTargetNotebook
          case ChunkChangeEvent.CHANGE_CREATE:
             createChunkOutput(ChunkDefinition.create(event.getRow(), 
                   1, true, ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(),
-                  event.getChunkId()));
+                  event.getChunkId(), 
+                  getKnitrChunkLabel(event.getRow(), docDisplay_, 
+                        new ScopeList(docDisplay_))));
             break;
          case ChunkChangeEvent.CHANGE_REMOVE:
             removeChunk(event.getChunkId());
@@ -976,6 +995,36 @@ public class TextEditingTargetNotebook
       }
    }
 
+   public static String getKnitrChunkLabel(int row, DocDisplay display, 
+         ScopeList scopes)
+   {
+      // find the chunk at this row
+      Scope chunk = display.getCurrentChunk(Position.create(row, 0));
+      if (chunk == null)
+         return "";
+      
+      // if it has a name, just return it
+      String label = chunk.getChunkLabel();
+      if (!StringUtil.isNullOrEmpty(label))
+         return label;
+      
+      // label the first unlabeled chunk as unlabeled-chunk-1, the next as
+      // unlabeled-chunk-2, etc.
+      int pos = 1;
+      for (Scope curScope: scopes)
+      {
+         if (!curScope.isChunk())
+            continue;
+         if (curScope.getPreamble().getRow() == 
+             chunk.getPreamble().getRow())
+            break;
+         if (StringUtil.isNullOrEmpty(curScope.getChunkLabel()))
+            pos++;
+      }
+      
+      return "unnamed-chunk-" + pos;
+   }
+
    // Private methods --------------------------------------------------------
    
    private void cleanCurrentExecChunk()
@@ -1133,7 +1182,9 @@ public class TextEditingTargetNotebook
          if (StringUtil.isNullOrEmpty(newId))
             newId = "c" + StringUtil.makeRandomId(12);
          chunkDef = ChunkDefinition.create(row, 1, true, 
-               ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(), newId);
+               ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(), newId,
+               getKnitrChunkLabel(row, docDisplay_, 
+                                  new ScopeList(docDisplay_)));
          
          if (newId == SETUP_CHUNK_ID)
             chunkDef.getOptions().setInclude(false);
@@ -1616,6 +1667,7 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
+   private DependencyManager dependencyManager_;
    private UIPrefs prefs_;
    private Commands commands_;
 
