@@ -405,7 +405,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    std::wstring appNameWide(appName.begin(), appName.end());
    HRESULT hr = ::SHGetFolderPathAndSubDirW(
          NULL,
-         CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE,
+         CSIDL_APPDATA | CSIDL_FLAG_CREATE,
          NULL,
          SHGFP_TYPE_CURRENT,
          appNameWide.c_str(),
