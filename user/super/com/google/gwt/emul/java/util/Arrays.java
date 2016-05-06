@@ -61,7 +61,7 @@ public class Arrays {
     private E[] array;
 
     ArrayList(E[] array) {
-      assert (array != null);
+      checkNotNull(array);
       this.array = array;
     }
 
@@ -1781,4 +1781,6 @@ public class Arrays {
     nativeNumberSort(temp);
     ArrayHelper.copy(temp, 0, array, fromIndex, toIndex - fromIndex);
   }
+
+  private Arrays() { }
 }

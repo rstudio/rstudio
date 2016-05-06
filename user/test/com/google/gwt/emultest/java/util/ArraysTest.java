@@ -111,6 +111,12 @@ public class ArraysTest extends EmulTestBase {
    */
   @SuppressWarnings("unchecked")
   public void testAsList() {
+    try {
+      Arrays.asList((Object[]) null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
+
     // 0
     Object[] test = {};
     List result = Arrays.asList(test);

@@ -27,6 +27,8 @@ import static javaemul.internal.InternalPreconditions.checkNotNull;
 public abstract class AbstractSet<E> extends AbstractCollection<E> implements
     Set<E> {
 
+  protected AbstractSet() { }
+
   @Override
   public boolean equals(Object o) {
     if (o == this) {

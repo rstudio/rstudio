@@ -1145,17 +1145,18 @@ public class Collections {
     return modified;
   }
 
-  public static <T> void reverse(List<T> l) {
+  @SuppressWarnings("unchecked")
+  public static void reverse(List<?> l) {
     if (l instanceof RandomAccess) {
       for (int iFront = 0, iBack = l.size() - 1; iFront < iBack; ++iFront, --iBack) {
         Collections.swap(l, iFront, iBack);
       }
     } else {
-      ListIterator<T> head = l.listIterator();
-      ListIterator<T> tail = l.listIterator(l.size());
+      ListIterator head = l.listIterator();
+      ListIterator tail = l.listIterator(l.size());
       while (head.nextIndex() < tail.previousIndex()) {
-        T headElem = head.next();
-        T tailElem = tail.previous();
+        Object headElem = head.next();
+        Object tailElem = tail.previous();
         head.set(tailElem);
         tail.set(headElem);
       }
@@ -1232,12 +1233,12 @@ public class Collections {
     }
   }
 
-  public static <T> void shuffle(List<T> list) {
+  public static void shuffle(List<?> list) {
     shuffle(list, RandomHolder.rnd);
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> void shuffle(List<T> list, Random rnd) {
+  public static void shuffle(List<?> list, Random rnd) {
     if (list instanceof RandomAccess) {
       for (int i = list.size() - 1; i >= 1; i--) {
         swapImpl(list, i, rnd.nextInt(i + 1));
@@ -1248,10 +1249,10 @@ public class Collections {
         swapImpl(arr, i, rnd.nextInt(i + 1));
       }
 
-      ListIterator<T> it = list.listIterator();
+      ListIterator it = list.listIterator();
       for (Object e : arr) {
         it.next();
-        it.set((T) e);
+        it.set(e);
       }
     }
   }
@@ -1312,8 +1313,7 @@ public class Collections {
     return new UnmodifiableSortedMap<K, V>(map);
   }
 
-  public static <T> SortedSet<T> unmodifiableSortedSet(
-      SortedSet<? extends T> set) {
+  public static <T> SortedSet<T> unmodifiableSortedSet(SortedSet<T> set) {
     return new UnmodifiableSortedSet<T>(set);
   }
 
@@ -1352,4 +1352,6 @@ public class Collections {
     a[i] = a[j];
     a[j] = obj;
   }
+
+  private Collections() { }
 }
