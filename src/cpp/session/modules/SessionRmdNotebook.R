@@ -247,7 +247,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # restore original hook temporarily (so that any sub-calls
          # to 'evaluate' go to the correct function)
-         evaluate <- .rs.getVar("evaluate")
+         evaluate <- get(".rs.evaluate", envir = .rs.toolsEnv())
          hook <- .rs.replaceBinding("evaluate", "evaluate", evaluate)
          on.exit(.rs.replaceBinding("evaluate", "evaluate", hook), add = TRUE)
          
@@ -363,7 +363,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    evaluate <- .rs.replaceBinding("evaluate", "evaluate", function(...) {
       knitr::knit_hooks$get("evaluate")(...)
    })
-   .rs.setVar("evaluate", evaluate)
+   assign(".rs.evaluate", evaluate, envir = .rs.toolsEnv())
    on.exit(.rs.replaceBinding("evaluate", "evaluate", evaluate), add = TRUE)
    
    # call render with special format hooks
