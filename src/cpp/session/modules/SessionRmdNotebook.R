@@ -398,13 +398,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (!file.exists(cachePath)) {
       
       # render our notebook, but don't evaluate any R code
-      eval <- knitr::opts_chunk$get("eval")
-      knitr::opts_chunk$set(eval = FALSE)
+      format <- rmarkdown::html_notebook()
+      format$knitr$opts_chunk$eval <- FALSE
       on.exit(knitr::opts_chunk$set(eval = eval), add = TRUE)
       
       # create the notebook
-      .rs.createNotebook(inputFile = rmdPath,
-                         outputFile = outputPath)
+      rmarkdown::render(rmdPath,
+                        output_format = format,
+                        output_file = outputPath)
       
       return(TRUE)
    }
