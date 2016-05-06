@@ -1699,7 +1699,7 @@ public class Arrays {
     if (comp == null) {
       comp = Comparators.natural();
     }
-    Object[] temp = copyOfRange(x, fromIndex, toIndex);
+    Object[] temp = ArrayHelper.unsafeClone(x, fromIndex, toIndex);
     mergeSort(temp, x, fromIndex, toIndex, -fromIndex,
         (Comparator<Object>) comp);
   }
