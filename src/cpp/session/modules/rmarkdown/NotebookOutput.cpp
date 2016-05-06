@@ -171,12 +171,6 @@ Error handleChunkOutputRequest(const http::Request& request,
    if (idx != std::string::npos)
       uri = uri.substr(0, idx);
    
-   // strip the querystring from the uri
-   std::string uri = request.uri();
-   size_t idx = uri.find_last_of("?");
-   if (idx != std::string::npos)
-      uri = uri.substr(0, idx);
-   
    // split URI into pieces, extract the document ID, and remove that part of
    // the URI
    std::vector<std::string> parts = algorithm::split(uri, "/");
