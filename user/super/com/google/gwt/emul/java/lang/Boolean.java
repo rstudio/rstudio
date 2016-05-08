@@ -27,15 +27,9 @@ import jsinterop.annotations.JsMethod;
  * Wraps native <code>boolean</code> as an object.
  */
 public final class Boolean implements Comparable<Boolean>, Serializable {
-  /*
-   * TODO: figure out how to not clinit this class on direct field access.
-   */
 
-  // CHECKSTYLE_OFF: These have to be created somewhere.
-  public static final Boolean FALSE = new Boolean(false);
-  public static final Boolean TRUE = new Boolean(true);
-
-  // CHECKSTYLE_ON
+  public static final Boolean FALSE = false;
+  public static final Boolean TRUE = true;
 
   public static final Class<Boolean> TYPE = boolean.class;
 
@@ -69,7 +63,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   public static Boolean valueOf(boolean b) {
-    return b ? TRUE : FALSE;
+    return b ? $createBoolean(true) : $createBoolean(false);
   }
 
   public static Boolean valueOf(String s) {

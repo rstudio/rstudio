@@ -33,7 +33,7 @@ import jsinterop.annotations.JsProperty;
  */
 public class Throwable implements Serializable {
 
-  private static final Object UNITIALIZED = new Object();
+  private static final Object UNINITIALIZED = "__noinit__";
 
   /*
    * NOTE: We cannot use custom field serializers because we need the client and
@@ -55,7 +55,7 @@ public class Throwable implements Serializable {
   private transient boolean writetableStackTrace = true;
 
   @JsProperty
-  private transient Object backingJsObject = UNITIALIZED;
+  private transient Object backingJsObject = UNINITIALIZED;
 
   public Throwable() {
     fillInStackTrace();
@@ -176,7 +176,7 @@ public class Throwable implements Serializable {
       // If this is the first run, let constructor initialize it.
       // (We need to initialize the backingJsObject from constructor as our own implementation of
       // fillInStackTrace is not guaranteed to be executed.)
-      if (backingJsObject != UNITIALIZED) {
+      if (backingJsObject != UNINITIALIZED) {
         initializeBackingError();
       }
 
