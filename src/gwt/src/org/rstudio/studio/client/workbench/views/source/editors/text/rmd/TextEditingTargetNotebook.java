@@ -116,7 +116,8 @@ public class TextEditingTargetNotebook
                           RestartStatusEvent.Handler,
                           ScopeTreeReadyEvent.Handler,
                           PinnedLineWidget.Host,
-                          SourceDocAddedEvent.Handler
+                          SourceDocAddedEvent.Handler,
+                          RenderFinishedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, TextEditingTargetNotebook> {}
@@ -218,33 +219,9 @@ public class TextEditingTargetNotebook
          }
       }));
       
-      // single shot rendering of chunk output line widgets
-      // (we wait until after the first render to ensure that
-      // ace places the line widgets correctly)
-      releaseOnDismiss.add(docDisplay_.addRenderFinishedHandler(
-            new RenderFinishedEvent.Handler()
-      { 
-         @Override
-         public void onRenderFinished(RenderFinishedEvent event)
-         {
-            if (initialChunkDefs_ != null)
-            {
-               for (int i = 0; i<initialChunkDefs_.length(); i++)
-               {
-                  createChunkOutput(initialChunkDefs_.get(i));
-               }
-               // if we got chunk content, load initial chunk output from server
-               if (initialChunkDefs_.length() > 0)
-                  loadInitialChunkOutput();
-
-               initialChunkDefs_ = null;
-               
-               // sync to editor style changes
-               editingTarget.addEditorThemeStyleChangedHandler(
-                                             TextEditingTargetNotebook.this);
-            }
-         }
-      }));
+      // single shot rendering of chunk output line widgets (we wait until after
+      // the first render to ensure that ace places the line widgets correctly)
+      renderFinishedReg_ = docDisplay_.addRenderFinishedHandler(this);
       
       releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(new SaveFileHandler()
       {
@@ -760,8 +737,12 @@ public class TextEditingTargetNotebook
    public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
    {
       // ignore if targeted at another document
-      if (event.getDocId() != docUpdateSentinel_.getId())
+      if (event.getData().getDocId() != docUpdateSentinel_.getId())
          return;
+
+      lastPlotWidth_ = event.getData().getWidth();
+      docUpdateSentinel_.setProperty(CHUNK_RENDERED_WIDTH, 
+            "" + lastPlotWidth_);
 
       // clean up flag
       resizingPlotsRemote_ = false;
@@ -884,6 +865,44 @@ public class TextEditingTargetNotebook
       // (this actually spins up a separate R process to re-render all the
       // plots at the new resolution)
       resizePlotsRemote_.schedule(500);
+   }
+
+   @Override
+   public void onRenderFinished(RenderFinishedEvent event)
+   {
+      // single shot rendering of output line widgets (we wait until after the
+      // first render to ensure that ace places the line widgets correctly)
+      if (initialChunkDefs_ != null)
+      {
+         for (int i = 0; i < initialChunkDefs_.length(); i++)
+         {
+            createChunkOutput(initialChunkDefs_.get(i));
+         }
+         // if we got chunk content, load initial chunk output from server
+         if (initialChunkDefs_.length() > 0)
+            loadInitialChunkOutput();
+
+         initialChunkDefs_ = null;
+         
+         // sync to editor style changes
+         editingTarget_.addEditorThemeStyleChangedHandler(
+                                       TextEditingTargetNotebook.this);
+         
+         // read and/or set initial render width
+         String renderedWidth = docUpdateSentinel_.getProperty(
+               CHUNK_RENDERED_WIDTH);
+         if (!StringUtil.isNullOrEmpty(renderedWidth))
+            lastPlotWidth_ = StringUtil.parseInt(renderedWidth, 0);
+         if (lastPlotWidth_ == 0)
+         {
+            lastPlotWidth_ = getPlotWidth();
+            docUpdateSentinel_.setProperty(CHUNK_RENDERED_WIDTH, 
+                  "" + lastPlotWidth_);
+         }
+      }
+      
+      // clean up single shot listener
+      renderFinishedReg_.removeHandler();
    }
 
    @Override
@@ -1669,6 +1688,7 @@ public class TextEditingTargetNotebook
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;
+   private HandlerRegistration renderFinishedReg_;
    private Position lastStart_;
    private Position lastEnd_;
    
@@ -1721,9 +1741,11 @@ public class TextEditingTargetNotebook
    private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
    private final static String SETUP_CHUNK_ID = "csetup_chunk";
    
+   // stored document properties/values
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
+   public final static String CHUNK_RENDERED_WIDTH = "chunk_rendered_width";
    
    public final static int MODE_SINGLE = 0;
    public final static int MODE_BATCH  = 1;

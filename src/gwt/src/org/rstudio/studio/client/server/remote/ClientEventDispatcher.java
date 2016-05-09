@@ -796,8 +796,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ChunkPlotRefreshFinished))
          {
-            String docId = event.getData();
-            eventBus_.fireEvent(new ChunkPlotRefreshFinishedEvent(docId));
+            ChunkPlotRefreshFinishedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ChunkPlotRefreshFinishedEvent(data));
          }
          else
          {

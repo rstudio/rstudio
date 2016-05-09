@@ -90,6 +90,7 @@ public:
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
       pReplayer->docId_ = docId;
+      pReplayer->width_ = width;
       pReplayer->start(cmd.c_str(), FilePath(),
                        async_r::R_PROCESS_VANILLA,
                        sources,
@@ -134,11 +135,15 @@ private:
    void onCompleted(int exitStatus)
    {
       // let client know the process is completed (even if it failed)
+      json::Object result;
+      result["doc_id"] = docId_;
+      result["width"] = width_;
       module_context::enqueClientEvent(ClientEvent(
-               client_events::kChunkPlotRefreshFinished, docId_));
+               client_events::kChunkPlotRefreshFinished, result));
    }
 
    std::string docId_;
+   int width_;
 };
 
 boost::shared_ptr<ReplayPlots> s_pPlotReplayer;

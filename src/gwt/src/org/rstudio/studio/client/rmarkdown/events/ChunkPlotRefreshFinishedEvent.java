@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -26,14 +27,30 @@ public class ChunkPlotRefreshFinishedEvent
       void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event);
    }
 
-   public ChunkPlotRefreshFinishedEvent(String docId)
+   public static class Data extends JavaScriptObject
    {
-      docId_ = docId;
+      protected Data()
+      {  
+      }
+      
+      public final native String getDocId() /*-{
+         return this.doc_id;
+      }-*/;
+      
+      public final native int getWidth() /*-{
+         return this.width;
+      }-*/;
+   }
+   
+
+   public ChunkPlotRefreshFinishedEvent(Data data)
+   {
+      data_ = data;
    }
 
-   public String getDocId()
+   public Data getData()
    {
-      return docId_;
+      return data_;
    }
 
    @Override
@@ -48,7 +65,7 @@ public class ChunkPlotRefreshFinishedEvent
       handler.onChunkPlotRefreshFinished(this);
    }
    
-   private String docId_;
+   private Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
