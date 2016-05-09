@@ -57,6 +57,7 @@ public:
    r::sexp::PreservedSEXP sexpMargins;
    boost::signals::connection onConsolePrompt;
    boost::signals::connection onBeforeNewPlot;
+   boost::signals::connection onBeforeNewGridPage;
    boost::signals::connection onNewPlot;
 };
 
@@ -181,6 +182,7 @@ void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
    pPlotState->onConsolePrompt.disconnect();
    pPlotState->onNewPlot.disconnect();
    pPlotState->onBeforeNewPlot.disconnect();
+   pPlotState->onBeforeNewGridPage.disconnect();
 }
 
 } // anonymous namespace
@@ -259,6 +261,9 @@ core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
          boost::bind(onConsolePrompt, pPlotState, _1));
 
    pPlotState->onBeforeNewPlot = plots::events().onBeforeNewPlot.connect(
+         boost::bind(onBeforeNewPlot, pPlotState));
+   
+   pPlotState->onBeforeNewGridPage = plots::events().onBeforeNewGridPage.connect(
          boost::bind(onBeforeNewPlot, pPlotState));
 
    pPlotState->onNewPlot = plots::events().onNewPlot.connect(

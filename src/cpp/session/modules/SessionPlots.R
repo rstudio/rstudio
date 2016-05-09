@@ -24,7 +24,7 @@ setHook(
 setHook(
   hookName = "before.grid.newpage", 
   value = function() { 
-    .Call("rs_emitBeforeNewPlot")
+    .Call("rs_emitBeforeNewGridPage")
   },
   action = "append")
 

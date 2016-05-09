@@ -98,16 +98,10 @@ public:
    }
 
 private:
-   void onStderr(const std::string& output)
-   {
-      std::cerr << "cerr: " << output << std::endl;
-   }
-
    void onStdout(const std::string& output)
    {
       r::sexp::Protect protect;
       Error error;
-      std::cerr << "cout: " << output << std::endl;
 
       // output is queued/buffered so multiple paths may be emitted
       std::vector<std::string> paths;

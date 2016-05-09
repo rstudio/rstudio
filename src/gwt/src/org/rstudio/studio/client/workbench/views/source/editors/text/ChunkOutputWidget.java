@@ -442,9 +442,6 @@ public class ChunkOutputWidget extends Composite
             if (FilePathUtils.friendlyFileName(url) != plotFile)
                continue;
             
-            // the only purpose of this resize counter is to ensure that the
-            // plot URL changes when its geometry does (it's not consumed by
-            // the server)
             w.removeStyleName(style.pendingResize());
             
             // sync height (etc) when render is complete, but don't scroll to 
@@ -452,6 +449,9 @@ public class ChunkOutputWidget extends Composite
             DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
                   false));
 
+            // the only purpose of this resize counter is to ensure that the
+            // plot URL changes when its geometry does (it's not consumed by
+            // the server)
             plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
          }
       }
