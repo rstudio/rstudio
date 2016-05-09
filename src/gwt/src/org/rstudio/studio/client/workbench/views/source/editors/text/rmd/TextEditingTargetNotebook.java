@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
@@ -77,6 +78,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChang
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -113,7 +115,8 @@ public class TextEditingTargetNotebook
                           InterruptStatusEvent.Handler,
                           RestartStatusEvent.Handler,
                           ScopeTreeReadyEvent.Handler,
-                          PinnedLineWidget.Host
+                          PinnedLineWidget.Host,
+                          SourceDocAddedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, TextEditingTargetNotebook> {}
@@ -350,6 +353,8 @@ public class TextEditingTargetNotebook
             events_.addHandler(InterruptStatusEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(RestartStatusEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(SourceDocAddedEvent.TYPE, this));
       
       // subscribe to global rmd output inline preference and sync
       // again when it changes
@@ -364,24 +369,18 @@ public class TextEditingTargetNotebook
             }));
    }
    
-   public void onActivate()
-   {
-      executedSinceActivate_ = false;
-   }
-   
    public void executeChunk(Scope chunk, String code, String options,
          int mode)
    {
-      // maximize the source window if it's paired with the console and this
-      // is the first chunk we've executed since we were activated
-      if (!executedSinceActivate_)
-      {
-         pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
-         executedSinceActivate_ = true;
-      }
-      
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
+      
+      // maximize the source pane if we haven't yet this session
+      if (!maximizedPane_)
+      {
+         pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+         maximizedPane_ = true;
+      }
 
       String chunkId = "";
       String setupCrc32 = "";
@@ -932,6 +931,22 @@ public class TextEditingTargetNotebook
             outputs_.remove(output.getChunkId());
             break;
          }
+      }
+   }
+
+   @Override
+   public void onSourceDocAdded(SourceDocAddedEvent e)
+   {
+      if (e.getDoc().getId() != docUpdateSentinel_.getId())
+         return;
+      
+      // when interactively adding a new notebook, we maximize the source pane
+      if (e.getMode() == Source.OPEN_INTERACTIVE &&
+          editingTarget_.isActiveDocument() &&
+          editingTarget_.isRmdNotebook())
+      {
+         pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+         maximizedPane_ = true;
       }
    }
 
@@ -1687,10 +1702,10 @@ public class TextEditingTargetNotebook
    private int charWidth_ = 65;
    private int pixelWidth_ = 0;
    private int lastPlotWidth_ = 0;
-   private boolean executedSinceActivate_ = false;
    private boolean evaluatingParams_ = false;
    private int execQueueMaxSize_ = 0;
    private boolean resizingPlotsRemote_ = false;
+   private boolean maximizedPane_ = false;
    
    private int state_ = STATE_NONE;
 
