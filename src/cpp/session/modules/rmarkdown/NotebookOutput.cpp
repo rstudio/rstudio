@@ -273,14 +273,13 @@ FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, 
       ChunkOutputContext ctxType)
-
 {
    // compute path to exact context
    FilePath path = chunkCacheFolder(docPath, docId, nbCtxId).childPath(chunkId);
 
    // fall back to saved context if permitted
    if (!path.exists() && ctxType == ContextSaved)
-      path = chunkCacheFolder(docPath, docId, nbCtxId).childPath(kSavedCtx);
+      path = chunkCacheFolder(docPath, docId, kSavedCtx).childPath(chunkId);
 
    return path;
 }
