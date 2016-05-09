@@ -366,6 +366,13 @@ public class TextEditingTargetNotebook
    {
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
+      
+      // maximize the source pane if we haven't yet this session
+      if (!maximizedPane_)
+      {
+         pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+         maximizedPane_ = true;
+      }
 
       String chunkId = "";
       String setupCrc32 = "";
@@ -896,6 +903,7 @@ public class TextEditingTargetNotebook
           editingTarget_.isRmdNotebook())
       {
          pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
+         maximizedPane_ = true;
       }
    }
 
@@ -1586,6 +1594,7 @@ public class TextEditingTargetNotebook
    private int pixelWidth_ = 0;
    private boolean evaluatingParams_ = false;
    private int execQueueMaxSize_ = 0;
+   private boolean maximizedPane_ = false;
    
    private int state_ = STATE_NONE;
 
