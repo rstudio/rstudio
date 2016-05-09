@@ -54,7 +54,7 @@ public:
          int width,
          const std::vector<FilePath>& snapshotFiles)
    {
-      // create the text to send to the process (it'll be read by scan()
+      // create the text to send to the process (it'll be read on stdin
       // inside R)
       std::string input;
       BOOST_FOREACH(const FilePath snapshot, snapshotFiles)

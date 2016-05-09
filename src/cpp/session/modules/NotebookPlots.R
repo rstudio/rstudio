@@ -75,7 +75,6 @@
     output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
                     sep = ".")
     .rs.createNotebookGraphicsDevice(output, width, pixelRatio, extraArgs);
-    cat("created graphics device for ", output, "\n")
 
     # actually replay the plot onto the device
     tryCatch({
