@@ -562,7 +562,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    contents <- .rs.readLines(nbPath)
    
    reComment  <- "^\\s*<!--\\s*rnb-([^-]+)-(begin|end)\\s*([^\\s-]+)?\\s*-->\\s*$"
-   reDocument <- "^\\s*<!--\\s*rnb-document-source\\s*([^\\s-]+)\\s*-->\\s*$"
+   reDocument <- "^<div id=\"rmd-source-code\">([^<]+)<\\/div>$"
    
    rmdContents <- NULL
    builder <- .rs.listBuilder()
