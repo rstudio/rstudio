@@ -23,6 +23,7 @@ public interface ChunkContextResources extends ClientBundle
    ImageResource runChunkPending();
    ImageResource runPreviousChunksLight();
    ImageResource runPreviousChunksDark();
+   ImageResource runSubsequentChunksLight();
    ImageResource interruptChunk();
    ImageResource chunkOptionsLight();
    ImageResource chunkOptionsDark();

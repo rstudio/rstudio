@@ -59,6 +59,7 @@ public class ChunkContextToolbar extends Composite
 
       initRunPrevious(dark);
       setRunPrevious(runPrevious);
+      runNext_.setResource(RES.runSubsequentChunksLight());
       
       initRun();
       setRun(run);
@@ -164,6 +165,7 @@ public class ChunkContextToolbar extends Composite
    
    @UiField Image options_;
    @UiField Image runPrevious_;
+   @UiField Image runNext_;
    @UiField Image run_;
    
    private final Host host_;
