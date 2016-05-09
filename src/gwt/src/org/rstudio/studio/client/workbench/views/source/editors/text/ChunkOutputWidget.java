@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -49,7 +48,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -411,7 +409,8 @@ public class ChunkOutputWidget extends Composite
    {
       for (Widget w: root_)
       {
-         if (w instanceof Image)
+         if (w instanceof FixedRatioWidget && 
+             ((FixedRatioWidget)w).getWidget() instanceof Image)
          {
             if (pending)
                w.addStyleName(style.pendingResize());
@@ -427,9 +426,13 @@ public class ChunkOutputWidget extends Composite
       
       for (Widget w: root_)
       {
-         if (w instanceof Image)
+         if (w instanceof FixedRatioWidget)
          {
-            Image plot = (Image)w;
+            // extract the wrapped plot
+            FixedRatioWidget fixedFrame = (FixedRatioWidget)w;
+            if (!(fixedFrame.getWidget() instanceof Image))
+               continue;
+            Image plot = (Image)fixedFrame.getWidget();
             
             // get the existing URL and strip off the query string 
             String url = plot.getUrl();
@@ -629,12 +632,12 @@ public class ChunkOutputWidget extends Composite
 
       final Image plot = new Image();
       
-      // set to auto height and hidden -- we need the image to load so we can 
-      // compute its natural width before showing it
-      plot.getElement().getStyle().setProperty("height", "auto");
-      plot.getElement().getStyle().setDisplay(Display.NONE);
+      final FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
+                  ChunkOutputUi.OUTPUT_ASPECT, 
+                  ChunkOutputUi.MAX_PLOT_WIDTH);
 
-      root_.add(plot);
+      root_.add(fixedFrame);
+
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
             ensureVisible));
@@ -681,9 +684,10 @@ public class ChunkOutputWidget extends Composite
          url += "?";
       url += "viewer_pane=1";
 
-      ChunkOutputFrame frame = new ChunkOutputFrame();
-      final FixedRatioWidget<ChunkOutputFrame> fixedFrame = 
-            new FixedRatioWidget<ChunkOutputFrame>(frame, 1.618, 650);
+      final ChunkOutputFrame frame = new ChunkOutputFrame();
+      final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
+                  ChunkOutputUi.OUTPUT_ASPECT, 
+                  ChunkOutputUi.MAX_PLOT_WIDTH);
 
       root_.add(fixedFrame);
 
@@ -694,7 +698,7 @@ public class ChunkOutputWidget extends Composite
          @Override
          public void execute()
          {
-            Element body = fixedFrame.getWidget().getDocument().getBody();
+            Element body = frame.getDocument().getBody();
             Style bodyStyle = body.getStyle();
             
             bodyStyle.setPadding(0, Unit.PX);
@@ -947,19 +951,6 @@ public class ChunkOutputWidget extends Composite
             if (DOM.eventGetType(event) != Event.ONLOAD)
                return;
             
-            ImageElementEx img = plot.getElement().cast();
-
-            // grow the image to fill the container, but not beyond its
-            // natural width. also clamp image width to avoid overly-large
-            // images in a wide editor buffer
-            int maxWidth = Math.min(ChunkOutputUi.MAX_PLOT_WIDTH, 
-                  img.naturalWidth());
-            img.getStyle().setWidth(100, Unit.PCT);
-            img.getStyle().setProperty("maxWidth", maxWidth + "px");
-
-            // show the image
-            plot.getElement().getStyle().setDisplay(Display.BLOCK);
-
             renderTimeout.cancel();
             completeUnitRender(ensureVisible);
          }

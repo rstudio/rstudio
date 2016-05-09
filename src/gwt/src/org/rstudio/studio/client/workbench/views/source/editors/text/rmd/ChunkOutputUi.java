@@ -224,4 +224,5 @@ public class ChunkOutputUi
    public final static int MAX_CHUNK_HEIGHT = 650;
    
    public final static int MAX_PLOT_WIDTH = 650;
+   public final static double OUTPUT_ASPECT = 1.618;
 }

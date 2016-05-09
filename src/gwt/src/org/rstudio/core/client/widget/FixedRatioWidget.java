@@ -21,9 +21,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class FixedRatioWidget <T extends Widget> extends Composite
+public class FixedRatioWidget extends Composite
 {
-   public FixedRatioWidget(T widget, double aspect, int maxWidth)
+   public FixedRatioWidget(Widget widget, double aspect, int maxWidth)
    {
       widget_ = widget;
 
@@ -52,10 +52,10 @@ public class FixedRatioWidget <T extends Widget> extends Composite
       initWidget(outer);
    }
    
-   public T getWidget()
+   public Widget getWidget()
    {
       return widget_;
    }
    
-   private final T widget_;
+   private final Widget widget_;
 }
