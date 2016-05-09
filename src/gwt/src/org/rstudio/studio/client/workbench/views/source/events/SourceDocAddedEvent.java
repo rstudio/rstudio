@@ -34,9 +34,10 @@ public class SourceDocAddedEvent
    {
    }
    
-   public SourceDocAddedEvent(SourceDocument doc)
+   public SourceDocAddedEvent(SourceDocument doc, int mode)
    {
       doc_ = doc;
+      mode_ = mode;
       windowId_ = SourceWindowManager.getSourceWindowId();
    }
 
@@ -48,6 +49,11 @@ public class SourceDocAddedEvent
    public String getWindowId()
    {
       return windowId_;
+   }
+   
+   public int getMode()
+   {
+      return mode_;
    }
   
    @Override
@@ -64,6 +70,7 @@ public class SourceDocAddedEvent
 
    private SourceDocument doc_;
    private String windowId_;
+   private int mode_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

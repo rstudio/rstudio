@@ -404,7 +404,7 @@ public class Source implements InsertSourceHandler,
                   new SimpleRequestCallback<SourceDocument>("Edit Data Frame") {
                      public void onResponseReceived(SourceDocument response)
                      {
-                        addTab(response);
+                        addTab(response, OPEN_INTERACTIVE);
                      }
                   });
          }
@@ -822,7 +822,7 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            EditingTarget editor = addTab(doc, true);
+            EditingTarget editor = addTab(doc, true, OPEN_REPLAY);
             
             // if this is a source window, check to see if it was opened to
             // pop out a particular doc, and restore that doc's position if so
@@ -943,7 +943,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  addTab(response);
+                  addTab(response, OPEN_INTERACTIVE);
                }
             });
    }
@@ -979,7 +979,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  addTab(response);
+                  addTab(response, OPEN_INTERACTIVE);
                }
             });
    }
@@ -1012,7 +1012,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(SourceDocument response)
             {
-               addTab(response);
+               addTab(response, OPEN_INTERACTIVE);
             }
             
             @Override
@@ -1038,7 +1038,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  addTab(response);
+                  addTab(response, OPEN_INTERACTIVE);
                }
                
                @Override
@@ -1609,7 +1609,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument newDoc)
                {
-                  EditingTarget target = addTab(newDoc);
+                  EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
                   
                   if (contents != null)
                   {
@@ -2544,7 +2544,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               editingTargetAction.execute(addTab(doc));
+               editingTargetAction.execute(addTab(doc, OPEN_REPLAY));
             }
 
             @Override
@@ -2870,7 +2870,7 @@ public class Source implements InsertSourceHandler,
                {
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
-                  EditingTarget target = addTab(document);
+                  EditingTarget target = addTab(document, OPEN_INTERACTIVE);
                   if (resultCallback != null)
                      resultCallback.onSuccess(target);
                }
@@ -2882,18 +2882,21 @@ public class Source implements InsertSourceHandler,
       return target.asWidget();
    }
    
-   private EditingTarget addTab(SourceDocument doc)
+   private EditingTarget addTab(SourceDocument doc, int mode)
    {
-      return addTab(doc, false);
+      return addTab(doc, false, mode);
    }
    
-   private EditingTarget addTab(SourceDocument doc, boolean atEnd)
+   private EditingTarget addTab(SourceDocument doc, boolean atEnd, 
+         int mode)
    {
       // by default, add at the tab immediately after the current tab
-      return addTab(doc, atEnd ? null : getPhysicalTabIndex() + 1);
+      return addTab(doc, atEnd ? null : getPhysicalTabIndex() + 1,
+            mode);
    }
 
-   private EditingTarget addTab(SourceDocument doc, Integer position)
+   private EditingTarget addTab(SourceDocument doc, Integer position, 
+         int mode)
    {
       final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
       final EditingTarget target = editingTargetSource_.getEditingTarget(
@@ -2974,7 +2977,7 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events_.fireEvent(new SourceDocAddedEvent(doc));
+      events_.fireEvent(new SourceDocAddedEvent(doc, mode));
       
       // adding a tab may enable commands that are only available when 
       // multiple documents are open; if this is the second document, go check
@@ -4180,4 +4183,6 @@ public class Source implements InsertSourceHandler,
  
    public final static int TYPE_FILE_BACKED = 0;
    public final static int TYPE_UNTITLED    = 1;
+   public final static int OPEN_INTERACTIVE = 0;
+   public final static int OPEN_REPLAY      = 1;
 }
