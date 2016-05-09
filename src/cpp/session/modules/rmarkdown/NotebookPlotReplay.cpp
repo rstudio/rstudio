@@ -81,8 +81,11 @@ public:
 
       // form command to pass to R 
       std::string cmd(".rs.replayNotebookPlots(" + 
-                      safe_convert::numberToString(width) + ", '" + 
-                      extraParams + "')");
+                      safe_convert::numberToString(width) + ", " + 
+                      safe_convert::numberToString(
+                         r::session::graphics::device::devicePixelRatio()) +
+                         ", "
+                      "'" + extraParams + "')");
 
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());

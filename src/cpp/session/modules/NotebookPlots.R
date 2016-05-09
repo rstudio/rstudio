@@ -15,15 +15,15 @@
 
 # creates the notebook graphics device 
 .rs.addFunction("createNotebookGraphicsDevice", function(filename,
-  width, extraArgs)
+  width, pixelRatio, extraArgs)
 {
   require(grDevices, quietly = TRUE)
   args <- list(
     file   = filename,
-    width  = width,
-    height = width / 1.618, 
+    width  = width * pixelRatio,
+    height = (width * pixelRatio) / 1.618, 
     units  = "px",
-    res    = 96)
+    res    = 96 * pixelRatio)
   
   if (nchar(extraArgs) > 0)
   {
@@ -52,7 +52,7 @@
   par(mar = c(5.1, 4.1, 2.1, 2.1))
 })
 
-.rs.addFunction("replayNotebookPlots", function(width, extraArgs) {
+.rs.addFunction("replayNotebookPlots", function(width, pixelRatio, extraArgs) {
   # open stdin (for consuming snapshots from parent process)
   stdin <- file("stdin")
   cat(width, "\n", extraArgs, "\n")
@@ -74,7 +74,7 @@
     # output from the device
     output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
                     sep = ".")
-    .rs.createNotebookGraphicsDevice(output, width, extraArgs);
+    .rs.createNotebookGraphicsDevice(output, width, pixelRatio, extraArgs);
     cat("created graphics device for ", output, "\n")
 
     # actually replay the plot onto the device

@@ -71,6 +71,12 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
+
+namespace device {
+
+double devicePixelRatio();
+
+}
    
 struct DisplayState
 {

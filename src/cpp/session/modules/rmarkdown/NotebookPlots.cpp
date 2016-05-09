@@ -229,7 +229,9 @@ core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
    // create the notebook graphics device
    error = r::exec::RFunction(".rs.createNotebookGraphicsDevice",
          plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png",
-         pixelWidth, r::session::graphics::extraBitmapParams()).call();
+         pixelWidth, 
+         r::session::graphics::device::devicePixelRatio(),
+         r::session::graphics::extraBitmapParams()).call();
    if (error)
    {
       // this is fatal; without a graphics device we can't capture plots
