@@ -55,7 +55,6 @@
 .rs.addFunction("replayNotebookPlots", function(width, pixelRatio, extraArgs) {
   # open stdin (for consuming snapshots from parent process)
   stdin <- file("stdin")
-  cat(width, "\n", extraArgs, "\n")
 
   require(grDevices, quietly = TRUE)
 
@@ -65,8 +64,6 @@
     # ignore empty lines
     if (nchar(tools::file_ext(snapshot)) < 1)
       return(invisible(NULL))
-
-    cat("processing snapshot '", snapshot, "' (", nchar(tools::file_ext(snapshot)), ")\n")
 
     # create the PNG device on which we'll regenerate the plot -- it's somewhat
     # wasteful to use a separate device per plot, but the alternative is
