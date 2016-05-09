@@ -26,7 +26,7 @@
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
-#include <r/RJSon.hpp>
+#include <r/RJson.hpp>
 #include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
