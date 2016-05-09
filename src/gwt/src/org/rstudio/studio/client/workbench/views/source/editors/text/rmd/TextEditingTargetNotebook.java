@@ -203,6 +203,26 @@ public class TextEditingTargetNotebook
          }
       }));
       
+      // when the width of the outline changes, treat it as a resize
+      ValueChangeHandler<String> outlineWidthHandler = 
+         new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            onResize(null);
+         }
+      };
+      
+      releaseOnDismiss.add(
+         docUpdateSentinel_.addPropertyValueChangeHandler(
+               TextEditingTarget.DOC_OUTLINE_SIZE, 
+               outlineWidthHandler));
+      releaseOnDismiss.add(
+         docUpdateSentinel_.addPropertyValueChangeHandler(
+               TextEditingTarget.DOC_OUTLINE_VISIBLE, 
+               outlineWidthHandler));
+      
       releaseOnDismiss.add(docDisplay_.addValueChangeHandler(
             new ValueChangeHandler<Void>()
       {
