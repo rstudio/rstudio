@@ -120,7 +120,7 @@ void saveSnapshot(boost::shared_ptr<PlotState> pPlotState)
 
    // if there's already an unconsumed display list, remove it, since this
    // display list replaces it
-   if (pPlotState->snapshotFile.empty())
+   if (!pPlotState->snapshotFile.empty())
    {
       error = pPlotState->snapshotFile.removeIfExists();
       if (error) 
