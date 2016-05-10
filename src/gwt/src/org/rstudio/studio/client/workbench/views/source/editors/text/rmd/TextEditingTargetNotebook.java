@@ -1609,8 +1609,24 @@ public class TextEditingTargetNotebook
          if (plotWidth == lastPlotWidth_)
             return;
          
+         // we want to resize the visible plots first, so provide the server
+         // with the id of the first visible chunk as a cue
+         int row = docDisplay_.getFirstVisibleRow();
+         Integer min = null;
+         String chunkId = "";
+         for (ChunkOutputUi output: outputs_.values())
+         {
+            int delta = Math.abs(output.getCurrentRow() - row);
+            if (min == null || delta < min)
+            {
+               min = delta;
+               chunkId = output.getChunkId();
+            }
+         }
+         
          // make the request
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
+               chunkId,
                plotWidth,
                new ServerRequestCallback<Boolean>()
                {

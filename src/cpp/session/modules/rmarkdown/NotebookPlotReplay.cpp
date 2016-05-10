@@ -152,8 +152,10 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    std::string docId;
+   std::string initialChunkId;
    int pixelWidth = 0;
-   Error error = json::readParams(request.params, &docId, &pixelWidth);
+   Error error = json::readParams(request.params, &docId, 
+         &initialChunkId, &pixelWidth);
    if (error)
       return error;
 
@@ -181,6 +183,17 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    // convert to chunk IDs
    std::vector<std::string> chunkIds;
    extractChunkIds(chunkIdVals.get_array(), &chunkIds);
+
+   // shuffle the chunk IDs so we re-render the visible ones first
+   std::vector<std::string>::iterator it = std::find(
+         chunkIds.begin(), chunkIds.end(), initialChunkId);
+   if (it != chunkIds.end())
+   {
+      std::vector<std::string> shuffledChunkIds;
+      std::copy(it, chunkIds.end(), std::back_inserter(shuffledChunkIds));
+      std::copy(chunkIds.begin(), it, std::back_inserter(shuffledChunkIds));
+      chunkIds = shuffledChunkIds;
+   }
 
    // look for snapshot files
    std::vector<FilePath> snapshotFiles;
