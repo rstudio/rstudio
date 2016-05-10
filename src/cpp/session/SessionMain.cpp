@@ -510,6 +510,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    std::string initialWorkingDir = module_context::createAliasedPath(
                                                 getInitialWorkingDirectory());
    sessionInfo["initial_working_dir"] = initialWorkingDir;
+   std::string defaultWorkingDir = module_context::createAliasedPath(
+                                                getDefaultWorkingDirectory());
+   sessionInfo["default_working_dir"] = defaultWorkingDir;
 
    // active project file
    if (projects::projectContext().hasProject())
