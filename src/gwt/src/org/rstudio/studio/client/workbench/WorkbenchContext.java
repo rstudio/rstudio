@@ -189,6 +189,17 @@ public class WorkbenchContext
       return activeProjectDir_;
    }
    
+   public FileSystemItem getDefaultWorkingDir()
+   {
+      if (defaultWorkingDir_ == null)
+      {
+         SessionInfo sessionInfo = session_.getSessionInfo();
+         defaultWorkingDir_ = FileSystemItem.createDir(
+                                    sessionInfo.getDefaultWorkingDir());
+      }
+      return defaultWorkingDir_;
+   }
+   
    public boolean isProjectActive()
    {
       SessionInfo sessionInfo = session_.getSessionInfo();
@@ -238,6 +249,7 @@ public class WorkbenchContext
    private boolean isBuildInProgress_ = false;
    private FileSystemItem currentWorkingDir_ = FileSystemItem.home();
    private FileSystemItem defaultFileDialogDir_ = FileSystemItem.home();
+   private FileSystemItem defaultWorkingDir_ = null;
    private FileSystemItem activeProjectDir_ = null;
    private final Session session_; 
    private final Provider<GitState> pGitState_;
