@@ -185,6 +185,9 @@ public class TextEditingTarget implements
    private static final String NOTEBOOK_TITLE = "notebook_title";
    private static final String NOTEBOOK_AUTHOR = "notebook_author";
    private static final String NOTEBOOK_TYPE = "notebook_type";
+   
+   public final static String DOC_OUTLINE_SIZE    = "docOutlineSize";
+   public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -5953,12 +5956,12 @@ public class TextEditingTarget implements
    {
       prefs_.preferredDocumentOutlineWidth().setGlobalValue((int) size);
       prefs_.writeUIPrefs();
-      docUpdateSentinel_.setProperty("docOutlineSize", size + "");
+      docUpdateSentinel_.setProperty(DOC_OUTLINE_SIZE, size + "");
    }
    
    public double getPreferredOutlineWidgetSize()
    {
-      String property = docUpdateSentinel_.getProperty("docOutlineSize");
+      String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_SIZE);
       if (StringUtil.isNullOrEmpty(property))
          return prefs_.preferredDocumentOutlineWidth().getGlobalValue();
       
@@ -5983,12 +5986,12 @@ public class TextEditingTarget implements
    
    public void setPreferredOutlineWidgetVisibility(boolean visible)
    {
-      docUpdateSentinel_.setProperty("docOutlineVisible", visible ? "1" : "0");
+      docUpdateSentinel_.setProperty(DOC_OUTLINE_VISIBLE, visible ? "1" : "0");
    }
    
    public boolean getPreferredOutlineWidgetVisibility()
    {
-      String property = docUpdateSentinel_.getProperty("docOutlineVisible");
+      String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
       return StringUtil.isNullOrEmpty(property)
             ? (getTextFileType().isRmd() && prefs_.showDocumentOutlineRmd().getGlobalValue())
             : Integer.parseInt(property) > 0;

@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcesss.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/system/Types.hpp>
+#include <core/system/Process.hpp>
 
 namespace core
 {
@@ -57,16 +58,21 @@ public:
    void start(const char* rCommand,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = std::vector<core::FilePath>())
+              std::vector<core::FilePath> rSourceFiles = 
+                 std::vector<core::FilePath>(),
+              const std::string &input = std::string())
    {
-      start(rCommand, core::system::Options(), workingDir, rOptions, rSourceFiles);
+      start(rCommand, core::system::Options(), workingDir, rOptions, 
+            rSourceFiles, input);
    }
 
    void start(const char* rCommand,
               core::system::Options environment,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = std::vector<core::FilePath>());
+              std::vector<core::FilePath> rSourceFiles = 
+                 std::vector<core::FilePath>(),
+              const std::string& input = std::string());
 
    bool isRunning();
    void terminate();
@@ -74,6 +80,7 @@ public:
    bool terminationRequested();
 
 protected:
+   virtual void onStarted(core::system::ProcessOperations& operations);
    virtual bool onContinue();
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
@@ -84,6 +91,7 @@ private:
    void onProcessCompleted(int exitStatus);
    bool isRunning_;
    bool terminationRequested_;
+   std::string input_;
 };
 
 } // namespace async_r

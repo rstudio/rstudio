@@ -36,6 +36,8 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
+import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
@@ -103,6 +105,8 @@ public class TextEditingTargetNotebook
                implements EditorThemeStyleChangedEvent.Handler,
                           RmdChunkOutputEvent.Handler,
                           RmdChunkOutputFinishedEvent.Handler,
+                          ChunkPlotRefreshedEvent.Handler,
+                          ChunkPlotRefreshFinishedEvent.Handler,
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
@@ -112,7 +116,8 @@ public class TextEditingTargetNotebook
                           RestartStatusEvent.Handler,
                           ScopeTreeReadyEvent.Handler,
                           PinnedLineWidget.Host,
-                          SourceDocAddedEvent.Handler
+                          SourceDocAddedEvent.Handler,
+                          RenderFinishedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, TextEditingTargetNotebook> {}
@@ -198,6 +203,26 @@ public class TextEditingTargetNotebook
          }
       }));
       
+      // when the width of the outline changes, treat it as a resize
+      ValueChangeHandler<String> outlineWidthHandler = 
+         new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            onResize(null);
+         }
+      };
+      
+      releaseOnDismiss.add(
+         docUpdateSentinel_.addPropertyValueChangeHandler(
+               TextEditingTarget.DOC_OUTLINE_SIZE, 
+               outlineWidthHandler));
+      releaseOnDismiss.add(
+         docUpdateSentinel_.addPropertyValueChangeHandler(
+               TextEditingTarget.DOC_OUTLINE_VISIBLE, 
+               outlineWidthHandler));
+      
       releaseOnDismiss.add(docDisplay_.addValueChangeHandler(
             new ValueChangeHandler<Void>()
       {
@@ -214,33 +239,9 @@ public class TextEditingTargetNotebook
          }
       }));
       
-      // single shot rendering of chunk output line widgets
-      // (we wait until after the first render to ensure that
-      // ace places the line widgets correctly)
-      releaseOnDismiss.add(docDisplay_.addRenderFinishedHandler(
-            new RenderFinishedEvent.Handler()
-      { 
-         @Override
-         public void onRenderFinished(RenderFinishedEvent event)
-         {
-            if (initialChunkDefs_ != null)
-            {
-               for (int i = 0; i<initialChunkDefs_.length(); i++)
-               {
-                  createChunkOutput(initialChunkDefs_.get(i));
-               }
-               // if we got chunk content, load initial chunk output from server
-               if (initialChunkDefs_.length() > 0)
-                  loadInitialChunkOutput();
-
-               initialChunkDefs_ = null;
-               
-               // sync to editor style changes
-               editingTarget.addEditorThemeStyleChangedHandler(
-                                             TextEditingTargetNotebook.this);
-            }
-         }
-      }));
+      // single shot rendering of chunk output line widgets (we wait until after
+      // the first render to ensure that ace places the line widgets correctly)
+      renderFinishedReg_ = docDisplay_.addRenderFinishedHandler(this);
       
       releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(new SaveFileHandler()
       {
@@ -333,6 +334,10 @@ public class TextEditingTargetNotebook
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChunkPlotRefreshedEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChunkPlotRefreshFinishedEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(SendToChunkConsoleEvent.TYPE, this));
       releaseOnDismiss_.add(
@@ -594,7 +599,7 @@ public class TextEditingTargetNotebook
       // have the server start recording output from this chunk
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), MODE_SINGLE, options, pixelWidth_, 
+            chunkDef.getChunkId(), MODE_SINGLE, options, getPlotWidth(), 
             charWidth_, false, 
             new ServerRequestCallback<RmdChunkOptions>()
       {
@@ -747,6 +752,42 @@ public class TextEditingTargetNotebook
       }
    }
 
+
+   @Override
+   public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
+   {
+      // ignore if targeted at another document
+      if (event.getData().getDocId() != docUpdateSentinel_.getId())
+         return;
+
+      lastPlotWidth_ = event.getData().getWidth();
+      docUpdateSentinel_.setProperty(CHUNK_RENDERED_WIDTH, 
+            "" + lastPlotWidth_);
+
+      // clean up flag
+      resizingPlotsRemote_ = false;
+
+      // mark any plots as no longer queued for resize
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         output.getOutputWidget().setPlotPending(false);
+      }
+   }
+
+   @Override
+   public void onChunkPlotRefreshed(ChunkPlotRefreshedEvent event)
+   {
+      // ignore if targeted at another document
+      if (event.getData().getDocId() != docUpdateSentinel_.getId())
+         return;
+      
+      // find chunk containing plot and push the new plot in
+      String chunkId = event.getData().getChunkId();
+      if (outputs_.containsKey(chunkId))
+         outputs_.get(chunkId).getOutputWidget().updatePlot(
+               event.getData().getPlotUrl());
+   }
+
    @Override
    public void onChunkChange(ChunkChangeEvent event)
    {
@@ -837,10 +878,51 @@ public class TextEditingTargetNotebook
          return;
       }
       
-      for (ChunkOutputUi output: outputs_.values())
+      // lightly debounce local resizes since they're somewhat expensive
+      resizePlotsLocal_.schedule(50);
+      
+      // heavily debounce remote resizes since they're very expensive
+      // (this actually spins up a separate R process to re-render all the
+      // plots at the new resolution)
+      resizePlotsRemote_.schedule(500);
+   }
+
+   @Override
+   public void onRenderFinished(RenderFinishedEvent event)
+   {
+      // single shot rendering of output line widgets (we wait until after the
+      // first render to ensure that ace places the line widgets correctly)
+      if (initialChunkDefs_ != null)
       {
-         output.getOutputWidget().syncHeight(false, false);
+         for (int i = 0; i < initialChunkDefs_.length(); i++)
+         {
+            createChunkOutput(initialChunkDefs_.get(i));
+         }
+         // if we got chunk content, load initial chunk output from server
+         if (initialChunkDefs_.length() > 0)
+            loadInitialChunkOutput();
+
+         initialChunkDefs_ = null;
+         
+         // sync to editor style changes
+         editingTarget_.addEditorThemeStyleChangedHandler(
+                                       TextEditingTargetNotebook.this);
+         
+         // read and/or set initial render width
+         String renderedWidth = docUpdateSentinel_.getProperty(
+               CHUNK_RENDERED_WIDTH);
+         if (!StringUtil.isNullOrEmpty(renderedWidth))
+            lastPlotWidth_ = StringUtil.parseInt(renderedWidth, 0);
+         if (lastPlotWidth_ == 0)
+         {
+            lastPlotWidth_ = getPlotWidth();
+            docUpdateSentinel_.setProperty(CHUNK_RENDERED_WIDTH, 
+                  "" + lastPlotWidth_);
+         }
       }
+      
+      // clean up single shot listener
+      renderFinishedReg_.removeHandler();
    }
 
    @Override
@@ -1062,7 +1144,7 @@ public class TextEditingTargetNotebook
             unit.chunkId, 
             unit.mode,
             unit.options,
-            pixelWidth_,
+            getPlotWidth(),
             charWidth_,
             true,
             new ServerRequestCallback<RmdChunkOptions>()
@@ -1490,6 +1572,91 @@ public class TextEditingTargetNotebook
       }
    };
    
+   private int getPlotWidth()
+   {
+      // subtract some space to account for padding; ensure the plot doesn't
+      // grow arbitrarily large. note that this value must total the amount of
+      // space outside the element (here, 2 * (10px margin + 1px border)); since
+      // we stretch the plot to fit the space it will scale in unpredictable
+      // ways if it doesn't fit exactly
+      return Math.min(docDisplay_.getPixelWidth() - 22,
+                      ChunkOutputUi.MAX_PLOT_WIDTH);
+   }
+   
+   private Timer resizePlotsLocal_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         for (ChunkOutputUi output: outputs_.values())
+         {
+            output.getOutputWidget().syncHeight(false, false);
+         }
+      }
+   };
+   
+   private Timer resizePlotsRemote_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // avoid reentrancy
+         if (resizingPlotsRemote_)
+            return;
+         
+         // avoid unnecessary work
+         final int plotWidth = getPlotWidth();
+         if (plotWidth == lastPlotWidth_)
+            return;
+         
+         // we want to resize the visible plots first, so provide the server
+         // with the id of the first visible chunk as a cue
+         int row = docDisplay_.getFirstVisibleRow();
+         Integer min = null;
+         String chunkId = "";
+         for (ChunkOutputUi output: outputs_.values())
+         {
+            int delta = Math.abs(output.getCurrentRow() - row);
+            if (min == null || delta < min)
+            {
+               min = delta;
+               chunkId = output.getChunkId();
+            }
+         }
+         
+         // make the request
+         server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
+               chunkId,
+               plotWidth,
+               new ServerRequestCallback<Boolean>()
+               {
+                  @Override
+                  public void onResponseReceived(Boolean started)
+                  {
+                     // server returns false in the case wherein there's already
+                     // a resize RPC in process (could be from e.g. another 
+                     // notebook in this session)
+                     if (!started)
+                        return;
+                     
+                     // don't replay a request for this width again
+                     lastPlotWidth_ = plotWidth;
+                     
+                     // mark all plots as queued for resize
+                     for (ChunkOutputUi output: outputs_.values())
+                        output.getOutputWidget().setPlotPending(true);
+                     resizingPlotsRemote_ = true;
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
+      }
+   };
+   
    private void cleanScopeErrorState(Scope scope)
    {
       // this can be called on a timer, so ensure the scope is still valid
@@ -1560,6 +1727,7 @@ public class TextEditingTargetNotebook
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;
+   private HandlerRegistration renderFinishedReg_;
    private Position lastStart_;
    private Position lastEnd_;
    
@@ -1592,8 +1760,10 @@ public class TextEditingTargetNotebook
    private String setupCrc32_ = "";
    private int charWidth_ = 65;
    private int pixelWidth_ = 0;
+   private int lastPlotWidth_ = 0;
    private boolean evaluatingParams_ = false;
    private int execQueueMaxSize_ = 0;
+   private boolean resizingPlotsRemote_ = false;
    private boolean maximizedPane_ = false;
    
    private int state_ = STATE_NONE;
@@ -1610,9 +1780,11 @@ public class TextEditingTargetNotebook
    private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
    private final static String SETUP_CHUNK_ID = "csetup_chunk";
    
+   // stored document properties/values
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
+   public final static String CHUNK_RENDERED_WIDTH = "chunk_rendered_width";
    
    public final static int MODE_SINGLE = 0;
    public final static int MODE_BATCH  = 1;

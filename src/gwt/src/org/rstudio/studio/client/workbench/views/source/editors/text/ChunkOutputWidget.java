@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -26,6 +25,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
@@ -48,7 +48,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -104,6 +103,7 @@ public class ChunkOutputWidget extends Composite
       String overflowY();
       String collapsed();
       String spinner();
+      String pendingResize();
    }
 
    public ChunkOutputWidget(String chunkId, RmdChunkOptions options, 
@@ -405,6 +405,61 @@ public class ChunkOutputWidget extends Composite
       return hasErrors_;
    }
    
+   public void setPlotPending(boolean pending)
+   {
+      for (Widget w: root_)
+      {
+         if (w instanceof FixedRatioWidget && 
+             ((FixedRatioWidget)w).getWidget() instanceof Image)
+         {
+            if (pending)
+               w.addStyleName(style.pendingResize());
+            else
+               w.removeStyleName(style.pendingResize());
+         }
+      }
+   }
+   
+   public void updatePlot(String plotUrl)
+   {
+      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
+      
+      for (Widget w: root_)
+      {
+         if (w instanceof FixedRatioWidget)
+         {
+            // extract the wrapped plot
+            FixedRatioWidget fixedFrame = (FixedRatioWidget)w;
+            if (!(fixedFrame.getWidget() instanceof Image))
+               continue;
+            Image plot = (Image)fixedFrame.getWidget();
+            
+            // get the existing URL and strip off the query string 
+            String url = plot.getUrl();
+            int idx = url.lastIndexOf('?');
+            if (idx > 0)
+               url = url.substring(0, idx);
+            
+            // verify that the plot being refreshed is the same one this widget
+            // contains
+            if (FilePathUtils.friendlyFileName(url) != plotFile)
+               continue;
+            
+            w.removeStyleName(style.pendingResize());
+            
+            // sync height (etc) when render is complete, but don't scroll to 
+            // this point
+            DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
+                  false));
+
+            // the only purpose of this resize counter is to ensure that the
+            // plot URL changes when its geometry does (it's not consumed by
+            // the server)
+            plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
+         }
+      }
+   }
+   
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -577,39 +632,15 @@ public class ChunkOutputWidget extends Composite
 
       final Image plot = new Image();
       
-      // set to auto height and hidden -- we need the image to load so we can 
-      // compute its natural width before showing it
-      plot.getElement().getStyle().setProperty("height", "auto");
-      plot.getElement().getStyle().setDisplay(Display.NONE);
+      final FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
+                  ChunkOutputUi.OUTPUT_ASPECT, 
+                  ChunkOutputUi.MAX_PLOT_WIDTH);
 
-      root_.add(plot);
-      final Timer renderTimeout = new RenderTimer();
-      
+      root_.add(fixedFrame);
+
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            if (DOM.eventGetType(event) != Event.ONLOAD)
-               return;
-            
-            ImageElementEx img = plot.getElement().cast();
-
-            // grow the image to fill the container, but not beyond its
-            // natural width. also clamp image width to avoid overly-large
-            // images in a wide editor buffer
-            int maxWidth = Math.min(624, img.naturalWidth());
-            img.getStyle().setWidth(100, Unit.PCT);
-            img.getStyle().setProperty("maxWidth", maxWidth + "px");
-
-            // show the image
-            plot.getElement().getStyle().setDisplay(Display.BLOCK);
-
-            renderTimeout.cancel();
-            completeUnitRender(ensureVisible);
-         }
-      });
+      DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
+            ensureVisible));
 
       plot.setUrl(url);
    }
@@ -653,9 +684,10 @@ public class ChunkOutputWidget extends Composite
          url += "?";
       url += "viewer_pane=1";
 
-      ChunkOutputFrame frame = new ChunkOutputFrame();
-      final FixedRatioWidget<ChunkOutputFrame> fixedFrame = 
-            new FixedRatioWidget<ChunkOutputFrame>(frame, 1.618, 650);
+      final ChunkOutputFrame frame = new ChunkOutputFrame();
+      final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
+                  ChunkOutputUi.OUTPUT_ASPECT, 
+                  ChunkOutputUi.MAX_PLOT_WIDTH);
 
       root_.add(fixedFrame);
 
@@ -666,7 +698,7 @@ public class ChunkOutputWidget extends Composite
          @Override
          public void execute()
          {
-            Element body = fixedFrame.getWidget().getDocument().getBody();
+            Element body = frame.getDocument().getBody();
             Style bodyStyle = body.getStyle();
             
             bodyStyle.setPadding(0, Unit.PX);
@@ -907,6 +939,24 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
+   private EventListener createPlotListener(final Image plot, 
+         final boolean ensureVisible)
+   {
+      final Timer renderTimeout = new RenderTimer();
+      return new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) != Event.ONLOAD)
+               return;
+            
+            renderTimeout.cancel();
+            completeUnitRender(ensureVisible);
+         }
+      };
+   }
+   
    @UiField Image clear_;
    @UiField Image expand_;
    @UiField Label emptyIndicator_;
@@ -927,6 +977,7 @@ public class ChunkOutputWidget extends Composite
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
+   private int resizeCounter_ = 0;
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;

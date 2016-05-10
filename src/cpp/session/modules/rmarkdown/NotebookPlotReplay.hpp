@@ -1,5 +1,5 @@
 /*
- * NotebookPlots.hpp
+ * NotebookPlotReplay.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,18 +13,12 @@
  *
  */
 
-
-#ifndef SESSION_NOTEBOOK_PLOTS_HPP
-#define SESSION_NOTEBOOK_PLOTS_HPP
-
-#include <boost/function.hpp>
-
-#define kDisplayListExt ".snapshot"
+#ifndef SESSION_NOTEBOOK_PLOT_REPLAY_HPP
+#define SESSION_NOTEBOOK_PLOT_REPLAY_HPP
 
 namespace rstudio {
 namespace core {
    class Error;
-   class FilePath;
 }
 }
 
@@ -34,9 +28,7 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error beginPlotCapture(int pixelWidth, const core::FilePath& plotFolder);
-
-core::Error initPlots();
+core::Error initPlotReplay();
 
 } // namespace notebook
 } // namespace rmarkdown

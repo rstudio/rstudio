@@ -36,6 +36,7 @@ core::Error initialize();
 struct Events : boost::noncopyable
 {
    boost::signal<void()> onBeforeNewPlot;
+   boost::signal<void()> onBeforeNewGridPage;
    boost::signal<void()> onNewPlot;
 };
 

@@ -37,7 +37,6 @@
 
 #include <map>
 
-#define kChunkOutputPath   "chunk_output"
 #define kChunkOutputType   "output_type"
 #define kChunkOutputValue  "output_val"
 #define kChunkOutputs      "chunk_outputs"
@@ -240,10 +239,7 @@ OutputPair lastChunkOutput(const std::string& docId,
       return it->second;
    }
    
-   std::string docPath;
-   source_database::getPath(docId, &docPath);
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, 
-         notebookCtxId());
+   FilePath outputPath = chunkOutputPath(docId, chunkId, ContextExact);
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;
@@ -275,25 +271,33 @@ OutputPair lastChunkOutput(const std::string& docId,
 
 FilePath chunkOutputPath(
       const std::string& docPath, const std::string& docId,
-      const std::string& chunkId, const std::string& nbCtxId)
-
+      const std::string& chunkId, const std::string& nbCtxId, 
+      ChunkOutputContext ctxType)
 {
-   return chunkCacheFolder(docPath, docId, nbCtxId).childPath(chunkId);
+   // compute path to exact context
+   FilePath path = chunkCacheFolder(docPath, docId, nbCtxId).childPath(chunkId);
+
+   // fall back to saved context if permitted
+   if (!path.exists() && ctxType == ContextSaved)
+      path = chunkCacheFolder(docPath, docId, kSavedCtx).childPath(chunkId);
+
+   return path;
 }
 
-FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId)
+FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId,
+      ChunkOutputContext ctxType)
 {
    std::string docPath;
    source_database::getPath(docId, &docPath);
 
-   return chunkOutputPath(docPath, docId, chunkId, notebookCtxId());
+   return chunkOutputPath(docPath, docId, chunkId, notebookCtxId(), ctxType);
 }
 
 FilePath chunkOutputFile(const std::string& docId, 
                          const std::string& chunkId, 
                          const OutputPair& output)
 {
-   return chunkOutputPath(docId, chunkId).complete(
+   return chunkOutputPath(docId, chunkId, ContextExact).complete(
          (boost::format("%|1$06x|%2%") 
                      % (output.ordinal % MAX_ORDINAL)
                      % chunkOutputExt(output.outputType)).str());
@@ -339,17 +343,11 @@ Error enqueueChunkOutput(
       const std::string& chunkId, const std::string& nbCtxId,
       const std::string& requestId)
 {
-   std::string ctxId(nbCtxId);
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId);
-
-   // if the contextual output path doesn't exist, try the saved context
-   if (!outputPath.exists())
-   {
-      ctxId = kSavedCtx;
-      outputPath = chunkOutputPath(docPath, docId, chunkId, kSavedCtx);
-   }
+   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId,
+         ContextSaved);
 
    // scan the directory for output
+   std::string ctxId(outputPath.parent().filename());
    std::vector<FilePath> outputPaths;
    Error error = outputPath.children(&outputPaths);
 
@@ -398,7 +396,7 @@ Error enqueueChunkOutput(
 core::Error cleanChunkOutput(const std::string& docId,
       const std::string& chunkId, bool preserveFolder)
 {
-   FilePath outputPath = chunkOutputPath(docId, chunkId);
+   FilePath outputPath = chunkOutputPath(docId, chunkId, ContextExact);
    if (!outputPath.exists())
       return Success();
 

@@ -23,6 +23,7 @@
 
 #include <core/system/FileMonitor.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -44,14 +45,19 @@ namespace {
 class PlotState
 {
 public:
-   PlotState():
+   PlotState(const FilePath& folder):
+      plotFolder(folder),
       hasPlots(false)
    {
    }
 
+   FilePath plotFolder;
    bool hasPlots;
+   FilePath snapshotFile;
    r::sexp::PreservedSEXP sexpMargins;
    boost::signals::connection onConsolePrompt;
+   boost::signals::connection onBeforeNewPlot;
+   boost::signals::connection onBeforeNewGridPage;
    boost::signals::connection onNewPlot;
 };
 
@@ -61,17 +67,16 @@ bool isPlotPath(const FilePath& path)
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void processPlots(const FilePath& plotFolder,
-                  bool ignoreEmpty,
+void processPlots(bool ignoreEmpty,
                   boost::shared_ptr<PlotState> pPlotState)
 {
    // ensure plot folder exists
-   if (!plotFolder.exists())
+   if (!pPlotState->plotFolder.exists())
       return;
 
    // collect plots from the folder
    std::vector<FilePath> folderContents;
-   Error error = plotFolder.children(&folderContents);
+   Error error = pPlotState->plotFolder.children(&folderContents);
    if (error)
       LOG_ERROR(error);
 
@@ -84,18 +89,17 @@ void processPlots(const FilePath& plotFolder,
          if (ignoreEmpty && path.size() == 0)
             continue;
 
-#ifdef _WIN32
-   // on Windows, turning off the PNG device writes an empty PNG file if no 
-   // plot output occurs; we avoid treating that empty file as an actual plot
-   // by only emitting an event if a plot occurred.
-   //
-   // TODO: not all plot libraries cause the new plot hooks to invoke, so this
-   // heuristic may cause us to miss a plot on Windows; we may need some
-   // mechanism by which we can determine whether the device or its output is
-   // empty.
+         // it's possible for a PNG to get written that has no content 
+         // (on Windows in particular closing the PNG device always generates
+         // a PNG) so make sure we have something to write 
          if (pPlotState->hasPlots)
-#endif
-            events().onPlotOutput(path);
+         {
+            // emit the plot and the snapshot file
+            events().onPlotOutput(path, pPlotState->snapshotFile);
+
+            // we've consumed the snapshot file, so clear it
+            pPlotState->snapshotFile = FilePath();
+         }
 
          // clean up the plot so it isn't emitted twice
          error = path.removeIfExists();
@@ -105,9 +109,42 @@ void processPlots(const FilePath& plotFolder,
    }
 }
 
-void removeGraphicsDevice(const FilePath& plotFolder, 
-                          boost::shared_ptr<PlotState> pPlotState)
+void saveSnapshot(boost::shared_ptr<PlotState> pPlotState)
 {
+   // if there's a plot on the device, write its display list before it's
+   // cleared for the next page
+   FilePath outputFile = pPlotState->plotFolder.complete(
+         core::system::generateUuid(false) + kDisplayListExt);
+   Error error = r::exec::RFunction(".rs.saveGraphics", 
+         outputFile.absolutePath()).call();
+
+   // if there's already an unconsumed display list, remove it, since this
+   // display list replaces it
+   if (!pPlotState->snapshotFile.empty())
+   {
+      error = pPlotState->snapshotFile.removeIfExists();
+      if (error) 
+         LOG_ERROR(error);
+      else
+         pPlotState->snapshotFile = FilePath();
+   }
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      pPlotState->snapshotFile = outputFile;
+   }
+}
+
+void removeGraphicsDevice(boost::shared_ptr<PlotState> pPlotState)
+{
+   // take a snapshot of the last plot's display list before we turn off the
+   // device (if we haven't emitted it yet)
+   if (pPlotState->hasPlots && pPlotState->snapshotFile.empty())
+      saveSnapshot(pPlotState);
 
    // restore the figure margins
    Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
@@ -120,29 +157,38 @@ void removeGraphicsDevice(const FilePath& plotFolder,
    if (error)
       LOG_ERROR(error);
 
-   processPlots(plotFolder, false, pPlotState);
+   processPlots(false, pPlotState);
 }
 
-void onNewPlot(const FilePath& plotFolder,
-               boost::shared_ptr<PlotState> pPlotState)
+void onBeforeNewPlot(boost::shared_ptr<PlotState> pPlotState)
+{
+   if (pPlotState->hasPlots)
+   {
+      saveSnapshot(pPlotState);
+   }
+   pPlotState->hasPlots = true;
+}
+
+void onNewPlot(boost::shared_ptr<PlotState> pPlotState)
 {
    pPlotState->hasPlots = true;
-   processPlots(plotFolder, true, pPlotState);
+   processPlots(true, pPlotState);
 }
 
-void onConsolePrompt(const FilePath& plotFolder,
-                     boost::shared_ptr<PlotState> pPlotState,
+void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
                      const std::string& )
 {
-   removeGraphicsDevice(plotFolder, pPlotState);
+   removeGraphicsDevice(pPlotState);
    pPlotState->onConsolePrompt.disconnect();
    pPlotState->onNewPlot.disconnect();
+   pPlotState->onBeforeNewPlot.disconnect();
+   pPlotState->onBeforeNewGridPage.disconnect();
 }
 
 } // anonymous namespace
 
 // begins capturing plot output
-core::Error beginPlotCapture(const FilePath& plotFolder)
+core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
 {
    // clean up any stale plots from the folder
    std::vector<FilePath> folderContents;
@@ -164,26 +210,13 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
       }
    }
 
-   // generate code for creating PNG device
-   boost::format fmt("{ require(grDevices, quietly=TRUE); "
-                     "  png(file = \"%1%/" kPlotPrefix "%%03d.png\", "
-                     "  width = 6.5, height = 4, "
-                     "  units=\"in\", res = 96 %2%)"
-                     "}");
-
    // marker for content; this is necessary because on Windows, turning off
    // the png device writes an empty PNG file even if nothing was plotted, and
    // we need to avoid treating that file as though it were an actual plot
-   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>();
+   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>(
+         plotFolder);
 
-   // create the PNG device
-   error = r::exec::executeString(
-         (fmt % string_utils::utf8ToSystem(plotFolder.absolutePath())
-              % r::session::graphics::extraBitmapParams()).str());
-   if (error)
-      return error;
-
-   // save old plot state
+   // save old figure parameters
    r::exec::RFunction par("par");
    par.addParam("no.readonly", true);
    r::sexp::Protect protect;
@@ -195,20 +228,57 @@ core::Error beginPlotCapture(const FilePath& plotFolder)
    // preserve until chunk is finished executing
    pPlotState->sexpMargins.set(sexpMargins);
 
-   // set notebook-friendly figure margins
-   //                                          bot  left top  right
-   error = r::exec::executeString("par(mar = c(5.1, 4.1, 2.1, 2.1))");
+   // create the notebook graphics device
+   error = r::exec::RFunction(".rs.createNotebookGraphicsDevice",
+         plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png",
+         pixelWidth, 
+         r::session::graphics::device::devicePixelRatio(),
+         r::session::graphics::extraBitmapParams()).call();
+   if (error)
+   {
+      // this is fatal; without a graphics device we can't capture plots
+      return error;
+   }
+
+   // turn on display list recording so we can do intelligent resizing later
+   r::exec::RFunction devControl("dev.control");
+   devControl.addParam("displaylist", "enable");
+   error = devControl.call();
+   if (error)
+   {
+      // non-fatal since we'll do best-effort resizing in the absence of
+      // display lists
+      LOG_ERROR(error);
+   }
+
+   // set notebook-friendly figure margins 
+   error = r::exec::RFunction(".rs.setNotebookMargins").call();
    if (error)
       LOG_ERROR(error);
    
    // complete the capture on the next console prompt
    pPlotState->onConsolePrompt = module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, plotFolder, pPlotState, _1));
+         boost::bind(onConsolePrompt, pPlotState, _1));
+
+   pPlotState->onBeforeNewPlot = plots::events().onBeforeNewPlot.connect(
+         boost::bind(onBeforeNewPlot, pPlotState));
+   
+   pPlotState->onBeforeNewGridPage = plots::events().onBeforeNewGridPage.connect(
+         boost::bind(onBeforeNewPlot, pPlotState));
 
    pPlotState->onNewPlot = plots::events().onNewPlot.connect(
-         boost::bind(onNewPlot, plotFolder, pPlotState));
+         boost::bind(onNewPlot, pPlotState));
 
    return Success();
+}
+
+core::Error initPlots()
+{
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(module_context::sourceModuleRFile, "NotebookPlots.R"));
+
+   return initBlock.execute();
 }
 
 

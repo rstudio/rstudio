@@ -4246,6 +4246,17 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void replayNotebookPlots(String docId, String initialChunkId,
+         int pixelWidth, ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(initialChunkId));
+      params.set(2, new JSONNumber(pixelWidth));
+      sendRequest(RPC_SCOPE, "replay_notebook_plots", params, requestCallback);
+   }
+
+   @Override
    public void getRmdOutputInfo(String input,
          ServerRequestCallback<RmdOutputInfo> requestCallback)
    {

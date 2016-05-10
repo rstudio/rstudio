@@ -822,6 +822,12 @@ SEXP rs_emitNewPlot()
    return R_NilValue;
 }
 
+SEXP rs_emitBeforeNewGridPage()
+{
+   events().onBeforeNewGridPage();
+   return R_NilValue;
+}
+
 
 } // anonymous namespace  
    
@@ -863,6 +869,7 @@ Error initialize()
    module_context::events().onBackgroundProcessing.connect(onBackgroundProcessing);
 
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewPlot, 0);
+   RS_REGISTER_CALL_METHOD(rs_emitBeforeNewGridPage, 0);
    RS_REGISTER_CALL_METHOD(rs_emitNewPlot, 0);
 
    // connect to onShowManipulator

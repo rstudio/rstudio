@@ -21,6 +21,13 @@ setHook(
   },
   action = "append")
 
+setHook(
+  hookName = "before.grid.newpage", 
+  value = function() { 
+    .Call("rs_emitBeforeNewGridPage")
+  },
+  action = "append")
+
 # register hook to be invoked when a new plot has been created
 setHook(
   hookName = "plot.new", 

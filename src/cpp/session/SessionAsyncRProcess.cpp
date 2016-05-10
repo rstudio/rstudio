@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcess.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,8 @@ void AsyncRProcess::start(const char* rCommand,
                           core::system::Options environment,
                           const core::FilePath& workingDir,
                           AsyncRProcessOptions rOptions,
-                          std::vector<core::FilePath> rSourceFiles)
+                          std::vector<core::FilePath> rSourceFiles,
+                          const std::string& input)
 {
    // R binary
    core::FilePath rProgramPath;
@@ -171,6 +172,13 @@ void AsyncRProcess::start(const char* rCommand,
    cb.onExit =  boost::bind(&AsyncRProcess::onProcessCompleted,
                              AsyncRProcess::shared_from_this(),
                              _1);
+   cb.onStarted = boost::bind(&AsyncRProcess::onStarted,
+                              AsyncRProcess::shared_from_this(),
+                              _1);
+
+   // forward input if requested
+   input_ = input;
+
    error = module_context::processSupervisor().runProgram(
             rProgramPath.absolutePath(),
             args,
@@ -180,11 +188,26 @@ void AsyncRProcess::start(const char* rCommand,
    {
       LOG_ERROR(error);
       onCompleted(EXIT_FAILURE);
+   }
+   else
+   {
+      isRunning_ = true;
+   }
 }
-else
+
+void AsyncRProcess::onStarted(core::system::ProcessOperations& operations)
 {
-   isRunning_ = true;
-}
+   if (!input_.empty())
+   {
+      core::Error error = operations.writeToStdin(input_, true);
+      if (error)
+      {
+         LOG_ERROR(error);
+         error = operations.terminate();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
 }
 
 void AsyncRProcess::onStdout(const std::string& output)
