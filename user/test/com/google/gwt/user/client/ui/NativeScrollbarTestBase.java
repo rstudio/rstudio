@@ -38,9 +38,6 @@ public abstract class NativeScrollbarTestBase<S extends AbstractNativeScrollbar>
     private boolean isFinished;
 
     public void finish() {
-      if (isFinished) {
-        fail("ScrollHandler already finished.");
-      }
       this.isFinished = true;
     }
 
