@@ -566,7 +566,38 @@ public class TextEditingTargetNotebook
    @Handler
    public void onNotebookClearAllOutput()
    {
-      removeAllChunks();
+      if (executingChunk_ == null && chunkExecQueue_.isEmpty())
+      {
+         // no chunks running, just clean everything up
+         removeAllChunks();
+         return;
+      }
+      else
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
+               GlobalDisplay.MSG_INFO,
+               "Chunks Currently Running",
+               "Output can't be cleared because there are still chunks " +
+               "running. Do you want to interrupt them?",
+               false,
+               new Operation()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     if (commands_.interruptR().isEnabled())
+                         commands_.interruptR().execute();
+                     
+                     clearChunkExecQueue();
+                     removeAllChunks();
+                  }
+               },
+               null,
+               null,
+               "Interrupt and Clear Output",
+               "Cancel",
+               false);
+      }
    }
    // Event handlers ----------------------------------------------------------
    
