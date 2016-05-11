@@ -444,6 +444,23 @@ public final class InternalPreconditions {
   /**
    * Checks that bounds are correct.
    *
+   * @throws ArrayIndexOutOfBoundsException if the range is not legal
+   */
+  public static void checkCriticalArrayBounds(int start, int end, int length) {
+    if (start < 0) {
+      throw new ArrayIndexOutOfBoundsException("fromIndex: " + start + " < 0");
+    }
+    if (end > length) {
+      throw new ArrayIndexOutOfBoundsException("toIndex: " + end + " > length " + length);
+    }
+    if (start > end) {
+      throw new IllegalArgumentException("fromIndex: " + start + " > toIndex: " + end);
+    }
+  }
+
+  /**
+   * Checks that bounds are correct.
+   *
    * @throws StringIndexOutOfBoundsException if the range is not legal
    */
   public static void checkStringBounds(int start, int end, int size) {

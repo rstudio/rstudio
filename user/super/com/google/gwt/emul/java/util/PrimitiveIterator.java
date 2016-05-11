@@ -15,7 +15,6 @@
  */
 package java.util;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalNotNull;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.util.function.Consumer;
@@ -59,7 +58,6 @@ public interface PrimitiveIterator<T, C> extends Iterator<T> {
       if (consumer instanceof DoubleConsumer) {
         forEachRemaining((DoubleConsumer) consumer);
       } else {
-        checkCriticalNotNull(consumer);
         forEachRemaining((DoubleConsumer) consumer::accept);
       }
     }
@@ -90,7 +88,6 @@ public interface PrimitiveIterator<T, C> extends Iterator<T> {
       if (consumer instanceof IntConsumer) {
         forEachRemaining((IntConsumer) consumer);
       } else {
-        checkCriticalNotNull(consumer);
         forEachRemaining((IntConsumer) consumer::accept);
       }
     }
@@ -121,7 +118,6 @@ public interface PrimitiveIterator<T, C> extends Iterator<T> {
       if (consumer instanceof LongConsumer) {
         forEachRemaining((LongConsumer) consumer);
       } else {
-        checkCriticalNotNull(consumer);
         forEachRemaining((LongConsumer) consumer::accept);
       }
     }

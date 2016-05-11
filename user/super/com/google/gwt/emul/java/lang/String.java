@@ -16,7 +16,6 @@
 
 package java.lang;
 
-import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkStringBounds;
 
 import java.io.Serializable;
@@ -113,8 +112,6 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public static String join(CharSequence delimiter, CharSequence... elements) {
-    checkNotNull(delimiter, "delimiter");
-    checkNotNull(elements, "elements");
     StringJoiner joiner = new StringJoiner(delimiter);
     for (CharSequence e : elements) {
       joiner.add(e);
@@ -123,8 +120,6 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public static String join(CharSequence delimiter, Iterable<? extends CharSequence> elements) {
-    checkNotNull(delimiter, "delimiter");
-    checkNotNull(elements, "elements");
     StringJoiner joiner = new StringJoiner(delimiter);
     for (CharSequence e : elements) {
       joiner.add(e);

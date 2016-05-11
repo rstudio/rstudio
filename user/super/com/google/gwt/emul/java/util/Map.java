@@ -15,7 +15,6 @@
  */
 package java.util;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalNotNull;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
@@ -52,7 +51,7 @@ public interface Map<K, V> {
     }
 
     static <K, V> Comparator<Map.Entry<K, V>> comparingByKey(Comparator<? super K> cmp) {
-      checkCriticalNotNull(cmp);
+      checkNotNull(cmp);
       return (Comparator<Map.Entry<K, V>> & Serializable)
           (a, b) -> cmp.compare(a.getKey(), b.getKey());
     }
@@ -62,7 +61,7 @@ public interface Map<K, V> {
     }
 
     static <K, V> Comparator<Map.Entry<K, V>> comparingByValue(Comparator<? super V> cmp) {
-      checkCriticalNotNull(cmp);
+      checkNotNull(cmp);
       return (Comparator<Map.Entry<K, V>> & Serializable)
           (a, b) -> cmp.compare(a.getValue(), b.getValue());
     }

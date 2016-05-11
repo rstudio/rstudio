@@ -15,7 +15,7 @@
  */
 package java.util;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalNotNull;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 import java.util.function.Function;
@@ -43,7 +43,7 @@ public interface Comparator<T> {
   }
 
   default Comparator<T> thenComparing(Comparator<? super T> other) {
-    checkCriticalNotNull(other);
+    checkNotNull(other);
     return (Comparator<T> & Serializable) (a, b) -> {
       int c = compare(a, b);
       return (c != 0) ? c : other.compare(a, b);
@@ -74,8 +74,8 @@ public interface Comparator<T> {
 
   static <T, U> Comparator<T> comparing(Function<? super T, ? extends U> keyExtractor,
       Comparator<? super U> keyComparator) {
-    checkCriticalNotNull(keyExtractor);
-    checkCriticalNotNull(keyComparator);
+    checkNotNull(keyExtractor);
+    checkNotNull(keyComparator);
     return (Comparator<T> & Serializable) (a, b) ->
         keyComparator.compare(keyExtractor.apply(a), keyExtractor.apply(b));
   }
@@ -86,19 +86,19 @@ public interface Comparator<T> {
   }
 
   static<T> Comparator<T> comparingDouble(ToDoubleFunction<? super T> keyExtractor) {
-    checkCriticalNotNull(keyExtractor);
+    checkNotNull(keyExtractor);
     return (Comparator<T> & Serializable) (a, b) ->
         Double.compare(keyExtractor.applyAsDouble(a), keyExtractor.applyAsDouble(b));
   }
 
   static <T> Comparator<T> comparingInt(ToIntFunction<? super T> keyExtractor) {
-    checkCriticalNotNull(keyExtractor);
+    checkNotNull(keyExtractor);
     return (Comparator<T> & Serializable) (a, b) ->
         Integer.compare(keyExtractor.applyAsInt(a), keyExtractor.applyAsInt(b));
   }
 
   static <T> Comparator<T> comparingLong(ToLongFunction<? super T> keyExtractor) {
-    checkCriticalNotNull(keyExtractor);
+    checkNotNull(keyExtractor);
     return (Comparator<T> & Serializable) (a, b) ->
         Long.compare(keyExtractor.applyAsLong(a), keyExtractor.applyAsLong(b));
   }

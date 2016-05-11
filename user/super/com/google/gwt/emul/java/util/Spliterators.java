@@ -15,8 +15,8 @@
  */
 package java.util;
 
+import static javaemul.internal.InternalPreconditions.checkCriticalArrayBounds;
 import static javaemul.internal.InternalPreconditions.checkCriticalElement;
-import static javaemul.internal.InternalPreconditions.checkCriticalPositionIndexes;
 import static javaemul.internal.InternalPreconditions.checkCriticalState;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 
@@ -586,7 +586,7 @@ public final class Spliterators {
     private final int characteristics;
 
     BaseArraySpliterator(int from, int limit, int size, int characteristics) {
-      checkCriticalPositionIndexes(from, limit, size);
+      checkCriticalArrayBounds(from, limit, size);
       this.index = from;
       this.limit = limit;
       this.characteristics = sizeKnownSpliteratorCharacteristics(characteristics);
