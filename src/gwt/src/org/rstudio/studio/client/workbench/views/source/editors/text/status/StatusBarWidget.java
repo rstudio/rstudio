@@ -250,11 +250,14 @@ public class StatusBarWidget extends Composite
    }
 
    @Override
-   public void hideNotebookProgress()
+   public void hideNotebookProgress(boolean immediately)
    {
       if (progress_.isVisible())
       {
-         hideProgressTimer_.schedule(400);
+         if (immediately)
+            hideProgressTimer_.run();
+         else
+            hideProgressTimer_.schedule(400);
       }
    }
 

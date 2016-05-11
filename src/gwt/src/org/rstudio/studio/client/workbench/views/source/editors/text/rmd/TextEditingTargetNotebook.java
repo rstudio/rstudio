@@ -1104,7 +1104,7 @@ public class TextEditingTargetNotebook
       // if the queue is empty, just make sure we've hidden the progress UI
       if (chunkExecQueue_.isEmpty())
       {
-         editingTarget_.getStatusBar().hideNotebookProgress();
+         editingTarget_.getStatusBar().hideNotebookProgress(false);
          return;
       }
       
@@ -1547,7 +1547,7 @@ public class TextEditingTargetNotebook
       }
       chunkExecQueue_.clear();
 
-      editingTarget_.getStatusBar().hideNotebookProgress();
+      editingTarget_.getStatusBar().hideNotebookProgress(true);
    }
    
    private Timer cleanErrorGutter_ = new Timer()
