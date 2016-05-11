@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -1149,11 +1150,19 @@ public class TextEditingTargetNotebook
       
       if (unit.mode == MODE_BATCH)
          updateProgress();
-
+      
       // let the chunk widget know it's started executing
       if (outputs_.containsKey(unit.chunkId))
       {
          ChunkOutputUi output = outputs_.get(unit.chunkId);
+
+         // expand the chunk if it's in a fold
+         Scope scope = output.getScope();
+         if (scope != null)
+         {
+            docDisplay_.unfold(Range.fromPoints(scope.getPreamble(),
+                                                scope.getEnd()));
+         }
 
          output.getOutputWidget().setCodeExecuting(true, executingChunk_.mode);
          syncWidth();
