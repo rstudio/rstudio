@@ -127,9 +127,11 @@
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
         <g:Image styleName="{style.clear}"
                  ui:field="clear_"
-                 resource="{res.removeChunkIcon}"></g:Image>
+                 resource="{res.removeChunkIcon}"
+                 title="Clear Output"></g:Image>
         <g:Image styleName="{style.expand}" 
                  resource="{res.collapseChunkIcon}"
+                 title="Expand/Collapse Output"
                  ui:field="expand_"></g:Image>
         <g:Label styleName="{style.empty}" 
                  ui:field="emptyIndicator_"

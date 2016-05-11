@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.studio.client.RStudioGinjector;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -119,6 +121,8 @@ public class ChunkContextToolbar extends Composite
    private void initRun()
    {
       setState(state_);
+      run_.setTitle(RStudioGinjector.INSTANCE.getCommands()
+                    .executeCurrentChunk().getMenuLabel(false));
       DOM.sinkEvents(run_.getElement(), Event.ONCLICK);
       DOM.setEventListener(run_.getElement(), new EventListener()
       {
@@ -146,6 +150,8 @@ public class ChunkContextToolbar extends Composite
    
    private void initRunPrevious(boolean dark)
    {
+      runPrevious_.setTitle(RStudioGinjector.INSTANCE.getCommands()
+                            .executePreviousChunks().getMenuLabel(false));
       runPrevious_.setResource(dark ? RES.runPreviousChunksDark() :
                                       RES.runPreviousChunksLight());
       DOM.sinkEvents(runPrevious_.getElement(), Event.ONCLICK);
