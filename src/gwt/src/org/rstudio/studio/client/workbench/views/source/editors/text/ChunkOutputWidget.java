@@ -872,9 +872,10 @@ public class ChunkOutputWidget extends Composite
    
    private void toggleExpansionState()
    {
-      // cancel any previously running expand/collapse timer
+      // don't permit toggling state while we're animating a new state
+      // (no simple way to gracefully reverse direction) 
       if (collapseTimer_ != null && collapseTimer_.isRunning())
-          collapseTimer_.cancel();
+         return;
 
       if (expansionState_.getValue() == EXPANDED)
       {
