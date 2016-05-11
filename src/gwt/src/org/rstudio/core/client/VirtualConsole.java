@@ -189,8 +189,12 @@ public class VirtualConsole
       JsArrayString splat = StringUtil.split(output, "\n");
       for (int i = 0; i < splat.length(); i++)
       {
-         if (splat.get(i).length() > maxLength)
-            splat.set(i, splat.get(i).substring(0, maxLength) + "... <truncated>");
+         String string = splat.get(i);
+         String trimmed = StringUtil.trimRight(string);
+         if (trimmed.length() > maxLength)
+            splat.set(i, trimmed.substring(0, maxLength) + "... <truncated>");
+         else if (string.length() > maxLength)
+            splat.set(i, string.substring(0, maxLength));
       }
       
       String joined = splat.join("\n");
