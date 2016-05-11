@@ -116,6 +116,10 @@ import org.rstudio.studio.client.workbench.views.buildtools.BuildTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsPane;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsTab;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
@@ -292,6 +296,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Presentation.Display.class).to(PresentationPane.class);
       bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
       bind(ViewerPresenter.Display.class).to(ViewerPane.class);
+      bind(ConnectionsPresenter.Display.class).to(ConnectionsPane.class);
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
@@ -307,6 +312,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Presentation", PresentationTab.class);
       bindTab("Environment", EnvironmentTab.class);
       bindTab("Viewer", ViewerTab.class);
+      bindTab("Connections", ConnectionsTab.class);
       bindTab("Compile PDF", CompilePdfOutputTab.class);
       bindTab("R Markdown", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
@@ -369,6 +375,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DebuggingServerOperations.class).to(RemoteServer.class);
       bind(MetaServerOperations.class).to(RemoteServer.class);
       bind(ViewerServerOperations.class).to(RemoteServer.class);
+      bind(ConnectionsServerOperations.class).to(RemoteServer.class);
       bind(ProfilerServerOperations.class).to(RemoteServer.class);
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);

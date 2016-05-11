@@ -81,7 +81,7 @@ public class PaneManager
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
    
    public enum Tab {
-      History, Files, Plots, Packages, Help, VCS, Build,
+      History, Files, Plots, Packages, Help, VCS, Build, Connections,
       Presentation, Environment, Viewer, Source, Console
    }
    
@@ -212,6 +212,7 @@ public class PaneManager
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Presentation") final WorkbenchTab presentationTab,
+                      @Named("Connections") final WorkbenchTab connectionsTab,
                       @Named("Environment") final WorkbenchTab environmentTab,
                       @Named("Viewer") final WorkbenchTab viewerTab,
                       @Named("Compile PDF") final WorkbenchTab compilePdfTab,
@@ -236,6 +237,7 @@ public class PaneManager
       vcsTab_ = vcsTab;
       buildTab_ = buildTab;
       presentationTab_ = presentationTab;
+      connectionsTab_ = connectionsTab;
       environmentTab_ = environmentTab;
       viewerTab_ = viewerTab;
       compilePdfTab_ = compilePdfTab;
@@ -770,6 +772,8 @@ public class PaneManager
             return environmentTab_;
          case Viewer:
             return viewerTab_;
+         case Connections:
+            return connectionsTab_;
          case Source:
          case Console:
             // not 'real' tabs so should be an error to ask for their tabs
@@ -782,7 +786,8 @@ public class PaneManager
       return new WorkbenchTab[] { historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
                                   vcsTab_, buildTab_, presentationTab_,
-                                  environmentTab_, viewerTab_};
+                                  environmentTab_, viewerTab_,
+                                  connectionsTab_};
    }
 
    public void activateTab(Tab tab)
@@ -1002,6 +1007,8 @@ public class PaneManager
          return Tab.Environment;
       if (name.equalsIgnoreCase("viewer"))
          return Tab.Viewer;
+      if (name.equalsIgnoreCase("connections"))
+         return Tab.Connections;
       if (name.equalsIgnoreCase("source"))
          return Tab.Source;
       if (name.equalsIgnoreCase("console"))
@@ -1028,6 +1035,7 @@ public class PaneManager
       case Source:       return commands_.layoutZoomSource();
       case VCS:          return commands_.layoutZoomVcs();
       case Viewer:       return commands_.layoutZoomViewer();
+      case Connections:  return commands_.layoutZoomConnections();
       default:
          throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
       }
@@ -1074,6 +1082,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomSource());
       commands.add(commands_.layoutZoomVcs());
       commands.add(commands_.layoutZoomViewer());
+      commands.add(commands_.layoutZoomConnections());
       
       return commands;
    }
@@ -1106,6 +1115,7 @@ public class PaneManager
    private final WorkbenchTab vcsTab_;
    private final WorkbenchTab buildTab_;
    private final WorkbenchTab presentationTab_;
+   private final WorkbenchTab connectionsTab_;
    private final WorkbenchTab environmentTab_;
    private final WorkbenchTab viewerTab_;
    private final WorkbenchTab renderRmdTab_;

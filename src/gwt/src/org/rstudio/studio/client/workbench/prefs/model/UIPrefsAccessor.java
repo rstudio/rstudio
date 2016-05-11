@@ -470,6 +470,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("packages_pane_enabled", true);
    }
    
+   public PrefValue<Boolean> connectionsPaneEnabled()
+   {
+      return bool("connections_pane_enabled", false);
+   }
+   
    public PrefValue<Boolean> useRcppTemplate()
    {
       return bool("use_rcpp_template", true);

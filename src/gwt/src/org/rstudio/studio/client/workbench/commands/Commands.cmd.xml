@@ -247,6 +247,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutZoomViewer"/>
             <cmd refid="layoutZoomVcs"/>
             <cmd refid="layoutZoomBuild"/>
+            <cmd refid="layoutZoomConnections"/>
          </menu>
          
          <separator/>
@@ -276,6 +277,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateViewer"/>
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
+         <cmd refid="activateConnections"/>
          
          <separator/>
          <cmd refid="synctexSearch"/>
@@ -605,6 +607,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateViewer" value="Ctrl+9"/>
          <shortcut refid="activateVcs" value="Ctrl+F1"/>
          <shortcut refid="activateBuild" value="Ctrl+F2"/>
+         <shortcut refid="activateConnections" value="Ctrl+F5"/>
 
          <!-- Windows masks Ctrl+Shift+0 for IME input -->
          <shortcut refid="layoutEndZoom" value="Ctrl+Shift+0" if="!org.rstudio.core.client.BrowseCap.isWindowsDesktop()" />
@@ -741,6 +744,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomViewer" value="Ctrl+Shift+9"/>
          <shortcut refid="layoutZoomVcs" value="Ctrl+Shift+F1"/>
          <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
+         <shortcut refid="layoutZoomConnections" value="Ctrl+Shift+F5"/>
       </shortcutgroup>
          
    </shortcuts>
@@ -1139,6 +1143,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Show Presentation"
         windowMode="main"/>
         
+   <cmd id="activateConnections"
+        label="Show Connections Pane"
+        menuLabel = "Show Co_nnections"
+        windowMode="main"/>
         
    <cmd id="layoutZoomSource"
         checkable="true"
@@ -1203,6 +1211,12 @@ well as menu structures (for main menu and popup menus).
         checkable="true"
         label="Zoom Viewer"
         menuLabel="Zoom Vie_wer"
+        windowMode="main"/>
+    
+    <cmd id="layoutZoomConnections"
+        checkable="true"
+        label="Zoom Connections"
+        menuLabel="Zoom Co_nnections"
         windowMode="main"/>
         
    <cmd id="layoutZoomCurrentPane"

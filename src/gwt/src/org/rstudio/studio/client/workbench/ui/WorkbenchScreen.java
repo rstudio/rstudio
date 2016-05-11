@@ -333,6 +333,8 @@ public class WorkbenchScreen extends Composite
    void onActivatePresentation() { paneManager_.activateTab(Tab.Presentation); }
    @Handler
    void onActivateViewer() { paneManager_.activateTab(Tab.Viewer); }
+   @Handler
+   void onActivateConnections() { paneManager_.activateTab(Tab.Connections); }
    
    
    @Handler
@@ -357,6 +359,8 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomBuild() { paneManager_.zoomTab(Tab.Build); }
    @Handler
    void onLayoutZoomViewer() { paneManager_.zoomTab(Tab.Viewer); }
+   @Handler
+   void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
 
    @Handler
    void onMacPreferences()

@@ -214,6 +214,7 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomViewer().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
       
       ImageResource paneLayoutIcon = ThemeResources.INSTANCE.paneLayoutIcon();
       ToolbarButton paneLayoutButton = new ToolbarButton(

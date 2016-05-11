@@ -270,6 +270,10 @@ public abstract class
    public abstract AppCommand activateHistory();
    public abstract AppCommand layoutZoomHistory();
 
+   // Connections
+   public abstract AppCommand activateConnections();
+   public abstract AppCommand layoutZoomConnections();
+   
    // Workspace
    public abstract AppCommand clearWorkspace();
    public abstract AppCommand refreshWorkspace();

@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.choosefile.model.ChooseFileServerOperations;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.data.model.DataServerOperations;
 import org.rstudio.studio.client.workbench.views.edit.model.EditServerOperations;
@@ -94,7 +95,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    RoxygenServerOperations,
                                                    SnippetServerOperations,
                                                    AddinsServerOperations,
-                                                   DataImportServerOperations
+                                                   DataImportServerOperations,
+                                                   ConnectionsServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();
