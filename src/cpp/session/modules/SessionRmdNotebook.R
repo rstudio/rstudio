@@ -159,8 +159,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          
          # console output
          if (.rs.endsWith(key, ".csv")) {
-            # TODO
-            browser()
+            parsed <- .rs.rnb.readConsoleData(val)
+            rendered <- .rs.rnb.renderConsoleData(parsed)
+            return(rendered)
          }
          
          # html widgets
@@ -222,17 +223,44 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
 })
 
-.rs.addFunction("rnb.parseConsoleData", function(data)
+.rs.addFunction("rnb.readConsoleData", function(encodedData)
 {
+   # read from CSV
    csvData <- read.csv(
-      text = data,
+      text = encodedData,
       encoding = "UTF-8",
       header = FALSE,
       stringsAsFactors = FALSE
    )
    
    names(csvData) <- c("type", "text")
+   
    csvData
+})
+
+.rs.addFunction("rnb.renderConsoleData", function(csvData)
+{
+   # split on type
+   cutpoints <- .rs.cutpoints(csvData$type)
+   
+   ranges <- Map(
+      function(start, end) list(start = start, end = end),
+      c(1, cutpoints),
+      c(cutpoints - 1, nrow(csvData))
+   )
+   
+   splat <- lapply(ranges, function(range) {
+      type <- csvData$type[[range$start]]
+      text <- csvData$text[range$start:range$end]
+      collapse <- if (type == 0) "\n" else ""
+      pasted <- paste(text, collapse = collapse)
+      if (type == 0)
+         return(rmarkdown::html_notebook_output_code(pasted))
+      else
+         pasted
+   })
+   
+   splat
 })
 
 .rs.addFunction("scrapeHtmlAttributes", function(line)
