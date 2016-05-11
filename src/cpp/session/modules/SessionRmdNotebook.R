@@ -167,25 +167,39 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # html widgets
          if (.rs.endsWith(key, ".html")) {
             
-            # re-construct htmlwidget object using attached json data
+            # extract dependency information from json
             jsonName <- .rs.withChangedExtension(key, ".json")
             jsonPath <- file.path(rnbData$cache_path, chunkId, jsonName)
             jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
             for (i in seq_along(jsonContents))
                class(jsonContents[[i]]) <- "html_dependency"
             
+            # extract body element (this is effectively what the
+            # widget emitted on print in addition to aforementioned
+            # dependency information)
             bodyEl <- .rs.extractHTMLBodyElement(val)
             
-            widget <- knitr::asis_output(bodyEl)
+            # annotate widget manually and return asis output
+            annotated <- rmarkdown:::html_notebook_annotated_output(
+               bodyEl,
+               "htmlwidget",
+               jsonContents
+            )
+            widget <- knitr::asis_output(annotated)
             attr(widget, "knit_meta") <- jsonContents
             return(widget)
          }
          
+         # json files handled as pairs to HTML above
+         if (.rs.endsWith(key, "json"))
+            return(NULL)
+         
          return(knitr::asis_output("<!-- unknown-chunk-output -->"))
       })
       
-      # return output list
-      outputList
+      # remove nulls and return
+      Filter(Negate(is.null), outputList)
+      
    }
 })
    
