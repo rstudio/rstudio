@@ -3871,9 +3871,10 @@ public class TextEditingTarget implements
       
       if (executeChunks)
       {
-         executePreviousChunks(Position.create(
+         executeChunks(Position.create(
                docDisplay_.getDocumentEnd().getRow() + 1,
-               0));
+               0),
+               TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
       }
       else
       {
@@ -4120,20 +4121,20 @@ public class TextEditingTarget implements
    @Handler
    void onExecutePreviousChunks()
    {
-      executePreviousChunks(null);
+      executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
    }
    
    @Handler
    void onExecuteSubsequentChunks()
    {
-      globalDisplay_.showNotYetImplemented();
+      executeChunks(null, TextEditingTargetScopeHelper.FOLLOWING_CHUNKS);
    }
    
-   public void executePreviousChunks(final Position position)
+   public void executeChunks(final Position position, int which)
    {
       if (docDisplay_.showChunkOutputInline())
       {
-         executePreviousChunksNotebookMode(position);
+         executeChunksNotebookMode(position, which);
          return;
       }
       
@@ -4142,8 +4143,9 @@ public class TextEditingTarget implements
       // a Scope with an end.
       docDisplay_.getScopeTree();
       
-      // execute the previous chunks
-      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      // execute the chunks
+      Scope[] previousScopes = scopeHelper_.getSweaveChunks(position,
+            which);
       
       StringBuilder builder = new StringBuilder();
       for (Scope scope : previousScopes)
@@ -4184,7 +4186,7 @@ public class TextEditingTarget implements
       }
    }
    
-   public void executePreviousChunksNotebookMode(Position position)
+   public void executeChunksNotebookMode(Position position, int which)
    {
       // HACK: This is just to force the entire function tree to be built.
       // It's the easiest way to make sure getCurrentScope() returns
@@ -4192,7 +4194,7 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       // execute the previous chunks
-      Scope[] previousScopes = scopeHelper_.getPreviousSweaveChunks(position);
+      Scope[] previousScopes = scopeHelper_.getSweaveChunks(position, which);
 
       // prepare the status bar
       if (previousScopes.length > 0)
@@ -4200,8 +4202,10 @@ public class TextEditingTarget implements
          if (position != null &&
              position.getRow() > docDisplay_.getDocumentEnd().getRow())
             statusBar_.showNotebookProgress("Run All");
-         else
+         else if (which == TextEditingTargetScopeHelper.PREVIOUS_CHUNKS)
             statusBar_.showNotebookProgress("Run Previous");
+         else if (which == TextEditingTargetScopeHelper.FOLLOWING_CHUNKS)
+            statusBar_.showNotebookProgress("Run After");
       }
 
       for (Scope scope : previousScopes)

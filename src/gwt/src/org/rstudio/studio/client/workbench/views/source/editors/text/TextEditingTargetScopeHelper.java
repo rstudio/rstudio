@@ -121,10 +121,11 @@ public class TextEditingTargetScopeHelper
 
    public Scope[] getPreviousSweaveChunks()
    {
-      return getPreviousSweaveChunks(null);
+      return getSweaveChunks(null, PREVIOUS_CHUNKS);
    }
 
-   public Scope[] getPreviousSweaveChunks(Position startPosition)
+   public Scope[] getSweaveChunks(Position startPosition, 
+         final int which)
    {
       // provide default position based on selection if necessary
       final Position position = startPosition != null ? 
@@ -138,10 +139,15 @@ public class TextEditingTargetScopeHelper
          @Override
          public boolean test(Scope scope)
          {
-            return scope.isChunk() && 
-                   (scope.getEnd().compareTo(position) < 0);
+            if (!scope.isChunk())
+               return false;
+            
+            int dir = scope.getEnd().compareTo(position);
+            if (which == PREVIOUS_CHUNKS)
+               return dir < 0;
+            else
+               return dir > 0;
          }
-         
       });
       
       return scopeList.getScopes();   
@@ -189,6 +195,9 @@ public class TextEditingTargetScopeHelper
          }
       });
    }
+   
+   public final static int PREVIOUS_CHUNKS  = 0;
+   public final static int FOLLOWING_CHUNKS = 1;
 
    private DocDisplay docDisplay_;
 }

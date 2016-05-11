@@ -21,6 +21,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPosit
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -95,7 +96,8 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    @Override
    public void runPreviousChunks()
    {
-      target_.executePreviousChunks(chunkPosition());
+      target_.executeChunks(chunkPosition(), 
+            TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
       target_.focus();
    }
 
