@@ -1416,6 +1416,10 @@ public class TextEditingTargetNotebook
                TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
                   setupScope, docDisplay_);
             
+            // if there are no chunks in the queue yet, show progress 
+            if (chunkExecQueue_.isEmpty())
+               editingTarget_.getStatusBar().showNotebookProgress("Run Chunks");
+            
             // push it into the execution queue
             executeChunk(setupScope, getChunkCode(setupScope), options, 
                          MODE_BATCH);
