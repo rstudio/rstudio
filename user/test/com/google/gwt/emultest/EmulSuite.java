@@ -40,6 +40,7 @@ import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
 import com.google.gwt.emultest.java.lang.ThrowableStackTraceEmulTest;
 import com.google.gwt.emultest.java.lang.ThrowableTest;
+import com.google.gwt.emultest.java.lang.TypeTest;
 import com.google.gwt.emultest.java.math.MathContextTest;
 import com.google.gwt.emultest.java.math.MathContextWithObfuscatedEnumsTest;
 import com.google.gwt.emultest.java.math.RoundingModeTest;
@@ -92,6 +93,7 @@ public class EmulSuite {
     suite.addTestSuite(SystemTest.class);
     suite.addTestSuite(ThrowableTest.class);
     suite.addTestSuite(ThrowableStackTraceEmulTest.class);
+    suite.addTestSuite(TypeTest.class);
     //-- java.math
     // BigDecimal is tested in {@link BigDecimalSuite}
     // BigInteger is tested in {@link BigIntegerSuite}
