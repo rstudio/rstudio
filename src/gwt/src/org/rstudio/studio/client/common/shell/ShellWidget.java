@@ -175,13 +175,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       secondaryInputHandler.setInput(editor);
 
-      resizeCommand_ = new TimeBufferedCommand(5)
+      scrollToBottomCommand_ = new TimeBufferedCommand(5)
       {
          @Override
          protected void performAction(boolean shouldSchedulePassive)
          {
-            scrollPanel_.onContentSizeChanged();
-            if (!DomUtils.selectionExists() && scrollPanel_.isScrolledToBottom())
+            if (!DomUtils.selectionExists())
                scrollPanel_.scrollToBottom();
          }
       };
@@ -450,7 +449,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
       boolean result = !trimExcess();
 
-      resizeCommand_.nudge();
+      scrollPanel_.onContentSizeChanged();
+      if (scrollPanel_.isScrolledToBottom())
+         scrollToBottomCommand_.nudge();
 
       return result;
    }
@@ -792,7 +793,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final VerticalPanel verticalPanel_ ;
    protected final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
-   private final TimeBufferedCommand resizeCommand_;
+   private final TimeBufferedCommand scrollToBottomCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
    
