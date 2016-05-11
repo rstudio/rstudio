@@ -169,9 +169,8 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
 {
    std::string docId, chunkId, options;
    int pixelWidth = 0, charWidth = 0, execMode = 0;
-   bool replace = false;
    Error error = json::readParams(request.params, &docId, &chunkId, &execMode,
-         &options, &pixelWidth, &charWidth, &replace);
+         &options, &pixelWidth, &charWidth);
    if (error)
       return error;
 
@@ -203,8 +202,6 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
          return Success();
       }
    }
-
-   cleanChunkOutput(docId, chunkId, true);
 
    // clean up the old execution context if we still have one
    if (s_execContext)

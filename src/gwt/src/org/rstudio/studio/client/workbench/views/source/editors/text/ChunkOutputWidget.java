@@ -65,7 +65,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputWidget extends Composite
@@ -314,17 +313,10 @@ public class ChunkOutputWidget extends Composite
       // flush any remaining queued errors
       flushQueuedErrors(ensureVisible);
       
-      if (state_ == CHUNK_PRE_OUTPUT)
-      {
-         // if no output was produced, clear the contents and show the empty
-         // indicator
-         emptyIndicator_.setVisible(true);
-         if (vconsole_ != null)
-            vconsole_.clear();
-         root_.clear();
-         hasErrors_ = false;
-      }
-      syncHeight(true, ensureVisible);
+      // if we got some output, synchronize the chunk's height to accommodate it
+      if (state_ != CHUNK_PRE_OUTPUT)
+         syncHeight(true, ensureVisible);
+
       state_ = CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
@@ -384,7 +376,6 @@ public class ChunkOutputWidget extends Composite
          return;
       Style frameStyle = frame_.getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
-      emptyIndicator_.getElement().getStyle().setColor(s_color);
 
       // apply the style to any frames in the output
       for (Widget w: root_)
@@ -729,7 +720,6 @@ public class ChunkOutputWidget extends Composite
             vconsole_.clear();
          root_.clear();
          hasErrors_ = false;
-         emptyIndicator_.setVisible(false);
          lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
          state_ = CHUNK_POST_OUTPUT;
       }
@@ -960,7 +950,6 @@ public class ChunkOutputWidget extends Composite
    
    @UiField Image clear_;
    @UiField Image expand_;
-   @UiField Label emptyIndicator_;
    @UiField HTMLPanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;

@@ -65,10 +65,12 @@ private:
    void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
          int outputType);
    void onError(const core::json::Object& err);
+   void initializeOutput();
 
    std::string docId_;
    std::string chunkId_;
    std::string prevWorkingDir_;
+   std::string pendingInput_;
 
    int pixelWidth_;
    int charWidth_;
@@ -76,6 +78,7 @@ private:
    r::sexp::PreservedSEXP prevWarn_;
 
    bool connected_;
+   bool hasOutput_;
 
    std::vector<boost::signals::connection> connections_;
 };

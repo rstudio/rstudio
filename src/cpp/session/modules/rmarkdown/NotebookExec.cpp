@@ -66,7 +66,8 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
-   connected_(false)
+   connected_(false),
+   hasOutput_(false)
 {
 }
 
@@ -181,6 +182,10 @@ void ChunkExecContext::onConsolePrompt(const std::string& )
 void ChunkExecContext::onFileOutput(const FilePath& file, 
       const FilePath& metadata, int outputType)
 {
+   // set up folder to receive output if necessary
+   initializeOutput();
+
+   // put the file in sequence inside the host directory
    FilePath target = getNextOutputFile(docId_, chunkId_, outputType);
    Error error = file.move(target);
    if (error)
@@ -217,6 +222,9 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
 
 void ChunkExecContext::onError(const core::json::Object& err)
 {
+   // set up folder to receive output if necessary
+   initializeOutput();
+
    // write the error to a file 
    FilePath target = getNextOutputFile(docId_, chunkId_, kChunkOutputError);
    boost::shared_ptr<std::ostream> pOfs;
@@ -241,6 +249,25 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 {
    if (output.empty())
       return;
+
+   // if we haven't received any acutal output yet, don't push input into the
+   // file yet
+   if (type == kChunkConsoleInput && !hasOutput_) 
+   {
+      pendingInput_.append(output + "\n");
+      return;
+   }
+
+   // set up folder to receive output if necessary
+   initializeOutput();
+
+   // flush any buffered pending input
+   if (!pendingInput_.empty())
+   {
+      std::string input = pendingInput_;
+      pendingInput_.clear();
+      onConsoleText(kChunkConsoleInput, input, true);
+   }
 
    // determine output filename and ensure it exists
    FilePath outputCsv = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
@@ -311,6 +338,21 @@ void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type,
 void ChunkExecContext::onConsoleInput(const std::string& input)
 {
    onConsoleText(kChunkConsoleInput, input, false);
+}
+
+void ChunkExecContext::initializeOutput()
+{
+   // if we already have output, do nothing
+   if (hasOutput_)
+      return;
+   
+   // if we don't have output yet, clean existing output before adding new 
+   // output
+   Error error = cleanChunkOutput(docId_, chunkId_, true);
+   if (error)
+      LOG_ERROR(error);
+
+   hasOutput_ = true;
 }
 
 

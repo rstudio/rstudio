@@ -4217,7 +4217,7 @@ public class RemoteServer implements Server
 
    @Override
    public void setChunkConsole(String docId, String chunkId, int execMode, 
-         String options, int pixelWidth, int charWidth, boolean replace, 
+         String options, int pixelWidth, int charWidth, 
          ServerRequestCallback<RmdChunkOptions> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4227,7 +4227,6 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(options));
       params.set(4, new JSONNumber(pixelWidth));
       params.set(5, new JSONNumber(charWidth));
-      params.set(6, JSONBoolean.getInstance(replace));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,

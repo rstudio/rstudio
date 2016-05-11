@@ -632,8 +632,7 @@ public class TextEditingTargetNotebook
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
             chunkDef.getChunkId(), MODE_SINGLE, options, getPlotWidth(), 
-            charWidth_, false, 
-            new ServerRequestCallback<RmdChunkOptions>()
+            charWidth_, new ServerRequestCallback<RmdChunkOptions>()
       {
          @Override
          public void onResponseReceived(RmdChunkOptions options)
@@ -1186,7 +1185,6 @@ public class TextEditingTargetNotebook
             unit.options,
             getPlotWidth(),
             charWidth_,
-            true,
             new ServerRequestCallback<RmdChunkOptions>()
             {
                @Override

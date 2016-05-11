@@ -133,10 +133,6 @@
                  resource="{res.collapseChunkIcon}"
                  title="Expand/Collapse Output"
                  ui:field="expand_"></g:Image>
-        <g:Label styleName="{style.empty}" 
-                 ui:field="emptyIndicator_"
-                 text="No output produced."
-                 visible="false"></g:Label>
         <g:HTMLPanel styleName="{style.root}" ui:field="root_">
         </g:HTMLPanel>
       </g:HTMLPanel>
