@@ -71,6 +71,7 @@ private:
    std::string chunkId_;
    std::string prevWorkingDir_;
    std::string pendingInput_;
+   core::FilePath outputPath_;
 
    int pixelWidth_;
    int charWidth_;

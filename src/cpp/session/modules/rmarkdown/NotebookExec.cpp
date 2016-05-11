@@ -34,6 +34,8 @@
 
 #include <iostream>
 
+#define kStagingSuffix "_t"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -94,8 +96,9 @@ bool ChunkExecContext::connected()
 
 void ChunkExecContext::connect()
 {
-   FilePath outputPath = chunkOutputPath(docId_, chunkId_, ContextExact);
-   Error error = outputPath.ensureDirectory();
+   outputPath_ = chunkOutputPath(docId_, chunkId_ + kStagingSuffix, 
+         ContextExact);
+   Error error = outputPath_.ensureDirectory();
    if (error)
    {
       // if we don't have a place to put the output, don't register any handlers
@@ -109,7 +112,7 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      kChunkOutputPlot)));
 
-   error = beginPlotCapture(pixelWidth_, outputPath);
+   error = beginPlotCapture(pixelWidth_, outputPath_);
    if (error)
       LOG_ERROR(error);
 
@@ -118,8 +121,8 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
-   error = beginWidgetCapture(outputPath,
-         outputPath.parent().complete(kChunkLibDir));
+   error = beginWidgetCapture(outputPath_,
+         outputPath_.parent().complete(kChunkLibDir));
    if (error)
       LOG_ERROR(error);
 
@@ -250,7 +253,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    if (output.empty())
       return;
 
-   // if we haven't received any acutal output yet, don't push input into the
+   // if we haven't received any actual output yet, don't push input into the
    // file yet
    if (type == kChunkConsoleInput && !hasOutput_) 
    {
@@ -295,6 +298,11 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 void ChunkExecContext::disconnect()
 {
    Error error;
+
+   // clean up staging folder
+   error = outputPath_.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
 
    // restore width value
    r::options::setOptionWidth(prevCharWidth_);
@@ -349,6 +357,11 @@ void ChunkExecContext::initializeOutput()
    // if we don't have output yet, clean existing output before adding new 
    // output
    Error error = cleanChunkOutput(docId_, chunkId_, true);
+   if (error)
+      LOG_ERROR(error);
+
+   // ensure that the output folder exists
+   error = chunkOutputPath(docId_, chunkId_, ContextExact).ensureDirectory();
    if (error)
       LOG_ERROR(error);
 
