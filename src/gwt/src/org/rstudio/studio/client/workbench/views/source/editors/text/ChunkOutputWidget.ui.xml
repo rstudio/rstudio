@@ -60,7 +60,7 @@
    {
       position: relative;
       overflow: auto;
-      max-height: 750px;
+      max-height: 630px;
       transition: opacity 400ms ease;
       margin: 10px;
    }
