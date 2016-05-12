@@ -240,9 +240,9 @@ public class TextEditingTargetNotebook
          }
       }));
       
-      // single shot rendering of chunk output line widgets (we wait until after
-      // the first render to ensure that ace places the line widgets correctly)
-      renderFinishedReg_ = docDisplay_.addRenderFinishedHandler(this);
+      // rendering of chunk output line widgets (we wait until after the first
+      // render to ensure that ace places the line widgets correctly)
+      releaseOnDismiss.add(docDisplay_.addRenderFinishedHandler(this));
       
       releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(new SaveFileHandler()
       {
@@ -953,9 +953,12 @@ public class TextEditingTargetNotebook
                   "" + lastPlotWidth_);
          }
       }
-      
-      // clean up single shot listener
-      renderFinishedReg_.removeHandler();
+      else
+      {
+         // on ordinary render, we need to sync any chunk line widgets that have
+         // just been laid out; debounce this
+         syncHeightTimer_.schedule(250);
+      }
    }
 
    @Override
@@ -987,6 +990,7 @@ public class TextEditingTargetNotebook
       }
    }
    
+
    @Override
    public void onLineWidgetRemoved(LineWidget widget)
    {
@@ -1765,6 +1769,30 @@ public class TextEditingTargetNotebook
          releaseOnDismiss_.add(progressCancelReg_);
       }
    }
+   
+   private final Timer syncHeightTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // compute top/bottom of the doc (we'll sync widgets that lie in this
+         // range)
+         int top = docDisplay_.getFirstVisibleRow();
+         int bot = docDisplay_.getLastVisibleRow();
+
+         // sync any widgets that need it
+         for (ChunkOutputUi output: outputs_.values())
+         {
+            ChunkOutputWidget widget = output.getOutputWidget();
+            if (output.getCurrentRow() >= top &&
+                output.getCurrentRow() <= bot && 
+                widget.needsHeightSync())
+            {
+               output.getOutputWidget().syncHeight(false, false);
+            }
+         }
+      }
+   };
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;

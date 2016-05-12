@@ -201,6 +201,11 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.getValue();
    }
    
+   public boolean needsHeightSync()
+   {
+      return needsHeightSync_;
+   }
+   
    public void setExpansionState(int state)
    {
       if (state == expansionState_.getValue())
@@ -256,7 +261,8 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
-   public void syncHeight(boolean scrollToBottom, boolean ensureVisible)
+   public void syncHeight(final boolean scrollToBottom, 
+                          final boolean ensureVisible)
    {
       // special behavior for chunks which don't have output included by 
       // default
@@ -275,6 +281,18 @@ public class ChunkOutputWidget extends Composite
          return;
       
       setVisible(true);
+      
+      if (root_.getElement().getScrollHeight() == 0 && 
+          root_.getElement().getFirstChildElement() != null)
+      {
+         // if we have no height but we do have content, mark ourselves as 
+         // requiring a sync
+         needsHeightSync_ = true;
+      }
+      else
+      {
+         needsHeightSync_ = false;
+      }
       
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
@@ -959,7 +977,7 @@ public class ChunkOutputWidget extends Composite
          {
             if (DOM.eventGetType(event) != Event.ONLOAD)
                return;
-            
+               
             renderTimeout.cancel();
             completeUnitRender(ensureVisible);
          }
@@ -986,6 +1004,7 @@ public class ChunkOutputWidget extends Composite
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
    private int resizeCounter_ = 0;
+   private boolean needsHeightSync_ = false;
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;
