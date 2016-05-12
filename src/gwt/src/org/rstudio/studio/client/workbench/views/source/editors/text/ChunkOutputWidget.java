@@ -147,7 +147,7 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               toggleExpansionState();
+               toggleExpansionState(true);
                break;
             };
          }
@@ -206,7 +206,7 @@ public class ChunkOutputWidget extends Composite
       if (state == expansionState_.getValue())
          return;
       else
-         toggleExpansionState();
+         toggleExpansionState(false);
    }
    
    public int getState()
@@ -345,7 +345,7 @@ public class ChunkOutputWidget extends Composite
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)
-         toggleExpansionState();
+         toggleExpansionState(false);
 
       // do nothing if code is already executing
       if (state_ == CHUNK_PRE_OUTPUT || 
@@ -878,7 +878,7 @@ public class ChunkOutputWidget extends Composite
       showReadyState();
    }
    
-   private void toggleExpansionState()
+   private void toggleExpansionState(final boolean ensureVisible)
    {
       // don't permit toggling state while we're animating a new state
       // (no simple way to gracefully reverse direction) 
@@ -898,7 +898,7 @@ public class ChunkOutputWidget extends Composite
             {
                renderedHeight_ = 
                      ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
-               host_.onOutputHeightChanged(renderedHeight_, true);
+               host_.onOutputHeightChanged(renderedHeight_, ensureVisible);
             }
             
          };
@@ -908,7 +908,7 @@ public class ChunkOutputWidget extends Composite
       {
          clearCollapsedStyles();
          expansionState_.setValue(EXPANDED, true);
-         syncHeight(true, true);
+         syncHeight(true, ensureVisible);
          collapseTimer_ = new Timer()
          {
             @Override
