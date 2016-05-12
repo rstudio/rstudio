@@ -35,7 +35,7 @@
 /**
  * author Elena Semukhina
  */
-package com.google.gwt.emultest.java.math;
+package com.google.gwt.emultest.java8.math;
 
 import com.google.gwt.emultest.java.util.EmulTestBase;
 
