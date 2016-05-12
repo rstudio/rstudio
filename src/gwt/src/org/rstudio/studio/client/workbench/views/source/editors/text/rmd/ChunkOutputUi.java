@@ -121,6 +121,7 @@ public class ChunkOutputUi
       // widget if we haven't already, so it's important that remove() can't
       // be reentrant.
       lineWidget_.detach();
+      lineWidget_.getLineWidget().getElement().removeFromParent();
    }
    
    public boolean moving()
