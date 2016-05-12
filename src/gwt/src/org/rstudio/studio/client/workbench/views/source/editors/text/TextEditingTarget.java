@@ -5278,13 +5278,11 @@ public class TextEditingTarget implements
    {
       if (useScopeTreeFolding())
       {
-         // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<Integer>();
          for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             rowsFolded.add(f.getStart().getRow());
 
          ScopeList scopeList = new ScopeList(docDisplay_);
-         scopeList.removeAll(ScopeList.ANON_BRACE);
          for (Scope scope : scopeList)
          {
             int row = scope.getFoldStart().getRow();
