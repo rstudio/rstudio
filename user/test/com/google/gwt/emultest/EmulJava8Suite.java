@@ -15,6 +15,7 @@
  */
 package com.google.gwt.emultest;
 
+import com.google.gwt.emultest.java8.math.BigIntegerConvertTest;
 import com.google.gwt.emultest.java8.util.ComparatorTest;
 import com.google.gwt.emultest.java8.util.DoubleSummaryStatisticsTest;
 import com.google.gwt.emultest.java8.util.HashMapTest;
@@ -43,6 +44,9 @@ public class EmulJava8Suite {
 
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java8");
+
+    //-- java.math
+    suite.addTestSuite(BigIntegerConvertTest.class);
 
     //-- java.util
     suite.addTestSuite(ComparatorTest.class);
