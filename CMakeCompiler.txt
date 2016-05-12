@@ -15,6 +15,13 @@
 
 # use clang on osx
 if(APPLE)
-  set(CMAKE_C_COMPILER /usr/bin/cc)
-  set(CMAKE_CXX_COMPILER /usr/bin/c++)
+
+  if(NOT DEFINED CMAKE_C_COMPILER)
+    set(CMAKE_C_COMPILER /usr/bin/cc)
+  endif()
+
+  if(NOT DEFINED CMAKE_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER /usr/bin/c++)
+  endif()
+
 endif()
