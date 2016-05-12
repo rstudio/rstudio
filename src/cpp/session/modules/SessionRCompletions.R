@@ -2629,13 +2629,13 @@ assign(x = ".rs.acCompletionTypes",
       if (nzchar(firstArgName))
       {
          functionArgs <- shinyFunctions[[functionName]]
-         if ("outputId" %in% functionArgs)
+         if ("outputId" %in% functionArgs || .rs.endsWith(functionName, "Output"))
          {
             outputCount$count <- outputCount$count + 1
             outputs[[as.character(outputCount$count)]] <- firstArgName
          }
          
-         else if ("inputId" %in% functionArgs)
+         else if ("inputId" %in% functionArgs || .rs.endsWith(functionName, "Input"))
          {
             inputCount$count <- inputCount$count + 1
             inputs[[as.character(inputCount$count)]] <- firstArgName
