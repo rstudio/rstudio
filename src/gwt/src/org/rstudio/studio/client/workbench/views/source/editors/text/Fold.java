@@ -36,9 +36,12 @@ public class Fold
       return hashCode;
    }
 
-   public static Fold fromAceFold(AceFold fold)
+   public static Fold fromAceFold(AceFold fold, Position offset)
    {
-      return new Fold(fold.getStart(), fold.getEnd(), fold.getPlaceholder());
+      return new Fold(
+            Position.create(fold.getStart().getRow() + offset.getRow(), fold.getStart().getColumn()),
+            Position.create(fold.getEnd().getRow() + offset.getRow(), fold.getEnd().getColumn()),
+            fold.getPlaceholder());
    }
 
    public static String encode(ArrayList<Fold> folds)
@@ -114,16 +117,22 @@ public class Fold
    {
       ArrayList<Fold> results = new ArrayList<Fold>();
       for (int i = 0; i < folds.length(); i++)
-         collect(folds.get(i), results);
+         collect(folds.get(i), results, Position.create(0, 0));
       return results;
    }
 
-   private static void collect(AceFold fold, ArrayList<Fold> results)
+   private static void collect(AceFold fold, ArrayList<Fold> results, Position parentOffset)
    {
-      results.add(fromAceFold(fold));
+      results.add(fromAceFold(fold, parentOffset));
       JsArray<AceFold> subFolds = fold.getSubFolds();
       for (int i = 0; i < subFolds.length(); i++)
-         collect(subFolds.get(i), results);
+      {
+         AceFold subFold = subFolds.get(i);
+         Position offset = Position.create(
+               fold.getStart().getRow() + parentOffset.getRow(),
+               fold.getStart().getColumn() + parentOffset.getColumn());
+         collect(subFold, results, offset);
+      }
    }
 
    public Fold(Position start, Position end, String placeholder)
