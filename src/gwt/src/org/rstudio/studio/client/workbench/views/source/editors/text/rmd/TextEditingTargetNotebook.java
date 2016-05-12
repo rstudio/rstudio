@@ -631,8 +631,9 @@ public class TextEditingTargetNotebook
       // have the server start recording output from this chunk
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), MODE_SINGLE, options, getPlotWidth(), 
-            charWidth_, new ServerRequestCallback<RmdChunkOptions>()
+            chunkDef.getChunkId(), MODE_SINGLE, SCOPE_PARTIAL, options, 
+            getPlotWidth(), charWidth_,
+            new ServerRequestCallback<RmdChunkOptions>()
       {
          @Override
          public void onResponseReceived(RmdChunkOptions options)
@@ -715,7 +716,8 @@ public class TextEditingTargetNotebook
          
          outputs_.get(chunkId).getOutputWidget()
                               .showChunkOutput(event.getOutput(), mode,
-                                               ensureVisible);
+                                  TextEditingTargetNotebook.SCOPE_PARTIAL,
+                                  ensureVisible);
       }
    }
 
@@ -765,7 +767,7 @@ public class TextEditingTargetNotebook
          if (outputs_.containsKey(data.getChunkId()))
          {
             outputs_.get(data.getChunkId()).getOutputWidget()
-                                           .onOutputFinished(ensureVisible);
+                           .onOutputFinished(ensureVisible, data.getScope());
 
             // mark the document dirty (if it isn't already) since it now
             // contains notebook cache changes that haven't been committed 
@@ -1120,7 +1122,8 @@ public class TextEditingTargetNotebook
       if (outputs_.containsKey(executingChunk_.chunkId))
       {
          outputs_.get(executingChunk_.chunkId)
-                 .getOutputWidget().onOutputFinished(false);
+                 .getOutputWidget().onOutputFinished(false, 
+                       TextEditingTargetNotebook.SCOPE_PARTIAL);
       }
       cleanChunkExecState(executingChunk_.chunkId);
       executingChunk_ = null;
@@ -1179,9 +1182,10 @@ public class TextEditingTargetNotebook
                ChunkContextToolbar.STATE_EXECUTING);
       }
       
-      server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            unit.chunkId, 
+      server_.setChunkConsole(docUpdateSentinel_.getId(),
+            unit.chunkId,
             unit.mode,
+            SCOPE_CHUNK,
             unit.options,
             getPlotWidth(),
             charWidth_,
@@ -1830,4 +1834,7 @@ public class TextEditingTargetNotebook
    
    public final static int MODE_SINGLE = 0;
    public final static int MODE_BATCH  = 1;
+   
+   public final static int SCOPE_CHUNK   = 0;
+   public final static int SCOPE_PARTIAL = 1;
 }

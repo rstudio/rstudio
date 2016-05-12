@@ -42,7 +42,8 @@ class ChunkExecContext
 public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
-         const std::string& options, int pixelWidth, int charWidth);
+         int execScope, const std::string& options, int pixelWidth, 
+         int charWidth);
    ~ChunkExecContext();
 
    // connect or disconnect the execution context to events
@@ -53,6 +54,7 @@ public:
    std::string chunkId();
    std::string docId();
    bool connected();
+   int execScope();
 
    // inject console input manually
    void onConsoleInput(const std::string& input);
@@ -76,6 +78,7 @@ private:
    int pixelWidth_;
    int charWidth_;
    int prevCharWidth_;
+   int execScope_;
    r::sexp::PreservedSEXP prevWarn_;
 
    bool connected_;

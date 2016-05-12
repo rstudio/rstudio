@@ -64,4 +64,7 @@ public class RmdChunkOutput extends JavaScriptObject
    
    public static final int TYPE_SINGLE_UNIT   = 0;
    public static final int TYPE_MULTIPLE_UNIT = 1;
+   
+   public static final int EXEC_CHUNK_BODY    = 0;
+   public static final int EXEC_CHUNK_SECTION = 1;
 }

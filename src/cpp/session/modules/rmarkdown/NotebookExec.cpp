@@ -60,14 +60,15 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 } // anonymous namespace
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, const std::string& options, int pixelWidth,
-      int charWidth):
+      const std::string& chunkId, int execScope, const std::string& options, 
+      int pixelWidth, int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
    prevWorkingDir_(""),
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
+   execScope_(execScope),
    connected_(false),
    hasOutput_(false)
 {
@@ -106,6 +107,11 @@ void ChunkExecContext::connect()
       LOG_ERROR(error);
       return;
    }
+
+   // if executing the whole chunk, initialize output right away (otherwise we
+   // wait until we actually have output)
+   if (execScope_ == kExecScopeChunk)
+      initializeOutput();
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
@@ -368,6 +374,10 @@ void ChunkExecContext::initializeOutput()
    hasOutput_ = true;
 }
 
+int ChunkExecContext::execScope()
+{
+   return execScope_;
+}
 
 } // namespace notebook
 } // namespace rmarkdown

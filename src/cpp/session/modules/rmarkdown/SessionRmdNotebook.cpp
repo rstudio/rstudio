@@ -46,10 +46,6 @@
 #define kFinishedReplay      0
 #define kFinishedInteractive 1
 
-// symmetric with client
-#define kExecModeSingle 0
-#define kExecModeBatch  1
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -116,13 +112,15 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void emitOutputFinished(const std::string& docId, const std::string& chunkId)
+void emitOutputFinished(const std::string& docId, const std::string& chunkId,
+      int scope)
 {
    json::Object result;
-   result["doc_id"] = docId;
+   result["doc_id"]     = docId;
    result["request_id"] = "";
-   result["chunk_id"] = chunkId;
-   result["type"] = kFinishedInteractive;
+   result["chunk_id"]   = chunkId;
+   result["type"]       = kFinishedInteractive;
+   result["scope"]      = scope;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
 }
@@ -152,14 +150,17 @@ void onChunkExecCompleted(const std::string& docId,
                           const std::string& chunkId,
                           const std::string& nbCtxId)
 {
-   emitOutputFinished(docId, chunkId);
-
    // if this event belonged to the current execution context, destroy it
    if (s_execContext &&
        s_execContext->docId() == docId &&
        s_execContext->chunkId() == chunkId)
    {
+      emitOutputFinished(docId, chunkId, s_execContext->execScope());
       s_execContext.reset();
+   }
+   else
+   {
+      emitOutputFinished(docId, chunkId, kExecScopeChunk);
    }
 }
 
@@ -168,9 +169,9 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string docId, chunkId, options;
-   int pixelWidth = 0, charWidth = 0, execMode = 0;
+   int pixelWidth = 0, charWidth = 0, execMode = 0, execScope = 0;
    Error error = json::readParams(request.params, &docId, &chunkId, &execMode,
-         &options, &pixelWidth, &charWidth);
+         &execScope, &options, &pixelWidth, &charWidth);
    if (error)
       return error;
 
@@ -208,7 +209,7 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
       s_execContext->disconnect();
 
    // create the execution context and connect it immediately if necessary
-   s_execContext.reset(new ChunkExecContext(docId, chunkId, options, 
+   s_execContext.reset(new ChunkExecContext(docId, chunkId, execScope, options, 
             pixelWidth, charWidth));
    if (s_activeConsole == chunkId)
       s_execContext->connect();

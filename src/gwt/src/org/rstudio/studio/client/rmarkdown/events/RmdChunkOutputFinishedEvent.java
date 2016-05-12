@@ -48,6 +48,10 @@ public class RmdChunkOutputFinishedEvent
       public final native int getType() /*-{
          return this.type;
       }-*/;
+      
+      public final native int getScope() /*-{
+         return this.scope;
+      }-*/;
    }
    
    public RmdChunkOutputFinishedEvent(Data data)

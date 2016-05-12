@@ -229,7 +229,7 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.addValueChangeHandler(handler);
    }
     
-   public void showChunkOutput(RmdChunkOutput output, int mode, 
+   public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
          boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
@@ -248,7 +248,7 @@ public class ChunkOutputWidget extends Composite
          }
 
          // ensure the output is visible if requested
-         onOutputFinished(ensureVisible);
+         onOutputFinished(ensureVisible, scope);
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
@@ -269,6 +269,10 @@ public class ChunkOutputWidget extends Composite
          }
          return;
       }
+      
+      // don't sync if not visible and no output yet
+      if (!isVisible() && (state_ == CHUNK_EMPTY || state_ == CHUNK_PRE_OUTPUT))
+         return;
       
       setVisible(true);
       
@@ -308,14 +312,28 @@ public class ChunkOutputWidget extends Composite
              s_outlineColor != null;
    }
    
-   public void onOutputFinished(boolean ensureVisible)
+   public void onOutputFinished(boolean ensureVisible, int execScope)
    {
       // flush any remaining queued errors
       flushQueuedErrors(ensureVisible);
       
-      // if we got some output, synchronize the chunk's height to accommodate it
       if (state_ != CHUNK_PRE_OUTPUT)
+      {
+         // if we got some output, synchronize the chunk's height to accommodate
+         // it
          syncHeight(true, ensureVisible);
+      }
+      else if (execScope == TextEditingTargetNotebook.SCOPE_CHUNK)
+      {
+         // if executing the whole chunk but no output was received, clean up
+         // any prior output and hide the output
+         root_.clear();
+         if (vconsole_ != null)
+            vconsole_.clear();
+         renderedHeight_ = 0;
+         setVisible(false);
+         host_.onOutputHeightChanged(0, ensureVisible);
+      }
 
       state_ = CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
@@ -495,7 +513,7 @@ public class ChunkOutputWidget extends Composite
       // as though the server told us it's done
       if (state_ != CHUNK_READY)
       {
-         onOutputFinished(false);
+         onOutputFinished(false, TextEditingTargetNotebook.SCOPE_PARTIAL);
       }
    }
 

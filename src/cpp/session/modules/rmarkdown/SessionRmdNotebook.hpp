@@ -23,6 +23,12 @@
 
 #define kChunkLibDir "lib"
 
+// symmetric with client
+#define kExecModeSingle 0
+#define kExecModeBatch  1
+#define kExecScopeChunk   0
+#define kExecScopePartial 1
+
 namespace rstudio {
 namespace core {
    class Error;
