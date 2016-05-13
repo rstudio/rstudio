@@ -57,6 +57,10 @@ var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").Ja
 var XmlHighlightRules = require("ace/mode/xml_highlight_rules").XmlHighlightRules;
 var HtmlHighlightRules = require("ace/mode/html_highlight_rules").HtmlHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
+var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
+var PythonHighlightRules = require("ace/mode/python_highlight_rules").PythonHighlightRules;
+var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
+var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlightRules;
 
 var escaped = function(ch) {
     return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
@@ -146,6 +150,10 @@ var MarkdownHighlightRules = function() {
         github_embed("xml", "xmlcode-"),
         github_embed("html", "htmlcode-"),
         github_embed("css", "csscode-"),
+        github_embed("perl", "perlcode-"),
+        github_embed("python", "pythoncode-"),
+        github_embed("ruby", "rubycode-"),
+        github_embed("scala", "scalacode-"),
         
         { // Github style block
             token : "support.function",
@@ -378,6 +386,30 @@ var MarkdownHighlightRules = function() {
     }]);
 
     this.embedRules(XmlHighlightRules, "xmlcode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(PerlHighlightRules, "perlcode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(PythonHighlightRules, "pythoncode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(RubyHighlightRules, "rubycode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(ScalaHighlightRules, "scalacode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
