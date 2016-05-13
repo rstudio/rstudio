@@ -23,8 +23,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
@@ -120,9 +119,6 @@ public class TextEditingTargetNotebook
                           SourceDocAddedEvent.Handler,
                           RenderFinishedEvent.Handler
 {
-   public interface Binder
-   extends CommandBinder<Commands, TextEditingTargetNotebook> {}
-
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, String labelIn, int modeIn, 
@@ -316,7 +312,6 @@ public class TextEditingTargetNotebook
          Session session,
          UIPrefs prefs,
          Commands commands,
-         Binder binder,
          Provider<SourceWindowManager> pSourceWindowManager,
          DependencyManager dependencyManager)
    {
@@ -327,7 +322,6 @@ public class TextEditingTargetNotebook
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
-      binder.bind(commands, this);
       pSourceWindowManager_ = pSourceWindowManager;
       dependencyManager_ = dependencyManager;
       
@@ -558,20 +552,21 @@ public class TextEditingTargetNotebook
    }
    
    // Command handlers --------------------------------------------------------
+   //
+   // Notebook-specific commands are received on the parent text editing target
+   // and then dispatched here (the logic to bind commands to the active editor
+   // exists only in the text editing target)
    
-   @Handler
    public void onNotebookCollapseAllOutput()
    {
       setAllExpansionStates(ChunkOutputWidget.COLLAPSED);
    }
 
-   @Handler
    public void onNotebookExpandAllOutput()
    {
       setAllExpansionStates(ChunkOutputWidget.EXPANDED);
    }
    
-   @Handler
    public void onNotebookClearAllOutput()
    {
       if (executingChunk_ == null && chunkExecQueue_.isEmpty())
@@ -607,6 +602,17 @@ public class TextEditingTargetNotebook
                false);
       }
    }
+   
+   public void onRestartRRunAllChunks()
+   {
+      restartThenExecute(commands_.executeAllCode());
+   }
+
+   public void onRestartRClearOutput()
+   {
+      restartThenExecute(commands_.notebookClearAllOutput());
+   }
+   
    // Event handlers ----------------------------------------------------------
    
    @Override
@@ -994,9 +1000,17 @@ public class TextEditingTargetNotebook
          // clean execution state
          clearChunkExecQueue();
          cleanCurrentExecChunk();
+         
+         // run any queued command
+         if (postRestartCommand_ != null)
+         {
+            if (postRestartCommand_.isEnabled())
+               postRestartCommand_.execute();
+            postRestartCommand_ = null;
+            return;
+         }
       }
    }
-   
 
    @Override
    public void onLineWidgetRemoved(LineWidget widget)
@@ -1124,6 +1138,15 @@ public class TextEditingTargetNotebook
    }
 
    // Private methods --------------------------------------------------------
+   
+   private void restartThenExecute(AppCommand command)
+   {
+      if (commands_.restartR().isEnabled())
+      {
+         postRestartCommand_ = command;
+         commands_.restartR().execute();
+      }
+   }
    
    private void cleanCurrentExecChunk()
    {
@@ -1810,6 +1833,7 @@ public class TextEditingTargetNotebook
    private HandlerRegistration progressCancelReg_;
    private Position lastStart_;
    private Position lastEnd_;
+   private AppCommand postRestartCommand_;
    
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;

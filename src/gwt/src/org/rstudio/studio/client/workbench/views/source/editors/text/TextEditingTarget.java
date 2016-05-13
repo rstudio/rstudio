@@ -3124,6 +3124,41 @@ public class TextEditingTarget implements
       }
    }
 
+   @Handler
+   public void onNotebookCollapseAllOutput()
+   {
+      if (notebook_ != null)
+         notebook_.onNotebookCollapseAllOutput();
+   }
+
+   @Handler
+   public void onNotebookExpandAllOutput()
+   {
+      if (notebook_ != null)
+         notebook_.onNotebookExpandAllOutput();
+   }
+   
+   @Handler
+   public void onNotebookClearAllOutput()
+   {
+      if (notebook_ != null)
+         notebook_.onNotebookClearAllOutput();
+   }
+   
+   @Handler
+   public void onRestartRRunAllChunks()
+   {
+      if (notebook_ != null)
+         notebook_.onRestartRRunAllChunks();
+   }
+
+   @Handler
+   public void onRestartRClearOutput()
+   {
+      if (notebook_ != null)
+         notebook_.onRestartRClearOutput();
+   }
+   
    @SuppressWarnings("deprecation") // GWT emulation only provides isSpace
    private void doCommentUncomment(String commentStart,
                                    String commentEnd)
@@ -5057,18 +5092,6 @@ public class TextEditingTarget implements
              });
          }
       });  
-   }
-   
-   @Handler
-   void onRestartRClearOutput()
-   {
-      globalDisplay_.showNotYetImplemented();
-   }
-   
-   @Handler
-   void onRestartRRunAllChunks()
-   {
-      globalDisplay_.showNotYetImplemented();
    }
    
    @Handler
