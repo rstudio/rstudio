@@ -345,4 +345,15 @@ public class NativeJsTypeTest extends GWTTestCase {
     assertFalse(aBoxedNumber instanceof NativeFunction);
     assertFalse(aBoxedNumber instanceof NativeString);
   }
+
+  @JsType(isNative = true)
+  private static class UnreferencedNativeType { }
+
+  private static native Object createArray() /*-{
+    return [];
+  }-*/;
+
+  public void testUnreferencedNativeArrayInstanceOf() {
+    assertTrue(createArray() instanceof UnreferencedNativeType[]);
+  }
 }

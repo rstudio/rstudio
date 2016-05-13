@@ -1059,6 +1059,12 @@ public class ControlFlowAnalyzer {
       }
     }
 
+    for (JArrayType arrayType : program.getAllArrayTypes()) {
+      if (arrayType.canBeImplementedExternally()) {
+        rescuer.rescue(arrayType, true);
+      }
+    }
+
     if (program.getRunAsyncs().size() > 0) {
       /*
        * Explicitly rescue AsyncFragmentLoader.onLoad(). It is never explicitly
