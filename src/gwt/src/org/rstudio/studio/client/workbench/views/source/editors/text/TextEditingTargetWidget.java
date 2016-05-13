@@ -341,6 +341,14 @@ public class TextEditingTargetWidget
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executePreviousChunks().createMenuItem(false));
       chunksMenu.addItem(commands_.executeSubsequentChunks().createMenuItem(false));
+      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      {
+         chunksMenu.addSeparator();
+         chunksMenu.addItem(
+               commands_.restartRRunAllChunks().createMenuItem(false));
+         chunksMenu.addItem(
+               commands_.restartRClearOutput().createMenuItem(false));
+      }
       chunksMenu.addSeparator();
       chunksMenu.addItem(commands_.executeAllCode().createMenuItem(false));
       chunksButton_ = new ToolbarButton(
