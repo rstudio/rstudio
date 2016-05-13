@@ -102,11 +102,11 @@ public final class Math {
   }
 
   public static double copySign(double magnitude, double sign) {
-    if (sign < 0) {
-      return (magnitude < 0) ? magnitude : -magnitude;
-    } else {
-      return (magnitude > 0) ? magnitude : -magnitude;
-    }
+    return isNegative(sign) ? -Math.abs(magnitude) : Math.abs(magnitude);
+  }
+
+  private static boolean isNegative(double d) {
+    return d < 0 || 1 / d < 0;
   }
 
   public static float copySign(float magnitude, float sign) {

@@ -33,6 +33,15 @@ public class MathTest extends GWTTestCase {
   private static final Integer[] ALL_INTEGER_CANDIDATES = getAllIntegerCandidates();
   private static final Long[] ALL_LONG_CANDIDATES = getAllLongCandidates();
 
+  private static void assertNegativeZero(double x) {
+    assertTrue(isNegativeZero(x));
+  }
+
+  private static void assertPositiveZero(double x) {
+    assertEquals(0.0, x);
+    assertFalse(isNegativeZero(x));
+  }
+
   private static boolean isNegativeZero(double x) {
     return Double.doubleToLongBits(-0.0) == Double.doubleToLongBits(x);
   }
@@ -54,10 +63,9 @@ public class MathTest extends GWTTestCase {
     v = Math.abs(1.0);
     assertEquals(1.0, v);
     v = Math.abs(negativeZero);
-    assertEquals(0.0, v);
-    assertFalse(isNegativeZero(v));
+    assertPositiveZero(v);
     v = Math.abs(0.0);
-    assertEquals(0.0, v);
+    assertPositiveZero(v);
     v = Math.abs(Double.NEGATIVE_INFINITY);
     assertEquals(Double.POSITIVE_INFINITY, v);
     v = Math.abs(Double.POSITIVE_INFINITY);
@@ -99,6 +107,41 @@ public class MathTest extends GWTTestCase {
   public void testCbrt() {
     double v = Math.cbrt(1000.0);
     assertEquals(10.0, v, 1e-7);
+  }
+
+  public void testCopySign() {
+    double negativeZero = makeNegativeZero();
+
+    assertEquals(3.0, Math.copySign(3.0, 2.0));
+    assertEquals(3.0, Math.copySign(-3.0, 2.0));
+    assertEquals(-3.0, Math.copySign(3.0, -2.0));
+    assertEquals(-3.0, Math.copySign(-3.0, -2.0));
+
+    assertEquals(2.0, Math.copySign(2.0, 0.0));
+    assertEquals(2.0, Math.copySign(-2.0, 0.0));
+    assertEquals(-2.0, Math.copySign(2.0, negativeZero));
+    assertEquals(-2.0, Math.copySign(-2.0, negativeZero));
+    assertEquals(-2.0, Math.copySign(-2.0, Double.NEGATIVE_INFINITY));
+    assertEquals(2.0, Math.copySign(-2.0, Double.POSITIVE_INFINITY));
+    assertEquals(2.0, Math.copySign(-2.0, Double.NaN));
+
+    assertPositiveZero(Math.copySign(0.0, 4.0));
+    assertPositiveZero(Math.copySign(negativeZero, 4.0));
+    assertNegativeZero(Math.copySign(0.0, -4.0));
+    assertNegativeZero(Math.copySign(negativeZero, -4.0));
+
+    assertPositiveZero(Math.copySign(0.0, 0.0));
+    assertPositiveZero(Math.copySign(negativeZero, 0.0));
+    assertNegativeZero(Math.copySign(0.0, negativeZero));
+    assertNegativeZero(Math.copySign(negativeZero, negativeZero));
+
+    assertEquals(Double.POSITIVE_INFINITY, Math.copySign(Double.POSITIVE_INFINITY, 1));
+    assertEquals(Double.NEGATIVE_INFINITY, Math.copySign(Double.POSITIVE_INFINITY, -1));
+    assertEquals(Double.POSITIVE_INFINITY, Math.copySign(Double.NEGATIVE_INFINITY, 1));
+    assertEquals(Double.NEGATIVE_INFINITY, Math.copySign(Double.NEGATIVE_INFINITY, -1));
+
+    assertEquals(Double.NaN, Math.copySign(Double.NaN, 1), 0);
+    assertEquals(Double.NaN, Math.copySign(Double.NaN, -1), 0);
   }
 
   public void testCos() {
