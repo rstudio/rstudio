@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static javaemul.internal.InternalPreconditions.checkCriticalNotNull;
+
 /**
  * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/StringJoiner.html">
  * the official Java API doc</a> for details.
@@ -33,6 +35,11 @@ public final class StringJoiner {
   }
 
   public StringJoiner(CharSequence delimiter, CharSequence prefix, CharSequence suffix) {
+    // TODO: null.toString() does not throw exception
+    checkCriticalNotNull(delimiter, "delimiter");
+    checkCriticalNotNull(prefix, "prefix");
+    checkCriticalNotNull(suffix, "suffix");
+
     this.delimiter = delimiter.toString();
     this.prefix = prefix.toString();
     this.suffix = suffix.toString();
@@ -64,6 +71,9 @@ public final class StringJoiner {
   }
 
   public StringJoiner setEmptyValue(CharSequence emptyValue) {
+    // TODO: null.toString() does not throw exception
+    checkCriticalNotNull(emptyValue);
+
     this.emptyValue = emptyValue.toString();
     return this;
   }
