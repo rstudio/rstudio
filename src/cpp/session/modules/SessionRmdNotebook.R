@@ -145,8 +145,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # resolve chunk id (attempt to match labels)
       chunkId <- .rs.rnb.resolveActiveChunkId(rnbData, context$label)
+      
+      # if we have no chunk outputs, just show source code (respecting
+      # chunk options as appropriate)
       if (is.null(chunkId)) {
-         return(knitr::asis_output("<!-- empty-output-placeholder -->"))
+         return(rmarkdown::html_notebook_output_code(code))
       }
       
       chunkData <- rnbData$chunk_data[[chunkId]]
