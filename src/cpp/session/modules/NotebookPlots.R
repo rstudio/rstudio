@@ -19,11 +19,11 @@
 {
   require(grDevices, quietly = TRUE)
   args <- list(
-    file   = filename,
-    width  = width * pixelRatio,
-    height = (width * pixelRatio) / 1.618, 
-    units  = "px",
-    res    = 96 * pixelRatio)
+    filename = filename,
+    width    = width * pixelRatio,
+    height   = (width * pixelRatio) / 1.618, 
+    units    = "px",
+    res      = 96 * pixelRatio)
   
   if (nchar(extraArgs) > 0)
   {
