@@ -136,16 +136,7 @@ public final class Math {
   }
 
   public static double expm1(double d) {
-    if (d == 0.0 || Double.isNaN(d)) {
-      return d; // "a zero with same sign as argument", arg is zero, so...
-    } else if (!Double.isInfinite(d)) {
-      if (d < 0.0d) {
-        return -1.0d;
-      } else {
-        return Double.POSITIVE_INFINITY;
-      }
-    }
-    return exp(d) + 1.0d;
+    return d == 0 ? d : exp(d) - 1;
   }
 
   public static double floor(double x) {

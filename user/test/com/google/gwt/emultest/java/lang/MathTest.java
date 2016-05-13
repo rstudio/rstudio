@@ -42,6 +42,14 @@ public class MathTest extends GWTTestCase {
     assertFalse(isNegativeZero(x));
   }
 
+  private static void assertNaN(double x) {
+    assertTrue(Double.isNaN(x));
+  }
+
+  private static void assertEquals(double expected, double actual) {
+    assertEquals(expected, actual, 0.);
+  }
+
   private static boolean isNegativeZero(double x) {
     return Double.doubleToLongBits(-0.0) == Double.doubleToLongBits(x);
   }
@@ -71,7 +79,7 @@ public class MathTest extends GWTTestCase {
     v = Math.abs(Double.POSITIVE_INFINITY);
     assertEquals(Double.POSITIVE_INFINITY, v);
     v = Math.abs(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
   }
 
   public void testAddExact() {
@@ -156,11 +164,11 @@ public class MathTest extends GWTTestCase {
     v = Math.cos(Math.PI * 1.5);
     assertEquals(0.0, v, 1e-7);
     v = Math.cos(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.cos(Double.NEGATIVE_INFINITY);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.cos(Double.POSITIVE_INFINITY);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
   }
 
   public void testCosh() {
@@ -171,7 +179,7 @@ public class MathTest extends GWTTestCase {
     v = Math.cosh(-1.0);
     assertEquals(1.5430806348, v, 1e-7);
     v = Math.cosh(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.cosh(Double.NEGATIVE_INFINITY);
     assertEquals(Double.POSITIVE_INFINITY, v);
     v = Math.cosh(Double.POSITIVE_INFINITY);
@@ -202,6 +210,16 @@ public class MathTest extends GWTTestCase {
         assertFalse(expectedSuccess);
       }
     }
+  }
+
+  public void testExpm1() {
+    assertNegativeZero(Math.expm1(-0.));
+    assertPositiveZero(Math.expm1(0.));
+    assertNaN(Math.expm1(Double.NaN));
+    assertEquals(Double.POSITIVE_INFINITY, Math.expm1(Double.POSITIVE_INFINITY));
+    assertEquals(-1., Math.expm1(Double.NEGATIVE_INFINITY));
+    assertEquals(-0.632, Math.expm1(-1), 0.001);
+    assertEquals(1.718, Math.expm1(1), 0.001);
   }
 
   public void testFloor() {
@@ -320,12 +338,12 @@ public class MathTest extends GWTTestCase {
     assertEquals(1d, Math.max(1d, -1d));
     assertEquals(-1d, Math.max(-1d, -2d));
     assertEquals(-1d, Math.max(-2d, -1d));
-    assertTrue(Double.isNaN(Math.max(Double.NaN, 1d)));
-    assertTrue(Double.isNaN(Math.max(1d, Double.NaN)));
-    assertTrue(Double.isNaN(Math.max(Double.NaN, Double.POSITIVE_INFINITY)));
-    assertTrue(Double.isNaN(Math.max(Double.POSITIVE_INFINITY, Double.NaN)));
-    assertTrue(Double.isNaN(Math.max(Double.NaN, Double.NEGATIVE_INFINITY)));
-    assertTrue(Double.isNaN(Math.max(Double.NEGATIVE_INFINITY, Double.NaN)));
+    assertNaN(Math.max(Double.NaN, 1d));
+    assertNaN(Math.max(1d, Double.NaN));
+    assertNaN(Math.max(Double.NaN, Double.POSITIVE_INFINITY));
+    assertNaN(Math.max(Double.POSITIVE_INFINITY, Double.NaN));
+    assertNaN(Math.max(Double.NaN, Double.NEGATIVE_INFINITY));
+    assertNaN(Math.max(Double.NEGATIVE_INFINITY, Double.NaN));
 
     assertEquals(2f, Math.max(1f, 2f));
     assertEquals(2f, Math.max(2f, 1f));
@@ -352,12 +370,12 @@ public class MathTest extends GWTTestCase {
     assertEquals(-1d, Math.min(1d, -1d));
     assertEquals(-2d, Math.min(-1d, -2d));
     assertEquals(-2d, Math.min(-2d, -1d));
-    assertTrue(Double.isNaN(Math.min(Double.NaN, 1d)));
-    assertTrue(Double.isNaN(Math.min(1d, Double.NaN)));
-    assertTrue(Double.isNaN(Math.min(Double.NaN, Double.POSITIVE_INFINITY)));
-    assertTrue(Double.isNaN(Math.min(Double.POSITIVE_INFINITY, Double.NaN)));
-    assertTrue(Double.isNaN(Math.min(Double.NaN, Double.NEGATIVE_INFINITY)));
-    assertTrue(Double.isNaN(Math.min(Double.NEGATIVE_INFINITY, Double.NaN)));
+    assertNaN(Math.min(Double.NaN, 1d));
+    assertNaN(Math.min(1d, Double.NaN));
+    assertNaN(Math.min(Double.NaN, Double.POSITIVE_INFINITY));
+    assertNaN(Math.min(Double.POSITIVE_INFINITY, Double.NaN));
+    assertNaN(Math.min(Double.NaN, Double.NEGATIVE_INFINITY));
+    assertNaN(Math.min(Double.NEGATIVE_INFINITY, Double.NaN));
 
     assertEquals(1f, Math.min(1f, 2f));
     assertEquals(1f, Math.min(2f, 1f));
@@ -519,7 +537,7 @@ public class MathTest extends GWTTestCase {
   }
 
   public void testSignum() {
-    assertTrue(Double.isNaN(Math.signum(Double.NaN)));
+    assertNaN(Math.signum(Double.NaN));
     assertTrue(isNegativeZero(Math.signum(-0.)));
     assertEquals(0., Math.signum(0.), 0);
     assertEquals(-1, Math.signum(-2), 0);
@@ -542,11 +560,11 @@ public class MathTest extends GWTTestCase {
     v = Math.sin(Math.PI * 1.5);
     assertEquals(-1.0, v, 1e-7);
     v = Math.sin(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.sin(Double.NEGATIVE_INFINITY);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.sin(Double.POSITIVE_INFINITY);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
   }
 
   public void testSinh() {
@@ -557,7 +575,7 @@ public class MathTest extends GWTTestCase {
     v = Math.sinh(-1.0);
     assertEquals(-1.175201193, v, 1e-7);
     v = Math.sinh(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.sinh(Double.NEGATIVE_INFINITY);
     assertEquals(Double.NEGATIVE_INFINITY, v);
     v = Math.sinh(Double.POSITIVE_INFINITY);
@@ -572,11 +590,11 @@ public class MathTest extends GWTTestCase {
     v = Math.tan(-0.0);
     assertEquals(-0.0, v, 1e-7);
     v = Math.tan(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.tan(Double.NEGATIVE_INFINITY);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.tan(Double.POSITIVE_INFINITY);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
   }
 
   public void testTanh() {
@@ -587,7 +605,7 @@ public class MathTest extends GWTTestCase {
     v = Math.tanh(-1.0);
     assertEquals(-0.761594155, v, 1e-7);
     v = Math.tanh(Double.NaN);
-    assertTrue(Double.isNaN(v));
+    assertNaN(v);
     v = Math.tanh(Double.NEGATIVE_INFINITY);
     assertEquals(-1.0, v, 1e-7);
     v = Math.tanh(Double.POSITIVE_INFINITY);
