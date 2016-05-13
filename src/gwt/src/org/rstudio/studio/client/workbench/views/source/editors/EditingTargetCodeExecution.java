@@ -209,7 +209,24 @@ public class EditingTargetCodeExecution
          String code = lastExecutedCode_.getValue();
          if (code != null && code.trim().length() > 0)
          {
-            events_.fireEvent(new SendToConsoleEvent(code, true));
+            // if in notebook mode, we want to execute the code inside the 
+            // chunk rather than at the console
+            Scope scope = null;
+            if (docDisplay_.showChunkOutputInline())
+            {
+               scope = docDisplay_.getCurrentChunk(
+                  lastExecutedCode_.getRange().getStart());
+            }
+
+            if (scope == null)
+            {
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+            else
+            {
+               events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
+                     scope, code));
+            }
          }
       }
    }
