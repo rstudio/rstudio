@@ -141,6 +141,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionLists.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/clang/SessionClang.hpp"
+#include "modules/connections/SessionConnections.hpp"
 #include "modules/data/SessionData.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
@@ -1797,6 +1798,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 #endif
       (modules::code_search::initialize)
       (modules::clang::initialize)
+      (modules::connections::initialize)
       (modules::files::initialize)
       (modules::find::initialize)
       (modules::environment::initialize)
