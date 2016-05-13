@@ -75,6 +75,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       {
          add(checkboxPref("Execute setup chunk automatically in notebooks", 
                           prefs_.autoRunSetupChunk()));
+         add(checkboxPref("Hide console automatically when executing " +
+                          "notebook chunks",
+                          prefs_.hideConsoleOnChunkExecute()));
       }
    }
 

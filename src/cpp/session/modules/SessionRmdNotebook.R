@@ -133,7 +133,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    chunkDefns <- rnbData$chunk_info$chunk_definitions
    for (defn in chunkDefns) {
-      if (defn$chunk_label == label)
+      if (identical(defn$chunk_label, label))
          return(defn$chunk_id)
    }
    return(NULL)
@@ -145,8 +145,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # resolve chunk id (attempt to match labels)
       chunkId <- .rs.rnb.resolveActiveChunkId(rnbData, context$label)
+      
+      # determine whether we include source code (respect chunk options)
+      includeSource <- isTRUE(context$echo) && isTRUE(context$include)
+      
+      # if we have no chunk outputs, just show source code (respecting
+      # chunk options as appropriate)
       if (is.null(chunkId)) {
-         return(knitr::asis_output("<!-- empty-output-placeholder -->"))
+         if (includeSource) {
+            return(rmarkdown::html_notebook_output_code(code))
+         }
+         return(knitr::asis_output(""))
       }
       
       chunkData <- rnbData$chunk_data[[chunkId]]
@@ -160,6 +169,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # console output
          if (.rs.endsWith(key, ".csv")) {
             parsed <- .rs.rnb.readConsoleData(val)
+            if (!includeSource)
+               parsed <- parsed[parsed$type != 0, ]
+            if (identical(context$results, "hide"))
+               parsed <- parsed[parsed$type != 1, ]
             rendered <- .rs.rnb.renderConsoleData(parsed)
             return(rendered)
          }

@@ -367,6 +367,12 @@ public class TextEditingTargetNotebook
             }));
    }
    
+   public void onActivate()
+   {
+      // remember that we haven't maximized the pane in this session
+      maximizedPane_ = false;
+   }
+   
    public void executeChunk(Scope chunk, String code, String options,
          int mode)
    {
@@ -374,7 +380,8 @@ public class TextEditingTargetNotebook
       int row = chunk.getEnd().getRow();
       
       // maximize the source pane if we haven't yet this session
-      if (!maximizedPane_)
+      if (!maximizedPane_ && 
+          prefs_.hideConsoleOnChunkExecute().getValue())
       {
          pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
          maximizedPane_ = true;
@@ -1801,7 +1808,6 @@ public class TextEditingTargetNotebook
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;
-   private HandlerRegistration renderFinishedReg_;
    private Position lastStart_;
    private Position lastEnd_;
    

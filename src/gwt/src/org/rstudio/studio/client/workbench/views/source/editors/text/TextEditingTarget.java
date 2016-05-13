@@ -2036,6 +2036,10 @@ public class TextEditingTarget implements
          }
       });
       
+      // notify notebook of activation if necessary
+      if (notebook_ != null)
+         notebook_.onActivate();
+      
       view_.onActivate();
    }
 
@@ -4461,6 +4465,13 @@ public class TextEditingTarget implements
           extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX))
       {
          runShinyApp();
+         return;
+      }
+      
+      // if the document is an R Markdown notebook, run all its chunks instead
+      if (fileType_.isRmd() && isRmdNotebook()) 
+      {
+         onExecuteAllCode();
          return;
       }
       
