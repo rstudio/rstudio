@@ -261,7 +261,7 @@ void onDocAdded(const std::string& id)
    // contents of the notebook?
 }
 
-void onDocSaved(FilePath &path)
+void onDocSaved(FilePath path)
 {
    Error error;
    // ignore non-R Markdown saves
