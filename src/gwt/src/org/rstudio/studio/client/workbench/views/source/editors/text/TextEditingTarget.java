@@ -4464,6 +4464,13 @@ public class TextEditingTarget implements
          return;
       }
       
+      // if the document is an R Markdown notebook, run all its chunks instead
+      if (fileType_.isRmd() && isRmdNotebook()) 
+      {
+         onExecuteAllCode();
+         return;
+      }
+      
       // If the document being sourced is a script then use that codepath
       if (fileType_.isScript())
       {
