@@ -49,6 +49,7 @@ public class WorkbenchListManager
       listContexts_.put(HELP_HISTORY, new ListContext(HELP_HISTORY));
       listContexts_.put(USER_DICTIONARY, new ListContext(USER_DICTIONARY));
       listContexts_.put(ADDINS_MRU, new ListContext(ADDINS_MRU));
+      listContexts_.put(CONNECTIONS, new ListContext(CONNECTIONS));
       
       events.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
          @Override
@@ -61,6 +62,7 @@ public class WorkbenchListManager
             updateList(HELP_HISTORY, lists);
             updateList(USER_DICTIONARY, lists);
             updateList(ADDINS_MRU, lists);
+            updateList(CONNECTIONS, lists);
          }  
       });
       
@@ -101,6 +103,11 @@ public class WorkbenchListManager
    public WorkbenchList getAddinsMruList()
    {
       return listContexts_.get(ADDINS_MRU);
+   }
+   
+   public WorkbenchList getConnectionsList()
+   {
+      return listContexts_.get(CONNECTIONS);
    }
    
    private void updateList(String name, WorkbenchLists lists)
@@ -192,4 +199,5 @@ public class WorkbenchListManager
    private static final String HELP_HISTORY = "help_history_links";
    private static final String USER_DICTIONARY = "user_dictionary";
    private static final String ADDINS_MRU = "addins_mru";
+   private static final String CONNECTIONS = "connections";
 }

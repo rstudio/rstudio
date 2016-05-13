@@ -15,8 +15,10 @@ package org.rstudio.studio.client.workbench.views.connections;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionList;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 
 public class ConnectionsPresenter extends BasePresenter 
@@ -29,11 +31,13 @@ public class ConnectionsPresenter extends BasePresenter
    @Inject
    public ConnectionsPresenter(Display display, 
                                ConnectionsServerOperations server,
-                               EventBus eventBus)
+                               EventBus eventBus,
+                               WorkbenchListManager listManager)
    {
       super(display);
       display_ = display;
       server_ = server;
+      connectionList_ = new ConnectionList(listManager.getConnectionsList());
    }
    
   
@@ -42,6 +46,9 @@ public class ConnectionsPresenter extends BasePresenter
    private final Display display_ ;
    @SuppressWarnings("unused")
    private final ConnectionsServerOperations server_ ;
+   
+   @SuppressWarnings("unused")
+   private ConnectionList connectionList_;
 
    
 }
