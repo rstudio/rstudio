@@ -133,7 +133,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    chunkDefns <- rnbData$chunk_info$chunk_definitions
    for (defn in chunkDefns) {
-      if (defn$chunk_label == label)
+      if (identical(defn$chunk_label, label))
          return(defn$chunk_id)
    }
    return(NULL)
