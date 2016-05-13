@@ -2036,6 +2036,10 @@ public class TextEditingTarget implements
          }
       });
       
+      // notify notebook of activation if necessary
+      if (notebook_ != null)
+         notebook_.onActivate();
+      
       view_.onActivate();
    }
 

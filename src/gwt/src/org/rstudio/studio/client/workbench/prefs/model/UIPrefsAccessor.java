@@ -560,6 +560,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("auto_run_setup_chunk", true);
    }
    
+   public PrefValue<Boolean> hideConsoleOnChunkExecute()
+   {
+      return bool("hide_console_on_chunk_execute", true);
+   }
+   
    public static final String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "show_sections_only";
    public static final String DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS = "show_sections_and_chunks";
    public static final String DOC_OUTLINE_SHOW_ALL = "show_all";
