@@ -32,6 +32,7 @@
 #include <r/session/RGraphics.hpp>
 
 #define kPlotPrefix "_rs_chunk_plot_"
+#define kGoldenRatio 1.618
 
 using namespace rstudio::core;
 
@@ -45,14 +46,16 @@ namespace {
 class PlotState
 {
 public:
-   PlotState(const FilePath& folder):
+   PlotState(const FilePath& folder, PlotSizeBehavior sizeBehavior):
       plotFolder(folder),
-      hasPlots(false)
+      hasPlots(false),
+      sizeBehavior(sizeBehavior)
    {
    }
 
    FilePath plotFolder;
    bool hasPlots;
+   PlotSizeBehavior sizeBehavior;
    FilePath snapshotFile;
    r::sexp::PreservedSEXP sexpMargins;
    boost::signals::connection onConsolePrompt;
@@ -143,7 +146,9 @@ void removeGraphicsDevice(boost::shared_ptr<PlotState> pPlotState)
 {
    // take a snapshot of the last plot's display list before we turn off the
    // device (if we haven't emitted it yet)
-   if (pPlotState->hasPlots && pPlotState->snapshotFile.empty())
+   if (pPlotState->hasPlots && 
+       pPlotState->sizeBehavior == PlotSizeAutomatic &&
+       pPlotState->snapshotFile.empty())
       saveSnapshot(pPlotState);
 
    // restore the figure margins
@@ -162,7 +167,8 @@ void removeGraphicsDevice(boost::shared_ptr<PlotState> pPlotState)
 
 void onBeforeNewPlot(boost::shared_ptr<PlotState> pPlotState)
 {
-   if (pPlotState->hasPlots)
+   if (pPlotState->hasPlots &&
+       pPlotState->sizeBehavior == PlotSizeAutomatic)
    {
       saveSnapshot(pPlotState);
    }
@@ -188,7 +194,9 @@ void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
 } // anonymous namespace
 
 // begins capturing plot output
-core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
+core::Error beginPlotCapture(double height, double width, 
+                             PlotSizeBehavior sizeBehavior,
+                             const FilePath& plotFolder)
 {
    // clean up any stale plots from the folder
    std::vector<FilePath> folderContents;
@@ -210,11 +218,15 @@ core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
       }
    }
 
-   // marker for content; this is necessary because on Windows, turning off
-   // the png device writes an empty PNG file even if nothing was plotted, and
-   // we need to avoid treating that file as though it were an actual plot
+   // infer height/width if only one is given
+   if (height == 0 && width > 0)
+      height = width / kGoldenRatio;
+   else if (height > 0 && width == 0)
+      width = height * kGoldenRatio;
+
+   // create state accumulator
    boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>(
-         plotFolder);
+         plotFolder, sizeBehavior);
 
    // save old figure parameters
    r::exec::RFunction par("par");
@@ -229,26 +241,44 @@ core::Error beginPlotCapture(int pixelWidth, const FilePath& plotFolder)
    pPlotState->sexpMargins.set(sexpMargins);
 
    // create the notebook graphics device
-   error = r::exec::RFunction(".rs.createNotebookGraphicsDevice",
-         plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png",
-         pixelWidth, 
-         r::session::graphics::device::devicePixelRatio(),
-         r::session::graphics::extraBitmapParams()).call();
+   r::exec::RFunction createDevice(".rs.createNotebookGraphicsDevice");
+
+   // the folder in which to place the rendered plots (this is a sibling of the
+   // main chunk output folder)
+   createDevice.addParam(
+         plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png");
+
+   // device dimensions
+   createDevice.addParam(height);
+   createDevice.addParam(width); 
+
+   // sizing behavior drives units -- user specified units are in inches but
+   // we use pixels when scaling automatically
+   createDevice.addParam(sizeBehavior == PlotSizeManual ? "in" : "px");
+
+   // devie parameters
+   createDevice.addParam(r::session::graphics::device::devicePixelRatio());
+   createDevice.addParam(r::session::graphics::extraBitmapParams());
+   error = createDevice.call();
    if (error)
    {
       // this is fatal; without a graphics device we can't capture plots
       return error;
    }
 
-   // turn on display list recording so we can do intelligent resizing later
-   r::exec::RFunction devControl("dev.control");
-   devControl.addParam("displaylist", "enable");
-   error = devControl.call();
-   if (error)
+   // if sizing automatically, turn on display list recording so we can do
+   // intelligent resizing later
+   if (sizeBehavior == PlotSizeAutomatic)
    {
-      // non-fatal since we'll do best-effort resizing in the absence of
-      // display lists
-      LOG_ERROR(error);
+      r::exec::RFunction devControl("dev.control");
+      devControl.addParam("displaylist", "enable");
+      error = devControl.call();
+      if (error)
+      {
+         // non-fatal since we'll do best-effort resizing in the absence of
+         // display lists
+         LOG_ERROR(error);
+      }
    }
 
    // set notebook-friendly figure margins 

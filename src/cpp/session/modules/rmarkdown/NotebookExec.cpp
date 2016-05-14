@@ -60,11 +60,12 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 } // anonymous namespace
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, int execScope, const std::string& options, 
+      const std::string& chunkId, int execScope, const json::Object& options,
       int pixelWidth, int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
    prevWorkingDir_(""),
+   options_(options),
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
@@ -113,12 +114,29 @@ void ChunkExecContext::connect()
    if (execScope_ == kExecScopeChunk)
       initializeOutput();
 
+   // extract knitr figure options if present
+   double figWidth = 0;
+   double figHeight = 0;
+   json::readObject(options_, "fig.width",  &figWidth);
+   json::readObject(options_, "fig.height", &figHeight);
+
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      kChunkOutputPlot)));
 
-   error = beginPlotCapture(pixelWidth_, outputPath_);
+   if (figWidth > 0 || figHeight > 0)
+   {
+      // user specified plot size, use it
+      error = beginPlotCapture(figHeight, figWidth, PlotSizeManual, 
+                               outputPath_);
+   }
+   else
+   {
+      // user didn't specify plot size, use the width of the editor surface
+      error = beginPlotCapture(0, pixelWidth_, PlotSizeAutomatic, 
+                               outputPath_);
+   }
    if (error)
       LOG_ERROR(error);
 

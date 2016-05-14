@@ -15,14 +15,15 @@
 
 # creates the notebook graphics device 
 .rs.addFunction("createNotebookGraphicsDevice", function(filename,
-  width, pixelRatio, extraArgs)
+  height, width, units, pixelRatio, extraArgs)
 {
+  # form the arguments to the graphics device creator
   require(grDevices, quietly = TRUE)
   args <- list(
     filename = filename,
     width    = width * pixelRatio,
-    height   = (width * pixelRatio) / 1.618, 
-    units    = "px",
+    height   = height * pixelRatio, 
+    units    = units,
     res      = 96 * pixelRatio)
   
   if (nchar(extraArgs) > 0)
@@ -71,7 +72,8 @@
     # output from the device
     output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
                     sep = ".")
-    .rs.createNotebookGraphicsDevice(output, width, pixelRatio, extraArgs);
+    .rs.createNotebookGraphicsDevice(output, width / 1.618, width, 
+                                     "px", pixelRatio, extraArgs);
 
     # actually replay the plot onto the device
     tryCatch({

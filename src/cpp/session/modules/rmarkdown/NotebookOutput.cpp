@@ -16,6 +16,7 @@
 #include "SessionRmdNotebook.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookOutput.hpp"
+#include "NotebookPlots.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
@@ -152,9 +153,22 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
    else if (outputType == kChunkOutputPlot || outputType == kChunkOutputHtml)
    {
       // plot/HTML outputs should be requested by the client, so pass the path
-      (*pObj)[kChunkOutputValue] = kChunkOutputPath "/" + nbCtxId + "/" + 
-                                   docId + "/" + chunkId + "/" + 
-                                   path.filename();
+      std::string url(kChunkOutputPath "/" + nbCtxId + "/" + 
+                         docId + "/" + chunkId + "/" + 
+                         path.filename());
+
+      // if this is a plot and it doesn't have a display list, hint to client
+      // that plot can't be resized
+      if (outputType == kChunkOutputPlot && path.hasExtensionLowerCase(".png"))
+      {
+         // form the path to where we'd expect the snapshot to be
+         FilePath snapshotPath = path.parent().complete(
+               path.stem() + kDisplayListExt);
+         if (!snapshotPath.exists())
+            url.append("?fixed_size=1");
+      }
+
+      (*pObj)[kChunkOutputValue] = url;
    }
 
    return Success();

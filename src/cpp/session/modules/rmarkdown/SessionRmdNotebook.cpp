@@ -209,8 +209,10 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
       s_execContext->disconnect();
 
    // create the execution context and connect it immediately if necessary
-   s_execContext.reset(new ChunkExecContext(docId, chunkId, execScope, options, 
-            pixelWidth, charWidth));
+   const json::Object& optionsJson = jsonOptions.type() == json::ObjectType ? 
+      jsonOptions.get_obj() : json::Object();
+   s_execContext.reset(new ChunkExecContext(docId, chunkId, execScope, 
+            optionsJson, pixelWidth, charWidth));
    if (s_activeConsole == chunkId)
       s_execContext->connect();
 

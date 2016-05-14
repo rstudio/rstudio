@@ -42,7 +42,7 @@ class ChunkExecContext
 public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
-         int execScope, const std::string& options, int pixelWidth, 
+         int execScope, const core::json::Object& options, int pixelWidth, 
          int charWidth);
    ~ChunkExecContext();
 
@@ -74,6 +74,7 @@ private:
    std::string prevWorkingDir_;
    std::string pendingInput_;
    core::FilePath outputPath_;
+   core::json::Object options_;
 
    int pixelWidth_;
    int charWidth_;

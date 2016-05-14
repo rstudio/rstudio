@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -659,12 +660,24 @@ public class ChunkOutputWidget extends Composite
 
       final Image plot = new Image();
       
-      final FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
-                  ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_PLOT_WIDTH);
+      if (isFixedSizePlotUrl(url))
+      {
+         // if the plot is of fixed size, emit it directly, but make it
+         // initially invisible until we get sizing information (as we may 
+         // have to downsample)
+         plot.setVisible(false);
+         root_.add(plot);
+      }
+      else
+      {
+         // if we can scale the plot, scale it
+         FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
+                     ChunkOutputUi.OUTPUT_ASPECT, 
+                     ChunkOutputUi.MAX_PLOT_WIDTH);
 
-      root_.add(fixedFrame);
-
+         root_.add(fixedFrame);
+      }
+  
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
             ensureVisible));
@@ -977,11 +990,30 @@ public class ChunkOutputWidget extends Composite
          {
             if (DOM.eventGetType(event) != Event.ONLOAD)
                return;
+            
+            // if the image is of fixed size, just clamp its width while
+            // preserving its aspect ratio
+            if (isFixedSizePlotUrl(plot.getUrl()))
+            {
+               ImageElementEx img = plot.getElement().cast();
+               img.getStyle().setProperty("height", "auto");
+               img.getStyle().setProperty("width", "100%");
+               img.getStyle().setProperty("maxWidth", 
+                     Math.min(ChunkOutputUi.MAX_PLOT_WIDTH, 
+                              img.naturalWidth()) + "px");
+            }
                
+            plot.setVisible(true);
+            
             renderTimeout.cancel();
             completeUnitRender(ensureVisible);
          }
       };
+   }
+   
+   private boolean isFixedSizePlotUrl(String url)
+   {
+      return url.contains("fixed_size=1");
    }
    
    @UiField Image clear_;

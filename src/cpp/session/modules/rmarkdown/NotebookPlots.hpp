@@ -34,7 +34,15 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error beginPlotCapture(int pixelWidth, const core::FilePath& plotFolder);
+enum PlotSizeBehavior
+{
+   PlotSizeAutomatic,
+   PlotSizeManual
+};
+
+core::Error beginPlotCapture(double height, double width, 
+      PlotSizeBehavior sizeBehavior, 
+      const core::FilePath& plotFolder);
 
 core::Error initPlots();
 
