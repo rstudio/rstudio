@@ -63,7 +63,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 
 import java.util.ArrayList;
 
-public class Shell implements ConsoleInputHandler,
+public class Shell implements ConsoleHistoryAddedEvent.Handler,
+                              ConsoleInputHandler,
                               ConsoleWriteOutputHandler,
                               ConsoleWriteErrorHandler,
                               ConsoleWritePromptHandler,
@@ -135,6 +136,7 @@ public class Shell implements ConsoleInputHandler,
       view_.addCapturingKeyDownHandler(handler) ;
       view_.addKeyPressHandler(handler) ;
       
+      eventBus.addHandler(ConsoleHistoryAddedEvent.TYPE, this);
       eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
       eventBus.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       eventBus.addHandler(ConsoleWriteErrorEvent.TYPE, this);
@@ -336,7 +338,7 @@ public class Shell implements ConsoleInputHandler,
    {
       String commandText = view_.processCommandEntry() ;
       if (addToHistory_ && (commandText.length() > 0))
-         addToHistory(commandText);
+         eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
       // fire event 
       eventBus_.fireEvent(new ConsoleInputEvent(commandText, ""));
@@ -434,6 +436,15 @@ public class Shell implements ConsoleInputHandler,
                   // if we failed to set debug mode, don't rerun the command
                }
             }); 
+   }
+
+   @Override
+   public void onConsoleHistoryAdded(ConsoleHistoryAddedEvent event)
+   {
+      if (isBrowsePrompt())
+         browseHistoryManager_.addToHistory(event.getCode());
+      else
+         historyManager_.addToHistory(event.getCode());
    }
 
    private final class InputKeyDownHandler implements KeyDownHandler,
@@ -578,14 +589,6 @@ public class Shell implements ConsoleInputHandler,
    {
       historyManager_.resetPosition();
       browseHistoryManager_.resetPosition();
-   }
-   
-   private void addToHistory(String commandText)
-   {
-      if (isBrowsePrompt())
-         browseHistoryManager_.addToHistory(commandText);
-      else
-         historyManager_.addToHistory(commandText);
    }
    
    private String getHistoryEntry(int offset)
