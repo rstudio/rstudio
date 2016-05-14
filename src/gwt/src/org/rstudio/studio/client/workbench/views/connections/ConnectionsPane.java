@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -57,6 +58,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       selectionModel_ = new SingleSelectionModel<Connection>();
       connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
       connectionsDataGrid_.setSelectionModel(selectionModel_);
+      connectionsDataGrid_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
       
       // add type column
       typeColumn_ = new TextColumn<Connection>() {
@@ -180,7 +182,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
    {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS})
+      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.css"})
       Styles dataGridStyle();
    }
    
