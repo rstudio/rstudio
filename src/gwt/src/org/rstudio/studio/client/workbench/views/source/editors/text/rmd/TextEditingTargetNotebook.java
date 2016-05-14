@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -652,8 +653,7 @@ public class TextEditingTargetNotebook
          public void onResponseReceived(RmdChunkOptions options)
          {
             // execute the input
-            console_.consoleInput(event.getCode(), chunkDef.getChunkId(), 
-                  new VoidServerRequestCallback());
+            executeCodeChunk(event.getCode(), chunkDef.getChunkId());
          }
          @Override
          public void onError(ServerError error)
@@ -1241,8 +1241,7 @@ public class TextEditingTargetNotebook
                      {
                         outputs_.get(unit.chunkId).setOptions(options);
                      }
-                     console_.consoleInput(unit.code, unit.chunkId, 
-                           new VoidServerRequestCallback());
+                     executeCodeChunk(unit.code, unit.chunkId);
                   }
                }
 
@@ -1823,6 +1822,27 @@ public class TextEditingTargetNotebook
          }
       }
    };
+   
+   private void executeCodeChunk(final String code, final String chunkId)
+   {
+      console_.consoleInput(code, chunkId, 
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  // add the code into the history once it's been successfully
+                  // sent to the server
+                  events_.fireEvent(new ConsoleHistoryAddedEvent(code));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
