@@ -12,10 +12,16 @@
  */
 package org.rstudio.studio.client.workbench.views.connections;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
@@ -24,6 +30,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -71,7 +78,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionsDataGrid_.addColumn(nameColumn_, new TextHeader("Name"));
       connectionsDataGrid_.setColumnWidth(nameColumn_, "120px");
       
-      
       dataProvider_ = new ListDataProvider<Connection>();
       dataProvider_.addDataDisplay(connectionsDataGrid_);
       
@@ -80,9 +86,36 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
+   public void setConnections(List<Connection> connections)
+   {
+      dataProvider_.setList(connections);
+   }
+   
+   @Override
+   public HandlerRegistration addSearchFilterChangedHandler(
+                                          ValueChangeHandler<String> handler)
+   {
+      return searchWidget_.addValueChangeHandler(handler);
+   }
+   
+   
+   @Override
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
+      
+      
+      searchWidget_ = new SearchWidget(new SuggestOracle() {
+         @Override
+         public void requestSuggestions(Request request, Callback callback)
+         {
+            // no suggestions
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<Suggestion>()));
+         }
+      });
+      toolbar.addRightWidget(searchWidget_);
       return toolbar;
    }
    
@@ -101,6 +134,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private final ProvidesKey<Connection> keyProvider_;
    private final SingleSelectionModel<Connection> selectionModel_;
    private final ListDataProvider<Connection> dataProvider_;
+   
+   private SearchWidget searchWidget_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

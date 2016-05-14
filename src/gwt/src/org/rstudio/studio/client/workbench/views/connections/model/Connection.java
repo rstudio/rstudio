@@ -23,6 +23,14 @@ public class Connection extends JavaScriptObject
    {
    }
    
+   
+   public static native final Connection create(String type, String name) /*-{ 
+      return {
+         type: type,
+         name: name
+      }; 
+    }-*/;
+   
    public final native String getType() /*-{
       return this.type;
    }-*/;
