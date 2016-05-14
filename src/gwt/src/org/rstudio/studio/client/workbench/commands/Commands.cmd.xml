@@ -2791,4 +2791,14 @@ well as menu structures (for main menu and popup menus).
         desc="Remove a connection"
         windowMode="main"/>
         
+    <cmd id="connectConnection"
+         label="Connect"
+         desc="Connect"
+         windowmode="main"/>
+         
+    <cmd id="disconnectConnection"
+         label="Disconnect"
+         desc="Disconnect"
+         windowModw="main"/>
+        
 </commands>

@@ -23,11 +23,13 @@ public class Connection extends JavaScriptObject
    {
    }
    
-   
-   public static native final Connection create(String type, String name) /*-{ 
+   public static native final Connection create(String type, 
+                                                String name,
+                                                boolean connected) /*-{ 
       return {
          type: type,
-         name: name
+         name: name,
+         connected: connected
       }; 
     }-*/;
    
@@ -37,5 +39,9 @@ public class Connection extends JavaScriptObject
    
    public final native String getName() /*-{
       return this.name;
+   }-*/;
+   
+   public final native boolean isConnected() /*-{
+      return this.connected;
    }-*/;
 }

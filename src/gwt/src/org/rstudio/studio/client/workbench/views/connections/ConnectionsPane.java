@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
@@ -45,6 +46,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       commands_ = commands;
       
+      // create data grid
       keyProvider_ = new ProvidesKey<Connection>() {
          @Override
          public Object getKey(Connection connection)
@@ -52,12 +54,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             return connection.hashCode();
          }
       };
-      
       selectionModel_ = new SingleSelectionModel<Connection>();
-      
       connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
       connectionsDataGrid_.setSelectionModel(selectionModel_);
-     
+      
+      // add type column
       typeColumn_ = new TextColumn<Connection>() {
          @Override
          public String getValue(Connection connection)
@@ -65,27 +66,41 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             return connection.getType();
          }
       };
-      
       connectionsDataGrid_.addColumn(typeColumn_, new TextHeader("Type"));
-      connectionsDataGrid_.setColumnWidth(typeColumn_, "20px");
+      connectionsDataGrid_.setColumnWidth(typeColumn_, "30px");
             
-      // Name ----
+      // add name column
       nameColumn_ = new TextColumn<Connection>() {
          @Override
          public String getValue(Connection connection)
          {
             return connection.getName();
          }
-      };
-      
+      };      
       connectionsDataGrid_.addColumn(nameColumn_, new TextHeader("Name"));
       connectionsDataGrid_.setColumnWidth(nameColumn_, "120px");
       
+      // add status column
+      statusColumn_ = new TextColumn<Connection>() {
+
+         @Override
+         public String getValue(Connection connection)
+         {
+            if (connection.isConnected())
+               return "Connected";
+            else
+               return "Disconnected";
+         }
+      };
+      connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
+      connectionsDataGrid_.setColumnWidth(statusColumn_, "40px");
+      
+      // data provider
       dataProvider_ = new ListDataProvider<Connection>();
       dataProvider_.addDataDisplay(connectionsDataGrid_);
       
+      // create widget
       ensureWidget();
-      
    }
    
    @Override
@@ -95,7 +110,20 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
-   public HandlerRegistration addSearchFilterChangedHandler(
+   public Connection getSelectedConnection()
+   {
+      return selectionModel_.getSelectedObject();
+   }
+   
+   @Override
+   public HandlerRegistration addSelectedConnectionChangeHandler(
+                                    SelectionChangeEvent.Handler handler)
+   {
+      return selectionModel_.addSelectionChangeHandler(handler);
+   }
+   
+   @Override
+   public HandlerRegistration addSearchFilterChangeHandler(
                                           ValueChangeHandler<String> handler)
    {
       return searchWidget_.addValueChangeHandler(handler);
@@ -110,7 +138,9 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar.addLeftWidget(commands_.newConnection().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.removeConnection().createToolbarButton());
-      
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.connectConnection().createToolbarButton());
+      toolbar.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
@@ -137,6 +167,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    
    private final TextColumn<Connection> typeColumn_;
    private final TextColumn<Connection> nameColumn_;
+   private final TextColumn<Connection> statusColumn_;
    
    private final ProvidesKey<Connection> keyProvider_;
    private final SingleSelectionModel<Connection> selectionModel_;

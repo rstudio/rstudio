@@ -18,6 +18,7 @@ import java.util.List;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
@@ -39,7 +40,14 @@ public class ConnectionsPresenter extends BasePresenter
    {
       void setConnections(List<Connection> connections);
       
-      HandlerRegistration addSearchFilterChangedHandler(
+      Connection getSelectedConnection();
+      
+      
+      
+      HandlerRegistration addSelectedConnectionChangeHandler(
+                                 SelectionChangeEvent.Handler handler);
+      
+      HandlerRegistration addSearchFilterChangeHandler(
                                        ValueChangeHandler<String> handler);
    }
    
@@ -50,7 +58,7 @@ public class ConnectionsPresenter extends BasePresenter
                                ConnectionsServerOperations server,
                                GlobalDisplay globalDisplay,
                                Binder binder,
-                               Commands commands,
+                               final Commands commands,
                                WorkbenchListManager listManager)
    {
       super(display);
@@ -59,16 +67,26 @@ public class ConnectionsPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
       connectionList_ = new ConnectionList(listManager.getConnectionsList());
+        
+      // start off with connect/disconnect commands invisible then
+      // change them with the active selection
+      commands.connectConnection().setVisible(false);
+      commands.disconnectConnection().setVisible(false);
       
-      ArrayList<Connection> connections = new ArrayList<Connection>();
+      // track selected connection
+      display_.addSelectedConnectionChangeHandler(
+                                       new SelectionChangeEvent.Handler() {
+         @Override
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            boolean isConnected = display_.getSelectedConnection().isConnected();
+            commands.connectConnection().setVisible(!isConnected);
+            commands.disconnectConnection().setVisible(isConnected);
+         }
+      });
       
-      connections.add(Connection.create("Spark", "localhost:4040"));
-      connections.add(Connection.create("Spark", "localhost:4141"));
-      connections.add(Connection.create("Spark", "localhost:4242"));
-      
-      updateConnections(connections);
-      
-      display_.addSearchFilterChangedHandler(new ValueChangeHandler<String>() {
+      // search filter
+      display_.addSearchFilterChangeHandler(new ValueChangeHandler<String>() {
 
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -94,6 +112,13 @@ public class ConnectionsPresenter extends BasePresenter
             display_.setConnections(connections);
          }
       });
+      
+      // fake connection data for now
+      ArrayList<Connection> connections = new ArrayList<Connection>();
+      connections.add(Connection.create("Spark", "localhost:4040", true));
+      connections.add(Connection.create("Spark", "localhost:4141", false));
+      connections.add(Connection.create("Spark", "localhost:4242", false));
+      updateConnections(connections);  
    }
    
    public void onNewConnection()
@@ -107,6 +132,19 @@ public class ConnectionsPresenter extends BasePresenter
       globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
    }
   
+   
+   @Handler
+   public void onConnectConnection()
+   {
+      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
+   }
+   
+   @Handler
+   public void onDisconnectConnection()
+   {
+      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
+   }
+   
    private void updateConnections(List<Connection> connections)
    {
       allConnections_ = connections;
