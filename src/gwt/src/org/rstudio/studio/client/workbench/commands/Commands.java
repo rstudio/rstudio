@@ -413,6 +413,10 @@ public abstract class
    public abstract AppCommand activateBuild();
    public abstract AppCommand layoutZoomBuild();
    
+   // Connections
+   public abstract AppCommand newConnection();
+   public abstract AppCommand removeConnection();
+   
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

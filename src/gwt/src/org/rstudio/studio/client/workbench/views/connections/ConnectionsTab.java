@@ -14,6 +14,9 @@ package org.rstudio.studio.client.workbench.views.connections;
 
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
@@ -22,12 +25,25 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
 {
    public abstract static class Shim 
-        extends DelayLoadTabShim<ConnectionsPresenter, ConnectionsTab> {}
+        extends DelayLoadTabShim<ConnectionsPresenter, ConnectionsTab> {
+      
+      @Handler
+      public abstract void onNewConnection();
+      
+   }
+   
+   public interface Binder extends CommandBinder<Commands, ConnectionsTab.Shim> {}
+
 
    @Inject
-   public ConnectionsTab(Shim shim, Session session, UIPrefs uiPrefs)
+   public ConnectionsTab(Shim shim, 
+                         Binder binder,
+                         Commands commands,
+                         Session session, 
+                         UIPrefs uiPrefs)
    {
       super("Connections", shim);
+      binder.bind(commands, shim);
       session_ = session;
       uiPrefs_ = uiPrefs;
    }

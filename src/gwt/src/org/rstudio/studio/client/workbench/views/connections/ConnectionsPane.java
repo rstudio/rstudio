@@ -32,15 +32,18 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
 {
    @Inject
-   public ConnectionsPane()
+   public ConnectionsPane(Commands commands)
    {
       super("Connections");
+      
+      commands_ = commands;
       
       keyProvider_ = new ProvidesKey<Connection>() {
          @Override
@@ -104,6 +107,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    {
       Toolbar toolbar = new Toolbar();
       
+      toolbar.addLeftWidget(commands_.newConnection().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.removeConnection().createToolbarButton());
+      
       
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
@@ -136,6 +143,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private final ListDataProvider<Connection> dataProvider_;
    
    private SearchWidget searchWidget_;
+   
+   private final Commands commands_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

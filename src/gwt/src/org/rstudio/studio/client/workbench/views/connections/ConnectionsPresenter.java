@@ -22,9 +22,12 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
-import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionList;
@@ -40,15 +43,21 @@ public class ConnectionsPresenter extends BasePresenter
                                        ValueChangeHandler<String> handler);
    }
    
+   public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
+   
    @Inject
    public ConnectionsPresenter(Display display, 
                                ConnectionsServerOperations server,
-                               EventBus eventBus,
+                               GlobalDisplay globalDisplay,
+                               Binder binder,
+                               Commands commands,
                                WorkbenchListManager listManager)
    {
       super(display);
+      binder.bind(commands, this);
       display_ = display;
       server_ = server;
+      globalDisplay_ = globalDisplay;
       connectionList_ = new ConnectionList(listManager.getConnectionsList());
       
       ArrayList<Connection> connections = new ArrayList<Connection>();
@@ -87,12 +96,25 @@ public class ConnectionsPresenter extends BasePresenter
       });
    }
    
+   public void onNewConnection()
+   {
+      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
+   }
+   
+   @Handler
+   public void onRemoveConnection()
+   {
+      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
+   }
+  
    private void updateConnections(List<Connection> connections)
    {
       allConnections_ = connections;
       display_.setConnections(allConnections_);
    }
    
+   
+   private final GlobalDisplay globalDisplay_;
    
    private final Display display_ ;
    @SuppressWarnings("unused")
