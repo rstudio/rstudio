@@ -410,6 +410,20 @@ public class JsInteropRestrictionChecker {
     if (method.isJsMethodVarargs()) {
       checkJsVarargs(method);
     }
+
+    // Check that parameters that are declared JsOptional in overridden methods remain JsOptional.
+    for (JMethod overriddenMethod : method.getOverriddenMethods()) {
+      for (int i = 0; i < overriddenMethod.getParams().size(); i++) {
+        if (overriddenMethod.getParams().get(i).isOptional()) {
+          if (!method.getParams().get(i).isOptional()) {
+            logError(method, "Method %s should declare parameter '%s' as JsOptional",
+                getMemberDescription(method), method.getParams().get(i).getName());
+            return;
+          }
+          break;
+        }
+      }
+    }
   }
 
   private void checkJsVarargs(final JMethod method) {
