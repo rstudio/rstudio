@@ -34,6 +34,7 @@ import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
@@ -259,16 +260,51 @@ public class TextEditingTargetNotebook
             if (!editingTarget_.isRmdNotebook())
                return;
             
-            String rmdPath = docUpdateSentinel_.getPath();
+            final String rmdPath = docUpdateSentinel_.getPath();
             
             // bail if unsaved doc (no point in generating notebooks for those)
             if (StringUtil.isNullOrEmpty(rmdPath))
                return;
             
-            String outputPath = FilePathUtils.filePathSansExtension(rmdPath) + 
-                                RmdOutput.NOTEBOOK_EXT;
+            final String outputPath =
+                  FilePathUtils.filePathSansExtension(rmdPath) + 
+                  RmdOutput.NOTEBOOK_EXT;
             
-            createNotebookFromCache(rmdPath, outputPath);
+            dependencyManager_.withUnsatisfiedDependencies(
+                  Dependency.embeddedPackage("rmarkdown"),
+                  new ServerRequestCallback<JsArray<Dependency>>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsArray<Dependency> unsatisfiedDependencies)
+                     {
+                        if (unsatisfiedDependencies.length() == 0)
+                        {
+                           createNotebookFromCache(rmdPath, outputPath);
+                           return;
+                        }
+                        
+                        Dependency dependency = unsatisfiedDependencies.get(0);
+                        String message;
+                        
+                        if (StringUtil.isNullOrEmpty(dependency.getVersion()))
+                        {
+                           message = "The rmarkdown package is not installed; notebook preview will not be generated.";
+                        }
+                        else
+                        {
+                           message = "An updated version of the rmarkdown package is required to generate notebook previews.";
+                        }
+                        
+                        editingDisplay_.showWarningBar(message);
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  }
+            );
          }
       }));
    }
