@@ -4809,25 +4809,31 @@ public class TextEditingTarget implements
                                       isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:
                                                         RmdOutput.TYPE_STATIC;
       
-      saveThenExecute(null, new Command() {
+      withSavePrerequisites(new Command()
+      {
          @Override
          public void execute()
          {
-            boolean asTempfile = isPackageDocumentationFile();
-            
-            rmarkdownHelper_.renderRMarkdown(
-               docUpdateSentinel_.getPath(),
-               docDisplay_.getCursorPosition().getRow() + 1,
-               null,
-               docUpdateSentinel_.getEncoding(),
-               paramsFile,
-               asTempfile,
-               type,
-               false);
+            saveThenExecute(null, new Command() {
+               @Override
+               public void execute()
+               {
+                  boolean asTempfile = isPackageDocumentationFile();
+
+                  rmarkdownHelper_.renderRMarkdown(
+                        docUpdateSentinel_.getPath(),
+                        docDisplay_.getCursorPosition().getRow() + 1,
+                        null,
+                        docUpdateSentinel_.getEncoding(),
+                        paramsFile,
+                        asTempfile,
+                        type,
+                        false);
+               }
+            });   
          }
-      });  
+      });
    }
-   
    
    public boolean isRmdNotebook()
    {
