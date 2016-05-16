@@ -15,6 +15,9 @@ package org.rstudio.studio.client.workbench.views.connections;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -25,6 +28,7 @@ import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -42,17 +46,22 @@ public class ConnectionsPresenter extends BasePresenter
       void setConnections(List<Connection> connections);
       
       Connection getSelectedConnection();
-      
-      
-      
+          
       HandlerRegistration addSelectedConnectionChangeHandler(
                                  SelectionChangeEvent.Handler handler);
       
       HandlerRegistration addSearchFilterChangeHandler(
                                        ValueChangeHandler<String> handler);
       
-      public HandlerRegistration addExploreConnectionHandler(
+      HandlerRegistration addExploreConnectionHandler(
                                        ExploreConnectionEvent.Handler handler);
+      
+      void showConnectionExplorer(Connection connection);
+      
+      
+      HasClickHandlers backToConnectionsButton();
+      
+      void showConnectionsList();
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -122,9 +131,20 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onExploreConnection(ExploreConnectionEvent event)
          {
-            globalDisplay_.showErrorMessage("RStudio", "Explore Connection");
-            
+            display_.showConnectionExplorer(event.getConnection());
+            display_.ensureHeight(EnsureHeightEvent.MAXIMIZED);
          }
+      });
+      
+      display_.backToConnectionsButton().addClickHandler(new ClickHandler() {
+
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            display_.showConnectionsList();
+            display_.ensureHeight(EnsureHeightEvent.NORMAL);
+         }
+         
       });
       
       // fake connection data for now
