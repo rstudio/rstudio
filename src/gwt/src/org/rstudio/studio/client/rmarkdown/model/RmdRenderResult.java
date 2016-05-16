@@ -38,7 +38,8 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         knitr_errors: [],
         is_shiny_document: true,
         preview_slide: doc.preview_slide,
-        slide_navigation: doc.slide_navigation
+        slide_navigation: doc.slide_navigation,
+        viewed: false
      };
    }-*/;
   
@@ -98,6 +99,14 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    
    public final native boolean hasShinyContent() /*-{
       return this.has_shiny_content;
+   }-*/;
+   
+   public final native boolean viewed() /*-{
+      return !!this.viewed;
+   }-*/;
+   
+   public final native boolean setViewed(boolean viewed) /*-{
+      this.viewed = viewed;
    }-*/;
 
    public final boolean isHtmlPresentation()
