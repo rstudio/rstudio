@@ -2746,37 +2746,66 @@ public class TextEditingTarget implements
                }
             });
    }
+   
+   void withSavePrerequisites(final Command command)
+   {
+      if (isRmdNotebook())
+         dependencyManager_.withRMarkdown("Using R Notebooks", command);
+      else
+         command.execute();
+   }
 
    @Handler
    void onSaveSourceDoc()
    {
-      saveThenExecute(null, postSaveCommand());
+      withSavePrerequisites(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            saveThenExecute(null, postSaveCommand());
+         }
+      });
    }
 
    @Handler
    void onSaveSourceDocAs()
    {
-      saveNewFile(docUpdateSentinel_.getPath(),
+      withSavePrerequisites(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            saveNewFile(docUpdateSentinel_.getPath(),
                   null,
                   postSaveCommand());
+         }
+      });
    }
 
    @Handler
    void onSaveSourceDocWithEncoding()
    {
-      withChooseEncoding(
-            StringUtil.firstNotNullOrEmpty(new String[] {
-                  docUpdateSentinel_.getEncoding(),
-                  prefs_.defaultEncoding().getValue(),
-                  session_.getSessionInfo().getSystemEncoding()
-            }),
-            new CommandWithArg<String>()
-            {
-               public void execute(String encoding)
-               {
-                  saveThenExecute(encoding, postSaveCommand());
-               }
-            });
+      withSavePrerequisites(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            withChooseEncoding(
+                  StringUtil.firstNotNullOrEmpty(new String[] {
+                        docUpdateSentinel_.getEncoding(),
+                        prefs_.defaultEncoding().getValue(),
+                        session_.getSessionInfo().getSystemEncoding()
+                  }),
+                  new CommandWithArg<String>()
+                  {
+                     public void execute(String encoding)
+                     {
+                        saveThenExecute(encoding, postSaveCommand());
+                     }
+                  });
+         }
+      });
    }
 
    @Handler
