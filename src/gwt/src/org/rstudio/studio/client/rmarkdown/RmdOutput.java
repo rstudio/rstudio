@@ -734,10 +734,12 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       boolean isNotebook = result_ != null &&
             FileSystemItem.getExtensionFromPath(result_.getOutputFile()) ==
             NOTEBOOK_EXT;
-
+      
       // show the preview; activate the window (but not for auto-refresh of 
       // notebook preview)
-      outputFrame_.showRmdPreview(params, !(isRefresh && isNotebook));
+      outputFrame_.showRmdPreview(params, !(isRefresh && isNotebook && 
+            result.viewed()));
+      result.setViewed(true);
       
       // reset live preview state
       livePreviewRenderInProgress_ = false;
