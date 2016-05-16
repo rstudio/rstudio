@@ -1566,9 +1566,7 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
     }
     if (x instanceof BigDecimal) {
       BigDecimal x1 = (BigDecimal) x;
-      return x1.scale == scale
-          && (bitLength < SMALL_VALUE_BITS ? (x1.smallValue == smallValue)
-              : intVal.equals(x1.intVal));
+      return (this.scale == x1.scale && this.compareTo(x1) == 0);
     }
     return false;
   }
