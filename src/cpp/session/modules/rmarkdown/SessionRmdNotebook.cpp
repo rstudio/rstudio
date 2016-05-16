@@ -238,6 +238,16 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
+
+   // bump the write time on our local chunk definition file so that it matches
+   // the notebook file; this prevents us from thinking that the .nb.html file
+   // we just wrote is ahead of the local cache.
+   FilePath outputFile = module_context::resolveAliasedPath(outputPath);
+   FilePath chunkDefsFile = chunkDefinitionsPath(
+         module_context::resolveAliasedPath(rmdPath), kSavedCtx);
+   if (chunkDefsFile.exists() && 
+       chunkDefsFile.lastWriteTime() < outputFile.lastWriteTime())
+      chunkDefsFile.setLastWriteTime(outputFile.lastWriteTime());
    
    return Success();
 }

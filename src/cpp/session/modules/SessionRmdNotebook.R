@@ -14,11 +14,7 @@
 #
 assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
-.rs.addFunction("extractRmdFromNotebook", function(input, output) 
-{
-   if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
-   if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
-   
+.rs.addFunction("parseRmdFromNotebook", function(input, output) {
    # extract rmd contents and populate file
    contents <- "# Failed to parse notebook"
    parsed <- try(rmarkdown::parse_html_notebook(input), silent = TRUE)
@@ -28,6 +24,27 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       contents <- parsed$rmd
    }
    cat(contents, file = output, sep = "\n")
+})
+
+.rs.addFunction("testNotebookRmdMatches", function(rmd, notebook) {
+   # parse the notebook to get the text of the contained R markdown doc
+   parsed <- try(rmarkdown::parse_html_notebook(notebook), silent = TRUE)
+   if (inherits(parsed, "try-error") || is.null(parsed$rmd)) {
+    return(.rs.scalar(FALSE))
+   }
+
+   # compare with the contents of the R markdown file
+   rmdContents <- readLines(rmd)
+   return(identical(parsed$rmd, rmdContents))
+})
+
+.rs.addFunction("extractRmdFromNotebook", function(input, output) 
+{
+   if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
+   if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
+
+   # parse R Markdown from notebook and write it to the requested file
+   .rs.parseRmdFromNotebook(input, output)
    
    # extract and populate cache
    status <- try(.rs.hydrateCacheFromNotebook(input), silent = TRUE)

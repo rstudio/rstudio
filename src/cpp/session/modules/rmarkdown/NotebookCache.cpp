@@ -236,31 +236,73 @@ void onDocAdded(const std::string& id)
    if (docPath.extensionLowerCase() != ".rmd")
       return;
 
-   FilePath cachePath = chunkCacheFolder(path, id);
+   // find the cache (test for saved) 
+   FilePath cachePath = chunkCacheFolder(path, id, notebookCtxId());
+   if (!cachePath.exists())
+      cachePath = chunkCacheFolder(path, id, kSavedCtx);
+
    FilePath notebookPath = docPath.parent().complete(docPath.stem() + 
          kNotebookExt);
-
-   // clean up incompatible cache versions (as we're about to invalidate them
-   // by mutating the document without updating them) 
-   if (cachePath.exists())
-   {
-      std::vector<FilePath> versions;
-      cachePath.children(&versions);
-      BOOST_FOREACH(const FilePath& version, versions)
-      {
-         if (version.isDirectory() && version.filename() != kCacheVersion)
-         {
-            error = version.remove();
-            if (error)
-               LOG_ERROR(error);
-         }
-      }
-   }
 
    // if the cache doesn't exist but we have a notebook file, hydrate from that
    // file
    if (!cachePath.exists() && notebookPath.exists())
    {
+      error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
+            notebookPath.absolutePath()).call();
+      if (error)
+         LOG_ERROR(error);
+      return;
+   }
+
+   // if both the local cache and the notebook cache exist, we need to decide
+   // which to load
+   if (cachePath.exists() && notebookPath.exists())
+   {
+      // get the dates first--in no case will we use the notebook over the
+      // local cache if the local cache is newer (this will be the case most
+      // of the time). we want to check this first because it's cheap; further
+      // tests will require us to test the caches for compatibility, which is
+      // more expensive.
+     
+      // find the chunk definition file 
+      FilePath chunkDefs = cachePath.complete(kNotebookChunkDefFilename);
+      if (!chunkDefs.exists())
+         return;
+
+      std::time_t localCacheTime = chunkDefs.lastWriteTime();
+      std::time_t nbCacheTime = notebookPath.lastWriteTime();
+
+      if (localCacheTime >= nbCacheTime)
+         return;
+
+      // if we got this far, it means that the notebook cache looks newer than
+      // our cache -- test to see whether it's compatible
+      bool matches = false;
+      error = r::exec::RFunction(".rs.testNotebookRmdMatches", 
+            docPath.absolutePath(), notebookPath.absolutePath()).call(&matches);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      
+      if (!matches)
+      {
+         // the notebook cache looks newer but it isn't aligned with the .Rmd,
+         // so we can't use it
+         return;
+      }
+
+      // if we got this far, we have matching newer notebook cache. blow away
+      // our stale local cache and rehydrate from the notebook cache.
+      error = cachePath.remove();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
       error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
             notebookPath.absolutePath()).call();
       if (error)
