@@ -14,7 +14,6 @@
  */
 
 #include "SessionRmdNotebook.hpp"
-#include "SessionRnbParser.hpp"
 #include "NotebookPlots.hpp"
 #include "NotebookPlotReplay.hpp"
 #include "NotebookCache.hpp"

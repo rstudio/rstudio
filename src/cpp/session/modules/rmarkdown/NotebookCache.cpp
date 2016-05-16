@@ -14,7 +14,6 @@
  */
 
 #include "SessionRmdNotebook.hpp"
-#include "SessionRnbParser.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 #include "NotebookPaths.hpp"
