@@ -252,7 +252,7 @@ public class TextEditingTargetWidget
       String cmdText = 
         new KeyboardShortcut(mod + KeyboardShortcut.SHIFT, 'K').toString(true);
       cmdText = DomUtils.htmlToText(cmdText);
-      notebookToolbarButton_.setTitle("Compile Notebook (" + cmdText + ")");
+      notebookToolbarButton_.setTitle("Compile Report (" + cmdText + ")");
       
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());

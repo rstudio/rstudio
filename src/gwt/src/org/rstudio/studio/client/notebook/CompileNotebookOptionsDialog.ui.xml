@@ -16,7 +16,7 @@
 
    <g:HTMLPanel styleName="{style.dialog}">
       
-      <label>A Notebook is a standalone HTML file that contains the
+      <label>Create a standalone HTML report that contains the
       code and output from your R script.</label>
       
       <p>
@@ -30,7 +30,7 @@
  
       <div ui:field="divTypeSelector_">
          <g:HorizontalPanel ui:field="typeLabelPanel_">
-            <g:Label ui:field="lblType_" text="Notebook type:"/>
+            <g:Label ui:field="lblType_" text="Report type:"/>
          </g:HorizontalPanel>
          <g:ListBox ui:field="listType_"
                     styleName="{style.type}">

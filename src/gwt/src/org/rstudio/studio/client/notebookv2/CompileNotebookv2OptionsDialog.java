@@ -44,7 +44,7 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
          String defaultFormat,
          final OperationWithInput<CompileNotebookv2Options> operation)
    {
-      super("Compile Notebook from R Script", operation);
+      super("Compile Report from R Script", operation);
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       style.ensureInjected();
       

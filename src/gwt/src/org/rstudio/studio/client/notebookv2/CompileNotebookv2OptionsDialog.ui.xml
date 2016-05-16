@@ -19,19 +19,19 @@
 
    <g:HTMLPanel styleName="{style.dialog}">
       
-      <label>A Notebook is a standalone document that contains the
+      <label>Create a standalone report that contains the
       code and output from your R script.</label>
       
       <p>
-       For more information on compiling notebooks, see the documentation at
-        <a href="http://rmarkdown.rstudio.com/r_notebook_format.html" target = "_blank">
-           Compiling Notebooks from R Scripts
+       For more information on compiling reports, see the documentation at
+        <a href="http://rmarkdown.rstudio.com/articles_report_from_r_script.html" target = "_blank">
+           Compiling Reports from R Scripts
         </a>
       </p>
  
       <div ui:field="divFormatSelector_" styleName="{style.formatPanel}">
          <g:HorizontalPanel ui:field="formatLabelPanel_">
-            <g:Label ui:field="lblFormat_" text="Notebook output format:"/>
+            <g:Label ui:field="lblFormat_" text="Report output format:"/>
          </g:HorizontalPanel>
          <g:ListBox ui:field="listFormat_"
                     styleName="{style.format}">

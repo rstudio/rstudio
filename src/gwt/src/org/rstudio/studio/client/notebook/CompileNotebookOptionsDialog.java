@@ -50,7 +50,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          String defaultType,
          final OperationWithInput<CompileNotebookOptions> operation)
    {
-      super("Compile Notebook from R Script", operation);
+      super("Compile Report from R Script", operation);
       docId_ = docId;
       RStudioGinjector.INSTANCE.injectMembers(this);
 

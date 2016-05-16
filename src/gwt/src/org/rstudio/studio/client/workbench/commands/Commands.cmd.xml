@@ -1682,8 +1682,8 @@ well as menu structures (for main menu and popup menus).
         context="sweave"/>
 
    <cmd id="compileNotebook"
-        menuLabel="_Compile Notebook..."
-        desc="Compile a notebook from the current R script"/>
+        menuLabel="_Compile Report..."
+        desc="Compile a report from the current R script"/>
 
    <cmd id="editRmdFormatOptions"
         menuLabel="_Output Options..."

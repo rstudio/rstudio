@@ -4973,7 +4973,7 @@ public class TextEditingTarget implements
                   else
                   {
                      globalDisplay_.showErrorMessage(
-                                       "Unable to Compile Notebook", 
+                                       "Unable to Compile Report", 
                                        response.getFailureMessage());
                   }
                }
@@ -5019,7 +5019,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         if (!rmarkdownHelper_.verifyPrerequisites("Compile Notebook",
+         if (!rmarkdownHelper_.verifyPrerequisites("Compile Report",
                view_,
                FileTypeRegistry.RMARKDOWN))
          {
