@@ -22,6 +22,7 @@
 #include <core/json/Json.hpp>
 
 #define kChunkLibDir "lib"
+#define kNotebookExt ".nb.html"
 
 // symmetric with client
 #define kExecModeSingle 0

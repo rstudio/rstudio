@@ -237,6 +237,8 @@ void onDocAdded(const std::string& id)
       return;
 
    FilePath cachePath = chunkCacheFolder(path, id);
+   FilePath notebookPath = docPath.parent().complete(docPath.stem() + 
+         kNotebookExt);
 
    // clean up incompatible cache versions (as we're about to invalidate them
    // by mutating the document without updating them) 
@@ -255,9 +257,15 @@ void onDocAdded(const std::string& id)
       }
    }
 
-   // TODO: consider write times of document, cache, and .Rnb -- are there
-   // combinations which would suggest we should overwrite the cache with the
-   // contents of the notebook?
+   // if the cache doesn't exist but we have a notebook file, hydrate from that
+   // file
+   if (!cachePath.exists() && notebookPath.exists())
+   {
+      error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
+            notebookPath.absolutePath()).call();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void onDocSaved(FilePath path)

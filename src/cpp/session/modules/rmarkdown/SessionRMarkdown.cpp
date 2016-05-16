@@ -14,6 +14,7 @@
  */
 
 #include "SessionRMarkdown.hpp"
+#include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
 
@@ -943,7 +944,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       // if this is a notebook, it's pre-rendered
       FilePath inputFile = module_context::resolveAliasedPath(file); 
       FilePath outputFile = inputFile.parent().complete(inputFile.stem() + 
-                                                        ".nb.html");
+                                                        kNotebookExt);
 
       // extract the output format
       json::Object outputFormat;

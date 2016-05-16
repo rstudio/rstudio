@@ -14,7 +14,7 @@
 #
 assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
-.rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
+.rs.addFunction("extractRmdFromNotebook", function(input, output) 
 {
    if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
    if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
@@ -32,10 +32,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # extract and populate cache
    status <- try(.rs.hydrateCacheFromNotebook(input), silent = TRUE)
    if (inherits(status, "try-error"))
-      warning("failed to read cache data from notebook file; no chunk outputs will be displayed")
+      warning("failed to read cache data from notebook file; ",
+              "no chunk outputs will be displayed")
    
    # return TRUE to indicate success
    .rs.scalar(TRUE)
+})
+
+.rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
+{
+  return(.rs.extractRmdFromNotebook(input, output))
 })
 
 .rs.addFunction("reRmdChunkBegin", function()
