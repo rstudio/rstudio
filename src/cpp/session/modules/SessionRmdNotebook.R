@@ -267,6 +267,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.renderConsoleData", function(csvData)
 {
+   # bail early for empty data
+   if (length(csvData) == 0 || nrow(csvData) == 0)
+      return(list())
+   
    # split on type
    cutpoints <- .rs.cutpoints(csvData$type)
    
