@@ -1103,6 +1103,13 @@ assign(x = ".rs.acCompletionTypes",
             allNames <- .rs.getNames(object)
          }
          
+         # Environments (note that some S4 objects 'are' environments;
+         # e.g. 'hash' objects from the 'hash' package)
+         else if (is.environment(object))
+         {
+            allNames <- .rs.getNames(object)
+         }
+         
          # Other objects
          else
          {
