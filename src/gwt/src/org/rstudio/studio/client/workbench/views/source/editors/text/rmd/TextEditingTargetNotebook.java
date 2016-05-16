@@ -275,34 +275,25 @@ public class TextEditingTargetNotebook
    
    public void createNotebookFromCache(final String rmdPath, final String outputPath)
    {
-      Command createNotebookCmd = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            server_.createNotebookFromCache(
-                  rmdPath,
-                  outputPath,
-                  new ServerRequestCallback<Void>()
-                  {
-                     @Override
-                     public void onResponseReceived(Void v)
-                     {
-                        events_.fireEvent(new NotebookRenderFinishedEvent(
-                              docUpdateSentinel_.getId(), 
-                              docUpdateSentinel_.getPath()));
-                     }
+      server_.createNotebookFromCache(
+            rmdPath,
+            outputPath,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  events_.fireEvent(new NotebookRenderFinishedEvent(
+                        docUpdateSentinel_.getId(), 
+                        docUpdateSentinel_.getPath()));
+               }
 
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
-         }
-      };
-      
-      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", createNotebookCmd);
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
    }
    
    @Inject
