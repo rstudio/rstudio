@@ -16,12 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -30,12 +33,15 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
@@ -69,7 +75,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          }
       };
       connectionsDataGrid_.addColumn(typeColumn_, new TextHeader("Type"));
-      connectionsDataGrid_.setColumnWidth(typeColumn_, "30px");
+      connectionsDataGrid_.setColumnWidth(typeColumn_, 35, Unit.PX);
             
       // add name column
       nameColumn_ = new TextColumn<Connection>() {
@@ -80,7 +86,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          }
       };      
       connectionsDataGrid_.addColumn(nameColumn_, new TextHeader("Name"));
-      connectionsDataGrid_.setColumnWidth(nameColumn_, "120px");
+      connectionsDataGrid_.setColumnWidth(nameColumn_, 30, Unit.PCT);
       
       // add status column
       statusColumn_ = new TextColumn<Connection>() {
@@ -95,7 +101,31 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          }
       };
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
-      connectionsDataGrid_.setColumnWidth(statusColumn_, "40px");
+      connectionsDataGrid_.setColumnWidth(statusColumn_, 55, Unit.PX);
+      
+      // add explore column
+      ImageButtonColumn<Connection> exploreColumn = 
+            new ImageButtonColumn<Connection>(
+              AbstractImagePrototype.create(RES.connectionExploreButton()),
+              new OperationWithInput<Connection>() {
+                @Override
+                public void execute(Connection connection)
+                {
+                   fireEvent(new ExploreConnectionEvent(connection));
+                }  
+              },
+              "Explore connection") {
+         
+         @Override
+         protected boolean showButton(Connection connection)
+         {
+            return connection.isConnected();
+         }
+      };
+      connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
+      connectionsDataGrid_.setColumnWidth(exploreColumn, 15, Unit.PX);
+      
+      
       
       // data provider
       dataProvider_ = new ListDataProvider<Connection>();
@@ -131,6 +161,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return searchWidget_.addValueChangeHandler(handler);
    }
    
+   @Override
+   public HandlerRegistration addExploreConnectionHandler(
+                              ExploreConnectionEvent.Handler handler)
+   {
+      return addHandler(handler, ExploreConnectionEvent.TYPE);
+   }
    
    @Override
    protected Toolbar createMainToolbar()
@@ -184,6 +220,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    {
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.css"})
       Styles dataGridStyle();
+        
+      ImageResource connectionExploreButton();
    }
    
    public interface Styles extends RStudioDataGridStyle

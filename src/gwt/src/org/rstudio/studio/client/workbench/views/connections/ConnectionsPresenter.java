@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionList;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -49,6 +50,9 @@ public class ConnectionsPresenter extends BasePresenter
       
       HandlerRegistration addSearchFilterChangeHandler(
                                        ValueChangeHandler<String> handler);
+      
+      public HandlerRegistration addExploreConnectionHandler(
+                                       ExploreConnectionEvent.Handler handler);
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -110,6 +114,16 @@ public class ConnectionsPresenter extends BasePresenter
                }
             });
             display_.setConnections(connections);
+         }
+      });
+      
+      display_.addExploreConnectionHandler(new ExploreConnectionEvent.Handler()
+      {   
+         @Override
+         public void onExploreConnection(ExploreConnectionEvent event)
+         {
+            globalDisplay_.showErrorMessage("RStudio", "Explore Connection");
+            
          }
       });
       
