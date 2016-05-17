@@ -34,7 +34,8 @@ import java.util.function.LongConsumer;
  */
 public final class Spliterators {
 
-  private static class BaseSpliterator<T, S extends Spliterator<T>> {
+  private abstract static class BaseSpliterator<T, S extends Spliterator<T>>
+      implements Spliterator<T> {
     private final int characteristics;
     private long sizeEstimate;
 
@@ -219,7 +220,8 @@ public final class Spliterators {
     return new LongConsumerIterator(spliterator);
   }
 
-  private abstract static class EmptySpliterator<T, S extends Spliterator<T>, C> {
+  private abstract static class EmptySpliterator<T, S extends Spliterator<T>, C>
+      implements Spliterator<T> {
 
     static final Spliterator<Object> OF_REF = new EmptySpliterator.OfRef<>();
     static final Spliterator.OfDouble OF_DOUBLE = new EmptySpliterator.OfDouble();
@@ -580,7 +582,8 @@ public final class Spliterators {
     }
   }
 
-  private abstract static class BaseArraySpliterator<T, S extends Spliterator<T>, C> {
+  private abstract static class BaseArraySpliterator<T, S extends Spliterator<T>, C>
+      implements Spliterator<T> {
     private int index;
     private final int limit;
     private final int characteristics;
