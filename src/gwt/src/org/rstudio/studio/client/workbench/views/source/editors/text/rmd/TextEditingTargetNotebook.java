@@ -18,11 +18,13 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
@@ -1252,6 +1254,24 @@ public class TextEditingTargetNotebook
                ChunkContextToolbar.STATE_EXECUTING);
       }
       
+      // if we're using a non-R engine, farm that out to separate routine
+      Map<String, String> chunkOptions = new HashMap<String, String>();
+      parseChunkOptions(unit.options, chunkOptions);
+       
+      String engine = chunkOptions.containsKey("engine")
+            ? chunkOptions.get("engine")
+            : "r";
+            
+      if (engine != "r")
+      {
+         execAlternateEngineChunk(
+               docUpdateSentinel_.getId(),
+               unit.chunkId,
+               engine,
+               unit.code);
+         return;
+      }
+      
       server_.setChunkConsole(docUpdateSentinel_.getId(),
             unit.chunkId,
             unit.mode,
@@ -1313,6 +1333,89 @@ public class TextEditingTargetNotebook
                         null, null, "Continue", "Abort", true);
                }
             });
+   }
+   
+   private void execAlternateEngineChunk(String docId,
+                                         String chunkId,
+                                         String engine,
+                                         String code)
+   {
+      server_.executeAlternateEngineChunk(
+            docId,
+            chunkId,
+            engine,
+            code,
+            new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  cleanCurrentExecChunk();
+                  processChunkExecQueue();
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  cleanCurrentExecChunk();
+                  processChunkExecQueue();
+               }
+            });
+   }
+   
+   // Parse a chunk header (without the delimiting braces), e.g.
+   //
+   //    r label, foo=1, bar=2
+   //
+   private static void parseChunkOptions(String line,
+                                         Map<String, String> chunkOptions)
+   {
+      TextCursor cursor = new TextCursor(line);
+      
+      // parse preamble
+      int preambleStartIdx = cursor.getIndex();
+      int preambleEndIdx   = line.length();
+      
+      if (cursor.fwdToCharacter(',', false))
+         preambleEndIdx = cursor.getIndex();
+      
+      parseChunkPreamble(
+            line.substring(preambleStartIdx, preambleEndIdx),
+            chunkOptions);
+      
+      // parse chunk options
+      while (cursor.contentEquals(','))
+      {
+         int startIdx = cursor.getIndex() + 1;
+         if (!cursor.fwdToCharacter('=', false))
+            break;
+         int equalsIdx = cursor.getIndex();
+         int endIdx = cursor.fwdToCharacter(',', true)
+               ? cursor.getIndex() 
+               : line.length();
+         
+         String argName  = line.substring(startIdx, equalsIdx).trim();
+         String argValue = line.substring(equalsIdx + 1, endIdx).trim();
+         if (argValue.startsWith("\"") && argValue.endsWith("\""))
+            argValue = argValue.substring(1, argValue.length() - 1);
+         else if (argValue.startsWith("'") && argValue.endsWith("'"))
+            argValue = argValue.substring(1, argValue.length() - 1);
+         chunkOptions.put(argName, argValue);
+      }
+   }
+   
+   private static void parseChunkPreamble(String preamble,
+                                          Map<String, String> chunkOptions)
+   {
+      // split into pieces
+      String[] splat = preamble.split("\\s+");
+      
+      if (splat.length >= 1)
+         chunkOptions.put("engine", splat[0].trim());
+      
+      if (splat.length >= 2)
+         chunkOptions.put("label", splat[1].trim());
    }
    
    private void loadInitialChunkOutput()

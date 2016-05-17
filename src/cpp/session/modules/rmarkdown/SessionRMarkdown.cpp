@@ -44,6 +44,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "RMarkdownPresentation.hpp"
+#include "SessionExecuteChunkOperation.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -1305,8 +1306,57 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
+Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse* pResponse)
+{
+   std::string docId, chunkId, engine, code;
+   Error error = json::readParams(request.params,
+                                  &docId,
+                                  &chunkId,
+                                  &engine,
+                                  &code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   if (string_utils::toLower(engine) == "python")
+   {
+      // write code to temporary file
+      FilePath codePath = module_context::tempFile("python", ".py");
+      error = core::writeStringToFile(codePath, code);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return error;
+      }
+      
+      // create command to execute
+      core::shell_utils::ShellCommand command("python");
+      command << codePath.absolutePathNative();
+      
+      // create process
+      boost::shared_ptr<ExecuteChunkOperation> operation =
+            ExecuteChunkOperation::create(docId, chunkId, command);
+      
+      // create process options
+      core::system::ProcessOptions options;
+      
+      // create process callbacks
+      core::system::ProcessCallbacks callbacks = operation->processCallbacks();
+      
+      Error error = module_context::processSupervisor().runCommand(command,
+                                                                   options,
+                                                                   callbacks);
+      if (error)
+         LOG_ERROR(error);
+      
+      pResponse->setResult(true);
+   }
+   
+   return Success();
+}
 
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
@@ -1407,6 +1457,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
+      (bind(registerRpcMethod, "execute_alternate_engine_chunk", executeAlternateEngineChunk))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
