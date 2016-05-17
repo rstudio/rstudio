@@ -59,7 +59,6 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
@@ -1630,7 +1629,7 @@ public class UnifyAst {
   }
 
   private JType translate(JType type) {
-    if (type instanceof JPrimitiveType) {
+    if (type.isPrimitiveType()) {
       return type;
     }
     return translate((JReferenceType) type);

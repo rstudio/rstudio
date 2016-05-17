@@ -39,7 +39,6 @@ import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
@@ -629,7 +628,7 @@ public class Pruner {
       JType leafType = primitiveTypeOrNullTypeOrArray(program, ((JArrayType) type).getLeafType());
       return program.getOrCreateArrayType(leafType, ((JArrayType) type).getDims());
     }
-    if (type instanceof JPrimitiveType) {
+    if (type.isPrimitiveType()) {
       return type;
     }
     return JReferenceType.NULL_TYPE;

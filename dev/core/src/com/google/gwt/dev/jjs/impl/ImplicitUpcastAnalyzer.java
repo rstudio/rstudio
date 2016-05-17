@@ -93,11 +93,11 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
 
   @Override
   public void endVisit(JField x, Context ctx) {
-    if (x.getInitializer() == null && !x.isFinal()) {
-      if (!(x.getType() instanceof JPrimitiveType)) {
-        // if it is declared without an initial value, it defaults to null
-        processIfTypesNotEqual(JReferenceType.NULL_TYPE, x.getType(), x.getSourceInfo());
-      }
+    if (x.getInitializer() == null
+        && !x.isFinal()
+        && !x.getType().isPrimitiveType()) {
+      // if it is declared without an initial value, it defaults to null
+      processIfTypesNotEqual(JReferenceType.NULL_TYPE, x.getType(), x.getSourceInfo());
     }
   }
 

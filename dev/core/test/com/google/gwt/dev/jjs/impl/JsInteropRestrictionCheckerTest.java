@@ -1505,7 +1505,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  @JsConstructor public Buggy(@JsOptional Object a) {}",
         "  @JsMethod public void fun(int a, Object b, @JsOptional String c) {}",
         "  @JsMethod public void bar(int a, @JsOptional Object b, @JsOptional String c) {}",
-        "  @JsMethod public void baz(@JsOptional int a, @JsOptional Object b) {}",
+        "  @JsMethod public void baz(@JsOptional String a, @JsOptional Object b) {}",
         "}");
 
     assertBuggySucceeds();
@@ -1544,18 +1544,33 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetImport("jsinterop.annotations.JsOptional");
     addSnippetClassDecl(
         "public static class Buggy {",
-        "   @JsConstructor public Buggy(@JsOptional int a, Object b, @JsOptional String c) {}",
+        "   @JsConstructor public Buggy(@JsOptional String a, Object b, @JsOptional String c) {}",
         "   @JsMethod public void bar(int a, @JsOptional Object b, String c) {}",
         "   @JsMethod public void baz(@JsOptional Object b, String c, Object... os) {}",
         "}");
 
     assertBuggyFails(
-        "Line 7: JsOptional parameter 'b' in method 'EntryPoint.Buggy.EntryPoint$Buggy(int, "
+        "Line 7: JsOptional parameter 'b' in method 'EntryPoint.Buggy.EntryPoint$Buggy(String, "
             + "Object, String)' cannot precede parameters that are not optional.",
         "Line 8: JsOptional parameter 'c' in method 'void EntryPoint.Buggy.bar(int, Object,"
             + " String)' cannot precede parameters that are not optional.",
         "Line 9: JsOptional parameter 'c' in method 'void EntryPoint.Buggy.baz(Object, String, "
             + "Object[])' cannot precede parameters that are not optional.");
+  }
+
+  public void testJsOptionalOnPrimitiveTypedParametersFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsOptional");
+    addSnippetClassDecl(
+        "public static class Buggy {",
+        "  @JsMethod public void m(@JsOptional int i, @JsOptional byte b) {}",
+        "}");
+
+    assertBuggyFails(
+        "Line 6: JsOptional parameter 'b' in method 'void EntryPoint.Buggy.m(int, byte)' cannot be "
+            + "of primitive type.",
+        "Line 6: JsOptional parameter 'i' in method 'void EntryPoint.Buggy.m(int, byte)' cannot be "
+            + "of primitive type.");
   }
 
   public void testJsOptionalOnNonJsExposedMethodsFails() throws Exception {

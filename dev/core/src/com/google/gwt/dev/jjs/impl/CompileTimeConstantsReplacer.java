@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -58,7 +57,7 @@ public class CompileTimeConstantsReplacer {
       // clone it and recursively remove field references, and finally cache the results.
       value = accept(new CloneExpressionVisitor().cloneExpression(field.getInitializer()));
       JType fieldType = field.getType().getUnderlyingType();
-      assert fieldType instanceof JPrimitiveType || fieldType == program.getTypeJavaLangString()
+      assert fieldType.isPrimitiveType() || fieldType == program.getTypeJavaLangString()
           : fieldType.getName() + " is not a primitive nor String";
       if (fieldType != value.getType()) {
         value = new JCastOperation(value.getSourceInfo(), fieldType, value);

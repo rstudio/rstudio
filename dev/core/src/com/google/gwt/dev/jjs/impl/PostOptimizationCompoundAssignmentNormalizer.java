@@ -67,7 +67,7 @@ public class PostOptimizationCompoundAssignmentNormalizer extends CompoundAssign
       return false;
     }
     // break up so that result may be coerced to LHS type
-    if (lhsType instanceof JPrimitiveType && rhsType instanceof JPrimitiveType
+    if (lhsType.isPrimitiveType() && rhsType.isPrimitiveType()
         && widenType(lhsType, rhsType) != lhsType) {
       return true;
     }

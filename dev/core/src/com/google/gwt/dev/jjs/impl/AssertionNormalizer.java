@@ -24,7 +24,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
@@ -97,7 +96,7 @@ public class AssertionNormalizer {
       return "_Object";
     }
 
-    assert (argType instanceof JPrimitiveType);
+    assert (argType.isPrimitiveType());
     return "_" + argType.getName();
   }
 

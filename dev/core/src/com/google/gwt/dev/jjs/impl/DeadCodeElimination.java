@@ -1789,7 +1789,7 @@ public class DeadCodeElimination {
            * this value is not changed.
            */
           // TODO(spoon): use Simplifier.cast to shorten this
-          if ((x.getType() instanceof JPrimitiveType) && (lit instanceof JValueLiteral)) {
+          if (x.getType().isPrimitiveType() && (lit instanceof JValueLiteral)) {
             JPrimitiveType xTypePrim = (JPrimitiveType) x.getType();
             lit = xTypePrim.coerce((JValueLiteral) lit);
           }

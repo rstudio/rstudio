@@ -110,7 +110,7 @@ public class ImplementCastsAndTypeChecks {
 
       // It is a primitive type, perform the necessary coercion.
 
-      assert toType instanceof JPrimitiveType;
+      assert toType.isPrimitiveType();
       /*
        * See JLS 5.1.3: if a cast narrows from one type to another, we must
        * call a narrowing conversion function. EXCEPTION: we currently have no

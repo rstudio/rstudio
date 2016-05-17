@@ -127,7 +127,7 @@ public class ReferenceMapper {
 
     JType type = types.get(key);
     if (type != null) {
-      assert type instanceof JPrimitiveType || type.isNullType() || type.isExternal();
+      assert type.isPrimitiveType() || type.isNullType() || type.isExternal();
       return type;
     }
     assert !(binding instanceof BaseTypeBinding);

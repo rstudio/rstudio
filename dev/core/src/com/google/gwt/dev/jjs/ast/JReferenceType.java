@@ -320,6 +320,11 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     return "L" + name.replace('.', '/') + ';';
   }
 
+  @Override
+  public boolean isPrimitiveType() {
+    return false;
+  }
+
   public JReferenceType weakenToNullable() {
     if (getUnderlyingType() == this) {
       // Underlying types cannot be weakened.

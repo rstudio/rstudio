@@ -589,7 +589,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean castSucceedsTrivially(JType fromType, JType toType) {
-    if (fromType instanceof JPrimitiveType && toType instanceof JPrimitiveType) {
+    if (fromType.isPrimitiveType() && toType.isPrimitiveType()) {
       return fromType == toType;
     }
     if (fromType instanceof JReferenceType && toType instanceof JReferenceType) {
@@ -688,7 +688,7 @@ public class JTypeOracle implements Serializable {
         }
       }
 
-      if (arrayType.getLeafType() instanceof JPrimitiveType) {
+      if (arrayType.getLeafType().isPrimitiveType()) {
         castableDestinationTypes.add(arrayType);
       } else {
         // Class arrays reuse their leaf type castable destination types.

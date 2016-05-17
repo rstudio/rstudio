@@ -80,6 +80,11 @@ public class JArrayType extends JReferenceType {
   }
 
   @Override
+  public boolean isPrimitiveType() {
+    return false;
+  }
+
+  @Override
   public boolean isAbstract() {
     return false;
   }

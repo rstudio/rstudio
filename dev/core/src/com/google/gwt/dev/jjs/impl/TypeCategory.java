@@ -94,7 +94,7 @@ public enum TypeCategory {
    * Determines the type category for a specific type.
    */
   public static TypeCategory typeCategoryForType(JType type, JProgram program) {
-    if (type instanceof JPrimitiveType) {
+    if (type.isPrimitiveType()) {
       if (type == JPrimitiveType.BOOLEAN) {
         return TypeCategory.TYPE_PRIMITIVE_BOOLEAN;
       } else if (type == JPrimitiveType.LONG) {

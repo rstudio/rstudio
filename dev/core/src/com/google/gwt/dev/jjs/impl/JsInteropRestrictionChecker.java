@@ -393,6 +393,10 @@ public class JsInteropRestrictionChecker {
     boolean hasOptionalParameters = false;
     for (JParameter parameter : method.getParams()) {
       if (parameter.isOptional()) {
+        if (parameter.getType().isPrimitiveType()) {
+          logError(method, "JsOptional parameter '%s' in method %s cannot be of primitive type.",
+              parameter.getName(), getMemberDescription(method));
+        }
         hasOptionalParameters = true;
         continue;
       }
