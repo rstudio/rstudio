@@ -37,9 +37,17 @@
       
       cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
       
+      # force a responsive viewer sizing policy
+      x$sizingPolicy$viewer.padding <- 0
+      x$sizingPolicy$viewer.fill <- TRUE
+      
       # collect knitr options
-      # TODO: parse chunk options and use here?
       knitrOptions <- knitr::opts_chunk$get()
+      
+      # force default knitr sizing for now
+      # TODO: infer from chunk options (fig.[width|height], dpi, fig.retina?)
+      knitrOptions$out.width.px <- 672
+      knitrOptions$out.height.px <- 480
       
       # save as HTML -- save a modified version of the 'standalone' representation
       # that works effectively the same way as the 'embedded' representation;
@@ -55,6 +63,12 @@
       
       if (length(html[[1]]$children) != 1)
          stop("expected a single child for htmlwidget container div")
+      
+      # force knitr styling on 'standalone' widget (will be overridden by sizing policy
+      # in dynamic environments; this ensures that the 'preview' will be displayed as
+      # though the widget were generated through 'rmarkdown::render()')
+      embedded <- htmlwidgets:::toHTML(x, standalone = FALSE, knitrOptions = knitrOptions)
+      html[[1]]$children[[1]][[2]]$attribs$style <- embedded[[1]][[2]]$attribs$style
       
       # split up into parts
       div <- html[[1]]$children[[1]]
