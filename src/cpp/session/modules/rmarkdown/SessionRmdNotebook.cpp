@@ -218,40 +218,6 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error createNotebookFromCache(const json::JsonRpcRequest& request,
-                              json::JsonRpcResponse* pResponse)
-{
-   std::string rmdPath, outputPath;
-   Error error = json::readParams(request.params, &rmdPath, &outputPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
-   createNotebook.addParam(rmdPath);
-   createNotebook.addParam(outputPath);
-   error = createNotebook.call();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // bump the write time on our local chunk definition file so that it matches
-   // the notebook file; this prevents us from thinking that the .nb.html file
-   // we just wrote is ahead of the local cache.
-   FilePath outputFile = module_context::resolveAliasedPath(outputPath);
-   FilePath chunkDefsFile = chunkDefinitionsPath(
-         module_context::resolveAliasedPath(rmdPath), kSavedCtx);
-   if (chunkDefsFile.exists() && 
-       chunkDefsFile.lastWriteTime() < outputFile.lastWriteTime())
-      chunkDefsFile.setLastWriteTime(outputFile.lastWriteTime());
-   
-   return Success();
-}
-
 } // anonymous namespace
 
 Events& events()
@@ -285,7 +251,6 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "refresh_chunk_output", refreshChunkOutput))
       (bind(registerRpcMethod, "set_chunk_console", setChunkConsole))
-      (bind(registerRpcMethod, "create_notebook_from_cache", createNotebookFromCache))
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))

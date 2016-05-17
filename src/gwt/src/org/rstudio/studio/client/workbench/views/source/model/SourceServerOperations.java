@@ -235,6 +235,5 @@ public interface SourceServerOperations extends FilesServerOperations,
          ServerRequestCallback<Void> requestCallback);
    
    public void extractRmdFromNotebook(String inputPath,
-                                      String outputPath,
-                                      ServerRequestCallback<Boolean> requestCallback);
+         ServerRequestCallback<SourceDocumentResult> requestCallback);
 }

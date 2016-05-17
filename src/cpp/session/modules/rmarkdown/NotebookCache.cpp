@@ -27,6 +27,8 @@
 #include <session/SessionSourceDatabase.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -141,6 +143,40 @@ void cleanUnusedCaches()
          }
       }
    }
+}
+
+Error notebookContentMatches(const FilePath& nbPath, const FilePath& rmdPath, 
+      bool *pMatches, std::string* pContents)
+{
+   // extract content from notebook
+   std::string nbRmdContents;
+   Error error = r::exec::RFunction(".rs.extractRmdFromNotebook", 
+         nbPath.absolutePath()).call(&nbRmdContents);
+   if (error) 
+      return error;
+   if (pContents)
+      *pContents = nbRmdContents;
+
+   // extract contents from Rmd, if present
+   std::string rmdContents;
+   if (rmdPath.exists())
+   {
+      error = core::readStringFromFile(rmdPath, &rmdContents);
+      if (error)
+         return error;
+   }
+
+   // calculate match if requested
+   if (pMatches) 
+   {
+      // remove whitespace noise from end of file
+      boost::algorithm::trim_right(rmdContents);
+      boost::algorithm::trim_right(nbRmdContents);
+
+      *pMatches = rmdContents == nbRmdContents;
+   }
+      
+   return Success();
 }
 
 Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
@@ -279,14 +315,13 @@ void onDocAdded(const std::string& id)
       // if we got this far, it means that the notebook cache looks newer than
       // our cache -- test to see whether it's compatible
       bool matches = false;
-      error = r::exec::RFunction(".rs.testNotebookRmdMatches", 
-            docPath.absolutePath(), notebookPath.absolutePath()).call(&matches);
+      error = notebookContentMatches(notebookPath, docPath, &matches, NULL);
       if (error)
       {
          LOG_ERROR(error);
          return;
       }
-      
+            
       if (!matches)
       {
          // the notebook cache looks newer but it isn't aligned with the .Rmd,
@@ -401,6 +436,120 @@ SEXP rs_chunkCacheFolder(SEXP fileSEXP)
    return r::sexp::create(cacheFolder.absolutePath(), &protect);
 }
 
+Error createNotebookFromCache(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
+{
+   std::string rmdPath, outputPath;
+   Error error = json::readParams(request.params, &rmdPath, &outputPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
+   createNotebook.addParam(rmdPath);
+   createNotebook.addParam(outputPath);
+   error = createNotebook.call();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // bump the write time on our local chunk definition file so that it matches
+   // the notebook file; this prevents us from thinking that the .nb.html file
+   // we just wrote is ahead of the local cache.
+   FilePath outputFile = module_context::resolveAliasedPath(outputPath);
+   FilePath chunkDefsFile = chunkDefinitionsPath(
+         module_context::resolveAliasedPath(rmdPath), kSavedCtx);
+   if (chunkDefsFile.exists() && 
+       chunkDefsFile.lastWriteTime() < outputFile.lastWriteTime())
+      chunkDefsFile.setLastWriteTime(outputFile.lastWriteTime());
+   
+   return Success();
+}
+
+Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   std::string nbPathVal;
+   Error error = json::readParams(request.params, &nbPathVal);
+
+   std::string nbRmdContents;
+   FilePath nbPath = module_context::resolveAliasedPath(nbPathVal);
+
+   // form the stem name (a little extra work since .nb.html isn't a simple
+   // extension)
+   std::string stem = nbPath.filename().substr(0, 
+         (nbPath.filename().length() - sizeof(kNotebookExt)) + 1);
+
+   // if the Rmd file exists on disk, see if it matches. check both upper/lower
+   // case variants; check the canonical version last so we'll hydrate to that
+   // file.
+   FilePath rmdPath = nbPath.parent().complete(stem + ".rmd");
+   if (!rmdPath.exists())
+      rmdPath = nbPath.parent().complete(stem + ".Rmd");
+
+   // set up values to send to the server
+   std::string docId;
+   std::string docPath;
+
+   bool matches = false;
+   error = notebookContentMatches(nbPath, rmdPath, &matches, &nbRmdContents);
+   if (error)
+      return error;
+      
+   FilePath cacheFolder;
+   if (rmdPath.exists() && !matches)
+   {
+      // if it doesn't match, we need to hydrate into an untitled document
+      using namespace source_database;
+
+      boost::shared_ptr<SourceDocument> pDoc(
+            new SourceDocument(SourceDocument::SourceDocumentTypeRMarkdown));
+      pDoc->setContents(nbRmdContents);
+      error = put(pDoc);
+      if (error)
+         return error;
+
+      cacheFolder = chunkCacheFolder(pDoc->path(), pDoc->id(), 
+            notebookCtxId());
+      docId = pDoc->id();
+   }
+
+   // if we didn't select a cache folder already, use one based on the R
+   // Markdown document path
+   if (cacheFolder.empty()) 
+   {
+      // hydrate the R markdown document and record
+      error = core::writeStringToFile(rmdPath, nbRmdContents);
+      if (error)
+         return error;
+      docPath = module_context::createAliasedPath(rmdPath);
+      
+      // assign the cache folder (remove any existing folder) 
+      cacheFolder = chunkCacheFolder(rmdPath, "", kSavedCtx);
+      error = cacheFolder.removeIfExists();
+      if (error)
+         return error;
+   }
+
+   // perform the cache hydration
+   error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
+         nbPath.absolutePath(), cacheFolder.absolutePath()).call();
+   if (error)
+      return error;
+
+   // format result for client and emit
+   json::Object result;
+   result["doc_id"]   = docId;
+   result["doc_path"] = docPath;
+   pResponse->setResult(result);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 FilePath notebookCacheRoot()
@@ -452,6 +601,8 @@ FilePath chunkCacheFolder(const std::string& docPath, const std::string& docId)
 
 Error initCache()
 {
+   using namespace module_context;
+
    source_database::events().onDocRenamed.connect(onDocRenamed);
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
@@ -463,7 +614,13 @@ Error initCache()
    module_context::scheduleDelayedWork(boost::posix_time::seconds(30),
       cleanUnusedCaches, true);
 
-   return Success();
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "create_notebook_from_cache", 
+            createNotebookFromCache))
+      (bind(registerRpcMethod, "extract_rmd_from_notebook", 
+            extractRmdFromNotebook));
+   return initBlock.execute();
 }
 
 } // namespace notebook

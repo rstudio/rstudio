@@ -170,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitCount;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.CommitInfo;
 
@@ -1790,13 +1791,12 @@ public class RemoteServer implements Server
    
    @Override
    public void extractRmdFromNotebook(String inputPath,
-                                      String outputPath,
-                                      ServerRequestCallback<Boolean> requestCallback)
+              ServerRequestCallback<SourceDocumentResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(inputPath));
-      params.set(1, new JSONString(outputPath));
-      sendRequest(RPC_SCOPE, "extract_rmd_from_notebook", params, requestCallback);
+      sendRequest(RPC_SCOPE, "extract_rmd_from_notebook", params, 
+            requestCallback);
    }
 
    @Override

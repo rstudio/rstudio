@@ -148,6 +148,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -2710,19 +2711,58 @@ public class Source implements InsertSourceHandler,
          {
             server_.extractRmdFromNotebook(
                   rnbPath,
-                  rmdPath,
-                  new ServerRequestCallback<Boolean>()
+                  new ServerRequestCallback<SourceDocumentResult>()
                   {
                      @Override
-                     public void onResponseReceived(Boolean success)
+                     public void onResponseReceived(SourceDocumentResult doc)
                      {
-                        openFileFromServer(rmdFile, FileTypeRegistry.RMARKDOWN, resultCallback);
+                        if (!StringUtil.isNullOrEmpty(doc.getDocPath()))
+                        {
+                           // this happens if we created the R Markdown file,
+                           // or if the R Markdown file on disk matched the
+                           // one inside the notebook
+                           openFileFromServer(rmdFile, 
+                                 FileTypeRegistry.RMARKDOWN, resultCallback);
+                        }
+                        else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
+                        {
+                           // this happens when we have to open an untitled
+                           // buffer for the the notebook (usually because the
+                           // of a conflict between the Rmd on disk and the one
+                           // in the .nb.html file)
+                           server_.getSourceDocument(doc.getDocId(), 
+                                 new ServerRequestCallback<SourceDocument>()
+                           {
+                              @Override
+                              public void onResponseReceived(SourceDocument doc)
+                              {
+                                 resultCallback.onSuccess(addTab(doc, 
+                                       OPEN_INTERACTIVE));
+                              }
+
+                              @Override
+                              public void onError(ServerError error)
+                              {
+                                 
+                                 globalDisplay_.showErrorMessage(
+                                    "Notebook Open Failed", 
+                                    "This notebook could not be opened. " +
+                                    "If the error persists, try removing the " +
+                                    "accompanying R Markdown file. \n\n" +
+                                    error.getMessage());
+                                 resultCallback.onFailure(error);
+                              }
+                           });
+                        }
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
-                        Debug.logError(error);
+                        globalDisplay_.showErrorMessage("Notebook Open Failed", 
+                              "This notebook could not be opened. \n\n" +
+                              error.getMessage());
+                        resultCallback.onFailure(error);
                      }
                   });
          }

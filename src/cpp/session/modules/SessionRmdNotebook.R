@@ -14,51 +14,17 @@
 #
 assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
-.rs.addFunction("parseRmdFromNotebook", function(input, output) {
-   # extract rmd contents and populate file
-   contents <- "# Failed to parse notebook"
-   parsed <- try(rmarkdown::parse_html_notebook(input), silent = TRUE)
-   if (inherits(parsed, "try-error") || is.null(parsed$rmd)) {
-      warning("failed to parse notebook; source document will not be recovered")
-   } else {
-      contents <- parsed$rmd
-   }
-   cat(contents, file = output, sep = "\n")
-})
+.rs.addFunction("extractRmdFromNotebook", function(notebook) {
+   # ensure path encoding is marked correctly
+   if (Encoding(notebook) == "unknown")  Encoding(notebook) <- "UTF-8"
 
-.rs.addFunction("testNotebookRmdMatches", function(rmd, notebook) {
    # parse the notebook to get the text of the contained R markdown doc
    parsed <- try(rmarkdown::parse_html_notebook(notebook), silent = TRUE)
    if (inherits(parsed, "try-error") || is.null(parsed$rmd)) {
-    return(.rs.scalar(FALSE))
+    return("")
    }
 
-   # compare with the contents of the R markdown file
-   rmdContents <- readLines(rmd)
-   return(identical(parsed$rmd, rmdContents))
-})
-
-.rs.addFunction("extractRmdFromNotebook", function(input, output) 
-{
-   if (Encoding(input) == "unknown")  Encoding(input) <- "UTF-8"
-   if (Encoding(output) == "unknown") Encoding(output) <- "UTF-8"
-
-   # parse R Markdown from notebook and write it to the requested file
-   .rs.parseRmdFromNotebook(input, output)
-   
-   # extract and populate cache
-   status <- try(.rs.hydrateCacheFromNotebook(input), silent = TRUE)
-   if (inherits(status, "try-error"))
-      warning("failed to read cache data from notebook file; ",
-              "no chunk outputs will be displayed")
-   
-   # return TRUE to indicate success
-   .rs.scalar(TRUE)
-})
-
-.rs.addJsonRpcHandler("extract_rmd_from_notebook", function(input, output)
-{
-  return(.rs.extractRmdFromNotebook(input, output))
+   return(paste(parsed$rmd, collapse = "\n"))
 })
 
 .rs.addFunction("reRmdChunkBegin", function()
