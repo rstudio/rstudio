@@ -288,11 +288,11 @@ public class TextEditingTargetNotebook
                         
                         if (StringUtil.isNullOrEmpty(dependency.getVersion()))
                         {
-                           message = "The rmarkdown package is not installed; notebook preview will not be generated.";
+                           message = "The rmarkdown package is not installed; notebook HTML file will not be generated.";
                         }
                         else
                         {
-                           message = "An updated version of the rmarkdown package is required to generate notebook previews.";
+                           message = "An updated version of the rmarkdown package is required to generate notebook HTML files.";
                         }
                         
                         editingDisplay_.showWarningBar(message);
