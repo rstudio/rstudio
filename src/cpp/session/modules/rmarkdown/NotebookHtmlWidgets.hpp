@@ -33,8 +33,9 @@ namespace rmarkdown {
 namespace notebook {
 
 core::Error beginWidgetCapture(
-              const core::FilePath& outputFolder,
-              const core::FilePath& libraryFolder);
+      const core::FilePath& outputFolder,
+      const core::FilePath& libraryFolder,
+      const rstudio::core::json::Object& chunkOptions);
 
 core::Error initHtmlWidgets();
 

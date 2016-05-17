@@ -75,11 +75,13 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
 
 core::Error beginWidgetCapture(
               const core::FilePath& outputFolder,
-              const core::FilePath& libraryFolder)
+              const core::FilePath& libraryFolder,
+              const json::Object& chunkOptions)
 {
    Error error = r::exec::RFunction(".rs.initHtmlCapture", 
          outputFolder.absolutePath(),
-         outputFolder.complete(kChunkLibDir).absolutePath()).call();
+         outputFolder.complete(kChunkLibDir).absolutePath(),
+         chunkOptions).call();
    if (error)
       return error;
 

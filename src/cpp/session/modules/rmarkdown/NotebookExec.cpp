@@ -145,8 +145,10 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
-   error = beginWidgetCapture(outputPath_,
-         outputPath_.parent().complete(kChunkLibDir));
+   error = beginWidgetCapture(
+            outputPath_,
+            outputPath_.parent().complete(kChunkLibDir),
+            options_);
    if (error)
       LOG_ERROR(error);
 

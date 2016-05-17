@@ -13,7 +13,9 @@
 #
 #
 
-.rs.addFunction("initHtmlCapture", function(outputFolder, libraryFolder)
+.rs.addFunction("initHtmlCapture", function(outputFolder,
+                                            libraryFolder,
+                                            chunkOptions)
 {
    assign("print.htmlwidget", function(x, ...) {
       
@@ -44,10 +46,33 @@
       # collect knitr options
       knitrOptions <- knitr::opts_chunk$get()
       
-      # force default knitr sizing for now
-      # TODO: infer from chunk options (fig.[width|height], dpi, fig.retina?)
-      knitrOptions$out.width.px <- 672
-      knitrOptions$out.height.px <- 480
+      # infer knitr sizing
+      first_of <- function(...) {
+         for (item in list(...))
+            if (length(item)) return(item)
+         return(NULL)
+      }
+      
+      fig.height <- first_of(
+         chunkOptions$fig.height,
+         knitrOptions$fig.height,
+         7
+      )
+      
+      fig.width <- first_of(
+         chunkOptions$fig.width,
+         knitrOptions$fig.width,
+         fig.height * 5 / 7
+      )
+      
+      dpi <- first_of(
+         chunkOptions$dpi,
+         knitrOptions$dpi,
+         72
+      )
+      
+      knitrOptions$out.width.px <- fig.width * dpi
+      knitrOptions$out.height.px <- fig.height * dpi
       
       # save as HTML -- save a modified version of the 'standalone' representation
       # that works effectively the same way as the 'embedded' representation;
