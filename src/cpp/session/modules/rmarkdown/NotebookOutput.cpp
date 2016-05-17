@@ -23,6 +23,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Base64.hpp>
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
@@ -174,6 +175,35 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
    return Success();
 }
 
+class HtmlWidgetFilter : public boost::iostreams::regex_filter
+{
+public:
+   HtmlWidgetFilter()
+      : boost::iostreams::regex_filter(
+           boost::regex("<!-- htmlwidget-sizing-policy-base64 (\\S+) -->"),
+           boost::bind(&HtmlWidgetFilter::substitute, this, _1))
+   {
+   }
+   
+private:
+   std::string substitute(const boost::cmatch& match)
+   {
+      // be paranoid
+      std::size_t n = match.size();
+      if (n < 1)
+         return std::string();
+      else if (n == 1)
+         return match[0].str();
+      
+      // decode htmlwidget sizing information
+      std::string decoded;
+      Error error = base64::decode(match[1].first, match[1].length(), &decoded);
+      if (error)
+         LOG_ERROR(error);
+      return decoded;
+   }
+};
+
 Error handleChunkOutputRequest(const http::Request& request,
                                http::Response* pResponse)
 {
@@ -221,12 +251,12 @@ Error handleChunkOutputRequest(const http::Request& request,
    {
       // in server mode, or if a reference to the chunk library folder, we can
       // reuse the contents (let the browser cache the file)
-      pResponse->setCacheableFile(target, request);
+      pResponse->setCacheableFile(target, request, HtmlWidgetFilter());
    }
    else
    {
       // no cache necessary in desktop mode
-      pResponse->setFile(target, request);
+      pResponse->setFile(target, request, HtmlWidgetFilter());
    }
 
    return Success();

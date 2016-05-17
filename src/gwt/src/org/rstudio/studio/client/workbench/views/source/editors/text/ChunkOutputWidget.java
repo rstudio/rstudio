@@ -727,7 +727,7 @@ public class ChunkOutputWidget extends Composite
       final ChunkOutputFrame frame = new ChunkOutputFrame();
       final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
                   ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_PLOT_WIDTH);
+                  ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
       root_.add(fixedFrame);
 
