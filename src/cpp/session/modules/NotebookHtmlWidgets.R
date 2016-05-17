@@ -13,8 +13,7 @@
 #
 #
 
-.rs.addFunction("initHtmlCapture",
-                function(outputFolder, libraryFolder)
+.rs.addFunction("initHtmlCapture", function(outputFolder, libraryFolder)
 {
    assign("print.htmlwidget", function(x, ...) {
       
@@ -37,27 +36,28 @@
                           fileext = ".json")
       
       cat(.rs.toJSON(dependencies, unbox = TRUE), file = depfile, sep = "\n")
-
-      # we simulate the viewer pane in the editor surface; create a sizing
-      # policy which fills this space but keeps the widget constrained in
-      # other contexts
-      x$sizingPolicy <- htmlwidgets::sizingPolicy(
-        viewer.padding        = 0,
-        viewer.fill           = TRUE,
-        browser.defaultWidth  = 650,
-        browser.defaultHeight = 400,
-        browser.fill          = FALSE,
-        browser.padding       = 0,
-        knitr.defaultWidth    = 650,
-        knitr.defaultHeight   = 400)
-
-      # save the widget to HTML 
-      htmlwidgets::saveWidget(
-         widget = x, 
-         file = htmlfile,
-         selfcontained = FALSE, 
-         libdir = libraryFolder
-      )
+      
+      # collect knitr options
+      # TODO: parse chunk options and use here?
+      knitrOptions <- knitr::opts_chunk$get()
+      
+      # save as HTML -- save a modified version of the 'standalone' representation
+      # that works effectively the same way as the 'embedded' representation;
+      # we use a filter on the server side to disentangle things as needed
+      html <- htmlwidgets:::toHTML(x, standalone = TRUE, knitrOptions = knitrOptions)
+      
+      n <- length(html)
+      sizingPolicy <- html[[n]]
+      encodedPolicy <- .rs.base64encode(as.character(sizingPolicy))
+      
+      # NOTE: if you touch this make sure you update the parsing code in NotebookOutput.cpp
+      fmt <- "<!-- htmlwidget-sizing-policy-base64 %s -->"
+      html[[n]] <- htmltools::HTML(sprintf(fmt, encodedPolicy))
+      
+      # write html
+      htmltools::save_html(html, file = htmlfile, libdir = libraryFolder)
+      
+      # record the saved artefacts
       .Call("rs_recordHtmlWidget", htmlfile, depfile)
       
    }, envir = as.environment("tools:rstudio"))
