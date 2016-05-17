@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -124,13 +125,15 @@ public class TextEditingTargetNotebook
    private class ChunkExecQueueUnit
    {
       public ChunkExecQueueUnit(String chunkIdIn, String labelIn, int modeIn, 
-            String codeIn, String optionsIn, int rowIn, String setupCrc32In)
+            String codeIn, int scopeTypeIn, String optionsIn, int rowIn, 
+            String setupCrc32In)
       {
          chunkId = chunkIdIn;
          label = labelIn;
          mode = modeIn;
          options = optionsIn;
          code = codeIn;
+         scopeType = scopeTypeIn;
          row = rowIn;
          setupCrc32 = setupCrc32In;
          pos = 0;
@@ -149,6 +152,7 @@ public class TextEditingTargetNotebook
       public int linesExecuted;
       public int executingRowStart;
       public int executingRowEnd;
+      public int scopeType;
    };
 
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
@@ -404,8 +408,8 @@ public class TextEditingTargetNotebook
       maximizedPane_ = false;
    }
    
-   public void executeChunk(Scope chunk, String code, String options,
-         int mode)
+   public void executeChunk(Scope chunk, String code, int scopeType, 
+         String options, int mode)
    {
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
@@ -436,27 +440,52 @@ public class TextEditingTargetNotebook
          return;
       chunkId = chunkDef.getChunkId();
 
-      // check to see if this chunk is already in the execution queue--if so
-      // just update the code and leave it queued
-      for (ChunkExecQueueUnit unit: chunkExecQueue_)
+      // when executing the whole chunk, check to see if this chunk is already
+      // in the execution queue--if so just update the code and leave it queued
+      if (scopeType == SCOPE_CHUNK)
       {
-         if (unit.chunkId == chunkId)
+         for (ChunkExecQueueUnit unit: chunkExecQueue_)
          {
-            unit.code = code;
-            unit.options = options;
-            unit.setupCrc32 = setupCrc32;
-            unit.row = row;
+            if (unit.chunkId == chunkId)
+            {
+               unit.code = code;
+               unit.options = options;
+               unit.setupCrc32 = setupCrc32;
+               unit.row = row;
+               return;
+            }
+         }
+
+         if (executingChunk_ != null && executingChunk_.chunkId == chunkId)
             return;
+      }
+
+      // create the unit to add to the execution queue
+      ChunkExecQueueUnit unit = new ChunkExecQueueUnit(chunkId, 
+            StringUtil.isNullOrEmpty(chunk.getChunkLabel()) ? 
+                  chunk.getLabel() : chunk.getChunkLabel(),
+            mode, code, scopeType, options, row, setupCrc32);
+      
+      // decorate the gutter to show the chunk is queued
+      int start = chunk.getBodyStart().getRow() + 1;
+      int end = chunk.getEnd().getRow();
+      if (scopeType == SCOPE_PARTIAL)
+      {
+         // if the chunk is partial, we need to find the range to decorate
+         String chunkCode = getChunkCode(chunk);
+         int idx = chunkCode.indexOf(code);
+         if (idx >= 0)
+         {
+            int rowOffset = countNewLines(chunkCode, 0, idx);
+            start += rowOffset;
+            end -= countNewLines(code, 0, code.length());
+            unit.row += rowOffset;
+            unit.linesExecuted += rowOffset;
          }
       }
 
-      // if this is the currently executing chunk, don't queue it again
-      if (executingChunk_ != null && executingChunk_.chunkId == chunkId)
-         return;
-
-      // decorate the gutter to show the chunk is queued
-      docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
-            chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
+      docDisplay_.setChunkLineExecState(start, end, 
+            ChunkRowExecState.LINE_QUEUED);
       chunks_.setChunkState(chunk.getPreamble().getRow(), 
             ChunkContextToolbar.STATE_QUEUED);
       
@@ -472,10 +501,7 @@ public class TextEditingTargetNotebook
       }
 
       // put it in the queue 
-      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, 
-            StringUtil.isNullOrEmpty(chunk.getChunkLabel()) ? 
-                  chunk.getLabel() : chunk.getChunkLabel(),
-            mode, code, options, row, setupCrc32));
+      chunkExecQueue_.add(idx, unit);
       
       // record maximum queue size (for scaling progress when we start popping
       // chunks from the list)
@@ -673,36 +699,11 @@ public class TextEditingTargetNotebook
       if (event.getDocId() != docUpdateSentinel_.getId())
          return;
       
-      // create or update the chunk at the given row
-      final ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow(), null);
       String options = TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
             event.getScope(), docDisplay_);
       
-      // have the server start recording output from this chunk
-      syncWidth();
-      server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), MODE_SINGLE, SCOPE_PARTIAL, options, 
-            getPlotWidth(), charWidth_,
-            new ServerRequestCallback<RmdChunkOptions>()
-      {
-         @Override
-         public void onResponseReceived(RmdChunkOptions options)
-         {
-            // execute the input
-            executeCodeChunk(event.getCode(), chunkDef.getChunkId());
-         }
-         @Override
-         public void onError(ServerError error)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Chunk Execution Error", error.getMessage());
-            
-         }
-      });
-      
-      if (outputs_.containsKey(chunkDef.getChunkId()))
-         outputs_.get(chunkDef.getChunkId()).getOutputWidget()
-                                         .setCodeExecuting(false, MODE_SINGLE);
+      executeChunk(event.getScope(), event.getCode(), SCOPE_PARTIAL, options, 
+            MODE_SINGLE);
    }
    
    @Override
@@ -917,35 +918,28 @@ public class TextEditingTargetNotebook
       if (chunk == null)
          return;
 
-      String code = docDisplay_.getCode(chunk.getBodyStart(), chunk.getEnd());
-      
-      // find the line just emitted (start looking from the current position)
-      int idx = code.indexOf(event.getInput(), executingChunk_.pos);
-      if (idx < 0)
-         return;
-      
       // if we found it, count the number of lines moved over
-      int lines = 0;
-      int end = idx + event.getInput().length();
-      for (int i = executingChunk_.pos; i < end; i++)
+      Value<Integer> offset = new Value<Integer>(executingChunk_.pos);
+      Value<Integer> newlines = new Value<Integer>(0);
+      if (!countNewlines(executingChunk_.code, event.getInput(), offset, 
+                         newlines))
       {
-         if (code.charAt(i) == '\n')
-            lines++;
+         return;
       }
       
       // update display 
       int start = chunk.getBodyStart().getRow() + 
                   executingChunk_.linesExecuted;
       executingChunk_.executingRowStart = start + 1;
-      executingChunk_.executingRowEnd = start + lines;
+      executingChunk_.executingRowEnd = start + newlines.getValue();
       docDisplay_.setChunkLineExecState(
             executingChunk_.executingRowStart, 
             executingChunk_.executingRowEnd,
             ChunkRowExecState.LINE_EXECUTED);
       
       // advance internal input indicator past the text just emitted
-      executingChunk_.pos = idx + event.getInput().length();
-      executingChunk_.linesExecuted += lines;
+      executingChunk_.pos = offset.getValue() + event.getInput().length();
+      executingChunk_.linesExecuted += newlines.getValue();
    }
 
    @Override
@@ -1255,7 +1249,7 @@ public class TextEditingTargetNotebook
       server_.setChunkConsole(docUpdateSentinel_.getId(),
             unit.chunkId,
             unit.mode,
-            SCOPE_CHUNK,
+            unit.scopeType,
             unit.options,
             getPlotWidth(),
             charWidth_,
@@ -1532,8 +1526,8 @@ public class TextEditingTargetNotebook
                editingTarget_.getStatusBar().showNotebookProgress("Run Chunks");
             
             // push it into the execution queue
-            executeChunk(setupScope, getChunkCode(setupScope), options, 
-                         MODE_BATCH);
+            executeChunk(setupScope, getChunkCode(setupScope), SCOPE_CHUNK, 
+                  options, MODE_BATCH);
          }
       }
    }
@@ -1878,6 +1872,33 @@ public class TextEditingTargetNotebook
                   Debug.logError(error);
                }
             });
+   }
+   
+   private boolean countNewlines(String code, String input,
+         Value<Integer> offset, Value<Integer> newlines)
+   {
+      // find the line just emitted (start looking from the current position)
+      int idx = code.indexOf(input, offset.getValue());
+      if (idx < 0)
+         return false;
+      
+      // return value pair
+      newlines.setValue(countNewLines(code, offset.getValue(), 
+            idx + input.length())); 
+      offset.setValue(idx);
+      
+      return true;
+   }
+   
+   private int countNewLines(String code, int start, int end)
+   {
+      int lines = 0;
+      for (int i = start; i < end; i++)
+      {
+         if (code.charAt(i) == '\n')
+            lines++;
+      }
+      return lines;
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

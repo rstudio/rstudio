@@ -4332,7 +4332,8 @@ public class TextEditingTarget implements
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code, options, mode);
+                  notebook_.executeChunk(chunk, code, 
+                        TextEditingTargetNotebook.SCOPE_CHUNK, options, mode);
                }
                else
                {
