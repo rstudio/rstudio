@@ -175,12 +175,20 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
    return Success();
 }
 
+#define kReHtmlWidgetContainerBegin     "<!-- htmlwidget-container-begin -->"
+#define kReHtmlWidgetContainerEnd       "<!-- htmlwidget-container-end -->"
+#define kReHtmlWidgetSizingPolicyBase64 "<!-- htmlwidget-sizing-policy-base64 (\\S+) -->"
+
 class HtmlWidgetFilter : public boost::iostreams::regex_filter
 {
 public:
    HtmlWidgetFilter()
       : boost::iostreams::regex_filter(
-           boost::regex("<!-- htmlwidget-sizing-policy-base64 (\\S+) -->"),
+           boost::regex(
+              kReHtmlWidgetContainerBegin "|"
+              kReHtmlWidgetContainerEnd "|"
+              kReHtmlWidgetSizingPolicyBase64
+           ),
            boost::bind(&HtmlWidgetFilter::substitute, this, _1))
    {
    }
@@ -192,8 +200,15 @@ private:
       std::size_t n = match.size();
       if (n < 1)
          return std::string();
-      else if (n == 1)
-         return match[0].str();
+      
+      std::string matchString = match.str();
+      if (matchString == kReHtmlWidgetContainerBegin)
+         return "<div id=\"htmlwidget_container\">";
+      else if (matchString == kReHtmlWidgetContainerEnd)
+         return "</div>";
+      
+      if (n < 2)
+         return match[1].str();
       
       // decode htmlwidget sizing information
       std::string decoded;

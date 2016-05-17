@@ -46,16 +46,41 @@
       # we use a filter on the server side to disentangle things as needed
       html <- htmlwidgets:::toHTML(x, standalone = TRUE, knitrOptions = knitrOptions)
       
-      n <- length(html)
-      sizingPolicy <- html[[n]]
-      encodedPolicy <- .rs.base64encode(as.character(sizingPolicy))
+      # validate some expectations about the data structure
+      if (length(html) != 3)
+         stop("unexpected htmlwidget structure: expected taglist of length 3")
       
-      # NOTE: if you touch this make sure you update the parsing code in NotebookOutput.cpp
+      if (html[[1]]$attribs$id != "htmlwidget_container")
+         stop("expected a container div with id 'htmlwidget_container'")
+      
+      if (length(html[[1]]$children) != 1)
+         stop("expected a single child for htmlwidget container div")
+      
+      # split up into parts
+      div <- html[[1]]$children[[1]]
+      json <- html[[2]]
+      policy <- html[[3]]
+      
+      # encode the htmlwidget sizing policy as base64 (disentangled on the server
+      # as appropriate, e.g. when showing viewer element in IDE)
       fmt <- "<!-- htmlwidget-sizing-policy-base64 %s -->"
-      html[[n]] <- htmltools::HTML(sprintf(fmt, encodedPolicy))
+      encodedPolicy <- .rs.base64encode(paste(as.character(policy), collapse = "\n"))
+      htmlPolicy <- htmltools::HTML(sprintf(fmt, encodedPolicy))
+      
+      # generate annotated version of standalone html that we can disentangle
+      # with a server-side filter as needed
+      # NOTE: if you touch this make sure you update the parsing code in NotebookOutput.cpp
+      htmlProduct <- htmltools::tagList(
+         htmltools::HTML("<!-- htmlwidget-container-begin -->"),
+         div,
+         htmltools::HTML("<!-- htmlwidget-container-end -->"),
+         json,
+         htmlPolicy
+      )
+      attributes(htmlProduct) <- attributes(html)
       
       # write html
-      htmltools::save_html(html, file = htmlfile, libdir = libraryFolder)
+      htmltools::save_html(htmlProduct, file = htmlfile, libdir = libraryFolder)
       
       # record the saved artefacts
       .Call("rs_recordHtmlWidget", htmlfile, depfile)
