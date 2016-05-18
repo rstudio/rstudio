@@ -1334,38 +1334,7 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
    if (engine == "Rcpp")
       return executeRcppEngineChunk(docId, chunkId, code, pResponse);
    
-   using namespace notebook;
-   typedef core::shell_utils::ShellCommand ShellCommand;
-   
-   // write code to temporary file
-   FilePath scriptPath = module_context::tempFile("chunk-code", "");
-   error = core::writeStringToFile(scriptPath, code);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   // get command
-   ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath);
-
-   // create and run process
-   boost::shared_ptr<ExecuteChunkOperation> operation =
-         ExecuteChunkOperation::create(docId, chunkId, command);
-
-   // create process options
-   core::system::ProcessOptions options;
-
-   // create process callbacks
-   core::system::ProcessCallbacks callbacks = operation->processCallbacks();
-
-   error = module_context::processSupervisor().runCommand(command,
-                                                          options,
-                                                          callbacks);
-   if (error)
-      LOG_ERROR(error);
-
-   pResponse->setResult(true);
+   notebook::runChunk(docId, chunkId, engine, code);
    return Success();
 }
 

@@ -62,10 +62,13 @@ public:
                                                           const std::string& chunkId,
                                                           const ShellCommand& command)
    {
-      return boost::shared_ptr<ExecuteChunkOperation>(new ExecuteChunkOperation(
-                                                         docId,
-                                                         chunkId,
-                                                         command));
+      boost::shared_ptr<ExecuteChunkOperation> pProcess =
+            boost::shared_ptr<ExecuteChunkOperation>(new ExecuteChunkOperation(
+                                                        docId,
+                                                        chunkId,
+                                                        command));
+      pProcess->registerProcess();
+      return pProcess;
    }
    
 private:
@@ -169,6 +172,7 @@ private:
    void onExit(int exitStatus)
    {
       events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
+      deregisterProcess();
       isRunning_ = false;
    }
    
@@ -209,14 +213,10 @@ private:
                target);
    }
    
-   void terminate()
-   {
-      terminationRequested_ = true;
-   }
-   
 public:
    
    bool isRunning() const { return isRunning_; }
+   void terminate() { terminationRequested_ = true; }
    bool terminationRequested() const { return terminationRequested_; }
    const std::string& chunkId() const { return chunkId_; }
    
@@ -227,7 +227,74 @@ private:
    std::string chunkId_;
    std::vector<boost::signals::connection> connections_;
    ShellCommand command_;
+   
+private:
+   
+   typedef std::map<
+      std::string,
+      boost::shared_ptr<ExecuteChunkOperation>
+   > ProcessRegistry;
+   
+   static ProcessRegistry& registry()
+   {
+      static ProcessRegistry instance;
+      return instance;
+   }
+   
+   void registerProcess()
+   {
+      registry()[docId_ + "-" + chunkId_] = shared_from_this();
+   }
+   
+   void deregisterProcess()
+   {
+      registry().erase(docId_ + "-" + chunkId_);
+   }
+   
+public:
+   static boost::shared_ptr<ExecuteChunkOperation> getProcess(
+         const std::string& docId,
+         const std::string& chunkId)
+   {
+      return registry()[docId + "-" + chunkId];
+   }
 };
+
+core::Error runChunk(const std::string& docId,
+                     const std::string& chunkId,
+                     const std::string& engine,
+                     const std::string& code)
+{
+   using namespace core;
+   typedef core::shell_utils::ShellCommand ShellCommand;
+   
+   // write code to temporary file
+   FilePath scriptPath = module_context::tempFile("chunk-code", "");
+   Error error = core::writeStringToFile(scriptPath, code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   // get command
+   ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath);
+
+   // create and run process
+   boost::shared_ptr<ExecuteChunkOperation> operation =
+         ExecuteChunkOperation::create(docId, chunkId, command);
+
+   core::system::ProcessOptions options;
+   core::system::ProcessCallbacks callbacks = operation->processCallbacks();
+   error = module_context::processSupervisor().runCommand(command,
+                                                          options,
+                                                          callbacks);
+   if (error)
+      LOG_ERROR(error);
+   
+   return Success();
+}
+
 
 } // end namespace notebook
 } // end namespace rmarkdown
