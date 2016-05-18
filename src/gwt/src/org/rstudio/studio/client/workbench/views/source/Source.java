@@ -366,8 +366,10 @@ public class Source implements InsertSourceHandler,
          command.setEnabled(false);
       }
       
-      // feature flag for notebook
-      if (!uiPrefs_.showRmdChunkOutputInline().getValue())
+      // feature flag for notebook -- this will eventually go away
+      // and these commands will always be enabled
+      if (!uiPrefs_.enableRNotebooks().getValue() &&
+          !uiPrefs_.showRmdChunkOutputInline().getValue())
       {
          commands.newRNotebook().setEnabled(false);
          commands.newRNotebook().setVisible(false);
