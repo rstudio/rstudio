@@ -354,7 +354,7 @@ public class ChunkOutputWidget extends Composite
          host_.onOutputHeightChanged(0, ensureVisible);
       }
 
-      state_ = CHUNK_READY;
+      state_ = root_.getWidgetCount() == 0 ? CHUNK_EMPTY : CHUNK_READY;
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
       showReadyState();
