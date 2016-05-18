@@ -1166,6 +1166,11 @@ public class TextEditingTarget implements
       }      
    }
    
+   public void showWarningMessage(String message)
+   {
+      view_.showWarningBar(message);
+   }
+   
    private void jumpToPreviousFunction()
    {
       Scope jumpTo = scopeHelper_.getPreviousFunction(

@@ -2691,6 +2691,59 @@ public class Source implements InsertSourceHandler,
             });  
    }
    
+   private void openNotebook(
+         final FileSystemItem rmdFile, 
+         final SourceDocumentResult doc,
+         final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      if (!StringUtil.isNullOrEmpty(doc.getDocPath()))
+      {
+         // this happens if we created the R Markdown file, or if the R Markdown
+         // file on disk matched the one inside the notebook
+         openFileFromServer(rmdFile, 
+               FileTypeRegistry.RMARKDOWN, resultCallback);
+      }
+      else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
+      {
+         // this happens when we have to open an untitled buffer for the the
+         // notebook (usually because the of a conflict between the Rmd on disk
+         // and the one in the .nb.html file)
+         server_.getSourceDocument(doc.getDocId(), 
+               new ServerRequestCallback<SourceDocument>()
+         {
+            @Override
+            public void onResponseReceived(SourceDocument doc)
+            {
+               // create the editor
+               EditingTarget target = 
+                     addTab(doc, OPEN_INTERACTIVE);
+               
+               // show a warning bar 
+               if (target instanceof TextEditingTarget)
+               {
+                  ((TextEditingTarget) target).showWarningMessage(
+                        "This notebook has the same name as an R Markdown " +
+                        "file, but doesn't match it.");
+               }
+               resultCallback.onSuccess(target);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               
+               globalDisplay_.showErrorMessage(
+                  "Notebook Open Failed", 
+                  "This notebook could not be opened. " +
+                  "If the error persists, try removing the " +
+                  "accompanying R Markdown file. \n\n" +
+                  error.getMessage());
+               resultCallback.onFailure(error);
+            }
+         });
+      }
+   }
+   
    private void openNotebook(final FileSystemItem rnbFile,
                              final TextFileType fileType,
                              final ResultCallback<EditingTarget, ServerError> resultCallback)
@@ -2718,44 +2771,7 @@ public class Source implements InsertSourceHandler,
                      @Override
                      public void onResponseReceived(SourceDocumentResult doc)
                      {
-                        if (!StringUtil.isNullOrEmpty(doc.getDocPath()))
-                        {
-                           // this happens if we created the R Markdown file,
-                           // or if the R Markdown file on disk matched the
-                           // one inside the notebook
-                           openFileFromServer(rmdFile, 
-                                 FileTypeRegistry.RMARKDOWN, resultCallback);
-                        }
-                        else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
-                        {
-                           // this happens when we have to open an untitled
-                           // buffer for the the notebook (usually because the
-                           // of a conflict between the Rmd on disk and the one
-                           // in the .nb.html file)
-                           server_.getSourceDocument(doc.getDocId(), 
-                                 new ServerRequestCallback<SourceDocument>()
-                           {
-                              @Override
-                              public void onResponseReceived(SourceDocument doc)
-                              {
-                                 resultCallback.onSuccess(addTab(doc, 
-                                       OPEN_INTERACTIVE));
-                              }
-
-                              @Override
-                              public void onError(ServerError error)
-                              {
-                                 
-                                 globalDisplay_.showErrorMessage(
-                                    "Notebook Open Failed", 
-                                    "This notebook could not be opened. " +
-                                    "If the error persists, try removing the " +
-                                    "accompanying R Markdown file. \n\n" +
-                                    error.getMessage());
-                                 resultCallback.onFailure(error);
-                              }
-                           });
-                        }
+                        openNotebook(rmdFile, doc, resultCallback);
                      }
 
                      @Override
