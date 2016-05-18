@@ -1072,7 +1072,8 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
-      if (uiPrefs_.showRmdChunkOutputInline().getValue())
+      if (uiPrefs_.showRmdChunkOutputInline().getValue() &&
+          type != RmdOutput.TYPE_SHINY)
       {
          if (type != RmdOutput.TYPE_NOTEBOOK)
          {

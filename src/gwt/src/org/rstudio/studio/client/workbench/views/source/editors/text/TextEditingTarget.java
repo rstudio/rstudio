@@ -3651,6 +3651,13 @@ public class TextEditingTarget implements
             view_.setIsNotebookFormat();
          }
       }
+      
+      if (isShinyDoc())
+      {
+         // turn off inline output in Shiny documents (if it's not already)
+         if (docDisplay_.showChunkOutputInline())
+            docDisplay_.setShowChunkOutputInline(false);
+      }
    }
    
    private void setRmdFormat(String formatName)
