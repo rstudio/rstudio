@@ -205,22 +205,14 @@ public class TextEditingTargetChunks
       }
    }
    
-   private String extractChunkHeaderContents(String line)
-   {
-      int startIdx = line.indexOf('{') + 1;
-      int endIdx = line.lastIndexOf('}');
-      return line.substring(startIdx, endIdx);
-   }
-   
    private boolean isRunnableChunk(int row)
    {
       // extract chunk header
       String header = target_.getDocDisplay().getLine(row);
-      String inner = extractChunkHeaderContents(header);
       
       // parse contents
       Map<String, String> options = new HashMap<String, String>();
-      TextEditingTargetNotebook.parseChunkOptions(inner, options);
+      TextEditingTargetNotebook.parseChunkOptions(header, options);
       
       // check runnable engine
       String engine = options.containsKey("engine")

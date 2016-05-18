@@ -1362,13 +1362,14 @@ public class TextEditingTargetNotebook
             });
    }
    
-   // Parse a chunk header (without the delimiting braces), e.g.
-   //
-   //    r label, foo=1, bar=2
-   //
    public static void parseChunkOptions(String line,
                                         Map<String, String> chunkOptions)
    {
+      // strip '```{' and '}' if necessary
+      line = line.trim();
+      if (line.startsWith("```{") && line.endsWith("}"))
+         line = line.substring(4, line.length() - 1);
+      
       TextCursor cursor = new TextCursor(line);
       
       // parse preamble
