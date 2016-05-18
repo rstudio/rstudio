@@ -22,6 +22,16 @@
       if (!requireNamespace("htmlwidgets", quietly = TRUE))
          stop("print.htmlwidget called without 'htmlwidgets' available")
       
+      # set options for responsive DT widgets -- force them to
+      # fill their container
+      dtOptions <- list(
+         DT.fillContainer = TRUE,
+         DT.autoHideNavigation = TRUE
+      )
+      oldDtOptions <- do.call(base::options, as.list(names(dtOptions)))
+      do.call(base::options, dtOptions)
+      on.exit(do.call(base::options, oldDtOptions), add = TRUE)
+      
       htmlfile <- tempfile(pattern = "_rs_html_",
                            tmpdir = outputFolder, 
                            fileext = ".html")
@@ -86,8 +96,8 @@
       if (html[[1]]$attribs$id != "htmlwidget_container")
          stop("expected a container div with id 'htmlwidget_container'")
       
-      if (length(html[[1]]$children) != 1)
-         stop("expected a single child for htmlwidget container div")
+      if (length(html[[1]]$children) == 0)
+         stop("expected one or more children for htmlwidget container div")
       
       # force knitr styling on 'standalone' widget (will be overridden by sizing policy
       # in dynamic environments; this ensures that the 'preview' will be displayed as
