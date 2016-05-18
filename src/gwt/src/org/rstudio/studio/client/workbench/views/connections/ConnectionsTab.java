@@ -50,7 +50,7 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
    @Override
    public boolean isSuppressed()
    {
-      return session_.getSessionInfo().getConnectionsEnabled();
+      return !session_.getSessionInfo().getConnectionsEnabled();
    }
    
    private Session session_;
