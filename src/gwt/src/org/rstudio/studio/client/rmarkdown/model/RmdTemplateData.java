@@ -421,24 +421,10 @@ public class RmdTemplateData
             option_default: "null"
             },
          ]
-         },
-         {
-         template_name: "Notebook", 
-         template_formats: [ 
-            {
-            format_name: "html_notebook",
-            format_ui_name: "Notebook",
-            format_extension: "html",
-            format_options: [],
-            format_notes: ""
-            } 
-         ],
-         template_options: [ ]
          }
-   ];
+      ];
    }-*/;
    
    public final static String DOCUMENT_TEMPLATE = "Document";
    public final static String PRESENTATION_TEMPLATE = "Presentation";
-   public final static String NOTEBOOK_TEMPLATE = "Notebook";
 }

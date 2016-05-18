@@ -472,14 +472,21 @@ public class TextEditingTargetRMarkdownHelper
          if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
             return null;
          
+         List<String> outFormats = getOutputFormats(tree);
+
          // Find the template appropriate to the first output format listed.
          // If no output format is present, assume HTML document (as the 
          // renderer does).
-         List<String> outFormats = getOutputFormats(tree);
          String outFormat = outFormats == null ? 
                RmdOutputFormat.OUTPUT_HTML_DOCUMENT :
                outFormats.get(0);
          
+         // if the top format is a notebook, use the secondary format to drive
+         // the UI (or fall back to HTML)
+         if (outFormat == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK)
+            outFormat = outFormats.size() > 1 ?
+                  outFormats.get(1) : RmdOutputFormat.OUTPUT_HTML_DOCUMENT;
+
          RmdTemplate template = getTemplateForFormat(outFormat);
          if (template == null)
             return null;

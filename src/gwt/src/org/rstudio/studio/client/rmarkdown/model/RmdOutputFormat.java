@@ -32,6 +32,7 @@ public class RmdOutputFormat extends JavaScriptObject
 
    // output format name strings from the rmarkdown package (not exhaustive)
    public final static String OUTPUT_HTML_DOCUMENT = "html_document";
+   public final static String OUTPUT_HTML_NOTEBOOK = "html_notebook";
    public final static String OUTPUT_BEAMER_PRESENTATION = "beamer_presentation";
    public final static String OUTPUT_REVEALJS_PRESENTATION = "revealjs_presentation";
    public final static String OUTPUT_IOSLIDES_PRESENTATION = "ioslides_presentation";

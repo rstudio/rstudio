@@ -821,9 +821,10 @@ public class TextEditingTargetWidget
                      new RmdOutputFormatChangedEvent(valueName));
             }
          };
-         MenuItem item = ImageMenuItem.create(img, 
-                                              prefix + options.get(i), 
-                                              cmd, 2);
+         String text = ext == ".nb.html" ? "Preview Notebook" :
+            prefix + options.get(i);
+            
+         MenuItem item = ImageMenuItem.create(img, text, cmd, 2);
          rmdFormatButton_.addMenuItem(item, values.get(i));
       }
       
@@ -888,7 +889,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(
             commands_.newRNotebook().getImageResource());
-      setRmdFormatButtonVisible(false);
+      setRmdFormatButtonVisible(true);
       showRmdViewerMenuItems(true, false, true, RmdOutput.TYPE_NOTEBOOK);
    }
    

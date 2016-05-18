@@ -96,7 +96,6 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
@@ -3599,11 +3598,22 @@ public class TextEditingTarget implements
                }
             }
          }
-             
+         
          // add formats not in the selected template 
+         boolean isNotebook = false;
          List<String> outputFormats = getOutputFormats();
-         for (String format : outputFormats)
+         for (int i = 0; i < outputFormats.size(); i++)
          {
+            String format = outputFormats.get(i);
+            if (format == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK)
+            {
+               if (i == 0)
+                  isNotebook = true;
+               formatList.add("Notebook");
+               valueList.add(format);
+               extensionList.add(".nb.html");
+               continue;
+            }
             if (!valueList.contains(format))
             {
                String uiName = format;
@@ -3616,10 +3626,9 @@ public class TextEditingTarget implements
             }
          }
          
-         boolean isNotebook = isRmdNotebook();
-
          view_.setFormatOptions(fileType_, 
-                                !isNotebook && getCustomKnit().length() == 0,
+                                // can choose output formats
+                                getCustomKnit().length() == 0,
                                 // can edit format options
                                 !isNotebook && selTemplate != null,
                                 formatList, 
@@ -3646,20 +3655,8 @@ public class TextEditingTarget implements
    
    private void setRmdFormat(String formatName)
    {
-      // match based on selected template
-      RmdSelectedTemplate selTemplate = getSelectedTemplate();
-      if (selTemplate != null)
-      {
-         // if this is the current format, we don't need to change the front matter
-         if (selTemplate.format.equals(formatName))
-         {
-            renderRmd();
-            return;
-         }
-      }
-       
-      // look for other formats, if the target format name already 
-      // matches the first format then just render and return
+      // If the target format name already matches the first format then just
+      // render and return
       List<String> outputFormats = getOutputFormats();
       if (outputFormats.size() > 0 && outputFormats.get(0).equals(formatName))
       {
@@ -4814,10 +4811,20 @@ public class TextEditingTarget implements
    
    public boolean isRmdNotebook()
    {
-       RmdSelectedTemplate selTemplate = getSelectedTemplate();
-       return selTemplate != null &&
-              selTemplate.template.getName() == 
-                                 RmdTemplateData.NOTEBOOK_TEMPLATE;
+      List<String> outputFormats = getOutputFormats();
+      return outputFormats.size() > 0 && 
+             outputFormats.get(0) == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK;
+   }
+
+   public boolean hasRmdNotebook()
+   {
+      List<String> outputFormats = getOutputFormats();
+      for (String format: outputFormats)
+      {
+         if (format == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK)
+            return true;
+      }
+      return false;
    }
 
    private boolean isShinyDoc()

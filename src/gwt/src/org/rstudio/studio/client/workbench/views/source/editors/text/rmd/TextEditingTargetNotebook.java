@@ -256,8 +256,8 @@ public class TextEditingTargetNotebook
             if (!docDisplay_.showChunkOutputInline())
                return;
             
-            // bail if not notebook output format
-            if (!editingTarget_.isRmdNotebook())
+            // bail if no notebook output format
+            if (!editingTarget_.hasRmdNotebook())
                return;
             
             final String rmdPath = docUpdateSentinel_.getPath();
