@@ -29,10 +29,14 @@ import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureHeightEvent;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -72,7 +76,8 @@ public class ConnectionsPresenter extends BasePresenter
                                GlobalDisplay globalDisplay,
                                Binder binder,
                                final Commands commands,
-                               WorkbenchListManager listManager)
+                               WorkbenchListManager listManager,
+                               Session session)
    {
       super(display);
       binder.bind(commands, this);
@@ -131,7 +136,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onExploreConnection(ExploreConnectionEvent event)
          {
-            display_.showConnectionExplorer(event.getConnection());
+            exploreConnection(event.getConnection());
             display_.ensureHeight(EnsureHeightEvent.MAXIMIZED);
          }
       });
@@ -141,6 +146,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
+            activeConnection_ = null;
             display_.showConnectionsList();
             display_.ensureHeight(EnsureHeightEvent.NORMAL);
          }
@@ -153,6 +159,53 @@ public class ConnectionsPresenter extends BasePresenter
       connections.add(Connection.create("Spark", "localhost:4141", false));
       connections.add(Connection.create("Spark", "localhost:4242", false));
       updateConnections(connections);  
+      
+      // make the active connection persistent
+      new JSObjectStateValue(MODULE_CONNECTIONS, 
+                             KEY_ACTIVE_CONNECTION, 
+                             ClientState.PERSISTENT, 
+                             session.getSessionInfo().getClientState(), 
+                             false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            // get the value
+            if (value != null)
+               activeConnection_ = value.cast();
+            else
+               activeConnection_ = null;
+                 
+            lastKnownActiveConnection_ = activeConnection_;
+            
+            // if there is an active connection then explore it
+            if (activeConnection_ != null)
+               exploreConnection(activeConnection_);
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            if (activeConnection_ != null)
+               return activeConnection_.cast();
+            else
+               return null;
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            if (lastKnownActiveConnection_ != activeConnection_)
+            {
+               lastKnownActiveConnection_ = activeConnection_;
+               return true;
+            }
+            else
+            {
+               return false;
+            }
+         }
+      };
    }
    
    public void onNewConnection()
@@ -185,12 +238,23 @@ public class ConnectionsPresenter extends BasePresenter
       display_.setConnections(allConnections_);
    }
    
+   private void exploreConnection(Connection connection)
+   {
+      activeConnection_ = connection;
+      display_.showConnectionExplorer(connection);
+   }
    
    private final GlobalDisplay globalDisplay_;
    
    private final Display display_ ;
    @SuppressWarnings("unused")
    private final ConnectionsServerOperations server_ ;
+   
+   // client state
+   private static final String MODULE_CONNECTIONS = "connections-pane";
+   private static final String KEY_ACTIVE_CONNECTION = "activeConnection";
+   private Connection activeConnection_;
+   private Connection lastKnownActiveConnection_;
    
    @SuppressWarnings("unused")
    private ConnectionList connectionList_;
