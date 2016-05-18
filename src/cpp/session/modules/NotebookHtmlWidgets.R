@@ -22,6 +22,16 @@
       if (!requireNamespace("htmlwidgets", quietly = TRUE))
          stop("print.htmlwidget called without 'htmlwidgets' available")
       
+      # set options for responsive DT widgets -- force them to
+      # fill their container
+      dtOptions <- list(
+         DT.fillContainer = TRUE,
+         DT.autoHideNavigation = TRUE
+      )
+      oldDtOptions <- do.call(base::options, as.list(names(dtOptions)))
+      do.call(base::options, dtOptions)
+      on.exit(do.call(base::options, oldDtOptions), add = TRUE)
+      
       htmlfile <- tempfile(pattern = "_rs_html_",
                            tmpdir = outputFolder, 
                            fileext = ".html")
