@@ -488,6 +488,11 @@ public class ChunkOutputWidget extends Composite
       }
    }
    
+   public void setHost(ChunkOutputHost host)
+   {
+      host_ = host;
+   }
+   
    // Event handlers ----------------------------------------------------------
 
    @Override
@@ -1028,6 +1033,7 @@ public class ChunkOutputWidget extends Composite
    private ProgressSpinner spinner_;
    private String queuedError_;
    private RmdChunkOptions options_;
+   private ChunkOutputHost host_;
    
    private int state_ = CHUNK_EMPTY;
    private int execMode_ = TextEditingTargetNotebook.MODE_SINGLE;
@@ -1041,7 +1047,6 @@ public class ChunkOutputWidget extends Composite
    private Timer collapseTimer_ = null;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
-   private final ChunkOutputHost host_;
 
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;

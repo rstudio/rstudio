@@ -40,13 +40,28 @@ public class ChunkOutputUi
    public ChunkOutputUi(String docId, DocDisplay display, ChunkDefinition def,
           PinnedLineWidget.Host lineWidgetHost)
    {
+      this(docId, display, def, lineWidgetHost, null);
+   }
+
+   public ChunkOutputUi(String docId, DocDisplay display, ChunkDefinition def,
+          PinnedLineWidget.Host lineWidgetHost, ChunkOutputWidget widget)
+   {
       display_ = display;
       chunkId_ = def.getChunkId();
       docId_ = docId;
       def_ = def;
+      boolean hasOutput = widget != null;
+      if (widget == null) 
+      {
+         widget = new ChunkOutputWidget(def.getChunkId(), def.getOptions(), 
+                                        def.getExpansionState(), this);
+      }
+      else
+      {
+         widget.setHost(this);
+      }
 
-      outputWidget_ = new ChunkOutputWidget(def.getChunkId(), 
-            def_.getOptions(), def.getExpansionState(), this);
+      outputWidget_ = widget;
       
       // sync the widget's expanded/collapsed state to the underlying chunk
       // definition (which is persisted)
@@ -63,9 +78,13 @@ public class ChunkOutputUi
       Element ele = outputWidget_.getElement();
       ele.addClassName(ThemeStyles.INSTANCE.selectableText());
       
-      // make the widget initially invisible (until it gets some output)
-      ele.getStyle().setHeight(0, Unit.PX);
-      outputWidget_.setVisible(false);
+      // if we didn't start with output, make the widget initially invisible
+      // (until it gets some output)
+      if (!hasOutput)
+      {
+         ele.getStyle().setHeight(0, Unit.PX);
+         outputWidget_.setVisible(false);
+      }
       
       lineWidget_ = new PinnedLineWidget(ChunkDefinition.LINE_WIDGET_TYPE, 
             display_, outputWidget_, def.getRow(), def, lineWidgetHost);

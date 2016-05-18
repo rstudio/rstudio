@@ -1060,8 +1060,33 @@ public class TextEditingTargetNotebook
             continue;
          if (output.getLineWidget() == widget && !output.moving())
          {
+            // save scope and widget
+            int terminalLine = widget.getRow() - 1;
+            Scope scope = docDisplay_.getCurrentChunk(Position.create(
+                  terminalLine, 1));
+            ChunkOutputWidget outputWidget = output.getOutputWidget();
+
+            // clean up old widget
             output.remove();
             outputs_.remove(output.getChunkId());
+
+            // if the scope is still at the terminal line, then this widget was
+            // deleted over-aggressively by Ace (this can happen when e.g. 
+            // removing the final line of a chunk). create a new linewidget in
+            // place of the old one (but re-use the output widget so the output
+            // is identical)
+            if (scope.getEnd().getRow() == terminalLine)
+            {
+               ChunkDefinition def = (ChunkDefinition)widget.getData();
+               def.setRow(terminalLine);
+               widget.setRow(terminalLine);
+               ChunkOutputUi newOutput = new ChunkOutputUi(
+                     docUpdateSentinel_.getId(), 
+                     docDisplay_, def, this, outputWidget);
+               outputs_.put(output.getChunkId(), newOutput);
+               return;
+            }
+
             break;
          }
       }
@@ -1678,6 +1703,9 @@ public class TextEditingTargetNotebook
          
          for (ChunkOutputUi output: outputs_.values())
          {
+            if (output.getScope() == null)
+               continue;
+            
             if (output.getScope().getPreamble() == current.getPreamble())
             {
                cleanScopeErrorState(current);

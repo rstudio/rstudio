@@ -91,6 +91,10 @@ public class ChunkDefinition extends JavaScriptObject
       this.options = options;
    }-*/;
    
+   public native final void setRow(int row) /*-{
+      this.row = row;
+   }-*/;
+   
    public final boolean equalTo(ChunkDefinition other)
    {
       return getRow() == other.getRow() &&
