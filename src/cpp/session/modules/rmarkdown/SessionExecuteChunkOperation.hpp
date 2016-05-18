@@ -20,6 +20,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <core/FileSerializer.hpp>
+#include <core/text/CsvParser.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/System.hpp>
@@ -62,6 +64,41 @@ private:
         chunkId_(chunkId),
         command_(command)
    {
+      using namespace core;
+      Error error = Success();
+      
+      // ensure staging directory
+      FilePath stagingPath = notebook::chunkOutputPath(
+               docId_,
+               chunkId_ + kStagingSuffix,
+               notebook::ContextExact);
+      
+      error = stagingPath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+      
+      error = stagingPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+      
+      // ensure regular directory
+      FilePath outputPath = notebook::chunkOutputPath(
+               docId_,
+               chunkId_,
+               notebook::ContextExact);
+      
+      error = outputPath.removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+      
+      error = outputPath.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+      
+      // clean old chunk output
+      error = notebook::cleanChunkOutput(docId_, chunkId_, true);
+      if (error)
+         LOG_ERROR(error);
    }
    
 public:
@@ -102,36 +139,10 @@ public:
    
 private:
    
+   enum OutputType { OUTPUT_STDOUT, OUTPUT_STDERR };
+   
    void onStarted(ProcessOperations& operations)
    {
-      using namespace core;
-      Error error = Success();
-      
-      // ensure staging directory
-      FilePath stagingPath = notebook::chunkOutputPath(
-               docId_,
-               chunkId_ + kStagingSuffix,
-               notebook::ContextExact);
-      
-      error = stagingPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-      
-      // ensure regular directory
-      FilePath outputPath = notebook::chunkOutputPath(
-               docId_,
-               chunkId_,
-               notebook::ContextExact);
-      
-      error = outputPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-      
-      // clean old chunk output
-      error = notebook::cleanChunkOutput(docId_, chunkId_, true);
-      if (error)
-         LOG_ERROR(error);
-      
       isRunning_ = true;
    }
    
@@ -142,19 +153,45 @@ private:
    
    void onExit(int exitStatus)
    {
+      notebook::events().onChunkExecCompleted(docId_, chunkId_, notebook::notebookCtxId());
       isRunning_ = false;
    }
    
    void onStdout(ProcessOperations& operations, const std::string& output)
    {
-      core::FilePath target = notebook::chunkOutputFile(docId_, chunkId_, notebook::ContextExact);
-      notebook::enqueueChunkOutput(docId_, chunkId_, notebook::notebookCtxId(), kChunkOutputText, target);
+      onText(output, OUTPUT_STDOUT);
    }
    
    void onStderr(ProcessOperations& operations, const std::string& output)
    {
-      core::FilePath target = notebook::chunkOutputFile(docId_, chunkId_, notebook::ContextExact);
-      notebook::enqueueChunkOutput(docId_, chunkId_, notebook::notebookCtxId(), kChunkOutputError, target);
+      onText(output, OUTPUT_STDERR);
+   }
+   
+   void onText(const std::string& output, OutputType outputType)
+   {
+      using namespace core;
+      
+      // get path to cache file
+      FilePath target = notebook::chunkOutputFile(docId_, chunkId_, kChunkOutputText);
+      
+      // generate CSV to write
+      std::vector<std::string> values;
+      values.push_back(outputType == OUTPUT_STDOUT ? "1" : "2");
+      values.push_back(output);
+      std::string encoded = text::encodeCsvLine(values) + "\n";
+      
+      // write to cache
+      Error error = writeStringToFile(target, encoded);
+      if (error)
+         LOG_ERROR(error);
+      
+      // emit client event
+      notebook::enqueueChunkOutput(
+               docId_,
+               chunkId_,
+               notebook::notebookCtxId(),
+               kChunkOutputText,
+               target);
    }
    
    void terminate()
