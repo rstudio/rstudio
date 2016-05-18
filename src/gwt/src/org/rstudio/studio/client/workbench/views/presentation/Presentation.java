@@ -27,16 +27,12 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
-import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.events.BarrierReleasedEvent;
-import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -44,7 +40,7 @@ import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -55,15 +51,12 @@ import org.rstudio.studio.client.common.presentation.SlideNavigationPresenter;
 import org.rstudio.studio.client.common.presentation.events.SlideIndexChangedEvent;
 import org.rstudio.studio.client.common.presentation.events.SlideNavigationChangedEvent;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchView;
-
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -508,25 +501,7 @@ public class Presentation extends BasePresenter
    
    private void reloadWorkbench()
    { 
-      Barrier barrier = new Barrier();
-      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler() {
-
-         @Override
-         public void onBarrierReleased(BarrierReleasedEvent event)
-         {
-            eventBus_.fireEvent(new ReloadEvent());
-         }
-      });
-      
-      Token token = barrier.acquire();
-      try
-      {
-         eventBus_.fireEvent(new LastChanceSaveEvent(barrier));
-      }
-      finally
-      {
-         token.release();
-      }  
+      eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
    }
    
    

@@ -34,13 +34,17 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.BarrierReleasedEvent;
+import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
@@ -61,6 +65,7 @@ import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.ClientStateUpdater;
 import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -123,6 +128,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(LogoutRequestedEvent.TYPE, this);
       events.addHandler(UnauthorizedEvent.TYPE, this);
       events.addHandler(ReloadEvent.TYPE, this);
+      events.addHandler(ReloadWithLastChanceSaveEvent.TYPE, this);
       events.addHandler(QuitEvent.TYPE, this);
       events.addHandler(SuicideEvent.TYPE, this);
       events.addHandler(SessionAbendWarningEvent.TYPE, this);    
@@ -425,6 +431,29 @@ public class Application implements ApplicationEventHandlers
       cleanupWorkbench();
       
       reloadWindowWithDelay(false);
+   }
+   
+   public void onReloadWithLastChanceSave(ReloadWithLastChanceSaveEvent event)
+   {
+      Barrier barrier = new Barrier();
+      barrier.addBarrierReleasedHandler(new BarrierReleasedHandler() {
+
+         @Override
+         public void onBarrierReleased(BarrierReleasedEvent event)
+         {
+            events_.fireEvent(new ReloadEvent());
+         }
+      });
+      
+      Token token = barrier.acquire();
+      try
+      {
+         events_.fireEvent(new LastChanceSaveEvent(barrier));
+      }
+      finally
+      {
+         token.release();
+      }  
    }
    
    public void onQuit(QuitEvent event)
