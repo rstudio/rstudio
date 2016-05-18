@@ -153,6 +153,7 @@ const int kPreviewRmd = 132;
 const int kWebsiteFileSaved = 133;
 const int kChunkPlotRefreshed = 134;
 const int kChunkPlotRefreshFinished = 135;
+const int kReloadWithLastChanceSave = 136;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -418,6 +419,8 @@ std::string ClientEvent::typeName() const
          return "chunk_plot_refreshed";
       case client_events::kChunkPlotRefreshFinished:
          return "chunk_plot_refresh_finished";
+      case client_events::kReloadWithLastChanceSave:
+         return "reload_with_last_chance_save";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

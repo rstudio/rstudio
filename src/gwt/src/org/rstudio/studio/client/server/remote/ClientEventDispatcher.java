@@ -799,6 +799,10 @@ public class ClientEventDispatcher
             ChunkPlotRefreshFinishedEvent.Data data = event.getData();
             eventBus_.fireEvent(new ChunkPlotRefreshFinishedEvent(data));
          }
+         else if (type.equals(ClientEvent.ReloadWithLastChanceSave))
+         {
+            eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

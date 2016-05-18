@@ -154,6 +154,7 @@ extern const int kPreviewRmd;
 extern const int kWebsiteFileSaved;
 extern const int kChunkPlotRefreshed;
 extern const int kChunkPlotRefreshFinished;
+extern const int kReloadWithLastChanceSave;
 }
    
 class ClientEvent
