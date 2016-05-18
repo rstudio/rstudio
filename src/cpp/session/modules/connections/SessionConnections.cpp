@@ -15,6 +15,10 @@
 
 #include "SessionConnections.hpp"
 
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -30,21 +34,37 @@ namespace connections {
 
 namespace {
 
+// track last reported state of connections enabled
+bool s_reportedConnectionsEnabled = false;
 
-
-
+void onInstalledPackagesChanged()
+{
+   // reload the IDE if connections should be enabled but they were
+   // last reported as disabled
+   if (!s_reportedConnectionsEnabled && connectionsEnabled())
+   {
+      ClientEvent event(client_events::kReloadWithLastChanceSave);
+      module_context::enqueClientEvent(event);
+   }
+}
 
 } // anonymous namespace
 
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageInstalled("spark");
+   // track last reported state of connections enabled
+   s_reportedConnectionsEnabled = module_context::isPackageInstalled("rspark");
+
+   // return value
+   return s_reportedConnectionsEnabled;
 }
 
 Error initialize()
 {
-
+   // connect to events to track whether we should enable connections
+   module_context::events().onPackageLibraryMutated.connect(
+                                             onInstalledPackagesChanged);
 
    using boost::bind;
    using namespace module_context;
