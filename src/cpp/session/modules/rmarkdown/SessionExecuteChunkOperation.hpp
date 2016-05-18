@@ -34,6 +34,21 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
+namespace notebook {
+
+core::shell_utils::ShellCommand shellCommandForEngine(
+      const std::string& engine,
+      const core::FilePath& scriptPath)
+{
+   core::shell_utils::ShellCommand command(engine);
+   
+   if (engine == "Rscript")
+      command << "-f";
+   
+   command << scriptPath;
+   
+   return command;
+}
 
 class ExecuteChunkOperation : boost::noncopyable,
                               public boost::enable_shared_from_this<ExecuteChunkOperation>
@@ -68,10 +83,10 @@ private:
       Error error = Success();
       
       // ensure staging directory
-      FilePath stagingPath = notebook::chunkOutputPath(
+      FilePath stagingPath = chunkOutputPath(
                docId_,
                chunkId_ + kStagingSuffix,
-               notebook::ContextExact);
+               ContextExact);
       
       error = stagingPath.removeIfExists();
       if (error)
@@ -82,10 +97,10 @@ private:
          LOG_ERROR(error);
       
       // ensure regular directory
-      FilePath outputPath = notebook::chunkOutputPath(
+      FilePath outputPath = chunkOutputPath(
                docId_,
                chunkId_,
-               notebook::ContextExact);
+               ContextExact);
       
       error = outputPath.removeIfExists();
       if (error)
@@ -96,7 +111,7 @@ private:
          LOG_ERROR(error);
       
       // clean old chunk output
-      error = notebook::cleanChunkOutput(docId_, chunkId_, true);
+      error = cleanChunkOutput(docId_, chunkId_, true);
       if (error)
          LOG_ERROR(error);
    }
@@ -153,7 +168,7 @@ private:
    
    void onExit(int exitStatus)
    {
-      notebook::events().onChunkExecCompleted(docId_, chunkId_, notebook::notebookCtxId());
+      events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
       isRunning_ = false;
    }
    
@@ -172,7 +187,7 @@ private:
       using namespace core;
       
       // get path to cache file
-      FilePath target = notebook::chunkOutputFile(docId_, chunkId_, kChunkOutputText);
+      FilePath target = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
       
       // generate CSV to write
       std::vector<std::string> values;
@@ -186,10 +201,10 @@ private:
          LOG_ERROR(error);
       
       // emit client event
-      notebook::enqueueChunkOutput(
+      enqueueChunkOutput(
                docId_,
                chunkId_,
-               notebook::notebookCtxId(),
+               notebookCtxId(),
                kChunkOutputText,
                target);
    }
@@ -214,6 +229,7 @@ private:
    ShellCommand command_;
 };
 
+} // end namespace notebook
 } // end namespace rmarkdown
 } // end namespace modules
 } // end namespace session

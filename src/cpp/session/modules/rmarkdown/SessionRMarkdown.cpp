@@ -1306,6 +1306,15 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error executeRcppEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& code,
+                             json::JsonRpcResponse* pResponse)
+{
+   // TODO:
+   return Success();
+}
+
 Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
                                   json::JsonRpcResponse* pResponse)
 {
@@ -1321,40 +1330,42 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
       return error;
    }
    
-   if (string_utils::toLower(engine) == "python")
+   // handle Rcpp specially
+   if (engine == "Rcpp")
+      return executeRcppEngineChunk(docId, chunkId, code, pResponse);
+   
+   using namespace notebook;
+   typedef core::shell_utils::ShellCommand ShellCommand;
+   
+   // write code to temporary file
+   FilePath scriptPath = module_context::tempFile("chunk-code", "");
+   error = core::writeStringToFile(scriptPath, code);
+   if (error)
    {
-      // write code to temporary file
-      FilePath codePath = module_context::tempFile("python", ".py");
-      error = core::writeStringToFile(codePath, code);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-      
-      // create command to execute
-      core::shell_utils::ShellCommand command("python");
-      command << codePath.absolutePathNative();
-      
-      // create process
-      boost::shared_ptr<ExecuteChunkOperation> operation =
-            ExecuteChunkOperation::create(docId, chunkId, command);
-      
-      // create process options
-      core::system::ProcessOptions options;
-      
-      // create process callbacks
-      core::system::ProcessCallbacks callbacks = operation->processCallbacks();
-      
-      Error error = module_context::processSupervisor().runCommand(command,
-                                                                   options,
-                                                                   callbacks);
-      if (error)
-         LOG_ERROR(error);
-      
-      pResponse->setResult(true);
+      LOG_ERROR(error);
+      return error;
    }
    
+   // get command
+   ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath);
+
+   // create and run process
+   boost::shared_ptr<ExecuteChunkOperation> operation =
+         ExecuteChunkOperation::create(docId, chunkId, command);
+
+   // create process options
+   core::system::ProcessOptions options;
+
+   // create process callbacks
+   core::system::ProcessCallbacks callbacks = operation->processCallbacks();
+
+   error = module_context::processSupervisor().runCommand(command,
+                                                          options,
+                                                          callbacks);
+   if (error)
+      LOG_ERROR(error);
+
+   pResponse->setResult(true);
    return Success();
 }
 
