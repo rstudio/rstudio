@@ -1350,7 +1350,6 @@ public class TextEditingTargetNotebook
                @Override
                public void onResponseReceived(String response)
                {
-                  cleanCurrentExecChunk();
                   processChunkExecQueue();
                }
 
@@ -1358,7 +1357,6 @@ public class TextEditingTargetNotebook
                public void onError(ServerError error)
                {
                   Debug.logError(error);
-                  cleanCurrentExecChunk();
                   processChunkExecQueue();
                }
             });
@@ -1368,8 +1366,8 @@ public class TextEditingTargetNotebook
    //
    //    r label, foo=1, bar=2
    //
-   private static void parseChunkOptions(String line,
-                                         Map<String, String> chunkOptions)
+   public static void parseChunkOptions(String line,
+                                        Map<String, String> chunkOptions)
    {
       TextCursor cursor = new TextCursor(line);
       
