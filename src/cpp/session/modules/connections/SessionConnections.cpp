@@ -31,11 +31,21 @@ namespace connections {
 namespace {
 
 
+
+
+
 } // anonymous namespace
 
 
+bool connectionsEnabled()
+{
+   return module_context::isPackageInstalled("spark");
+}
+
 Error initialize()
 {
+
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

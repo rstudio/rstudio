@@ -45,16 +45,13 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
       super("Connections", shim);
       binder.bind(commands, shim);
       session_ = session;
-      uiPrefs_ = uiPrefs;
    }
    
    @Override
    public boolean isSuppressed()
    {
-      return !uiPrefs_.connectionsPaneEnabled().getValue();
+      return session_.getSessionInfo().getConnectionsEnabled();
    }
    
-   @SuppressWarnings("unused")
    private Session session_;
-   private UIPrefs uiPrefs_;
 }

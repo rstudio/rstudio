@@ -404,6 +404,10 @@ public class SessionInfo extends JavaScriptObject
       return this.clang_available;
    }-*/;
    
+   public final native boolean getConnectionsEnabled() /*-{
+      return this.connections_enabled;
+   }-*/;
+
    public final native boolean getShowHelpHome() /*-{
       return this.show_help_home;
    }-*/;

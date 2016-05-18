@@ -28,6 +28,8 @@ namespace session {
 namespace modules { 
 namespace connections {
    
+bool connectionsEnabled();
+
 core::Error initialize();
                        
 } // namespace connections
