@@ -996,16 +996,13 @@ public class ChunkOutputWidget extends Composite
             if (DOM.eventGetType(event) != Event.ONLOAD)
                return;
             
-            // if the image is of fixed size, just clamp its width while
-            // preserving its aspect ratio
+            // if the image is of fixed size, just clamp its width to the editor
+            // surface while preserving its aspect ratio
             if (isFixedSizePlotUrl(plot.getUrl()))
             {
                ImageElementEx img = plot.getElement().cast();
                img.getStyle().setProperty("height", "auto");
-               img.getStyle().setProperty("width", "100%");
-               img.getStyle().setProperty("maxWidth", 
-                     Math.min(ChunkOutputUi.MAX_PLOT_WIDTH, 
-                              img.naturalWidth()) + "px");
+               img.getStyle().setProperty("maxWidth", "100%");
             }
                
             plot.setVisible(true);
