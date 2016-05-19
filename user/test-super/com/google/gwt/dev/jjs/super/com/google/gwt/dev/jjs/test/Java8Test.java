@@ -1372,13 +1372,63 @@ public class Java8Test extends GWTTestCase {
     assertSame("a", function.f(0, pars));
   }
 
+  private static <T> T m(T s) {
+    return s;
+  }
+
+  static class Some<T> {
+    T s;
+    MyFunction2<T, T ,T> combine;
+    Some(T s, MyFunction2<T, T, T>  combine) {
+      this.s = s;
+      this.combine = combine;
+    }
+    public T m(T s2) {
+      return combine.apply(s, s2);
+    }
+    public T m1() {
+      return s;
+    }
+  }
+
   @FunctionalInterface
-  interface ToString {
-    String apply(StringBuilder t);
+  interface MyFunction1<T, U> {
+    U apply(T t);
+  }
+
+  @FunctionalInterface
+  interface MyFunction2<T, U, V> {
+    V apply(T t, U u);
   }
 
   public void testMethodReferenceImplementedInSuperclass() {
-    ToString toString = StringBuilder::toString;
+    MyFunction1<StringBuilder, String> toString = StringBuilder::toString;
     assertEquals("Hello", toString.apply(new StringBuilder("Hello")));
+  }
+
+  static MyFunction2<String, String, String> concat = (s,t) -> s + t;
+
+  public void testMethodReferenceWithGenericTypeParameters() {
+    testMethodReferencesWithGenericTypeParameters(
+        new Some<String>("Hell", concat), "Hell", "o", concat);
+  }
+
+  private static <T> void testMethodReferencesWithGenericTypeParameters(
+      Some<T> some, T t1, T t2, MyFunction2<T, T, T> combine) {
+    T t1t2 = combine.apply(t1, t2);
+
+    // Test all 4 flavours of methodReference
+    // 1. Static method
+    assertEquals(t1t2, ((MyFunction1<T, T>) Java8Test::m).apply(t1t2));
+    // 2. Qualified instance method
+    assertEquals(t1t2, ((MyFunction1<T, T>) some::m).apply(t2));
+    // 3. Unqualified instance method
+    assertEquals(t1, ((MyFunction1<Some<T>, T>) Some<T>::m1).apply(some));
+    assertEquals("Hello",
+        ((MyFunction1<Some<String>, String>)
+              Some<String>::m1).apply(new Some<>("Hello", concat)));
+    // 4. Constructor reference.
+    assertEquals(t1t2,
+        ((MyFunction2<T, MyFunction2<T, T, T>, Some<T>>) Some<T>::new).apply(t1t2, combine).m1());
   }
 }
