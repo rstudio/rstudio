@@ -225,7 +225,6 @@ private:
    bool terminationRequested_;
    std::string docId_;
    std::string chunkId_;
-   std::vector<boost::signals::connection> connections_;
    ShellCommand command_;
    
 private:
