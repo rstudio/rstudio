@@ -60,13 +60,15 @@ class ExecuteChunkOperation : boost::noncopyable,
 public:
    static boost::shared_ptr<ExecuteChunkOperation> create(const std::string& docId,
                                                           const std::string& chunkId,
-                                                          const ShellCommand& command)
+                                                          const ShellCommand& command,
+                                                          const core::FilePath& scriptPath)
    {
       boost::shared_ptr<ExecuteChunkOperation> pProcess =
             boost::shared_ptr<ExecuteChunkOperation>(new ExecuteChunkOperation(
                                                         docId,
                                                         chunkId,
-                                                        command));
+                                                        command,
+                                                        scriptPath));
       pProcess->registerProcess();
       return pProcess;
    }
@@ -75,11 +77,13 @@ private:
    
    ExecuteChunkOperation(const std::string& docId,
                          const std::string& chunkId,
-                         const ShellCommand& command)
+                         const ShellCommand& command,
+                         const core::FilePath& scriptPath)
       : terminationRequested_(false),
         docId_(docId),
         chunkId_(chunkId),
-        command_(command)
+        command_(command),
+        scriptPath_(scriptPath)
    {
       using namespace core;
       Error error = Success();
@@ -153,6 +157,7 @@ private:
    {
       events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
       deregisterProcess();
+      scriptPath_.removeIfExists();
    }
    
    void onStdout(const std::string& output)
@@ -208,6 +213,7 @@ private:
    std::string docId_;
    std::string chunkId_;
    ShellCommand command_;
+   core::FilePath scriptPath_;
    
 private:
    
@@ -263,7 +269,7 @@ core::Error runChunk(const std::string& docId,
 
    // create and run process
    boost::shared_ptr<ExecuteChunkOperation> operation =
-         ExecuteChunkOperation::create(docId, chunkId, command);
+         ExecuteChunkOperation::create(docId, chunkId, command, scriptPath);
 
    // generate process options
    core::system::ProcessOptions options;
