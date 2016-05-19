@@ -23,7 +23,19 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+
 #include <session/SessionModuleContext.hpp>
+
+// #define LOG_CONNECTION_EVENTS 1
+
+#ifdef LOG_CONNECTION_EVENTS
+#define LOG_CONNECTION_EVENT(event, type, host) \
+   std::cout << "Connection " << event << ": " << type << " - " << host << std::endl;
+#else
+#define LOG_CONNECTION_EVENT(event, type, host)
+#endif
 
 using namespace rstudio::core;
 
@@ -32,7 +44,39 @@ namespace session {
 namespace modules { 
 namespace connections {
 
+
 namespace {
+
+SEXP rs_connectionOpened(SEXP typeSEXP,
+                         SEXP hostSEXP,
+                         SEXP finderSEXP,
+                         SEXP connectCodeSEXP,
+                         SEXP disconnectCodeSEXP)
+{
+   std::string type = r::sexp::safeAsString(typeSEXP);
+   std::string host = r::sexp::safeAsString(hostSEXP);
+   std::string finder = r::sexp::safeAsString(finderSEXP);
+   std::string connectCode = r::sexp::safeAsString(connectCodeSEXP);
+   std::string disconnectCode = r::sexp::safeAsString(connectCodeSEXP);
+   LOG_CONNECTION_EVENT("Opened", type, host);
+   return R_NilValue;
+}
+
+SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
+{
+   std::string type = r::sexp::safeAsString(typeSEXP);
+   std::string host = r::sexp::safeAsString(hostSEXP);
+   LOG_CONNECTION_EVENT("Closed", type, host);
+   return R_NilValue;
+}
+
+SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
+{
+   std::string type = r::sexp::safeAsString(typeSEXP);
+   std::string host = r::sexp::safeAsString(hostSEXP);
+   LOG_CONNECTION_EVENT("Updated", type, host);
+   return R_NilValue;
+}
 
 // track last reported state of connections enabled
 bool s_reportedConnectionsEnabled = false;
@@ -62,6 +106,11 @@ bool connectionsEnabled()
 
 Error initialize()
 {
+   // register methods
+   RS_REGISTER_CALL_METHOD(rs_connectionOpened, 5);
+   RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
+   RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
+
    // connect to events to track whether we should enable connections
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);

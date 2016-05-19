@@ -12,3 +12,34 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+.rs.addFunction("validateCharacterParams", function(params) {
+   paramNames <- names(params)
+   for (param in paramNames) {
+      value <- params[[param]]
+      if (!is.character(value) || length(value) != 1)
+         stop(param, " must be a single element character vector", call. = FALSE)
+   }
+})
+
+options(connectionViewer = list(
+   connectionOpened = function(type, host, finder, connectCode, disconnectCode) {
+      .rs.validateCharacterParams(list(
+         type = type, host = host, connectCode = connectCode, 
+         disconnectCode = disconnectCode
+      ))
+      if (!is.function(finder))
+         stop("finder must be a function", call. = FALSE)
+      finder <- paste(deparse(finder), collapse = "\n")
+      invisible(.Call("rs_connectionOpened", type, host, finder, 
+                      connectCode, disconnectCode))
+   },
+   connectionClosed = function(type, host) {
+      .rs.validateCharacterParams(list(type = type, host = host))
+      invisible(.Call("rs_connectionClosed", type, host))
+   },
+   connectionUpdated = function(type, host) {
+      .rs.validateCharacterParams(list(type = type, host = host))
+      invisible(.Call("rs_connectionUpdated", type, host))
+   }
+))
