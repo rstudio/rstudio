@@ -183,7 +183,10 @@ private:
       // write to cache
       Error error = writeStringToFile(target, encoded);
       if (error)
+      {
          LOG_ERROR(error);
+         return;
+      }
       
       // emit client event
       enqueueChunkOutput(
