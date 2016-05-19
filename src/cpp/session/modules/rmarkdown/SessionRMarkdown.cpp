@@ -1413,18 +1413,6 @@ Error executeRcppEngineChunk(const std::string& docId,
    error = r::exec::executeString(execCode);
    if (error)
       LOG_ERROR(error);
-   else
-   {
-      // TODO:
-      std::vector<std::string> data;
-      data.push_back(safe_convert::numberToString(kChunkConsoleOutput));
-      data.push_back("> Compilation completed successfully.");
-      std::string encoded = text::encodeCsvLine(data) + "\n";
-
-      error = core::writeStringToFile(target, encoded);
-      if (error)
-         LOG_ERROR(error);
-   }
    
    // forward success / failure to chunk
    notebook::enqueueChunkOutput(
