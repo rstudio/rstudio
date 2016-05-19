@@ -23,7 +23,7 @@
 })
 
 options(connectionViewer = list(
-   connectionOpened = function(type, host, finder, connectCode, disconnectCode) {
+   connectionOpened = function(type, host, finder, connectCode, disconnectCode, ...) {
       .rs.validateCharacterParams(list(
          type = type, host = host, connectCode = connectCode, 
          disconnectCode = disconnectCode
@@ -34,11 +34,11 @@ options(connectionViewer = list(
       invisible(.Call("rs_connectionOpened", type, host, finder, 
                       connectCode, disconnectCode))
    },
-   connectionClosed = function(type, host) {
+   connectionClosed = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))
       invisible(.Call("rs_connectionClosed", type, host))
    },
-   connectionUpdated = function(type, host) {
+   connectionUpdated = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))
       invisible(.Call("rs_connectionUpdated", type, host))
    }
