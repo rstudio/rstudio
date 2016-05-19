@@ -113,24 +113,20 @@ public:
       
       callbacks.onStarted = boost::bind(
                &ExecuteChunkOperation::onStarted,
-               shared_from_this(),
-               _1);
+               shared_from_this());
       
       callbacks.onContinue = boost::bind(
                &ExecuteChunkOperation::onContinue,
-               shared_from_this(),
-               _1);
+               shared_from_this());
       
       callbacks.onStdout = boost::bind(
                &ExecuteChunkOperation::onStdout,
                shared_from_this(),
-               _1,
                _2);
       
       callbacks.onStderr = boost::bind(
                &ExecuteChunkOperation::onStderr,
                shared_from_this(),
-               _1,
                _2);
       
       callbacks.onExit = boost::bind(
@@ -145,12 +141,12 @@ private:
    
    enum OutputType { OUTPUT_STDOUT, OUTPUT_STDERR };
    
-   void onStarted(ProcessOperations& operations)
+   void onStarted()
    {
       isRunning_ = true;
    }
    
-   bool onContinue(ProcessOperations& operations)
+   bool onContinue()
    {
       return !terminationRequested_;
    }
@@ -162,12 +158,12 @@ private:
       isRunning_ = false;
    }
    
-   void onStdout(ProcessOperations& operations, const std::string& output)
+   void onStdout(const std::string& output)
    {
       onText(output, OUTPUT_STDOUT);
    }
    
-   void onStderr(ProcessOperations& operations, const std::string& output)
+   void onStderr(const std::string& output)
    {
       onText(output, OUTPUT_STDERR);
    }
