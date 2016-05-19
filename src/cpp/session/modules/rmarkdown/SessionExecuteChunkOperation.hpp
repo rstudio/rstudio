@@ -85,20 +85,6 @@ private:
       using namespace core;
       Error error = Success();
       
-      // ensure staging directory
-      FilePath stagingPath = chunkOutputPath(
-               docId_,
-               chunkId_ + kStagingSuffix,
-               ContextExact);
-      
-      error = stagingPath.removeIfExists();
-      if (error)
-         LOG_ERROR(error);
-      
-      error = stagingPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-      
       // ensure regular directory
       FilePath outputPath = chunkOutputPath(
                docId_,
