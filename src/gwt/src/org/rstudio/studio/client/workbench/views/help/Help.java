@@ -281,7 +281,7 @@ public class Help extends BasePresenter implements ShowHelpHandler
 
    void onProfileHelp()
    {
-      globalDisplay_.openRStudioLink("profiling_help");
+      globalDisplay_.openRStudioLink("profiling_help", false);
    }
 
    private Display view_ ;
