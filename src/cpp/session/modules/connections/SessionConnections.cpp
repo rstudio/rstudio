@@ -63,7 +63,6 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
    connectionJson["finder"] = finder;
    connectionJson["connectCode"] = connectCode;
    connectionJson["disconnectCode"] = disconnectCode;
-   connectionJson["connected"] = true;
 
    ClientEvent event(client_events::kConnectionOpened, connectionJson);
    module_context::enqueClientEvent(event);

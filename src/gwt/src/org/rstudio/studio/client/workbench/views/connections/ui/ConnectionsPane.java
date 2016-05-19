@@ -108,10 +108,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          public String getValue(Connection connection)
          {
-            if (connection.isConnected())
-               return "Connected";
-            else
-               return "Disconnected";
+            return "";
          }
       };
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
@@ -133,7 +130,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          protected boolean showButton(Connection connection)
          {
-            return connection.isConnected();
+            return true;
          }
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));

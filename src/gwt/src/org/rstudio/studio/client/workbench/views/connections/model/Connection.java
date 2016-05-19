@@ -42,12 +42,4 @@ public class Connection extends JavaScriptObject
    public final native String getDisconnectCode() /*-{
       return this.disconnect_code;
    }-*/;
-   
-   public final native boolean isConnected() /*-{
-      return this.connected;
-   }-*/;
-   
-   public final native void setConnected(boolean connected) /*-{
-      this.connected = connected;
-   }-*/;
 }

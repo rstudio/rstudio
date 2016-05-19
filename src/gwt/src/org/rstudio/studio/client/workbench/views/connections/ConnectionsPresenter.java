@@ -101,7 +101,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            boolean isConnected = display_.getSelectedConnection().isConnected();
+            boolean isConnected = false;
             commands.connectConnection().setVisible(!isConnected);
             commands.disconnectConnection().setVisible(isConnected);
          }
