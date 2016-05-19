@@ -3614,9 +3614,9 @@ public class TextEditingTarget implements
             {
                if (i == 0)
                   isNotebook = true;
-               formatList.add("Notebook");
-               valueList.add(format);
-               extensionList.add(".nb.html");
+               formatList.add(0, "Notebook");
+               valueList.add(0, format);
+               extensionList.add(0, ".nb.html");
                continue;
             }
             if (!valueList.contains(format))
