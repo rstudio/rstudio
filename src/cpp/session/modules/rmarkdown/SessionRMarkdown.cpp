@@ -1315,6 +1315,15 @@ Error executeRcppEngineChunk(const std::string& docId,
    return Success();
 }
 
+Error executeStanEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& code,
+                             json::JsonRpcResponse* pResponse)
+{
+   // TODO:
+   return Success();
+}
+
 Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
                                   json::JsonRpcResponse* pResponse)
 {
@@ -1333,6 +1342,8 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
    // handle Rcpp specially
    if (engine == "Rcpp")
       return executeRcppEngineChunk(docId, chunkId, code, pResponse);
+   else if (engine == "stan")
+      return executeStanEngineChunk(docId, chunkId, code, pResponse);
    
    notebook::runChunk(docId, chunkId, engine, code);
    return Success();
