@@ -1418,9 +1418,16 @@ public class TextEditingTargetNotebook
                                         Map<String, String> chunkOptions)
    {
       // strip '```{' and '}' if necessary
+      // some callers only pass in the leading '```{'
       line = line.trim();
-      if (line.startsWith("```{") && line.endsWith("}"))
-         line = line.substring(4, line.length() - 1);
+      if (line.startsWith("```{"))
+      {
+         int endIndex = line.length();
+         if (line.endsWith("}"))
+            endIndex--;
+         
+         line = line.substring(4, endIndex);
+      }
       
       TextCursor cursor = new TextCursor(line);
       
