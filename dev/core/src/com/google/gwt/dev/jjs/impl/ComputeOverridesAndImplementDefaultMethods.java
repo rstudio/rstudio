@@ -138,15 +138,14 @@ public class ComputeOverridesAndImplementDefaultMethods {
     // Compute interface overrides, fix accidental overrides and implement default methods.
     for (String signature : interfaceMethodsBySignature.keySet()) {
       Collection<JMethod> interfaceMethods = interfaceMethodsBySignature.get(signature);
-      JMethod baseImplementingMethod = polymorphicMethodsByExtendedSignature.get(signature);
-      if (baseImplementingMethod == null) {
+      JMethod implementingMethod = polymorphicMethodsByExtendedSignature.get(signature);
+      if (implementingMethod == null) {
         // See if there is a package private method whose visibility is made public by the
         // override (can actually only happen for abstract methods, as it is a compiler error
         // otherwise.
-        baseImplementingMethod = polymorphicMethodsByExtendedSignature.get(
+        implementingMethod = polymorphicMethodsByExtendedSignature.get(
             computePackagePrivateSignature(type.getPackageName(), signature));
       }
-      JMethod implementingMethod = baseImplementingMethod;
       if (implementingMethod == null || implementingMethod.getEnclosingType() != type) {
         implementingMethod = maybeAddSyntheticOverride(type, implementingMethod, interfaceMethods);
         if (implementingMethod == null) {
@@ -246,17 +245,17 @@ public class ComputeOverridesAndImplementDefaultMethods {
    * interfaces when is only one declaration of the method in the super interface hierarchy.
    */
   private JMethod maybeAddSyntheticOverride(
-      JDeclaredType type, JMethod method, Collection<JMethod> interfaceMethods) {
+      JDeclaredType type, JMethod superMethod, Collection<JMethod> interfaceMethods) {
 
     // If there is a default implementation it will be first and the only default in the collection
     // (as multiple "active" defaults are a compiler error).
     JMethod interfaceMethod = interfaceMethods.iterator().next();
     assert !interfaceMethod.isStatic();
 
-    JMethod implementingMethod = method;
+    JMethod implementingMethod = superMethod;
 
     // Only populate classes with stubs, forwarding methods or default implementations.
-    if (needsStubMethod(type, method, interfaceMethod)) {
+    if (needsDefaultImplementationStubMethod(type, superMethod, interfaceMethod)) {
 
       assert FluentIterable.from(interfaceMethods).filter(new Predicate<JMethod>() {
         @Override
@@ -277,25 +276,25 @@ public class ComputeOverridesAndImplementDefaultMethods {
       implementingMethod = JjsUtils.createForwardingMethod(type, interfaceMethod);
 
       defaultMethodsByForwardingMethod.put(implementingMethod, interfaceMethod);
-    } else if (method == null && interfaceMethod.isAbstract() &&
+    } else if (superMethod == null && interfaceMethod.isAbstract() &&
         (type instanceof JClassType || interfaceMethods.size() > 1)) {
       // It is an abstract stub
       implementingMethod = JjsUtils.createSyntheticAbstractStub(type, interfaceMethod);
-    } else if (type instanceof JClassType && method.getEnclosingType() != type &&
+    } else if (type instanceof JClassType && superMethod.getEnclosingType() != type &&
         !FluentIterable.from(interfaceMethods)
-            .allMatch(Predicates.in(method.getOverriddenMethods()))) {
+            .allMatch(Predicates.in(superMethod.getOverriddenMethods()))) {
         // the implementing method does not override all interface declared methods with the same
         // signature.
-      if (method.isAbstract()) {
+      if (superMethod.isAbstract()) {
         implementingMethod = JjsUtils.createSyntheticAbstractStub(type, interfaceMethod);
       } else {
         // Creates a forwarding method to act as the place holder for this accidental override.
-        implementingMethod = JjsUtils.createForwardingMethod(type, method);
+        implementingMethod = JjsUtils.createForwardingMethod(type, superMethod);
         implementingMethod.setSyntheticAccidentalOverride();
 
-        if (method.isFinal()) {
+        if (superMethod.isFinal()) {
           // To keep consistency we reset the final mark
-          method.setFinal(false);
+          superMethod.setFinal(false);
         }
       }
     }
@@ -304,23 +303,34 @@ public class ComputeOverridesAndImplementDefaultMethods {
       polymorphicMethodsByExtendedSignatureByType.get(type)
           .put(implementingMethod.getSignature(), implementingMethod);
 
-      if (method != null && method != implementingMethod) {
-        addOverridingMethod(method, implementingMethod);
+      if (superMethod != null && superMethod != implementingMethod) {
+        addOverridingMethod(superMethod, implementingMethod);
       }
     }
     return implementingMethod;
   }
 
   /**
-   * Return true if the type {@code type} need to replace {@code method} (possibly {@code null})
-   * with a (forwarding) stub due to {@code interfaceMethod}?
+   * Return true if the type {@code type} need to replace {@code superMethod} (possibly {@code null})
+   * with a (forwarding) stub due to default {@code interfaceMethod}.
    */
-  private boolean needsStubMethod(JDeclaredType type, JMethod method, JMethod interfaceMethod) {
-    return type instanceof JClassType &&
-        interfaceMethod.isDefaultMethod() && (method == null ||
-        method.isDefaultMethod() &&
-            defaultMethodsByForwardingMethod.keySet().contains(method) &&
-            defaultMethodsByForwardingMethod.get(method) != interfaceMethod);
+  private boolean needsDefaultImplementationStubMethod(
+      JDeclaredType type, JMethod superMethod, JMethod interfaceMethod) {
+    if (!interfaceMethod.isDefaultMethod() || type instanceof JInterfaceType) {
+      // Only implement default methods in classes.
+      return false;
+    }
+    if (superMethod == null || (superMethod.isAbstract() && superMethod.isSynthetic())) {
+      // The interface method is not implemented or an abstract stub was synthesized as the super
+      // (not necessarily direct) implementation.
+      return true;
+    }
+    JMethod superForwardingMethod = defaultMethodsByForwardingMethod.get(superMethod);
+    // A default superMethod stub is in place in the supertype, and needs to be replaced if it does
+    // not forward to the required default implementation.
+    return superForwardingMethod != null
+        && superForwardingMethod.isDefaultMethod()
+        && superForwardingMethod != interfaceMethod;
   }
 
   /**

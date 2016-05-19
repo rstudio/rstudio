@@ -198,11 +198,6 @@ public class JjsUtils {
     JMethod forwardingMethod = createEmptyMethodFromExample(type, methodToDelegateTo, false);
     forwardingMethod.setForwarding();
 
-    // This is a synthetic forwading method due to a default.
-    if (methodToDelegateTo.isDefaultMethod()) {
-      forwardingMethod.setDefaultMethod();
-    }
-
     if (methodToDelegateTo.isJsOverlay() && type.isJsNative()) {
       forwardingMethod.isJsOverlay();
     }
