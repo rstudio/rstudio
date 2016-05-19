@@ -487,12 +487,6 @@ public class TextEditingTargetRMarkdownHelper
                RmdOutputFormat.OUTPUT_HTML_DOCUMENT :
                outFormats.get(0);
          
-         // if the top format is a notebook, use the secondary format to drive
-         // the UI (or fall back to HTML)
-         if (outFormat == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK)
-            outFormat = outFormats.size() > 1 ?
-                  outFormats.get(1) : RmdOutputFormat.OUTPUT_HTML_DOCUMENT;
-
          RmdTemplate template = getTemplateForFormat(outFormat);
          if (template == null)
             return null;

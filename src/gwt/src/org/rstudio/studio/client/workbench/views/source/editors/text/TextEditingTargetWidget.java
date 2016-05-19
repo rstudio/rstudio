@@ -890,7 +890,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setLeftImage(
             commands_.newRNotebook().getImageResource());
       setRmdFormatButtonVisible(true);
-      showRmdViewerMenuItems(true, false, true, RmdOutput.TYPE_NOTEBOOK);
+      showRmdViewerMenuItems(true, true, true, RmdOutput.TYPE_NOTEBOOK);
    }
    
    private void setRmdFormatButtonVisible(boolean visible)
