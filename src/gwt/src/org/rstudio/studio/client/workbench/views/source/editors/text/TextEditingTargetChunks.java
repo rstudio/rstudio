@@ -224,6 +224,10 @@ public class TextEditingTargetChunks
    
    private boolean isExecutableKnitrEngine(String engine)
    {
+      // TODO: only enable non-R engine work for notebooks for now
+      if (!target_.getDocDisplay().showChunkOutputInline())
+         return engine.equals("r");
+      
       return RE_RUNNABLE_ENGINES.indexOf(engine + "|") != -1;
    }
    
