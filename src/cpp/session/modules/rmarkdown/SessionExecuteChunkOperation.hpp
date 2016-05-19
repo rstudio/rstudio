@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/StringUtils.hpp>
 #include <core/text/CsvParser.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
@@ -45,7 +46,7 @@ core::shell_utils::ShellCommand shellCommandForEngine(
    if (engine == "Rscript")
       command << "-f";
    
-   command << scriptPath;
+   command << core::string_utils::utf8ToSystem(scriptPath.absolutePathNative());
    
    return command;
 }
