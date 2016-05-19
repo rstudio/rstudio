@@ -1342,24 +1342,6 @@ private:
    std::string chunkId_;
 };
 
-class DisconnectScope
-{
-public:
-   DisconnectScope(boost::signals::connection* pConnection)
-      : pConnection_(pConnection)
-   {
-   }
-   
-   ~DisconnectScope()
-   {
-      pConnection_->disconnect();
-   }
-   
-private:
-   boost::signals::connection* pConnection_;
-   
-};
-
 void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
                                    const std::string& output,
                                    FilePath targetPath)
@@ -1413,13 +1395,12 @@ Error executeRcppEngineChunk(const std::string& docId,
    FilePath target = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
    
    // capture console output, error
-   boost::signals::connection consoleHandler =
+   boost::signals::scoped_connection consoleHandler =
          module_context::events().onConsoleOutput.connect(
             boost::bind(sourceCppConsoleOutputHandler,
                         _1,
                         _2,
                         target));
-   DisconnectScope disconnectScope(&consoleHandler);
 
    // call Rcpp::sourceCpp on code
    std::string escaped = boost::regex_replace(
