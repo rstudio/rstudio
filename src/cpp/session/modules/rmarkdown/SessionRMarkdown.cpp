@@ -1342,6 +1342,48 @@ private:
    std::string chunkId_;
 };
 
+class DisconnectScope
+{
+public:
+   DisconnectScope(boost::signals::connection* pConnection)
+      : pConnection_(pConnection)
+   {
+   }
+   
+   ~DisconnectScope()
+   {
+      pConnection_->disconnect();
+   }
+   
+private:
+   boost::signals::connection* pConnection_;
+   
+};
+
+void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
+                                   const std::string& output,
+                                   FilePath targetPath)
+{
+   using namespace module_context;
+   
+   // TODO: we only want to capture + report errors?
+   if (type == ConsoleOutputNormal)
+      return;
+   
+   std::vector<std::string> data;
+   data.push_back(safe_convert::numberToString(
+                     type == ConsoleOutputNormal
+                     ? kChunkConsoleOutput
+                     : kChunkConsoleError));
+   data.push_back(output);
+   
+   std::string encoded = text::encodeCsvLine(data) + "\n";
+   Error error = writeStringToFile(
+            targetPath, encoded, string_utils::LineEndingPassthrough, false);
+   if (error)
+      LOG_ERROR(error);
+}
+
 Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
                              const std::string& code,
@@ -1352,7 +1394,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    
    // always ensure we emit a 'execution complete' event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
-
+   
    // prepare chunk directory
    FilePath outputPath = notebook::chunkOutputPath(
             docId,
@@ -1367,6 +1409,18 @@ Error executeRcppEngineChunk(const std::string& docId,
    if (error)
       LOG_ERROR(error);
    
+   // prepare to write chunk cache output
+   FilePath target = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
+   
+   // capture console output, error
+   boost::signals::connection consoleHandler =
+         module_context::events().onConsoleOutput.connect(
+            boost::bind(sourceCppConsoleOutputHandler,
+                        _1,
+                        _2,
+                        target));
+   DisconnectScope disconnectScope(&consoleHandler);
+
    // call Rcpp::sourceCpp on code
    std::string escaped = boost::regex_replace(
             code,
@@ -1378,6 +1432,26 @@ Error executeRcppEngineChunk(const std::string& docId,
    error = r::exec::executeString(execCode);
    if (error)
       LOG_ERROR(error);
+   else
+   {
+      // TODO:
+      std::vector<std::string> data;
+      data.push_back(safe_convert::numberToString(kChunkConsoleOutput));
+      data.push_back("> Compilation completed successfully.");
+      std::string encoded = text::encodeCsvLine(data) + "\n";
+
+      error = core::writeStringToFile(target, encoded);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   // forward success / failure to chunk
+   notebook::enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebook::notebookCtxId(),
+            kChunkOutputText,
+            target);
    
    return error;
 }
