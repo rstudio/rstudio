@@ -23,6 +23,7 @@
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
@@ -44,6 +45,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "RMarkdownPresentation.hpp"
+#include "SessionExecuteChunkOperation.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -1318,8 +1320,104 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
+class ChunkExecCompletedScope
+{
+public:
+   ChunkExecCompletedScope(const std::string& docId,
+                           const std::string& chunkId)
+      : docId_(docId), chunkId_(chunkId)
+   {
+   }
+   
+   ~ChunkExecCompletedScope()
+   {
+      notebook::events().onChunkExecCompleted(
+               docId_,
+               chunkId_,
+               notebook::notebookCtxId());
+   }
+   
+private:
+   std::string docId_;
+   std::string chunkId_;
+};
 
+Error executeRcppEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& code,
+                             json::JsonRpcResponse* pResponse)
+{
+   // forward declare error
+   Error error = Success();
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
 
+   // prepare chunk directory
+   FilePath outputPath = notebook::chunkOutputPath(
+            docId,
+            chunkId,
+            notebook::ContextExact);
+
+   error = outputPath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = outputPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   
+   // write code to tempfile
+   FilePath tempPath = module_context::tempFile("rcpp-chunk", "cpp");
+   error = core::writeStringToFile(tempPath, code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   RemoveOnExitScope fileScope(tempPath, ERROR_LOCATION);
+   
+   // call Rcpp::sourceCpp on file
+   error = r::exec::executeString("Rcpp::sourceCpp('" + tempPath.absolutePath() + "')");
+   if (error)
+      LOG_ERROR(error);
+   
+   return error;
+}
+
+Error executeStanEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& code,
+                             json::JsonRpcResponse* pResponse)
+{
+   // TODO:
+   return Success();
+}
+
+Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse* pResponse)
+{
+   std::string docId, chunkId, engine, code;
+   Error error = json::readParams(request.params,
+                                  &docId,
+                                  &chunkId,
+                                  &engine,
+                                  &code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   // handle Rcpp specially
+   if (engine == "Rcpp")
+      return executeRcppEngineChunk(docId, chunkId, code, pResponse);
+   else if (engine == "stan")
+      return executeStanEngineChunk(docId, chunkId, code, pResponse);
+   
+   notebook::runChunk(docId, chunkId, engine, code);
+   return Success();
+}
 
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
@@ -1420,6 +1518,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
+      (bind(registerRpcMethod, "execute_alternate_engine_chunk", executeAlternateEngineChunk))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

@@ -22,6 +22,9 @@ define("mode/rmarkdown_highlight_rules", ["require", "exports", "module"], funct
 var oop = require("ace/lib/oop");
 var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
+var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
+var PythonHighlightRules = require("ace/mode/python_highlight_rules").PythonHighlightRules;
+var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
 var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
@@ -59,6 +62,36 @@ var RMarkdownHighlightRules = function() {
       c_cppHighlightRules,
       "r-cpp",
       this.$reCppChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed perl highlight rules
+   Utils.embedRules(
+      this,
+      PerlHighlightRules,
+      "perl",
+      this.$rePerlChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed python highlight rules
+   Utils.embedRules(
+      this,
+      PythonHighlightRules,
+      "python",
+      this.$rePythonChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed ruby highlight rules
+   Utils.embedRules(
+      this,
+      RubyHighlightRules,
+      "ruby",
+      this.$reRubyChunkStartString,
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
@@ -115,6 +148,15 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
    this.$reMarkdownChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{\\s*block(?:.*)\\}\\s*$";
+
+   this.$rePerlChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{perl\\b(?:.*)\\}\\s*$";
+
+   this.$rePythonChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{python\\b(?:.*)\\}\\s*$";
+
+   this.$reRubyChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{ruby\\b(?:.*)\\}\\s*$";
 
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";

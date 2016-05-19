@@ -34,8 +34,6 @@
 
 #include <iostream>
 
-#define kStagingSuffix "_t"
-
 using namespace rstudio::core;
 
 namespace rstudio {

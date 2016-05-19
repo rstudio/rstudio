@@ -4256,6 +4256,21 @@ public class RemoteServer implements Server
       params.set(2, new JSONNumber(pixelWidth));
       sendRequest(RPC_SCOPE, "replay_notebook_plots", params, requestCallback);
    }
+   
+   @Override
+   public void executeAlternateEngineChunk(String docId,
+                                           String chunkId,
+                                           String engine,
+                                           String code,
+                                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      params.set(2, new JSONString(engine));
+      params.set(3, new JSONString(code));
+      sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
+   }
 
    @Override
    public void getRmdOutputInfo(String input,
