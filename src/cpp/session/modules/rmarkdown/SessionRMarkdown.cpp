@@ -23,6 +23,7 @@
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
@@ -1306,13 +1307,69 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
+class ChunkExecCompletedScope
+{
+public:
+   ChunkExecCompletedScope(const std::string& docId,
+                           const std::string& chunkId)
+      : docId_(docId), chunkId_(chunkId)
+   {
+   }
+   
+   ~ChunkExecCompletedScope()
+   {
+      notebook::events().onChunkExecCompleted(
+               docId_,
+               chunkId_,
+               notebook::notebookCtxId());
+   }
+   
+private:
+   std::string docId_;
+   std::string chunkId_;
+};
+
 Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
                              const std::string& code,
                              json::JsonRpcResponse* pResponse)
 {
-   // TODO:
-   return Success();
+   // forward declare error
+   Error error = Success();
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+
+   // prepare chunk directory
+   FilePath outputPath = notebook::chunkOutputPath(
+            docId,
+            chunkId,
+            notebook::ContextExact);
+
+   error = outputPath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = outputPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   
+   // write code to tempfile
+   FilePath tempPath = module_context::tempFile("rcpp-chunk", "cpp");
+   error = core::writeStringToFile(tempPath, code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   RemoveOnExitScope fileScope(tempPath, ERROR_LOCATION);
+   
+   // call Rcpp::sourceCpp on file
+   error = r::exec::executeString("Rcpp::sourceCpp('" + tempPath.absolutePath() + "')");
+   if (error)
+      LOG_ERROR(error);
+   
+   return error;
 }
 
 Error executeStanEngineChunk(const std::string& docId,
