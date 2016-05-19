@@ -284,11 +284,15 @@ core::Error runChunk(const std::string& docId,
    boost::shared_ptr<ExecuteChunkOperation> operation =
          ExecuteChunkOperation::create(docId, chunkId, command);
 
+   // generate process options
    core::system::ProcessOptions options;
-   core::system::ProcessCallbacks callbacks = operation->processCallbacks();
-   error = module_context::processSupervisor().runCommand(command,
-                                                          options,
-                                                          callbacks);
+   options.terminateChildren = true;
+   
+   error = module_context::processSupervisor().runCommand(
+            command,
+            options,
+            operation->processCallbacks());
+   
    if (error)
       LOG_ERROR(error);
    
