@@ -312,8 +312,9 @@
       # the user will have to add manually
     })
     if (!is.null(deploy_frame)) {
-      file_list <- c(file_list, deploy_frame$path, basename(t))
-    }
+      file_list <- c(file_list, deploy_frame$path)
+    } 
+    file_list <- c(file_list, basename(t))
   }
 
   # discard any duplicates (the same resource may be depended upon by multiple
