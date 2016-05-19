@@ -1101,7 +1101,8 @@ public class TextEditingTargetNotebook
             // removing the final line of a chunk). create a new linewidget in
             // place of the old one (but re-use the output widget so the output
             // is identical)
-            if (scope.getEnd().getRow() == terminalLine)
+            if (scope != null &&
+                scope.getEnd().getRow() == terminalLine)
             {
                ChunkDefinition def = (ChunkDefinition)widget.getData();
                def.setRow(terminalLine);
