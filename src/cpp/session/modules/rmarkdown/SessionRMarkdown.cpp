@@ -1367,18 +1367,15 @@ Error executeRcppEngineChunk(const std::string& docId,
    if (error)
       LOG_ERROR(error);
    
-   // write code to tempfile
-   FilePath tempPath = module_context::tempFile("rcpp-chunk", "cpp");
-   error = core::writeStringToFile(tempPath, code);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   RemoveOnExitScope fileScope(tempPath, ERROR_LOCATION);
+   // call Rcpp::sourceCpp on code
+   std::string escaped = boost::regex_replace(
+            code,
+            boost::regex("(\\\\|\")"),
+            "\\\\$1");
    
-   // call Rcpp::sourceCpp on file
-   error = r::exec::executeString("Rcpp::sourceCpp('" + tempPath.absolutePath() + "')");
+   std::string execCode =
+         "Rcpp::sourceCpp(code = \"" + escaped + "\")";
+   error = r::exec::executeString(execCode);
    if (error)
       LOG_ERROR(error);
    
