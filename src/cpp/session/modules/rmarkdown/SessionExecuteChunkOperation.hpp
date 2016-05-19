@@ -76,8 +76,7 @@ private:
    ExecuteChunkOperation(const std::string& docId,
                          const std::string& chunkId,
                          const ShellCommand& command)
-      : isRunning_(false),
-        terminationRequested_(false),
+      : terminationRequested_(false),
         docId_(docId),
         chunkId_(chunkId),
         command_(command)
@@ -143,7 +142,6 @@ private:
    
    void onStarted()
    {
-      isRunning_ = true;
    }
    
    bool onContinue()
@@ -155,7 +153,6 @@ private:
    {
       events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
       deregisterProcess();
-      isRunning_ = false;
    }
    
    void onStdout(const std::string& output)
@@ -177,7 +174,9 @@ private:
       
       // generate CSV to write
       std::vector<std::string> values;
-      values.push_back(outputType == OUTPUT_STDOUT ? "1" : "2");
+      values.push_back(outputType == OUTPUT_STDOUT
+               ? safe_convert::numberToString(kChunkConsoleOutput)
+               : safe_convert::numberToString(kChunkConsoleError));
       values.push_back(output);
       std::string encoded = text::encodeCsvLine(values) + "\n";
       
@@ -197,13 +196,11 @@ private:
    
 public:
    
-   bool isRunning() const { return isRunning_; }
    void terminate() { terminationRequested_ = true; }
    bool terminationRequested() const { return terminationRequested_; }
    const std::string& chunkId() const { return chunkId_; }
    
 private:
-   bool isRunning_;
    bool terminationRequested_;
    std::string docId_;
    std::string chunkId_;
