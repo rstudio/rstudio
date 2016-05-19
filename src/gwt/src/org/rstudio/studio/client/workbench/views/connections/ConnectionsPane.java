@@ -84,7 +84,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          public String getValue(Connection connection)
          {
-            return connection.getType();
+            return connection.getId().getType();
          }
       };
       connectionsDataGrid_.addColumn(typeColumn_, new TextHeader("Type"));
@@ -327,7 +327,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(connectionName_);
       
       connectionName_.setText(
-            connection.getType() + ": " + connection.getName());
+            connection.getId().getType() + ": " + connection.getName());
       
    }
    

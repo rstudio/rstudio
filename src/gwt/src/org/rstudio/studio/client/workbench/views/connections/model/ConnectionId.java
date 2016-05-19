@@ -1,5 +1,5 @@
 /*
- * Connection.java
+ * ConnectionId.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,37 +17,35 @@ package org.rstudio.studio.client.workbench.views.connections.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class Connection extends JavaScriptObject
+public class ConnectionId extends JavaScriptObject
 { 
-   protected Connection()
+   protected ConnectionId()
    {
    }
    
-   public final native ConnectionId getId() /*-{
-      return this.id;
+   public static native final ConnectionId create(String type, String host) /*-{ 
+      return {
+         type: type,
+         host: host
+      }; 
+    }-*/;
+   
+   public final native String getType() /*-{
+      return this.type;
+   }-*/;
+  
+   public final native String getHost() /*-{
+      return this.host;
    }-*/;
    
-   public final native String getName() /*-{
-      return this.name || this.id.host;
-   }-*/;
+   public final String asString()
+   {
+      return getType() + " - " + getHost();
+   }
    
-   public final native String getFinder() /*-{
-      return this.finder;
-   }-*/;
-   
-   public final native String getConnectCode() /*-{
-      return this.connect_code;
-   }-*/;
-   
-   public final native String getDisconnectCode() /*-{
-      return this.disconnect_code;
-   }-*/;
-   
-   public final native boolean isConnected() /*-{
-      return this.connected;
-   }-*/;
-   
-   public final native void setConnected(boolean connected) /*-{
-      this.connected = connected;
-   }-*/;
+   public final boolean equalTo(ConnectionId other)
+   {
+      return getType().equals(other.getType()) && 
+                       getHost().equals(other.getHost());
+   }
 }

@@ -28,15 +28,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// #define LOG_CONNECTION_EVENTS 1
-
-#ifdef LOG_CONNECTION_EVENTS
-#define LOG_CONNECTION_EVENT(event, type, host) \
-   std::cout << "Connection " << event << ": " << type << " - " << host << std::endl;
-#else
-#define LOG_CONNECTION_EVENT(event, type, host)
-#endif
-
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -46,6 +37,14 @@ namespace connections {
 
 
 namespace {
+
+json::Object connectionIdJson(const std::string& type, const std::string& host)
+{
+   json::Object idJson;
+   idJson["type"] = type;
+   idJson["host"] = host;
+   return idJson;
+}
 
 SEXP rs_connectionOpened(SEXP typeSEXP,
                          SEXP hostSEXP,
@@ -57,8 +56,18 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
    std::string host = r::sexp::safeAsString(hostSEXP);
    std::string finder = r::sexp::safeAsString(finderSEXP);
    std::string connectCode = r::sexp::safeAsString(connectCodeSEXP);
-   std::string disconnectCode = r::sexp::safeAsString(connectCodeSEXP);
-   LOG_CONNECTION_EVENT("Opened", type, host);
+   std::string disconnectCode = r::sexp::safeAsString(disconnectCodeSEXP);
+
+   json::Object connectionJson;
+   connectionJson["id"] = connectionIdJson(type, host);
+   connectionJson["finder"] = finder;
+   connectionJson["connectCode"] = connectCode;
+   connectionJson["disconnectCode"] = disconnectCode;
+   connectionJson["connected"] = true;
+
+   ClientEvent event(client_events::kConnectionOpened, connectionJson);
+   module_context::enqueClientEvent(event);
+
    return R_NilValue;
 }
 
@@ -66,7 +75,11 @@ SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
-   LOG_CONNECTION_EVENT("Closed", type, host);
+
+   ClientEvent event(client_events::kConnectionClosed,
+                     connectionIdJson(type, host));
+   module_context::enqueClientEvent(event);
+
    return R_NilValue;
 }
 
@@ -74,7 +87,11 @@ SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
-   LOG_CONNECTION_EVENT("Updated", type, host);
+
+   ClientEvent event(client_events::kConnectionUpdated,
+                     connectionIdJson(type, host));
+   module_context::enqueClientEvent(event);
+
    return R_NilValue;
 }
 

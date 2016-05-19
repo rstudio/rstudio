@@ -145,6 +145,10 @@ class ClientEvent extends JavaScriptObject
    public static final String ChunkPlotRefreshed = "chunk_plot_refreshed";
    public static final String ChunkPlotRefreshFinished = "chunk_plot_refresh_finished";
    public static final String ReloadWithLastChanceSave = "reload_with_last_chance_save";
+   public static final String ConnectionOpened = "connection_opened";
+   public static final String ConnectionClosed = "connection_closed";
+   public static final String ConnectionUpdated = "connection_updated";
+   
    
    protected ClientEvent()
    {

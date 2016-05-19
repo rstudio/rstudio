@@ -24,6 +24,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
@@ -38,6 +39,9 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionList;
@@ -155,9 +159,9 @@ public class ConnectionsPresenter extends BasePresenter
       
       // fake connection data for now
       ArrayList<Connection> connections = new ArrayList<Connection>();
-      connections.add(Connection.create("Spark", "localhost:4040", true));
-      connections.add(Connection.create("Spark", "localhost:4141", false));
-      connections.add(Connection.create("Spark", "localhost:4242", false));
+      //connections.add(Connection.create("Spark", "localhost:4040", true));
+      //connections.add(Connection.create("Spark", "localhost:4141", false));
+      //connections.add(Connection.create("Spark", "localhost:4242", false));
       updateConnections(connections);  
       
       // make the active connection persistent
@@ -206,6 +210,24 @@ public class ConnectionsPresenter extends BasePresenter
             }
          }
       };
+   }
+   
+   public void onConnectionOpened(ConnectionOpenedEvent event)
+   {
+      Debug.logToConsole("Connection Opened: " + 
+                         event.getConnection().getId().asString());  
+   }
+   
+   public void onConnectionClosed(ConnectionClosedEvent event)
+   {
+      Debug.logToConsole("Connection Closed: " + 
+                         event.getConnectionId().asString());         
+   }
+   
+   public void onConnectionUpdated(ConnectionUpdatedEvent event)
+   {
+      Debug.logToConsole("Connection Updated: " + 
+                         event.getConnectionId().asString());         
    }
    
    public void onNewConnection()

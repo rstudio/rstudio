@@ -98,6 +98,11 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsolePrompt;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleResetHistory;
@@ -802,6 +807,21 @@ public class ClientEventDispatcher
          else if (type.equals(ClientEvent.ReloadWithLastChanceSave))
          {
             eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
+         }
+         else if (type.equals(ClientEvent.ConnectionOpened))
+         {
+            Connection connection = event.getData();
+            eventBus_.fireEvent(new ConnectionOpenedEvent(connection));
+         }
+         else if (type.equals(ClientEvent.ConnectionClosed))
+         {
+            ConnectionId connectionId = event.getData();
+            eventBus_.fireEvent(new ConnectionClosedEvent(connectionId));
+         }
+         else if (type.equals(ClientEvent.ConnectionUpdated))
+         {
+            ConnectionId connectionId = event.getData();
+            eventBus_.fireEvent(new ConnectionUpdatedEvent(connectionId));
          }
          else
          {

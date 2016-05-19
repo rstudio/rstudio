@@ -155,6 +155,9 @@ extern const int kWebsiteFileSaved;
 extern const int kChunkPlotRefreshed;
 extern const int kChunkPlotRefreshFinished;
 extern const int kReloadWithLastChanceSave;
+extern const int kConnectionOpened;
+extern const int kConnectionClosed;
+extern const int kConnectionUpdated;
 }
    
 class ClientEvent
