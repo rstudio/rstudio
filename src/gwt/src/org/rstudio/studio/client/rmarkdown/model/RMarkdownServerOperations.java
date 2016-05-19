@@ -65,7 +65,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    public String getFileUrl(FileSystemItem file);
    
    void prepareForRmdChunkExecution(String id,
-                                    ServerRequestCallback<Void> requestCallback);
+                ServerRequestCallback<RmdExecutionState> requestCallback);
 
    void getRmdOutputInfo(String target,
                 ServerRequestCallback<RmdOutputInfo> resultCallback);

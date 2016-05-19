@@ -63,6 +63,12 @@ namespace session {
 
 namespace {
 
+enum 
+{
+   RExecutionReady = 0,
+   RExecutionBusy  = 1
+};
+
 std::string projectBuildDir()
 {
    return string_utils::utf8ToSystem(
@@ -1186,7 +1192,7 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 
 
 Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
-                                  json::JsonRpcResponse*)
+                                  json::JsonRpcResponse* pResponse)
 {
    // read id param
    std::string id;
@@ -1215,6 +1221,13 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
          return error;
       }
    }
+
+   // indicate to the client whether R currently has executing code on the
+   // stack
+   json::Object result;
+   result["state"] = r::getGlobalContext()->nextcontext == NULL ?
+      RExecutionReady : RExecutionBusy;
+   pResponse->setResult(result);
 
    return Success();
 }

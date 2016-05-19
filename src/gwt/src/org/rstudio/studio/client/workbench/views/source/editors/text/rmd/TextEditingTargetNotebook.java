@@ -33,6 +33,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -45,6 +46,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
+import org.rstudio.studio.client.rmarkdown.model.RmdExecutionState;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -54,6 +56,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -520,12 +524,34 @@ public class TextEditingTargetNotebook
          public void execute()
          {
             server_.prepareForRmdChunkExecution(docUpdateSentinel_.getId(), 
-               new ServerRequestCallback<Void>()
+               new ServerRequestCallback<RmdExecutionState>()
                {
                   @Override
-                  public void onResponseReceived(Void v)
+                  public void onResponseReceived(RmdExecutionState state)
                   {
-                     completeEval.execute();
+                     if (state.getState() == RmdExecutionState.STATE_BUSY)
+                     {
+                        // if R has code on the stack, wait for the next console
+                        // prompt
+                        final Value<HandlerRegistration> handler = 
+                              new Value<HandlerRegistration>(null);
+                        handler.setValue(events_.addHandler(
+                              ConsolePromptEvent.TYPE,
+                              new ConsolePromptHandler()
+                              {
+                                 @Override
+                                 public void onConsolePrompt(
+                                       ConsolePromptEvent event)
+                                 {
+                                    handler.getValue().removeHandler();
+                                    completeEval.execute();
+                                 }
+                              }));
+                     }
+                     else
+                     {
+                        completeEval.execute();
+                     }
                   }
 
                   @Override

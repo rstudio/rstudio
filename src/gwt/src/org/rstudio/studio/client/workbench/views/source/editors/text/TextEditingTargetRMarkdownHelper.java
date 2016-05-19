@@ -54,6 +54,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdExecutionState;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -68,7 +69,6 @@ import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -330,12 +330,18 @@ public class TextEditingTargetRMarkdownHelper
       if (useRMarkdownV2(contents))
       {
          server_.prepareForRmdChunkExecution(id, 
-                                             new VoidServerRequestCallback() {
-            
+            new ServerRequestCallback<RmdExecutionState>() 
+         {
             @Override
-            protected void onCompleted()
+            public void onResponseReceived(RmdExecutionState state)
             {
                onExecuteChunk.execute();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
             }
          });
       }

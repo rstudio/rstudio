@@ -98,6 +98,7 @@ import org.rstudio.studio.client.projects.model.SharingResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdExecutionState;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
@@ -4190,8 +4191,8 @@ public class RemoteServer implements Server
    
    @Override
    public void prepareForRmdChunkExecution(
-                                String id,
-                                ServerRequestCallback<Void> requestCallback)
+         String id,
+         ServerRequestCallback<RmdExecutionState> requestCallback)
    {
       sendRequest(RPC_SCOPE, 
                   "prepare_for_rmd_chunk_execution", 
