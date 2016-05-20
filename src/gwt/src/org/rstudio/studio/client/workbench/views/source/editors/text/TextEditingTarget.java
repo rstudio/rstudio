@@ -144,6 +144,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -2003,6 +2004,11 @@ public class TextEditingTarget implements
                         EditorThemeStyleChangedEvent.Handler handler)
    {
       return themeHelper_.addEditorThemeStyleChangedHandler(handler);
+   }
+   
+   public HandlerRegistration addInterruptChunkHandler(InterruptChunkEvent.Handler handler)
+   {
+      return handlers_.addHandler(InterruptChunkEvent.TYPE, handler);
    }
 
    public void fireEvent(GwtEvent<?> event)

@@ -4271,6 +4271,17 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(code));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
    }
+   
+   @Override
+   public void interruptChunk(String docId,
+                              String chunkId,
+                              ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      sendRequest(RPC_SCOPE, "interrupt_chunk", params, requestCallback);
+   }
 
    @Override
    public void getRmdOutputInfo(String input,

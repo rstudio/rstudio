@@ -1464,6 +1464,23 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error interruptChunk(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string docId, chunkId;
+   Error error = json::readParams(request.params,
+                                  &docId,
+                                  &chunkId);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   notebook::interruptChunk(docId, chunkId);
+   return Success();
+}
+
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1564,6 +1581,7 @@ Error initialize()
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
       (bind(registerRpcMethod, "execute_alternate_engine_chunk", executeAlternateEngineChunk))
+      (bind(registerRpcMethod, "interrupt_chunk", interruptChunk))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

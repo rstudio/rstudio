@@ -89,4 +89,8 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                                     String engine,
                                     String code,
                                     ServerRequestCallback<String> requestCallback);
+   
+   void interruptChunk(String docId,
+                       String chunkId,
+                       ServerRequestCallback<Void> requestCallback);
 }
