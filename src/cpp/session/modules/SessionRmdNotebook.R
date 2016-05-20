@@ -133,6 +133,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    engine <- tolower(engine)
    switch(engine,
       rcpp = "cpp",
+      sh = "bash",
       engine)
 })
 
