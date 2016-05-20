@@ -45,14 +45,11 @@ public final class Math {
   private static final double PI_UNDER_180 = 180.0 / PI;
 
   public static double abs(double x) {
-    // This is implemented this way so that either positive or negative zeroes
-    // get converted to positive zeros.
-    // See http://www.concentric.net/~Ttwang/tech/javafloat.htm for details.
-    return x <= 0 ? 0.0 - x : x;
+    return NativeMath.abs(x);
   }
 
   public static float abs(float x) {
-    return (float) abs((double) x);
+    return (float) NativeMath.abs(x);
   }
 
   public static int abs(int x) {
@@ -380,6 +377,7 @@ public final class Math {
   @JsType(isNative = true, name = "Math", namespace = JsPackage.GLOBAL)
   private static class NativeMath {
     public static double LOG10E;
+    public static native double abs(double x);
     public static native double acos(double x);
     public static native double asin(double x);
     public static native double atan(double x);
