@@ -142,7 +142,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # chunk options as appropriate)
       if (is.null(chunkId)) {
          if (includeSource) {
-            return(rmarkdown::html_notebook_output_code(code))
+            attributes <- list(class = tolower(context$engine))
+            return(rmarkdown::html_notebook_output_code(code, attributes = attributes))
          }
          return(knitr::asis_output(""))
       }
@@ -162,7 +163,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                parsed <- parsed[parsed$type != 0, ]
             if (identical(context$results, "hide"))
                parsed <- parsed[parsed$type != 1, ]
-            rendered <- .rs.rnb.renderConsoleData(parsed)
+            attributes <- list(class = tolower(context$engine))
+            rendered <- .rs.rnb.renderConsoleData(parsed, attributes = attributes)
             return(rendered)
          }
          
@@ -254,7 +256,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
-.rs.addFunction("rnb.renderConsoleData", function(csvData)
+.rs.addFunction("rnb.renderConsoleData", function(csvData,
+                                                  attributes = list(class = "r"))
 {
    # bail early for empty data
    if (length(csvData) == 0 || nrow(csvData) == 0)
@@ -275,7 +278,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       collapse <- if (type == 0) "\n" else ""
       pasted <- paste(text, collapse = collapse)
       if (type == 0)
-         return(rmarkdown::html_notebook_output_code(pasted))
+         return(rmarkdown::html_notebook_output_code(pasted, attributes = attributes))
       else
          pasted
    })
