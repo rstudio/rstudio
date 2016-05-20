@@ -163,6 +163,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookPlotReplay.cpp
    modules/rmarkdown/NotebookPlots.cpp
    modules/rmarkdown/NotebookQueue.cpp
+   modules/rmarkdown/NotebookQueueUnit.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

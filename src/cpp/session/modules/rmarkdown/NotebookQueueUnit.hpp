@@ -1,5 +1,5 @@
 /*
- * NotebookQueue.cpp
+ * NotebookQueueUnit.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,50 +13,42 @@
  *
  */
 
-#include "NotebookQueue.hpp"
+#ifndef SESSION_NOTEBOOK_QUEUE_UNIT_HPP
+#define SESSION_NOTEBOOK_QUEUE_UNIT_HPP
 
-#include <core/Exec.hpp>
-
-#include <session/SessionModuleContext.hpp>
-
-using namespace rstudio::core;
+#include <core/json/Json.hpp>
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
-namespace {
 
-enum QueueOperation
+struct ExecRange 
 {
-   QueueAdd    = 0,
-   QueueUpdate = 1,
-   QueueDelete = 2
+   int start;
+   int stop;
 };
 
-Error updateExecQueue(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+class NotebookQueueUnit
 {
-   return Success();
-}
+public:
+   NotebookQueueUnit();
+   NotebookQueueUnit(const core::json::Object& source);
+   core::json::Object asJson();
 
-} // anonymous namespace
-
-Error initQueue()
-{
-   using boost::bind;
-   using namespace module_context;
-
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "update_notebook_exec_queue", updateExecQueue));
-
-   return initBlock.execute();
-}
+private:
+   std::string docId_;
+   std::string chunkId_;
+   std::string code_;
+   std::vector<ExecRange> completed_;
+   std::vector<ExecRange> pending_;
+};
 
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#endif
