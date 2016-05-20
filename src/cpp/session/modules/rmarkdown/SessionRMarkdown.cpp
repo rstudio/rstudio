@@ -1348,10 +1348,6 @@ void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
 {
    using namespace module_context;
    
-   // TODO: we only want to capture + report errors?
-   if (type == ConsoleOutputNormal)
-      return;
-   
    std::vector<std::string> data;
    data.push_back(safe_convert::numberToString(
                      type == ConsoleOutputNormal
@@ -1412,8 +1408,12 @@ Error executeRcppEngineChunk(const std::string& docId,
          "Rcpp::sourceCpp(code = \"" + escaped + "\")";
    error = r::exec::executeString(execCode);
    if (error)
-      LOG_ERROR(error);
-   
+   {
+      sourceCppConsoleOutputHandler(module_context::ConsoleOutputError,
+                                    r::endUserErrorMessage(error),
+                                    target);
+   }
+
    // forward success / failure to chunk
    notebook::enqueueChunkOutput(
             docId,
