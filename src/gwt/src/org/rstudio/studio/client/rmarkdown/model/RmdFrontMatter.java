@@ -106,14 +106,28 @@ public class RmdFrontMatter extends JavaScriptObject
      if (typeof this.output === "undefined")
         this.output = {};
         
+     // default format options
      if (Object.getOwnPropertyNames(options).length === 0)
      {
-        if (typeof this.output === "undefined" ||
-            typeof this.output === "string" ||
-            Object.getOwnPropertyNames(this.output).length === 0)
-           this.output = format;
-        else
-           this.output[format] = "default"
+        if (typeof this.output === "string")
+        {
+           // already have a default output format -- convert to list
+           var prevFormat = this.output;
+           this.output = {};
+           this.output[prevFormat] = "default";
+        }
+        if (typeof this.output === "object") 
+        {
+           if (Object.getOwnPropertyNames(this.output).length === 0)
+           {
+              // no existing output format, use this one with defaults
+              this.output = format;
+           }
+           else
+           {
+              this.output[format] = "default";
+           }
+        }
      }
      else
      {
