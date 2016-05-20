@@ -3593,10 +3593,9 @@ public class TextEditingTarget implements
             JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
             for (int i = 0; i < formats.length(); i++)
             {
-               // hide notebook if not enabled
+               // skip notebook format (will enable it later if discovered)
                if (formats.get(i).getName() == 
-                     RmdOutputFormat.OUTPUT_HTML_NOTEBOOK &&
-                   !prefs_.enableRNotebooks().getValue())
+                     RmdOutputFormat.OUTPUT_HTML_NOTEBOOK)
                {
                   continue;
                }
@@ -3618,8 +3617,15 @@ public class TextEditingTarget implements
          for (int i = 0; i < outputFormats.size(); i++)
          {
             String format = outputFormats.get(i);
-            if (format == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK && i == 0)
-               isNotebook = true;
+            if (format == RmdOutputFormat.OUTPUT_HTML_NOTEBOOK)
+            {
+               if (i == 0)
+                  isNotebook = true;
+               formatList.add(0, "Notebook");
+               valueList.add(0, format);
+               extensionList.add(0, ".nb.html");
+               continue;
+            }
             if (!valueList.contains(format))
             {
                String uiName = format;
