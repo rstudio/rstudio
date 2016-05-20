@@ -556,7 +556,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
            Dependency.cranPackage("htmltools", "0.3"),
            Dependency.cranPackage("yaml", "2.1.5"),
            Dependency.cranPackage("htmlwidgets", "0.6", true),
-           Dependency.embeddedPackage("profvis")
+           Dependency.cranPackage("profvis", "0.3.2", true)
           
         }, 
         true, // update profvis if needed

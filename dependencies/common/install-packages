@@ -66,12 +66,5 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 install rmarkdown master
 
-# temporary pointer to profvis until cran transition
-if R CMD build --help | grep --quiet no-build-vignettes; then
-	install profvis master --no-build-vignettes
-else
-	install profvis master --no-vignettes
-fi 
-
 # back to install-dir
 cd $INSTALL_DIR
