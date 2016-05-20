@@ -128,6 +128,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    return(NULL)
 })
 
+.rs.addFunction("rnb.engineToCodeClass", function(engine)
+{
+   engine <- tolower(engine)
+   switch(engine,
+      rcpp = "cpp",
+      engine)
+})
+
 .rs.addFunction("rnb.outputSource", function(rnbData) {
    force(rnbData)
    function(code, context, ...) {
@@ -142,7 +150,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # chunk options as appropriate)
       if (is.null(chunkId)) {
          if (includeSource) {
-            attributes <- list(class = tolower(context$engine))
+            attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
             return(rmarkdown::html_notebook_output_code(code, attributes = attributes))
          }
          return(knitr::asis_output(""))
@@ -163,7 +171,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                parsed <- parsed[parsed$type != 0, ]
             if (identical(context$results, "hide"))
                parsed <- parsed[parsed$type != 1, ]
-            attributes <- list(class = tolower(context$engine))
+            attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
             rendered <- .rs.rnb.renderConsoleData(parsed, attributes = attributes)
             return(rendered)
          }
