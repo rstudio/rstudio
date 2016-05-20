@@ -15,15 +15,16 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -206,39 +207,28 @@ public class TextEditingTargetChunks
    
    private boolean isRunnableChunk(int row)
    {
-      String text = target_.getDocDisplay().getLine(row);
+      // extract chunk header
+      String header = target_.getDocDisplay().getLine(row);
       
-      // Check for R Markdown chunks, and verify that the engine is 'r' or 'rscript'.
-      // First, check for chunk headers of the form:
-      //
-      //     ```{r ...}
-      //
-      // as opposed to
-      //
-      //     ```{sh ...}
-      String lower = text.toLowerCase().trim();
-      if (lower.startsWith("```{"))
-      {
-         Pattern reREngine = Pattern.create("```{r(?:script)?[ ,}]", "");
-         if (!reREngine.test(lower))
-            return false;
-      }
+      // parse contents
+      Map<String, String> options = new HashMap<String, String>();
+      TextEditingTargetNotebook.parseChunkOptions(header, options);
       
-      // If this is an 'R' chunk, it's possible that an alternate engine
-      // has been specified, e.g.
-      //
-      //     ```{r, engine = 'awk'}
-      //
-      // which is the 'old-fashioned' way of specifying non-R chunks.
-      Pattern pattern = Pattern.create("engine\\s*=\\s*['\"]([^'\"]*)['\"]", "");
-      Match match = pattern.match(text, 0);
+      // check runnable engine
+      String engine = options.containsKey("engine")
+            ? options.get("engine")
+            : "r";
+            
+      return isExecutableKnitrEngine(engine);
+   }
+   
+   private boolean isExecutableKnitrEngine(String engine)
+   {
+      // TODO: only enable non-R engine work for notebooks for now
+      if (!target_.getDocDisplay().showChunkOutputInline())
+         return engine.equals("r");
       
-      if (match == null)
-         return true;
-      
-      String engine = match.getGroup(1).toLowerCase();
-      
-      return engine.equals("r") || engine.equals("rscript");
+      return RE_RUNNABLE_ENGINES.indexOf(engine + "|") != -1;
    }
    
    private final TextEditingTarget target_;
@@ -249,6 +239,9 @@ public class TextEditingTargetChunks
    private AceThemes themes_;
 
    private int lastRow_;
+   
+   // runnable engines within the R Notebook mode
+   private static final String RE_RUNNABLE_ENGINES = "r|Rscript|Rcpp|python|ruby|perl|";
    
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow

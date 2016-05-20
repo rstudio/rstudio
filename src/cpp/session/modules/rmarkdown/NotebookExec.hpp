@@ -24,6 +24,8 @@
 
 #include <r/RSexp.hpp>
 
+#define kStagingSuffix "_t"
+
 namespace rstudio {
 namespace core {
    class Error;

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -373,13 +374,25 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          JsArray<RmdTemplateFormat> formats = currentTemplate_.getFormats();
          for (int i = 0; i < formats.length(); i++)
          {
-            templateFormatPanel_.add(createFormatOption(formats.get(i)));
+            Widget option = createFormatOption(formats.get(i));
+            
+            // hide if no notes
+            if (StringUtil.isNullOrEmpty(formats.get(i).getNotes()))
+               option.setVisible(false);
+
+            templateFormatPanel_.add(option);
          }
       }
          
-      // Select the first format by default
-      if (formatOptions_.size() > 0)
-         formatOptions_.get(0).setValue(true);
+      // select the first visible format by default
+      for (int i = 0; i < formatOptions_.size(); i++)
+      {
+         if (formatOptions_.get(i).getParent().isVisible())
+         {
+            formatOptions_.get(i).setValue(true);
+            break;
+         }
+      }
    }
    
    private void populateTemplates()

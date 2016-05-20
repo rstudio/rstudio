@@ -174,8 +174,9 @@ public class PinnedLineWidget
                lastWidgetRow_, 0));
          delta = 2;
       }
-      else if (startAnchor_.getRow() == lineWidget_.getRow() && 
-               endAnchor_.getRow()   == lineWidget_.getRow())
+      else if (startAnchor_.getRow()    == lineWidget_.getRow() && 
+               endAnchor_.getRow()      == lineWidget_.getRow() &&
+               startAnchor_.getColumn() == endAnchor_.getColumn())
       {
          // if the entire row of content is swapped out, the line widget can get
          // moved inappropriately; prior to this occurring, the anchors and the

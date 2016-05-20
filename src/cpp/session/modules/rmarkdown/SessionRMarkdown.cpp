@@ -23,6 +23,7 @@
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/foreach.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <core/FileSerializer.hpp>
 #include <core/Exec.hpp>
@@ -44,6 +45,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "RMarkdownPresentation.hpp"
+#include "SessionExecuteChunkOperation.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -1318,8 +1320,144 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
+class ChunkExecCompletedScope
+{
+public:
+   ChunkExecCompletedScope(const std::string& docId,
+                           const std::string& chunkId)
+      : docId_(docId), chunkId_(chunkId)
+   {
+   }
+   
+   ~ChunkExecCompletedScope()
+   {
+      notebook::events().onChunkExecCompleted(
+               docId_,
+               chunkId_,
+               notebook::notebookCtxId());
+   }
+   
+private:
+   std::string docId_;
+   std::string chunkId_;
+};
 
+void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
+                                   const std::string& output,
+                                   FilePath targetPath)
+{
+   using namespace module_context;
+   
+   // TODO: we only want to capture + report errors?
+   if (type == ConsoleOutputNormal)
+      return;
+   
+   std::vector<std::string> data;
+   data.push_back(safe_convert::numberToString(
+                     type == ConsoleOutputNormal
+                     ? kChunkConsoleOutput
+                     : kChunkConsoleError));
+   data.push_back(output);
+   
+   std::string encoded = text::encodeCsvLine(data) + "\n";
+   Error error = writeStringToFile(
+            targetPath, encoded, string_utils::LineEndingPassthrough, false);
+   if (error)
+      LOG_ERROR(error);
+}
 
+Error executeRcppEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& code,
+                             json::JsonRpcResponse* pResponse)
+{
+   // forward declare error
+   Error error = Success();
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+   
+   // prepare chunk directory
+   FilePath outputPath = notebook::chunkOutputPath(
+            docId,
+            chunkId,
+            notebook::ContextExact);
+
+   error = outputPath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = outputPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   
+   // prepare to write chunk cache output
+   FilePath target = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
+   
+   // capture console output, error
+   boost::signals::scoped_connection consoleHandler =
+         module_context::events().onConsoleOutput.connect(
+            boost::bind(sourceCppConsoleOutputHandler,
+                        _1,
+                        _2,
+                        target));
+
+   // call Rcpp::sourceCpp on code
+   std::string escaped = boost::regex_replace(
+            code,
+            boost::regex("(\\\\|\")"),
+            "\\\\$1");
+   
+   std::string execCode =
+         "Rcpp::sourceCpp(code = \"" + escaped + "\")";
+   error = r::exec::executeString(execCode);
+   if (error)
+      LOG_ERROR(error);
+   
+   // forward success / failure to chunk
+   notebook::enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebook::notebookCtxId(),
+            kChunkOutputText,
+            target);
+   
+   return error;
+}
+
+Error executeStanEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& code,
+                             json::JsonRpcResponse* pResponse)
+{
+   // TODO:
+   return Success();
+}
+
+Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse* pResponse)
+{
+   std::string docId, chunkId, engine, code;
+   Error error = json::readParams(request.params,
+                                  &docId,
+                                  &chunkId,
+                                  &engine,
+                                  &code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   // handle Rcpp specially
+   if (engine == "Rcpp")
+      return executeRcppEngineChunk(docId, chunkId, code, pResponse);
+   else if (engine == "stan")
+      return executeStanEngineChunk(docId, chunkId, code, pResponse);
+   
+   notebook::runChunk(docId, chunkId, engine, code);
+   return Success();
+}
 
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
@@ -1420,6 +1558,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
+      (bind(registerRpcMethod, "execute_alternate_engine_chunk", executeAlternateEngineChunk))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
