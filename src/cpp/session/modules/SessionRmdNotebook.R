@@ -153,7 +153,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          if (includeSource) {
             attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
             if (!is.null(context$indent)) {
-               return(.rs.rnb.renderIndentedConsoleInput(code, tolower(context$engine), ""))
+               return(.rs.rnb.renderVerbatimConsoleInput(code, tolower(context$engine), ""))
             } else {
                return(rmarkdown::html_notebook_output_code(code, attributes = attributes))
             }
@@ -271,7 +271,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
-.rs.addFunction("rnb.renderIndentedConsoleInput", function(code, engine, indent)
+.rs.addFunction("rnb.renderVerbatimConsoleInput", function(code, engine, indent)
 {
    # remove indentation from code
    code <- substring(code, nchar(indent) + 1)
@@ -308,7 +308,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          if (is.null(context$indent)) {
             return(rmarkdown::html_notebook_output_code(pasted, attributes = attributes))
          } else {
-            return(.rs.rnb.renderIndentedConsoleInput(pasted, tolower(context$engine), context$indent))
+            return(.rs.rnb.renderVerbatimConsoleInput(pasted, tolower(context$engine), context$indent))
          }
       } else {
          return(pasted)
