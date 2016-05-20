@@ -16,7 +16,7 @@
 
 
 // ---------------- D8 GLOBALS ----------------
-window = {};
+window = this;
 // Alias self as well since it is a magic var sometimes provided
 // by the webworker linker.
 self = window;
@@ -29,11 +29,6 @@ window.setTimeout = function() { window.__d8warning("setTimeout")};
 window.clearTimeout = function() { window.__d8warning("clearTimeout")};
 window.clearInterval = function() { window.__d8warning("clearInterval");};
 window.setInterval = function() { window.__d8warning("setInterval"); };
-window.Object = Object;
-window.Array = Array;
-window.Function = Function;
-window.String = String;
-window.Number = Number;
 navigator = {};
 navigator.userAgent = {};
 navigator.userAgent.toLowerCase = function(){ return "webkit";};
