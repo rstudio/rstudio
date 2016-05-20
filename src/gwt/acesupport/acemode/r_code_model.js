@@ -972,6 +972,23 @@ var RCodeModel = function(session, tokenizer,
             this.$scopes.onSectionEnd(position);
          }
 
+         // Check specifically for C++ chunks. We don't want these
+         // to create their own 'chunks' within R Markdown documents
+         // (as otherwise they screw with the R Notebook chunk scoping)
+         else if (modeId === "mode/rmarkdown" &&
+                  /\bcodebegin\b/.test(type) &&
+                  value.trim().indexOf("/***") === 0)
+         {
+            this.$scopes.onSectionHead("(R Code Chunk)", position);
+         }
+
+         else if (modeId === "mode/rmarkdown" &&
+                  /\bcodeend\b/.test(type) &&
+                  value.trim().indexOf("*/") === 0)
+         {
+            this.$scopes.onSectionEnd(position);
+         }
+
          // Add chunks to the scope tree; e.g. (for R Markdown)
          //
          //    ```{r}

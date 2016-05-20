@@ -277,7 +277,7 @@ var c_cppHighlightRules = function() {
 
    // Embed R syntax highlighting
    this.$rules["start"].unshift({
-      token: "support.function",
+      token: "support.function.codebegin",
       regex: "^\\s*\\/\\*{3,}\\s*[Rr]\\s*$",
       next: "r-start"
    });
@@ -285,7 +285,7 @@ var c_cppHighlightRules = function() {
    var rRules = new RHighlightRules().getRules();
    this.addRules(rRules, "r-");
    this.$rules["r-start"].unshift({
-      token: "support.function",
+      token: "support.function.codeend",
       regex: "\\*\\/",
       next: "start"
    });
