@@ -36,6 +36,9 @@ public:
    NotebookQueueUnit();
    NotebookQueueUnit(const core::json::Object& source);
    core::json::Object asJson();
+   std::string docId();
+   std::string chunkId();
+   std::string code();
 
 private:
    std::string docId_;

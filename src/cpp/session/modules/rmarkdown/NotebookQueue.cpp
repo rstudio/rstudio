@@ -14,6 +14,7 @@
  */
 
 #include "NotebookQueue.hpp"
+#include "NotebookQueueUnit.hpp"
 
 #include <core/Exec.hpp>
 
@@ -28,6 +29,8 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
+std::list<NotebookQueueUnit> s_queue;
+
 enum QueueOperation
 {
    QueueAdd    = 0,
@@ -38,6 +41,36 @@ enum QueueOperation
 Error updateExecQueue(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
+   json::Object unitJson;
+   int op = 0;
+   std::string before;
+   Error error = json::readParams(request.params, &unitJson, &op, &before);
+   if (error)
+      return error;
+
+   NotebookQueueUnit unit(unitJson);
+   std::list<NotebookQueueUnit>::iterator it;
+
+   switch(op)
+   {
+      case QueueAdd:
+         // find insertion position
+         for (s_queue.begin(); it != s_queue.end(); it++)
+         {
+            if (it->docId() == unit.docId() && 
+                it->chunkId() == before)
+               break;
+         }
+         s_queue.insert(it, unit);
+         break;
+
+      case QueueUpdate:
+         break;
+
+      case QueueDelete:
+         break;
+   }
+
    return Success();
 }
 

@@ -110,6 +110,21 @@ json::Object NotebookQueueUnit::asJson()
    return json::Object();
 }
 
+std::string NotebookQueueUnit::docId()
+{
+   return docId_;
+}
+
+std::string NotebookQueueUnit::chunkId()
+{
+   return chunkId_;
+}
+
+std::string NotebookQueueUnit::code()
+{
+   return code_;
+}
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules
