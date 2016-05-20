@@ -162,6 +162,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookPaths.cpp
    modules/rmarkdown/NotebookPlotReplay.cpp
    modules/rmarkdown/NotebookPlots.cpp
+   modules/rmarkdown/NotebookQueue.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

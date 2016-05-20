@@ -22,6 +22,7 @@
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookExec.hpp"
 #include "NotebookErrors.hpp"
+#include "NotebookQueue.hpp"
 
 #include <iostream>
 
@@ -257,7 +258,8 @@ Error initialize()
       (bind(initHtmlWidgets))
       (bind(initErrors))
       (bind(initPlots))
-      (bind(initPlotReplay));
+      (bind(initPlotReplay))
+      (bind(initQueue));
 
    return initBlock.execute();
 }
