@@ -17,16 +17,6 @@
                                             libraryFolder,
                                             chunkOptions)
 {
-   # set up some DT options (these will get unset in 'releaseHtmlCapture()')
-   # fill their container
-   dtOptions <- list(
-      DT.fillContainer = TRUE,
-      DT.autoHideNavigation = TRUE
-   )
-   oldDtOptions <- do.call(base::options, as.list(names(dtOptions)))
-   .rs.setVar("dtOptions", oldDtOptions)
-   do.call(base::options, dtOptions)
-   
    assign("print.htmlwidget", function(x, ...) {
       
       if (!requireNamespace("htmlwidgets", quietly = TRUE))
@@ -139,10 +129,6 @@
 
 .rs.addFunction("releaseHtmlCapture", function()
 {
-   # restore DT options
-   dtOptions <- .rs.getVar("dtOptions")
-   do.call(base::options, dtOptions)
-   
    # remove print.htmlwidget hook
    rm("print.htmlwidget", envir = as.environment("tools:rstudio"))
 })
