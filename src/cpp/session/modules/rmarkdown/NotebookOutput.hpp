@@ -91,6 +91,11 @@ core::FilePath chunkOutputFile(const std::string& docId,
 core::Error cleanChunkOutput(const std::string& docId, 
       const std::string& chunkId, bool preserveFolder);
 
+// helper for emitting console data to file
+core::Error appendConsoleOutput(int chunkConsoleOutputType,
+                                const std::string& output,
+                                const core::FilePath& filePath);
+
 // send chunk output to client
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, 

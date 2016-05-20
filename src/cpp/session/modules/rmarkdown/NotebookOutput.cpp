@@ -478,6 +478,23 @@ core::Error cleanChunkOutput(const std::string& docId,
    return Success();
 }
 
+core::Error appendConsoleOutput(int chunkConsoleType,
+                                const std::string& output,
+                                const core::FilePath& targetPath)
+{
+   std::vector<std::string> data;
+   data.push_back(safe_convert::numberToString(chunkConsoleType));
+   data.push_back(output);
+   
+   std::string encoded = text::encodeCsvLine(data) + "\n";
+   Error error = writeStringToFile(
+            targetPath,
+            encoded,
+            string_utils::LineEndingPassthrough,
+            false);
+   return error;
+}
+
 Error initOutput()
 {
    ExecBlock initBlock;

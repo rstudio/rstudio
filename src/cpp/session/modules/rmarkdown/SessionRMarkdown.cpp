@@ -1348,16 +1348,10 @@ void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
 {
    using namespace module_context;
    
-   std::vector<std::string> data;
-   data.push_back(safe_convert::numberToString(
-                     type == ConsoleOutputNormal
-                     ? kChunkConsoleOutput
-                     : kChunkConsoleError));
-   data.push_back(output);
-   
-   std::string encoded = text::encodeCsvLine(data) + "\n";
-   Error error = writeStringToFile(
-            targetPath, encoded, string_utils::LineEndingPassthrough, false);
+   Error error = notebook::appendConsoleOutput(
+            type == ConsoleOutputNormal ? kChunkConsoleOutput : kChunkConsoleError,
+            output,
+            targetPath);
    if (error)
       LOG_ERROR(error);
 }
@@ -1406,6 +1400,17 @@ Error executeRcppEngineChunk(const std::string& docId,
    
    std::string execCode =
          "Rcpp::sourceCpp(code = \"" + escaped + "\")";
+   
+   // write input code to cache
+   error = notebook::appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            target);
+   if (error)
+      LOG_ERROR(error);
+   
+   // execute code (output captured on success; on failure we
+   // explicitly forward the error message returned)
    error = r::exec::executeString(execCode);
    if (error)
    {

@@ -178,21 +178,11 @@ private:
       // get path to cache file
       FilePath target = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
       
-      // generate CSV to write
-      std::vector<std::string> values;
-      values.push_back(outputType == OUTPUT_STDOUT
-               ? safe_convert::numberToString(kChunkConsoleOutput)
-               : safe_convert::numberToString(kChunkConsoleError));
-      values.push_back(output);
-      std::string encoded = text::encodeCsvLine(values) + "\n";
-      
-      // write to cache
-      Error error = writeStringToFile(target, encoded);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
+      // append console data
+      notebook::appendConsoleOutput(
+               outputType == OUTPUT_STDOUT ? kChunkConsoleOutput : kChunkConsoleError,
+               output,
+               target);
       
       // emit client event
       enqueueChunkOutput(
@@ -268,14 +258,29 @@ core::Error runChunk(const std::string& docId,
    // get command
    ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath);
 
-   // create and run process
+   // create process
    boost::shared_ptr<ExecuteChunkOperation> operation =
          ExecuteChunkOperation::create(docId, chunkId, command, scriptPath);
 
+   // write input code to cache
+   FilePath cacheFilePath = notebook::chunkOutputFile(
+            docId,
+            chunkId,
+            kChunkOutputText);
+   
+   error = notebook::appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            cacheFilePath);
+   
+   if (error)
+      LOG_ERROR(error);
+   
    // generate process options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
    
+   // run it
    error = module_context::processSupervisor().runCommand(
             command,
             options,
