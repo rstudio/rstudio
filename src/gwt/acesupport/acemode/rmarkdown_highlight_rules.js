@@ -140,14 +140,14 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 (function() {
 
    this.$reRChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr](.*)\\}\\s*$";
+      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(.*)\\}\\s*$";
 
    this.$reCppChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr](?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$|" +
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]cpp(?:.*)\\}\\s*$";
+      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$|" +
+      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]cpp\\b(?:.*)\\}\\s*$";
 
    this.$reMarkdownChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{\\s*block(?:.*)\\}\\s*$";
+      "^(?:[ ]{4})?`{3,}\\s*\\{\\s*block\\b(?:.*)\\}\\s*$";
 
    this.$rePerlChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{perl\\b(?:.*)\\}\\s*$";
