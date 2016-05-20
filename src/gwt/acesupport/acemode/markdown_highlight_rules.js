@@ -61,6 +61,7 @@ var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightR
 var PythonHighlightRules = require("ace/mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
 var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlightRules;
+var ShHighlightRules = require("ace/mode/sh_highlight_rules").ShHighlightRules;
 
 var escaped = function(ch) {
     return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
@@ -154,6 +155,8 @@ var MarkdownHighlightRules = function() {
         github_embed("python", "pythoncode-"),
         github_embed("ruby", "rubycode-"),
         github_embed("scala", "scalacode-"),
+        github_embed("sh", "shcode-"),
+        github_embed("bash", "bashcode-"),
         
         { // Github style block
             token : "support.function",
@@ -410,6 +413,18 @@ var MarkdownHighlightRules = function() {
     }]);
     
     this.embedRules(ScalaHighlightRules, "scalacode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(ShHighlightRules, "shcode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(ShHighlightRules, "bashcode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
