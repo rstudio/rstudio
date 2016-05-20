@@ -101,11 +101,13 @@ void onInstalledPackagesChanged()
 {
    // reload the IDE if connections should be enabled but they were
    // last reported as disabled
+   /*
    if (!s_reportedConnectionsEnabled && connectionsEnabled())
    {
       ClientEvent event(client_events::kReloadWithLastChanceSave);
       module_context::enqueClientEvent(event);
    }
+   */
 }
 
 } // anonymous namespace
