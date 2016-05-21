@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.emultest.java.lang;
+package com.google.gwt.emultest.java8.lang;
 
+import com.google.gwt.emultest.java.lang.C;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
 

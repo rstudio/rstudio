@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.emultest.java.lang;
+package com.google.gwt.emultest.java8.lang;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
