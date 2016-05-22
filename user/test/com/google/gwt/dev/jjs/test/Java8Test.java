@@ -276,11 +276,15 @@ public class Java8Test extends GWTTestCase {
     assertFalse(isGwtSourceLevel8());
   }
 
-  public void testMethodReferenceImplementedInSuperclass() {
+  public void testMethodReference_implementedInSuperclass() {
     assertFalse(isGwtSourceLevel8());
   }
 
-  public void testMethodReferenceWithGenericTypeParameters() {
+  public void testMethodReference_genericTypeParameters() {
+    assertFalse(isGwtSourceLevel8());
+  }
+
+  public void testMethodReference_autoboxing() {
     assertFalse(isGwtSourceLevel8());
   }
 

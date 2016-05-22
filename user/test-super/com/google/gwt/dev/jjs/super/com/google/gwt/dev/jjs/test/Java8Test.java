@@ -1441,19 +1441,19 @@ public class Java8Test extends GWTTestCase {
     V apply(T t, U u);
   }
 
-  public void testMethodReferenceImplementedInSuperclass() {
+  public void testMethodReference_implementedInSuperclass() {
     MyFunction1<StringBuilder, String> toString = StringBuilder::toString;
     assertEquals("Hello", toString.apply(new StringBuilder("Hello")));
   }
 
   static MyFunction2<String, String, String> concat = (s,t) -> s + t;
 
-  public void testMethodReferenceWithGenericTypeParameters() {
-    testMethodReferencesWithGenericTypeParameters(
+  public void testMethodReference_genericTypeParameters() {
+    testMethodReference_genericTypeParameters(
         new Some<String>("Hell", concat), "Hell", "o", concat);
   }
 
-  private static <T> void testMethodReferencesWithGenericTypeParameters(
+  private static <T> void testMethodReference_genericTypeParameters(
       Some<T> some, T t1, T t2, MyFunction2<T, T, T> combine) {
     T t1t2 = combine.apply(t1, t2);
 
@@ -1470,5 +1470,88 @@ public class Java8Test extends GWTTestCase {
     // 4. Constructor reference.
     assertEquals(t1t2,
         ((MyFunction2<T, MyFunction2<T, T, T>, Some<T>>) Some<T>::new).apply(t1t2, combine).m1());
+  }
+
+  static MyFunction2<Integer, Integer, Integer> addInteger = (s,t) -> s + t;
+
+  @FunctionalInterface
+  interface MyIntFunction1 {
+    int apply(int t);
+  }
+
+  @FunctionalInterface
+  interface MyIntFunction2 {
+    int apply(int t, int u);
+  }
+
+  @FunctionalInterface
+  interface MyIntFuncToSomeIntegeFunction2 {
+    SomeInteger apply(int t, MyFunction2<Integer, Integer, Integer> u);
+  }
+
+  @FunctionalInterface
+  interface MySomeIntegerFunction1 {
+    int apply(SomeInteger t);
+  }
+
+  @FunctionalInterface
+  interface MySomeIntegerIntFunction2 {
+    int apply(SomeInteger t, int u);
+  }
+
+  static MyIntFunction2 addint = (s,t) -> s + t;
+
+  static class SomeInteger {
+    int s;
+    MyFunction2<Integer, Integer ,Integer> combine;
+    SomeInteger(int s, MyFunction2<Integer, Integer, Integer>  combine) {
+      this.s = s;
+      this.combine = combine;
+    }
+    public int m(int s2) {
+      return combine.apply(s, s2);
+    }
+    public int m1() {
+      return s;
+    }
+  }
+
+  public void testMethodReference_autoboxing() {
+    SomeInteger some = new SomeInteger(3, addInteger);
+
+    // Test all 4 flavours of methodReference autoboxing parameters.
+    // 1. Static method
+    assertEquals((Integer) 5, ((MyFunction1<Integer, Integer>) Java8Test::m).apply(5));
+    // 2. Qualified instance method
+    assertEquals((Integer) 5, ((MyFunction1<Integer, Integer>) some::m).apply(2));
+    // 3. Unqualified instance method
+    assertEquals((Integer) 3, ((MyFunction1<SomeInteger, Integer>) SomeInteger::m1).apply(some));
+    assertEquals((Integer) 5, ((MyFunction2<SomeInteger, Integer, Integer>)
+        SomeInteger::m).apply(some, 2));
+    assertEquals((Integer) 5,
+        ((MyFunction1<SomeInteger, Integer>)
+            SomeInteger::m1).apply(new SomeInteger(5, addInteger)));
+    // 4. Constructor reference.
+    assertEquals(5,
+        ((MyFunction2<Integer, MyFunction2<Integer, Integer, Integer>, SomeInteger>)
+            SomeInteger::new).apply(5, addInteger).m1());
+
+    // Test all 4 flavours of methodReference (interface unboxed)
+    // 1. Static method
+    assertEquals(5, ((MyIntFunction1) Java8Test::m).apply(5));
+    // 2. Qualified instance method
+    assertEquals(5, ((MyIntFunction1) some::m).apply(2));
+    // 3. Unqualified instance method
+    assertEquals(3, ((MySomeIntegerFunction1) SomeInteger::m1).apply(some));
+    // The next expression was the one that triggered bug #9346 where decisions on whether to
+    // box/unbox were decided incorrectly due to differring number of parameters in the method
+    // reference and the functional interface method.
+    assertEquals(5, ((MySomeIntegerIntFunction2) SomeInteger::m).apply(some, 2));
+    assertEquals(5,
+        ((MySomeIntegerFunction1)
+            SomeInteger::m1).apply(new SomeInteger(5, addInteger)));
+    // 4. Constructor reference.
+    assertEquals(5,
+        ((MyIntFuncToSomeIntegeFunction2) SomeInteger::new).apply(5, addInteger).m1());
   }
 }

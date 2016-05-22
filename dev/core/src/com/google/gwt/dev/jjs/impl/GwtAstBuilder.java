@@ -1867,17 +1867,22 @@ public class GwtAstBuilder {
           JExpression paramExpr = param.makeRef(info);
           // params may need to be boxed or unboxed
           TypeBinding destParam = null;
+          // The method declared in the functional interface might have more parameters than the
+          // method referred by the method reference. In the case of an instance method without
+          // an explicit qualifier (A::m vs instance::m) the method in the functional interface will
+          // have an additional parameter for the instance preceding all the method parameters.
+          TypeBinding samParameterBinding =
+              samBinding.parameters[paramNumber
+                  + (samBinding.parameters.length - referredMethodBinding.parameters.length)];
           // if it is not the trailing param or varargs, or interface method is already varargs
           if (varArgInitializers == null || !referredMethodBinding.isVarargs() || (paramNumber < varArg)) {
             destParam = referredMethodBinding.parameters[paramNumber];
-            paramExpr = boxOrUnboxExpression(paramExpr, samBinding.parameters[paramNumber],
-                destParam);
+            paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
             samCall.addArg(paramExpr);
-          } else if (!samBinding.parameters[paramNumber].isArrayType()) {
+          } else if (!samParameterBinding.isArrayType()) {
             // else add trailing parameters to var-args initializer list for an array
             destParam = referredMethodBinding.parameters[varArg].leafComponentType();
-            paramExpr = boxOrUnboxExpression(paramExpr, samBinding.parameters[paramNumber],
-                destParam);
+            paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
             varArgInitializers.add(paramExpr);
           }
           paramNumber++;
