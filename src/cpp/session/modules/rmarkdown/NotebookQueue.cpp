@@ -13,6 +13,7 @@
  *
  */
 
+#include "SessionRmdNotebook.hpp"
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
 #include "NotebookExec.hpp"
@@ -50,7 +51,18 @@ public:
          return Success();
 
       // get the next execution unit from the current queue
-      
+      boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
+      boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
+
+      // establish execution context for the unit
+      json::Object options;
+      Error error = unit->parseOptions(&options);
+      if (error)
+         return error;
+
+      execContext_ = boost::make_shared<ChunkExecContext>(
+         unit->docId(), unit->chunkId(), kExecScopeChunk, options,
+         docQueue->pixelWidth(), docQueue->charWidth());
 
       return Success();
    }

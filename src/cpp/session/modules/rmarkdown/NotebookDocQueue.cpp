@@ -96,6 +96,16 @@ std::string NotebookDocQueue::docId() const
    return docId_;
 }
 
+int NotebookDocQueue::pixelWidth() const
+{
+   return pixelWidth_;
+}
+
+int NotebookDocQueue::charWidth() const
+{
+   return charWidth_;
+}
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

@@ -43,6 +43,8 @@ public:
       QueueOperation op, const std::string& before);
    core::json::Object toJson() const; 
    std::string docId() const;
+   int pixelWidth() const;
+   int charWidth() const;
    boost::shared_ptr<NotebookQueueUnit> firstUnit();
 
 private:

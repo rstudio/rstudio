@@ -19,6 +19,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
+#include <r/RExec.hpp>
+#include <r/RJson.hpp>
+
 #define kQueueUnitCode       "code"
 #define kQueueUnitDocId      "doc_id"
 #define kQueueUnitChunkId    "chunk_id"
@@ -94,6 +97,26 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    error = fillExecRangeArray(pending, &unit.pending_);
    if (error)
       LOG_ERROR(error);
+   return Success();
+}
+
+Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
+{
+   // evaluate this chunk's options in R
+   r::sexp::Protect protect;
+   SEXP sexpOptions = R_NilValue;
+   Error error = r::exec::RFunction(".rs.evaluateChunkOptions", code_)
+                                   .call(&sexpOptions, &protect);
+   if (error)
+      return error;
+
+   // convert to JSON 
+   json::Value jsonOptions;
+   error = r::json::jsonValueFromList(sexpOptions, &jsonOptions);
+   if (jsonOptions.type() != json::ObjectType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+   
+   *pOptions = jsonOptions.get_obj();
    return Success();
 }
 

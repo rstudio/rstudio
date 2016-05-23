@@ -39,6 +39,8 @@ public:
          boost::shared_ptr<NotebookQueueUnit>* pUnit);
    core::json::Object toJson() const;
 
+   core::Error parseOptions(core::json::Object* pOptions);
+
    // accessors
    std::string docId() const;
    std::string chunkId() const;
