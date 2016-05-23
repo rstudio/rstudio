@@ -27,6 +27,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -93,6 +94,7 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -1358,7 +1360,8 @@ public class TextEditingTargetNotebook
                docUpdateSentinel_.getId(),
                unit.chunkId,
                engine,
-               unit.code);
+               unit.code,
+               chunkOptions);
          return;
       }
       
@@ -1428,13 +1431,20 @@ public class TextEditingTargetNotebook
    private void execAlternateEngineChunk(String docId,
                                          String chunkId,
                                          String engine,
-                                         String code)
+                                         String code,
+                                         Map<String, String> chunkOptions)
    {
+      // convert to JSO for RPC
+      JsObject jsoChunkOptions = JsObject.createJsObject();
+      for (Map.Entry<String, String> entry : chunkOptions.entrySet())
+         jsoChunkOptions.setString(entry.getKey(), entry.getValue());
+      
       server_.executeAlternateEngineChunk(
             docId,
             chunkId,
             engine,
             code,
+            jsoChunkOptions,
             new ServerRequestCallback<String>()
             {
                @Override
