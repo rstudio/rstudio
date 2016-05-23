@@ -15,12 +15,15 @@
  */
 package java.lang;
 
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsType;
+
 /**
  * See <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/NullPointerException.html">the
  * official Java API doc</a> for details.
  */
-public class NullPointerException extends RuntimeException {
+public class NullPointerException extends JsException {
 
   public NullPointerException() {
   }
@@ -29,7 +32,17 @@ public class NullPointerException extends RuntimeException {
     super(message);
   }
 
-  native Object createError(String msg) /*-{
-    return new TypeError(msg);
-  }-*/;
+  NullPointerException(Object typeError) {
+    super(typeError);
+  }
+
+  @Override
+  Object createError(String msg) {
+    return new NativeTypeError(msg);
+  }
+
+  @JsType(isNative = true, name = "TypeError", namespace = JsPackage.GLOBAL)
+  private static class NativeTypeError {
+    NativeTypeError(String msg) { }
+  }
 }

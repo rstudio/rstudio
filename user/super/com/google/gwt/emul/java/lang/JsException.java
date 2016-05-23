@@ -21,8 +21,16 @@ package java.lang;
  * primitives like {@code null}, numbers, etc.
  */
 public class JsException extends RuntimeException {
+
   protected JsException(Object backingJsObject) {
     super(backingJsObject);
   }
-}
 
+  JsException(String msg) {
+    super(msg);
+  }
+
+  JsException() {
+    super();
+  }
+}

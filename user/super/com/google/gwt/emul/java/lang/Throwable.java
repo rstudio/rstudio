@@ -24,7 +24,11 @@ import java.io.Serializable;
 
 import javaemul.internal.JsUtils;
 import javaemul.internal.annotations.DoNotInline;
+
+import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
+import jsinterop.annotations.JsType;
 
 /**
  * See <a
@@ -41,11 +45,7 @@ public class Throwable implements Serializable {
    * The client uses the generated field serializers which can use JSNI. That
    * leaves the server free to special case Throwable so that only the
    * detailMessage field is serialized.
-   *
-   * Throwable is given special treatment by server's SerializabilityUtil class
-   * to ensure that only the detailMessage field is serialized. Changing the
-   * field modifiers below may necessitate a change to the server's
-   * SerializabilityUtil.fieldQualifiesForSerialization(Field) method.
+   * See SerializabilityUtil.
    */
   private String detailMessage;
   private transient Throwable cause;
@@ -118,9 +118,9 @@ public class Throwable implements Serializable {
 
   // TODO(goktug): set 'name' property to class name and 'message' to detailMessage instead when
   // they are respected by dev tools logging.
-  native Object createError(String msg) /*-{
-    return new Error(msg);
-  }-*/;
+  Object createError(String msg) {
+    return new NativeError(msg);
+  }
 
   private static native Object fixIE(Object e) /*-{
     // In IE -unlike every other browser-, the stack property is not defined until you throw it.
@@ -279,4 +279,26 @@ public class Throwable implements Serializable {
     String className = getClass().getName();
     return message == null ? className : className + ": " + message;
   }
+
+  @JsMethod
+  public static Throwable of(Object e) {
+    // If the JS error is already mapped to a Java Exception, use it.
+    if (e != null) {
+      Throwable throwable = JsUtils.getProperty(e, "__java$exception");
+      if (throwable != null) {
+        return throwable;
+      }
+    }
+
+    // If the JS error is being seen for the first time, map it best corresponding Java exception.
+    return e instanceof NativeTypeError ? new NullPointerException(e) : new JsException(e);
+  }
+
+  @JsType(isNative = true, name = "Error", namespace = JsPackage.GLOBAL)
+  private static class NativeError {
+    NativeError(String msg) { }
+  }
+
+  @JsType(isNative = true, name = "TypeError", namespace = JsPackage.GLOBAL)
+  private static class NativeTypeError { }
 }

@@ -1519,6 +1519,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     staleTypeNames.remove("java.lang.Double");
     staleTypeNames.remove("java.lang.Number");
     staleTypeNames.remove("java.lang.String");
+    staleTypeNames.remove("java.lang.Throwable");
     // Show that only this little change is stale, not the whole world.
     assertEquals(2, staleTypeNames.size());
   }
@@ -2552,6 +2553,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       staleTypeNames.remove("java.lang.Double");
       staleTypeNames.remove("java.lang.Number");
       staleTypeNames.remove("java.lang.String");
+      staleTypeNames.remove("java.lang.Throwable");
       assertEquals(expectedProcessedStaleTypeNames, staleTypeNames);
     }
     return Files.toString(outputJsFile, Charsets.UTF_8);

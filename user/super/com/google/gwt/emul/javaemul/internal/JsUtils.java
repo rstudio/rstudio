@@ -37,6 +37,10 @@ public class JsUtils {
    return string;
   }-*/;
 
+  public static native <T> T getProperty(Object map, String key) /*-{
+    return map[key];
+  }-*/;
+
   public static native void setPropertySafe(Object map, String key, Object value) /*-{
     try {
       // This may throw exception in strict mode.
