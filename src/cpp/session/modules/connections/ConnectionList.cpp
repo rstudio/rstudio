@@ -97,7 +97,7 @@ void ConnectionList::update(const Connection& connection)
       connectionsJson.push_back(connectionJson(connection));
 
    // write out the connections
-   error = writeConections(connectionsJson);
+   error = writeConnections(connectionsJson);
    if (error)
       LOG_ERROR(error);
 }
@@ -121,7 +121,7 @@ void ConnectionList::remove(const ConnectionId &id)
                          connectionsJson.end());
 
    // write out the connections
-   error = writeConections(connectionsJson);
+   error = writeConnections(connectionsJson);
    if (error)
       LOG_ERROR(error);
 }
@@ -171,7 +171,7 @@ Error ConnectionList::readConnections(json::Array* pConnections)
    return Success();
 }
 
-Error ConnectionList::writeConections(const json::Array& connectionsJson)
+Error ConnectionList::writeConnections(const json::Array& connectionsJson)
 {
    FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
    boost::shared_ptr<std::ostream> pStream;

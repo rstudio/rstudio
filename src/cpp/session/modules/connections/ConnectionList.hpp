@@ -54,7 +54,7 @@ public:
 private:
    void onConnectionsChanged();
    core::Error readConnections(core::json::Array* pConnections);
-   core::Error writeConections(const core::json::Array& connectionsJson);
+   core::Error writeConnections(const core::json::Array& connectionsJson);
 
 private:
    core::FilePath connectionsDir_;
