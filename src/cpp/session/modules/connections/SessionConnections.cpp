@@ -25,6 +25,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RExec.hpp>
 
 
 #include <session/SessionModuleContext.hpp>
@@ -114,6 +115,38 @@ Error removeConnection(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getDisconnectCode(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // read params
+   json::Object idJson;
+   std::string finder, disconnectCode;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &idJson,
+                                       "finder", &finder,
+                                       "disconnect_code", &disconnectCode);
+   if (error)
+      return error;
+   std::string type, host;
+   error = json::readObject(idJson, "type", &type, "host", &host);
+   if (error)
+      return error;
+
+   // call R function to determine disconnect code
+   r::exec::RFunction func(".rs.getDisconnectCode");
+   func.addParam(finder);
+   func.addParam(host);
+   func.addParam(disconnectCode);
+   std::string code;
+   error = func.call(&code);
+   if (error)
+      return error;
+
+   pResponse->setResult(code);
+
+   return Success();
+}
+
 
 void onInstalledPackagesChanged()
 {
@@ -164,6 +197,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
+      (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
    return initBlock.execute();

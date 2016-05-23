@@ -180,6 +180,15 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
+   public boolean isConnected(ConnectionId id)
+   {
+      for (int i=0; i<activeConnections_.size(); i++)
+         if (activeConnections_.get(i).equalTo(id))
+            return true;
+      return false;
+   }
+   
+   @Override
    public Connection getSelectedConnection()
    {
       return selectionModel_.getSelectedObject();
@@ -322,6 +331,9 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       
       toolbar_.addRightWidget(searchWidget_);
    }
@@ -340,13 +352,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
    }
    
-   private boolean isConnected(ConnectionId id)
-   {
-      for (int i=0; i<activeConnections_.size(); i++)
-         if (activeConnections_.get(i).equalTo(id))
-            return true;
-      return false;
-   }
    
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;

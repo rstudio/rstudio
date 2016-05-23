@@ -33,7 +33,9 @@ import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -50,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ExploreConne
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class ConnectionsPresenter extends BasePresenter 
 {
@@ -57,6 +60,8 @@ public class ConnectionsPresenter extends BasePresenter
    {
       void setConnections(List<Connection> connections);
       void setActiveConnections(List<ConnectionId> connections);
+      
+      boolean isConnected(ConnectionId id);
       
       Connection getSelectedConnection();
           
@@ -83,6 +88,7 @@ public class ConnectionsPresenter extends BasePresenter
    public ConnectionsPresenter(Display display, 
                                ConnectionsServerOperations server,
                                GlobalDisplay globalDisplay,
+                               EventBus eventBus,
                                Binder binder,
                                final Commands commands,
                                WorkbenchListManager listManager,
@@ -91,17 +97,20 @@ public class ConnectionsPresenter extends BasePresenter
       super(display);
       binder.bind(commands, this);
       display_ = display;
+      commands_ = commands;
       server_ = server;
       globalDisplay_ = globalDisplay;
+      eventBus_ = eventBus;
          
        
       // track selected connection
+      manageCommands();
       display_.addSelectedConnectionChangeHandler(
                                        new SelectionChangeEvent.Handler() {
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            
+            manageCommands();
          }
       });
       
@@ -256,6 +265,28 @@ public class ConnectionsPresenter extends BasePresenter
       }
    }
   
+   @Handler
+   public void onConnectConnection()
+   {
+      Connection selectedConnection = display_.getSelectedConnection();
+      String connectCode = selectedConnection.getConnectCode();
+      eventBus_.fireEvent(new SendToConsoleEvent(connectCode, true));
+   }
+   
+   @Handler
+   public void onDisconnectConnection()
+   {
+      Connection selectedConnection = display_.getSelectedConnection();
+      server_.getDisconnectCode(selectedConnection, 
+                                new SimpleRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String disconnectCode)
+         {
+            eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+         }
+      });
+   }
+   
    private void updateConnections(JsArray<Connection> connections)
    {
       allConnections_.clear();
@@ -270,6 +301,7 @@ public class ConnectionsPresenter extends BasePresenter
       for (int i = 0; i<connections.length(); i++)
          activeConnections_.add(connections.get(i));
       display_.setActiveConnections(activeConnections_);
+      manageCommands();
    }
    
    private void exploreConnection(Connection connection)
@@ -278,9 +310,27 @@ public class ConnectionsPresenter extends BasePresenter
       display_.showConnectionExplorer(connection);
    }
    
+   private void manageCommands()
+   {
+      Connection selectedConnection = display_.getSelectedConnection();
+      if (selectedConnection != null)
+      {
+         boolean connected = display_.isConnected(selectedConnection.getId());
+         commands_.connectConnection().setVisible(!connected);  
+         commands_.disconnectConnection().setVisible(connected);
+      }
+      else
+      {
+         commands_.connectConnection().setVisible(false);
+         commands_.disconnectConnection().setVisible(false);
+      }
+   }
+   
    private final GlobalDisplay globalDisplay_;
    
    private final Display display_ ;
+   private final EventBus eventBus_;
+   private final Commands commands_;
    private final ConnectionsServerOperations server_ ;
    
    // client state

@@ -46,8 +46,8 @@ json::Object connectionJson(const Connection& connection)
    json::Object connectionJson;
    connectionJson["id"] = connectionIdJson(connection.id);
    connectionJson["finder"] = connection.finder;
-   connectionJson["connectCode"] = connection.connectCode;
-   connectionJson["disconnectCode"] = connection.disconnectCode;
+   connectionJson["connect_code"] = connection.connectCode;
+   connectionJson["disconnect_code"] = connection.disconnectCode;
    connectionJson["lastUsed"] = connection.lastUsed;
    return connectionJson;
 }

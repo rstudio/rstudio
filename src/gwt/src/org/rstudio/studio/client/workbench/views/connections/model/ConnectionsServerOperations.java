@@ -21,4 +21,7 @@ public interface ConnectionsServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
   
+   
+   void getDisconnectCode(Connection connection, 
+                          ServerRequestCallback<String> callback);
 }

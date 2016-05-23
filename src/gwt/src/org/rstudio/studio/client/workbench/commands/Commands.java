@@ -416,6 +416,8 @@ public abstract class
    // Connections
    public abstract AppCommand newConnection();
    public abstract AppCommand removeConnection();
+   public abstract AppCommand connectConnection();
+   public abstract AppCommand disconnectConnection();
     
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
