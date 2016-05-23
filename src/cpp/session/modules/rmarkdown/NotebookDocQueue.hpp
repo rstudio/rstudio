@@ -39,10 +39,12 @@ class NotebookDocQueue
 public:
    NotebookDocQueue(const std::string& docId, const std::string& jobDesc, 
          int pixelWith, int charWidth);
-   core::Error update(const NotebookQueueUnit& unit, QueueOperation op, 
-         const std::string& before);
+   core::Error update(const boost::shared_ptr<NotebookQueueUnit> unit, 
+      QueueOperation op, const std::string& before);
    core::json::Object toJson() const; 
    std::string docId() const;
+   boost::shared_ptr<NotebookQueueUnit> firstUnit();
+
 private:
    std::string docId_;
    std::string jobDesc_;
@@ -50,7 +52,7 @@ private:
    int charWidth_;
 
    // the queue of chunks to be executed 
-   std::list<NotebookQueueUnit> queue_;
+   std::list<boost::shared_ptr<NotebookQueueUnit> > queue_;
 };
 
 } // namespace notebook

@@ -49,18 +49,21 @@ public:
       if (r::getGlobalContext()->nextcontext != NULL)
          return Success();
 
+      // get the next execution unit from the current queue
+      
+
       return Success();
    }
 
-   Error update(const NotebookQueueUnit& unit, QueueOperation op, 
+   Error update(boost::shared_ptr<NotebookQueueUnit> pUnit, QueueOperation op, 
       const std::string& before)
    {
       // find the document queue corresponding to this unit
       BOOST_FOREACH(const boost::shared_ptr<NotebookDocQueue> queue, queue_)
       {
-         if (queue->docId() == unit.docId())
+         if (queue->docId() == pUnit->docId())
          {
-            queue->update(unit, op, before);
+            queue->update(pUnit, op, before);
             break;
          }
       }
@@ -73,6 +76,7 @@ private:
    std::list<boost::shared_ptr<NotebookDocQueue> > queue_;
 
    // the execution context for the currently executing chunk
+   boost::shared_ptr<NotebookQueueUnit> execUnit_;
    boost::shared_ptr<ChunkExecContext> execContext_;
 };
 
@@ -88,12 +92,13 @@ Error updateExecQueue(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   NotebookQueueUnit unit;
-   error = NotebookQueueUnit::fromJson(unitJson, &unit);
+   boost::shared_ptr<NotebookQueueUnit> pUnit = 
+      boost::make_shared<NotebookQueueUnit>();
+   error = NotebookQueueUnit::fromJson(unitJson, &pUnit);
    if (error)
       return error;
 
-   return s_queue->update(unit, static_cast<QueueOperation>(op), before);
+   return s_queue->update(pUnit, static_cast<QueueOperation>(op), before);
 }
 
 } // anonymous namespace

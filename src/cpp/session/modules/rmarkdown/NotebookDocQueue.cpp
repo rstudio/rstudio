@@ -40,13 +40,20 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
 {
 }
 
+boost::shared_ptr<NotebookQueueUnit> NotebookDocQueue::firstUnit()
+{
+   if (queue_.empty())
+      return boost::shared_ptr<NotebookQueueUnit>();
+   return *queue_.begin();
+}
+
 json::Object NotebookDocQueue::toJson() const
 {
    // serialize all the queue units 
    json::Array units;
-   BOOST_FOREACH(const NotebookQueueUnit unit, queue_) 
+   BOOST_FOREACH(const boost::shared_ptr<NotebookQueueUnit> unit, queue_) 
    {
-      units.push_back(unit.toJson());
+      units.push_back(unit->toJson());
    }
 
    // form JSON object for client
@@ -58,10 +65,10 @@ json::Object NotebookDocQueue::toJson() const
    return queue;
 }
 
-Error NotebookDocQueue::update(const NotebookQueueUnit& unit, QueueOperation op, 
-      const std::string& before)
+Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit, 
+      QueueOperation op, const std::string& before)
 {
-   std::list<NotebookQueueUnit>::iterator it;
+   std::list<boost::shared_ptr<NotebookQueueUnit> >::iterator it;
 
    switch(op)
    {
@@ -69,7 +76,7 @@ Error NotebookDocQueue::update(const NotebookQueueUnit& unit, QueueOperation op,
          // find insertion position
          for (it = queue_.begin(); it != queue_.end(); it++)
          {
-            if (it->chunkId() == before)
+            if ((*it)->chunkId() == before)
                break;
          }
          queue_.insert(it, unit);

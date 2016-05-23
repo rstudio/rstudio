@@ -71,24 +71,27 @@ void fillJsonRangeArray(const std::vector<ExecRange>& in, json::Array* pOut)
 } // anonymous namespace
 
 Error NotebookQueueUnit::fromJson(const json::Object& source, 
-      NotebookQueueUnit* pUnit)
+      boost::shared_ptr<NotebookQueueUnit>* pUnit)
 {
+   // extract contained unit for manipulation
+   NotebookQueueUnit& unit = *pUnit->get();
+
    // extract top-level values
    json::Array completed, pending;
    Error error = json::readObject(source, 
-         kQueueUnitCode,      &pUnit->code_,
-         kQueueUnitDocId,     &pUnit->docId_,
-         kQueueUnitChunkId,   &pUnit->chunkId_,
+         kQueueUnitCode,      &unit.code_,
+         kQueueUnitDocId,     &unit.docId_,
+         kQueueUnitChunkId,   &unit.chunkId_,
          kQueueUnitCompleted, &completed,
          kQueueUnitPending,   &pending);
    if (error)
       LOG_ERROR(error);
 
    // process arrays 
-   error = fillExecRangeArray(completed, &pUnit->completed_);
+   error = fillExecRangeArray(completed, &unit.completed_);
    if (error)
       LOG_ERROR(error);
-   error = fillExecRangeArray(pending, &pUnit->pending_);
+   error = fillExecRangeArray(pending, &unit.pending_);
    if (error)
       LOG_ERROR(error);
    return Success();

@@ -36,7 +36,7 @@ public:
    // serialization/deserialization
    static core::Error fromJson (
          const core::json::Object& source,
-         NotebookQueueUnit* pUnit);
+         boost::shared_ptr<NotebookQueueUnit>* pUnit);
    core::json::Object toJson() const;
 
    // accessors
