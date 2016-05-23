@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.connections;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -24,14 +25,16 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -40,6 +43,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
@@ -88,20 +92,14 @@ public class ConnectionsPresenter extends BasePresenter
       server_ = server;
       globalDisplay_ = globalDisplay;
          
-      // start off with connect/disconnect commands invisible then
-      // change them with the active selection
-      commands.connectConnection().setVisible(false);
-      commands.disconnectConnection().setVisible(false);
-      
+       
       // track selected connection
       display_.addSelectedConnectionChangeHandler(
                                        new SelectionChangeEvent.Handler() {
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            boolean isConnected = false;
-            commands.connectConnection().setVisible(!isConnected);
-            commands.disconnectConnection().setVisible(isConnected);
+            
          }
       });
       
@@ -122,7 +120,7 @@ public class ConnectionsPresenter extends BasePresenter
                   for (String el : splat)
                   {
                      boolean match =
-                         connection.getName().toLowerCase().contains(el);
+                         connection.getHost().toLowerCase().contains(el);
                      if (!match)
                         return false;
                   }
@@ -155,13 +153,9 @@ public class ConnectionsPresenter extends BasePresenter
          
       });
       
-      // fake connection data for now
-      ArrayList<Connection> connections = new ArrayList<Connection>();
-      //connections.add(Connection.create("Spark", "localhost:4040", true));
-      //connections.add(Connection.create("Spark", "localhost:4141", false));
-      //connections.add(Connection.create("Spark", "localhost:4242", false));
-      updateConnections(connections);  
-      
+      // set connections      
+      updateConnections(session.getSessionInfo().getConnectionList());  
+           
       // make the active connection persistent
       new JSObjectStateValue(MODULE_CONNECTIONS, 
                              KEY_ACTIVE_CONNECTION, 
@@ -212,20 +206,19 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onConnectionOpened(ConnectionOpenedEvent event)
    {
-      Debug.logToConsole("Connection Opened: " + 
-                         event.getConnection().getId().asString());  
    }
    
    public void onConnectionClosed(ConnectionClosedEvent event)
-   {
-      Debug.logToConsole("Connection Closed: " + 
-                         event.getConnectionId().asString());         
+   {  
    }
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
+   {     
+   }
+   
+   public void onConnectionListChanged(ConnectionListChangedEvent event)
    {
-      Debug.logToConsole("Connection Updated: " + 
-                         event.getConnectionId().asString());         
+      updateConnections(event.getConnectionList());
    }
    
    public void onNewConnection()
@@ -236,25 +229,37 @@ public class ConnectionsPresenter extends BasePresenter
    @Handler
    public void onRemoveConnection()
    {
-      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
+      final Connection connection = display_.getSelectedConnection();
+      if (connection != null)
+      {
+         globalDisplay_.showYesNoMessage(
+            MessageDialog.QUESTION,
+            "Remove Connection",
+            "Are you sure you want to remove the selected connection from " +
+            "the list?", 
+            new Operation() {
+   
+               @Override
+               public void execute()
+               {
+                  server_.removeConnection(
+                    connection.getId(), new VoidServerRequestCallback());   
+               }
+            },
+            true);
+      }
+      else
+      {
+         globalDisplay_.showErrorMessage(
+           "Remove Connection", "No connection currently selected.");
+      }
    }
   
-   
-   @Handler
-   public void onConnectConnection()
+   private void updateConnections(JsArray<Connection> connections)
    {
-      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
-   }
-   
-   @Handler
-   public void onDisconnectConnection()
-   {
-      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
-   }
-   
-   private void updateConnections(List<Connection> connections)
-   {
-      allConnections_ = connections;
+      allConnections_.clear();
+      for (int i = 0; i<connections.length(); i++)
+         allConnections_.add(connections.get(i));
       display_.setConnections(allConnections_);
    }
    
@@ -267,7 +272,6 @@ public class ConnectionsPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    
    private final Display display_ ;
-   @SuppressWarnings("unused")
    private final ConnectionsServerOperations server_ ;
    
    // client state
@@ -276,5 +280,5 @@ public class ConnectionsPresenter extends BasePresenter
    private Connection activeConnection_;
    private Connection lastKnownActiveConnection_;
    
-   private List<Connection> allConnections_;
+   private ArrayList<Connection> allConnections_ = new ArrayList<Connection>();
 }

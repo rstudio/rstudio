@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
@@ -35,7 +36,8 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
         extends DelayLoadTabShim<ConnectionsPresenter, ConnectionsTab>
         implements ConnectionOpenedEvent.Handler,
                    ConnectionClosedEvent.Handler,
-                   ConnectionUpdatedEvent.Handler {
+                   ConnectionUpdatedEvent.Handler,
+                   ConnectionListChangedEvent.Handler {
       
       @Handler
       public abstract void onNewConnection();
@@ -60,6 +62,7 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
       eventBus.addHandler(ConnectionOpenedEvent.TYPE, shim);
       eventBus.addHandler(ConnectionClosedEvent.TYPE, shim);
       eventBus.addHandler(ConnectionUpdatedEvent.TYPE, shim);
+      eventBus.addHandler(ConnectionListChangedEvent.TYPE, shim);
       eventBus.addHandler(EnableConnectionsEvent.TYPE, this);
    }
    

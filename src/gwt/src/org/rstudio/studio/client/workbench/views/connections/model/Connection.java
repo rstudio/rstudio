@@ -27,8 +27,8 @@ public class Connection extends JavaScriptObject
       return this.id;
    }-*/;
    
-   public final native String getName() /*-{
-      return this.name || this.id.host;
+   public final native String getHost() /*-{
+      return this.id.host;
    }-*/;
    
    public final native String getFinder() /*-{

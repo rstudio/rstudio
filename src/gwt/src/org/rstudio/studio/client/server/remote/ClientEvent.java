@@ -149,6 +149,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ConnectionClosed = "connection_closed";
    public static final String ConnectionUpdated = "connection_updated";
    public static final String EnableConnections = "enable_connections";
+   public static final String ConnectionListChanged = "connection_list_changed";
    
    
    protected ClientEvent()

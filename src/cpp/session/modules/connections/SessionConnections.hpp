@@ -16,6 +16,7 @@
 #ifndef SESSION_CONNECTIONS_HPP
 #define SESSION_CONNECTIONS_HPP
 
+#include <core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -29,6 +30,8 @@ namespace modules {
 namespace connections {
    
 bool connectionsEnabled();
+
+core::json::Array connectionsAsJson();
 
 core::Error initialize();
                        

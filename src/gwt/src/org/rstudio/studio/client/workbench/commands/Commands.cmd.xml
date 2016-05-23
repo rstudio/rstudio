@@ -2781,7 +2781,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="newConnection"
         menuLabel="New Connection..."
-        buttonLabel="New"
+        buttonLabel="New Connection"
         desc="Create a new connection"
         windowMode="main"/>
    
@@ -2790,15 +2790,5 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Remove a connection"
         windowMode="main"/>
-        
-    <cmd id="connectConnection"
-         label="Connect"
-         desc="Connect"
-         windowmode="main"/>
-         
-    <cmd id="disconnectConnection"
-         label="Disconnect"
-         desc="Disconnect"
-         windowModw="main"/>
         
 </commands>

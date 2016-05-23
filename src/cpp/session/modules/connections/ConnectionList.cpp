@@ -15,8 +15,8 @@
 
 #include "ConnectionList.hpp"
 
-#include <r/RSexp.hpp>
-#include <r/RRoutines.hpp>
+#include <core/FileSerializer.hpp>
+
 
 #include <session/SessionModuleContext.hpp>
 
@@ -30,63 +30,18 @@ namespace connections {
 
 namespace {
 
-json::Object connectionIdJson(const std::string& type, const std::string& host)
+
+bool isConnection(const ConnectionId& id, json::Value valueJson)
 {
-   json::Object idJson;
-   idJson["type"] = type;
-   idJson["host"] = host;
-   return idJson;
+   if (!json::isType<json::Object>(valueJson))
+   {
+      LOG_WARNING_MESSAGE("Connection JSON has unexpected format");
+      return false;
+   }
+
+   json::Object connJson = valueJson.get_obj();
+   return hasConnectionId(id, connJson);
 }
-
-SEXP rs_connectionOpened(SEXP typeSEXP,
-                         SEXP hostSEXP,
-                         SEXP finderSEXP,
-                         SEXP connectCodeSEXP,
-                         SEXP disconnectCodeSEXP)
-{
-   std::string type = r::sexp::safeAsString(typeSEXP);
-   std::string host = r::sexp::safeAsString(hostSEXP);
-   std::string finder = r::sexp::safeAsString(finderSEXP);
-   std::string connectCode = r::sexp::safeAsString(connectCodeSEXP);
-   std::string disconnectCode = r::sexp::safeAsString(disconnectCodeSEXP);
-
-   json::Object connectionJson;
-   connectionJson["id"] = connectionIdJson(type, host);
-   connectionJson["finder"] = finder;
-   connectionJson["connectCode"] = connectCode;
-   connectionJson["disconnectCode"] = disconnectCode;
-
-   ClientEvent event(client_events::kConnectionOpened, connectionJson);
-   module_context::enqueClientEvent(event);
-
-   return R_NilValue;
-}
-
-SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
-{
-   std::string type = r::sexp::safeAsString(typeSEXP);
-   std::string host = r::sexp::safeAsString(hostSEXP);
-
-   ClientEvent event(client_events::kConnectionClosed,
-                     connectionIdJson(type, host));
-   module_context::enqueClientEvent(event);
-
-   return R_NilValue;
-}
-
-SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
-{
-   std::string type = r::sexp::safeAsString(typeSEXP);
-   std::string host = r::sexp::safeAsString(hostSEXP);
-
-   ClientEvent event(client_events::kConnectionUpdated,
-                     connectionIdJson(type, host));
-   module_context::enqueClientEvent(event);
-
-   return R_NilValue;
-}
-
-
 
 
 } // anonymous namespace
@@ -103,13 +58,132 @@ ConnectionList::ConnectionList()
 {
 }
 
-void initializeConnectionList()
+Error ConnectionList::initialize()
 {
-   // register methods
-   RS_REGISTER_CALL_METHOD(rs_connectionOpened, 5);
-   RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
-   RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
+   // register to be notified when connections are changed
+   connectionsDir_ = module_context::registerMonitoredUserScratchDir(
+            "connections",
+            boost::bind(&ConnectionList::onConnectionsChanged, this));
+
+   return Success();
 }
+
+void ConnectionList::update(const Connection& connection)
+{
+   // read existing connections
+   json::Array connectionsJson;
+   Error error = readConnections(&connectionsJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // look for a matching connection and update it
+   bool foundConnection = false;
+   for (size_t i = 0; i<connectionsJson.size(); i++)
+   {
+      json::Value valueJson = connectionsJson[i];
+      if (isConnection(connection.id, valueJson))
+      {
+         connectionsJson[i] = connectionJson(connection);
+         foundConnection = true;
+         break;
+      }
+   }
+
+   // if we didn't find a connection then append
+   if (!foundConnection)
+      connectionsJson.push_back(connectionJson(connection));
+
+   // write out the connections
+   error = writeConections(connectionsJson);
+   if (error)
+      LOG_ERROR(error);
+}
+
+
+void ConnectionList::remove(const ConnectionId &id)
+{
+   // read existing connections
+   json::Array connectionsJson;
+   Error error = readConnections(&connectionsJson);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // remove matching connection
+   connectionsJson.erase(std::remove_if(connectionsJson.begin(),
+                                        connectionsJson.end(),
+                                        boost::bind(isConnection, id, _1)),
+                         connectionsJson.end());
+
+   // write out the connections
+   error = writeConections(connectionsJson);
+   if (error)
+      LOG_ERROR(error);
+}
+
+
+
+json::Array ConnectionList::connectionsAsJson()
+{
+   json::Array connectionsJson;
+   Error error = readConnections(&connectionsJson);
+   if (error)
+      LOG_ERROR(error);
+   return connectionsJson;
+}
+
+void ConnectionList::onConnectionsChanged()
+{
+   ClientEvent event(client_events::kConnectionListChanged,
+                     connectionsAsJson());
+   module_context::enqueClientEvent(event);
+}
+
+const char* const kConnectionListFile = "connection_list";
+
+Error ConnectionList::readConnections(json::Array* pConnections)
+{
+   FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
+   if (connectionListFile.exists())
+   {
+      std::string contents;
+      Error error = core::readStringFromFile(connectionListFile, &contents);
+      if (error)
+         return error;
+
+      json::Value parsedJson;
+      if (!json::parse(contents, &parsedJson) ||
+          !json::isType<json::Array>(parsedJson))
+      {
+         return systemError(boost::system::errc::protocol_error,
+                            "Error parsing connections json file",
+                            ERROR_LOCATION);
+      }
+
+      *pConnections = parsedJson.get_array();
+   }
+
+   return Success();
+}
+
+Error ConnectionList::writeConections(const json::Array& connectionsJson)
+{
+   FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
+   boost::shared_ptr<std::ostream> pStream;
+   Error error = connectionListFile.open_w(&pStream);
+   if (error)
+      return error;
+
+   json::writeFormatted(connectionsJson, *pStream);
+
+   return Success();
+}
+
 
 
 } // namespace connections

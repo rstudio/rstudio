@@ -89,30 +89,18 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          }
       };
       connectionsDataGrid_.addColumn(typeColumn_, new TextHeader("Type"));
-      connectionsDataGrid_.setColumnWidth(typeColumn_, 35, Unit.PX);
+      connectionsDataGrid_.setColumnWidth(typeColumn_, 40, Unit.PX);
             
-      // add name column
-      nameColumn_ = new TextColumn<Connection>() {
+      // add host column
+      hostColumn_ = new TextColumn<Connection>() {
          @Override
          public String getValue(Connection connection)
          {
-            return connection.getName();
+            return connection.getHost();
          }
       };      
-      connectionsDataGrid_.addColumn(nameColumn_, new TextHeader("Name"));
-      connectionsDataGrid_.setColumnWidth(nameColumn_, 30, Unit.PCT);
-      
-      // add status column
-      statusColumn_ = new TextColumn<Connection>() {
-
-         @Override
-         public String getValue(Connection connection)
-         {
-            return "";
-         }
-      };
-      connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
-      connectionsDataGrid_.setColumnWidth(statusColumn_, 55, Unit.PX);
+      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Server"));
+      connectionsDataGrid_.setColumnWidth(hostColumn_, 50, Unit.PCT);
       
       // add explore column
       ImageButtonColumn<Connection> exploreColumn = 
@@ -130,11 +118,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          protected boolean showButton(Connection connection)
          {
-            return true;
+            return connection.getId().getType().equals("Spark");
          }
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
-      connectionsDataGrid_.setColumnWidth(exploreColumn, 20, Unit.PX);
+      connectionsDataGrid_.setColumnWidth(exploreColumn, 30, Unit.PX);
       
       // data provider
       dataProvider_ = new ListDataProvider<Connection>();
@@ -309,9 +297,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
-      toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
+      
       toolbar_.addRightWidget(searchWidget_);
    }
    
@@ -325,7 +311,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(connectionName_);
       
       connectionName_.setText(
-            connection.getId().getType() + ": " + connection.getName());
+            connection.getId().getType() + ": " + connection.getHost());
       
    }
    
@@ -335,9 +321,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private final HorizontalCenterPanel connectionExplorer_;
    
    private final TextColumn<Connection> typeColumn_;
-   private final TextColumn<Connection> nameColumn_;
-   private final TextColumn<Connection> statusColumn_;
-   
+   private final TextColumn<Connection> hostColumn_;
+  
    private final ProvidesKey<Connection> keyProvider_;
    private final SingleSelectionModel<Connection> selectionModel_;
    private final ListDataProvider<Connection> dataProvider_;

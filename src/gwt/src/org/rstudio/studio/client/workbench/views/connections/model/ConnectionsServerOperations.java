@@ -14,7 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.model;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
+
 public interface ConnectionsServerOperations
 {
+   void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
   
 }

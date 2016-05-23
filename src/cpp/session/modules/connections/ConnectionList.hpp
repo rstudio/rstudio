@@ -16,8 +16,12 @@
 #ifndef SESSION_CONNECTIONS_CONNECTION_LIST_HPP
 #define SESSION_CONNECTIONS_CONNECTION_LIST_HPP
 
-
 #include <boost/noncopyable.hpp>
+
+#include <core/FilePath.hpp>
+#include <core/json/Json.hpp>
+
+#include "Connection.hpp"
 
 namespace rstudio {
 namespace core {
@@ -39,10 +43,22 @@ private:
    ConnectionList();
    friend ConnectionList& connectionList();
 
+public:
+   core::Error initialize();
 
+   void update(const Connection& connection);
+   void remove(const ConnectionId& id);
+
+   core::json::Array connectionsAsJson();
+
+private:
+   void onConnectionsChanged();
+   core::Error readConnections(core::json::Array* pConnections);
+   core::Error writeConections(const core::json::Array& connectionsJson);
+
+private:
+   core::FilePath connectionsDir_;
 };
-
-void initializeConnectionList();
                        
 } // namespace connections
 } // namespace modules
