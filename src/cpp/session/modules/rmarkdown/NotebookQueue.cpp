@@ -16,6 +16,9 @@
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
 #include "NotebookExec.hpp"
+#include "NotebookDocQueue.hpp"
+
+#include <boost/foreach.hpp>
 
 #include <r/RInterface.hpp>
 
@@ -46,43 +49,28 @@ public:
       if (r::getGlobalContext()->nextcontext != NULL)
          return Success();
 
-      // pop front off execution queue
-      const NotebookQueueUnit& unit = *queue_.begin();
-      queue_.pop_front();
-
       return Success();
    }
 
    Error update(const NotebookQueueUnit& unit, QueueOperation op, 
-         const std::string& before)
+      const std::string& before)
    {
-      std::list<NotebookQueueUnit>::iterator it;
-
-      switch(op)
+      // find the document queue corresponding to this unit
+      BOOST_FOREACH(const boost::shared_ptr<NotebookDocQueue> queue, queue_)
       {
-         case QueueAdd:
-            // find insertion position
-            for (it = queue_.begin(); it != queue_.end(); it++)
-            {
-               if (it->docId()   == unit.docId() && 
-                   it->chunkId() == before)
-                  break;
-            }
-            queue_.insert(it, unit);
+         if (queue->docId() == unit.docId())
+         {
+            queue->update(unit, op, before);
             break;
-
-         case QueueUpdate:
-            break;
-
-         case QueueDelete:
-            break;
+         }
       }
+
       return Success();
    }
 
 private:
-   // the queue of chunks to be executed 
-   std::list<NotebookQueueUnit> queue_;
+   // the documents with active queues
+   std::list<boost::shared_ptr<NotebookDocQueue> > queue_;
 
    // the execution context for the currently executing chunk
    boost::shared_ptr<ChunkExecContext> execContext_;

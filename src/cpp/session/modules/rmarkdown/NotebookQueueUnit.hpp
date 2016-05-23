@@ -37,7 +37,7 @@ public:
    static core::Error fromJson (
          const core::json::Object& source,
          NotebookQueueUnit* pUnit);
-   core::json::Object toJson();
+   core::json::Object toJson() const;
 
    // accessors
    std::string docId() const;

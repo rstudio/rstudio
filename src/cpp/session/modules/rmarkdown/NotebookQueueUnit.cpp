@@ -94,7 +94,7 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    return Success();
 }
 
-json::Object NotebookQueueUnit::toJson()
+json::Object NotebookQueueUnit::toJson() const
 {
    // process arrays
    json::Array completed, pending;

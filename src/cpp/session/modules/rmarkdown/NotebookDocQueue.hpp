@@ -16,6 +16,9 @@
 #ifndef SESSION_NOTEBOOK_DOC_QUEUE_HPP
 #define SESSION_NOTEBOOK_DOC_QUEUE_HPP
 
+#include "NotebookQueue.hpp"
+#include "NotebookQueueUnit.hpp"
+
 #include <core/json/Json.hpp>
 #include <list>
 
@@ -38,7 +41,8 @@ public:
          int pixelWith, int charWidth);
    core::Error update(const NotebookQueueUnit& unit, QueueOperation op, 
          const std::string& before);
-   core::json::Object toJson(); 
+   core::json::Object toJson() const; 
+   std::string docId() const;
 private:
    std::string docId_;
    std::string jobDesc_;
