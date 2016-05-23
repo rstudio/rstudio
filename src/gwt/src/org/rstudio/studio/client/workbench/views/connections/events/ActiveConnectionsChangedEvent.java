@@ -1,5 +1,5 @@
 /*
- * ConnectionOpenedEvent.java
+ * ActiveConnectionsChangedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,26 +14,27 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.events;
 
-import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConnectionOpenedEvent extends GwtEvent<ConnectionOpenedEvent.Handler>
+public class ActiveConnectionsChangedEvent extends GwtEvent<ActiveConnectionsChangedEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onConnectionOpened(ConnectionOpenedEvent event);
+      void onActiveConnectionsChanged(ActiveConnectionsChangedEvent event);
    }
    
-   public ConnectionOpenedEvent(Connection connection)
+   public ActiveConnectionsChangedEvent(JsArray<ConnectionId> activeConnections)
    {
-      connection_ = connection;
+      activeConnections_ = activeConnections;
    }
    
-   public Connection getConnection()
+   public JsArray<ConnectionId> getActiveConnections()
    {
-      return connection_;
+      return activeConnections_;
    }
 
    @Override
@@ -45,10 +46,10 @@ public class ConnectionOpenedEvent extends GwtEvent<ConnectionOpenedEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onConnectionOpened(this);
+      handler.onActiveConnectionsChanged(this);
    }
    
-   private final Connection connection_;
+   private final JsArray<ConnectionId> activeConnections_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -693,6 +693,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["connections_enabled"] = modules::connections::connectionsEnabled();
    sessionInfo["connection_list"] = modules::connections::connectionsAsJson();
+   sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
 
    std::string sessionId = module_context::activeSession().id();
    if (sessionId.empty())

@@ -27,6 +27,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
@@ -413,6 +414,10 @@ public class SessionInfo extends JavaScriptObject
       return this.connection_list;
    }-*/;
 
+   public final native JsArray<ConnectionId> getActiveConnections() /*-{
+      return this.active_connections;
+   }-*/;
+   
    public final native boolean getShowHelpHome() /*-{
       return this.show_help_home;
    }-*/;

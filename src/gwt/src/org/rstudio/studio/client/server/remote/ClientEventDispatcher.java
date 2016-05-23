@@ -98,9 +98,8 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -810,16 +809,6 @@ public class ClientEventDispatcher
          {
             eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
          }
-         else if (type.equals(ClientEvent.ConnectionOpened))
-         {
-            Connection connection = event.getData();
-            eventBus_.fireEvent(new ConnectionOpenedEvent(connection));
-         }
-         else if (type.equals(ClientEvent.ConnectionClosed))
-         {
-            ConnectionId connectionId = event.getData();
-            eventBus_.fireEvent(new ConnectionClosedEvent(connectionId));
-         }
          else if (type.equals(ClientEvent.ConnectionUpdated))
          {
             ConnectionId connectionId = event.getData();
@@ -833,6 +822,11 @@ public class ClientEventDispatcher
          {
             JsArray<Connection> connections = event.getData();
             eventBus_.fireEvent(new ConnectionListChangedEvent(connections));
+         }
+         else if (type.equals(ClientEvent.ActiveConnectionsChanged))
+         {
+            JsArray<ConnectionId> connections = event.getData();
+            eventBus_.fireEvent(new ActiveConnectionsChangedEvent(connections));
          }
          else
          {

@@ -1,5 +1,5 @@
 /*
- * SessionConnections.hpp
+ * ActiveConnections.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,33 +13,45 @@
  *
  */
 
-#ifndef SESSION_CONNECTIONS_HPP
-#define SESSION_CONNECTIONS_HPP
+#ifndef SESSION_CONNECTIONS_ACTIVE_CONNECTIONS_HPP
+#define SESSION_CONNECTIONS_ACTIVE_CONNECTIONS_HPP
 
-#include <core/json/Json.hpp>
+#include <set>
 
-namespace rstudio {
-namespace core {
-   class Error;
-}
-}
- 
+#include <boost/noncopyable.hpp>
+
+#include "Connection.hpp"
+
 namespace rstudio {
 namespace session {
 namespace modules { 
 namespace connections {
    
-bool connectionsEnabled();
+class ActiveConnections;
+ActiveConnections& activeConnections();
 
-core::json::Array connectionsAsJson();
+class ActiveConnections : boost::noncopyable
+{
+private:
+   ActiveConnections();
+   friend ActiveConnections& activeConnections();
 
-core::json::Array activeConnectionsAsJson();
+public:
 
-core::Error initialize();
+   void add(const ConnectionId& id);
+   void remove(const ConnectionId& id);
+
+   core::json::Array activeConnectionsAsJson();
+
+private:
+   std::set<ConnectionId> activeConnections_;
+};
+
+
                        
 } // namespace connections
 } // namespace modules
 } // namesapce session
 } // namespace rstudio
 
-#endif // SESSION_CONNECTIONS_HPP
+#endif // SESSION_CONNECTIONS_ACTIVE_CONNECTIONS_HPP

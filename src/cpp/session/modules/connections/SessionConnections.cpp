@@ -29,6 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
 
 using namespace rstudio::core;
@@ -65,10 +66,8 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
    // update connection history
    connectionHistory().update(connection);
 
-   // fire connection opened
-   ClientEvent event(client_events::kConnectionOpened,
-                     connectionJson(connection));
-   module_context::enqueClientEvent(event);
+   // update active connections
+   activeConnections().add(connection.id);
 
    return R_NilValue;
 }
@@ -77,11 +76,9 @@ SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
-   ConnectionId id(type, host);
 
-   ClientEvent event(client_events::kConnectionClosed,
-                     connectionIdJson(id));
-   module_context::enqueClientEvent(event);
+   // update active connections
+   activeConnections().remove(ConnectionId(type, host));
 
    return R_NilValue;
 }
@@ -139,6 +136,11 @@ bool connectionsEnabled()
 json::Array connectionsAsJson()
 {
    return connectionHistory().connectionsAsJson();
+}
+
+json::Array activeConnectionsAsJson()
+{
+   return activeConnections().activeConnectionsAsJson();
 }
 
 Error initialize()

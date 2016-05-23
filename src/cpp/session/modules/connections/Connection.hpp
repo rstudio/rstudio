@@ -39,9 +39,12 @@ struct ConnectionId
    {
       return other.type == type && other.host == host;
    }
+
+   bool operator<(const ConnectionId& other) const
+   {
+      return (other.type + other.host) < (type + host);
+   }
 };
-
-
 
 struct Connection
 {

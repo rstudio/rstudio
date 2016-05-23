@@ -40,14 +40,15 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 
 public class ConnectionsPresenter extends BasePresenter 
@@ -55,6 +56,7 @@ public class ConnectionsPresenter extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void setConnections(List<Connection> connections);
+      void setActiveConnections(List<ConnectionId> connections);
       
       Connection getSelectedConnection();
           
@@ -146,7 +148,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            activeConnection_ = null;
+            exploredConnection_ = null;
             display_.showConnectionsList();
             display_.ensureHeight(EnsureHeightEvent.NORMAL);
          }
@@ -154,11 +156,13 @@ public class ConnectionsPresenter extends BasePresenter
       });
       
       // set connections      
-      updateConnections(session.getSessionInfo().getConnectionList());  
+      SessionInfo sessionInfo = session.getSessionInfo();
+      updateConnections(sessionInfo.getConnectionList());  
+      updateActiveConnections(sessionInfo.getActiveConnections());
            
-      // make the active connection persistent
+      // make the explored connection persistent
       new JSObjectStateValue(MODULE_CONNECTIONS, 
-                             KEY_ACTIVE_CONNECTION, 
+                             KEY_EXPLORED_CONNECTION, 
                              ClientState.PERSISTENT, 
                              session.getSessionInfo().getClientState(), 
                              false)
@@ -168,22 +172,22 @@ public class ConnectionsPresenter extends BasePresenter
          {
             // get the value
             if (value != null)
-               activeConnection_ = value.cast();
+               exploredConnection_ = value.cast();
             else
-               activeConnection_ = null;
+               exploredConnection_ = null;
                  
-            lastKnownActiveConnection_ = activeConnection_;
+            lastExploredConnection_ = exploredConnection_;
             
-            // if there is an active connection then explore it
-            if (activeConnection_ != null)
-               exploreConnection(activeConnection_);
+            // if there is an an explored connection then explore it
+            if (exploredConnection_ != null)
+               exploreConnection(exploredConnection_);
          }
 
          @Override
          protected JsObject getValue()
          {
-            if (activeConnection_ != null)
-               return activeConnection_.cast();
+            if (exploredConnection_ != null)
+               return exploredConnection_.cast();
             else
                return null;
          }
@@ -191,9 +195,9 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          protected boolean hasChanged()
          {
-            if (lastKnownActiveConnection_ != activeConnection_)
+            if (lastExploredConnection_ != exploredConnection_)
             {
-               lastKnownActiveConnection_ = activeConnection_;
+               lastExploredConnection_ = exploredConnection_;
                return true;
             }
             else
@@ -204,14 +208,6 @@ public class ConnectionsPresenter extends BasePresenter
       };
    }
    
-   public void onConnectionOpened(ConnectionOpenedEvent event)
-   {
-   }
-   
-   public void onConnectionClosed(ConnectionClosedEvent event)
-   {  
-   }
-   
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
    {     
    }
@@ -219,6 +215,11 @@ public class ConnectionsPresenter extends BasePresenter
    public void onConnectionListChanged(ConnectionListChangedEvent event)
    {
       updateConnections(event.getConnectionList());
+   }
+   
+   public void onActiveConnectionsChanged(ActiveConnectionsChangedEvent event)
+   {
+      updateActiveConnections(event.getActiveConnections());
    }
    
    public void onNewConnection()
@@ -263,9 +264,17 @@ public class ConnectionsPresenter extends BasePresenter
       display_.setConnections(allConnections_);
    }
    
+   private void updateActiveConnections(JsArray<ConnectionId> connections)
+   {
+      activeConnections_.clear();
+      for (int i = 0; i<connections.length(); i++)
+         activeConnections_.add(connections.get(i));
+      display_.setActiveConnections(activeConnections_);
+   }
+   
    private void exploreConnection(Connection connection)
    {
-      activeConnection_ = connection;
+      exploredConnection_ = connection;
       display_.showConnectionExplorer(connection);
    }
    
@@ -276,9 +285,10 @@ public class ConnectionsPresenter extends BasePresenter
    
    // client state
    private static final String MODULE_CONNECTIONS = "connections-pane";
-   private static final String KEY_ACTIVE_CONNECTION = "activeConnection";
-   private Connection activeConnection_;
-   private Connection lastKnownActiveConnection_;
+   private static final String KEY_EXPLORED_CONNECTION = "exploredConnection";
+   private Connection exploredConnection_;
+   private Connection lastExploredConnection_;
    
    private ArrayList<Connection> allConnections_ = new ArrayList<Connection>();
+   private ArrayList<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
 }

@@ -132,6 +132,7 @@ set (SESSION_SOURCE_FILES
    modules/clang/RCompilationDatabase.cpp
    modules/clang/RSourceIndex.cpp
    modules/clang/SessionClang.cpp
+   modules/connections/ActiveConnections.cpp
    modules/connections/Connection.cpp
    modules/connections/ConnectionHistory.cpp
    modules/connections/SessionConnections.cpp

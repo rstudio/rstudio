@@ -40,6 +40,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
@@ -54,6 +55,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 
 public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
 {
@@ -102,6 +104,22 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Server"));
       connectionsDataGrid_.setColumnWidth(hostColumn_, 50, Unit.PCT);
       
+      // add status column
+      statusColumn_ = new TextColumn<Connection>() {
+
+         @Override
+         public String getValue(Connection connection)
+         {
+            if (isConnected(connection.getId()))
+               return "Connected";
+            else
+               return "Disconnected";
+         }
+      };
+      connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
+      connectionsDataGrid_.setColumnWidth(statusColumn_, 75, Unit.PX);
+      
+      
       // add explore column
       ImageButtonColumn<Connection> exploreColumn = 
             new ImageButtonColumn<Connection>(
@@ -118,7 +136,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          protected boolean showButton(Connection connection)
          {
-            return connection.getId().getType().equals("Spark");
+            return connection.getId().getType().equals("Spark") &&
+                   isConnected(connection.getId());
          }
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
@@ -152,6 +171,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void setConnections(List<Connection> connections)
    {
       dataProvider_.setList(connections);
+   }
+   
+   @Override
+   public void setActiveConnections(List<ConnectionId> connections)
+   {
+      activeConnections_ = connections;
+      connectionsDataGrid_.redraw();
    }
    
    @Override
@@ -315,6 +341,14 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
    }
    
+   private boolean isConnected(ConnectionId id)
+   {
+      for (int i=0; i<activeConnections_.size(); i++)
+         if (activeConnections_.get(i).equalTo(id))
+            return true;
+      return false;
+   }
+   
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
@@ -322,10 +356,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    
    private final TextColumn<Connection> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
+   private final TextColumn<Connection> statusColumn_;
   
    private final ProvidesKey<Connection> keyProvider_;
    private final SingleSelectionModel<Connection> selectionModel_;
    private final ListDataProvider<Connection> dataProvider_;
+   private List<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
    
    private SearchWidget searchWidget_;
    private ToolbarButton backToConnectionsButton_;

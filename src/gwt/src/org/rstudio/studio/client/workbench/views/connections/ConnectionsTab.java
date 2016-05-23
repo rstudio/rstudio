@@ -23,9 +23,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
 
@@ -34,10 +33,9 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
 {
    public abstract static class Shim 
         extends DelayLoadTabShim<ConnectionsPresenter, ConnectionsTab>
-        implements ConnectionOpenedEvent.Handler,
-                   ConnectionClosedEvent.Handler,
-                   ConnectionUpdatedEvent.Handler,
-                   ConnectionListChangedEvent.Handler {
+        implements ConnectionUpdatedEvent.Handler,
+                   ConnectionListChangedEvent.Handler,
+                   ActiveConnectionsChangedEvent.Handler {
       
       @Handler
       public abstract void onNewConnection();
@@ -59,10 +57,9 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
       binder.bind(commands, shim);
       session_ = session;
       eventBus_ = eventBus;
-      eventBus.addHandler(ConnectionOpenedEvent.TYPE, shim);
-      eventBus.addHandler(ConnectionClosedEvent.TYPE, shim);
       eventBus.addHandler(ConnectionUpdatedEvent.TYPE, shim);
       eventBus.addHandler(ConnectionListChangedEvent.TYPE, shim);
+      eventBus.addHandler(ActiveConnectionsChangedEvent.TYPE, shim);
       eventBus.addHandler(EnableConnectionsEvent.TYPE, this);
    }
    
