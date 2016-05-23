@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.gwt.emultest.java8.lang;
+package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
