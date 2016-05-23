@@ -44,7 +44,6 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOp
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
-import org.rstudio.studio.client.workbench.views.connections.model.ConnectionList;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 
 public class ConnectionsPresenter extends BasePresenter 
@@ -88,8 +87,7 @@ public class ConnectionsPresenter extends BasePresenter
       display_ = display;
       server_ = server;
       globalDisplay_ = globalDisplay;
-      connectionList_ = new ConnectionList(listManager.getConnectionsList());
-        
+         
       // start off with connect/disconnect commands invisible then
       // change them with the active selection
       commands.connectConnection().setVisible(false);
@@ -278,8 +276,5 @@ public class ConnectionsPresenter extends BasePresenter
    private Connection activeConnection_;
    private Connection lastKnownActiveConnection_;
    
-   @SuppressWarnings("unused")
-   private ConnectionList connectionList_;
-
    private List<Connection> allConnections_;
 }
