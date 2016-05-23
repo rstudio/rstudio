@@ -94,20 +94,14 @@ SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
    return R_NilValue;
 }
 
-// track last reported state of connections enabled
-bool s_reportedConnectionsEnabled = false;
 
 void onInstalledPackagesChanged()
 {
-   // reload the IDE if connections should be enabled but they were
-   // last reported as disabled
-   /*
-   if (!s_reportedConnectionsEnabled && connectionsEnabled())
+   if (connectionsEnabled())
    {
-      ClientEvent event(client_events::kReloadWithLastChanceSave);
+      ClientEvent event(client_events::kEnableConnections);
       module_context::enqueClientEvent(event);
    }
-   */
 }
 
 } // anonymous namespace
@@ -115,11 +109,7 @@ void onInstalledPackagesChanged()
 
 bool connectionsEnabled()
 {
-   // track last reported state of connections enabled
-   s_reportedConnectionsEnabled = module_context::isPackageInstalled("rspark");
-
-   // return value
-   return s_reportedConnectionsEnabled;
+   return module_context::isPackageInstalled("rspark");
 }
 
 Error initialize()

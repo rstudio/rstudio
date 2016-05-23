@@ -101,6 +101,7 @@ import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEve
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.*;
@@ -822,6 +823,10 @@ public class ClientEventDispatcher
          {
             ConnectionId connectionId = event.getData();
             eventBus_.fireEvent(new ConnectionUpdatedEvent(connectionId));
+         }
+         else if (type.equals(ClientEvent.EnableConnections))
+         {
+            eventBus_.fireEvent(new EnableConnectionsEvent());
          }
          else
          {

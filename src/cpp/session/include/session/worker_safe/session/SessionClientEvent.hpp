@@ -158,6 +158,7 @@ extern const int kReloadWithLastChanceSave;
 extern const int kConnectionOpened;
 extern const int kConnectionClosed;
 extern const int kConnectionUpdated;
+extern const int kEnableConnections;
 }
    
 class ClientEvent
