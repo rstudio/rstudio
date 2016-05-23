@@ -28,6 +28,13 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+enum QueueOperation
+{
+   QueueAdd    = 0,
+   QueueUpdate = 1,
+   QueueDelete = 2
+};
+
 core::Error initQueue();
 
 } // namespace notebook

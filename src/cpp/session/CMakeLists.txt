@@ -155,6 +155,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
    modules/rmarkdown/NotebookCache.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
+   modules/rmarkdown/NotebookDocQueue.cpp
    modules/rmarkdown/NotebookErrors.cpp
    modules/rmarkdown/NotebookExec.cpp
    modules/rmarkdown/NotebookHtmlWidgets.cpp

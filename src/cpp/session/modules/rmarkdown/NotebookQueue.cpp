@@ -32,13 +32,6 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-enum QueueOperation
-{
-   QueueAdd    = 0,
-   QueueUpdate = 1,
-   QueueDelete = 2
-};
-
 // represents the global queue of work 
 class NotebookQueue
 {

@@ -1,5 +1,5 @@
 /*
- * NotebookDocQueue.hpp
+ * NotebookDocQueue.cpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,8 +13,11 @@
  *
  */
 
-#ifndef SESSION_NOTEBOOK_DOC_QUEUE_HPP
-#define SESSION_NOTEBOOK_DOC_QUEUE_HPP
+#include "NotebookQueue.hpp"
+#include "NotebookQueueUnit.hpp"
+#include "NotebookDocQueue.hpp"
+
+#include <session/SessionModuleContext.hpp>
 
 namespace rstudio {
 namespace session {
@@ -22,17 +25,6 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class NotebookDocQueue
-{
-public:
-   NotebookDocQueue(const std::string& docId, int execMode, int execScope, 
-         int pixelWith, int charWidth);
-   Error update(const NotebookQueueUnit& unit, QueueOperation op, 
-         const std::string& before);
-private:
-   // the queue of chunks to be executed 
-   std::list<NotebookQueueUnit> queue_;
-}
 
 } // namespace notebook
 } // namespace rmarkdown
@@ -40,4 +32,3 @@ private:
 } // namespace session
 } // namespace rstudio
 
-#endif

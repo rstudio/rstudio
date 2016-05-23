@@ -1,5 +1,5 @@
 /*
- * NotebookDocQueue.cpp
+ * NotebookDocQueue.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,15 +13,41 @@
  *
  */
 
-#include "NotebookDocQueue.hpp"
+#ifndef SESSION_NOTEBOOK_DOC_QUEUE_HPP
+#define SESSION_NOTEBOOK_DOC_QUEUE_HPP
+
+#include <core/json/Json.hpp>
+#include <list>
 
 namespace rstudio {
+
+namespace core {
+   class Error;
+   class FilePath;
+}
+
 namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+class NotebookDocQueue
+{
+public:
+   NotebookDocQueue(const std::string& docId, const std::string& jobDesc, 
+         int pixelWith, int charWidth);
+   core::Error update(const NotebookQueueUnit& unit, QueueOperation op, 
+         const std::string& before);
+   core::json::Object toJson(); 
+private:
+   std::string docId_;
+   std::string jobDesc_;
+   int pixelWidth_;
+   int charWidth_;
 
+   // the queue of chunks to be executed 
+   std::list<NotebookQueueUnit> queue_;
+};
 
 } // namespace notebook
 } // namespace rmarkdown
@@ -29,3 +55,4 @@ namespace notebook {
 } // namespace session
 } // namespace rstudio
 
+#endif
