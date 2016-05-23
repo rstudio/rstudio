@@ -1286,6 +1286,36 @@ public class AceEditor implements DocDisplay,
             coordinates.getPageY());
    }
 
+   /**
+    * Given an offset in characters (e.g. 275), finds the corresponding row
+    * and column in the document.
+    * 
+    * @param n The character offset to find
+    * @return The position at which the character offset was found
+    */
+   @Override
+   public Position characterToDocumentPosition(int n)
+   {
+      // get all the code and count the characters one by one (this is somewhat
+      // inefficient since all of the ACE internals are line-oriented)
+      String code = getCode();
+      int max = Math.min(n, code.length());
+      int row = 0, col = 0;
+      for (int i = 0; i < max; i++)
+      {
+         if (code.charAt(i) == '\n')
+         {
+            row++;
+            col = 0;
+         }
+         else
+         {
+            col++;
+         }
+      }
+      return Position.create(row, col);
+   }
+
    public Range toDocumentRange(Rectangle rectangle)
    {
       Renderer renderer = widget_.getEditor().getRenderer();

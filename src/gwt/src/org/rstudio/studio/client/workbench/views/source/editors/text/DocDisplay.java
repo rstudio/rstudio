@@ -373,6 +373,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Rectangle getPositionBounds(Position position);
    Position toDocumentPosition(ScreenCoordinates coordinates);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
+   Position characterToDocumentPosition(int n);
    
    void forceImmediateRender();
    boolean isPositionVisible(Position position);
