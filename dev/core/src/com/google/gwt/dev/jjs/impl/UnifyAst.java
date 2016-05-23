@@ -178,17 +178,9 @@ public class UnifyAst {
       x.setType(translate(x.getType().getUnderlyingType()));
     }
 
-    private void maybeFlowIntoNativeConstructor(JType type) {
-      JConstructor jsConstructor = JjsUtils.getJsNativeConstructorOrNull(type);
-      if (jsConstructor != null) {
-        flowInto(jsConstructor);
-      }
-    }
-
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       x.resolve(translate(x.getCastType()));
-      maybeFlowIntoNativeConstructor(x.getCastType());
     }
 
     @Override
@@ -273,7 +265,6 @@ public class UnifyAst {
     @Override
     public void endVisit(JInstanceOf x, Context ctx) {
       x.resolve(translate(x.getTestType()));
-      maybeFlowIntoNativeConstructor(x.getTestType());
     }
 
     @Override
@@ -1032,22 +1023,24 @@ public class UnifyAst {
       }
     }
 
-    for (JDeclaredType t : types) {
+    for (JDeclaredType type : types) {
       /*
        * Eagerly instantiate any type that requires devirtualization, i.e. String and
        * JavaScriptObject subtypes. That way we don't have to copy the exact semantics of
        * ControlFlowAnalyzer.
        */
-      if (requiresDevirtualization(t)) {
-        instantiate(t);
+      if (requiresDevirtualization(type)) {
+        instantiate(type);
       }
 
       /*
        * We also flow into the types with JsInterop entry point because our first pass on root types
-       * with JsInterop entry points are missing these inner classes.
+       * with JsInterop entry points are missing these inner classes. For native types this ensures
+       * that the constructor is considered reachable as it might be needed later for instanceof
+       * and casts.
        */
-      if (t.hasJsInteropEntryPoints()) {
-        fullFlowIntoType(t);
+      if (type.hasJsInteropEntryPoints() || type.isJsNative()) {
+        fullFlowIntoType(type);
       }
     }
   }
