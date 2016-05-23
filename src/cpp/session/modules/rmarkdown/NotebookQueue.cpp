@@ -39,7 +39,7 @@ enum QueueOperation
    QueueDelete = 2
 };
 
-
+// represents the global queue of work 
 class NotebookQueue
 {
 public:
