@@ -29,7 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include "ConnectionList.hpp"
+#include "ConnectionHistory.hpp"
 
 using namespace rstudio::core;
 
@@ -62,8 +62,8 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
                          disconnectCode,
                          date_time::millisecondsSinceEpoch());
 
-   // update connection list
-   connectionList().update(connection);
+   // update connection history
+   connectionHistory().update(connection);
 
    // fire connection opened
    ClientEvent event(client_events::kConnectionOpened,
@@ -112,7 +112,7 @@ Error removeConnection(const json::JsonRpcRequest& request,
 
    // remove connection
    ConnectionId id(type, host);
-   connectionList().remove(id);
+   connectionHistory().remove(id);
 
    return Success();
 }
@@ -138,7 +138,7 @@ bool connectionsEnabled()
 
 json::Array connectionsAsJson()
 {
-   return connectionList().connectionsAsJson();
+   return connectionHistory().connectionsAsJson();
 }
 
 Error initialize()
@@ -148,8 +148,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
 
-   // initialize connectionList
-   Error error = connectionList().initialize();
+   // initialize connection history
+   Error error = connectionHistory().initialize();
    if (error)
       return error;
 

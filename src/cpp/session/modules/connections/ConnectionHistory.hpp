@@ -1,5 +1,5 @@
 /*
- * ConnectionList.hpp
+ * ConnectionHistory.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_CONNECTIONS_CONNECTION_LIST_HPP
-#define SESSION_CONNECTIONS_CONNECTION_LIST_HPP
+#ifndef SESSION_CONNECTIONS_CONNECTION_HISTORY_HPP
+#define SESSION_CONNECTIONS_CONNECTION_HISTORY_HPP
 
 #include <boost/noncopyable.hpp>
 
@@ -34,14 +34,14 @@ namespace session {
 namespace modules { 
 namespace connections {
    
-class ConnectionList;
-ConnectionList& connectionList();
+class ConnectionHistory;
+ConnectionHistory& connectionHistory();
 
-class ConnectionList : boost::noncopyable
+class ConnectionHistory : boost::noncopyable
 {
 private:
-   ConnectionList();
-   friend ConnectionList& connectionList();
+   ConnectionHistory();
+   friend ConnectionHistory& connectionHistory();
 
 public:
    core::Error initialize();
@@ -65,4 +65,4 @@ private:
 } // namesapce session
 } // namespace rstudio
 
-#endif // SESSION_CONNECTIONS_CONNECTION_LIST_HPP
+#endif // SESSION_CONNECTIONS_CONNECTION_HISTORY_HPP

@@ -1,5 +1,5 @@
 /*
- * ConnectionList.cpp
+ * ConnectionHistory.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "ConnectionList.hpp"
+#include "ConnectionHistory.hpp"
 
 #include <core/FileSerializer.hpp>
 
@@ -48,27 +48,27 @@ bool isConnection(const ConnectionId& id, json::Value valueJson)
 
 
 
-ConnectionList& connectionList()
+ConnectionHistory& connectionHistory()
 {
-   static ConnectionList instance;
+   static ConnectionHistory instance;
    return instance;
 }
 
-ConnectionList::ConnectionList()
+ConnectionHistory::ConnectionHistory()
 {
 }
 
-Error ConnectionList::initialize()
+Error ConnectionHistory::initialize()
 {
    // register to be notified when connections are changed
    connectionsDir_ = module_context::registerMonitoredUserScratchDir(
             "connections",
-            boost::bind(&ConnectionList::onConnectionsChanged, this));
+            boost::bind(&ConnectionHistory::onConnectionsChanged, this));
 
    return Success();
 }
 
-void ConnectionList::update(const Connection& connection)
+void ConnectionHistory::update(const Connection& connection)
 {
    // read existing connections
    json::Array connectionsJson;
@@ -103,7 +103,7 @@ void ConnectionList::update(const Connection& connection)
 }
 
 
-void ConnectionList::remove(const ConnectionId &id)
+void ConnectionHistory::remove(const ConnectionId &id)
 {
    // read existing connections
    json::Array connectionsJson;
@@ -128,7 +128,7 @@ void ConnectionList::remove(const ConnectionId &id)
 
 
 
-json::Array ConnectionList::connectionsAsJson()
+json::Array ConnectionHistory::connectionsAsJson()
 {
    json::Array connectionsJson;
    Error error = readConnections(&connectionsJson);
@@ -137,7 +137,7 @@ json::Array ConnectionList::connectionsAsJson()
    return connectionsJson;
 }
 
-void ConnectionList::onConnectionsChanged()
+void ConnectionHistory::onConnectionsChanged()
 {
    ClientEvent event(client_events::kConnectionListChanged,
                      connectionsAsJson());
@@ -146,7 +146,7 @@ void ConnectionList::onConnectionsChanged()
 
 const char* const kConnectionListFile = "connection_list";
 
-Error ConnectionList::readConnections(json::Array* pConnections)
+Error ConnectionHistory::readConnections(json::Array* pConnections)
 {
    FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
    if (connectionListFile.exists())
@@ -171,7 +171,7 @@ Error ConnectionList::readConnections(json::Array* pConnections)
    return Success();
 }
 
-Error ConnectionList::writeConnections(const json::Array& connectionsJson)
+Error ConnectionHistory::writeConnections(const json::Array& connectionsJson)
 {
    FilePath connectionListFile = connectionsDir_.childPath(kConnectionListFile);
    boost::shared_ptr<std::ostream> pStream;
