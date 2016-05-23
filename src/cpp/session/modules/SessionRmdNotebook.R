@@ -133,6 +133,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    engine <- tolower(engine)
    switch(engine,
       rcpp = "cpp",
+      sh = "bash",
       engine)
 })
 
@@ -151,7 +152,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (is.null(chunkId)) {
          if (includeSource) {
             attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
-            return(rmarkdown::html_notebook_output_code(code, attributes = attributes))
+            if (!is.null(context$indent)) {
+               return(.rs.rnb.renderVerbatimConsoleInput(code, tolower(context$engine), ""))
+            } else {
+               return(rmarkdown::html_notebook_output_code(code, attributes = attributes))
+            }
          }
          return(knitr::asis_output(""))
       }
@@ -172,7 +177,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             if (identical(context$results, "hide"))
                parsed <- parsed[parsed$type != 1, ]
             attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
-            rendered <- .rs.rnb.renderConsoleData(parsed, attributes = attributes)
+            rendered <- .rs.rnb.renderConsoleData(parsed,
+                                                  attributes = attributes,
+                                                  context)
             return(rendered)
          }
          
@@ -264,8 +271,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    csvData
 })
 
+.rs.addFunction("rnb.renderVerbatimConsoleInput", function(code, engine, indent)
+{
+   # remove indentation from code
+   code <- substring(code, nchar(indent) + 1)
+   
+   # print as block code (as knitr might normally do)
+   fmt <- "```%s\n%s\n```"
+   out <- sprintf(fmt, tolower(engine), paste(code, collapse = "\n"))
+   knitr::asis_output(out)
+})
+
 .rs.addFunction("rnb.renderConsoleData", function(csvData,
-                                                  attributes = list(class = "r"))
+                                                  attributes = list(class = "r"),
+                                                  context = list())
 {
    # bail early for empty data
    if (length(csvData) == 0 || nrow(csvData) == 0)
@@ -285,10 +304,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       text <- csvData$text[range$start:range$end]
       collapse <- if (type == 0) "\n" else ""
       pasted <- paste(text, collapse = collapse)
-      if (type == 0)
-         return(rmarkdown::html_notebook_output_code(pasted, attributes = attributes))
-      else
-         pasted
+      if (type == 0) {
+         if (is.null(context$indent)) {
+            return(rmarkdown::html_notebook_output_code(pasted, attributes = attributes))
+         } else {
+            return(.rs.rnb.renderVerbatimConsoleInput(pasted, tolower(context$engine), context$indent))
+         }
+      } else {
+         return(pasted)
+      }
    })
    
    splat

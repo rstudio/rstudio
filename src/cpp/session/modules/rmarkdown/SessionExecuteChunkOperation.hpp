@@ -292,6 +292,15 @@ core::Error runChunk(const std::string& docId,
    return Success();
 }
 
+void interruptChunk(const std::string& docId,
+                    const std::string& chunkId)
+{
+   boost::shared_ptr<ExecuteChunkOperation> pOperation =
+         ExecuteChunkOperation::getProcess(docId, chunkId);
+   
+   if (pOperation)
+      pOperation->terminate();
+}
 
 } // end namespace notebook
 } // end namespace rmarkdown

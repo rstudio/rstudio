@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
@@ -311,6 +312,43 @@ public class TextEditingTargetNotebook
                      }
                   }
             );
+         }
+      }));
+      
+      releaseOnDismiss_.add(editingTarget_.addInterruptChunkHandler(new InterruptChunkEvent.Handler()
+      {
+         @Override
+         public void onInterruptChunk(InterruptChunkEvent event)
+         {
+            int row = event.getRow();
+            String chunkId = getRowChunkId(row);
+            
+            // just interrupt R if we have no chunk id for some reason (shouldn't happen)
+            if (StringUtil.isNullOrEmpty(chunkId))
+            {
+               RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(null);
+               return;
+            }
+            
+            // interrupt this chunk's execution
+            server_.interruptChunk(
+                  editingTarget_.getId(),
+                  chunkId,
+                  new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onResponseReceived(Void response)
+                     {
+                        RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(null);
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        RStudioGinjector.INSTANCE.getApplicationInterrupt().interruptR(null);
+                     }
+                  });
          }
       }));
    }
