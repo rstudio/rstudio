@@ -41,6 +41,14 @@ public class AceEditorCommandDispatcher
    }
    
    @Handler
+   public void onYankRegion()
+   {
+      fireEvent(
+            CommandType.YANK_REGION,
+            ExecutionPolicy.FOCUSED);
+   }
+   
+   @Handler
    public void onYankBeforeCursor()
    {
       fireEvent(

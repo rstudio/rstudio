@@ -420,12 +420,32 @@ public class AceEditor implements DocDisplay,
                   
                   switch (event.getCommand())
                   {
-                  case PASTE_LAST_YANK:    pasteLastYank();    break;
+                  case YANK_REGION:        yankRegion();       break;
                   case YANK_BEFORE_CURSOR: yankBeforeCursor(); break;
                   case YANK_AFTER_CURSOR:  yankAfterCursor();  break;
+                  case PASTE_LAST_YANK:    pasteLastYank();    break;
                   }
                }
             });
+   }
+   
+   public void yankRegion()
+   {
+      if (isVimModeOn() && !isVimInInsertMode())
+         return;
+      
+      // no-op if there is no selection
+      String selectionValue = getSelectionValue();
+      if (StringUtil.isNullOrEmpty(selectionValue))
+         return;
+      
+      if (Desktop.isDesktop())
+         commands_.cutDummy().execute();
+      else
+      {
+         yankedText_ = getSelectionValue();
+         replaceSelection("");
+      }
    }
    
    public void yankBeforeCursor()
