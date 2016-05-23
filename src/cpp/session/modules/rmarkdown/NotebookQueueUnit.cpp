@@ -70,29 +70,31 @@ void fillJsonRangeArray(const std::vector<ExecRange>& in, json::Array* pOut)
 
 } // anonymous namespace
 
-NotebookQueueUnit::NotebookQueueUnit(const json::Object& source)
+Error NotebookQueueUnit::fromJson(const json::Object& source, 
+      NotebookQueueUnit* pUnit)
 {
    // extract top-level values
    json::Array completed, pending;
    Error error = json::readObject(source, 
-         kQueueUnitCode,      &code_,
-         kQueueUnitDocId,     &docId_,
-         kQueueUnitChunkId,   &chunkId_,
+         kQueueUnitCode,      &pUnit->code_,
+         kQueueUnitDocId,     &pUnit->docId_,
+         kQueueUnitChunkId,   &pUnit->chunkId_,
          kQueueUnitCompleted, &completed,
          kQueueUnitPending,   &pending);
    if (error)
       LOG_ERROR(error);
 
    // process arrays 
-   error = fillExecRangeArray(completed, &completed_);
+   error = fillExecRangeArray(completed, &pUnit->completed_);
    if (error)
       LOG_ERROR(error);
-   error = fillExecRangeArray(pending, &pending_);
+   error = fillExecRangeArray(pending, &pUnit->pending_);
    if (error)
       LOG_ERROR(error);
+   return Success();
 }
 
-json::Object NotebookQueueUnit::asJson()
+json::Object NotebookQueueUnit::toJson()
 {
    // process arrays
    json::Array completed, pending;
@@ -110,17 +112,17 @@ json::Object NotebookQueueUnit::asJson()
    return json::Object();
 }
 
-std::string NotebookQueueUnit::docId()
+std::string NotebookQueueUnit::docId() const
 {
    return docId_;
 }
 
-std::string NotebookQueueUnit::chunkId()
+std::string NotebookQueueUnit::chunkId() const
 {
    return chunkId_;
 }
 
-std::string NotebookQueueUnit::code()
+std::string NotebookQueueUnit::code() const
 {
    return code_;
 }

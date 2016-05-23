@@ -33,12 +33,16 @@ struct ExecRange
 class NotebookQueueUnit
 {
 public:
-   NotebookQueueUnit();
-   NotebookQueueUnit(const core::json::Object& source);
-   core::json::Object asJson();
-   std::string docId();
-   std::string chunkId();
-   std::string code();
+   // serialization/deserialization
+   static core::Error fromJson (
+         const core::json::Object& source,
+         NotebookQueueUnit* pUnit);
+   core::json::Object toJson();
+
+   // accessors
+   std::string docId() const;
+   std::string chunkId() const;
+   std::string code() const;
 
 private:
    std::string docId_;

@@ -15,6 +15,9 @@
 
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
+#include "NotebookExec.hpp"
+
+#include <r/RInterface.hpp>
 
 #include <core/Exec.hpp>
 
@@ -29,14 +32,70 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-std::list<NotebookQueueUnit> s_queue;
-
 enum QueueOperation
 {
    QueueAdd    = 0,
    QueueUpdate = 1,
    QueueDelete = 2
 };
+
+
+class NotebookQueue
+{
+public:
+   Error process()
+   {
+      // no work if list is empty
+      if (queue_.empty())
+         return Success();
+
+      // defer if R is currently executing code
+      if (r::getGlobalContext()->nextcontext != NULL)
+         return Success();
+
+      // pop front off execution queue
+      const NotebookQueueUnit& unit = *queue_.begin();
+      queue_.pop_front();
+
+      return Success();
+   }
+
+   Error update(const NotebookQueueUnit& unit, QueueOperation op, 
+         const std::string& before)
+   {
+      std::list<NotebookQueueUnit>::iterator it;
+
+      switch(op)
+      {
+         case QueueAdd:
+            // find insertion position
+            for (it = queue_.begin(); it != queue_.end(); it++)
+            {
+               if (it->docId()   == unit.docId() && 
+                   it->chunkId() == before)
+                  break;
+            }
+            queue_.insert(it, unit);
+            break;
+
+         case QueueUpdate:
+            break;
+
+         case QueueDelete:
+            break;
+      }
+      return Success();
+   }
+
+private:
+   // the queue of chunks to be executed 
+   std::list<NotebookQueueUnit> queue_;
+
+   // the execution context for the currently executing chunk
+   boost::shared_ptr<ChunkExecContext> execContext_;
+};
+
+static boost::shared_ptr<NotebookQueue> s_queue;
 
 Error updateExecQueue(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
@@ -48,30 +107,12 @@ Error updateExecQueue(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   NotebookQueueUnit unit(unitJson);
-   std::list<NotebookQueueUnit>::iterator it;
+   NotebookQueueUnit unit;
+   error = NotebookQueueUnit::fromJson(unitJson, &unit);
+   if (error)
+      return error;
 
-   switch(op)
-   {
-      case QueueAdd:
-         // find insertion position
-         for (s_queue.begin(); it != s_queue.end(); it++)
-         {
-            if (it->docId() == unit.docId() && 
-                it->chunkId() == before)
-               break;
-         }
-         s_queue.insert(it, unit);
-         break;
-
-      case QueueUpdate:
-         break;
-
-      case QueueDelete:
-         break;
-   }
-
-   return Success();
+   return s_queue->update(unit, static_cast<QueueOperation>(op), before);
 }
 
 } // anonymous namespace
