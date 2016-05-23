@@ -3536,16 +3536,13 @@ public class TextEditingTarget implements
    
    private String getRmdFrontMatter()
    {
-      return YamlFrontMatter.getFrontMatter(docDisplay_.getCode());
+      return YamlFrontMatter.getFrontMatter(docDisplay_);
    }
    
    private void applyRmdFrontMatter(String yaml)
    {
-      String code = docDisplay_.getCode();
-      String newCode = YamlFrontMatter.applyFrontMatter(code, yaml);
-      if (!code.equals(newCode)) 
+      if (YamlFrontMatter.applyFrontMatter(docDisplay_, yaml))
       {
-         docDisplay_.setCode(newCode, true);
          updateRmdFormatList();
       }
    }
