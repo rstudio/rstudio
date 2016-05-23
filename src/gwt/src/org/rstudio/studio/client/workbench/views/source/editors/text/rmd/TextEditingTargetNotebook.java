@@ -94,7 +94,6 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -1347,11 +1346,9 @@ public class TextEditingTargetNotebook
       }
       
       // if we're using a non-R engine, farm that out to separate routine
-      Map<String, String> chunkOptions = new HashMap<String, String>();
-      parseChunkOptions(unit.options, chunkOptions);
-       
+      Map<String, String> chunkOptions = parseChunkOptions(unit.options);
       String engine = chunkOptions.containsKey("engine")
-            ? chunkOptions.get("engine")
+            ? StringUtil.stringValue(chunkOptions.get("engine"))
             : "r";
             
       if (engine != "r")
@@ -1503,12 +1500,15 @@ public class TextEditingTargetNotebook
          
          String argName  = line.substring(startIdx, equalsIdx).trim();
          String argValue = line.substring(equalsIdx + 1, endIdx).trim();
-         if (argValue.startsWith("\"") && argValue.endsWith("\""))
-            argValue = argValue.substring(1, argValue.length() - 1);
-         else if (argValue.startsWith("'") && argValue.endsWith("'"))
-            argValue = argValue.substring(1, argValue.length() - 1);
          chunkOptions.put(argName, argValue);
       }
+   }
+   
+   public static Map<String, String> parseChunkOptions(String line)
+   {
+      Map<String, String> options = new HashMap<String, String>();
+      parseChunkOptions(line, options);
+      return options;
    }
    
    private static void parseChunkPreamble(String preamble,

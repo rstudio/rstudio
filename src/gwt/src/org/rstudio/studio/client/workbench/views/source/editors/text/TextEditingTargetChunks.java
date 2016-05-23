@@ -15,9 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -211,12 +211,12 @@ public class TextEditingTargetChunks
       String header = target_.getDocDisplay().getLine(row);
       
       // parse contents
-      Map<String, String> options = new HashMap<String, String>();
-      TextEditingTargetNotebook.parseChunkOptions(header, options);
+      Map<String, String> options =
+            TextEditingTargetNotebook.parseChunkOptions(header);
       
       // check runnable engine
       String engine = options.containsKey("engine")
-            ? options.get("engine")
+            ? StringUtil.stringValue(options.get("engine"))
             : "r";
             
       return isExecutableKnitrEngine(engine);
