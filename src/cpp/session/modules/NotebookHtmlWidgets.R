@@ -13,11 +13,45 @@
 #
 #
 
+.rs.addFunction("recordHtmlWidget", function(htmlfile, depfile)
+{
+   .Call("rs_recordHtmlWidget", htmlfile, depfile)
+})
+
+.rs.addFunction("rnb.setHtmlCaptureContext", function(...)
+{
+   .rs.setVar("rnb.htmlCaptureContext", list(...))
+})
+
+.rs.addFunction("rnb.getHtmlCaptureContext", function()
+{
+   .rs.getVar("rnb.htmlCaptureContext")
+})
+
 # Hooks ----
 
-.rs.addFunction("rnbHooks.print.htmlwidget", function(x, ...) {
+.rs.addFunction("rnb.saveHtmlToCache", function(x, ...)
+{
+   ctx <- .rs.rnb.getHtmlCaptureContext()
    
-   ctx <- .rs.getVar("htmlCaptureContext")
+   # write html to file
+   rendered <- paste(as.character(x), collapse = "\n")
+   htmlfile <- tempfile("_rs_html_deps_", tmpdir = ctx$outputFolder, fileext = ".html")
+   cat(rendered, file = htmlfile, sep = "\n")
+   
+   # record html
+   .rs.recordHtmlWidget(htmlfile, tempfile())
+})
+
+# common implementation for items which can be converted to HTML
+# just using 'as.character'
+.rs.addFunction("rnbHooks.print.html",           .rs.rnb.saveHtmlToCache)
+.rs.addFunction("rnbHooks.print.shiny.tag",      .rs.rnb.saveHtmlToCache)
+.rs.addFunction("rnbHooks.print.shiny.tag.list", .rs.rnb.saveHtmlToCache)
+
+.rs.addFunction("rnbHooks.print.htmlwidget", function(x, ...) {
+   ctx <- .rs.rnb.getHtmlCaptureContext()
+   
    outputFolder  <- ctx$outputFolder
    chunkOptions  <- ctx$chunkOptions
    libraryFolder <- ctx$libraryFolder
@@ -132,22 +166,30 @@
 
 # HTML Capture ----
 
-.rs.setVar("rnbHtmlCaptureHooks", list(
-   "print.htmlwidget" = .rs.rnbHooks.print.htmlwidget
-))
+.rs.addFunction("rnb.htmlCaptureHooks", function()
+{
+   list(
+      "print.htmlwidget"     = .rs.rnbHooks.print.htmlwidget,
+      "print.html"           = .rs.rnbHooks.print.html,
+      "print.shiny.tag"      = .rs.rnbHooks.print.shiny.tag,
+      "print.shiny.tag.list" = .rs.rnbHooks.print.shiny.tag.list
+   )
+})
 
 .rs.addFunction("initHtmlCapture", function(outputFolder,
                                             libraryFolder,
                                             chunkOptions)
 {
    # cache context
-   .rs.setVar("htmlCaptureContext", list(outputFolder = outputFolder,
-                                         libraryFolder = libraryFolder,
-                                         chunkOptions = chunkOptions))
+   .rs.rnb.setHtmlCaptureContext(
+      outputFolder = outputFolder,
+      libraryFolder = libraryFolder,
+      chunkOptions = chunkOptions
+   )
    
    # get and load hooks
    envir <- .rs.toolsEnv()
-   hooks <- .rs.getVar("rnbHtmlCaptureHooks")
+   hooks <- .rs.rnb.htmlCaptureHooks()
    .rs.enumerate(hooks, function(key, value) {
       assign(key, value, envir = envir)
    })
@@ -155,11 +197,8 @@
 
 .rs.addFunction("releaseHtmlCapture", function()
 {
-   # reset context
-   .rs.setVar("htmlCaptureContext", list())
-   
    # remove hooks
-   hooks <- .rs.getVar("rnbHtmlCaptureHooks")
+   hooks <- .rs.rnb.htmlCaptureHooks()
    
    # construct call to 'rm'
    args <- c(as.list(names(hooks)), envir = .rs.toolsEnv())
