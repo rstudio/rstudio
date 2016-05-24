@@ -1,5 +1,5 @@
 /*
- * SessionHttp.hpp
+ * SessionHttpMethods.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionHttp.hpp"
+#include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionFork.hpp"
 #include "SessionSuspend.hpp"
@@ -22,6 +22,8 @@
 #include "SessionUriHandlers.hpp"
 #include "SessionDirs.hpp"
 #include "SessionRpc.hpp"
+
+#include "session-config.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -50,7 +52,6 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace http {
 namespace {
 
 core::http::UriHandlerFunction s_defaultUriHandler;
@@ -126,7 +127,7 @@ bool parseAndValidateJsonRpcConnection(
 
    // check for client version
    if (!pJsonRpcRequest->clientVersion.empty() &&
-       clientVersion() != pJsonRpcRequest->clientVersion)
+       http_methods::clientVersion() != pJsonRpcRequest->clientVersion)
    {
       Error error(json::errc::InvalidClientVersion, ERROR_LOCATION);
       ptrConnection->sendJsonRpcError(error);
@@ -138,7 +139,7 @@ bool parseAndValidateJsonRpcConnection(
 }
 
 void endHandleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
-                         ConnectionType connectionType,
+                         http_methods::ConnectionType connectionType,
                          core::http::Response* pResponse)
 {
    ptrConnection->sendResponse(*pResponse);
@@ -277,7 +278,7 @@ void polledEventHandler()
          }
          else
          {
-            http::handleConnection(ptrConnection, BackgroundConnection);
+            handleConnection(ptrConnection, http_methods::BackgroundConnection);
          }
       }
    }
@@ -291,19 +292,33 @@ bool registeredWaitForMethod(const std::string& method,
    module_context::enqueClientEvent(event);
 
    // wait for method
-   return waitForMethod(method,
-                        boost::bind(waitForMethodInitFunction, event),
+   return http_methods::waitForMethod(method,
+                        boost::bind(http_methods::waitForMethodInitFunction, 
+                                    event),
                         suspend::disallowSuspend,
                         pRequest);
 }
 
 } // anonymous namespace
 
+namespace module_context
+{
+module_context::WaitForMethodFunction registerWaitForMethod(
+      const std::string& methodName)
+{
+   s_waitForMethodNames.push_back(methodName);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
+}
+
+} // namespace module_context
+
+namespace http_methods {
+
 // client version -- this is determined by the git revision hash. the client
 // and the server can diverge if a new version of the server was installed
 // underneath a previously rendered client. if versions diverge then a reload
 // of the client is forced
-inline std::string clientVersion()
+std::string clientVersion()
 {
    // never return a version in desktop mode
    if (options().programMode() == kSessionProgramModeDesktop)
@@ -315,13 +330,6 @@ inline std::string clientVersion()
 
    // clientVersion is the git revision hash
    return RSTUDIO_GIT_REVISION_HASH;
-}
-
-module_context::WaitForMethodFunction registerWaitForMethod(
-      const std::string& methodName)
-{
-   s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
 }
 
 void waitForMethodInitFunction(const ClientEvent& initEvent)
@@ -715,7 +723,7 @@ std::string nextSessionUrl()
    return s_nextSessionUrl;
 }
 
-} // namespace http
+} // namespace http_methods
 } // namespace session
 } // namespace rstudio
 

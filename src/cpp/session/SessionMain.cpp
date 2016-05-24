@@ -98,17 +98,20 @@
 
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientEventService.hpp"
-#include "SessionConsoleInput.hpp"
 #include "SessionClientInit.hpp"
-#include "SessionFork.hpp"
-#include "SessionInit.hpp"
-#include "SessionHttp.hpp"
+#include "SessionConsoleInput.hpp"
 #include "SessionDirs.hpp"
+#include "SessionFork.hpp"
+#include "SessionHttpMethods.hpp"
+#include "SessionInit.hpp"
+#include "SessionSuspend.hpp"
 
 #include <session/SessionRUtil.hpp>
 
 #include "modules/SessionAbout.hpp"
+#include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
+#include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionCodeSearch.hpp"
@@ -211,11 +214,6 @@ void detectChanges(module_context::ChangeSource source)
    module_context::events().onDetectChanges(source);
 }
  
-// forward declare convenience wait for method init function which
-// enques the specified event and then issues either the last console
-// prompt or a busy event
-void waitForMethodInitFunction(const ClientEvent& initEvent);
-
 // allow console_input requests to come in when we aren't explicitly waiting
 // on them (i.e. waitForMethod("console_input")). place them into into a buffer
 // which is then checked by rConsoleRead prior to it calling waitForMethod
@@ -337,11 +335,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    suspend::setSessionResumed(rInitInfo.resumed);
    
    // record built-in waitForMethod handlers
-   rsession::http::registerWaitForMethod(kLocatorCompleted);
-   rsession::http::registerWaitForMethod(kEditCompleted);
-   rsession::http::registerWaitForMethod(kChooseFileCompleted);
-   rsession::http::registerWaitForMethod(kUserPromptCompleted);
-   rsession::http::registerWaitForMethod(kHandleUnsavedChangesCompleted);
+   module_context::registerWaitForMethod(kLocatorCompleted);
+   module_context::registerWaitForMethod(kEditCompleted);
+   module_context::registerWaitForMethod(kChooseFileCompleted);
+   module_context::registerWaitForMethod(kUserPromptCompleted);
+   module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
 
    // execute core initialization functions
    using boost::bind;
@@ -500,7 +498,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    if ((rsession::options().programMode() == kSessionProgramModeDesktop) ||
        rsession::options().standalone())
    {
-      rsession::http::registerGwtHandlers();
+      http_methods::registerGwtHandlers();
    }
 
    // enque abend warning event if necessary (but not in standalone
@@ -589,7 +587,7 @@ int rEditFile(const std::string& file)
 
    // wait for edit_completed 
    json::JsonRpcRequest request ;
-   bool succeeded = http::waitForMethod(kEditCompleted,
+   bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
                                         &request);
@@ -638,7 +636,7 @@ FilePath rChooseFile(bool newFile)
    
    // wait for choose_file_completed 
    json::JsonRpcRequest request ;
-   bool succeeded = http::waitForMethod(kChooseFileCompleted,
+   bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
                                         &request);
@@ -718,7 +716,7 @@ bool rLocator(double* x, double* y)
    
    // wait for locator_completed 
    json::JsonRpcRequest request ;
-   bool succeeded = http::waitForMethod(kLocatorCompleted,
+   bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
                                         &request);
@@ -857,7 +855,7 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
    // log to monitor
    using namespace monitor;
    std::string data;
-   if (s_suspendedFromTimeout)
+   if (suspend::suspendedFromTimeout())
       data = safe_convert::numberToString(rsession::options().timeoutMinutes());
    logExitEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
@@ -878,9 +876,10 @@ bool rHandleUnsavedChanges()
 
    // wait for method
    json::JsonRpcRequest request;
-   bool succeeded = http::waitForMethod(
+   bool succeeded = http_methods::waitForMethod(
                         kHandleUnsavedChangesCompleted,
-                        boost::bind(waitForMethodInitFunction, event),
+                        boost::bind(http_methods::waitForMethodInitFunction, 
+                                    event),
                         suspend::disallowSuspend,
                         &request);
 
@@ -911,7 +910,7 @@ void rQuit()
    bool switchProjects;
    if (options().switchProjectsWithUrl())
    {
-      switchProjects = !session::http::nextSessionUrl().empty();
+      switchProjects = !http_methods::nextSessionUrl().empty();
    }
    else
    {
@@ -924,7 +923,7 @@ void rQuit()
 
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
-   jsonData["next_session_url"] = session::http::nextSessionUrl();
+   jsonData["next_session_url"] = http_methods::nextSessionUrl();
    ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }
@@ -1266,7 +1265,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 
    // wait for user_prompt_completed
    json::JsonRpcRequest request ;
-   http::waitForMethod(kUserPromptCompleted,
+   http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
                        &request);
@@ -1330,11 +1329,9 @@ void syncRSaveAction()
    rstudio::r::session::setSaveAction(saveWorkspaceOption());
 }
 
-
-WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
-{
-   return http::registerWaitForMethod(methodName);
-}
+} // namespace module_context
+} // namespace session
+} // namespace rstudio
 
 namespace {
 
@@ -1444,7 +1441,7 @@ int main (int argc, char * const argv[])
 
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
-      s_mainThreadId = boost::this_thread::get_id();
+      fork::initThreadId();
 
       // ensure LANG and UTF-8 character set
 #ifndef _WIN32
@@ -1596,13 +1593,14 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
       // set working directory
-      FilePath workingDir = init::getInitialWorkingDirectory();
+      FilePath workingDir = dirs::getInitialWorkingDirectory();
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
          
       // start http connection listener
-      error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1);
+      error = waitWithTimeout(
+            http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
@@ -1645,7 +1643,7 @@ int main (int argc, char * const argv[])
       rOptions.logPath = options.userLogPath();
       rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
-      rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
+      rOptions.rEnvironmentDir = boost::bind(dirs::rEnvironmentDir);
       rOptions.rHistoryDir = boost::bind(dirs::rHistoryDir);
       rOptions.alwaysSaveHistory = boost::bind(alwaysSaveHistoryOption);
       rOptions.rSourcePath = options.coreRSourcePath();

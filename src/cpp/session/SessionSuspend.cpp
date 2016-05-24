@@ -48,6 +48,16 @@ bool disallowSuspend()
    return false; 
 }
 
+bool sessionResumed()
+{
+   return s_rSessionResumed;
+}
+
+void setSessionResumed(bool resumed)
+{
+   s_rSessionResumed = resumed;
+}
+
 bool suspendedFromTimeout()
 {
    return s_suspendedFromTimeout;

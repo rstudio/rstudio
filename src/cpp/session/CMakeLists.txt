@@ -64,7 +64,8 @@ set (SESSION_SOURCE_FILES
    SessionContentUrls.cpp
    SessionDirs.cpp
    SessionFork.cpp
-   SessionHttp.cpp
+   SessionRpc.cpp
+   SessionHttpMethods.cpp
    SessionInit.cpp
    SessionMain.cpp
    SessionMainOverlay.cpp

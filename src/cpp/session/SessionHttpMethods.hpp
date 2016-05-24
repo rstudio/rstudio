@@ -1,5 +1,5 @@
 /*
- * SessionHttp.hpp
+ * SessionHttpMethods.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_HTTP_HPP
-#define SESSION_HTTP_HPP
+#ifndef SESSION_HTTP_METHODS_HPP
+#define SESSION_HTTP_METHODS_HPP
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -27,7 +27,7 @@ namespace session {
 
 class ClientEvent;
 
-namespace http {
+namespace http_methods {
 
 enum ConnectionType
 {
@@ -43,18 +43,16 @@ bool waitForMethod(const std::string& method,
                    const ClientEvent& initEvent,
                    const boost::function<bool()>& allowSuspend,
                    core::json::JsonRpcRequest* pRequest);
-module_context::WaitForMethodFunction registerWaitForMethod(
-      const std::string& methodName);
 void waitForMethodInitFunction(const ClientEvent& initEvent);
 
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType);
 core::WaitResult startHttpConnectionListenerWithTimeout();
 void registerGwtHandlers();
-inline std::string clientVersion();
+std::string clientVersion();
 std::string nextSessionUrl();
 
-} // namespace http
+} // namespace http_methods
 } // namespace session
 } // namespace rstudio
 

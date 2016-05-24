@@ -13,6 +13,8 @@
  *
  */
 
+#include <core/http/UriHandler.hpp>
+
 namespace rstudio {
 namespace session { 
 namespace uri_handlers {

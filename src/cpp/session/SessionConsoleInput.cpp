@@ -17,7 +17,7 @@
 #include "SessionClientEventQueue.hpp"
 #include "SessionFork.hpp"
 #include "SessionInit.hpp"
-#include "SessionHttp.hpp"
+#include "SessionHttpMethods.hpp"
 
 #include "modules/SessionConsole.hpp"
 
@@ -202,7 +202,7 @@ bool rConsoleRead(const std::string& prompt,
 
       // wait for console_input
       json::JsonRpcRequest request ;
-      bool succeeded = http::waitForMethod(
+      bool succeeded = http_methods::waitForMethod(
                         kConsoleInput,
                         boost::bind(consolePrompt, prompt, addToHistory),
                         boost::bind(canSuspend, prompt),

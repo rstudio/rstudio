@@ -52,7 +52,7 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
       if (val.type() != json::ObjectType)
          continue;
 
-      ExecRange range;
+      ExecRange range(0, 0);
       Error error = json::readObject(val.get_obj(),
             kQueueUnitRangeStart, &range.start,
             kQueueUnitRangeStop,  &range.stop);

@@ -13,12 +13,17 @@
  *
  */
 
+#include "SessionUriHandlers.hpp"
+
+#include <session/SessionConstants.hpp>
+
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace session { 
 namespace uri_handlers {
 
-http::UriHandlers& handlers();
+http::UriHandlers& handlers()
 {
    static http::UriHandlers instance;
    return instance;

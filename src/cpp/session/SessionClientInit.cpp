@@ -17,26 +17,33 @@
 #include "SessionClientEventService.hpp"
 #include "SessionInit.hpp"
 #include "SessionSuspend.hpp"
-#include "SessionHttp.hpp"
+#include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAuthoring.hpp"
+#include "modules/rmarkdown/SessionRMarkdown.hpp"
+#include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
+#include "modules/SessionRAddins.hpp"
+#include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
 #include "modules/SessionHTMLPreview.hpp"
-#include "modules/SessionMarkers.hpp"
-#include "modules/SessionSource.hpp"
-#include "modules/SessionSVN.hpp"
-#include "modules/SessionVCS.hpp"
 #include "modules/SessionLists.hpp"
-
+#include "modules/clang/SessionClang.hpp"
+#include "modules/SessionMarkers.hpp"
+#include "modules/SessionPlots.hpp"
+#include "modules/SessionSVN.hpp"
+#include "modules/SessionSource.hpp"
+#include "modules/SessionVCS.hpp"
+#include "modules/build/SessionBuild.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
 
 #include <r/session/RSession.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleActions.hpp>
+#include <r/session/RConsoleHistory.hpp>
 #include <r/ROptions.hpp>
 
 #include <core/json/Json.hpp>
@@ -45,14 +52,17 @@
 #include <core/http/Response.hpp>
 #include <core/system/Environment.hpp>
 
+#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUserSettings.hpp>
-#include <session/SessionConsoleProcess.hpp>
+#include <session/projects/SessionProjectSharing.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+
+#include "session-config.h"
 
 using namespace rstudio::core;
 
@@ -115,7 +125,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["temp_dir"] = tempDir.absolutePath();
    
    // installed client version
-   sessionInfo["client_version"] = http::clientVersion();
+   sessionInfo["client_version"] = http_methods::clientVersion();
    
    // default prompt
    sessionInfo["prompt"] = rstudio::r::options::getOption<std::string>("prompt");

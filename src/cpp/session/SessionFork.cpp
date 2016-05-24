@@ -75,6 +75,11 @@ void setupForkHandlers()
 }
 #endif
 
+void initThreadId()
+{
+   s_mainThreadId = boost::this_thread::get_id();
+}
+
 bool haveRunningChildren()
 {
    return module_context::processSupervisor().hasRunningChildren() ||

@@ -16,13 +16,20 @@
 #ifndef SESSION_RPC_HPP
 #define SESSION_RPC_HPP
 
+#include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
+#include <session/SessionHttpConnection.hpp>
+
+#include "SessionHttpMethods.hpp"
+
 namespace rstudio {
 namespace session {
+
 namespace rpc {
 
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
-                      http::ConnectionType connectionType);
+                      http_methods::ConnectionType connectionType);
 
 } // namespace rpc
 } // namespace session

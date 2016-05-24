@@ -14,14 +14,16 @@
  */
 
 #include "SessionRpc.hpp"
+#include "SessionHttpMethods.hpp"
 #include "SessionClientEventQueue.hpp"
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
+using namespace rstudio::core;
+
 namespace rstudio {
 namespace session {
-namespace rpc {
 namespace {
 
 // json rpc methods
@@ -41,7 +43,10 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
    {
       // allow modules to detect changes after rpc calls
       if (!pJsonRpcResponse->suppressDetectChanges())
-         detectChanges(module_context::ChangeSourceRPC);
+      {
+         module_context::events().onDetectChanges(
+               module_context::ChangeSourceRPC);
+      }
 
       // are there (or will there likely be) events pending?
       // (if not then notify the client)
@@ -59,7 +64,10 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
       {
          pJsonRpcResponse->runAfterResponse();
          if (!pJsonRpcResponse->suppressDetectChanges())
-            detectChanges(module_context::ChangeSourceRPC);
+         {
+            module_context::events().onDetectChanges(
+                  module_context::ChangeSourceRPC);
+         }
       }
    }
 }
@@ -112,10 +120,13 @@ void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method)
    s_jsonRpcMethods.insert(method);
 }
 
-}
+} // namespace module_context
+
+namespace rpc {
+
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
-                      http::ConnectionType connectionType)
+                      http_methods::ConnectionType connectionType)
 {
    // record the time just prior to execution of the event
    // (so we can determine if any events were added during execution)

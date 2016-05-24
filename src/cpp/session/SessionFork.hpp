@@ -23,6 +23,7 @@ namespace fork {
 void setupForkHandlers();
 bool wasForked();
 bool haveRunningChildren();
+void initThreadId();
 
 } // namespace fork
 } // namespace session
