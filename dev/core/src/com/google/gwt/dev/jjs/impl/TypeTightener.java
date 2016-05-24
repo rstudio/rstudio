@@ -563,8 +563,12 @@ public class TypeTightener {
     public void endVisit(JParameter x, Context ctx) {
       JMethod currentMethod = getCurrentMethod();
       if (program.codeGenTypes.contains(currentMethod.getEnclosingType())
-          || currentMethod.canBeReferencedExternally()) {
-        // We cannot tighten this parameter as we don't know all callers.
+          // We cannot tighten this parameter as we don't know all callers.
+          || currentMethod.canBeReferencedExternally()
+          // And do not tighten JsVararg parameters because the implementation of the JsVarargs
+          // calling convention creates an array of the parameter type hence requires that it is
+          // preserved.
+          || x.isVarargs() && currentMethod.isJsMethodVarargs()) {
         return;
       }
       tighten(x);

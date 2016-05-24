@@ -301,11 +301,12 @@ public class JsTypeVarargsTest extends GWTTestCase {
   }
 
   @JsMethod(namespace = JsPackage.GLOBAL)
-  public static UninstantiatedClass[] varargJsMethodUninstantiatedVararg(UninstantiatedClass... varargs) {
-    return varargs;
+  public static int varargJsMethodUninstantiatedVararg(
+      UninstantiatedClass... varargs) {
+    return varargs.length;
   }
 
   public native void testVarargsCall_uninstantiatedVararg() /*-{
-    @GWTTestCase::assertEquals(II)(0, $global.varargJsMethodUninstantiatedVararg().length);
+    @GWTTestCase::assertEquals(II)(0, $global.varargJsMethodUninstantiatedVararg());
   }-*/;
 }
