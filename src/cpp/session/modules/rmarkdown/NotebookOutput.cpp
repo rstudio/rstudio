@@ -405,37 +405,41 @@ Error enqueueChunkOutput(
    FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId,
          ContextSaved);
 
-   // scan the directory for output
    std::string ctxId(outputPath.parent().filename());
    std::vector<FilePath> outputPaths;
-   Error error = outputPath.children(&outputPaths);
-
-   // non-fatal: if we can't list we'll safely return an empty array
-   if (error) 
-      LOG_ERROR(error);
-
-   // arrange by filename (use FilePath's < operator)
-   std::sort(outputPaths.begin(), outputPaths.end());
-
-   // loop through each and build an array of the outputs
    json::Array outputs;
-   BOOST_FOREACH(const FilePath& outputPath, outputPaths)
+
+   // if there's an output directory at the expected location (there may not be
+   // for chunks which don't have any output at all), read it into a JSON
+   // object for the client
+   if (outputPath.exists())
    {
-      json::Object output;
-
-      // ascertain chunk output type from file extension; skip if extension 
-      // unknown
-      int outputType = chunkOutputType(outputPath);
-      if (outputType == kChunkOutputNone)
-         continue;
-
-      // format/parse chunk output for client consumption
-      Error error = fillOutputObject(docId, chunkId, ctxId, outputType, 
-            outputPath, &output);
-      if (error)
+      Error error = outputPath.children(&outputPaths);
+      if (error) 
          LOG_ERROR(error);
-      else
-         outputs.push_back(output);
+
+      // arrange by filename (use FilePath's < operator)
+      std::sort(outputPaths.begin(), outputPaths.end());
+
+      // loop through each and build an array of the outputs
+      BOOST_FOREACH(const FilePath& outputPath, outputPaths)
+      {
+         json::Object output;
+
+         // ascertain chunk output type from file extension; skip if extension 
+         // unknown
+         int outputType = chunkOutputType(outputPath);
+         if (outputType == kChunkOutputNone)
+            continue;
+
+         // format/parse chunk output for client consumption
+         error = fillOutputObject(docId, chunkId, ctxId, outputType, 
+               outputPath, &output);
+         if (error)
+            LOG_ERROR(error);
+         else
+            outputs.push_back(output);
+      }
    }
    
    // note that if we find that this chunk has no output we can display, we

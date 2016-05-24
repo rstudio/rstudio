@@ -21,6 +21,7 @@ public class AceEditorCommandEvent extends GwtEvent<AceEditorCommandEvent.Handle
 {
    public static enum CommandType
    {
+      YANK_REGION,
       YANK_BEFORE_CURSOR,
       YANK_AFTER_CURSOR,
       PASTE_LAST_YANK;
