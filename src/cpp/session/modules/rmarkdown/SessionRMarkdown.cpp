@@ -1342,9 +1342,9 @@ private:
    std::string chunkId_;
 };
 
-void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
-                                   const std::string& output,
-                                   FilePath targetPath)
+void chunkConsoleOutputHandler(module_context::ConsoleOutputType type,
+                               const std::string& output,
+                               FilePath targetPath)
 {
    using namespace module_context;
    
@@ -1387,7 +1387,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
          module_context::events().onConsoleOutput.connect(
-            boost::bind(sourceCppConsoleOutputHandler,
+            boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
                         target));
@@ -1414,9 +1414,9 @@ Error executeRcppEngineChunk(const std::string& docId,
    error = r::exec::executeString(execCode);
    if (error)
    {
-      sourceCppConsoleOutputHandler(module_context::ConsoleOutputError,
-                                    r::endUserErrorMessage(error),
-                                    target);
+      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
+                                r::endUserErrorMessage(error),
+                                target);
    }
 
    // forward success / failure to chunk
@@ -1462,7 +1462,7 @@ Error executeStanEngineChunk(const std::string& docId,
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
          module_context::events().onConsoleOutput.connect(
-            boost::bind(sourceCppConsoleOutputHandler,
+            boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
                         target));
@@ -1533,7 +1533,11 @@ Error executeStanEngineChunk(const std::string& docId,
    SEXP stanModelSEXP = R_NilValue;
    error = fStanEngine.call(&stanModelSEXP, &protect);
    if (error)
-      LOG_ERROR(error);
+   {
+      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
+                                r::endUserErrorMessage(error),
+                                target);
+   }
    
    // assign in global env on success
    if (stanModelSEXP != R_NilValue)
