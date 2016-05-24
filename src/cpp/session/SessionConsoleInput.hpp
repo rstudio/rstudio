@@ -13,27 +13,31 @@
  *
  */
 
-#ifndef SESSION_MODULE_CONSOLE_INPUT_HPP
-#define SESSION_MODULE_CONSOLE_INPUT_HPP
+#ifndef SESSION_CONSOLE_INPUT_HPP
+#define SESSION_CONSOLE_INPUT_HPP
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 
 namespace rstudio {
+namespace r {
+   namespace session {
+      struct RConsoleInput;
+   }
+}
 namespace session {
-namespace modules {
 namespace console_input {
 
 void clearConsoleInputBuffer();
 bool executing();
 core::Error extractConsoleInput(const core::json::JsonRpcRequest& request);
+void reissueLastConsolePrompt();
 
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
-                  rstudio::r::session::RConsoleInput* pConsoleInput)
+                  r::session::RConsoleInput* pConsoleInput);
 
 } // namespace console_input
-} // namespace modules
 } // namespace session
 } // namespace rstudio
 

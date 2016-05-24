@@ -14,20 +14,33 @@
  */
 
 #include "SessionConsoleInput.hpp"
-#include "../../SessionClientEventQueue.hpp"
+#include "SessionClientEventQueue.hpp"
+#include "SessionFork.hpp"
+#include "SessionInit.hpp"
+#include "SessionHttp.hpp"
+
+#include "modules/SessionConsole.hpp"
 
 #include <session/SessionModuleContext.hpp>
 
+#include <r/session/RSession.hpp>
+#include <r/ROptions.hpp>
+
+using namespace rstudio::core;
+
 namespace rstudio {
 namespace session {
-namespace modules {
 namespace console_input {
 namespace {
 
+// queue of pending console input
 std::queue<rstudio::r::session::RConsoleInput> s_consoleInputBuffer;
 
 // manage global state indicating whether R is processing input
 volatile sig_atomic_t s_rProcessingInput = 0;
+
+// last prompt we issued
+std::string s_lastPrompt;
 
 void setExecuting(bool executing)
 {
@@ -59,6 +72,45 @@ void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleIn
                line, consoleInput.console));
    }
 }
+
+void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
+{
+   json::Object data;
+   data[kConsoleText] = input.text + "\n";
+   data[kConsoleId]   = input.console;
+   ClientEvent inputEvent(client_events::kConsoleWriteInput, data);
+   clientEventQueue().add(inputEvent);
+}
+
+void consolePrompt(const std::string& prompt, bool addToHistory)
+{
+   // save the last prompt (for re-issuing)
+   s_lastPrompt = prompt;
+
+   // enque the event
+   json::Object data ;
+   data["prompt"] = prompt ;
+   data["history"] = addToHistory;
+   bool isDefaultPrompt = 
+      prompt == rstudio::r::options::getOption<std::string>("prompt");
+   data["default"] = isDefaultPrompt;
+   ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
+   clientEventQueue().add(consolePromptEvent);
+   
+   // allow modules to detect changes after execution of previous REPL
+   module_context::events().onDetectChanges(module_context::ChangeSourceREPL);   
+
+   // call prompt hook
+   module_context::events().onConsolePrompt(prompt);
+}
+
+bool canSuspend(const std::string& prompt)
+{
+   return !fork::haveRunningChildren() && 
+          rstudio::r::session::isSuspendable(prompt);
+}
+
+} // anonymous namespace
 
 // extract console input -- can be either null (user hit escape) or a string
 Error extractConsoleInput(const json::JsonRpcRequest& request)
@@ -103,20 +155,14 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
    }
 }
 
-void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
-{
-   json::Object data;
-   data[kConsoleText] = input.text + "\n";
-   data[kConsoleId]   = input.console;
-   ClientEvent inputEvent(kConsoleWriteInput, data);
-   rsession::clientEventQueue().add(inputEvent);
-}
-
-} // anonymous namespace
-
 bool executing()
 {
    return s_rProcessingInput;
+}
+
+void reissueLastConsolePrompt()
+{
+   consolePrompt(s_lastPrompt, false);
 }
 
 void clearConsoleInputBuffer()
@@ -131,7 +177,7 @@ bool rConsoleRead(const std::string& prompt,
                   rstudio::r::session::RConsoleInput* pConsoleInput)
 {
    // this is an invalid state in a forked (multicore) process
-   if (s_wasForked)
+   if (fork::wasForked())
    {
       LOG_WARNING_MESSAGE("rConsoleRead called in forked processs");
       return false;
@@ -151,12 +197,12 @@ bool rConsoleRead(const std::string& prompt,
       // fire console_prompt event (unless we are just starting up, in which
       // case we will either prompt as part of the response to client_init or
       // we shouldn't prompt at all because we are resuming a suspended session)
-      if (s_sessionInitialized)
+      if (init::isSessionInitialized())
          consolePrompt(prompt, addToHistory);
 
       // wait for console_input
       json::JsonRpcRequest request ;
-      bool succeeded = waitForMethod(
+      bool succeeded = http::waitForMethod(
                         kConsoleInput,
                         boost::bind(consolePrompt, prompt, addToHistory),
                         boost::bind(canSuspend, prompt),
@@ -190,18 +236,21 @@ bool rConsoleRead(const std::string& prompt,
    setExecuting(true);
 
    // ensure that output resulting from this input goes to the correct console
-   if (rsession::clientEventQueue().setActiveConsole(pConsoleInput->console))
+   if (clientEventQueue().setActiveConsole(pConsoleInput->console))
    {
       module_context::events().onActiveConsoleChanged(pConsoleInput->console,
             pConsoleInput->text);
    }
 
-   ClientEvent promptEvent(kConsoleWritePrompt, prompt);
-   rsession::clientEventQueue().add(promptEvent);
+   ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+   clientEventQueue().add(promptEvent);
    enqueueConsoleInput(*pConsoleInput);
 
    // always return true (returning false causes the process to exit)
    return true;
 }
 
+} // namespace console_input 
+} // namespace session
+} // namespace rstudio
 
