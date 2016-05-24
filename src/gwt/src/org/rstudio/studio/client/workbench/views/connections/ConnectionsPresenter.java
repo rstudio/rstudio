@@ -68,6 +68,8 @@ public class ConnectionsPresenter extends BasePresenter
       HandlerRegistration addSelectedConnectionChangeHandler(
                                  SelectionChangeEvent.Handler handler);
       
+      String getSearchFilter();
+      
       HandlerRegistration addSearchFilterChangeHandler(
                                        ValueChangeHandler<String> handler);
       
@@ -120,25 +122,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            String query = event.getValue();
-            final String[] splat = query.toLowerCase().split("\\s+");
-            List<Connection> connections = ListUtil.filter(allConnections_, 
-                                         new FilterPredicate<Connection>()
-            {
-               @Override
-               public boolean test(Connection connection)
-               {
-                  for (String el : splat)
-                  {
-                     boolean match =
-                         connection.getHost().toLowerCase().contains(el);
-                     if (!match)
-                        return false;
-                  }
-                  return true;
-               }
-            });
-            display_.setConnections(connections);
+            display_.setConnections(filteredConnections());
          }
       });
       
@@ -289,10 +273,13 @@ public class ConnectionsPresenter extends BasePresenter
    
    private void updateConnections(JsArray<Connection> connections)
    {
+      // update all connections
       allConnections_.clear();
       for (int i = 0; i<connections.length(); i++)
          allConnections_.add(connections.get(i)); 
-      display_.setConnections(allConnections_);
+      
+      // set filtered connections
+      display_.setConnections(filteredConnections());
    }
    
    private void updateActiveConnections(JsArray<ConnectionId> connections)
@@ -324,6 +311,28 @@ public class ConnectionsPresenter extends BasePresenter
          commands_.connectConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
       }
+   }
+   
+   private List<Connection> filteredConnections()
+   {
+      String query = display_.getSearchFilter();
+      final String[] splat = query.toLowerCase().split("\\s+");
+      return ListUtil.filter(allConnections_, 
+                                   new FilterPredicate<Connection>()
+      {
+         @Override
+         public boolean test(Connection connection)
+         {
+            for (String el : splat)
+            {
+               boolean match =
+                   connection.getHost().toLowerCase().contains(el);
+               if (!match)
+                  return false;
+            }
+            return true;
+         }
+      });
    }
    
    private final GlobalDisplay globalDisplay_;

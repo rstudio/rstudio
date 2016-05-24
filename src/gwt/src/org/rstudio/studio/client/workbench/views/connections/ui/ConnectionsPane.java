@@ -228,6 +228,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
+   public String getSearchFilter()
+   {
+      return searchWidget_.getValue();
+   }
+   
+   @Override
    public HandlerRegistration addSearchFilterChangeHandler(
                                           ValueChangeHandler<String> handler)
    {
