@@ -18,6 +18,8 @@
 
 #include <core/json/Json.hpp>
 
+#include <list>
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -26,6 +28,10 @@ namespace notebook {
 
 struct ExecRange 
 {
+   ExecRange(int startIn, int stopIn):
+      start(startIn),
+      stop(stopIn)
+   {}
    int start;
    int stop;
 };
@@ -40,6 +46,7 @@ public:
    core::json::Object toJson() const;
 
    core::Error parseOptions(core::json::Object* pOptions);
+   core::Error execute();
 
    // accessors
    std::string docId() const;
@@ -50,8 +57,8 @@ private:
    std::string docId_;
    std::string chunkId_;
    std::string code_;
-   std::vector<ExecRange> completed_;
-   std::vector<ExecRange> pending_;
+   std::list<ExecRange> completed_;
+   std::list<ExecRange> pending_;
 };
 
 } // namespace notebook

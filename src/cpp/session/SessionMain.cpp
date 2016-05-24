@@ -155,6 +155,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
+#include "modules/SessionConsoleInput.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -226,13 +227,8 @@ std::string s_nextSessionUrl;
 // (true if the user does a full quit)
 bool s_destroySession = false;
 
-// manage global state indicating whether R is processing input
-volatile sig_atomic_t s_rProcessingInput = 0;
-
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
-
-std::queue<rstudio::r::session::RConsoleInput> s_consoleInputBuffer;
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
@@ -270,7 +266,7 @@ void handleUSR1(int unused)
 void handleUSR2(int unused)
 {
    // note whether R was interrupted
-   if (s_rProcessingInput)
+   if (modules::console_input::executing())
       s_forceSuspendInterruptedR = 1;
 
    // set the r interrupt flag (always)
@@ -922,7 +918,7 @@ void endHandleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                          http::Response* pResponse)
 {
    ptrConnection->sendResponse(*pResponse);
-   if (!s_rProcessingInput)
+   if (!modules::console_input::executing())
       detectChanges(module_context::ChangeSourceURI);
 }
 
@@ -1094,14 +1090,13 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
          else if ( jsonRpcRequest.method == kInterrupt )
          {
             // Discard any buffered input
-            while (!s_consoleInputBuffer.empty())
-               s_consoleInputBuffer.pop();
+            clearConsoleInputBuffer();
 
             // aknowledge request
             ptrConnection->sendJsonRpcResponse();
 
             // only accept interrupts while R is processing input
-            if ( s_rProcessingInput )
+            if (modules::console_input::executing())
                rstudio::r::exec::setInterruptsPending(true);
          }
 
@@ -1207,7 +1202,7 @@ void polledEventHandler()
 
    // check for a pending connections only while R is processing
    // (otherwise we'll handle them directly in waitForMethod)
-   if (s_rProcessingInput)
+   if (modules::console_input::executing())
    {
       // check the uri of the next connection
       std::string nextConnectionUri =
@@ -1503,74 +1498,6 @@ bool waitForMethod(const std::string& method,
 // prompt or a busy event
 void waitForMethodInitFunction(const ClientEvent& initEvent);
 
-void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
-{
-   if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
-   {
-      s_consoleInputBuffer.push(consoleInput);
-      return;
-   }
-
-   // split input into list of commands
-   boost::char_separator<char> lineSep("\n", "", boost::keep_empty_tokens);
-   boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
-   for (boost::tokenizer<boost::char_separator<char> >::iterator
-        lineIter = lines.begin();
-        lineIter != lines.end();
-        ++lineIter)
-   {
-      // get line
-      std::string line(*lineIter);
-
-      // add to buffer
-      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
-               line, consoleInput.console));
-   }
-}
-
-// extract console input -- can be either null (user hit escape) or a string
-Error extractConsoleInput(const json::JsonRpcRequest& request)
-{
-   if (request.params.size() == 2)
-   {
-      // ensure the caller specified the requesting console
-      std::string console;
-      if (request.params[1].type() == json::StringType)
-      {
-         console = request.params[1].get_str();
-      }
-      else
-      {
-         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-      }
-
-      // extract the requesting console
-      if (request.params[0].is_null())
-      {
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console));
-         return Success();
-      }
-      else if (request.params[0].type() == json::StringType)
-      {
-         // get console input to return to R
-         std::string text = request.params[0].get_str();
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, 
-                  console));
-
-         // return success
-         return Success();
-      }
-      else
-      {
-         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
-      }
-   }
-   else
-   {
-      return Error(json::errc::ParamMissing, ERROR_LOCATION);
-   }
-}
-
 // allow console_input requests to come in when we aren't explicitly waiting
 // on them (i.e. waitForMethod("console_input")). place them into into a buffer
 // which is then checked by rConsoleRead prior to it calling waitForMethod
@@ -1578,9 +1505,8 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract the input
-   return extractConsoleInput(request);
+   return modules::console_input::extractConsoleInput(request);
 }
-
 
 void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
@@ -1995,100 +1921,6 @@ void reissueLastConsolePrompt()
    consolePrompt(s_lastPrompt, false);
 }
 
-void setExecuting(bool executing)
-{
-   s_rProcessingInput = executing;
-   module_context::activeSession().setExecuting(executing);
-}
-
-void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
-{
-   json::Object data;
-   data[kConsoleText] = input.text + "\n";
-   data[kConsoleId]   = input.console;
-   ClientEvent inputEvent(kConsoleWriteInput, data);
-   rsession::clientEventQueue().add(inputEvent);
-}
-
-bool rConsoleRead(const std::string& prompt,
-                  bool addToHistory,
-                  rstudio::r::session::RConsoleInput* pConsoleInput)
-{
-   // this is an invalid state in a forked (multicore) process
-   if (s_wasForked)
-   {
-      LOG_WARNING_MESSAGE("rConsoleRead called in forked processs");
-      return false;
-   }
-
-   // r is not processing input
-   setExecuting(false);
-
-   if (!s_consoleInputBuffer.empty())
-   {
-      *pConsoleInput = s_consoleInputBuffer.front();
-      s_consoleInputBuffer.pop();
-   }
-   // otherwise prompt and wait for console_input from the client
-   else
-   {
-      // fire console_prompt event (unless we are just starting up, in which
-      // case we will either prompt as part of the response to client_init or
-      // we shouldn't prompt at all because we are resuming a suspended session)
-      if (s_sessionInitialized)
-         consolePrompt(prompt, addToHistory);
-
-      // wait for console_input
-      json::JsonRpcRequest request ;
-      bool succeeded = waitForMethod(
-                        kConsoleInput,
-                        boost::bind(consolePrompt, prompt, addToHistory),
-                        boost::bind(canSuspend, prompt),
-                        &request);
-
-      // exit process if we failed
-      if (!succeeded)
-         return false;
-
-      // extract console input. if there is an error during extraction we log it
-      // but still return and empty string and true (returning false will cause R
-      // to abort)
-      Error error = extractConsoleInput(request);
-      if (error)
-      {
-         LOG_ERROR(error);
-         *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
-      }
-      *pConsoleInput = s_consoleInputBuffer.front();
-      s_consoleInputBuffer.pop();
-   }
-
-   // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
-   if (!pConsoleInput->cancel)
-   {
-      module_context::events().onBeforeExecute();
-      module_context::events().onConsoleInput(pConsoleInput->text);
-   }
-
-   // we are about to return input to r so set the flag indicating that state
-   setExecuting(true);
-
-   // ensure that output resulting from this input goes to the correct console
-   if (rsession::clientEventQueue().setActiveConsole(pConsoleInput->console))
-   {
-      module_context::events().onActiveConsoleChanged(pConsoleInput->console,
-            pConsoleInput->text);
-   }
-
-   ClientEvent promptEvent(kConsoleWritePrompt, prompt);
-   rsession::clientEventQueue().add(promptEvent);
-   enqueueConsoleInput(*pConsoleInput);
-
-   // always return true (returning false causes the process to exit)
-   return true;
-}
-
-
 int rEditFile(const std::string& file)
 {
    // read file contents
@@ -2191,7 +2023,7 @@ void rBusy(bool busy)
       return;
 
    // screen out busy = true events that occur when R isn't busy
-   if (busy && !s_rProcessingInput)
+   if (busy && !modules::console_input::executing())
       return;
 
    ClientEvent busyEvent(kBusy, busy);
@@ -2798,7 +2630,7 @@ void waitForMethodInitFunction(const ClientEvent& initEvent)
 {
    module_context::enqueClientEvent(initEvent);
 
-   if (s_rProcessingInput)
+   if (modules::console_input::executing())
    {
       ClientEvent busyEvent(client_events::kBusy, true);
       module_context::enqueClientEvent(busyEvent);
@@ -3335,7 +3167,7 @@ int main (int argc, char * const argv[])
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
-      rCallbacks.consoleRead = rConsoleRead;
+      rCallbacks.consoleRead = modules::console_input::rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;
       rCallbacks.chooseFile = rChooseFile;

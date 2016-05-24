@@ -84,6 +84,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
+   modules/SessionConsoleInput.cpp
    modules/SessionDependencies.cpp
    modules/SessionDiagnostics.cpp
    modules/SessionDirty.cpp

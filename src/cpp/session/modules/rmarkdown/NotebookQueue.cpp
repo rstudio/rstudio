@@ -63,6 +63,9 @@ public:
       execContext_ = boost::make_shared<ChunkExecContext>(
          unit->docId(), unit->chunkId(), kExecScopeChunk, options,
          docQueue->pixelWidth(), docQueue->charWidth());
+      execContext_->connect();
+
+      error = unit->execute();
 
       return Success();
    }

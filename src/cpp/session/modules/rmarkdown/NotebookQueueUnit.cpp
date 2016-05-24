@@ -15,7 +15,11 @@
 
 #include "NotebookQueueUnit.hpp"
 
+#include <session/SessionModuleContext.hpp>
+#include "../../SessionClientEventQueue.hpp"
+
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <core/json/JsonRpc.hpp>
 
@@ -39,7 +43,7 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-Error fillExecRangeArray(const json::Array& in, std::vector<ExecRange>* pOut)
+Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
 {
    // process arrays
    BOOST_FOREACH(const json::Value val, in) 
@@ -60,7 +64,7 @@ Error fillExecRangeArray(const json::Array& in, std::vector<ExecRange>* pOut)
    return Success();
 }
 
-void fillJsonRangeArray(const std::vector<ExecRange>& in, json::Array* pOut)
+void fillJsonRange(const std::list<ExecRange>& in, json::Array* pOut)
 {
    BOOST_FOREACH(const ExecRange range, in)
    {
@@ -91,10 +95,10 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
       LOG_ERROR(error);
 
    // process arrays 
-   error = fillExecRangeArray(completed, &unit.completed_);
+   error = fillExecRange(completed, &unit.completed_);
    if (error)
       LOG_ERROR(error);
-   error = fillExecRangeArray(pending, &unit.pending_);
+   error = fillExecRange(pending, &unit.pending_);
    if (error)
       LOG_ERROR(error);
    return Success();
@@ -124,8 +128,8 @@ json::Object NotebookQueueUnit::toJson() const
 {
    // process arrays
    json::Array completed, pending;
-   fillJsonRangeArray(completed_, &completed);
-   fillJsonRangeArray(pending_, &pending);
+   fillJsonRange(completed_, &completed);
+   fillJsonRange(pending_, &pending);
 
    // emit top-level values
    json::Object unit;
@@ -136,6 +140,37 @@ json::Object NotebookQueueUnit::toJson() const
    unit[kQueueUnitPending]   = pending;
 
    return json::Object();
+}
+
+Error NotebookQueueUnit::execute()
+{
+   // extract next range to execute
+   ExecRange& range = *pending_.begin();
+   int start = range.start;
+   int stop = range.stop;
+
+   // use the first line of the range if it's multi-line
+   size_t idx = code_.find('\n', start);
+   if (idx != std::string::npos && static_cast<int>(idx) < stop)
+   {
+      stop = idx;
+
+      // adjust the range to account for the code we're about to send
+      range.start = idx;
+   }
+   else
+   {
+      // not multi line, remove range entirely
+      pending_.pop_front();
+   }
+
+   // mark completed and extract from code
+   completed_.push_back(ExecRange(start, stop));
+   std::string code = code_.substr(start, stop);
+
+   // send to R 
+      
+   return Success();
 }
 
 std::string NotebookQueueUnit::docId() const
