@@ -579,6 +579,36 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       }
    }
    
+   # HTML Handling ----
+   htmlRange <- list(start = NULL, end = NULL)
+   htmlMeta <- NULL
+   writeHtml <- function(source, range, meta) {
+      
+      # extract html from source document
+      htmlOutput <- source[`:`(
+         range$start + 1,
+         range$end - 1
+      )]
+      
+      htmlPath <- outputPath(cachePath, activeChunkId, activeIndex, "html")
+      cat(htmlOutput, file = htmlPath, sep = "\n")
+      
+      # update state
+      activeIndex <<- activeIndex + 1
+   }
+   onHtml <- function(annotation) {
+      if (annotation$state == "begin") {
+         writeConsoleData(consoleDataBuilder)
+         htmlRange$start <<- annotation$row
+         htmlMeta        <<- annotation$meta
+      } else {
+         htmlRange$end   <<- annotation$row
+         writeHtml(nbData$source, htmlRange, htmlMeta)
+         htmlRange <<- list(start = NULL, end = NULL)
+         htmlMeta  <<- NULL
+      }
+   }
+   
    # HTML Widget Handling ----
    widgetRange <- list(start = NULL, end = NULL)
    widgetMeta  <- NULL
@@ -590,6 +620,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          range$end - 1
       )]
       
+      # TODO: background color should be passed as
+      # metadata attribute and used here
       fmt <- paste(
          '<!DOCTYPE html>',
          '<html>',
@@ -642,6 +674,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
              "source"     = onSource(annotation),
              "output"     = onOutput(annotation),
              "plot"       = onPlot(annotation),
+             "html"       = onHtml(annotation),
              "htmlwidget" = onHtmlWidget(annotation))
       
       lastActiveAnnotation <- annotation
