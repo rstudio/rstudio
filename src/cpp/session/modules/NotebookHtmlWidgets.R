@@ -133,8 +133,7 @@
 # HTML Capture ----
 
 .rs.setVar("rnbHtmlCaptureHooks", list(
-   "print.htmlwidget" = .rs.rnbHooks.print.htmlwidget,
-   "print.html"       = .rs.rnbHooks.print.html
+   "print.htmlwidget" = .rs.rnbHooks.print.htmlwidget
 ))
 
 .rs.addFunction("initHtmlCapture", function(outputFolder,
