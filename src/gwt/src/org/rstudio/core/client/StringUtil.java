@@ -1048,12 +1048,12 @@ public class StringUtil
    
    public static final String singleQuotedEscaped(String string)
    {
-      return "'" + string.replaceAll("'", "\\'") + "'";
+      return "'" + string.replaceAll("'", "\\\\'") + "'";
    }
    
    public static final String doubleQuotedEscaped(String string)
    {
-      return "\"" + string.replaceAll("\"", "\\\"") + "\"";
+      return "\"" + string.replaceAll("\"", "\\\\\"") + "\"";
    }
    
    // Given a quoted string with inner quotes escaped with '\',

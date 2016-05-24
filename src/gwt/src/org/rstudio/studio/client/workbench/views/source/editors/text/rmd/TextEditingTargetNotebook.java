@@ -1492,10 +1492,7 @@ public class TextEditingTargetNotebook
       if (firstEqualsIdx == -1)
       {
          String[] parts = line.split("[,\\s]+");
-         if (parts.length >= 1)
-            chunkOptions.put("engine", StringUtil.doubleQuotedEscaped(parts[0]));
-         if (parts.length >= 2)
-            chunkOptions.put("label", StringUtil.doubleQuotedEscaped(parts[1]));
+         extractKnitrEngineLabel(parts, chunkOptions);
          return;
       }
       
@@ -1527,10 +1524,7 @@ public class TextEditingTargetNotebook
          // following that comma
          String preamble = line.substring(0, commaIdx);
          String[] parts = preamble.split(",*\\s+,*");
-         if (parts.length >= 1)
-            chunkOptions.put("engine", StringUtil.doubleQuotedEscaped(parts[0]));
-         if (parts.length >= 2)
-            chunkOptions.put("label", StringUtil.doubleQuotedEscaped(parts[1]));
+         extractKnitrEngineLabel(parts, chunkOptions);
          cursor.setIndex(commaIdx);
       }
       
@@ -1564,6 +1558,25 @@ public class TextEditingTargetNotebook
       Map<String, String> options = new HashMap<String, String>();
       parseChunkOptions(line, options);
       return options;
+   }
+   
+   private static String ensureQuoted(String string)
+   {
+      if (string.startsWith("\"") && string.endsWith("\""))
+         return string;
+      else if (string.startsWith("'") && string.endsWith("'"))
+         return string;
+      
+      return StringUtil.doubleQuotedEscaped(string);
+   }
+   
+   private static void extractKnitrEngineLabel(String[] parts,
+                                               Map<String, String> chunkOptions)
+   {
+      if (parts.length >= 1)
+         chunkOptions.put("engine", ensureQuoted(parts[0]));
+      if (parts.length >= 2)
+         chunkOptions.put("label", ensureQuoted(parts[1]));
    }
    
    private void loadInitialChunkOutput()
