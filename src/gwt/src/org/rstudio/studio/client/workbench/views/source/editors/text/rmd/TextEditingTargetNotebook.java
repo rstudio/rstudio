@@ -1471,24 +1471,71 @@ public class TextEditingTargetNotebook
          if (line.endsWith("}"))
             endIndex--;
          
-         line = line.substring(4, endIndex);
+         line = line.substring(4, endIndex).trim();
       }
       
+      // the preamble can come in many forms for R Markdown:
+      //
+      //    ```{r}
+      //    ```{r label}
+      //    ```{r echo = FALSE}
+      //    ```{r label, echo = FALSE}
+      //    ```{r, label, echo = FALSE}
+      //
+      // in particular, note that the label is optional; if it exists
+      // and the are chunk options, then the label must be followed by
+      // a comma; if not, then the comma is optional
+      
+      // check for presence of '='. if it doesn't exist, then we're
+      // just parsing the engine + (optionally) label
+      int firstEqualsIdx = line.indexOf('=');
+      if (firstEqualsIdx == -1)
+      {
+         String[] parts = line.split("[,\\s]+");
+         if (parts.length >= 1)
+            chunkOptions.put("engine", StringUtil.doubleQuotedEscaped(parts[0]));
+         if (parts.length >= 2)
+            chunkOptions.put("label", StringUtil.doubleQuotedEscaped(parts[1]));
+         return;
+      }
+      
+      // create our text cursor (will move to first named argument once discovered)
       TextCursor cursor = new TextCursor(line);
       
-      // parse preamble
-      int preambleStartIdx = cursor.getIndex();
-      int preambleEndIdx   = line.length();
+      // attempt to detect last ',' before '=' sign
+      int commaIdx = -1;
+      for (int i = 0; i < firstEqualsIdx; i++)
+         if (line.charAt(i) == ',')
+            commaIdx = i;
       
-      if (cursor.fwdToCharacter(',', false))
-         preambleEndIdx = cursor.getIndex();
+      if (commaIdx == -1)
+      {
+         // if we couldn't find a comma, but we did find an '=',
+         // then we have an unnamed chunk with options. we begin
+         // parsing arguments immediately after the engine name.
+         String[] parts = line.split("[,\\s]+");
+         if (parts.length >= 1)
+         {
+            chunkOptions.put("engine", StringUtil.doubleQuotedEscaped(parts[0]));
+            cursor.setIndex(parts[0].length());
+         }
+      }
+      else
+      {
+         // we found a comma -- we'll parse the engine + (optional)
+         // label before that comma, and start the argument parsing
+         // following that comma
+         String preamble = line.substring(0, commaIdx);
+         String[] parts = preamble.split(",*\\s+,*");
+         if (parts.length >= 1)
+            chunkOptions.put("engine", StringUtil.doubleQuotedEscaped(parts[0]));
+         if (parts.length >= 2)
+            chunkOptions.put("label", StringUtil.doubleQuotedEscaped(parts[1]));
+         cursor.setIndex(commaIdx);
+      }
       
-      parseChunkPreamble(
-            line.substring(preambleStartIdx, preambleEndIdx),
-            chunkOptions);
-      
-      // parse chunk options
-      while (cursor.contentEquals(','))
+      // now, we parse all of the (named) arguments
+      do
       {
          int startIdx = cursor.getIndex() + 1;
          if (!cursor.fwdToCharacter('=', false))
@@ -1498,10 +1545,18 @@ public class TextEditingTargetNotebook
                ? cursor.getIndex() 
                : line.length();
          
-         String argName  = line.substring(startIdx, equalsIdx).trim();
+         // extract argument name
+         String argName  = line.substring(startIdx, equalsIdx);
          String argValue = line.substring(equalsIdx + 1, endIdx).trim();
-         chunkOptions.put(argName, argValue);
+         
+         // clean up extra spaces and commas before argname if necessary
+         argName = argName.replaceAll("^[,\\s]+", "");
+         
+         // store non-empty options (handle immediate parse states)
+         if (argName.length() > 0 && argValue.length() > 0)
+            chunkOptions.put(argName, argValue);
       }
+      while (cursor.contentEquals(','));
    }
    
    public static Map<String, String> parseChunkOptions(String line)
@@ -1509,19 +1564,6 @@ public class TextEditingTargetNotebook
       Map<String, String> options = new HashMap<String, String>();
       parseChunkOptions(line, options);
       return options;
-   }
-   
-   private static void parseChunkPreamble(String preamble,
-                                          Map<String, String> chunkOptions)
-   {
-      // split into pieces
-      String[] splat = preamble.split("\\s+");
-      
-      if (splat.length >= 1)
-         chunkOptions.put("engine", splat[0].trim());
-      
-      if (splat.length >= 2)
-         chunkOptions.put("label", splat[1].trim());
    }
    
    private void loadInitialChunkOutput()

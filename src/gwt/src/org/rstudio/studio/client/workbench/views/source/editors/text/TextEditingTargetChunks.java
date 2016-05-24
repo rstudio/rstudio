@@ -214,6 +214,11 @@ public class TextEditingTargetChunks
       Map<String, String> options =
             TextEditingTargetNotebook.parseChunkOptions(header);
       
+      // List<String> strings = new ArrayList<String>();
+      // for (Map.Entry<String, String> entry : options.entrySet())
+      //    strings.add(entry.getKey() + " = '" + entry.getValue() + "'");
+      // Debug.logToRConsole(StringUtil.join(strings, ", "));
+      
       // check runnable engine
       String engine = options.containsKey("engine")
             ? StringUtil.stringValue(options.get("engine"))
