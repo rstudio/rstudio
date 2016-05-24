@@ -29,7 +29,11 @@ namespace session {
 namespace modules { 
 namespace connections {
    
+// should connections be enabled?
 bool connectionsEnabled();
+
+// are we enabling them for the first time this session
+bool activateConnections();
 
 core::json::Array connectionsAsJson();
 

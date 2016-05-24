@@ -147,10 +147,12 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// track whether connections were enabled at the start of this R session
+bool s_connectionsInitiallyEnabled = false;
 
 void onInstalledPackagesChanged()
 {
-   if (connectionsEnabled())
+   if (activateConnections())
    {
       ClientEvent event(client_events::kEnableConnections);
       module_context::enqueClientEvent(event);
@@ -165,6 +167,10 @@ bool connectionsEnabled()
    return module_context::isPackageInstalled("rspark");
 }
 
+bool activateConnections()
+{
+   return !s_connectionsInitiallyEnabled && connectionsEnabled();
+}
 
 json::Array connectionsAsJson()
 {
@@ -189,6 +195,7 @@ Error initialize()
       return error;
 
    // connect to events to track whether we should enable connections
+   s_connectionsInitiallyEnabled = connectionsEnabled();
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
 

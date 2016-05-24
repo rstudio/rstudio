@@ -149,7 +149,7 @@ public class ConnectionsPresenter extends BasePresenter
       });
       
       // set connections      
-      SessionInfo sessionInfo = session.getSessionInfo();
+      final SessionInfo sessionInfo = session.getSessionInfo();
       updateConnections(sessionInfo.getConnectionList());  
       updateActiveConnections(sessionInfo.getActiveConnections());
            
@@ -199,6 +199,11 @@ public class ConnectionsPresenter extends BasePresenter
             }
          }
       };
+   }
+   
+   public void activate()
+   {
+      display_.bringToFront();
    }
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)

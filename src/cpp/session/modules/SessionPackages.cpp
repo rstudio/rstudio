@@ -485,6 +485,18 @@ void detectLibPathsChanges()
    }
 }
 
+// if the last input had an install_github then fire event
+std::string s_lastInput;
+void onConsoleInput(const std::string& input)
+{
+   s_lastInput = input;
+}
+void onConsolePrompt(const std::string&)
+{
+   if (boost::algorithm::contains(s_lastInput, "install_github("))
+      rs_packageLibraryMutated();
+}
+
 void onDetectChanges(module_context::ChangeSource source)
 {
    // check for libPaths changes if we're evaluating a change from the REPL at
@@ -547,6 +559,8 @@ Error initialize()
 {
    // register deferred init
    module_context::events().onDeferredInit.connect(onDeferredInit);
+   module_context::events().onConsoleInput.connect(onConsoleInput);
+   module_context::events().onConsolePrompt.connect(onConsolePrompt);
 
    // register routines
    R_CallMethodDef methodDef ;

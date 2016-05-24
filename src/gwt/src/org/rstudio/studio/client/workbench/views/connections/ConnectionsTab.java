@@ -19,7 +19,10 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
@@ -40,13 +43,15 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
       @Handler
       public abstract void onNewConnection();
       
+      public abstract void activate();
+      
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsTab.Shim> {}
 
 
    @Inject
-   public ConnectionsTab(Shim shim, 
+   public ConnectionsTab(final Shim shim, 
                          Binder binder,
                          Commands commands,
                          EventBus eventBus,
@@ -61,6 +66,18 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
       eventBus.addHandler(ConnectionListChangedEvent.TYPE, shim);
       eventBus.addHandler(ActiveConnectionsChangedEvent.TYPE, shim);
       eventBus.addHandler(EnableConnectionsEvent.TYPE, this);
+      
+      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            SessionInfo sessionInfo = session_.getSessionInfo();
+            if (sessionInfo.getConnectionsEnabled() && 
+                sessionInfo.getActivateConnections())
+            {
+               shim.activate();
+            }
+         }
+      });
    }
    
    @Override

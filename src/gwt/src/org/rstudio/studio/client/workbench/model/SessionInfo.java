@@ -410,6 +410,10 @@ public class SessionInfo extends JavaScriptObject
       return this.connections_enabled;
    }-*/;
    
+   public final native boolean getActivateConnections() /*-{
+      return this.activate_connections;
+   }-*/;
+   
    public final native JsArray<Connection> getConnectionList() /*-{
       return this.connection_list;
    }-*/;
