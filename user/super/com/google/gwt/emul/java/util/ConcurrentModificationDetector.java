@@ -15,6 +15,7 @@
  */
 package java.util;
 
+import javaemul.internal.InternalPreconditions;
 import javaemul.internal.JsUtils;
 
 /**
@@ -23,8 +24,7 @@ import javaemul.internal.JsUtils;
  */
 class ConcurrentModificationDetector {
 
-  private static final boolean API_CHECK =
-    System.getProperty("jre.checks.api", "ENABLED").equals("ENABLED");
+  private static final boolean API_CHECK = InternalPreconditions.isApiChecked();
 
   private static final String MOD_COUNT_PROPERTY = "_gwt_modCount";
 

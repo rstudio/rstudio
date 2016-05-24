@@ -12,116 +12,23 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- Defines support configurable preconditions -->
+<!-- Defines configurable preconditions -->
 <module type="fileset">
 
-  <!--
- ┌────────┬─────────────────────────────────────────────────────┬───────────────────────────────┐
- │Group   │Description                                          │Common Exception Types         │
- ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
- │JSNI    │Checks related to arguments and return types of      │ClassCastException             │
- │        │JSNI methods. (Not implemented yet)                  │                               │
- ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
- │BOUNDS  │Checks related to the bound checking in collections. │IndexOutBoundsException        │
- │        │                                                     │ArrayIndexOutOfBoundsException │
- ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
- │API     │Checks related to the correct usage of APIs.         │IllegalStateException          │
- │        │                                                     │NoSuchElementException         │
- │        │                                                     │NullPointerException           │
- │        │                                                     │IllegalArgumentException       │
- │        │                                                     │ConcurrentModificationException│
- ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
- │TYPE    │Checks related to java type system.                  │ClassCastException             │
- │        │                                                     │ArrayStoreException            │
- ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
- │CRITICAL│Checks for cases where not failing-fast will keep    │IllegalArgumentException       │
- │        │the object in an inconsistent state and/or degrade   │                               │
- │        │debugging significantly. Currently disabling these   │                               │
- │        │checks is not supported.                             │                               │
- └────────┴─────────────────────────────────────────────────────┴───────────────────────────────┘
-  -->
-  <define-property name="jre.checks.jsni" values="ENABLED,DISABLED" />
-  <define-property name="jre.checks.bounds" values="ENABLED,DISABLED" />
-  <define-property name="jre.checks.api" values="ENABLED,DISABLED" />
-  <define-property name="jre.checks.type" values="ENABLED,DISABLED" />
-  <define-property name="jre.checks.critical" values="ENABLED" />
+  <define-property name="jre.checks.bounds" values="AUTO,ENABLED,DISABLED" />
+  <define-property name="jre.checks.api" values="AUTO,ENABLED,DISABLED" />
+  <define-property name="jre.checks.type" values="AUTO,ENABLED,DISABLED" />
+  <set-property name="jre.checks.bounds" value="AUTO" />
+  <set-property name="jre.checks.api" value="AUTO" />
+  <set-property name="jre.checks.type" value="AUTO" />
 
-
-  <!--
- ┌────────────────┬─────────┬──────────┬─────────┬─────────┬─────────┐
- │Check level     │  JSNI   │  BOUNDS  │   API   │  TYPE   │CRITICAL │
- ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
- │Full            │    X    │    X     │    X    │    X    │    X    │
- ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
- │Normal (default)│         │    X     │    X    │    X    │    X    │
- ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
- │Optimized       │         │          │         │    X    │    X    │
- ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
- │Minimal         │         │          │         │         │    X    │
- ├────────────────┼─────────┼──────────┼─────────┼─────────┼─────────┤
- │None (N/A yet)  │         │          │         │         │         │
- └────────────────┴─────────┴──────────┴─────────┴─────────┴─────────┘
-  -->
-  <define-property name="jre.checks.checkLevel" values="FULL,NORMAL,OPTIMIZED,MINIMAL" />
-
-
-  <!-- Associate individual checks with levels -->
-
-  <set-property name="jre.checks.jsni" value="DISABLED" />
-  <set-property name="jre.checks.jsni" value="ENABLED">
-    <any>
-      <when-property-is name="jre.checks.checkLevel" value="FULL" />
-    </any>
-  </set-property>
-
-  <set-property name="jre.checks.bounds" value="DISABLED" />
-  <set-property name="jre.checks.bounds" value="ENABLED">
-    <any>
-      <when-property-is name="jre.checks.checkLevel" value="FULL" />
-      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
-    </any>
-  </set-property>
-
-  <set-property name="jre.checks.api" value="DISABLED" />
-  <set-property name="jre.checks.api" value="ENABLED">
-    <any>
-      <when-property-is name="jre.checks.checkLevel" value="FULL" />
-      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
-    </any>
-  </set-property>
-
-
-  <set-property name="jre.checks.type" value="DISABLED" />
-  <set-property name="jre.checks.type" value="ENABLED">
-    <any>
-      <when-property-is name="jre.checks.checkLevel" value="FULL" />
-      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
-      <when-property-is name="jre.checks.checkLevel" value="OPTIMIZED" />
-    </any>
-  </set-property>
-
-  <!-- CRITICAL checking cannot be disabled for now.
-  <set-property name="jre.checks.critical" value="DISABLED" />
-  <set-property name="jre.checks.critical" value="ENABLED">
-    <any>
-      <when-property-is name="jre.checks.checkLevel" value="FULL" />
-      <when-property-is name="jre.checks.checkLevel" value="NORMAL" />
-      <when-property-is name="jre.checks.checkLevel" value="OPTIMIZED" />
-      <when-property-is name="jre.checks.checkLevel" value="MINIMAL" />
-    </any>
-  </set-property>
-  -->
-
-  <!-- End of associations -->
-
-
-  <!-- Default checkLevel is NORMAL -->
+  <define-property name="jre.checks.checkLevel" values="NORMAL,OPTIMIZED,MINIMAL" />
   <set-property name="jre.checks.checkLevel" value="NORMAL" />
 
   <define-property name="jre.checkedMode" values="ENABLED,DISABLED" />
-
   <set-property name="jre.checkedMode" value="DISABLED" />
   <set-property name="jre.checkedMode" value="ENABLED">
     <when-property-is name="jre.debugMode" value="ENABLED" />
   </set-property>
+
 </module>
