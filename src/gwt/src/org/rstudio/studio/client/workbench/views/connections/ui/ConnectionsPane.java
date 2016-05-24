@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -26,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
@@ -84,15 +86,16 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionsDataGrid_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
       
       // add type column
-      typeColumn_ = new TextColumn<Connection>() {
+      typeColumn_ = new Column<Connection, ImageResource>(new ImageResourceCell()) {
          @Override
-         public String getValue(Connection connection)
+         public ImageResource getValue(Connection object)
          {
-            return connection.getId().getType();
+            return RES.spark();
          }
       };
-      connectionsDataGrid_.addColumn(typeColumn_, new TextHeader("Type"));
-      connectionsDataGrid_.setColumnWidth(typeColumn_, 40, Unit.PX);
+         
+      connectionsDataGrid_.addColumn(typeColumn_, new TextHeader(""));
+      connectionsDataGrid_.setColumnWidth(typeColumn_, 20, Unit.PX);
             
       // add host column
       hostColumn_ = new TextColumn<Connection>() {
@@ -390,7 +393,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private final DataGrid<Connection> connectionsDataGrid_; 
    private final HorizontalCenterPanel connectionExplorer_;
    
-   private final TextColumn<Connection> typeColumn_;
+   private final Column<Connection, ImageResource> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
    private final TextColumn<Connection> statusColumn_;
   
@@ -412,6 +415,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       Styles dataGridStyle();
         
       ImageResource connectionExploreButton();
+      
+      ImageResource spark();
    }
    
    public interface Styles extends RStudioDataGridStyle

@@ -980,6 +980,8 @@ public class PaneManager
             return getTab(tab).getTitle();
          case Presentation:
             return getTab(tab).getTitle();
+         case Connections:
+            return getTab(tab).getTitle();
          default:
             return tab.toString();
       }
