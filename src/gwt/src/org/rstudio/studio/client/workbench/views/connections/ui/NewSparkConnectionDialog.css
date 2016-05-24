@@ -1,0 +1,32 @@
+@CHARSET "UTF-8";
+
+@external gwt-Label;
+
+
+.grid {
+  margin-bottom: 5px;
+}
+
+.versionGrid {
+  margin-top: 20px;
+}
+
+.label {
+   width: 150px;
+}
+
+.spanningListBox {
+	width: 250px;
+}
+
+.textBox {
+	width: 250px;
+}
+
+.helpLink {
+	margin-top: 6px;
+}
+
+.installCheckBox {
+
+}

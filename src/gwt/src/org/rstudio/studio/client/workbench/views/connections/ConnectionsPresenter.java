@@ -33,6 +33,7 @@ import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -52,6 +53,8 @@ import org.rstudio.studio.client.workbench.views.connections.events.ExploreConne
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class ConnectionsPresenter extends BasePresenter 
@@ -222,7 +225,15 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onNewConnection()
    {
-      globalDisplay_.showErrorMessage("Error", "Not Yet Implemented");
+      new NewSparkConnectionDialog(
+                  new OperationWithInput<NewSparkConnectionDialog.Result>() {
+         @Override
+         public void execute(Result input)
+         {
+            
+            
+         }
+      }).showModal();;
    }
    
    @Handler
@@ -348,7 +359,7 @@ public class ConnectionsPresenter extends BasePresenter
    private final ConnectionsServerOperations server_ ;
    
    // client state
-   private static final String MODULE_CONNECTIONS = "connections-pane";
+   public static final String MODULE_CONNECTIONS = "connections-pane";
    private static final String KEY_EXPLORED_CONNECTION = "exploredConnection";
    private Connection exploredConnection_;
    private Connection lastExploredConnection_;
