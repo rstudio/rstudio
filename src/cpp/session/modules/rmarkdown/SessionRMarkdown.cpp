@@ -1430,6 +1430,41 @@ Error executeRcppEngineChunk(const std::string& docId,
    return error;
 }
 
+Error stanExecutionError(const std::string& docId,
+                         const std::string& chunkId,
+                         const std::string& message,
+                         const FilePath& targetPath,
+                         const ErrorLocation& errorLocation)
+{
+   // emit chunk error
+   chunkConsoleOutputHandler(
+            module_context::ConsoleOutputError,
+            message,
+            targetPath);
+   
+   // forward failure to chunk
+   notebook::enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebook::notebookCtxId(),
+            kChunkOutputText,
+            targetPath);
+   
+   return Error(r::errc::CodeExecutionError, errorLocation);
+}
+
+Error stanExecutionError(const std::string& docId,
+                         const std::string& chunkId,
+                         const FilePath& targetPath,
+                         const ErrorLocation& errorLocation)
+{
+   std::string message =
+         "engine.opts$x must be a character string providing a "
+         "name for the returned `stanmodel` object";
+         
+   return stanExecutionError(docId, chunkId, message, targetPath, errorLocation);
+}
+
 Error executeStanEngineChunk(const std::string& docId,
                              const std::string& chunkId,
                              const std::string& code,
@@ -1457,7 +1492,7 @@ Error executeStanEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // prepare to write chunk cache output
-   FilePath target = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
+   FilePath targetPath = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
    
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
@@ -1465,13 +1500,13 @@ Error executeStanEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        target));
+                        targetPath));
    
    // write input code to cache
    error = notebook::appendConsoleOutput(
             kChunkConsoleInput,
             code,
-            target);
+            targetPath);
    if (error)
       LOG_ERROR(error);
    
@@ -1485,17 +1520,22 @@ Error executeStanEngineChunk(const std::string& docId,
    }
    RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
    
+   // ensure existence of 'engine.opts' with 'x' parameter
+   if (!chunkOptions.count("engine.opts"))
+      return stanExecutionError(docId, chunkId, targetPath, ERROR_LOCATION);
+   
    // evaluate engine options (so we can pass them through to stan call)
    r::sexp::Protect protect;
    SEXP engineOptsSEXP = R_NilValue;
-   if (chunkOptions.count("engine.opts"))
+   error = r::exec::evaluateString(
+            chunkOptions.at("engine.opts"),
+            &engineOptsSEXP,
+            &protect);
+   
+   if (error)
    {
-      error = r::exec::evaluateString(
-               chunkOptions.at("engine.opts"),
-               &engineOptsSEXP,
-               &protect);
-      if (error)
-         LOG_ERROR(error);
+      std::string msg = r::endUserErrorMessage(error);
+      return stanExecutionError(docId, chunkId, msg, targetPath, ERROR_LOCATION);
    }
    
    // construct call to 'stan_model'
@@ -1505,7 +1545,7 @@ Error executeStanEngineChunk(const std::string& docId,
    if (error)
    {
       LOG_ERROR(error);
-      return error;
+      return stanExecutionError(docId, chunkId, targetPath, ERROR_LOCATION);
    }
    
    // build parameters
@@ -1525,6 +1565,10 @@ Error executeStanEngineChunk(const std::string& docId,
                VECTOR_ELT(engineOptsSEXP, i));
    }
    
+   // if no model name was set, return error message
+   if (modelName.empty())
+      return stanExecutionError(docId, chunkId, targetPath, ERROR_LOCATION);
+   
    // if the 'file' option was not set, set it explicitly
    if (!core::algorithm::contains(engineOptsNames, "file"))
       fStanEngine.addParam("file", tempFile.absolutePath());
@@ -1534,9 +1578,8 @@ Error executeStanEngineChunk(const std::string& docId,
    error = fStanEngine.call(&stanModelSEXP, &protect);
    if (error)
    {
-      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
-                                r::endUserErrorMessage(error),
-                                target);
+      std::string msg = r::endUserErrorMessage(error);
+      return stanExecutionError(docId, chunkId, msg, targetPath, ERROR_LOCATION);
    }
    
    // assign in global env on success
@@ -1556,7 +1599,7 @@ Error executeStanEngineChunk(const std::string& docId,
             chunkId,
             notebook::notebookCtxId(),
             kChunkOutputText,
-            target);
+            targetPath);
    
    return error;
 }
