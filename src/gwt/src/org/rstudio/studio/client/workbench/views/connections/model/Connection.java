@@ -42,4 +42,8 @@ public class Connection extends JavaScriptObject
    public final native String getDisconnectCode() /*-{
       return this.disconnect_code;
    }-*/;
+   
+   public final native double getLastUsed() /*-{
+      return this.last_used;
+   }-*/;
 }

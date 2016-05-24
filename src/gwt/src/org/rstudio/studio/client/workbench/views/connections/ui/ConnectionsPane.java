@@ -13,6 +13,8 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
@@ -170,13 +172,37 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void setConnections(List<Connection> connections)
    {
       dataProvider_.setList(connections);
+      sortConnections();
    }
    
    @Override
    public void setActiveConnections(List<ConnectionId> connections)
    {
       activeConnections_ = connections;
+      sortConnections();
       connectionsDataGrid_.redraw();
+   }
+   
+   private void sortConnections()
+   {
+      // order the list
+      List<Connection> connections = dataProvider_.getList();
+      Collections.sort(connections, new Comparator<Connection>() {     
+       @Override
+       public int compare(Connection conn1, Connection conn2)
+       {
+          // values to use in comparison
+          boolean conn1Connected = isConnected(conn1.getId());
+          boolean conn2Connected = isConnected(conn2.getId());
+          
+          if (conn1Connected && !conn2Connected)
+             return -1;
+          else if (conn2Connected && !conn1Connected)
+             return 1;
+          else
+             return Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
+       }       
+    });
    }
    
    @Override

@@ -291,7 +291,7 @@ public class ConnectionsPresenter extends BasePresenter
    {
       allConnections_.clear();
       for (int i = 0; i<connections.length(); i++)
-         allConnections_.add(connections.get(i));
+         allConnections_.add(connections.get(i)); 
       display_.setConnections(allConnections_);
    }
    
@@ -299,7 +299,7 @@ public class ConnectionsPresenter extends BasePresenter
    {
       activeConnections_.clear();
       for (int i = 0; i<connections.length(); i++)
-         activeConnections_.add(connections.get(i));
+         activeConnections_.add(connections.get(i));  
       display_.setActiveConnections(activeConnections_);
       manageCommands();
    }
