@@ -135,7 +135,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       master_.setText("local");
       masterGrid.setWidget(0, 1, master_);
       
-      Label coresLabel = new Label("Cores:");
+      Label coresLabel = new Label("Local cores:");
       masterGrid.setWidget(1, 0, coresLabel);
       ListBox cores = new ListBox();
       cores.addItem("8 cores (Default)");
