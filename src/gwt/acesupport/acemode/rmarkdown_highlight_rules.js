@@ -184,7 +184,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reShChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{(?:bash|sh)\\b(?:.*)\\}\\s*$";
 
-   this.$reShChunkStartString =
+   this.$reStanChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{stan\\b(?:.*)\\}\\s*$";
 
    this.$reChunkEndString =
