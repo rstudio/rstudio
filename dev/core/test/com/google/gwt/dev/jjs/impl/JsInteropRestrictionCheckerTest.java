@@ -1860,6 +1860,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsIgnore");
     addSnippetClassDecl(
+        "@JsType(isNative=true) interface Interface {",
+        "  @JsIgnore public void n();",
+        "}",
         "@JsType(isNative=true) static class Buggy {",
         "  public static final int s = 42;",
         "  public int f = 42;",
@@ -1871,14 +1874,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 5: Native JsType 'EntryPoint.Buggy' cannot have initializer.",
-        "Line 6: Native JsType field 'int EntryPoint.Buggy.s' cannot have initializer.",
-        "Line 7: Native JsType field 'int EntryPoint.Buggy.f' cannot have initializer.",
-        "Line 8: Native JsType member 'EntryPoint.Buggy.EntryPoint$Buggy()' cannot have @JsIgnore.",
-        "Line 9: Native JsType member 'int EntryPoint.Buggy.x' cannot have @JsIgnore.",
-        "Line 10: Native JsType member 'void EntryPoint.Buggy.n()' cannot have @JsIgnore.",
-        "Line 11: Native JsType method 'void EntryPoint.Buggy.o()' should be native or abstract.",
-        "Line 12: JSNI method 'void EntryPoint.Buggy.p()' is not allowed in a native JsType.");
+        "Line 6: Native JsType member 'void EntryPoint.Interface.n()' cannot have @JsIgnore.",
+        "Line 8: Native JsType 'EntryPoint.Buggy' cannot have initializer.",
+        "Line 9: Native JsType field 'int EntryPoint.Buggy.s' cannot have initializer.",
+        "Line 10: Native JsType field 'int EntryPoint.Buggy.f' cannot have initializer.",
+        "Line 11: Native JsType member 'EntryPoint.Buggy.EntryPoint$Buggy()' cannot have @JsIgnore.",
+        "Line 12: Native JsType member 'int EntryPoint.Buggy.x' cannot have @JsIgnore.",
+        "Line 13: Native JsType member 'void EntryPoint.Buggy.n()' cannot have @JsIgnore.",
+        "Line 14: Native JsType method 'void EntryPoint.Buggy.o()' should be native or abstract.",
+        "Line 15: JSNI method 'void EntryPoint.Buggy.p()' is not allowed in a native JsType.");
   }
 
   public void testNativeMethodOnJsTypeSucceeds() throws Exception {
