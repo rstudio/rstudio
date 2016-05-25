@@ -37,6 +37,7 @@ namespace notebook {
 class NotebookDocQueue
 {
 public:
+   NotebookDocQueue();
    NotebookDocQueue(const std::string& docId, const std::string& jobDesc, 
          int pixelWith, int charWidth);
    static core::Error fromJson(const core::json::Object& source, 

@@ -40,13 +40,18 @@ namespace {
 class NotebookQueue
 {
 public:
+   NotebookQueue()
+   {
+   }
+
    Error process()
    {
       // no work if list is empty
       if (queue_.empty())
          return Success();
 
-      // defer if R is currently executing code
+      // defer if R is currently executing code (we'll initiate processing when
+      // the console continues)
       if (r::getGlobalContext()->nextcontext != NULL)
          return Success();
 
@@ -120,9 +125,14 @@ public:
       return Success();
    }
 
+   void add(boost::shared_ptr<NotebookDocQueue> pQueue)
+   {
+      queue_.push_back(pQueue);
+   }
+
    void onConsolePrompt(const std::string& prompt)
    {
-      
+      process();
    }
 
 private:
@@ -158,6 +168,22 @@ Error updateExecQueue(const json::JsonRpcRequest& request,
 Error executeNotebookChunks(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
+   json::Object docObj;
+   Error error = json::readParams(request.params, &docObj);
+
+   boost::shared_ptr<NotebookDocQueue> pQueue = 
+      boost::make_shared<NotebookDocQueue>();
+   error = NotebookDocQueue::fromJson(docObj, &pQueue);
+   if (error)
+      return error;
+
+   // create queue if it doesn't exist
+   if (!s_queue)
+      s_queue = boost::make_shared<NotebookQueue>();
+
+   // add the queue and process immediately
+   s_queue->add(pQueue);
+   s_queue->process();
 
    return Success();
 }
@@ -182,7 +208,7 @@ Error initQueue()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "update_notebook_exec_queue", updateExecQueue))
-      (bind(registerRpcMethod, "execute_notebook_chunks", updateExecQueue));
+      (bind(registerRpcMethod, "execute_notebook_chunks", executeNotebookChunks));
 
    return initBlock.execute();
 }

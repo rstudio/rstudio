@@ -42,6 +42,10 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
 {
 }
 
+NotebookDocQueue::NotebookDocQueue()
+{
+}
+
 boost::shared_ptr<NotebookQueueUnit> NotebookDocQueue::firstUnit()
 {
    if (queue_.empty())
