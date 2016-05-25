@@ -32,6 +32,8 @@ void clearConsoleInputBuffer();
 bool executing();
 core::Error extractConsoleInput(const core::json::JsonRpcRequest& request);
 void reissueLastConsolePrompt();
+void addToConsoleInputBuffer(
+      const rstudio::r::session::RConsoleInput& consoleInput);
 
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,

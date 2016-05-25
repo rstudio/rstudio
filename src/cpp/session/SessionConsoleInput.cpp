@@ -48,31 +48,6 @@ void setExecuting(bool executing)
    module_context::activeSession().setExecuting(executing);
 }
 
-void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
-{
-   if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
-   {
-      s_consoleInputBuffer.push(consoleInput);
-      return;
-   }
-
-   // split input into list of commands
-   boost::char_separator<char> lineSep("\n", "", boost::keep_empty_tokens);
-   boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
-   for (boost::tokenizer<boost::char_separator<char> >::iterator
-        lineIter = lines.begin();
-        lineIter != lines.end();
-        ++lineIter)
-   {
-      // get line
-      std::string line(*lineIter);
-
-      // add to buffer
-      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
-               line, consoleInput.console));
-   }
-}
-
 void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
 {
    json::Object data;
@@ -248,6 +223,31 @@ bool rConsoleRead(const std::string& prompt,
 
    // always return true (returning false causes the process to exit)
    return true;
+}
+
+void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
+{
+   if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
+   {
+      s_consoleInputBuffer.push(consoleInput);
+      return;
+   }
+
+   // split input into list of commands
+   boost::char_separator<char> lineSep("\n", "", boost::keep_empty_tokens);
+   boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
+   for (boost::tokenizer<boost::char_separator<char> >::iterator
+        lineIter = lines.begin();
+        lineIter != lines.end();
+        ++lineIter)
+   {
+      // get line
+      std::string line(*lineIter);
+
+      // add to buffer
+      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
+               line, consoleInput.console));
+   }
 }
 
 } // namespace console_input 

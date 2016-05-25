@@ -47,11 +47,13 @@ public:
 
    core::Error parseOptions(core::json::Object* pOptions);
    core::Error execute();
+   bool complete() const;
 
    // accessors
    std::string docId() const;
    std::string chunkId() const;
    std::string code() const;
+
 
 private:
    std::string docId_;

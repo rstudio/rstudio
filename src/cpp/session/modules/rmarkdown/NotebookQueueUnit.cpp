@@ -16,7 +16,7 @@
 #include "NotebookQueueUnit.hpp"
 
 #include <session/SessionModuleContext.hpp>
-#include "../../SessionClientEventQueue.hpp"
+#include "../SessionConsoleInput.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -25,6 +25,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/session/RSession.hpp>
 
 #define kQueueUnitCode       "code"
 #define kQueueUnitDocId      "doc_id"
@@ -169,6 +170,8 @@ Error NotebookQueueUnit::execute()
    std::string code = code_.substr(start, stop);
 
    // send to R 
+   console_input::addToConsoleInputBuffer(
+         r::session::RConsoleInput(code, chunkId_));
       
    return Success();
 }
@@ -186,6 +189,11 @@ std::string NotebookQueueUnit::chunkId() const
 std::string NotebookQueueUnit::code() const
 {
    return code_;
+}
+
+bool NotebookQueueUnit::complete() const
+{
+   return pending_.empty();
 }
 
 } // namespace notebook

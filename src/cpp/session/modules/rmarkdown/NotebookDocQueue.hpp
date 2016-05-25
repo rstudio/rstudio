@@ -39,12 +39,15 @@ class NotebookDocQueue
 public:
    NotebookDocQueue(const std::string& docId, const std::string& jobDesc, 
          int pixelWith, int charWidth);
+   static core::Error fromJson(const core::json::Object& source, 
+      boost::shared_ptr<NotebookDocQueue>* pQueue);
    core::Error update(const boost::shared_ptr<NotebookQueueUnit> unit, 
       QueueOperation op, const std::string& before);
    core::json::Object toJson() const; 
    std::string docId() const;
    int pixelWidth() const;
    int charWidth() const;
+   bool complete() const;
    boost::shared_ptr<NotebookQueueUnit> firstUnit();
 
 private:

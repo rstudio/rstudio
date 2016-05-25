@@ -21,9 +21,11 @@
 
 using namespace rstudio::core;
 
-#define kDocQueueId      "doc_id"
-#define kDocQueueJobDesc "job_desc"
-#define kDocQueueUnits   "units"
+#define kDocQueueId         "doc_id"
+#define kDocQueueJobDesc    "job_desc"
+#define kDocQueuePixelWidth "pixel_width"
+#define kDocQueueCharWidth  "pixel_width"
+#define kDocQueueUnits      "units"
 
 namespace rstudio {
 namespace session {
@@ -58,11 +60,44 @@ json::Object NotebookDocQueue::toJson() const
 
    // form JSON object for client
    json::Object queue;
-   queue[kDocQueueId]      = docId_;
-   queue[kDocQueueJobDesc] = jobDesc_;
-   queue[kDocQueueUnits]   = units;
+   queue[kDocQueueId]         = docId_;
+   queue[kDocQueueJobDesc]    = jobDesc_;
+   queue[kDocQueuePixelWidth] = pixelWidth_;
+   queue[kDocQueueCharWidth]  = charWidth_;
+   queue[kDocQueueUnits]      = units;
 
    return queue;
+}
+
+core::Error NotebookDocQueue::fromJson(const core::json::Object& source, 
+   boost::shared_ptr<NotebookDocQueue>* pQueue)
+{
+   // extract contained unit for manipulation
+   NotebookDocQueue& queue = *pQueue->get();
+   json::Array units; 
+   Error error = json::readObject(source, 
+         kDocQueueId,         &queue.docId_,
+         kDocQueueJobDesc,    &queue.jobDesc_,
+         kDocQueuePixelWidth, &queue.pixelWidth_,
+         kDocQueueCharWidth,  &queue.charWidth_,
+         kDocQueueUnits,      &units);
+
+   BOOST_FOREACH(const json::Value val, units)
+   {
+      // ignore non-objects
+      if (val.type() != json::ObjectType)
+         continue;
+
+      boost::shared_ptr<NotebookQueueUnit> pUnit = 
+         boost::make_shared<NotebookQueueUnit>();
+      Error error = NotebookQueueUnit::fromJson(val.get_obj(), &pUnit);
+      if (error)
+         LOG_ERROR(error);
+      else
+         queue.queue_.push_back(pUnit);
+   }
+
+   return Success();
 }
 
 Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit, 
@@ -104,6 +139,11 @@ int NotebookDocQueue::pixelWidth() const
 int NotebookDocQueue::charWidth() const
 {
    return charWidth_;
+}
+
+bool NotebookDocQueue::complete() const
+{
+   return queue_.empty();
 }
 
 } // namespace notebook

@@ -50,6 +50,40 @@ public:
       if (r::getGlobalContext()->nextcontext != NULL)
          return Success();
 
+      // if we have a currently executing unit, execute it; otherwise, pop the
+      // next unit off the stack
+      if (execUnit_)
+      {
+         if (execUnit_->complete())
+         {
+            // unit has finished executing; remove it from the queue
+            if (queue_.size() > 0)
+            {
+               boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
+               docQueue->update(execUnit_, QueueDelete, "");
+               if (docQueue->complete())
+               {
+                  queue_.pop_front();
+               }
+            }
+         }
+         else
+            return execUnit_->execute();
+      }
+      else
+      {
+         return executeNextUnit();
+      }
+
+      return Success();
+   }
+
+   Error executeNextUnit()
+   {
+      // no work to do if we have no documents
+      if (queue_.empty())
+         return Success();
+
       // get the next execution unit from the current queue
       boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
@@ -86,6 +120,11 @@ public:
       return Success();
    }
 
+   void onConsolePrompt(const std::string& prompt)
+   {
+      
+   }
+
 private:
    // the documents with active queues
    std::list<boost::shared_ptr<NotebookDocQueue> > queue_;
@@ -116,6 +155,21 @@ Error updateExecQueue(const json::JsonRpcRequest& request,
    return s_queue->update(pUnit, static_cast<QueueOperation>(op), before);
 }
 
+Error executeNotebookChunks(const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+
+   return Success();
+}
+
+void onConsolePrompt(const std::string& prompt)
+{
+   if (s_queue)
+   {
+      s_queue->onConsolePrompt(prompt);
+   }
+}
+
 } // anonymous namespace
 
 Error initQueue()
@@ -123,9 +177,12 @@ Error initQueue()
    using boost::bind;
    using namespace module_context;
 
+   module_context::events().onConsolePrompt.connect(onConsolePrompt);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "update_notebook_exec_queue", updateExecQueue));
+      (bind(registerRpcMethod, "update_notebook_exec_queue", updateExecQueue))
+      (bind(registerRpcMethod, "execute_notebook_chunks", updateExecQueue));
 
    return initBlock.execute();
 }
