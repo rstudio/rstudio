@@ -39,6 +39,8 @@ core::json::Array connectionsAsJson();
 
 core::json::Array activeConnectionsAsJson();
 
+bool isSuspendable();
+
 core::Error initialize();
                        
 } // namespace connections

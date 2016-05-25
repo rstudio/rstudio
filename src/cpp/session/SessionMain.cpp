@@ -1307,7 +1307,9 @@ bool haveRunningChildren()
 
 bool canSuspend(const std::string& prompt)
 {
-   return !haveRunningChildren() && rstudio::r::session::isSuspendable(prompt);
+   return !haveRunningChildren() &&
+          modules::connections::isSuspendable() &&
+          rstudio::r::session::isSuspendable(prompt);
 }
 
 

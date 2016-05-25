@@ -182,6 +182,11 @@ json::Array activeConnectionsAsJson()
    return activeConnections().activeConnectionsAsJson();
 }
 
+bool isSuspendable()
+{
+   return activeConnections().empty();
+}
+
 Error initialize()
 {
    // register methods

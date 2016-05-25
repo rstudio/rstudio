@@ -49,6 +49,11 @@ ActiveConnections::ActiveConnections()
 {
 }
 
+bool ActiveConnections::empty() const
+{
+   return activeConnections_.empty();
+}
+
 void ActiveConnections::add(const ConnectionId& id)
 {
    activeConnections_.insert(id);

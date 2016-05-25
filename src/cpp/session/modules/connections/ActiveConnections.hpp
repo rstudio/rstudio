@@ -38,6 +38,8 @@ private:
 
 public:
 
+   bool empty() const;
+
    void add(const ConnectionId& id);
    void remove(const ConnectionId& id);
 
