@@ -35,7 +35,11 @@ public class NotebookQueueUnit extends JavaScriptObject
       return this.code;
    }-*/;
    
-   public final native JsArray<NotebookQueueUnit> getUnits() /*-{
-      return this.units;
+   public final native JsArray<NotebookExecRange> getPending() /*-{
+      return this.pending;
+   }-*/;
+
+   public final native JsArray<NotebookExecRange> getCompleted() /*-{
+      return this.completed;
    }-*/;
 }

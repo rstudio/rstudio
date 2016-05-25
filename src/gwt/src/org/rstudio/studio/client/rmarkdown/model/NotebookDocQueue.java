@@ -23,6 +23,21 @@ public class NotebookDocQueue extends JavaScriptObject
    {
    }
    
+   public final native NotebookDocQueue create(
+         String docId, String jobDesc, int pixelWidth, int charWidth) /*-{
+      return {
+         doc_id:      docId,
+         job_desc:    jobDesc,
+         pixel_width: pixelWidth,
+         char_width:  charWidth,
+         units:       []
+      }
+   }-*/;
+   
+   public final native NotebookQueueUnit addUnit(NotebookQueueUnit unit) /*-{
+      this.units.push(unit);
+   }-*/;
+   
    public final native String getDocId() /*-{
       return this.doc_id;
    }-*/;
@@ -38,12 +53,12 @@ public class NotebookDocQueue extends JavaScriptObject
    public final native int getCharWidth() /*-{
       return this.char_width;
    }-*/;
-   
-   public final native JsArray<NotebookExecRange> getPending() /*-{
-      return this.pending;
-   }-*/;
 
-   public final native JsArray<NotebookExecRange> getCompleted() /*-{
-      return this.completed;
+   public final native JsArray<NotebookQueueUnit> getUnits() /*-{
+      return this.units;
    }-*/;
+   
+   public final static int QUEUE_OP_ADD    = 0;
+   public final static int QUEUE_OP_UPDATE = 1;
+   public final static int QUEUE_OP_DELETE = 2;
 }

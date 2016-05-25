@@ -95,6 +95,8 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
+import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
@@ -4270,6 +4272,26 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(engine));
       params.set(3, new JSONString(code));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
+   }
+   
+   public void executeNotebookChunks(NotebookDocQueue queue, 
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(queue));
+      sendRequest(RPC_SCOPE, "execute_notebook_chunks", params, 
+            requestCallback);
+   }
+   
+   public void updateNotebookExecQueue(NotebookQueueUnit unit, int op, 
+         String beforeChunkId, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(unit));
+      params.set(1, new JSONNumber(op));
+      params.set(2, new JSONString(beforeChunkId));
+      sendRequest(RPC_SCOPE, "execute_notebook_chunks", params, 
+            requestCallback);
    }
    
    @Override
