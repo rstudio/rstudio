@@ -1265,6 +1265,19 @@ public class TextEditingTargetNotebook
       return "unnamed-chunk-" + pos;
    }
 
+   public Scope getSetupChunkScope()
+   {
+      ScopeList scopes = new ScopeList(docDisplay_);
+      return scopes.findFirst(new ScopePredicate()
+      {
+         @Override
+         public boolean test(Scope scope)
+         {
+            return isSetupChunkScope(scope);
+         }
+      });
+   }
+
    // Private methods --------------------------------------------------------
    
    private void restartThenExecute(AppCommand command)
@@ -1831,19 +1844,6 @@ public class TextEditingTargetNotebook
       return null;
    }
    
-   
-   private Scope getSetupChunkScope()
-   {
-      ScopeList scopes = new ScopeList(docDisplay_);
-      return scopes.findFirst(new ScopePredicate()
-      {
-         @Override
-         public boolean test(Scope scope)
-         {
-            return isSetupChunkScope(scope);
-         }
-      });
-   }
    
    private void setAllExpansionStates(int state)
    {
