@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresente
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -69,11 +70,11 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          };
       }-*/;
       
-      public final native String getMaster() /*-{ return this["master"]; }-*/;
-      public final native int getCores() /*-{ return this["cores"]; }-*/;
-      public final native String getSparkVersion() /*-{ return this["spark_version"]; }-*/;
-      public final native String getHadoopVersion() /*-{ return this["hadoop_version"]; }-*/;
-      public final native boolean getReconnect() /*-{ return this["reconnect"]; }-*/;
+      public final native String getMaster() /*-{ return this.master; }-*/;
+      public final native int getCores() /*-{ return this.cores; }-*/;
+      public final native String getSparkVersion() /*-{ return this.spark_version; }-*/;
+      public final native String getHadoopVersion() /*-{ return this.hadoop_version; }-*/;
+      public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
    }
    
    @Inject
@@ -202,8 +203,13 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    @Override
    protected Result collectInput()
    {     
-      result_ = Result.create();
-      return result_;
+      // TODO: collect data
+      Result result = Result.create();
+      
+      // TODO: update client state
+      
+      
+      return result;
    }
    
    @Override
@@ -218,7 +224,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       public NewSparkConnectionClientState()
       {
          super(ConnectionsPresenter.MODULE_CONNECTIONS,
-               "new-spark-connection",
+               "new-spark-connection-dialog",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
@@ -228,15 +234,15 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       protected void onInit(JsObject value)
       {
          if (value != null)
-            result_ = value.cast();
+            state_ = value.cast();
          else
-            result_ = Result.create();
+            state_ = State.create();
       }
 
       @Override
       protected JsObject getValue()
       {
-         return result_.cast();
+         return state_.cast();
       }
    }
    
@@ -249,8 +255,6 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    public static final String TYPE_SINGLE_FILE = "type_single_file";
    public static final String TYPE_MULTI_FILE  = "type_multi_file";
    
-   
-   private static Result result_ = Result.create();
    private static NewSparkConnectionClientState clientStateValue_;
    
    private TextBox master_;
@@ -285,5 +289,56 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    static {
       RES.styles().ensureInjected();
    }
+   
+   private static class State extends JavaScriptObject
+   {
+      protected State()
+      {
+      }
+     
+      
+      public static final State create()
+      {
+         return create(emptyArray(),
+                       emptyArray(),
+                       emptyArray(),
+                       Result.create());
+      }
+      
+      public static final native State create(JsArrayString previousMasters,
+                                              JsArrayString customSparkVersions,
+                                              JsArrayString customHadoopVersions,
+                                              Result lastResult) /*-{ 
+         return {
+            previous_masters: previousMasters,
+            custom_spark_versions: customSparkVersions,
+            custom_hadoop_versions: customHadoopVersions,
+            last_result: lastResult
+         }; 
+      }-*/;
+      
+      public final native JsArrayString getPreviousMasters() /*-{ 
+         return this.previous_masters; 
+      }-*/;
+      
+      public final native JsArrayString getCustomSparkVersions() /*-{
+         return this.custom_spark_versions;
+      }-*/;
+      
+      
+      public final native JsArrayString getCustomHadoopVersions() /*-{
+         return this.custom_hadoop_versions;
+      }-*/;
+      
+      public final native Result getLastResult() /*-{ 
+         return this.last_result; 
+      }-*/;
+      
+      private final native static JsArrayString emptyArray() /*-{
+         return [];
+      }-*/;
+   }
+   
+   private static State state_ = State.create();
    
 }
