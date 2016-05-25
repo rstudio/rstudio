@@ -15,6 +15,7 @@
 
 #include "SessionRMarkdown.hpp"
 #include "SessionRmdNotebook.hpp"
+#include "NotebookCache.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
 
@@ -1358,7 +1359,9 @@ void chunkConsoleOutputHandler(module_context::ConsoleOutputType type,
 
 Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& nbCtxId,
                              const std::string& code,
+                             const std::map<std::string, std::string>& options,
                              json::JsonRpcResponse* pResponse)
 {
    // forward declare error
@@ -1382,7 +1385,8 @@ Error executeRcppEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // prepare to write chunk cache output
-   FilePath target = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
+   FilePath target = notebook::chunkOutputFile(docId, chunkId, nbCtxId, 
+         kChunkOutputText);
    
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
@@ -1423,7 +1427,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    notebook::enqueueChunkOutput(
             docId,
             chunkId,
-            notebook::notebookCtxId(),
+            nbCtxId,
             kChunkOutputText,
             target);
    
@@ -1462,8 +1466,9 @@ void reportStanExecutionError(const std::string& docId,
 
 Error executeStanEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& nbCtxId,
                              const std::string& code,
-                             const std::map<std::string, std::string>& chunkOptions,
+                             const std::map<std::string, std::string>& options,
                              json::JsonRpcResponse* pResponse)
 {
    // forward declare error
@@ -1516,7 +1521,7 @@ Error executeStanEngineChunk(const std::string& docId,
    RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
    
    // ensure existence of 'engine.opts' with 'x' parameter
-   if (!chunkOptions.count("engine.opts"))
+   if (!options.count("engine.opts"))
    {
       reportStanExecutionError(docId, chunkId, targetPath);
       return Success();
@@ -1526,7 +1531,7 @@ Error executeStanEngineChunk(const std::string& docId,
    r::sexp::Protect protect;
    SEXP engineOptsSEXP = R_NilValue;
    error = r::exec::evaluateString(
-            chunkOptions.at("engine.opts"),
+            options.at("engine.opts"),
             &engineOptsSEXP,
             &protect);
    
@@ -1616,9 +1621,11 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
 {
    std::string docId, chunkId, engine, code;
    json::Object jsonChunkOptions;
+   int commitMode;
    Error error = json::readParams(request.params,
                                   &docId,
                                   &chunkId,
+                                  &commitMode,
                                   &engine,
                                   &code,
                                   &jsonChunkOptions);
@@ -1636,13 +1643,19 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
       chunkOptions[it->first] = it->second.get_str();
    }
    
+   // choose appropriate notebook context to write to -- if this is a saved
+   // Rmd, we'll write directly to the saved context
+   std::string nbCtxId = 
+       static_cast<notebook::CommitMode>(commitMode) == notebook::ModeCommitted ?
+         kSavedCtx : notebook::notebookCtxId();
+
    // handle Rcpp specially
    if (engine == "Rcpp")
-      return executeRcppEngineChunk(docId, chunkId, code, pResponse);
+      return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, chunkOptions, pResponse);
    else if (engine == "stan")
-      return executeStanEngineChunk(docId, chunkId, code, chunkOptions, pResponse);
+      return executeStanEngineChunk(docId, chunkId, nbCtxId, code, chunkOptions, pResponse);
    
-   notebook::runChunk(docId, chunkId, engine, code);
+   notebook::runChunk(docId, chunkId, nbCtxId, engine, code);
    return Success();
 }
 

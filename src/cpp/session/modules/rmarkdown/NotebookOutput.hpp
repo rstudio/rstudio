@@ -79,17 +79,23 @@ core::FilePath chunkOutputPath(
       const std::string& chunkId, const std::string& nbCtxId,
       ChunkOutputContext ctxType);
 core::FilePath chunkOutputPath(const std::string& docId, 
+      const std::string& chunkId, const std::string& nbCtxId, 
+      ChunkOutputContext ctxType);
+core::FilePath chunkOutputPath(const std::string& docId, 
       const std::string& chunkId, ChunkOutputContext ctxType);
 
 // compute individual chunk output unit paths
 core::FilePath chunkOutputFile(const std::string& docId, 
-      const std::string& chunkId, const OutputPair& output);
+      const std::string& chunkId, const std::string& nbCtxId,
+      const OutputPair& output);
 
 core::FilePath chunkOutputFile(const std::string& docId, 
-      const std::string& chunkId, unsigned outputType);
+      const std::string& chunkId, const std::string& nbCtxId,
+      unsigned outputType);
 
 core::Error cleanChunkOutput(const std::string& docId, 
-      const std::string& chunkId, bool preserveFolder);
+      const std::string& chunkId, const std::string& nbCtxId, 
+      bool preserveFolder);
 
 // helper for emitting console data to file
 core::Error appendConsoleOutput(int chunkConsoleOutputType,

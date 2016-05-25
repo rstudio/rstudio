@@ -419,7 +419,7 @@ public abstract class
    public abstract AppCommand removeConnection();
    public abstract AppCommand connectConnection();
    public abstract AppCommand disconnectConnection();
-   
+    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

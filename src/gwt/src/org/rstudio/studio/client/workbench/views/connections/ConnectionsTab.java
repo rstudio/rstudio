@@ -17,25 +17,33 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ReloadWithLastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionClosedEvent;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
 
 public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
+                            implements EnableConnectionsEvent.Handler
 {
    public abstract static class Shim 
         extends DelayLoadTabShim<ConnectionsPresenter, ConnectionsTab>
-        implements ConnectionOpenedEvent.Handler,
-                   ConnectionClosedEvent.Handler,
-                   ConnectionUpdatedEvent.Handler {
+        implements ConnectionUpdatedEvent.Handler,
+                   ConnectionListChangedEvent.Handler,
+                   ActiveConnectionsChangedEvent.Handler {
       
       @Handler
       public abstract void onNewConnection();
+      
+      public abstract void activate();
       
    }
    
@@ -43,19 +51,33 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
 
 
    @Inject
-   public ConnectionsTab(Shim shim, 
+   public ConnectionsTab(final Shim shim, 
                          Binder binder,
                          Commands commands,
-                         EventBus events,
+                         EventBus eventBus,
                          Session session, 
                          UIPrefs uiPrefs)
    {
-      super("Connections", shim);
+      super("Spark", shim);
       binder.bind(commands, shim);
       session_ = session;
-      events.addHandler(ConnectionOpenedEvent.TYPE, shim);
-      events.addHandler(ConnectionClosedEvent.TYPE, shim);
-      events.addHandler(ConnectionUpdatedEvent.TYPE, shim);
+      eventBus_ = eventBus;
+      eventBus.addHandler(ConnectionUpdatedEvent.TYPE, shim);
+      eventBus.addHandler(ConnectionListChangedEvent.TYPE, shim);
+      eventBus.addHandler(ActiveConnectionsChangedEvent.TYPE, shim);
+      eventBus.addHandler(EnableConnectionsEvent.TYPE, this);
+      
+      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            SessionInfo sessionInfo = session_.getSessionInfo();
+            if (sessionInfo.getConnectionsEnabled() && 
+                sessionInfo.getActivateConnections())
+            {
+               shim.activate();
+            }
+         }
+      });
    }
    
    @Override
@@ -64,5 +86,13 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
       return !session_.getSessionInfo().getConnectionsEnabled();
    }
    
+   @Override
+   public void onEnableConnections(EnableConnectionsEvent event)
+   {
+      if (isSuppressed())
+         eventBus_.fireEvent(new ReloadWithLastChanceSaveEvent());
+   }
+   
    private Session session_;
+   private EventBus eventBus_;
 }

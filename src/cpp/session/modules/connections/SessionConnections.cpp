@@ -25,8 +25,13 @@
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RExec.hpp>
+
 
 #include <session/SessionModuleContext.hpp>
+
+#include "ActiveConnections.hpp"
+#include "ConnectionHistory.hpp"
 
 using namespace rstudio::core;
 
@@ -38,13 +43,6 @@ namespace connections {
 
 namespace {
 
-json::Object connectionIdJson(const std::string& type, const std::string& host)
-{
-   json::Object idJson;
-   idJson["type"] = type;
-   idJson["host"] = host;
-   return idJson;
-}
 
 SEXP rs_connectionOpened(SEXP typeSEXP,
                          SEXP hostSEXP,
@@ -52,20 +50,25 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
                          SEXP connectCodeSEXP,
                          SEXP disconnectCodeSEXP)
 {
+   // read params
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
    std::string finder = r::sexp::safeAsString(finderSEXP);
    std::string connectCode = r::sexp::safeAsString(connectCodeSEXP);
    std::string disconnectCode = r::sexp::safeAsString(disconnectCodeSEXP);
 
-   json::Object connectionJson;
-   connectionJson["id"] = connectionIdJson(type, host);
-   connectionJson["finder"] = finder;
-   connectionJson["connectCode"] = connectCode;
-   connectionJson["disconnectCode"] = disconnectCode;
+   // create connection object
+   Connection connection(ConnectionId(type, host),
+                         finder,
+                         connectCode,
+                         disconnectCode,
+                         date_time::millisecondsSinceEpoch());
 
-   ClientEvent event(client_events::kConnectionOpened, connectionJson);
-   module_context::enqueClientEvent(event);
+   // update connection history
+   connectionHistory().update(connection);
+
+   // update active connections
+   activeConnections().add(connection.id);
 
    return R_NilValue;
 }
@@ -75,9 +78,8 @@ SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
 
-   ClientEvent event(client_events::kConnectionClosed,
-                     connectionIdJson(type, host));
-   module_context::enqueClientEvent(event);
+   // update active connections
+   activeConnections().remove(ConnectionId(type, host));
 
    return R_NilValue;
 }
@@ -86,28 +88,75 @@ SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
+   ConnectionId id(type, host);
 
    ClientEvent event(client_events::kConnectionUpdated,
-                     connectionIdJson(type, host));
+                     connectionIdJson(id));
    module_context::enqueClientEvent(event);
 
    return R_NilValue;
 }
 
-// track last reported state of connections enabled
-bool s_reportedConnectionsEnabled = false;
+Error removeConnection(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string type, host;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "type", &type,
+                                       "host", &host);
+   if (error)
+      return error;
+
+   // remove connection
+   ConnectionId id(type, host);
+   connectionHistory().remove(id);
+
+   return Success();
+}
+
+Error getDisconnectCode(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // read params
+   json::Object idJson;
+   std::string finder, disconnectCode;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &idJson,
+                                       "finder", &finder,
+                                       "disconnect_code", &disconnectCode);
+   if (error)
+      return error;
+   std::string type, host;
+   error = json::readObject(idJson, "type", &type, "host", &host);
+   if (error)
+      return error;
+
+   // call R function to determine disconnect code
+   r::exec::RFunction func(".rs.getDisconnectCode");
+   func.addParam(finder);
+   func.addParam(host);
+   func.addParam(disconnectCode);
+   std::string code;
+   error = func.call(&code);
+   if (error)
+      return error;
+
+   pResponse->setResult(code);
+
+   return Success();
+}
+
+// track whether connections were enabled at the start of this R session
+bool s_connectionsInitiallyEnabled = false;
 
 void onInstalledPackagesChanged()
 {
-   // reload the IDE if connections should be enabled but they were
-   // last reported as disabled
-   /*
-   if (!s_reportedConnectionsEnabled && connectionsEnabled())
+   if (activateConnections())
    {
-      ClientEvent event(client_events::kReloadWithLastChanceSave);
+      ClientEvent event(client_events::kEnableConnections);
       module_context::enqueClientEvent(event);
    }
-   */
 }
 
 } // anonymous namespace
@@ -115,11 +164,27 @@ void onInstalledPackagesChanged()
 
 bool connectionsEnabled()
 {
-   // track last reported state of connections enabled
-   s_reportedConnectionsEnabled = module_context::isPackageInstalled("rspark");
+   return module_context::isPackageInstalled("rspark");
+}
 
-   // return value
-   return s_reportedConnectionsEnabled;
+bool activateConnections()
+{
+   return !s_connectionsInitiallyEnabled && connectionsEnabled();
+}
+
+json::Array connectionsAsJson()
+{
+   return connectionHistory().connectionsAsJson();
+}
+
+json::Array activeConnectionsAsJson()
+{
+   return activeConnections().activeConnectionsAsJson();
+}
+
+bool isSuspendable()
+{
+   return activeConnections().empty();
 }
 
 Error initialize()
@@ -129,7 +194,13 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
 
+   // initialize connection history
+   Error error = connectionHistory().initialize();
+   if (error)
+      return error;
+
    // connect to events to track whether we should enable connections
+   s_connectionsInitiallyEnabled = connectionsEnabled();
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
 
@@ -137,6 +208,8 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "remove_connection", removeConnection))
+      (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
    return initBlock.execute();

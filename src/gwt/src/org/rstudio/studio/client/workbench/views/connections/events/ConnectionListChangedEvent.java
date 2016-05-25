@@ -1,5 +1,5 @@
 /*
- * ConnectionClosedEvent.java
+ * ConnectionListChangedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,26 +14,27 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.events;
 
-import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConnectionClosedEvent extends GwtEvent<ConnectionClosedEvent.Handler>
+public class ConnectionListChangedEvent extends GwtEvent<ConnectionListChangedEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onConnectionClosed(ConnectionClosedEvent event);
+      void onConnectionListChanged(ConnectionListChangedEvent event);
    }
    
-   public ConnectionClosedEvent(ConnectionId connectionId)
+   public ConnectionListChangedEvent(JsArray<Connection> connectionList)
    {
-      connectionId_ = connectionId;
+      connectionList_ = connectionList;
    }
    
-   public ConnectionId getConnectionId()
+   public JsArray<Connection> getConnectionList()
    {
-      return connectionId_;
+      return connectionList_;
    }
 
    @Override
@@ -45,10 +46,10 @@ public class ConnectionClosedEvent extends GwtEvent<ConnectionClosedEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onConnectionClosed(this);
+      handler.onConnectionListChanged(this);
    }
    
-   private final ConnectionId connectionId_;
+   private final JsArray<Connection> connectionList_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

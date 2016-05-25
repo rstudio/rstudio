@@ -221,8 +221,8 @@ void onDocRenamed(const std::string& oldPath,
    bool removeOldDir = false;
 
    // compute cache folders and ignore if we can't safely adjust them
-   FilePath oldCacheDir = chunkCacheFolder(oldPath, pDoc->id());
-   FilePath newCacheDir = chunkCacheFolder(pDoc->path(), pDoc->id());
+   FilePath oldCacheDir = chunkCacheFolder(oldPath, pDoc->id(), kSavedCtx);
+   FilePath newCacheDir = chunkCacheFolder(pDoc->path(), pDoc->id(), kSavedCtx);
    if (!oldCacheDir.exists() || newCacheDir.exists())
       return;
 

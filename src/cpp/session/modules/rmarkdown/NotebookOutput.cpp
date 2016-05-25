@@ -344,19 +344,26 @@ FilePath chunkOutputPath(
 }
 
 FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId,
-      ChunkOutputContext ctxType)
+      const std::string& nbCtxId, ChunkOutputContext ctxType)
 {
    std::string docPath;
    source_database::getPath(docId, &docPath);
 
-   return chunkOutputPath(docPath, docId, chunkId, notebookCtxId(), ctxType);
+   return chunkOutputPath(docPath, docId, chunkId, nbCtxId, ctxType);
+}
+
+FilePath chunkOutputPath(const std::string& docId, const std::string& chunkId,
+      ChunkOutputContext ctxType)
+{
+   return chunkOutputPath(docId, chunkId, notebookCtxId(), ctxType);
 }
 
 FilePath chunkOutputFile(const std::string& docId, 
                          const std::string& chunkId, 
+                         const std::string& nbCtxId,
                          const OutputPair& output)
 {
-   return chunkOutputPath(docId, chunkId, ContextExact).complete(
+   return chunkOutputPath(docId, chunkId, nbCtxId, ContextExact).complete(
          (boost::format("%|1$06x|%2%") 
                      % (output.ordinal % MAX_ORDINAL)
                      % chunkOutputExt(output.outputType)).str());
@@ -364,15 +371,16 @@ FilePath chunkOutputFile(const std::string& docId,
 
 FilePath chunkOutputFile(const std::string& docId, 
                          const std::string& chunkId, 
+                         const std::string& nbCtxId, 
                          unsigned outputType)
 {
    OutputPair output = lastChunkOutput(docId, chunkId);
    if (output.outputType == outputType)
-      return chunkOutputFile(docId, chunkId, output);
+      return chunkOutputFile(docId, chunkId, nbCtxId, output);
    output.ordinal++;
    output.outputType = outputType;
    updateLastChunkOutput(docId, chunkId, output);
-   return chunkOutputFile(docId, chunkId, output);
+   return chunkOutputFile(docId, chunkId, nbCtxId, output);
 }
 
 void enqueueChunkOutput(const std::string& docId,
@@ -457,9 +465,10 @@ Error enqueueChunkOutput(
 }
 
 core::Error cleanChunkOutput(const std::string& docId,
-      const std::string& chunkId, bool preserveFolder)
+      const std::string& chunkId, const std::string& nbCtxId, 
+      bool preserveFolder)
 {
-   FilePath outputPath = chunkOutputPath(docId, chunkId, ContextExact);
+   FilePath outputPath = chunkOutputPath(docId, chunkId, nbCtxId, ContextExact);
    if (!outputPath.exists())
       return Success();
 
