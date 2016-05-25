@@ -25,6 +25,8 @@ import javaemul.internal.ArrayHelper;
 import javaemul.internal.DateUtil;
 import javaemul.internal.HashCodes;
 
+import jsinterop.annotations.JsMethod;
+
 /**
  * General-purpose low-level utility methods. GWT only supports a limited subset
  * of these methods due to browser limitations. Only the documented methods are
@@ -105,16 +107,14 @@ public final class System {
   /**
    * The compiler replaces getProperty by the actual value of the property.
    */
-  public static String getProperty(String key) {
-    throw new AssertionError("System.getProperty should have been replaced by the compiler.");
-  }
+  @JsMethod(name = "$getDefine", namespace = "nativebootstrap.Util")
+  public static native String getProperty(String key);
 
   /**
    * The compiler replaces getProperty by the actual value of the property.
    */
-  public static String getProperty(String key, String def) {
-    throw new AssertionError("System.getProperty should have been replaced by the compiler.");
-  }
+  @JsMethod(name = "$getDefine", namespace = "nativebootstrap.Util")
+  public static native String getProperty(String key, String def);
 
   public static int identityHashCode(Object o) {
     return HashCodes.getIdentityHashCode(o);
