@@ -747,8 +747,8 @@ public class TextEditingTargetNotebook
       // have the server start recording output from this chunk
       syncWidth();
       server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), MODE_SINGLE, SCOPE_PARTIAL, options, 
-            getPlotWidth(), charWidth_,
+            chunkDef.getChunkId(), getCommitMode(), MODE_SINGLE, SCOPE_PARTIAL, 
+            options, getPlotWidth(), charWidth_,
             new ServerRequestCallback<RmdChunkOptions>()
       {
          @Override
@@ -884,15 +884,8 @@ public class TextEditingTargetNotebook
             outputs_.get(data.getChunkId()).getOutputWidget()
                            .onOutputFinished(ensureVisible, data.getScope());
 
-            // mark the document dirty (if it isn't already) since it now
-            // contains notebook cache changes that haven't been committed 
-            if (!dirtyState_.getValue())
-            {
-               dirtyState_.markDirty(false);
-               source_.setSourceDocumentDirty(
-                     docUpdateSentinel_.getId(), true, 
-                     new VoidServerRequestCallback());
-            }
+            // set dirty state if necessary
+            setDirtyState();
          }
 
          // process next chunk in execution queue
@@ -1377,6 +1370,7 @@ public class TextEditingTargetNotebook
       
       server_.setChunkConsole(docUpdateSentinel_.getId(),
             unit.chunkId,
+            getCommitMode(),
             unit.mode,
             SCOPE_CHUNK,
             unit.options,
@@ -1596,8 +1590,8 @@ public class TextEditingTargetNotebook
             output.remove();
             outputs_.remove(chunkId);
 
-            // mark doc dirty (this is not undoable)
-            dirtyState_.markDirty(false);
+            // mark doc dirty if necessary (this is not undoable)
+            setDirtyState();
          }
       });
       anim.run(400);
@@ -2082,6 +2076,35 @@ public class TextEditingTargetNotebook
             });
    }
    
+   private int getCommitMode()
+   {
+      if (editingTarget_.isRmdNotebook())
+      {
+         // notebooks always play chunks as uncommitted
+         return MODE_UNCOMMITTED;
+      }
+      else if (dirtyState_.getValue())
+      {
+         // uncommitted R Markdown files also play chunks as uncommitted
+         return MODE_UNCOMMITTED;
+      }
+      // everything else plays directly to committed
+      return MODE_COMMITTED;
+   }
+   
+   private void setDirtyState()
+   {
+      if (getCommitMode() == MODE_UNCOMMITTED && !dirtyState_.getValue())
+      {
+         // mark the document dirty (if it isn't already) since it now
+         // contains notebook cache changes that haven't been committed 
+         dirtyState_.markDirty(false);
+         source_.setSourceDocumentDirty(
+               docUpdateSentinel_.getId(), true, 
+               new VoidServerRequestCallback());
+      }
+   }
+   
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
    private LinkedList<ChunkExecQueueUnit> chunkExecQueue_;
@@ -2153,4 +2176,7 @@ public class TextEditingTargetNotebook
    
    public final static int SCOPE_CHUNK   = 0;
    public final static int SCOPE_PARTIAL = 1;
+   
+   public final static int MODE_COMMITTED   = 0;
+   public final static int MODE_UNCOMMITTED = 1;
 }

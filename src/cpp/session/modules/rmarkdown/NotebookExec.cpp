@@ -45,12 +45,12 @@ namespace notebook {
 namespace {
 
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
-   int outputType)
+   const std::string& nbCtxId, int outputType)
 {
    OutputPair pair = lastChunkOutput(docId, chunkId);
    pair.ordinal++;
    pair.outputType = outputType;
-   FilePath target = chunkOutputFile(docId, chunkId, pair);
+   FilePath target = chunkOutputFile(docId, chunkId, nbCtxId, pair);
    updateLastChunkOutput(docId, chunkId, pair);
    return target;
 }
@@ -58,10 +58,12 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 } // anonymous namespace
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
-      const std::string& chunkId, int execScope, const json::Object& options,
-      int pixelWidth, int charWidth):
+      const std::string& chunkId, const std::string& nbCtxId, 
+      ExecScope execScope, const json::Object& options, int pixelWidth, 
+      int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
+   nbCtxId_(nbCtxId),
    prevWorkingDir_(""),
    options_(options),
    pixelWidth_(pixelWidth),
@@ -96,7 +98,7 @@ bool ChunkExecContext::connected()
 
 void ChunkExecContext::connect()
 {
-   outputPath_ = chunkOutputPath(docId_, chunkId_ + kStagingSuffix, 
+   outputPath_ = chunkOutputPath(docId_, chunkId_ + kStagingSuffix, nbCtxId_,
          ContextExact);
    Error error = outputPath_.ensureDirectory();
    if (error)
@@ -109,7 +111,7 @@ void ChunkExecContext::connect()
 
    // if executing the whole chunk, initialize output right away (otherwise we
    // wait until we actually have output)
-   if (execScope_ == kExecScopeChunk)
+   if (execScope_ == ExecScopeChunk)
       initializeOutput();
 
    // extract knitr figure options if present
@@ -213,7 +215,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    initializeOutput();
 
    // put the file in sequence inside the host directory
-   FilePath target = getNextOutputFile(docId_, chunkId_, outputType);
+   FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType);
    Error error = file.move(target);
    if (error)
    {
@@ -228,7 +230,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    {
       std::string docPath;
       source_database::getPath(docId_, &docPath);
-      error = mergeLib(fileLib, chunkCacheFolder(docPath, docId_)
+      error = mergeLib(fileLib, chunkCacheFolder(docPath, docId_, nbCtxId_)
                                    .complete(kChunkLibDir));
       if (error)
          LOG_ERROR(error);
@@ -244,7 +246,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
                target.stem() + metadata.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, notebookCtxId(), outputType, target);
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, outputType, target);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)
@@ -253,7 +255,8 @@ void ChunkExecContext::onError(const core::json::Object& err)
    initializeOutput();
 
    // write the error to a file 
-   FilePath target = getNextOutputFile(docId_, chunkId_, kChunkOutputError);
+   FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
+         kChunkOutputError);
    boost::shared_ptr<std::ostream> pOfs;
    Error error = target.open_w(&pOfs, true);
    if (error)
@@ -267,7 +270,7 @@ void ChunkExecContext::onError(const core::json::Object& err)
    pOfs.reset();
 
    // send to client
-   enqueueChunkOutput(docId_, chunkId_, notebookCtxId(), kChunkOutputError, 
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, kChunkOutputError, 
                       target);
 }
 
@@ -297,7 +300,8 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
    }
 
    // determine output filename and ensure it exists
-   FilePath outputCsv = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
+   FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, 
+         kChunkOutputText);
    Error error = outputCsv.ensureFile();
    if (error)
    {
@@ -355,7 +359,7 @@ void ChunkExecContext::disconnect()
 
    connected_ = false;
 
-   events().onChunkExecCompleted(docId_, chunkId_, notebookCtxId());
+   events().onChunkExecCompleted(docId_, chunkId_, nbCtxId_);
 }
 
 void ChunkExecContext::onConsoleOutput(module_context::ConsoleOutputType type, 
@@ -380,19 +384,20 @@ void ChunkExecContext::initializeOutput()
    
    // if we don't have output yet, clean existing output before adding new 
    // output
-   Error error = cleanChunkOutput(docId_, chunkId_, true);
+   Error error = cleanChunkOutput(docId_, chunkId_, nbCtxId_, true);
    if (error)
       LOG_ERROR(error);
 
    // ensure that the output folder exists
-   error = chunkOutputPath(docId_, chunkId_, ContextExact).ensureDirectory();
+   error = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact)
+      .ensureDirectory();
    if (error)
       LOG_ERROR(error);
 
    hasOutput_ = true;
 }
 
-int ChunkExecContext::execScope()
+ExecScope ChunkExecContext::execScope()
 {
    return execScope_;
 }

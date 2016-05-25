@@ -74,9 +74,9 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                            String requestId, 
                            ServerRequestCallback<Void> requestCallback);
    
-   void setChunkConsole(String docId, String chunkId, int execMode, 
-                        int execScope, String options, int pixelWidth, 
-                        int characterWidth, 
+   void setChunkConsole(String docId, String chunkId, int commitMode, 
+                        int execMode, int execScope, String options, 
+                        int pixelWidth, int characterWidth, 
                         ServerRequestCallback<RmdChunkOptions> requestCallback);
    
    void createNotebookFromCache(String rmdPath, String outputPath, ServerRequestCallback<Void> requestCallback);

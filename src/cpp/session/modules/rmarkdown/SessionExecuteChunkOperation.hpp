@@ -61,6 +61,7 @@ class ExecuteChunkOperation : boost::noncopyable,
 public:
    static boost::shared_ptr<ExecuteChunkOperation> create(const std::string& docId,
                                                           const std::string& chunkId,
+                                                          const std::string& nbCtxId,
                                                           const ShellCommand& command,
                                                           const core::FilePath& scriptPath)
    {
@@ -68,6 +69,7 @@ public:
             boost::shared_ptr<ExecuteChunkOperation>(new ExecuteChunkOperation(
                                                         docId,
                                                         chunkId,
+                                                        nbCtxId,
                                                         command,
                                                         scriptPath));
       pProcess->registerProcess();
@@ -78,11 +80,13 @@ private:
    
    ExecuteChunkOperation(const std::string& docId,
                          const std::string& chunkId,
+                         const std::string& nbCtxId,
                          const ShellCommand& command,
                          const core::FilePath& scriptPath)
       : terminationRequested_(false),
         docId_(docId),
         chunkId_(chunkId),
+        nbCtxId_(nbCtxId),
         command_(command),
         scriptPath_(scriptPath)
    {
@@ -104,7 +108,7 @@ private:
          LOG_ERROR(error);
       
       // clean old chunk output
-      error = cleanChunkOutput(docId_, chunkId_, true);
+      error = cleanChunkOutput(docId_, chunkId_, nbCtxId_, true);
       if (error)
          LOG_ERROR(error);
    }
@@ -176,7 +180,8 @@ private:
       using namespace core;
       
       // get path to cache file
-      FilePath target = chunkOutputFile(docId_, chunkId_, kChunkOutputText);
+      FilePath target = chunkOutputFile(docId_, chunkId_, nbCtxId_,
+            kChunkOutputText);
       
       // append console data
       notebook::appendConsoleOutput(
@@ -188,7 +193,7 @@ private:
       enqueueChunkOutput(
                docId_,
                chunkId_,
-               notebookCtxId(),
+               nbCtxId_,
                kChunkOutputText,
                target);
    }
@@ -203,6 +208,7 @@ private:
    bool terminationRequested_;
    std::string docId_;
    std::string chunkId_;
+   std::string nbCtxId_;
    ShellCommand command_;
    core::FilePath scriptPath_;
    
@@ -240,6 +246,7 @@ public:
 
 core::Error runChunk(const std::string& docId,
                      const std::string& chunkId,
+                     const std::string& nbCtxId,
                      const std::string& engine,
                      const std::string& code)
 {
@@ -260,12 +267,14 @@ core::Error runChunk(const std::string& docId,
 
    // create process
    boost::shared_ptr<ExecuteChunkOperation> operation =
-         ExecuteChunkOperation::create(docId, chunkId, command, scriptPath);
+         ExecuteChunkOperation::create(docId, chunkId, nbCtxId, command, 
+               scriptPath);
 
    // write input code to cache
    FilePath cacheFilePath = notebook::chunkOutputFile(
             docId,
             chunkId,
+            nbCtxId,
             kChunkOutputText);
    
    error = notebook::appendConsoleOutput(

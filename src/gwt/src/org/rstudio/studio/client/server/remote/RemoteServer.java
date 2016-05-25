@@ -4219,18 +4219,20 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setChunkConsole(String docId, String chunkId, int execMode,
-         int execScope, String options, int pixelWidth, int charWidth,
+   public void setChunkConsole(String docId, String chunkId, int commitMode,
+         int execMode, int execScope, String options, int pixelWidth, 
+         int charWidth,
          ServerRequestCallback<RmdChunkOptions> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
-      params.set(2, new JSONNumber(execMode));
-      params.set(3, new JSONNumber(execScope));
-      params.set(4, new JSONString(options));
-      params.set(5, new JSONNumber(pixelWidth));
-      params.set(6, new JSONNumber(charWidth));
+      params.set(2, new JSONNumber(commitMode));
+      params.set(3, new JSONNumber(execMode));
+      params.set(4, new JSONNumber(execScope));
+      params.set(5, new JSONString(options));
+      params.set(6, new JSONNumber(pixelWidth));
+      params.set(7, new JSONNumber(charWidth));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,
