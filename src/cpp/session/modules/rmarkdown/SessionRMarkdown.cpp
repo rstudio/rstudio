@@ -1430,11 +1430,10 @@ Error executeRcppEngineChunk(const std::string& docId,
    return error;
 }
 
-Error stanExecutionError(const std::string& docId,
-                         const std::string& chunkId,
-                         const std::string& message,
-                         const FilePath& targetPath,
-                         const ErrorLocation& errorLocation)
+void reportChunkExecutionError(const std::string& docId,
+                               const std::string& chunkId,
+                               const std::string& message,
+                               const FilePath& targetPath)
 {
    // emit chunk error
    chunkConsoleOutputHandler(
@@ -1449,20 +1448,16 @@ Error stanExecutionError(const std::string& docId,
             notebook::notebookCtxId(),
             kChunkOutputText,
             targetPath);
-   
-   return Error(r::errc::CodeExecutionError, errorLocation);
 }
 
-Error stanExecutionError(const std::string& docId,
-                         const std::string& chunkId,
-                         const FilePath& targetPath,
-                         const ErrorLocation& errorLocation)
+void reportStanExecutionError(const std::string& docId,
+                              const std::string& chunkId,
+                              const FilePath& targetPath)
 {
    std::string message =
          "engine.opts$x must be a character string providing a "
          "name for the returned `stanmodel` object";
-         
-   return stanExecutionError(docId, chunkId, message, targetPath, errorLocation);
+   reportChunkExecutionError(docId, chunkId, message, targetPath);
 }
 
 Error executeStanEngineChunk(const std::string& docId,
@@ -1522,7 +1517,10 @@ Error executeStanEngineChunk(const std::string& docId,
    
    // ensure existence of 'engine.opts' with 'x' parameter
    if (!chunkOptions.count("engine.opts"))
-      return stanExecutionError(docId, chunkId, targetPath, ERROR_LOCATION);
+   {
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
+   }
    
    // evaluate engine options (so we can pass them through to stan call)
    r::sexp::Protect protect;
@@ -1534,8 +1532,8 @@ Error executeStanEngineChunk(const std::string& docId,
    
    if (error)
    {
-      std::string msg = r::endUserErrorMessage(error);
-      return stanExecutionError(docId, chunkId, msg, targetPath, ERROR_LOCATION);
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
    }
    
    // construct call to 'stan_model'
@@ -1544,8 +1542,8 @@ Error executeStanEngineChunk(const std::string& docId,
    error = r::sexp::getNames(engineOptsSEXP, &engineOptsNames);
    if (error)
    {
-      LOG_ERROR(error);
-      return stanExecutionError(docId, chunkId, targetPath, ERROR_LOCATION);
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
    }
    
    // build parameters
@@ -1567,7 +1565,10 @@ Error executeStanEngineChunk(const std::string& docId,
    
    // if no model name was set, return error message
    if (modelName.empty())
-      return stanExecutionError(docId, chunkId, targetPath, ERROR_LOCATION);
+   {
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
+   }
    
    // if the 'file' option was not set, set it explicitly
    if (!core::algorithm::contains(engineOptsNames, "file"))
@@ -1579,7 +1580,8 @@ Error executeStanEngineChunk(const std::string& docId,
    if (error)
    {
       std::string msg = r::endUserErrorMessage(error);
-      return stanExecutionError(docId, chunkId, msg, targetPath, ERROR_LOCATION);
+      reportChunkExecutionError(docId, chunkId, msg, targetPath);
+      return Success();
    }
    
    // assign in global env on success
@@ -1590,7 +1592,12 @@ Error executeStanEngineChunk(const std::string& docId,
       fAssign.addParam("value", stanModelSEXP);
       error = fAssign.call();
       if (error)
+      {
+         std::string msg = r::endUserErrorMessage(error);
+         reportChunkExecutionError(docId, chunkId, msg, targetPath);
          LOG_ERROR(error);
+         return Success();
+      }
    }
 
    // forward success / failure to chunk
@@ -1601,7 +1608,7 @@ Error executeStanEngineChunk(const std::string& docId,
             kChunkOutputText,
             targetPath);
    
-   return error;
+   return Success();
 }
 
 Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
