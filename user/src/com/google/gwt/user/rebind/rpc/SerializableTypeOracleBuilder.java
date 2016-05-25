@@ -850,6 +850,11 @@ public class SerializableTypeOracleBuilder {
 
       type = type.getErasedType();
 
+      if (type.getLeafType().getQualifiedSourceName().equals("java.lang.JsException")) {
+        // JsException is not considered serializable since it is never available at JVM.
+        continue;
+      }
+
       if (tic.isInstantiable()) {
         assert (!type.isAbstract() || type.isEnum() != null);
 
