@@ -86,6 +86,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void executeAlternateEngineChunk(String docId,
                                     String chunkId,
+                                    int commitMode,
                                     String engine,
                                     String code,
                                     ServerRequestCallback<String> requestCallback);

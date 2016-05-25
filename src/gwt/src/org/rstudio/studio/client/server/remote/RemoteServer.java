@@ -4264,6 +4264,7 @@ public class RemoteServer implements Server
    @Override
    public void executeAlternateEngineChunk(String docId,
                                            String chunkId,
+                                           int commitMode,
                                            String engine,
                                            String code,
                                            ServerRequestCallback<String> requestCallback)
@@ -4271,8 +4272,9 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
-      params.set(2, new JSONString(engine));
-      params.set(3, new JSONString(code));
+      params.set(2, new JSONNumber(commitMode));
+      params.set(3, new JSONString(engine));
+      params.set(4, new JSONString(code));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
    }
    

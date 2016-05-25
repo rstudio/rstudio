@@ -1440,6 +1440,7 @@ public class TextEditingTargetNotebook
       server_.executeAlternateEngineChunk(
             docId,
             chunkId,
+            getCommitMode(),
             engine,
             code,
             new ServerRequestCallback<String>()
