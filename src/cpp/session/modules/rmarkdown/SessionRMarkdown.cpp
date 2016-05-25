@@ -1385,8 +1385,8 @@ Error executeRcppEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // prepare to write chunk cache output
-   FilePath target = notebook::chunkOutputFile(docId, chunkId, nbCtxId, 
-         kChunkOutputText);
+   FilePath targetPath =
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, kChunkOutputText);
    
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
@@ -1394,7 +1394,7 @@ Error executeRcppEngineChunk(const std::string& docId,
             boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        target));
+                        targetPath));
 
    // call Rcpp::sourceCpp on code
    std::string escaped = boost::regex_replace(
@@ -1409,7 +1409,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    error = notebook::appendConsoleOutput(
             kChunkConsoleInput,
             code,
-            target);
+            targetPath);
    if (error)
       LOG_ERROR(error);
    
@@ -1420,7 +1420,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    {
       chunkConsoleOutputHandler(module_context::ConsoleOutputError,
                                 r::endUserErrorMessage(error),
-                                target);
+                                targetPath);
    }
 
    // forward success / failure to chunk
@@ -1429,7 +1429,7 @@ Error executeRcppEngineChunk(const std::string& docId,
             chunkId,
             nbCtxId,
             kChunkOutputText,
-            target);
+            targetPath);
    
    return error;
 }
@@ -1492,7 +1492,8 @@ Error executeStanEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // prepare to write chunk cache output
-   FilePath targetPath = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
+   FilePath targetPath =
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, kChunkOutputText);
    
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
