@@ -373,6 +373,9 @@ public class ChunkOutputWidget extends Composite
          return;
       }
 
+      // clean error state
+      hasErrors_ = false;
+
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
       execMode_ = mode;
