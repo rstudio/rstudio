@@ -4273,16 +4273,31 @@ public class TextEditingTarget implements
    @Handler
    public void onExecuteSetupChunk()
    {
-      JsArray<Scope> scopes = docDisplay_.getScopeTree();
-      for (int i = 0; i < scopes.length(); i++)
+      // attempt to find the setup scope by name
+      Scope setupScope = null;
+      if (notebook_ != null)
+         setupScope = notebook_.getSetupChunkScope();
+
+      // if we didn't find it by name, flatten the scope list and find the
+      // first chunk
+      if (setupScope == null)
       {
-         Scope scope = scopes.get(i);
-         if (scope.isChunk())
+         ScopeList scopes = new ScopeList(docDisplay_);
+         for (Scope scope: scopes)
          {
-            executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, 
-                  false);
-            return;
+            if (scope.isChunk())
+            {
+               setupScope = scope;
+               break;
+            }
          }
+      }
+      
+      // if we found a candidate, run it
+      if (setupScope != null)
+      {
+         executeSweaveChunk(setupScope, TextEditingTargetNotebook.MODE_BATCH, 
+               false);
       }
    }
 
