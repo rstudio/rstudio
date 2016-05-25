@@ -15,16 +15,16 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -211,14 +211,11 @@ public class TextEditingTargetChunks
       String header = target_.getDocDisplay().getLine(row);
       
       // parse contents
-      Map<String, String> options = new HashMap<String, String>();
-      TextEditingTargetNotebook.parseChunkOptions(header, options);
+      Map<String, String> options = 
+            RMarkdownChunkHeaderParser.parse(header);
       
       // check runnable engine
-      String engine = options.containsKey("engine")
-            ? options.get("engine")
-            : "r";
-            
+      String engine = StringUtil.stringValue(options.get("engine"));
       return isExecutableKnitrEngine(engine);
    }
    
