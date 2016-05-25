@@ -225,7 +225,20 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onNewConnection()
    {
+      // create context
+      ArrayList<String> remoteServers = new ArrayList<String>();
+      for (int i = 0; i<allConnections_.size(); i++)
+      {
+         String host = allConnections_.get(i).getId().getHost();
+         if (!host.equals("local") && !host.startsWith("local["))
+            remoteServers.add(host);
+      }
+      NewSparkConnectionDialog.Context context = new 
+            NewSparkConnectionDialog.Context(remoteServers);
+      
+      // show dialog
       new NewSparkConnectionDialog(
+                  context,
                   new OperationWithInput<NewSparkConnectionDialog.Result>() {
          @Override
          public void execute(Result input)

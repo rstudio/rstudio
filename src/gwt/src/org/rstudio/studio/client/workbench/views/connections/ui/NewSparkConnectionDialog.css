@@ -11,20 +11,25 @@
   margin-top: 20px;
 }
 
+
+.masterGrid.remote tbody>tr:last-child {
+  display: none;
+}
+
+.masterGrid.remote {
+  margin-bottom: 6px;
+}
+
 .label {
-   width: 150px;
+  width: 150px;
 }
 
-.spanningListBox {
-	width: 250px;
-}
-
-.textBox {
-	width: 250px;
+.spanningInput {
+  width: 250px;
 }
 
 .helpLink {
-	margin-top: 6px;
+  margin-top: 6px;
 }
 
 .installCheckBox {
