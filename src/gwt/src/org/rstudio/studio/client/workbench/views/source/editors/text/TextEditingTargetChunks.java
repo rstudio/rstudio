@@ -15,9 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -211,12 +211,17 @@ public class TextEditingTargetChunks
       String header = target_.getDocDisplay().getLine(row);
       
       // parse contents
-      Map<String, String> options = new HashMap<String, String>();
-      TextEditingTargetNotebook.parseChunkOptions(header, options);
+      Map<String, String> options =
+            TextEditingTargetNotebook.parseChunkOptions(header);
+      
+      // List<String> strings = new ArrayList<String>();
+      // for (Map.Entry<String, String> entry : options.entrySet())
+      //    strings.add(entry.getKey() + " = '" + entry.getValue() + "'");
+      // Debug.logToRConsole(StringUtil.join(strings, ", "));
       
       // check runnable engine
       String engine = options.containsKey("engine")
-            ? options.get("engine")
+            ? StringUtil.stringValue(options.get("engine"))
             : "r";
             
       return isExecutableKnitrEngine(engine);
@@ -242,7 +247,7 @@ public class TextEditingTargetChunks
    
    // runnable engines within the R Notebook mode
    private static final String RE_RUNNABLE_ENGINES =
-         "r|Rscript|Rcpp|python|ruby|perl|bash|sh|";
+         "r|Rscript|Rcpp|python|ruby|perl|bash|sh|stan|";
    
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow

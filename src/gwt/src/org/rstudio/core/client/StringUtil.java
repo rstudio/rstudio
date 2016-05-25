@@ -1046,6 +1046,35 @@ public class StringUtil
       return id;
    }
    
+   public static final String singleQuotedEscaped(String string)
+   {
+      return "'" + string.replaceAll("'", "\\\\'") + "'";
+   }
+   
+   public static final String doubleQuotedEscaped(String string)
+   {
+      return "\"" + string.replaceAll("\"", "\\\\\"") + "\"";
+   }
+   
+   // Given a quoted string with inner quotes escaped with '\',
+   // returns the 'inner', unescaped, string contents. E.g.
+   //
+   //    "\"string\"" --> "string"
+   //    '\'string\'' --> 'string'
+   public static final String stringValue(String string)
+   {
+      if (string.length() < 2)
+         return string;
+      
+      if (string.startsWith("\"") && string.endsWith("\""))
+         return string.substring(1, string.length() - 1).replaceAll("\\\\\"", "\"");
+      
+      if (string.startsWith("'") && string.endsWith("'"))
+         return string.substring(1, string.length() - 1).replaceAll("\\\\'", "'");
+      
+      return string;
+   }
+   
    public static final native String encodeURI(String string) /*-{
       return $wnd.encodeURI(string);
    }-*/;

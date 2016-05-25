@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -88,6 +89,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                                     String chunkId,
                                     String engine,
                                     String code,
+                                    JsObject chunkOptions,
                                     ServerRequestCallback<String> requestCallback);
    
    void interruptChunk(String docId,

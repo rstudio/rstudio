@@ -4266,6 +4266,7 @@ public class RemoteServer implements Server
                                            String chunkId,
                                            String engine,
                                            String code,
+                                           JsObject chunkOptions,
                                            ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4273,6 +4274,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(chunkId));
       params.set(2, new JSONString(engine));
       params.set(3, new JSONString(code));
+      params.set(4, new JSONObject(chunkOptions));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
    }
    

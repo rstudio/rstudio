@@ -1343,9 +1343,9 @@ private:
    std::string chunkId_;
 };
 
-void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
-                                   const std::string& output,
-                                   FilePath targetPath)
+void chunkConsoleOutputHandler(module_context::ConsoleOutputType type,
+                               const std::string& output,
+                               FilePath targetPath)
 {
    using namespace module_context;
    
@@ -1361,6 +1361,7 @@ Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
                              const std::string& nbCtxId,
                              const std::string& code,
+                             const std::map<std::string, std::string>& options,
                              json::JsonRpcResponse* pResponse)
 {
    // forward declare error
@@ -1384,16 +1385,16 @@ Error executeRcppEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // prepare to write chunk cache output
-   FilePath target = notebook::chunkOutputFile(docId, chunkId, nbCtxId, 
-         kChunkOutputText);
+   FilePath targetPath =
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, kChunkOutputText);
    
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
          module_context::events().onConsoleOutput.connect(
-            boost::bind(sourceCppConsoleOutputHandler,
+            boost::bind(chunkConsoleOutputHandler,
                         _1,
                         _2,
-                        target));
+                        targetPath));
 
    // call Rcpp::sourceCpp on code
    std::string escaped = boost::regex_replace(
@@ -1408,7 +1409,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    error = notebook::appendConsoleOutput(
             kChunkConsoleInput,
             code,
-            target);
+            targetPath);
    if (error)
       LOG_ERROR(error);
    
@@ -1417,9 +1418,9 @@ Error executeRcppEngineChunk(const std::string& docId,
    error = r::exec::executeString(execCode);
    if (error)
    {
-      sourceCppConsoleOutputHandler(module_context::ConsoleOutputError,
-                                    r::endUserErrorMessage(error),
-                                    target);
+      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
+                                r::endUserErrorMessage(error),
+                                targetPath);
    }
 
    // forward success / failure to chunk
@@ -1428,18 +1429,191 @@ Error executeRcppEngineChunk(const std::string& docId,
             chunkId,
             nbCtxId,
             kChunkOutputText,
-            target);
+            targetPath);
    
    return error;
+}
+
+void reportChunkExecutionError(const std::string& docId,
+                               const std::string& chunkId,
+                               const std::string& message,
+                               const FilePath& targetPath)
+{
+   // emit chunk error
+   chunkConsoleOutputHandler(
+            module_context::ConsoleOutputError,
+            message,
+            targetPath);
+   
+   // forward failure to chunk
+   notebook::enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebook::notebookCtxId(),
+            kChunkOutputText,
+            targetPath);
+}
+
+void reportStanExecutionError(const std::string& docId,
+                              const std::string& chunkId,
+                              const FilePath& targetPath)
+{
+   std::string message =
+         "engine.opts$x must be a character string providing a "
+         "name for the returned `stanmodel` object";
+   reportChunkExecutionError(docId, chunkId, message, targetPath);
 }
 
 Error executeStanEngineChunk(const std::string& docId,
                              const std::string& chunkId,
                              const std::string& nbCtxId,
                              const std::string& code,
+                             const std::map<std::string, std::string>& options,
                              json::JsonRpcResponse* pResponse)
 {
-   // TODO:
+   // forward declare error
+   Error error = Success();
+   
+   // always ensure we emit a 'execution complete' event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+   
+   // prepare chunk directory
+   FilePath outputPath = notebook::chunkOutputPath(
+            docId,
+            chunkId,
+            notebook::ContextExact);
+
+   error = outputPath.removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+
+   error = outputPath.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   
+   // prepare to write chunk cache output
+   FilePath targetPath =
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, kChunkOutputText);
+   
+   // capture console output, error
+   boost::signals::scoped_connection consoleHandler =
+         module_context::events().onConsoleOutput.connect(
+            boost::bind(chunkConsoleOutputHandler,
+                        _1,
+                        _2,
+                        targetPath));
+   
+   // write input code to cache
+   error = notebook::appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            targetPath);
+   if (error)
+      LOG_ERROR(error);
+   
+   // write code to file
+   FilePath tempFile = module_context::tempFile("stan-", ".stan");
+   error = writeStringToFile(tempFile, code);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
+   
+   // ensure existence of 'engine.opts' with 'x' parameter
+   if (!options.count("engine.opts"))
+   {
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
+   }
+   
+   // evaluate engine options (so we can pass them through to stan call)
+   r::sexp::Protect protect;
+   SEXP engineOptsSEXP = R_NilValue;
+   error = r::exec::evaluateString(
+            options.at("engine.opts"),
+            &engineOptsSEXP,
+            &protect);
+   
+   if (error)
+   {
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
+   }
+   
+   // construct call to 'stan_model'
+   r::exec::RFunction fStanEngine("rstan:::stan_model");
+   std::vector<std::string> engineOptsNames;
+   error = r::sexp::getNames(engineOptsSEXP, &engineOptsNames);
+   if (error)
+   {
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
+   }
+   
+   // build parameters
+   std::string modelName;
+   for (std::size_t i = 0, n = r::sexp::length(engineOptsSEXP); i < n; ++i)
+   {
+      // skip 'x' engine option (this is the variable we wish to assign to
+      // after evaluating the stan model)
+      if (engineOptsNames[i] == "x")
+      {
+         modelName = r::sexp::asString(VECTOR_ELT(engineOptsSEXP, i));
+         continue;
+      }
+      
+      fStanEngine.addParam(
+               engineOptsNames[i],
+               VECTOR_ELT(engineOptsSEXP, i));
+   }
+   
+   // if no model name was set, return error message
+   if (modelName.empty())
+   {
+      reportStanExecutionError(docId, chunkId, targetPath);
+      return Success();
+   }
+   
+   // if the 'file' option was not set, set it explicitly
+   if (!core::algorithm::contains(engineOptsNames, "file"))
+      fStanEngine.addParam("file", tempFile.absolutePath());
+   
+   // evaluate stan_model call
+   SEXP stanModelSEXP = R_NilValue;
+   error = fStanEngine.call(&stanModelSEXP, &protect);
+   if (error)
+   {
+      std::string msg = r::endUserErrorMessage(error);
+      reportChunkExecutionError(docId, chunkId, msg, targetPath);
+      return Success();
+   }
+   
+   // assign in global env on success
+   if (stanModelSEXP != R_NilValue)
+   {
+      r::exec::RFunction fAssign("base:::assign");
+      fAssign.addParam("x", modelName);
+      fAssign.addParam("value", stanModelSEXP);
+      error = fAssign.call();
+      if (error)
+      {
+         std::string msg = r::endUserErrorMessage(error);
+         reportChunkExecutionError(docId, chunkId, msg, targetPath);
+         LOG_ERROR(error);
+         return Success();
+      }
+   }
+
+   // forward success / failure to chunk
+   notebook::enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebook::notebookCtxId(),
+            kChunkOutputText,
+            targetPath);
+   
    return Success();
 }
 
@@ -1447,17 +1621,27 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
                                   json::JsonRpcResponse* pResponse)
 {
    std::string docId, chunkId, engine, code;
+   json::Object jsonChunkOptions;
    int commitMode;
    Error error = json::readParams(request.params,
                                   &docId,
                                   &chunkId,
                                   &commitMode,
                                   &engine,
-                                  &code);
+                                  &code,
+                                  &jsonChunkOptions);
    if (error)
    {
       LOG_ERROR(error);
       return error;
+   }
+   
+   std::map<std::string, std::string> chunkOptions;
+   for (json::Object::const_iterator it = jsonChunkOptions.begin();
+        it != jsonChunkOptions.end();
+        ++it)
+   {
+      chunkOptions[it->first] = it->second.get_str();
    }
    
    // choose appropriate notebook context to write to -- if this is a saved
@@ -1468,9 +1652,9 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
 
    // handle Rcpp specially
    if (engine == "Rcpp")
-      return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, pResponse);
+      return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, chunkOptions, pResponse);
    else if (engine == "stan")
-      return executeStanEngineChunk(docId, chunkId, nbCtxId, code, pResponse);
+      return executeStanEngineChunk(docId, chunkId, nbCtxId, code, chunkOptions, pResponse);
    
    notebook::runChunk(docId, chunkId, nbCtxId, engine, code);
    return Success();

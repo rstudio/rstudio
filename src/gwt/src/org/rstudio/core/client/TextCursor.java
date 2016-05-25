@@ -160,8 +160,25 @@ public class TextCursor
       return data_.indexOf(ch, index_ + 1);
    }
    
-   public String getData() { return data_; }
-   public int getIndex() { return index_; }
+   public char getCurrentCharacter()
+   {
+      return data_.charAt(index_);
+   }
+   
+   public String getData()
+   {
+      return data_;
+   }
+   
+   public void setIndex(int index)
+   {
+      index_ = MathUtil.clamp(index, 0, data_.length());
+   }
+   
+   public int getIndex()
+   {
+      return index_;
+   }
    
    public boolean isLeftBracket()
    {
