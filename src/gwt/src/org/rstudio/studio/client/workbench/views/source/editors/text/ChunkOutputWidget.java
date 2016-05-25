@@ -310,8 +310,9 @@ public class ChunkOutputWidget extends Composite
             return;
       }
 
-      // don't report height if it hasn't changed
-      if (height == renderedHeight_)
+      // don't report height if it hasn't changed (unless we also need to ensure
+      // visibility)
+      if (height == renderedHeight_ && !ensureVisible)
          return;
 
       // cache last reported render size
