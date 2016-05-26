@@ -34,17 +34,24 @@
 {
    ctx <- .rs.rnb.getHtmlCaptureContext()
    
-   # write html to file
-   rendered <- paste(as.character(x), collapse = "\n")
-   htmlfile <- tempfile("_rs_html_deps_", tmpdir = ctx$outputFolder, fileext = ".html")
-   cat(rendered, file = htmlfile, sep = "\n")
+   # tempfile paths for html resources
+   htmlfile <- tempfile("_rs_html_", tmpdir = ctx$outputFolder, fileext = ".html")
+   depfile <- tempfile("_rs_html_deps_", tmpdir = ctx$outputFolder, fileext = ".json")
    
-   # record html
-   .rs.recordHtmlWidget(htmlfile, tempfile())
+   htmldeps <- attr(x, "html_dependencies")
+   if (length(htmldeps)) {
+      # if we have html dependencies, write those to file and use 'save_html'
+      cat(.rs.toJSON(htmldeps, unbox = TRUE), file = depfile, sep = "\n")
+      htmltools::save_html(x, file = htmlfile, libdir = ctx$libraryFolder)
+   } else {
+      # otherwise, just write html to file as-is
+      cat(as.character(x), file = htmlfile, sep = "\n")
+   }
+   
+   # record the generated artefacts
+   .rs.recordHtmlWidget(htmlfile, depfile)
 })
 
-# common implementation for items which can be converted to HTML
-# just using 'as.character'
 .rs.addFunction("rnbHooks.print.html",           .rs.rnb.saveHtmlToCache)
 .rs.addFunction("rnbHooks.print.shiny.tag",      .rs.rnb.saveHtmlToCache)
 .rs.addFunction("rnbHooks.print.shiny.tag.list", .rs.rnb.saveHtmlToCache)
@@ -159,8 +166,7 @@
    htmltools::save_html(htmlProduct, file = htmlfile, libdir = libraryFolder)
    
    # record the saved artefacts
-   .Call("rs_recordHtmlWidget", htmlfile, depfile)
-   
+   .rs.recordHtmlWidget(htmlfile, depfile)
 })
 
 
