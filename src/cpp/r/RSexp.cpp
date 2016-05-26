@@ -673,6 +673,12 @@ Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pM
    
    return Success();
 }
+
+SEXP create(SEXP valueSEXP, Protect* pProtect)
+{
+   pProtect->add(valueSEXP);
+   return valueSEXP;
+}
    
 SEXP create(const json::Value& value, Protect* pProtect)
 {
