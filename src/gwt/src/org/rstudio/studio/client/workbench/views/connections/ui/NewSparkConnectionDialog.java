@@ -23,9 +23,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -34,6 +32,8 @@ import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresente
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -55,39 +55,38 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       
       public static final Result create()
       {
-         return create("local", -1, "1.6.1", "2.6", false);
+         return create("local", false, -1, "1.6.1", "2.6", true);
       }
       
       public static final native Result create(String master,
+                                               boolean reconnect,
                                                int cores,
                                                String sparkVersion,
                                                String hadoopVersion,
-                                               boolean reconnect)
+                                               boolean autoInstall)
       /*-{
          return {
             "master": master,
+            "reconnect": reconnect,
             "cores": cores,
             "spark_version": sparkVersion,
             "hadoop_version": hadoopVersion,
-            "reconnect": reconnect
+            "auto_install": autoInstall
          };
       }-*/;
       
       public final native String getMaster() /*-{ return this.master; }-*/;
+      public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
       public final native int getCores() /*-{ return this.cores; }-*/;
       public final native String getSparkVersion() /*-{ return this.spark_version; }-*/;
       public final native String getHadoopVersion() /*-{ return this.hadoop_version; }-*/;
-      public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
+      public final native boolean getAutoInstall() /*-{ return this.auto_install; }-*/;
    }
    
    @Inject
-   private void initialize(Session session,
-                           GlobalDisplay globalDisplay,
-                           WorkbenchContext context)
+   private void initialize(Session session)
    {
       session_ = session;
-      globalDisplay_ = globalDisplay;
-      workbenchContext_ = context;
    }
    
    public static class Context
@@ -136,7 +135,6 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    @Override
    protected boolean validate(Result result)
    {
-      
       return true;
    }
    
@@ -145,50 +143,55 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    {
       VerticalPanel container = new VerticalPanel();
      
+      // get previous result to populate controls
+      Result lastResult = state_.getLastResult();
+      
+      // master
       final Grid masterGrid = new Grid(2, 2);
       masterGrid.addStyleName(RES.styles().grid());
       masterGrid.addStyleName(RES.styles().masterGrid());
-      
       Label masterLabel = new Label("Master node:");
       masterLabel.addStyleName(RES.styles().label());
       masterGrid.setWidget(0, 0, masterLabel);
       master_ = new SparkMasterChooser(context_.getRemoteServers());
       master_.addStyleName(RES.styles().spanningInput());
+      master_.setSelection(lastResult.getMaster());
       masterGrid.setWidget(0, 1, master_);
-      
       Label coresLabel = new Label("Local cores:");
       masterGrid.setWidget(1, 0, coresLabel);
-      ListBox cores = new ListBox();
-      cores.addItem("8 (Default)", "8");
-      cores.addItem("7");
-      cores.addItem("6");
-      cores.addItem("5");
-      cores.addItem("4");
-      cores.addItem("3");
-      cores.addItem("2");
-      cores.addItem("1");
-      masterGrid.setWidget(1, 1, cores);
-    
+      cores_ = new ListBox();
+      cores_.addItem("8 (Default)", "8");
+      cores_.addItem("7");
+      cores_.addItem("6");
+      cores_.addItem("5");
+      cores_.addItem("4");
+      cores_.addItem("3");
+      cores_.addItem("2");
+      cores_.addItem("1");
+      setValue(cores_, String.valueOf(lastResult.getCores()));
+      masterGrid.setWidget(1, 1, cores_);
       container.add(masterGrid);
-      
-      final CheckBox autoReconnect = new CheckBox(
+
+      // auto-reconnect
+      autoReconnect_ = new CheckBox(
             "Reconnect automatically if connection is dropped");
-      container.add(autoReconnect);
+      autoReconnect_.setValue(lastResult.getReconnect());
+      container.add(autoReconnect_);
     
+      // manage visiblity of master UI components
       final Command manageMasterUI = new Command() {
          @Override
          public void execute()
          {
             boolean local = master_.isLocalMaster(master_.getSelection());
-            autoReconnect.setVisible(!local);
+            autoReconnect_.setVisible(!local);
             if (local)
                masterGrid.removeStyleName(RES.styles().remote());
             else
                masterGrid.addStyleName(RES.styles().remote());
          }
       };
-      manageMasterUI.execute();
-      
+      manageMasterUI.execute();   
       master_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
       { 
          @Override
@@ -198,43 +201,62 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          }
       });
       
+      // versions
       Grid versionGrid = new Grid(2, 2);
       versionGrid.addStyleName(RES.styles().grid());
       versionGrid.addStyleName(RES.styles().versionGrid());
-     
       Label sparkLabel = new Label("Spark version:");
       sparkLabel.addStyleName(RES.styles().label());
       versionGrid.setWidget(0, 0, sparkLabel);
-      ListBox sparkVersion = new ListBox();
-      sparkVersion.addStyleName(RES.styles().spanningInput());
-      sparkVersion.addItem("Spark 1.6.1 (Default)", "1.6.1");
-      sparkVersion.addItem("Spark 1.6.0", "1.6.0");
-      sparkVersion.addItem("Spark 1.5.2", "1.5.2");
-      sparkVersion.addItem("Spark 1.5.1", "1.5.1");
-      sparkVersion.addItem("Spark 1.5.0", "1.5.0");
-      versionGrid.setWidget(0, 1, sparkVersion);
-      
+      sparkVersion_ = new ListBox();
+      sparkVersion_.addStyleName(RES.styles().spanningInput());
+      sparkVersion_.addItem("Spark 1.6.1 (Default)", "1.6.1");
+      sparkVersion_.addItem("Spark 1.6.0", "1.6.0");
+      sparkVersion_.addItem("Spark 1.5.2", "1.5.2");
+      sparkVersion_.addItem("Spark 1.5.1", "1.5.1");
+      sparkVersion_.addItem("Spark 1.5.0", "1.5.0");
+      setValue(sparkVersion_, lastResult.getSparkVersion());
+      versionGrid.setWidget(0, 1, sparkVersion_);  
       versionGrid.setWidget(1, 0, new Label("Hadoop version:"));
-      ListBox hadoopVersion = new ListBox();
-      hadoopVersion.addStyleName(RES.styles().spanningInput());
-      hadoopVersion.addItem("Hadoop 2.6 or higher (Default)", "2.6");
-      hadoopVersion.addItem("Hadoop 2.4 or higher", "2.4");
-      hadoopVersion.addItem("Hadoop 2.3", "2.3");
-      hadoopVersion.addItem("Hadoop 1.X", "1.X");
-      hadoopVersion.addItem("Cloudera Hadoop 4", "CDH4");
-      versionGrid.setWidget(1, 1, hadoopVersion);
-      
+      hadoopVersion_ = new ListBox();
+      hadoopVersion_.addStyleName(RES.styles().spanningInput());
+      hadoopVersion_.addItem("Hadoop 2.6 or higher (Default)", "2.6");
+      hadoopVersion_.addItem("Hadoop 2.4 or higher", "2.4");
+      hadoopVersion_.addItem("Hadoop 2.3", "2.3");
+      hadoopVersion_.addItem("Hadoop 1.X", "1.X");
+      hadoopVersion_.addItem("Cloudera Hadoop 4", "CDH4");
+      setValue(hadoopVersion_, lastResult.getHadoopVersion());
+      versionGrid.setWidget(1, 1, hadoopVersion_); 
       container.add(versionGrid);
       
+      // auto install
+      autoInstall_ = new CheckBox();
+      autoInstall_.addStyleName(RES.styles().installCheckBox());
+      autoInstall_.setValue(true);
+      container.add(autoInstall_);
       
-      CheckBox autoInstall = new CheckBox(
-        "Install Spark 1.6.1 runtime on local system");
-      autoInstall.addStyleName(RES.styles().installCheckBox());
-      autoInstall.setValue(true);
-      container.add(autoInstall);
+      final Command updateInstallTextCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            autoInstall_.setText("Install Spark " + 
+                                 sparkVersion_.getSelectedValue() +
+                                 " runtime on local system");
+            
+         }
+      };
+      updateInstallTextCommand.execute();
+      sparkVersion_.addChangeHandler(new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            updateInstallTextCommand.execute();
+         }
+      });
       
+      
+      // connection code
       container.add(new VerticalSpacer("20px"));
-      
       //container.add(new Label("Code"));
       //container.add(new Label("Insert into:"));
       
@@ -245,12 +267,19 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    @Override
    protected Result collectInput()
    {     
-      // TODO: collect data
-      Result result = Result.create();
+      // collect the result
+      Result result = Result.create(
+            master_.getSelection(),
+            autoReconnect_.getValue(),
+            Integer.parseInt(cores_.getSelectedValue()),
+            sparkVersion_.getSelectedValue(),
+            hadoopVersion_.getSelectedValue(),
+            autoInstall_.getValue());
       
-      // TODO: update client state
+      // update client state
+      state_ = State.create(result);
       
-      
+      // return result
       return result;
    }
    
@@ -261,73 +290,15 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       session_.persistClientState();
    }
    
-   private class NewSparkConnectionClientState extends JSObjectStateValue
+   private boolean setValue(ListBox listBox, String value)
    {
-      public NewSparkConnectionClientState()
-      {
-         super(ConnectionsPresenter.MODULE_CONNECTIONS,
-               "new-spark-connection-dialog",
-               ClientState.PERSISTENT,
-               session_.getSessionInfo().getClientState(),
-               false);
-      }
-
-      @Override
-      protected void onInit(JsObject value)
-      {
-         if (value != null)
-            state_ = value.cast();
-         else
-            state_ = State.create();
-      }
-
-      @Override
-      protected JsObject getValue()
-      {
-         return state_.cast();
-      }
-   }
-   
-   private final void loadAndPersistClientState()
-   {
-      if (clientStateValue_ == null)
-         clientStateValue_ = new NewSparkConnectionClientState();
-   }  
-   private static NewSparkConnectionClientState clientStateValue_;
-   
-   private SparkMasterChooser master_;
-   
-   private final Context context_;
-   
-   private State state_ = State.create();
-   
-   private Session session_;
-   @SuppressWarnings("unused")
-   private GlobalDisplay globalDisplay_;
-   @SuppressWarnings("unused")
-   private WorkbenchContext workbenchContext_;
-   
-   public interface Styles extends CssResource
-   {
-      String label();
-      String grid();
-      String versionGrid();
-      String masterGrid();
-      String remote();
-      String helpLink();
-      String spanningInput();
-      String installCheckBox();
-   }
-
-   public interface Resources extends ClientBundle
-   {
-      @Source("NewSparkConnectionDialog.css")
-      Styles styles();
-   }
-   
-   private static Resources RES = GWT.create(Resources.class);
-   static {
-      RES.styles().ensureInjected();
+      for (int i = 0; i < listBox.getItemCount(); i++)
+         if (value.equals(listBox.getValue(i)))
+         {
+            listBox.setSelectedIndex(i);
+            return true;
+         }
+      return false;
    }
    
    private static class State extends JavaScriptObject
@@ -335,13 +306,19 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       protected State()
       {
       }
-     
       
       public static final State create()
       {
          return create(emptyArray(),
                        emptyArray(),
                        Result.create());
+      }
+      
+      public static final State create(Result lastResult)
+      {
+         return create(emptyArray(),
+                       emptyArray(),
+                       lastResult);
       }
       
       public static final native State create(JsArrayString customSparkVersions,
@@ -371,4 +348,75 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          return [];
       }-*/;
    } 
+   
+   private class NewSparkConnectionClientState extends JSObjectStateValue
+   {
+      public NewSparkConnectionClientState()
+      {
+         super(ConnectionsPresenter.MODULE_CONNECTIONS,
+               "spark-connection-dialog",
+               ClientState.PERSISTENT,
+               session_.getSessionInfo().getClientState(),
+               false);
+      }
+
+      @Override
+      protected void onInit(JsObject value)
+      {
+         if (value != null)
+            state_ = value.cast();
+         else
+            state_ = State.create();
+      }
+
+      @Override
+      protected JsObject getValue()
+      {
+         return state_.cast();
+      }
+   }
+   
+   private final void loadAndPersistClientState()
+   {
+      if (clientStateValue_ == null)
+         clientStateValue_ = new NewSparkConnectionClientState();
+   }  
+   private static NewSparkConnectionClientState clientStateValue_;
+   private static State state_ = State.create();
+   
+  
+   public interface Styles extends CssResource
+   {
+      String label();
+      String grid();
+      String versionGrid();
+      String masterGrid();
+      String remote();
+      String helpLink();
+      String spanningInput();
+      String installCheckBox();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("NewSparkConnectionDialog.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
+   }
+   
+   private final Context context_;
+   
+   private SparkMasterChooser master_;
+   private CheckBox autoReconnect_;
+   private ListBox cores_;
+   private ListBox sparkVersion_;
+   private ListBox hadoopVersion_;
+   private CheckBox autoInstall_;
+  
+      
+   private Session session_;
 }

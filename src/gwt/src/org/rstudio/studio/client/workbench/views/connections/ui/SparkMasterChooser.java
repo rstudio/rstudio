@@ -138,6 +138,15 @@ public class SparkMasterChooser extends Composite
       return listBox_.getSelectedValue();
    }
    
+   public void setSelection(String master)
+   {
+      for (int i = 0; i<listBox_.getItemCount(); i++)
+      {
+         if (listBox_.getItemText(i).equals(master))
+            listBox_.setSelectedIndex(i);
+      }
+   }
+   
    public boolean isLocalMaster(String master)
    {
       return master.equals(LOCAL);
