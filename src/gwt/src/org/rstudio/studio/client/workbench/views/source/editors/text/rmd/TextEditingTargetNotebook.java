@@ -1934,6 +1934,7 @@ public class TextEditingTargetNotebook
          int row = docDisplay_.getFirstVisibleRow();
          Integer min = null;
          String chunkId = "";
+         boolean hasPlots = false;
          for (ChunkOutputUi output: outputs_.values())
          {
             int delta = Math.abs(output.getCurrentRow() - row);
@@ -1942,7 +1943,12 @@ public class TextEditingTargetNotebook
                min = delta;
                chunkId = output.getChunkId();
             }
+            hasPlots = hasPlots || output.getOutputWidget().hasPlots();
          }
+         
+         // if no widgets have plots, don't bother with resize
+         if (!hasPlots)
+            return;
          
          // make the request
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 

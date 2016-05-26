@@ -437,6 +437,19 @@ public class ChunkOutputWidget extends Composite
       return hasErrors_;
    }
    
+   public boolean hasPlots()
+   {
+      for (Widget w: root_)
+      {
+         if (w instanceof FixedRatioWidget && 
+             ((FixedRatioWidget)w).getWidget() instanceof Image)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
    public void setPlotPending(boolean pending)
    {
       for (Widget w: root_)
