@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import java.util.List;
-
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.Operation;
@@ -24,7 +22,9 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -39,7 +39,7 @@ public class SparkMasterChooser extends Composite
                                 implements CanFocus,
                                 SelectionChangeEvent.HasSelectionChangedHandlers
 {
-   public SparkMasterChooser(List<String> remoteServers)
+   public SparkMasterChooser(NewSparkConnectionContext context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
      
@@ -48,7 +48,8 @@ public class SparkMasterChooser extends Composite
       listBox_ = new ListBox();
       listBox_.setWidth("100%");
       listBox_.addItem(LOCAL);
-      for (int i = 0; i<remoteServers.size(); i++)
+      JsArrayString remoteServers = context.getRemoteServers();
+      for (int i = 0; i<remoteServers.length(); i++)
         listBox_.addItem(remoteServers.get(i));
       listBox_.addItem(REMOTE_SERVER);
       lastListBoxSelectedIndex_ = listBox_.getSelectedIndex();
@@ -136,6 +137,15 @@ public class SparkMasterChooser extends Composite
    public String getSelection()
    {
       return listBox_.getSelectedValue();
+   }
+   
+   public void setSelection(String master)
+   {
+      for (int i = 0; i<listBox_.getItemCount(); i++)
+      {
+         if (listBox_.getItemText(i).equals(master))
+            listBox_.setSelectedIndex(i);
+      }
    }
    
    public boolean isLocalMaster(String master)

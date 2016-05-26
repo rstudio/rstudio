@@ -1,5 +1,5 @@
 /*
- * ConnectionsServerOperations.java
+ * SparkVersion.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,18 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.connections.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-public interface ConnectionsServerOperations
-{
-   void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
- 
-   void getDisconnectCode(Connection connection, 
-                          ServerRequestCallback<String> callback);
+public class SparkVersion extends JavaScriptObject
+{ 
+   protected SparkVersion()
+   {
+   }
    
-   void getNewSparkConnectionContext(
-            ServerRequestCallback<NewSparkConnectionContext> callback);
+   public final native String getNumber() /*-{
+      return this.number;
+   }-*/;
+  
+   public final native JsArray<HadoopVersion> getHadoopVersions() /*-{
+      return this.hadoop_versions;
+   }-*/;
+  
 }

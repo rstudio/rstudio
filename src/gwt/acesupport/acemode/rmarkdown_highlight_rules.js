@@ -29,6 +29,7 @@ var MarkdownHighlightRules = require("mode/markdown_highlight_rules").MarkdownHi
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
 var ShHighlightRules = require("ace/mode/sh_highlight_rules").ShHighlightRules;
+var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var Utils = require("mode/utils");
 
 function makeDateRegex()
@@ -117,6 +118,16 @@ var RMarkdownHighlightRules = function() {
        ["start", "listblock", "allowBlock"]
    );
 
+   // Embed stan highlighting rules
+   Utils.embedRules(
+       this,
+       StanHighlightRules,
+       "stan",
+       this.$reStanChunkStartString,
+       this.$reChunkEndString,
+       ["start", "listblock", "allowBlock"]
+   );
+
    // Embed YAML highlight rules, but ensure that they can only be
    // found at the start of a document. We do this by moving all of the
    // start rules to a second '$start' state, and ensuring that YAML headers
@@ -171,6 +182,9 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
    this.$reShChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{(?:bash|sh)\\b(?:.*)\\}\\s*$";
+
+   this.$reStanChunkStartString =
+      "^(?:[ ]{4})?`{3,}\\s*\\{stan\\b(?:.*)\\}\\s*$";
 
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";

@@ -185,29 +185,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       sortConnections();
       connectionsDataGrid_.redraw();
    }
-   
-   private void sortConnections()
-   {
-      // order the list
-      List<Connection> connections = dataProvider_.getList();
-      Collections.sort(connections, new Comparator<Connection>() {     
-       @Override
-       public int compare(Connection conn1, Connection conn2)
-       {
-          // values to use in comparison
-          boolean conn1Connected = isConnected(conn1.getId());
-          boolean conn2Connected = isConnected(conn2.getId());
-          
-          if (conn1Connected && !conn2Connected)
-             return -1;
-          else if (conn2Connected && !conn1Connected)
-             return 1;
-          else
-             return Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
-       }       
-    });
-   }
-   
+  
    @Override
    public boolean isConnected(ConnectionId id)
    {
@@ -320,6 +298,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return mainPanel_;
    }
    
+   @Override
+   public void onBeforeSelected()
+   {
+      super.onBeforeSelected();
+      connectionsDataGrid_.redraw();
+   }
+   
    private void animate(final Widget from,
                         final Widget to,
                         boolean rightToLeft,
@@ -385,6 +370,28 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionName_.setText(
             connection.getId().getType() + ": " + connection.getHost());
       
+   }
+   
+   private void sortConnections()
+   {
+      // order the list
+      List<Connection> connections = dataProvider_.getList();
+      Collections.sort(connections, new Comparator<Connection>() {     
+       @Override
+       public int compare(Connection conn1, Connection conn2)
+       {
+          // values to use in comparison
+          boolean conn1Connected = isConnected(conn1.getId());
+          boolean conn2Connected = isConnected(conn2.getId());
+          
+          if (conn1Connected && !conn2Connected)
+             return -1;
+          else if (conn2Connected && !conn1Connected)
+             return 1;
+          else
+             return Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
+       }       
+    });
    }
    
    

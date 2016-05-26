@@ -289,7 +289,8 @@ void updateLastChunkOutput(const std::string& docId,
 
 // given a document ID and a chunk ID, discover the last output the chunk had
 OutputPair lastChunkOutput(const std::string& docId, 
-                           const std::string& chunkId)
+                           const std::string& chunkId,
+                           const std::string& nbCtxId)
 {
    // check our cache 
    LastChunkOutput::iterator it = s_lastChunkOutputs.find(docId + chunkId);
@@ -298,7 +299,7 @@ OutputPair lastChunkOutput(const std::string& docId,
       return it->second;
    }
    
-   FilePath outputPath = chunkOutputPath(docId, chunkId, ContextExact);
+   FilePath outputPath = chunkOutputPath(docId, chunkId, nbCtxId, ContextExact);
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;
@@ -374,7 +375,7 @@ FilePath chunkOutputFile(const std::string& docId,
                          const std::string& nbCtxId, 
                          unsigned outputType)
 {
-   OutputPair output = lastChunkOutput(docId, chunkId);
+   OutputPair output = lastChunkOutput(docId, chunkId, nbCtxId);
    if (output.outputType == outputType)
       return chunkOutputFile(docId, chunkId, nbCtxId, output);
    output.ordinal++;
@@ -473,7 +474,7 @@ core::Error cleanChunkOutput(const std::string& docId,
       return Success();
 
    // reset counter if we're getting close to the end of our range (rare)
-   OutputPair pair = lastChunkOutput(docId, chunkId);
+   OutputPair pair = lastChunkOutput(docId, chunkId, nbCtxId);
    if ((MAX_ORDINAL - pair.ordinal) < OUTPUT_THRESHOLD)
    {
       updateLastChunkOutput(docId, chunkId, OutputPair());

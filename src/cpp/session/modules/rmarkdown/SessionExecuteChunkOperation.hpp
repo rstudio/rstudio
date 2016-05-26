@@ -43,9 +43,6 @@ core::shell_utils::ShellCommand shellCommandForEngine(
 {
    core::shell_utils::ShellCommand command(engine);
    
-   if (engine == "Rscript")
-      command << "-f";
-   
    command << core::string_utils::utf8ToSystem(scriptPath.absolutePathNative());
    
    return command;

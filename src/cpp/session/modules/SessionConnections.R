@@ -53,3 +53,40 @@ options(connectionViewer = list(
    else
       ""
 })
+
+.rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
+
+   context <- list()
+
+  # all previously connected to remote servers
+  context$remote_servers <- .Call("rs_availableRemoteServers")
+
+  # available cores on this machine
+  context$cores <- parallel::detectCores()
+  if (is.na(context$cores))
+    context$cores <- 1
+
+  # available spark versions and related hadoop versions
+  context$spark_versions <- list()
+  for (versionNumber in rspark:::spark_versions()) {
+    version <- list()
+    version$number <- .rs.scalar(versionNumber)
+    version$hadoop_versions <- rspark:::spark_versions_hadoop()
+    for (hadoopVersion in names(version$hadoop_versions)) {
+      label <- version$hadoop_versions[[hadoopVersion]]$name
+      version$hadoop_versions[[hadoopVersion]] <- list()
+      version$hadoop_versions[[hadoopVersion]]$id <- .rs.scalar(hadoopVersion)
+      version$hadoop_versions[[hadoopVersion]]$label <- .rs.scalar(label)
+    }
+    names(version$hadoop_versions) <- NULL
+    context$spark_versions[[length(context$spark_versions) + 1]] <- version
+  }
+
+  # default spark version
+  context$default_spark_version <- .rs.scalar(
+                           formals(rspark::spark_install)$sparkVersion)
+
+  context
+})
+
+
