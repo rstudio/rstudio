@@ -223,9 +223,9 @@ public class TextEditingTargetChunks
    {
       // TODO: only enable non-R engine work for notebooks for now
       if (!target_.getDocDisplay().showChunkOutputInline())
-         return engine.equals("r");
+         return engine.equalsIgnoreCase("r");
       
-      return RE_RUNNABLE_ENGINES.indexOf(engine + "|") != -1;
+      return RE_RUNNABLE_ENGINES.indexOf(engine.toLowerCase() + "|") != -1;
    }
    
    private final TextEditingTarget target_;
@@ -239,7 +239,7 @@ public class TextEditingTargetChunks
    
    // runnable engines within the R Notebook mode
    private static final String RE_RUNNABLE_ENGINES =
-         "r|Rscript|Rcpp|python|ruby|perl|bash|sh|stan|";
+         "r|rscript|rcpp|python|ruby|perl|bash|sh|stan|";
    
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow

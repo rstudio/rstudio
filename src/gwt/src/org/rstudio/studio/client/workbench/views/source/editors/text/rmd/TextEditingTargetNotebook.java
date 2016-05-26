@@ -1356,7 +1356,7 @@ public class TextEditingTargetNotebook
       Map<String, String> chunkOptions = RMarkdownChunkHeaderParser.parse(line);
        
       String engine = StringUtil.stringValue(chunkOptions.get("engine"));
-      if (!engine.toLowerCase().equals("r"))
+      if (!engine.equalsIgnoreCase("r"))
       {
          execAlternateEngineChunk(
                docUpdateSentinel_.getId(),
