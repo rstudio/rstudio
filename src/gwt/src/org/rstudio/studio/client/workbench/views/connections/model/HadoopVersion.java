@@ -1,5 +1,5 @@
 /*
- * NewSparkConnectionContext.java
+ * HadoopVersion.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,30 +15,20 @@
 
 package org.rstudio.studio.client.workbench.views.connections.model;
 
-
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
-public class NewSparkConnectionContext extends JavaScriptObject
-{
-   protected NewSparkConnectionContext()
+public class HadoopVersion extends JavaScriptObject
+{ 
+   protected HadoopVersion()
    {
    }
    
-   public final native JsArrayString getRemoteServers() /*-{
-      return this.remote_servers;
+   public final native String getId() /*-{
+      return this.id;
    }-*/;
-   
-   public final native int getCores()  /*-{
-      return this.cores;
+  
+   public final native String getLabel() /*-{
+      return this.label;
    }-*/;
-   
-   public final native JsArray<SparkVersion> getSparkVersions() /*-{
-      return this.spark_versions;
-   }-*/;
-   
-   public final native String getDefaultSparkVersion() /*-{
-      return this.default_spark_version;
-   }-*/;
+  
 }
