@@ -97,6 +97,48 @@ SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
    return R_NilValue;
 }
 
+SEXP rs_availableRemoteServers()
+{
+   // get list of previous connections and extract unique remote servers
+   std::vector<std::string> remoteServers;
+   json::Array connectionsJson = connectionHistory().connectionsAsJson();
+   BOOST_FOREACH(const json::Value connectionJson, connectionsJson)
+   {
+      // don't inspect if not an object -- this should never happen
+      // but we screen it anyway to prevent a crash on corrupt data
+      if (!json::isType<json::Object>(connectionJson))
+         continue;
+
+      // get the host
+      json::Object idJson;
+      Error error = json::readObject(connectionJson.get_obj(), "id", &idJson);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      std::string host;
+      error = json::readObject(idJson, "host", &host);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      // add it if necessary
+      if(std::find(remoteServers.begin(), remoteServers.end(), host) ==
+                                                         remoteServers.end())
+      {
+         if (host != "local" && !boost::algorithm::starts_with(host, "local["))
+            remoteServers.push_back(host);
+      }
+   }
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(remoteServers, &rProtect);
+}
+
+
 Error removeConnection(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -147,6 +189,7 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
 // track whether connections were enabled at the start of this R session
 bool s_connectionsInitiallyEnabled = false;
 
@@ -193,6 +236,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionOpened, 5);
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
+   RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
 
    // initialize connection history
    Error error = connectionHistory().initialize();

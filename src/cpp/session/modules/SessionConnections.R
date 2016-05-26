@@ -53,3 +53,16 @@ options(connectionViewer = list(
    else
       ""
 })
+
+.rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
+
+   context <- list()
+
+   context$remote_servers <- .Call("rs_availableRemoteServers")
+   context$cores <- parallel::detectCores()
+   if (is.na(context$cores))
+      context$cores <- 1
+
+   context
+})
+

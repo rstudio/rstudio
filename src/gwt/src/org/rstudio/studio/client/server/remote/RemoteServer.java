@@ -142,6 +142,7 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -4670,6 +4671,12 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connection, callback);
    }
+   
+   public void getNewSparkConnectionContext(
+         ServerRequestCallback<NewSparkConnectionContext> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
+   }
 
    private String clientId_;
    private String clientVersion_ = "";
@@ -5036,4 +5043,5 @@ public class RemoteServer implements Server
    
    private static final String REMOVE_CONNECTION = "remove_connection";
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
+   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
 }

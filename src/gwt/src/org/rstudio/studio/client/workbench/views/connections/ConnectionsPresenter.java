@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ExploreConne
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
+import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -225,28 +227,27 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onNewConnection()
    {
-      // create context
-      ArrayList<String> remoteServers = new ArrayList<String>();
-      for (int i = 0; i<allConnections_.size(); i++)
-      {
-         String host = allConnections_.get(i).getId().getHost();
-         if (!host.equals("local") && !host.startsWith("local["))
-            remoteServers.add(host);
-      }
-      NewSparkConnectionDialog.Context context = new 
-            NewSparkConnectionDialog.Context(remoteServers);
-      
-      // show dialog
-      new NewSparkConnectionDialog(
-                  context,
-                  new OperationWithInput<NewSparkConnectionDialog.Result>() {
-         @Override
-         public void execute(Result input)
-         {
-            
-            
-         }
-      }).showModal();;
+      // get the context
+      server_.getNewSparkConnectionContext(
+         new DelayedProgressRequestCallback<NewSparkConnectionContext>(
+                                                   "New Connection...") {
+   
+            @Override
+            protected void onSuccess(NewSparkConnectionContext context)
+            {
+               // show dialog
+               new NewSparkConnectionDialog(
+                context,
+                new OperationWithInput<NewSparkConnectionDialog.Result>() {
+                  @Override
+                  public void execute(Result input)
+                  {
+                     
+                     
+                  }
+               }).showModal();;
+            }
+         });      
    }
    
    @Handler

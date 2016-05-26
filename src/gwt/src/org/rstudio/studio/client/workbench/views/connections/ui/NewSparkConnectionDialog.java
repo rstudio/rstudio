@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import java.util.List;
-
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -28,6 +26,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -89,23 +88,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       session_ = session;
    }
    
-   public static class Context
-   {
-      public Context(List<String> remoteServers)
-      {
-         remoteServers_ = remoteServers;
-      }
-      
-      public List<String> getRemoteServers()
-      {
-         return remoteServers_;
-      }
-      
-      
-      private final List<String> remoteServers_;
-   }
-   
-   public NewSparkConnectionDialog(Context context,
+   public NewSparkConnectionDialog(NewSparkConnectionContext context,
                                    OperationWithInput<Result> operation)
    {
       super("Connect to Spark Cluster", operation);
@@ -120,9 +103,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             "about_shiny",
             false);
       helpLink.addStyleName(RES.styles().helpLink());
-      addLeftWidget(helpLink);
-      
-      
+      addLeftWidget(helpLink);   
    }
    
    @Override
@@ -153,21 +134,22 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       Label masterLabel = new Label("Master node:");
       masterLabel.addStyleName(RES.styles().label());
       masterGrid.setWidget(0, 0, masterLabel);
-      master_ = new SparkMasterChooser(context_.getRemoteServers());
+      master_ = new SparkMasterChooser(context_);
       master_.addStyleName(RES.styles().spanningInput());
       master_.setSelection(lastResult.getMaster());
       masterGrid.setWidget(0, 1, master_);
       Label coresLabel = new Label("Local cores:");
       masterGrid.setWidget(1, 0, coresLabel);
       cores_ = new ListBox();
-      cores_.addItem("8 (Default)", "8");
-      cores_.addItem("7");
-      cores_.addItem("6");
-      cores_.addItem("5");
-      cores_.addItem("4");
-      cores_.addItem("3");
-      cores_.addItem("2");
-      cores_.addItem("1");
+      for (int i = context_.getCores(); i>0; i--)
+      {
+         String value = String.valueOf(i);
+         String item = value;
+         if (cores_.getItemCount() == 0)
+            item = item + " (Default)";
+         cores_.addItem(item, value);
+            
+      }
       setValue(cores_, String.valueOf(lastResult.getCores()));
       masterGrid.setWidget(1, 1, cores_);
       container.add(masterGrid);
@@ -408,7 +390,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       RES.styles().ensureInjected();
    }
    
-   private final Context context_;
+   private final NewSparkConnectionContext context_;
    
    private SparkMasterChooser master_;
    private CheckBox autoReconnect_;

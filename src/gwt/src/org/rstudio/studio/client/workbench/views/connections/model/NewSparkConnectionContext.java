@@ -1,5 +1,5 @@
 /*
- * ConnectionsServerOperations.java
+ * NewSparkConnectionContext.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,18 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.connections.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
-public interface ConnectionsServerOperations
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+
+public class NewSparkConnectionContext extends JavaScriptObject
 {
-   void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
- 
-   void getDisconnectCode(Connection connection, 
-                          ServerRequestCallback<String> callback);
+   protected NewSparkConnectionContext()
+   {
+   }
    
-   void getNewSparkConnectionContext(
-            ServerRequestCallback<NewSparkConnectionContext> callback);
+   public final native JsArrayString getRemoteServers() /*-{
+      return this.remote_servers;
+   }-*/;
+   
+   public final native int getCores()  /*-{
+      return this.cores;
+   }-*/;
 }
