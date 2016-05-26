@@ -56,12 +56,12 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       
       public static final Result create()
       {
-         return create(null, false, -1, null, null);
+         return create(null, false, "auto", null, null);
       }
       
       public static final native Result create(String master,
                                                boolean reconnect,
-                                               int cores,
+                                               String cores,
                                                String sparkVersion,
                                                String hadoopVersion)
       /*-{
@@ -76,7 +76,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       
       public final native String getMaster() /*-{ return this.master; }-*/;
       public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
-      public final native int getCores() /*-{ return this.cores; }-*/;
+      public final native String getCores() /*-{ return this.cores; }-*/;
       public final native String getSparkVersion() /*-{ return this.spark_version; }-*/;
       public final native String getHadoopVersion() /*-{ return this.hadoop_version; }-*/;
    }
@@ -138,17 +138,14 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       Label coresLabel = new Label("Local cores:");
       masterGrid.setWidget(1, 0, coresLabel);
       cores_ = new ListBox();
+      cores_.addItem("Auto (" + context_.getCores() + ")", "auto");
       for (int i = context_.getCores(); i>0; i--)
       {
          String value = String.valueOf(i);
          String item = value;
-         if (cores_.getItemCount() == 0)
-            item = item + " (Default)";
-         cores_.addItem(item, value);
-            
+         cores_.addItem(item, value);     
       }
-      if (lastResult_.getCores() != -1)
-         setValue(cores_, String.valueOf(lastResult_.getCores()));
+      setValue(cores_, lastResult_.getCores());
       masterGrid.setWidget(1, 1, cores_);
       container.add(masterGrid);
 
@@ -259,7 +256,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       Result result = Result.create(
             master_.getSelection(),
             autoReconnect_.getValue(),
-            Integer.parseInt(cores_.getSelectedValue()),
+            cores_.getSelectedValue(),
             sparkVersion_.getSelectedValue(),
             hadoopVersion_.getSelectedValue());
       
@@ -293,7 +290,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       public NewSparkConnectionClientState()
       {
          super(ConnectionsPresenter.MODULE_CONNECTIONS,
-               "new-spark-connection-dialog-options",
+               "last-spark-connection-dialog-result",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
