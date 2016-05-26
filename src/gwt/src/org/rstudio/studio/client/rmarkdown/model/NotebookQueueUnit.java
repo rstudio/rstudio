@@ -23,6 +23,17 @@ public class NotebookQueueUnit extends JavaScriptObject
    {
    }
    
+   public final static native NotebookQueueUnit create(
+         String docId, String chunkId, String code) /*-{
+      return {
+         doc_id:    docId,
+         chunk_id:  chunkId,
+         code:      code,
+         pending:   [],
+         completed: []
+      };
+   }-*/;
+   
    public final native String getDocId() /*-{
       return this.doc_id;
    }-*/;
@@ -41,5 +52,9 @@ public class NotebookQueueUnit extends JavaScriptObject
 
    public final native JsArray<NotebookExecRange> getCompleted() /*-{
       return this.completed;
+   }-*/;
+   
+   public final native void addPendingRange(NotebookExecRange range) /*-{
+      this.pending.push(range);
    }-*/;
 }

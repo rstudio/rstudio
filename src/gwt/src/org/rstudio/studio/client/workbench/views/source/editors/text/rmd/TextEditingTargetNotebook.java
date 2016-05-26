@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -405,6 +406,8 @@ public class TextEditingTargetNotebook
       commands_ = commands;
       pSourceWindowManager_ = pSourceWindowManager;
       dependencyManager_ = dependencyManager;
+      queue_ = new NotebookQueueState(docDisplay_, docUpdateSentinel_,
+            server);
       
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
@@ -446,6 +449,11 @@ public class TextEditingTargetNotebook
    {
       // remember that we haven't maximized the pane in this session
       maximizedPane_ = false;
+   }
+   
+   public void executeChunks(String jobDesc, List<Scope> chunks)
+   {
+      queue_.executeChunks(jobDesc, chunks);
    }
    
    public void executeChunk(Scope chunk, String code, String options,
@@ -2135,6 +2143,7 @@ public class TextEditingTargetNotebook
    private ConsoleServerOperations console_;
    private SourceServerOperations source_;
    private EventBus events_;
+   private NotebookQueueState queue_;
    
    private Style editorStyle_;
 
@@ -2164,7 +2173,7 @@ public class TextEditingTargetNotebook
    private final static int STATE_INITIALIZED = 1;
    
    private final static String LAST_SETUP_CRC32 = "last_setup_crc32";
-   private final static String SETUP_CHUNK_ID = "csetup_chunk";
+   public final static String SETUP_CHUNK_ID = "csetup_chunk";
    
    // stored document properties/values
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";

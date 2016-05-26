@@ -4255,19 +4255,24 @@ public class TextEditingTarget implements
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position, which);
 
       // prepare the status bar
+      String jobDesc = "";
       if (previousScopes.length > 0)
       {
          if (position != null &&
              position.getRow() > docDisplay_.getDocumentEnd().getRow())
-            statusBar_.showNotebookProgress("Run All");
+            jobDesc = "Run All";
          else if (which == TextEditingTargetScopeHelper.PREVIOUS_CHUNKS)
-            statusBar_.showNotebookProgress("Run Previous");
+            jobDesc = "Run Previous";
          else if (which == TextEditingTargetScopeHelper.FOLLOWING_CHUNKS)
-            statusBar_.showNotebookProgress("Run After");
+            jobDesc = "Run After";
       }
+      statusBar_.showNotebookProgress(jobDesc);
 
+      ArrayList<Scope> scopes = new ArrayList<Scope>();
       for (Scope scope : previousScopes)
-         executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
+         scopes.add(scope);
+      
+      notebook_.executeChunks(jobDesc, scopes);
    }
    
    @Handler

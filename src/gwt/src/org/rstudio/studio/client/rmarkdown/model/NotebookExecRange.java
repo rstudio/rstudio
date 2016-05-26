@@ -22,7 +22,7 @@ public class NotebookExecRange extends JavaScriptObject
    {
    }
    
-   public final native NotebookExecRange create(int start, int stop) /*-{
+   public final static native NotebookExecRange create(int start, int stop) /*-{
       return {
          start: start,
          stop:  stop
