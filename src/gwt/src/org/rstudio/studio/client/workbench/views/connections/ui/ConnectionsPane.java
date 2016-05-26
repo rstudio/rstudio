@@ -298,6 +298,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return mainPanel_;
    }
    
+   @Override
+   public void onBeforeSelected()
+   {
+      super.onBeforeSelected();
+      connectionsDataGrid_.redraw();
+   }
+   
    private void animate(final Widget from,
                         final Widget to,
                         boolean rightToLeft,
