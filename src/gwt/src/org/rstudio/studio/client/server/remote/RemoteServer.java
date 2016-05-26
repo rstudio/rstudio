@@ -4268,6 +4268,7 @@ public class RemoteServer implements Server
                                            int commitMode,
                                            String engine,
                                            String code,
+                                           JsObject options,
                                            ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4276,6 +4277,7 @@ public class RemoteServer implements Server
       params.set(2, new JSONNumber(commitMode));
       params.set(3, new JSONString(engine));
       params.set(4, new JSONString(code));
+      params.set(5, new JSONObject(options));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
    }
    

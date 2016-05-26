@@ -27,6 +27,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -1364,7 +1365,8 @@ public class TextEditingTargetNotebook
                docUpdateSentinel_.getId(),
                unit.chunkId,
                engine,
-               unit.code);
+               unit.code,
+               chunkOptions);
          return;
       }
       
@@ -1435,14 +1437,20 @@ public class TextEditingTargetNotebook
    private void execAlternateEngineChunk(String docId,
                                          String chunkId,
                                          String engine,
-                                         String code)
+                                         String code,
+                                         Map<String, String> options)
    {
+      JsObject jsOptions = JsObject.createJsObject();
+      for (Map.Entry<String, String> entry : options.entrySet())
+         jsOptions.setString(entry.getKey(), entry.getValue());
+      
       server_.executeAlternateEngineChunk(
             docId,
             chunkId,
             getCommitMode(),
             engine,
             code,
+            jsOptions,
             new ServerRequestCallback<String>()
             {
                @Override
@@ -1926,6 +1934,7 @@ public class TextEditingTargetNotebook
          int row = docDisplay_.getFirstVisibleRow();
          Integer min = null;
          String chunkId = "";
+         boolean hasPlots = false;
          for (ChunkOutputUi output: outputs_.values())
          {
             int delta = Math.abs(output.getCurrentRow() - row);
@@ -1934,7 +1943,12 @@ public class TextEditingTargetNotebook
                min = delta;
                chunkId = output.getChunkId();
             }
+            hasPlots = hasPlots || output.getOutputWidget().hasPlots();
          }
+         
+         // if no widgets have plots, don't bother with resize
+         if (!hasPlots)
+            return;
          
          // make the request
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 

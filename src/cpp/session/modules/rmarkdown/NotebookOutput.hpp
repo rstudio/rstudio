@@ -67,7 +67,8 @@ struct OutputPair
 
 // given a document ID and a chunk ID, discover the last output the chunk had
 OutputPair lastChunkOutput(const std::string& docId, 
-                           const std::string& chunkId);
+                           const std::string& chunkId,
+                           const std::string& nbCtxId);
 
 void updateLastChunkOutput(const std::string& docId, 
                            const std::string& chunkId,

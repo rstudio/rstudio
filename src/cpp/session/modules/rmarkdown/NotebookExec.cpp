@@ -47,7 +47,7 @@ namespace {
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
    const std::string& nbCtxId, int outputType)
 {
-   OutputPair pair = lastChunkOutput(docId, chunkId);
+   OutputPair pair = lastChunkOutput(docId, chunkId, nbCtxId);
    pair.ordinal++;
    pair.outputType = outputType;
    FilePath target = chunkOutputFile(docId, chunkId, nbCtxId, pair);
