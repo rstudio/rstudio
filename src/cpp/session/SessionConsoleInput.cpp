@@ -21,6 +21,8 @@
 
 #include "modules/SessionConsole.hpp"
 
+#include "modules/connections/SessionConnections.hpp"
+
 #include <session/SessionModuleContext.hpp>
 
 #include <r/session/RSession.hpp>
@@ -82,6 +84,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 bool canSuspend(const std::string& prompt)
 {
    return !fork::haveRunningChildren() && 
+          modules::connections::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
 

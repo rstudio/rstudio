@@ -43,3 +43,13 @@ options(connectionViewer = list(
       invisible(.Call("rs_connectionUpdated", type, host))
    }
 ))
+
+
+.rs.addFunction("getDisconnectCode", function(finder, host, template) {
+   finderFunc <- eval(parse(text = finder))
+   name <- finderFunc(globalenv(), host)
+   if (!is.null(name))
+      sprintf(template, name)
+   else
+      ""
+})

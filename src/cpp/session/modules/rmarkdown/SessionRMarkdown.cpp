@@ -15,6 +15,7 @@
 
 #include "SessionRMarkdown.hpp"
 #include "SessionRmdNotebook.hpp"
+#include "NotebookCache.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
 
@@ -1358,6 +1359,7 @@ void sourceCppConsoleOutputHandler(module_context::ConsoleOutputType type,
 
 Error executeRcppEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& nbCtxId,
                              const std::string& code,
                              json::JsonRpcResponse* pResponse)
 {
@@ -1382,7 +1384,8 @@ Error executeRcppEngineChunk(const std::string& docId,
       LOG_ERROR(error);
    
    // prepare to write chunk cache output
-   FilePath target = notebook::chunkOutputFile(docId, chunkId, kChunkOutputText);
+   FilePath target = notebook::chunkOutputFile(docId, chunkId, nbCtxId, 
+         kChunkOutputText);
    
    // capture console output, error
    boost::signals::scoped_connection consoleHandler =
@@ -1423,7 +1426,7 @@ Error executeRcppEngineChunk(const std::string& docId,
    notebook::enqueueChunkOutput(
             docId,
             chunkId,
-            notebook::notebookCtxId(),
+            nbCtxId,
             kChunkOutputText,
             target);
    
@@ -1432,6 +1435,7 @@ Error executeRcppEngineChunk(const std::string& docId,
 
 Error executeStanEngineChunk(const std::string& docId,
                              const std::string& chunkId,
+                             const std::string& nbCtxId,
                              const std::string& code,
                              json::JsonRpcResponse* pResponse)
 {
@@ -1443,9 +1447,11 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
                                   json::JsonRpcResponse* pResponse)
 {
    std::string docId, chunkId, engine, code;
+   int commitMode;
    Error error = json::readParams(request.params,
                                   &docId,
                                   &chunkId,
+                                  &commitMode,
                                   &engine,
                                   &code);
    if (error)
@@ -1454,13 +1460,19 @@ Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
       return error;
    }
    
+   // choose appropriate notebook context to write to -- if this is a saved
+   // Rmd, we'll write directly to the saved context
+   std::string nbCtxId = 
+       static_cast<notebook::CommitMode>(commitMode) == notebook::ModeCommitted ?
+         kSavedCtx : notebook::notebookCtxId();
+
    // handle Rcpp specially
    if (engine == "Rcpp")
-      return executeRcppEngineChunk(docId, chunkId, code, pResponse);
+      return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, pResponse);
    else if (engine == "stan")
-      return executeStanEngineChunk(docId, chunkId, code, pResponse);
+      return executeStanEngineChunk(docId, chunkId, nbCtxId, code, pResponse);
    
-   notebook::runChunk(docId, chunkId, engine, code);
+   notebook::runChunk(docId, chunkId, nbCtxId, engine, code);
    return Success();
 }
 

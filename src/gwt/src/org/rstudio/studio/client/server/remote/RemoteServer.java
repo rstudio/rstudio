@@ -142,6 +142,8 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
+import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -4219,18 +4221,20 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setChunkConsole(String docId, String chunkId, int execMode,
-         int execScope, String options, int pixelWidth, int charWidth,
+   public void setChunkConsole(String docId, String chunkId, int commitMode,
+         int execMode, int execScope, String options, int pixelWidth, 
+         int charWidth,
          ServerRequestCallback<RmdChunkOptions> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
-      params.set(2, new JSONNumber(execMode));
-      params.set(3, new JSONNumber(execScope));
-      params.set(4, new JSONString(options));
-      params.set(5, new JSONNumber(pixelWidth));
-      params.set(6, new JSONNumber(charWidth));
+      params.set(2, new JSONNumber(commitMode));
+      params.set(3, new JSONNumber(execMode));
+      params.set(4, new JSONNumber(execScope));
+      params.set(5, new JSONString(options));
+      params.set(6, new JSONNumber(pixelWidth));
+      params.set(7, new JSONNumber(charWidth));
       sendRequest(RPC_SCOPE,
             "set_chunk_console",
             params,
@@ -4262,6 +4266,7 @@ public class RemoteServer implements Server
    @Override
    public void executeAlternateEngineChunk(String docId,
                                            String chunkId,
+                                           int commitMode,
                                            String engine,
                                            String code,
                                            ServerRequestCallback<String> requestCallback)
@@ -4269,8 +4274,9 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(chunkId));
-      params.set(2, new JSONString(engine));
-      params.set(3, new JSONString(code));
+      params.set(2, new JSONNumber(commitMode));
+      params.set(3, new JSONString(engine));
+      params.set(4, new JSONString(code));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
    }
    
@@ -4674,6 +4680,18 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(normPath));
       sendRequest(RPC_SCOPE, PROFILE_SOURCES, params, requestCallback);
    }
+   
+   public void removeConnection(ConnectionId id, 
+                                ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, REMOVE_CONNECTION, id, callback);
+   }
+   
+   public void getDisconnectCode(Connection connection, 
+                                 ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connection, callback);
+   }
 
    private String clientId_;
    private String clientVersion_ = "";
@@ -5037,4 +5055,7 @@ public class RemoteServer implements Server
    private static final String COPY_PROFILE = "copy_profile";
    private static final String CLEAR_PROFILE = "clear_profile";
    private static final String PROFILE_SOURCES = "profile_sources";
+   
+   private static final String REMOVE_CONNECTION = "remove_connection";
+   private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
 }

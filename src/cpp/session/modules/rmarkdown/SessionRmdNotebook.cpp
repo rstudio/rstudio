@@ -160,7 +160,7 @@ void onChunkExecCompleted(const std::string& docId,
    }
    else
    {
-      emitOutputFinished(docId, chunkId, kExecScopeChunk);
+      emitOutputFinished(docId, chunkId, ExecScopeChunk);
    }
 }
 
@@ -169,9 +169,10 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string docId, chunkId, options;
-   int pixelWidth = 0, charWidth = 0, execMode = 0, execScope = 0;
-   Error error = json::readParams(request.params, &docId, &chunkId, &execMode,
-         &execScope, &options, &pixelWidth, &charWidth);
+   int pixelWidth = 0, charWidth = 0, execMode = 0, execScope = 0,
+       commitMode = 0;
+   Error error = json::readParams(request.params, &docId, &chunkId, &commitMode,
+         &execMode, &execScope, &options, &pixelWidth, &charWidth);
    if (error)
       return error;
 
@@ -193,7 +194,7 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
    // if this chunk is going to be evaluated in batch mode, and the options
    // indicate that it shouldn't be evaluated, don't
    // evaluate it
-   if (execMode == kExecModeBatch &&
+   if (execMode == ExecModeBatch &&
        jsonOptions.type() == json::ObjectType)
    {
       bool eval = true;
@@ -208,11 +209,18 @@ Error setChunkConsole(const json::JsonRpcRequest& request,
    if (s_execContext)
       s_execContext->disconnect();
 
-   // create the execution context and connect it immediately if necessary
+   // choose appropriate notebook context to write to -- if this is a saved
+   // Rmd, we'll write directly to the saved context
+   std::string nbCtxId = 
+       static_cast<CommitMode>(commitMode) == ModeCommitted ?
+         kSavedCtx :
+         notebookCtxId();
+
    const json::Object& optionsJson = jsonOptions.type() == json::ObjectType ? 
       jsonOptions.get_obj() : json::Object();
-   s_execContext.reset(new ChunkExecContext(docId, chunkId, execScope, 
-            optionsJson, pixelWidth, charWidth));
+   s_execContext.reset(new ChunkExecContext(docId, chunkId, nbCtxId, 
+            static_cast<ExecScope>(execScope), optionsJson, pixelWidth, 
+            charWidth));
    if (s_activeConsole == chunkId)
       s_execContext->connect();
 

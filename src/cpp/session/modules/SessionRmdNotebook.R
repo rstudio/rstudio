@@ -186,27 +186,37 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # html widgets
          if (.rs.endsWith(key, ".html")) {
             
-            # extract dependency information from json
+            # if we have a '.json' sidecar file, this is an HTML widget
             jsonName <- .rs.withChangedExtension(key, ".json")
             jsonPath <- file.path(rnbData$cache_path, chunkId, jsonName)
-            jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
-            for (i in seq_along(jsonContents))
-               class(jsonContents[[i]]) <- "html_dependency"
+            if (file.exists(jsonPath)) {
+               jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
+               for (i in seq_along(jsonContents))
+                  class(jsonContents[[i]]) <- "html_dependency"
+               
+               # extract body element (this is effectively what the
+               # widget emitted on print in addition to aforementioned
+               # dependency information)
+               bodyEl <- .rs.extractHTMLBodyElement(val)
+               
+               # annotate widget manually and return asis output
+               annotated <- rmarkdown:::html_notebook_annotated_output(
+                  bodyEl,
+                  "htmlwidget",
+                  jsonContents
+               )
+               widget <- knitr::asis_output(annotated)
+               attr(widget, "knit_meta") <- jsonContents
+               return(widget)
+            }
             
-            # extract body element (this is effectively what the
-            # widget emitted on print in addition to aforementioned
-            # dependency information)
-            bodyEl <- .rs.extractHTMLBodyElement(val)
-            
-            # annotate widget manually and return asis output
+            # no .json file; just return HTML as-is
             annotated <- rmarkdown:::html_notebook_annotated_output(
-               bodyEl,
-               "htmlwidget",
-               jsonContents
+               val,
+               "html"
             )
-            widget <- knitr::asis_output(annotated)
-            attr(widget, "knit_meta") <- jsonContents
-            return(widget)
+            
+            return(knitr::asis_output(annotated))
          }
          
          # json files handled as pairs to HTML above
@@ -578,6 +588,36 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       }
    }
    
+   # HTML Handling ----
+   htmlRange <- list(start = NULL, end = NULL)
+   htmlMeta <- NULL
+   writeHtml <- function(source, range, meta) {
+      
+      # extract html from source document
+      htmlOutput <- source[`:`(
+         range$start + 1,
+         range$end - 1
+      )]
+      
+      htmlPath <- outputPath(cachePath, activeChunkId, activeIndex, "html")
+      cat(htmlOutput, file = htmlPath, sep = "\n")
+      
+      # update state
+      activeIndex <<- activeIndex + 1
+   }
+   onHtml <- function(annotation) {
+      if (annotation$state == "begin") {
+         writeConsoleData(consoleDataBuilder)
+         htmlRange$start <<- annotation$row
+         htmlMeta        <<- annotation$meta
+      } else {
+         htmlRange$end   <<- annotation$row
+         writeHtml(nbData$source, htmlRange, htmlMeta)
+         htmlRange <<- list(start = NULL, end = NULL)
+         htmlMeta  <<- NULL
+      }
+   }
+   
    # HTML Widget Handling ----
    widgetRange <- list(start = NULL, end = NULL)
    widgetMeta  <- NULL
@@ -589,6 +629,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          range$end - 1
       )]
       
+      # TODO: background color should be passed as
+      # metadata attribute and used here
       fmt <- paste(
          '<!DOCTYPE html>',
          '<html>',
@@ -641,6 +683,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
              "source"     = onSource(annotation),
              "output"     = onOutput(annotation),
              "plot"       = onPlot(annotation),
+             "html"       = onHtml(annotation),
              "htmlwidget" = onHtmlWidget(annotation))
       
       lastActiveAnnotation <- annotation

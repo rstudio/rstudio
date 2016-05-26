@@ -365,6 +365,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["r_addins"] = modules::r_addins::addinRegistryAsJson();
 
    sessionInfo["connections_enabled"] = modules::connections::connectionsEnabled();
+   sessionInfo["activate_connections"] = modules::connections::activateConnections();
+   sessionInfo["connection_list"] = modules::connections::connectionsAsJson();
+   sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
 
    std::string sessionId = module_context::activeSession().id();
    if (sessionId.empty())

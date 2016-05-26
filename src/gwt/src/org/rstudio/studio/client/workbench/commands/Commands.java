@@ -135,6 +135,7 @@ public abstract class
    public abstract AppCommand renameInScope();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
+   public abstract AppCommand yankRegion();
    public abstract AppCommand yankBeforeCursor();
    public abstract AppCommand yankAfterCursor();
    public abstract AppCommand pasteLastYank();
@@ -418,7 +419,7 @@ public abstract class
    public abstract AppCommand removeConnection();
    public abstract AppCommand connectConnection();
    public abstract AppCommand disconnectConnection();
-   
+    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

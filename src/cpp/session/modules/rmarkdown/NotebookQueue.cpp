@@ -99,8 +99,9 @@ public:
       if (error)
          return error;
 
+      // TODO: resolve commit mode
       execContext_ = boost::make_shared<ChunkExecContext>(
-         unit->docId(), unit->chunkId(), kExecScopeChunk, options,
+         unit->docId(), unit->chunkId(), notebookCtxId(), ExecScopeChunk, options,
          docQueue->pixelWidth(), docQueue->charWidth());
       execContext_->connect();
 

@@ -1,5 +1,5 @@
 /*
- * ConnectionsServerOperations.java
+ * VerticalSpacer.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,16 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.connections.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+package org.rstudio.core.client.widget;
 
-public interface ConnectionsServerOperations
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+
+public class VerticalSpacer extends Composite
 {
-   void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
-  
-   
-   void getDisconnectCode(Connection connection, 
-                          ServerRequestCallback<String> callback);
+   public VerticalSpacer(String height)
+   {
+      FlowPanel panel = new FlowPanel();
+      panel.setHeight(height);
+      initWidget(panel);
+   }
 }

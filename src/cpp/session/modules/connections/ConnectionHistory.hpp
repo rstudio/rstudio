@@ -1,5 +1,5 @@
 /*
- * SessionConnections.hpp
+ * ConnectionHistory.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,10 +13,15 @@
  *
  */
 
-#ifndef SESSION_CONNECTIONS_HPP
-#define SESSION_CONNECTIONS_HPP
+#ifndef SESSION_CONNECTIONS_CONNECTION_HISTORY_HPP
+#define SESSION_CONNECTIONS_CONNECTION_HISTORY_HPP
 
+#include <boost/noncopyable.hpp>
+
+#include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
+
+#include "Connection.hpp"
 
 namespace rstudio {
 namespace core {
@@ -29,23 +34,35 @@ namespace session {
 namespace modules { 
 namespace connections {
    
-// should connections be enabled?
-bool connectionsEnabled();
+class ConnectionHistory;
+ConnectionHistory& connectionHistory();
 
-// are we enabling them for the first time this session
-bool activateConnections();
+class ConnectionHistory : boost::noncopyable
+{
+private:
+   ConnectionHistory();
+   friend ConnectionHistory& connectionHistory();
 
-core::json::Array connectionsAsJson();
+public:
+   core::Error initialize();
 
-core::json::Array activeConnectionsAsJson();
+   void update(const Connection& connection);
+   void remove(const ConnectionId& id);
 
-bool isSuspendable();
+   core::json::Array connectionsAsJson();
 
-core::Error initialize();
+private:
+   void onConnectionsChanged();
+   core::Error readConnections(core::json::Array* pConnections);
+   core::Error writeConnections(const core::json::Array& connectionsJson);
+
+private:
+   core::FilePath connectionsDir_;
+};
                        
 } // namespace connections
 } // namespace modules
 } // namesapce session
 } // namespace rstudio
 
-#endif // SESSION_CONNECTIONS_HPP
+#endif // SESSION_CONNECTIONS_CONNECTION_HISTORY_HPP

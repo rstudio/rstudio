@@ -13,8 +13,11 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -24,6 +27,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
@@ -54,6 +58,7 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 
 public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
 {
@@ -81,26 +86,27 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionsDataGrid_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
       
       // add type column
-      typeColumn_ = new TextColumn<Connection>() {
+      typeColumn_ = new Column<Connection, ImageResource>(new ImageResourceCell()) {
          @Override
-         public String getValue(Connection connection)
+         public ImageResource getValue(Connection object)
          {
-            return connection.getId().getType();
+            return RES.spark();
          }
       };
-      connectionsDataGrid_.addColumn(typeColumn_, new TextHeader("Type"));
-      connectionsDataGrid_.setColumnWidth(typeColumn_, 35, Unit.PX);
+         
+      connectionsDataGrid_.addColumn(typeColumn_, new TextHeader(""));
+      connectionsDataGrid_.setColumnWidth(typeColumn_, 20, Unit.PX);
             
-      // add name column
-      nameColumn_ = new TextColumn<Connection>() {
+      // add host column
+      hostColumn_ = new TextColumn<Connection>() {
          @Override
          public String getValue(Connection connection)
          {
-            return connection.getName();
+            return connection.getHost();
          }
       };      
-      connectionsDataGrid_.addColumn(nameColumn_, new TextHeader("Name"));
-      connectionsDataGrid_.setColumnWidth(nameColumn_, 30, Unit.PCT);
+      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Server"));
+      connectionsDataGrid_.setColumnWidth(hostColumn_, 50, Unit.PCT);
       
       // add status column
       statusColumn_ = new TextColumn<Connection>() {
@@ -108,11 +114,15 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          public String getValue(Connection connection)
          {
-            return "";
+            if (isConnected(connection.getId()))
+               return "Connected";
+            else
+               return "Disconnected";
          }
       };
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
-      connectionsDataGrid_.setColumnWidth(statusColumn_, 55, Unit.PX);
+      connectionsDataGrid_.setColumnWidth(statusColumn_, 75, Unit.PX);
+      
       
       // add explore column
       ImageButtonColumn<Connection> exploreColumn = 
@@ -130,11 +140,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          protected boolean showButton(Connection connection)
          {
-            return true;
+            return connection.getId().getType().equals("Spark") &&
+                   isConnected(connection.getId());
          }
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
-      connectionsDataGrid_.setColumnWidth(exploreColumn, 20, Unit.PX);
+      connectionsDataGrid_.setColumnWidth(exploreColumn, 30, Unit.PX);
       
       // data provider
       dataProvider_ = new ListDataProvider<Connection>();
@@ -164,6 +175,46 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void setConnections(List<Connection> connections)
    {
       dataProvider_.setList(connections);
+      sortConnections();
+   }
+   
+   @Override
+   public void setActiveConnections(List<ConnectionId> connections)
+   {
+      activeConnections_ = connections;
+      sortConnections();
+      connectionsDataGrid_.redraw();
+   }
+   
+   private void sortConnections()
+   {
+      // order the list
+      List<Connection> connections = dataProvider_.getList();
+      Collections.sort(connections, new Comparator<Connection>() {     
+       @Override
+       public int compare(Connection conn1, Connection conn2)
+       {
+          // values to use in comparison
+          boolean conn1Connected = isConnected(conn1.getId());
+          boolean conn2Connected = isConnected(conn2.getId());
+          
+          if (conn1Connected && !conn2Connected)
+             return -1;
+          else if (conn2Connected && !conn1Connected)
+             return 1;
+          else
+             return Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
+       }       
+    });
+   }
+   
+   @Override
+   public boolean isConnected(ConnectionId id)
+   {
+      for (int i=0; i<activeConnections_.size(); i++)
+         if (activeConnections_.get(i).equalTo(id))
+            return true;
+      return false;
    }
    
    @Override
@@ -177,6 +228,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                                     SelectionChangeEvent.Handler handler)
    {
       return selectionModel_.addSelectionChangeHandler(handler);
+   }
+   
+   @Override
+   public String getSearchFilter()
+   {
+      return searchWidget_.getValue();
    }
    
    @Override
@@ -312,6 +369,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
+      
       toolbar_.addRightWidget(searchWidget_);
    }
    
@@ -325,22 +383,24 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(connectionName_);
       
       connectionName_.setText(
-            connection.getId().getType() + ": " + connection.getName());
+            connection.getId().getType() + ": " + connection.getHost());
       
    }
+   
    
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
    private final HorizontalCenterPanel connectionExplorer_;
    
-   private final TextColumn<Connection> typeColumn_;
-   private final TextColumn<Connection> nameColumn_;
+   private final Column<Connection, ImageResource> typeColumn_;
+   private final TextColumn<Connection> hostColumn_;
    private final TextColumn<Connection> statusColumn_;
-   
+  
    private final ProvidesKey<Connection> keyProvider_;
    private final SingleSelectionModel<Connection> selectionModel_;
    private final ListDataProvider<Connection> dataProvider_;
+   private List<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
    
    private SearchWidget searchWidget_;
    private ToolbarButton backToConnectionsButton_;
@@ -355,6 +415,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       Styles dataGridStyle();
         
       ImageResource connectionExploreButton();
+      
+      ImageResource spark();
    }
    
    public interface Styles extends RStudioDataGridStyle

@@ -1,5 +1,5 @@
 /*
- * ConnectionOpenedEvent.java
+ * EnableConnectionsEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,27 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.events;
 
-import org.rstudio.studio.client.workbench.views.connections.model.Connection;
-
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConnectionOpenedEvent extends GwtEvent<ConnectionOpenedEvent.Handler>
+public class EnableConnectionsEvent extends GwtEvent<EnableConnectionsEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onConnectionOpened(ConnectionOpenedEvent event);
+      void onEnableConnections(EnableConnectionsEvent event);
    }
    
-   public ConnectionOpenedEvent(Connection connection)
+   public EnableConnectionsEvent()
    {
-      connection_ = connection;
    }
-   
-   public Connection getConnection()
-   {
-      return connection_;
-   }
+  
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -45,10 +38,8 @@ public class ConnectionOpenedEvent extends GwtEvent<ConnectionOpenedEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onConnectionOpened(this);
+      handler.onEnableConnections(this);
    }
-   
-   private final Connection connection_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

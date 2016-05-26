@@ -542,6 +542,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut value="Alt+Down" title="Move Lines Down" />
          <shortcut value="Ctrl+D" title="Delete Line" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" />
          <shortcut value="Cmd+D" title="Delete Line" if="org.rstudio.core.client.BrowseCap.isMacintosh()" />
+         <shortcut refid="yankRegion" value="Ctrl+W" title="Kill Region" disableModes="default,vim"/>
          <shortcut refid="yankBeforeCursor" value="Ctrl+U" title="Yank Line Up to Cursor" disableModes="vim"/>
          <shortcut refid="yankAfterCursor" value="Ctrl+K" title="Yank Line After Cursor" />
          <shortcut refid="pasteLastYank" value="Ctrl+Y" title="Insert Yanked Text" />
@@ -2779,7 +2780,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="newConnection"
         menuLabel="New Connection..."
-        buttonLabel="New"
+        buttonLabel="New Connection"
         desc="Create a new connection"
         windowMode="main"/>
    
@@ -2789,14 +2790,16 @@ well as menu structures (for main menu and popup menus).
         desc="Remove a connection"
         windowMode="main"/>
         
+          
     <cmd id="connectConnection"
-         label="Connect"
-         desc="Connect"
-         windowmode="main"/>
-         
+         buttonLabel="Connect"
+         desc="Establish a connection"
+         windowMode="main"/>
+   
     <cmd id="disconnectConnection"
-         label="Disconnect"
-         desc="Disconnect"
-         windowModw="main"/>
+         buttonLabel="Disconnect"
+         desc="Disconect from a connection"
+         windowMode="main"/>
+     
         
 </commands>
