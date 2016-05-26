@@ -38,14 +38,18 @@
    htmlfile <- tempfile("_rs_html_", tmpdir = ctx$outputFolder, fileext = ".html")
    depfile <- tempfile("_rs_html_deps_", tmpdir = ctx$outputFolder, fileext = ".json")
    
-   htmldeps <- attr(x, "html_dependencies")
+   # render html tags (to discover recursive dependencies + get html)
+   rendered <- htmltools::renderTags(x)
+   htmldeps <- rendered$dependencies
+   html <- rendered$html
+   
    if (length(htmldeps)) {
       # if we have html dependencies, write those to file and use 'save_html'
       cat(.rs.toJSON(htmldeps, unbox = TRUE), file = depfile, sep = "\n")
       htmltools::save_html(x, file = htmlfile, libdir = ctx$libraryFolder)
    } else {
       # otherwise, just write html to file as-is
-      cat(as.character(x), file = htmlfile, sep = "\n")
+      cat(as.character(html), file = htmlfile, sep = "\n")
    }
    
    # record the generated artefacts
