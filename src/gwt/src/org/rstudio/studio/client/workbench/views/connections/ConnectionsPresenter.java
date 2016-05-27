@@ -29,6 +29,7 @@ import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -240,10 +241,18 @@ public class ConnectionsPresenter extends BasePresenter
                 context,
                 new OperationWithInput<NewSparkConnectionDialog.Result>() {
                   @Override
-                  public void execute(Result input)
+                  public void execute(Result result)
                   {
-                     
-                     
+                     if (result.getConnectVia().equals(
+                                    Result.CONNECT_COPY_TO_CLIPBOARD))
+                     {
+                        DomUtils.copyCodeToClipboard(result.getConnectCode());
+                     }
+                     else
+                     {
+                        eventBus_.fireEvent(
+                         new SendToConsoleEvent(result.getConnectCode(), true));
+                     }
                   }
                }).showModal();;
             }

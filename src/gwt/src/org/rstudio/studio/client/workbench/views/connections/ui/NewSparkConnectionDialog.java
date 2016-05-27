@@ -296,9 +296,9 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       connectPanel.add(connectLabel);
       connectVia_ = new ListBox();
       connectVia_.addItem("R Console", Result.CONNECT_R_CONSOLE);
-      connectVia_.addItem("New R Script", Result.CONNECT_NEW_R_SCRIPT);
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectVia_.addItem("New R Notebook", Result.CONNECT_NEW_R_NOTEBOOK);
+      //connectVia_.addItem("New R Script", Result.CONNECT_NEW_R_SCRIPT);
+      //if (uiPrefs_.enableRNotebooks().getValue())
+      //   connectVia_.addItem("New R Notebook", Result.CONNECT_NEW_R_NOTEBOOK);
       connectVia_.addItem("Copy to Clipboard", 
                           Result.CONNECT_COPY_TO_CLIPBOARD);
       setValue(connectVia_, lastResult_.getConnectVia());
