@@ -1,6 +1,7 @@
 @CHARSET "UTF-8";
 
 @external gwt-Label;
+@external gwt-Image;
 
 
 .grid {
@@ -8,7 +9,7 @@
 }
 
 .versionGrid {
-  margin-top: 15px;
+  margin-top: 10px;
 }
 
 
@@ -26,6 +27,16 @@
 
 .spanningInput {
   width: 250px;
+}
+
+.infoPanel {
+  width: 400px;
+  margin-top: 8px;
+  color: #4d4d4d;
+}
+
+.infoPanel .gwt-Image {
+  margin-right: 4px;
 }
 
 .helpLink {

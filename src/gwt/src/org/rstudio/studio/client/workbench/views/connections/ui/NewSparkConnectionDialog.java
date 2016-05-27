@@ -217,8 +217,10 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
                   for (int h = 0; h<hadoopVersions.length(); h++)
                   {
                      HadoopVersion hadoopVersion = hadoopVersions.get(h);
-                     hadoopVersion_.addItem(hadoopVersion.getLabel(), 
-                                            hadoopVersion.getId());
+                     String label = hadoopVersion.getLabel();
+                     if (h == 0)
+                        label = label + " (Default)";
+                     hadoopVersion_.addItem(label, hadoopVersion.getId());
                   }
                   break;
                }
@@ -230,16 +232,37 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       if (lastResult_.getHadoopVersion() != null)
          setValue(hadoopVersion_, lastResult_.getHadoopVersion());
       versionGrid.setWidget(1, 1, hadoopVersion_); 
-      sparkVersion_.addChangeHandler(new ChangeHandler() {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            updateHadoopVersionsCommand.execute();
-         }
-      });
+      sparkVersion_.addChangeHandler(
+            commandChangeHandler(updateHadoopVersionsCommand));
+      
       
       container.add(versionGrid);
         
+      // info regarding installation
+      final InstallInfoPanel infoPanel = new InstallInfoPanel();
+      container.add(infoPanel);
+      
+      // update info panel state
+      Command updateInfoPanel = new Command() {
+         @Override
+         public void execute()
+         {
+            SparkVersion sparkVersion = 
+              context_.getSparkVersions()
+                             .get(sparkVersion_.getSelectedIndex());
+            HadoopVersion hadoopVersion = sparkVersion.getHadoopVersions()
+                             .get(hadoopVersion_.getSelectedIndex());
+            boolean remote = !master_.isLocalMaster(master_.getSelection());
+            
+            infoPanel.setVisible(!hadoopVersion.isInstalled());
+            if (!hadoopVersion.isInstalled())
+               infoPanel.update(sparkVersion, hadoopVersion, remote);
+         }  
+      };
+      updateInfoPanel.execute();
+      sparkVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
+      hadoopVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
+      
       // connection code
       container.add(new VerticalSpacer("20px"));
       //container.add(new Label("Code"));
@@ -272,6 +295,17 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    {
       super.onUnload();
       session_.persistClientState();
+   }
+   
+   private ChangeHandler commandChangeHandler(final Command command) 
+   {
+      return new ChangeHandler() {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            command.execute();
+         }   
+      };
    }
    
    private boolean setValue(ListBox listBox, String value)
@@ -331,6 +365,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       String helpLink();
       String spanningInput();
       String installCheckBox();
+      String infoPanel();
    }
 
    public interface Resources extends ClientBundle
@@ -339,7 +374,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       Styles styles();
    }
    
-   private static Resources RES = GWT.create(Resources.class);
+   public static Resources RES = GWT.create(Resources.class);
    static {
       RES.styles().ensureInjected();
    }
