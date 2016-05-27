@@ -111,7 +111,7 @@
          <arg value="-XdisableCastChecking"/>
          <arg line="-strict"/>
          <arg line="-gen gen"/>
-         <arg line="-style PRETTY"/>
+         <!--<arg line="-style PRETTY"/>-->
          <arg line="-extra extras"/>
          <arg line="${gwt.extra.args}"/>
          <!-- Additional arguments like -logLevel DEBUG -->
