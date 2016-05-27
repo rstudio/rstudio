@@ -127,7 +127,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       final Grid masterGrid = new Grid(2, 2);
       masterGrid.addStyleName(RES.styles().grid());
       masterGrid.addStyleName(RES.styles().masterGrid());
-      Label masterLabel = new Label("Master node:");
+      Label masterLabel = new Label("Master:");
       masterLabel.addStyleName(RES.styles().label());
       masterGrid.setWidget(0, 0, masterLabel);
       master_ = new SparkMasterChooser(context_);
