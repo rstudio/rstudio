@@ -524,14 +524,14 @@ public final class InternalPreconditions {
    * @throws ArrayIndexOutOfBoundsException if the range is not legal
    */
   public static void checkCriticalArrayBounds(int start, int end, int length) {
+    if (start > end) {
+      throw new IllegalArgumentException("fromIndex: " + start + " > toIndex: " + end);
+    }
     if (start < 0) {
       throw new ArrayIndexOutOfBoundsException("fromIndex: " + start + " < 0");
     }
     if (end > length) {
       throw new ArrayIndexOutOfBoundsException("toIndex: " + end + " > length " + length);
-    }
-    if (start > end) {
-      throw new IllegalArgumentException("fromIndex: " + start + " > toIndex: " + end);
     }
   }
 

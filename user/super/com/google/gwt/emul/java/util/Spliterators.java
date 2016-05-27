@@ -15,7 +15,6 @@
  */
 package java.util;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalArrayBounds;
 import static javaemul.internal.InternalPreconditions.checkCriticalElement;
 import static javaemul.internal.InternalPreconditions.checkCriticalState;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
@@ -130,6 +129,7 @@ public final class Spliterators {
 
   public static <T> Spliterator<T> spliterator(Object[] array, int fromIndex, int toIndex,
                                                int characteristics) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     return new ArraySpliterator<>(array, fromIndex, toIndex, characteristics);
   }
 
@@ -139,6 +139,7 @@ public final class Spliterators {
 
   public static Spliterator.OfInt spliterator(int[] array, int fromIndex, int toIndex,
                                               int characteristics) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     return new IntArraySpliterator(array, fromIndex, toIndex, characteristics);
   }
 
@@ -148,6 +149,7 @@ public final class Spliterators {
 
   public static Spliterator.OfLong spliterator(long[] array, int fromIndex, int toIndex,
                                                int characteristics) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     return new LongArraySpliterator(array, fromIndex, toIndex, characteristics);
   }
 
@@ -157,6 +159,7 @@ public final class Spliterators {
 
   public static Spliterator.OfDouble spliterator(double[] array, int fromIndex, int toIndex,
                                                  int characteristics) {
+    checkCriticalArrayBounds(fromIndex, toIndex, array.length);
     return new DoubleArraySpliterator(array, fromIndex, toIndex, characteristics);
   }
 
@@ -588,8 +591,7 @@ public final class Spliterators {
     private final int limit;
     private final int characteristics;
 
-    BaseArraySpliterator(int from, int limit, int size, int characteristics) {
-      checkCriticalArrayBounds(from, limit, size);
+    BaseArraySpliterator(int from, int limit, int characteristics) {
       this.index = from;
       this.limit = limit;
       this.characteristics = sizeKnownSpliteratorCharacteristics(characteristics);
@@ -643,7 +645,7 @@ public final class Spliterators {
     }
 
     ArraySpliterator(Object[] array, int from, int limit, int characteristics) {
-      super(from, limit, array.length, characteristics);
+      super(from, limit, characteristics);
       this.array = array;
     }
 
@@ -665,7 +667,7 @@ public final class Spliterators {
     }
 
     DoubleArraySpliterator(double[] array, int from, int limit, int characteristics) {
-      super(from, limit, array.length, characteristics);
+      super(from, limit, characteristics);
       this.array = array;
     }
 
@@ -686,7 +688,7 @@ public final class Spliterators {
     }
 
     IntArraySpliterator(int[] array, int from, int limit, int characteristics) {
-      super(from, limit, array.length, characteristics);
+      super(from, limit, characteristics);
       this.array = array;
     }
 
@@ -707,7 +709,7 @@ public final class Spliterators {
     }
 
     LongArraySpliterator(long[] array, int from, int limit, int characteristics) {
-      super(from, limit, array.length, characteristics);
+      super(from, limit, characteristics);
       this.array = array;
     }
 
@@ -732,6 +734,17 @@ public final class Spliterators {
 
   private static int sizeUnknownSpliteratorCharacteristics(int characteristics) {
     return characteristics & ~(Spliterator.SIZED | Spliterator.SUBSIZED);
+  }
+
+  /**
+   * We cant use InternalPreconditions.checkCriticalArrayBounds here because
+   * Spliterators must throw only ArrayIndexOutOfBoundsException on range check by contract.
+   */
+  private static void checkCriticalArrayBounds(int start, int end, int length) {
+    if (start > end || start < 0 || end > length) {
+      throw new ArrayIndexOutOfBoundsException(
+          "fromIndex: " + start + ", toIndex: " + end + ", length: " + length);
+    }
   }
 
   private Spliterators() { }
