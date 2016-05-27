@@ -71,12 +71,14 @@ options(connectionViewer = list(
   for (versionNumber in rspark:::spark_versions()) {
     version <- list()
     version$number <- .rs.scalar(versionNumber)
-    version$hadoop_versions <- rspark:::spark_versions_hadoop()
+    version$hadoop_versions <- rspark:::spark_versions_hadoop(versionNumber)
     for (hadoopVersion in names(version$hadoop_versions)) {
       label <- version$hadoop_versions[[hadoopVersion]]$name
       version$hadoop_versions[[hadoopVersion]] <- list()
       version$hadoop_versions[[hadoopVersion]]$id <- .rs.scalar(hadoopVersion)
       version$hadoop_versions[[hadoopVersion]]$label <- .rs.scalar(label)
+      version$hadoop_versions[[hadoopVersion]]$installed <- .rs.scalar(
+         rspark:::spark_install_info(versionNumber, hadoopVersion)$installed)
     }
     names(version$hadoop_versions) <- NULL
     context$spark_versions[[length(context$spark_versions) + 1]] <- version
@@ -84,7 +86,7 @@ options(connectionViewer = list(
 
   # default spark version
   context$default_spark_version <- .rs.scalar(
-                           formals(rspark::spark_install)$sparkVersion)
+                           formals(rspark::spark_install)$spark_version)
 
   context
 })

@@ -30,5 +30,9 @@ public class HadoopVersion extends JavaScriptObject
    public final native String getLabel() /*-{
       return this.label;
    }-*/;
+   
+   public final native boolean isInstalled() /*-{
+      return this.installed;
+   }-*/;
   
 }
