@@ -277,6 +277,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          }  
       };
       updateInfoPanel.execute();
+      master_.addSelectionChangeHandler(commandSelectionChangeHandler(updateInfoPanel));
       sparkVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
       
@@ -370,6 +371,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             {
                builder.append(", hadoop_version = \"");
                builder.append(hadoopVersion_.getSelectedValue());
+               builder.append("\"");
             }
             
             // cores if not default
