@@ -231,11 +231,8 @@ public class MathTest extends GWTTestCase {
     assertEquals(Double.NEGATIVE_INFINITY, v, 0);
     v = Math.floor(Double.NaN);
     assertEquals(Double.NaN, v, 0);
-  }
 
-  @DoNotRunWith(Platform.HtmlUnitBug)
-  public void testFloor_DoubleMaxValue() {
-    double v = Math.floor(Double.MAX_VALUE);
+    v = Math.floor(Double.MAX_VALUE);
     assertEquals(Double.MAX_VALUE, v, 0);
     v = Math.floor(-Double.MAX_VALUE);
     assertEquals(-Double.MAX_VALUE, v, 0);
@@ -479,19 +476,16 @@ public class MathTest extends GWTTestCase {
     long v = Math.round(0.5);
     assertEquals(1L, v);
     v = Math.round(Double.POSITIVE_INFINITY);
-    assertEquals(Long.MAX_VALUE, v, 0);
+    assertEquals(Long.MAX_VALUE, v);
     v = Math.round(Double.NEGATIVE_INFINITY);
-    assertEquals(Long.MIN_VALUE, v, 0);
+    assertEquals(Long.MIN_VALUE, v);
     v = Math.round(Double.NaN);
-    assertEquals(0, v, 0);
-  }
+    assertEquals(0L, v);
 
-  @DoNotRunWith(Platform.HtmlUnitBug)
-  public void testRound_DoubleMaxValue() {
-    long v = Math.round(Double.MAX_VALUE);
-    assertEquals(Double.MAX_VALUE, v, 0);
+    v = Math.round(Double.MAX_VALUE);
+    assertEquals(Long.MAX_VALUE, v);
     v = Math.round(-Double.MAX_VALUE);
-    assertEquals(-Double.MAX_VALUE, v, 0);
+    assertEquals(Long.MIN_VALUE, v);
   }
 
   public void testRint() {
