@@ -255,6 +255,11 @@ public class TextEditingTargetNotebook
          @Override
          public void onSaveFile(SaveFileEvent event)
          {
+            // bail if save handler already running (avoid accumulating
+            // multiple notebook creation requests)
+            if (isCreateNotebookSaveHandlerRunning_)
+               return;
+            
             // bail if this was an autosave
             if (event.isAutosave())
                return;
@@ -278,6 +283,8 @@ public class TextEditingTargetNotebook
                   FilePathUtils.filePathSansExtension(rmdPath) + 
                   RmdOutput.NOTEBOOK_EXT;
             
+            isCreateNotebookSaveHandlerRunning_ = true;
+            
             dependencyManager_.withUnsatisfiedDependencies(
                   Dependency.embeddedPackage("rmarkdown"),
                   new ServerRequestCallback<JsArray<Dependency>>()
@@ -287,7 +294,16 @@ public class TextEditingTargetNotebook
                      {
                         if (unsatisfiedDependencies.length() == 0)
                         {
-                           createNotebookFromCache(rmdPath, outputPath);
+                           CommandWithArg<Boolean> onCompleted = new CommandWithArg<Boolean>()
+                           {
+                              @Override
+                              public void execute(Boolean arg)
+                              {
+                                 isCreateNotebookSaveHandlerRunning_ = false;
+                              }
+                           };
+                           
+                           createNotebookFromCache(rmdPath, outputPath, onCompleted);
                            return;
                         }
                         
@@ -304,6 +320,7 @@ public class TextEditingTargetNotebook
                         }
                         
                         editingDisplay_.showWarningBar(message);
+                        isCreateNotebookSaveHandlerRunning_ = false;
                      }
                      
                      @Override
@@ -354,7 +371,9 @@ public class TextEditingTargetNotebook
       }));
    }
    
-   public void createNotebookFromCache(final String rmdPath, final String outputPath)
+   public void createNotebookFromCache(final String rmdPath,
+                                       final String outputPath,
+                                       final CommandWithArg<Boolean> onCompleted)
    {
       Command createNotebookCmd = new Command()
       {
@@ -372,12 +391,17 @@ public class TextEditingTargetNotebook
                         events_.fireEvent(new NotebookRenderFinishedEvent(
                               docUpdateSentinel_.getId(), 
                               docUpdateSentinel_.getPath()));
+                        
+                        if (onCompleted != null)
+                           onCompleted.execute(true);
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
                         Debug.logError(error);
+                        if (onCompleted != null)
+                           onCompleted.execute(false);
                      }
                   });
          }
@@ -2165,6 +2189,7 @@ public class TextEditingTargetNotebook
    private int execQueueMaxSize_ = 0;
    private boolean resizingPlotsRemote_ = false;
    private boolean maximizedPane_ = false;
+   private boolean isCreateNotebookSaveHandlerRunning_ = false;
    
    private int state_ = STATE_NONE;
 
