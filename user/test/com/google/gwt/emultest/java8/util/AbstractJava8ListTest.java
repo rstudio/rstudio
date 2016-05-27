@@ -83,7 +83,7 @@ abstract class AbstractJava8ListTest extends EmulTestBase {
   }
 
   public void testReplaceAll() {
-    ArrayList<String> list = new ArrayList<>();
+    List<String> list = createEmptyList();
 
     try {
       list.replaceAll(null);
@@ -104,6 +104,20 @@ abstract class AbstractJava8ListTest extends EmulTestBase {
     list.add("c");
     list.replaceAll(e -> e + "1");
     assertEquals(asList("a01", "b01", "c1"), list);
+  }
+
+  public void testSort() {
+    List<String> list = createEmptyList();
+    list.sort(null);
+
+    Collections.addAll(list, "b", "a", "c");
+    list.sort(null);
+    assertEquals(asList("a", "b", "c"), list);
+
+    list = createEmptyList();
+    Collections.addAll(list, "b", "a", "c");
+    list.sort(Collections.reverseOrder());
+    assertEquals(asList("c", "b", "a"), list);
   }
 
   protected abstract List<String> createEmptyList();
