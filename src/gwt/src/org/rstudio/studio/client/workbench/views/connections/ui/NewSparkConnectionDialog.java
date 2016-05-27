@@ -19,27 +19,36 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.model.HadoopVersion;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -56,21 +65,25 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       
       public static final Result create()
       {
-         return create(null, false, "auto", null, null);
+         return create(null, false, null, null, null, null, null);
       }
       
       public static final native Result create(String master,
                                                boolean reconnect,
                                                String cores,
                                                String sparkVersion,
-                                               String hadoopVersion)
+                                               String hadoopVersion,
+                                               String connectCode,
+                                               String connectVia)
       /*-{
          return {
             "master": master,
             "reconnect": reconnect,
             "cores": cores,
             "spark_version": sparkVersion,
-            "hadoop_version": hadoopVersion
+            "hadoop_version": hadoopVersion,
+            "connect_code": connectCode,
+            "connect_via": connectVia
          };
       }-*/;
       
@@ -79,12 +92,20 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       public final native String getCores() /*-{ return this.cores; }-*/;
       public final native String getSparkVersion() /*-{ return this.spark_version; }-*/;
       public final native String getHadoopVersion() /*-{ return this.hadoop_version; }-*/;
+      public final native String getConnectCode() /*-{ return this.connect_code; }-*/;
+      public final native String getConnectVia() /*-{ return this.connect_via; }-*/;
+      
+      public static String CONNECT_R_CONSOLE = "connect-r-console";
+      public static String CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
+      public static String CONNECT_NEW_R_NOTEBOOK = "connect-new-r-notebook";
+      public static String CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
    }
    
    @Inject
-   private void initialize(Session session)
+   private void initialize(Session session, UIPrefs uiPrefs)
    {
       session_ = session;
+      uiPrefs_ = uiPrefs;
    }
    
    public NewSparkConnectionDialog(NewSparkConnectionContext context,
@@ -96,6 +117,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       context_ = context;
       
       loadAndPersistClientState();
+      
+      setOkButtonCaption("Connect");
            
       HelpLink helpLink = new HelpLink(
             "Using Spark with RStudio",
@@ -121,8 +144,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    @Override
    protected Widget createMainWidget()
    {
-      VerticalPanel container = new VerticalPanel();
-        
+      VerticalPanel container = new VerticalPanel();    
+      
       // master
       final Grid masterGrid = new Grid(2, 2);
       masterGrid.addStyleName(RES.styles().grid());
@@ -169,14 +192,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          }
       };
       manageMasterUI.execute();   
-      master_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
-      { 
-         @Override
-         public void onSelectionChange(SelectionChangeEvent event)
-         {
-            manageMasterUI.execute();
-         }
-      });
+      master_.addSelectionChangeHandler(
+                           commandSelectionChangeHandler(manageMasterUI));
       
       // versions
       Grid versionGrid = new Grid(2, 2);
@@ -263,12 +280,135 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       sparkVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
       
-      // connection code
-      container.add(new VerticalSpacer("20px"));
-      //container.add(new Label("Code"));
-      //container.add(new Label("Insert into:"));
+      // add the code viewer
+      Grid codeGrid = new Grid(2, 1);
+      codeGrid.addStyleName(RES.styles().codeGrid());
+          
+      HorizontalPanel codeHeaderPanel = new HorizontalPanel();
+      codeHeaderPanel.setWidth("100%");
+      Label codeLabel = new Label("Code:");
+      codeHeaderPanel.add(codeLabel);
+      codeHeaderPanel.setCellHorizontalAlignment(
+               codeLabel, HasHorizontalAlignment.ALIGN_LEFT);
+      HorizontalPanel connectPanel = new HorizontalPanel();
+      Label connectLabel = new Label("Connect from:");
+      connectLabel.addStyleName(RES.styles().leftLabel());
+      connectPanel.add(connectLabel);
+      connectVia_ = new ListBox();
+      connectVia_.addItem("R Console", Result.CONNECT_R_CONSOLE);
+      connectVia_.addItem("New R Script", Result.CONNECT_NEW_R_SCRIPT);
+      if (uiPrefs_.enableRNotebooks().getValue())
+         connectVia_.addItem("New R Notebook", Result.CONNECT_NEW_R_NOTEBOOK);
+      connectVia_.addItem("Copy to Clipboard", 
+                          Result.CONNECT_COPY_TO_CLIPBOARD);
+      setValue(connectVia_, lastResult_.getConnectVia());
+      final Command updateConnectViaUI = new Command() {
+         @Override
+         public void execute()
+         {
+            if (connectVia_.getSelectedValue().equals(Result.CONNECT_COPY_TO_CLIPBOARD))
+            {
+               setOkButtonCaption("Copy");
+               if (codeViewer_ != null)
+               {
+                  codeViewer_.getEditor().getSession().getSelection().selectAll();
+                  codeViewer_.getEditor().focus();
+               }
+            }
+            else
+            {
+               if (codeViewer_ != null)
+                  codeViewer_.getEditor().getSession().getSelection().moveCursorTo(0, 0, false);
+               setOkButtonCaption("Connect");
+            }
+         }
+      };
+      updateConnectViaUI.execute();
+      connectVia_.addChangeHandler(commandChangeHandler(updateConnectViaUI));
       
+      connectPanel.add(connectVia_);
+      codeHeaderPanel.add(connectPanel);
+      codeHeaderPanel.setCellHorizontalAlignment(
+            connectPanel, HasHorizontalAlignment.ALIGN_RIGHT); 
+      codeGrid.setWidget(0, 0, codeHeaderPanel);
       
+      codeViewer_ = new AceEditorWidget(false);
+      codeViewer_.addStyleName(RES.styles().codeViewer());
+      codeViewer_.getEditor().getSession().setEditorMode(
+            EditorLanguage.LANG_R.getParserName(), false);
+      codeViewer_.getEditor().getSession().setUseWrapMode(true);
+      codeViewer_.getEditor().getSession().setWrapLimitRange(20, 120);
+      codeViewer_.getEditor().getRenderer().setShowGutter(false);
+      codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            EditSession session = codeViewer_.getEditor().getSession();
+            String selectedCode = session.getTextRange(session.getSelection().getRange());
+            if (selectedCode.trim().equals(session.getValue().trim()))
+               setValue(connectVia_, Result.CONNECT_COPY_TO_CLIPBOARD);
+         }
+      });
+      final Command updateCodeCommand = new Command() {
+         @Override
+         public void execute()
+         {  
+            StringBuilder builder = new StringBuilder();
+            
+            // connect to master
+            builder.append("library(rspark)\n");
+            builder.append("sc <- spark_connect(\"");
+            builder.append(master_.getSelection());
+           
+            // spark version
+            builder.append("\", version = \"");
+            builder.append(sparkVersion_.getSelectedValue());
+            builder.append("\"");
+            
+            // hadoop version if not default
+            if (hadoopVersion_.getSelectedIndex() != 0)
+            {
+               builder.append(", hadoop_version = \"");
+               builder.append(hadoopVersion_.getSelectedValue());
+            }
+            
+            // cores if not default
+            if (cores_.getSelectedIndex() != 0)
+            {
+               builder.append(", cores = ");
+               if (cores_.getSelectedIndex() == 0)
+                  builder.append("\"auto\"");
+               else
+                  builder.append(Integer.parseInt(cores_.getSelectedValue()));
+            }
+            
+            // reconnect if appropriate and not default
+            if (!master_.isLocalMaster(master_.getSelection()) &&
+                autoReconnect_.getValue())
+            {
+               builder.append(", reconnect = TRUE");
+            }
+            
+            builder.append(")");
+            codeViewer_.setCode(builder.toString());
+         }
+      };
+      updateCodeCommand.execute();
+      master_.addSelectionChangeHandler(commandSelectionChangeHandler(updateCodeCommand));
+      autoReconnect_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            updateCodeCommand.execute();
+         } 
+      });
+      cores_.addChangeHandler(commandChangeHandler(updateCodeCommand));
+      sparkVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
+      hadoopVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
+      codeGrid.setWidget(1, 0, codeViewer_);
+      container.add(codeGrid);
+     
+     
       return container;
    }
 
@@ -281,7 +421,9 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             autoReconnect_.getValue(),
             cores_.getSelectedValue(),
             sparkVersion_.getSelectedValue(),
-            hadoopVersion_.getSelectedValue());
+            hadoopVersion_.getSelectedValue(),
+            codeViewer_.getEditor().getSession().getValue(),
+            connectVia_.getSelectedValue());
       
       // update client state
       lastResult_ = result;
@@ -308,10 +450,23 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       };
    }
    
+   private SelectionChangeEvent.Handler commandSelectionChangeHandler(
+         final Command command)
+   {
+      return new SelectionChangeEvent.Handler()
+      { 
+         @Override
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            command.execute();;
+         }
+      };
+   }
+   
    private boolean setValue(ListBox listBox, String value)
    {
       for (int i = 0; i < listBox.getItemCount(); i++)
-         if (value.equals(listBox.getValue(i)))
+         if (listBox.getValue(i).equals(value))
          {
             listBox.setSelectedIndex(i);
             return true;
@@ -364,8 +519,10 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       String remote();
       String helpLink();
       String spanningInput();
-      String installCheckBox();
       String infoPanel();
+      String codeViewer();
+      String codeGrid();
+      String leftLabel();
    }
 
    public interface Resources extends ClientBundle
@@ -375,7 +532,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    }
    
    public static Resources RES = GWT.create(Resources.class);
-   static {
+   public static void ensureStylesInjected() 
+   {
       RES.styles().ensureInjected();
    }
    
@@ -386,6 +544,9 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    private ListBox cores_;
    private ListBox sparkVersion_;
    private ListBox hadoopVersion_;  
+   private ListBox connectVia_;
+   private AceEditorWidget codeViewer_;
       
    private Session session_;
+   private UIPrefs uiPrefs_;
 }

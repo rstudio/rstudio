@@ -74,12 +74,17 @@ public class AceEditorWidget extends Composite
                  HasAllKeyHandlers,
                  EditEvent.Handler
 {
-   
    public AceEditorWidget()
+   {
+      this(true);
+   }
+    
+   public AceEditorWidget(boolean applyNormalFontSize)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       initWidget(new HTML());
-      FontSizer.applyNormalFontSize(this);
+      if (applyNormalFontSize)
+         FontSizer.applyNormalFontSize(this);
       setSize("100%", "100%");
 
       capturingHandlers_ = new HandlerManager(this);
