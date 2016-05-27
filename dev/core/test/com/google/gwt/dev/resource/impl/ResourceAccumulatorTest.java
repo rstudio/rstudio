@@ -271,8 +271,12 @@ public class ResourceAccumulatorTest extends TestCase {
     return list;
   }
 
-  private static PathPrefixSet createInclusivePathPrefixSet() {
-    PathPrefixSet pathPrefixes = new PathPrefixSet();
+  private PathPrefixSet pathPrefixes;
+
+  private PathPrefixSet createInclusivePathPrefixSet() {
+    // Set to a field to create a strong reference, otherwise will get GCed as ResourceAccumulator
+    // refers to it weakly.
+    pathPrefixes = new PathPrefixSet();
     pathPrefixes.add(new PathPrefix("", null));
     return pathPrefixes;
   }
