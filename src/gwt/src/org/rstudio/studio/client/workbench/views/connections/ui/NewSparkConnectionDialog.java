@@ -65,19 +65,21 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       
       public static final Result create()
       {
-         return create(null, false, null, null, null, null, null);
+         return create(null, false, false, null, null, null, null, null);
       }
       
       public static final native Result create(String master,
+                                               boolean remote,
                                                boolean reconnect,
                                                String cores,
-                                               String sparkVersion,
-                                               String hadoopVersion,
+                                               SparkVersion sparkVersion,
+                                               HadoopVersion hadoopVersion,
                                                String connectCode,
                                                String connectVia)
       /*-{
          return {
             "master": master,
+            "remote": remote,
             "reconnect": reconnect,
             "cores": cores,
             "spark_version": sparkVersion,
@@ -88,10 +90,11 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       }-*/;
       
       public final native String getMaster() /*-{ return this.master; }-*/;
+      public final native boolean getRemote() /*-{ return this.remote; }-*/;
       public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
       public final native String getCores() /*-{ return this.cores; }-*/;
-      public final native String getSparkVersion() /*-{ return this.spark_version; }-*/;
-      public final native String getHadoopVersion() /*-{ return this.hadoop_version; }-*/;
+      public final native SparkVersion getSparkVersion() /*-{ return this.spark_version; }-*/;
+      public final native HadoopVersion getHadoopVersion() /*-{ return this.hadoop_version; }-*/;
       public final native String getConnectCode() /*-{ return this.connect_code; }-*/;
       public final native String getConnectVia() /*-{ return this.connect_via; }-*/;
       
@@ -99,6 +102,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       public static String CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
       public static String CONNECT_NEW_R_NOTEBOOK = "connect-new-r-notebook";
       public static String CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
+      
+      public static String MASTER_LOCAL = "local";
    }
    
    @Inject
@@ -211,7 +216,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          sparkVersion_.addItem("Spark " + version, version);
       }
       if (lastResult_.getSparkVersion() != null)
-         setValue(sparkVersion_, lastResult_.getSparkVersion());
+         setValue(sparkVersion_, lastResult_.getSparkVersion().getNumber());
       else
          setValue(sparkVersion_, context_.getDefaultSparkVersion());
       versionGrid.setWidget(0, 1, sparkVersion_);  
@@ -247,7 +252,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       };
       updateHadoopVersionsCommand.execute();
       if (lastResult_.getHadoopVersion() != null)
-         setValue(hadoopVersion_, lastResult_.getHadoopVersion());
+         setValue(hadoopVersion_, lastResult_.getHadoopVersion().getId());
       versionGrid.setWidget(1, 1, hadoopVersion_); 
       sparkVersion_.addChangeHandler(
             commandChangeHandler(updateHadoopVersionsCommand));
@@ -362,7 +367,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             builder.append(master_.getSelection());
            
             // spark version
-            builder.append("\", version = \"");
+            builder.append("\", spark_version = \"");
             builder.append(sparkVersion_.getSelectedValue());
             builder.append("\"");
             
@@ -417,13 +422,21 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    @Override
    protected Result collectInput()
    {     
+      // spark and hadoop versions
+      SparkVersion sparkVersion = 
+            context_.getSparkVersions()
+                           .get(sparkVersion_.getSelectedIndex());
+      HadoopVersion hadoopVersion = sparkVersion.getHadoopVersions()
+                           .get(hadoopVersion_.getSelectedIndex());
+      
       // collect the result
       Result result = Result.create(
             master_.getSelection(),
+            !master_.isLocalMaster(master_.getSelection()),
             autoReconnect_.getValue(),
             cores_.getSelectedValue(),
-            sparkVersion_.getSelectedValue(),
-            hadoopVersion_.getSelectedValue(),
+            sparkVersion,
+            hadoopVersion,
             codeViewer_.getEditor().getSession().getValue(),
             connectVia_.getSelectedValue());
       
@@ -481,7 +494,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       public NewSparkConnectionClientState()
       {
          super(ConnectionsPresenter.MODULE_CONNECTIONS,
-               "last-spark-connection-dialog-result",
+               "new-spark-connection-dialogresult",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
@@ -550,5 +563,6 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    private AceEditorWidget codeViewer_;
       
    private Session session_;
+   @SuppressWarnings("unused")
    private UIPrefs uiPrefs_;
 }

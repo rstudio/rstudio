@@ -33,10 +33,6 @@ public class InstallInfoPanel extends Composite
       Image infoIcon = new Image(ThemeResources.INSTANCE.infoSmall());
       panel.add(infoIcon);
       infoLabel_ = new Label();
-      infoLabel_.setText(
-          "A local installation of Spark 1.6.1 for Hadoop 2.6 or later is " +
-          "required to connect to this cluster. You will be prompted to " +
-          "install this prior to connecting.");
       panel.add(infoLabel_);
    
       

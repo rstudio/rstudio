@@ -16,18 +16,20 @@
 #include "SessionConnections.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Process.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
 
-
+#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include "ActiveConnections.hpp"
@@ -189,6 +191,71 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error installSpark(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string sparkVersion, hadoopVersion;
+   Error error = json::readParams(request.params,
+                                  &sparkVersion,
+                                  &hadoopVersion);
+   if (error)
+      return error;
+
+   // R binary
+   FilePath rProgramPath;
+   error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+
+   // build install command
+   boost::format fmt("rspark::spark_install('%1%', hadoop_version = '%2%')");
+   std::string cmd = boost::str(fmt % sparkVersion % hadoopVersion);
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--vanilla");
+
+   // propagate R_LIBS
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   std::string libPaths = module_context::libPathsString();
+   if (!libPaths.empty())
+      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+   options.environment = childEnv;
+
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
+
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   // create and execute console process
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   pCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            "Installing Spark " + sparkVersion,
+            true,
+            console_process::InteractionNever);
+
+   // return console process
+   pResponse->setResult(pCP->toJson());
+   return Success();
+}
+
+
 
 // track whether connections were enabled at the start of this R session
 bool s_connectionsInitiallyEnabled = false;
@@ -254,6 +321,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
       (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
+      (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
    return initBlock.execute();

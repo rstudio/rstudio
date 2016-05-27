@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
@@ -39,6 +40,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -55,10 +58,14 @@ import org.rstudio.studio.client.workbench.views.connections.events.ExploreConne
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
+import org.rstudio.studio.client.workbench.views.connections.model.HadoopVersion;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
+import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter 
 {
@@ -241,22 +248,96 @@ public class ConnectionsPresenter extends BasePresenter
                 context,
                 new OperationWithInput<NewSparkConnectionDialog.Result>() {
                   @Override
-                  public void execute(Result result)
+                  public void execute(final Result result)
                   {
-                     if (result.getConnectVia().equals(
-                                    Result.CONNECT_COPY_TO_CLIPBOARD))
-                     {
-                        DomUtils.copyCodeToClipboard(result.getConnectCode());
-                     }
-                     else
-                     {
-                        eventBus_.fireEvent(
-                         new SendToConsoleEvent(result.getConnectCode(), true));
-                     }
+                     withRequiredSparkInstallation(
+                           result.getSparkVersion(),
+                           result.getHadoopVersion(),
+                           result.getRemote(),
+                           new Command() {
+                              @Override
+                              public void execute()
+                              {
+                                 performConnection(result);
+                              }
+                              
+                           });
                   }
                }).showModal();;
             }
          });      
+   }
+   
+   
+   private void withRequiredSparkInstallation(final SparkVersion sparkVersion,
+                                              final HadoopVersion hadoopVersion,
+                                              boolean remote,
+                                              final Command command)
+   {
+      if (!hadoopVersion.isInstalled())
+      {
+         globalDisplay_.showYesNoMessage(
+            MessageDialog.QUESTION, 
+            "Install Spark Components",
+            InstallInfoPanel.getInfoText(sparkVersion, hadoopVersion, 
+                                         remote, true),
+            false,
+            new Operation() {  public void execute() {
+               server_.installSpark(
+                 sparkVersion.getNumber(),
+                 hadoopVersion.getId(), 
+                 new SimpleRequestCallback<ConsoleProcess>(){
+
+                    @Override
+                    public void onResponseReceived(ConsoleProcess process)
+                    {
+                       final ConsoleProgressDialog dialog = 
+                             new ConsoleProgressDialog(process, server_);
+                       dialog.showModal();
+           
+                       process.addProcessExitHandler(
+                          new ProcessExitEvent.Handler()
+                          {
+                             @Override
+                             public void onProcessExit(ProcessExitEvent event)
+                             {
+                                if (event.getExitCode() == 0)
+                                {
+                                   dialog.hide();
+                                   command.execute();
+                                } 
+                             }
+                          }); 
+                    }
+
+               });   
+            }},
+            null,
+            null,
+            "Install",
+            "Cancel",
+            true);
+      }
+      else
+      {
+         command.execute();
+      }
+   }
+   
+  
+   
+   private void performConnection(NewSparkConnectionDialog.Result result)
+   {
+      if (result.getConnectVia().equals(
+            Result.CONNECT_COPY_TO_CLIPBOARD))
+      {
+         DomUtils.copyCodeToClipboard(result.getConnectCode());
+      }
+      else
+      {
+         eventBus_.fireEvent(
+               new SendToConsoleEvent(result.getConnectCode(), true));
+      }
    }
    
    @Handler
