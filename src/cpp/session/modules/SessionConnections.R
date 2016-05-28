@@ -86,7 +86,7 @@ options(connectionViewer = list(
 
   # default spark version
   context$default_spark_version <- .rs.scalar(
-                           formals(rspark::spark_install)$spark_version)
+                           formals(rspark::spark_install)$version)
 
   context
 })

@@ -367,7 +367,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             builder.append(master_.getSelection());
            
             // spark version
-            builder.append("\", spark_version = \"");
+            builder.append("\", version = \"");
             builder.append(sparkVersion_.getSelectedValue());
             builder.append("\"");
             

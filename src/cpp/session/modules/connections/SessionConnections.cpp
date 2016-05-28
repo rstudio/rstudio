@@ -274,7 +274,7 @@ void onInstalledPackagesChanged()
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.1");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.2");
 }
 
 bool activateConnections()
