@@ -217,13 +217,9 @@ public class GwtAstBuilderTest extends JJSTestBase {
     JDeclaredType lambdaNested = program.getFromTypeMap("test.NestedClasses$lambda$0$Type");
     assertEquals(JDeclaredType.NestedClassDisposition.LAMBDA, lambdaNested.getClassDisposition());
 
-    String generatedInnnerClassNameForMethodReferenceLambda =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.NestedClasses",
-            "test.NestedClasses$Lambda", "test.NestedClasses", "referencedMethod", false) +
-            "__V$Type";
 
     JDeclaredType referenceNested =
-        program.getFromTypeMap(generatedInnnerClassNameForMethodReferenceLambda);
+        program.getFromTypeMap("test.NestedClasses$0methodref$referencedMethod$Type");
     assertEquals(JDeclaredType.NestedClassDisposition.LAMBDA,
         referenceNested.getClassDisposition());
 

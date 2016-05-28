@@ -1314,10 +1314,20 @@ public class Java8Test extends GWTTestCase {
       return true;
     }
   }
+  private static <T> String getClassName(T obj) {
+    return obj.getClass().getSimpleName();
+  }
 
   public void testMethodReference_generics() {
     P<B> p = B::getTrue;
     assertTrue(p.apply(new B()));
+    // The next two method references must result in two different lambda implementations due
+    // to generics, see bug # 9333.
+    MyFunction1<B, String> f1 = Java8Test::getClassName;
+    MyFunction1<Double, String> f2 = Java8Test::getClassName;
+
+    assertEquals(B.class.getSimpleName(), f1.apply(new B()));
+    assertEquals(Double.class.getSimpleName(), f2.apply(new Double(2)));
   }
 
   public void testDefaultMethod_staticInitializer() {

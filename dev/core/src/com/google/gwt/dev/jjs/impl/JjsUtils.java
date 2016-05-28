@@ -61,9 +61,7 @@ import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.lang.LongLib;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
@@ -95,42 +93,6 @@ public class JjsUtils {
    */
   public static String classLiteralFieldNameFromJavahTypeSignatureName(String javahSignatureName) {
     return javahSignatureName + "_classLit";
-  }
-
-  /**
-   * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
-   * that are a function of the samInterface (e.g. Runnable), the method being referred to,
-   * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
-   */
-  public static String classNameForMethodReference(JType cuType,
-      JInterfaceType functionalInterface, JMethod referredMethod, boolean hasReceiver) {
-    String prefix = classNamePrefixForMethodReference(cuType.getPackageName(), cuType.getName(),
-        functionalInterface.getName(), referredMethod.getEnclosingType().getName(),
-        referredMethod.getName(), hasReceiver);
-
-    return StringInterner.get().intern(
-        constructManglingSignature(referredMethod, prefix));
-  }
-
-  /**
-   * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
-   * that are a function of the samInterface (e.g. Runnable), the method being referred to,
-   * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
-   */
-  @VisibleForTesting
-  static String classNamePrefixForMethodReference(String packageName, String cuTypeName,
-      String functionalInterfaceName, String referredMethodEnclosingClassName,
-      String referredMethodName, boolean hasReceiver) {
-    return packageName + "." + Joiner.on("$$").join(
-        // Make sure references to the same methods in different compilation units do not create
-        // inner classses with the same name.
-        mangledNameString(cuTypeName),
-        "__",
-        mangledNameString(functionalInterfaceName),
-        "__",
-        hasReceiver ? "instance" : "static",
-        mangledNameString(referredMethodEnclosingClassName),
-        mangledNameString(referredMethodName));
   }
 
   public static boolean closureStyleLiteralsNeeded(boolean incremental,

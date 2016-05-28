@@ -1702,7 +1702,7 @@ public class GwtAstBuilder {
       }
     }
 
-    private Map<String, JClassType> lambdaNameToInnerLambdaType = Maps.newHashMap();
+    private int nextReferenceExpressionId = 0;
 
     @Override
     public void endVisit(ReferenceExpression x, BlockScope blockScope) {
@@ -1756,162 +1756,159 @@ public class GwtAstBuilder {
       JMethod referredMethod = typeMap.get(referredMethodBinding);
       boolean hasQualifier = hasQualifier(x);
 
-      // Constructors and overloading means we need generate unique names
-      String lambdaName = classNameForMethodReference(funcType,
-          referredMethod,
-          hasQualifier);
+      // Constructors, overloading and generics means that the safest approach is to consider
+      // each different member reference as a different lambda implementation.
+      String lambdaName =  JdtUtil.getClassName(curClass.typeDecl.binding) + "$"
+          + String.valueOf(nextReferenceExpressionId++) + "methodref$"
+          + (x.binding.isConstructor() ? "ctor" : String.valueOf(x.binding.selector));
 
       List<JExpression> enclosingThisRefs = Lists.newArrayList();
 
       // Create an inner class to hold the implementation of the interface
-      JClassType innerLambdaClass = lambdaNameToInnerLambdaType.get(lambdaName);
-      if (innerLambdaClass == null) {
-        innerLambdaClass = createInnerClass(lambdaName, x, info, funcType);
-        lambdaNameToInnerLambdaType.put(lambdaName, innerLambdaClass);
-        newTypes.add(innerLambdaClass);
+      JClassType innerLambdaClass = createInnerClass(lambdaName, x, info, funcType);
+      newTypes.add(innerLambdaClass);
 
-        JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
+      JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
 
-        JMethodBody ctorBody = new JMethodBody(info);
-        JThisRef thisRef = new JThisRef(info, innerLambdaClass);
-        JExpression instance = null;
+      JMethodBody ctorBody = new JMethodBody(info);
+      JThisRef thisRef = new JThisRef(info, innerLambdaClass);
+      JExpression instance = null;
 
-        List<JField> enclosingInstanceFields = new ArrayList<JField>();
-        // If we have a qualifier instance, we have to stash it in the constructor
-        if (hasQualifier) {
-          // this.$$outer = $$outer
-          JField outerField = createAndBindCapturedLambdaParameter(info, OUTER_LAMBDA_PARAM_NAME,
-              innerLambdaClass.getEnclosingType(), ctor, ctorBody);
-          instance = new JFieldRef(info,
-              new JThisRef(info, innerLambdaClass), outerField, innerLambdaClass);
-        } else if (referredMethod instanceof JConstructor) {
-          // the method we are invoking is a constructor and may need enclosing instances passed to
-          // it.
-          // For example, an class Foo { class Inner { Inner(int x) { } } } needs
-          // it's constructor invoked with an enclosing instance, Inner::new
-          // Java8 doesn't allow the qualifified case, e.g. x.new Foo() -> x.Foo::new
-          ReferenceBinding targetBinding = referredMethodBinding.declaringClass;
-          if (JdtUtil.isInnerClass(targetBinding)) {
-            for (ReferenceBinding argType : targetBinding.syntheticEnclosingInstanceTypes()) {
-              argType = (ReferenceBinding) argType.erasure();
-              JExpression enclosingThisRef = resolveThisReference(info, argType, false, blockScope);
-              JField enclosingInstance = createAndBindCapturedLambdaParameter(info,
-                  String.valueOf(argType.readableName()).replace('.', '_'),
-                  enclosingThisRef.getType(), ctor, ctorBody);
-              enclosingInstanceFields.add(enclosingInstance);
-              enclosingThisRefs.add(enclosingThisRef);
-            }
+      List<JField> enclosingInstanceFields = new ArrayList<JField>();
+      // If we have a qualifier instance, we have to stash it in the constructor
+      if (hasQualifier) {
+        // this.$$outer = $$outer
+        JField outerField = createAndBindCapturedLambdaParameter(info, OUTER_LAMBDA_PARAM_NAME,
+            innerLambdaClass.getEnclosingType(), ctor, ctorBody);
+        instance = new JFieldRef(info,
+            new JThisRef(info, innerLambdaClass), outerField, innerLambdaClass);
+      } else if (referredMethod instanceof JConstructor) {
+        // the method we are invoking is a constructor and may need enclosing instances passed to
+        // it.
+        // For example, an class Foo { class Inner { Inner(int x) { } } } needs
+        // it's constructor invoked with an enclosing instance, Inner::new
+        // Java8 doesn't allow the qualifified case, e.g. x.new Foo() -> x.Foo::new
+        ReferenceBinding targetBinding = referredMethodBinding.declaringClass;
+        if (JdtUtil.isInnerClass(targetBinding)) {
+          for (ReferenceBinding argType : targetBinding.syntheticEnclosingInstanceTypes()) {
+            argType = (ReferenceBinding) argType.erasure();
+            JExpression enclosingThisRef = resolveThisReference(info, argType, false, blockScope);
+            JField enclosingInstance = createAndBindCapturedLambdaParameter(info,
+                String.valueOf(argType.readableName()).replace('.', '_'),
+                enclosingThisRef.getType(), ctor, ctorBody);
+            enclosingInstanceFields.add(enclosingInstance);
+            enclosingThisRefs.add(enclosingThisRef);
           }
         }
-        ctor.setBody(ctorBody);
-        innerLambdaClass.addMethod(ctor);
-
-        // Create an implementation of the target interface that invokes the method referred to
-        // void onClick(ClickEvent e) { outer.referredMethod(e); }
-        JMethod samMethod = new JMethod(info, interfaceMethod.getName(),
-            innerLambdaClass, interfaceMethod.getType(),
-            false, false, true, interfaceMethod.getAccess());
-        for (JParameter origParam : interfaceMethod.getParams()) {
-          samMethod.cloneParameter(origParam);
-        }
-        JMethodBody samMethodBody = new JMethodBody(info);
-
-        Iterator<JParameter> paramIt = samMethod.getParams().iterator();
-        // here's where it gets tricky. A method can have an implicit qualifier, e.g.
-        // String::compareToIgnoreCase, it's non-static, it only has one argument, but it binds to
-        // Comparator<T>.
-        // The first argument serves as the qualifier, so for example, the method dispatch looks
-        // like this: int compare(T a, T b) { a.compareTo(b); }
-        if (!hasQualifier && !referredMethod.isStatic() && instance == null &&
-            samMethod.getParams().size() == referredMethod.getParams().size() + 1) {
-          // the instance qualifier is the first parameter in this case.
-          // Needs to be cast the actual type due to generics.
-          instance = new JCastOperation(info, typeMap.get(referredMethodBinding.declaringClass),
-              paramIt.next().makeRef(info));
-        }
-        JMethodCall samCall = null;
-
-        if (referredMethod.isConstructor()) {
-          // Constructors must be invoked with JNewInstance
-          samCall = new JNewInstance(info, (JConstructor) referredMethod);
-          for (JField enclosingInstance : enclosingInstanceFields) {
-            samCall.addArg(new JFieldRef(enclosingInstance.getSourceInfo(), thisRef,
-                enclosingInstance, innerLambdaClass));
-          }
-        } else {
-          // For static methods, instance will be null
-          samCall = new JMethodCall(info, instance, referredMethod);
-          // if super::method, we need static dispatch
-          if (x.lhs instanceof SuperReference) {
-            samCall.setStaticDispatchOnly();
-          }
-        }
-
-        // Add the rest of the parameters from the interface method to methodcall
-        // boxing or unboxing and dealing with varargs
-        int paramNumber = 0;
-
-        // need to build up an array of passed parameters if we have varargs
-        List<JExpression> varArgInitializers = null;
-        int varArg = referredMethodBinding.parameters.length - 1;
-
-        // interface Foo { m(int x, int y); } bound to reference foo(int... args)
-        // if varargs and incoming param is not already a var-arg, we'll need to convert
-        // trailing args of the target interface into an array
-        if (referredMethodBinding.isVarargs() && !samBinding.parameters[varArg].isArrayType()) {
-          varArgInitializers = Lists.newArrayList();
-        }
-
-        while (paramIt.hasNext()) {
-          JParameter param = paramIt.next();
-          JExpression paramExpr = param.makeRef(info);
-          // params may need to be boxed or unboxed
-          TypeBinding destParam = null;
-          // The method declared in the functional interface might have more parameters than the
-          // method referred by the method reference. In the case of an instance method without
-          // an explicit qualifier (A::m vs instance::m) the method in the functional interface will
-          // have an additional parameter for the instance preceding all the method parameters.
-          TypeBinding samParameterBinding =
-              samBinding.parameters[paramNumber
-                  + (samBinding.parameters.length - referredMethodBinding.parameters.length)];
-          // if it is not the trailing param or varargs, or interface method is already varargs
-          if (varArgInitializers == null || !referredMethodBinding.isVarargs() || (paramNumber < varArg)) {
-            destParam = referredMethodBinding.parameters[paramNumber];
-            paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
-            samCall.addArg(paramExpr);
-          } else if (!samParameterBinding.isArrayType()) {
-            // else add trailing parameters to var-args initializer list for an array
-            destParam = referredMethodBinding.parameters[varArg].leafComponentType();
-            paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
-            varArgInitializers.add(paramExpr);
-          }
-          paramNumber++;
-        }
-
-        // add trailing new T[] { initializers } var-arg array
-        if (varArgInitializers != null) {
-          JArrayType lastParamType =
-              (JArrayType) typeMap.get(
-                  referredMethodBinding.parameters[referredMethodBinding.parameters.length - 1]);
-          JNewArray newArray =
-              JNewArray.createArrayWithInitializers(info, lastParamType, varArgInitializers);
-          samCall.addArg(newArray);
-        }
-
-        // TODO(rluble): Make this a call to JjsUtils.makeMethodEndStatement once boxing/unboxing
-        // is handled there.
-        if (samMethod.getType() != JPrimitiveType.VOID) {
-          JExpression samExpression = boxOrUnboxExpression(samCall, referredMethodBinding.returnType,
-              samBinding.returnType);
-          samMethodBody.getBlock().addStmt(simplify(samExpression, x).makeReturnStatement());
-        } else {
-          samMethodBody.getBlock().addStmt(samCall.makeStatement());
-        }
-        samMethod.setBody(samMethodBody);
-        innerLambdaClass.addMethod(samMethod);
-        ctor.freezeParamTypes();
-        samMethod.freezeParamTypes();
       }
+      ctor.setBody(ctorBody);
+      innerLambdaClass.addMethod(ctor);
+
+      // Create an implementation of the target interface that invokes the method referred to
+      // void onClick(ClickEvent e) { outer.referredMethod(e); }
+      JMethod samMethod = new JMethod(info, interfaceMethod.getName(),
+          innerLambdaClass, interfaceMethod.getType(),
+          false, false, true, interfaceMethod.getAccess());
+      for (JParameter origParam : interfaceMethod.getParams()) {
+        samMethod.cloneParameter(origParam);
+      }
+      JMethodBody samMethodBody = new JMethodBody(info);
+
+      Iterator<JParameter> paramIt = samMethod.getParams().iterator();
+      // here's where it gets tricky. A method can have an implicit qualifier, e.g.
+      // String::compareToIgnoreCase, it's non-static, it only has one argument, but it binds to
+      // Comparator<T>.
+      // The first argument serves as the qualifier, so for example, the method dispatch looks
+      // like this: int compare(T a, T b) { a.compareTo(b); }
+      if (!hasQualifier && !referredMethod.isStatic() && instance == null &&
+          samMethod.getParams().size() == referredMethod.getParams().size() + 1) {
+        // the instance qualifier is the first parameter in this case.
+        // Needs to be cast the actual type due to generics.
+        instance = new JCastOperation(info, typeMap.get(referredMethodBinding.declaringClass),
+            paramIt.next().makeRef(info));
+      }
+      JMethodCall samCall = null;
+
+      if (referredMethod.isConstructor()) {
+        // Constructors must be invoked with JNewInstance
+        samCall = new JNewInstance(info, (JConstructor) referredMethod);
+        for (JField enclosingInstance : enclosingInstanceFields) {
+          samCall.addArg(new JFieldRef(enclosingInstance.getSourceInfo(), thisRef,
+              enclosingInstance, innerLambdaClass));
+        }
+      } else {
+        // For static methods, instance will be null
+        samCall = new JMethodCall(info, instance, referredMethod);
+        // if super::method, we need static dispatch
+        if (x.lhs instanceof SuperReference) {
+          samCall.setStaticDispatchOnly();
+        }
+      }
+
+      // Add the rest of the parameters from the interface method to methodcall
+      // boxing or unboxing and dealing with varargs
+      int paramNumber = 0;
+
+      // need to build up an array of passed parameters if we have varargs
+      List<JExpression> varArgInitializers = null;
+      int varArg = referredMethodBinding.parameters.length - 1;
+
+      // interface Foo { m(int x, int y); } bound to reference foo(int... args)
+      // if varargs and incoming param is not already a var-arg, we'll need to convert
+      // trailing args of the target interface into an array
+      if (referredMethodBinding.isVarargs() && !samBinding.parameters[varArg].isArrayType()) {
+        varArgInitializers = Lists.newArrayList();
+      }
+
+      while (paramIt.hasNext()) {
+        JParameter param = paramIt.next();
+        JExpression paramExpr = param.makeRef(info);
+        // params may need to be boxed or unboxed
+        TypeBinding destParam = null;
+        // The method declared in the functional interface might have more parameters than the
+        // method referred by the method reference. In the case of an instance method without
+        // an explicit qualifier (A::m vs instance::m) the method in the functional interface will
+        // have an additional parameter for the instance preceding all the method parameters.
+        TypeBinding samParameterBinding =
+            samBinding.parameters[paramNumber
+                + (samBinding.parameters.length - referredMethodBinding.parameters.length)];
+        // if it is not the trailing param or varargs, or interface method is already varargs
+        if (varArgInitializers == null || !referredMethodBinding.isVarargs() || (paramNumber < varArg)) {
+          destParam = referredMethodBinding.parameters[paramNumber];
+          paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
+          samCall.addArg(paramExpr);
+        } else if (!samParameterBinding.isArrayType()) {
+          // else add trailing parameters to var-args initializer list for an array
+          destParam = referredMethodBinding.parameters[varArg].leafComponentType();
+          paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
+          varArgInitializers.add(paramExpr);
+        }
+        paramNumber++;
+      }
+
+      // add trailing new T[] { initializers } var-arg array
+      if (varArgInitializers != null) {
+        JArrayType lastParamType =
+            (JArrayType) typeMap.get(
+                referredMethodBinding.parameters[referredMethodBinding.parameters.length - 1]);
+        JNewArray newArray =
+            JNewArray.createArrayWithInitializers(info, lastParamType, varArgInitializers);
+        samCall.addArg(newArray);
+      }
+
+      // TODO(rluble): Make this a call to JjsUtils.makeMethodEndStatement once boxing/unboxing
+      // is handled there.
+      if (samMethod.getType() != JPrimitiveType.VOID) {
+        JExpression samExpression = boxOrUnboxExpression(samCall, referredMethodBinding.returnType,
+            samBinding.returnType);
+        samMethodBody.getBlock().addStmt(simplify(samExpression, x).makeReturnStatement());
+      } else {
+        samMethodBody.getBlock().addStmt(samCall.makeStatement());
+      }
+      samMethod.setBody(samMethodBody);
+      innerLambdaClass.addMethod(samMethod);
+      ctor.freezeParamTypes();
+      samMethod.freezeParamTypes();
 
       JConstructor lambdaCtor = null;
       for (JMethod method : innerLambdaClass.getMethods()) {
@@ -1939,18 +1936,6 @@ public class GwtAstBuilder {
         }
       }
       push(allocLambda);
-    }
-
-    /**
-     * Java8 Method References such as String::equalsIgnoreCase should produce inner class names
-     * that are a function of the samInterface (e.g. Runnable), the method being referred to,
-     * and the qualifying disposition (this::foo vs Class::foo if foo is an instance method)
-     */
-    private String classNameForMethodReference(
-        JInterfaceType functionalInterface, JMethod referredMethod, boolean hasReceiver) {
-
-      return JjsUtils.classNameForMethodReference(typeMap.get(curCud.cud.types[0].binding),
-          functionalInterface, referredMethod, hasReceiver);
     }
 
     private JExpression boxOrUnboxExpression(JExpression expr, TypeBinding fromType,

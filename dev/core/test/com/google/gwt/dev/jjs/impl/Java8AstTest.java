@@ -619,9 +619,7 @@ public class Java8AstTest extends FullCompileTestBase {
     addSnippetClassDecl("public static Integer foo(int x, int y) { return x + y; }");
     String lambda = "new AcceptsLambda<Integer>().accept(EntryPoint::foo);";
 
-    String generatedInnerClassName =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint", "test.Lambda",
-            "test.EntryPoint", "foo", false) + "__IILjava_lang_Integer_2$Type";
+    String generatedInnerClassName = "test.EntryPoint$0methodref$foo$Type";
     String simpleLambdaInnerClassName = generatedInnerClassName.substring("test.".length());
 
     assertEqualBlock(
@@ -658,9 +656,7 @@ public class Java8AstTest extends FullCompileTestBase {
     addSnippetClassDecl("public Integer foo(int x, int y) { return x + y; }");
     String lambda = "new AcceptsLambda<Integer>().accept(this::foo);";
 
-    String generatedInnerClassName =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint", "test.Lambda",
-            "test.EntryPoint", "foo", true) + "__IILjava_lang_Integer_2$Type";
+    String generatedInnerClassName = "test.EntryPoint$0methodref$foo$Type";
     String simpleLambdaInnerClassName = generatedInnerClassName.substring("test.".length());
 
     assertEqualBlock(
@@ -704,14 +700,13 @@ public class Java8AstTest extends FullCompileTestBase {
         "new AcceptsLambda<Integer>().accept(instance1::fooInstance);\n" +
         "new AcceptsLambda<Integer>().accept(instance2::fooInstance);";
 
-    String generatedInnerClassName =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint", "test.Lambda",
-            "test.Pojo", "fooInstance", true) + "__IILjava_lang_Integer_2$Type";
-    String simpleLambdaInnerClassName = generatedInnerClassName.substring("test.".length());
+    String generatedInnerClassName = "test.EntryPoint$0methodref$fooInstance$Type";
+    String simpleLambdaInnerClassName1 = generatedInnerClassName.substring("test.".length());
+    String simpleLambdaInnerClassName2 = "EntryPoint$1methodref$fooInstance$Type";
 
     assertEqualBlock(
-        "(new AcceptsLambda()).accept(new " + simpleLambdaInnerClassName + "(this.instance1));\n"
-        + "(new AcceptsLambda()).accept(new " + simpleLambdaInnerClassName + "(this.instance2));",
+        "(new AcceptsLambda()).accept(new " + simpleLambdaInnerClassName1 + "(this.instance1));\n"
+        + "(new AcceptsLambda()).accept(new " + simpleLambdaInnerClassName2 + "(this.instance2));",
         reference);
     JProgram program = compileSnippet("void", reference, false);
 
@@ -721,7 +716,7 @@ public class Java8AstTest extends FullCompileTestBase {
     assertEquals(1, Collections.frequency(program.getDeclaredTypes(), lambdaInnerClass));
 
     // should have constructor taking the instance
-    JMethod ctor = findMethod(lambdaInnerClass, simpleLambdaInnerClassName);
+    JMethod ctor = findMethod(lambdaInnerClass, simpleLambdaInnerClassName1);
     assertTrue(ctor instanceof JConstructor);
     // instance capture
     assertEquals(1, ctor.getParams().size());
@@ -771,17 +766,11 @@ public class Java8AstTest extends FullCompileTestBase {
         "f(b::getId);"
     );
 
-    String generatedInnerClassNameForA =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.EntryPoint$Function", "test.EntryPoint$TestMF_A", "getId", true) +
-            "__Ljava_lang_String_2$Type";
+    String generatedInnerClassNameForA = "test.EntryPoint$0methodref$getId$Type";
     String simpleLambdaInnerClassNameForA =
         generatedInnerClassNameForA.substring("test.".length());
 
-    String generatedInnerClassNameForB =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.EntryPoint$Function", "test.EntryPoint$TestMF_B", "getId", true) +
-            "__Ljava_lang_String_2$Type";
+    String generatedInnerClassNameForB = "test.EntryPoint$1methodref$getId$Type";
     String simpleLambdaInnerClassNameForB =
         generatedInnerClassNameForB.substring("test.".length());
 
@@ -859,17 +848,11 @@ public class Java8AstTest extends FullCompileTestBase {
         "  }");
     String reference = "f(TestMF_A::getId);\n" + "f(TestMF_B::getId);";
 
-    String generatedInnerClassNameForA =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.EntryPoint$Function", "test.EntryPoint$TestMF_A", "getId", false) +
-            "__Ljava_lang_String_2$Type";
+    String generatedInnerClassNameForA = "test.EntryPoint$0methodref$getId$Type";
     String simpleLambdaInnerClassNameForA =
         generatedInnerClassNameForA.substring("test.".length());
 
-    String generatedInnerClassNameForB =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.EntryPoint$Function", "test.EntryPoint$TestMF_B", "getId", false) +
-            "__Ljava_lang_String_2$Type";
+    String generatedInnerClassNameForB = "test.EntryPoint$1methodref$getId$Type";
     String simpleLambdaInnerClassNameForB =
         generatedInnerClassNameForB.substring("test.".length());
 
@@ -904,10 +887,7 @@ public class Java8AstTest extends FullCompileTestBase {
   public void testCompileImplicitQualifierReferenceBinding() throws Exception {
     String lambda = "new AcceptsLambda<String>().accept2(String::equalsIgnoreCase);";
 
-    String generatedInnerClassName =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.Lambda2", "java.lang.String", "equalsIgnoreCase", false) +
-            "__Ljava_lang_String_2Z$Type";
+    String generatedInnerClassName = "test.EntryPoint$0methodref$equalsIgnoreCase$Type";
     String simpleLambdaInnerClassName =
         generatedInnerClassName.substring("test.".length());
 
@@ -944,9 +924,7 @@ public class Java8AstTest extends FullCompileTestBase {
   public void testCompileConstructorReferenceBinding() throws Exception {
     String lambda = "new AcceptsLambda<Pojo>().accept(Pojo::new);";
 
-    String generatedInnerClassName =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.Lambda", "test.Pojo", "Pojo", false) + "__IIV$Type";
+    String generatedInnerClassName = "test.EntryPoint$0methodref$ctor$Type";
     String simpleLambdaInnerClassName =
         generatedInnerClassName.substring("test.".length());
 
@@ -995,10 +973,7 @@ public class Java8AstTest extends FullCompileTestBase {
 
     String lambda = "new AcceptsLambda<Pojo2>().accept(Pojo2::new);";
 
-    String generatedInnerClassName =
-        JjsUtils.classNamePrefixForMethodReference("test", "test.EntryPoint",
-            "test.Lambda", "test.EntryPoint$Pojo2", "EntryPoint$Pojo2", false) +
-            "__Ltest_EntryPoint_2IIV$Type";
+    String generatedInnerClassName = "test.EntryPoint$0methodref$ctor$Type";
     String simpleLambdaInnerClassName =
         generatedInnerClassName.substring("test.".length());
 
@@ -1258,24 +1233,6 @@ public class Java8AstTest extends FullCompileTestBase {
     //
     // Also just performing the compile asserts that the AST is well formed.
     compileSnippetToJS(entryPointClass);
-  }
-
-  public void testMangledMethodReferencePrefixTest() {
-    String compilationUnitPackage = "a.b";
-    String compilationUnitMainType = compilationUnitPackage + ".SomeEnclosingClass";
-    String functionalInterface =  "d.e.SomeFunctionalInterface";
-    String methodReferenceClass = "f.g.SomeClass";
-    String methodName = "foo";
-
-    assertEquals("a.b.a_b_SomeEnclosingClass$$__$$d_e_SomeFunctionalInterface$$" +
-        "__$$instance$$f_g_SomeClass$$foo",
-        JjsUtils.classNamePrefixForMethodReference(compilationUnitPackage,
-        compilationUnitMainType, functionalInterface, methodReferenceClass, methodName, true));
-
-    assertEquals("a.b.a_b_SomeEnclosingClass$$__$$d_e_SomeFunctionalInterface$$" +
-        "__$$static$$f_g_SomeClass$$foo",
-        JjsUtils.classNamePrefixForMethodReference(compilationUnitPackage,
-        compilationUnitMainType, functionalInterface, methodReferenceClass, methodName, false));
   }
 
   @Override
