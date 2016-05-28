@@ -199,7 +199,7 @@ public class JsUtils {
   }
 
   private enum CallStyle {
-    DIRECT, USING_CALL_FOR_SUPER, USING_APPLY_FOR_VARARGS_ARRAY
+    DIRECT, USING_CALL, USING_APPLY_FOR_VARARGS_ARRAY
   }
 
   private static class InvocationDescriptor {
@@ -230,7 +230,12 @@ public class JsUtils {
       JMethod method, JsExpression instance, JsNameRef reference, List<JsExpression> args)  {
 
     CallStyle callStyle = invocationStyle == InvocationStyle.SUPER
-        ? CallStyle.USING_CALL_FOR_SUPER : CallStyle.DIRECT;
+        // JsFunctions that are accessed through an instance field need to be called using CALL to
+        // avoid accidentally binding "this" to the field's qualifier. See bug #9328.
+        || invocationStyle == InvocationStyle.FUNCTION
+            && instance instanceof JsNameRef
+            && ((JsNameRef) instance).getQualifier() != null
+        ? CallStyle.USING_CALL : CallStyle.DIRECT;
 
     TargetType targetType;
     switch (invocationStyle) {
@@ -253,7 +258,8 @@ public class JsUtils {
     }
 
     JsExpression lastArgument = Iterables.getLast(args, null);
-    boolean needsVarargsApply = method.isJsMethodVarargs() && !(lastArgument instanceof JsArrayLiteral);
+    boolean needsVarargsApply =
+        method.isJsMethodVarargs() && !(lastArgument instanceof JsArrayLiteral);
     List<JsExpression> nonVarargArguments = args;
     JsExpression varargArgument = null;
     if (method.isJsMethodVarargs()) {
@@ -361,9 +367,9 @@ public class JsUtils {
     }
   }
 
-  public static JsExpression createSuperInvocationOrPropertyAccess(
+  public static JsExpression createCallInvocationOrSuperPropertyAccess(
       SourceInfo sourceInfo, InvocationDescriptor invocationDescriptor) {
-    assert invocationDescriptor.callStyle == CallStyle.USING_CALL_FOR_SUPER;
+    assert invocationDescriptor.callStyle == CallStyle.USING_CALL;
     switch (invocationDescriptor.targetType) {
       case SETTER:
         assert invocationDescriptor.nonVarargsArguments.size() == 1;
@@ -373,16 +379,27 @@ public class JsUtils {
         assert invocationDescriptor.nonVarargsArguments.size() == 0;
         // TODO(rluble): implement super getters.
         throw new UnsupportedOperationException("Super.getter is unsupported");
+      case FUNCTION:
+        // instance.call(null, p1, ..., pn)
+        return createCallInvocation(sourceInfo, invocationDescriptor.instance,
+            JsNullLiteral.INSTANCE, invocationDescriptor.nonVarargsArguments);
       case METHOD:
-        // q.name.call(instance, p1, ..., pn)
-        return new JsInvocation(sourceInfo,
-            createQualifiedNameRef(sourceInfo, invocationDescriptor.reference, "call"),
-            Iterables.concat(Collections.singleton(invocationDescriptor.instance),
-                invocationDescriptor.nonVarargsArguments));
+        // q.methodname.call(instance, p1, ..., pn)
+        return createCallInvocation(sourceInfo, invocationDescriptor.reference,
+            invocationDescriptor.instance, invocationDescriptor.nonVarargsArguments);
       default:
         throw new AssertionError("Target type " + invocationDescriptor.targetType
             + " invalid for super invocation");
     }
+  }
+
+  /**
+   * Synthesize an invocation using .call().
+   */
+  private static JsInvocation createCallInvocation(SourceInfo sourceInfo, JsExpression target,
+      JsExpression instance, Iterable<JsExpression> arguments) {
+    return new JsInvocation(sourceInfo, createQualifiedNameRef(sourceInfo, target, "call"),
+        Iterables.concat(Collections.singleton(instance),arguments));
   }
 
   /**
@@ -400,8 +417,8 @@ public class JsUtils {
     switch (invocationDescriptor.callStyle) {
       case DIRECT:
         return createDirectInvocationOrPropertyAccess(sourceInfo, invocationDescriptor);
-      case USING_CALL_FOR_SUPER:
-        return createSuperInvocationOrPropertyAccess(sourceInfo, invocationDescriptor);
+      case USING_CALL:
+        return createCallInvocationOrSuperPropertyAccess(sourceInfo, invocationDescriptor);
       case USING_APPLY_FOR_VARARGS_ARRAY:
         return createApplyInvocation(sourceInfo, invocationDescriptor);
     }

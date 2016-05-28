@@ -15,7 +15,12 @@
  */
 package com.google.gwt.core.interop;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsProperty;
 
 /**
  * Tests JsFunction functionality.
@@ -226,6 +231,29 @@ public class JsFunctionTest extends GWTTestCase {
     assertTrue(object instanceof MyJsFunctionIdentityInterface);
     assertTrue(object instanceof MyJsFunctionWithOnlyInstanceofReference);
     assertFalse(object instanceof HTMLElementConcreteNativeJsType);
+  }
+
+  @JsFunction
+  interface JsFunctionInterface {
+    Object m();
+  }
+
+  private static native JsFunctionInterface createFunctionThatReturnsThis() /*-{
+    return function () { return this; };
+  }-*/;
+
+  // Tests for bug #9328
+  @DoNotRunWith(Platform.HtmlUnitBug)
+  public void testJsFunctionProperty() {
+    class JsFuncionProperty {
+      @JsProperty
+      public JsFunctionInterface func;
+    }
+    JsFuncionProperty jsFuncionProperty = new JsFuncionProperty();
+    jsFuncionProperty.func = createFunctionThatReturnsThis();
+    assertNotSame(jsFuncionProperty, jsFuncionProperty.func.m());
+    JsFunctionInterface funcInVar = jsFuncionProperty.func;
+    assertSame(jsFuncionProperty.func.m(), funcInVar.m());
   }
 
   // uncomment when Java8 is supported.

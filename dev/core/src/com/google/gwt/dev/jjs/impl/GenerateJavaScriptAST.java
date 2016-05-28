@@ -939,7 +939,8 @@ public class GenerateJavaScriptAST {
 
     private JsExpression dispatchToJsFunction(JsExpression instance, JMethod method,
         List<JsExpression> args, SourceInfo sourceInfo) {
-      return createInvocationOrPropertyAccess(InvocationStyle.FUNCTION, sourceInfo, method, instance, null, args);
+      return createInvocationOrPropertyAccess(
+          InvocationStyle.FUNCTION, sourceInfo, method, instance, null, args);
     }
 
     private JsExpression dispatchToInstanceMethod(JsExpression instance, JMethod method,
