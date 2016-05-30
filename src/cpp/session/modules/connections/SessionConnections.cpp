@@ -28,9 +28,11 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
