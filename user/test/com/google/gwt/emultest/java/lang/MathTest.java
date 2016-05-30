@@ -16,8 +16,6 @@
 
 package com.google.gwt.emultest.java.lang;
 
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.math.BigInteger;
@@ -520,20 +518,6 @@ public class MathTest extends GWTTestCase {
         Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
         Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY,
         Double.NaN, Double.NaN,
-    };
-    for (int i = 0; i < testValues.length;) {
-      double v = testValues[i++];
-      double expected = testValues[i++];
-      double actual = Math.rint(v);
-      assertEquals("value: " + v + ", expected: " + expected + ", actual: " + actual,
-          expected, actual, 0);
-    }
-  }
-
-  @DoNotRunWith(Platform.HtmlUnitBug)
-  public void testRint_DoubleMaxValue() {
-    // format: value to be round and expected value
-    final double[] testValues = {
         Double.MAX_VALUE, Double.MAX_VALUE,
         -Double.MAX_VALUE, -Double.MAX_VALUE,
     };

@@ -256,12 +256,18 @@ public final class Math {
   }
 
   public static double rint(double x) {
-    double mod2 = x % 2;
-    if ((mod2 == -1.5) || (mod2 == 0.5)) {
-      return NativeMath.floor(x);
-    } else {
-      return NativeMath.round(x);
+    // Floating point has a mantissa with an accuracy of 52 bits so
+    // any number bigger than 2^52 is effectively a finite integer value.
+    // This case also filters out NaN and infinite values.
+    if (NativeMath.abs(x) < (double) (1L << 52)) {
+      double mod2 = x % 2;
+      if ((mod2 == -1.5) || (mod2 == 0.5)) {
+        x = NativeMath.floor(x);
+      } else {
+        x = NativeMath.round(x);
+      }
     }
+    return x;
   }
 
   public static long round(double x) {
