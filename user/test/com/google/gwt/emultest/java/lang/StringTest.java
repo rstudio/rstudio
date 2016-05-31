@@ -20,7 +20,6 @@ import com.google.gwt.testing.TestUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -459,24 +458,6 @@ public class StringTest extends GWTTestCase {
     String s2 = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
     assertTrue("strings not equal", s1.equals(s2));
     assertSame("interns are not the same reference", s1.intern(), s2.intern());
-  }
-
-  public void testJoin() {
-    assertEquals("", String.join("", ""));
-    assertEquals("", String.join(",", ""));
-    assertEquals("", String.join(",", Arrays.<String>asList()));
-
-    assertEquals("a", String.join("", "a"));
-    assertEquals("a", String.join(",", "a"));
-    assertEquals("a", String.join(",", Arrays.asList("a")));
-
-    assertEquals("ab", String.join("", "a", "b"));
-    assertEquals("a,b", String.join(",", "a", "b"));
-    assertEquals("a,b", String.join(",", Arrays.asList("a", "b")));
-
-    assertEquals("abc", String.join("", "a", "b", "c"));
-    assertEquals("a,b,c", String.join(",", "a", "b", "c"));
-    assertEquals("a,b,c", String.join(",", Arrays.asList("a", "b", "c")));
   }
 
   public void testLastIndexOf() {
