@@ -56,7 +56,7 @@ options(connectionViewer = list(
 
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
 
-   context <- list()
+  context <- list()
 
   # all previously connected to remote servers
   context$remote_servers <- .Call("rs_availableRemoteServers")
@@ -68,17 +68,23 @@ options(connectionViewer = list(
 
   # available spark versions and related hadoop versions
   context$spark_versions <- list()
-  for (versionNumber in rspark:::spark_versions()) {
+
+  versions <- rspark:::spark_versions()
+  sparkVersions <- versions$spark
+  for (sparkVersion in sparkVersions) {
     version <- list()
-    version$number <- .rs.scalar(versionNumber)
-    version$hadoop_versions <- rspark:::spark_versions_hadoop(versionNumber)
-    for (hadoopVersion in names(version$hadoop_versions)) {
-      label <- version$hadoop_versions[[hadoopVersion]]$name
+    version$number <- .rs.scalar(sparkVersion)
+
+    version$hadoop_versions <- list()
+
+    hadoopVersions <- versions[versions$spark == sparkVersion, ]$hadoop
+    for (hadoopVersion in hadoopVersions) {
+      versionRow <- versions[versions$spark == sparkVersion & versions$hadoop == hadoopVersion, ]
+
       version$hadoop_versions[[hadoopVersion]] <- list()
       version$hadoop_versions[[hadoopVersion]]$id <- .rs.scalar(hadoopVersion)
-      version$hadoop_versions[[hadoopVersion]]$label <- .rs.scalar(label)
-      version$hadoop_versions[[hadoopVersion]]$installed <- .rs.scalar(
-         rspark:::spark_install_info(versionNumber, hadoopVersion)$installed)
+      version$hadoop_versions[[hadoopVersion]]$label <- .rs.scalar(versionRow$hadoop_label)
+      version$hadoop_versions[[hadoopVersion]]$installed <- .rs.scalar(versionRow$installed)
     }
     names(version$hadoop_versions) <- NULL
     context$spark_versions[[length(context$spark_versions) + 1]] <- version
