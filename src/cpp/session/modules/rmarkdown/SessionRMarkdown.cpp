@@ -424,6 +424,9 @@ private:
       else
          LOG_ERROR(error);
 
+      // set the not cran env var
+      environment.push_back(std::make_pair("NOT_CRAN", "true"));
+
       // render unless we were handed an existing output file
       allOutput_.clear();
       if (existingOutputFile.empty())
