@@ -563,6 +563,6 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    private AceEditorWidget codeViewer_;
       
    private Session session_;
-   @SuppressWarnings("unused")
+
    private UIPrefs uiPrefs_;
 }
