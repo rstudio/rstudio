@@ -224,27 +224,18 @@ public class Logger {
   }
 
   public void log(Level level, String msg, Throwable thrown) {
-    if (LOGGING_FALSE) {
-      return;
-    }
     if (isLoggable(level)) {
       actuallyLog(level, msg, thrown);
     }
   }
 
   public void log(Level level, Throwable thrown, Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE) {
-      return;
-    }
     if (isLoggable(level)) {
       actuallyLog(level, msgSupplier.get(), thrown);
     }
   }
 
   public void log(LogRecord record) {
-    if (LOGGING_FALSE) {
-      return;
-    }
     if (isLoggable(record.getLevel())) {
       actuallyLog(record);
     }
