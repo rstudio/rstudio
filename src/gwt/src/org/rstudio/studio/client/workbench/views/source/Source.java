@@ -2395,6 +2395,11 @@ public class Source implements InsertSourceHandler,
             });
    }
    
+   public void onNewDocumentWithCode(NewDocumentWithCodeEvent event)
+   {
+      globalDisplay_.showErrorMessage("RStudio", "Not yet implemented");
+   }
+   
     
    public void onOpenSourceFile(OpenSourceFileEvent event)
    {

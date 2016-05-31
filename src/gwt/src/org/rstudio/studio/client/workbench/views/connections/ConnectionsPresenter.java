@@ -65,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter 
@@ -328,15 +329,25 @@ public class ConnectionsPresenter extends BasePresenter
    
    private void performConnection(NewSparkConnectionDialog.Result result)
    {
-      if (result.getConnectVia().equals(
+      String connectVia = result.getConnectVia();
+      if (connectVia.equals(
             Result.CONNECT_COPY_TO_CLIPBOARD))
       {
          DomUtils.copyCodeToClipboard(result.getConnectCode());
       }
-      else
+      else if (connectVia.equals(Result.CONNECT_R_CONSOLE))
       {
          eventBus_.fireEvent(
                new SendToConsoleEvent(result.getConnectCode(), true));
+      }
+      else if (connectVia.equals(Result.CONNECT_NEW_R_SCRIPT) ||
+               connectVia.equals(Result.CONNECT_NEW_R_NOTEBOOK))
+      {
+         String type = connectVia.equals(Result.CONNECT_NEW_R_SCRIPT) ?
+                         NewDocumentWithCodeEvent.R_SCRIPT :
+                         NewDocumentWithCodeEvent.R_NOTEBOOK;
+         eventBus_.fireEvent(
+            new NewDocumentWithCodeEvent(type, result.getConnectCode(), true));
       }
    }
    
