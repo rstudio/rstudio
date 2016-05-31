@@ -533,7 +533,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       return;
     }
 
-    if (oldJsMember.isNativeMethod() && newJsMember.isNativeMethod()) {
+    if (oldJsMember.isJsNative() && newJsMember.isJsNative()) {
       return;
     }
 
@@ -799,8 +799,8 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       this.getter = getter;
     }
 
-    public boolean isNativeMethod() {
-      return member instanceof JMethod && member.isJsNative() && !isPropertyAccessor();
+    public boolean isJsNative() {
+      return member.isJsNative();
     }
 
     public boolean isPropertyAccessor() {

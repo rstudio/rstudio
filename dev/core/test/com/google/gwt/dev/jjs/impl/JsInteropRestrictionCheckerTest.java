@@ -262,6 +262,30 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "cannot both use the same JavaScript name 'x'.");
   }
 
+  public void testCollidingNativeJsPropertiesSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetClassDecl(
+        "@JsType(isNative=true)",
+        "public static class Buggy {",
+        "  @JsMethod",
+        "  public native int now();",
+        "  @JsProperty",
+        "  public native Object getNow();",
+        "  @JsMethod",
+        "  public static native int other();",
+        "  @JsProperty",
+        "  public static native Object getOther();",
+        "  @JsMethod",
+        "  public static native int another();",
+        "  @JsProperty",
+        "  public static Object another;",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
   public void testCollidingJsPropertiesTwoSettersFails() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetImport("jsinterop.annotations.JsProperty");
