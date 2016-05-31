@@ -16,7 +16,7 @@
 
 package java.lang;
 
-import static javaemul.internal.InternalPreconditions.checkStringBounds;
+import static javaemul.internal.InternalPreconditions.checkCriticalStringBounds;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -137,7 +137,7 @@ public final class String implements Comparable<String>, CharSequence,
 
   public static String valueOf(char x[], int offset, int count) {
     int end = offset + count;
-    checkStringBounds(offset, end, x.length);
+    checkCriticalStringBounds(offset, end, x.length);
     // Work around function.prototype.apply call stack size limits:
     // https://code.google.com/p/v8/issues/detail?id=2896
     // Performance: http://jsperf.com/string-fromcharcode-test/13
@@ -448,8 +448,11 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public void getChars(int srcBegin, int srcEnd, char[] dst, int dstBegin) {
-    for (int srcIdx = srcBegin; srcIdx < srcEnd; ++srcIdx) {
-      dst[dstBegin++] = charAt(srcIdx);
+    checkCriticalStringBounds(srcBegin, srcEnd, length());
+    checkCriticalStringBounds(dstBegin, dstBegin + (srcEnd - srcBegin), dst.length);
+
+    while (srcBegin < srcEnd) {
+      dst[dstBegin++] = charAt(srcBegin++);
     }
   }
 

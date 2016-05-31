@@ -441,7 +441,7 @@ public final class InternalPreconditions {
   }
 
   /**
-   * Ensures that {@code index} specifies a valid <i>element</i> in an array, list or string of size
+   * Ensures that {@code index} specifies a valid <i>element</i> in a list or string of size
    * {@code size}. An element index may range from zero, inclusive, to {@code size}, exclusive.
    */
   public static void checkElementIndex(int index, int size) {
@@ -463,7 +463,7 @@ public final class InternalPreconditions {
   }
 
   /**
-   * Ensures that {@code index} specifies a valid <i>position</i> in an array, list or string of
+   * Ensures that {@code index} specifies a valid <i>position</i> in a list of
    * size {@code size}. A position index may range from zero to {@code size}, inclusive.
    */
   public static void checkPositionIndex(int index, int size) {
@@ -485,8 +485,8 @@ public final class InternalPreconditions {
   }
 
   /**
-   * Ensures that {@code start} and {@code end} specify a valid <i>positions</i> in an array, list
-   * or string of size {@code size}, and are in order. A position index may range from zero to
+   * Ensures that {@code start} and {@code end} specify a valid <i>positions</i> in a list
+   * of size {@code size}, and are in order. A position index may range from zero to
    * {@code size}, inclusive.
    */
   public static void checkPositionIndexes(int start, int end, int size) {
@@ -502,16 +502,14 @@ public final class InternalPreconditions {
   }
 
   /**
-   * Ensures that {@code start} and {@code end} specify a valid <i>positions</i> in an array, list
-   * or string of size {@code size}, and are in order. A position index may range from zero to
+   * Ensures that {@code start} and {@code end} specify a valid <i>positions</i> in a list
+   * of size {@code size}, and are in order. A position index may range from zero to
    * {@code size}, inclusive.
    */
   public static void checkCriticalPositionIndexes(int start, int end, int size) {
-    if (start < 0) {
-      throw new IndexOutOfBoundsException("fromIndex: " + start + " < 0");
-    }
-    if (end > size) {
-      throw new IndexOutOfBoundsException("toIndex: " + end + " > size " + size);
+    if (start < 0 || end > size) {
+      throw new IndexOutOfBoundsException(
+          "fromIndex: " + start + ", toIndex: " + end + ", size: " + size);
     }
     if (start > end) {
       throw new IllegalArgumentException("fromIndex: " + start + " > toIndex: " + end);
@@ -519,36 +517,30 @@ public final class InternalPreconditions {
   }
 
   /**
-   * Checks that bounds are correct.
+   * Checks that array bounds are correct.
    *
+   * @throws IllegalArgumentException if {@code start > end}
    * @throws ArrayIndexOutOfBoundsException if the range is not legal
    */
   public static void checkCriticalArrayBounds(int start, int end, int length) {
     if (start > end) {
       throw new IllegalArgumentException("fromIndex: " + start + " > toIndex: " + end);
     }
-    if (start < 0) {
-      throw new ArrayIndexOutOfBoundsException("fromIndex: " + start + " < 0");
-    }
-    if (end > length) {
-      throw new ArrayIndexOutOfBoundsException("toIndex: " + end + " > length " + length);
+    if (start < 0 || end > length) {
+      throw new ArrayIndexOutOfBoundsException(
+          "fromIndex: " + start + ", toIndex: " + end + ", length: " + length);
     }
   }
 
   /**
-   * Checks that bounds are correct.
+   * Checks that string bounds are correct.
    *
    * @throws StringIndexOutOfBoundsException if the range is not legal
    */
-  public static void checkStringBounds(int start, int end, int size) {
-    if (start < 0) {
-      throw new StringIndexOutOfBoundsException("fromIndex: " + start + " < 0");
-    }
-    if (end > size) {
-      throw new StringIndexOutOfBoundsException("toIndex: " + end + " > size " + size);
-    }
-    if (end < start) {
-      throw new StringIndexOutOfBoundsException("fromIndex: " + start + " > toIndex: " + end);
+  public static void checkCriticalStringBounds(int start, int end, int length) {
+    if (start < 0 || end > length || end < start) {
+      throw new StringIndexOutOfBoundsException(
+          "fromIndex: " + start + ", toIndex: " + end + ", length: " + length);
     }
   }
 
