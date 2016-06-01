@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.connections.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
 public class SparkVersion extends JavaScriptObject
 { 
@@ -24,12 +23,31 @@ public class SparkVersion extends JavaScriptObject
    {
    }
    
-   public final native String getNumber() /*-{
-      return this.number;
+   public final String getId() {
+      return getSparkVersionNumber() + "-" + getHadoopVersionNumber();
+   }
+   
+   public final native String getSparkVersionNumber() /*-{
+      return this.spark;
+   }-*/;
+   
+   public final native String getHadoopVersionNumber() /*-{
+      return this.hadoop;
    }-*/;
   
-   public final native JsArray<HadoopVersion> getHadoopVersions() /*-{
-      return this.hadoop_versions;
+   public final native String getHadoopVersionLabel() /*-{
+      return this.hadoop_label;
    }-*/;
-  
+   
+   public final native boolean isHadoopDefault() /*-{
+      return this.hadoop_default;
+   }-*/;
+   
+   public final native boolean isDefault() /*-{
+      return this["default"];
+   }-*/;
+   
+   public final native boolean isInstalled() /*-{
+      return this["installed"];
+   }-*/;
 }

@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.studio.client.workbench.views.connections.model.HadoopVersion;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 
 import com.google.gwt.user.client.ui.Composite;
@@ -39,16 +38,13 @@ public class InstallInfoPanel extends Composite
       initWidget(panel);
    }
    
-   public void update(SparkVersion sparkVersion, 
-                      HadoopVersion hadoopVersion,
+   public void update(SparkVersion sparkVersion,
                       boolean remote)
    {
-      infoLabel_.setText(
-          getInfoText(sparkVersion, hadoopVersion, remote, false));
+      infoLabel_.setText(getInfoText(sparkVersion, remote, false));
    }
    
    public static String getInfoText(SparkVersion sparkVersion, 
-                                    HadoopVersion hadoopVersion,
                                     boolean remote,
                                     boolean isInstall)
    {
@@ -57,9 +53,9 @@ public class InstallInfoPanel extends Composite
          builder.append("A local version of Spark ");
       else
          builder.append("Spark ");
-      builder.append(sparkVersion.getNumber());
+      builder.append(sparkVersion.getSparkVersionNumber());
       builder.append(" for ");
-      builder.append(hadoopVersion.getLabel());
+      builder.append(sparkVersion.getHadoopVersionLabel());
       if (remote)
          builder.append(" is required to connect to this cluster. ");
       else

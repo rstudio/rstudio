@@ -37,8 +37,4 @@ public class NewSparkConnectionContext extends JavaScriptObject
    public final native JsArray<SparkVersion> getSparkVersions() /*-{
       return this.spark_versions;
    }-*/;
-   
-   public final native String getDefaultSparkVersion() /*-{
-      return this.default_spark_version;
-   }-*/;
 }

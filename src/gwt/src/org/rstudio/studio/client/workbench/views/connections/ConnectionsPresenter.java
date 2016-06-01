@@ -58,7 +58,6 @@ import org.rstudio.studio.client.workbench.views.connections.events.ExploreConne
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.HadoopVersion;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
@@ -254,7 +253,6 @@ public class ConnectionsPresenter extends BasePresenter
                   {
                      withRequiredSparkInstallation(
                            result.getSparkVersion(),
-                           result.getHadoopVersion(),
                            result.getRemote(),
                            new Command() {
                               @Override
@@ -267,27 +265,26 @@ public class ConnectionsPresenter extends BasePresenter
                   }
                }).showModal();;
             }
+            
          });      
    }
    
    
    private void withRequiredSparkInstallation(final SparkVersion sparkVersion,
-                                              final HadoopVersion hadoopVersion,
                                               boolean remote,
                                               final Command command)
    {
-      if (!hadoopVersion.isInstalled())
+      if (!sparkVersion.isInstalled())
       {
          globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION, 
             "Install Spark Components",
-            InstallInfoPanel.getInfoText(sparkVersion, hadoopVersion, 
-                                         remote, true),
+            InstallInfoPanel.getInfoText(sparkVersion, remote, true),
             false,
             new Operation() {  public void execute() {
                server_.installSpark(
-                 sparkVersion.getNumber(),
-                 hadoopVersion.getId(), 
+                 sparkVersion.getSparkVersionNumber(),
+                 sparkVersion.getHadoopVersionNumber(),
                  new SimpleRequestCallback<ConsoleProcess>(){
 
                     @Override
