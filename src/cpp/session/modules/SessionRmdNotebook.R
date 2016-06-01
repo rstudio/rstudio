@@ -261,6 +261,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputPath))
       outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
    
+   rmdPath <- path.expand(rmdPath)
+   outputPath <- path.expand(outputPath)
+   
    cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    rnbData <- .rs.readRnbCache(rmdPath, cachePath)
    .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
