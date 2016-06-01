@@ -246,7 +246,7 @@ public class ConnectionsPresenter extends BasePresenter
             protected void onSuccess(NewSparkConnectionContext context)
             {
                // proceed if java is installed
-               if (!context.isJavaInstalled())
+               if (context.isJavaInstalled())
                {
                   // show dialog
                   new NewSparkConnectionDialog(
