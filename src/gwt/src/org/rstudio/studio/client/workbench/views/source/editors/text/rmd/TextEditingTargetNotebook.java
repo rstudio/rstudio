@@ -1632,9 +1632,11 @@ public class TextEditingTargetNotebook
    
    private void removeAllChunks()
    {
-      for (String chunkId: outputs_.keySet())
+      for (ChunkOutputUi output: outputs_.values())
       {
-         outputs_.get(chunkId).remove();
+         // clean any error state still attached to the output's scope
+         cleanScopeErrorState(output.getScope());
+         output.remove();
       }
       outputs_.clear();
    }
