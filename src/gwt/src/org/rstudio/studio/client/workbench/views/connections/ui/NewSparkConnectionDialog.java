@@ -351,8 +351,11 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          {
             EditSession session = codeViewer_.getEditor().getSession();
             String selectedCode = session.getTextRange(session.getSelection().getRange());
-            if (selectedCode.trim().equals(session.getValue().trim()))
+            if (selectedCode.trim().equals(session.getValue().trim())) 
+            {
                setValue(connectVia_, Result.CONNECT_COPY_TO_CLIPBOARD);
+               setOkButtonCaption("Copy");
+            }
          }
       });
       final Command updateCodeCommand = new Command() {

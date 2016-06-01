@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnecti
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter 
@@ -343,11 +344,34 @@ public class ConnectionsPresenter extends BasePresenter
       else if (connectVia.equals(Result.CONNECT_NEW_R_SCRIPT) ||
                connectVia.equals(Result.CONNECT_NEW_R_NOTEBOOK))
       {
-         String type = connectVia.equals(Result.CONNECT_NEW_R_SCRIPT) ?
-                         NewDocumentWithCodeEvent.R_SCRIPT :
-                         NewDocumentWithCodeEvent.R_NOTEBOOK;
+         String type;
+         String code = result.getConnectCode();
+         SourcePosition cursorPosition = null;
+         if (connectVia.equals(Result.CONNECT_NEW_R_SCRIPT))
+         {
+            type = NewDocumentWithCodeEvent.R_SCRIPT;
+            code = code + "\n\n";
+         }
+         else
+         {
+            type = NewDocumentWithCodeEvent.R_NOTEBOOK; 
+            code = "---\n" +
+                   "title: \"R Notebook\"\n" +
+                   "output: html_notebook\n" +
+                   "---\n" +
+                   "\n" +
+                   "```{r connect}\n" +
+                   code + "\n" +
+                   "```\n" +
+                   "\n" +
+                   "```{r}\n" +
+                   "\n" +
+                   "```\n";
+            cursorPosition = SourcePosition.create(11, 0);      
+         }
+        
          eventBus_.fireEvent(
-            new NewDocumentWithCodeEvent(type, result.getConnectCode(), true));
+            new NewDocumentWithCodeEvent(type, code, cursorPosition, true));
       }
    }
    

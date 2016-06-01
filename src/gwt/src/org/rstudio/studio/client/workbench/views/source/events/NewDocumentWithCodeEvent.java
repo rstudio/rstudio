@@ -15,6 +15,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -31,10 +33,12 @@ public class NewDocumentWithCodeEvent
    
    public NewDocumentWithCodeEvent(String type,
                                    String code,
+                                   SourcePosition cursorPosition,
                                    boolean execute)
    {
       type_ = type;
       code_ = code;
+      cursorPosition_ = cursorPosition;
       execute_ = execute;
    }
 
@@ -46,6 +50,11 @@ public class NewDocumentWithCodeEvent
    public String getCode()
    {
       return code_;
+   }
+   
+   public SourcePosition getCursorPosition()
+   {
+      return cursorPosition_;
    }
    
    public boolean getExecute()
@@ -67,6 +76,7 @@ public class NewDocumentWithCodeEvent
 
    private final String type_;
    private final String code_;
+   private final SourcePosition cursorPosition_;
    private final boolean execute_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();

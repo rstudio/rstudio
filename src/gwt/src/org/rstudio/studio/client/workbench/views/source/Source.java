@@ -2395,9 +2395,63 @@ public class Source implements InsertSourceHandler,
             });
    }
    
-   public void onNewDocumentWithCode(NewDocumentWithCodeEvent event)
+   
+   
+   public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
-      globalDisplay_.showErrorMessage("RStudio", "Not yet implemented");
+      // determine the type
+      final EditableFileType docType;
+      if (event.getType().equals(NewDocumentWithCodeEvent.R_SCRIPT))
+         docType = FileTypeRegistry.R;
+      else
+         docType = FileTypeRegistry.RMARKDOWN;
+      
+      // command to create and run the new doc
+      Command newDocCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            newDoc(docType,  
+                  new ResultCallback<EditingTarget, ServerError>() {
+               public void onSuccess(EditingTarget arg)
+               {
+                  TextEditingTarget editingTarget = (TextEditingTarget)arg;
+                  editingTarget.insertCode(event.getCode(), false);
+                  
+                  if (event.getCursorPosition() != null)
+                  {
+                     editingTarget.navigateToPosition(event.getCursorPosition(),
+                                                      false);
+                  }
+                  
+                  if (event.getExecute())
+                  {
+                     if (docType.equals(FileTypeRegistry.R))
+                     {
+                        commands_.executeToCurrentLine().execute();
+                        commands_.activateSource().execute();
+                     }
+                     else
+                     {
+                        commands_.executePreviousChunks().execute();
+                     }
+                  }
+               }
+            });
+         }
+      };
+     
+      // do it
+      if (docType.equals(FileTypeRegistry.R))
+      {
+         newDocCommand.execute();
+      }
+      else
+      {
+         dependencyManager_.withRMarkdown("R Notebook",
+                                          "Create R Notebook", 
+                                          newDocCommand);
+      }
    }
    
     
