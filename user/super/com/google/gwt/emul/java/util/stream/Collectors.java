@@ -73,7 +73,8 @@ public final class Collectors {
   }
 
   public static <T> Collector<T,?,Long> counting() {
-    return reducing(0L, item -> 1L, Long::sum);
+    // Using Long::sum here fails in JDT
+    return reducing(0L, item -> 1L, (a, b) -> (Long) a.longValue() + b.longValue());
   }
 
   public static <T,K> Collector<T,?,Map<K,List<T>>> groupingBy(Function<? super T,? extends K> classifier) {
