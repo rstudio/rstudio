@@ -167,6 +167,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("markdown", "0.7"));
       deps.add(Dependency.cranPackage("stringr", "0.6"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       deps.add(Dependency.cranPackage("htmltools", "0.2.4"));
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
@@ -266,6 +267,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          String htmltoolsVersion)
          {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       deps.add(Dependency.cranPackage("httpuv", "1.3.3"));
       deps.add(Dependency.cranPackage("mime", "0.3"));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
@@ -340,7 +342,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("haven", "0.2.0"));
-      deps.add(Dependency.cranPackage("Rcpp", "0.11.4"));
+      deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
       return deps;
    }
    
