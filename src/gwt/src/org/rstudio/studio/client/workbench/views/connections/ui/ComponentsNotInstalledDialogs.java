@@ -33,7 +33,7 @@ public class ComponentsNotInstalledDialogs
    {
       String message = 
         "<p>There are no versions of Spark currently installed on this system.</p>" +
-        "<p>In order to connect to a Spark cluster please contact your system " +
+        "<p>Please contact your system " +
         "administrator to request installation of Spark.</p>";
       showDialog("Spark Not Installed", message, null);
    }
