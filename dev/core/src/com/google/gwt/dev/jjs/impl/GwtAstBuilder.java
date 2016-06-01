@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.AccessModifier;
 import com.google.gwt.dev.jjs.ast.CanHaveSuppressedWarnings;
+import com.google.gwt.dev.jjs.ast.HasJsInfo;
 import com.google.gwt.dev.jjs.ast.JArrayLength;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -1114,6 +1115,12 @@ public class GwtAstBuilder {
       // JDT synthesizes a method lambda$n(capture1, capture2, ..., lambda_arg1, lambda_arg2, ...)
       // Here we create a JMethod from this
       JMethod lambdaMethod = createMethodFromBinding(info, x.binding, paramNames);
+      // Because the lambda implementations is synthesized as a static method in the
+      // enclosing class, it needs to be adjusted if that class happens to be a JsType.
+      lambdaMethod.setJsMemberInfo(HasJsInfo.JsMemberType.NONE, null, null, false);
+      if (curClass.type.isJsNative()) {
+        lambdaMethod.setJsOverlay();
+      }
       JMethodBody methodBody = new JMethodBody(info);
       lambdaMethod.setBody(methodBody);
       // We need to push this method  on the stack as it introduces a scope, and
@@ -1332,7 +1339,6 @@ public class GwtAstBuilder {
       // First let's get that synthetic method we created in the visit() call on the
       // containing class?
       JMethod lambdaMethod = curMethod.method;
-
       // And pop off the body nodes of the LambdaExpression that was processed as children
       // Deal with any boxing/unboxing needed
       JNode node = pop();

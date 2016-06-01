@@ -1564,4 +1564,16 @@ public class Java8Test extends GWTTestCase {
     assertEquals(5,
         ((MyIntFuncToSomeIntegeFunction2) SomeInteger::new).apply(5, addInteger).m1());
   }
+
+  @JsType(isNative = true)
+  private static class NativeClassWithJsOverlay {
+    @JsOverlay
+    public static String m(String s) {
+      MyFunction1<String, String> id = (a) -> a;
+      return id.apply(s);
+    }
+  }
+  public void testNativeJsOverlay_lambda() {
+    assertSame("Hello", NativeClassWithJsOverlay.m("Hello"));
+  }
 }
