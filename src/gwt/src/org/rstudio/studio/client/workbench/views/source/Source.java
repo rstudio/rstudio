@@ -352,6 +352,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.knitWithParameters());
       dynamicCommands_.add(commands.goToNextSection());
       dynamicCommands_.add(commands.goToPrevSection());
+      dynamicCommands_.add(commands.goToNextChunk());
+      dynamicCommands_.add(commands.goToPrevChunk());
       dynamicCommands_.add(commands.profileCode());
       dynamicCommands_.add(commands.profileCodeWithoutFocus());
       dynamicCommands_.add(commands.saveProfileAs());
