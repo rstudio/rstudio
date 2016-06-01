@@ -181,6 +181,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       autoReconnect_ = new CheckBox(
             "Reconnect automatically if connection is dropped");
       autoReconnect_.setValue(lastResult_.getReconnect());
+      autoReconnect_.setVisible(false);
       container.add(autoReconnect_);
     
       // manage visiblity of master UI components
@@ -189,7 +190,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          public void execute()
          {
             boolean local = master_.isLocalMaster(master_.getSelection());
-            autoReconnect_.setVisible(!local);
+            // don't ever show autoReconnect for now
+            // autoReconnect_.setVisible(!local);
             if (local)
                masterGrid.removeStyleName(RES.styles().remote());
             else
