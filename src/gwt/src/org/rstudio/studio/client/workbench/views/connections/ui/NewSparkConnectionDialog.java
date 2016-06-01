@@ -385,7 +385,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             }
             
             // cores if not default
-            if (cores_.getSelectedIndex() != 0)
+            boolean local = master_.isLocalMaster(master_.getSelection());
+            if (local && (cores_.getSelectedIndex() != 0))
             {
                builder.append(", cores = ");
                if (cores_.getSelectedIndex() == 0)
@@ -395,8 +396,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             }
             
             // reconnect if appropriate and not default
-            if (!master_.isLocalMaster(master_.getSelection()) &&
-                autoReconnect_.getValue())
+            if (!local && autoReconnect_.getValue())
             {
                builder.append(", reconnect = TRUE");
             }
