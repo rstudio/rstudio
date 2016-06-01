@@ -80,7 +80,8 @@
 * Diagnostics: fix false positive errors with '{' following function calls
 * Diagnostics: engine better understands 'data()' calls (fixes 'no symbol in scope' false positive)
 * Improved performance of document tokenization (fix laggy typing)
-* Fix block commenting of Sweave chunks
+* Sweave: Fix block commenting of chunks
+* Sweave: Fixed an issue where TOC headings weren't displayed in document outline
 * Fix highlighting of escaped '$' in inline Mathjax expressions
 * Fix editor preview vanishing on zoom level change
 * Emacs mode: C-f now moves the cursor forward instead of opening Find dialog
