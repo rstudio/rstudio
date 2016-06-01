@@ -67,11 +67,18 @@ options(connectionViewer = list(
     context$cores <- 1
   context$cores <- .rs.scalar(context$cores)
 
-  # available spark versions
-  context$spark_versions <- rspark:::spark_versions()
+  # can we install new versions
+  context$can_install_spark_versions <- .rs.scalar(rspark:::spark_can_install())
+
+  # available spark versions (filter by installed if we can't install
+  # new versions of spark)
+  spark_versions <- rspark:::spark_versions()
+  if (!context$can_install_spark_versions)
+    spark_versions <- subset(spark_versions, spark_versions$installed)
+  context$spark_versions <- spark_versions
 
   # is java installed?
-  context$java_installed<- .rs.scalar(rspark:::is_java_available())
+  context$java_installed <- .rs.scalar(rspark:::is_java_available())
   context$java_install_url <- .rs.scalar(rspark:::java_install_url())
 
   context

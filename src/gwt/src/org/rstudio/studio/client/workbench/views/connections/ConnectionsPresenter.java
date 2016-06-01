@@ -61,7 +61,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
-import org.rstudio.studio.client.workbench.views.connections.ui.JavaNotInstalledDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -245,8 +245,20 @@ public class ConnectionsPresenter extends BasePresenter
             @Override
             protected void onSuccess(NewSparkConnectionContext context)
             {
-               // proceed if java is installed
-               if (context.isJavaInstalled())
+               // prompt for no java installed
+               if (!context.isJavaInstalled())
+               {
+                  ComponentsNotInstalledDialogs.showJavaNotInstalled(context.getJavaInstallUrl());
+               }
+               
+               // prompt for no spark installed
+               else if (context.getSparkVersions().length() == 0)
+               {
+                  ComponentsNotInstalledDialogs.showSparkNotInstalled();
+               }
+               
+               // otherwise proceed with connecting
+               else
                {
                   // show dialog
                   new NewSparkConnectionDialog(
@@ -269,13 +281,7 @@ public class ConnectionsPresenter extends BasePresenter
                      }
                   }).showModal();
                }
-               // otherwise prompt re: java requirement
-               else
-               {
-                  JavaNotInstalledDialog.show(context.getJavaInstallUrl());
-               }
             }
-            
          });      
    }
    

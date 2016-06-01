@@ -38,6 +38,10 @@ public class NewSparkConnectionContext extends JavaScriptObject
       return this.spark_versions;
    }-*/;
    
+   public final native boolean getCanInstallSparkVersions() /*-{
+      return this.can_install_spark_versions;
+   }-*/; 
+   
    public final native boolean isJavaInstalled() /*-{
       return this.java_installed;
    }-*/;

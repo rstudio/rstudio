@@ -1,5 +1,5 @@
 /*
- * JavaNotInstalledDialog.java
+ * ComponentsNotInstalledDialogs.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -27,62 +27,80 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class JavaNotInstalledDialog 
+public class ComponentsNotInstalledDialogs 
 {
-   public static void show(final String installUrl)
+   public static void showSparkNotInstalled()
    {
-      NewSparkConnectionDialog.Styles styles = 
-                              NewSparkConnectionDialog.RES.styles();
-      VerticalPanel verticalPanel = new VerticalPanel();
-      verticalPanel.addStyleName(styles.javaNotInstalledWidget());
-      
-     
-      HTML msg = new HTML();
-      msg.setWidth("100%");
-      
+      String message = 
+        "<p>There are no versions of Spark currently installed on this system.</p>" +
+        "<p>In order to connect to a Spark cluster please contact your system " +
+        "administrator to request installation of Spark.</p>";
+      showDialog("Spark Not Installed", message, null);
+   }
+   
+   public static void showJavaNotInstalled(String installUrl)
+   {    
       StringBuilder builder = new StringBuilder();
       builder.append(
          "<p>In order to connect to a local or remote Spark " +
-         "cluster your system needs to have Java installed. " +
-          "No version of Java was detected on this system.</p>");
+         "cluster your system needs to have Java installed (" +
+          "no version of Java was detected).</p>");
       
+      String url = null;
       if (Desktop.isDesktop())
       {
          builder.append(
            "<p>Click the link below to navigate to the Java website where " +
            "you will find instructions for installing Java (note that you " + 
            "may also need to restart RStudio after installing Java).</p>");
-         
-         msg.setHTML(builder.toString());
-         verticalPanel.add(msg);
-         
-         HyperlinkLabel link = new HyperlinkLabel(installUrl, 
-                                                  new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               RStudioGinjector.INSTANCE.getGlobalDisplay()
-                                             .openWindow(installUrl);
-            }
-            
-         });
-         link.addStyleName(styles.javaInstallLink());
-         verticalPanel.add(link);
+        
+         url = installUrl;
       }
       else
       {
          builder.append(
-            "<p>You should request that your " +
-            "server administrator install Java on this system.</p>");
-             
-         msg.setHTML(builder.toString());
-         verticalPanel.add(msg);
+            "<p>Please contact your server administrator to request the " + 
+            "installation of Java on this system.</p>");
+      }
+      
+      showDialog("Java Required for Spark Connections", 
+                 builder.toString(), 
+                 url);
+   }
+   
+   private static void showDialog(String caption, 
+                                  String message, 
+                                  final String url)
+   {
+      NewSparkConnectionDialog.Styles styles = 
+            NewSparkConnectionDialog.RES.styles();
+      VerticalPanel verticalPanel = new VerticalPanel();
+      verticalPanel.addStyleName(styles.componentNotInstalledWidget());
+
+      HTML msg = new HTML(message);
+      msg.setWidth("100%");
+      verticalPanel.add(msg);
+      
+      if (url != null)
+      {
+         HyperlinkLabel link = new HyperlinkLabel(url, 
+               new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event)
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay()
+               .openWindow(url);
+            }
+
+         });
+         link.addStyleName(styles.componentInstallLink());
+         verticalPanel.add(link);
       }
       
       MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
-                                            "Java Required for Spark Connections",
-                                            verticalPanel);
-      
+            caption,
+            verticalPanel);
+
       dlg.addButton("OK", (Operation)null, true, false);
       dlg.showModal();
    }

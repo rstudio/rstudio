@@ -505,8 +505,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       String codeViewer();
       String codeGrid();
       String leftLabel();
-      String javaNotInstalledWidget();
-      String javaInstallLink();
+      String componentNotInstalledWidget();
+      String componentInstallLink();
    }
 
    public interface Resources extends ClientBundle
