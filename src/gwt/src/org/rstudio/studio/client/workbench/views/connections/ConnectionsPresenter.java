@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
+import org.rstudio.studio.client.workbench.views.connections.ui.JavaNotInstalledDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -244,26 +245,35 @@ public class ConnectionsPresenter extends BasePresenter
             @Override
             protected void onSuccess(NewSparkConnectionContext context)
             {
-               // show dialog
-               new NewSparkConnectionDialog(
-                context,
-                new OperationWithInput<NewSparkConnectionDialog.Result>() {
-                  @Override
-                  public void execute(final Result result)
-                  {
-                     withRequiredSparkInstallation(
-                           result.getSparkVersion(),
-                           result.getRemote(),
-                           new Command() {
-                              @Override
-                              public void execute()
-                              {
-                                 performConnection(result);
-                              }
-                              
-                           });
-                  }
-               }).showModal();;
+               // proceed if java is installed
+               if (!context.isJavaInstalled())
+               {
+                  // show dialog
+                  new NewSparkConnectionDialog(
+                   context,
+                   new OperationWithInput<NewSparkConnectionDialog.Result>() {
+                     @Override
+                     public void execute(final Result result)
+                     {
+                        withRequiredSparkInstallation(
+                              result.getSparkVersion(),
+                              result.getRemote(),
+                              new Command() {
+                                 @Override
+                                 public void execute()
+                                 {
+                                    performConnection(result);
+                                 }
+                                 
+                              });
+                     }
+                  }).showModal();
+               }
+               // otherwise prompt re: java requirement
+               else
+               {
+                  JavaNotInstalledDialog.show(context.getJavaInstallUrl());
+               }
             }
             
          });      

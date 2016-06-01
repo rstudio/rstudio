@@ -70,6 +70,10 @@ options(connectionViewer = list(
   # available spark versions
   context$spark_versions <- rspark:::spark_versions()
 
+  # is java installed?
+  context$java_installed<- .rs.scalar(rspark:::is_java_available())
+  context$java_install_url <- .rs.scalar(rspark:::java_install_url())
+
   context
 })
 

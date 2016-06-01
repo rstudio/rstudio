@@ -37,4 +37,12 @@ public class NewSparkConnectionContext extends JavaScriptObject
    public final native JsArray<SparkVersion> getSparkVersions() /*-{
       return this.spark_versions;
    }-*/;
+   
+   public final native boolean isJavaInstalled() /*-{
+      return this.java_installed;
+   }-*/;
+   
+   public final native String getJavaInstallUrl() /*-{
+      return this.java_install_url;
+   }-*/;
 }
