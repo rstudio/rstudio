@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.HashSet;
+
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -199,7 +201,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
                            commandSelectionChangeHandler(manageMasterUI));
       
       // versions
-      Grid versionGrid = new Grid(1, 2);
+      Grid versionGrid = new Grid(2, 2);
       versionGrid.addStyleName(RES.styles().grid());
       versionGrid.addStyleName(RES.styles().versionGrid());
       Label sparkLabel = new Label("Spark version:");
@@ -207,23 +209,81 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       versionGrid.setWidget(0, 0, sparkLabel);
       sparkVersion_ = new ListBox();
       sparkVersion_.addStyleName(RES.styles().spanningInput());
-      final JsArray<SparkVersion> sparkVersions = context_.getSparkVersions();
-      int defaultIndex = -1;
+      final JsArray<SparkVersion> sparkVersions = getAvailableSparkVersions();
+      int defaultIndex = 0;
+      HashSet<String> numbers =  new HashSet<String>();
       for (int i = 0; i<sparkVersions.length(); i++)
       {
          SparkVersion sparkVersion = sparkVersions.get(i);
-         String label = "Spark " + sparkVersion.getSparkVersionNumber() + 
-                        " for " + sparkVersion.getHadoopVersionLabel();
-         sparkVersion_.addItem(label, sparkVersion.getId());
-         if (sparkVersion.isDefault())
-            defaultIndex = i;
+         String number = sparkVersion.getSparkVersionNumber();
+         if (!numbers.contains(number))
+         {
+            numbers.add(number);
+            sparkVersion_.addItem("Spark " + number, number);
+            if (sparkVersion.isDefault())
+               defaultIndex = sparkVersion_.getItemCount() - 1;
+         }
       }
       // set default (from last result if possible)
-      if (lastResult_.getSparkVersion() != null)
-         setValue(sparkVersion_, lastResult_.getSparkVersion().getId());
-      else if (defaultIndex != -1)
+      SparkVersion defaultSparkVersion = getDefaultSparkVersion();
+      if (defaultSparkVersion != null)
+      {
+         if (!setValue(sparkVersion_, defaultSparkVersion.getSparkVersionNumber()))
+         {
+            // failsafe
+            sparkVersion_.setSelectedIndex(defaultIndex);
+         }
+      }
+      else
+      {
          sparkVersion_.setSelectedIndex(defaultIndex);
-      versionGrid.setWidget(0, 1, sparkVersion_);  
+      }
+      versionGrid.setWidget(0, 1, sparkVersion_); 
+      
+      versionGrid.setWidget(1, 0, new Label("Hadoop version:"));
+      hadoopVersion_ = new ListBox();
+      hadoopVersion_.addStyleName(RES.styles().spanningInput());
+      final Command updateHadoopVersionsCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            boolean firstExecution = hadoopVersion_.getItemCount() == 0;
+            int defaultIndex = 0;
+            hadoopVersion_.clear();
+            String sparkVersionNumber = sparkVersion_.getSelectedValue();
+            for (int i = 0; i<sparkVersions.length(); i++)
+            {
+               SparkVersion sparkVersion = sparkVersions.get(i);
+               if (sparkVersion.getSparkVersionNumber().equals(sparkVersionNumber))
+               {
+                  hadoopVersion_.addItem(sparkVersion.getHadoopVersionLabel(),
+                                         sparkVersion.getId());
+                  if (sparkVersion.isHadoopDefault())
+                     defaultIndex = hadoopVersion_.getItemCount() - 1;
+               }
+            }
+            
+            // if this is the first execution and we have lastResult_ 
+            // then set the index to that, otherwise use defaultIndex
+            SparkVersion defaultSparkVersion = getDefaultSparkVersion();
+            if (firstExecution && (defaultSparkVersion != null))
+            {
+               if (!setValue(hadoopVersion_, defaultSparkVersion.getId()))
+               {
+                  // failsafe
+                  hadoopVersion_.setSelectedIndex(defaultIndex);
+               }
+            }
+            else
+            {
+               hadoopVersion_.setSelectedIndex(defaultIndex);
+            }
+         }
+      };
+      updateHadoopVersionsCommand.execute();
+      versionGrid.setWidget(1, 1, hadoopVersion_); 
+      sparkVersion_.addChangeHandler(
+            commandChangeHandler(updateHadoopVersionsCommand));
       container.add(versionGrid);
         
       // info regarding installation
@@ -234,10 +294,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       Command updateInfoPanel = new Command() {
          @Override
          public void execute()
-         {
-            SparkVersion sparkVersion = 
-              context_.getSparkVersions()
-                             .get(sparkVersion_.getSelectedIndex());
+         {   
+            SparkVersion sparkVersion = getSelectedSparkVersion();
             
             boolean remote = !master_.isLocalMaster(master_.getSelection());
             
@@ -249,6 +307,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       updateInfoPanel.execute();
       master_.addSelectionChangeHandler(commandSelectionChangeHandler(updateInfoPanel));
       sparkVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
+      hadoopVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
       
       // add the code viewer
       Grid codeGrid = new Grid(2, 1);
@@ -334,9 +393,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             builder.append(master_.getSelection());
            
             // spark version
-            SparkVersion sparkVersion = 
-                  context_.getSparkVersions()
-                                 .get(sparkVersion_.getSelectedIndex());
+            SparkVersion sparkVersion = getSelectedSparkVersion();
             builder.append("\", version = \"");
             builder.append(sparkVersion.getSparkVersionNumber());
             builder.append("\"");
@@ -382,6 +439,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       });
       cores_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       sparkVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
+      hadoopVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       codeGrid.setWidget(1, 0, codeViewer_);
       container.add(codeGrid);
      
@@ -392,18 +450,13 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    @Override
    protected Result collectInput()
    {     
-      // spark and hadoop versions
-      SparkVersion sparkVersion = 
-            context_.getSparkVersions()
-                           .get(sparkVersion_.getSelectedIndex());
-     
       // collect the result
       Result result = Result.create(
             master_.getSelection(),
             !master_.isLocalMaster(master_.getSelection()),
             autoReconnect_.getValue(),
             cores_.getSelectedValue(),
-            sparkVersion,
+            getSelectedSparkVersion(),
             codeViewer_.getEditor().getSession().getValue(),
             connectVia_.getSelectedValue());
       
@@ -427,7 +480,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          @Override
          public void onChange(ChangeEvent event)
          {
-            command.execute();
+            if (getSelectedSparkVersion() != null)
+               command.execute();
          }   
       };
    }
@@ -440,7 +494,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          @Override
          public void onSelectionChange(SelectionChangeEvent event)
          {
-            command.execute();;
+            if (getSelectedSparkVersion() != null)
+               command.execute();;
          }
       };
    }
@@ -454,6 +509,57 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             return true;
          }
       return false;
+   }
+   
+   private JsArray<SparkVersion> getAvailableSparkVersions()
+   {
+      return context_.getSparkVersions();
+   }
+   
+   private SparkVersion getDefaultSparkVersion()
+   {
+      JsArray<SparkVersion> sparkVersions = getAvailableSparkVersions();
+      
+      // use the last result
+      if (lastResult_.getSparkVersion() != null)
+      {
+         String versionId = lastResult_.getSparkVersion().getId();
+         for (int i=0; i<sparkVersions.length(); i++)
+         {
+            SparkVersion sparkVersion = sparkVersions.get(i);
+            if (sparkVersion.getId().equals(versionId))
+               return sparkVersion;
+         }
+      }
+      
+      // if we didn't get a match then scan for default within the data
+      for (int i=0; i<sparkVersions.length(); i++)
+      {
+         SparkVersion sparkVersion = sparkVersions.get(i);
+         if (sparkVersion.isDefault())
+            return sparkVersion;
+      }
+      
+      // failsafe is just to return the first version
+      return sparkVersions.get(0);
+   }
+   
+   private SparkVersion getSelectedSparkVersion()
+   {
+      if (hadoopVersion_.getItemCount() > 0 &&
+          hadoopVersion_.getSelectedIndex() != -1)
+      {
+         String id = hadoopVersion_.getValue(hadoopVersion_.getSelectedIndex());
+         JsArray<SparkVersion> sparkVersions = getAvailableSparkVersions();
+         for (int i = 0; i < sparkVersions.length(); i++) 
+         {
+            SparkVersion sparkVersion = sparkVersions.get(i);
+            if (sparkVersion.getId().equals(id))
+               return sparkVersion;
+         }
+      }
+     
+      return null;
    }
    
    private class NewSparkConnectionClientState extends JSObjectStateValue
@@ -527,6 +633,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    private CheckBox autoReconnect_;
    private ListBox cores_;
    private ListBox sparkVersion_;
+   private ListBox hadoopVersion_;
    private ListBox connectVia_;
    private AceEditorWidget codeViewer_;
       
