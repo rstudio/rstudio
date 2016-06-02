@@ -216,7 +216,8 @@ Error installSpark(const json::JsonRpcRequest& request,
    options.redirectStdErrToStdOut = true;
 
    // build install command
-   boost::format fmt("rspark::spark_install('%1%', hadoop_version = '%2%')");
+   boost::format fmt("rspark::spark_install('%1%', hadoop_version = '%2%', "
+                     "verbose = TRUE)");
    std::string cmd = boost::str(fmt % sparkVersion % hadoopVersion);
 
    // build args
@@ -276,7 +277,7 @@ void onInstalledPackagesChanged()
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.6");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.7");
 }
 
 bool activateConnections()
