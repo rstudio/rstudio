@@ -210,7 +210,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       sparkVersion_ = new ListBox();
       sparkVersion_.addStyleName(RES.styles().spanningInput());
       final JsArray<SparkVersion> sparkVersions = getAvailableSparkVersions();
-      int defaultIndex = 0;
+      String defaultVersionNumber = null;
       HashSet<String> numbers =  new HashSet<String>();
       for (int i = 0; i<sparkVersions.length(); i++)
       {
@@ -220,9 +220,9 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          {
             numbers.add(number);
             sparkVersion_.addItem("Spark " + number, number);
-            if (sparkVersion.isDefault())
-               defaultIndex = sparkVersion_.getItemCount() - 1;
          }
+         if (sparkVersion.isDefault())
+            defaultVersionNumber = number;
       }
       // set default (from last result if possible)
       SparkVersion defaultSparkVersion = getDefaultSparkVersion();
@@ -231,12 +231,12 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          if (!setValue(sparkVersion_, defaultSparkVersion.getSparkVersionNumber()))
          {
             // failsafe
-            sparkVersion_.setSelectedIndex(defaultIndex);
+            setValue(sparkVersion_, defaultVersionNumber);
          }
       }
       else
       {
-         sparkVersion_.setSelectedIndex(defaultIndex);
+         setValue(sparkVersion_, defaultVersionNumber);
       }
       versionGrid.setWidget(0, 1, sparkVersion_); 
       
