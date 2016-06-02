@@ -2,6 +2,7 @@
 
 @external gwt-Label;
 @external gwt-Image;
+@external macintosh;
 
 
 .grid {
@@ -57,7 +58,11 @@
   border: 1px solid #BBB !important;
   background-color: #FFF;
   width: 450px !important;
-  height: 55px !important;
+  height: 85px !important;
+  font-size: 9pt;
+}
+
+.macintosh .codeViewer {
   font-size: 8pt;
 }
 
