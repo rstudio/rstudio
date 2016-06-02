@@ -38,12 +38,17 @@ public interface Collector<T,A,R> {
 
   /**
    * See <a
-   * href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.Characteristics.html">the
-   * official Java API doc</a> for details.
+   * href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Collector.Characteristics.html">
+   * the official Java API doc</a> for details.
    */
   enum Characteristics { CONCURRENT, IDENTITY_FINISH, UNORDERED }
 
-  static <T,A,R> Collector<T,A,R> of(Supplier<A> supplier, BiConsumer<A,T> accumulator, BinaryOperator<A> combiner, Function<A,R> finisher, Collector.Characteristics... characteristics) {
+  static <T, A, R> Collector<T, A, R> of(
+      Supplier<A> supplier,
+      BiConsumer<A, T> accumulator,
+      BinaryOperator<A> combiner,
+      Function<A, R> finisher,
+      Characteristics... characteristics) {
     checkNotNull(supplier);
     checkNotNull(accumulator);
     checkNotNull(combiner);
@@ -58,12 +63,16 @@ public interface Collector<T,A,R> {
     );
   }
 
-  static <T,R> Collector<T,R,R> of(Supplier<R> supplier, BiConsumer<R,T> accumulator, BinaryOperator<R> combiner, Collector.Characteristics... characteristics) {
+  static <T, R> Collector<T, R, R> of(
+      Supplier<R> supplier,
+      BiConsumer<R, T> accumulator,
+      BinaryOperator<R> combiner,
+      Characteristics... characteristics) {
     checkNotNull(supplier);
     checkNotNull(accumulator);
     checkNotNull(combiner);
     checkNotNull(characteristics);
-    return new CollectorImpl<>(
+    return new CollectorImpl<T, R, R>(
         supplier,
         accumulator,
         combiner,
@@ -76,7 +85,7 @@ public interface Collector<T,A,R> {
 
   BiConsumer<A,T> accumulator();
 
-  Set<Collector.Characteristics> characteristics();
+  Set<Characteristics> characteristics();
 
   BinaryOperator<A> combiner();
 
@@ -85,14 +94,19 @@ public interface Collector<T,A,R> {
   /**
    * Simple internal implementation of a collector, holding each of the functions in a field.
    */
-  static final class CollectorImpl<T, A, R> implements Collector<T, A, R> {
+  final class CollectorImpl<T, A, R> implements Collector<T, A, R> {
     private final Supplier<A> supplier;
     private final BiConsumer<A, T> accumulator;
-    private final Set<Collector.Characteristics> characteristics;
+    private final Set<Characteristics> characteristics;
     private final BinaryOperator<A> combiner;
     private final Function<A, R> finisher;
 
-    public CollectorImpl(Supplier<A> supplier, BiConsumer<A, T> accumulator, BinaryOperator<A> combiner, Function<A, R> finisher, Characteristics... characteristics) {
+    public CollectorImpl(
+        Supplier<A> supplier,
+        BiConsumer<A, T> accumulator,
+        BinaryOperator<A> combiner,
+        Function<A, R> finisher,
+        Characteristics... characteristics) {
       this.supplier = supplier;
       this.accumulator = accumulator;
       if (characteristics.length == 0) {
@@ -100,13 +114,19 @@ public interface Collector<T,A,R> {
       } else if (characteristics.length == 1) {
         this.characteristics = Collections.singleton(characteristics[0]);
       } else {
-        this.characteristics = Collections.unmodifiableSet(EnumSet.of(characteristics[0], characteristics));
+        this.characteristics =
+            Collections.unmodifiableSet(EnumSet.of(characteristics[0], characteristics));
       }
       this.combiner = combiner;
       this.finisher = finisher;
     }
 
-    public CollectorImpl(Supplier<A> supplier, BiConsumer<A, T> accumulator, BinaryOperator<A> combiner, Function<A, R> finisher, Set<Characteristics> characteristics) {
+    public CollectorImpl(
+        Supplier<A> supplier,
+        BiConsumer<A, T> accumulator,
+        BinaryOperator<A> combiner,
+        Function<A, R> finisher,
+        Set<Characteristics> characteristics) {
       this.supplier = supplier;
       this.accumulator = accumulator;
       this.combiner = combiner;

@@ -96,7 +96,8 @@ public class CollectorsTest extends EmulTestBase {
   }
 
   public void testCollectingAndThen() {
-    Collector<Object, ?, List<Object>> listIdentityCollector = collectingAndThen(toList(), Function.identity());
+    Collector<Object, ?, List<Object>> listIdentityCollector =
+        collectingAndThen(toList(), Function.identity());
     // same test as toList():
     // same items (allow dups)
     applyItems(
@@ -142,9 +143,11 @@ public class CollectorsTest extends EmulTestBase {
     applyItems(mapOfLists, c1, "a", "b");
 
     assertZeroItemsCollectedAs(Collections.emptyMap(), c1);
-    assertSingleItemCollectedAs(Collections.singletonMap("a", Collections.singletonList("a")), c1, "a");
+    assertSingleItemCollectedAs(
+        Collections.singletonMap("a", Collections.singletonList("a")), c1, "a");
 
-    Collector<String, ?, LinkedHashMap<String, Set<String>>> c2 = groupingBy(Function.identity(), LinkedHashMap::new, toSet());
+    Collector<String, ?, LinkedHashMap<String, Set<String>>> c2 =
+        groupingBy(Function.identity(), LinkedHashMap::new, toSet());
 
     LinkedHashMap<String, Set<String>> linkedMapOfSets = new LinkedHashMap<>();
     linkedMapOfSets.put("a", Collections.singleton("a"));
@@ -154,7 +157,8 @@ public class CollectorsTest extends EmulTestBase {
     linkedMapOfSets.put("b", Collections.singleton("b"));
     applyItems(linkedMapOfSets, c2, "a", "b");
 
-    // check to make sure we actually get the linked results, and that they are ordered how we want them
+    // check to make sure we actually get the linked results, and that they are ordered how we want
+    // them
     LinkedHashMap<String, Set<String>> out = applyItemsWithoutSplitting(c2, "a", "b");
     assertEquals(Arrays.asList("a", "b"), new ArrayList<>(out.keySet()));
     out = applyItemsWithoutSplitting(c2, "b", "a");
@@ -260,10 +264,13 @@ public class CollectorsTest extends EmulTestBase {
     applyItems(mapOfLists, c1, false, false);
 
     assertZeroItemsCollectedAs(Collections.emptyMap(), c1);
-    assertSingleItemCollectedAs(Collections.singletonMap(true, Collections.singletonList(true)), c1, true);
-    assertSingleItemCollectedAs(Collections.singletonMap(false, Collections.singletonList(false)), c1, false);
+    assertSingleItemCollectedAs(
+        Collections.singletonMap(true, Collections.singletonList(true)), c1, true);
+    assertSingleItemCollectedAs(
+        Collections.singletonMap(false, Collections.singletonList(false)), c1, false);
 
-    Collector<Boolean, ?, Map<Boolean, Set<Boolean>>> c2 = partitioningBy(Boolean::valueOf, toSet());
+    Collector<Boolean, ?, Map<Boolean, Set<Boolean>>> c2 =
+        partitioningBy(Boolean::valueOf, toSet());
 
     Map<Boolean, Set<Boolean>> mapOfSets = new HashMap<>();
     mapOfSets.put(true, Collections.singleton(true));
@@ -439,12 +446,16 @@ public class CollectorsTest extends EmulTestBase {
   }
 
   /**
-   * This method attempts to apply a collector to items as a stream might do, so that we
-   * can simply verify the output. Taken from the Collector class's javadoc.
+   * This method attempts to apply a collector to items as a stream might do, so that we can simply
+   * verify the output. Taken from the Collector class's javadoc.
    */
-  private static <T, A, R> void applyItems(R expected, Collector<T, A, R> collector, T t1, T t2, BiPredicate<R, R> equals) {
-    assertTrue("failed without splitting", equals.test(expected, applyItemsWithoutSplitting(collector, t1, t2)));
-    assertTrue("failed with splitting", equals.test(expected, applyItemsWithSplitting(collector, t1, t2)));
+  private static <T, A, R> void applyItems(
+      R expected, Collector<T, A, R> collector, T t1, T t2, BiPredicate<R, R> equals) {
+    assertTrue(
+        "failed without splitting",
+        equals.test(expected, applyItemsWithoutSplitting(collector, t1, t2)));
+    assertTrue(
+        "failed with splitting", equals.test(expected, applyItemsWithSplitting(collector, t1, t2)));
   }
 
   /**
@@ -495,11 +506,13 @@ public class CollectorsTest extends EmulTestBase {
     return r2;
   }
 
-  private static <T, A, R> void assertZeroItemsCollectedAs(R expected, Collector<T, A, R> collector) {
+  private static <T, A, R> void assertZeroItemsCollectedAs(
+      R expected, Collector<T, A, R> collector) {
     assertZeroItemsCollectedAs(expected, collector, Object::equals);
   }
 
-  private static <T, A, R> void assertZeroItemsCollectedAs(R expected, Collector<T, A, R> collector, BiPredicate<R, R> equals) {
+  private static <T, A, R> void assertZeroItemsCollectedAs(
+      R expected, Collector<T, A, R> collector, BiPredicate<R, R> equals) {
     Supplier<A> supplier = collector.supplier();
     // unused in this impl
     BiConsumer<A, T> accumulator = collector.accumulator();
@@ -514,11 +527,13 @@ public class CollectorsTest extends EmulTestBase {
     assertTrue(equals, expected, actual);
   }
 
-  private static <T, A, R> void assertSingleItemCollectedAs(R expected, Collector<T, A, R> collector, T item) {
+  private static <T, A, R> void assertSingleItemCollectedAs(
+      R expected, Collector<T, A, R> collector, T item) {
     assertSingleItemCollectedAs(expected, collector, item, Object::equals);
   }
 
-  private static <T, A, R> void assertSingleItemCollectedAs(R expected, Collector<T, A, R> collector, T item, BiPredicate<R, R> equals) {
+  private static <T, A, R> void assertSingleItemCollectedAs(
+      R expected, Collector<T, A, R> collector, T item, BiPredicate<R, R> equals) {
     Supplier<A> supplier = collector.supplier();
     BiConsumer<A, T> accumulator = collector.accumulator();
     // shouldn't really be used, just handy to poke the internals quick
