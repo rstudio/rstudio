@@ -458,7 +458,7 @@ public final class String implements Comparable<String>, CharSequence,
 
   @Override
   public int hashCode() {
-    return HashCodes.hashCodeForString(this);
+    return HashCodes.getStringHashCode(this);
   }
 
   public int indexOf(int codePoint) {

@@ -89,12 +89,8 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   public boolean booleanValue() {
-    return unsafeCast(checkNotNull(this));
+    return JsUtils.unsafeCastToBoolean(checkNotNull(this));
   }
-
-  private static native boolean unsafeCast(Object value) /*-{
-    return value;
-  }-*/;
 
   @Override
   public int compareTo(Boolean b) {

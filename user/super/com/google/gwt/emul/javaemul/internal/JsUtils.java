@@ -36,9 +36,16 @@ public class JsUtils {
     return value === undefined;
   }-*/;
 
-  // TODO(goktug): replace this with a real cast when the compiler can optimize it.
   public static native String unsafeCastToString(Object string) /*-{
    return string;
+  }-*/;
+
+  public static native double unsafeCastToDouble(Object number) /*-{
+   return number;
+  }-*/;
+
+  public static native boolean unsafeCastToBoolean(Object bool) /*-{
+   return bool;
   }-*/;
 
   public static native <T> T getProperty(Object map, String key) /*-{

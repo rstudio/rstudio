@@ -67,6 +67,7 @@ java_library(
         exclude = [
             "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
             "**/EmulatedCharset.java",
+            "**/HashCodes.java", # relies on java8 only APIs
             "**/RunStyleSelenium.java",
         ],
     ),

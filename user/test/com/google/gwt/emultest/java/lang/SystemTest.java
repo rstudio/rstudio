@@ -297,6 +297,21 @@ public class SystemTest extends GWTTestCase {
     assertEquals('a', charDest[offset + manyNulls.length]);
   }
 
+  public void testIdentityHashCode() {
+    String s = "str";
+    assertEquals(System.identityHashCode(s), System.identityHashCode(s));
+
+    Double d = 42d;
+    assertEquals(System.identityHashCode(d), System.identityHashCode(d));
+
+    Boolean b = true;
+    assertEquals(System.identityHashCode(b), System.identityHashCode(b));
+
+    Object o = new Object();
+    assertEquals(System.identityHashCode(o), System.identityHashCode(o));
+    assertNotSame(System.identityHashCode(o), System.identityHashCode(new Object()));
+  }
+
   @DoNotRunWith(Platform.Devel)
   public void testGetProperty() {
     if (TestUtils.isJvm()) {

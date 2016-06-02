@@ -19,33 +19,24 @@ package javaemul.internal;
  * Contains logics for calculating hash codes in JavaScript.
  */
 public class HashCodes {
-
-  private static int sNextHashId = 0;
-  private static final String HASH_CODE_PROPERTY = "$H";
-
-  public static int hashCodeForString(String s) {
-    return StringHashCache.getHashCode(s);
-  }
-
   public static int getIdentityHashCode(Object o) {
-    if (o == null) {
-      return 0;
+    switch (JsUtils.typeOf(o)) {
+      case "string":
+        return getStringHashCode(JsUtils.unsafeCastToString(o));
+      case "number":
+        return Double.hashCode(JsUtils.unsafeCastToDouble(o));
+      case "boolean":
+        return Boolean.hashCode(JsUtils.unsafeCastToBoolean(o));
+      default:
+        return o == null ? 0 : getObjectIdentityHashCode(o);
     }
-    return o instanceof String
-        ?  hashCodeForString(JsUtils.unsafeCastToString(o)) : getObjectIdentityHashCode(o);
   }
 
-  public static native int getObjectIdentityHashCode(Object o) /*-{
-    return o.$H || (o.$H = @HashCodes::getNextHashId()());
-  }-*/;
+  public static int getObjectIdentityHashCode(Object o) {
+    return ObjectHashing.getHashCode(o);
+  }
 
-  /**
-   * Called from JSNI. Do not change this implementation without updating:
-   * <ul>
-   * <li>{@link com.google.gwt.user.client.rpc.impl.SerializerBase}</li>
-   * </ul>
-   */
-  private static int getNextHashId() {
-    return ++sNextHashId;
+  public static int getStringHashCode(String s) {
+    return StringHashCache.getHashCode(s);
   }
 }

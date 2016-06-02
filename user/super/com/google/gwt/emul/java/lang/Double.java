@@ -323,12 +323,8 @@ public final class Double extends Number implements Comparable<Double> {
 
   @Override
   public double doubleValue() {
-    return unsafeCast(checkNotNull(this));
+    return JsUtils.unsafeCastToDouble(checkNotNull(this));
   }
-
-  private static native double unsafeCast(Object instance) /*-{
-    return instance;
-  }-*/;
 
   @Override
   public boolean equals(Object o) {
