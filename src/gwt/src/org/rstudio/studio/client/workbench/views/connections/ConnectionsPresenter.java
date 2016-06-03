@@ -91,6 +91,9 @@ public class ConnectionsPresenter extends BasePresenter
       HasClickHandlers backToConnectionsButton();
       
       void showConnectionsList();
+      
+      void clearConnectionExplorer();
+      void addToConnectionExplorer(String item);
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -203,6 +206,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
    {     
+      display_.addToConnectionExplorer(event.getHint());
    }
    
    public void onConnectionListChanged(ConnectionListChangedEvent event)
@@ -212,6 +216,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onActiveConnectionsChanged(ActiveConnectionsChangedEvent event)
    {
+      display_.clearConnectionExplorer();
       updateActiveConnections(event.getActiveConnections());
    }
    

@@ -38,9 +38,9 @@ options(connectionViewer = list(
       .rs.validateCharacterParams(list(type = type, host = host))
       invisible(.Call("rs_connectionClosed", type, host))
    },
-   connectionUpdated = function(type, host, ...) {
-      .rs.validateCharacterParams(list(type = type, host = host))
-      invisible(.Call("rs_connectionUpdated", type, host))
+   connectionUpdated = function(type, host, hint, ...) {
+      .rs.validateCharacterParams(list(type = type, host = host, hint = hint))
+      invisible(.Call("rs_connectionUpdated", type, host, hint))
    }
 ))
 

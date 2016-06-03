@@ -88,14 +88,18 @@ SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
    return R_NilValue;
 }
 
-SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
+SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP, SEXP hintSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
+   std::string hint = r::sexp::safeAsString(hintSEXP);
    ConnectionId id(type, host);
 
-   ClientEvent event(client_events::kConnectionUpdated,
-                     connectionIdJson(id));
+   json::Object updatedJson;
+   updatedJson["id"] = connectionIdJson(id);
+   updatedJson["hint"] = hint;
+
+   ClientEvent event(client_events::kConnectionUpdated, updatedJson);
    module_context::enqueClientEvent(event);
 
    return R_NilValue;
@@ -348,7 +352,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.9");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.10");
 }
 
 bool activateConnections()
@@ -376,7 +380,7 @@ Error initialize()
    // register methods
    RS_REGISTER_CALL_METHOD(rs_connectionOpened, 5);
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
-   RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
+   RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
 
    // initialize connection history

@@ -33,7 +33,6 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -44,7 +43,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.widget.HorizontalCenterPanel;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
@@ -153,9 +151,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
 
       
       // create connection explorer, add it, and hide it
-      Label label = new Label("Connection Explorer");
-      label.getElement().getStyle().setColor("#888");
-      connectionExplorer_ = new HorizontalCenterPanel(label, 100);
+      connectionExplorer_ = new ConnectionExplorer();
       connectionExplorer_.setSize("100%", "100%");
       
       mainPanel_.add(connectionExplorer_);
@@ -244,6 +240,18 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public HasClickHandlers backToConnectionsButton()
    {
       return backToConnectionsButton_;
+   }
+   
+   @Override
+   public void clearConnectionExplorer()
+   {
+      connectionExplorer_.clearItems();
+   }
+   
+   @Override
+   public void addToConnectionExplorer(String item)
+   {
+      connectionExplorer_.addItem(item);
    }
    
    
@@ -393,7 +401,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
-   private final HorizontalCenterPanel connectionExplorer_;
+   private final ConnectionExplorer connectionExplorer_;
    
    private final Column<Connection, ImageResource> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
