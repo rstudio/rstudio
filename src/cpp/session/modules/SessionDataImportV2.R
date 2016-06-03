@@ -102,7 +102,7 @@
                         time = paste(ns, "col_time(", parseString, ")", sep = ""),
                         double = paste(ns, "col_double()", sep = ""),
                         factor = paste(ns, "col_factor(", parseString, ")", sep = ""),
-                        numeric = paste(ns, "col_numeric()", sep = ""),
+                        numeric = paste(ns, "col_number()", sep = ""),
                         integer = paste(ns, "col_integer()", sep = ""),
                         logical = paste(ns, "col_logical()", sep = ""),
                         dateTime = paste(ns, "col_datetime(", parseString, ")", sep = ""),
