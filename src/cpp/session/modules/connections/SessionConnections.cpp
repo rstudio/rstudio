@@ -272,6 +272,14 @@ void onInstalledPackagesChanged()
    }
 }
 
+void onDeferredInit(bool newSession)
+{
+   if (!newSession && connectionsEnabled())
+   {
+      activeConnections().broadcastToClient();
+   }
+}
+
 } // anonymous namespace
 
 
@@ -312,6 +320,9 @@ Error initialize()
    Error error = connectionHistory().initialize();
    if (error)
       return error;
+
+   // deferrred init for updating active connections
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    // connect to events to track whether we should enable connections
    s_connectionsInitiallyEnabled = connectionsEnabled();

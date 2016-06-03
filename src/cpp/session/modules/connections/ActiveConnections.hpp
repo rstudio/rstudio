@@ -45,6 +45,8 @@ public:
 
    core::json::Array activeConnectionsAsJson();
 
+   void broadcastToClient();
+
 private:
    std::set<ConnectionId> activeConnections_;
 };

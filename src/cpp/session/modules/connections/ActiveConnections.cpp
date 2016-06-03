@@ -78,6 +78,11 @@ json::Array ActiveConnections::activeConnectionsAsJson()
 }
 
 
+void ActiveConnections::broadcastToClient()
+{
+   enqueActiveConnectionsChanged();
+}
+
 
 
 
