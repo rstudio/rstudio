@@ -23,7 +23,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
@@ -77,12 +76,7 @@ public class ConnectionsPresenter extends BasePresenter
       void setActiveConnections(List<ConnectionId> connections);
       
       boolean isConnected(ConnectionId id);
-      
-      Connection getSelectedConnection();
-          
-      HandlerRegistration addSelectedConnectionChangeHandler(
-                                 SelectionChangeEvent.Handler handler);
-      
+           
       String getSearchFilter();
       
       HandlerRegistration addSearchFilterChangeHandler(
@@ -119,18 +113,6 @@ public class ConnectionsPresenter extends BasePresenter
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
          
-       
-      // track selected connection
-      manageCommands();
-      display_.addSelectedConnectionChangeHandler(
-                                       new SelectionChangeEvent.Handler() {
-         @Override
-         public void onSelectionChange(SelectionChangeEvent event)
-         {
-            manageCommands();
-         }
-      });
-      
       // search filter
       display_.addSearchFilterChangeHandler(new ValueChangeHandler<String>() {
 
@@ -156,9 +138,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            exploredConnection_ = null;
-            display_.showConnectionsList();
-            display_.ensureHeight(EnsureHeightEvent.NORMAL);
+            showAllConnections();
          }
          
       });
@@ -391,21 +371,20 @@ public class ConnectionsPresenter extends BasePresenter
    @Handler
    public void onRemoveConnection()
    {
-      final Connection connection = display_.getSelectedConnection();
-      if (connection != null)
+      if (exploredConnection_ != null)
       {
          globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION,
             "Remove Connection",
-            "Are you sure you want to remove the selected connection from " +
-            "the list?", 
+            "Are you sure you want to remove the selected connection?",
             new Operation() {
    
                @Override
                public void execute()
                {
                   server_.removeConnection(
-                    connection.getId(), new VoidServerRequestCallback());   
+                    exploredConnection_.getId(), new VoidServerRequestCallback());   
+                  showAllConnections();
                }
             },
             true);
@@ -420,23 +399,55 @@ public class ConnectionsPresenter extends BasePresenter
    @Handler
    public void onConnectConnection()
    {
-      Connection selectedConnection = display_.getSelectedConnection();
-      String connectCode = selectedConnection.getConnectCode();
-      eventBus_.fireEvent(new SendToConsoleEvent(connectCode, true));
+      if (exploredConnection_ != null)
+      {
+         String connectCode = exploredConnection_.getConnectCode();
+         eventBus_.fireEvent(new SendToConsoleEvent(connectCode, true));
+      }
    }
    
    @Handler
    public void onDisconnectConnection()
    {
-      Connection selectedConnection = display_.getSelectedConnection();
-      server_.getDisconnectCode(selectedConnection, 
-                                new SimpleRequestCallback<String>() {
-         @Override
-         public void onResponseReceived(String disconnectCode)
-         {
-            eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-         }
-      });
+      if (exploredConnection_ != null)
+      {
+         server_.getDisconnectCode(exploredConnection_, 
+                                   new SimpleRequestCallback<String>() {
+            @Override
+            public void onResponseReceived(String disconnectCode)
+            {
+               eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+            }
+         });
+      }
+   }
+   
+   @Handler
+   public void onSparkLog()
+   {
+      if (exploredConnection_ != null)
+      {
+         server_.showSparkLog(exploredConnection_, 
+                              new VoidServerRequestCallback());
+      }
+   }
+   
+   @Handler
+   public void onSparkUI()
+   {
+      if (exploredConnection_ != null)
+      {
+         server_.showSparkUI(exploredConnection_, 
+                             new VoidServerRequestCallback());
+      }
+   }
+   
+   
+   private void showAllConnections()
+   {
+      exploredConnection_ = null;
+      display_.showConnectionsList();
+      display_.ensureHeight(EnsureHeightEvent.NORMAL);
    }
    
    private void updateConnections(JsArray<Connection> connections)
@@ -463,21 +474,25 @@ public class ConnectionsPresenter extends BasePresenter
    {
       exploredConnection_ = connection;
       display_.showConnectionExplorer(connection);
+      manageCommands();
    }
    
    private void manageCommands()
    {
-      Connection selectedConnection = display_.getSelectedConnection();
-      if (selectedConnection != null)
+      if (exploredConnection_ != null)
       {
-         boolean connected = display_.isConnected(selectedConnection.getId());
-         commands_.connectConnection().setVisible(!connected);  
+         boolean connected = display_.isConnected(exploredConnection_.getId());
+         commands_.connectConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
+         commands_.sparkLog().setVisible(connected);
+         commands_.sparkUI().setVisible(connected);
       }
       else
       {
-         commands_.connectConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
+         commands_.connectConnection().setVisible(false);
+         commands_.sparkLog().setVisible(false);
+         commands_.sparkUI().setVisible(false);
       }
    }
    

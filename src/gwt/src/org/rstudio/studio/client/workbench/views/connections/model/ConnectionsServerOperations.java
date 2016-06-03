@@ -26,6 +26,12 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
    void getDisconnectCode(Connection connection, 
                           ServerRequestCallback<String> callback);
    
+   void showSparkLog(Connection connection, 
+                     ServerRequestCallback<Void> callback);
+   
+   void showSparkUI(Connection connection, 
+                    ServerRequestCallback<Void> callback);
+   
    void getNewSparkConnectionContext(
             ServerRequestCallback<NewSparkConnectionContext> callback);
    

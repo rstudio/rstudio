@@ -193,6 +193,69 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error readFinderAndHostParams(const json::JsonRpcRequest& request,
+                              std::string* pFinder,
+                              std::string* pHost)
+{
+   // read params
+   json::Object idJson;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &idJson,
+                                       "finder", pFinder);
+   if (error)
+      return error;
+
+   return json::readObject(idJson, "host", pHost);
+}
+
+
+Error showSparkLog(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string finder, host;
+   Error error = readFinderAndHostParams(request, &finder, &host);
+   if (error)
+      return error;
+
+   // get the log file
+   std::string log;
+   error = r::exec::RFunction(".rs.getSparkLogFile", finder, host).call(&log);
+   if (error)
+      return error;
+
+   // show the file
+   module_context::showFile(FilePath(log));
+
+   return Success();
+}
+
+Error showSparkUI(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string finder, host;
+   Error error = readFinderAndHostParams(request, &finder, &host);
+   if (error)
+      return error;
+
+   // get the url
+   std::string url;
+   error = r::exec::RFunction(".rs.getSparkWebUrl", finder, host).call(&url);
+   if (error)
+      return error;
+
+   // portmap if necessary
+   url = module_context::mapUrlPorts(url);
+
+   // show the ui
+   ClientEvent event = browseUrlEvent(url);
+   module_context::enqueClientEvent(event);
+
+   return Success();
+}
+
+
 Error installSpark(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
@@ -285,7 +348,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.7");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.9");
 }
 
 bool activateConnections()
@@ -335,6 +398,8 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
       (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
+      (bind(registerRpcMethod, "show_spark_log", showSparkLog))
+      (bind(registerRpcMethod, "show_spark_ui", showSparkUI))
       (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 

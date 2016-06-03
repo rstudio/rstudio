@@ -4674,6 +4674,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connection, callback);
    }
    
+   
+   public void showSparkLog(Connection connection, 
+                            ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, SHOW_SPARK_LOG, connection, callback);
+   }
+   
+   public void showSparkUI(Connection connection, 
+                           ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, SHOW_SPARK_UI, connection, callback);
+   }
+   
    public void getNewSparkConnectionContext(
          ServerRequestCallback<NewSparkConnectionContext> callback)
    {
@@ -5058,6 +5071,8 @@ public class RemoteServer implements Server
    
    private static final String REMOVE_CONNECTION = "remove_connection";
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
+   private static final String SHOW_SPARK_LOG = "show_spark_log";
+   private static final String SHOW_SPARK_UI = "show_spark_ui";
    private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 }

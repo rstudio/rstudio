@@ -45,13 +45,32 @@ options(connectionViewer = list(
 ))
 
 
-.rs.addFunction("getDisconnectCode", function(finder, host, template) {
+.rs.addFunction("getConnectionObjectName", function(finder, host) {
    finderFunc <- eval(parse(text = finder))
-   name <- finderFunc(globalenv(), host)
+   finderFunc(globalenv(), host)
+})
+
+.rs.addFunction("getConnectionObject", function(finder, host) {
+   name <- .rs.getConnectionObjectName(finder, host)
+   get(name, envir = globalenv())
+})
+
+.rs.addFunction("getDisconnectCode", function(finder, host, template) {
+   name <- .rs.getConnectionObjectName(finder, host)
    if (!is.null(name))
       sprintf(template, name)
    else
       ""
+})
+
+.rs.addFunction("getSparkWebUrl", function(finder, host) {
+   sc <- .rs.getConnectionObject(finder, host)
+   rspark::spark_web(sc)
+})
+
+.rs.addFunction("getSparkLogFile", function(finder, host) {
+   sc <- .rs.getConnectionObject(finder, host)
+   rspark::spark_log_file(sc)
 })
 
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
