@@ -17,6 +17,7 @@
 package java.lang;
 
 import static javaemul.internal.InternalPreconditions.checkCriticalStringBounds;
+import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -750,7 +751,7 @@ public final class String implements Comparable<String>, CharSequence,
      * Magic: this method is only used during compiler optimizations; the generated JS will instead alias
      * this method to the native String.prototype.toString() function.
      */
-    return this;
+    return checkNotNull(this);
   }
 
   public String trim() {
