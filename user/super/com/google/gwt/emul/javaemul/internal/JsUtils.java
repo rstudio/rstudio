@@ -70,5 +70,13 @@ public class JsUtils {
   public static native String typeOf(Object o) /*-{
     return typeof o;
   }-*/;
+
+  public static native boolean hasComparableTypeMarker(Object o) /*-{
+    return o.$implements__java_lang_Comparable;
+  }-*/;
+
+  public static native boolean hasCharSequenceTypeMarker(Object o) /*-{
+    return o.$implements__java_lang_CharSequence;
+  }-*/;
 }
 

@@ -2548,6 +2548,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     // comparisons.
     staleTypeNames.removeAll(Arrays.asList(
         "java.lang.Boolean",
+        "java.lang.CharSequence",
+        "java.lang.Comparable",
         "java.lang.Double",
         "java.lang.Number",
         "java.lang.String",

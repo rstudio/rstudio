@@ -15,6 +15,10 @@
  */
 package java.lang;
 
+import javaemul.internal.JsUtils;
+
+import jsinterop.annotations.JsMethod;
+
 /**
  * Abstracts the notion of a sequence of characters.
  */
@@ -27,4 +31,15 @@ public interface CharSequence {
 
   @Override
   String toString();
+
+  // CHECKSTYLE_OFF: Utility methods.
+  @JsMethod
+  static boolean $isInstance(Object instance) {
+    if (JsUtils.typeOf(instance).equals("string")) {
+      return true;
+    }
+
+    return instance != null && JsUtils.hasCharSequenceTypeMarker(instance);
+  }
+  // CHECKSTYLE_ON: end utility methods
 }

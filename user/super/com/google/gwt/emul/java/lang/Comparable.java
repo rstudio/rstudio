@@ -15,6 +15,10 @@
  */
 package java.lang;
 
+import javaemul.internal.JsUtils;
+
+import jsinterop.annotations.JsMethod;
+
 /**
  * An interface used a basis for implementing custom ordering. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Comparable.html">[Sun
@@ -24,4 +28,16 @@ package java.lang;
  */
 public interface Comparable<T> {
   int compareTo(T other);
+
+  // CHECKSTYLE_OFF: Utility methods.
+  @JsMethod
+  static boolean $isInstance(Object instance) {
+    String type = JsUtils.typeOf(instance);
+    if (type.equals("boolean") || type.equals("number") || type.equals("string")) {
+      return true;
+    }
+
+    return instance != null && JsUtils.hasComparableTypeMarker(instance);
+  }
+  // CHECKSTYLE_ON: end utility methods
 }
