@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -56,13 +57,13 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUp
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog.Result;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -72,6 +73,8 @@ public class ConnectionsPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView
    {
+      void showConnectionsList();
+      
       void setConnections(List<Connection> connections);
       void setActiveConnections(List<ConnectionId> connections);
       
@@ -83,16 +86,14 @@ public class ConnectionsPresenter extends BasePresenter
                                        ValueChangeHandler<String> handler);
       
       HandlerRegistration addExploreConnectionHandler(
-                                       ExploreConnectionEvent.Handler handler);
+                                       ExploreConnectionEvent.Handler handler); 
       
-      void showConnectionExplorer(Connection connection);
-      
+      void showConnectionExplorer(Connection connection, String connectVia);
       
       HasClickHandlers backToConnectionsButton();
       
-      void showConnectionsList();
+      String getExplorerConnectVia();
       
-      void clearConnectionExplorer();
       void addToConnectionExplorer(String item);
    }
    
@@ -103,6 +104,7 @@ public class ConnectionsPresenter extends BasePresenter
                                ConnectionsServerOperations server,
                                GlobalDisplay globalDisplay,
                                EventBus eventBus,
+                               UIPrefs uiPrefs,
                                Binder binder,
                                final Commands commands,
                                WorkbenchListManager listManager,
@@ -113,6 +115,7 @@ public class ConnectionsPresenter extends BasePresenter
       display_ = display;
       commands_ = commands;
       server_ = server;
+      uiPrefs_ = uiPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
          
@@ -216,7 +219,6 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onActiveConnectionsChanged(ActiveConnectionsChangedEvent event)
    {
-      display_.clearConnectionExplorer();
       updateActiveConnections(event.getActiveConnections());
    }
    
@@ -248,9 +250,9 @@ public class ConnectionsPresenter extends BasePresenter
                   // show dialog
                   new NewSparkConnectionDialog(
                    context,
-                   new OperationWithInput<NewSparkConnectionDialog.Result>() {
+                   new OperationWithInput<ConnectionOptions>() {
                      @Override
-                     public void execute(final Result result)
+                     public void execute(final ConnectionOptions result)
                      {
                         withRequiredSparkInstallation(
                               result.getSparkVersion(),
@@ -259,7 +261,8 @@ public class ConnectionsPresenter extends BasePresenter
                                  @Override
                                  public void execute()
                                  {
-                                    performConnection(result);
+                                    performConnection(result.getConnectVia(),
+                                                      result.getConnectCode());
                                  }
                                  
                               });
@@ -326,26 +329,25 @@ public class ConnectionsPresenter extends BasePresenter
    
   
    
-   private void performConnection(NewSparkConnectionDialog.Result result)
+   private void performConnection(String connectVia, String connectCode)
    {
-      String connectVia = result.getConnectVia();
       if (connectVia.equals(
-            Result.CONNECT_COPY_TO_CLIPBOARD))
+            ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
       {
-         DomUtils.copyCodeToClipboard(result.getConnectCode());
+         DomUtils.copyCodeToClipboard(connectCode);
       }
-      else if (connectVia.equals(Result.CONNECT_R_CONSOLE))
+      else if (connectVia.equals(ConnectionOptions.CONNECT_R_CONSOLE))
       {
          eventBus_.fireEvent(
-               new SendToConsoleEvent(result.getConnectCode(), true));
+               new SendToConsoleEvent(connectCode, true));
       }
-      else if (connectVia.equals(Result.CONNECT_NEW_R_SCRIPT) ||
-               connectVia.equals(Result.CONNECT_NEW_R_NOTEBOOK))
+      else if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT) ||
+               connectVia.equals(ConnectionOptions.CONNECT_NEW_R_NOTEBOOK))
       {
          String type;
-         String code = result.getConnectCode();
+         String code = connectCode;
          SourcePosition cursorPosition = null;
-         if (connectVia.equals(Result.CONNECT_NEW_R_SCRIPT))
+         if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT))
          {
             type = NewDocumentWithCodeEvent.R_SCRIPT;
             code = code + "\n\n";
@@ -406,8 +408,12 @@ public class ConnectionsPresenter extends BasePresenter
    {
       if (exploredConnection_ != null)
       {
+         String connectVia = display_.getExplorerConnectVia();
          String connectCode = exploredConnection_.getConnectCode();
-         eventBus_.fireEvent(new SendToConsoleEvent(connectCode, true));
+         performConnection(connectVia, connectCode);
+         
+         uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
+         uiPrefs_.writeUIPrefs();
       }
    }
    
@@ -478,7 +484,7 @@ public class ConnectionsPresenter extends BasePresenter
    private void exploreConnection(Connection connection)
    {
       exploredConnection_ = connection;
-      display_.showConnectionExplorer(connection);
+      display_.showConnectionExplorer(connection, uiPrefs_.connectionsConnectVia().getValue());
       manageCommands();
    }
    
@@ -528,6 +534,7 @@ public class ConnectionsPresenter extends BasePresenter
    private final Display display_ ;
    private final EventBus eventBus_;
    private final Commands commands_;
+   private UIPrefs uiPrefs_;
    private final ConnectionsServerOperations server_ ;
    
    // client state

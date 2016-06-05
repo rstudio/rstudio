@@ -41,6 +41,8 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -153,6 +155,16 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       // create connection explorer, add it, and hide it
       connectionExplorer_ = new ConnectionExplorer();
       connectionExplorer_.setSize("100%", "100%");
+      connectionExplorer_.setConnected(commands_.disconnectConnection().isVisible());
+      commands_.disconnectConnection().addVisibleChangedHandler(
+            new VisibleChangedHandler() {
+
+         @Override
+         public void onVisibleChanged(AppCommand command)
+         {
+            connectionExplorer_.setConnected(command.isVisible());
+         }   
+      });
       
       mainPanel_.add(connectionExplorer_);
       mainPanel_.setWidgetTopBottom(connectionExplorer_, 0, Unit.PX, 0, Unit.PX);
@@ -207,8 +219,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
-   public void showConnectionExplorer(final Connection connection)
+   public void showConnectionExplorer(final Connection connection, 
+                                      String connectVia)
    {
+      connectionExplorer_.setConnection(connection, connectVia);
+      
       animate(connectionsDataGrid_,
               connectionExplorer_,
               true,
@@ -241,12 +256,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    {
       return backToConnectionsButton_;
    }
-   
+  
    @Override
-   public void clearConnectionExplorer()
+   public String getExplorerConnectVia()
    {
-      connectionExplorer_.clearItems();
+      return connectionExplorer_.getConnectVia();
    }
+   
    
    @Override
    public void addToConnectionExplorer(String item)
@@ -292,8 +308,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       return toolbar_;
    }
-   
-   
    
    @Override 
    protected Widget createMainWidget()

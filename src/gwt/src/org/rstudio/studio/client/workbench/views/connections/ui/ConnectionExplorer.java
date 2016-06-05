@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
@@ -27,6 +29,7 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 
@@ -43,6 +46,7 @@ public class ConnectionExplorer extends Composite
          }
       };
       dataGrid_ = new DataGrid<String>(1000, RES, keyProvider_);
+      dataGrid_.setSize("100%", "100%");
       
       // add type column
       typeColumn_ = new Column<String, ImageResource>(new ImageResourceCell()) {
@@ -71,10 +75,20 @@ public class ConnectionExplorer extends Composite
       dataProvider_ = new ListDataProvider<String>();
       dataProvider_.addDataDisplay(dataGrid_);
       
+      int codePanelHeight = 125;
+      codePanel_ = new ConnectionCodePanel();
+      codePanel_.addStyleName(ThemeStyles.INSTANCE.secondaryToolbarPanel());
+      codePanel_.getElement().getStyle().setPadding(8, Unit.PX);
+      codePanel_.setHeight(codePanelHeight + "px");
+      codePanel_.setWidth("100%");
       
- 
+      dockPanel_ = new DockLayoutPanel(Unit.PX);
+      dockPanel_.addNorth(codePanel_, codePanelHeight);
+      dockPanel_.add(dataGrid_);
+     
+      setConnected(false);
       
-      initWidget(dataGrid_);
+      initWidget(dockPanel_);
    }
    
    
@@ -83,9 +97,23 @@ public class ConnectionExplorer extends Composite
       dataProvider_.getList().add(item);
    }
    
-   public void clearItems()
+   public void setConnection(Connection connection, String connectVia)
    {
+      codePanel_.setCode(connectVia, connection.getConnectCode());
+   }
+   
+   public void setConnected(boolean connected)
+   {
+      // always clear the list
       dataProvider_.getList().clear();
+      
+     
+      dockPanel_.setWidgetHidden(codePanel_, connected);
+   }
+   
+   public String getConnectVia()
+   {
+      return codePanel_.getConnectVia();
    }
   
    private final DataGrid<String> dataGrid_; 
@@ -96,6 +124,9 @@ public class ConnectionExplorer extends Composite
    private final ProvidesKey<String> keyProvider_;
    private final ListDataProvider<String> dataProvider_;
    
+   private final ConnectionCodePanel codePanel_;
+      
+   private final DockLayoutPanel dockPanel_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

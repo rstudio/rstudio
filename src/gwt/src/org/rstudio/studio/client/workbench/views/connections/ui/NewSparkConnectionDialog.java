@@ -23,21 +23,16 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -48,8 +43,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -57,60 +50,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDialog.Result>
+public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
 {
-   // extends JavaScriptObject for easy serialization (as client state)
-   public static class Result extends JavaScriptObject
-   {
-      protected Result() {}
-      
-      public static final Result create()
-      {
-         return create(null, false, false, null, null, null, null, null);
-      }
-      
-      public static final native Result create(String master,
-                                               boolean remote,
-                                               boolean reconnect,
-                                               String cores,
-                                               SparkVersion sparkVersion,
-                                               String dbConnection,
-                                               String connectCode,
-                                               String connectVia)
-      /*-{
-         return {
-            "master": master,
-            "remote": remote,
-            "reconnect": reconnect,
-            "cores": cores,
-            "spark_version": sparkVersion,
-            "db_connection": dbConnection,
-            "connect_code": connectCode,
-            "connect_via": connectVia
-         };
-      }-*/;
-      
-      public final native String getMaster() /*-{ return this.master; }-*/;
-      public final native boolean getRemote() /*-{ return this.remote; }-*/;
-      public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
-      public final native String getCores() /*-{ return this.cores; }-*/;
-      public final native SparkVersion getSparkVersion() /*-{ return this.spark_version; }-*/;
-      public final native String getDBConnection() /*-{ return this.db_connection; }-*/;
-      public final native String getConnectCode() /*-{ return this.connect_code; }-*/;
-      public final native String getConnectVia() /*-{ return this.connect_via; }-*/;
-      
-      public static String CONNECT_R_CONSOLE = "connect-r-console";
-      public static String CONNECT_NEW_R_SCRIPT = "connect-new-r-script";
-      public static String CONNECT_NEW_R_NOTEBOOK = "connect-new-r-notebook";
-      public static String CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
-      
-      public static String DB_CONNECTION_NONE = "none";
-      public static String DB_CONNECTION_DPLYR = "dplyr";
-      public static String DB_CONNECTION_DBI = "dbi";
-      
-      public static String MASTER_LOCAL = "local";
-   }
-   
    @Inject
    private void initialize(Session session, UIPrefs uiPrefs)
    {
@@ -119,7 +60,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    }
    
    public NewSparkConnectionDialog(NewSparkConnectionContext context,
-                                   OperationWithInput<Result> operation)
+                                   OperationWithInput<ConnectionOptions> operation)
    {
       super("Connect to Spark Cluster", operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -146,7 +87,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    }
    
    @Override
-   protected boolean validate(Result result)
+   protected boolean validate(ConnectionOptions result)
    {
       return true;
    }
@@ -298,9 +239,9 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       versionGrid.setWidget(2, 0, dbLabel);
       dbConnection_ = new ListBox();
       dbConnection_.addStyleName(RES.styles().spanningInput());
-      dbConnection_.addItem("dplyr", Result.DB_CONNECTION_DPLYR);
-      dbConnection_.addItem("DBI", Result.DB_CONNECTION_DBI);
-      dbConnection_.addItem("(None)", Result.DB_CONNECTION_NONE);
+      dbConnection_.addItem("dplyr", ConnectionOptions.DB_CONNECTION_DPLYR);
+      dbConnection_.addItem("DBI", ConnectionOptions.DB_CONNECTION_DBI);
+      dbConnection_.addItem("(None)", ConnectionOptions.DB_CONNECTION_NONE);
       setValue(dbConnection_, lastResult_.getDBConnection());
       versionGrid.setWidget(2, 1, dbConnection_);
       container.add(versionGrid);
@@ -329,78 +270,29 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateInfoPanel));
       
       
-      // add the code viewer
-      Grid codeGrid = new Grid(2, 1);
-      codeGrid.addStyleName(RES.styles().codeGrid());
-          
-      HorizontalPanel codeHeaderPanel = new HorizontalPanel();
-      codeHeaderPanel.setWidth("100%");
-      Label codeLabel = new Label("Code:");
-      codeHeaderPanel.add(codeLabel);
-      codeHeaderPanel.setCellHorizontalAlignment(
-               codeLabel, HasHorizontalAlignment.ALIGN_LEFT);
-      HorizontalPanel connectPanel = new HorizontalPanel();
-      Label connectLabel = new Label("Connect from:");
-      connectLabel.addStyleName(RES.styles().leftLabel());
-      connectPanel.add(connectLabel);
-      connectVia_ = new ListBox();
-      connectVia_.addItem("R Console", Result.CONNECT_R_CONSOLE);
-      connectVia_.addItem("New R Script", Result.CONNECT_NEW_R_SCRIPT);
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectVia_.addItem("New R Notebook", Result.CONNECT_NEW_R_NOTEBOOK);
-      connectVia_.addItem("Copy to Clipboard", 
-                          Result.CONNECT_COPY_TO_CLIPBOARD);
-      setValue(connectVia_, lastResult_.getConnectVia());
-      final Command updateConnectViaUI = new Command() {
+      // add the code panel     
+      codePanel_ = new ConnectionCodePanel();
+      codePanel_.addStyleName(RES.styles().dialogCodePanel());
+      codePanel_.setConnectVia(lastResult_.getConnectVia());
+      final Command updateOKButtonCommand = new Command() {
          @Override
          public void execute()
          {
-            if (connectVia_.getSelectedValue().equals(Result.CONNECT_COPY_TO_CLIPBOARD))
-            {
+            if (codePanel_.getConnectVia().equals(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
                setOkButtonCaption("Copy");
-               if (codeViewer_ != null)
-               {
-                  codeViewer_.getEditor().getSession().getSelection().selectAll();
-                  codeViewer_.getEditor().focus();
-               }
-            }
             else
-            {
-               if (codeViewer_ != null)
-                  codeViewer_.getEditor().getSession().getSelection().moveCursorTo(0, 0, false);
                setOkButtonCaption("Connect");
-            }
          }
       };
-      updateConnectViaUI.execute();
-      connectVia_.addChangeHandler(commandChangeHandler(updateConnectViaUI));
-      
-      connectPanel.add(connectVia_);
-      codeHeaderPanel.add(connectPanel);
-      codeHeaderPanel.setCellHorizontalAlignment(
-            connectPanel, HasHorizontalAlignment.ALIGN_RIGHT); 
-      codeGrid.setWidget(0, 0, codeHeaderPanel);
-      
-      codeViewer_ = new AceEditorWidget(false);
-      codeViewer_.addStyleName(RES.styles().codeViewer());
-      codeViewer_.getEditor().getSession().setEditorMode(
-            EditorLanguage.LANG_R.getParserName(), false);
-      codeViewer_.getEditor().getSession().setUseWrapMode(true);
-      codeViewer_.getEditor().getSession().setWrapLimitRange(20, 120);
-      codeViewer_.getEditor().getRenderer().setShowGutter(false);
-      codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
+      updateOKButtonCommand.execute();
+      codePanel_.addConnectViaChangeHandler(new ChangeHandler() {
          @Override
-         public void onCursorChanged(CursorChangedEvent event)
+         public void onChange(ChangeEvent event)
          {
-            EditSession session = codeViewer_.getEditor().getSession();
-            String selectedCode = session.getTextRange(session.getSelection().getRange());
-            if (selectedCode.trim().equals(session.getValue().trim())) 
-            {
-               setValue(connectVia_, Result.CONNECT_COPY_TO_CLIPBOARD);
-               setOkButtonCaption("Copy");
-            }
+            updateOKButtonCommand.execute();
          }
       });
+      
       final Command updateCodeCommand = new Command() {
          @Override
          public void execute()
@@ -410,7 +302,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             // connect to master
             builder.append("library(rspark)\n");
             String dbConnection = dbConnection_.getSelectedValue();
-            if (dbConnection.equals(Result.DB_CONNECTION_DPLYR))
+            if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DPLYR))
                builder.append("library(dplyr)\n");
                
             builder.append("sc <- spark_connect(\"");
@@ -450,18 +342,18 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
             builder.append(")");
             
             // db connection if specified
-            if (dbConnection.equals(Result.DB_CONNECTION_DPLYR))
+            if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DPLYR))
             {
                builder.append("\n");
                builder.append("db <- src_spark(sc)");
             }
-            else if (dbConnection.equals(Result.DB_CONNECTION_DBI))
+            else if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DBI))
             {
                builder.append("\n");
                builder.append("db <- dbConnect(DBISpark(sc))\n");
             }
             
-            codeViewer_.setCode(builder.toString());
+            codePanel_.setCode(null, builder.toString());
          }
       };
       updateCodeCommand.execute();
@@ -477,26 +369,29 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       sparkVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       dbConnection_.addChangeHandler(commandChangeHandler(updateCodeCommand));
-      codeGrid.setWidget(1, 0, codeViewer_);
+     
+      Grid codeGrid = new Grid(1, 1);
+      codeGrid.addStyleName(RES.styles().codeGrid());
+      codeGrid.setWidget(0, 0, codePanel_);
       container.add(codeGrid);
      
-     
+ 
       return container;
    }
 
    @Override
-   protected Result collectInput()
+   protected ConnectionOptions collectInput()
    {     
       // collect the result
-      Result result = Result.create(
+      ConnectionOptions result = ConnectionOptions.create(
             master_.getSelection(),
             !master_.isLocalMaster(master_.getSelection()),
             autoReconnect_.getValue(),
             cores_.getSelectedValue(),
             getSelectedSparkVersion(),
             dbConnection_.getSelectedValue(),
-            codeViewer_.getEditor().getSession().getValue(),
-            connectVia_.getSelectedValue());
+            codePanel_.getCode(),
+            codePanel_.getConnectVia());
       
       // update client state
       lastResult_ = result;
@@ -617,7 +512,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          if (value != null)
             lastResult_ = value.cast();
          else
-            lastResult_ = Result.create();
+            lastResult_ = ConnectionOptions.create();
       }
 
       @Override
@@ -633,7 +528,7 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
          clientStateValue_ = new NewSparkConnectionClientState();
    }  
    private static NewSparkConnectionClientState clientStateValue_;
-   private static Result lastResult_ = Result.create();
+   private static ConnectionOptions lastResult_ = ConnectionOptions.create();
    
   
    public interface Styles extends CssResource
@@ -651,6 +546,8 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
       String leftLabel();
       String componentNotInstalledWidget();
       String componentInstallLink();
+      String codePanelHeader();
+      String dialogCodePanel();
    }
 
    public interface Resources extends ClientBundle
@@ -672,11 +569,13 @@ public class NewSparkConnectionDialog extends ModalDialog<NewSparkConnectionDial
    private ListBox cores_;
    private ListBox sparkVersion_;
    private ListBox hadoopVersion_;
-   private ListBox connectVia_;
+ 
    private ListBox dbConnection_;
-   private AceEditorWidget codeViewer_;
+   
+   private ConnectionCodePanel codePanel_;
       
    private Session session_;
 
+   @SuppressWarnings("unused")
    private UIPrefs uiPrefs_;
 }
