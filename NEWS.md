@@ -71,12 +71,13 @@
 * SVN: avoid recursive revert when reverting changes to modified directory properties
 * Autocompletion: fixed errors printed in console when 'devtools::load_all()' active
 * Autocompletion: fixed errors printed in console for functions 'force', 'identity'
+* Autocompletion: ensure .DollarNames method respected when discovered
+* Autocompletion: avoid errors when retrieving completions in debugger
 * Viewer: Fixed issue in 'Export -> Copy to Clipboard' when IDE not at default zoom level
 * Fix hang caused by large, heavily-nested S4 objects
 * Fix for 'httpdPort' detection error sometimes seen with R built from source
 * Fixed a hang on Windows with 64-bit R when attempting to load a corrupted workspace
 * Fixed an issue where non-interactive addins could not be executed in popped out windows
-* Autocompletion: avoid errors when retrieving completions in debugger
 * Diagnostics: fix false positive errors with '{' following function calls
 * Diagnostics: engine better understands 'data()' calls (fixes 'no symbol in scope' false positive)
 * Improved performance of document tokenization (fix laggy typing)
