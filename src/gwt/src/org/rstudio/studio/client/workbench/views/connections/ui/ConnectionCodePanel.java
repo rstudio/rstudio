@@ -63,7 +63,7 @@ public class ConnectionCodePanel extends Composite
          connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
       connectVia_.addItem("Copy to Clipboard", 
                           ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
-      final Command updateConnectViaUI = new Command() {
+      updateConnectViaUI_ = new Command() {
          @Override
          public void execute()
          {
@@ -82,12 +82,12 @@ public class ConnectionCodePanel extends Composite
             }
          }
       };
-      updateConnectViaUI.execute();
+      updateConnectViaUI_.execute();
       addConnectViaChangeHandler(new ChangeHandler() {
          @Override
          public void onChange(ChangeEvent event)
          {
-            updateConnectViaUI.execute();
+            updateConnectViaUI_.execute();
          }
       });
      
@@ -158,8 +158,7 @@ public class ConnectionCodePanel extends Composite
       if (connectVia != null)
       {
          setConnectVia(connectVia);
-         codeViewer_.getEditor().getSession().getSelection().selectAll();
-         codeViewer_.getEditor().focus();
+         updateConnectViaUI_.execute();
       }
       codeViewer_.forceResize();
       settingCode_ = false;
@@ -175,6 +174,7 @@ public class ConnectionCodePanel extends Composite
    private AceEditorWidget codeViewer_;
    private UIPrefs uiPrefs_;
    private boolean settingCode_ = false;
+   private final Command updateConnectViaUI_;
    
    private static NewSparkConnectionDialog.Resources RES = NewSparkConnectionDialog.RES;
 }
