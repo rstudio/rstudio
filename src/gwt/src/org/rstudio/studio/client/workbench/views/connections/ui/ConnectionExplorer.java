@@ -99,7 +99,7 @@ public class ConnectionExplorer extends Composite
    
    public void setConnection(Connection connection, String connectVia)
    {
-      codePanel_.setCode(connectVia, connection.getConnectCode());
+      codePanel_.setCode(connection.getConnectCode(), connectVia);
    }
    
    public void setConnected(boolean connected)

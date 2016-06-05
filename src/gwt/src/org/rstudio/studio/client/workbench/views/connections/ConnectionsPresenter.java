@@ -30,7 +30,6 @@ import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -92,7 +91,7 @@ public class ConnectionsPresenter extends BasePresenter
       
       HasClickHandlers backToConnectionsButton();
       
-      String getExplorerConnectVia();
+      String getConnectVia();
       
       void addToConnectionExplorer(String item);
    }
@@ -408,7 +407,7 @@ public class ConnectionsPresenter extends BasePresenter
    {
       if (exploredConnection_ != null)
       {
-         String connectVia = display_.getExplorerConnectVia();
+         String connectVia = display_.getConnectVia();
          String connectCode = exploredConnection_.getConnectCode();
          performConnection(connectVia, connectCode);
          

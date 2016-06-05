@@ -353,7 +353,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
                builder.append("db <- dbConnect(DBISpark(sc))\n");
             }
             
-            codePanel_.setCode(null, builder.toString());
+            codePanel_.setCode(builder.toString(), null);
          }
       };
       updateCodeCommand.execute();

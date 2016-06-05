@@ -258,7 +258,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
   
    @Override
-   public String getExplorerConnectVia()
+   public String getConnectVia()
    {
       return connectionExplorer_.getConnectVia();
    }

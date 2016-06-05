@@ -151,7 +151,7 @@ public class ConnectionCodePanel extends Composite
       return connectVia_.addChangeHandler(handler);
    }
    
-   public void setCode(String connectVia, String code)
+   public void setCode(String code, String connectVia)
    {
       settingCode_ = true;
       codeViewer_.setCode(code);
