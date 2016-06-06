@@ -1591,6 +1591,16 @@ well as menu structures (for main menu and popup menus).
    <cmd id="goToEndOfCurrentScope"
         context="editor"/>
    
+   <cmd id="goToNextChunk"
+        label="Go to Next Chunk"
+        desc="Go to next chunk"
+        context="editor"/>
+   
+   <cmd id="goToPrevChunk"
+        label="Go to Previous Chunk"
+        desc="Go to previous chunk"
+        context="editor"/>
+
    <cmd id="expandRaggedSelection"
         label="Expand Ragged Selection"
         context="editor"/>
@@ -2785,11 +2795,10 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
    
     <cmd id="removeConnection"
-        menuLabel="Remove Connection..."
+        menuLabel="Remove..."
         buttonLabel=""
         desc="Remove a connection"
-        windowMode="main"/>
-        
+        windowMode="main"/>        
           
     <cmd id="connectConnection"
          buttonLabel="Connect"
@@ -2797,9 +2806,20 @@ well as menu structures (for main menu and popup menus).
          windowMode="main"/>
    
     <cmd id="disconnectConnection"
+         menuLabel="Disconnect"
          buttonLabel="Disconnect"
          desc="Disconect from a connection"
          windowMode="main"/>
+         
+    <cmd id="sparkLog"
+         menuLabel="Spark Log"
+         desc="View the log for the Spark connection"
+         windowMode="main"/> 
+         
+     <cmd id="sparkUI"
+         menuLabel="Spark UI"
+         desc="View the browser UI for the Spark connection"
+         windowMode="main"/> 
      
         
 </commands>

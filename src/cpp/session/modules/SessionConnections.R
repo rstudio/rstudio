@@ -38,25 +38,44 @@ options(connectionViewer = list(
       .rs.validateCharacterParams(list(type = type, host = host))
       invisible(.Call("rs_connectionClosed", type, host))
    },
-   connectionUpdated = function(type, host, ...) {
-      .rs.validateCharacterParams(list(type = type, host = host))
-      invisible(.Call("rs_connectionUpdated", type, host))
+   connectionUpdated = function(type, host, hint, ...) {
+      .rs.validateCharacterParams(list(type = type, host = host, hint = hint))
+      invisible(.Call("rs_connectionUpdated", type, host, hint))
    }
 ))
 
 
-.rs.addFunction("getDisconnectCode", function(finder, host, template) {
+.rs.addFunction("getConnectionObjectName", function(finder, host) {
    finderFunc <- eval(parse(text = finder))
-   name <- finderFunc(globalenv(), host)
+   finderFunc(globalenv(), host)
+})
+
+.rs.addFunction("getConnectionObject", function(finder, host) {
+   name <- .rs.getConnectionObjectName(finder, host)
+   get(name, envir = globalenv())
+})
+
+.rs.addFunction("getDisconnectCode", function(finder, host, template) {
+   name <- .rs.getConnectionObjectName(finder, host)
    if (!is.null(name))
       sprintf(template, name)
    else
       ""
 })
 
+.rs.addFunction("getSparkWebUrl", function(finder, host) {
+   sc <- .rs.getConnectionObject(finder, host)
+   rspark::spark_web(sc)
+})
+
+.rs.addFunction("getSparkLogFile", function(finder, host) {
+   sc <- .rs.getConnectionObject(finder, host)
+   rspark::spark_log_file(sc)
+})
+
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
 
-   context <- list()
+  context <- list()
 
   # all previously connected to remote servers
   context$remote_servers <- .Call("rs_availableRemoteServers")
@@ -65,26 +84,21 @@ options(connectionViewer = list(
   context$cores <- parallel::detectCores()
   if (is.na(context$cores))
     context$cores <- 1
+  context$cores <- .rs.scalar(context$cores)
 
-  # available spark versions and related hadoop versions
-  context$spark_versions <- list()
-  for (versionNumber in rspark:::spark_versions()) {
-    version <- list()
-    version$number <- .rs.scalar(versionNumber)
-    version$hadoop_versions <- rspark:::spark_versions_hadoop()
-    for (hadoopVersion in names(version$hadoop_versions)) {
-      label <- version$hadoop_versions[[hadoopVersion]]$name
-      version$hadoop_versions[[hadoopVersion]] <- list()
-      version$hadoop_versions[[hadoopVersion]]$id <- .rs.scalar(hadoopVersion)
-      version$hadoop_versions[[hadoopVersion]]$label <- .rs.scalar(label)
-    }
-    names(version$hadoop_versions) <- NULL
-    context$spark_versions[[length(context$spark_versions) + 1]] <- version
-  }
+  # can we install new versions
+  context$can_install_spark_versions <- .rs.scalar(rspark:::spark_can_install())
 
-  # default spark version
-  context$default_spark_version <- .rs.scalar(
-                           formals(rspark::spark_install)$sparkVersion)
+  # available spark versions (filter by installed if we can't install
+  # new versions of spark)
+  spark_versions <- rspark:::spark_versions()
+  if (!context$can_install_spark_versions)
+    spark_versions <- subset(spark_versions, spark_versions$installed)
+  context$spark_versions <- spark_versions
+
+  # is java installed?
+  context$java_installed <- .rs.scalar(rspark:::is_java_available())
+  context$java_install_url <- .rs.scalar(rspark:::java_install_url())
 
   context
 })

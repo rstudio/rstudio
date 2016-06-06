@@ -352,6 +352,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.knitWithParameters());
       dynamicCommands_.add(commands.goToNextSection());
       dynamicCommands_.add(commands.goToPrevSection());
+      dynamicCommands_.add(commands.goToNextChunk());
+      dynamicCommands_.add(commands.goToPrevChunk());
       dynamicCommands_.add(commands.profileCode());
       dynamicCommands_.add(commands.profileCodeWithoutFocus());
       dynamicCommands_.add(commands.saveProfileAs());
@@ -2393,6 +2395,65 @@ public class Source implements InsertSourceHandler,
                   });
                }
             });
+   }
+   
+   
+   
+   public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
+   {
+      // determine the type
+      final EditableFileType docType;
+      if (event.getType().equals(NewDocumentWithCodeEvent.R_SCRIPT))
+         docType = FileTypeRegistry.R;
+      else
+         docType = FileTypeRegistry.RMARKDOWN;
+      
+      // command to create and run the new doc
+      Command newDocCommand = new Command() {
+         @Override
+         public void execute()
+         {
+            newDoc(docType,  
+                  new ResultCallback<EditingTarget, ServerError>() {
+               public void onSuccess(EditingTarget arg)
+               {
+                  TextEditingTarget editingTarget = (TextEditingTarget)arg;
+                  editingTarget.insertCode(event.getCode(), false);
+                  
+                  if (event.getCursorPosition() != null)
+                  {
+                     editingTarget.navigateToPosition(event.getCursorPosition(),
+                                                      false);
+                  }
+                  
+                  if (event.getExecute())
+                  {
+                     if (docType.equals(FileTypeRegistry.R))
+                     {
+                        commands_.executeToCurrentLine().execute();
+                        commands_.activateSource().execute();
+                     }
+                     else
+                     {
+                        commands_.executePreviousChunks().execute();
+                     }
+                  }
+               }
+            });
+         }
+      };
+     
+      // do it
+      if (docType.equals(FileTypeRegistry.R))
+      {
+         newDocCommand.execute();
+      }
+      else
+      {
+         dependencyManager_.withRMarkdown("R Notebook",
+                                          "Create R Notebook", 
+                                          newDocCommand);
+      }
    }
    
     

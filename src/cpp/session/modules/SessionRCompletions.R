@@ -1055,7 +1055,7 @@ assign(x = ".rs.acCompletionTypes",
       {
          # Check to see if an overloaded .DollarNames method has been provided,
          # and use that to resolve names if possible.
-         dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE)
+         dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE, envir = envir)
          if (is.function(dollarNamesMethod))
          {
             allNames <- dollarNamesMethod(object)

@@ -60,11 +60,13 @@ public class SourceShim extends Composite
                  EditPresentationSourceEvent.Handler,
                  InsertSourceHandler, 
                  FileEditHandler,
-                 SnippetsChangedEvent.Handler
+                 SnippetsChangedEvent.Handler,
+                 NewDocumentWithCodeEvent.Handler
    {
       public abstract void onOpenSourceFile(OpenSourceFileEvent event);
       public abstract void onOpenPresentationSourceFile(OpenPresentationSourceFileEvent event);
       public abstract void onEditPresentationSource(EditPresentationSourceEvent event);
+      public abstract void onNewDocumentWithCode(NewDocumentWithCodeEvent event);
       
       @Handler
       public abstract void onNewSourceDoc();
@@ -124,6 +126,7 @@ public class SourceShim extends Composite
       public abstract void onSourceNavigateBack();
       @Handler
       public abstract void onSourceNavigateForward();
+     
       
       @Override
       protected void preInstantiationHook(Command continuation)
@@ -191,6 +194,7 @@ public class SourceShim extends Composite
       events.addHandler(EditPresentationSourceEvent.TYPE, asyncSource);
       events.addHandler(InsertSourceEvent.TYPE, asyncSource);
       events.addHandler(SnippetsChangedEvent.TYPE, asyncSource);
+      events.addHandler(NewDocumentWithCodeEvent.TYPE, asyncSource);
       events.addHandler(MaximizeSourceWindowEvent.TYPE, this);
       events.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
       asyncSource_ = asyncSource;

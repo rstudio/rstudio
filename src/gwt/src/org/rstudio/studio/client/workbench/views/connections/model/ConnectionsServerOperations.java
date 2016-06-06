@@ -14,16 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.model;
 
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
-public interface ConnectionsServerOperations
+public interface ConnectionsServerOperations extends CryptoServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
  
    void getDisconnectCode(Connection connection, 
                           ServerRequestCallback<String> callback);
    
+   void showSparkLog(Connection connection, 
+                     ServerRequestCallback<Void> callback);
+   
+   void showSparkUI(Connection connection, 
+                    ServerRequestCallback<Void> callback);
+   
    void getNewSparkConnectionContext(
             ServerRequestCallback<NewSparkConnectionContext> callback);
+   
+   void installSpark(String sparkVersion,
+                     String hadoopVersion,
+                     ServerRequestCallback<ConsoleProcess> callback);
 }

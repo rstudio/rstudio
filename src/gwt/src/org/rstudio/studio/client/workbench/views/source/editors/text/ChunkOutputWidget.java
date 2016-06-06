@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ImageElementEx;
@@ -281,6 +282,13 @@ public class ChunkOutputWidget extends Composite
       if (!isVisible() && (state_ == CHUNK_EMPTY || state_ == CHUNK_PRE_OUTPUT))
          return;
       
+      // don't sync if Ace hasn't positioned us yet
+      if (StringUtil.isNullOrEmpty(getElement().getStyle().getTop()))
+      {
+         needsHeightSync_ = true;
+         return;
+      }
+
       setVisible(true);
       
       if (root_.getElement().getScrollHeight() == 0 && 
@@ -294,7 +302,6 @@ public class ChunkOutputWidget extends Composite
       {
          needsHeightSync_ = false;
       }
-      
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
       int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;

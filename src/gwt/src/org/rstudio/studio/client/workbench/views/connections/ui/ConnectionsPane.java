@@ -31,28 +31,27 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.widget.HorizontalCenterPanel;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
@@ -80,10 +79,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             return connection.hashCode();
          }
       };
-      selectionModel_ = new SingleSelectionModel<Connection>();
       connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
-      connectionsDataGrid_.setSelectionModel(selectionModel_);
-      connectionsDataGrid_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
       
       // add type column
       typeColumn_ = new Column<Connection, ImageResource>(new ImageResourceCell()) {
@@ -117,7 +113,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             if (isConnected(connection.getId()))
                return "Connected";
             else
-               return "Disconnected";
+               return "";
          }
       };
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
@@ -140,8 +136,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          protected boolean showButton(Connection connection)
          {
-            return connection.getId().getType().equals("Spark") &&
-                   isConnected(connection.getId());
+            return connection.getId().getType().equals("Spark");
          }
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
@@ -158,10 +153,18 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
 
       
       // create connection explorer, add it, and hide it
-      Label label = new Label("Connection Explorer");
-      label.getElement().getStyle().setColor("#888");
-      connectionExplorer_ = new HorizontalCenterPanel(label, 100);
+      connectionExplorer_ = new ConnectionExplorer();
       connectionExplorer_.setSize("100%", "100%");
+      connectionExplorer_.setConnected(commands_.disconnectConnection().isVisible());
+      commands_.disconnectConnection().addVisibleChangedHandler(
+            new VisibleChangedHandler() {
+
+         @Override
+         public void onVisibleChanged(AppCommand command)
+         {
+            connectionExplorer_.setConnected(command.isVisible());
+         }   
+      });
       
       mainPanel_.add(connectionExplorer_);
       mainPanel_.setWidgetTopBottom(connectionExplorer_, 0, Unit.PX, 0, Unit.PX);
@@ -196,19 +199,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
-   public Connection getSelectedConnection()
-   {
-      return selectionModel_.getSelectedObject();
-   }
-   
-   @Override
-   public HandlerRegistration addSelectedConnectionChangeHandler(
-                                    SelectionChangeEvent.Handler handler)
-   {
-      return selectionModel_.addSelectionChangeHandler(handler);
-   }
-   
-   @Override
    public String getSearchFilter()
    {
       return searchWidget_.getValue();
@@ -229,8 +219,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
-   public void showConnectionExplorer(final Connection connection)
+   public void showConnectionExplorer(final Connection connection, 
+                                      String connectVia)
    {
+      connectionExplorer_.setConnection(connection, connectVia);
+      
       animate(connectionsDataGrid_,
               connectionExplorer_,
               true,
@@ -263,6 +256,19 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    {
       return backToConnectionsButton_;
    }
+  
+   @Override
+   public String getConnectVia()
+   {
+      return connectionExplorer_.getConnectVia();
+   }
+   
+   
+   @Override
+   public void addToConnectionExplorer(String item)
+   {
+      connectionExplorer_.addItem(item);
+   }
    
    
    @Override
@@ -270,6 +276,18 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    {
       toolbar_ = new Toolbar();
       
+      ToolbarPopupMenu actionsMenu = new ToolbarPopupMenu();
+      actionsMenu.addItem(commands_.sparkLog().createMenuItem(false));
+      actionsMenu.addItem(commands_.sparkUI().createMenuItem(false));
+      actionsMenu.addSeparator();
+      actionsMenu.addItem(commands_.removeConnection().createMenuItem(false));
+      
+      actionsMenuButton_ = new ToolbarButton(
+            "",
+            StandardIcons.INSTANCE.more_actions(),
+            actionsMenu);
+
+   
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -284,13 +302,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       backToConnectionsButton_ = new ToolbarButton(
             commands_.helpBack().getImageResource(), (ClickHandler)null);
       connectionName_ = new ToolbarLabel();
+      connectionName_.getElement().getStyle().setMarginRight(8, Unit.PX);
           
       installConnectionsToolbar();
       
       return toolbar_;
    }
-   
-   
    
    @Override 
    protected Widget createMainWidget()
@@ -349,12 +366,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.removeAllWidgets();
       
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
-      toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
-      
+        
       toolbar_.addRightWidget(searchWidget_);
    }
    
@@ -366,9 +378,14 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(backToConnectionsButton_);
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(connectionName_);
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(actionsMenuButton_);
+     
       
-      connectionName_.setText(
-            connection.getId().getType() + ": " + connection.getHost());
+      connectionName_.setText(connection.getHost());
       
    }
    
@@ -398,20 +415,20 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
-   private final HorizontalCenterPanel connectionExplorer_;
+   private final ConnectionExplorer connectionExplorer_;
    
    private final Column<Connection, ImageResource> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
    private final TextColumn<Connection> statusColumn_;
   
    private final ProvidesKey<Connection> keyProvider_;
-   private final SingleSelectionModel<Connection> selectionModel_;
    private final ListDataProvider<Connection> dataProvider_;
    private List<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
    
    private SearchWidget searchWidget_;
    private ToolbarButton backToConnectionsButton_;
    private ToolbarLabel connectionName_;
+   private ToolbarButton actionsMenuButton_;
    
    private final Commands commands_;
    

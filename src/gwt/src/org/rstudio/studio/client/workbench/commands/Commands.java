@@ -116,6 +116,8 @@ public abstract class
    public abstract AppCommand shrinkSelection();
    public abstract AppCommand goToNextSection();
    public abstract AppCommand goToPrevSection();
+   public abstract AppCommand goToNextChunk();
+   public abstract AppCommand goToPrevChunk();
    public abstract AppCommand goToStartOfCurrentScope();
    public abstract AppCommand goToEndOfCurrentScope();
    public abstract AppCommand expandRaggedSelection();
@@ -419,7 +421,9 @@ public abstract class
    public abstract AppCommand removeConnection();
    public abstract AppCommand connectConnection();
    public abstract AppCommand disconnectConnection();
-    
+   public abstract AppCommand sparkLog();
+   public abstract AppCommand sparkUI();
+   
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
    public abstract AppCommand redoDummy();

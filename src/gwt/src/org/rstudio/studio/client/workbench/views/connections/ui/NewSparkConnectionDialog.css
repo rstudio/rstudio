@@ -1,6 +1,8 @@
 @CHARSET "UTF-8";
 
 @external gwt-Label;
+@external gwt-Image;
+@external macintosh;
 
 
 .grid {
@@ -8,7 +10,7 @@
 }
 
 .versionGrid {
-  margin-top: 15px;
+  margin-top: 7px;
 }
 
 
@@ -17,7 +19,7 @@
 }
 
 .masterGrid.remote {
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .label {
@@ -25,13 +27,59 @@
 }
 
 .spanningInput {
-  width: 250px;
+  width: 300px;
+}
+
+.infoPanel {
+  width: 450px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  color: #4d4d4d;
+}
+
+.infoPanel .gwt-Image {
+  margin-right: 4px;
 }
 
 .helpLink {
   margin-top: 6px;
 }
 
-.installCheckBox {
+.codeGrid {
+  margin-top: 9px;
+  margin-bottom: 10px;
+}
 
+.leftLabel {
+  margin-right: 4px;
+}
+
+.codeViewer {
+  border: 1px solid #BBB !important;
+  background-color: #FFF;
+  width: 100% !important;
+  height: 85px !important;
+  font-size: 9pt;
+}
+
+.dialogCodePanel {
+  width: 450px !important;
+}
+
+.macintosh .codeViewer {
+  font-size: 8pt;
+}
+
+.componentNotInstalledWidget {
+   width: 325px;
+   margin-left: 10px;
+}
+
+.componentInstallLink {
+   margin-top: 10px;
+   margin-bottom: 20px;
+}
+
+.codePanelHeader {
+   margin-bottom: 4px;
 }

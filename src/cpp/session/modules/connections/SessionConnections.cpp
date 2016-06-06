@@ -16,19 +16,23 @@
 #include "SessionConnections.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
+#include <core/system/Process.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
+#include <r/session/RSessionUtils.hpp>
 
-
+#include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
@@ -84,14 +88,18 @@ SEXP rs_connectionClosed(SEXP typeSEXP, SEXP hostSEXP)
    return R_NilValue;
 }
 
-SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP)
+SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP, SEXP hintSEXP)
 {
    std::string type = r::sexp::safeAsString(typeSEXP);
    std::string host = r::sexp::safeAsString(hostSEXP);
+   std::string hint = r::sexp::safeAsString(hintSEXP);
    ConnectionId id(type, host);
 
-   ClientEvent event(client_events::kConnectionUpdated,
-                     connectionIdJson(id));
+   json::Object updatedJson;
+   updatedJson["id"] = connectionIdJson(id);
+   updatedJson["hint"] = hint;
+
+   ClientEvent event(client_events::kConnectionUpdated, updatedJson);
    module_context::enqueClientEvent(event);
 
    return R_NilValue;
@@ -189,6 +197,135 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error readFinderAndHostParams(const json::JsonRpcRequest& request,
+                              std::string* pFinder,
+                              std::string* pHost)
+{
+   // read params
+   json::Object idJson;
+   Error error = json::readObjectParam(request.params, 0,
+                                       "id", &idJson,
+                                       "finder", pFinder);
+   if (error)
+      return error;
+
+   return json::readObject(idJson, "host", pHost);
+}
+
+
+Error showSparkLog(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string finder, host;
+   Error error = readFinderAndHostParams(request, &finder, &host);
+   if (error)
+      return error;
+
+   // get the log file
+   std::string log;
+   error = r::exec::RFunction(".rs.getSparkLogFile", finder, host).call(&log);
+   if (error)
+      return error;
+
+   // show the file
+   module_context::showFile(FilePath(log));
+
+   return Success();
+}
+
+Error showSparkUI(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string finder, host;
+   Error error = readFinderAndHostParams(request, &finder, &host);
+   if (error)
+      return error;
+
+   // get the url
+   std::string url;
+   error = r::exec::RFunction(".rs.getSparkWebUrl", finder, host).call(&url);
+   if (error)
+      return error;
+
+   // portmap if necessary
+   url = module_context::mapUrlPorts(url);
+
+   // show the ui
+   ClientEvent event = browseUrlEvent(url);
+   module_context::enqueClientEvent(event);
+
+   return Success();
+}
+
+
+Error installSpark(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string sparkVersion, hadoopVersion;
+   Error error = json::readParams(request.params,
+                                  &sparkVersion,
+                                  &hadoopVersion);
+   if (error)
+      return error;
+
+   // R binary
+   FilePath rProgramPath;
+   error = module_context::rScriptPath(&rProgramPath);
+   if (error)
+      return error;
+
+   // options
+   core::system::ProcessOptions options;
+   options.terminateChildren = true;
+   options.redirectStdErrToStdOut = true;
+
+   // build install command
+   boost::format fmt("rspark::spark_install('%1%', hadoop_version = '%2%', "
+                     "verbose = TRUE)");
+   std::string cmd = boost::str(fmt % sparkVersion % hadoopVersion);
+
+   // build args
+   std::vector<std::string> args;
+   args.push_back("--slave");
+   args.push_back("--vanilla");
+
+   // propagate R_LIBS
+   core::system::Options childEnv;
+   core::system::environment(&childEnv);
+   std::string libPaths = module_context::libPathsString();
+   if (!libPaths.empty())
+      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+   options.environment = childEnv;
+
+
+   // for windows we need to forward setInternet2
+#ifdef _WIN32
+   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+      args.push_back("--internet2");
+#endif
+
+   args.push_back("-e");
+   args.push_back(cmd);
+
+   // create and execute console process
+   boost::shared_ptr<console_process::ConsoleProcess> pCP;
+   pCP = console_process::ConsoleProcess::create(
+            string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+            args,
+            options,
+            "Installing Spark " + sparkVersion,
+            true,
+            console_process::InteractionNever);
+
+   // return console process
+   pResponse->setResult(pCP->toJson());
+   return Success();
+}
+
+
 
 // track whether connections were enabled at the start of this R session
 bool s_connectionsInitiallyEnabled = false;
@@ -202,12 +339,20 @@ void onInstalledPackagesChanged()
    }
 }
 
+void onDeferredInit(bool newSession)
+{
+   if (!newSession && connectionsEnabled())
+   {
+      activeConnections().broadcastToClient();
+   }
+}
+
 } // anonymous namespace
 
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageInstalled("rspark");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.10");
 }
 
 bool activateConnections()
@@ -235,13 +380,16 @@ Error initialize()
    // register methods
    RS_REGISTER_CALL_METHOD(rs_connectionOpened, 5);
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
-   RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 2);
+   RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
 
    // initialize connection history
    Error error = connectionHistory().initialize();
    if (error)
       return error;
+
+   // deferrred init for updating active connections
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    // connect to events to track whether we should enable connections
    s_connectionsInitiallyEnabled = connectionsEnabled();
@@ -254,6 +402,9 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
       (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
+      (bind(registerRpcMethod, "show_spark_log", showSparkLog))
+      (bind(registerRpcMethod, "show_spark_ui", showSparkUI))
+      (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
    return initBlock.execute();

@@ -918,6 +918,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    background: TABBACKGROUND bottom repeat-x;
    height: TABSTRIPHEIGHT;
 }
+
+.secondaryToolbarPanel {
+  background: rgb(240,241,241);
+  border-bottom: 1px solid rgb(169,169,169);
+}
+
 .toolbarButtonRightImage {
    display: none;
 }

@@ -768,7 +768,8 @@
 })
 
 .rs.addFunction("getDollarNamesMethod", function(object,
-                                                 excludeBaseClasses = FALSE)
+                                                 excludeBaseClasses = FALSE,
+                                                 envir = parent.frame())
 {
    classes <- class(object)
    for (class in classes)
@@ -776,7 +777,8 @@
       if (excludeBaseClasses && class %in% c("list", "environment"))
          next
       
-      method <- .rs.getAnywhere(paste(".DollarNames", class, sep = "."))
+      methodName <- paste(".DollarNames", class, sep = ".")
+      method <- .rs.getAnywhere(methodName, envir = envir)
       if (!is.null(method))
          return(method)
    }

@@ -100,6 +100,9 @@ void ConnectionHistory::update(const Connection& connection)
    error = writeConnections(connectionsJson);
    if (error)
       LOG_ERROR(error);
+
+   // fire event
+   onConnectionsChanged();
 }
 
 

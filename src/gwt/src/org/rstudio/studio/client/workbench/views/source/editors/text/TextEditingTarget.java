@@ -839,7 +839,7 @@ public class TextEditingTarget implements
       return sIncrementalSearchMessage_;
    }
    
-   private boolean moveCursorToNextSectionOrChunk()
+   private boolean moveCursorToNextSectionOrChunk(boolean includeSections)
    {
       Scope current = docDisplay_.getCurrentScope();
       ScopeList scopes = new ScopeList(docDisplay_);
@@ -849,7 +849,7 @@ public class TextEditingTarget implements
       for (int i = 0; i < n; i++)
       {
          Scope scope = scopes.get(i);
-         if (!(scope.isChunk() || scope.isSection()))
+         if (!(scope.isChunk() || (scope.isSection() && includeSections)))
             continue;
          
          if (scope.equals(current))
@@ -865,7 +865,7 @@ public class TextEditingTarget implements
       return false;
    }
    
-   private boolean moveCursorToPreviousSectionOrChunk()
+   private boolean moveCursorToPreviousSectionOrChunk(boolean includeSections)
    {
       ScopeList scopes = new ScopeList(docDisplay_);
       Position cursorPos = docDisplay_.getCursorPosition();
@@ -874,7 +874,7 @@ public class TextEditingTarget implements
       for (int i = n - 1; i >= 0; i--)
       {
          Scope scope = scopes.get(i);
-         if (!(scope.isChunk() || scope.isSection()))
+         if (!(scope.isChunk() || (includeSections && scope.isSection())))
             continue;
          
          if (scope.getPreamble().isBefore(cursorPos))
@@ -939,7 +939,7 @@ public class TextEditingTarget implements
    {
       if (docDisplay_.getFileType().canGoNextPrevSection())
       {
-         if (!moveCursorToNextSectionOrChunk())
+         if (!moveCursorToNextSectionOrChunk(true))
             docDisplay_.gotoPageDown();
       }
       else
@@ -953,13 +953,25 @@ public class TextEditingTarget implements
    {
       if (docDisplay_.getFileType().canGoNextPrevSection())
       {
-         if (!moveCursorToPreviousSectionOrChunk())
+         if (!moveCursorToPreviousSectionOrChunk(true))
             docDisplay_.gotoPageUp();
       }
       else
       {
          docDisplay_.gotoPageUp();
       }
+   }
+   
+   @Handler
+   void onGoToNextChunk()
+   {
+      moveCursorToNextSectionOrChunk(false);
+   }
+   
+   @Handler
+   void onGoToPrevChunk()
+   {
+      moveCursorToPreviousSectionOrChunk(false);
    }
    
    @Override

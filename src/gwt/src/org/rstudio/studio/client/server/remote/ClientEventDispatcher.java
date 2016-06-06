@@ -811,8 +811,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.ConnectionUpdated))
          {
-            ConnectionId connectionId = event.getData();
-            eventBus_.fireEvent(new ConnectionUpdatedEvent(connectionId));
+            ConnectionUpdatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ConnectionUpdatedEvent(data));
          }
          else if (type.equals(ClientEvent.EnableConnections))
          {

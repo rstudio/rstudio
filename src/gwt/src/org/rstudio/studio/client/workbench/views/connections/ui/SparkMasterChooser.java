@@ -47,7 +47,7 @@ public class SparkMasterChooser extends Composite
       
       listBox_ = new ListBox();
       listBox_.setWidth("100%");
-      listBox_.addItem(LOCAL);
+      listBox_.addItem(LOCAL, LOCAL_VALUE);
       JsArrayString remoteServers = context.getRemoteServers();
       for (int i = 0; i<remoteServers.length(); i++)
         listBox_.addItem(remoteServers.get(i));
@@ -150,7 +150,7 @@ public class SparkMasterChooser extends Composite
    
    public boolean isLocalMaster(String master)
    {
-      return master.equals(LOCAL);
+      return master.equals(LOCAL_VALUE);
    }
 
    @Override
@@ -167,5 +167,6 @@ public class SparkMasterChooser extends Composite
    private SimplePanel panel_;
    
    private final static String LOCAL = "Local";
+   private final static String LOCAL_VALUE = "local";
    private final static String REMOTE_SERVER = "Remote Server...";
 }

@@ -16,24 +16,37 @@ package org.rstudio.studio.client.workbench.views.connections.events;
 
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConnectionUpdatedEvent extends GwtEvent<ConnectionUpdatedEvent.Handler>
 {  
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
+      public final native ConnectionId getConnectionId() /*-{ return this["id"]; }-*/;
+      public final native String getHint() /*-{ return this["hint"]; }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
       void onConnectionUpdated(ConnectionUpdatedEvent event);
    }
    
-   public ConnectionUpdatedEvent(ConnectionId connectionId)
+   public ConnectionUpdatedEvent(Data data)
    {
-      connectionId_ = connectionId;
+      data_ = data;
    }
    
    public ConnectionId getConnectionId()
    {
-      return connectionId_;
+      return data_.getConnectionId();
+   }
+   
+   public String getHint()
+   {
+      return data_.getHint();
    }
 
    @Override
@@ -48,7 +61,7 @@ public class ConnectionUpdatedEvent extends GwtEvent<ConnectionUpdatedEvent.Hand
       handler.onConnectionUpdated(this);
    }
    
-   private final ConnectionId connectionId_;
+   private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
