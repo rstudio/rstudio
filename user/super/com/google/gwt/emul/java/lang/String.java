@@ -238,122 +238,122 @@ public final class String implements Comparable<String>, CharSequence,
 
   public String() {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString();
+    $create();
   }
 
   public String(byte[] bytes) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(bytes);
+    $create(bytes);
   }
 
   public String(byte[] bytes, int ofs, int len) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(bytes, ofs, len);
+    $create(bytes, ofs, len);
   }
 
   public String(byte[] bytes, int ofs, int len, String charsetName)
       throws UnsupportedEncodingException {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(bytes, ofs, len, charsetName);
+    $create(bytes, ofs, len, charsetName);
   }
 
   public String(byte[] bytes, int ofs, int len, Charset charset) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(bytes, ofs, len, charset);
+    $create(bytes, ofs, len, charset);
   }
 
   public String(byte[] bytes, String charsetName)
       throws UnsupportedEncodingException {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(bytes, charsetName);
+    $create(bytes, charsetName);
   }
 
   public String(byte[] bytes, Charset charset)
       throws UnsupportedEncodingException {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(bytes, charset);
+    $create(bytes, charset);
   }
 
   public String(char value[]) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(value);
+    $create(value);
   }
 
   public String(char value[], int offset, int count) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(value, offset, count);
+    $create(value, offset, count);
   }
 
   public String(int codePoints[], int offset, int count) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(codePoints, offset, count);
+    $create(codePoints, offset, count);
   }
 
   public String(String other) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(other);
+    $create(other);
   }
 
   public String(StringBuffer sb) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(sb);
+    $create(sb);
   }
 
   public String(StringBuilder sb) {
     /*
-     * Call to $createString(args) must be here so that the method is referenced and not
-     * pruned before new String(args) is replaced by $createString(args) by
+     * Call to $create(args) must be here so that the method is referenced and not
+     * pruned before new String(args) is replaced by $create(args) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createString(sb);
+    $create(sb);
   }
 
   private NativeString asNativeString() {
@@ -786,56 +786,46 @@ public final class String implements Comparable<String>, CharSequence,
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed String.
 
-  @JsMethod(name = "$create")
-  private static String $createString() {
+  protected static String $create() {
     return "";
   }
 
-  @JsMethod(name = "$create__arrayOf_byte")
-  private static String $createString(byte[] bytes) {
-    return $createString(bytes, 0, bytes.length);
+  protected static String $create(byte[] bytes) {
+    return $create(bytes, 0, bytes.length);
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__int__int")
-  private static String $createString(byte[] bytes, int ofs, int len) {
-    return $createString(bytes, ofs, len, EmulatedCharset.UTF_8);
+  protected static String $create(byte[] bytes, int ofs, int len) {
+    return $create(bytes, ofs, len, EmulatedCharset.UTF_8);
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__int__int__java_lang_String")
-  private static String $createString(byte[] bytes, int ofs, int len, String charsetName)
+  protected static String $create(byte[] bytes, int ofs, int len, String charsetName)
       throws UnsupportedEncodingException {
-    return $createString(bytes, ofs, len, String.getCharset(charsetName));
+    return $create(bytes, ofs, len, String.getCharset(charsetName));
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__int__int__java_nio_charset_Charset")
-  private static String $createString(byte[] bytes, int ofs, int len, Charset charset) {
+  protected static String $create(byte[] bytes, int ofs, int len, Charset charset) {
     return String.valueOf(((EmulatedCharset) charset).decodeString(bytes, ofs, len));
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__java_lang_String")
-  private static String $createString(byte[] bytes, String charsetName)
+  protected static String $create(byte[] bytes, String charsetName)
       throws UnsupportedEncodingException {
-    return $createString(bytes, 0, bytes.length, charsetName);
+    return $create(bytes, 0, bytes.length, charsetName);
   }
 
-  @JsMethod(name = "$create__arrayOf_byte__java_nio_charset_Charset")
-  private static String $createString(byte[] bytes, Charset charset)
+  protected static String $create(byte[] bytes, Charset charset)
       throws UnsupportedEncodingException {
-    return $createString(bytes, 0, bytes.length, charset.name());
+    return $create(bytes, 0, bytes.length, charset.name());
   }
 
-  @JsMethod(name = "$create__arrayOf_char")
-  private static String $createString(char value[]) {
+  protected static String $create(char value[]) {
     return String.valueOf(value);
   }
 
-  @JsMethod(name = "$create__arrayOf_char__int__int")
-  private static String $createString(char value[], int offset, int count) {
+  protected static String $create(char value[], int offset, int count) {
     return String.valueOf(value, offset, count);
   }
 
-  @JsMethod(name = "$create__arrayOf_int__int__int")
-  private static String $createString(int[] codePoints, int offset, int count) {
+  protected static String $create(int[] codePoints, int offset, int count) {
     char[] chars = new char[count * 2];
     int charIdx = 0;
     while (count-- > 0) {
@@ -844,23 +834,20 @@ public final class String implements Comparable<String>, CharSequence,
     return String.valueOf(chars, 0, charIdx);
   }
 
-  @JsMethod(name = "$create__java_lang_String")
-  private static String $createString(String other) {
+  protected static String $create(String other) {
     return other;
   }
 
-  @JsMethod(name = "$create__java_lang_StringBuffer")
-  private static String $createString(StringBuffer sb) {
+  protected static String $create(StringBuffer sb) {
     return String.valueOf(sb);
   }
 
-  @JsMethod(name = "$create__java_lang_StringBuilder")
-  private static String $createString(StringBuilder sb) {
+  protected static String $create(StringBuilder sb) {
     return String.valueOf(sb);
   }
 
   @JsMethod
-  private static boolean $isInstance(Object instance) {
+  protected static boolean $isInstance(Object instance) {
     return "string".equals(JsUtils.typeOf(instance));
   }
   // CHECKSTYLE_ON: end utility methods

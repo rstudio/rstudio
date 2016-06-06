@@ -295,20 +295,20 @@ public final class Double extends Number implements Comparable<Double> {
 
   public Double(double value) {
     /*
-     * Call to $createDouble(value) must be here so that the method is referenced and not
-     * pruned before new Double(value) is replaced by $createDouble(value) by
+     * Call to $create(value) must be here so that the method is referenced and not
+     * pruned before new Double(value) is replaced by $create(value) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createDouble(value);
+    $create(value);
   }
 
   public Double(String s) {
     /*
-     * Call to $createDouble(value) must be here so that the method is referenced and not
-     * pruned before new Double(value) is replaced by $createDouble(value) by
+     * Call to $create(value) must be here so that the method is referenced and not
+     * pruned before new Double(value) is replaced by $create(value) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createDouble(s);
+    $create(s);
   }
 
   @Override
@@ -379,13 +379,11 @@ public final class Double extends Number implements Comparable<Double> {
   }
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed Double.
-  @JsMethod(name = "$create__double")
-  private static Double $createDouble(double x) {
+  protected static Double $create(double x) {
     return createNative(x);
   }
 
-  @JsMethod(name = "$create__java_lang_String")
-  private static Double $createDouble(String s) {
+  protected static Double $create(String s) {
     return createNative(Double.parseDouble(s));
   }
 
@@ -394,7 +392,7 @@ public final class Double extends Number implements Comparable<Double> {
   }-*/;
 
   @JsMethod
-  private static boolean $isInstance(Object instance) {
+  protected static boolean $isInstance(Object instance) {
     return "number".equals(JsUtils.typeOf(instance));
   }
   //CHECKSTYLE_ON: End utility methods

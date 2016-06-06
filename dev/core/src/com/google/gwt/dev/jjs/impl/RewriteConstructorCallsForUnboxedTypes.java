@@ -40,14 +40,16 @@ public class RewriteConstructorCallsForUnboxedTypes extends JModVisitor {
 
   public static final String NATIVE_TYPE_CREATEMETHOD_PREFIX = "$create";
   private JProgram program;
-  private Map<String, JMethod> jsniSig2Method = new HashMap<>();
+  private Map<JDeclaredType, Map<String, JMethod>> createMethodsByType = new HashMap<>();
 
   public RewriteConstructorCallsForUnboxedTypes(JProgram program) {
     this.program = program;
     for (JDeclaredType unboxedType : program.getRepresentedAsNativeTypes()) {
+      HashMap<String, JMethod> createMethods = new HashMap<>();
+      createMethodsByType.put(unboxedType, createMethods);
       for (JMethod method : unboxedType.getMethods()) {
         if (method.getName().startsWith(NATIVE_TYPE_CREATEMETHOD_PREFIX)) {
-          jsniSig2Method.put(method.getJsniSignature(false, false), method);
+          createMethods.put(method.getOriginalParamTypes().toString(), method);
         }
       }
     }
@@ -55,16 +57,17 @@ public class RewriteConstructorCallsForUnboxedTypes extends JModVisitor {
 
   @Override
   public void endVisit(JNewInstance x, Context ctx) {
-    JMethod createMethod;
     JConstructor ctor = x.getTarget();
 
     if (!program.isRepresentedAsNativeJsPrimitive(ctor.getEnclosingType())) {
       return;
     }
 
-    // map BoxedType(args) -> BoxedType.$createBoxedType(args)
-    createMethod = jsniSig2Method.get(NATIVE_TYPE_CREATEMETHOD_PREFIX
-        + ctor.getJsniSignature(false, false));
+    // map BoxedType(args) -> BoxedType.$create(args)
+    JMethod createMethod =
+        createMethodsByType
+            .get(ctor.getEnclosingType())
+            .get(ctor.getOriginalParamTypes().toString());
     assert createMethod != null;
 
     JMethodCall createCall = new JMethodCall(x.getSourceInfo(), null, createMethod);
@@ -77,9 +80,11 @@ public class RewriteConstructorCallsForUnboxedTypes extends JModVisitor {
     if (x.getTarget().isConstructor()
         && program.isRepresentedAsNativeJsPrimitive(x.getTarget().getEnclosingType())) {
       JConstructor ctor = (JConstructor) x.getTarget();
-      // map BoxedType(args) -> BoxedType.$createBoxedType(args)
-      JMethod createMethod = jsniSig2Method.get(NATIVE_TYPE_CREATEMETHOD_PREFIX
-          + ctor.getJsniSignature(false, false));
+      // map BoxedType(args) -> BoxedType.$createType(args)
+      JMethod createMethod =
+          createMethodsByType
+              .get(ctor.getEnclosingType())
+              .get(ctor.getOriginalParamTypes().toString());
       assert createMethod != null;
 
       JsniMethodRef newJsniMethodRef = new JsniMethodRef(x.getSourceInfo(),

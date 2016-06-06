@@ -63,7 +63,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   public static Boolean valueOf(boolean b) {
-    return b ? $createBoolean(true) : $createBoolean(false);
+    return b ? $create(true) : $create(false);
   }
 
   public static Boolean valueOf(String s) {
@@ -72,20 +72,20 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   public Boolean(boolean value) {
     /*
-     * Call to $createBoolean(value) must be here so that the method is referenced and not pruned
-     * before new Boolean(value) is replaced by $createBoolean(value) by
+     * Call to $create(value) must be here so that the method is referenced and not pruned
+     * before new Boolean(value) is replaced by $create(value) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createBoolean(value);
+    $create(value);
   }
 
   public Boolean(String s) {
      /*
-     * Call to $createBoolean(value) must be here so that the method is referenced and not pruned
-     * before new Boolean(value) is replaced by $createBoolean(value) by
+     * Call to $create(value) must be here so that the method is referenced and not pruned
+     * before new Boolean(value) is replaced by $create(value) by
      * RewriteConstructorCallsForUnboxedTypes.
      */
-    $createBoolean(s);
+    $create(s);
   }
 
   public boolean booleanValue() {
@@ -113,13 +113,11 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   // CHECKSTYLE_OFF: Utility Methods for unboxed Boolean.
-  @JsMethod(name = "$create__boolean")
-  private static Boolean $createBoolean(boolean x) {
+  protected static Boolean $create(boolean x) {
     return createNative(x);
   }
 
-  @JsMethod(name = "$create__java_lang_String")
-  private static Boolean $createBoolean(String x) {
+  protected static Boolean $create(String x) {
     return createNative(Boolean.parseBoolean(x));
   }
 
@@ -128,7 +126,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }-*/;
 
   @JsMethod
-  private static boolean $isInstance(Object instance) {
+  protected static boolean $isInstance(Object instance) {
     return "boolean".equals(JsUtils.typeOf(instance));
   }
   //CHECKSTYLE_ON: End utility methods
