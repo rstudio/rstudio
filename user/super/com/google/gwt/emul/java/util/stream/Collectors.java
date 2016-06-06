@@ -93,7 +93,11 @@ public final class Collectors {
       Function<? super T, ? extends K> classifier,
       Supplier<M> mapFactory,
       Collector<? super T, A, D> downstream) {
-    return groupingBy0(LinkedHashMap::new, classifier, mapFactory, downstream);
+    return groupingBy0(() -> {
+      // cannot use LinkedHashMap::new because javac cannot infer correct
+      // return type of method reference
+      return new LinkedHashMap<>();
+    }, classifier, mapFactory, downstream);
   }
 
   private static <T, K, D, A, M extends Map<K, D>> Collector<T, ?, M> groupingBy0(
