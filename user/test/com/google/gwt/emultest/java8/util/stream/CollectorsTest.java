@@ -256,18 +256,31 @@ public class CollectorsTest extends EmulTestBase {
     mapOfLists.put(true, Collections.singletonList(true));
     mapOfLists.put(false, Collections.singletonList(false));
     applyItems(mapOfLists, c1, true, false);
+
     mapOfLists.clear();
+    mapOfLists.put(false, Collections.emptyList());
     mapOfLists.put(true, Arrays.asList(true, true));
     applyItems(mapOfLists, c1, true, true);
+
     mapOfLists.clear();
     mapOfLists.put(false, Arrays.asList(false, false));
+    mapOfLists.put(true, Collections.emptyList());
     applyItems(mapOfLists, c1, false, false);
 
-    assertZeroItemsCollectedAs(Collections.emptyMap(), c1);
-    assertSingleItemCollectedAs(
-        Collections.singletonMap(true, Collections.singletonList(true)), c1, true);
-    assertSingleItemCollectedAs(
-        Collections.singletonMap(false, Collections.singletonList(false)), c1, false);
+    mapOfLists.clear();
+    mapOfLists.put(false, Collections.emptyList());
+    mapOfLists.put(true, Collections.emptyList());
+    assertZeroItemsCollectedAs(mapOfLists, c1);
+
+    mapOfLists.clear();
+    mapOfLists.put(false, Collections.emptyList());
+    mapOfLists.put(true, Collections.singletonList(true));
+    assertSingleItemCollectedAs(mapOfLists, c1, true);
+
+    mapOfLists.clear();
+    mapOfLists.put(false, Collections.singletonList(false));
+    mapOfLists.put(true, Collections.emptyList());
+    assertSingleItemCollectedAs(mapOfLists, c1, false);
 
     Collector<Boolean, ?, Map<Boolean, Set<Boolean>>> c2 =
         partitioningBy(Boolean::valueOf, toSet());
@@ -276,11 +289,15 @@ public class CollectorsTest extends EmulTestBase {
     mapOfSets.put(true, Collections.singleton(true));
     mapOfSets.put(false, Collections.singleton(false));
     applyItems(mapOfSets, c2, true, false);
+
     mapOfSets.clear();
+    mapOfSets.put(false, Collections.emptySet());
     mapOfSets.put(true, Collections.singleton(true));
     applyItems(mapOfSets, c2, true, true);
+
     mapOfSets.clear();
     mapOfSets.put(false, Collections.singleton(false));
+    mapOfSets.put(true, Collections.emptySet());
     applyItems(mapOfSets, c2, false, false);
   }
 

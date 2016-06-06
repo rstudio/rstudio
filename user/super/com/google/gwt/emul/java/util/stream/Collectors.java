@@ -93,8 +93,16 @@ public final class Collectors {
       Function<? super T, ? extends K> classifier,
       Supplier<M> mapFactory,
       Collector<? super T, A, D> downstream) {
-    return Collector.<T, Map<K, List<T>>, M>of(
-        LinkedHashMap::new,
+    return groupingBy0(LinkedHashMap::new, classifier, mapFactory, downstream);
+  }
+
+  private static <T, K, D, A, M extends Map<K, D>> Collector<T, ?, M> groupingBy0(
+      Supplier<Map<K, List<T>>> supplier,
+      Function<? super T, ? extends K> classifier,
+      Supplier<M> mapFactory,
+      Collector<? super T, A, D> downstream) {
+    return Collector.of(
+        supplier,
         (m, o) -> {
           K k = classifier.apply(o);
           List<T> l = m.get(k);
@@ -172,13 +180,21 @@ public final class Collectors {
 
   public static <T> Collector<T, ?, Map<Boolean, List<T>>> partitioningBy(
       Predicate<? super T> predicate) {
-    // calling groupBy directly rather than partioningBy so that it can be optimized later
-    return groupingBy(predicate::test);
+    return partitioningBy(predicate, toList());
   }
 
   public static <T, D, A> Collector<T, ?, Map<Boolean, D>> partitioningBy(
       Predicate<? super T> predicate, Collector<? super T, A, D> downstream) {
-    return groupingBy(predicate::test, downstream);
+    return groupingBy0(partitionSupplier(), predicate::test, HashMap::new, downstream);
+  }
+
+  private static <T> Supplier<Map<Boolean, List<T>>> partitionSupplier() {
+    return () -> {
+      Map<Boolean, List<T>> partition = new LinkedHashMap<>();
+      partition.put(false, new ArrayList<>());
+      partition.put(true, new ArrayList<>());
+      return partition;
+    };
   }
 
   public static <T> Collector<T,?,Optional<T>> reducing(BinaryOperator<T> op) {
