@@ -259,6 +259,7 @@ public class JavaResourceBase {
       createMockJavaResource("java.lang.Number",
           "package java.lang;",
           "public class Number implements java.io.Serializable {",
+          "  public double doubleValue() { return 0; }",
           "}");
 
   public static final MockJavaResource OBJECT =
