@@ -16,7 +16,7 @@
 #include "NotebookQueueUnit.hpp"
 
 #include <session/SessionModuleContext.hpp>
-#include "../SessionConsoleInput.hpp"
+#include <session/http/SessionRequest.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -169,11 +169,20 @@ Error NotebookQueueUnit::execute()
    completed_.push_back(ExecRange(start, stop));
    std::string code = code_.substr(start, stop);
 
-   // send to R 
-   console_input::addToConsoleInputBuffer(
-         r::session::RConsoleInput(code, chunkId_));
-      
-   return Success();
+   // formulate request body
+   json::Array arr;
+   arr.push_back(chunkId_);
+   arr.push_back(code);
+   std::ostringstream oss;
+   json::write(arr, oss);
+
+   // loop back console input request to session -- this allows us to treat 
+   // notebook console input exactly as user console input
+   core::http::Response response;
+   Error error = session::http::sendSessionRequest(
+         "console_input", oss.str(), &response);
+   
+   return error;
 }
 
 std::string NotebookQueueUnit::docId() const
