@@ -67,7 +67,7 @@ int main(int argc, char * const argv[])
       
       http::Response response;
       error = session::http::sendSessionRequest(
-            kPostbackUriScope + options.command(), 
+            kLocalUriLocationPrefix kPostbackUriScope + options.command(), 
             options.argument(), 
             &response);
       if (error)

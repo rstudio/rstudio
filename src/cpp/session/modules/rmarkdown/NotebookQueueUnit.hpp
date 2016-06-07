@@ -46,7 +46,7 @@ public:
    core::json::Object toJson() const;
 
    core::Error parseOptions(core::json::Object* pOptions);
-   core::Error execute();
+   std::string popExecRange();
    bool complete() const;
 
    // accessors

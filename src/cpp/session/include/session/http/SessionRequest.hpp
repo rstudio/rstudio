@@ -38,16 +38,17 @@ namespace rstudio {
 namespace session {
 namespace http {
    
-inline core::Error sendSessionRequest(const std::string& method, 
+inline core::Error sendSessionRequest(const std::string& uri, 
       const std::string& body, core::http::Response* pResponse)
 {
    // build request
    core::http::Request request;
    request.setMethod("POST");
-   request.setUri(kLocalUriLocationPrefix + method);
+   request.setUri(uri);
    request.setHeader("Accept", "*/*");
    request.setHeader("Connection", "close");
    request.setBody(body);
+   std::cerr << "request: " << request << std::endl;
 
 #ifdef _WIN32
    // get local peer

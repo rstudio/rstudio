@@ -16,7 +16,6 @@
 #include "NotebookQueueUnit.hpp"
 
 #include <session/SessionModuleContext.hpp>
-#include <session/http/SessionRequest.hpp>
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
@@ -118,10 +117,21 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    // convert to JSON 
    json::Value jsonOptions;
    error = r::json::jsonValueFromList(sexpOptions, &jsonOptions);
-   if (jsonOptions.type() != json::ObjectType)
+   if (jsonOptions.type() == json::ArrayType && 
+       jsonOptions.get_array().empty())
+   {
+      // treat empty array as empty object
+      *pOptions = json::Object();
+   }
+   else if (jsonOptions.type() != json::ObjectType)
+   {
       return Error(json::errc::ParseError, ERROR_LOCATION);
-   
-   *pOptions = jsonOptions.get_obj();
+   }
+   else 
+   {
+      *pOptions = jsonOptions.get_obj();
+   }
+
    return Success();
 }
 
@@ -143,7 +153,7 @@ json::Object NotebookQueueUnit::toJson() const
    return json::Object();
 }
 
-Error NotebookQueueUnit::execute()
+std::string NotebookQueueUnit::popExecRange()
 {
    // extract next range to execute
    ExecRange& range = *pending_.begin();
@@ -151,7 +161,9 @@ Error NotebookQueueUnit::execute()
    int stop = range.stop;
 
    // use the first line of the range if it's multi-line
-   size_t idx = code_.find('\n', start);
+   size_t idx = code_.find('\n', start + 1);
+   std::cerr << "start exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
+
    if (idx != std::string::npos && static_cast<int>(idx) < stop)
    {
       stop = idx;
@@ -167,22 +179,11 @@ Error NotebookQueueUnit::execute()
 
    // mark completed and extract from code
    completed_.push_back(ExecRange(start, stop));
-   std::string code = code_.substr(start, stop);
-
-   // formulate request body
-   json::Array arr;
-   arr.push_back(chunkId_);
-   arr.push_back(code);
-   std::ostringstream oss;
-   json::write(arr, oss);
-
-   // loop back console input request to session -- this allows us to treat 
-   // notebook console input exactly as user console input
-   core::http::Response response;
-   Error error = session::http::sendSessionRequest(
-         "console_input", oss.str(), &response);
+   std::string code = code_.substr(start, stop - start);
    
-   return error;
+   std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop) << " (" << idx << ")" << std::endl;
+
+   return code;
 }
 
 std::string NotebookQueueUnit::docId() const
