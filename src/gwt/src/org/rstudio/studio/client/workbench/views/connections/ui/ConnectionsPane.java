@@ -346,11 +346,14 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             0, Unit.PX,
             width, Unit.PX);
 
+      to.setVisible(true);
+      from.setVisible(true);
       mainPanel_.animate(300, new AnimationCallback()
       {
          public void onAnimationComplete()
          {
             mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
+            from.setVisible(false);
             mainPanel_.forceLayout();
             onComplete.execute();
          }
