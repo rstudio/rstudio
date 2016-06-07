@@ -161,6 +161,7 @@ public class ConnectionCodePanel extends Composite
          updateConnectViaUI_.execute();
       }
       codeViewer_.forceResize();
+      codeViewer_.forceCursorChange();
       settingCode_ = false;
    }
    
