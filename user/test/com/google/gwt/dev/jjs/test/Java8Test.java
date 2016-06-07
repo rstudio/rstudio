@@ -292,6 +292,10 @@ public class Java8Test extends GWTTestCase {
     assertFalse(isGwtSourceLevel8());
   }
 
+  public void testLambdaCapturingThis_onDefaultMethod() {
+    assertFalse(isGwtSourceLevel8());
+  }
+
   private boolean isGwtSourceLevel8() {
     return JUnitShell.getCompilerOptions().getSourceLevel().compareTo(SourceLevel.JAVA8) >= 0;
   }

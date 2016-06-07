@@ -175,7 +175,7 @@ public class Devirtualizer {
         JMethod jsoStaticImpl =
             staticImplCreator.getOrCreateStaticImpl(program, overridingMethod);
         devirtualMethodByMethod.put(method, jsoStaticImpl);
-      } else if (method.isJsOverlay()) {
+      } else if (isOverlayMethod(method)) {
         // A virtual dispatch on a target that is already known to be a JavaScriptObject, this
         // should have been handled by MakeCallsStatic.
         // TODO(rluble): verify that this case can not arise in optimized mode and if so
@@ -200,7 +200,7 @@ public class Devirtualizer {
       if (devirtualMethodByMethod.containsKey(method)) {
         return true;
       }
-      if (method.isJsOverlay()) {
+      if (isOverlayMethod(method)) {
         return true;
       }
       if (method.getEnclosingType().isJsNative()) {
@@ -211,6 +211,18 @@ public class Devirtualizer {
       dispatchType.remove(DispatchType.HAS_JAVA_VIRTUAL_DISPATCH);
       return !dispatchType.isEmpty();
     }
+  }
+
+  /**
+   * Returns true if {@code method} is an overlay method. Overlay methods include the ones that
+   * are marked as JsOverlay but also (synthetic) private instance methods on interfaces.
+   * <p>
+   * Synthetic private methods on interfaces are the result of lambdas that capture the enclosing
+   * instance and are defined on default methods.
+   */
+  private boolean isOverlayMethod(JMethod method) {
+    return method.isJsOverlay()
+        || (method.getEnclosingType() instanceof JInterfaceType && method.isPrivate());
   }
 
   public static void exec(JProgram program) {

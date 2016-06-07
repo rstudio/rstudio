@@ -1576,4 +1576,28 @@ public class Java8Test extends GWTTestCase {
   public void testNativeJsOverlay_lambda() {
     assertSame("Hello", NativeClassWithJsOverlay.m("Hello"));
   }
+
+  interface IntefaceWithDefaultMethodAndLambda {
+    boolean f();
+
+    default BooleanPredicate fAsPredicate() {
+      // This lambda will be defined as an instance method in the enclosing class, which is an
+      // interface. In this case the methdod will be devirtualized.
+      return () -> this.f();
+    }
+  }
+
+  interface BooleanPredicate {
+    boolean apply();
+  }
+
+  public void testLambdaCapturingThis_onDefaultMethod() {
+    assertTrue(
+        new IntefaceWithDefaultMethodAndLambda() {
+          @Override
+          public boolean f() {
+            return true;
+          }
+        }.fAsPredicate().apply());
+  }
 }
