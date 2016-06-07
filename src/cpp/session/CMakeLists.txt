@@ -58,9 +58,15 @@ set (SESSION_SOURCE_FILES
    SessionClientEvent.cpp
    SessionClientEventQueue.cpp
    SessionClientEventService.cpp
+   SessionClientInit.cpp
+   SessionConsoleInput.cpp
    SessionConsoleProcess.cpp
    SessionContentUrls.cpp
-   SessionSSH.cpp
+   SessionDirs.cpp
+   SessionFork.cpp
+   SessionRpc.cpp
+   SessionHttpMethods.cpp
+   SessionInit.cpp
    SessionMain.cpp
    SessionMainOverlay.cpp
    SessionModuleContext.cpp
@@ -69,8 +75,11 @@ set (SESSION_SOURCE_FILES
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionRUtil.cpp
+   SessionSSH.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
+   SessionSuspend.cpp
+   SessionUriHandlers.cpp
    SessionUserSettings.cpp
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
