@@ -671,3 +671,17 @@ filegroup(
     ),
     visibility = ["//third_party/java_src/j2cl:__subpackages__"],
 )
+
+filegroup(
+    name = "java8_emul_test",
+    srcs = [
+        "test/com/google/gwt/emultest/EmulJava8Suite.java",
+        "test/com/google/gwt/testing/TestUtils.java",
+    ] + glob(
+        [
+            "test/com/google/gwt/emultest/java8/**/*.java",
+            "test/org/apache/commons/**/*.java",
+        ],
+    ),
+    visibility = ["//third_party/java_src/j2cl:__subpackages__"],
+)
