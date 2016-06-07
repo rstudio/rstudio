@@ -1,7 +1,7 @@
 #!/bin/sh
 
 testConfig() {
- `#{opt_bin}/rserver --test-config`
+ `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
 }
 
 verifyInstallation() {
