@@ -38,6 +38,9 @@ namespace rstudio {
 namespace session {
 namespace http {
    
+// this function sends an request directly to the session; it's inlined so that
+// it can be used both from the postback executable (which does not link with
+// rsession) and the session itself
 inline core::Error sendSessionRequest(const std::string& uri, 
       const std::string& body, core::http::Response* pResponse)
 {
@@ -48,7 +51,6 @@ inline core::Error sendSessionRequest(const std::string& uri,
    request.setHeader("Accept", "*/*");
    request.setHeader("Connection", "close");
    request.setBody(body);
-   std::cerr << "request: " << request << std::endl;
 
 #ifdef _WIN32
    // get local peer
