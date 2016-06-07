@@ -162,6 +162,7 @@ std::string NotebookQueueUnit::popExecRange()
 
    // use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
+   std::cerr << "exec chunk with code " << code_ << std::endl;
    std::cerr << "start exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
 
    if (idx != std::string::npos && static_cast<int>(idx) < stop)
@@ -169,7 +170,7 @@ std::string NotebookQueueUnit::popExecRange()
       stop = idx;
 
       // adjust the range to account for the code we're about to send
-      range.start = idx;
+      range.start = idx + 1;
    }
    else
    {
@@ -181,7 +182,7 @@ std::string NotebookQueueUnit::popExecRange()
    completed_.push_back(ExecRange(start, stop));
    std::string code = code_.substr(start, stop - start);
    
-   std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop) << " (" << idx << ")" << std::endl;
+   std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
 
    return code;
 }

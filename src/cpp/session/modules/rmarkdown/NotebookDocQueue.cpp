@@ -104,6 +104,12 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    return Success();
 }
 
+bool chunkIdEquals(const boost::shared_ptr<NotebookQueueUnit> unit,
+                   const std::string &chunkId)
+{
+   return unit->chunkId() == chunkId;
+}
+
 Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit, 
       QueueOperation op, const std::string& before)
 {
@@ -113,11 +119,8 @@ Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit,
    {
       case QueueAdd:
          // find insertion position
-         for (it = queue_.begin(); it != queue_.end(); it++)
-         {
-            if ((*it)->chunkId() == before)
-               break;
-         }
+         it = std::find_if(queue_.begin(), queue_.end(), 
+               boost::bind(chunkIdEquals, _1, before));
          queue_.insert(it, unit);
          break;
 
@@ -125,6 +128,7 @@ Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit,
          break;
 
       case QueueDelete:
+         queue_.remove_if(boost::bind(chunkIdEquals, _1, unit->chunkId()));
          break;
    }
    return Success();

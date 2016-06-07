@@ -52,8 +52,6 @@ public:
 
    Error process()
    {
-      std::cerr << "process notebook exec queue" << std::endl;
-
       // no work if list is empty
       if (queue_.empty())
          return Success();
@@ -79,21 +77,19 @@ public:
                   queue_.pop_front();
                }
             }
+
+            // clean up current exec unit and execute the next one
+            execUnit_ = boost::shared_ptr<NotebookQueueUnit>();
          }
          else
-            executeCurrentUnit();
-      }
-      else
-      {
-         return executeNextUnit();
+            return executeCurrentUnit();
       }
 
-      return Success();
+      return executeNextUnit();
    }
 
    Error executeNextUnit()
    {
-      std::cerr << "exec next unit" << std::endl;
       // no work to do if we have no documents
       if (queue_.empty())
          return Success();
@@ -114,7 +110,6 @@ public:
          docQueue->pixelWidth(), docQueue->charWidth());
       execContext_->connect();
 
-      std::cerr << "beginning exec for unit " << unit->chunkId() << std::endl;
       execUnit_ = unit;
       executeCurrentUnit();
 
@@ -139,14 +134,11 @@ public:
 
    void add(boost::shared_ptr<NotebookDocQueue> pQueue)
    {
-      std::cerr << "add doc to queue: " << pQueue->docId() << std::endl;
-
       queue_.push_back(pQueue);
    }
 
    void consoleThreadMain()
    {
-      std::cerr << "console thread starting" << std::endl;
       // main function for thread which receives console input
       std::string input;
       while (input_.deque(&input, boost::posix_time::not_a_date_time))
@@ -154,14 +146,11 @@ public:
          // loop back console input request to session -- this allows us to treat 
          // notebook console input exactly as user console input
          core::http::Response response;
-         std::cerr << "sending console input to session: " << input << std::endl;
          Error error = session::http::sendSessionRequest(
                "/rpc/console_input", input, &response);
          if (error)
             LOG_ERROR(error);
-         std::cerr << "resp " << response.statusCode() << " - " << response.body() << std::endl;
       }
-      std::cerr << "console thread exiting" << std::endl;
    }
 
    Error executeCurrentUnit()
@@ -183,7 +172,6 @@ public:
       json::write(rpc, oss);
 
       input_.enque(oss.str());
-      std::cerr << "submitting console input " << oss.str() << std::endl;
       return Success();
    }
 

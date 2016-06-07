@@ -69,9 +69,8 @@ public class NotebookQueueState
          
          // add a single range which encompasses all of the actual code in the
          // chunk
-         int start = code.indexOf("\n");
+         int start = code.indexOf("\n") + 1;
          int end = code.lastIndexOf("\n");
-         end = code.lastIndexOf(code, end - 1);
          
          NotebookExecRange range = NotebookExecRange.create(start, end);
          unit.addPendingRange(range);
