@@ -91,7 +91,8 @@ public:
                }
             }
 
-            // clean up current exec unit and execute the next one
+            // clean up current exec unit 
+            execContext_->disconnect();
             execUnit_ = boost::shared_ptr<NotebookQueueUnit>();
          }
          else

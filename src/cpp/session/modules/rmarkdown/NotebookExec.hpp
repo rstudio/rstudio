@@ -24,6 +24,8 @@
 
 #include <r/RSexp.hpp>
 
+#include "NotebookPlots.hpp"
+
 #define kStagingSuffix "_t"
 
 namespace rstudio {
@@ -87,6 +89,8 @@ private:
 
    bool connected_;
    bool hasOutput_;
+
+   PlotCapture plotCapture_;
 
    std::vector<boost::signals::connection> connections_;
 };

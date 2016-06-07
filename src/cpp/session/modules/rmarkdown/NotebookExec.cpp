@@ -128,14 +128,14 @@ void ChunkExecContext::connect()
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = beginPlotCapture(figHeight, figWidth, PlotSizeManual, 
-                               outputPath_);
+      error = plotCapture_.connect(figHeight, figWidth, PlotSizeManual, 
+            outputPath_);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = beginPlotCapture(0, pixelWidth_, PlotSizeAutomatic, 
-                               outputPath_);
+      error = plotCapture_.connect(0, pixelWidth_, PlotSizeAutomatic, 
+            outputPath_);
    }
    if (error)
       LOG_ERROR(error);
@@ -192,20 +192,12 @@ void ChunkExecContext::connect()
    beginErrorCapture();
 
    // begin capturing console text
-   connections_.push_back(module_context::events().onConsolePrompt.connect(
-         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
    connections_.push_back(module_context::events().onConsoleOutput.connect(
          boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
    connections_.push_back(module_context::events().onConsoleInput.connect(
          boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
 
    connected_ = true;
-}
-
-void ChunkExecContext::onConsolePrompt(const std::string& )
-{
-   if (connected_)
-      disconnect();
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
@@ -326,6 +318,9 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 void ChunkExecContext::disconnect()
 {
    Error error;
+
+   // clean up plots if necessary
+   plotCapture_.disconnect();
 
    // clean up staging folder
    error = outputPath_.removeIfExists();
