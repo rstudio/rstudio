@@ -110,7 +110,7 @@ case "$1" in
         ;;
 
     version)
-        echo "#{version}"
+        echo "${CPACK_PACKAGE_VERSION}"
         ;;
 
     *)
