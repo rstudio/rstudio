@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,6 +58,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/gwt/GwtLogHandler.hpp>
+#include <core/gwt/GwtFileHandler.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
@@ -81,6 +83,8 @@
 #include <r/session/REventLoop.hpp>
 #include <r/RUtil.hpp>
 
+extern "C" const char *locale2charset(const char *);
+
 #include <monitor/MonitorClient.hpp>
 
 #include <session/SessionConstants.hpp>
@@ -98,13 +102,6 @@
 
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientEventService.hpp"
-#include "SessionClientInit.hpp"
-#include "SessionConsoleInput.hpp"
-#include "SessionDirs.hpp"
-#include "SessionFork.hpp"
-#include "SessionHttpMethods.hpp"
-#include "SessionInit.hpp"
-#include "SessionSuspend.hpp"
 
 #include <session/SessionRUtil.hpp>
 
@@ -196,24 +193,1389 @@ Error initialize();
 
 namespace {
 
+// uri handlers
+http::UriHandlers s_uriHandlers;
+http::UriHandlerFunction s_defaultUriHandler;
+
+// json rpc methods
+core::json::JsonRpcAsyncMethods s_jsonRpcMethods;
+   
 // R browseUrl handlers
 std::vector<module_context::RBrowseUrlHandler> s_rBrowseUrlHandlers;
    
 // R browseFile handlers
 std::vector<module_context::RBrowseFileHandler> s_rBrowseFileHandlers;
 
+// names of waitForMethod handlers (used to screen out of bkgnd processing)
+std::vector<std::string> s_waitForMethodNames;
+
+// last prompt we issued
+std::string s_lastPrompt;
+
+// have we fully initialized? used by rConsoleRead and clientInit to
+// tweak their behavior when the process is first starting
+bool s_sessionInitialized = false;
+
+// was the underlying r session resumed
+bool s_rSessionResumed = false;
+
+// url for next session
+std::string s_nextSessionUrl;
+
 // indicates whether we should destroy the session at cleanup time
 // (true if the user does a full quit)
 bool s_destroySession = false;
 
+// manage global state indicating whether R is processing input
+volatile sig_atomic_t s_rProcessingInput = 0;
+
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
+
+std::queue<rstudio::r::session::RConsoleInput> s_consoleInputBuffer;
+
+// json rpc methods we handle (the rest are delegated to the HttpServer)
+const char * const kClientInit = "client_init" ;
+const char * const kConsoleInput = "console_input" ;
+const char * const kEditCompleted = "edit_completed";
+const char * const kChooseFileCompleted = "choose_file_completed";
+const char * const kLocatorCompleted = "locator_completed";
+const char * const kUserPromptCompleted = "user_prompt_completed";
+const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
+const char * const kQuitSession = "quit_session" ;   
+const char * const kSuspendSession = "suspend_session";
+const char * const kInterrupt = "interrupt";
+
+// convenience function for disallowing suspend (note still doesn't override
+// the presence of s_forceSuspend = 1)
+bool disallowSuspend() { return false; }
+   
+// request suspends (cooperative and forced) using interrupts
+volatile sig_atomic_t s_suspendRequested = 0;
+volatile sig_atomic_t s_forceSuspend = 0;
+volatile sig_atomic_t s_forceSuspendInterruptedR = 0;
+bool s_suspendedFromTimeout = false;
+
+// cooperative suspend -- the http server is forced to timeout and a flag 
+// indicating that we should suspend at ourfirst valid opportunity is set
+void handleUSR1(int unused)
+{   
+   // note that a suspend has been requested. the process will suspend
+   // at the first instance that it is valid for it to do so 
+   s_suspendRequested = 1;
+}
+
+// forced suspend -- R is interrupted, the http server is forced to timeout,
+// and the 'force' flag is set
+void handleUSR2(int unused)
+{
+   // note whether R was interrupted
+   if (s_rProcessingInput)
+      s_forceSuspendInterruptedR = 1;
+
+   // set the r interrupt flag (always)
+   rstudio::r::exec::setInterruptsPending(true);
+
+   // note that a suspend is being forced. 
+   s_forceSuspend = 1;
+}
+
+// version of the executable -- this is the legacy version designator. we
+// set it to double max so that it always invalidates legacy clients
+double s_version = std::numeric_limits<double>::max();
+
+// client version -- this is determined by the git revision hash. the client
+// and the server can diverge if a new version of the server was installed
+// underneath a previously rendered client. if versions diverge then a reload
+// of the client is forced
+inline std::string clientVersion()
+{
+   // never return a version in desktop mode
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+      return std::string();
+
+   // never return a version in standalone mode
+   if (rsession::options().standalone())
+      return std::string();
+
+   // clientVersion is the git revision hash
+   return RSTUDIO_GIT_REVISION_HASH;
+}
+   
 
 void detectChanges(module_context::ChangeSource source)
 {
    module_context::events().onDetectChanges(source);
 }
  
+
+// certain things are deferred until after we have sent our first response
+// take care of these things here
+void ensureSessionInitialized()
+{
+   // note that we are now fully initialized. we defer setting this
+   // flag so that consoleRead and handleClientInit know that we have just
+   // started up and can act accordingly
+   s_sessionInitialized = true;
+
+   // ensure the session is fully deserialized (deferred deserialization
+   // is supported so that the workbench UI can load without having to wait
+   // for the potentially very lengthy deserialization of the environment)
+   rstudio::r::session::ensureDeserialized();
+}
+
+FilePath getDefaultWorkingDirectory()
+{
+   // calculate using user settings
+   FilePath defaultWorkingDir = userSettings().initialWorkingDirectory();
+
+   // return it if it exists, otherwise use the default user home path
+   if (defaultWorkingDir.exists() && defaultWorkingDir.isDirectory())
+      return defaultWorkingDir;
+   else
+      return rsession::options().userHomePath();
+}
+
+FilePath getInitialWorkingDirectory()
+{
+   // check for a project
+   if (projects::projectContext().hasProject())
+   {
+      return projects::projectContext().directory();
+   }
+
+   // check for working dir in project none
+   else if (options().sessionScope().isProjectNone())
+   {
+      FilePath workingDirPath = module_context::resolveAliasedPath(
+                      module_context::activeSession().workingDir());
+      if (workingDirPath.exists())
+         return workingDirPath;
+      else
+         return getDefaultWorkingDirectory();
+   }
+
+   // see if there is an override from the environment (perhaps based
+   // on a folder drag and drop or other file association)
+   FilePath workingDirPath = rsession::options().initialWorkingDirOverride();
+   if (workingDirPath.exists() && workingDirPath.isDirectory())
+   {
+      return workingDirPath;
+   }
+   else
+   {
+      // if not then just return default working dir
+      return getDefaultWorkingDirectory();
+   }
+}
+
+FilePath getProjectUserDataDir(const ErrorLocation& location)
+{
+   // get the project directory
+   FilePath projectDir = projects::projectContext().directory();
+
+   // presume that the project dir is the data dir then check
+   // for a .Ruserdata directory as an alternative
+   FilePath dataDir = projectDir;
+
+   FilePath ruserdataDir = projectDir.childPath(".Ruserdata");
+   if (ruserdataDir.exists())
+   {
+      // create user-specific subdirectory if necessary
+      FilePath userDir = ruserdataDir.childPath(core::system::username());
+      Error error = userDir.ensureDirectory();
+      if (!error)
+      {
+         dataDir = userDir;
+      }
+      else
+      {
+         core::log::logError(error, location);
+      }
+   }
+
+   // return the data dir
+   return dataDir;
+}
+
+
+
+void handleClientInit(const boost::function<void()>& initFunction,
+                      boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // alias options
+   Options& options = rsession::options();
+   
+   // calculate initialization parameters
+   std::string clientId = rsession::persistentState().newActiveClientId();
+   bool resumed = s_rSessionResumed || s_sessionInitialized;
+
+   // if we are resuming then we don't need to worry about events queued up
+   // by R during startup (e.g. printing of the banner) being sent to the
+   // client. so, clear out the events which might be pending in the
+   // client event service and/or queue
+   bool clearEvents = resumed;
+   
+   // reset the client event service for the new client (will cause
+   // outstanding http requests from old clients to fail with
+   // InvalidClientId). note that we can't simply stop() the
+   // ClientEventService and start() a new one because in that case the
+   // old client will never get disconnected because it won't get
+   // the InvalidClientId error.
+   clientEventService().setClientId(clientId, clearEvents);
+
+   // set RSTUDIO_HTTP_REFERER environment variable based on Referer
+   if (options.programMode() == kSessionProgramModeServer)
+   {
+      std::string referer = ptrConnection->request().headerValue("referer");
+      core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+   }
+
+   // prepare session info 
+   json::Object sessionInfo ;
+   sessionInfo["clientId"] = clientId;
+   sessionInfo["mode"] = options.programMode();
+   
+   sessionInfo["userIdentity"] = options.userIdentity();
+
+   // only send log_dir and scratch_dir if we are in desktop mode
+   if (options.programMode() == kSessionProgramModeDesktop)
+   {
+      sessionInfo["log_dir"] = options.userLogPath().absolutePath();
+      sessionInfo["scratch_dir"] = options.userScratchPath().absolutePath();
+   }
+
+   // temp dir
+   FilePath tempDir = rstudio::r::session::utils::tempDir();
+   Error error = tempDir.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   sessionInfo["temp_dir"] = tempDir.absolutePath();
+   
+   // installed client version
+   sessionInfo["client_version"] = clientVersion();
+   
+   // default prompt
+   sessionInfo["prompt"] = rstudio::r::options::getOption<std::string>("prompt");
+
+   // client state
+   json::Object clientStateObject;
+   rstudio::r::session::clientState().currentState(&clientStateObject);
+   sessionInfo["client_state"] = clientStateObject;
+   
+   // source documents
+   json::Array jsonDocs;
+   error = modules::source::clientInitDocuments(&jsonDocs);
+   if (error)
+      LOG_ERROR(error);
+   sessionInfo["source_documents"] = jsonDocs;
+   
+   // agreement
+   sessionInfo["hasAgreement"] = modules::agreement::hasAgreement();
+   sessionInfo["pendingAgreement"] = modules::agreement::pendingAgreement();
+
+   // docs url
+   sessionInfo["docsURL"] = rsession::options().docsURL();
+
+   // get alias to console_actions and get limit
+   rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
+   sessionInfo["console_actions_limit"] = consoleActions.capacity();
+
+   // resumed
+   sessionInfo["resumed"] = resumed; 
+   if (resumed)
+   {
+      // console actions
+      json::Object actionsObject;
+      consoleActions.asJson(&actionsObject);
+      sessionInfo["console_actions"] = actionsObject;
+   }
+
+   sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
+   sessionInfo["latex_program_types"] = modules::authoring::supportedLatexProgramTypes();
+   sessionInfo["tex_capabilities"] = modules::authoring::texCapabilitiesAsJson();
+   sessionInfo["compile_pdf_state"] = modules::authoring::compilePdfStateAsJson();
+
+   sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
+
+   sessionInfo["find_in_files_state"] = modules::find::findInFilesStateAsJson();
+
+   sessionInfo["markers_state"] = modules::markers::markersStateAsJson();
+
+   sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
+
+   sessionInfo["ui_prefs"] = userSettings().uiPrefs();
+
+   sessionInfo["have_advanced_step_commands"] =
+                        modules::breakpoints::haveAdvancedStepCommands();
+   
+   // initial working directory
+   std::string initialWorkingDir = module_context::createAliasedPath(
+                                                getInitialWorkingDirectory());
+   sessionInfo["initial_working_dir"] = initialWorkingDir;
+   std::string defaultWorkingDir = module_context::createAliasedPath(
+                                                getDefaultWorkingDirectory());
+   sessionInfo["default_working_dir"] = defaultWorkingDir;
+
+   // active project file
+   if (projects::projectContext().hasProject())
+   {
+      sessionInfo["active_project_file"] = module_context::createAliasedPath(
+                              projects::projectContext().file());
+      sessionInfo["project_ui_prefs"] = projects::projectContext().uiPrefs();
+      sessionInfo["project_open_docs"] = projects::projectContext().openDocs();
+      sessionInfo["project_supports_sharing"] = 
+         projects::projectContext().supportsSharing();
+      sessionInfo["project_parent_browseable"] = 
+         projects::projectContext().parentBrowseable();
+      sessionInfo["project_user_data_directory"] =
+       module_context::createAliasedPath(getProjectUserDataDir(ERROR_LOCATION));
+
+   }
+   else
+   {
+      sessionInfo["active_project_file"] = json::Value();
+      sessionInfo["project_ui_prefs"] = json::Value();
+      sessionInfo["project_open_docs"] = json::Value();
+      sessionInfo["project_supports_sharing"] = false;
+      sessionInfo["project_owned_by_user"] = false;
+      sessionInfo["project_user_data_directory"] = json::Value();
+   }
+
+   sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
+
+   std::vector<std::string> vcsAvailable;
+   if (modules::source_control::isGitInstalled())
+      vcsAvailable.push_back(modules::git::kVcsId);
+   if (modules::source_control::isSvnInstalled())
+      vcsAvailable.push_back(modules::svn::kVcsId);
+   sessionInfo["vcs_available"] = boost::algorithm::join(vcsAvailable, ",");
+   sessionInfo["vcs"] = modules::source_control::activeVCSName();
+   sessionInfo["default_ssh_key_dir"] =module_context::createAliasedPath(
+                              modules::source_control::defaultSshKeyDir());
+   sessionInfo["is_github_repo"] = modules::git::isGithubRepository();
+
+   // contents of all lists
+   sessionInfo["lists"] = modules::lists::allListsAsJson();
+
+   sessionInfo["console_processes"] =
+         rsession::console_process::processesAsJson();
+
+   // send sumatra pdf exe path if we are on windows
+#ifdef _WIN32
+   sessionInfo["sumatra_pdf_exe_path"] =
+               options.sumatraPath().complete("SumatraPDF.exe").absolutePath();
+#endif
+
+   // are build tools enabled
+   if (projects::projectContext().hasProject())
+   {
+      std::string type = projects::projectContext().config().buildType;
+      sessionInfo["build_tools_type"] = type;
+
+      sessionInfo["build_tools_bookdown_website"] =
+                              module_context::isBookdownWebsite();
+
+      FilePath buildTargetDir = projects::projectContext().buildTargetPath();
+      if (!buildTargetDir.empty())
+      {
+         sessionInfo["build_target_dir"] = module_context::createAliasedPath(
+                                                                buildTargetDir);
+         sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
+                                      buildTargetDir.childPath("src").exists();
+         sessionInfo["has_pkg_vig"] =
+               (type == r_util::kBuildTypePackage) &&
+               buildTargetDir.childPath("vignettes").exists();
+      }
+      else
+      {
+         sessionInfo["build_target_dir"] = json::Value();
+         sessionInfo["has_pkg_src"] = false;
+         sessionInfo["has_pkg_vig"] = false;
+      }
+
+   }
+   else
+   {
+      sessionInfo["build_tools_type"] = r_util::kBuildTypeNone;
+      sessionInfo["build_tools_bookdown_website"] = false;
+      sessionInfo["build_target_dir"] = json::Value();
+      sessionInfo["has_pkg_src"] = false;
+      sessionInfo["has_pkg_vig"] = false;
+   }
+
+   sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
+   sessionInfo["presentation_commands"] = options.allowPresentationCommands();
+
+   sessionInfo["tutorial_api_available"] = false;
+   sessionInfo["tutorial_api_client_origin"] = json::Value();
+
+   sessionInfo["build_state"] = modules::build::buildStateAsJson();
+   sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
+   sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
+
+   sessionInfo["have_srcref_attribute"] =
+         modules::breakpoints::haveSrcrefAttribute();
+
+   // console history -- we do this at the end because
+   // restoreBuildRestartContext may have reset it
+   json::Array historyArray;
+   rstudio::r::session::consoleHistory().asJson(&historyArray);
+   sessionInfo["console_history"] = historyArray;
+   sessionInfo["console_history_capacity"] =
+                              rstudio::r::session::consoleHistory().capacity();
+
+   sessionInfo["disable_packages"] = module_context::disablePackages();
+
+   sessionInfo["disable_check_for_updates"] =
+          !core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
+
+   sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
+   sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();
+   sessionInfo["allow_vcs"] = options.allowVcs();
+   sessionInfo["allow_pkg_install"] = options.allowPackageInstallation();
+   sessionInfo["allow_shell"] = options.allowShell();
+   sessionInfo["allow_file_download"] = options.allowFileDownloads();
+   sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
+
+   // publishing may be disabled globally or just for external services, and
+   // via configuration options or environment variables
+   bool allowPublish = options.allowPublish() &&
+      core::system::getenv("RSTUDIO_DISABLE_PUBLISH").empty();
+   sessionInfo["allow_publish"] = allowPublish;
+
+   sessionInfo["allow_external_publish"] = options.allowRpubsPublish() &&
+      options.allowExternalPublish() &&
+      core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
+      allowPublish;
+
+   // allow opening shared projects if it's enabled, and if there's shared
+   // storage from which we can discover the shared projects
+   sessionInfo["allow_open_shared_projects"] = 
+         core::system::getenv(kRStudioDisableProjectSharing).empty() &&
+         !options.getOverlayOption(kSessionSharedStoragePath).empty();
+
+   sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
+   sessionInfo["error_state"] = modules::errors::errorStateAsJson();
+
+   // send whether we should show the user identity
+   sessionInfo["show_identity"] =
+           (options.programMode() == kSessionProgramModeServer) &&
+           options.showUserIdentity();
+
+   sessionInfo["rmarkdown_available"] =
+         modules::rmarkdown::rmarkdownPackageAvailable();
+
+   sessionInfo["packrat_available"] =
+                     module_context::isRequiredPackratInstalled();
+
+
+   sessionInfo["knit_params_available"] =
+         modules::rmarkdown::knitParamsAvailable();
+
+   sessionInfo["clang_available"] = modules::clang::isAvailable();
+
+   // don't show help home until we figure out a sensible heuristic
+   // sessionInfo["show_help_home"] = options.showHelpHome();
+   sessionInfo["show_help_home"] = false;
+
+   sessionInfo["multi_session"] = options.multiSession();
+
+   json::Object rVersionsJson;
+   rVersionsJson["r_version"] = module_context::rVersion();
+   rVersionsJson["r_home_dir"] = module_context::rHomeDir();
+   sessionInfo["r_versions_info"] = rVersionsJson;
+
+   sessionInfo["show_user_home_page"] = options.showUserHomePage();
+   sessionInfo["user_home_page_url"] = json::Value();
+   
+   sessionInfo["r_addins"] = modules::r_addins::addinRegistryAsJson();
+
+   sessionInfo["connections_enabled"] = modules::connections::connectionsEnabled();
+   sessionInfo["activate_connections"] = modules::connections::activateConnections();
+   sessionInfo["connection_list"] = modules::connections::connectionsAsJson();
+   sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
+
+   std::string sessionId = module_context::activeSession().id();
+   if (sessionId.empty())
+   {
+      // create virtual session ID if we don't have an explicitly assigned ID
+      sessionId = resumed ?
+         rsession::persistentState().virtualSessionId() :
+         rsession::persistentState().newVirtualSessionId();
+
+   }
+   sessionInfo["session_id"] = sessionId;
+
+   module_context::events().onSessionInfo(&sessionInfo);
+
+   // send response  (we always set kEventsPending to false so that the client
+   // won't poll for events until it is ready)
+   json::JsonRpcResponse jsonRpcResponse ;
+   jsonRpcResponse.setField(kEventsPending, "false");
+   jsonRpcResponse.setResult(sessionInfo) ;
+   ptrConnection->sendJsonRpcResponse(jsonRpcResponse);
+
+   // complete initialization of session
+   ensureSessionInitialized();
+   
+   // notify modules of the client init
+   module_context::events().onClientInit();
+   
+   // call the init function
+   initFunction();
+}
+
+enum ConnectionType
+{
+   ForegroundConnection,
+   BackgroundConnection
+};
+
+void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
+                         boost::posix_time::ptime executeStartTime,
+                         const core::Error& executeError,
+                         json::JsonRpcResponse* pJsonRpcResponse)
+{
+   // return error or result then continue waiting for requests
+   if (executeError)
+   {
+      ptrConnection->sendJsonRpcError(executeError);
+   }
+   else
+   {
+      // allow modules to detect changes after rpc calls
+      if (!pJsonRpcResponse->suppressDetectChanges())
+         detectChanges(module_context::ChangeSourceRPC);
+
+      // are there (or will there likely be) events pending?
+      // (if not then notify the client)
+      if ( !clientEventQueue().eventAddedSince(executeStartTime) &&
+           !pJsonRpcResponse->hasAfterResponse() )
+      {
+         pJsonRpcResponse->setField(kEventsPending, "false");
+      }
+
+      // send the response
+      ptrConnection->sendJsonRpcResponse(*pJsonRpcResponse);
+
+      // run after response if we have one (then detect changes again)
+      if (pJsonRpcResponse->hasAfterResponse())
+      {
+         pJsonRpcResponse->runAfterResponse();
+         if (!pJsonRpcResponse->suppressDetectChanges())
+            detectChanges(module_context::ChangeSourceRPC);
+      }
+   }
+}
+
+void endHandleRpcRequestIndirect(
+      const std::string& asyncHandle,
+      const core::Error& executeError,
+      json::JsonRpcResponse* pJsonRpcResponse)
+{
+   json::JsonRpcResponse temp;
+   json::JsonRpcResponse& jsonRpcResponse =
+                                 pJsonRpcResponse ? *pJsonRpcResponse : temp;
+
+   BOOST_ASSERT(!jsonRpcResponse.hasAfterResponse());
+   if (executeError)
+   {
+      jsonRpcResponse.setError(executeError);
+   }
+   json::Object value;
+   value["handle"] = asyncHandle;
+   value["response"] = jsonRpcResponse.getRawResponse();
+   ClientEvent evt(client_events::kAsyncCompletion, value);
+   module_context::enqueClientEvent(evt);
+}
+
+void handleRpcRequest(const core::json::JsonRpcRequest& request,
+                      boost::shared_ptr<HttpConnection> ptrConnection,
+                      ConnectionType connectionType)
+{
+   // record the time just prior to execution of the event
+   // (so we can determine if any events were added during execution)
+   using namespace boost::posix_time; 
+   ptime executeStartTime = microsec_clock::universal_time();
+   
+   // execute the method
+   json::JsonRpcAsyncMethods::const_iterator it =
+                                     s_jsonRpcMethods.find(request.method);
+   if (it != s_jsonRpcMethods.end())
+   {
+      std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
+      json::JsonRpcAsyncFunction handlerFunction = reg.second;
+
+      if (reg.first)
+      {
+         // direct return
+         handlerFunction(request,
+                         boost::bind(endHandleRpcRequestDirect,
+                                     ptrConnection,
+                                     executeStartTime,
+                                     _1,
+                                     _2));
+      }
+      else
+      {
+         // indirect return (asyncHandle style)
+         std::string handle = core::system::generateUuid(true);
+         json::JsonRpcResponse response;
+         response.setAsyncHandle(handle);
+         response.setField(kEventsPending, "false");
+         ptrConnection->sendJsonRpcResponse(response);
+
+         handlerFunction(request,
+                         boost::bind(endHandleRpcRequestIndirect,
+                                     handle,
+                                     _1,
+                                     _2));
+      }
+   }
+   else
+   {
+      Error executeError = Error(json::errc::MethodNotFound, ERROR_LOCATION);
+      executeError.addProperty("method", request.method);
+
+      // we need to know about these because they represent unexpected
+      // application states
+      LOG_ERROR(executeError);
+
+      endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, NULL);
+   }
+
+
+}
+
+bool isMethod(const std::string& uri, const std::string& method)
+{
+   return boost::algorithm::ends_with(uri, method);
+}
+
+bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
+              const std::string& method)
+{
+   return isMethod(ptrConnection->request().uri(), method);
+}
+
+bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   return boost::algorithm::starts_with(ptrConnection->request().uri(),
+                                        "/rpc/");
+}
+
+bool isWaitForMethodUri(const std::string& uri)
+{
+   BOOST_FOREACH(const std::string& methodName, s_waitForMethodNames)
+   {
+      if (isMethod(uri, methodName))
+         return true;
+   }
+
+   return false;
+}
+
+bool parseAndValidateJsonRpcConnection(
+         boost::shared_ptr<HttpConnection> ptrConnection,
+         json::JsonRpcRequest* pJsonRpcRequest)
+{
+   // attempt to parse the request into a json-rpc request
+   Error error = json::parseJsonRpcRequest(ptrConnection->request().body(),
+                                           pJsonRpcRequest);
+   if (error)
+   {
+      ptrConnection->sendJsonRpcError(error);
+      return false;
+   }
+
+   // check for invalid client id
+   if (pJsonRpcRequest->clientId != rsession::persistentState().activeClientId())
+   {
+      Error error(json::errc::InvalidClientId, ERROR_LOCATION);
+      ptrConnection->sendJsonRpcError(error);
+      return false;
+   }
+
+   // check for legacy client version (need to invalidate any client using
+   // the old version field)
+   if ( (pJsonRpcRequest->version > 0) &&
+        (s_version > pJsonRpcRequest->version) )
+   {
+      Error error(json::errc::InvalidClientVersion, ERROR_LOCATION);
+      ptrConnection->sendJsonRpcError(error);
+      return false;
+   }
+
+   // check for client version
+   if (!pJsonRpcRequest->clientVersion.empty() &&
+       clientVersion() != pJsonRpcRequest->clientVersion)
+   {
+      Error error(json::errc::InvalidClientVersion, ERROR_LOCATION);
+      ptrConnection->sendJsonRpcError(error);
+      return false;
+   }
+
+   // got through all of the validation, return true
+   return true;
+}
+
+void endHandleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
+                         ConnectionType connectionType,
+                         http::Response* pResponse)
+{
+   ptrConnection->sendResponse(*pResponse);
+   if (!s_rProcessingInput)
+      detectChanges(module_context::ChangeSourceURI);
+}
+
+void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
+                      ConnectionType connectionType)
+{
+   // check for a uri handler registered by a module
+   const http::Request& request = ptrConnection->request();
+   std::string uri = request.uri();
+   http::UriAsyncHandlerFunction uriHandler = s_uriHandlers.handlerFor(uri);
+
+   if (uriHandler) // uri handler
+   {
+      // r code may execute - ensure session is initialized
+      ensureSessionInitialized();
+
+      uriHandler(request, boost::bind(endHandleConnection,
+                                      ptrConnection,
+                                      connectionType,
+                                      _1));
+   }
+   else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
+   {
+      // r code may execute - ensure session is initialized
+      ensureSessionInitialized();
+
+      // attempt to parse & validate
+      json::JsonRpcRequest jsonRpcRequest;
+      if (parseAndValidateJsonRpcConnection(ptrConnection, &jsonRpcRequest))
+      {
+         // quit_session: exit process
+         if (jsonRpcRequest.method == kQuitSession)
+         {
+#ifdef _WIN32
+            // if we are on windows then we can't quit while the browser
+            // context is active
+            if (rstudio::r::session::browserContextActive())
+            {
+               module_context::consoleWriteError(
+                        "Error: unable to quit when browser is active\n");
+               json::JsonRpcResponse response;
+               response.setResult(false);
+               ptrConnection->sendJsonRpcResponse(response);
+               return;
+            }
+#endif
+
+            // see whether we should save the workspace
+            bool saveWorkspace = true;
+            std::string switchToProject, hostPageUrl;
+            json::Value switchToVersionJson;
+            Error error = json::readParams(jsonRpcRequest.params,
+                                           &saveWorkspace,
+                                           &switchToProject,
+                                           &switchToVersionJson,
+                                           &hostPageUrl) ;
+            if (error)
+               LOG_ERROR(error);
+
+            // note switch to project
+            if (!switchToProject.empty())
+            {
+               if (options().switchProjectsWithUrl())
+               {
+                  using namespace module_context;
+
+                  std::string projDir;
+                  r_util::SessionScope scope;
+                  if (switchToProject == kProjectNone)
+                  {
+                     scope = r_util::SessionScope::projectNone(
+                                          options().sessionScope().id());
+
+                     // update the project and working dir
+                     activeSession().setProject(kProjectNone);
+                     activeSession().setWorkingDir(
+                             createAliasedPath(getDefaultWorkingDirectory()));
+                  }
+                  else
+                  {
+                     // extract the directory (aliased)
+                     using namespace module_context;
+                     FilePath projFile = resolveAliasedPath(switchToProject);
+                     projDir = createAliasedPath(projFile.parent());
+
+                     scope = r_util::SessionScope::fromProject(
+                              projDir,
+                              options().sessionScope().id(),
+                              filePathToProjectId(options().userScratchPath(),
+                                   FilePath(options().getOverlayOption(
+                                               kSessionSharedStoragePath))));
+
+                     // update the project and working dir
+                     activeSession().setProject(projDir);
+                     activeSession().setWorkingDir(projDir);
+                  }
+
+                  // set next session url
+                  s_nextSessionUrl = r_util::createSessionUrl(hostPageUrl,
+                                                              scope);
+               }
+               else
+               {
+                  projects::ProjectsSettings(options().userScratchPath()).
+                                    setSwitchToProjectPath(switchToProject);
+               }
+
+               // note switch to R version if requested
+               if (json::isType<json::Object>(switchToVersionJson))
+               {
+                  using namespace module_context;
+                  std::string version, rHome;
+                  Error error = json::readObject(
+                                            switchToVersionJson.get_obj(),
+                                            "version", &version,
+                                            "r_home", &rHome);
+                  if (!error)
+                  {
+                     // set version for active session
+                     activeSession().setRVersion(version, rHome);
+
+                     // if we had a project directory as well then
+                     // set it's version (this is necessary because
+                     // project versions override session versions)
+                     if (switchToProject != kProjectNone)
+                     {
+                        FilePath projFile = resolveAliasedPath(switchToProject);
+                        std::string projDir = createAliasedPath(projFile.parent());
+                        RVersionSettings verSettings(
+                                            options().userScratchPath(),
+                                            FilePath(options().getOverlayOption(
+                                                  kSessionSharedStoragePath)));
+                        verSettings.setProjectLastRVersion(projDir,
+                                                           version,
+                                                           rHome);
+                     }
+                 }
+                 else
+                    LOG_ERROR(error);
+               }
+            }
+
+            // exit status
+            int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
+
+            // acknowledge request & quit session
+            json::JsonRpcResponse response;
+            response.setResult(true);
+            ptrConnection->sendJsonRpcResponse(response);
+            rstudio::r::session::quit(saveWorkspace, status); // does not return
+         }
+         else if (jsonRpcRequest.method == kSuspendSession)
+         {
+            // check for force
+            bool force = true;
+            Error error = json::readParams(jsonRpcRequest.params, &force);
+            if (error)
+               LOG_ERROR(error);
+
+            // acknowledge request and set flags to suspend session
+            ptrConnection->sendJsonRpcResponse();
+            if (force)
+               handleUSR2(0);
+            else
+               handleUSR1(0);
+         }
+
+         // interrupt
+         else if ( jsonRpcRequest.method == kInterrupt )
+         {
+            // Discard any buffered input
+            while (!s_consoleInputBuffer.empty())
+               s_consoleInputBuffer.pop();
+
+            // aknowledge request
+            ptrConnection->sendJsonRpcResponse();
+
+            // only accept interrupts while R is processing input
+            if ( s_rProcessingInput )
+               rstudio::r::exec::setInterruptsPending(true);
+         }
+
+         // other rpc method, handle it
+         else
+         {
+            jsonRpcRequest.isBackgroundConnection =
+                  (connectionType == BackgroundConnection);
+            handleRpcRequest(jsonRpcRequest, ptrConnection, connectionType);
+         }
+      }
+   }
+   else if (s_defaultUriHandler)
+   {
+       http::Response response;
+       s_defaultUriHandler(request, &response);
+       ptrConnection->sendResponse(response);
+   }
+   else
+   {
+      http::Response response;
+      response.setNotFoundError(request.uri());
+      ptrConnection->sendResponse(response);
+   }
+}
+
+// fork state
+boost::thread::id s_mainThreadId;
+bool s_wasForked = false;
+
+// fork handlers (only applicatable to Unix platforms)
+#ifndef _WIN32
+
+void prepareFork()
+{
+   // only detect forks from the main thread (since we are going to be
+   // calling into non-threadsafe code). this is ok because fork
+   // detection is meant to handle forks that don't exec (and thus
+   // continue running R code). only the main thread will ever do this
+   if (boost::this_thread::get_id() != s_mainThreadId)
+      return;
+
+}
+
+void atForkParent()
+{
+   if (boost::this_thread::get_id() != s_mainThreadId)
+      return;
+
+}
+
+void atForkChild()
+{
+   s_wasForked = true;
+}
+
+void setupForkHandlers()
+{
+   int rc = ::pthread_atfork(prepareFork, atForkParent, atForkChild);
+   if (rc != 0)
+      LOG_ERROR(systemError(errno, ERROR_LOCATION));
+}
+#else
+void setupForkHandlers()
+{
+
+}
+#endif
+
+void polledEventHandler()
+{
+   // if R is getting called after a fork this is likely multicore or
+   // some other parallel computing package that uses fork. in this
+   // case be defensive by shutting down as many things as we can
+   // which might cause mischief in the child process
+   if (s_wasForked)
+   {
+      // no more polled events
+      rstudio::r::session::event_loop::permanentlyDisablePolledEventHandler();
+
+      // done
+      return;
+   }
+
+   // static lastPerformed value used for throttling
+   using namespace boost::posix_time;
+   static ptime s_lastPerformed;
+   if (s_lastPerformed.is_not_a_date_time())
+      s_lastPerformed = microsec_clock::universal_time();
+
+   // throttle to no more than once every 50ms
+   static time_duration s_intervalMs = milliseconds(50);
+   if (microsec_clock::universal_time() <= (s_lastPerformed + s_intervalMs))
+      return;
+
+   // notify modules
+   module_context::onBackgroundProcessing(false);
+
+   // set last performed (should be set after calling onBackgroundProcessing so
+   // that long running background processing handlers can't overflow the 50ms
+   // interval between background processing invocations)
+   s_lastPerformed = microsec_clock::universal_time();
+
+   // check for a pending connections only while R is processing
+   // (otherwise we'll handle them directly in waitForMethod)
+   if (s_rProcessingInput)
+   {
+      // check the uri of the next connection
+      std::string nextConnectionUri =
+       httpConnectionListener().mainConnectionQueue().peekNextConnectionUri();
+
+      // if the uri is empty or if it one of our special waitForMethod calls
+      // then bails so that the waitForMethod logic can handle it
+      if (nextConnectionUri.empty() || isWaitForMethodUri(nextConnectionUri))
+         return;
+
+      // attempt to deque a connection and handle it. for now we just handle
+      // a single connection at a time (we'll be called back again if processing
+      // continues)
+      boost::shared_ptr<HttpConnection> ptrConnection =
+            httpConnectionListener().mainConnectionQueue().dequeConnection();
+      if (ptrConnection)
+      {
+         if ( isMethod(ptrConnection, kClientInit) )
+         {
+            // client_init means the user is attempting to reload the browser
+            // in the middle of a computation. process client_init and post
+            // a busy event as our initFunction
+            using namespace rsession::module_context;
+            ClientEvent busyEvent(client_events::kBusy, true);
+            handleClientInit(boost::bind(enqueClientEvent, busyEvent),
+                             ptrConnection);
+         }
+         else
+         {
+            handleConnection(ptrConnection, BackgroundConnection);
+         }
+      }
+   }
+}
+
+bool suspendSession(bool force, int status = EXIT_SUCCESS)
+{
+   // need to make sure the global environment is loaded before we
+   // attemmpt to save it!
+   rstudio::r::session::ensureDeserialized();
+
+   // perform the suspend (does not return if successful)
+   return rstudio::r::session::suspend(force, status);
+}
+
+void suspendIfRequested(const boost::function<bool()>& allowSuspend)
+{
+   // never suspend in desktop mode
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+      return;
+
+   // check for forced suspend request
+   if (s_forceSuspend)
+   {
+      // reset flag (if for any reason we fail we don't want to keep
+      // hammering away on the failure case)
+      s_forceSuspend = false;
+
+      // did this force suspend interrupt R?
+      if (s_forceSuspendInterruptedR)
+      {
+         // reset flag
+         s_forceSuspendInterruptedR = false;
+
+         // notify user
+         rstudio::r::session::reportAndLogWarning(
+            "Session forced to suspend due to system upgrade, restart, maintenance, "
+            "or other issue. Your session data was saved however running "
+            "computations may have been interrupted.");
+      }
+
+      // execute the forced suspend (does not return)
+      suspendSession(true, EX_FORCE);
+   }
+
+   // cooperative suspend request
+   else if (s_suspendRequested && allowSuspend())
+   {
+      // reset flag (if for any reason we fail we don't want to keep
+      // hammering away on the failure case)
+      s_suspendRequested = false;
+
+      // attempt suspend -- if this succeeds it doesn't return; if it fails
+      // errors will be logged/reported internally and we will move on
+      suspendSession(false);
+   }
+}
+
+bool haveRunningChildren()
+{
+   return module_context::processSupervisor().hasRunningChildren() ||
+          modules::authoring::hasRunningChildren();
+}
+
+bool canSuspend(const std::string& prompt)
+{
+   return !haveRunningChildren() &&
+          modules::connections::isSuspendable() &&
+          rstudio::r::session::isSuspendable(prompt);
+}
+
+
+bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
+{
+   using namespace boost::posix_time;
+
+   // never time out in desktop mode
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+      return false;
+
+   // check for an client disconnection based timeout
+   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
+   if (disconnectedTimeoutMinutes > 0)
+   {
+      ptime lastEventConnection =
+         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
+      if (!lastEventConnection.is_not_a_date_time())
+      {
+         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
+               < second_clock::universal_time()) )
+         {
+            return true;
+         }
+      }
+   }
+
+   // check for a foreground inactivity based timeout
+   if (timeoutTime.is_not_a_date_time())
+      return false;
+   else
+      return second_clock::universal_time() > timeoutTime;
+}
+
+boost::posix_time::ptime timeoutTimeFromNow()
+{
+   int timeoutMinutes = rsession::options().timeoutMinutes();
+   if (timeoutMinutes > 0)
+   {
+      return boost::posix_time::second_clock::universal_time() +
+             boost::posix_time::minutes(rsession::options().timeoutMinutes());
+   }
+   else
+   {
+      return boost::posix_time::ptime(boost::posix_time::not_a_date_time);
+   }
+}
+
+void processDesktopGuiEvents()
+{
+   // keep R gui alive when we are in destkop mode
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   {
+      // execute safely since this can call arbitrary R code (and
+      // (can also cause jump_to_top if an interrupt is pending)
+      Error error = rstudio::r::exec::executeSafely(
+                        rstudio::r::session::event_loop::processEvents);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+
+// wait for the specified method. will either:
+//   - return true and the method request in pRequest
+//   - return false indicating failure (e.g. called after fork in child)
+//   - suspend or quit the process
+// exit the process as a result of suspend or quit)
+bool waitForMethod(const std::string& method,
+                   const boost::function<void()>& initFunction,
+                   const boost::function<bool()>& allowSuspend,
+                   core::json::JsonRpcRequest* pRequest)
+{
+   if (s_wasForked)
+   {
+      LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
+      return false;
+   }
+
+   // establish timeouts
+   boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();
+   boost::posix_time::time_duration connectionQueueTimeout =
+                                   boost::posix_time::milliseconds(50);
+
+   // wait until we get the method we are looking for
+   while(true)
+   {
+      // suspend if necessary (does not return if a suspend occurs)
+      suspendIfRequested(allowSuspend);
+
+      // check for timeout
+      if ( isTimedOut(timeoutTime) )
+      {
+         if (allowSuspend())
+         {
+            // note that we timed out
+            s_suspendedFromTimeout = true;
+
+            // attempt to suspend (does not return if it succeeds)
+            if ( !suspendSession(false) )
+            {
+               // reset timeout flag
+               s_suspendedFromTimeout = false;
+
+               // if it fails then reset the timeout timer so we don't keep
+               // hammering away on the failure case
+               timeoutTime = timeoutTimeFromNow();
+            }
+         }
+      }
+
+      // if we have at least one async process running then this counts
+      // as "activity" and resets the timeout timer
+      if(haveRunningChildren())
+         timeoutTime = timeoutTimeFromNow();
+
+      // look for a connection (waiting for the specified interval)
+      boost::shared_ptr<HttpConnection> ptrConnection =
+          httpConnectionListener().mainConnectionQueue().dequeConnection(
+                                            connectionQueueTimeout);
+
+
+      // perform background processing (true for isIdle)
+      module_context::onBackgroundProcessing(true);
+
+      // process pending events in desktop mode
+      processDesktopGuiEvents();
+
+      if (ptrConnection)
+      {
+         // check for client_init
+         if ( isMethod(ptrConnection, kClientInit) )
+         {
+             handleClientInit(initFunction, ptrConnection);
+         }
+
+         // check for the method we are waiting on
+         else if ( isMethod(ptrConnection, method) )
+         {
+            // parse and validate request then proceed
+            if (parseAndValidateJsonRpcConnection(ptrConnection, pRequest))
+            {
+               // respond to the method
+               ptrConnection->sendJsonRpcResponse();
+
+               // ensure initialized
+               ensureSessionInitialized();
+
+               break; // got the method, we are out of here!
+            }
+         }
+
+         // another connection type, dispatch it
+         else
+         {
+            handleConnection(ptrConnection, ForegroundConnection);
+         }
+
+         // since we got a connection we can reset the timeout time
+         timeoutTime = timeoutTimeFromNow();
+
+         // after we've processed at least one waitForMethod it is now safe to
+         // initialize the polledEventHandler (which is used to maintain rsession
+         // responsiveness even when R is executing code received at the console).
+         // we defer this to make sure that the FIRST request is always handled
+         // by the logic above. if we didn't do this then client_init or
+         // console_input (often the first request) could go directly to
+         // handleConnection which wouldn't know what to do with them
+         if (!rstudio::r::session::event_loop::polledEventHandlerInitialized())
+            rstudio::r::session::event_loop::initializePolledEventHandler(
+                                                     polledEventHandler);
+      }
+   }
+
+   // satisfied the request
+   return true;
+}
+
+
+// wait for the specified method (will either return the method or 
+// exit the process as a result of suspend or quit)
+bool waitForMethod(const std::string& method,
+                   const ClientEvent& initEvent,
+                   const boost::function<bool()>& allowSuspend,
+                   core::json::JsonRpcRequest* pRequest)
+{
+   return waitForMethod(method,
+                        boost::bind(module_context::enqueClientEvent,
+                                    initEvent),
+                        allowSuspend,
+                        pRequest);
+}
+
+// forward declare convenience wait for method init function which
+// enques the specified event and then issues either the last console
+// prompt or a busy event
+void waitForMethodInitFunction(const ClientEvent& initEvent);
+
+void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
+{
+   if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
+   {
+      s_consoleInputBuffer.push(consoleInput);
+      return;
+   }
+
+   // split input into list of commands
+   boost::char_separator<char> lineSep("\n", "", boost::keep_empty_tokens);
+   boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
+   for (boost::tokenizer<boost::char_separator<char> >::iterator
+        lineIter = lines.begin();
+        lineIter != lines.end();
+        ++lineIter)
+   {
+      // get line
+      std::string line(*lineIter);
+
+      // add to buffer
+      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
+               line, consoleInput.console));
+   }
+}
+
+// extract console input -- can be either null (user hit escape) or a string
+Error extractConsoleInput(const json::JsonRpcRequest& request)
+{
+   if (request.params.size() == 2)
+   {
+      // ensure the caller specified the requesting console
+      std::string console;
+      if (request.params[1].type() == json::StringType)
+      {
+         console = request.params[1].get_str();
+      }
+      else
+      {
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      }
+
+      // extract the requesting console
+      if (request.params[0].is_null())
+      {
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(console));
+         return Success();
+      }
+      else if (request.params[0].type() == json::StringType)
+      {
+         // get console input to return to R
+         std::string text = request.params[0].get_str();
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, 
+                  console));
+
+         // return success
+         return Success();
+      }
+      else
+      {
+         return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      }
+   }
+   else
+   {
+      return Error(json::errc::ParamMissing, ERROR_LOCATION);
+   }
+}
+
 // allow console_input requests to come in when we aren't explicitly waiting
 // on them (i.e. waitForMethod("console_input")). place them into into a buffer
 // which is then checked by rConsoleRead prior to it calling waitForMethod
@@ -221,8 +1583,9 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract the input
-   return console_input::extractConsoleInput(request);
+   return extractConsoleInput(request);
 }
+
 
 void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
@@ -254,9 +1617,54 @@ Error ping(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+
+Error startHttpConnectionListener()
+{
+   initializeHttpConnectionListener();
+   return httpConnectionListener().start();
+}
+
+WaitResult startHttpConnectionListenerWithTimeout()
+{
+   Error error = startHttpConnectionListener();
+
+   // When the rsession restarts, it may take a few ms for the port to become
+   // available; therefore, retry connection, but only for address_in_use error
+   if (!error)
+       return WaitResult(WaitSuccess, Success());
+   else if (error.code() != boost::system::errc::address_in_use)
+      return WaitResult(WaitError, error);
+   else
+      return WaitResult(WaitContinue, error);
+}
+
 Error startClientEventService()
 {
    return clientEventService().start(rsession::persistentState().activeClientId());
+}
+
+void registerGwtHandlers()
+{
+   // alias options
+   rsession::Options& options = rsession::options();
+
+   // establish logging handler
+   module_context::registerUriHandler(
+         "/log",
+         boost::bind(gwt::handleLogRequest, options.userIdentity(), _1, _2));
+
+   // establish progress handler
+   FilePath wwwPath(options.wwwLocalPath());
+   FilePath progressPagePath = wwwPath.complete("progress.htm");
+   module_context::registerUriHandler(
+         "/progress",
+          boost::bind(text::handleTemplateRequest, progressPagePath, _1, _2));
+
+   // initialize gwt symbol maps
+   gwt::initializeSymbolMaps(options.wwwSymbolMapsPath());
+
+   // set default handler
+   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), "/");
 }
 
 Error registerSignalHandlers()
@@ -269,8 +1677,8 @@ Error registerSignalHandlers()
    {
       ExecBlock registerBlock ;
       registerBlock.addFunctions()
-         (bind(handleSignal, SigUsr1, suspend::handleUSR1))
-         (bind(handleSignal, SigUsr2, suspend::handleUSR2));
+         (bind(handleSignal, SigUsr1, handleUSR1))
+         (bind(handleSignal, SigUsr2, handleUSR2));
       return registerBlock.execute();
    }
    // USR1 and USR2: ignore in desktop mode
@@ -332,14 +1740,14 @@ void exitEarly(int status)
 Error rInit(const rstudio::r::session::RInitInfo& rInitInfo) 
 {
    // save state we need to reference later
-   suspend::setSessionResumed(rInitInfo.resumed);
+   s_rSessionResumed = rInitInfo.resumed;
    
    // record built-in waitForMethod handlers
-   module_context::registerWaitForMethod(kLocatorCompleted);
-   module_context::registerWaitForMethod(kEditCompleted);
-   module_context::registerWaitForMethod(kChooseFileCompleted);
-   module_context::registerWaitForMethod(kUserPromptCompleted);
-   module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
+   s_waitForMethodNames.push_back(kLocatorCompleted);
+   s_waitForMethodNames.push_back(kEditCompleted);
+   s_waitForMethodNames.push_back(kChooseFileCompleted);
+   s_waitForMethodNames.push_back(kUserPromptCompleted);
+   s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
 
    // execute core initialization functions
    using boost::bind;
@@ -491,14 +1899,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       return error ;
    BOOST_FOREACH(const json::JsonRpcMethod& method, rMethods)
    {
-      registerRpcMethod(json::adaptMethodToAsync(method));
+      s_jsonRpcMethods.insert(json::adaptMethodToAsync(method));
    }
 
    // add gwt handlers if we are running desktop mode
    if ((rsession::options().programMode() == kSessionProgramModeDesktop) ||
        rsession::options().standalone())
    {
-      http_methods::registerGwtHandlers();
+      registerGwtHandlers();
    }
 
    // enque abend warning event if necessary (but not in standalone
@@ -537,7 +1945,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    activeSession().beginSession(rVersion(), rHomeDir());
 
    // setup fork handlers
-   fork::setupForkHandlers();
+   setupForkHandlers();
 
    // success!
    return Success();
@@ -566,6 +1974,126 @@ void rDeferredInit(bool newSession)
                         boost::bind(rSessionInitHook, newSession));
 }
    
+void consolePrompt(const std::string& prompt, bool addToHistory)
+{
+   // save the last prompt (for re-issuing)
+   s_lastPrompt = prompt;
+
+   // enque the event
+   json::Object data ;
+   data["prompt"] = prompt ;
+   data["history"] = addToHistory;
+   bool isDefaultPrompt = prompt == rstudio::r::options::getOption<std::string>("prompt");
+   data["default"] = isDefaultPrompt;
+   ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
+   rsession::clientEventQueue().add(consolePromptEvent);
+   
+   // allow modules to detect changes after execution of previous REPL
+   detectChanges(module_context::ChangeSourceREPL);   
+
+   // call prompt hook
+   module_context::events().onConsolePrompt(prompt);
+}
+
+void reissueLastConsolePrompt()
+{
+   consolePrompt(s_lastPrompt, false);
+}
+
+void setExecuting(bool executing)
+{
+   s_rProcessingInput = executing;
+   module_context::activeSession().setExecuting(executing);
+}
+
+void enqueueConsoleInput(const rstudio::r::session::RConsoleInput& input)
+{
+   json::Object data;
+   data[kConsoleText] = input.text + "\n";
+   data[kConsoleId]   = input.console;
+   ClientEvent inputEvent(kConsoleWriteInput, data);
+   rsession::clientEventQueue().add(inputEvent);
+}
+
+bool rConsoleRead(const std::string& prompt,
+                  bool addToHistory,
+                  rstudio::r::session::RConsoleInput* pConsoleInput)
+{
+   // this is an invalid state in a forked (multicore) process
+   if (s_wasForked)
+   {
+      LOG_WARNING_MESSAGE("rConsoleRead called in forked processs");
+      return false;
+   }
+
+   // r is not processing input
+   setExecuting(false);
+
+   if (!s_consoleInputBuffer.empty())
+   {
+      *pConsoleInput = s_consoleInputBuffer.front();
+      s_consoleInputBuffer.pop();
+   }
+   // otherwise prompt and wait for console_input from the client
+   else
+   {
+      // fire console_prompt event (unless we are just starting up, in which
+      // case we will either prompt as part of the response to client_init or
+      // we shouldn't prompt at all because we are resuming a suspended session)
+      if (s_sessionInitialized)
+         consolePrompt(prompt, addToHistory);
+
+      // wait for console_input
+      json::JsonRpcRequest request ;
+      bool succeeded = waitForMethod(
+                        kConsoleInput,
+                        boost::bind(consolePrompt, prompt, addToHistory),
+                        boost::bind(canSuspend, prompt),
+                        &request);
+
+      // exit process if we failed
+      if (!succeeded)
+         return false;
+
+      // extract console input. if there is an error during extraction we log it
+      // but still return and empty string and true (returning false will cause R
+      // to abort)
+      Error error = extractConsoleInput(request);
+      if (error)
+      {
+         LOG_ERROR(error);
+         *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
+      }
+      *pConsoleInput = s_consoleInputBuffer.front();
+      s_consoleInputBuffer.pop();
+   }
+
+   // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
+   if (!pConsoleInput->cancel)
+   {
+      module_context::events().onBeforeExecute();
+      module_context::events().onConsoleInput(pConsoleInput->text);
+   }
+
+   // we are about to return input to r so set the flag indicating that state
+   setExecuting(true);
+
+   // ensure that output resulting from this input goes to the correct console
+   if (rsession::clientEventQueue().setActiveConsole(pConsoleInput->console))
+   {
+      module_context::events().onActiveConsoleChanged(pConsoleInput->console,
+            pConsoleInput->text);
+   }
+
+   ClientEvent promptEvent(kConsoleWritePrompt, prompt);
+   rsession::clientEventQueue().add(promptEvent);
+   enqueueConsoleInput(*pConsoleInput);
+
+   // always return true (returning false causes the process to exit)
+   return true;
+}
+
+
 int rEditFile(const std::string& file)
 {
    // read file contents
@@ -587,10 +2115,10 @@ int rEditFile(const std::string& file)
 
    // wait for edit_completed 
    json::JsonRpcRequest request ;
-   bool succeeded = http_methods::waitForMethod(kEditCompleted,
-                                        editEvent,
-                                        suspend::disallowSuspend,
-                                        &request);
+   bool succeeded = waitForMethod(kEditCompleted,
+                                  editEvent,
+                                  disallowSuspend,
+                                  &request);
 
    if (!succeeded)
       return false;
@@ -636,10 +2164,10 @@ FilePath rChooseFile(bool newFile)
    
    // wait for choose_file_completed 
    json::JsonRpcRequest request ;
-   bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
-                                        chooseFileEvent,
-                                        suspend::disallowSuspend,
-                                        &request);
+   bool succeeded = waitForMethod(kChooseFileCompleted,
+                                 chooseFileEvent,
+                                 disallowSuspend,
+                                 &request);
    
    if (!succeeded)
       return FilePath();
@@ -664,11 +2192,11 @@ FilePath rChooseFile(bool newFile)
 
 void rBusy(bool busy)
 {
-   if (fork::wasForked())
+   if (s_wasForked)
       return;
 
    // screen out busy = true events that occur when R isn't busy
-   if (busy && !console_input::executing())
+   if (busy && !s_rProcessingInput)
       return;
 
    ClientEvent busyEvent(kBusy, busy);
@@ -677,7 +2205,7 @@ void rBusy(bool busy)
       
 void rConsoleWrite(const std::string& output, int otype)   
 {
-   if (fork::wasForked())
+   if (s_wasForked)
       return;
 
    int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
@@ -716,10 +2244,10 @@ bool rLocator(double* x, double* y)
    
    // wait for locator_completed 
    json::JsonRpcRequest request ;
-   bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
-                                        locatorEvent,
-                                        suspend::disallowSuspend,
-                                        &request);
+   bool succeeded = waitForMethod(kLocatorCompleted,
+                                  locatorEvent,
+                                  disallowSuspend,
+                                  &request);
 
    if (!succeeded)
       return false;
@@ -855,7 +2383,7 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
    // log to monitor
    using namespace monitor;
    std::string data;
-   if (suspend::suspendedFromTimeout())
+   if (s_suspendedFromTimeout)
       data = safe_convert::numberToString(rsession::options().timeoutMinutes());
    logExitEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
@@ -876,11 +2404,10 @@ bool rHandleUnsavedChanges()
 
    // wait for method
    json::JsonRpcRequest request;
-   bool succeeded = http_methods::waitForMethod(
+   bool succeeded = waitForMethod(
                         kHandleUnsavedChangesCompleted,
-                        boost::bind(http_methods::waitForMethodInitFunction, 
-                                    event),
-                        suspend::disallowSuspend,
+                        boost::bind(waitForMethodInitFunction, event),
+                        disallowSuspend,
                         &request);
 
    if (!succeeded)
@@ -896,7 +2423,7 @@ bool rHandleUnsavedChanges()
 
 void rQuit()
 {   
-   if (fork::wasForked())
+   if (s_wasForked)
       return;
 
    // log to monitor
@@ -910,7 +2437,7 @@ void rQuit()
    bool switchProjects;
    if (options().switchProjectsWithUrl())
    {
-      switchProjects = !http_methods::nextSessionUrl().empty();
+      switchProjects = !s_nextSessionUrl.empty();
    }
    else
    {
@@ -923,7 +2450,7 @@ void rQuit()
 
    json::Object jsonData;
    jsonData["switch_projects"] = switchProjects;
-   jsonData["next_session_url"] = http_methods::nextSessionUrl();
+   jsonData["next_session_url"] = s_nextSessionUrl;
    ClientEvent quitEvent(kQuit, jsonData);
    rsession::clientEventQueue().add(quitEvent);
 }
@@ -932,7 +2459,7 @@ void rQuit()
 // override suicide on windows)
 void rSuicide(const std::string& message)
 {
-   if (fork::wasForked())
+   if (s_wasForked)
       return;
 
    // log to monitor
@@ -971,7 +2498,7 @@ void rCleanup(bool terminatedNormally)
    try
    {
       // bail completely if we were forked
-      if (fork::wasForked())
+      if (s_wasForked)
          return;
 
       // note that we didn't abend
@@ -1164,6 +2691,28 @@ void detectParentTermination()
 }
 #endif
 
+// NOTE: mirrors behavior of WorkbenchContext.getREnvironmentPath on the client
+FilePath rEnvironmentDir()
+{
+   // for projects
+   if (projects::projectContext().hasProject())
+   {
+      return getProjectUserDataDir(ERROR_LOCATION);
+   }
+
+   // for desktop the current path
+   else if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   {
+      return FilePath::safeCurrentPath(rsession::options().userHomePath());
+   }
+
+   // for server the initial working dir
+   else
+   {
+      return getInitialWorkingDirectory();
+   }
+}
+
 SA_TYPE saveWorkspaceOption()
 {
    // convert from internal type to R type
@@ -1199,6 +2748,27 @@ bool restoreWorkspaceOption()
           !rsession::options().initialEnvironmentFileOverride().empty();
 }
 
+FilePath rHistoryDir()
+{
+   // for projects
+   if (projects::projectContext().hasProject())
+   {
+      return getProjectUserDataDir(ERROR_LOCATION);
+   }
+
+   // for server we use the default working directory
+   else if (rsession::options().programMode() == kSessionProgramModeServer)
+   {
+      return getDefaultWorkingDirectory();
+   }
+
+   // for desktop we take the current path
+   else
+   {
+      return FilePath::safeCurrentPath(rsession::options().userHomePath());
+   }
+}
+
 bool alwaysSaveHistoryOption()
 {
    // allow project override
@@ -1226,8 +2796,24 @@ FilePath getStartupEnvironmentFilePath()
    if (!envFile.empty())
       return envFile;
    else
-      return dirs::rEnvironmentDir().complete(".RData");
+      return rEnvironmentDir().complete(".RData");
 }
+
+void waitForMethodInitFunction(const ClientEvent& initEvent)
+{
+   module_context::enqueClientEvent(initEvent);
+
+   if (s_rProcessingInput)
+   {
+      ClientEvent busyEvent(client_events::kBusy, true);
+      module_context::enqueClientEvent(busyEvent);
+   }
+   else
+   {
+      reissueLastConsolePrompt();
+   }
+}
+
 
 } // anonymous namespace
 
@@ -1249,6 +2835,61 @@ Error registerRBrowseFileHandler(const RBrowseFileHandler& handler)
    return Success();
 }
 
+Error registerAsyncUriHandler(
+                         const std::string& name,
+                         const http::UriAsyncHandlerFunction& handlerFunction)
+{
+
+   s_uriHandlers.add(http::UriHandler(name,
+                                      handlerFunction));
+   return Success();
+}
+
+Error registerUriHandler(const std::string& name,
+                         const http::UriHandlerFunction& handlerFunction)
+{
+
+   s_uriHandlers.add(http::UriHandler(name,
+                                      handlerFunction));
+   return Success();
+}
+
+
+Error registerAsyncLocalUriHandler(
+                         const std::string& name,
+                         const http::UriAsyncHandlerFunction& handlerFunction)
+{
+   s_uriHandlers.add(http::UriHandler(kLocalUriLocationPrefix + name,
+                                      handlerFunction));
+   return Success();
+}
+
+Error registerLocalUriHandler(const std::string& name,
+                              const http::UriHandlerFunction& handlerFunction)
+{
+   s_uriHandlers.add(http::UriHandler(kLocalUriLocationPrefix + name,
+                                      handlerFunction));
+   return Success();
+}
+
+
+Error registerAsyncRpcMethod(const std::string& name,
+                             const core::json::JsonRpcAsyncFunction& function)
+{
+   s_jsonRpcMethods.insert(
+         std::make_pair(name, std::make_pair(false, function)));
+   return Success();
+}
+
+Error registerRpcMethod(const std::string& name,
+                        const core::json::JsonRpcFunction& function)
+{
+   s_jsonRpcMethods.insert(
+         std::make_pair(name,
+                        std::make_pair(true, json::adaptToAsync(function))));
+   return Success();
+}
+
 UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 {
    // enque user prompt event
@@ -1265,10 +2906,10 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 
    // wait for user_prompt_completed
    json::JsonRpcRequest request ;
-   http_methods::waitForMethod(kUserPromptCompleted,
-                       userPromptEvent,
-                       suspend::disallowSuspend,
-                       &request);
+   waitForMethod(kUserPromptCompleted,
+                 userPromptEvent,
+                 disallowSuspend,
+                 &request);
 
    // read the response param
    int response;
@@ -1300,6 +2941,12 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
    };
 }
 
+
+bool rSessionResumed()
+{
+   return s_rSessionResumed;
+}
+
 int saveWorkspaceAction()
 {
    // allow project override
@@ -1329,9 +2976,35 @@ void syncRSaveAction()
    rstudio::r::session::setSaveAction(saveWorkspaceOption());
 }
 
+
+namespace {
+
+bool registeredWaitForMethod(const std::string& method,
+                             const ClientEvent& event,
+                             core::json::JsonRpcRequest* pRequest)
+{
+   // enque the event which notifies the client we want input
+   module_context::enqueClientEvent(event);
+
+   // wait for method
+   return waitForMethod(method,
+                        boost::bind(waitForMethodInitFunction, event),
+                        disallowSuspend,
+                        pRequest);
+}
+
+} // anonymous namepace
+
+WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
+{
+   s_waitForMethodNames.push_back(methodName);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
+}
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio
+
 
 namespace {
 
@@ -1441,7 +3114,7 @@ int main (int argc, char * const argv[])
 
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
-      fork::initThreadId();
+      s_mainThreadId = boost::this_thread::get_id();
 
       // ensure LANG and UTF-8 character set
 #ifndef _WIN32
@@ -1593,14 +3266,13 @@ int main (int argc, char * const argv[])
          return sessionExitFailure(error, ERROR_LOCATION) ;
 
       // set working directory
-      FilePath workingDir = dirs::getInitialWorkingDirectory();
+      FilePath workingDir = getInitialWorkingDirectory();
       error = workingDir.makeCurrentPath();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
          
       // start http connection listener
-      error = waitWithTimeout(
-            http_methods::startHttpConnectionListenerWithTimeout, 0, 100, 1);
+      error = waitWithTimeout(startHttpConnectionListenerWithTimeout, 0, 100, 1);
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
@@ -1643,8 +3315,8 @@ int main (int argc, char * const argv[])
       rOptions.logPath = options.userLogPath();
       rOptions.sessionPort = options.wwwPort();
       rOptions.startupEnvironmentFilePath = getStartupEnvironmentFilePath();
-      rOptions.rEnvironmentDir = boost::bind(dirs::rEnvironmentDir);
-      rOptions.rHistoryDir = boost::bind(dirs::rHistoryDir);
+      rOptions.rEnvironmentDir = boost::bind(rEnvironmentDir);
+      rOptions.rHistoryDir = boost::bind(rHistoryDir);
       rOptions.alwaysSaveHistory = boost::bind(alwaysSaveHistoryOption);
       rOptions.rSourcePath = options.coreRSourcePath();
       if (!desktopMode) // ignore r-libs-user in desktop mode
@@ -1668,7 +3340,7 @@ int main (int argc, char * const argv[])
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
-      rCallbacks.consoleRead = console_input::rConsoleRead;
+      rCallbacks.consoleRead = rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;
       rCallbacks.chooseFile = rChooseFile;

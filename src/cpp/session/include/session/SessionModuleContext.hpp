@@ -216,7 +216,6 @@ core::Error registerAsyncRpcMethod(
 core::Error registerRpcMethod(const std::string& name,
                               const core::json::JsonRpcFunction& function);
 
-void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method);
 
 core::Error executeAsync(const core::json::JsonRpcFunction& function,
                          const core::json::JsonRpcRequest& request,
@@ -830,8 +829,6 @@ std::string websiteOutputDir();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
-
-void onBackgroundProcessing(bool isIdle);
 
 } // namespace module_context
 } // namespace session
