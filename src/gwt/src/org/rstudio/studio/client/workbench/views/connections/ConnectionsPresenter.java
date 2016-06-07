@@ -354,6 +354,7 @@ public class ConnectionsPresenter extends BasePresenter
          else
          {
             type = NewDocumentWithCodeEvent.R_NOTEBOOK; 
+            int codeLength = code.split("\n").length;
             code = "---\n" +
                    "title: \"R Notebook\"\n" +
                    "output: html_notebook\n" +
@@ -366,7 +367,7 @@ public class ConnectionsPresenter extends BasePresenter
                    "```{r}\n" +
                    "\n" +
                    "```\n";
-            cursorPosition = SourcePosition.create(11, 0);      
+            cursorPosition = SourcePosition.create(9 + codeLength, 0);      
          }
         
          eventBus_.fireEvent(
