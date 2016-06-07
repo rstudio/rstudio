@@ -48,11 +48,24 @@ public:
       // launch a thread to process console input
       thread::safeLaunchThread(boost::bind(
                &NotebookQueue::consoleThreadMain, this), &console_);
+      std::cerr << "exec queue started" << std::endl;
+   }
+
+   ~NotebookQueue()
+   {
+      // clean up thread
+      console_.detach();
+      std::cerr << "exec queue finished" << std::endl;
+   }
+
+   bool complete()
+   {
+      return queue_.empty();
    }
 
    Error process()
    {
-      // no work if list is empty
+      // if list is empty, we're done
       if (queue_.empty())
          return Success();
 
@@ -92,7 +105,7 @@ public:
    {
       // no work to do if we have no documents
       if (queue_.empty())
-         return Success();
+         return process();
 
       // get the next execution unit from the current queue
       boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
@@ -245,6 +258,12 @@ void onConsolePrompt(const std::string& prompt)
    if (s_queue)
    {
       s_queue->onConsolePrompt(prompt);
+   }
+
+   // clean up queue if it's finished executing
+   if (s_queue && s_queue->complete())
+   {
+      s_queue.reset();
    }
 }
 
