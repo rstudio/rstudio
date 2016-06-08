@@ -61,4 +61,7 @@ public class NotebookDocQueue extends JavaScriptObject
    public final static int QUEUE_OP_ADD    = 0;
    public final static int QUEUE_OP_UPDATE = 1;
    public final static int QUEUE_OP_DELETE = 2;
+   
+   public final static int CHUNK_EXEC_STARTED  = 0;
+   public final static int CHUNK_EXEC_FINISHED = 1;
 }

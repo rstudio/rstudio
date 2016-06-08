@@ -160,6 +160,7 @@ extern const int kEnableConnections;
 extern const int kConnectionListChanged;
 extern const int kActiveConnectionsChanged;
 extern const int kNotebookRangeExecuted;
+extern const int kChunkExecStateChanged;
 }
    
 class ClientEvent

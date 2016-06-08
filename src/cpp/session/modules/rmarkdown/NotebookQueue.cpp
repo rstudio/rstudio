@@ -39,6 +39,12 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
+enum ChunkExecState
+{
+   ChunkExecStarted  = 0,
+   ChunkExecFinished = 1
+};
+
 // represents the global queue of work 
 class NotebookQueue
 {
@@ -92,6 +98,9 @@ public:
                }
             }
 
+            // notify client
+            enqueueExecStateChanged(ChunkExecFinished);
+
             // clean up current exec unit 
             execContext_->disconnect();
             execUnit_ = boost::shared_ptr<NotebookQueueUnit>();
@@ -125,7 +134,10 @@ public:
          docQueue->pixelWidth(), docQueue->charWidth());
       execContext_->connect();
 
+      // notify client
       execUnit_ = unit;
+      enqueueExecStateChanged(ChunkExecStarted);
+
       executeCurrentUnit();
 
       return Success();
@@ -206,6 +218,17 @@ public:
    }
 
 private:
+
+   void enqueueExecStateChanged(ChunkExecState state)
+   {
+      json::Object event;
+      event["doc_id"] = execUnit_->docId();
+      event["chunk_id"] = execUnit_->chunkId();
+      event["exec_state"] = ChunkExecStarted;
+      module_context::enqueClientEvent(ClientEvent(
+               client_events::kChunkExecStateChanged, event));
+   }
+
    // the current client id
    std::string clientId_;
    
