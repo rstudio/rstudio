@@ -14,24 +14,18 @@
   <property name="test.timeout" value="5"/>
   <property name="emma.merged.out" value="${junit.out}/emma-coverage"/>
 
-  <condition property="gwt.junit.user.excludes"
-             value="com/google/gwt/langtest/**,**/super/**,**/java8/**,**/*Java8Suite.java"
-             else="com/google/gwt/langtest/**,**/super/**">
-    <equals arg1="${javac.source}" arg2="1.7" />
-  </condition>
-
   <property name="gwt.junit.testcase.web.includes" value="${gwt.junit.testcase.includes}"/>
   <condition property="gwt.junit.testcase.web.excludes"
             value="**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
             else="**/*JreSuite.class,**/OptimizedOnly*">
-    <equals arg1="${javac.source}" arg2="1.7" />
+    <isfalse value="${isJava8}" />
   </condition>
 
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}"/>
   <condition property="gwt.junit.testcase.dev.excludes"
             value="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
             else="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
-    <equals arg1="${javac.source}" arg2="1.7" />
+    <isfalse value="${isJava8}" />
   </condition>
 
   <property name="gwt.tck.testcase.dev.includes"
@@ -142,10 +136,15 @@
       Compiles the test code for this project
   -->
   <target name="compile.tests"
-          depends="compile.dev.tests, compile.emma.if.enabled"
+          depends="-compile.tests.java7, -compile.tests.java8"
           unless="compile.tests.complete">
+  </target>
+
+  <target name="-compile.tests.java7"
+          depends="compile.dev.tests, compile.emma.if.enabled">
     <mkdir dir="${javac.junit.out}"/>
-    <gwt.javac srcdir="test" destdir="${javac.junit.out}" excludes="${gwt.junit.user.excludes}">
+    <gwt.javac srcdir="test" destdir="${javac.junit.out}"
+               excludes="com/google/gwt/langtest/**,**/super/**,**/java8/**,**/*Java8Suite.java">
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
@@ -154,6 +153,19 @@
       </classpath>
       <compilerarg value="-processor"/>
       <compilerarg value="com.google.web.bindery.requestfactory.apt.RfValidator"/>
+    </gwt.javac>
+  </target>
+
+  <target name="-compile.tests.java8" if="isJava8" depends="-compile.tests.java7">
+    <gwt.javac srcdir="test" destdir="${javac.junit.out}" source="1.8" target="1.8"
+               includes="**/java8/**,**/*Java8Suite.java">
+      <classpath>
+        <pathelement location="${javac.junit.out}"/>
+        <pathelement location="${javac.out}"/>
+        <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
+        <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar"/>
+        <path refid="test.extraclasspath"/>
+      </classpath>
     </gwt.javac>
   </target>
 

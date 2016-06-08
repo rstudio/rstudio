@@ -27,6 +27,11 @@
         message="This build file is in an inconsistent state (${ant.file} != ${test.ant.file})."/>
 
   <!-- Global Properties -->
+  <condition property="isJava8">
+    <not>
+      <equals arg1="${ant.java.version}" arg2="1.7" />
+    </not>
+  </condition>
   <property environment="env"/>
   <condition property="gwt.version" value="${env.GWT_VERSION}" else="0.0.0">
     <isset property="env.GWT_VERSION"/>
