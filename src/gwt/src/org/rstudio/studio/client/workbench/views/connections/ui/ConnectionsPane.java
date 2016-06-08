@@ -232,6 +232,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                public void execute()
                {
                   installConnectionExplorerToolbar(connection);
+                  connectionExplorer_.onResize();
                }
       });
    }
@@ -280,6 +281,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void addToConnectionExplorer(String item)
    {
       connectionExplorer_.addItem(item);
+   }
+   
+   @Override
+   public void onResize()
+   {
+      connectionExplorer_.onResize();
    }
    
    

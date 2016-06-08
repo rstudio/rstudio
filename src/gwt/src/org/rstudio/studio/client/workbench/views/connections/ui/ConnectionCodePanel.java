@@ -35,10 +35,11 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-public class ConnectionCodePanel extends Composite
+public class ConnectionCodePanel extends Composite implements RequiresResize
 {
    public ConnectionCodePanel()
    {
@@ -160,9 +161,16 @@ public class ConnectionCodePanel extends Composite
          setConnectVia(connectVia);
          updateConnectViaUI_.execute();
       }
-      codeViewer_.forceResize();
-      codeViewer_.forceCursorChange();
+      onResize();
       settingCode_ = false;
+   }
+   
+   @Override
+   public void onResize()
+   {
+      codeViewer_.forceResize();
+      codeViewer_.getEditor().resize();
+      codeViewer_.forceCursorChange();
    }
    
    public String getCode()

@@ -30,10 +30,11 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 
-public class ConnectionExplorer extends Composite
+public class ConnectionExplorer extends Composite implements RequiresResize
 {
    public ConnectionExplorer()
    {
@@ -121,6 +122,13 @@ public class ConnectionExplorer extends Composite
       return codePanel_.getConnectVia();
    }
   
+   @Override
+   public void onResize()
+   {
+      codePanel_.onResize();
+      
+   }
+   
    private final DataGrid<String> dataGrid_; 
  
    private final Column<String, ImageResource> typeColumn_;
