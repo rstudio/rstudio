@@ -346,7 +346,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     optimize("char", "return s.charAt(1);").intoString("return EntryPoint.s.charAt(1);");
 
     // String.toString
-    optimize("String", "return s.toString();").intoString("return EntryPoint.s;");
+    optimize("String", "return \"a\".toString();").intoString("return \"a\";");
+    optimize("String", "return s.toString();").intoString("return EntryPoint.s.toString();");
     optimize("String", "return o.toString();").intoString("return EntryPoint.o.toString();");
 
     // String.hashCode: never optimized
