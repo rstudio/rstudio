@@ -127,7 +127,6 @@ import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.jjs.impl.codesplitter.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.gflow.DataflowOptimizer;
 import com.google.gwt.dev.js.BaselineCoverageGatherer;
-import com.google.gwt.dev.js.ClosureJsRunner;
 import com.google.gwt.dev.js.CoverageInstrumentor;
 import com.google.gwt.dev.js.DuplicateClinitRemover;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
@@ -654,23 +653,17 @@ public final class JavaToJavaScriptCompiler {
       Permutation permutation, long startTimeMs, SizeBreakdown[] sizeBreakdowns,
       PermutationResult permutationResult) {
     CompilationMetricsArtifact compilationMetrics = null;
-    // TODO: enable this when ClosureCompiler is enabled
     if (options.isCompilerMetricsEnabled()) {
-      if (options.isClosureCompilerEnabled()) {
-        logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
-            + "-XcompilerMetric; ignoring -XcompilerMetric.");
-      } else {
-        compilationMetrics = new CompilationMetricsArtifact(permutation.getId());
-        compilationMetrics.setCompileElapsedMilliseconds(
-            System.currentTimeMillis() - startTimeMs);
-        compilationMetrics.setElapsedMilliseconds(
-            System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
-        compilationMetrics.setJsSize(sizeBreakdowns);
-        compilationMetrics.setPermutationDescription(permutation.getProperties().prettyPrint());
-        permutationResult.addArtifacts(Lists.newArrayList(
-            unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
-            compilationMetrics));
-      }
+      compilationMetrics = new CompilationMetricsArtifact(permutation.getId());
+      compilationMetrics.setCompileElapsedMilliseconds(
+          System.currentTimeMillis() - startTimeMs);
+      compilationMetrics.setElapsedMilliseconds(
+          System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime());
+      compilationMetrics.setJsSize(sizeBreakdowns);
+      compilationMetrics.setPermutationDescription(permutation.getProperties().prettyPrint());
+      permutationResult.addArtifacts(Lists.newArrayList(
+          unifiedAst.getModuleMetrics(), unifiedAst.getPrecompilationMetrics(),
+          compilationMetrics));
     }
     return compilationMetrics;
   }
@@ -680,27 +673,15 @@ public final class JavaToJavaScriptCompiler {
       boolean isSourceMapsEnabled, SizeBreakdown[] sizeBreakdowns,
       List<JsSourceMap> sourceInfoMaps, PermutationResult permutationResult) {
     if (options.isJsonSoycEnabled()) {
-      // TODO: enable this when ClosureCompiler is enabled
-      if (options.isClosureCompilerEnabled()) {
-        logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
-            + "-XjsonSoyc; ignoring -XjsonSoyc.");
-      } else {
-        // Is a super set of SourceMapRecorder.makeSourceMapArtifacts().
-        permutationResult.addArtifacts(EntityRecorder.makeSoycArtifacts(
-            permutationId, sourceInfoMaps, options.getSourceMapFilePrefix(),
-            jjsmap, sizeBreakdowns,
-            ((DependencyGraphRecorder) dependenciesAndRecorder.getRight()), jprogram));
-      }
+      // Is a super set of SourceMapRecorder.makeSourceMapArtifacts().
+      permutationResult.addArtifacts(EntityRecorder.makeSoycArtifacts(
+          permutationId, sourceInfoMaps, options.getSourceMapFilePrefix(),
+          jjsmap, sizeBreakdowns,
+          ((DependencyGraphRecorder) dependenciesAndRecorder.getRight()), jprogram));
     } else if (isSourceMapsEnabled) {
-      // TODO: enable this when ClosureCompiler is enabled
-      if (options.isClosureCompilerEnabled()) {
-        logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
-            + "compiler.useSourceMaps=true; ignoring compiler.useSourceMaps=true.");
-      } else {
-        logger.log(TreeLogger.INFO, "Source Maps Enabled");
-        permutationResult.addArtifacts(SourceMapRecorder.exec(permutationId, sourceInfoMaps,
-            options.getSourceMapFilePrefix()));
-      }
+      logger.log(TreeLogger.INFO, "Source Maps Enabled");
+      permutationResult.addArtifacts(SourceMapRecorder.exec(permutationId, sourceInfoMaps,
+          options.getSourceMapFilePrefix()));
     }
   }
 
@@ -725,19 +706,11 @@ public final class JavaToJavaScriptCompiler {
       List<JsSourceMap> sourceInfoMaps, PermutationResult permutationResult,
       CompilationMetricsArtifact compilationMetrics)
       throws IOException, UnableToCompleteException {
-    // TODO: enable this when ClosureCompiler is enabled
-    if (options.isClosureCompilerEnabled()) {
-      if (options.isSoycEnabled()) {
-        logger.log(TreeLogger.WARN, "Incompatible options: -XenableClosureCompiler and "
-            + "-compileReport; ignoring -compileReport.");
-      }
-    } else {
-      permutationResult.addArtifacts(makeSoycArtifacts(permutationId, js, sizeBreakdowns,
-          options.isSoycExtra() ? sourceInfoMaps : null, dependenciesAndRecorder.getLeft(),
-          jjsmap, internedLiteralByVariableName, unifiedAst.getModuleMetrics(),
-          unifiedAst.getPrecompilationMetrics(), compilationMetrics,
-          options.isSoycHtmlDisabled()));
-    }
+    permutationResult.addArtifacts(makeSoycArtifacts(permutationId, js, sizeBreakdowns,
+        options.isSoycExtra() ? sourceInfoMaps : null, dependenciesAndRecorder.getLeft(),
+        jjsmap, internedLiteralByVariableName, unifiedAst.getModuleMetrics(),
+        unifiedAst.getPrecompilationMetrics(), compilationMetrics,
+        options.isSoycHtmlDisabled()));
   }
 
   private void addSyntheticArtifacts(UnifiedAst unifiedAst, Permutation permutation,
@@ -773,14 +746,6 @@ public final class JavaToJavaScriptCompiler {
 
     Event generateJavascriptEvent =
         SpeedTracerLogger.start(CompilerEventType.GENERATE_JAVASCRIPT);
-
-    boolean useClosureCompiler = options.isClosureCompilerEnabled();
-    if (useClosureCompiler) {
-      ClosureJsRunner runner = new ClosureJsRunner();
-      runner.compile(jprogram, jsProgram, jsFragments, options.getOutput());
-      generateJavascriptEvent.end();
-      return;
-    }
 
     for (int i = 0; i < jsFragments.length; i++) {
       DefaultTextOutput out = new DefaultTextOutput(!options.isIncrementalCompileEnabled() &&

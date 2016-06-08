@@ -33,7 +33,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
-import com.google.gwt.dev.util.arg.ArgHandlerEnableClosureCompiler;
 import com.google.gwt.dev.util.arg.ArgHandlerFragmentCount;
 import com.google.gwt.dev.util.arg.ArgHandlerFragmentMerge;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
@@ -75,7 +74,6 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerDraftCompile(options));
     registerHandler(new ArgHandlerDumpSignatures());
     registerHandler(new ArgHandlerEnableAssertions(options));
-    registerHandler(new ArgHandlerEnableClosureCompiler(options));
     registerHandler(new ArgHandlerFragmentCount(options));
     registerHandler(new ArgHandlerFragmentMerge(options));
     registerHandler(new ArgHandlerGenDir(options));

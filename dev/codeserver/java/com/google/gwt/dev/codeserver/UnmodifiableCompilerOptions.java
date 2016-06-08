@@ -50,11 +50,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public void setClosureCompilerEnabled(boolean enabled) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void setClusterSimilarFunctions(boolean enabled) {
     throw new UnsupportedOperationException();
   }

@@ -328,7 +328,6 @@ public final class JsRootScope extends JsScope {
       "java", "Packages", "netscape", "sun", "JavaObject", "JavaClass", "JavaArray", "JavaMember",
 
       // GWT-defined identifiers
-      // If adding a new variable, don't forget to update ClosureJsRunner#getClosureCompilerExterns.
       "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version", "$sessionId", "gwtOnLoad",
       // Any new gwt-related global should be a property of $gwt.
       "$gwt",

@@ -6,7 +6,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-19.0/guava-19.0-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/gson-2.6.2.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/sourcemap-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20160315/compiler-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>

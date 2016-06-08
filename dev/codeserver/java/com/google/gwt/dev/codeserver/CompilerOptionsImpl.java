@@ -170,11 +170,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean isClosureCompilerEnabled() {
-    return false;
-  }
-
-  @Override
   public boolean isCompilerMetricsEnabled() {
     return false;
   }

@@ -28,7 +28,6 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean addRuntimeChecks = false;
-  private boolean closureCompilerEnabled;
   private boolean clusterSimilarFunctions = true;
   private boolean incrementalCompile = false;
   private boolean compilerMetricsEnabled = false;
@@ -62,7 +61,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void copyFrom(JJSOptions other) {
     setAddRuntimeChecks(other.shouldAddRuntimeChecks());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
-    setClosureCompilerEnabled(other.isClosureCompilerEnabled());
     setClusterSimilarFunctions(other.shouldClusterSimilarFunctions());
     setIncrementalCompileEnabled(other.isIncrementalCompileEnabled());
     setCompilerMetricsEnabled(other.isCompilerMetricsEnabled());
@@ -129,11 +127,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  public boolean isClosureCompilerEnabled() {
-    return closureCompilerEnabled;
-  }
-
-  @Override
   public boolean isCompilerMetricsEnabled() {
     return compilerMetricsEnabled;
   }
@@ -185,11 +178,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setClassMetadataDisabled(boolean disabled) {
     disableClassMetadata = disabled;
-  }
-
-  @Override
-  public void setClosureCompilerEnabled(boolean enabled) {
-    closureCompilerEnabled = enabled;
   }
 
   @Override
