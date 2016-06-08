@@ -41,8 +41,6 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -155,16 +153,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       // create connection explorer, add it, and hide it
       connectionExplorer_ = new ConnectionExplorer();
       connectionExplorer_.setSize("100%", "100%");
-      connectionExplorer_.setConnected(commands_.disconnectConnection().isVisible());
-      commands_.disconnectConnection().addVisibleChangedHandler(
-            new VisibleChangedHandler() {
-
-         @Override
-         public void onVisibleChanged(AppCommand command)
-         {
-            connectionExplorer_.setConnected(command.isVisible());
-         }   
-      });
       
       mainPanel_.add(connectionExplorer_);
       mainPanel_.setWidgetTopBottom(connectionExplorer_, 0, Unit.PX, 0, Unit.PX);
@@ -184,9 +172,16 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    @Override
    public void setActiveConnections(List<ConnectionId> connections)
    {
+      // update active connection
       activeConnections_ = connections;
       sortConnections();
-      connectionsDataGrid_.redraw();
+      
+      // redraw the data grid
+      connectionsDataGrid_.redraw();  
+      
+      // update explored connection
+      connectionExplorer_.setConnected(exploredConnection_ != null &&
+                                       isConnected(exploredConnection_.getId()));
    }
   
    private boolean isConnected(ConnectionId id)
@@ -221,7 +216,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void showConnectionExplorer(final Connection connection, 
                                       String connectVia)
    {
-      connectionExplorer_.setConnection(connection, connectVia);
+      setConnection(connection, connectVia);
       
       animate(connectionsDataGrid_,
               connectionExplorer_,
@@ -239,13 +234,25 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    @Override
    public void updateExploredConnection(Connection connection)
    {
-      connectionExplorer_.setConnection(connection, 
-                                        connectionExplorer_.getConnectVia());
+      setConnection(connection, connectionExplorer_.getConnectVia());
+   }
+   
+   private void setConnection(Connection connection, String connectVia)
+   {
+      exploredConnection_ = connection;
+      
+      if (exploredConnection_ != null) 
+      {
+         connectionExplorer_.setConnection(connection, connectVia);
+         connectionExplorer_.setConnected(isConnected(connection.getId()));
+      }
    }
    
    @Override
    public void showConnectionsList()
    {
+      exploredConnection_ = null;
+      
       animate(connectionExplorer_,
               connectionsDataGrid_,
               false,
@@ -257,6 +264,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                 }
              });
    }
+   
    
    @Override
    public HasClickHandlers backToConnectionsButton()
@@ -432,6 +440,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
    private final ConnectionExplorer connectionExplorer_;
+   
+   private Connection exploredConnection_ = null;
    
    private final Column<Connection, ImageResource> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
