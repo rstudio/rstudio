@@ -4376,17 +4376,14 @@ public class TextEditingTarget implements
             if (!range.isEmpty())
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
-               String code = scopeHelper_.getSweaveChunkText(chunk);
-               String options = 
-                     TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
-                           chunk, docDisplay_);
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code, options, mode);
+                  notebook_.executeChunk(chunk, mode);
                }
                else
                {
+                  String code = scopeHelper_.getSweaveChunkText(chunk);
                   events_.fireEvent(new SendToConsoleEvent(code, true));
                }
                docDisplay_.collapseSelection(true);   

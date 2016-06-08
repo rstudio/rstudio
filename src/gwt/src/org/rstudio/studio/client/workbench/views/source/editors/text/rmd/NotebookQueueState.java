@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
@@ -61,6 +62,15 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       syncWidth();
    }
    
+   public void executeChunk(Scope chunk)
+   {
+      List<Scope> scopes = new ArrayList<Scope>();
+      scopes.add(chunk);
+      executeChunks("Run Chunk", scopes);
+      
+      // TODO: insert into existing queue if it exists
+   }
+   
    public void executeChunks(final String jobDesc, List<Scope> scopes)
    {
       // ensure width is up to date
@@ -73,22 +83,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       // create queue units from scopes
       for (Scope scope: scopes)
       {
-         ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), 
-               null);
-         String code = docDisplay_.getCode(
-            scope.getPreamble(),
-            scope.getEnd());
-         NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
-               def.getChunkId(), code);
-         
-         // add a single range which encompasses all of the actual code in the
-         // chunk
-         int start = code.indexOf("\n") + 1;
-         int end = code.lastIndexOf("\n");
-         
-         NotebookExecRange range = NotebookExecRange.create(start, end);
-         unit.addPendingRange(range);
-         
+         NotebookQueueUnit unit = unitFromScope(scope);
          queue_.addUnit(unit);
       }
       
@@ -214,6 +209,27 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
    }
    
+   private NotebookQueueUnit unitFromScope(Scope scope)
+   {
+      ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), 
+            null);
+      String code = docDisplay_.getCode(
+         scope.getPreamble(),
+         scope.getEnd());
+      NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
+            def.getChunkId(), code);
+      
+      // add a single range which encompasses all of the actual code in the
+      // chunk
+      int start = code.indexOf("\n") + 1;
+      int end = code.lastIndexOf("\n");
+      
+      NotebookExecRange range = NotebookExecRange.create(start, end);
+      unit.addPendingRange(range);
+      
+      return unit;
+   }
+         
    // TODO: resolve with copy at TextEditingTargetNotebook
    private void syncWidth()
    {

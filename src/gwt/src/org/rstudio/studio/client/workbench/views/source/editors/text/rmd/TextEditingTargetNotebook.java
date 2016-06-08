@@ -482,8 +482,7 @@ public class TextEditingTargetNotebook
       queue_.executeChunks(jobDesc, chunks);
    }
    
-   public void executeChunk(Scope chunk, String code, String options,
-         int mode)
+   public void executeChunk(Scope chunk, int mode)
    {
       // get the row that ends the chunk
       int row = chunk.getEnd().getRow();
@@ -495,7 +494,8 @@ public class TextEditingTargetNotebook
          pSourceWindowManager_.get().maximizeSourcePaneIfNecessary();
          maximizedPane_ = true;
       }
-
+      
+      /* TODO: move to queue state manager 
       String chunkId = "";
       String setupCrc32 = "";
       if (isSetupChunkScope(chunk))
@@ -507,147 +507,13 @@ public class TextEditingTargetNotebook
       {
          ensureSetupChunkExecuted();
       }
+      */
 
-      // find or create a matching chunk definition 
-      ChunkDefinition chunkDef = getChunkDefAtRow(row, chunkId);
-      if (chunkDef == null)
-         return;
-      chunkId = chunkDef.getChunkId();
+      queue_.executeChunk(chunk);
 
-      // check to see if this chunk is already in the execution queue--if so
-      // just update the code and leave it queued
-      for (ChunkExecQueueUnit unit: chunkExecQueue_)
-      {
-         if (unit.chunkId == chunkId)
-         {
-            unit.code = code;
-            unit.options = options;
-            unit.setupCrc32 = setupCrc32;
-            unit.row = row;
-            return;
-         }
-      }
-
-      // if this is the currently executing chunk, don't queue it again
-      if (executingChunk_ != null && executingChunk_.chunkId == chunkId)
-         return;
-
-      // decorate the gutter to show the chunk is queued
-      docDisplay_.setChunkLineExecState(chunk.getBodyStart().getRow() + 1,
-            chunk.getEnd().getRow(), ChunkRowExecState.LINE_QUEUED);
-      chunks_.setChunkState(chunk.getPreamble().getRow(), 
-            ChunkContextToolbar.STATE_QUEUED);
-      
-      // find the appropriate place in the queue for this chunk
-      int idx = chunkExecQueue_.size();
-      for (int i = 0; i < chunkExecQueue_.size(); i++)
-      {
-         if (chunkExecQueue_.get(i).row > row)
-         {
-            idx = i;
-            break;
-         }
-      }
-
-      // put it in the queue 
-      chunkExecQueue_.add(idx, new ChunkExecQueueUnit(chunkId, 
-            StringUtil.isNullOrEmpty(chunk.getChunkLabel()) ? 
-                  chunk.getLabel() : chunk.getChunkLabel(),
-            mode, code, options, row, setupCrc32));
-      
-      // record maximum queue size (for scaling progress when we start popping
-      // chunks from the list)
-      if (chunkExecQueue_.size() == 1)
-      {
-         // first item in the queue resets the max recorded size
-         execQueueMaxSize_ = 1;
-      }
-      else
-      {
-         // otherwise, maintain the high water mark until the queue is empty
-         execQueueMaxSize_ = Math.max(execQueueMaxSize_, 
-                                      chunkExecQueue_.size());
-      }
-      
       // draw progress meter for the new queue in batch mode
       if (mode == MODE_BATCH)
          updateProgress();
-
-      // if there are other chunks in the queue, let them run
-      if (chunkExecQueue_.size() > 1)
-         return;
-      
-      // if this is the first chunk in the queue, make sure the doc is saved
-      // and check for param eval before we continue. since we suppress the
-      // execution of additional chunks while waiting for param evaluation, we
-      // need to guarantee that this state gets cleaned up correctly on error
-      evaluatingParams_ = true;
-      final Command completeEval = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            evaluatingParams_ = false;
-            processChunkExecQueue();
-         }
-      };
-
-      docUpdateSentinel_.withSavedDoc(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            server_.prepareForRmdChunkExecution(docUpdateSentinel_.getId(), 
-               new ServerRequestCallback<RmdExecutionState>()
-               {
-                  @Override
-                  public void onResponseReceived(RmdExecutionState state)
-                  {
-                     if (state.getState() == RmdExecutionState.STATE_BUSY)
-                     {
-                        // if R has code on the stack, wait for the next console
-                        // prompt
-                        final Value<HandlerRegistration> handler = 
-                              new Value<HandlerRegistration>(null);
-                        handler.setValue(events_.addHandler(
-                              ConsolePromptEvent.TYPE,
-                              new ConsolePromptHandler()
-                              {
-                                 @Override
-                                 public void onConsolePrompt(
-                                       ConsolePromptEvent event)
-                                 {
-                                    handler.getValue().removeHandler();
-                                    completeEval.execute();
-                                 }
-                              }));
-                     }
-                     else
-                     {
-                        completeEval.execute();
-                     }
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // if we couldn't evaluate the parameters, process the queue
-                     // anyway
-                     Debug.logError(error);
-                     completeEval.execute();
-                  }
-               });
-         }
-      }, 
-      new CommandWithArg<String>()
-      {
-         @Override
-         public void execute(String arg)
-         {
-            Debug.logWarning(arg);
-            completeEval.execute();
-         }
-      });
    }
    
    public void manageCommands()
@@ -1847,18 +1713,12 @@ public class TextEditingTargetNotebook
          // setup chunk
          if (crc32 != setupCrc32_)
          {
-            // extract current options from setup chunk
-            String options = 
-               TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
-                  setupScope, docDisplay_);
-            
             // if there are no chunks in the queue yet, show progress 
             if (chunkExecQueue_.isEmpty())
                editingTarget_.getStatusBar().showNotebookProgress("Run Chunks");
             
             // push it into the execution queue
-            executeChunk(setupScope, getChunkCode(setupScope), options, 
-                         MODE_BATCH);
+            executeChunk(setupScope, MODE_BATCH);
          }
       }
    }
