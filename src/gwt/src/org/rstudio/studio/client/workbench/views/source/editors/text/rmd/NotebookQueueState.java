@@ -24,9 +24,12 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookExecRange;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
@@ -34,19 +37,22 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.JsArray;
+
 public class NotebookQueueState
 {
    public NotebookQueueState(DocDisplay display, DocUpdateSentinel sentinel,
-         RMarkdownServerOperations server)
+         RMarkdownServerOperations server, TextEditingTargetNotebook notebook)
    {
       docDisplay_ = display;
       sentinel_ = sentinel;
       server_ = server;
+      notebook_ = notebook;
       
       syncWidth();
    }
    
-   public void executeChunks(String jobDesc, List<Scope> scopes)
+   public void executeChunks(final String jobDesc, List<Scope> scopes)
    {
       // ensure width is up to date
       syncWidth();
@@ -78,9 +84,54 @@ public class NotebookQueueState
       }
       
       // send it to the server!
-      server_.executeNotebookChunks(queue_, new VoidServerRequestCallback());
+      server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            renderQueueState();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "Can't execute " + jobDesc, error.getMessage());
+         }
+      });
    }
    
+   public void renderQueueState()
+   {
+      JsArray<NotebookQueueUnit> units = queue_.getUnits();
+      for (int i = 0; i < units.length(); i++)
+      {
+         NotebookQueueUnit unit = units.get(i);
+
+         // get the offset into the doc 
+         Scope scope = notebook_.getChunkScope(unit.getChunkId());
+         if (scope == null)
+            continue;
+         
+         // draw the completed lines
+         renderLineState(scope.getPreamble().getRow() + 1, 
+               unit.getCompletedLines(), ChunkRowExecState.LINE_EXECUTED);
+
+         // draw the pending lines
+         renderLineState(scope.getPreamble().getRow() + 1, 
+               unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+      }
+   }
+   
+   private void renderLineState(int offset, List<Integer> lines, int state)
+   {
+      for (Integer line: lines)
+      {
+         docDisplay_.setChunkLineExecState(line + offset, line + offset, state);
+      }
+   }
+   
+   // TODO: resolve with copy at TextEditingTargetNotebook
    private void syncWidth()
    {
       // check the width and see if it's already synced
@@ -131,6 +182,7 @@ public class NotebookQueueState
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel sentinel_;
    private final RMarkdownServerOperations server_;
+   private final TextEditingTargetNotebook notebook_;
    
    private int pixelWidth_;
    private int charWidth_;

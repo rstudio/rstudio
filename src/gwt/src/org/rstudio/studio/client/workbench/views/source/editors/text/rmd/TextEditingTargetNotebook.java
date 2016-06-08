@@ -432,7 +432,7 @@ public class TextEditingTargetNotebook
       pSourceWindowManager_ = pSourceWindowManager;
       dependencyManager_ = dependencyManager;
       queue_ = new NotebookQueueState(docDisplay_, docUpdateSentinel_,
-            server);
+            server, this);
       
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
@@ -1291,6 +1291,19 @@ public class TextEditingTargetNotebook
       return "unnamed-chunk-" + pos;
    }
 
+   public Scope getChunkScope(String chunkId)
+   {
+      if (chunkId == SETUP_CHUNK_ID)
+      {
+         return getSetupChunkScope();
+      }
+      else if (outputs_.containsKey(chunkId))
+      {
+         return outputs_.get(chunkId).getScope();
+      }
+      return null;
+   }
+   
    public Scope getSetupChunkScope()
    {
       ScopeList scopes = new ScopeList(docDisplay_);
@@ -1846,19 +1859,6 @@ public class TextEditingTargetNotebook
       pixelWidth_ = width;
       charWidth_ = DomUtils.getCharacterWidth(pixelWidth_, pixelWidth_,
             ConsoleResources.INSTANCE.consoleStyles().console());
-   }
-   
-   private Scope getChunkScope(String chunkId)
-   {
-      if (chunkId == SETUP_CHUNK_ID)
-      {
-         return getSetupChunkScope();
-      }
-      else if (outputs_.containsKey(chunkId))
-      {
-         return outputs_.get(chunkId).getScope();
-      }
-      return null;
    }
    
    private String getRowChunkId(int preambleRow)

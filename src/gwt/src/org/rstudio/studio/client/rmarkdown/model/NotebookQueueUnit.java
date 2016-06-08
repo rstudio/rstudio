@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -57,4 +60,46 @@ public class NotebookQueueUnit extends JavaScriptObject
    public final native void addPendingRange(NotebookExecRange range) /*-{
       this.pending.push(range);
    }-*/;
+   
+   public final List<Integer> getPendingLines() 
+   {
+      return linesFromRanges(getPending());
+   }
+   
+   public final List<Integer> getCompletedLines() 
+   {
+      return linesFromRanges(getCompleted());
+   }
+   
+   private final List<Integer> linesFromRanges(
+         JsArray<NotebookExecRange> ranges)
+   {
+      List<Integer> lines = new ArrayList<Integer>();
+      final String code = getCode();
+      int line = 0;
+      for (int i = 0; i < code.length(); i++)
+      {
+         // increment line counter if we're on a new line
+         if (code.charAt(i) == '\n')
+            line++;
+
+         // skip if this line was already accounted for
+         if (!lines.isEmpty() &&
+             lines.get(lines.size() - 1) == line)
+            continue;
+         
+         // check to see if this line is included in any of the given ranges
+         for (int j = 0; j < ranges.length(); j++)
+         {
+            final NotebookExecRange range = ranges.get(j);
+            if (i >= range.getStart() && i < range.getStop())
+            {
+               lines.add(line);
+               continue;
+            }
+         }
+      }
+      
+      return lines;
+   }
 }
