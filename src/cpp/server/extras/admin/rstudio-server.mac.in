@@ -77,7 +77,7 @@ case "$1" in
     kill-session)
         if test -n $2
         then
-           kill -s KILL $3 $4 $5 $6 $7 $8 $9 $2
+           kill -KILL $3 $4 $5 $6 $7 $8 $9 $2
         else
            echo "Must specify PID of session to kill"
            exit 1
@@ -85,8 +85,8 @@ case "$1" in
         ;;
 
     kill-all)
-        killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
-        killall -s KILL $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        killall -KILL $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        killall -KILL $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     offline)
