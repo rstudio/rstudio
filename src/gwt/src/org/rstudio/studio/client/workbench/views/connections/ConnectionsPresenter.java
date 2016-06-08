@@ -404,8 +404,7 @@ public class ConnectionsPresenter extends BasePresenter
          return;
 
       String connectVia = display_.getConnectVia();
-      String connectCode = display_.getConnectCode();
-      performConnection(connectVia, connectCode);
+      performConnection(connectVia, exploredConnection_.getConnectCode());
       
       uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
       uiPrefs_.writeUIPrefs();
