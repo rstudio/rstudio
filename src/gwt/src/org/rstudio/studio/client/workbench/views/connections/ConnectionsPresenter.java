@@ -491,17 +491,17 @@ public class ConnectionsPresenter extends BasePresenter
       for (int i = 0; i<connections.length(); i++)
          activeConnections_.add(connections.get(i));  
       display_.setActiveConnections(activeConnections_);
-      manageCommands();
+      manageUI();
    }
    
    private void exploreConnection(Connection connection)
    {
       exploredConnection_ = connection;
       display_.showConnectionExplorer(connection, uiPrefs_.connectionsConnectVia().getValue());
-      manageCommands();
+      manageUI();
    }
    
-   private void manageCommands()
+   private void manageUI()
    {
       if (exploredConnection_ != null)
       {
