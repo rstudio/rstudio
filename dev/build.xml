@@ -89,7 +89,7 @@
           <include name="apache/james/apache-mime4j-0.6.jar"/>
           <include name="apache/commons/commons-codec-1.10.jar"/>
           <include name="apache/commons/commons-io-2.4.jar"/>
-          <include name="apache/commons/commons-lang3-3.4"/>
+          <include name="apache/commons/commons-lang3-3.4.jar"/>
           <include name="apache/commons/commons-logging-1.2.jar"/>
           <include name="cssparser/cssparser-0.9.18.jar"/>
          <include name="htmlunit/htmlunit-2.19/htmlunit-2.19.jar"/>
