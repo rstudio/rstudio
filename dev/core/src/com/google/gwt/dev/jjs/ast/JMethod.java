@@ -92,7 +92,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
 
   @Override
   public boolean canBeImplementedExternally() {
-    return isJsNative() || isJsFunctionMethod() || isJsInterfaceMethod();
+    return isJsNative() || isJsFunctionMethod();
   }
 
   /**
@@ -151,10 +151,6 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     assert params.isEmpty() || !params.get(params.size() - 1).isVarargs()
         || getEnclosingType().getClassDisposition().isLocalType();
     params = Lists.add(params, x);
-  }
-
-  private boolean isJsInterfaceMethod() {
-    return isInterfaceMethod() && enclosingType.isJsType();
   }
 
   private boolean isInterfaceMethod() {
@@ -317,6 +313,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     this.preventDevirtualization = true;
   }
 
+  @Override
   public boolean isJsMethodVarargs() {
     if (getParams().isEmpty() || !(canBeReferencedExternally() || canBeImplementedExternally())) {
       return false;
