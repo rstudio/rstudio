@@ -94,8 +94,6 @@ public class ConnectionsPresenter extends BasePresenter
       
       String getConnectVia();
       String getConnectCode();
-      
-      void addToConnectionExplorer(String item);
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -210,7 +208,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
    {     
-      display_.addToConnectionExplorer(event.getHint());
+      
    }
    
    public void onConnectionListChanged(ConnectionListChangedEvent event)

@@ -105,10 +105,6 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    public void setConnected(boolean connected)
    {
-      // always clear the list
-      dataProvider_.getList().clear();
-      
-     
       dockPanel_.setWidgetHidden(codePanel_, connected);
    }
    

@@ -277,11 +277,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return connectionExplorer_.getConnectCode();
    }
    
-   @Override
-   public void addToConnectionExplorer(String item)
-   {
-      connectionExplorer_.addItem(item);
-   }
    
    @Override
    public void onResize()
