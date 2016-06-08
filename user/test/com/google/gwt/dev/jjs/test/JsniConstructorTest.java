@@ -21,6 +21,8 @@ import com.google.gwt.dev.jjs.test.StaticObject.NoArgObject;
 import com.google.gwt.dev.jjs.test.StaticObject.NoInitObject;
 import com.google.gwt.dev.jjs.test.StaticObject.StaticInnerObject;
 import com.google.gwt.dev.jjs.test.StaticObject.StaticObjectException;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -188,6 +190,8 @@ public class JsniConstructorTest extends GWTTestCase {
     assertEquals(o2.foo() + 1, i2.foo());
   }
 
+  // Devirtualized constructors not supported in now deprecated devmode.
+  @DoNotRunWith(Platform.Devel)
   public native void testJsniDevirtualizedConstructors() /*-{
     var aDoubleConstructor = @java.lang.Double::new(Ljava/lang/String;);
     @junit.framework.Assert::assertEquals(DDD)(1.5,  aDoubleConstructor("1.5"), 0.1);
