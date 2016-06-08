@@ -189,8 +189,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionsDataGrid_.redraw();
    }
   
-   @Override
-   public boolean isConnected(ConnectionId id)
+   private boolean isConnected(ConnectionId id)
    {
       for (int i=0; i<activeConnections_.size(); i++)
          if (activeConnections_.get(i).equalTo(id))

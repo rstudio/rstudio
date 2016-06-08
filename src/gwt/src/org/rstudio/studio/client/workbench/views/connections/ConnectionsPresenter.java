@@ -76,8 +76,6 @@ public class ConnectionsPresenter extends BasePresenter
       
       void setConnections(List<Connection> connections);
       void setActiveConnections(List<ConnectionId> connections);
-      
-      boolean isConnected(ConnectionId id);
            
       String getSearchFilter();
       
@@ -503,7 +501,7 @@ public class ConnectionsPresenter extends BasePresenter
    {
       if (exploredConnection_ != null)
       {
-         boolean connected = display_.isConnected(exploredConnection_.getId());
+         boolean connected = isConnected(exploredConnection_.getId());
          commands_.connectConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
          commands_.sparkLog().setVisible(connected);
@@ -516,6 +514,14 @@ public class ConnectionsPresenter extends BasePresenter
          commands_.sparkLog().setVisible(false);
          commands_.sparkUI().setVisible(false);
       }
+   }
+   
+   private boolean isConnected(ConnectionId id)
+   {
+      for (int i=0; i<activeConnections_.size(); i++)
+         if (activeConnections_.get(i).equalTo(id))
+            return true;
+      return false;
    }
    
    private List<Connection> filteredConnections()
