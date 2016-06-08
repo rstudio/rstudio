@@ -1,1 +1,9 @@
+.dataGridHoveredRow {
+  background: #EEE;
+}
+
+.dataGridHoveredRowCell {
+  border: selectionBorderWidth solid #EEE;
+}
+
 

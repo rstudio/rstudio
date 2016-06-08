@@ -38,6 +38,8 @@ import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
@@ -77,8 +79,21 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             return connection.hashCode();
          }
       };
-      connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
       
+      selectionModel_ = new SingleSelectionModel<Connection>();
+      connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
+      connectionsDataGrid_.setSelectionModel(selectionModel_);
+      selectionModel_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+      {
+         @Override
+         public void onSelectionChange(SelectionChangeEvent event)
+         {
+            Connection selectedConnection = selectionModel_.getSelectedObject();
+            if (selectedConnection != null)
+               fireEvent(new ExploreConnectionEvent(selectedConnection));  
+         }
+      });
+       
       // add type column
       typeColumn_ = new Column<Connection, ImageResource>(new ImageResourceCell()) {
          @Override
@@ -216,6 +231,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void showConnectionExplorer(final Connection connection, 
                                       String connectVia)
    {
+      selectionModel_.clear();
+      
       setConnection(connection, connectVia);
       
       animate(connectionsDataGrid_,
@@ -439,6 +456,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
+   private final SingleSelectionModel<Connection> selectionModel_;
    private final ConnectionExplorer connectionExplorer_;
    
    private Connection exploredConnection_ = null;
@@ -462,7 +480,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public interface Resources extends RStudioDataGridResources
    {
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.css"})
-      Styles dataGridStyle();
+      RStudioDataGridStyle dataGridStyle();
         
       ImageResource connectionExploreButton();
       
