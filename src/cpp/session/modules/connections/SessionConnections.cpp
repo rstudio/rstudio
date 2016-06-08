@@ -52,7 +52,10 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
                          SEXP hostSEXP,
                          SEXP finderSEXP,
                          SEXP connectCodeSEXP,
-                         SEXP disconnectCodeSEXP)
+                         SEXP disconnectCodeSEXP,
+                         SEXP listTablesCodeSEXP,
+                         SEXP listColumnsCodeSEXP,
+                         SEXP previewTableCodeSEXP)
 {
    // read params
    std::string type = r::sexp::safeAsString(typeSEXP);
@@ -60,12 +63,18 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
    std::string finder = r::sexp::safeAsString(finderSEXP);
    std::string connectCode = r::sexp::safeAsString(connectCodeSEXP);
    std::string disconnectCode = r::sexp::safeAsString(disconnectCodeSEXP);
+   std::string listTablesCode = r::sexp::safeAsString(listTablesCodeSEXP);
+   std::string listColumnsCode = r::sexp::safeAsString(listColumnsCodeSEXP);
+   std::string previewTableCode = r::sexp::safeAsString(previewTableCodeSEXP);
 
    // create connection object
    Connection connection(ConnectionId(type, host),
                          finder,
                          connectCode,
                          disconnectCode,
+                         listTablesCode,
+                         listColumnsCode,
+                         previewTableCode,
                          date_time::millisecondsSinceEpoch());
 
    // update connection history
@@ -352,7 +361,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.10");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.11");
 }
 
 bool activateConnections()
@@ -378,7 +387,7 @@ bool isSuspendable()
 Error initialize()
 {
    // register methods
-   RS_REGISTER_CALL_METHOD(rs_connectionOpened, 5);
+   RS_REGISTER_CALL_METHOD(rs_connectionOpened, 8);
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);

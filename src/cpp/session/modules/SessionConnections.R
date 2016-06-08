@@ -13,26 +13,37 @@
 #
 #
 
-.rs.addFunction("validateCharacterParams", function(params) {
+.rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
    paramNames <- names(params)
    for (param in paramNames) {
       value <- params[[param]]
+      if (optional && is.null(value))
+         next
       if (!is.character(value) || length(value) != 1)
          stop(param, " must be a single element character vector", call. = FALSE)
    }
 })
 
 options(connectionViewer = list(
-   connectionOpened = function(type, host, finder, connectCode, disconnectCode, ...) {
+   connectionOpened = function(type, host, finder, connectCode, disconnectCode,
+                               listTablesCode = NULL, listColumnsCode = NULL,
+                               previewTableCode = NULL, ...) {
       .rs.validateCharacterParams(list(
-         type = type, host = host, connectCode = connectCode, 
+         type = type, host = host, connectCode = connectCode,
          disconnectCode = disconnectCode
       ))
+      .rs.validateCharacterParams(list(
+         listTablesCode = listTablesCode,
+         listColumnsCode = listColumnsCode,
+         previewTableCode = previewTableCode
+      ), optional = TRUE)
       if (!is.function(finder))
          stop("finder must be a function", call. = FALSE)
       finder <- paste(deparse(finder), collapse = "\n")
       invisible(.Call("rs_connectionOpened", type, host, finder, 
-                      connectCode, disconnectCode))
+                      connectCode, disconnectCode,
+                      listTablesCode, listColumnsCode,
+                      previewTableCode))
    },
    connectionClosed = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))

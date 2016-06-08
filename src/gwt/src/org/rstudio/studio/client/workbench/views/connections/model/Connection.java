@@ -43,6 +43,18 @@ public class Connection extends JavaScriptObject
       return this.disconnect_code;
    }-*/;
    
+   public final native String getListTablesCode() /*-{
+      return this.list_tables_code;
+   }-*/;
+
+   public final native String getListColumnsCode() /*-{
+      return this.list_columns_code;
+   }-*/;
+   
+   public final native String getPreviewTableCode() /*-{
+      return this.preview_table_code;
+   }-*/;
+   
    public final native double getLastUsed() /*-{
       return this.last_used;
    }-*/;

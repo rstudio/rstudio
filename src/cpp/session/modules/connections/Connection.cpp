@@ -48,6 +48,9 @@ json::Object connectionJson(const Connection& connection)
    connectionJson["finder"] = connection.finder;
    connectionJson["connect_code"] = connection.connectCode;
    connectionJson["disconnect_code"] = connection.disconnectCode;
+   connectionJson["list_tables_code"] = connection.listTablesCode;
+   connectionJson["list_columns_code"] = connection.listTablesCode;
+   connectionJson["preview_table_code"] = connection.previewTableCode;
    connectionJson["last_used"] = connection.lastUsed;
    return connectionJson;
 }

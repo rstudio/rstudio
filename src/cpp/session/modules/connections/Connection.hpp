@@ -52,11 +52,17 @@ struct Connection
               const std::string& finder,
               const std::string& connectCode,
               const std::string& disconnectCode,
+              const std::string& listTablesCode,
+              const std::string& listColumnsCode,
+              const std::string& previewTableCode,
               double lastUsed)
       : id(id),
         finder(finder),
         connectCode(connectCode),
         disconnectCode(disconnectCode),
+        listTablesCode(listTablesCode),
+        listColumnsCode(listColumnsCode),
+        previewTableCode(previewTableCode),
         lastUsed(lastUsed)
    {
    }
@@ -65,6 +71,9 @@ struct Connection
    std::string finder;
    std::string connectCode;
    std::string disconnectCode;
+   std::string listTablesCode;
+   std::string listColumnsCode;
+   std::string previewTableCode;
    double lastUsed;
 };
 
