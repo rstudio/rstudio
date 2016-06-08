@@ -136,7 +136,6 @@ public class ConnectionsPresenter extends BasePresenter
          public void onExploreConnection(ExploreConnectionEvent event)
          {
             exploreConnection(event.getConnection());
-            //display_.ensureHeight(EnsureHeightEvent.MAXIMIZED);
          }
       });
       
@@ -459,7 +458,6 @@ public class ConnectionsPresenter extends BasePresenter
    {
       exploredConnection_ = null;
       display_.showConnectionsList();
-      //display_.ensureHeight(EnsureHeightEvent.NORMAL);
    }
    
    private void updateConnections(JsArray<Connection> connections)
