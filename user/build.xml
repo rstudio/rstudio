@@ -104,7 +104,7 @@
   <target name="compile" description="Compile all class files"
           unless="compile.complete">
     <mkdir dir="${javac.out}"/>
-    <gwt.javac excludes="**/EmulatedCharset.java">
+    <gwt.javac excludes="**/EmulatedCharset.java,**/HashCodes.java">
       <src path="super/com/google/gwt/emul/javaemul/internal"/>
       <classpath>
         <pathelement location="${gwt.tools.lib}/gss/2015-10-07/closure-stylesheets-library-20151007-rebased.jar"/>
