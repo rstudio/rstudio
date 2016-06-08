@@ -577,11 +577,10 @@ public class ControlFlowAnalyzer {
     }
 
     /**
-     * Subclasses of JavaScriptObject are never instantiated directly. They are
-     * implicitly created when a JSNI method passes a reference to an existing
-     * JS object into Java code. If any point in the program can pass a value
-     * from JS into Java which could potentially be cast to JavaScriptObject, we
-     * must rescue JavaScriptObject.
+     * Subclasses of JavaScriptObject are never instantiated directly. They are implicitly created
+     * when a JSNI method passes a reference to an existing JS object into Java code. If any point
+     * in the program can pass a value from JS into Java which could potentially be cast to
+     * JavaScriptObject, we must rescue JavaScriptObject.
      *
      * @param type The type of the value passing from Java to JavaScript.
      * @see com.google.gwt.core.client.JavaScriptObject
@@ -760,12 +759,11 @@ public class ControlFlowAnalyzer {
     }
 
     /**
-     * The code is very tightly tied to the behavior of
-     * Pruner.CleanupRefsVisitor. CleanUpRefsVisitor will prune unread
-     * parameters, and also prune any matching arguments that don't have side
-     * effects. We want to make control flow congruent to pruning, to avoid the
-     * need to iterate over Pruner until reaching a stable point, so we avoid
-     * actually rescuing such arguments until/unless the parameter is read.
+     * The code is very tightly tied to the behavior of Pruner.CleanupRefsVisitor.
+     * CleanUpRefsVisitor will prune unread parameters, and also prune any matching arguments that
+     * don't have side effects. We want to make control flow congruent to pruning, to avoid the need
+     * to iterate over Pruner until reaching a stable point, so we avoid actually rescuing such
+     * arguments until/unless the parameter is read.
      */
     private void rescueArgumentsIfParametersCanBeRead(JMethodCall call) {
       JMethod method = call.getTarget();
@@ -847,15 +845,14 @@ public class ControlFlowAnalyzer {
       }
       for (JField field : type.getFields()) {
         if (!field.isStatic() && membersToRescueIfTypeIsInstantiated.contains(field)) {
-            rescue(field);
+          rescue(field);
         }
       }
     }
 
     /**
-     * Assume that <code>method</code> is live. Rescue any overriding methods
-     * that might be called if <code>method</code> is called through virtual
-     * dispatch.
+     * Assume that <code>method</code> is live. Rescue any overriding methods that might be called
+     * if <code>method</code> is called through virtual dispatch.
      */
     private void rescueOverridingMethods(JMethod method) {
       if (method.isStatic()) {
@@ -1028,14 +1025,14 @@ public class ControlFlowAnalyzer {
 
       // first time through, record all exported methods
       for (JMethod method : type.getMethods()) {
-        if (method.isJsInteropEntryPoint()) {
+        if (method.isJsInteropEntryPoint() || method.canBeImplementedExternally()) {
           // treat class as instantiated, since a ctor may be called from JS export
           rescuer.rescue(method.getEnclosingType(), true);
           traverseFrom(method);
         }
       }
       for (JField field : type.getFields()) {
-        if (field.isJsInteropEntryPoint()) {
+        if (field.isJsInteropEntryPoint() || field.canBeImplementedExternally()) {
           rescuer.rescue(field.getEnclosingType(), true);
           rescuer.rescue(field);
         }

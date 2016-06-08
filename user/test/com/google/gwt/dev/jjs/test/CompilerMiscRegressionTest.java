@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 import javaemul.internal.annotations.DoNotInline;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -342,5 +344,29 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     for (int i = 0; i < expected.length; i++) {
       assertEquals("Array mismatch at element " + i , expected[i], actual[i]);
     }
+  }
+
+  @JsType(isNative = true)
+  interface SomeNativeInterface {
+    @JsProperty
+    String getTextContent();
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  static abstract class AbstractNativeType implements SomeNativeInterface {
+  }
+
+  private static native AbstractNativeType createAbstractNativeType(String value) /*-{
+    return {textContent : value};
+  }-*/;
+
+  // Tests that methods that override native JsMethods are generated properly w.r.t
+  // JsMethod/JsProperty annotations even if the overridden method is not live.
+  // See bug #9358
+  //
+  // Make sure this method is part of a suite that is run with -nogenerateJsInteropExports.
+  public void testNativeJsMethodDispatch_unreferencedSupertypeMethod() {
+    final AbstractNativeType o = createAbstractNativeType("Hello");
+    assertEquals("Hello", o.getTextContent());
   }
 }

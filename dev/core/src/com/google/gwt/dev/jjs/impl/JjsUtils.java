@@ -526,8 +526,12 @@ public class JjsUtils {
     for (JParameter param : exampleMethod.getParams()) {
       emptyMethod.cloneParameter(param);
     }
-    JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
-    emptyMethod.setBody(body);
+    // If the enclosing type is native, make sure the synthetic empty method is native by leaving
+    // the body = null.
+    if (!inType.isJsNative()) {
+      JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
+      emptyMethod.setBody(body);
+    }
     emptyMethod.freezeParamTypes();
     inType.addMethod(emptyMethod);
     return emptyMethod;
