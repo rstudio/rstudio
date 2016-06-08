@@ -111,6 +111,11 @@ public class ConnectionExplorer extends Composite
       dockPanel_.setWidgetHidden(codePanel_, connected);
    }
    
+   public String getConnectCode()
+   {
+      return codePanel_.getCode();
+   }
+   
    public String getConnectVia()
    {
       return codePanel_.getConnectVia();

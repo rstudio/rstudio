@@ -88,10 +88,12 @@ public class ConnectionsPresenter extends BasePresenter
                                        ExploreConnectionEvent.Handler handler); 
       
       void showConnectionExplorer(Connection connection, String connectVia);
+      void updateExploredConnection(Connection connection);
       
       HasClickHandlers backToConnectionsButton();
       
       String getConnectVia();
+      String getConnectCode();
       
       void addToConnectionExplorer(String item);
    }
@@ -409,7 +411,7 @@ public class ConnectionsPresenter extends BasePresenter
       if (exploredConnection_ != null)
       {
          String connectVia = display_.getConnectVia();
-         String connectCode = exploredConnection_.getConnectCode();
+         String connectCode = display_.getConnectCode();
          performConnection(connectVia, connectCode);
          
          uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
@@ -470,6 +472,20 @@ public class ConnectionsPresenter extends BasePresenter
       
       // set filtered connections
       display_.setConnections(filteredConnections());
+      
+      // update explored connection
+      if (exploredConnection_ != null)
+      {
+         for (int i = 0; i<connections.length(); i++)
+         {
+            if (connections.get(i).getId().equals(exploredConnection_.getId()))
+            {
+               exploredConnection_ = connections.get(i);
+               display_.updateExploredConnection(exploredConnection_);
+               break;
+            }
+         }
+      }
    }
    
    private void updateActiveConnections(JsArray<ConnectionId> connections)

@@ -237,6 +237,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
+   public void updateExploredConnection(Connection connection)
+   {
+      connectionExplorer_.setConnection(connection, 
+                                        connectionExplorer_.getConnectVia());
+   }
+   
+   @Override
    public void showConnectionsList()
    {
       animate(connectionExplorer_,
@@ -263,6 +270,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return connectionExplorer_.getConnectVia();
    }
    
+   @Override
+   public String getConnectCode()
+   {
+      return connectionExplorer_.getConnectCode();
+   }
    
    @Override
    public void addToConnectionExplorer(String item)
