@@ -92,12 +92,6 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       initWidget(dockPanel_);
    }
    
-   
-   public void addItem(String item)
-   {
-      dataProvider_.getList().add(item);
-   }
-   
    public void setConnection(Connection connection, String connectVia)
    {
       codePanel_.setCode(connection.getConnectCode(), connectVia);
