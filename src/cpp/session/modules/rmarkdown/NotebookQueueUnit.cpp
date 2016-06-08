@@ -196,7 +196,7 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
    
    // return values to caller
    if (pRange)
-      *pRange = range;
+      *pRange = ExecRange(start, stop);
 
    std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
 

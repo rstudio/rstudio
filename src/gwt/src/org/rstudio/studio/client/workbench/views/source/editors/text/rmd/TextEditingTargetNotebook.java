@@ -432,7 +432,7 @@ public class TextEditingTargetNotebook
       pSourceWindowManager_ = pSourceWindowManager;
       dependencyManager_ = dependencyManager;
       queue_ = new NotebookQueueState(docDisplay_, docUpdateSentinel_,
-            server, this);
+            server, events, this);
       
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
@@ -747,6 +747,13 @@ public class TextEditingTargetNotebook
    public void onRestartRClearOutput()
    {
       restartThenExecute(commands_.notebookClearAllOutput());
+   }
+   
+   public String getChunkCode(Scope chunk)
+   {
+      return docDisplay_.getCode(
+            chunk.getBodyStart(),
+            Position.create(chunk.getEnd().getRow(), 0));
    }
    
    // Event handlers ----------------------------------------------------------
@@ -1798,13 +1805,6 @@ public class TextEditingTargetNotebook
                          MODE_BATCH);
          }
       }
-   }
-   
-   private String getChunkCode(Scope chunk)
-   {
-      return docDisplay_.getCode(
-            chunk.getBodyStart(),
-            Position.create(chunk.getEnd().getRow(), 0));
    }
    
    private String getChunkCrc32(Scope chunk)

@@ -19,6 +19,8 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.events.NotebookRangeExecutedEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookExecRange;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -39,15 +41,19 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
 
-public class NotebookQueueState
+public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
 {
    public NotebookQueueState(DocDisplay display, DocUpdateSentinel sentinel,
-         RMarkdownServerOperations server, TextEditingTargetNotebook notebook)
+         RMarkdownServerOperations server, EventBus events, 
+         TextEditingTargetNotebook notebook)
    {
       docDisplay_ = display;
       sentinel_ = sentinel;
       server_ = server;
+      events_ = events;
       notebook_ = notebook;
+      
+      events_.addHandler(NotebookRangeExecutedEvent.TYPE, this);
       
       syncWidth();
    }
@@ -101,6 +107,30 @@ public class NotebookQueueState
       });
    }
    
+   @Override
+   public void onNotebookRangeExecuted(NotebookRangeExecutedEvent event)
+   {
+      if (queue_ == null || event.getDocId() != queue_.getDocId())
+         return;
+      
+      Scope scope = notebook_.getChunkScope(event.getChunkId());
+      if (scope == null)
+         return;
+      
+      // find the queue unit and convert to lines
+      for (int i = 0; i < queue_.getUnits().length(); i++)
+      {
+         NotebookQueueUnit unit = queue_.getUnits().get(i);
+         if (unit.getChunkId() == event.getChunkId())
+         {
+            List<Integer> lines = unit.linesFromRange(event.getExecRange());
+            renderLineState(scope.getPreamble().getRow() + 1, 
+                 lines, ChunkRowExecState.LINE_EXECUTED);
+            break;
+         }
+      }
+   }
+
    public void renderQueueState()
    {
       JsArray<NotebookQueueUnit> units = queue_.getUnits();
@@ -183,6 +213,7 @@ public class NotebookQueueState
    private final DocUpdateSentinel sentinel_;
    private final RMarkdownServerOperations server_;
    private final TextEditingTargetNotebook notebook_;
+   private final EventBus events_;
    
    private int pixelWidth_;
    private int charWidth_;

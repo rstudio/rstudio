@@ -71,6 +71,13 @@ public class NotebookQueueUnit extends JavaScriptObject
       return linesFromRanges(getCompleted());
    }
    
+   public final List<Integer> linesFromRange(NotebookExecRange range)
+   {
+      JsArray<NotebookExecRange> ranges = JsArray.createArray().cast();
+      ranges.push(range);
+      return linesFromRanges(ranges);
+   }
+   
    private final List<Integer> linesFromRanges(
          JsArray<NotebookExecRange> ranges)
    {
