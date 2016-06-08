@@ -63,6 +63,7 @@ import org.rstudio.studio.client.projects.model.OpenProjectError;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
+import org.rstudio.studio.client.rmarkdown.events.NotebookRangeExecutedEvent;
 import org.rstudio.studio.client.rmarkdown.events.PreviewRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
@@ -827,6 +828,11 @@ public class ClientEventDispatcher
          {
             JsArray<ConnectionId> connections = event.getData();
             eventBus_.fireEvent(new ActiveConnectionsChangedEvent(connections));
+         }
+         else if (type.equals(ClientEvent.NotebookRangeExecuted))
+         {
+            NotebookRangeExecutedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new NotebookRangeExecutedEvent(data));
          }
          else
          {

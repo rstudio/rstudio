@@ -53,9 +53,7 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
          continue;
 
       ExecRange range(0, 0);
-      Error error = json::readObject(val.get_obj(),
-            kQueueUnitRangeStart, &range.start,
-            kQueueUnitRangeStop,  &range.stop);
+      Error error = ExecRange::fromJson(val.get_obj(), &range);
       if (error)
          return error;
 
@@ -68,14 +66,28 @@ void fillJsonRange(const std::list<ExecRange>& in, json::Array* pOut)
 {
    BOOST_FOREACH(const ExecRange range, in)
    {
-      json::Object jsonRange;
-      jsonRange[kQueueUnitRangeStart] = range.start;
-      jsonRange[kQueueUnitRangeStop] = range.stop;
-      pOut->push_back(jsonRange);
+      pOut->push_back(range.toJson());
    }
 }
 
 } // anonymous namespace
+
+Error ExecRange::fromJson(const json::Object& source,
+                          ExecRange* pRange)
+{
+   return json::readObject(source,
+         kQueueUnitRangeStart, &pRange->start,
+         kQueueUnitRangeStop,  &pRange->stop);
+}
+
+json::Object ExecRange::toJson() const
+{
+   json::Object jsonRange;
+   jsonRange[kQueueUnitRangeStart] = start;
+   jsonRange[kQueueUnitRangeStop] = stop;
+   return jsonRange;
+}
+
 
 Error NotebookQueueUnit::fromJson(const json::Object& source, 
       boost::shared_ptr<NotebookQueueUnit>* pUnit)
@@ -153,7 +165,7 @@ json::Object NotebookQueueUnit::toJson() const
    return json::Object();
 }
 
-std::string NotebookQueueUnit::popExecRange()
+std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
 {
    // extract next range to execute
    ExecRange& range = *pending_.begin();
@@ -182,6 +194,10 @@ std::string NotebookQueueUnit::popExecRange()
    completed_.push_back(ExecRange(start, stop));
    std::string code = code_.substr(start, stop - start);
    
+   // return values to caller
+   if (pRange)
+      *pRange = range;
+
    std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
 
    return code;

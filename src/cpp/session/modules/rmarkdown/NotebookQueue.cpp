@@ -27,6 +27,7 @@
 #include <core/Thread.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionClientEvent.hpp>
 #include <session/http/SessionRequest.hpp>
 
 using namespace rstudio::core;
@@ -170,7 +171,8 @@ public:
    Error executeCurrentUnit()
    {
       json::Array arr;
-      arr.push_back(execUnit_->popExecRange());
+      ExecRange range(0, 0);
+      arr.push_back(execUnit_->popExecRange(&range));
       arr.push_back(execUnit_->chunkId());
 
       // formulate request body
@@ -182,10 +184,19 @@ public:
       // TODO: do we need to update the client ID if a client is disconnected
       // and replaced with a new client?
      
+      // serialize RPC body and send it to helper thread for submission
       std::ostringstream oss;
       json::write(rpc, oss);
-
       input_.enque(oss.str());
+
+      // let client know the range has been sent to R
+      json::Object exec;
+      exec["doc_id"]     = execUnit_->docId();
+      exec["chunk_id"]   = execUnit_->chunkId();
+      exec["exec_range"] = range.toJson();
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kNotebookRangeExecuted, exec));
+
       return Success();
    }
 

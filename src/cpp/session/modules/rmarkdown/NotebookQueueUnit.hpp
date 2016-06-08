@@ -32,6 +32,10 @@ struct ExecRange
       start(startIn),
       stop(stopIn)
    {}
+   static core::Error fromJson(
+         const core::json::Object& source, 
+         ExecRange *pRange);
+   core::json::Object toJson() const;
    int start;
    int stop;
 };
@@ -40,13 +44,13 @@ class NotebookQueueUnit
 {
 public:
    // serialization/deserialization
-   static core::Error fromJson (
+   static core::Error fromJson(
          const core::json::Object& source,
          boost::shared_ptr<NotebookQueueUnit>* pUnit);
    core::json::Object toJson() const;
 
    core::Error parseOptions(core::json::Object* pOptions);
-   std::string popExecRange();
+   std::string popExecRange(ExecRange* pRange);
    bool complete() const;
 
    // accessors
