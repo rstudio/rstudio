@@ -2795,9 +2795,9 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
    
     <cmd id="removeConnection"
-        menuLabel="Remove..."
+        menuLabel="Remove Connection..."
         buttonLabel=""
-        desc="Remove a connection"
+        desc="Remove connection from the connection history"
         windowMode="main"/>        
           
     <cmd id="connectConnection"
@@ -2807,7 +2807,6 @@ well as menu structures (for main menu and popup menus).
    
     <cmd id="disconnectConnection"
          menuLabel="Disconnect"
-         buttonLabel="Disconnect"
          desc="Disconect from a connection"
          windowMode="main"/>
          

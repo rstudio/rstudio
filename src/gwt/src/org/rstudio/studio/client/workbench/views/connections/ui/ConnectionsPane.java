@@ -315,10 +315,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_ = new Toolbar();
       
       ToolbarPopupMenu actionsMenu = new ToolbarPopupMenu();
-      actionsMenu.addItem(commands_.sparkLog().createMenuItem(false));
-      actionsMenu.addItem(commands_.sparkUI().createMenuItem(false));
+      actionsMenu.addItem(commands_.disconnectConnection().createMenuItem(false));
       actionsMenu.addSeparator();
       actionsMenu.addItem(commands_.removeConnection().createMenuItem(false));
+     
       
       actionsMenuButton_ = new ToolbarButton(
             "",
@@ -421,11 +421,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(connectionName_);
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
-      toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(actionsMenuButton_);
-     
+      toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.sparkUI().createToolbarButton());
       
+      toolbar_.addRightWidget(actionsMenuButton_);
+     
       connectionName_.setText(connection.getHost());
       
    }

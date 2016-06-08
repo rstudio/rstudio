@@ -382,7 +382,7 @@ public class ConnectionsPresenter extends BasePresenter
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION,
          "Remove Connection",
-         "Are you sure you want to remove the selected connection?",
+         "Are you sure you want to remove this connection from the connection history?",
          new Operation() {
 
             @Override
