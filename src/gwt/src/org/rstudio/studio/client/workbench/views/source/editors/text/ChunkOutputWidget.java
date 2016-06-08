@@ -368,7 +368,7 @@ public class ChunkOutputWidget extends Composite
       showReadyState();
    }
 
-   public void setCodeExecuting(boolean entireChunk, int mode)
+   public void setCodeExecuting(int mode)
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)

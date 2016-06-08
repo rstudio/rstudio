@@ -31,6 +31,7 @@
 #define kQueueUnitChunkId    "chunk_id"
 #define kQueueUnitCompleted  "completed"
 #define kQueueUnitPending    "pending"
+#define kQueueUnitExecuting  "executing"
 #define kQueueUnitRangeStart "start"
 #define kQueueUnitRangeStop  "stop"
 
@@ -161,6 +162,7 @@ json::Object NotebookQueueUnit::toJson() const
    unit[kQueueUnitChunkId]   = chunkId_;
    unit[kQueueUnitCompleted] = completed;
    unit[kQueueUnitPending]   = pending;
+   unit[kQueueUnitExecuting] = executing_;
 
    return json::Object();
 }
@@ -191,12 +193,13 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
    }
 
    // mark completed and extract from code
-   completed_.push_back(ExecRange(start, stop));
+   executing_ = ExecRange(start, stop);
+   completed_.push_back(executing_);
    std::string code = code_.substr(start, stop - start);
    
    // return values to caller
    if (pRange)
-      *pRange = ExecRange(start, stop);
+      *pRange = executing_;
 
    std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
 

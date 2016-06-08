@@ -46,6 +46,7 @@ import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
@@ -808,7 +809,7 @@ public class TextEditingTargetNotebook
       
       if (outputs_.containsKey(chunkDef.getChunkId()))
          outputs_.get(chunkDef.getChunkId()).getOutputWidget()
-                                         .setCodeExecuting(false, MODE_SINGLE);
+                                         .setCodeExecuting(MODE_SINGLE);
    }
    
    @Override
@@ -831,18 +832,24 @@ public class TextEditingTargetNotebook
       String chunkId = event.getOutput().getChunkId();
       
       // if this is the currently executing chunk and it has an error...
-      if (executingChunk_ != null &&
-          executingChunk_.chunkId == event.getOutput().getChunkId() &&
+      NotebookQueueUnit unit = queue_.executingUnit();
+      if (unit != null &&
+          unit.getChunkId() == event.getOutput().getChunkId() &&
           event.getOutput().getType() == RmdChunkOutput.TYPE_SINGLE_UNIT &&
           event.getOutput().getUnit().getType() == 
              RmdChunkOutputUnit.TYPE_ERROR)
       {
          // draw the error 
-         docDisplay_.setChunkLineExecState(
-               executingChunk_.executingRowStart,
-               executingChunk_.executingRowEnd,
-               ChunkRowExecState.LINE_ERROR);
-         
+         Scope scope = getChunkScope(unit.getChunkId());
+         if (scope != null)
+         {
+            int offset = scope.getBodyStart().getRow();
+            List<Integer> lines = unit.getExecutingLines();
+            for (Integer line: lines)
+               docDisplay_.setChunkLineExecState(line + offset, line + offset, 
+                     ChunkRowExecState.LINE_ERROR);
+         }
+
          // don't execute any more chunks if this chunk's options includes
          // error = FALSE
          if (!outputs_.containsKey(chunkId) ||
@@ -884,11 +891,13 @@ public class TextEditingTargetNotebook
          return;
       boolean ensureVisible = true;
       
+      // clean up execution state
+      cleanChunkExecState(event.getData().getChunkId());
+
       // mark chunk execution as finished
       if (executingChunk_ != null &&
           event.getData().getChunkId() == executingChunk_.chunkId)
       {
-         cleanChunkExecState(executingChunk_.chunkId);
          ensureVisible = executingChunk_.mode == MODE_SINGLE;
 
          // if this was the setup chunk, and no errors were encountered while
@@ -1323,7 +1332,54 @@ public class TextEditingTargetNotebook
          }
       });
    }
+   
+   public void setChunkExecuting(String chunkId, int mode)
+   {
+      // let the chunk widget know it's started executing
+      if (outputs_.containsKey(chunkId))
+      {
+         ChunkOutputUi output = outputs_.get(chunkId);
 
+         // expand the chunk if it's in a fold
+         Scope scope = output.getScope();
+         if (scope != null)
+         {
+            docDisplay_.unfold(Range.fromPoints(scope.getPreamble(),
+                                                scope.getEnd()));
+         }
+
+         output.getOutputWidget().setCodeExecuting(mode);
+         syncWidth();
+         
+         // scroll the widget into view if it's a single-shot exec
+         if (mode == MODE_SINGLE)
+            output.ensureVisible();
+      }
+
+      // draw UI on chunk
+      Scope chunk = getChunkScope(chunkId);
+      if (chunk != null)
+      {
+         chunks_.setChunkState(chunk.getPreamble().getRow(), 
+               ChunkContextToolbar.STATE_EXECUTING);
+      }
+   }
+
+   public void cleanChunkExecState(String chunkId)
+   {
+      Scope chunk = getChunkScope(chunkId);
+      if (chunk != null)
+      {
+         docDisplay_.setChunkLineExecState(
+               chunk.getBodyStart().getRow(), 
+               chunk.getEnd().getRow(), 
+               ChunkRowExecState.LINE_RESTING);
+
+         chunks_.setChunkState(chunk.getPreamble().getRow(), 
+               ChunkContextToolbar.STATE_RESTING);
+      }
+   }
+   
    // Private methods --------------------------------------------------------
    
    private void restartThenExecute(AppCommand command)
@@ -1387,7 +1443,7 @@ public class TextEditingTargetNotebook
                                                 scope.getEnd()));
          }
 
-         output.getOutputWidget().setCodeExecuting(true, executingChunk_.mode);
+         output.getOutputWidget().setCodeExecuting(executingChunk_.mode);
          syncWidth();
          
          // scroll the widget into view if it's a single-shot exec
@@ -1831,21 +1887,6 @@ public class TextEditingTargetNotebook
    {
       setupCrc32_ = crc32;
       docUpdateSentinel_.setProperty(LAST_SETUP_CRC32, crc32);
-   }
-   
-   private void cleanChunkExecState(String chunkId)
-   {
-      Scope chunk = getChunkScope(chunkId);
-      if (chunk != null)
-      {
-         docDisplay_.setChunkLineExecState(
-               chunk.getBodyStart().getRow(), 
-               chunk.getEnd().getRow(), 
-               ChunkRowExecState.LINE_RESTING);
-
-         chunks_.setChunkState(chunk.getPreamble().getRow(), 
-               ChunkContextToolbar.STATE_RESTING);
-      }
    }
    
    private void syncWidth()

@@ -65,6 +65,7 @@ private:
    std::string code_;
    std::list<ExecRange> completed_;
    std::list<ExecRange> pending_;
+   ExecRange executing_;
 };
 
 } // namespace notebook

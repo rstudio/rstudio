@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.NotebookRangeExecutedEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookExecRange;
@@ -41,7 +42,8 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
 
-public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
+public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
+                                           ChunkExecStateChangedEvent.Handler
 {
    public NotebookQueueState(DocDisplay display, DocUpdateSentinel sentinel,
          RMarkdownServerOperations server, EventBus events, 
@@ -54,6 +56,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
       notebook_ = notebook;
       
       events_.addHandler(NotebookRangeExecutedEvent.TYPE, this);
+      events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
       
       syncWidth();
    }
@@ -70,7 +73,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
       // create queue units from scopes
       for (Scope scope: scopes)
       {
-         ChunkDefinition def = getChunkDefAtRow(scope.getPreamble().getRow(), 
+         ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), 
                null);
          String code = docDisplay_.getCode(
             scope.getPreamble(),
@@ -107,6 +110,15 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
       });
    }
    
+   public boolean isChunkExecuting(String chunkId)
+   {
+      if (executingUnit_ == null)
+         return false;
+      return executingUnit_.getChunkId() == chunkId;
+   }
+   
+   // Event handlers ----------------------------------------------------------
+   
    @Override
    public void onNotebookRangeExecuted(NotebookRangeExecutedEvent event)
    {
@@ -117,6 +129,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
       if (scope == null)
          return;
       
+      if (isChunkExecuting(event.getChunkId()))
+         executingUnit_.setExecutingRange(event.getExecRange());
+      
       // find the queue unit and convert to lines
       for (int i = 0; i < queue_.getUnits().length(); i++)
       {
@@ -124,11 +139,49 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
          if (unit.getChunkId() == event.getChunkId())
          {
             List<Integer> lines = unit.linesFromRange(event.getExecRange());
-            renderLineState(scope.getPreamble().getRow() + 1, 
+            renderLineState(scope.getBodyStart().getRow(), 
                  lines, ChunkRowExecState.LINE_EXECUTED);
             break;
          }
       }
+   }
+
+   @Override
+   public void onChunkExecStateChanged(ChunkExecStateChangedEvent event)
+   {
+      if (queue_ == null || event.getDocId() != queue_.getDocId())
+         return;
+      
+      if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_STARTED)
+      {
+         // find the unit
+         JsArray<NotebookQueueUnit> units = queue_.getUnits();
+         for (int i = 0; i < units.length(); i++)
+         {
+            if (units.get(i).getChunkId() == event.getChunkId())
+            {
+               executingUnit_ = units.get(i);
+               break;
+            }
+         }
+
+         // TODO: respect actual chunk execution mode
+         notebook_.setChunkExecuting(event.getChunkId(), 
+               TextEditingTargetNotebook.MODE_BATCH);
+      }
+      else if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
+      {
+         if (executingUnit_ != null && 
+             executingUnit_.getChunkId() == event.getChunkId())
+         {
+            executingUnit_ = null;
+         }
+      }
+   }
+   
+   public NotebookQueueUnit executingUnit()
+   {
+      return executingUnit_;
    }
 
    public void renderQueueState()
@@ -144,11 +197,11 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
             continue;
          
          // draw the completed lines
-         renderLineState(scope.getPreamble().getRow() + 1, 
+         renderLineState(scope.getBodyStart().getRow(), 
                unit.getCompletedLines(), ChunkRowExecState.LINE_EXECUTED);
 
          // draw the pending lines
-         renderLineState(scope.getPreamble().getRow() + 1, 
+         renderLineState(scope.getBodyStart().getRow(), 
                unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
       }
    }
@@ -217,4 +270,5 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler
    
    private int pixelWidth_;
    private int charWidth_;
+   public NotebookQueueUnit executingUnit_;
 }

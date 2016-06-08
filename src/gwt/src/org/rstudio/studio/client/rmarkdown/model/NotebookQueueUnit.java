@@ -33,7 +33,8 @@ public class NotebookQueueUnit extends JavaScriptObject
          chunk_id:  chunkId,
          code:      code,
          pending:   [],
-         completed: []
+         completed: [],
+         executing: null
       };
    }-*/;
    
@@ -57,10 +58,18 @@ public class NotebookQueueUnit extends JavaScriptObject
       return this.completed;
    }-*/;
    
+   public final native NotebookExecRange getExecuting() /*-{
+      return this.executing;
+   }-*/;
+   
    public final native void addPendingRange(NotebookExecRange range) /*-{
       this.pending.push(range);
    }-*/;
    
+   public final native void setExecutingRange(NotebookExecRange range) /*-{
+      this.executing = range;
+   }-*/;
+
    public final List<Integer> getPendingLines() 
    {
       return linesFromRanges(getPending());
@@ -69,6 +78,11 @@ public class NotebookQueueUnit extends JavaScriptObject
    public final List<Integer> getCompletedLines() 
    {
       return linesFromRanges(getCompleted());
+   }
+   
+   public final List<Integer> getExecutingLines() 
+   {
+      return linesFromRange(getExecuting());
    }
    
    public final List<Integer> linesFromRange(NotebookExecRange range)

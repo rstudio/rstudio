@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
-import org.rstudio.studio.client.rmarkdown.model.NotebookExecRange;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
