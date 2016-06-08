@@ -23,7 +23,6 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
@@ -178,19 +177,6 @@ public class ConnectionsPresenter extends BasePresenter
             // (but delay to allow for the panel to be laid out)
             if (exploredConnection_ != null)
                exploreConnection(exploredConnection_);
-             /*
-            {
-               new Timer() {
-
-                  @Override
-                  public void run()
-                  {
-                     exploreConnection(exploredConnection_);   
-                  }
-                 
-               }.schedule(200);;    
-            }
-            */
          }
 
          @Override
