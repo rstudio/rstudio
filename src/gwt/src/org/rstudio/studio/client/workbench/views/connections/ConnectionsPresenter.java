@@ -174,6 +174,7 @@ public class ConnectionsPresenter extends BasePresenter
             lastExploredConnection_ = exploredConnection_;
             
             // if there is an an explored connection then explore it
+            
             if (exploredConnection_ != null)
                exploreConnection(exploredConnection_);
          }
@@ -380,79 +381,77 @@ public class ConnectionsPresenter extends BasePresenter
    @Handler
    public void onRemoveConnection()
    {
-      if (exploredConnection_ != null)
-      {
-         globalDisplay_.showYesNoMessage(
-            MessageDialog.QUESTION,
-            "Remove Connection",
-            "Are you sure you want to remove the selected connection?",
-            new Operation() {
-   
-               @Override
-               public void execute()
-               {
-                  server_.removeConnection(
-                    exploredConnection_.getId(), new VoidServerRequestCallback());   
-                  showAllConnections();
-               }
-            },
-            true);
-      }
-      else
-      {
-         globalDisplay_.showErrorMessage(
-           "Remove Connection", "No connection currently selected.");
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.QUESTION,
+         "Remove Connection",
+         "Are you sure you want to remove the selected connection?",
+         new Operation() {
+
+            @Override
+            public void execute()
+            {
+               server_.removeConnection(
+                 exploredConnection_.getId(), new VoidServerRequestCallback());   
+               showAllConnections();
+            }
+         },
+         true);
+     
    }
   
    @Handler
    public void onConnectConnection()
    {
-      if (exploredConnection_ != null)
-      {
-         String connectVia = display_.getConnectVia();
-         String connectCode = display_.getConnectCode();
-         performConnection(connectVia, connectCode);
-         
-         uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
-         uiPrefs_.writeUIPrefs();
-      }
+      if (exploredConnection_ == null)
+         return;
+
+      String connectVia = display_.getConnectVia();
+      String connectCode = display_.getConnectCode();
+      performConnection(connectVia, connectCode);
+      
+      uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
+      uiPrefs_.writeUIPrefs();
    }
    
    @Handler
    public void onDisconnectConnection()
    {
-      if (exploredConnection_ != null)
-      {
-         server_.getDisconnectCode(exploredConnection_, 
-                                   new SimpleRequestCallback<String>() {
-            @Override
-            public void onResponseReceived(String disconnectCode)
-            {
-               eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-            }
-         });
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      server_.getDisconnectCode(exploredConnection_, 
+                                new SimpleRequestCallback<String>() {
+         @Override
+         public void onResponseReceived(String disconnectCode)
+         {
+            eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+         }
+      });
    }
    
    @Handler
    public void onSparkLog()
    {
-      if (exploredConnection_ != null)
-      {
-         server_.showSparkLog(exploredConnection_, 
-                              new VoidServerRequestCallback());
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      server_.showSparkLog(exploredConnection_, 
+                           new VoidServerRequestCallback());
+      
    }
    
    @Handler
    public void onSparkUI()
    {
-      if (exploredConnection_ != null)
-      {
-         server_.showSparkUI(exploredConnection_, 
-                             new VoidServerRequestCallback());
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      server_.showSparkUI(exploredConnection_, 
+                          new VoidServerRequestCallback());
+      
    }
    
    
