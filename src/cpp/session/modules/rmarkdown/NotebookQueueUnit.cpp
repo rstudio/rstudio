@@ -32,6 +32,8 @@
 #define kQueueUnitCompleted  "completed"
 #define kQueueUnitPending    "pending"
 #define kQueueUnitExecuting  "executing"
+#define kQueueUnitExecMode   "exec_mode"
+#define kQueueUnitExecScope  "exec_scope"
 #define kQueueUnitRangeStart "start"
 #define kQueueUnitRangeStop  "stop"
 
@@ -98,14 +100,20 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
 
    // extract top-level values
    json::Array completed, pending;
+   int execMode, execScope;
    Error error = json::readObject(source, 
          kQueueUnitCode,      &unit.code_,
          kQueueUnitDocId,     &unit.docId_,
          kQueueUnitChunkId,   &unit.chunkId_,
          kQueueUnitCompleted, &completed,
-         kQueueUnitPending,   &pending);
+         kQueueUnitPending,   &pending,
+         kQueueUnitExecMode,  &execMode,
+         kQueueUnitExecScope, &execScope);
    if (error)
       LOG_ERROR(error);
+
+   unit.execMode_ = static_cast<ExecMode>(execMode);
+   unit.execScope_ = static_cast<ExecScope>(execScope);
 
    // process arrays 
    error = fillExecRange(completed, &unit.completed_);
@@ -162,6 +170,8 @@ json::Object NotebookQueueUnit::toJson() const
    unit[kQueueUnitChunkId]   = chunkId_;
    unit[kQueueUnitCompleted] = completed;
    unit[kQueueUnitPending]   = pending;
+   unit[kQueueUnitExecMode]  = execMode_;
+   unit[kQueueUnitExecScope] = execScope_;
    unit[kQueueUnitExecuting] = executing_.toJson();
 
    return json::Object();
@@ -224,6 +234,16 @@ std::string NotebookQueueUnit::code() const
 bool NotebookQueueUnit::complete() const
 {
    return pending_.empty();
+}
+
+ExecScope NotebookQueueUnit::execScope() const
+{
+   return execScope_;
+}
+
+ExecMode NotebookQueueUnit::execMode() const
+{
+   return execMode_;
 }
 
 } // namespace notebook

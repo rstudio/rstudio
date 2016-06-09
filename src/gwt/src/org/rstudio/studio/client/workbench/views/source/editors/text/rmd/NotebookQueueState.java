@@ -71,7 +71,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public boolean isExecuting()
    {
-      return queue_ != null;
+      return queue_ != null && !queue_.complete();
    }
    
    public String getExecutingChunkId()
@@ -80,6 +80,32 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          return null;
       
       return executingUnit_.getChunkId();
+   }
+   
+   public int getChunkExecMode(String chunkId)
+   {
+      if (queue_ != null)
+      {
+         // check queued units
+         NotebookQueueUnit unit = getUnit(chunkId);
+         
+         // check completed units
+         if (unit == null)
+         {
+            for (int i = 0; i < queue_.getCompletedUnits().length(); i++)
+            {
+               NotebookQueueUnit completedUnit = 
+                     queue_.getCompletedUnits().get(i);
+               if (completedUnit.getChunkId() == chunkId)
+                  return completedUnit.getExecMode();
+            }
+         }
+         else
+         {
+            return unit.getExecMode();
+         }
+      }
+      return TextEditingTargetNotebook.MODE_BATCH;
    }
    
    public void clear()
@@ -95,7 +121,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public void executeRange(Scope chunk, Range range)
    {
-      if (queue_ != null)
+      if (!isExecuting())
       {
          String chunkId = notebook_.getRowChunkId(chunk.getPreamble().getRow());
          if (chunkId == null)
@@ -105,7 +131,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (unit == null)
          {
             // unit is not in the queue; add it
-            queueChunkRange(chunk, range);
+            queueChunkRange(chunk, range, TextEditingTargetNotebook.MODE_BATCH,
+                  TextEditingTargetNotebook.SCOPE_PARTIAL);
          }
          else
          {
@@ -125,7 +152,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       {
          // no queue, create one
          createQueue("Run Chunk");
-         NotebookQueueUnit unit = unitFromScope(chunk, range);
+         NotebookQueueUnit unit = unitFromScope(chunk, range, 
+               TextEditingTargetNotebook.MODE_SINGLE,
+               TextEditingTargetNotebook.SCOPE_PARTIAL);
          queue_.addUnit(unit);
          executeQueue();
       }
@@ -133,9 +162,11 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public void executeChunk(Scope chunk)
    {
-      if (queue_ != null)
+      if (isExecuting())
       {
-         queueChunkRange(chunk, scopeHelper_.getSweaveChunkInnerRange(chunk));
+         queueChunkRange(chunk, scopeHelper_.getSweaveChunkInnerRange(chunk),
+               TextEditingTargetNotebook.MODE_SINGLE, 
+               TextEditingTargetNotebook.SCOPE_CHUNK);
       }
       else
       {
@@ -147,13 +178,17 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public void executeChunks(String jobDesc, List<Scope> scopes)
    {
+      // TODO: handle case where there's already a queue
+      
       createQueue(jobDesc);
 
       // create queue units from scopes
       for (Scope scope: scopes)
       {
          NotebookQueueUnit unit = unitFromScope(scope,
-               scopeHelper_.getSweaveChunkInnerRange(scope));
+               scopeHelper_.getSweaveChunkInnerRange(scope),
+               TextEditingTargetNotebook.MODE_BATCH,
+               TextEditingTargetNotebook.SCOPE_CHUNK);
          queue_.addUnit(unit);
       }
       
@@ -256,9 +291,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
 
          // TODO: scroll the widget into view if it's a single-shot exec
       
-         // TODO: respect actual chunk execution mode
          notebook_.setChunkExecuting(event.getChunkId(), 
-               TextEditingTargetNotebook.MODE_BATCH);
+               executingUnit_.getExecMode());
 
       }
       else if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
@@ -267,13 +301,13 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
              executingUnit_.getChunkId() == event.getChunkId())
          {
             queue_.removeUnit(executingUnit_);
+            queue_.addCompletedUnit(executingUnit_);
             executingUnit_ = null;
             
             // if there are no more units, clean up the queue so we get a clean
             // slate on the next execution
-            if (queue_.getUnits().length() == 0)
+            if (queue_.complete())
             {
-               queue_ = null;
                editingTarget_.getStatusBar().hideNotebookProgress(false);
             }
             else
@@ -308,6 +342,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          // draw the pending lines
          renderLineState(scope.getBodyStart().getRow(), 
                unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+         
+         notebook_.setChunkState(scope, ChunkContextToolbar.STATE_QUEUED);
       }
 
       // update the status bar
@@ -327,7 +363,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
    }
    
-   private NotebookQueueUnit unitFromScope(Scope scope, Range range)
+   private NotebookQueueUnit unitFromScope(Scope scope, Range range, 
+         int execMode, int execScope)
    {
       // find associated chunk definition
       String id = null;
@@ -339,7 +376,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          scope.getPreamble(),
          scope.getEnd());
       NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
-            def.getChunkId(), code);
+            def.getChunkId(), execMode, execScope, code);
       
       unit.addPendingRange(getNotebookExecRange(scope, range));
       
@@ -396,7 +433,6 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       return null;
    }
 
-   // TODO: resolve with copy at TextEditingTargetNotebook
    private void syncWidth()
    {
       // check the width and see if it's already synced
@@ -441,12 +477,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       return chunkDef;
    }
    
-   private void queueChunkRange(Scope chunk, Range range)
+   private void queueChunkRange(Scope chunk, Range range, int execMode, 
+         int execScope)
    {
-      NotebookQueueUnit unit = unitFromScope(chunk, range);
+      NotebookQueueUnit unit = unitFromScope(chunk, range, execMode, execScope);
 
       renderLineState(chunk.getBodyStart().getRow(), 
             unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+      notebook_.setChunkState(chunk, ChunkContextToolbar.STATE_QUEUED);
 
       queue_.addUnit(unit);
       server_.updateNotebookExecQueue(unit, 

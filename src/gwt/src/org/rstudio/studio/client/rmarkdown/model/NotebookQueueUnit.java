@@ -27,14 +27,17 @@ public class NotebookQueueUnit extends JavaScriptObject
    }
    
    public final static native NotebookQueueUnit create(
-         String docId, String chunkId, String code) /*-{
+         String docId, String chunkId, int execMode, int execScope, 
+         String code) /*-{
       return {
-         doc_id:    docId,
-         chunk_id:  chunkId,
-         code:      code,
-         pending:   [],
-         completed: [],
-         executing: null
+         doc_id:     docId,
+         chunk_id:   chunkId,
+         exec_mode:  execMode,
+         exec_scope: execScope,
+         code:       code,
+         pending:    [],
+         completed:  [],
+         executing:  null
       };
    }-*/;
    
@@ -44,6 +47,14 @@ public class NotebookQueueUnit extends JavaScriptObject
 
    public final native String getChunkId() /*-{
       return this.chunk_id;
+   }-*/;
+   
+   public final native int getExecMode() /*-{
+      return this.exec_mode;
+   }-*/;
+   
+   public final native int getExecScope() /*-{
+      return this.exec_scope;
    }-*/;
 
    public final native String getCode() /*-{

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +26,6 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -57,8 +54,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -123,36 +118,6 @@ public class TextEditingTargetNotebook
                           SourceDocAddedEvent.Handler,
                           RenderFinishedEvent.Handler
 {
-   private class ChunkExecQueueUnit
-   {
-      public ChunkExecQueueUnit(String chunkIdIn, String labelIn, int modeIn, 
-            String codeIn, String optionsIn, int rowIn, String setupCrc32In)
-      {
-         chunkId = chunkIdIn;
-         label = labelIn;
-         mode = modeIn;
-         options = optionsIn;
-         code = codeIn;
-         row = rowIn;
-         setupCrc32 = setupCrc32In;
-         pos = 0;
-         linesExecuted = 0;
-         executingRowStart = 0;
-         executingRowEnd = 0;
-      }
-      public String chunkId;
-      public String label;
-      public String options;
-      public String code;
-      public String setupCrc32;
-      public int pos;
-      public int row;
-      public int mode;
-      public int linesExecuted;
-      public int executingRowStart;
-      public int executingRowEnd;
-   };
-
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetChunks chunks,
                                     TextEditingTarget.Display editingDisplay,
@@ -168,7 +133,6 @@ public class TextEditingTargetNotebook
       releaseOnDismiss_ = releaseOnDismiss;
       initialChunkDefs_ = JsArrayUtil.deepCopy(document.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
-      chunkExecQueue_ = new LinkedList<ChunkExecQueueUnit>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
       chunks_ = chunks;
@@ -417,7 +381,6 @@ public class TextEditingTargetNotebook
    {
       events_ = events;
       server_ = server;
-      console_ = console;
       source_ = source;
       session_ = session;
       prefs_ = prefs;
@@ -475,7 +438,7 @@ public class TextEditingTargetNotebook
       queue_.executeChunks(jobDesc, chunks);
    }
    
-   public void executeChunk(Scope chunk, int mode)
+   public void executeChunk(Scope chunk)
    {
       // maximize the source pane if we haven't yet this session
       if (!maximizedPane_ && 
@@ -485,11 +448,20 @@ public class TextEditingTargetNotebook
          maximizedPane_ = true;
       }
       
-      // if this isn't the setup chunk, ensure the setup chunk is executed
-      if (!isSetupChunkScope(chunk))
-         ensureSetupChunkExecuted();
-
-      queue_.executeChunk(chunk);
+      // if this isn't the setup chunk, ensure the setup chunk is executed by
+      // creating a job that runs both chunks
+      if (!isSetupChunkScope(chunk) &&
+          needsSetupChunkExecuted())
+      {
+         List<Scope> chunks = new ArrayList<Scope>();
+         chunks.add(getSetupChunkScope());
+         chunks.add(chunk);
+         queue_.executeChunks("Run Chunks", chunks);
+      }
+      else
+      {
+         queue_.executeChunk(chunk);
+      }
    }
    
    public void manageCommands()
@@ -672,16 +644,7 @@ public class TextEditingTargetNotebook
          // by default, ensure chunks are visible if we aren't replaying them
          // from the cache
          boolean ensureVisible = !event.getOutput().isReplay();
-         int mode = MODE_SINGLE;
-         
-         // TODO: pick up mode from executing chunk
-         /*
-         if (executingChunk_ != null &&
-             executingChunk_.chunkId == event.getOutput().getChunkId())
-         {
-            mode = executingChunk_.mode;
-         }
-         */
+         int mode = queue_.getChunkExecMode(chunkId);
          
          // no need to make chunks visible in batch mode
          if (ensureVisible && mode == MODE_BATCH)
@@ -706,8 +669,7 @@ public class TextEditingTargetNotebook
       cleanChunkExecState(event.getData().getChunkId());
       RmdChunkOutputFinishedEvent.Data data = event.getData();
 
-      // TODO: compute visibility
-      // ensureVisible = executingChunk_.mode == MODE_SINGLE;
+      ensureVisible = queue_.getChunkExecMode(data.getChunkId()) == MODE_SINGLE;
 
       // if this was the setup chunk, and no errors were encountered while
       // executing it, mark it clean
@@ -1133,7 +1095,6 @@ public class TextEditingTargetNotebook
          }
 
          output.getOutputWidget().setCodeExecuting(mode);
-         syncWidth();
          
          // scroll the widget into view if it's a single-shot exec
          if (mode == MODE_SINGLE)
@@ -1144,8 +1105,7 @@ public class TextEditingTargetNotebook
       Scope chunk = getChunkScope(chunkId);
       if (chunk != null)
       {
-         chunks_.setChunkState(chunk.getPreamble().getRow(), 
-               ChunkContextToolbar.STATE_EXECUTING);
+         setChunkState(chunk, ChunkContextToolbar.STATE_EXECUTING);
       }
    }
 
@@ -1159,9 +1119,13 @@ public class TextEditingTargetNotebook
                chunk.getEnd().getRow(), 
                ChunkRowExecState.LINE_RESTING);
 
-         chunks_.setChunkState(chunk.getPreamble().getRow(), 
-               ChunkContextToolbar.STATE_RESTING);
+         setChunkState(chunk, ChunkContextToolbar.STATE_RESTING);
       }
+   }
+   
+   public void setChunkState(Scope chunk, int state)
+   {
+      chunks_.setChunkState(chunk.getPreamble().getRow(), state);
    }
    
    public static boolean isSetupChunkScope(Scope scope)
@@ -1212,6 +1176,7 @@ public class TextEditingTargetNotebook
       cleanChunkExecState(chunkId);
    }
    
+   /* TODO: implement non R chunk execution on the server
    private void execNonRChunk(ChunkExecQueueUnit unit)
    {
       // if we're using a non-R engine, farm that out to separate routine
@@ -1265,6 +1230,8 @@ public class TextEditingTargetNotebook
                }
             });
    }
+    * 
+    */
    
    public static void parseChunkOptions(String line,
                                         Map<String, String> chunkOptions)
@@ -1470,23 +1437,23 @@ public class TextEditingTargetNotebook
                                def, this));
    }
    
-   private void ensureSetupChunkExecuted()
+   private boolean needsSetupChunkExecuted()
    {
       // ignore if disabled
       if (!prefs_.autoRunSetupChunk().getValue())
-         return;
+         return false;
 
       // ignore if setup chunk currently running or already in the execution
       // queue
       if (queue_.isChunkExecuting(SETUP_CHUNK_ID) ||
           queue_.isChunkQueued(SETUP_CHUNK_ID))
       {
-         return;
+         return false;
       }
       
       // no reason to do work if we don't need to re-validate the setup chunk
       if (!validateSetupChunk_ && !StringUtil.isNullOrEmpty(setupCrc32_))
-         return;
+         return false;
       validateSetupChunk_ = false;
       
       // find the setup chunk
@@ -1500,9 +1467,11 @@ public class TextEditingTargetNotebook
          if (crc32 != setupCrc32_)
          {
             // push it into the execution queue
-            executeChunk(setupScope, MODE_BATCH);
+            return true;
          }
       }
+      
+      return false;
    }
    
    private String getChunkCrc32(Scope chunk)
@@ -1520,19 +1489,6 @@ public class TextEditingTargetNotebook
    {
       setupCrc32_ = crc32;
       docUpdateSentinel_.setProperty(LAST_SETUP_CRC32, crc32);
-   }
-   
-   private void syncWidth()
-   {
-      // check the width and see if it's already synced
-      int width = docDisplay_.getPixelWidth();
-      if (pixelWidth_ == width)
-         return;
-      
-      // it's not synced, so compute the new width
-      pixelWidth_ = width;
-      charWidth_ = DomUtils.getCharacterWidth(pixelWidth_, pixelWidth_,
-            ConsoleResources.INSTANCE.consoleStyles().console());
    }
    
    private void setAllExpansionStates(int state)
@@ -1745,27 +1701,6 @@ public class TextEditingTargetNotebook
       }
    };
    
-   private void executeCodeChunk(final String code, final String chunkId)
-   {
-      console_.consoleInput(code, chunkId, 
-            new ServerRequestCallback<Void>()
-            {
-               @Override
-               public void onResponseReceived(Void v)
-               {
-                  // add the code into the history once it's been successfully
-                  // sent to the server
-                  events_.fireEvent(new ConsoleHistoryAddedEvent(code));
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-   }
-   
    private void setDirtyState()
    {
       if (getCommitMode() == MODE_UNCOMMITTED && !dirtyState_.getValue())
@@ -1781,7 +1716,6 @@ public class TextEditingTargetNotebook
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
-   private LinkedList<ChunkExecQueueUnit> chunkExecQueue_;
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;
@@ -1804,7 +1738,6 @@ public class TextEditingTargetNotebook
    private Commands commands_;
 
    private RMarkdownServerOperations server_;
-   private ConsoleServerOperations console_;
    private SourceServerOperations source_;
    private EventBus events_;
    private NotebookQueueState queue_;
@@ -1817,10 +1750,7 @@ public class TextEditingTargetNotebook
    private ResizeEvent queuedResize_ = null;
    private boolean validateSetupChunk_ = false;
    private String setupCrc32_ = "";
-   private int charWidth_ = 65;
-   private int pixelWidth_ = 0;
    private int lastPlotWidth_ = 0;
-   private boolean evaluatingParams_ = false;
    private boolean resizingPlotsRemote_ = false;
    private boolean maximizedPane_ = false;
    private boolean isCreateNotebookSaveHandlerRunning_ = false;

@@ -27,17 +27,18 @@ public class NotebookDocQueue extends JavaScriptObject
          String docId, String jobDesc, int commitMode, 
          int pixelWidth, int charWidth) /*-{
       return {
-         doc_id:      docId,
-         job_desc:    jobDesc,
-         commit_mode: commitMode,
-         pixel_width: pixelWidth,
-         char_width:  charWidth,
-         units:       [],
-         max_units:   0
+         doc_id:          docId,
+         job_desc:        jobDesc,
+         commit_mode:     commitMode,
+         pixel_width:     pixelWidth,
+         char_width:      charWidth,
+         units:           [],
+         max_units:       0,
+         completed_units: []
       }
    }-*/;
    
-   public final native NotebookQueueUnit addUnit(NotebookQueueUnit unit) /*-{
+   public final native void addUnit(NotebookQueueUnit unit) /*-{
       this.units.push(unit);
       this.max_units = Math.max(this.units.length, this.max_units);
    }-*/;
@@ -48,6 +49,10 @@ public class NotebookDocQueue extends JavaScriptObject
       {
          this.units.splice(idx, 1);
       }
+   }-*/;
+   
+   public final native void addCompletedUnit(NotebookQueueUnit unit) /*-{
+      this.completed_units.push(unit);
    }-*/;
    
    public final native String getDocId() /*-{
@@ -77,6 +82,15 @@ public class NotebookDocQueue extends JavaScriptObject
    public final native JsArray<NotebookQueueUnit> getUnits() /*-{
       return this.units;
    }-*/;
+   
+   public final native JsArray<NotebookQueueUnit> getCompletedUnits() /*-{
+      return this.completed_units || [];
+   }-*/;
+   
+   public final boolean complete() 
+   {
+      return getUnits().length() == 0;
+   }
    
    public final static int QUEUE_OP_ADD    = 0;
    public final static int QUEUE_OP_UPDATE = 1;

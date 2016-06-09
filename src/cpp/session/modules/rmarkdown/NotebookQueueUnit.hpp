@@ -16,6 +16,8 @@
 #ifndef SESSION_NOTEBOOK_QUEUE_UNIT_HPP
 #define SESSION_NOTEBOOK_QUEUE_UNIT_HPP
 
+#include "SessionRmdNotebook.hpp"
+
 #include <core/json/Json.hpp>
 
 #include <list>
@@ -60,12 +62,16 @@ public:
    // accessors
    std::string docId() const;
    std::string chunkId() const;
+   ExecMode execMode() const;
+   ExecScope execScope() const;
    std::string code() const;
 
 
 private:
    std::string docId_;
    std::string chunkId_;
+   ExecMode execMode_;
+   ExecScope execScope_;
    std::string code_;
    std::list<ExecRange> completed_;
    std::list<ExecRange> pending_;

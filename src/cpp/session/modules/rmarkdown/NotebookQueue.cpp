@@ -139,7 +139,7 @@ public:
       std::string ctx = docQueue->commitMode() == ModeCommitted ?
          kSavedCtx : notebookCtxId();
       execContext_ = boost::make_shared<ChunkExecContext>(
-         unit->docId(), unit->chunkId(), ctx, ExecScopeChunk, options,
+         unit->docId(), unit->chunkId(), ctx, unit->execScope(), options,
          docQueue->pixelWidth(), docQueue->charWidth());
       execContext_->connect();
 
