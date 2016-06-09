@@ -21,10 +21,6 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Tests for the JsInteropRestrictionChecker.
@@ -2221,23 +2217,13 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public final void assertBuggySucceeds(String... expectedWarnings)
       throws Exception {
-    List<String> allWarnings = Lists.newArrayList();
-    if (expectedWarnings.length > 0) {
-      allWarnings.add("Warnings in test/EntryPoint.java");
-      allWarnings.addAll(Arrays.asList(expectedWarnings));
-    }
-    Result result = assertCompileSucceeds("Buggy buggy = null;",
-        allWarnings.toArray(new String[0]));
+    Result result = assertCompileSucceeds("Buggy buggy = null;", expectedWarnings);
     assertNotNull(result.findClass("test.EntryPoint$Buggy"));
   }
 
   public final void assertBuggyFails(String... expectedErrors) {
     assertTrue(expectedErrors.length > 0);
-
-    List<String> allErrors = Lists.newArrayList();
-    allErrors.add("Errors in test/EntryPoint.java");
-    allErrors.addAll(Arrays.asList(expectedErrors));
-    assertCompileFails("Buggy buggy = null;", allErrors.toArray(new String[0]));
+    assertCompileFails("Buggy buggy = null;", expectedErrors);
   }
 
   @Override

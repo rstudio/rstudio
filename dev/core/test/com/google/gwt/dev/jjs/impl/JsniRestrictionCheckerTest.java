@@ -48,9 +48,8 @@ public class JsniRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertCompileFails("new Buggy().jsniMethod(null);",
-        "Line 6: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls method "
-            + "java.lang.Double.doubleValue()D. Instance methods on java.lang.Double cannot be "
-            + "called from JSNI.");
+        "Line 6: Cannot call method 'double Double.doubleValue()'. Instance methods on 'Double' "
+            + "cannot be called from JSNI.");
   }
 
   public void testInstanceCallToTrampolineWarns() throws Exception {
@@ -65,18 +64,14 @@ public class JsniRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertCompileSucceeds("new Buggy().jsniMethod(null);",
-        "Line 6: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls method "
-            + "java.lang.Number.doubleValue()D. "
-            + "Instance methods from java.lang.Number should not be called on "
-            + "Boolean, Double, String, Array or JSO instances from JSNI.",
-        "Line 7: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls method "
-            + "java.lang.CharSequence.charAt(I)C. "
-            + "Instance methods from java.lang.CharSequence should not be called on "
-            + "Boolean, Double, String, Array or JSO instances from JSNI.",
-        "Line 8: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls method "
-            + "java.lang.Object.toString()Ljava/lang/String;. "
-            + "Instance methods from java.lang.Object should not be called on "
-            + "Boolean, Double, String, Array or JSO instances from JSNI.");
+        "Line 6: Unsafe call to method 'double Number.doubleValue()'. Instance methods from "
+            + "'Number' should not be called on Boolean, Double, String, Array or JSO instances "
+            + "from JSNI.",
+        "Line 7: Unsafe call to method 'char CharSequence.charAt(int)'. Instance methods from "
+            + "'CharSequence' should not be called on Boolean, Double, String, Array or JSO "
+            + "instances from JSNI.",
+        "Line 8: Unsafe call to method 'String Object.toString()'. Instance methods from 'Object' "
+            + "should not be called on Boolean, Double, String, Array or JSO instances from JSNI.");
   }
 
   public void testStaticJsoDispatchSucceeds() throws Exception {
@@ -112,10 +107,9 @@ public class JsniRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertCompileFails("new Buggy().jsniMethod(null);",
-        "Line 13: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls " +
-            "method test.EntryPoint$Buggy$IFoo.foo()V on an instance which might be a " +
-            "JavaScriptObject. Such a method call is only allowed in pure Java " +
-            "(non-JSNI) functions.");
+        "Line 13: Cannot call method 'void EntryPoint.Buggy.IFoo.foo()' on an instance which might "
+            + "be a JavaScriptObject. Such a method call is only allowed in pure Java (non-JSNI) "
+            + "functions.");
   }
 
   public void testNonstaticJsoDispatchFails() throws Exception {
@@ -128,11 +122,9 @@ public class JsniRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertCompileFails("new Buggy().jsniMethod(null);",
-        "Line 6: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls " +
-            "non-static method " +
-            "com.google.gwt.core.client.JavaScriptObject.toString()Ljava/lang/String; on an " +
-            "instance which is a subclass of JavaScriptObject. Only static method calls on " +
-            "JavaScriptObject subclasses are allowed in JSNI.");
+        "Line 6: Cannot call non-static method 'String JavaScriptObject.toString()' on an instance "
+            + "which is a subclass of JavaScriptObject. Only static method calls on "
+            + "JavaScriptObject subclasses are allowed in JSNI.");
   }
 
   public void testNonstaticJsoSubclassDispatchFails() throws Exception {
@@ -149,10 +141,9 @@ public class JsniRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertCompileFails("new Buggy().jsniMethod(null);",
-        "Line 10: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls " +
-            "non-static method test.EntryPoint$Buggy$Foo.foo()V on an instance which is a " +
-            "subclass of JavaScriptObject. Only static method calls on JavaScriptObject " +
-            "subclasses are allowed in JSNI.");
+        "Line 10: Cannot call non-static method 'void EntryPoint.Buggy.Foo.foo()' on an instance "
+            + "which is a subclass of JavaScriptObject. Only static method calls on "
+            + "JavaScriptObject subclasses are allowed in JSNI.");
   }
 
   public void testStringInstanceMethodCallFail() throws Exception {
@@ -165,9 +156,8 @@ public class JsniRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertCompileFails("new Buggy().jsniMethod(null);",
-        "Line 6: JSNI method test.EntryPoint$Buggy.jsniMethod(Ljava/lang/Object;)V calls method " +
-            "java.lang.String.length()I. Instance methods on java.lang.String cannot be called " +
-            "from JSNI.");
+        "Line 6: Cannot call method 'int String.length()'. Instance methods on 'String' cannot be "
+            + "called from JSNI.");
   }
 
   public void testStringStaticMethodCallSucceeds() throws Exception {

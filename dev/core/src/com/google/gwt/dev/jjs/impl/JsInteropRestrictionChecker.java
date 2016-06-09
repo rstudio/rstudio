@@ -14,7 +14,6 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.javac.JsInteropUtil;
@@ -43,7 +42,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsUtils;
@@ -53,25 +51,19 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.Pair;
-import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Multimap;
-import com.google.gwt.thirdparty.guava.common.collect.Ordering;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.collect.TreeMultimap;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 
 /**
  * Checks and throws errors for invalid JsInterop constructs.
  */
-public class JsInteropRestrictionChecker {
+public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
 
   public static void exec(TreeLogger logger, JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) throws UnableToCompleteException {
@@ -83,10 +75,6 @@ public class JsInteropRestrictionChecker {
     }
   }
 
-  private Multimap<String, String> errorsByFilename
-      = TreeMultimap.create(Ordering.natural(), AbstractTreeLogger.LOG_LINE_COMPARATOR);
-  private Multimap<String, String> warningsByFilename
-      = TreeMultimap.create(Ordering.natural(), AbstractTreeLogger.LOG_LINE_COMPARATOR);
   private final JProgram jprogram;
   private final MinimalRebuildCache minimalRebuildCache;
 
@@ -923,70 +911,8 @@ public class JsInteropRestrictionChecker {
                .equals(potentiallyOverriddenMethod.getJsniSignature(false, false));
   }
 
-  private static String getDescription(HasSourceInfo hasSourceInfo) {
-    if (hasSourceInfo instanceof JDeclaredType) {
-      return getTypeDescription((JDeclaredType) hasSourceInfo);
-    } else {
-      return getMemberDescription((JMember) hasSourceInfo);
-    }
-  }
-  private static String getMemberDescription(JMember member) {
-    if (member instanceof JField) {
-      return String.format("'%s'", JjsUtils.getReadableDescription(member));
-    }
-    JMethod method = (JMethod) member;
-    if ((method.isSyntheticAccidentalOverride() || method.isSynthetic())
-        // Some synthetic methods are created by JDT, it is not save to assume
-        // that they will always be overriding and crash the compiler.
-        && !method.getOverriddenMethods().isEmpty()) {
-      JMethod overridenMethod = method.getOverriddenMethods().iterator().next();
-      return String.format("'%s' (exposed by '%s')",
-          JjsUtils.getReadableDescription(overridenMethod),
-          JjsUtils.getReadableDescription(method.getEnclosingType()));
-    }
-    return String.format("'%s'", JjsUtils.getReadableDescription(method));
-  }
-
-  private static String getTypeDescription(JDeclaredType type) {
-    return String.format("'%s'", JjsUtils.getReadableDescription(type));
-  }
-
   private boolean isUnusableByJsSuppressed(CanHaveSuppressedWarnings x) {
     return x.getSuppressedWarnings() != null &&
         x.getSuppressedWarnings().contains(JsInteropUtil.UNUSABLE_BY_JS);
-  }
-
-  private void logError(String format, JType type) {
-    logError(type, format, JjsUtils.getReadableDescription(type));
-  }
-
-  private void logError(HasSourceInfo hasSourceInfo, String format, Object... args) {
-    errorsByFilename.put(hasSourceInfo.getSourceInfo().getFileName(),
-        String.format("Line %d: ", hasSourceInfo.getSourceInfo().getStartLine())
-            + String.format(format, args));
-  }
-
-  private void logWarning(HasSourceInfo hasSourceInfo, String format, Object... args) {
-    warningsByFilename.put(hasSourceInfo.getSourceInfo().getFileName(),
-        String.format("Line %d: ", hasSourceInfo.getSourceInfo().getStartLine())
-            + String.format(format, args));
-  }
-
-  private boolean reportErrorsAndWarnings(TreeLogger logger) {
-    TreeSet<String> filenamesToReport = Sets.newTreeSet(
-        Iterables.concat(errorsByFilename.keySet(), warningsByFilename.keySet()));
-    for (String fileName : filenamesToReport) {
-      boolean hasErrors = !errorsByFilename.get(fileName).isEmpty();
-      TreeLogger branch = logger.branch(
-          hasErrors ? Type.ERROR : Type.WARN,
-          (hasErrors ? "Errors" : "Warnings") + " in " + fileName);
-      for (String message : errorsByFilename.get(fileName)) {
-        branch.log(Type.ERROR, message);
-      }
-      for (String message :warningsByFilename.get(fileName)) {
-        branch.log(Type.WARN, message);
-      }
-    }
-    return !errorsByFilename.isEmpty();
   }
 }
