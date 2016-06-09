@@ -50,8 +50,6 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
-import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
@@ -313,18 +311,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar();
-      
-      ToolbarPopupMenu actionsMenu = new ToolbarPopupMenu();
-      actionsMenu.addItem(commands_.disconnectConnection().createMenuItem(false));
-      actionsMenu.addSeparator();
-      actionsMenu.addItem(commands_.removeConnection().createMenuItem(false));
-     
-      
-      actionsMenuButton_ = new ToolbarButton(
-            "",
-            StandardIcons.INSTANCE.more_actions(),
-            actionsMenu);
-
    
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
@@ -423,11 +409,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
-      toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.sparkUI().createToolbarButton());
       
-      toolbar_.addRightWidget(actionsMenuButton_);
-     
+      toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
+      
       connectionName_.setText(connection.getHost());
       
    }
@@ -474,7 +459,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private SearchWidget searchWidget_;
    private ToolbarButton backToConnectionsButton_;
    private ToolbarLabel connectionName_;
-   private ToolbarButton actionsMenuButton_;
    
    private final Commands commands_;
    
