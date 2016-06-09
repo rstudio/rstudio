@@ -428,6 +428,7 @@ public class ConnectionsPresenter extends BasePresenter
          public void onResponseReceived(String disconnectCode)
          {
             eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+            showAllConnections();
          }
       });
    }
