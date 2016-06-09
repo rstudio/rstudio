@@ -38,7 +38,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExe
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -56,6 +59,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       server_ = server;
       events_ = events;
       notebook_ = notebook;
+      scopeHelper_ = new TextEditingTargetScopeHelper(display);
       
       events_.addHandler(NotebookRangeExecutedEvent.TYPE, this);
       events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
@@ -63,19 +67,49 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       syncWidth();
    }
    
+   public void executeRange(Scope chunk, Range range)
+   {
+      if (queue_ != null)
+      {
+         String chunkId = notebook_.getRowChunkId(chunk.getPreamble().getRow());
+         if (chunkId == null)
+            return;
+
+         NotebookQueueUnit unit = getUnit(chunkId);
+         if (unit == null)
+         {
+            // unit is not in the queue; add it
+            queueChunkRange(chunk, range);
+         }
+         else
+         {
+            // unit is in the queue, modify it
+            unit.addPendingRange(getNotebookExecRange(chunk, range));
+
+            // redraw the pending lines
+            renderLineState(chunk.getBodyStart().getRow(), 
+                  unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+
+            server_.updateNotebookExecQueue(unit, 
+                  NotebookDocQueue.QUEUE_OP_UPDATE, "", 
+                  new VoidServerRequestCallback());
+         }
+      }
+      else
+      {
+         // no queue, create one
+         createQueue("Run Chunk");
+         NotebookQueueUnit unit = unitFromScope(chunk, range);
+         queue_.addUnit(unit);
+         executeQueue();
+      }
+   }
+   
    public void executeChunk(Scope chunk)
    {
       if (queue_ != null)
       {
-         NotebookQueueUnit unit = unitFromScope(chunk);
-
-         renderLineState(chunk.getBodyStart().getRow(), 
-               unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
-
-         queue_.addUnit(unit);
-         server_.updateNotebookExecQueue(unit, 
-               NotebookDocQueue.QUEUE_OP_ADD, "", 
-               new VoidServerRequestCallback());
+         queueChunkRange(chunk, scopeHelper_.getSweaveChunkInnerRange(chunk));
       }
       else
       {
@@ -85,38 +119,19 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
    }
    
-   public void executeChunks(final String jobDesc, List<Scope> scopes)
+   public void executeChunks(String jobDesc, List<Scope> scopes)
    {
-      // ensure width is up to date
-      syncWidth();
-      
-      // create new queue
-      queue_ = NotebookDocQueue.create(sentinel_.getId(), jobDesc, 
-            pixelWidth_, charWidth_);
+      createQueue(jobDesc);
 
       // create queue units from scopes
       for (Scope scope: scopes)
       {
-         NotebookQueueUnit unit = unitFromScope(scope);
+         NotebookQueueUnit unit = unitFromScope(scope,
+               scopeHelper_.getSweaveChunkInnerRange(scope));
          queue_.addUnit(unit);
       }
       
-      // send it to the server!
-      server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
-      {
-         @Override
-         public void onResponseReceived(Void v)
-         {
-            renderQueueState();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Can't execute " + jobDesc, error.getMessage());
-         }
-      });
+      executeQueue();
    }
    
    public boolean isChunkExecuting(String chunkId)
@@ -230,7 +245,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
    }
    
-   private NotebookQueueUnit unitFromScope(Scope scope)
+   private NotebookQueueUnit unitFromScope(Scope scope, Range range)
    {
       // find associated chunk definition
       String id = null;
@@ -244,15 +259,46 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
             def.getChunkId(), code);
       
-      // add a single range which encompasses all of the actual code in the
-      // chunk
-      int start = code.indexOf("\n") + 1;
-      int end = code.lastIndexOf("\n");
-      
-      NotebookExecRange range = NotebookExecRange.create(start, end);
-      unit.addPendingRange(range);
+      unit.addPendingRange(getNotebookExecRange(scope, range));
       
       return unit;
+   }
+   
+   private NotebookExecRange getNotebookExecRange(Scope scope, Range range)
+   {
+      // convert range into character offsets
+      Position startPos = range.getStart();
+      Position endPos = range.getEnd();
+      int start = 0;
+      int end = 0;
+      int pos = 0;
+      
+      for (int row = scope.getPreamble().getRow();
+           row < scope.getEnd().getRow();
+           row++)
+      {
+         String line = docDisplay_.getLine(row);
+         for (int col = 0; col <= line.length(); col++)
+         {
+            if (startPos.getRow() == row && startPos.getColumn() == col)
+            {
+               start = pos;
+            }
+            else if (endPos.getRow() == row && endPos.getColumn() == col)
+            {
+               end = pos;
+               break;
+            }
+            pos++;
+         }
+      }
+      
+      // if we never found the end, just use the last character (less one for 
+      // the newline)
+      if (end == 0)
+         end = pos - 1;
+      
+      return NotebookExecRange.create(start, end);
    }
    
    private NotebookQueueUnit getUnit(String chunkId)
@@ -282,7 +328,6 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             ConsoleResources.INSTANCE.consoleStyles().console());
    }
    
-   // TODO: resolve with copy at TextEditingTargetNotebook
    private ChunkDefinition getChunkDefAtRow(int row, String newId)
    {
       ChunkDefinition chunkDef;
@@ -314,6 +359,48 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       return chunkDef;
    }
    
+   private void queueChunkRange(Scope chunk, Range range)
+   {
+      NotebookQueueUnit unit = unitFromScope(chunk, range);
+
+      renderLineState(chunk.getBodyStart().getRow(), 
+            unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+
+      queue_.addUnit(unit);
+      server_.updateNotebookExecQueue(unit, 
+            NotebookDocQueue.QUEUE_OP_ADD, "", 
+            new VoidServerRequestCallback());
+   }
+   
+   private void createQueue(String jobDesc)
+   {
+      // ensure width is up to date
+      syncWidth();
+      
+      // create new queue
+      queue_ = NotebookDocQueue.create(sentinel_.getId(), jobDesc, 
+            pixelWidth_, charWidth_);
+   }
+   
+   private void executeQueue()
+   {
+      server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void v)
+         {
+            renderQueueState();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "Can't execute " + queue_.getJobDesc(), error.getMessage());
+         }
+      });
+   }
+   
    private NotebookDocQueue queue_;
    
    private final DocDisplay docDisplay_;
@@ -321,6 +408,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private final RMarkdownServerOperations server_;
    private final TextEditingTargetNotebook notebook_;
    private final EventBus events_;
+   private final TextEditingTargetScopeHelper scopeHelper_;
    
    private int pixelWidth_;
    private int charWidth_;

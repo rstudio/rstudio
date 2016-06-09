@@ -185,7 +185,7 @@ public class EditingTargetCodeExecution
          if (scope != null)
          {
             events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
-                  scope, code));
+                  scope, range));
             return;
          }
       }
@@ -225,7 +225,7 @@ public class EditingTargetCodeExecution
             else
             {
                events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
-                     scope, code));
+                     scope, lastExecutedCode_.getRange()));
             }
          }
       }

@@ -73,7 +73,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ScopePredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -629,36 +628,7 @@ public class TextEditingTargetNotebook
       if (event.getDocId() != docUpdateSentinel_.getId())
          return;
       
-      // create or update the chunk at the given row
-      final ChunkDefinition chunkDef = getChunkDefAtRow(event.getRow(), null);
-      String options = TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
-            event.getScope(), docDisplay_);
-      
-      // have the server start recording output from this chunk
-      syncWidth();
-      server_.setChunkConsole(docUpdateSentinel_.getId(), 
-            chunkDef.getChunkId(), getCommitMode(), MODE_SINGLE, SCOPE_PARTIAL, 
-            options, getPlotWidth(), charWidth_,
-            new ServerRequestCallback<RmdChunkOptions>()
-      {
-         @Override
-         public void onResponseReceived(RmdChunkOptions options)
-         {
-            // execute the input
-            executeCodeChunk(event.getCode(), chunkDef.getChunkId());
-         }
-         @Override
-         public void onError(ServerError error)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Chunk Execution Error", error.getMessage());
-            
-         }
-      });
-      
-      if (outputs_.containsKey(chunkDef.getChunkId()))
-         outputs_.get(chunkDef.getChunkId()).getOutputWidget()
-                                         .setCodeExecuting(MODE_SINGLE);
+      queue_.executeRange(event.getScope(), event.getRange());
    }
    
    @Override
@@ -1151,6 +1121,26 @@ public class TextEditingTargetNotebook
       return "unnamed-chunk-" + pos;
    }
 
+   public String getRowChunkId(int preambleRow)
+   {
+      // find the chunk corresponding to the row
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         if (output.getScope().getPreamble().getRow() == preambleRow)
+            return output.getChunkId();
+      }
+      
+      // no row mapped -- how about the setup chunk?
+      Scope setupScope = getSetupChunkScope();
+      if (setupScope != null &&
+          setupScope.getPreamble().getRow() == preambleRow)
+      {
+         return SETUP_CHUNK_ID;
+      }
+      
+      return null;
+   }
+   
    public Scope getChunkScope(String chunkId)
    {
       if (chunkId == SETUP_CHUNK_ID)
@@ -1506,37 +1496,6 @@ public class TextEditingTargetNotebook
             new VoidServerRequestCallback());
    }
    
-   private ChunkDefinition getChunkDefAtRow(int row, String newId)
-   {
-      ChunkDefinition chunkDef;
-      
-      // if there is an existing widget just modify it in place
-      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
-      if (widget != null && 
-          widget.getType().equals(ChunkDefinition.LINE_WIDGET_TYPE))
-      {
-         chunkDef = widget.getData();
-      }
-      // otherwise create a new one
-      else
-      {
-         if (StringUtil.isNullOrEmpty(newId))
-            newId = "c" + StringUtil.makeRandomId(12);
-         chunkDef = ChunkDefinition.create(row, 1, true, 
-               ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(), newId,
-               getKnitrChunkLabel(row, docDisplay_, 
-                                  new ScopeList(docDisplay_)));
-         
-         if (newId == SETUP_CHUNK_ID)
-            chunkDef.getOptions().setInclude(false);
-         
-         events_.fireEvent(new ChunkChangeEvent(
-               docUpdateSentinel_.getId(), chunkDef.getChunkId(), row, 
-               ChunkChangeEvent.CHANGE_CREATE));
-      }
-      return chunkDef;
-   }
-   
    // NOTE: this implements chunk removal locally; prefer firing a
    // ChunkChangeEvent if you're removing a chunk so appropriate hooks are
    // invoked elsewhere
@@ -1728,27 +1687,6 @@ public class TextEditingTargetNotebook
       charWidth_ = DomUtils.getCharacterWidth(pixelWidth_, pixelWidth_,
             ConsoleResources.INSTANCE.consoleStyles().console());
    }
-   
-   private String getRowChunkId(int preambleRow)
-   {
-      // find the chunk corresponding to the row
-      for (ChunkOutputUi output: outputs_.values())
-      {
-         if (output.getScope().getPreamble().getRow() == preambleRow)
-            return output.getChunkId();
-      }
-      
-      // no row mapped -- how about the setup chunk?
-      Scope setupScope = getSetupChunkScope();
-      if (setupScope != null &&
-          setupScope.getPreamble().getRow() == preambleRow)
-      {
-         return SETUP_CHUNK_ID;
-      }
-      
-      return null;
-   }
-   
    
    private void setAllExpansionStates(int state)
    {
