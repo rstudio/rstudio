@@ -4299,7 +4299,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONObject(unit));
       params.set(1, new JSONNumber(op));
       params.set(2, new JSONString(beforeChunkId));
-      sendRequest(RPC_SCOPE, "execute_notebook_chunks", params, 
+      sendRequest(RPC_SCOPE, "update_notebook_exec_queue", params, 
             requestCallback);
    }
    

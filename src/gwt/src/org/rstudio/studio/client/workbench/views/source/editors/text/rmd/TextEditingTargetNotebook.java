@@ -37,7 +37,6 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -51,7 +50,6 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
-import org.rstudio.studio.client.rmarkdown.model.RmdExecutionState;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -61,8 +59,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
@@ -484,9 +480,6 @@ public class TextEditingTargetNotebook
    
    public void executeChunk(Scope chunk, int mode)
    {
-      // get the row that ends the chunk
-      int row = chunk.getEnd().getRow();
-      
       // maximize the source pane if we haven't yet this session
       if (!maximizedPane_ && 
           prefs_.hideConsoleOnChunkExecute().getValue())
@@ -495,19 +488,9 @@ public class TextEditingTargetNotebook
          maximizedPane_ = true;
       }
       
-      /* TODO: move to queue state manager 
-      String chunkId = "";
-      String setupCrc32 = "";
-      if (isSetupChunkScope(chunk))
-      {
-         setupCrc32 = getChunkCrc32(chunk);
-         chunkId = SETUP_CHUNK_ID;
-      }
-      else
-      {
+      // if this isn't the setup chunk, ensure the setup chunk is executed
+      if (!isSetupChunkScope(chunk))
          ensureSetupChunkExecuted();
-      }
-      */
 
       queue_.executeChunk(chunk);
 
@@ -759,33 +742,28 @@ public class TextEditingTargetNotebook
       
       // clean up execution state
       cleanChunkExecState(event.getData().getChunkId());
+      RmdChunkOutputFinishedEvent.Data data = event.getData();
 
-      // mark chunk execution as finished
-      if (executingChunk_ != null &&
-          event.getData().getChunkId() == executingChunk_.chunkId)
+      // TODO: compute visibility
+      // ensureVisible = executingChunk_.mode == MODE_SINGLE;
+
+      // if this was the setup chunk, and no errors were encountered while
+      // executing it, mark it clean
+      if (data.getChunkId() == SETUP_CHUNK_ID)
       {
-         ensureVisible = executingChunk_.mode == MODE_SINGLE;
-
-         // if this was the setup chunk, and no errors were encountered while
-         // executing it, mark it clean
-         if (!StringUtil.isNullOrEmpty(executingChunk_.setupCrc32) &&
-              outputs_.containsKey(executingChunk_.chunkId))
+         if (!outputs_.get(data.getChunkId()).hasErrors())
          {
-            if (!outputs_.get(executingChunk_.chunkId).hasErrors())
-            {
-               writeSetupCrc32(executingChunk_.setupCrc32);
-            }
-            else
-            {
-               ensureVisible = true;
-               validateSetupChunk_ = true;
-            }
+            Scope scope = getSetupChunkScope();
+            if (scope != null)
+               writeSetupCrc32(getChunkCrc32(scope));
          }
-      
-         executingChunk_ = null;
+         else
+         {
+            ensureVisible = true;
+            validateSetupChunk_ = true;
+         }
       }
 
-      RmdChunkOutputFinishedEvent.Data data = event.getData();
       if (data.getType() == RmdChunkOutputFinishedEvent.TYPE_REPLAY &&
           data.getRequestId() == Integer.toHexString(requestId_)) 
       {
@@ -1246,6 +1224,15 @@ public class TextEditingTargetNotebook
       }
    }
    
+   public static boolean isSetupChunkScope(Scope scope)
+   {
+      if (!scope.isChunk())
+         return false;
+      if (scope.getChunkLabel() == null)
+         return false;
+      return scope.getChunkLabel().toLowerCase() == "setup";
+   }
+   
    // Private methods --------------------------------------------------------
    
    private void restartThenExecute(AppCommand command)
@@ -1685,17 +1672,10 @@ public class TextEditingTargetNotebook
 
       // ignore if setup chunk currently running or already in the execution
       // queue
-      if (executingChunk_ != null &&
-          executingChunk_.chunkId == SETUP_CHUNK_ID)
+      if (queue_.isChunkExecuting(SETUP_CHUNK_ID) ||
+          queue_.isChunkQueued(SETUP_CHUNK_ID))
       {
          return;
-      }
-      for (ChunkExecQueueUnit unit: chunkExecQueue_)
-      {
-         if (unit.chunkId == SETUP_CHUNK_ID)
-         {
-            return;
-         }
       }
       
       // no reason to do work if we don't need to re-validate the setup chunk
@@ -1713,10 +1693,6 @@ public class TextEditingTargetNotebook
          // setup chunk
          if (crc32 != setupCrc32_)
          {
-            // if there are no chunks in the queue yet, show progress 
-            if (chunkExecQueue_.isEmpty())
-               editingTarget_.getStatusBar().showNotebookProgress("Run Chunks");
-            
             // push it into the execution queue
             executeChunk(setupScope, MODE_BATCH);
          }
@@ -1732,15 +1708,6 @@ public class TextEditingTargetNotebook
       // hashes are automatically invalidated when the session changes)
       return session_.getSessionInfo().getSessionId() +
             StringUtil.crc32(code);
-   }
-   
-   private static boolean isSetupChunkScope(Scope scope)
-   {
-      if (!scope.isChunk())
-         return false;
-      if (scope.getChunkLabel() == null)
-         return false;
-      return scope.getChunkLabel().toLowerCase() == "setup";
    }
    
    private void writeSetupCrc32(String crc32)

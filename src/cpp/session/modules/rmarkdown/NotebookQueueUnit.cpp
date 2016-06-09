@@ -162,7 +162,7 @@ json::Object NotebookQueueUnit::toJson() const
    unit[kQueueUnitChunkId]   = chunkId_;
    unit[kQueueUnitCompleted] = completed;
    unit[kQueueUnitPending]   = pending;
-   unit[kQueueUnitExecuting] = executing_;
+   unit[kQueueUnitExecuting] = executing_.toJson();
 
    return json::Object();
 }

@@ -38,6 +38,14 @@ public class NotebookDocQueue extends JavaScriptObject
       this.units.push(unit);
    }-*/;
    
+   public final native NotebookQueueUnit removeUnit(NotebookQueueUnit unit) /*-{
+      var idx = this.units.indexOf(unit);
+      if (idx >= 0)
+      {
+         this.units.splice(idx, 1);
+      }
+   }-*/;
+   
    public final native String getDocId() /*-{
       return this.doc_id;
    }-*/;

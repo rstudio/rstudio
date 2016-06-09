@@ -87,6 +87,7 @@ public:
       {
          if (execUnit_->complete())
          {
+            std::cerr << "chunk " << execUnit_->chunkId() << " complete" << std::endl;
             // unit has finished executing; remove it from the queue
             if (queue_.size() > 0)
             {
@@ -94,6 +95,7 @@ public:
                docQueue->update(execUnit_, QueueDelete, "");
                if (docQueue->complete())
                {
+                  std::cerr << "doc " << docQueue->docId() << " complete" << std::endl;
                   queue_.pop_front();
                }
             }
@@ -116,10 +118,13 @@ public:
    {
       // no work to do if we have no documents
       if (queue_.empty())
-         return process();
+         return Success();
 
       // get the next execution unit from the current queue
       boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
+      if (docQueue->complete())
+         return Success();
+
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
 
       // establish execution context for the unit
@@ -136,6 +141,7 @@ public:
 
       // notify client
       execUnit_ = unit;
+      std::cerr << "chunk " << execUnit_->chunkId() << " started" << std::endl;
       enqueueExecStateChanged(ChunkExecStarted);
 
       executeCurrentUnit();
@@ -224,7 +230,7 @@ private:
       json::Object event;
       event["doc_id"] = execUnit_->docId();
       event["chunk_id"] = execUnit_->chunkId();
-      event["exec_state"] = ChunkExecStarted;
+      event["exec_state"] = state;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkExecStateChanged, event));
    }
@@ -261,6 +267,8 @@ Error updateExecQueue(const json::JsonRpcRequest& request,
    error = NotebookQueueUnit::fromJson(unitJson, &pUnit);
    if (error)
       return error;
+   if (!s_queue)
+      return Success();
 
    return s_queue->update(pUnit, static_cast<QueueOperation>(op), before);
 }

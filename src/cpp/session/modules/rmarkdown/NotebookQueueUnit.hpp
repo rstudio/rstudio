@@ -28,6 +28,10 @@ namespace notebook {
 
 struct ExecRange 
 {
+   ExecRange():
+      start(0),
+      stop(0)
+   {}
    ExecRange(int startIn, int stopIn):
       start(startIn),
       stop(stopIn)

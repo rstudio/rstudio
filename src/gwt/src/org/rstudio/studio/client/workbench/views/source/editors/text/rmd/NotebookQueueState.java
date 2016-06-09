@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
@@ -64,11 +65,24 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public void executeChunk(Scope chunk)
    {
-      List<Scope> scopes = new ArrayList<Scope>();
-      scopes.add(chunk);
-      executeChunks("Run Chunk", scopes);
-      
-      // TODO: insert into existing queue if it exists
+      if (queue_ != null)
+      {
+         NotebookQueueUnit unit = unitFromScope(chunk);
+
+         renderLineState(chunk.getBodyStart().getRow(), 
+               unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+
+         queue_.addUnit(unit);
+         server_.updateNotebookExecQueue(unit, 
+               NotebookDocQueue.QUEUE_OP_ADD, "", 
+               new VoidServerRequestCallback());
+      }
+      else
+      {
+         List<Scope> scopes = new ArrayList<Scope>();
+         scopes.add(chunk);
+         executeChunks("Run Chunk", scopes);
+      }
    }
    
    public void executeChunks(final String jobDesc, List<Scope> scopes)
@@ -109,7 +123,16 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    {
       if (executingUnit_ == null)
          return false;
+
       return executingUnit_.getChunkId() == chunkId;
+   }
+   
+   public boolean isChunkQueued(String chunkId)
+   {
+      if (queue_ == null)
+         return false;
+
+      return getUnit(chunkId) != null;
    }
    
    // Event handlers ----------------------------------------------------------
@@ -150,15 +173,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_STARTED)
       {
          // find the unit
-         JsArray<NotebookQueueUnit> units = queue_.getUnits();
-         for (int i = 0; i < units.length(); i++)
-         {
-            if (units.get(i).getChunkId() == event.getChunkId())
-            {
-               executingUnit_ = units.get(i);
-               break;
-            }
-         }
+         executingUnit_ = getUnit(event.getChunkId());
 
          // TODO: respect actual chunk execution mode
          notebook_.setChunkExecuting(event.getChunkId(), 
@@ -169,7 +184,13 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (executingUnit_ != null && 
              executingUnit_.getChunkId() == event.getChunkId())
          {
+            queue_.removeUnit(executingUnit_);
             executingUnit_ = null;
+            
+            // if there are no more units, clean up the queue so we get a clean
+            // slate on the next execution
+            if (queue_.getUnits().length() == 0)
+               queue_ = null;
          }
       }
    }
@@ -211,8 +232,12 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    private NotebookQueueUnit unitFromScope(Scope scope)
    {
-      ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), 
-            null);
+      // find associated chunk definition
+      String id = null;
+      if (TextEditingTargetNotebook.isSetupChunkScope(scope))
+         id = TextEditingTargetNotebook.SETUP_CHUNK_ID;
+      ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), id);
+
       String code = docDisplay_.getCode(
          scope.getPreamble(),
          scope.getEnd());
@@ -229,7 +254,20 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       
       return unit;
    }
-         
+   
+   private NotebookQueueUnit getUnit(String chunkId)
+   {
+      JsArray<NotebookQueueUnit> units = queue_.getUnits();
+      for (int i = 0; i < units.length(); i++)
+      {
+         if (units.get(i).getChunkId() == chunkId)
+         {
+            return units.get(i);
+         }
+      }
+      return null;
+   }
+
    // TODO: resolve with copy at TextEditingTargetNotebook
    private void syncWidth()
    {
