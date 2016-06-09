@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
+import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.SparkMasterChooser;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
@@ -182,6 +183,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewSparkConnectionDialog newSparkConnectionDialog);
    void injectMembers(SparkMasterChooser sparkMasterChooser);
    void injectMembers(ConnectionCodePanel connectionCodePanel);
+   void injectMembers(ConnectionExplorer connectionExplorer);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

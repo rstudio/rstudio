@@ -299,6 +299,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return connectionExplorer_.getConnectCode();
    }
    
+   @Override
+   public void showConnectionProgress()
+   {
+      connectionExplorer_.showConnectionProgress();
+   }
    
    @Override
    public void onResize()

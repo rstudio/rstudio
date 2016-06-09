@@ -92,6 +92,8 @@ public class ConnectionsPresenter extends BasePresenter
       
       String getConnectVia();
       String getConnectCode();
+      
+      void showConnectionProgress();
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -337,6 +339,8 @@ public class ConnectionsPresenter extends BasePresenter
       {
          eventBus_.fireEvent(
                new SendToConsoleEvent(connectCode, true));
+         
+         display_.showConnectionProgress();
       }
       else if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT) ||
                connectVia.equals(ConnectionOptions.CONNECT_NEW_R_NOTEBOOK))
@@ -370,6 +374,8 @@ public class ConnectionsPresenter extends BasePresenter
         
          eventBus_.fireEvent(
             new NewDocumentWithCodeEvent(type, code, cursorPosition, true));
+         
+         display_.showConnectionProgress();
       }
    }
    
