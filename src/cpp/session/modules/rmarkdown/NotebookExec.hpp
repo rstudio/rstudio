@@ -59,6 +59,7 @@ public:
    std::string docId();
    bool connected();
    ExecScope execScope();
+   core::json::Object options();
 
    // inject console input manually
    void onConsoleInput(const std::string& input);

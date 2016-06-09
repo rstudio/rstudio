@@ -101,7 +101,7 @@ public:
             }
 
             // notify client
-            enqueueExecStateChanged(ChunkExecFinished);
+            enqueueExecStateChanged(ChunkExecFinished, execContext_->options());
 
             // clean up current exec unit 
             execContext_->disconnect();
@@ -133,6 +133,8 @@ public:
       if (error)
          return error;
 
+      // TODO: skip if options includes eval = false (need to notify client)
+
       // TODO: resolve commit mode
       execContext_ = boost::make_shared<ChunkExecContext>(
          unit->docId(), unit->chunkId(), notebookCtxId(), ExecScopeChunk, options,
@@ -142,7 +144,7 @@ public:
       // notify client
       execUnit_ = unit;
       std::cerr << "chunk " << execUnit_->chunkId() << " started" << std::endl;
-      enqueueExecStateChanged(ChunkExecStarted);
+      enqueueExecStateChanged(ChunkExecStarted, options);
 
       executeCurrentUnit();
 
@@ -225,12 +227,14 @@ public:
 
 private:
 
-   void enqueueExecStateChanged(ChunkExecState state)
+   void enqueueExecStateChanged(ChunkExecState state, 
+         const json::Object& options)
    {
       json::Object event;
-      event["doc_id"] = execUnit_->docId();
-      event["chunk_id"] = execUnit_->chunkId();
+      event["doc_id"]     = execUnit_->docId();
+      event["chunk_id"]   = execUnit_->chunkId();
       event["exec_state"] = state;
+      event["options"]    = options;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkExecStateChanged, event));
    }

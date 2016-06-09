@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -38,6 +40,10 @@ public class ChunkExecStateChangedEvent
       
       public final native int getExecState() /*-{
          return this.exec_state;
+      }-*/;
+      
+      public final native RmdChunkOptions getOptions() /*-{
+         return this.options;
       }-*/;
    }
    
@@ -65,6 +71,11 @@ public class ChunkExecStateChangedEvent
    public int getExecState()
    {
       return data_.getExecState();
+   }
+   
+   public RmdChunkOptions getOptions()
+   {
+      return data_.getOptions();
    }
  
    @Override

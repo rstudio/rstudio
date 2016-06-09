@@ -33,7 +33,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -81,6 +80,17 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          return null;
       
       return executingUnit_.getChunkId();
+   }
+   
+   public void clear()
+   {
+      for (int i = 0; i < queue_.getUnits().length(); i++) 
+      {
+         notebook_.cleanChunkExecState(queue_.getUnits().get(i).getChunkId());
+      }
+      
+      // TODO: clean on server, too
+      editingTarget_.getStatusBar().hideNotebookProgress(true);
    }
    
    public void executeRange(Scope chunk, Range range)
@@ -165,6 +175,30 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
 
       return getUnit(chunkId) != null;
    }
+
+   public void dequeueChunk(int preambleRow)
+   {
+      // find the chunk's ID
+      String chunkId = notebook_.getRowChunkId(preambleRow);
+      if (StringUtil.isNullOrEmpty(chunkId))
+         return;
+
+      notebook_.cleanChunkExecState(chunkId);
+      
+      // clear from the execution queue and update display
+      for (int i = 0; i < queue_.getUnits().length(); i++)
+      {
+         if (queue_.getUnits().get(i).getChunkId() == chunkId)
+         {
+            NotebookQueueUnit unit = queue_.getUnits().get(i);
+            queue_.removeUnit(unit);
+            server_.updateNotebookExecQueue(unit, 
+                  NotebookDocQueue.QUEUE_OP_DELETE, "",
+                  new VoidServerRequestCallback());
+            break;
+         }
+      }
+   }
    
    // Event handlers ----------------------------------------------------------
    
@@ -208,9 +242,24 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          // find the unit
          executingUnit_ = getUnit(event.getChunkId());
 
+         // unfold the scope
+         Scope scope = notebook_.getChunkScope(event.getChunkId());
+         if (scope != null)
+         {
+            docDisplay_.unfold(Range.fromPoints(scope.getPreamble(),
+                                                scope.getEnd()));
+         }
+         
+         // apply options
+         notebook_.setOutputOptions(event.getChunkId(), 
+               event.getOptions());
+
+         // TODO: scroll the widget into view if it's a single-shot exec
+      
          // TODO: respect actual chunk execution mode
          notebook_.setChunkExecuting(event.getChunkId(), 
                TextEditingTargetNotebook.MODE_BATCH);
+
       }
       else if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
       {

@@ -91,6 +91,11 @@ std::string ChunkExecContext::docId()
    return docId_;
 }
 
+json::Object ChunkExecContext::options() 
+{
+   return options_;
+}
+
 bool ChunkExecContext::connected()
 {
    return connected_;
