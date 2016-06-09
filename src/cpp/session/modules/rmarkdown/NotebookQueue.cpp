@@ -18,6 +18,7 @@
 #include "NotebookQueueUnit.hpp"
 #include "NotebookExec.hpp"
 #include "NotebookDocQueue.hpp"
+#include "NotebookCache.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -135,9 +136,10 @@ public:
 
       // TODO: skip if options includes eval = false (need to notify client)
 
-      // TODO: resolve commit mode
+      std::string ctx = docQueue->commitMode() == ModeCommitted ?
+         kSavedCtx : notebookCtxId();
       execContext_ = boost::make_shared<ChunkExecContext>(
-         unit->docId(), unit->chunkId(), notebookCtxId(), ExecScopeChunk, options,
+         unit->docId(), unit->chunkId(), ctx, ExecScopeChunk, options,
          docQueue->pixelWidth(), docQueue->charWidth());
       execContext_->connect();
 

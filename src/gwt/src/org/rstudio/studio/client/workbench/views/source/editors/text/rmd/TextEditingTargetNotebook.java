@@ -577,6 +577,22 @@ public class TextEditingTargetNotebook
             Position.create(chunk.getEnd().getRow(), 0));
    }
    
+   public int getCommitMode()
+   {
+      if (editingTarget_.isRmdNotebook())
+      {
+         // notebooks always play chunks as uncommitted
+         return MODE_UNCOMMITTED;
+      }
+      else if (dirtyState_.getValue())
+      {
+         // uncommitted R Markdown files also play chunks as uncommitted
+         return MODE_UNCOMMITTED;
+      }
+      // everything else plays directly to committed
+      return MODE_COMMITTED;
+   }
+   
    // Event handlers ----------------------------------------------------------
    
    @Override
@@ -726,9 +742,6 @@ public class TextEditingTargetNotebook
             // set dirty state if necessary
             setDirtyState();
          }
-
-         // process next chunk in execution queue
-         processChunkExecQueue();
       }
    }
 
@@ -1199,23 +1212,8 @@ public class TextEditingTargetNotebook
       cleanChunkExecState(chunkId);
    }
    
-   private void processChunkExecQueue()
+   private void execNonRChunk(ChunkExecQueueUnit unit)
    {
-      // do nothing if we're waiting for params to evaluate
-      if (!evaluatingParams_)
-         return;
-      
-      // begin chunk execution
-      final ChunkExecQueueUnit unit = chunkExecQueue_.remove();
-
-      // draw UI on chunk
-      Scope chunk = getChunkScope(unit.chunkId);
-      if (chunk != null)
-      {
-         chunks_.setChunkState(chunk.getPreamble().getRow(), 
-               ChunkContextToolbar.STATE_EXECUTING);
-      }
-      
       // if we're using a non-R engine, farm that out to separate routine
       Map<String, String> chunkOptions = new HashMap<String, String>();
       parseChunkOptions(unit.options, chunkOptions);
@@ -1234,54 +1232,6 @@ public class TextEditingTargetNotebook
                chunkOptions);
          return;
       }
-      
-      server_.setChunkConsole(docUpdateSentinel_.getId(),
-            unit.chunkId,
-            getCommitMode(),
-            unit.mode,
-            SCOPE_CHUNK,
-            unit.options,
-            getPlotWidth(),
-            charWidth_,
-            new ServerRequestCallback<RmdChunkOptions>()
-            {
-               @Override
-               public void onResponseReceived(RmdChunkOptions options)
-               {
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // don't leave the chunk hung in execution state
-                  cleanCurrentExecChunk();
-
-                  // if the queue is empty, show an error; if it's not, prompt
-                  // for continuing
-                  if (chunkExecQueue_.isEmpty())
-                     RStudioGinjector.INSTANCE.getGlobalDisplay()
-                       .showErrorMessage("Chunk Execution Failed", 
-                              error.getUserMessage());
-                  else
-                     RStudioGinjector.INSTANCE.getGlobalDisplay()
-                       .showYesNoMessage(
-                        GlobalDisplay.MSG_QUESTION, 
-                        "Continue Execution?", 
-                        "The following error was encountered during chunk " +
-                        "execution: \n\n" + error.getUserMessage() + "\n\n" +
-                        "Do you want to continue executing notebook chunks?", 
-                        false, 
-                        new Operation()
-                        {
-                           @Override
-                           public void execute()
-                           {
-                              processChunkExecQueue();
-                           }
-                        }, 
-                        null, null, "Continue", "Abort", true);
-               }
-            });
    }
    
    private void execAlternateEngineChunk(String docId,
@@ -1306,14 +1256,12 @@ public class TextEditingTargetNotebook
                @Override
                public void onResponseReceived(String response)
                {
-                  processChunkExecQueue();
                }
 
                @Override
                public void onError(ServerError error)
                {
                   Debug.logError(error);
-                  processChunkExecQueue();
                }
             });
    }
@@ -1816,22 +1764,6 @@ public class TextEditingTargetNotebook
                   Debug.logError(error);
                }
             });
-   }
-   
-   private int getCommitMode()
-   {
-      if (editingTarget_.isRmdNotebook())
-      {
-         // notebooks always play chunks as uncommitted
-         return MODE_UNCOMMITTED;
-      }
-      else if (dirtyState_.getValue())
-      {
-         // uncommitted R Markdown files also play chunks as uncommitted
-         return MODE_UNCOMMITTED;
-      }
-      // everything else plays directly to committed
-      return MODE_COMMITTED;
    }
    
    private void setDirtyState()

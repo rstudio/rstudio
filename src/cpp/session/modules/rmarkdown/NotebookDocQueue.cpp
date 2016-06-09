@@ -27,6 +27,7 @@ using namespace rstudio::core;
 #define kDocQueueCharWidth  "pixel_width"
 #define kDocQueueUnits      "units"
 #define kDocQueueMaxUnits   "max_units"
+#define kDocQueueCommitMode "commit_mode"
 
 namespace rstudio {
 namespace session {
@@ -35,9 +36,11 @@ namespace rmarkdown {
 namespace notebook {
 
 NotebookDocQueue::NotebookDocQueue(const std::string& docId, 
-      const std::string& jobDesc, int pixelWidth, int charWidth) :
+      const std::string& jobDesc, CommitMode commitMode,
+      int pixelWidth, int charWidth) :
       docId_(docId),
       jobDesc_(jobDesc),
+      commitMode_(commitMode),
       pixelWidth_(pixelWidth),
       charWidth_(charWidth)
 {
@@ -67,6 +70,7 @@ json::Object NotebookDocQueue::toJson() const
    json::Object queue;
    queue[kDocQueueId]         = docId_;
    queue[kDocQueueJobDesc]    = jobDesc_;
+   queue[kDocQueueCommitMode] = commitMode_;
    queue[kDocQueuePixelWidth] = pixelWidth_;
    queue[kDocQueueCharWidth]  = charWidth_;
    queue[kDocQueueUnits]      = units;
@@ -81,13 +85,17 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    // extract contained unit for manipulation
    NotebookDocQueue& queue = *pQueue->get();
    json::Array units; 
+   int commitMode = 0;
    Error error = json::readObject(source, 
          kDocQueueId,         &queue.docId_,
          kDocQueueJobDesc,    &queue.jobDesc_,
+         kDocQueueCommitMode, &commitMode,
          kDocQueuePixelWidth, &queue.pixelWidth_,
          kDocQueueCharWidth,  &queue.charWidth_,
          kDocQueueUnits,      &units, 
          kDocQueueMaxUnits,   &queue.maxUnits_);
+
+   queue.commitMode_ = static_cast<CommitMode>(commitMode);
 
    BOOST_FOREACH(const json::Value val, units)
    {
@@ -156,6 +164,11 @@ int NotebookDocQueue::charWidth() const
 bool NotebookDocQueue::complete() const
 {
    return queue_.empty();
+}
+
+CommitMode NotebookDocQueue::commitMode() const
+{
+   return commitMode_;
 }
 
 } // namespace notebook

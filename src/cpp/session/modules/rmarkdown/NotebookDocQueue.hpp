@@ -18,6 +18,7 @@
 
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
+#include "SessionRmdNotebook.hpp"
 
 #include <core/json/Json.hpp>
 #include <list>
@@ -38,22 +39,24 @@ class NotebookDocQueue
 {
 public:
    NotebookDocQueue();
-   NotebookDocQueue(const std::string& docId, const std::string& jobDesc, 
-         int pixelWith, int charWidth);
-   static core::Error fromJson(const core::json::Object& source, 
+   NotebookDocQueue(const std::string& docId, const std::string& jobDesc,
+         CommitMode commitMode, int pixelWith, int charWidth);
+   static core::Error fromJson(const core::json::Object& source,
       boost::shared_ptr<NotebookDocQueue>* pQueue);
-   core::Error update(const boost::shared_ptr<NotebookQueueUnit> unit, 
+   core::Error update(const boost::shared_ptr<NotebookQueueUnit> unit,
       QueueOperation op, const std::string& before);
-   core::json::Object toJson() const; 
+   core::json::Object toJson() const;
    std::string docId() const;
    int pixelWidth() const;
    int charWidth() const;
    bool complete() const;
+   CommitMode commitMode() const;
    boost::shared_ptr<NotebookQueueUnit> firstUnit();
 
 private:
    std::string docId_;
    std::string jobDesc_;
+   CommitMode commitMode_;
    int pixelWidth_;
    int charWidth_;
    int maxUnits_;

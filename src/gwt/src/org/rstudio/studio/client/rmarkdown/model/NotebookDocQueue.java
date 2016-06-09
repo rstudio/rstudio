@@ -24,10 +24,12 @@ public class NotebookDocQueue extends JavaScriptObject
    }
    
    public static final native NotebookDocQueue create(
-         String docId, String jobDesc, int pixelWidth, int charWidth) /*-{
+         String docId, String jobDesc, int commitMode, 
+         int pixelWidth, int charWidth) /*-{
       return {
          doc_id:      docId,
          job_desc:    jobDesc,
+         commit_mode: commitMode,
          pixel_width: pixelWidth,
          char_width:  charWidth,
          units:       [],
@@ -54,6 +56,10 @@ public class NotebookDocQueue extends JavaScriptObject
 
    public final native String getJobDesc() /*-{
       return this.job_desc;
+   }-*/;
+   
+   public final native int getCommitMode() /*-{
+      return this.commit_mode;
    }-*/;
 
    public final native int getPixelWidth() /*-{
