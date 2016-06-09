@@ -158,6 +158,7 @@ const int kConnectionUpdated = 139;
 const int kEnableConnections = 140;
 const int kConnectionListChanged = 141;
 const int kActiveConnectionsChanged = 142;
+const int kConnectionOpened = 143;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -433,6 +434,8 @@ std::string ClientEvent::typeName() const
          return "connection_list_changed";
       case client_events::kActiveConnectionsChanged:
          return "active_connections_changed";
+      case client_events::kConnectionOpened:
+         return "connection_opened";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

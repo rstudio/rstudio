@@ -83,6 +83,11 @@ SEXP rs_connectionOpened(SEXP typeSEXP,
    // update active connections
    activeConnections().add(connection.id);
 
+   // fire connection opended event
+   ClientEvent event(client_events::kConnectionOpened,
+                     connectionJson(connection));
+   module_context::enqueClientEvent(event);
+
    return R_NilValue;
 }
 

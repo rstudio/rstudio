@@ -52,6 +52,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -206,6 +207,15 @@ public class ConnectionsPresenter extends BasePresenter
    public void activate()
    {
       display_.bringToFront();
+   }
+   
+   public void onConnectionOpened(ConnectionOpenedEvent event)
+   {
+      if (exploredConnection_ == null || 
+          !exploredConnection_.getId().equalTo(event.getConnection().getId()))
+      {
+         exploreConnection(event.getConnection());
+      }
    }
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)

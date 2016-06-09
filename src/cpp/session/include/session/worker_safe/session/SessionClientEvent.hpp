@@ -159,6 +159,7 @@ extern const int kConnectionUpdated;
 extern const int kEnableConnections;
 extern const int kConnectionListChanged;
 extern const int kActiveConnectionsChanged;
+extern const int kConnectionOpened;
 }
    
 class ClientEvent

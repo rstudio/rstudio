@@ -100,6 +100,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedE
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -827,6 +828,11 @@ public class ClientEventDispatcher
          {
             JsArray<ConnectionId> connections = event.getData();
             eventBus_.fireEvent(new ActiveConnectionsChangedEvent(connections));
+         }
+         else if (type.equals(ClientEvent.ConnectionOpened))
+         {
+            Connection connection = event.getData();
+            eventBus_.fireEvent(new ConnectionOpenedEvent(connection));
          }
          else
          {
