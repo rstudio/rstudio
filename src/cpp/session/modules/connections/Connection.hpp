@@ -27,10 +27,14 @@ namespace connections {
    
 struct ConnectionId
 {
+   ConnectionId() {}
+
    ConnectionId(const std::string& type, const std::string& host)
       : type(type), host(host)
    {
    }
+
+   bool empty() const { return type.empty(); }
 
    std::string type;
    std::string host;
@@ -48,6 +52,7 @@ struct ConnectionId
 
 struct Connection
 {
+   Connection() {}
    Connection(const ConnectionId& id,
               const std::string& finder,
               const std::string& connectCode,
@@ -67,6 +72,8 @@ struct Connection
    {
    }
 
+   bool empty() const { return id.empty(); }
+
    ConnectionId id;
    std::string finder;
    std::string connectCode;
@@ -79,6 +86,9 @@ struct Connection
 
 core::json::Object connectionIdJson(const ConnectionId& id);
 core::json::Object connectionJson(const Connection& connection);
+
+core::Error connectionFromJson(const core::json::Object& connectionJson,
+                               Connection* pConnection);
 
 bool hasConnectionId(const ConnectionId& id,
                      const core::json::Object& connectionJson);

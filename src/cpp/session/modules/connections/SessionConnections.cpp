@@ -199,43 +199,48 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    std::string code;
    error = func.call(&code);
    if (error)
+   {
+      LOG_ERROR(error);
       return error;
+   }
 
    pResponse->setResult(code);
 
    return Success();
 }
 
-Error readFinderAndHostParams(const json::JsonRpcRequest& request,
-                              std::string* pFinder,
-                              std::string* pHost)
+Error readConnectionParam(const json::JsonRpcRequest& request,
+                          Connection* pConnection)
 {
-   // read params
-   json::Object idJson;
-   Error error = json::readObjectParam(request.params, 0,
-                                       "id", &idJson,
-                                       "finder", pFinder);
+   // read param
+   json::Object connectionJson;
+   Error error = json::readParam(request.params, 0, &connectionJson);
    if (error)
       return error;
 
-   return json::readObject(idJson, "host", pHost);
+   return connectionFromJson(connectionJson, pConnection);
 }
 
 
 Error showSparkLog(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
-   // get params
-   std::string finder, host;
-   Error error = readFinderAndHostParams(request, &finder, &host);
+   // get connection param
+   Connection connection;
+   Error error = readConnectionParam(request, &connection);
    if (error)
       return error;
 
    // get the log file
    std::string log;
-   error = r::exec::RFunction(".rs.getSparkLogFile", finder, host).call(&log);
+   error = r::exec::RFunction(".rs.getSparkLogFile",
+                                 connection.finder,
+                                 connection.id.host).call(&log);
    if (error)
+   {
+      LOG_ERROR(error);
       return error;
+   }
 
    // show the file
    module_context::showFile(FilePath(log));
@@ -246,17 +251,22 @@ Error showSparkLog(const json::JsonRpcRequest& request,
 Error showSparkUI(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   // get params
-   std::string finder, host;
-   Error error = readFinderAndHostParams(request, &finder, &host);
+   // get connection param
+   Connection connection;
+   Error error = readConnectionParam(request, &connection);
    if (error)
       return error;
 
    // get the url
    std::string url;
-   error = r::exec::RFunction(".rs.getSparkWebUrl", finder, host).call(&url);
+   error = r::exec::RFunction(".rs.getSparkWebUrl",
+                                 connection.finder,
+                                 connection.id.host).call(&url);
    if (error)
+   {
+      LOG_ERROR(error);
       return error;
+   }
 
    // portmap if necessary
    url = module_context::mapUrlPorts(url);
@@ -268,6 +278,77 @@ Error showSparkUI(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+void endConnectionListTables(const Connection& connection,
+                             const json::JsonRpcFunctionContinuation& continuation)
+{
+   // response
+   json::JsonRpcResponse response;
+
+   // get the list of tables
+   std::vector<std::string> tables;
+   Error error = r::exec::RFunction(".rs.connectionListTables",
+                                    connection.finder,
+                                    connection.id.host,
+                                    connection.listTablesCode).call(&tables);
+   if (error)
+   {
+      continuation(error, &response);
+   }
+   else
+   {
+      response.setResult(json::toJsonArray((tables)));
+      continuation(Success(), &response);
+   }
+}
+
+void beginConnectionListTables(const json::JsonRpcRequest& request,
+                               const json::JsonRpcFunctionContinuation& continuation)
+{
+   // get connection param
+   Connection connection;
+   Error error = readConnectionParam(request, &connection);
+   if (error)
+   {
+      json::JsonRpcResponse response;
+      continuation(error, &response);
+      return;
+   }
+
+   // delay until idle if this is a background connection
+   if (request.isBackgroundConnection)
+   {
+      module_context::scheduleDelayedWork(
+          boost::posix_time::milliseconds(100),
+          boost::bind(endConnectionListTables, connection, continuation),
+          true);
+   }
+   // otherwise execute immediately
+   else
+   {
+      endConnectionListTables(connection, continuation);
+   }
+}
+
+
+Error connectionListFields(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // get connection param
+   Connection connection;
+   Error error = readConnectionParam(request, &connection);
+   if (error)
+      return error;
+
+   // read table param
+   std::string table;
+   error = json::readParam(request.params, 1, &table);
+   if (error)
+      return error;
+
+
+   return Success();
+}
 
 Error installSpark(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
@@ -361,7 +442,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.11");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.12");
 }
 
 bool activateConnections()
@@ -413,6 +494,8 @@ Error initialize()
       (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
       (bind(registerRpcMethod, "show_spark_log", showSparkLog))
       (bind(registerRpcMethod, "show_spark_ui", showSparkUI))
+      (bind(registerAsyncRpcMethod, "connection_list_tables", beginConnectionListTables))
+      (bind(registerRpcMethod, "connection_list_fields", connectionListFields))
       (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 

@@ -49,10 +49,36 @@ json::Object connectionJson(const Connection& connection)
    connectionJson["connect_code"] = connection.connectCode;
    connectionJson["disconnect_code"] = connection.disconnectCode;
    connectionJson["list_tables_code"] = connection.listTablesCode;
-   connectionJson["list_columns_code"] = connection.listTablesCode;
+   connectionJson["list_columns_code"] = connection.listColumnsCode;
    connectionJson["preview_table_code"] = connection.previewTableCode;
    connectionJson["last_used"] = connection.lastUsed;
    return connectionJson;
+}
+
+Error connectionFromJson(const json::Object& connectionJson,
+                         Connection* pConnection)
+{
+   // read id fields
+   json::Object idJson;
+   Error error = json::readObject(connectionJson, "id", &idJson);
+   if (error)
+      return error;
+   error = json::readObject(idJson,
+                            "type", &(pConnection->id.type),
+                            "host", &(pConnection->id.host));
+   if (error)
+      return error;
+
+   // read remanining fields
+   return json::readObject(
+            connectionJson,
+            "finder", &(pConnection->finder),
+            "connect_code", &(pConnection->connectCode),
+            "disconnect_code", &(pConnection->disconnectCode),
+            "list_tables_code", &(pConnection->listTablesCode),
+            "list_columns_code", &(pConnection->listColumnsCode),
+            "preview_table_code", &(pConnection->previewTableCode),
+            "last_used", &(pConnection->lastUsed));
 }
 
 bool hasConnectionId(const ConnectionId& id,

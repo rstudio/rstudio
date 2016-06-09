@@ -20,12 +20,15 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -44,8 +47,10 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       codePanel_.setHeight(codePanelHeight + "px");
       codePanel_.setWidth("100%");
      
-      // data browser panel
-      dataBrowserPanel_ = new Label("Data Browser");
+      // table browser panel
+      tableBrowser_ = new ListBox();
+      tableBrowser_.setVisibleItemCount(2);
+      tableBrowser_.setSize("100%", "100%");
       
       
       containerPanel_ = new SimplePanelWithProgress(
@@ -62,17 +67,22 @@ public class ConnectionExplorer extends Composite implements RequiresResize
          {
             if (!event.isBusy())
             {
-               waitingForConnection_ = false;
-               showActivePanel();
+               if (waitingForConnection_)
+               {
+                  waitingForConnection_ = false;
+                  showActivePanel();
+                  updateTableBrowser();
+               }
             }
          }
       });
    }
    
    @Inject
-   public void initialize(EventBus eventBus)
+   public void initialize(EventBus eventBus, ConnectionsServerOperations server)
    {
       eventBus_ = eventBus;
+      server_ = server;
    }
    
    public void showConnectionProgress()
@@ -83,12 +93,14 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    public void setConnection(Connection connection, String connectVia)
    {
+      connection_ = connection;
       codePanel_.setCode(connection.getConnectCode(), connectVia);
+      updateTableBrowser();
    }
    
    public void setConnected(boolean connected)
    {
-      activePanel_ = connected ? dataBrowserPanel_ : codePanel_;
+      activePanel_ = connected ? tableBrowser_ : codePanel_;
       if (!waitingForConnection_)
          showActivePanel();
    }
@@ -101,6 +113,35 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    public String getConnectVia()
    {
       return codePanel_.getConnectVia();
+   }
+   
+   public void updateTableBrowser()
+   {
+      updateTableBrowser("");
+   }
+   
+   public void updateTableBrowser(String hint)
+   {   
+      if (waitingForConnection_)
+         return;
+      
+      server_.connectionListTables(
+                connection_, 
+                new SimpleRequestCallback<JsArrayString>() {
+         @Override
+         public void onResponseReceived(JsArrayString tables)
+         {
+            clearTableBrowser();
+            tableBrowser_.setVisibleItemCount(Math.max(2, tables.length()));
+            for (int i = 0; i<tables.length(); i++)
+               tableBrowser_.addItem(tables.get(i));
+         }    
+      });
+   }
+   
+   public void clearTableBrowser()
+   {
+      tableBrowser_.clear();
    }
   
    @Override
@@ -117,7 +158,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    }
    
    private final ConnectionCodePanel codePanel_;
-   private final Label dataBrowserPanel_;
+   private final ListBox tableBrowser_;
   
    private Widget activePanel_;
    
@@ -125,6 +166,9 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    private boolean waitingForConnection_ = false;
    
+   private Connection connection_ = null;
+   
    private EventBus eventBus_;
+   private ConnectionsServerOperations server_;
    
 }

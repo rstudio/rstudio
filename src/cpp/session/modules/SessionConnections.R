@@ -84,6 +84,18 @@ options(connectionViewer = list(
    rspark::spark_log_file(sc)
 })
 
+.rs.addFunction("connectionListTables", function(finder, host, listTablesCode) {
+
+   name <- .rs.getConnectionObjectName(finder, host)
+
+   if (!is.null(name)) {
+      listTablesCode <- sprintf(listTablesCode, name)
+      eval(parse(text = listTablesCode), envir = globalenv())
+   }
+   else
+      character()
+})
+
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
 
   context <- list()

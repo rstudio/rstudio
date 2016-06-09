@@ -86,7 +86,9 @@ public class ConnectionsPresenter extends BasePresenter
                                        ExploreConnectionEvent.Handler handler); 
       
       void showConnectionExplorer(Connection connection, String connectVia);
-      void updateExploredConnection(Connection connection);
+      void setExploredConnection(Connection connection);
+      
+      void updateExploredConnection(String hint);
       
       HasClickHandlers backToConnectionsButton();
       
@@ -207,8 +209,14 @@ public class ConnectionsPresenter extends BasePresenter
    }
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
-   {     
+   {  
+      if (exploredConnection_ == null)
+         return;
       
+      if (!exploredConnection_.getId().equalTo(event.getConnectionId()))
+         return;
+      
+      display_.updateExploredConnection(event.getHint());
    }
    
    public void onConnectionListChanged(ConnectionListChangedEvent event)
@@ -480,7 +488,7 @@ public class ConnectionsPresenter extends BasePresenter
             if (connections.get(i).getId().equals(exploredConnection_.getId()))
             {
                exploredConnection_ = connections.get(i);
-               display_.updateExploredConnection(exploredConnection_);
+               display_.setExploredConnection(exploredConnection_);
                break;
             }
          }

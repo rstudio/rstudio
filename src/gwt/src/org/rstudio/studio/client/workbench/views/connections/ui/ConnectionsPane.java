@@ -247,7 +247,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
-   public void updateExploredConnection(Connection connection)
+   public void setExploredConnection(Connection connection)
    {
       setConnection(connection, connectionExplorer_.getConnectVia());
    }
@@ -261,6 +261,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          connectionExplorer_.setConnection(connection, connectVia);
          connectionExplorer_.setConnected(isConnected(connection.getId()));
       }
+   }
+   
+   @Override
+   public void updateExploredConnection(String hint)
+   {
+      connectionExplorer_.updateTableBrowser(hint);
    }
    
    @Override
