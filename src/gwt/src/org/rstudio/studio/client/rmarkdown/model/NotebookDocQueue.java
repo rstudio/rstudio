@@ -30,12 +30,14 @@ public class NotebookDocQueue extends JavaScriptObject
          job_desc:    jobDesc,
          pixel_width: pixelWidth,
          char_width:  charWidth,
-         units:       []
+         units:       [],
+         max_units:   0
       }
    }-*/;
    
    public final native NotebookQueueUnit addUnit(NotebookQueueUnit unit) /*-{
       this.units.push(unit);
+      this.max_units = Math.max(this.units.length, this.max_units);
    }-*/;
    
    public final native NotebookQueueUnit removeUnit(NotebookQueueUnit unit) /*-{
@@ -60,6 +62,10 @@ public class NotebookDocQueue extends JavaScriptObject
 
    public final native int getCharWidth() /*-{
       return this.char_width;
+   }-*/;
+   
+   public final native int getMaxUnits() /*-{
+      return this.max_units;
    }-*/;
 
    public final native JsArray<NotebookQueueUnit> getUnits() /*-{

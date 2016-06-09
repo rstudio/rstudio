@@ -59,8 +59,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -117,7 +115,6 @@ public class TextEditingTargetNotebook
                           SendToChunkConsoleEvent.Handler, 
                           ChunkChangeEvent.Handler,
                           ChunkContextChangeEvent.Handler,
-                          ConsoleWriteInputHandler,
                           ResizeHandler,
                           InterruptStatusEvent.Handler,
                           RestartStatusEvent.Handler,
@@ -427,8 +424,8 @@ public class TextEditingTargetNotebook
       commands_ = commands;
       pSourceWindowManager_ = pSourceWindowManager;
       dependencyManager_ = dependencyManager;
-      queue_ = new NotebookQueueState(docDisplay_, docUpdateSentinel_,
-            server, events, this);
+      queue_ = new NotebookQueueState(docDisplay_, editingTarget_, 
+            docUpdateSentinel_, server, events, this);
       
       releaseOnDismiss_.add(
             events_.addHandler(RmdChunkOutputEvent.TYPE, this));
@@ -444,8 +441,6 @@ public class TextEditingTargetNotebook
             events_.addHandler(ChunkChangeEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(ChunkContextChangeEvent.TYPE, this));
-      releaseOnDismiss_.add(
-            events_.addHandler(ConsoleWriteInputEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(InterruptStatusEvent.TYPE, this));
       releaseOnDismiss_.add(
@@ -554,7 +549,7 @@ public class TextEditingTargetNotebook
    
    public void onNotebookClearAllOutput()
    {
-      if (executingChunk_ == null && chunkExecQueue_.isEmpty())
+      if (!queue_.isExecuting())
       {
          // no chunks running, just clean everything up
          removeAllChunks();
@@ -685,11 +680,15 @@ public class TextEditingTargetNotebook
          // from the cache
          boolean ensureVisible = !event.getOutput().isReplay();
          int mode = MODE_SINGLE;
+         
+         // TODO: pick up mode from executing chunk
+         /*
          if (executingChunk_ != null &&
              executingChunk_.chunkId == event.getOutput().getChunkId())
          {
             mode = executingChunk_.mode;
          }
+         */
          
          // no need to make chunks visible in batch mode
          if (ensureVisible && mode == MODE_BATCH)
@@ -830,45 +829,6 @@ public class TextEditingTargetNotebook
       }
    }
    
-   @Override
-   public void onConsoleWriteInput(ConsoleWriteInputEvent event)
-   {
-      if (executingChunk_ == null)
-         return;
-      Scope chunk = getChunkScope(executingChunk_.chunkId);
-      if (chunk == null)
-         return;
-
-      String code = docDisplay_.getCode(chunk.getBodyStart(), chunk.getEnd());
-      
-      // find the line just emitted (start looking from the current position)
-      int idx = code.indexOf(event.getInput(), executingChunk_.pos);
-      if (idx < 0)
-         return;
-      
-      // if we found it, count the number of lines moved over
-      int lines = 0;
-      int end = idx + event.getInput().length();
-      for (int i = executingChunk_.pos; i < end; i++)
-      {
-         if (code.charAt(i) == '\n')
-            lines++;
-      }
-      
-      // update display 
-      int start = chunk.getBodyStart().getRow() + 
-                  executingChunk_.linesExecuted;
-      executingChunk_.executingRowStart = start + 1;
-      executingChunk_.executingRowEnd = start + lines;
-      docDisplay_.setChunkLineExecState(
-            executingChunk_.executingRowStart, 
-            executingChunk_.executingRowEnd,
-            ChunkRowExecState.LINE_EXECUTED);
-      
-      // advance internal input indicator past the text just emitted
-      executingChunk_.pos = idx + event.getInput().length();
-      executingChunk_.linesExecuted += lines;
-   }
 
    @Override
    public void onResize(ResizeEvent event)
@@ -1236,17 +1196,17 @@ public class TextEditingTargetNotebook
    
    private void cleanCurrentExecChunk()
    {
-      if (executingChunk_ == null)
+      String chunkId = queue_.getExecutingChunkId();
+      if (chunkId == null)
          return;
       
-      if (outputs_.containsKey(executingChunk_.chunkId))
+      if (outputs_.containsKey(chunkId))
       {
-         outputs_.get(executingChunk_.chunkId)
+         outputs_.get(chunkId)
                  .getOutputWidget().onOutputFinished(false, 
                        TextEditingTargetNotebook.SCOPE_PARTIAL);
       }
-      cleanChunkExecState(executingChunk_.chunkId);
-      executingChunk_ = null;
+      cleanChunkExecState(chunkId);
    }
    
    private void processChunkExecQueue()
@@ -1258,7 +1218,6 @@ public class TextEditingTargetNotebook
       // if the queue is empty, just make sure we've hidden the progress UI
       if (chunkExecQueue_.isEmpty())
       {
-         editingTarget_.getStatusBar().hideNotebookProgress(false);
          return;
       }
       
@@ -1841,7 +1800,6 @@ public class TextEditingTargetNotebook
    {
       // update progress meter on status bar
       editingTarget_.getStatusBar().updateNotebookProgress(
-           executingChunk_ == null ? "" : executingChunk_.label,
            (int)Math.round(100 * ((double)(execQueueMaxSize_ - 
                                            chunkExecQueue_.size()) / 
                                   (double) execQueueMaxSize_)));
@@ -1856,10 +1814,11 @@ public class TextEditingTargetNotebook
                   @Override
                   public void onClick(ClickEvent arg0)
                   {
-                     if (executingChunk_ != null &&
-                         outputs_.containsKey(executingChunk_.chunkId))
+                     String chunkId = queue_.getExecutingChunkId();
+                     if (chunkId != null &&
+                         outputs_.containsKey(chunkId))
                      {
-                        outputs_.get(executingChunk_.chunkId).ensureVisible();
+                        outputs_.get(chunkId).ensureVisible();
                      }
                   }
                });

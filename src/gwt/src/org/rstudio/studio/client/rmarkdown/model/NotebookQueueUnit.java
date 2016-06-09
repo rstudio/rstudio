@@ -66,6 +66,10 @@ public class NotebookQueueUnit extends JavaScriptObject
       this.pending.push(range);
    }-*/;
    
+   public final native void addCompletedRange(NotebookExecRange range) /*-{
+      this.completed.push(range);
+   }-*/;
+   
    public final native void setExecutingRange(NotebookExecRange range) /*-{
       this.executing = range;
    }-*/;

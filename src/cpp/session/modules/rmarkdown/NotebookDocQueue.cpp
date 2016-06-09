@@ -26,6 +26,7 @@ using namespace rstudio::core;
 #define kDocQueuePixelWidth "pixel_width"
 #define kDocQueueCharWidth  "pixel_width"
 #define kDocQueueUnits      "units"
+#define kDocQueueMaxUnits   "max_units"
 
 namespace rstudio {
 namespace session {
@@ -69,6 +70,7 @@ json::Object NotebookDocQueue::toJson() const
    queue[kDocQueuePixelWidth] = pixelWidth_;
    queue[kDocQueueCharWidth]  = charWidth_;
    queue[kDocQueueUnits]      = units;
+   queue[kDocQueueMaxUnits]   = maxUnits_;
 
    return queue;
 }
@@ -84,7 +86,8 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
          kDocQueueJobDesc,    &queue.jobDesc_,
          kDocQueuePixelWidth, &queue.pixelWidth_,
          kDocQueueCharWidth,  &queue.charWidth_,
-         kDocQueueUnits,      &units);
+         kDocQueueUnits,      &units, 
+         kDocQueueMaxUnits,   &queue.maxUnits_);
 
    BOOST_FOREACH(const json::Value val, units)
    {
@@ -122,6 +125,7 @@ Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit,
          it = std::find_if(queue_.begin(), queue_.end(), 
                boost::bind(chunkIdEquals, _1, before));
          queue_.insert(it, unit);
+         maxUnits_ = std::max(maxUnits_, static_cast<int>(queue_.size()));
          break;
 
       case QueueUpdate:

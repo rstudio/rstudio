@@ -56,6 +56,7 @@ private:
    std::string jobDesc_;
    int pixelWidth_;
    int charWidth_;
+   int maxUnits_;
 
    // the queue of chunks to be executed 
    std::list<boost::shared_ptr<NotebookQueueUnit> > queue_;

@@ -33,11 +33,13 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -50,21 +52,35 @@ import com.google.gwt.core.client.JsArray;
 public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
                                            ChunkExecStateChangedEvent.Handler
 {
-   public NotebookQueueState(DocDisplay display, DocUpdateSentinel sentinel,
-         RMarkdownServerOperations server, EventBus events, 
-         TextEditingTargetNotebook notebook)
+   public NotebookQueueState(DocDisplay display, TextEditingTarget editingTarget,
+         DocUpdateSentinel sentinel, RMarkdownServerOperations server, 
+         EventBus events, TextEditingTargetNotebook notebook)
    {
       docDisplay_ = display;
       sentinel_ = sentinel;
       server_ = server;
       events_ = events;
       notebook_ = notebook;
+      editingTarget_ = editingTarget;
       scopeHelper_ = new TextEditingTargetScopeHelper(display);
       
       events_.addHandler(NotebookRangeExecutedEvent.TYPE, this);
       events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
       
       syncWidth();
+   }
+   
+   public boolean isExecuting()
+   {
+      return queue_ != null;
+   }
+   
+   public String getExecutingChunkId()
+   {
+      if (executingUnit_ == null)
+         return null;
+      
+      return executingUnit_.getChunkId();
    }
    
    public void executeRange(Scope chunk, Range range)
@@ -163,7 +179,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          return;
       
       if (isChunkExecuting(event.getChunkId()))
+      {
          executingUnit_.setExecutingRange(event.getExecRange());
+      }
       
       // find the queue unit and convert to lines
       for (int i = 0; i < queue_.getUnits().length(); i++)
@@ -205,7 +223,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             // if there are no more units, clean up the queue so we get a clean
             // slate on the next execution
             if (queue_.getUnits().length() == 0)
+            {
                queue_ = null;
+               editingTarget_.getStatusBar().hideNotebookProgress(false);
+            }
+            else
+            {
+               updateNotebookProgress();
+            }
          }
       }
    }
@@ -234,6 +259,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          // draw the pending lines
          renderLineState(scope.getBodyStart().getRow(), 
                unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+      }
+
+      // update the status bar
+      if (queue_.getMaxUnits() > 1)
+      {
+         editingTarget_.getStatusBar().showNotebookProgress(
+               queue_.getJobDesc());
+         updateNotebookProgress();
       }
    }
    
@@ -401,6 +434,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       });
    }
    
+   public void updateNotebookProgress()
+   {
+      editingTarget_.getStatusBar().updateNotebookProgress(
+           (int)Math.round(100 * ((double)(queue_.getMaxUnits() - 
+                                           queue_.getUnits().length())) / 
+                                  (double) queue_.getMaxUnits()));
+   }
+   
    private NotebookDocQueue queue_;
    
    private final DocDisplay docDisplay_;
@@ -409,6 +450,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private final TextEditingTargetNotebook notebook_;
    private final EventBus events_;
    private final TextEditingTargetScopeHelper scopeHelper_;
+   private final TextEditingTarget editingTarget_;
    
    private int pixelWidth_;
    private int charWidth_;
