@@ -60,7 +60,7 @@ PlotCapture::PlotCapture() :
 void PlotCapture::processPlots(bool ignoreEmpty)
 {
    // ensure plot folder exists
-   if (plotFolder_.exists())
+   if (!plotFolder_.exists())
       return;
 
    // collect plots from the folder
@@ -173,6 +173,7 @@ core::Error PlotCapture::connect(double height, double width,
                                  const FilePath& plotFolder)
 {
    // clean up any stale plots from the folder
+   plotFolder_ = plotFolder;
    std::vector<FilePath> folderContents;
    Error error = plotFolder.children(&folderContents);
    if (error)
