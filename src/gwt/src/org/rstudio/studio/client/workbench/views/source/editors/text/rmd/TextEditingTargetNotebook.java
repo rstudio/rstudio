@@ -24,7 +24,6 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.TextCursor;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
@@ -39,6 +38,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
+import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
@@ -1376,14 +1376,11 @@ public class TextEditingTargetNotebook
       }
       
       // if we're using a non-R engine, farm that out to separate routine
-      Map<String, String> chunkOptions = new HashMap<String, String>();
-      parseChunkOptions(unit.options, chunkOptions);
+      String line = docDisplay_.getLine(chunk.getPreamble().getRow());
+      Map<String, String> chunkOptions = RMarkdownChunkHeaderParser.parse(line);
        
-      String engine = chunkOptions.containsKey("engine")
-            ? chunkOptions.get("engine")
-            : "r";
-            
-      if (engine != "r")
+      String engine = StringUtil.stringValue(chunkOptions.get("engine"));
+      if (!engine.equalsIgnoreCase("r"))
       {
          execAlternateEngineChunk(
                docUpdateSentinel_.getId(),
@@ -1490,68 +1487,6 @@ public class TextEditingTargetNotebook
                   processChunkExecQueue();
                }
             });
-   }
-   
-   public static void parseChunkOptions(String line,
-                                        Map<String, String> chunkOptions)
-   {
-      // strip '```{' and '}' if necessary
-      // some callers only pass in the leading '```{'
-      line = line.trim();
-      if (line.startsWith("```{"))
-      {
-         int endIndex = line.length();
-         if (line.endsWith("}"))
-            endIndex--;
-         
-         line = line.substring(4, endIndex);
-      }
-      
-      TextCursor cursor = new TextCursor(line);
-      
-      // parse preamble
-      int preambleStartIdx = cursor.getIndex();
-      int preambleEndIdx   = line.length();
-      
-      if (cursor.fwdToCharacter(',', false))
-         preambleEndIdx = cursor.getIndex();
-      
-      parseChunkPreamble(
-            line.substring(preambleStartIdx, preambleEndIdx),
-            chunkOptions);
-      
-      // parse chunk options
-      while (cursor.contentEquals(','))
-      {
-         int startIdx = cursor.getIndex() + 1;
-         if (!cursor.fwdToCharacter('=', false))
-            break;
-         int equalsIdx = cursor.getIndex();
-         int endIdx = cursor.fwdToCharacter(',', true)
-               ? cursor.getIndex() 
-               : line.length();
-         
-         String argName  = line.substring(startIdx, equalsIdx).trim();
-         String argValue = line.substring(equalsIdx + 1, endIdx).trim();
-         if (argValue.startsWith("\"") && argValue.endsWith("\""))
-            argValue = argValue.substring(1, argValue.length() - 1);
-         else if (argValue.startsWith("'") && argValue.endsWith("'"))
-            argValue = argValue.substring(1, argValue.length() - 1);
-         chunkOptions.put(argName, argValue);
-      }
-   }
-   
-   private static void parseChunkPreamble(String preamble,
-                                          Map<String, String> chunkOptions)
-   {
-      // split into pieces
-      String[] splat = preamble.split("\\s+");
-      
-      if (splat.length >= 1)
-         chunkOptions.put("engine", splat[0].trim());
-      
-      if (splat.length >= 2)
-         chunkOptions.put("label", splat[1].trim());
    }
    
    private void loadInitialChunkOutput()

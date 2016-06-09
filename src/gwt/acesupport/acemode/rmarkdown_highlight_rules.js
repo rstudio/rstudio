@@ -161,33 +161,25 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
 (function() {
 
+   function engineRegex(engine) {
+      return "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(?:.*)engine\\s*\\=\\s*['\"]" + engine + "['\"](?:.*)\\}\\s*$|" +
+         "^(?:[ ]{4})?`{3,}\\s*\\{" + engine + "\\b(?:.*)\\}\\s*$";
+   }
+
    this.$reRChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(.*)\\}\\s*$";
 
-   this.$reCppChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$|" +
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]cpp\\b(?:.*)\\}\\s*$";
-
-   this.$reMarkdownChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{\\s*block\\b(?:.*)\\}\\s*$";
-
-   this.$rePerlChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{perl\\b(?:.*)\\}\\s*$";
-
-   this.$rePythonChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{python\\b(?:.*)\\}\\s*$";
-
-   this.$reRubyChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{ruby\\b(?:.*)\\}\\s*$";
-
-   this.$reShChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{(?:bash|sh)\\b(?:.*)\\}\\s*$";
-
-   this.$reStanChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{stan\\b(?:.*)\\}\\s*$";
-
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";
+
+   this.$reCppChunkStartString      = engineRegex("[Rr]cpp");
+   this.$reMarkdownChunkStartString = engineRegex("block");
+   this.$rePerlChunkStartString     = engineRegex("perl");
+   this.$rePythonChunkStartString   = engineRegex("python");
+   this.$reRubyChunkStartString     = engineRegex("ruby");
+   this.$reShChunkStartString       = engineRegex("(?:bash|sh)");
+   this.$reStanChunkStartString     = engineRegex("stan");
+
    
 }).call(RMarkdownHighlightRules.prototype);
 
