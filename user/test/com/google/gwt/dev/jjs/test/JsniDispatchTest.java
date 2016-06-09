@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.test;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -94,5 +95,52 @@ public class JsniDispatchTest extends GWTTestCase {
     assertEquals("Hello from SuperFoo 10 times", callSayHelloNTimesAtSuperSuperFoo(new Foo()));
     assertEquals("Hello from SuperSuperSuperFoo 10 times",
         callSayHelloNTimesAtSuperSuperSuperFoo(new Foo()));
+  }
+
+  public native int doubleToInt(Double d) /*-{
+    return d.@java.lang.Double::intValue()();
+  }-*/;
+
+  public native int numberToInt(Number n) /*-{
+    return n.@java.lang.Number::intValue()();
+  }-*/;
+
+  interface DualInterface {
+    int m();
+  }
+
+  private static class JavaImplementor implements DualInterface {
+    public int m() {
+      return 1;
+    }
+  }
+
+  private static class JsoImplementor extends JavaScriptObject implements DualInterface {
+    public final native int m() /*-{
+      return this.a;
+    }-*/;
+
+    protected JsoImplementor() {
+    }
+  }
+
+  public native int callMOnDual(DualInterface i) /*-{
+    return i.@JsniDispatchTest.DualInterface::m()();
+  }-*/;
+
+  public native int callMOnJso(JsoImplementor jso) /*-{
+    return jso.@JsniDispatchTest.JsoImplementor::m()();
+  }-*/;
+
+  public native JsoImplementor newImplementor(int n) /*-{
+    return {a:n};
+  }-*/;
+
+  public void testDevirtualization() {
+    assertEquals(2, doubleToInt(new Double(2.2)));
+    assertEquals(2, numberToInt(new Double(2.2)));
+    assertEquals(1, callMOnDual(new JavaImplementor()));
+    assertEquals(2, callMOnDual(newImplementor(2)));
+    assertEquals(3, callMOnJso(newImplementor(3)));
   }
 }
