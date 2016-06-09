@@ -20,15 +20,12 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -48,10 +45,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       codePanel_.setWidth("100%");
      
       // table browser panel
-      tableBrowser_ = new ListBox();
-      tableBrowser_.setVisibleItemCount(2);
-      tableBrowser_.setSize("100%", "100%");
-      
+      tableBrowser_ = new TableBrowser();
       
       containerPanel_ = new SimplePanelWithProgress(
                                     ProgressImages.createLarge(), 50);
@@ -88,7 +82,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    public void showConnectionProgress()
    {
       waitingForConnection_ = true;
-      containerPanel_.showProgress(100); 
+      containerPanel_.showProgress(50); 
    }
    
    public void setConnection(Connection connection, String connectVia)
@@ -125,18 +119,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       if (waitingForConnection_)
          return;
       
-      server_.connectionListTables(
-                connection_, 
-                new SimpleRequestCallback<JsArrayString>() {
-         @Override
-         public void onResponseReceived(JsArrayString tables)
-         {
-            clearTableBrowser();
-            tableBrowser_.setVisibleItemCount(Math.max(2, tables.length()));
-            for (int i = 0; i<tables.length(); i++)
-               tableBrowser_.addItem(tables.get(i));
-         }    
-      });
+      tableBrowser_.update(connection_, hint);
    }
    
    public void clearTableBrowser()
@@ -158,7 +141,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    }
    
    private final ConnectionCodePanel codePanel_;
-   private final ListBox tableBrowser_;
+   private final TableBrowser tableBrowser_;
   
    private Widget activePanel_;
    
@@ -169,6 +152,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    private Connection connection_ = null;
    
    private EventBus eventBus_;
+   @SuppressWarnings("unused")
    private ConnectionsServerOperations server_;
    
 }
