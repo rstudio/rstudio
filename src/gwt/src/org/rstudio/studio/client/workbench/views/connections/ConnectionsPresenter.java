@@ -430,15 +430,30 @@ public class ConnectionsPresenter extends BasePresenter
       if (exploredConnection_ == null)
          return;
       
-      server_.getDisconnectCode(exploredConnection_, 
-                                new SimpleRequestCallback<String>() {
-         @Override
-         public void onResponseReceived(String disconnectCode)
-         {
-            eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-            showAllConnections();
-         }
-      });
+      StringBuilder builder = new StringBuilder();
+      builder.append("Are you sure you want to disconnect from Spark?");
+      
+      globalDisplay_.showYesNoMessage(
+            MessageDialog.QUESTION,
+            "Disconnect",
+            builder.toString(),
+            new Operation() {
+
+               @Override
+               public void execute()
+               {
+                  server_.getDisconnectCode(exploredConnection_, 
+                        new SimpleRequestCallback<String>() {
+                     @Override
+                     public void onResponseReceived(String disconnectCode)
+                     {
+                        eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+                        showAllConnections();
+                     }
+                });
+               }
+            },
+            true);  
    }
    
    @Handler

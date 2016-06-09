@@ -336,6 +336,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       backToConnectionsButton_ = new ToolbarButton(
             commands_.helpBack().getImageResource(), (ClickHandler)null);
+      backToConnectionsButton_.setTitle("View all connections");
       connectionName_ = new ToolbarLabel();
       connectionName_.getElement().getStyle().setMarginRight(8, Unit.PX);
           
