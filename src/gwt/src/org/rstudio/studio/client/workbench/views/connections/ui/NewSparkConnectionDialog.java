@@ -234,7 +234,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             commandChangeHandler(updateHadoopVersionsCommand));
       
       // db connection
-      Label dbLabel = new Label("DB Connection:");
+      Label dbLabel = new Label("DB interface:");
       dbLabel.addStyleName(RES.styles().label());
       versionGrid.setWidget(2, 0, dbLabel);
       dbConnection_ = new ListBox();
