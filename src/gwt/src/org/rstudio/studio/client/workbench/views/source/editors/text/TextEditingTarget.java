@@ -4279,7 +4279,8 @@ public class TextEditingTarget implements
       }
 
       for (Scope scope : previousScopes)
-         executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
+         if (isExecutableChunk(scope))
+            executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
    }
    
    @Handler
