@@ -70,7 +70,8 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    charWidth_(charWidth),
    prevCharWidth_(0),
    execScope_(execScope),
-   hasOutput_(false)
+   hasOutput_(false),
+   hasErrors_(false)
 {
 }
 
@@ -247,6 +248,9 @@ void ChunkExecContext::onError(const core::json::Object& err)
    // set up folder to receive output if necessary
    initializeOutput();
 
+   // mark error state
+   hasErrors_ = true;
+
    // write the error to a file 
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
          kChunkOutputError);
@@ -394,6 +398,11 @@ void ChunkExecContext::initializeOutput()
       LOG_ERROR(error);
 
    hasOutput_ = true;
+}
+
+bool ChunkExecContext::hasErrors()
+{
+   return hasErrors_;
 }
 
 ExecScope ChunkExecContext::execScope()

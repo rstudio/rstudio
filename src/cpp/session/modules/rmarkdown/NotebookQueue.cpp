@@ -57,10 +57,6 @@ public:
       // launch a thread to process console input
       thread::safeLaunchThread(boost::bind(
                &NotebookQueue::consoleThreadMain, this), &console_);
-
-      // listen for errors
-      handlers_.push_back(events().onErrorOutput.connect(boost::bind(
-               &NotebookQueue::onError, this, _1)));
    }
 
    ~NotebookQueue()
@@ -95,6 +91,20 @@ public:
       // next unit off the stack
       if (execUnit_)
       {
+         if (execContext_ && execContext_->hasErrors())
+         {
+            // when an error occurs, see what the chunk options say; if they
+            // have error = TRUE we can keep going, but in all other
+            // circumstances we should stop right away
+            const json::Object& options = execContext_->options();
+            bool error = false;
+            json::readObject(options, "error", &error);
+            if (!error)
+            {
+               clear();
+               return Success();
+            }
+         }
          if (execUnit_->complete())
          {
             // unit has finished executing; remove it from the queue
@@ -169,26 +179,6 @@ public:
    }
 
 private:
-
-   void onError(const json::Object&)
-   {
-      std::cerr << "queue got error!" << std::endl;
-
-      if (!execContext_)
-         return;
-      
-      // when an error occurs, see what the chunk options say; if they have
-      // error = TRUE we can keep going, but in all other circumstances we
-      // should stop right away
-      const json::Object& options = execContext_->options();
-      bool error = false;
-      json::readObject(options, "error", &error);
-
-      if (!error)
-      {
-         clear();
-      }
-   }
 
    // execute the next line or expression in the current execution unit
    Error executeCurrentUnit()

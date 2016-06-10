@@ -58,6 +58,8 @@ public:
    // inject console input manually
    void onConsoleInput(const std::string& input);
 
+   bool hasErrors();
+
    void connect();
    void disconnect();
 
@@ -86,6 +88,7 @@ private:
    r::sexp::PreservedSEXP prevWarn_;
 
    bool hasOutput_;
+   bool hasErrors_;
 
    std::vector<boost::shared_ptr<NotebookCapture> > captures_;
    std::vector<boost::signals::connection> connections_;

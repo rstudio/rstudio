@@ -1516,7 +1516,8 @@ public class TextEditingTargetNotebook
    
    private void clearChunkExecQueue()
    {
-      queue_.clear();
+      if (queue_ != null)
+         queue_.clear();
    }
    
    private Timer cleanErrorGutter_ = new Timer()
