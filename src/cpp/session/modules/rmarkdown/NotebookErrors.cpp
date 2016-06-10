@@ -32,100 +32,40 @@ namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
-namespace {
 
-class ErrorState
+void ErrorCapture::connect()
 {
-public:
-   ErrorState():
-      connected_(false)
-   { }
+   // store old handler
+   sexpErrHandler_.set(r::options::getOption("error"));
 
-   ~ErrorState()
-   {
-      if (connected_)
-         disconnect();
-   }
+   // set new handler
+   Error error = r::exec::RFunction(".rs.registerNotebookErrHandler")
+                                  .callUnsafe();
+   if (error)
+      LOG_ERROR(error);
 
-   void connect()
-   {
-      // store old handler
-      sexpErrHandler_.set(r::options::getOption("error"));
+   NotebookCapture::connect();
+}
 
-      // set new handler
-      Error error = r::exec::RFunction(".rs.registerNotebookErrHandler")
-                                     .callUnsafe();
-      if (error)
-         LOG_ERROR(error);
+void ErrorCapture::disconnect()
+{
+   if (connected())
+      r::options::setErrorOption(sexpErrHandler_.get());
 
-      // mark as connected
-      connected_ = true;
-   }
+   NotebookCapture::disconnect();
+}
 
-   void onError(SEXP sexpErr)
-   {
-      json::Value jsonErr; 
-      Error error = r::json::jsonValueFromList(sexpErr, &jsonErr);
-      if (error)
-         LOG_ERROR(error);
-      if (jsonErr.type() != json::ObjectType)
-         return;
-      events().onErrorOutput(jsonErr.get_obj());
-   }
-
-   void disconnect()
-   {
-      if (connected_)
-      {
-         r::options::setErrorOption(sexpErrHandler_.get());
-         connected_ = false;
-      }
-   }
-
-private:
-   bool connected_;
-   r::sexp::PreservedSEXP sexpErrHandler_;
-};
-
-boost::shared_ptr<ErrorState> s_pErrorState;
 
 SEXP rs_recordNotebookError(SEXP errData)
 {
-   if (s_pErrorState)
-      s_pErrorState->onError(errData);
-
+   json::Value jsonErr; 
+   Error error = r::json::jsonValueFromList(errData, &jsonErr);
+   if (error)
+      LOG_ERROR(error);
+   if (jsonErr.type() != json::ObjectType)
+      return R_NilValue;
+   events().onErrorOutput(jsonErr.get_obj());
    return R_NilValue;
-}
-
-void onConsolePrompt(const std::string&)
-{
-   // if we're still listening for errors, disconnect
-   if (s_pErrorState)
-   {
-      s_pErrorState->disconnect();
-      s_pErrorState.reset();
-   }
-
-   // clean up listener
-   module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
-}
-
-} // anonymous namespace
-
-core::Error beginErrorCapture()
-{
-   // disconnect old error state if present
-   if (s_pErrorState)
-      s_pErrorState->disconnect();
-
-   // create and connect new error state
-   s_pErrorState.reset(new ErrorState());
-   s_pErrorState->connect();
-
-   // diconnect when statement finishes
-   module_context::events().onConsolePrompt.connect(onConsolePrompt);
-
-   return Success();
 }
 
 core::Error initErrors()

@@ -57,14 +57,22 @@ public:
       // launch a thread to process console input
       thread::safeLaunchThread(boost::bind(
                &NotebookQueue::consoleThreadMain, this), &console_);
-      std::cerr << "exec queue started" << std::endl;
+
+      // listen for errors
+      handlers_.push_back(events().onErrorOutput.connect(boost::bind(
+               &NotebookQueue::onError, this, _1)));
    }
 
    ~NotebookQueue()
    {
       // clean up thread
       console_.detach();
-      std::cerr << "exec queue finished" << std::endl;
+
+      // unregister handlers
+      BOOST_FOREACH(boost::signals::connection connection, handlers_)
+      {
+         connection.disconnect();
+      }
    }
 
    bool complete()
@@ -89,7 +97,6 @@ public:
       {
          if (execUnit_->complete())
          {
-            std::cerr << "chunk " << execUnit_->chunkId() << " complete" << std::endl;
             // unit has finished executing; remove it from the queue
             if (queue_.size() > 0)
             {
@@ -97,7 +104,6 @@ public:
                docQueue->update(execUnit_, QueueDelete, "");
                if (docQueue->complete())
                {
-                  std::cerr << "doc " << docQueue->docId() << " complete" << std::endl;
                   queue_.pop_front();
                }
             }
@@ -163,6 +169,26 @@ public:
    }
 
 private:
+
+   void onError(const json::Object&)
+   {
+      std::cerr << "queue got error!" << std::endl;
+
+      if (!execContext_)
+         return;
+      
+      // when an error occurs, see what the chunk options say; if they have
+      // error = TRUE we can keep going, but in all other circumstances we
+      // should stop right away
+      const json::Object& options = execContext_->options();
+      bool error = false;
+      json::readObject(options, "error", &error);
+
+      if (!error)
+      {
+         clear();
+      }
+   }
 
    // execute the next line or expression in the current execution unit
    Error executeCurrentUnit()
@@ -269,6 +295,9 @@ private:
    // the execution context for the currently executing chunk
    boost::shared_ptr<NotebookQueueUnit> execUnit_;
    boost::shared_ptr<ChunkExecContext> execContext_;
+
+   // registered signal handlers
+   std::vector<boost::signals::connection> handlers_;
 
    // the thread which submits console input, and the queue which feeds it
    boost::thread console_;

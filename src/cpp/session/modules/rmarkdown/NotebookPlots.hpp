@@ -22,6 +22,8 @@
 #include <core/FilePath.hpp>
 #include <r/RSexp.hpp>
 
+#include "NotebookCapture.hpp"
+
 #define kDisplayListExt ".snapshot"
 
 namespace rstudio {
@@ -43,12 +45,12 @@ enum PlotSizeBehavior
    PlotSizeManual
 };
 
-class PlotCapture
+class PlotCapture : public NotebookCapture
 {
 public:
    PlotCapture();
    ~PlotCapture();
-   core::Error connect(double height, double width, 
+   core::Error connectPlots(double height, double width, 
            PlotSizeBehavior sizeBehavior,
            const core::FilePath& plotFolder);
    void disconnect();
@@ -60,7 +62,6 @@ private:
    void onBeforeNewPlot();
 
    core::FilePath plotFolder_;
-   bool connected_;
    bool hasPlots_;
    PlotSizeBehavior sizeBehavior_;
    core::FilePath snapshotFile_;

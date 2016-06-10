@@ -70,15 +70,8 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    charWidth_(charWidth),
    prevCharWidth_(0),
    execScope_(execScope),
-   connected_(false),
    hasOutput_(false)
 {
-}
-
-ChunkExecContext::~ChunkExecContext()
-{
-   if (connected_)
-      disconnect();
 }
 
 std::string ChunkExecContext::chunkId()
@@ -94,11 +87,6 @@ std::string ChunkExecContext::docId()
 json::Object ChunkExecContext::options() 
 {
    return options_;
-}
-
-bool ChunkExecContext::connected()
-{
-   return connected_;
 }
 
 void ChunkExecContext::connect()
@@ -130,16 +118,20 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      kChunkOutputPlot)));
 
+   boost::shared_ptr<PlotCapture> pPlotCapture = 
+      boost::make_shared<PlotCapture>();
+   captures_.push_back(pPlotCapture);
+
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = plotCapture_.connect(figHeight, figWidth, PlotSizeManual, 
+      error = pPlotCapture->connectPlots(figHeight, figWidth, PlotSizeManual, 
             outputPath_);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = plotCapture_.connect(0, pixelWidth_, PlotSizeAutomatic, 
+      error = pPlotCapture->connectPlots(0, pixelWidth_, PlotSizeAutomatic, 
             outputPath_);
    }
    if (error)
@@ -192,9 +184,13 @@ void ChunkExecContext::connect()
    }
 
    // begin capturing errors
+   boost::shared_ptr<ErrorCapture> pErrorCapture = 
+      boost::make_shared<ErrorCapture>();
+   pErrorCapture->connect();
+   captures_.push_back(pErrorCapture);
+
    connections_.push_back(events().onErrorOutput.connect(
          boost::bind(&ChunkExecContext::onError, this, _1)));
-   beginErrorCapture();
 
    // begin capturing console text
    connections_.push_back(module_context::events().onConsoleOutput.connect(
@@ -202,7 +198,7 @@ void ChunkExecContext::connect()
    connections_.push_back(module_context::events().onConsoleInput.connect(
          boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
 
-   connected_ = true;
+   NotebookCapture::connect();
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
@@ -324,8 +320,11 @@ void ChunkExecContext::disconnect()
 {
    Error error;
 
-   // clean up plots if necessary
-   plotCapture_.disconnect();
+   // clean up capturing modules
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      pCapture->disconnect();
+   }
 
    // clean up staging folder
    error = outputPath_.removeIfExists();
@@ -357,7 +356,7 @@ void ChunkExecContext::disconnect()
       connection.disconnect();
    }
 
-   connected_ = false;
+   NotebookCapture::disconnect();
 
    events().onChunkExecCompleted(docId_, chunkId_, nbCtxId_);
 }

@@ -1,5 +1,5 @@
 /*
- * NotebookErrors.hpp
+ * NotebookCapture.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,18 +13,8 @@
  *
  */
 
-#ifndef SESSION_NOTEBOOK_ERRORS_HPP
-#define SESSION_NOTEBOOK_ERRORS_HPP
-
-#include "NotebookCapture.hpp"
-
-#include <r/RSexp.hpp>
-
-namespace rstudio {
-namespace core {
-   class Error;
-}
-}
+#ifndef SESSION_NOTEBOOK_CAPTURE_HPP
+#define SESSION_NOTEBOOK_CAPTURE_HPP
 
 namespace rstudio {
 namespace session {
@@ -32,17 +22,17 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class ErrorCapture : public NotebookCapture
+class NotebookCapture
 {
 public:
-   void connect();
-   void disconnect();
-
+   NotebookCapture();
+   virtual ~NotebookCapture();
+   virtual void connect();
+   virtual void disconnect();
+   bool connected();
 private:
-   r::sexp::PreservedSEXP sexpErrHandler_;
+   bool connected_;
 };
-
-core::Error initErrors();
 
 } // namespace notebook
 } // namespace rmarkdown
@@ -50,4 +40,4 @@ core::Error initErrors();
 } // namespace session
 } // namespace rstudio
 
-#endif
+#endif // SESSION_NOTEBOOK_CAPTURE_HPP

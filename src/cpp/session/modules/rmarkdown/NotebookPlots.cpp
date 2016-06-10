@@ -52,8 +52,11 @@ bool isPlotPath(const FilePath& path)
 } // anonymous namespace
 
 PlotCapture::PlotCapture() :
-   connected_(false),
    hasPlots_(false)
+{
+}
+
+PlotCapture::~PlotCapture()
 {
 }
 
@@ -168,9 +171,9 @@ void PlotCapture::onNewPlot()
 }
 
 // begins capturing plot output
-core::Error PlotCapture::connect(double height, double width, 
-                                 PlotSizeBehavior sizeBehavior,
-                                 const FilePath& plotFolder)
+core::Error PlotCapture::connectPlots(double height, double width, 
+                                      PlotSizeBehavior sizeBehavior,
+                                      const FilePath& plotFolder)
 {
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
@@ -266,26 +269,20 @@ core::Error PlotCapture::connect(double height, double width,
    onNewPlot_ = plots::events().onNewPlot.connect(
          boost::bind(&PlotCapture::onNewPlot, this));
 
-   connected_ = true;
+   NotebookCapture::connect();
    return Success();
 }
 
 void PlotCapture::disconnect()
 {
-   if (connected_)
+   if (connected())
    {
       removeGraphicsDevice();
       onNewPlot_.disconnect();
       onBeforeNewPlot_.disconnect();
       onBeforeNewGridPage_.disconnect();
-      connected_ = false;
    }
-}
-
-PlotCapture::~PlotCapture()
-{
-   if (connected_)
-      disconnect();
+   NotebookCapture::disconnect();
 }
 
 core::Error initPlots()

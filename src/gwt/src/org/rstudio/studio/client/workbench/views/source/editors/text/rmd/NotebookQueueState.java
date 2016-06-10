@@ -121,7 +121,6 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          notebook_.cleanChunkExecState(queue_.getUnits().get(i).getChunkId());
       }
       
-      // TODO: clean on server, too
       editingTarget_.getStatusBar().hideNotebookProgress(true);
    }
    

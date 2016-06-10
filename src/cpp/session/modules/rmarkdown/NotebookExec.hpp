@@ -24,7 +24,7 @@
 
 #include <r/RSexp.hpp>
 
-#include "NotebookPlots.hpp"
+#include "NotebookCapture.hpp"
 
 #define kStagingSuffix "_t"
 
@@ -41,28 +41,25 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class ChunkExecContext
+class ChunkExecContext : public NotebookCapture
 {
 public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
          const std::string& nbCtxId, ExecScope execScope, 
          const core::json::Object& options, int pixelWidth, int charWidth);
-   ~ChunkExecContext();
-
-   // connect or disconnect the execution context to events
-   void connect();
-   void disconnect();
 
    // return execution context from events
    std::string chunkId();
    std::string docId();
-   bool connected();
    ExecScope execScope();
    core::json::Object options();
 
    // inject console input manually
    void onConsoleInput(const std::string& input);
+
+   void connect();
+   void disconnect();
 
 private:
    void onConsoleOutput(module_context::ConsoleOutputType type, 
@@ -88,11 +85,9 @@ private:
    ExecScope execScope_;
    r::sexp::PreservedSEXP prevWarn_;
 
-   bool connected_;
    bool hasOutput_;
 
-   PlotCapture plotCapture_;
-
+   std::vector<boost::shared_ptr<NotebookCapture> > captures_;
    std::vector<boost::signals::connection> connections_;
 };
 
