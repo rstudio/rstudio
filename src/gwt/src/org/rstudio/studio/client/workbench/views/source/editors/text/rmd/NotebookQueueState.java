@@ -82,6 +82,12 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       return executingUnit_.getChunkId();
    }
    
+   public void setQueue(NotebookDocQueue queue)
+   {
+      queue_ = queue;
+      renderQueueState();
+   }
+   
    public int getChunkExecMode(String chunkId)
    {
       if (queue_ != null)
@@ -325,6 +331,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
 
    public void renderQueueState()
    {
+      if (queue_ == null)
+         return;
+      
       JsArray<NotebookQueueUnit> units = queue_.getUnits();
       for (int i = 0; i < units.length(); i++)
       {
@@ -335,13 +344,16 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (scope == null)
             continue;
          
-         // draw the completed lines
-         renderLineState(scope.getBodyStart().getRow(), 
-               unit.getCompletedLines(), ChunkRowExecState.LINE_EXECUTED);
+         // draw the completed lines (queue them first so they render properly
+         // in the gutter)
+         List<Integer> completed = unit.getCompletedLines();
+         int row = scope.getBodyStart().getRow();
+         renderLineState(row, completed, ChunkRowExecState.LINE_QUEUED);
+         renderLineState(row, completed, ChunkRowExecState.LINE_EXECUTED);
 
          // draw the pending lines
-         renderLineState(scope.getBodyStart().getRow(), 
-               unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+         renderLineState(row, unit.getPendingLines(), 
+               ChunkRowExecState.LINE_QUEUED);
          
          notebook_.setChunkState(scope, ChunkContextToolbar.STATE_QUEUED);
       }

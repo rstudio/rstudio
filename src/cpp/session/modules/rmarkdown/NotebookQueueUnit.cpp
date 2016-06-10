@@ -174,7 +174,7 @@ json::Object NotebookQueueUnit::toJson() const
    unit[kQueueUnitExecScope] = execScope_;
    unit[kQueueUnitExecuting] = executing_.toJson();
 
-   return json::Object();
+   return unit;
 }
 
 std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)

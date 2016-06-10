@@ -94,12 +94,12 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
 
    json::Object result;
    json::Value chunkDefs; 
+
    // use our own context ID if none supplied
    if (nbCtxId.empty())
       error = getChunkDefs(docPath, docId, NULL, &chunkDefs);
    else
       error = getChunkDefs(docPath, docId, nbCtxId, NULL, &chunkDefs);
-
 
    // schedule the work to play back the chunks
    if (!error && chunkDefs.type() == json::ArrayType) 
@@ -108,6 +108,9 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
             boost::bind(replayChunkOutputs, docPath, docId, requestId, 
                         chunkDefs.get_array()));
    }
+
+   // send back the execution queue, if any
+   pResponse->setResult(getDocQueue(docId));
 
    return Success();
 }

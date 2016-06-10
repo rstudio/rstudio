@@ -52,10 +52,9 @@ public:
    
    void setClientId(const std::string& clientId, bool clearEvents);
 
-
-private:
    std::string clientId();
 
+private:
    void run();
 
    void erasePreviouslyDeliveredEvents(int lastClientEventIdSeen);

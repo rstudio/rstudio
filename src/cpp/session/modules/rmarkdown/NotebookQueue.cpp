@@ -20,6 +20,8 @@
 #include "NotebookDocQueue.hpp"
 #include "NotebookCache.hpp"
 
+#include "../../SessionClientEventService.hpp"
+
 #include <boost/foreach.hpp>
 
 #include <r/RInterface.hpp>
@@ -50,8 +52,7 @@ enum ChunkExecState
 class NotebookQueue
 {
 public:
-   NotebookQueue(const std::string &clientId) :
-      clientId_(clientId)
+   NotebookQueue() 
    {
       // launch a thread to process console input
       thread::safeLaunchThread(boost::bind(
@@ -115,6 +116,78 @@ public:
       return executeNextUnit();
    }
 
+   Error update(boost::shared_ptr<NotebookQueueUnit> pUnit, QueueOperation op, 
+      const std::string& before)
+   {
+      // find the document queue corresponding to this unit
+      BOOST_FOREACH(const boost::shared_ptr<NotebookDocQueue> queue, queue_)
+      {
+         if (queue->docId() == pUnit->docId())
+         {
+            queue->update(pUnit, op, before);
+            break;
+         }
+      }
+
+      return Success();
+   }
+
+   void add(boost::shared_ptr<NotebookDocQueue> pQueue)
+   {
+      queue_.push_back(pQueue);
+   }
+
+   json::Value getDocQueue(const std::string& docId)
+   {
+      BOOST_FOREACH(boost::shared_ptr<NotebookDocQueue> pQueue, queue_)
+      {
+         if (pQueue->docId() == docId)
+            return pQueue->toJson();
+      }
+      return json::Value();
+   }
+
+   void onConsolePrompt(const std::string& prompt)
+   {
+      process();
+   }
+
+private:
+
+   // execute the next line or expression in the current execution unit
+   Error executeCurrentUnit()
+   {
+      // ensure we have a unit to execute 
+      if (!execUnit_)
+         return Success();
+
+      json::Array arr;
+      ExecRange range(0, 0);
+      arr.push_back(execUnit_->popExecRange(&range));
+      arr.push_back(execUnit_->chunkId());
+
+      // formulate request body
+      json::Object rpc;
+      rpc["method"] = "console_input";
+      rpc["params"] = arr;
+      rpc["clientId"] = clientEventService().clientId();
+
+      // serialize RPC body and send it to helper thread for submission
+      std::ostringstream oss;
+      json::write(rpc, oss);
+      input_.enque(oss.str());
+
+      // let client know the range has been sent to R
+      json::Object exec;
+      exec["doc_id"]     = execUnit_->docId();
+      exec["chunk_id"]   = execUnit_->chunkId();
+      exec["exec_range"] = range.toJson();
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kNotebookRangeExecuted, exec));
+
+      return Success();
+   }
+
    Error executeNextUnit()
    {
       // no work to do if we have no documents
@@ -153,30 +226,9 @@ public:
       return Success();
    }
 
-   Error update(boost::shared_ptr<NotebookQueueUnit> pUnit, QueueOperation op, 
-      const std::string& before)
-   {
-      // find the document queue corresponding to this unit
-      BOOST_FOREACH(const boost::shared_ptr<NotebookDocQueue> queue, queue_)
-      {
-         if (queue->docId() == pUnit->docId())
-         {
-            queue->update(pUnit, op, before);
-            break;
-         }
-      }
-
-      return Success();
-   }
-
-   void add(boost::shared_ptr<NotebookDocQueue> pQueue)
-   {
-      queue_.push_back(pQueue);
-   }
-
+   // main function for thread which receives console input
    void consoleThreadMain()
    {
-      // main function for thread which receives console input
       std::string input;
       while (input_.deque(&input, boost::posix_time::not_a_date_time))
       {
@@ -190,45 +242,6 @@ public:
       }
    }
 
-   Error executeCurrentUnit()
-   {
-      json::Array arr;
-      ExecRange range(0, 0);
-      arr.push_back(execUnit_->popExecRange(&range));
-      arr.push_back(execUnit_->chunkId());
-
-      // formulate request body
-      json::Object rpc;
-      rpc["method"] = "console_input";
-      rpc["params"] = arr;
-      rpc["clientId"] = clientId_;
-
-      // TODO: do we need to update the client ID if a client is disconnected
-      // and replaced with a new client?
-     
-      // serialize RPC body and send it to helper thread for submission
-      std::ostringstream oss;
-      json::write(rpc, oss);
-      input_.enque(oss.str());
-
-      // let client know the range has been sent to R
-      json::Object exec;
-      exec["doc_id"]     = execUnit_->docId();
-      exec["chunk_id"]   = execUnit_->chunkId();
-      exec["exec_range"] = range.toJson();
-      module_context::enqueClientEvent(
-            ClientEvent(client_events::kNotebookRangeExecuted, exec));
-
-      return Success();
-   }
-
-   void onConsolePrompt(const std::string& prompt)
-   {
-      process();
-   }
-
-private:
-
    void enqueueExecStateChanged(ChunkExecState state, 
          const json::Object& options)
    {
@@ -241,9 +254,6 @@ private:
                client_events::kChunkExecStateChanged, event));
    }
 
-   // the current client id
-   std::string clientId_;
-   
    // the documents with active queues
    std::list<boost::shared_ptr<NotebookDocQueue> > queue_;
 
@@ -293,7 +303,7 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 
    // create queue if it doesn't exist
    if (!s_queue)
-      s_queue = boost::make_shared<NotebookQueue>(request.clientId);
+      s_queue = boost::make_shared<NotebookQueue>();
 
    // add the queue and process immediately
    s_queue->add(pQueue);
@@ -317,6 +327,14 @@ void onConsolePrompt(const std::string& prompt)
 }
 
 } // anonymous namespace
+
+json::Value getDocQueue(const std::string& docId)
+{
+   if (!s_queue)
+      return json::Value();
+
+   return s_queue->getDocQueue(docId);
+}
 
 Error initQueue()
 {

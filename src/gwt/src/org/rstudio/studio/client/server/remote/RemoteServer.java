@@ -4208,7 +4208,7 @@ public class RemoteServer implements Server
    @Override
    public void refreshChunkOutput(String docPath, String docId, 
          String contextId, String requestId, 
-         ServerRequestCallback<Void> requestCallback)
+         ServerRequestCallback<NotebookDocQueue> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docPath == null ? "" : docPath));

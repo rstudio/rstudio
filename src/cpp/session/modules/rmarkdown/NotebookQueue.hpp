@@ -16,6 +16,8 @@
 #ifndef SESSION_NOTEBOOK_QUEUE_HPP
 #define SESSION_NOTEBOOK_QUEUE_HPP
 
+#include <core/json/Json.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -35,6 +37,7 @@ enum QueueOperation
    QueueDelete = 2
 };
 
+core::json::Value getDocQueue(const std::string& docId);
 core::Error initQueue();
 
 } // namespace notebook
