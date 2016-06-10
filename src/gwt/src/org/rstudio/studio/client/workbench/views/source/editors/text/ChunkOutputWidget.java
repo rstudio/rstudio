@@ -36,8 +36,6 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
@@ -72,7 +70,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
-                                          ConsolePromptHandler,
                                           RestartStatusEvent.Handler,
                                           InterruptStatusEvent.Handler,
                                           ConsoleError.Observer
@@ -366,6 +363,7 @@ public class ChunkOutputWidget extends Composite
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
       showReadyState();
+      unregisterConsoleEvents();
    }
 
    public void setCodeExecuting(int mode)
@@ -541,14 +539,6 @@ public class ChunkOutputWidget extends Composite
       // queue the error -- we don't emit errors right away since a more 
       // detailed error event may be forthcoming
       queuedError_ += event.getError();
-   }
-   
-   @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
-   {
-      // stop listening to the console once the prompt appears, but don't 
-      // clear up output until we receive the output finished event
-      unregisterConsoleEvents();
    }
    
    @Override
@@ -857,7 +847,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.addHandler(ConsolePromptEvent.TYPE, this);
    }
 
    private void unregisterConsoleEvents()
@@ -865,7 +854,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.removeHandler(ConsolePromptEvent.TYPE, this);
    }
    
    private void showBusyState()
