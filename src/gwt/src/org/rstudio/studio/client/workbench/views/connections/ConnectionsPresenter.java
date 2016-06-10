@@ -421,8 +421,8 @@ public class ConnectionsPresenter extends BasePresenter
             public void execute()
             {
                server_.removeConnection(
-                 exploredConnection_.getId(), new VoidServerRequestCallback());   
-               showAllConnections();
+                 exploredConnection_.getId(), new VoidServerRequestCallback()); 
+               disconnectConnection(false);
             }
          },
          true);
@@ -432,34 +432,49 @@ public class ConnectionsPresenter extends BasePresenter
    @Handler
    public void onDisconnectConnection()
    {
+      disconnectConnection(true);
+   }
+  
+   private void disconnectConnection(boolean prompt)
+   {
       if (exploredConnection_ == null)
          return;
       
-      StringBuilder builder = new StringBuilder();
-      builder.append("Are you sure you want to disconnect from Spark?");
-      
-      globalDisplay_.showYesNoMessage(
-            MessageDialog.QUESTION,
-            "Disconnect",
-            builder.toString(),
-            new Operation() {
-
+      // define connect operation
+      final Operation connectOperation = new Operation() {
+         @Override
+         public void execute()
+         {
+            server_.getDisconnectCode(exploredConnection_, 
+                  new SimpleRequestCallback<String>() {
                @Override
-               public void execute()
+               public void onResponseReceived(String disconnectCode)
                {
-                  server_.getDisconnectCode(exploredConnection_, 
-                        new SimpleRequestCallback<String>() {
-                     @Override
-                     public void onResponseReceived(String disconnectCode)
-                     {
-                        eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-                        showAllConnections();
-                     }
-                });
+                  eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+                  showAllConnections();
                }
-            },
-            true);  
+          });  
+         }  
+      };
+      
+      if (prompt)
+      {
+         StringBuilder builder = new StringBuilder();
+         builder.append("Are you sure you want to disconnect from Spark?");
+         globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION,
+               "Disconnect",
+               builder.toString(),
+               connectOperation,
+               true);  
+      }
+      else
+      {
+         connectOperation.execute();
+      }
    }
+   
+   
    
    @Handler
    public void onSparkLog()
