@@ -246,6 +246,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       setConnection(connection, connectVia);
       
+      installConnectionExplorerToolbar(connection);
+      
       animate(connectionsDataGrid_,
               connectionExplorer_,
               true,
@@ -253,7 +255,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                @Override
                public void execute()
                {
-                  installConnectionExplorerToolbar(connection);
                   connectionExplorer_.onResize();
                }
       });
@@ -286,6 +287,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public void showConnectionsList()
    {
       exploredConnection_ = null;
+ 
+      installConnectionsToolbar();
       
       animate(connectionExplorer_,
               connectionsDataGrid_,
@@ -294,7 +297,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                 @Override
                 public void execute()
                 {
-                   installConnectionsToolbar();
+                   
+                  
                 }
              });
    }
