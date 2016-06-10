@@ -15,6 +15,14 @@
  */
 package java.lang;
 
+import static javaemul.internal.InternalPreconditions.checkElement;
+
+import java.util.PrimitiveIterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
+
 import javaemul.internal.JsUtils;
 
 import jsinterop.annotations.JsMethod;
@@ -31,6 +39,26 @@ public interface CharSequence {
 
   @Override
   String toString();
+
+  default IntStream chars() {
+    return  StreamSupport.intStream(() -> {
+      PrimitiveIterator.OfInt it = new PrimitiveIterator.OfInt() {
+        int cursor;
+
+        @Override
+        public int nextInt() {
+          checkElement(hasNext());
+          return charAt(cursor++);
+        }
+
+        @Override
+        public boolean hasNext() {
+          return cursor < length();
+        }
+      };
+      return Spliterators.spliterator(it, length(), Spliterator.ORDERED);
+    }, Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.ORDERED, false);
+  }
 
   // CHECKSTYLE_OFF: Utility methods.
   @JsMethod
