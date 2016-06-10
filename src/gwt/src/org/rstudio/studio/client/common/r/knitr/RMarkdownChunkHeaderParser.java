@@ -208,7 +208,7 @@ public class RMarkdownChunkHeaderParser
       if (isQuote(cursor.peek()) && consumeQuotedItem(cursor, consumer))
          return true;
       
-      return consumeUntilRegex(cursor, "(?:$|[^a-zA-Z0-9_])", consumer);
+      return consumeUntilRegex(cursor, "(?:$|[^a-zA-Z0-9_.])", consumer);
    }
    
    private static final boolean consumeValue(TextCursor cursor,
