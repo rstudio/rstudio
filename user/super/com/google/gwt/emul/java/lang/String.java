@@ -292,8 +292,7 @@ public final class String implements Comparable<String>, CharSequence,
     $create(bytes, charsetName);
   }
 
-  public String(byte[] bytes, Charset charset)
-      throws UnsupportedEncodingException {
+  public String(byte[] bytes, Charset charset) {
     /*
      * Call to $create(args) must be here so that the method is referenced and not
      * pruned before new String(args) is replaced by $create(args) by
@@ -812,9 +811,8 @@ public final class String implements Comparable<String>, CharSequence,
     return $create(bytes, 0, bytes.length, charsetName);
   }
 
-  protected static String $create(byte[] bytes, Charset charset)
-      throws UnsupportedEncodingException {
-    return $create(bytes, 0, bytes.length, charset.name());
+  protected static String $create(byte[] bytes, Charset charset) {
+    return $create(bytes, 0, bytes.length, charset);
   }
 
   protected static String $create(char value[]) {
