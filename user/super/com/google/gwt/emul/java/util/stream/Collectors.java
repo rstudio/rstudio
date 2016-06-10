@@ -396,4 +396,6 @@ public final class Collectors {
     collection.addAll(items);
     return collection;
   }
+
+  private Collectors() { }
 }
