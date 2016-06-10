@@ -17,8 +17,6 @@
 package java.util.stream;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 
 // package protected, as not part of jre
@@ -70,33 +68,39 @@ class TerminatableStream<T extends TerminatableStream<T>> {
   public void close() {
     if (root == null) {
       terminated = true;
-
-      // TODO this might not be quite right, make sure that it behaves the same way when throwing
-      //      the same exception multiple times as JDK does.
-      LinkedHashSet<Throwable> throwables = new LinkedHashSet<>();
-      onClose.forEach((runnable) -> {
-        try {
-          runnable.run();
-        } catch (Throwable e) {
-          throwables.add(e);
-        }
-      });
-      onClose.clear();
-      if (!throwables.isEmpty()) {
-        Iterator<Throwable> iterator = throwables.iterator();
-        Throwable outer = iterator.next();
-        iterator.forEachRemaining(outer::addSuppressed);
-
-        if (outer instanceof RuntimeException) {
-          throw (RuntimeException) outer;
-        }
-        if (outer instanceof Error) {
-          throw (Error) outer;
-        }
-        assert false : "Couldn't have caught this exception from a Runnable! " + outer;
-      }
+      runClosers();
     } else {
       root.close();
+    }
+  }
+
+  private void runClosers() {
+    ArrayList<Throwable> throwables = new ArrayList<>();
+    onClose.forEach(runnable -> {
+      try {
+        runnable.run();
+      } catch (Throwable e) {
+        throwables.add(e);
+      }
+    });
+    onClose.clear();
+
+    if (!throwables.isEmpty()) {
+      Throwable e = throwables.get(0);
+      for (int i = 1, size = throwables.size(); i < size; ++i) {
+        Throwable suppressed = throwables.get(i);
+        if (suppressed != e) {
+          e.addSuppressed(suppressed);
+        }
+      }
+
+      if (e instanceof RuntimeException) {
+        throw (RuntimeException) e;
+      }
+      if (e instanceof Error) {
+        throw (Error) e;
+      }
+      assert false : "Couldn't have caught this exception from a Runnable! " + e;
     }
   }
 }

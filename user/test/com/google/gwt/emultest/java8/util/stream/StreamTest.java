@@ -591,6 +591,12 @@ public class StreamTest extends EmulTestBase {
         .onClose(() -> {
           throw b;
         })
+        .onClose(() -> {
+          throw a2;
+        })
+        .onClose(() -> {
+          throw b;
+        })
         .onClose(() -> calledCount[0]++);
 
     try {
@@ -598,9 +604,7 @@ public class StreamTest extends EmulTestBase {
       fail("RuntimeException expected");
     } catch (RuntimeException expected) {
       assertSame(a2, expected);
-      assertEquals(1, expected.getSuppressed().length);
-      Throwable firstSuppressed = expected.getSuppressed()[0];
-      assertSame(b, firstSuppressed);
+      assertEquals(new Throwable[] {b, b}, expected.getSuppressed());
     }
     assertEquals(1, calledCount[0]);
 
