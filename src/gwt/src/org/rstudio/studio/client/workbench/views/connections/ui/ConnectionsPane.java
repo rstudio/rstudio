@@ -51,6 +51,7 @@ import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
@@ -348,9 +349,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       backToConnectionsButton_ = new ToolbarButton(
             commands_.helpBack().getImageResource(), (ClickHandler)null);
       backToConnectionsButton_.setTitle("View all connections");
-      connectionName_ = new ToolbarLabel();
-      connectionName_.getElement().getStyle().setMarginRight(8, Unit.PX);
-      
+       
       // connect meuu
       ToolbarPopupMenu connectMenu = new ToolbarPopupMenu();
       connectMenu.addItem(connectMenuItem(
@@ -392,6 +391,15 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       installConnectionsToolbar();
       
       return toolbar_;
+   }
+   
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      secondaryToolbar_ = new SecondaryToolbar();
+      secondaryToolbar_.addLeftWidget(connectionName_ = new ToolbarLabel());
+      
+      return secondaryToolbar_;
    }
    
    @Override 
@@ -477,6 +485,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
         
       toolbar_.addRightWidget(searchWidget_);
+      
+      setSecondaryToolbarVisible(false);
    }
    
    private void installConnectionExplorerToolbar(Connection connection)
@@ -484,8 +494,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.removeAllWidgets();
      
       toolbar_.addLeftWidget(backToConnectionsButton_);
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(connectionName_);
       toolbar_.addLeftSeparator();
 
       toolbar_.addLeftWidget(connectMenuButton_);
@@ -502,7 +510,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
       connectionName_.setText(connection.getHost());
-      
+      setSecondaryToolbarVisible(true);
    }
    
    private void sortConnections()
@@ -546,9 +554,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    
    private SearchWidget searchWidget_;
    private ToolbarButton backToConnectionsButton_;
-   private ToolbarLabel connectionName_;
-   
    private ToolbarButton connectMenuButton_;
+   
+   private SecondaryToolbar secondaryToolbar_;
+   private ToolbarLabel connectionName_;
    
    private final Commands commands_;
    private final EventBus eventBus_;

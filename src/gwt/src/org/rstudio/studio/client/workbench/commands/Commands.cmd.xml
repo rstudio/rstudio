@@ -2812,11 +2812,13 @@ well as menu structures (for main menu and popup menus).
          
     <cmd id="sparkLog"
          menuLabel="Spark Log"
+         buttonLabel="Log"
          desc="View the log for the Spark connection"
          windowMode="main"/> 
          
      <cmd id="sparkUI"
-         menuLabel="Spark UI"
+         menuLabel="SparkUI"
+         buttonLabel = "SparkUI"
          desc="View the browser UI for the Spark connection"
          windowMode="main"/> 
      

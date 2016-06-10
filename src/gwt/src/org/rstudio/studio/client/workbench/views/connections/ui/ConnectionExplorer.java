@@ -24,9 +24,12 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -39,7 +42,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // code/connecti panel
-      int codePanelHeight = 100;
+      int codePanelHeight = 110;
       disconnectedUI_ = new VerticalPanel();
       disconnectedUI_.setWidth("100%");
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
@@ -49,7 +52,14 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       codePanel_.setHeight((codePanelHeight-5) + "px");
       codePanel_.setWidth("100%");
       disconnectedUI_.add(codePanel_);
-      disconnectedUI_.add(new PaneStatusMessage("(Not connected)", 35));
+      Label label = new Label("(Not connected)");
+      Style labelStyle = label.getElement().getStyle();
+      labelStyle.setColor("#888");
+      labelStyle.setMarginTop(15, Unit.PX);
+      labelStyle.setTextAlign(TextAlign.CENTER);
+      disconnectedUI_.add(label);
+      disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+      
   
       // table browser panel
       tableBrowser_ = new TableBrowser();
