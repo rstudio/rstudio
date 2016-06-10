@@ -175,11 +175,11 @@ public final class Collectors {
   }
 
   public static <T> Collector<T,?,Optional<T>> maxBy(Comparator<? super T> comparator) {
-    return minBy(comparator.reversed());
+    return reducing(BinaryOperator.maxBy(comparator));
   }
 
   public static <T> Collector<T,?,Optional<T>> minBy(final Comparator<? super T> comparator) {
-    return reducing((a, b) -> comparator.compare(a, b) < 0 ? a : b);
+    return reducing(BinaryOperator.minBy(comparator));
   }
 
   public static <T> Collector<T, ?, Map<Boolean, List<T>>> partitioningBy(
