@@ -487,11 +487,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(connectionName_);
       toolbar_.addLeftSeparator();
-      
+      toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
+      toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(connectMenuButton_);
       
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
       
       toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
       toolbar_.addLeftSeparator();
