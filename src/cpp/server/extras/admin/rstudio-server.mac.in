@@ -1,0 +1,119 @@
+#!/bin/sh
+
+testConfig() {
+ `${CMAKE_INSTALL_PREFIX}/bin/rserver --test-config`
+}
+
+verifyInstallation() {
+ `${CMAKE_INSTALL_PREFIX}/bin/rserver --verify-installation=1 --server-daemonize=0`
+}
+
+
+case "$1" in
+
+    status)
+        launchctl list com.rstudio.launchd.rserver
+        ;;
+
+    start)
+        testConfig || return $?
+        launchctl start com.rstudio.launchd.rserver
+        ;;
+
+    stop)
+        launchctl stop com.rstudio.launchd.rserver
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        ;;
+
+    restart)
+        testConfig || return $?
+        launchctl stop com.rstudio.launchd.rserver
+        launchctl start com.rstudio.launchd.rserver
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        ;;
+
+    test-config)
+        testConfig
+        ;;
+
+    verify-installation)
+        launchctl stop com.rstudio.launchd.rserver 2>/dev/null
+        verifyInstallation
+        launchctl start com.rstudio.launchd.rserver
+        ;;
+
+    suspend-session)
+        if test -n $2
+        then
+           kill -USR1 $3 $4 $5 $6 $7 $8 $9 $2
+        else
+           echo "Must specify PID of session to suspend"
+           exit 1
+        fi
+        ;;
+
+    suspend-all)
+        killall -USR1 $2 $3 $4 $5 $6 $7 $8 $9 rsession 2>/dev/null
+        killall -USR1 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces 2>/dev/null
+        ;;
+
+    force-suspend-session)
+        if test -n $2
+        then
+           kill -USR2 $3 $4 $5 $6 $7 $8 $9 $2
+        else
+           echo "Must specify PID of session to force suspend"
+           exit 1
+        fi
+        ;;
+
+    force-suspend-all)
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        ;;
+
+    kill-session)
+        if test -n $2
+        then
+           kill -KILL $3 $4 $5 $6 $7 $8 $9 $2
+        else
+           echo "Must specify PID of session to kill"
+           exit 1
+        fi
+        ;;
+
+    kill-all)
+        killall -KILL $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        killall -KILL $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        ;;
+
+    offline)
+        mkdir -p /var/lib/rstudio-server
+        touch /var/lib/rstudio-server/offline
+        launchctl stop com.rstudio.launchd.rserver
+        launchctl start com.rstudio.launchd.rserver
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
+        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
+        ;;
+
+    online)
+        mkdir -p /var/lib/rstudio-server
+        rm -f /var/lib/rstudio-server/offline
+        launchctl stop com.rstudio.launchd.rserver
+        launchctl start com.rstudio.launchd.rserver
+        ;;
+
+    active-sessions)
+        ps axo pid,cputime,args | grep [r]session
+        ;;
+
+    version)
+        echo "${CPACK_PACKAGE_VERSION}"
+        ;;
+
+    *)
+        echo $"Usage: rstudio-server {status|start|stop|restart|test-config|verify-installation|suspend-session|suspend-all|force-suspend-session|force-suspend-all|kill-session|kill-all|offline|online|active-sessions|version}"
+        exit 2
+esac

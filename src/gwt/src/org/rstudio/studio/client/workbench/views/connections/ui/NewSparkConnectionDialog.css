@@ -58,7 +58,7 @@
   border: 1px solid #BBB !important;
   background-color: #FFF;
   width: 100% !important;
-  height: 85px !important;
+  height: 95px !important;
   font-size: 9pt;
 }
 
@@ -83,3 +83,5 @@
 .codePanelHeader {
    margin-bottom: 4px;
 }
+
+

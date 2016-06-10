@@ -51,6 +51,10 @@ public class NotebookDocQueue extends JavaScriptObject
       }
    }-*/;
    
+   public final native void removeAllUnits() /*-{
+      this.units = [];
+   }-*/;
+   
    public final native void addCompletedUnit(NotebookQueueUnit unit) /*-{
       this.completed_units.push(unit);
    }-*/;

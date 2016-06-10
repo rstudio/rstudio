@@ -4282,7 +4282,10 @@ public class TextEditingTarget implements
 
       ArrayList<Scope> scopes = new ArrayList<Scope>();
       for (Scope scope : previousScopes)
-         scopes.add(scope);
+      {
+         if (isExecutableChunk(scope))
+            scopes.add(scope);
+      }
       
       notebook_.executeChunks(jobDesc, scopes);
    }

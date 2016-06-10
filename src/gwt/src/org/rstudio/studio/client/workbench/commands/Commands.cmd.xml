@@ -2795,29 +2795,30 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
    
     <cmd id="removeConnection"
-        menuLabel="Remove..."
+        menuLabel="Remove Connection..."
         buttonLabel=""
-        desc="Remove a connection"
+        desc="Remove connection from the connection history"
         windowMode="main"/>        
-          
-    <cmd id="connectConnection"
-         buttonLabel="Connect"
-         desc="Establish a connection"
-         windowMode="main"/>
-   
+            
     <cmd id="disconnectConnection"
          menuLabel="Disconnect"
-         buttonLabel="Disconnect"
          desc="Disconect from a connection"
+         windowMode="main"/>
+       
+    <cmd id="refreshConnection"
+         menuLabel="Refresh"
+         desc="Refresh data"
          windowMode="main"/>
          
     <cmd id="sparkLog"
          menuLabel="Spark Log"
+         buttonLabel="Log"
          desc="View the log for the Spark connection"
          windowMode="main"/> 
          
      <cmd id="sparkUI"
-         menuLabel="Spark UI"
+         menuLabel="SparkUI"
+         buttonLabel = "SparkUI"
          desc="View the browser UI for the Spark connection"
          windowMode="main"/> 
      

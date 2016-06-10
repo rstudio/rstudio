@@ -19,6 +19,9 @@ import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+
 public interface ConnectionsServerOperations extends CryptoServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
@@ -31,6 +34,13 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
    
    void showSparkUI(Connection connection, 
                     ServerRequestCallback<Void> callback);
+   
+   void connectionListTables(Connection connection,
+                             ServerRequestCallback<JsArrayString> callback);
+   
+   void connectionListFields(Connection connection,
+                             String table,
+                             ServerRequestCallback<JsArray<Field>> callback);
    
    void getNewSparkConnectionContext(
             ServerRequestCallback<NewSparkConnectionContext> callback);

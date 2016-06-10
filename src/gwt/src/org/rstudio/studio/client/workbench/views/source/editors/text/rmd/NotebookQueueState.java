@@ -116,17 +116,21 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public void clear()
    {
-      for (int i = 0; i < queue_.getUnits().length(); i++) 
+      if (queue_ != null)
       {
-         notebook_.cleanChunkExecState(queue_.getUnits().get(i).getChunkId());
+         for (int i = 0; i < queue_.getUnits().length(); i++) 
+         {
+            notebook_.cleanChunkExecState(queue_.getUnits().get(i).getChunkId());
+         }
+         
+         queue_.removeAllUnits();
       }
-      
       editingTarget_.getStatusBar().hideNotebookProgress(true);
    }
    
    public void executeRange(Scope chunk, Range range)
    {
-      if (!isExecuting())
+      if (isExecuting())
       {
          String chunkId = notebook_.getRowChunkId(chunk.getPreamble().getRow());
          if (chunkId == null)

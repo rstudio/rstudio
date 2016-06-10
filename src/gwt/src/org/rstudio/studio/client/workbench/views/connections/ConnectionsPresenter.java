@@ -52,8 +52,10 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -68,7 +70,8 @@ import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCo
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
-public class ConnectionsPresenter extends BasePresenter 
+public class ConnectionsPresenter extends BasePresenter  
+                                  implements PerformConnectionEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
@@ -76,8 +79,6 @@ public class ConnectionsPresenter extends BasePresenter
       
       void setConnections(List<Connection> connections);
       void setActiveConnections(List<ConnectionId> connections);
-      
-      boolean isConnected(ConnectionId id);
            
       String getSearchFilter();
       
@@ -88,12 +89,16 @@ public class ConnectionsPresenter extends BasePresenter
                                        ExploreConnectionEvent.Handler handler); 
       
       void showConnectionExplorer(Connection connection, String connectVia);
+      void setExploredConnection(Connection connection);
+      
+      void updateExploredConnection(String hint);
       
       HasClickHandlers backToConnectionsButton();
       
       String getConnectVia();
+      String getConnectCode();
       
-      void addToConnectionExplorer(String item);
+      void showConnectionProgress();
    }
    
    public interface Binder extends CommandBinder<Commands, ConnectionsPresenter> {}
@@ -134,7 +139,6 @@ public class ConnectionsPresenter extends BasePresenter
          public void onExploreConnection(ExploreConnectionEvent event)
          {
             exploreConnection(event.getConnection());
-            //display_.ensureHeight(EnsureHeightEvent.MAXIMIZED);
          }
       });
       
@@ -147,6 +151,9 @@ public class ConnectionsPresenter extends BasePresenter
          }
          
       });
+      
+      // perform connection event
+      eventBus_.addHandler(PerformConnectionEvent.TYPE, this);
       
       // set connections      
       final SessionInfo sessionInfo = session.getSessionInfo();
@@ -172,6 +179,7 @@ public class ConnectionsPresenter extends BasePresenter
             lastExploredConnection_ = exploredConnection_;
             
             // if there is an an explored connection then explore it
+            // (but delay to allow for the panel to be laid out)
             if (exploredConnection_ != null)
                exploreConnection(exploredConnection_);
          }
@@ -206,9 +214,24 @@ public class ConnectionsPresenter extends BasePresenter
       display_.bringToFront();
    }
    
+   public void onConnectionOpened(ConnectionOpenedEvent event)
+   {
+      if (exploredConnection_ == null || 
+          !exploredConnection_.getId().equalTo(event.getConnection().getId()))
+      {
+         exploreConnection(event.getConnection());
+      }
+   }
+   
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
-   {     
-      display_.addToConnectionExplorer(event.getHint());
+   {  
+      if (exploredConnection_ == null)
+         return;
+      
+      if (!exploredConnection_.getId().equalTo(event.getConnectionId()))
+         return;
+      
+      display_.updateExploredConnection(event.getHint());
    }
    
    public void onConnectionListChanged(ConnectionListChangedEvent event)
@@ -260,8 +283,9 @@ public class ConnectionsPresenter extends BasePresenter
                                  @Override
                                  public void execute()
                                  {
-                                    performConnection(result.getConnectVia(),
-                                                      result.getConnectCode());
+                                    eventBus_.fireEvent(new PerformConnectionEvent(
+                                          result.getConnectVia(),
+                                          result.getConnectCode()));
                                  }
                                  
                               });
@@ -326,10 +350,12 @@ public class ConnectionsPresenter extends BasePresenter
       }
    }
    
-  
-   
-   private void performConnection(String connectVia, String connectCode)
+   @Override
+   public void onPerformConnection(PerformConnectionEvent event)
    {
+      String connectVia = event.getConnectVia();
+      String connectCode = event.getConnectCode();
+     
       if (connectVia.equals(
             ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
       {
@@ -339,6 +365,8 @@ public class ConnectionsPresenter extends BasePresenter
       {
          eventBus_.fireEvent(
                new SendToConsoleEvent(connectCode, true));
+         
+         display_.showConnectionProgress();
       }
       else if (connectVia.equals(ConnectionOptions.CONNECT_NEW_R_SCRIPT) ||
                connectVia.equals(ConnectionOptions.CONNECT_NEW_R_NOTEBOOK))
@@ -354,6 +382,7 @@ public class ConnectionsPresenter extends BasePresenter
          else
          {
             type = NewDocumentWithCodeEvent.R_NOTEBOOK; 
+            int codeLength = code.split("\n").length;
             code = "---\n" +
                    "title: \"R Notebook\"\n" +
                    "output: html_notebook\n" +
@@ -366,90 +395,116 @@ public class ConnectionsPresenter extends BasePresenter
                    "```{r}\n" +
                    "\n" +
                    "```\n";
-            cursorPosition = SourcePosition.create(11, 0);      
+            cursorPosition = SourcePosition.create(9 + codeLength, 0);      
          }
         
          eventBus_.fireEvent(
             new NewDocumentWithCodeEvent(type, code, cursorPosition, true));
+         
+         display_.showConnectionProgress();
       }
    }
    
    @Handler
    public void onRemoveConnection()
    {
-      if (exploredConnection_ != null)
-      {
-         globalDisplay_.showYesNoMessage(
-            MessageDialog.QUESTION,
-            "Remove Connection",
-            "Are you sure you want to remove the selected connection?",
-            new Operation() {
-   
-               @Override
-               public void execute()
-               {
-                  server_.removeConnection(
-                    exploredConnection_.getId(), new VoidServerRequestCallback());   
-                  showAllConnections();
-               }
-            },
-            true);
-      }
-      else
-      {
-         globalDisplay_.showErrorMessage(
-           "Remove Connection", "No connection currently selected.");
-      }
-   }
-  
-   @Handler
-   public void onConnectConnection()
-   {
-      if (exploredConnection_ != null)
-      {
-         String connectVia = display_.getConnectVia();
-         String connectCode = exploredConnection_.getConnectCode();
-         performConnection(connectVia, connectCode);
-         
-         uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
-         uiPrefs_.writeUIPrefs();
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.QUESTION,
+         "Remove Connection",
+         "Are you sure you want to remove this connection from the connection history?",
+         new Operation() {
+
+            @Override
+            public void execute()
+            {
+               server_.removeConnection(
+                 exploredConnection_.getId(), new VoidServerRequestCallback()); 
+               disconnectConnection(false);
+            }
+         },
+         true);
+     
    }
    
    @Handler
    public void onDisconnectConnection()
    {
-      if (exploredConnection_ != null)
+      disconnectConnection(true);
+   }
+  
+   private void disconnectConnection(boolean prompt)
+   {
+      if (exploredConnection_ == null)
+         return;
+      
+      // define connect operation
+      final Operation connectOperation = new Operation() {
+         @Override
+         public void execute()
+         {
+            server_.getDisconnectCode(exploredConnection_, 
+                  new SimpleRequestCallback<String>() {
+               @Override
+               public void onResponseReceived(String disconnectCode)
+               {
+                  eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
+                  showAllConnections();
+               }
+          });  
+         }  
+      };
+      
+      if (prompt)
       {
-         server_.getDisconnectCode(exploredConnection_, 
-                                   new SimpleRequestCallback<String>() {
-            @Override
-            public void onResponseReceived(String disconnectCode)
-            {
-               eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-            }
-         });
+         StringBuilder builder = new StringBuilder();
+         builder.append("Are you sure you want to disconnect from Spark?");
+         globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION,
+               "Disconnect",
+               builder.toString(),
+               connectOperation,
+               true);  
+      }
+      else
+      {
+         connectOperation.execute();
       }
    }
+   
+   
+   @Handler
+   public void onRefreshConnection()
+   {
+      if (exploredConnection_ == null)
+         return;
+      
+      display_.updateExploredConnection("");
+   }
+   
    
    @Handler
    public void onSparkLog()
    {
-      if (exploredConnection_ != null)
-      {
-         server_.showSparkLog(exploredConnection_, 
-                              new VoidServerRequestCallback());
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      server_.showSparkLog(exploredConnection_, 
+                           new VoidServerRequestCallback());
+      
    }
    
    @Handler
    public void onSparkUI()
    {
-      if (exploredConnection_ != null)
-      {
-         server_.showSparkUI(exploredConnection_, 
-                             new VoidServerRequestCallback());
-      }
+      if (exploredConnection_ == null)
+         return;
+      
+      server_.showSparkUI(exploredConnection_, 
+                          new VoidServerRequestCallback());
+      
    }
    
    
@@ -457,7 +512,6 @@ public class ConnectionsPresenter extends BasePresenter
    {
       exploredConnection_ = null;
       display_.showConnectionsList();
-      //display_.ensureHeight(EnsureHeightEvent.NORMAL);
    }
    
    private void updateConnections(JsArray<Connection> connections)
@@ -469,6 +523,20 @@ public class ConnectionsPresenter extends BasePresenter
       
       // set filtered connections
       display_.setConnections(filteredConnections());
+      
+      // update explored connection
+      if (exploredConnection_ != null)
+      {
+         for (int i = 0; i<connections.length(); i++)
+         {
+            if (connections.get(i).getId().equals(exploredConnection_.getId()))
+            {
+               exploredConnection_ = connections.get(i);
+               display_.setExploredConnection(exploredConnection_);
+               break;
+            }
+         }
+      }
    }
    
    private void updateActiveConnections(JsArray<ConnectionId> connections)
@@ -477,33 +545,43 @@ public class ConnectionsPresenter extends BasePresenter
       for (int i = 0; i<connections.length(); i++)
          activeConnections_.add(connections.get(i));  
       display_.setActiveConnections(activeConnections_);
-      manageCommands();
+      manageUI();
    }
    
    private void exploreConnection(Connection connection)
    {
       exploredConnection_ = connection;
       display_.showConnectionExplorer(connection, uiPrefs_.connectionsConnectVia().getValue());
-      manageCommands();
+      manageUI();
    }
    
-   private void manageCommands()
+   private void manageUI()
    {
       if (exploredConnection_ != null)
       {
-         boolean connected = display_.isConnected(exploredConnection_.getId());
-         commands_.connectConnection().setVisible(!connected);
+         boolean connected = isConnected(exploredConnection_.getId());
+         commands_.removeConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
          commands_.sparkLog().setVisible(connected);
          commands_.sparkUI().setVisible(connected);
+         commands_.refreshConnection().setVisible(connected);
       }
       else
       {
+         commands_.removeConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
-         commands_.connectConnection().setVisible(false);
          commands_.sparkLog().setVisible(false);
          commands_.sparkUI().setVisible(false);
+         commands_.refreshConnection().setVisible(false);
       }
+   }
+   
+   private boolean isConnected(ConnectionId id)
+   {
+      for (int i=0; i<activeConnections_.size(); i++)
+         if (activeConnections_.get(i).equalTo(id))
+            return true;
+      return false;
    }
    
    private List<Connection> filteredConnections()

@@ -144,6 +144,7 @@ import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -4709,6 +4710,27 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SHOW_SPARK_UI, connection, callback);
    }
    
+   @Override
+   public void connectionListTables(
+                              Connection connection,
+                              ServerRequestCallback<JsArrayString> callback)
+   {
+      sendRequest(RPC_SCOPE, CONNECTION_LIST_TABLES, connection, callback);
+      
+   }
+
+   @Override
+   public void connectionListFields(
+                              Connection connection, 
+                              String table,
+                              ServerRequestCallback<JsArray<Field>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connection));
+      params.set(1, new JSONString(table));
+      sendRequest(RPC_SCOPE, CONNECTION_LIST_FIELDS, params, callback);
+   }
+   
    public void getNewSparkConnectionContext(
          ServerRequestCallback<NewSparkConnectionContext> callback)
    {
@@ -5095,6 +5117,8 @@ public class RemoteServer implements Server
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
    private static final String SHOW_SPARK_LOG = "show_spark_log";
    private static final String SHOW_SPARK_UI = "show_spark_ui";
+   private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
+   private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 }

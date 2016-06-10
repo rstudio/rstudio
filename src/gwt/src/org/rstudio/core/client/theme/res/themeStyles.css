@@ -929,7 +929,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 .toolbarButtonMenu .toolbarButtonRightImage {
    display: inline;
-   margin: 4px 0 0 2px;
+   margin: 4px 0 0 5px;
 }
 .toolbarButtonMenuOnly {
    position: relative;

@@ -1,5 +1,5 @@
 /*
- * Mutable.java
+ * Field.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,30 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
 
-// A utility class primarily used for creating mutable integers etc.
-public class Mutable<T>
-{
-   public Mutable()
+package org.rstudio.studio.client.workbench.views.connections.model;
+
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class Field extends JavaScriptObject
+{ 
+   protected Field()
    {
-      data_ = null;
    }
+  
+   public static native final Field create(String name, String type) /*-{ 
+      return {
+         name: name,
+         type: type
+      }; 
+   }-*/;
    
-   public Mutable(T data)
-   {
-      data_ = data;
-   }
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
    
-   public T get()
-   {
-      return data_;
-   }
-   
-   public void set(T data)
-   {
-      data_ = data;
-   }
-   
-   private T data_;
+   public final native String getType() /*-{
+      return this.type;
+   }-*/;
 }

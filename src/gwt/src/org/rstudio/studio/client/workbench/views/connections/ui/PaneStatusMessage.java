@@ -1,5 +1,5 @@
 /*
- * Mutable.java
+ * PaneStatusMessage.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,30 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
 
-// A utility class primarily used for creating mutable integers etc.
-public class Mutable<T>
+package org.rstudio.studio.client.workbench.views.connections.ui;
+
+import org.rstudio.core.client.widget.HorizontalCenterPanel;
+
+import com.google.gwt.user.client.ui.Label;
+
+class PaneStatusMessage extends HorizontalCenterPanel
 {
-   public Mutable()
+   public PaneStatusMessage(String message, int verticalOffset)
    {
-      data_ = null;
+      super(createStatusLabel(message), verticalOffset);
+      setSize("100%", "100%");
    }
+
    
-   public Mutable(T data)
+   private static Label createStatusLabel(String message)
    {
-      data_ = data;
+      Label label = new Label(message);
+      label.getElement().getStyle().setColor("#888");
+      return label;
    }
-   
-   public T get()
-   {
-      return data_;
-   }
-   
-   public void set(T data)
-   {
-      data_ = data;
-   }
-   
-   private T data_;
 }

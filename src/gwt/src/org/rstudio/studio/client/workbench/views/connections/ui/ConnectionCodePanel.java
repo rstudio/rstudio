@@ -35,12 +35,18 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-public class ConnectionCodePanel extends Composite
+public class ConnectionCodePanel extends Composite implements RequiresResize
 {
    public ConnectionCodePanel()
+   {
+      this(true);
+   }
+   
+   public ConnectionCodePanel(boolean connectViaUI)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       VerticalPanel container = new VerticalPanel();
@@ -57,12 +63,6 @@ public class ConnectionCodePanel extends Composite
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
       connectVia_ = new ListBox();
-      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
-      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
-      connectVia_.addItem("Copy to Clipboard", 
-                          ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       updateConnectViaUI_ = new Command() {
          @Override
          public void execute()
@@ -82,6 +82,12 @@ public class ConnectionCodePanel extends Composite
             }
          }
       };
+      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
+      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
+      if (uiPrefs_.enableRNotebooks().getValue())
+         connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
+      connectVia_.addItem("Copy to Clipboard", 
+                          ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       updateConnectViaUI_.execute();
       addConnectViaChangeHandler(new ChangeHandler() {
          @Override
@@ -90,12 +96,12 @@ public class ConnectionCodePanel extends Composite
             updateConnectViaUI_.execute();
          }
       });
-     
       connectPanel.add(connectVia_);
       codeHeaderPanel.add(connectPanel);
       codeHeaderPanel.setCellHorizontalAlignment(
             connectPanel, HasHorizontalAlignment.ALIGN_RIGHT);
-      container.add(codeHeaderPanel);
+      if (connectViaUI)
+         container.add(codeHeaderPanel);
      
       
       codeViewer_ = new AceEditorWidget(false);
@@ -104,7 +110,7 @@ public class ConnectionCodePanel extends Composite
             EditorLanguage.LANG_R.getParserName(), false);
       codeViewer_.getEditor().getSession().setUseWrapMode(true);
       codeViewer_.getEditor().getRenderer().setShowGutter(false);
-      codeViewer_.getEditor().setReadOnly(true);
+      codeViewer_.getEditor().setReadOnly(false);
       codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
@@ -160,8 +166,16 @@ public class ConnectionCodePanel extends Composite
          setConnectVia(connectVia);
          updateConnectViaUI_.execute();
       }
-      codeViewer_.forceResize();
+      onResize();
       settingCode_ = false;
+   }
+   
+   @Override
+   public void onResize()
+   {
+      codeViewer_.forceResize();
+      codeViewer_.getEditor().resize();
+      codeViewer_.forceCursorChange();
    }
    
    public String getCode()
