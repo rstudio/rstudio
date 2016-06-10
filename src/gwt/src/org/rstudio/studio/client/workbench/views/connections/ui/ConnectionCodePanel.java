@@ -110,7 +110,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
             EditorLanguage.LANG_R.getParserName(), false);
       codeViewer_.getEditor().getSession().setUseWrapMode(true);
       codeViewer_.getEditor().getRenderer().setShowGutter(false);
-      codeViewer_.getEditor().setReadOnly(true);
+      codeViewer_.getEditor().setReadOnly(false);
       codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
          @Override
          public void onCursorChanged(CursorChangedEvent event)

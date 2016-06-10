@@ -430,7 +430,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                   eventBus_.fireEvent(
                         new PerformConnectionEvent(
                               connectVia, 
-                              exploredConnection_.getConnectCode()));    
+                              connectionExplorer_.getConnectCode()));    
                }
             });
    }
