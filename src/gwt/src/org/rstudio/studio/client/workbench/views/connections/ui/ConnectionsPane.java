@@ -487,8 +487,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(connectionName_);
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
-      toolbar_.addLeftSeparator();
+
       toolbar_.addLeftWidget(connectMenuButton_);
       
       toolbar_.addLeftSeparator();
@@ -499,6 +498,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       
+      toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
       toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
       connectionName_.setText(connection.getHost());
