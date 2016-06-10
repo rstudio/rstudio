@@ -138,6 +138,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                return "";
          }
       };
+      statusColumn_.setCellStyleNames(RES.dataGridStyle().statusColumn());
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
       connectionsDataGrid_.setColumnWidth(statusColumn_, 75, Unit.PX);
       
@@ -557,7 +558,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    public interface Resources extends RStudioDataGridResources
    {
       @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionsListDataGridStyle.css"})
-      RStudioDataGridStyle dataGridStyle();
+      Styles dataGridStyle();
         
       ImageResource connectionExploreButton();
       
@@ -566,6 +567,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    
    public interface Styles extends RStudioDataGridStyle
    {
+      String statusColumn();
    }
    
    private static final Resources RES = GWT.create(Resources.class);
