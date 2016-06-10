@@ -2804,6 +2804,11 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Disconnect"
          desc="Disconect from a connection"
          windowMode="main"/>
+       
+    <cmd id="refreshConnection"
+         menuLabel="Refresh"
+         desc="Refresh data"
+         windowMode="main"/>
          
     <cmd id="sparkLog"
          menuLabel="Spark Log"

@@ -490,13 +490,15 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(connectMenuButton_);
       
       toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.removeConnection().createToolbarButton());
+      
       toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.sparkUI().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       
-      toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
+      toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
       connectionName_.setText(connection.getHost());
       
@@ -519,7 +521,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
           else if (conn2Connected && !conn1Connected)
              return 1;
           else
-             return Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
+             return -1 * Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
        }       
     });
    }

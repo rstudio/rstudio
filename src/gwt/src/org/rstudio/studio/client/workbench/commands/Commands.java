@@ -420,6 +420,7 @@ public abstract class
    public abstract AppCommand newConnection();
    public abstract AppCommand removeConnection();
    public abstract AppCommand disconnectConnection();
+   public abstract AppCommand refreshConnection();
    public abstract AppCommand sparkLog();
    public abstract AppCommand sparkUI();
    

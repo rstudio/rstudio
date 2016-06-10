@@ -20,7 +20,6 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
@@ -83,11 +82,9 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    @Inject
    public void initialize(EventBus eventBus, 
-                          Commands commands,
                           ConnectionsServerOperations server)
    {
       eventBus_ = eventBus;
-      commands_ = commands;
       server_ = server;
    }
    
@@ -165,8 +162,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    private boolean waitingForConnection_ = false;
    
    private Connection connection_ = null;
-   
-   private Commands commands_;
+
    private EventBus eventBus_;
    @SuppressWarnings("unused")
    private ConnectionsServerOperations server_;

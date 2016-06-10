@@ -475,6 +475,15 @@ public class ConnectionsPresenter extends BasePresenter
    }
    
    
+   @Handler
+   public void onRefreshConnection()
+   {
+      if (exploredConnection_ == null)
+         return;
+      
+      display_.updateExploredConnection("");
+   }
+   
    
    @Handler
    public void onSparkLog()
@@ -551,15 +560,19 @@ public class ConnectionsPresenter extends BasePresenter
       if (exploredConnection_ != null)
       {
          boolean connected = isConnected(exploredConnection_.getId());
+         commands_.removeConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
          commands_.sparkLog().setVisible(connected);
          commands_.sparkUI().setVisible(connected);
+         commands_.refreshConnection().setVisible(connected);
       }
       else
       {
+         commands_.removeConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
          commands_.sparkLog().setVisible(false);
          commands_.sparkUI().setVisible(false);
+         commands_.refreshConnection().setVisible(false);
       }
    }
    
