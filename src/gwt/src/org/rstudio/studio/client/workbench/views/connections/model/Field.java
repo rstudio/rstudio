@@ -22,6 +22,13 @@ public class Field extends JavaScriptObject
    protected Field()
    {
    }
+  
+   public static native final Field create(String name, String type) /*-{ 
+      return {
+         name: name,
+         type: type
+      }; 
+   }-*/;
    
    public final native String getName() /*-{
       return this.name;
