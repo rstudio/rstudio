@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.core.client.widget.HorizontalCenterPanel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -24,7 +23,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -43,7 +41,7 @@ public class TableBrowser extends Composite implements RequiresResize
       tables_.setVisibleItemCount(2);
       tables_.setSize("100%", "100%");
       
-      noTables_ = new NoTablesPanel();
+      noTables_ = new PaneStatusMessage("(No tables)", 50);
       
       container_.setWidget(noTables_);
      
@@ -91,25 +89,8 @@ public class TableBrowser extends Composite implements RequiresResize
 
    private final SimplePanel container_;
    private final ListBox tables_;
-   private final NoTablesPanel noTables_;
+   private final PaneStatusMessage noTables_;
    private ConnectionsServerOperations server_;
    
    private Connection connection_;
-   
-   private static class NoTablesPanel extends HorizontalCenterPanel
-   {
-      public NoTablesPanel()
-      {
-         super(createStatusLabel(), 50);
-         setSize("100%", "100%");
-      }
-
-      
-      private static Label createStatusLabel()
-      {
-         Label label = new Label("(No tables)");
-         label.getElement().getStyle().setColor("#888");
-         return label;
-      }
-   }
 }

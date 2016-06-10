@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionLi
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -69,7 +70,8 @@ import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCo
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
-public class ConnectionsPresenter extends BasePresenter 
+public class ConnectionsPresenter extends BasePresenter  
+                                  implements PerformConnectionEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
@@ -149,6 +151,9 @@ public class ConnectionsPresenter extends BasePresenter
          }
          
       });
+      
+      // perform connection event
+      eventBus_.addHandler(PerformConnectionEvent.TYPE, this);
       
       // set connections      
       final SessionInfo sessionInfo = session.getSessionInfo();
@@ -278,8 +283,9 @@ public class ConnectionsPresenter extends BasePresenter
                                  @Override
                                  public void execute()
                                  {
-                                    performConnection(result.getConnectVia(),
-                                                      result.getConnectCode());
+                                    eventBus_.fireEvent(new PerformConnectionEvent(
+                                          result.getConnectVia(),
+                                          result.getConnectCode()));
                                  }
                                  
                               });
@@ -344,10 +350,12 @@ public class ConnectionsPresenter extends BasePresenter
       }
    }
    
-  
-   
-   private void performConnection(String connectVia, String connectCode)
+   @Override
+   public void onPerformConnection(PerformConnectionEvent event)
    {
+      String connectVia = event.getConnectVia();
+      String connectCode = event.getConnectCode();
+     
       if (connectVia.equals(
             ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
       {
@@ -419,19 +427,6 @@ public class ConnectionsPresenter extends BasePresenter
          },
          true);
      
-   }
-  
-   @Handler
-   public void onConnectConnection()
-   {
-      if (exploredConnection_ == null)
-         return;
-
-      String connectVia = display_.getConnectVia();
-      performConnection(connectVia, exploredConnection_.getConnectCode());
-      
-      uiPrefs_.connectionsConnectVia().setGlobalValue(connectVia);
-      uiPrefs_.writeUIPrefs();
    }
    
    @Handler
@@ -541,7 +536,6 @@ public class ConnectionsPresenter extends BasePresenter
       if (exploredConnection_ != null)
       {
          boolean connected = isConnected(exploredConnection_.getId());
-         commands_.connectConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
          commands_.sparkLog().setVisible(connected);
          commands_.sparkUI().setVisible(connected);
@@ -549,7 +543,6 @@ public class ConnectionsPresenter extends BasePresenter
       else
       {
          commands_.disconnectConnection().setVisible(false);
-         commands_.connectConnection().setVisible(false);
          commands_.sparkLog().setVisible(false);
          commands_.sparkUI().setVisible(false);
       }

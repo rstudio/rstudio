@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -34,6 +35,7 @@ import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
@@ -43,6 +45,8 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.cellview.ImageButtonColumn;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -50,21 +54,28 @@ import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 
 public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
 {
    @Inject
-   public ConnectionsPane(Commands commands)
+   public ConnectionsPane(Commands commands, EventBus eventBus, UIPrefs uiPrefs)
    {
       // initialize
       super("Connections");
       commands_ = commands;
+      eventBus_ = eventBus;
+      uiPrefs_ = uiPrefs;
       
       // create main panel
       mainPanel_ = new LayoutPanel();
@@ -317,7 +328,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionExplorer_.onResize();
    }
    
-   
    @Override
    protected Toolbar createMainToolbar()
    {
@@ -339,6 +349,44 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       backToConnectionsButton_.setTitle("View all connections");
       connectionName_ = new ToolbarLabel();
       connectionName_.getElement().getStyle().setMarginRight(8, Unit.PX);
+      
+      // connect meuu
+      ToolbarPopupMenu connectMenu = new ToolbarPopupMenu();
+      connectMenu.addItem(connectMenuItem(
+            commands_.historySendToConsole().getImageResource(),
+            "R Console",
+            ConnectionOptions.CONNECT_R_CONSOLE));
+      connectMenu.addSeparator();
+      connectMenu.addItem(connectMenuItem(
+            commands_.newSourceDoc().getImageResource(),
+            "New R Script",
+            ConnectionOptions.CONNECT_NEW_R_SCRIPT));
+      if (uiPrefs_.enableRNotebooks().getValue())
+         connectMenu.addItem(connectMenuItem(
+            commands_.newRNotebook().getImageResource(),
+            "New R Notebook",
+            ConnectionOptions.CONNECT_NEW_R_NOTEBOOK));
+      connectMenu.addSeparator();
+      connectMenu.addItem(connectMenuItem(
+            commands_.copyPlotToClipboard().getImageResource(),
+            "Copy to Clipboard",
+            ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
+      connectMenuButton_ = new ToolbarButton(
+            "Connect", 
+            commands_.newConnection().getImageResource(), 
+            connectMenu);
+      
+      // manage connect menu visibility
+      connectMenuButton_.setVisible(!commands_.disconnectConnection().isVisible());
+      commands_.disconnectConnection().addVisibleChangedHandler(
+                                       new VisibleChangedHandler() {
+         @Override
+         public void onVisibleChanged(AppCommand command)
+         {
+            connectMenuButton_.setVisible(
+                  !commands_.disconnectConnection().isVisible());
+         }  
+      });
           
       installConnectionsToolbar();
       
@@ -357,6 +405,27 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       super.onBeforeSelected();
       connectionsDataGrid_.redraw();
    }
+   
+   private MenuItem connectMenuItem(ImageResource icon, 
+         String text, 
+         final String connectVia)
+   {
+      return new MenuItem(
+            AppCommand.formatMenuLabel(icon, text, null),
+            true,
+            new Scheduler.ScheduledCommand() {
+
+               @Override
+               public void execute()
+               {
+                  eventBus_.fireEvent(
+                        new PerformConnectionEvent(
+                              connectVia, 
+                              exploredConnection_.getConnectCode()));    
+               }
+            });
+   }
+
    
    private void animate(final Widget from,
                         final Widget to,
@@ -412,15 +481,17 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private void installConnectionExplorerToolbar(Connection connection)
    {
       toolbar_.removeAllWidgets();
-      
      
       toolbar_.addLeftWidget(backToConnectionsButton_);
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(connectionName_);
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
+      
+      toolbar_.addLeftWidget(connectMenuButton_);
+      
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
+      toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.sparkUI().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
@@ -474,7 +545,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private ToolbarButton backToConnectionsButton_;
    private ToolbarLabel connectionName_;
    
+   private ToolbarButton connectMenuButton_;
+   
    private final Commands commands_;
+   private final EventBus eventBus_;
+   private final UIPrefs uiPrefs_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

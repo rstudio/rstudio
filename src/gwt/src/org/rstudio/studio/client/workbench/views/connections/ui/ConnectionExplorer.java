@@ -20,13 +20,16 @@ import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -37,16 +40,22 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // code/connecti panel
-      int codePanelHeight = 125;
-      codePanel_ = new ConnectionCodePanel();
+      int codePanelHeight = 100;
+      disconnectedUI_ = new VerticalPanel();
+      disconnectedUI_.setWidth("100%");
+      disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+      codePanel_ = new ConnectionCodePanel(false);
       codePanel_.addStyleName(ThemeStyles.INSTANCE.secondaryToolbarPanel());
       codePanel_.getElement().getStyle().setPadding(8, Unit.PX);
-      codePanel_.setHeight(codePanelHeight + "px");
+      codePanel_.setHeight((codePanelHeight-5) + "px");
       codePanel_.setWidth("100%");
-     
+      disconnectedUI_.add(codePanel_);
+      disconnectedUI_.add(new PaneStatusMessage("(Not connected)", 35));
+  
       // table browser panel
       tableBrowser_ = new TableBrowser();
       
+      // container panel to enable switching between connected/disconnected
       containerPanel_ = new SimplePanelWithProgress(
                                     ProgressImages.createLarge(), 50);
       
@@ -73,9 +82,12 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    }
    
    @Inject
-   public void initialize(EventBus eventBus, ConnectionsServerOperations server)
+   public void initialize(EventBus eventBus, 
+                          Commands commands,
+                          ConnectionsServerOperations server)
    {
       eventBus_ = eventBus;
+      commands_ = commands;
       server_ = server;
    }
    
@@ -94,7 +106,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    public void setConnected(boolean connected)
    {
-      activePanel_ = connected ? tableBrowser_ : codePanel_;
+      activePanel_ = connected ? tableBrowser_ : disconnectedUI_;
       if (!waitingForConnection_)
          showActivePanel();
    }
@@ -131,6 +143,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    public void onResize()
    {
       containerPanel_.onResize();
+      codePanel_.onResize();
       
    }
    
@@ -141,6 +154,8 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    }
    
    private final ConnectionCodePanel codePanel_;
+   
+   private final VerticalPanel disconnectedUI_;
    private final TableBrowser tableBrowser_;
   
    private Widget activePanel_;
@@ -151,6 +166,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    private Connection connection_ = null;
    
+   private Commands commands_;
    private EventBus eventBus_;
    @SuppressWarnings("unused")
    private ConnectionsServerOperations server_;

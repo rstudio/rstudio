@@ -419,7 +419,6 @@ public abstract class
    // Connections
    public abstract AppCommand newConnection();
    public abstract AppCommand removeConnection();
-   public abstract AppCommand connectConnection();
    public abstract AppCommand disconnectConnection();
    public abstract AppCommand sparkLog();
    public abstract AppCommand sparkUI();

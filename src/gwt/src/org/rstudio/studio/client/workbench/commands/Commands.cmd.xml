@@ -2799,12 +2799,7 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc="Remove connection from the connection history"
         windowMode="main"/>        
-          
-    <cmd id="connectConnection"
-         buttonLabel="Connect"
-         desc="Establish a connection"
-         windowMode="main"/>
-   
+            
     <cmd id="disconnectConnection"
          menuLabel="Disconnect"
          desc="Disconect from a connection"

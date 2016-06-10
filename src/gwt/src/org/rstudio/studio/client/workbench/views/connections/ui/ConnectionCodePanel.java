@@ -43,6 +43,11 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
 {
    public ConnectionCodePanel()
    {
+      this(true);
+   }
+   
+   public ConnectionCodePanel(boolean connectViaUI)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       VerticalPanel container = new VerticalPanel();
       container.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);      
@@ -58,12 +63,6 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
       connectVia_ = new ListBox();
-      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
-      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
-      connectVia_.addItem("Copy to Clipboard", 
-                          ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       updateConnectViaUI_ = new Command() {
          @Override
          public void execute()
@@ -83,6 +82,12 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
             }
          }
       };
+      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
+      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
+      if (uiPrefs_.enableRNotebooks().getValue())
+         connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
+      connectVia_.addItem("Copy to Clipboard", 
+                          ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       updateConnectViaUI_.execute();
       addConnectViaChangeHandler(new ChangeHandler() {
          @Override
@@ -91,12 +96,12 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
             updateConnectViaUI_.execute();
          }
       });
-     
       connectPanel.add(connectVia_);
       codeHeaderPanel.add(connectPanel);
       codeHeaderPanel.setCellHorizontalAlignment(
             connectPanel, HasHorizontalAlignment.ALIGN_RIGHT);
-      container.add(codeHeaderPanel);
+      if (connectViaUI)
+         container.add(codeHeaderPanel);
      
       
       codeViewer_ = new AceEditorWidget(false);
