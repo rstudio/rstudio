@@ -318,6 +318,7 @@ struct Events : boost::noncopyable
                                              onActiveConsoleChanged;
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
+   boost::signal<void()>                     onUserInterrupt;
    boost::signal<void (ChangeSource)>        onDetectChanges;
    boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
    boost::signal<void(bool)>                 onDeferredInit;

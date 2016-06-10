@@ -1106,6 +1106,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // only accept interrupts while R is processing input
             if ( s_rProcessingInput )
                rstudio::r::exec::setInterruptsPending(true);
+
+            // let modules know
+            module_context::events().onUserInterrupt();
          }
 
          // other rpc method, handle it

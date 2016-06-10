@@ -137,6 +137,16 @@ public:
       queue_.push_back(pQueue);
    }
 
+   void clear()
+   {
+      // clean up any active execution context
+      if (execContext_)
+         execContext_->disconnect();
+
+      // remove all document queues
+      queue_.clear();
+   }
+
    json::Value getDocQueue(const std::string& docId)
    {
       BOOST_FOREACH(boost::shared_ptr<NotebookDocQueue> pQueue, queue_)
@@ -218,7 +228,6 @@ private:
 
       // notify client
       execUnit_ = unit;
-      std::cerr << "chunk " << execUnit_->chunkId() << " started" << std::endl;
       enqueueExecStateChanged(ChunkExecStarted, options);
 
       executeCurrentUnit();
@@ -326,6 +335,15 @@ void onConsolePrompt(const std::string& prompt)
    }
 }
 
+void onUserInterrupt()
+{
+   if (s_queue)
+   {
+      s_queue->clear();
+      s_queue.reset();
+   }
+}
+
 } // anonymous namespace
 
 json::Value getDocQueue(const std::string& docId)
@@ -342,6 +360,7 @@ Error initQueue()
    using namespace module_context;
 
    module_context::events().onConsolePrompt.connect(onConsolePrompt);
+   module_context::events().onUserInterrupt.connect(onUserInterrupt);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
