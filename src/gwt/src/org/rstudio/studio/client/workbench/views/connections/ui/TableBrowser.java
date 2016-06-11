@@ -17,8 +17,13 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTree;
+import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -30,7 +35,9 @@ public class TableBrowser extends Composite implements RequiresResize
    {  
       // create tables model and widget
       tablesModel_ = new TableBrowserModel();
-      tables_ = new CellTree(tablesModel_, null);
+      
+      tables_ = new CellTree(tablesModel_, null, RES, MESSAGES);
+      
       tables_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
       tables_.setWidth("100%");
       
@@ -59,6 +66,46 @@ public class TableBrowser extends Composite implements RequiresResize
    public void onResize()
    {
    }
+   
+   public interface Resources extends CellTree.Resources {
+      
+      @ImageOptions(flipRtl = true)
+      @Source("ExpandIcon.png")
+      ImageResource cellTreeClosedItem();
+
+      /**
+       * An image indicating that a node is loading.
+       */
+      @ImageOptions(flipRtl = true)
+      @Source("progress.gif")
+      ImageResource cellTreeLoading();
+
+    
+      @ImageOptions(flipRtl = true)
+      @Source("CollapseIcon.png")
+      ImageResource cellTreeOpenItem();
+      
+      
+      @Source("TableBrowser.css")
+      public CellTree.Style cellTreeStyle();   
+   }
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   
+   static {
+      RES.cellTreeStyle().ensureInjected();
+   }
+   
+   @DefaultLocale("en_US")
+   public interface TableBrowserMessages extends CellTreeMessages {
+     @DefaultMessage("Show more")
+     String showMore();
+     @DefaultMessage("(No tables)")
+     String emptyTree();
+   }
+   
+   private static final TableBrowserMessages MESSAGES 
+                              = GWT.create(TableBrowserMessages.class);
    
    private final CellTree tables_;
    private final TableBrowserModel tablesModel_;
