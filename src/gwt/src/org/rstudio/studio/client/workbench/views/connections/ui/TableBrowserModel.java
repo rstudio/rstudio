@@ -197,7 +197,7 @@ public class TableBrowserModel implements TreeViewModel
       @Override
       public void render(Cell.Context context, Field value, SafeHtmlBuilder sb)
       {
-         sb.appendEscaped(value.getName());
+         sb.appendEscaped(value.getName() + ": " + value.getType());
       }
     }
    

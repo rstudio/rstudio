@@ -1,4 +1,6 @@
 
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
 
 .cellTreeWidget {
   
@@ -13,53 +15,31 @@
 
 
 .cellTreeItem {
-  padding-top: 4px;
-  padding-bottom: 4px;
-  cursor: hand;
-  cursor: pointer;
-  zoom: 1;
+  padding-top: 1px;
+  padding-bottom: 1px;
 }
 .cellTreeItemImage {
   
 }
+
 .cellTreeItemImageValue {
-  zoom: 1;
 }
+
 .cellTreeItemValue {
-  padding-left: 3px;
-  padding-right: 3px;
-  outline: none;
+  font-family: fixedWidthFont;
 }
+
 .cellTreeOpenItem {
   
 }
 .cellTreeTopItem {
-  font-weight: bold;
-  color: #4b4a4a;
-  margin-top: 20px;
-  padding: 3px 13px 3px 10px !important;
+  margin-top: 0;
 }
 .cellTreeTopItemImage {
   
 }
 .cellTreeTopItemImageValue {
-  border-bottom: 1px solid #6f7277;
-  padding-bottom: 1px;
-}
-.cellTreeKeyboardSelectedItem {
-  background-color: #ffc;
-  outline: none;
-}
-@sprite .cellTreeSelectedItem {
-  gwt-image: 'cellTreeSelectedBackground';
-  background-color: #628cd5;
-  color: white;
-  height: auto;
-  overflow: visible;
-}
-.cellTreeShowMoreButton {
-  padding-left: 16px;
-  outline: none;
+  border-bottom: none;
 }
 
 

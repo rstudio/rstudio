@@ -86,7 +86,7 @@ public class TableBrowser extends Composite implements RequiresResize
       ImageResource cellTreeOpenItem();
       
       
-      @Source("TableBrowser.css")
+      @Source({CellTree.Style.DEFAULT_CSS, "TableBrowser.css"})
       public CellTree.Style cellTreeStyle();   
    }
    
