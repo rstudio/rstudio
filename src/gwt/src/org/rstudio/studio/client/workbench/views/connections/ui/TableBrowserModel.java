@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -32,7 +33,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
-import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.inject.Inject;
 
@@ -64,12 +64,14 @@ public class TableBrowserModel implements TreeViewModel
       if (value == null)
       {
          tableProvider_ = new TableProvider();
+         fieldProviders_.clear();
          return new DefaultNodeInfo<String>(tableProvider_, new TextCell());
       }
       else if (value instanceof String)
       {
-         FieldProvider columnProvider = new FieldProvider((String)value);
-         return new DefaultNodeInfo<Field>(columnProvider, new FieldCell());
+         FieldProvider fieldProvider = new FieldProvider((String)value);
+         fieldProviders_.put((String)value, fieldProvider);
+         return new DefaultNodeInfo<Field>(fieldProvider, new FieldCell());
       }
       
       // Unhandled type.
@@ -83,14 +85,26 @@ public class TableBrowserModel implements TreeViewModel
       return value instanceof Field;
    }
    
-   private void refresh()
+   public void refresh()
    {
-      for (HasData<String> display : tableProvider_.getDataDisplays())  
-         display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
+      tableProvider_.refresh();
+   }
+   
+   public void refreshTable(String table)
+   {
+      if (fieldProviders_.containsKey(table))
+         fieldProviders_.get(table).refresh();
    }
 
    private class TableProvider extends AsyncDataProvider<String>
    {
+      public void refresh()
+      {
+         fieldProviders_.clear();
+         for (HasData<String> display : getDataDisplays())  
+           display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
+      }
+      
       @Override
       protected void onRangeChanged(final HasData<String> display)
       {
@@ -137,6 +151,11 @@ public class TableBrowserModel implements TreeViewModel
          table_ = table;
       }
       
+      public void refresh()
+      {
+         for (HasData<Field> display : getDataDisplays())  
+           display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
+      }
       
       @Override
       protected void onRangeChanged(final HasData<Field> display)
@@ -150,7 +169,6 @@ public class TableBrowserModel implements TreeViewModel
             return;
          }
 
-         
          server_.connectionListFields(
                connection_,
                table_,
@@ -184,6 +202,8 @@ public class TableBrowserModel implements TreeViewModel
     }
    
    private TableProvider tableProvider_;
+   private HashMap<String,FieldProvider> fieldProviders_ 
+                              = new HashMap<String,FieldProvider>();
    
    private Connection connection_;
    
