@@ -96,6 +96,19 @@ options(connectionViewer = list(
       character()
 })
 
+.rs.addFunction("connectionListColumns", function(finder, host, listColumnsCode, table) {
+
+   name <- .rs.getConnectionObjectName(finder, host)
+
+   if (!is.null(name)) {
+      listColumnsCode <- sprintf(listColumnsCode, name, table)
+      eval(parse(text = listColumnsCode), envir = globalenv())
+   }
+   else
+      NULL
+})
+
+
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
 
   context <- list()

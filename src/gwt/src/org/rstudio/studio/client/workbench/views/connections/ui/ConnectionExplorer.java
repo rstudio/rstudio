@@ -141,10 +141,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       tableBrowser_.update(connection_, hint);
    }
    
-   public void clearTableBrowser()
-   {
-      tableBrowser_.clear();
-   }
+ 
   
    @Override
    public void onResize()

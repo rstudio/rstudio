@@ -207,8 +207,13 @@ core::Error registerPostbackHandler(
                               const PostbackHandlerFunction& handlerFunction,
                               std::string* pShellCommand); 
                         
-// register an rpc method
+// register an async rpc method
 core::Error registerAsyncRpcMethod(
+                              const std::string& name,
+                              const core::json::JsonRpcAsyncFunction& function);
+
+// register an idle-only async rpc method
+core::Error registerIdleOnlyAsyncRpcMethod(
                               const std::string& name,
                               const core::json::JsonRpcAsyncFunction& function);
 

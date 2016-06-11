@@ -28,6 +28,7 @@
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
@@ -284,31 +285,8 @@ Error showSparkUI(const json::JsonRpcRequest& request,
 }
 
 
-void endConnectionListTables(const Connection& connection,
-                             const json::JsonRpcFunctionContinuation& continuation)
-{
-   // response
-   json::JsonRpcResponse response;
-
-   // get the list of tables
-   std::vector<std::string> tables;
-   Error error = r::exec::RFunction(".rs.connectionListTables",
-                                    connection.finder,
-                                    connection.id.host,
-                                    connection.listTablesCode).call(&tables);
-   if (error)
-   {
-      continuation(error, &response);
-   }
-   else
-   {
-      response.setResult(json::toJsonArray((tables)));
-      continuation(Success(), &response);
-   }
-}
-
-void beginConnectionListTables(const json::JsonRpcRequest& request,
-                               const json::JsonRpcFunctionContinuation& continuation)
+void connectionListTables(const json::JsonRpcRequest& request,
+                          const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection param
    Connection connection;
@@ -320,39 +298,80 @@ void beginConnectionListTables(const json::JsonRpcRequest& request,
       return;
    }
 
-   // delay until idle if this is a background connection
-   if (request.isBackgroundConnection)
+   // response
+   json::JsonRpcResponse response;
+
+   // get the list of tables
+   std::vector<std::string> tables;
+   error = r::exec::RFunction(".rs.connectionListTables",
+                                 connection.finder,
+                                 connection.id.host,
+                                 connection.listTablesCode).call(&tables);
+   if (error)
    {
-      module_context::scheduleDelayedWork(
-          boost::posix_time::milliseconds(100),
-          boost::bind(endConnectionListTables, connection, continuation),
-          true);
+      continuation(error, &response);
    }
-   // otherwise execute immediately
    else
    {
-      endConnectionListTables(connection, continuation);
+      response.setResult(json::toJsonArray((tables)));
+      continuation(Success(), &response);
    }
 }
 
-
-Error connectionListFields(const json::JsonRpcRequest& request,
-                           json::JsonRpcResponse* pResponse)
+void connectionListFields(const json::JsonRpcRequest& request,
+                          const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection param
    Connection connection;
    Error error = readConnectionParam(request, &connection);
    if (error)
-      return error;
+   {
+      json::JsonRpcResponse response;
+      continuation(error, &response);
+      return;
+   }
 
-   // read table param
+   // get table param
    std::string table;
    error = json::readParam(request.params, 1, &table);
    if (error)
-      return error;
+   {
+      json::JsonRpcResponse response;
+      continuation(error, &response);
+      return;
+   }
 
+   // response
+   json::JsonRpcResponse response;
 
-   return Success();
+   // get the list of fields
+   r::sexp::Protect rProtect;
+   SEXP sexpResult;
+   error = r::exec::RFunction(".rs.connectionListColumns",
+                                 connection.finder,
+                                 connection.id.host,
+                                 connection.listColumnsCode,
+                                 table).call(&sexpResult, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      continuation(error, &response);
+   }
+   else
+   {
+      core::json::Value jsonResult;
+      Error error = r::json::jsonValueFromObject(sexpResult, &jsonResult);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continuation(error, &response);
+      }
+      else
+      {
+         response.setResult(jsonResult);
+         continuation(Success(), &response);
+      }
+   }
 }
 
 Error installSpark(const json::JsonRpcRequest& request,
@@ -447,7 +466,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.12");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.13");
 }
 
 bool activateConnections()
@@ -499,8 +518,8 @@ Error initialize()
       (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
       (bind(registerRpcMethod, "show_spark_log", showSparkLog))
       (bind(registerRpcMethod, "show_spark_ui", showSparkUI))
-      (bind(registerAsyncRpcMethod, "connection_list_tables", beginConnectionListTables))
-      (bind(registerRpcMethod, "connection_list_fields", connectionListFields))
+      (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_tables", connectionListTables))
+      (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
       (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 

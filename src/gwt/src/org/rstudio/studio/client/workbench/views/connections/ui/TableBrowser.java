@@ -15,82 +15,53 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
-import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.inject.Inject;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class TableBrowser extends Composite implements RequiresResize
 {
    public TableBrowser()
-   {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      container_ = new SimplePanel();
-      
-      tables_ = new ListBox();
+   {  
+      // create tables model and widget
+      tablesModel_ = new TableBrowserModel();
+      tables_ = new CellTree(tablesModel_, null);
       tables_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-      tables_.setVisibleItemCount(2);
-      tables_.setSize("100%", "100%");
+      tables_.setWidth("100%");
       
-      noTables_ = new PaneStatusMessage("(No tables)", 50);
+      // wrap in vertical panel to get correct scrollbar behavior
+      VerticalPanel verticalWrapper = new VerticalPanel();
+      verticalWrapper.setWidth("100%");
+      verticalWrapper.add(tables_);
       
-      container_.setWidget(noTables_);
-     
-      initWidget(container_);
+      // create scroll panel and set the vertical wrapper as it's widget
+      ScrollPanel scrollPanel = new ScrollPanel();
+      scrollPanel.setSize("100%", "100%");
+      scrollPanel.setWidget(verticalWrapper);
+       
+      // init widget
+      initWidget(scrollPanel);
    }
-   
-   @Inject
-   public void initialize(ConnectionsServerOperations server)
-   {
-      server_ = server;
-   }
-   
+  
    public void update(Connection connection, String hint)
    {
       connection_ = connection;
-      
-      server_.connectionListTables(
-        connection_, 
-        new SimpleRequestCallback<JsArrayString>() {
-           @Override
-           public void onResponseReceived(JsArrayString tables)
-           {
-              tables_.clear();
-              tables_.setVisibleItemCount(Math.max(2, tables.length()));
-              for (int i = 0; i<tables.length(); i++)
-                 tables_.addItem(tables.get(i));
-              container_.setWidget(tables.length() > 0 ? tables_ : noTables_);
-           }    
-        });
+      tablesModel_.setConnection(connection_);  
    }
    
-   public void clear()
-   {
-      tables_.clear();
-      container_.setWidget(noTables_);
-   }
-   
-
+ 
    @Override
    public void onResize()
    {
    }
    
-
-
-   private final SimplePanel container_;
-   private final ListBox tables_;
-   private final PaneStatusMessage noTables_;
-   private ConnectionsServerOperations server_;
+   private final CellTree tables_;
+   private final TableBrowserModel tablesModel_;
    
    private Connection connection_;
 }
