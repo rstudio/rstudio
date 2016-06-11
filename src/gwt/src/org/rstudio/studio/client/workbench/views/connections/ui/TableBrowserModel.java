@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
@@ -84,19 +85,18 @@ public class TableBrowserModel implements TreeViewModel
    
    private void refresh()
    {
-      for (HasData<String> display : tableProvider_.getDataDisplays())
-         display.setVisibleRangeAndClearData(new Range(0,1000), true);
+      for (HasData<String> display : tableProvider_.getDataDisplays())  
+         display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
    }
 
    private class TableProvider extends AsyncDataProvider<String>
    {
       @Override
-      protected void onRangeChanged(HasData<String> display)
+      protected void onRangeChanged(final HasData<String> display)
       {
         if (connection_ == null)
         {
-           updateRowCount(0, true);
-           updateRowData(0, new ArrayList<String>());
+           clearData();
         }
         else
         {
@@ -111,12 +111,23 @@ public class TableBrowserModel implements TreeViewModel
                     for (int i=0; i<tables.length(); i++)
                        data.add(tables.get(i));
                     updateRowData(0, data);
-                    
-                    
                  }    
+                 
+                 @Override
+                 public void onError(ServerError error)
+                 {
+                    super.onError(error);
+                    clearData();
+                 }
               });
         }
       } 
+      
+      private void clearData()
+      {
+         updateRowCount(0, true);
+         updateRowData(0, new ArrayList<String>());
+      }
    }
    
    private class FieldProvider extends AsyncDataProvider<Field>
