@@ -186,6 +186,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
   
       // create widget
       ensureWidget();
+      
+      setSecondaryToolbarVisible(false);
    }
    
    @Override
