@@ -33,6 +33,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.inject.Inject;
 
@@ -65,13 +66,19 @@ public class TableBrowserModel implements TreeViewModel
       {
          tableProvider_ = new TableProvider();
          fieldProviders_.clear();
-         return new DefaultNodeInfo<String>(tableProvider_, new TextCell());
+         return new DefaultNodeInfo<String>(tableProvider_, 
+                                    new TextCell(),
+                                    noTableSelectionModel_,
+                                    null);
       }
       else if (value instanceof String)
       {
          FieldProvider fieldProvider = new FieldProvider((String)value);
          fieldProviders_.put((String)value, fieldProvider);
-         return new DefaultNodeInfo<Field>(fieldProvider, new FieldCell());
+         return new DefaultNodeInfo<Field>(fieldProvider, 
+                                           new FieldCell(),
+                                           noFieldSelectionModel_,
+                                           null);
       }
       
       // Unhandled type.
@@ -209,7 +216,10 @@ public class TableBrowserModel implements TreeViewModel
    
    private ConnectionsServerOperations server_;
    
-  
-
+   private static NoSelectionModel<String> noTableSelectionModel_ = 
+         new NoSelectionModel<String>();
+   private static NoSelectionModel<Field> noFieldSelectionModel_ =
+         new NoSelectionModel<Field>();
+   
   
 }

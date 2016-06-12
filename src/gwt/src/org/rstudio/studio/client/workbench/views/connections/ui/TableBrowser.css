@@ -3,7 +3,6 @@
 
 
 .cellTreeWidget {
-  
 }
 
 .cellTreeEmptyMessage {
@@ -43,4 +42,7 @@
   border-bottom: none;
 }
 
+.cellTreeKeyboardSelectedItem {
+  background: white;
+}
 
