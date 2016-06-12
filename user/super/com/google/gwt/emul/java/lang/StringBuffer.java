@@ -21,7 +21,7 @@ package java.lang;
  * This class is an exact clone of {@link StringBuilder} except for the name.
  * Any change made to one should be mirrored in the other.
  */
-public final class StringBuffer extends AbstractStringBuilder implements CharSequence, Appendable {
+public final class StringBuffer extends AbstractStringBuilder {
 
   public StringBuffer() {
     super("");
@@ -73,7 +73,7 @@ public final class StringBuffer extends AbstractStringBuilder implements CharSeq
 
   @Override
   public StringBuffer append(CharSequence x, int start, int end) {
-    append0(x, start, end);
+    string += String.valueOf(x).substring(start, end);
     return this;
   }
 
@@ -144,11 +144,11 @@ public final class StringBuffer extends AbstractStringBuilder implements CharSeq
   }
 
   public StringBuffer insert(int index, CharSequence chars) {
-    return insert(index, chars.toString());
+    return insert(index, String.valueOf(chars));
   }
 
   public StringBuffer insert(int index, CharSequence chars, int start, int end) {
-    return insert(index, chars.subSequence(start, end).toString());
+    return insert(index, String.valueOf(chars).substring(start, end));
   }
 
   public StringBuffer insert(int index, double x) {

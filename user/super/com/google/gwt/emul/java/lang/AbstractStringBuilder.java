@@ -21,14 +21,15 @@ package java.lang;
  * Most methods will give expected performance results. Exception is {@link #setCharAt(int, char)},
  * which is O(n), and thus should not be used many times on the same <code>StringBuffer</code>.
  */
-abstract class AbstractStringBuilder {
+abstract class AbstractStringBuilder implements CharSequence, Appendable {
 
   String string;
 
-  public AbstractStringBuilder(String string) {
+  AbstractStringBuilder(String string) {
     this.string = string;
   }
 
+  @Override
   public int length() {
     return string.length();
   }
@@ -56,6 +57,7 @@ abstract class AbstractStringBuilder {
     // This implementation does not track capacity
   }
 
+  @Override
   public char charAt(int index) {
     return string.charAt(index);
   }
@@ -72,6 +74,7 @@ abstract class AbstractStringBuilder {
     replace0(index, index + 1, String.valueOf(x));
   }
 
+  @Override
   public CharSequence subSequence(int start, int end) {
     return string.substring(start, end);
   }
@@ -103,13 +106,6 @@ abstract class AbstractStringBuilder {
   @Override
   public String toString() {
     return string;
-  }
-
-  void append0(CharSequence x, int start, int end) {
-    if (x == null) {
-      x = "null";
-    }
-    string += x.subSequence(start, end);
   }
 
   void appendCodePoint0(int x) {

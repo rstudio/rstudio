@@ -82,6 +82,14 @@ public class StringBufferTest extends GWTTestCase {
     x = new StringBuffer("k");
     x.append(new StringBuffer("lm"));
     assertEquals("klm", x.toString());
+
+    final CharSequence nullCharSequence = null;
+    x = new StringBuffer("!");
+    x.append(nullCharSequence);
+    assertEquals("!null", x.toString());
+    x = new StringBuffer("!");
+    x.append(nullCharSequence, 0, 3);
+    assertEquals("!nul", x.toString());
   }
 
   /**
@@ -188,6 +196,14 @@ public class StringBufferTest extends GWTTestCase {
     x = new StringBuffer("!");
     x.insert(1, C.TRUE_VALUE);
     assertEquals("!" + C.TRUE_STRING, x.toString());
+
+    final CharSequence nullCharSequence = null;
+    x = new StringBuffer("!");
+    x.insert(1, nullCharSequence);
+    assertEquals("!null", x.toString());
+    x = new StringBuffer("!");
+    x.insert(1, nullCharSequence, 0, 3);
+    assertEquals("!nul", x.toString());
   }
 
   /**
