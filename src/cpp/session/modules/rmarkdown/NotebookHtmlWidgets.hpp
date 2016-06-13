@@ -17,7 +17,7 @@
 #ifndef SESSION_NOTEBOOK_HTML_WIGETS_HPP
 #define SESSION_NOTEBOOK_HTML_WIGETS_HPP
 
-#include <boost/function.hpp>
+#include "NotebookCapture.hpp"
 
 namespace rstudio {
 namespace core {
@@ -32,10 +32,18 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error beginWidgetCapture(
-      const core::FilePath& outputFolder,
-      const core::FilePath& libraryFolder,
-      const rstudio::core::json::Object& chunkOptions);
+class HtmlCapture : public NotebookCapture
+{
+public:
+   HtmlCapture();
+   ~HtmlCapture();
+   core::Error connectHtmlCapture(
+         const core::FilePath& outputFolder,
+         const core::FilePath& libraryFolder,
+         const rstudio::core::json::Object& chunkOptions);
+private:
+   void disconnect();
+};
 
 core::Error initHtmlWidgets();
 

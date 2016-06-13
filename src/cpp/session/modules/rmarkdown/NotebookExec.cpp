@@ -143,7 +143,11 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
-   error = beginWidgetCapture(
+   boost::shared_ptr<HtmlCapture> pHtmlCapture = 
+      boost::make_shared<HtmlCapture>();
+   captures_.push_back(pHtmlCapture);
+
+   error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.parent().complete(kChunkLibDir),
             options_);
@@ -324,7 +328,7 @@ void ChunkExecContext::disconnect()
 {
    Error error;
 
-   // clean up capturing modules
+   // clean up capturing modules (includes plots, errors, and HTML widgets)
    BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
    {
       pCapture->disconnect();
