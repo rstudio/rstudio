@@ -61,23 +61,16 @@ public class DoubleStreamTest extends EmulTestBase {
 
   public void testStreamOfOne() {
     Supplier<DoubleStream> one = () -> DoubleStream.of(1);
-    assertEquals(new double[]{1d}, one.get().toArray());
+    assertEquals(new double[] {1d}, one.get().toArray());
     assertEquals(1L, one.get().count());
     assertEquals(1d, one.get().findFirst().getAsDouble(), 0d);
     assertEquals(1d, one.get().findAny().getAsDouble(), 0d);
   }
 
   public void testBuilder() {
-    DoubleStream s = DoubleStream.builder()
-        .add(1d)
-        .add(3d)
-        .add(2d)
-        .build();
+    DoubleStream s = DoubleStream.builder().add(1d).add(3d).add(2d).build();
 
-    assertEquals(
-        new double[] {1d, 3d, 2d},
-        s.toArray()
-    );
+    assertEquals(new double[] {1d, 3d, 2d}, s.toArray());
 
     DoubleStream.Builder builder = DoubleStream.builder();
     DoubleStream built = builder.build();
@@ -97,12 +90,13 @@ public class DoubleStreamTest extends EmulTestBase {
   }
 
   public void testConcat() {
-    Supplier<DoubleStream> adbc = () -> {
-      return DoubleStream.concat(DoubleStream.of(1, 4), DoubleStream.of(2, 3));
-    };
+    Supplier<DoubleStream> adbc =
+        () -> {
+          return DoubleStream.concat(DoubleStream.of(1, 4), DoubleStream.of(2, 3));
+        };
 
-    assertEquals(new double[]{1d, 4d, 2d, 3d}, adbc.get().toArray());
-    assertEquals(new double[]{1d, 2d, 3d, 4d}, adbc.get().sorted().toArray());
+    assertEquals(new double[] {1d, 4d, 2d, 3d}, adbc.get().toArray());
+    assertEquals(new double[] {1d, 2d, 3d, 4d}, adbc.get().sorted().toArray());
 
     List<String> closed = new ArrayList<>();
     DoubleStream first = DoubleStream.of(1d).onClose(() -> closed.add("first"));
@@ -121,12 +115,8 @@ public class DoubleStreamTest extends EmulTestBase {
 
   public void testIterate() {
     assertEquals(
-        new double[]{10d, 11d, 12d, 13d, 14d},
-        DoubleStream.iterate(0d, l -> l + 1d)
-            .skip(10)
-            .limit(5)
-            .toArray()
-    );
+        new double[] {10d, 11d, 12d, 13d, 14d},
+        DoubleStream.iterate(0d, l -> l + 1d).skip(10).limit(5).toArray());
   }
 
   public void testGenerate() {
@@ -134,12 +124,8 @@ public class DoubleStreamTest extends EmulTestBase {
     assertEquals(new double[0], DoubleStream.generate(makeGenerator()).limit(4).skip(5).toArray());
 
     assertEquals(
-        new double[]{10d, 11d, 12d, 13d, 14d},
-        DoubleStream.generate(makeGenerator())
-            .skip(10)
-            .limit(5)
-            .toArray()
-    );
+        new double[] {10d, 11d, 12d, 13d, 14d},
+        DoubleStream.generate(makeGenerator()).skip(10).limit(5).toArray());
   }
 
   private DoubleSupplier makeGenerator() {
@@ -181,24 +167,17 @@ public class DoubleStreamTest extends EmulTestBase {
 
     // one result
     assertEquals(
-        new double[]{1d},
-        DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> a == 1).toArray()
-    );
+        new double[] {1d}, DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> a == 1).toArray());
     // zero results
-    assertEquals(
-        new double[0],
-        DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> false).toArray()
-    );
+    assertEquals(new double[0], DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> false).toArray());
     // two results
     assertEquals(
         new double[] {2d, 4d},
-        DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> a % 2 == 0).toArray()
-    );
+        DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> a % 2 == 0).toArray());
     // all
     assertEquals(
         new double[] {1d, 2d, 3d, 4d, 3d},
-        DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> true).toArray()
-    );
+        DoubleStream.of(1d, 2d, 3d, 4d, 3d).filter(a -> true).toArray());
   }
 
   public void testMap() {
@@ -207,10 +186,7 @@ public class DoubleStreamTest extends EmulTestBase {
     DoubleStream.of(1d, 2d, 3d).map(i -> data[0]++);
     assertEquals(0, data[0]);
 
-    assertEquals(
-        new double[] {2d, 4d, 6d},
-        DoubleStream.of(1d, 2d, 3d).map(i -> i * 2).toArray()
-    );
+    assertEquals(new double[] {2d, 4d, 6d}, DoubleStream.of(1d, 2d, 3d).map(i -> i * 2).toArray());
   }
 
   public void testPeek() {
@@ -222,9 +198,12 @@ public class DoubleStreamTest extends EmulTestBase {
     // make sure we saw it all in order
     double[] items = new double[] {1d, 2d, 3d};
     List<Double> peeked = new ArrayList<>();
-    DoubleStream.of(items).peek(peeked::add).forEach(item -> {
-      // do nothing, just run
-    });
+    DoubleStream.of(items)
+        .peek(peeked::add)
+        .forEach(
+            item -> {
+              // do nothing, just run
+            });
     assertEquals(items.length, peeked.size());
     for (int i = 0; i < items.length; i++) {
       assertEquals(items[i], peeked.get(i), 0d);
@@ -282,27 +261,19 @@ public class DoubleStreamTest extends EmulTestBase {
 
     assertEquals(
         new double[] {1d, 2d, 2d, 4d, 3d, 6d},
-        values.flatMap(i -> DoubleStream.of(i, i * 2d)).toArray()
-    );
+        values.flatMap(i -> DoubleStream.of(i, i * 2d)).toArray());
   }
 
   public void testMapToOthers() {
     Supplier<DoubleStream> s = () -> DoubleStream.of(1d, 2d, 10d);
 
     assertEquals(
-        new String[]{"1", "2", "10"},
-        s.get().mapToObj(DoubleStreamTest::toIntegralString).toArray(String[]::new)
-    );
+        new String[] {"1", "2", "10"},
+        s.get().mapToObj(DoubleStreamTest::toIntegralString).toArray(String[]::new));
 
-    assertEquals(
-        new long[]{1L, 2L, 10L},
-        s.get().mapToLong(i -> (long) i).toArray()
-    );
+    assertEquals(new long[] {1L, 2L, 10L}, s.get().mapToLong(i -> (long) i).toArray());
 
-    assertEquals(
-        new int[] {1, 2, 10},
-        s.get().mapToInt(i -> (int) i).toArray()
-    );
+    assertEquals(new int[] {1, 2, 10}, s.get().mapToInt(i -> (int) i).toArray());
   }
 
   public void testDistinct() {
@@ -398,9 +369,13 @@ public class DoubleStreamTest extends EmulTestBase {
 
   public void testCollect() {
     // noinspection StringConcatenationInsideStringBufferAppend
-    String val = DoubleStream.of(1d, 2d, 3d, 4d, 5d).collect(StringBuilder::new,
-        (stringBuilder, d) -> stringBuilder.append(toIntegralString(d)),
-        StringBuilder::append).toString();
+    String val =
+        DoubleStream.of(1d, 2d, 3d, 4d, 5d)
+            .collect(
+                StringBuilder::new,
+                (stringBuilder, d) -> stringBuilder.append(toIntegralString(d)),
+                StringBuilder::append)
+            .toString();
 
     assertEquals("12345", val);
   }

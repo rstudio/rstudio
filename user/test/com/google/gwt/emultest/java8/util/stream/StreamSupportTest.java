@@ -35,29 +35,21 @@ import java.util.stream.Stream;
 public class StreamSupportTest extends EmulTestBase {
 
   public void testDoubleStream() {
-    DoubleStream doubles = doubleStream(
-        Spliterators.spliterator(new double[] {1d, 2d, 3d, 4d}, 0),
-        false
-    );
+    DoubleStream doubles =
+        doubleStream(Spliterators.spliterator(new double[] {1d, 2d, 3d, 4d}, 0), false);
 
     assertNotNull(doubles);
-    assertEquals(new double[]{1d, 2d, 3d}, doubles.limit(3).toArray());
+    assertEquals(new double[] {1d, 2d, 3d}, doubles.limit(3).toArray());
 
-    doubles = doubleStream(() -> Spliterators.spliterator(new double[] {1d, 2d, 3d, 4d}, 0), 0,
-        false);
+    doubles =
+        doubleStream(() -> Spliterators.spliterator(new double[] {1d, 2d, 3d, 4d}, 0), 0, false);
 
     assertNotNull(doubles);
-    assertEquals(
-        new double[] {2d, 3d},
-        doubles.skip(1).limit(2).toArray()
-    );
+    assertEquals(new double[] {2d, 3d}, doubles.skip(1).limit(2).toArray());
   }
 
   public void testIntStream() {
-    IntStream ints = intStream(
-        Spliterators.spliterator(new int[] {1, 2, 3, 4}, 0),
-        false
-    );
+    IntStream ints = intStream(Spliterators.spliterator(new int[] {1, 2, 3, 4}, 0), false);
 
     assertNotNull(ints);
     assertEquals(new int[] {1, 2, 3}, ints.limit(3).toArray());
@@ -65,17 +57,11 @@ public class StreamSupportTest extends EmulTestBase {
     ints = intStream(() -> Spliterators.spliterator(new int[] {1, 2, 3, 4}, 0), 0, false);
 
     assertNotNull(ints);
-    assertEquals(
-        new int[] {2, 3},
-        ints.skip(1).limit(2).toArray()
-    );
+    assertEquals(new int[] {2, 3}, ints.skip(1).limit(2).toArray());
   }
 
   public void testLongStream() {
-    LongStream longs = longStream(
-        Spliterators.spliterator(new long[] {1L, 2L, 3L, 4L}, 0),
-        false
-    );
+    LongStream longs = longStream(Spliterators.spliterator(new long[] {1L, 2L, 3L, 4L}, 0), false);
 
     assertNotNull(longs);
     assertEquals(new long[] {1L, 2L, 3L}, longs.limit(3).toArray());
@@ -83,27 +69,20 @@ public class StreamSupportTest extends EmulTestBase {
     longs = longStream(() -> Spliterators.spliterator(new long[] {1L, 2L, 3L, 4L}, 0), 0, false);
 
     assertNotNull(longs);
-    assertEquals(
-        new long[] {2L, 3L},
-        longs.skip(1).limit(2).toArray()
-    );
+    assertEquals(new long[] {2L, 3L}, longs.skip(1).limit(2).toArray());
   }
 
   public void testStream() {
-    Stream<String> strings = stream(
-        Spliterators.spliterator(new String[] {"a", "b", "c", "d"}, 0),
-        false
-    );
+    Stream<String> strings =
+        stream(Spliterators.spliterator(new String[] {"a", "b", "c", "d"}, 0), false);
 
     assertNotNull(strings);
     assertEquals(new String[] {"a", "b", "c"}, strings.limit(3).toArray());
 
-    strings = stream(() -> Spliterators.spliterator(new String[] {"a", "b", "c", "d"}, 0), 0, false);
+    strings =
+        stream(() -> Spliterators.spliterator(new String[] {"a", "b", "c", "d"}, 0), 0, false);
 
     assertNotNull(strings);
-    assertEquals(
-        new String[] {"b", "c"},
-        strings.skip(1).limit(2).toArray()
-    );
+    assertEquals(new String[] {"b", "c"}, strings.skip(1).limit(2).toArray());
   }
 }

@@ -76,13 +76,14 @@ class TerminatableStream<T extends TerminatableStream<T>> {
 
   private void runClosers() {
     ArrayList<Throwable> throwables = new ArrayList<>();
-    onClose.forEach(runnable -> {
-      try {
-        runnable.run();
-      } catch (Throwable e) {
-        throwables.add(e);
-      }
-    });
+    onClose.forEach(
+        runnable -> {
+          try {
+            runnable.run();
+          } catch (Throwable e) {
+            throwables.add(e);
+          }
+        });
     onClose.clear();
 
     if (!throwables.isEmpty()) {

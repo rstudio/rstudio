@@ -26,7 +26,7 @@ import java.util.Spliterator;
  * @param <T> the contents of the stream
  * @param <S> the type of stream implementing this interface
  */
-public interface BaseStream<T,S extends BaseStream<T,S>> extends AutoCloseable {
+public interface BaseStream<T, S extends BaseStream<T, S>> extends AutoCloseable {
   Iterator<T> iterator();
 
   Spliterator<T> spliterator();

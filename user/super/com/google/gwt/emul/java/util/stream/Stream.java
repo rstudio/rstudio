@@ -96,41 +96,44 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     // streams
     Spliterator<? extends Stream<? extends T>> spliteratorOfStreams =
         Arrays.asList(a, b).spliterator();
-    Stream<T> result = new StreamSource<T>(null, new Spliterators.AbstractSpliterator<T>(Long
-        .MAX_VALUE, 0) {
-      Stream<? extends T> nextStream;
-      Spliterator<? extends T> next;
+    Stream<T> result =
+        new StreamSource<T>(
+            null,
+            new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE, 0) {
+              Stream<? extends T> nextStream;
+              Spliterator<? extends T> next;
 
-      @Override
-      public boolean tryAdvance(Consumer<? super T> action) {
-        // look for a new spliterator
-        while (advanceToNextSpliterator()) {
-          // if we have one, try to read and use it
-          if (next.tryAdvance(action)) {
-            return true;
-          } else {
-            nextStream = null;
-            // failed, null it out so we can find another
-            next = null;
-          }
-        }
-        return false;
-      }
+              @Override
+              public boolean tryAdvance(Consumer<? super T> action) {
+                // look for a new spliterator
+                while (advanceToNextSpliterator()) {
+                  // if we have one, try to read and use it
+                  if (next.tryAdvance(action)) {
+                    return true;
+                  } else {
+                    nextStream = null;
+                    // failed, null it out so we can find another
+                    next = null;
+                  }
+                }
+                return false;
+              }
 
-      private boolean advanceToNextSpliterator() {
-        while (next == null) {
-          if (!spliteratorOfStreams.tryAdvance(n -> {
-            if (n != null) {
-              nextStream = n;
-              next = n.spliterator();
-            }
-          })) {
-            return false;
-          }
-        }
-        return true;
-      }
-    });
+              private boolean advanceToNextSpliterator() {
+                while (next == null) {
+                  if (!spliteratorOfStreams.tryAdvance(
+                      n -> {
+                        if (n != null) {
+                          nextStream = n;
+                          next = n.spliterator();
+                        }
+                      })) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+            });
 
     result.onClose(a::close);
     result.onClose(b::close);
@@ -143,28 +146,32 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
   }
 
   static <T> Stream<T> generate(Supplier<T> s) {
-    return StreamSupport.stream(new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE,
-        Spliterator.IMMUTABLE | Spliterator.ORDERED) {
-      @Override
-      public boolean tryAdvance(Consumer<? super T> action) {
-        action.accept(s.get());
-        return true;
-      }
-    }, false);
+    return StreamSupport.stream(
+        new Spliterators.AbstractSpliterator<T>(
+            Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
+          @Override
+          public boolean tryAdvance(Consumer<? super T> action) {
+            action.accept(s.get());
+            return true;
+          }
+        },
+        false);
   }
 
   static <T> Stream<T> iterate(T seed, UnaryOperator<T> f) {
-    return StreamSupport.stream(new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE,
-        Spliterator.IMMUTABLE | Spliterator.ORDERED) {
-      private T next = seed;
+    return StreamSupport.stream(
+        new Spliterators.AbstractSpliterator<T>(
+            Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
+          private T next = seed;
 
-      @Override
-      public boolean tryAdvance(Consumer<? super T> action) {
-        action.accept(next);
-        next = f.apply(next);
-        return true;
-      }
-    }, false);
+          @Override
+          public boolean tryAdvance(Consumer<? super T> action) {
+            action.accept(next);
+            next = f.apply(next);
+            return true;
+          }
+        },
+        false);
   }
 
   static <T> Stream<T> of(T t) {
@@ -197,11 +204,10 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
   boolean anyMatch(Predicate<? super T> predicate);
 
-  <R,A> R collect(Collector<? super T,A,R> collector);
+  <R, A> R collect(Collector<? super T, A, R> collector);
 
-  <R> R collect(Supplier<R> supplier,
-                BiConsumer<R,? super T> accumulator,
-                BiConsumer<R,R> combiner);
+  <R> R collect(
+      Supplier<R> supplier, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner);
 
   long count();
 
@@ -213,13 +219,13 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
   Optional<T> findFirst();
 
-  <R> Stream<R> flatMap(Function<? super T,? extends Stream<? extends R>> mapper);
+  <R> Stream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper);
 
-  DoubleStream flatMapToDouble(Function<? super T,? extends DoubleStream> mapper);
+  DoubleStream flatMapToDouble(Function<? super T, ? extends DoubleStream> mapper);
 
-  IntStream flatMapToInt(Function<? super T,? extends IntStream> mapper);
+  IntStream flatMapToInt(Function<? super T, ? extends IntStream> mapper);
 
-  LongStream flatMapToLong(Function<? super T,? extends LongStream> mapper);
+  LongStream flatMapToLong(Function<? super T, ? extends LongStream> mapper);
 
   void forEach(Consumer<? super T> action);
 
@@ -227,7 +233,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
   Stream<T> limit(long maxSize);
 
-  <R> Stream<R> map(Function<? super T,? extends R> mapper);
+  <R> Stream<R> map(Function<? super T, ? extends R> mapper);
 
   DoubleStream mapToDouble(ToDoubleFunction<? super T> mapper);
 
@@ -247,7 +253,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
   T reduce(T identity, BinaryOperator<T> accumulator);
 
-  <U> U reduce(U identity, BiFunction<U,? super T,U> accumulator, BinaryOperator<U> combiner);
+  <U> U reduce(U identity, BiFunction<U, ? super T, U> accumulator, BinaryOperator<U> combiner);
 
   Stream<T> skip(long n);
 
@@ -270,13 +276,13 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     }
 
     @Override
-    public  Stream<T> filter(Predicate<? super T> predicate) {
+    public Stream<T> filter(Predicate<? super T> predicate) {
       throwIfTerminated();
       return this;
     }
 
     @Override
-    public <R>  Stream<R> map(Function<? super T, ? extends R> mapper) {
+    public <R> Stream<R> map(Function<? super T, ? extends R> mapper) {
       throwIfTerminated();
       return (Stream) this;
     }
@@ -300,7 +306,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     }
 
     @Override
-    public <R> Stream<R> flatMap(Function<? super T, ? extends  Stream<? extends R>> mapper) {
+    public <R> Stream<R> flatMap(Function<? super T, ? extends Stream<? extends R>> mapper) {
       throwIfTerminated();
       return (Stream) this;
     }
@@ -398,17 +404,15 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     }
 
     @Override
-    public <U> U reduce(U identity,
-                        BiFunction<U, ? super T, U> accumulator,
-                        BinaryOperator<U> combiner) {
+    public <U> U reduce(
+        U identity, BiFunction<U, ? super T, U> accumulator, BinaryOperator<U> combiner) {
       terminate();
       return identity;
     }
 
     @Override
-    public <R> R collect(Supplier<R> supplier,
-                         BiConsumer<R, ? super T> accumulator,
-                         BiConsumer<R, R> combiner) {
+    public <R> R collect(
+        Supplier<R> supplier, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner) {
       terminate();
       return supplier.get();
     }
@@ -516,8 +520,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public MapToObjSpliterator(Function<? super U, ? extends T> map, Spliterator<U> original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -540,8 +543,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public MapToIntSpliterator(ToIntFunction<? super T> map, Spliterator<T> original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -564,8 +566,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public MapToLongSpliterator(ToLongFunction<? super T> map, Spliterator<T> original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -588,8 +589,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public MapToDoubleSpliterator(ToDoubleFunction<? super T> map, Spliterator<T> original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -626,12 +626,14 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     @Override
     public boolean tryAdvance(final Consumer<? super T> action) {
       found = false;
-      while (!found && original.tryAdvance(item -> {
-        if (filter.test(item)) {
-          found = true;
-          action.accept(item);
-        }
-      })) {
+      while (!found
+          && original.tryAdvance(
+              item -> {
+                if (filter.test(item)) {
+                  found = true;
+                  action.accept(item);
+                }
+              })) {
         // do nothing, work is done in tryAdvance
       }
 
@@ -652,8 +654,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
           original.hasCharacteristics(Spliterator.SIZED)
               ? Math.max(0, original.estimateSize() - skip)
               : Long.MAX_VALUE,
-          original.characteristics()
-      );
+          original.characteristics());
       this.skip = skip;
       this.original = original;
     }
@@ -666,7 +667,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     @Override
     public boolean tryAdvance(Consumer<? super T> action) {
       while (skip > 0) {
-        if (!original.tryAdvance(ignore -> { })) {
+        if (!original.tryAdvance(ignore -> {})) {
           return false;
         }
         skip--;
@@ -689,8 +690,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
           original.hasCharacteristics(Spliterator.SIZED)
               ? Math.min(original.estimateSize(), limit)
               : Long.MAX_VALUE,
-          original.characteristics()
-      );
+          original.characteristics());
       this.limit = limit;
       this.original = original;
     }
@@ -739,7 +739,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public long count() {
       terminate();
       long count = 0;
-      while (spliterator.tryAdvance(a -> { })) {
+      while (spliterator.tryAdvance(a -> {})) {
         count++;
       }
       return count;
@@ -768,25 +768,30 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     }
 
     @Override
-    public <R> R collect(Supplier<R> supplier,
-                         BiConsumer<R, ? super T> accumulator,
-                         BiConsumer<R, R> combiner) {
-      return collect(Collector.of(supplier, accumulator, (a, b) -> {
-        combiner.accept(a, b);
-        return a;
-      }));
+    public <R> R collect(
+        Supplier<R> supplier, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner) {
+      return collect(
+          Collector.of(
+              supplier,
+              accumulator,
+              (a, b) -> {
+                combiner.accept(a, b);
+                return a;
+              }));
     }
 
     @Override
     public <R, A> R collect(final Collector<? super T, A, R> collector) {
-      return collector.finisher().apply(reduce(
-          collector.supplier().get(),
-          (a, t) -> {
-            collector.accumulator().accept(a, t);
-            return a;
-          },
-          collector.combiner()
-      ));
+      return collector
+          .finisher()
+          .apply(
+              reduce(
+                  collector.supplier().get(),
+                  (a, t) -> {
+                    collector.accumulator().accept(a, t);
+                    return a;
+                  },
+                  collector.combiner()));
     }
 
     @Override
@@ -846,15 +851,15 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
     // combiner is ignored, since we don't parallelize
     @Override
-    public <U> U reduce(U identity,
-                        BiFunction<U, ? super T, U> accumulator,
-                        BinaryOperator<U> combiner) {
+    public <U> U reduce(
+        U identity, BiFunction<U, ? super T, U> accumulator, BinaryOperator<U> combiner) {
       terminate();
       final ValueConsumer<U> consumer = new ValueConsumer<U>();
       consumer.value = identity;
-      spliterator.forEachRemaining(item -> {
-        consumer.accept(accumulator.apply(consumer.value, item));
-      });
+      spliterator.forEachRemaining(
+          item -> {
+            consumer.accept(accumulator.apply(consumer.value, item));
+          });
       return consumer.value;
     }
     // end terminal
@@ -888,9 +893,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public DoubleStream mapToDouble(ToDoubleFunction<? super T> mapper) {
       throwIfTerminated();
       return new DoubleStream.DoubleStreamSource(
-          this,
-          new MapToDoubleSpliterator<>(mapper, spliterator)
-      );
+          this, new MapToDoubleSpliterator<>(mapper, spliterator));
     }
 
     @Override
@@ -898,41 +901,44 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       throwIfTerminated();
       final Spliterator<? extends Stream<? extends R>> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new StreamSource<R>(this, new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE, 0) {
-        Stream<? extends R> nextStream;
-        Spliterator<? extends R> next;
+      return new StreamSource<R>(
+          this,
+          new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE, 0) {
+            Stream<? extends R> nextStream;
+            Spliterator<? extends R> next;
 
-        @Override
-        public boolean tryAdvance(Consumer<? super R> action) {
-          // look for a new spliterator
-          while (advanceToNextSpliterator()) {
-            // if we have one, try to read and use it
-            if (next.tryAdvance(action)) {
-              return true;
-            } else {
-              nextStream.close();
-              nextStream = null;
-              // failed, null it out so we can find another
-              next = null;
-            }
-          }
-          return false;
-        }
-
-        private boolean advanceToNextSpliterator() {
-          while (next == null) {
-            if (!spliteratorOfStreams.tryAdvance(n -> {
-              if (n != null) {
-                nextStream = n;
-                next = n.spliterator();
+            @Override
+            public boolean tryAdvance(Consumer<? super R> action) {
+              // look for a new spliterator
+              while (advanceToNextSpliterator()) {
+                // if we have one, try to read and use it
+                if (next.tryAdvance(action)) {
+                  return true;
+                } else {
+                  nextStream.close();
+                  nextStream = null;
+                  // failed, null it out so we can find another
+                  next = null;
+                }
               }
-            })) {
               return false;
             }
-          }
-          return true;
-        }
-      });
+
+            private boolean advanceToNextSpliterator() {
+              while (next == null) {
+                if (!spliteratorOfStreams.tryAdvance(
+                    n -> {
+                      if (n != null) {
+                        nextStream = n;
+                        next = n.spliterator();
+                      }
+                    })) {
+                  return false;
+                }
+              }
+              return true;
+            }
+          });
     }
 
     @Override
@@ -965,19 +971,19 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
             private boolean advanceToNextSpliterator() {
               while (next == null) {
-                if (!spliteratorOfStreams.tryAdvance(n -> {
-                  if (n != null) {
-                    nextStream = n;
-                    next = n.spliterator();
-                  }
-                })) {
+                if (!spliteratorOfStreams.tryAdvance(
+                    n -> {
+                      if (n != null) {
+                        nextStream = n;
+                        next = n.spliterator();
+                      }
+                    })) {
                   return false;
                 }
               }
               return true;
             }
-          }
-      );
+          });
     }
 
     @Override
@@ -1010,19 +1016,19 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
             private boolean advanceToNextSpliterator() {
               while (next == null) {
-                if (!spliteratorOfStreams.tryAdvance(n -> {
-                  if (n != null) {
-                    nextStream = n;
-                    next = n.spliterator();
-                  }
-                })) {
+                if (!spliteratorOfStreams.tryAdvance(
+                    n -> {
+                      if (n != null) {
+                        nextStream = n;
+                        next = n.spliterator();
+                      }
+                    })) {
                   return false;
                 }
               }
               return true;
             }
-          }
-      );
+          });
     }
 
     @Override
@@ -1055,19 +1061,19 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
             private boolean advanceToNextSpliterator() {
               while (next == null) {
-                if (!spliteratorOfStreams.tryAdvance(n -> {
-                  if (n != null) {
-                    nextStream = n;
-                    next = n.spliterator();
-                  }
-                })) {
+                if (!spliteratorOfStreams.tryAdvance(
+                    n -> {
+                      if (n != null) {
+                        nextStream = n;
+                        next = n.spliterator();
+                      }
+                    })) {
                   return false;
                 }
               }
               return true;
             }
-          }
-      );
+          });
     }
 
     @Override
@@ -1090,9 +1096,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       return new StreamSource<>(
           this,
           new Spliterators.AbstractSpliterator<T>(
-              spliterator.estimateSize(),
-              spliterator.characteristics() | Spliterator.SORTED
-          ) {
+              spliterator.estimateSize(), spliterator.characteristics() | Spliterator.SORTED) {
             Spliterator<T> ordered = null;
 
             @Override
@@ -1110,8 +1114,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
               }
               return ordered.tryAdvance(action);
             }
-          }
-      );
+          });
     }
 
     @Override
@@ -1121,18 +1124,16 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       return new StreamSource<>(
           this,
           new Spliterators.AbstractSpliterator<T>(
-              spliterator.estimateSize(),
-              spliterator.characteristics()
-          ) {
+              spliterator.estimateSize(), spliterator.characteristics()) {
             @Override
             public boolean tryAdvance(final Consumer<? super T> innerAction) {
-              return spliterator.tryAdvance(item -> {
-                action.accept(item);
-                innerAction.accept(item);
-              });
+              return spliterator.tryAdvance(
+                  item -> {
+                    action.accept(item);
+                    innerAction.accept(item);
+                  });
             }
-          }
-      );
+          });
     }
 
     @Override

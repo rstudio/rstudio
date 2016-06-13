@@ -48,7 +48,7 @@ import java.util.function.Supplier;
  * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/LongStream.html">
  * the official Java API doc</a> for details.
  */
-public interface LongStream extends BaseStream<Long,LongStream> {
+public interface LongStream extends BaseStream<Long, LongStream> {
 
   /**
    * Value holder for various stream operations.
@@ -90,43 +90,45 @@ public interface LongStream extends BaseStream<Long,LongStream> {
 
     // TODO replace this flatMap-ish spliterator with one that directly combines the two root
     // streams
-    Spliterator<? extends LongStream> spliteratorOfStreams =
-        Arrays.asList(a, b).spliterator();
-    LongStream result = new LongStreamSource(null, new Spliterators.AbstractLongSpliterator(Long
-        .MAX_VALUE, 0) {
-      LongStream nextStream;
-      Spliterator.OfLong next;
+    Spliterator<? extends LongStream> spliteratorOfStreams = Arrays.asList(a, b).spliterator();
+    LongStream result =
+        new LongStreamSource(
+            null,
+            new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0) {
+              LongStream nextStream;
+              Spliterator.OfLong next;
 
-      @Override
-      public boolean tryAdvance(LongConsumer action) {
-        // look for a new spliterator
-        while (advanceToNextSpliterator()) {
-          // if we have one, try to read and use it
-          if (next.tryAdvance(action)) {
-            return true;
-          } else {
-            nextStream = null;
-            // failed, null it out so we can find another
-            next = null;
-          }
-        }
-        return false;
-      }
+              @Override
+              public boolean tryAdvance(LongConsumer action) {
+                // look for a new spliterator
+                while (advanceToNextSpliterator()) {
+                  // if we have one, try to read and use it
+                  if (next.tryAdvance(action)) {
+                    return true;
+                  } else {
+                    nextStream = null;
+                    // failed, null it out so we can find another
+                    next = null;
+                  }
+                }
+                return false;
+              }
 
-      private boolean advanceToNextSpliterator() {
-        while (next == null) {
-          if (!spliteratorOfStreams.tryAdvance(n -> {
-            if (n != null) {
-              nextStream = n;
-              next = n.spliterator();
-            }
-          })) {
-            return false;
-          }
-        }
-        return true;
-      }
-    });
+              private boolean advanceToNextSpliterator() {
+                while (next == null) {
+                  if (!spliteratorOfStreams.tryAdvance(
+                      n -> {
+                        if (n != null) {
+                          nextStream = n;
+                          next = n.spliterator();
+                        }
+                      })) {
+                    return false;
+                  }
+                }
+                return true;
+              }
+            });
 
     result.onClose(a::close);
     result.onClose(b::close);
@@ -139,32 +141,32 @@ public interface LongStream extends BaseStream<Long,LongStream> {
   }
 
   static LongStream generate(LongSupplier s) {
-    return StreamSupport.longStream(new Spliterators.AbstractLongSpliterator(
-        Long.MAX_VALUE,
-        Spliterator.IMMUTABLE | Spliterator.ORDERED
-    ) {
-      @Override
-      public boolean tryAdvance(LongConsumer action) {
-        action.accept(s.getAsLong());
-        return true;
-      }
-    }, false);
+    return StreamSupport.longStream(
+        new Spliterators.AbstractLongSpliterator(
+            Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
+          @Override
+          public boolean tryAdvance(LongConsumer action) {
+            action.accept(s.getAsLong());
+            return true;
+          }
+        },
+        false);
   }
 
   static LongStream iterate(long seed, LongUnaryOperator f) {
-    return StreamSupport.longStream(new Spliterators.AbstractLongSpliterator(
-        Long.MAX_VALUE,
-        Spliterator.IMMUTABLE | Spliterator.ORDERED
-    ) {
-      private long next = seed;
+    return StreamSupport.longStream(
+        new Spliterators.AbstractLongSpliterator(
+            Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
+          private long next = seed;
 
-      @Override
-      public boolean tryAdvance(LongConsumer action) {
-        action.accept(next);
-        next = f.applyAsLong(next);
-        return true;
-      }
-    }, false);
+          @Override
+          public boolean tryAdvance(LongConsumer action) {
+            action.accept(next);
+            next = f.applyAsLong(next);
+            return true;
+          }
+        },
+        false);
   }
 
   static LongStream of(long... values) {
@@ -173,7 +175,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
 
   static LongStream of(long t) {
     // TODO consider a splittable that returns only a single value
-    return of(new long[]{t});
+    return of(new long[] {t});
   }
 
   static LongStream range(long startInclusive, long endExclusive) {
@@ -189,27 +191,32 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     }
     long count = endInclusive - startInclusive + 1;
 
-    return StreamSupport.longStream(new Spliterators.AbstractLongSpliterator(
-        count,
-        Spliterator.IMMUTABLE | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.ORDERED
-            | Spliterator.SORTED | Spliterator.DISTINCT
-    ) {
-      private long next = startInclusive;
+    return StreamSupport.longStream(
+        new Spliterators.AbstractLongSpliterator(
+            count,
+            Spliterator.IMMUTABLE
+                | Spliterator.SIZED
+                | Spliterator.SUBSIZED
+                | Spliterator.ORDERED
+                | Spliterator.SORTED
+                | Spliterator.DISTINCT) {
+          private long next = startInclusive;
 
-      @Override
-      public Comparator<? super Long> getComparator() {
-        return null;
-      }
+          @Override
+          public Comparator<? super Long> getComparator() {
+            return null;
+          }
 
-      @Override
-      public boolean tryAdvance(LongConsumer action) {
-        if (next <= endInclusive) {
-          action.accept(next++);
-          return true;
-        }
-        return false;
-      }
-    }, false);
+          @Override
+          public boolean tryAdvance(LongConsumer action) {
+            if (next <= endInclusive) {
+              action.accept(next++);
+              return true;
+            }
+            return false;
+          }
+        },
+        false);
   }
 
   /**
@@ -403,9 +410,8 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     }
 
     @Override
-    public <R> R collect(Supplier<R> supplier,
-                         ObjLongConsumer<R> accumulator,
-                         BiConsumer<R, R> combiner) {
+    public <R> R collect(
+        Supplier<R> supplier, ObjLongConsumer<R> accumulator, BiConsumer<R, R> combiner) {
       terminate();
       return supplier.get();
     }
@@ -534,8 +540,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     public MapToIntSpliterator(LongToIntFunction map, Spliterator.OfLong original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -558,8 +563,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     public MapToObjSpliterator(LongFunction<? extends T> map, Spliterator.OfLong original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -581,8 +585,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     public MapToLongSpliterator(LongUnaryOperator map, Spliterator.OfLong original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -604,8 +607,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     public MapToDoubleSpliterator(LongToDoubleFunction map, Spliterator.OfLong original) {
       super(
           original.estimateSize(),
-          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT)
-      );
+          original.characteristics() & ~(Spliterator.SORTED | Spliterator.DISTINCT));
       checkNotNull(map);
       this.map = map;
       this.original = original;
@@ -641,12 +643,14 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     @Override
     public boolean tryAdvance(final LongConsumer action) {
       found = false;
-      while (!found && original.tryAdvance((long item) -> {
-        if (filter.test(item)) {
-          found = true;
-          action.accept(item);
-        }
-      })) {
+      while (!found
+          && original.tryAdvance(
+              (long item) -> {
+                if (filter.test(item)) {
+                  found = true;
+                  action.accept(item);
+                }
+              })) {
         // do nothing, work is done in tryAdvance
       }
 
@@ -666,8 +670,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
           original.hasCharacteristics(Spliterator.SIZED)
               ? Math.max(0, original.estimateSize() - skip)
               : Long.MAX_VALUE,
-          original.characteristics()
-      );
+          original.characteristics());
       this.skip = skip;
       this.original = original;
     }
@@ -680,7 +683,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     @Override
     public boolean tryAdvance(LongConsumer action) {
       while (skip > 0) {
-        if (!original.tryAdvance((long ignore) -> { })) {
+        if (!original.tryAdvance((long ignore) -> {})) {
           return false;
         }
         skip--;
@@ -702,8 +705,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
           original.hasCharacteristics(Spliterator.SIZED)
               ? Math.min(original.estimateSize(), limit)
               : Long.MAX_VALUE,
-          original.characteristics()
-      );
+          original.characteristics());
       this.limit = limit;
       this.original = original;
     }
@@ -764,9 +766,10 @@ public interface LongStream extends BaseStream<Long,LongStream> {
       terminate();
       ValueConsumer holder = new ValueConsumer();
       holder.value = identity;
-      spliterator.forEachRemaining((long value) -> {
-        holder.accept(op.applyAsLong(holder.value, value));
-      });
+      spliterator.forEachRemaining(
+          (long value) -> {
+            holder.accept(op.applyAsLong(holder.value, value));
+          });
       return holder.value;
     }
 
@@ -781,9 +784,8 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     }
 
     @Override
-    public <R> R collect(Supplier<R> supplier,
-                         ObjLongConsumer<R> accumulator,
-                         BiConsumer<R, R> combiner) {
+    public <R> R collect(
+        Supplier<R> supplier, ObjLongConsumer<R> accumulator, BiConsumer<R, R> combiner) {
       terminate();
       final R acc = supplier.get();
       spliterator.forEachRemaining((long value) -> accumulator.accept(acc, value));
@@ -821,7 +823,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     public long count() {
       terminate();
       long count = 0;
-      while (spliterator.tryAdvance((long value) -> { })) {
+      while (spliterator.tryAdvance((long value) -> {})) {
         count++;
       }
       return count;
@@ -842,8 +844,7 @@ public interface LongStream extends BaseStream<Long,LongStream> {
           LongSummaryStatistics::new,
           // TODO switch to a lambda reference once #9340 is fixed
           (longSummaryStatistics, value) -> longSummaryStatistics.accept(value),
-          LongSummaryStatistics::combine
-      );
+          LongSummaryStatistics::combine);
     }
 
     @Override
@@ -916,23 +917,18 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     @Override
     public DoubleStream mapToDouble(LongToDoubleFunction mapper) {
       throwIfTerminated();
-      return new DoubleStream.DoubleStreamSource(this, new MapToDoubleSpliterator(
-          mapper,
-          spliterator)
-      );
+      return new DoubleStream.DoubleStreamSource(
+          this, new MapToDoubleSpliterator(mapper, spliterator));
     }
 
     @Override
     public LongStream flatMap(LongFunction<? extends LongStream> mapper) {
       throwIfTerminated();
-      final Spliterator<? extends LongStream> spliteratorOfStreams = new MapToObjSpliterator<>(
-          mapper,
-          spliterator
-      );
+      final Spliterator<? extends LongStream> spliteratorOfStreams =
+          new MapToObjSpliterator<>(mapper, spliterator);
       return new LongStreamSource(
           this,
-          new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0
-          ) {
+          new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0) {
             LongStream nextStream;
             Spliterator.OfLong next;
 
@@ -955,12 +951,13 @@ public interface LongStream extends BaseStream<Long,LongStream> {
 
             private boolean advanceToNextSpliterator() {
               while (next == null) {
-                if (!spliteratorOfStreams.tryAdvance(n -> {
-                  if (n != null) {
-                    nextStream = n;
-                    next = n.spliterator();
-                  }
-                })) {
+                if (!spliteratorOfStreams.tryAdvance(
+                    n -> {
+                      if (n != null) {
+                        nextStream = n;
+                        next = n.spliterator();
+                      }
+                    })) {
                   return false;
                 }
               }
@@ -979,43 +976,43 @@ public interface LongStream extends BaseStream<Long,LongStream> {
     @Override
     public LongStream sorted() {
       throwIfTerminated();
-      return new LongStreamSource(this, new Spliterators.AbstractLongSpliterator(
-          spliterator.estimateSize(),
-          spliterator.characteristics() | Spliterator.SORTED
-      ) {
-        Spliterator.OfLong ordered = null;
+      return new LongStreamSource(
+          this,
+          new Spliterators.AbstractLongSpliterator(
+              spliterator.estimateSize(), spliterator.characteristics() | Spliterator.SORTED) {
+            Spliterator.OfLong ordered = null;
 
-        @Override
-        public Comparator<? super Long> getComparator() {
-          return null;
-        }
+            @Override
+            public Comparator<? super Long> getComparator() {
+              return null;
+            }
 
-        @Override
-        public boolean tryAdvance(LongConsumer action) {
-          if (ordered == null) {
-            long[] list = new long[0];
-            spliterator.forEachRemaining((long item) -> list[list.length] = item);
-            Arrays.sort(list);
-            ordered = Spliterators.spliterator(list, characteristics());
-          }
-          return ordered.tryAdvance(action);
-        }
-      });
+            @Override
+            public boolean tryAdvance(LongConsumer action) {
+              if (ordered == null) {
+                long[] list = new long[0];
+                spliterator.forEachRemaining((long item) -> list[list.length] = item);
+                Arrays.sort(list);
+                ordered = Spliterators.spliterator(list, characteristics());
+              }
+              return ordered.tryAdvance(action);
+            }
+          });
     }
 
     @Override
     public LongStream peek(LongConsumer action) {
       checkNotNull(action);
       throwIfTerminated();
-      return new LongStreamSource(this, new Spliterators.AbstractLongSpliterator(
-          spliterator.estimateSize(),
-          spliterator.characteristics()
-      ) {
-        @Override
-        public boolean tryAdvance(final LongConsumer innerAction) {
-          return spliterator.tryAdvance(action.andThen(innerAction));
-        }
-      });
+      return new LongStreamSource(
+          this,
+          new Spliterators.AbstractLongSpliterator(
+              spliterator.estimateSize(), spliterator.characteristics()) {
+            @Override
+            public boolean tryAdvance(final LongConsumer innerAction) {
+              return spliterator.tryAdvance(action.andThen(innerAction));
+            }
+          });
     }
 
     @Override

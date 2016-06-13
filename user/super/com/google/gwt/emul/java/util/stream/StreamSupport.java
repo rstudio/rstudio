@@ -29,56 +29,65 @@ public final class StreamSupport {
     return new DoubleStream.DoubleStreamSource(null, spliterator);
   }
 
-  public static DoubleStream doubleStream(Supplier<? extends Spliterator.OfDouble> supplier,
-                                          int characteristics,
-                                          boolean parallel) {
+  public static DoubleStream doubleStream(
+      Supplier<? extends Spliterator.OfDouble> supplier, int characteristics, boolean parallel) {
     // TODO this is somewhat convoluted, and would be better served by a lazy singleton spliterator
-    return Stream.of(supplier).map(Supplier::get).flatMapToDouble(doubleSpliterator -> {
-      return doubleStream(doubleSpliterator, parallel);
-    });
+    return Stream.of(supplier)
+        .map(Supplier::get)
+        .flatMapToDouble(
+            doubleSpliterator -> {
+              return doubleStream(doubleSpliterator, parallel);
+            });
   }
 
   public static IntStream intStream(Spliterator.OfInt spliterator, boolean parallel) {
     return new IntStream.IntStreamSource(null, spliterator);
   }
 
-  public static IntStream intStream(Supplier<? extends Spliterator.OfInt> supplier,
-                                    int characteristics,
-                                    boolean parallel) {
+  public static IntStream intStream(
+      Supplier<? extends Spliterator.OfInt> supplier, int characteristics, boolean parallel) {
     // TODO this is somewhat convoluted, and would be better served by a lazy singleton spliterator
-    return Stream.of(supplier).map(Supplier::get).flatMapToInt(intSpliterator -> {
-      return intStream(intSpliterator, parallel);
-    });
+    return Stream.of(supplier)
+        .map(Supplier::get)
+        .flatMapToInt(
+            intSpliterator -> {
+              return intStream(intSpliterator, parallel);
+            });
   }
 
   public static LongStream longStream(Spliterator.OfLong spliterator, boolean parallel) {
     return new LongStream.LongStreamSource(null, spliterator);
   }
 
-  public static LongStream longStream(Supplier<? extends Spliterator.OfLong> supplier,
-                                      int characteristics,
-                                      final boolean parallel) {
+  public static LongStream longStream(
+      Supplier<? extends Spliterator.OfLong> supplier,
+      int characteristics,
+      final boolean parallel) {
     // TODO this is somewhat convoluted, and would be better served by a lazy singleton spliterator
-    return Stream.of(supplier).map(Supplier::get).flatMapToLong(longSpliterator -> {
-      return longStream(longSpliterator, parallel);
-    });
+    return Stream.of(supplier)
+        .map(Supplier::get)
+        .flatMapToLong(
+            longSpliterator -> {
+              return longStream(longSpliterator, parallel);
+            });
   }
 
   public static <T> Stream<T> stream(Spliterator<T> spliterator, boolean parallel) {
     return new Stream.StreamSource<T>(null, spliterator);
   }
 
-  public static <T> Stream<T> stream(Supplier<? extends Spliterator<T>> supplier,
-                                     int characteristics,
-                                     final boolean parallel) {
+  public static <T> Stream<T> stream(
+      Supplier<? extends Spliterator<T>> supplier, int characteristics, final boolean parallel) {
     // TODO this is somewhat convoluted, and would be better served by a lazy singleton spliterator
-    return Stream.of(supplier).map(Supplier::get).flatMap(spliterator -> {
-      return stream(spliterator, parallel);
-    });
+    return Stream.of(supplier)
+        .map(Supplier::get)
+        .flatMap(
+            spliterator -> {
+              return stream(spliterator, parallel);
+            });
   }
 
   private StreamSupport() {
     // prevent instantiation
   }
-
 }

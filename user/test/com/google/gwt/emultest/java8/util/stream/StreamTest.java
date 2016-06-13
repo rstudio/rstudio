@@ -78,11 +78,7 @@ public class StreamTest extends EmulTestBase {
   }
 
   public void testBuilder() {
-    Supplier<Stream<String>> s = () -> Stream.<String>builder()
-        .add("1")
-        .add("3")
-        .add("2")
-        .build();
+    Supplier<Stream<String>> s = () -> Stream.<String>builder().add("1").add("3").add("2").build();
 
     Optional<String> max = s.get().filter(str -> !str.equals("3")).max(Comparator.naturalOrder());
     assertTrue(max.isPresent());
@@ -112,8 +108,8 @@ public class StreamTest extends EmulTestBase {
   public void testConcat() {
     Supplier<Stream<String>> adbc = () -> Stream.concat(Stream.of("a", "d"), Stream.of("b", "c"));
 
-    assertEquals(new String[]{"a", "d", "b", "c"}, adbc.get().toArray(String[]::new));
-    assertEquals(new String[]{"a", "b", "c", "d"}, adbc.get().sorted().toArray(String[]::new));
+    assertEquals(new String[] {"a", "d", "b", "c"}, adbc.get().toArray(String[]::new));
+    assertEquals(new String[] {"a", "b", "c", "d"}, adbc.get().sorted().toArray(String[]::new));
 
     List<String> closed = new ArrayList<>();
     Stream<String> first = Stream.of("first").onClose(() -> closed.add("first"));
@@ -132,25 +128,19 @@ public class StreamTest extends EmulTestBase {
 
   public void testIterate() {
     assertEquals(
-        new Integer[]{10, 11, 12, 13, 14},
-        Stream.iterate(0, i -> i + 1)
-            .skip(10)
-            .limit(5)
-            .toArray(Integer[]::new)
-    );
+        new Integer[] {10, 11, 12, 13, 14},
+        Stream.iterate(0, i -> i + 1).skip(10).limit(5).toArray(Integer[]::new));
   }
 
   public void testGenerate() {
     // infinite, but if you limit it is already too short to skip much
-    assertEquals(new Integer[]{}, Stream.generate(makeGenerator())
-        .limit(4)
-        .skip(5)
-        .toArray(Integer[]::new));
+    assertEquals(
+        new Integer[] {},
+        Stream.generate(makeGenerator()).limit(4).skip(5).toArray(Integer[]::new));
 
-    assertEquals(new Integer[]{10, 11, 12, 13, 14}, Stream.generate(makeGenerator())
-        .skip(10)
-        .limit(5)
-        .toArray(Integer[]::new));
+    assertEquals(
+        new Integer[] {10, 11, 12, 13, 14},
+        Stream.generate(makeGenerator()).skip(10).limit(5).toArray(Integer[]::new));
   }
 
   private Supplier<Integer> makeGenerator() {
@@ -200,14 +190,8 @@ public class StreamTest extends EmulTestBase {
 
   // toArray
   public void testToArray() {
-    assertEquals(
-        new Object[]{"a", "b"},
-        asList("a", "b").stream().toArray()
-    );
-    assertEquals(
-        new String[]{"a", "b"},
-        asList("a", "b").stream().toArray(String[]::new)
-    );
+    assertEquals(new Object[] {"a", "b"}, asList("a", "b").stream().toArray());
+    assertEquals(new String[] {"a", "b"}, asList("a", "b").stream().toArray(String[]::new));
   }
 
   // reduce
@@ -231,9 +215,10 @@ public class StreamTest extends EmulTestBase {
   public void testCollect() {
     final String[] values = new String[] {"a", "b", "c"};
 
-    String collectedString = Stream.of(values).collect(StringBuilder::new,
-        StringBuilder::append,
-        StringBuilder::append).toString();
+    String collectedString =
+        Stream.of(values)
+            .collect(StringBuilder::new, StringBuilder::append, StringBuilder::append)
+            .toString();
     assertEquals("abc", collectedString);
 
     List<String> collectedList = Stream.of(values).collect(Collectors.toList());
@@ -249,25 +234,21 @@ public class StreamTest extends EmulTestBase {
     // one result
     assertEquals(
         Collections.singletonList("a"),
-        Stream.of("a", "b", "c", "d", "c").filter(a -> a.equals("a")).collect(Collectors.toList())
-    );
+        Stream.of("a", "b", "c", "d", "c").filter(a -> a.equals("a")).collect(Collectors.toList()));
     // zero results
     assertEquals(
         Collections.emptyList(),
-        Stream.of("a", "b", "c", "d", "c").filter(a -> false).collect(Collectors.toList())
-    );
+        Stream.of("a", "b", "c", "d", "c").filter(a -> false).collect(Collectors.toList()));
     // two results
     assertEquals(
         asList("c3", "c5"),
         Stream.of("a1", "b2", "c3", "d4", "c5")
             .filter(a -> a.startsWith("c"))
-            .collect(Collectors.toList())
-    );
+            .collect(Collectors.toList()));
     // all
     assertEquals(
         asList("a", "b", "c", "d", "c"),
-        Stream.of("a", "b", "c", "d", "c").filter(a -> true).collect(Collectors.toList())
-    );
+        Stream.of("a", "b", "c", "d", "c").filter(a -> true).collect(Collectors.toList()));
   }
 
   public void testMap() {
@@ -278,8 +259,7 @@ public class StreamTest extends EmulTestBase {
 
     assertEquals(
         asList("#1", "#2", "#3"),
-        Stream.of(1, 2, 3).map(i -> "#" + i).collect(Collectors.toList())
-    );
+        Stream.of(1, 2, 3).map(i -> "#" + i).collect(Collectors.toList()));
   }
 
   public void testPeek() {
@@ -291,9 +271,13 @@ public class StreamTest extends EmulTestBase {
     // make sure we saw it all in order
     List<String> items = asList("a", "b", "c");
     List<String> peeked = new ArrayList<>();
-    items.stream().peek(peeked::add).forEach(item -> {
-      // deliberately do nothing, just run
-    });
+    items
+        .stream()
+        .peek(peeked::add)
+        .forEach(
+            item -> {
+              // deliberately do nothing, just run
+            });
     assertEquals(items, peeked);
   }
 
@@ -346,27 +330,17 @@ public class StreamTest extends EmulTestBase {
     Stream<Stream<String>> strings = Stream.of(Stream.of("a", "b"), Stream.empty(), Stream.of("c"));
 
     assertEquals(
-        asList("a", "b", "c"),
-        strings.flatMap(Function.identity()).collect(Collectors.toList())
-    );
+        asList("a", "b", "c"), strings.flatMap(Function.identity()).collect(Collectors.toList()));
   }
+
   public void testMapToPrimitives() {
     Supplier<Stream<String>> s = () -> Stream.of("1", "2", "10");
 
-    assertEquals(
-        new int[]{1, 2, 10},
-        s.get().mapToInt(Integer::parseInt).toArray()
-    );
+    assertEquals(new int[] {1, 2, 10}, s.get().mapToInt(Integer::parseInt).toArray());
 
-    assertEquals(
-        new long[]{1, 2, 10},
-        s.get().mapToLong(Long::parseLong).toArray()
-    );
+    assertEquals(new long[] {1, 2, 10}, s.get().mapToLong(Long::parseLong).toArray());
 
-    assertEquals(
-        new double[]{1, 2, 10},
-        s.get().mapToDouble(Double::parseDouble).toArray()
-    );
+    assertEquals(new double[] {1, 2, 10}, s.get().mapToDouble(Double::parseDouble).toArray());
   }
 
   public void testFlatMapToPrimitives() {
@@ -375,41 +349,23 @@ public class StreamTest extends EmulTestBase {
     assertEquals(0, Stream.of(IntStream.of()).flatMapToInt(Function.identity()).count());
     assertEquals(1, Stream.of(IntStream.of(0)).flatMapToInt(Function.identity()).count());
 
-    Stream<IntStream> intStreams = Stream.of(
-        IntStream.of(1, 2),
-        IntStream.empty(),
-        IntStream.of(5)
-    );
-    assertEquals(
-        new int[]{1, 2, 5},
-        intStreams.flatMapToInt(Function.identity()).toArray()
-    );
+    Stream<IntStream> intStreams =
+        Stream.of(IntStream.of(1, 2), IntStream.empty(), IntStream.of(5));
+    assertEquals(new int[] {1, 2, 5}, intStreams.flatMapToInt(Function.identity()).toArray());
 
-    Stream<LongStream> longStreams = Stream.of(
-        LongStream.of(1, 2),
-        LongStream.empty(),
-        LongStream.of(5)
-    );
-    assertEquals(
-        new long[]{1, 2, 5},
-        longStreams.flatMapToLong(Function.identity()).toArray()
-    );
+    Stream<LongStream> longStreams =
+        Stream.of(LongStream.of(1, 2), LongStream.empty(), LongStream.of(5));
+    assertEquals(new long[] {1, 2, 5}, longStreams.flatMapToLong(Function.identity()).toArray());
 
-    Stream<DoubleStream> doubleStreams = Stream.of(
-        DoubleStream.of(1, 2),
-        DoubleStream.empty(),
-        DoubleStream.of(5)
-    );
+    Stream<DoubleStream> doubleStreams =
+        Stream.of(DoubleStream.of(1, 2), DoubleStream.empty(), DoubleStream.of(5));
     assertEquals(
-        new double[]{1, 2, 5},
-        doubleStreams.flatMapToDouble(Function.identity()).toArray()
-    );
+        new double[] {1, 2, 5}, doubleStreams.flatMapToDouble(Function.identity()).toArray());
   }
 
   public void testDistinct() {
-    List<String> distinct = asList("a", "b", "c", "b").stream()
-        .distinct()
-        .collect(Collectors.toList());
+    List<String> distinct =
+        asList("a", "b", "c", "b").stream().distinct().collect(Collectors.toList());
     assertEquals(3, distinct.size());
     assertTrue(distinct.contains("a"));
     assertTrue(distinct.contains("b"));
@@ -418,9 +374,11 @@ public class StreamTest extends EmulTestBase {
 
   public void testSorted() {
     List<String> sorted = asList("c", "a", "b").stream().sorted().collect(Collectors.toList());
-    List<String> reversed = asList("c", "a", "b").stream()
-        .sorted(Comparator.reverseOrder())
-        .collect(Collectors.toList());
+    List<String> reversed =
+        asList("c", "a", "b")
+            .stream()
+            .sorted(Comparator.reverseOrder())
+            .collect(Collectors.toList());
 
     assertEquals(asList("a", "b", "c"), sorted);
     assertEquals(asList("c", "b", "a"), reversed);
@@ -454,26 +412,16 @@ public class StreamTest extends EmulTestBase {
     assertEquals(1, stream.get().skip(3).count());
 
     assertEquals(asList("c", "d"), stream.get().skip(2).limit(3).collect(Collectors.toList()));
-    assertEquals(Collections.singletonList("c"), stream.get()
-        .skip(2)
-        .limit(1)
-        .collect(Collectors.toList()));
+    assertEquals(
+        Collections.singletonList("c"), stream.get().skip(2).limit(1).collect(Collectors.toList()));
 
-    assertEquals(Collections.singletonList("d"), stream.get()
-        .skip(3)
-        .collect(Collectors.toList()));
-    assertEquals(Collections.emptyList(), stream.get()
-        .skip(5)
-        .collect(Collectors.toList()));
+    assertEquals(Collections.singletonList("d"), stream.get().skip(3).collect(Collectors.toList()));
+    assertEquals(Collections.emptyList(), stream.get().skip(5).collect(Collectors.toList()));
 
-    assertEquals(asList("a", "b"), stream.get()
-        .limit(2)
-        .collect(Collectors.toList()));
+    assertEquals(asList("a", "b"), stream.get().limit(2).collect(Collectors.toList()));
 
-    assertEquals(Collections.singletonList("b"), stream.get()
-        .limit(2)
-        .skip(1)
-        .collect(Collectors.toList()));
+    assertEquals(
+        Collections.singletonList("b"), stream.get().limit(2).skip(1).collect(Collectors.toList()));
   }
 
   // This frustrating test was written first on the JVM stream to discover the basic behavior before
@@ -566,9 +514,10 @@ public class StreamTest extends EmulTestBase {
     Stream<Object> s = Stream.of(1, 2, 3);
 
     RuntimeException a = new RuntimeException("a");
-    s.onClose(() -> {
-      throw a;
-    });
+    s.onClose(
+        () -> {
+          throw a;
+        });
     try {
       s.close();
       fail("RuntimeException expected");
@@ -584,19 +533,22 @@ public class StreamTest extends EmulTestBase {
     RuntimeException a2 = new RuntimeException("a");
     IllegalStateException b = new IllegalStateException("b");
     int[] calledCount = {0};
-    s
-        .onClose(() -> {
-          throw a2;
-        })
-        .onClose(() -> {
-          throw b;
-        })
-        .onClose(() -> {
-          throw a2;
-        })
-        .onClose(() -> {
-          throw b;
-        })
+    s.onClose(
+            () -> {
+              throw a2;
+            })
+        .onClose(
+            () -> {
+              throw b;
+            })
+        .onClose(
+            () -> {
+              throw a2;
+            })
+        .onClose(
+            () -> {
+              throw b;
+            })
         .onClose(() -> calledCount[0]++);
 
     try {
@@ -612,13 +564,14 @@ public class StreamTest extends EmulTestBase {
     s = Stream.of(1, 2, 3);
 
     RuntimeException t = new RuntimeException("a");
-    s
-        .onClose(() -> {
-          throw t;
-        })
-        .onClose(() -> {
-          throw t;
-        });
+    s.onClose(
+            () -> {
+              throw t;
+            })
+        .onClose(
+            () -> {
+              throw t;
+            });
 
     try {
       s.close();

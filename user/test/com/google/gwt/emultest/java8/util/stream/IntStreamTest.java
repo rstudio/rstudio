@@ -63,23 +63,16 @@ public class IntStreamTest extends EmulTestBase {
 
   public void testStreamOfOne() {
     Supplier<IntStream> one = () -> IntStream.of(1);
-    assertEquals(new int[]{1}, one.get().toArray());
+    assertEquals(new int[] {1}, one.get().toArray());
     assertEquals(1L, one.get().count());
     assertEquals(1, one.get().findFirst().getAsInt());
     assertEquals(1, one.get().findAny().getAsInt());
   }
 
   public void testBuilder() {
-    IntStream s = IntStream.builder()
-        .add(1)
-        .add(3)
-        .add(2)
-        .build();
+    IntStream s = IntStream.builder().add(1).add(3).add(2).build();
 
-    assertEquals(
-        new int[] {1, 3, 2},
-        s.toArray()
-    );
+    assertEquals(new int[] {1, 3, 2}, s.toArray());
 
     IntStream.Builder builder = IntStream.builder();
     IntStream built = builder.build();
@@ -101,8 +94,8 @@ public class IntStreamTest extends EmulTestBase {
   public void testConcat() {
     Supplier<IntStream> adbc = () -> IntStream.concat(IntStream.of(1, 4), IntStream.of(2, 3));
 
-    assertEquals(new int[]{1, 4, 2, 3}, adbc.get().toArray());
-    assertEquals(new int[]{1, 2, 3, 4}, adbc.get().sorted().toArray());
+    assertEquals(new int[] {1, 4, 2, 3}, adbc.get().toArray());
+    assertEquals(new int[] {1, 2, 3, 4}, adbc.get().sorted().toArray());
 
     List<String> closed = new ArrayList<>();
     IntStream first = IntStream.of(1).onClose(() -> closed.add("first"));
@@ -121,12 +114,8 @@ public class IntStreamTest extends EmulTestBase {
 
   public void testIterate() {
     assertEquals(
-        new int[]{10, 11, 12, 13, 14},
-        IntStream.iterate(0, i -> i + 1)
-            .skip(10)
-            .limit(5)
-            .toArray()
-    );
+        new int[] {10, 11, 12, 13, 14},
+        IntStream.iterate(0, i -> i + 1).skip(10).limit(5).toArray());
   }
 
   public void testGenerate() {
@@ -135,11 +124,7 @@ public class IntStreamTest extends EmulTestBase {
 
     assertEquals(
         new int[] {10, 11, 12, 13, 14},
-        IntStream.generate(makeGenerator())
-            .skip(10)
-            .limit(5)
-            .toArray()
-    );
+        IntStream.generate(makeGenerator()).skip(10).limit(5).toArray());
   }
 
   private IntSupplier makeGenerator() {
@@ -170,7 +155,7 @@ public class IntStreamTest extends EmulTestBase {
   public void testToArray() {
     assertEquals(new int[0], IntStream.of().toArray());
     assertEquals(new int[] {1}, IntStream.of(1).toArray());
-    assertEquals(new int[] {3,2,0}, IntStream.of(3,2,0).toArray());
+    assertEquals(new int[] {3, 2, 0}, IntStream.of(3, 2, 0).toArray());
   }
 
   public void testReduce() {
@@ -194,25 +179,14 @@ public class IntStreamTest extends EmulTestBase {
     assertFalse(data[0]);
 
     // one result
-    assertEquals(
-        new int[] {1},
-        IntStream.of(1, 2, 3, 4, 3).filter(a -> a == 1).toArray()
-    );
+    assertEquals(new int[] {1}, IntStream.of(1, 2, 3, 4, 3).filter(a -> a == 1).toArray());
     // zero results
-    assertEquals(
-        new int[0],
-        IntStream.of(1, 2, 3, 4, 3).filter(a -> false).toArray()
-    );
+    assertEquals(new int[0], IntStream.of(1, 2, 3, 4, 3).filter(a -> false).toArray());
     // two results
-    assertEquals(
-        new int[] {2, 4},
-        IntStream.of(1, 2, 3, 4, 3).filter(a -> a % 2 == 0).toArray()
-    );
+    assertEquals(new int[] {2, 4}, IntStream.of(1, 2, 3, 4, 3).filter(a -> a % 2 == 0).toArray());
     // all
     assertEquals(
-        new int[] {1, 2, 3, 4, 3},
-        IntStream.of(1, 2, 3, 4, 3).filter(a -> true).toArray()
-    );
+        new int[] {1, 2, 3, 4, 3}, IntStream.of(1, 2, 3, 4, 3).filter(a -> true).toArray());
   }
 
   public void testMap() {
@@ -221,10 +195,7 @@ public class IntStreamTest extends EmulTestBase {
     IntStream.of(1, 2, 3).map(i -> data[0]++);
     assertEquals(0, data[0]);
 
-    assertEquals(
-        new int[] {2, 4, 6},
-        IntStream.of(1, 2, 3).map(i -> i * 2).toArray()
-    );
+    assertEquals(new int[] {2, 4, 6}, IntStream.of(1, 2, 3).map(i -> i * 2).toArray());
   }
 
   public void testPeek() {
@@ -236,9 +207,12 @@ public class IntStreamTest extends EmulTestBase {
     // make sure we saw it all in order
     int[] items = new int[] {1, 2, 3};
     List<Integer> peeked = new ArrayList<>();
-    IntStream.of(items).peek(peeked::add).forEach(item -> {
-      // do nothing, just run
-    });
+    IntStream.of(items)
+        .peek(peeked::add)
+        .forEach(
+            item -> {
+              // do nothing, just run
+            });
     assertEquals(items.length, peeked.size());
     for (int i = 0; i < items.length; i++) {
       assertEquals(items[i], (int) peeked.get(i));
@@ -295,28 +269,18 @@ public class IntStreamTest extends EmulTestBase {
     IntStream values = IntStream.of(1, 2, 3);
 
     assertEquals(
-        new int[] {1, 2, 2, 4, 3, 6},
-        values.flatMap(i -> IntStream.of(i, i * 2)).toArray()
-    );
+        new int[] {1, 2, 2, 4, 3, 6}, values.flatMap(i -> IntStream.of(i, i * 2)).toArray());
   }
 
   public void testMapToOthers() {
     Supplier<IntStream> s = () -> IntStream.of(1, 2, 10);
 
     assertEquals(
-        new String[] {"1", "2", "10"},
-        s.get().mapToObj(String::valueOf).toArray(String[]::new)
-    );
+        new String[] {"1", "2", "10"}, s.get().mapToObj(String::valueOf).toArray(String[]::new));
 
-    assertEquals(
-        new long[] {1, 2, 10},
-        s.get().mapToLong(i -> (long) i).toArray()
-    );
+    assertEquals(new long[] {1, 2, 10}, s.get().mapToLong(i -> (long) i).toArray());
 
-    assertEquals(
-        new double[] {1, 2, 10},
-        s.get().mapToDouble(i -> (double) i).toArray()
-    );
+    assertEquals(new double[] {1, 2, 10}, s.get().mapToDouble(i -> (double) i).toArray());
   }
 
   public void testDistinct() {
@@ -376,7 +340,7 @@ public class IntStreamTest extends EmulTestBase {
     Supplier<IntStream> stream = () -> IntStream.of(1, 2);
 
     DoubleStream actualDoubleStream = stream.get().asDoubleStream();
-    assertEquals(new double[]{1, 2}, actualDoubleStream.toArray());
+    assertEquals(new double[] {1, 2}, actualDoubleStream.toArray());
 
     LongStream actualLongStream = stream.get().asLongStream();
     assertEquals(new long[] {1, 2}, actualLongStream.toArray());
@@ -421,10 +385,14 @@ public class IntStreamTest extends EmulTestBase {
   }
 
   public void testCollect() {
-    String val = IntStream.of(1, 2, 3, 4, 5).collect(StringBuilder::new,
-        // TODO switch to a lambda reference once #9340 is fixed
-        (stringBuilder, i) -> stringBuilder.append(i),
-        StringBuilder::append).toString();
+    String val =
+        IntStream.of(1, 2, 3, 4, 5)
+            .collect(
+                StringBuilder::new,
+                // TODO switch to a lambda reference once #9340 is fixed
+                (stringBuilder, i) -> stringBuilder.append(i),
+                StringBuilder::append)
+            .toString();
 
     assertEquals("12345", val);
   }
