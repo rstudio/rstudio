@@ -35,6 +35,13 @@ public final class StringJoiner {
   }
 
   public StringJoiner(CharSequence delimiter, CharSequence prefix, CharSequence suffix) {
+
+    // TODO(dankurka): remove these checks once we have the proper compiler fix
+    // for Charsequence.toString() with null values.
+    checkCriticalNotNull(delimiter, "delimiter");
+    checkCriticalNotNull(prefix, "prefix");
+    checkCriticalNotNull(suffix, "suffix");
+
     this.delimiter = delimiter.toString();
     this.prefix = prefix.toString();
     this.suffix = suffix.toString();
