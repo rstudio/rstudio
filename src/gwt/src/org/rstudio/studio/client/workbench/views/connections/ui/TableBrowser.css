@@ -28,6 +28,8 @@
 
 .cellTreeItemValue {
   font-family: fixedWidthFont;
+  padding-right: 0px;
+  cursor: default;
 }
 
 .cellTreeOpenItem {
@@ -35,7 +37,7 @@
 }
 .cellTreeTopItem {
   margin-top: 0;
-  padding: 2px 13px 2px 6px !important;
+  padding: 2px 0px 2px 6px !important;
 }
 .cellTreeTopItemImage {
   
@@ -54,4 +56,18 @@
   margin-right: 15px;
   text-overflow: ellipsis;
 }
+
+@sprite .tableViewDataset {
+   gwt-image: 'zoomDataset';
+   background-position: right center; 
+   float: right;
+   width: 35px;
+   cursor: pointer;
+}
+
+
+
+
+
+
 

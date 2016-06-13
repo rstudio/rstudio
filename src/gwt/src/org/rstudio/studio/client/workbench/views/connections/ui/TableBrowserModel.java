@@ -19,18 +19,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -44,13 +50,14 @@ public class TableBrowserModel implements TreeViewModel
    public TableBrowserModel()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-    
    }
    
    @Inject
-   public void initialize(ConnectionsServerOperations server)
+   public void initialize(ConnectionsServerOperations server,
+                          EventBus eventBus)
    {
       server_ = server;
+      eventBus_ = eventBus;
    }
   
    
@@ -259,12 +266,35 @@ public class TableBrowserModel implements TreeViewModel
       private String table_;
    }
    
-   private static class TableCell extends AbstractCell<String> 
+   private class TableCell extends AbstractCell<String> 
    {
+      public TableCell()
+      {
+         super("click");
+      }
+      
       @Override
       public void render(Cell.Context context, String table, SafeHtmlBuilder sb)
       {
-         sb.appendEscaped(table);
+         SafeHtmlUtil.appendSpan(sb, "", table);
+         SafeHtmlUtil.appendSpan(sb, 
+               RES.cellTreeStyle().tableViewDataset(), 
+               "");
+      }
+      
+      @Override
+      public void onBrowserEvent(Cell.Context context,
+              Element parent, String value, NativeEvent event,
+              ValueUpdater<String> valueUpdater) {
+          if ("click".equals(event.getType()))
+          {
+             Element eventTarget = event.getEventTarget().cast();
+             if (eventTarget.getAttribute("class").equals(
+                               RES.cellTreeStyle().tableViewDataset()))
+             {
+                eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
+             }
+          }
       }
    }
    
@@ -291,6 +321,7 @@ public class TableBrowserModel implements TreeViewModel
    private Command onNodeExpansionCompleted_ = null;
    
    private ConnectionsServerOperations server_;
+   private EventBus eventBus_;
    
    private static NoSelectionModel<String> noTableSelectionModel_ = 
          new NoSelectionModel<String>();

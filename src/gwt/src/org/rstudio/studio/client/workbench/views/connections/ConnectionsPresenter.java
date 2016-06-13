@@ -25,6 +25,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOp
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -71,7 +73,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter  
-                                  implements PerformConnectionEvent.Handler
+                                  implements PerformConnectionEvent.Handler,
+                                             ViewConnectionDatasetEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
@@ -152,8 +155,9 @@ public class ConnectionsPresenter extends BasePresenter
          
       });
       
-      // perform connection event
+      // events
       eventBus_.addHandler(PerformConnectionEvent.TYPE, this);
+      eventBus_.addHandler(ViewConnectionDatasetEvent.TYPE, this);
       
       // set connections      
       final SessionInfo sessionInfo = session.getSessionInfo();
@@ -405,6 +409,13 @@ public class ConnectionsPresenter extends BasePresenter
       }
    }
    
+   @Override
+   public void onViewConnectionDataset(ViewConnectionDatasetEvent event)
+   {
+      Debug.logToConsole(event.getDataset());
+      
+   }
+   
    @Handler
    public void onRemoveConnection()
    {
@@ -622,4 +633,5 @@ public class ConnectionsPresenter extends BasePresenter
    
    private ArrayList<Connection> allConnections_ = new ArrayList<Connection>();
    private ArrayList<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
+   
 }

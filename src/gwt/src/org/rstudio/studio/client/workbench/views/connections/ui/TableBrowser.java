@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 import com.google.gwt.core.client.GWT;
@@ -123,6 +124,8 @@ public class TableBrowser extends Composite implements RequiresResize
    
    public interface Resources extends CellTree.Resources {
       
+      ImageResource zoomDataset();
+      
       @ImageOptions(flipRtl = true)
       @Source("ExpandIcon.png")
       ImageResource cellTreeClosedItem();
@@ -146,6 +149,7 @@ public class TableBrowser extends Composite implements RequiresResize
       public interface Style extends CellTree.Style
       {
          String fieldName();
+         String tableViewDataset();
       }
    }
    
