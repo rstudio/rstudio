@@ -635,7 +635,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
     @Override
     public boolean tryAdvance(DoubleConsumer action) {
       while (skip > 0) {
-        if (!original.tryAdvance((double ignore) -> {})) {
+        if (!original.tryAdvance((double ignore) -> { })) {
           return false;
         }
         skip--;
@@ -782,7 +782,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
     public long count() {
       terminate();
       long count = 0;
-      while (spliterator.tryAdvance((double value) -> {})) {
+      while (spliterator.tryAdvance((double value) -> { })) {
         count++;
       }
       return count;

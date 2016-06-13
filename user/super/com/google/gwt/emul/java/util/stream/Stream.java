@@ -667,7 +667,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     @Override
     public boolean tryAdvance(Consumer<? super T> action) {
       while (skip > 0) {
-        if (!original.tryAdvance(ignore -> {})) {
+        if (!original.tryAdvance(ignore -> { })) {
           return false;
         }
         skip--;
@@ -739,7 +739,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     public long count() {
       terminate();
       long count = 0;
-      while (spliterator.tryAdvance(a -> {})) {
+      while (spliterator.tryAdvance(a -> { })) {
         count++;
       }
       return count;

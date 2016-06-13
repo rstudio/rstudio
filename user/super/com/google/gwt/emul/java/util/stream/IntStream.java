@@ -693,7 +693,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
     @Override
     public boolean tryAdvance(IntConsumer action) {
       while (skip > 0) {
-        if (!original.tryAdvance((int ignore) -> {})) {
+        if (!original.tryAdvance((int ignore) -> { })) {
           return false;
         }
         skip--;
@@ -811,7 +811,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
     public long count() {
       terminate();
       long count = 0;
-      while (spliterator.tryAdvance((int value) -> {})) {
+      while (spliterator.tryAdvance((int value) -> { })) {
         count++;
       }
       return count;

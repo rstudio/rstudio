@@ -683,7 +683,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
     @Override
     public boolean tryAdvance(LongConsumer action) {
       while (skip > 0) {
-        if (!original.tryAdvance((long ignore) -> {})) {
+        if (!original.tryAdvance((long ignore) -> { })) {
           return false;
         }
         skip--;
@@ -823,7 +823,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
     public long count() {
       terminate();
       long count = 0;
-      while (spliterator.tryAdvance((long value) -> {})) {
+      while (spliterator.tryAdvance((long value) -> { })) {
         count++;
       }
       return count;
