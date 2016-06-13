@@ -36,4 +36,9 @@ public class NotebookExecRange extends JavaScriptObject
    public final native int getStop() /*-{
       return this.stop;
    }-*/;
+   
+   public final native void extendTo(NotebookExecRange other) /*-{
+      this.start = Math.min(this.start, other.start);
+      this.stop  = Math.max(this.stop, other.stop);
+   }-*/;
 }

@@ -91,6 +91,16 @@ json::Object ExecRange::toJson() const
    return jsonRange;
 }
 
+void ExecRange::extendTo(const ExecRange& other)
+{
+   start = std::min(start, other.start);
+   stop  = std::max(stop, other.stop);
+}
+
+bool ExecRange::empty()
+{
+   return start == 0 && stop == 0;
+}
 
 Error NotebookQueueUnit::fromJson(const json::Object& source, 
       boost::shared_ptr<NotebookQueueUnit>* pUnit)
@@ -207,7 +217,8 @@ json::Object NotebookQueueUnit::toJson() const
    return unit;
 }
 
-std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
+std::string NotebookQueueUnit::popExecRange(ExecRange* pRange, 
+      ExpressionMode mode)
 {
    // extract next range to execute
    ExecRange& range = *pending_.begin();
@@ -230,7 +241,11 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
    }
 
    // mark completed and extract from code
-   executing_ = ExecRange(start, stop);
+   if (mode == ExprModeNew || executing_.empty())
+      executing_ = ExecRange(start, stop);
+   else
+      executing_.extendTo(ExecRange(start, stop));
+
    completed_.push_back(executing_);
    std::string code = code_.substr(start, stop - start);
    

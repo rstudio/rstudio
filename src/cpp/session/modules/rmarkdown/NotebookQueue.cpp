@@ -86,7 +86,7 @@ public:
       return queue_.empty();
    }
 
-   Error process()
+   Error process(ExpressionMode mode)
    {
       // if list is empty, we're done
       if (queue_.empty())
@@ -129,10 +129,10 @@ public:
             execUnit_.reset();
          }
          else
-            return executeCurrentUnit();
+            return executeCurrentUnit(mode);
       }
 
-      return executeNextUnit();
+      return executeNextUnit(mode);
    }
 
    Error update(boost::shared_ptr<NotebookQueueUnit> pUnit, QueueOperation op, 
@@ -178,7 +178,10 @@ public:
 
    void onConsolePrompt(const std::string& prompt)
    {
-      process();
+      if (prompt == "+ ")
+         process(ExprModeContinuation);
+      else 
+         process(ExprModeNew);
    }
 
 private:
@@ -204,12 +207,12 @@ private:
          
          // execute the next chunk, if any
          execUnit_.reset();
-         process();
+         process(ExprModeNew);
       }
    }
 
    // execute the next line or expression in the current execution unit
-   Error executeCurrentUnit()
+   Error executeCurrentUnit(ExpressionMode mode)
    {
       // ensure we have a unit to execute 
       if (!execUnit_)
@@ -217,7 +220,7 @@ private:
 
       json::Array arr;
       ExecRange range(0, 0);
-      arr.push_back(execUnit_->popExecRange(&range));
+      arr.push_back(execUnit_->popExecRange(&range, mode));
       arr.push_back(execUnit_->chunkId());
 
       // formulate request body
@@ -236,13 +239,14 @@ private:
       exec["doc_id"]     = execUnit_->docId();
       exec["chunk_id"]   = execUnit_->chunkId();
       exec["exec_range"] = range.toJson();
+      exec["expr_mode"]  = mode;
       module_context::enqueClientEvent(
             ClientEvent(client_events::kNotebookRangeExecuted, exec));
 
       return Success();
    }
 
-   Error executeNextUnit()
+   Error executeNextUnit(ExpressionMode mode)
    {
       // no work to do if we have no documents
       if (queue_.empty())
@@ -313,7 +317,7 @@ private:
       enqueueExecStateChanged(ChunkExecStarted, options);
 
       if (engine == "r")
-         executeCurrentUnit();
+         executeCurrentUnit(ExprModeNew);
 
       return Success();
    }
@@ -370,7 +374,7 @@ private:
       execUnit_ = unit;
       enqueueExecStateChanged(ChunkExecCancelled, json::Object());
 
-      return executeNextUnit();
+      return executeNextUnit(ExprModeNew);
    }
 
    void popUnit(boost::shared_ptr<NotebookQueueUnit> pUnit)
@@ -443,7 +447,7 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
 
    // add the queue and process immediately
    s_queue->add(pQueue);
-   s_queue->process();
+   s_queue->process(ExprModeNew);
 
    return Success();
 }

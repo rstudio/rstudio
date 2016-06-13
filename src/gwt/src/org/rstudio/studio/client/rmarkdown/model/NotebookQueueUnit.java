@@ -84,6 +84,14 @@ public class NotebookQueueUnit extends JavaScriptObject
    public final native void setExecutingRange(NotebookExecRange range) /*-{
       this.executing = range;
    }-*/;
+   
+   public final void extendExecutingRange(NotebookExecRange range) 
+   {
+      if (getExecuting() == null)
+         setExecutingRange(range);
+      else
+         getExecuting().extendTo(range);
+   }
 
    public final List<Integer> getPendingLines() 
    {

@@ -41,6 +41,10 @@ public class NotebookRangeExecutedEvent
       public final native NotebookExecRange getExecRange() /*-{
          return this.exec_range;
       }-*/;
+
+      public final native int getExprMode() /*-{
+         return this.expr_mode;
+      }-*/;
    }
    
    
@@ -68,6 +72,11 @@ public class NotebookRangeExecutedEvent
    {
       return data_.getExecRange();
    }
+   
+   public int getExprMode()
+   {
+      return data_.getExprMode();
+   }
  
    @Override
    public Type<Handler> getAssociatedType()
@@ -84,4 +93,7 @@ public class NotebookRangeExecutedEvent
    private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   public final static int EXPR_NEW          = 0;
+   public final static int EXPR_CONTINUATION = 1;
 }

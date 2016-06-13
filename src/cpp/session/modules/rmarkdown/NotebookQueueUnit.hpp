@@ -41,9 +41,17 @@ struct ExecRange
    static core::Error fromJson(
          const core::json::Object& source, 
          ExecRange *pRange);
+   void extendTo(const ExecRange& other);
+   bool empty();
    core::json::Object toJson() const;
    int start;
    int stop;
+};
+
+enum ExpressionMode
+{
+   ExprModeNew          = 0,
+   ExprModeContinuation = 1
 };
 
 class NotebookQueueUnit
@@ -56,7 +64,7 @@ public:
    core::json::Object toJson() const;
 
    core::Error parseOptions(core::json::Object* pOptions);
-   std::string popExecRange(ExecRange* pRange);
+   std::string popExecRange(ExecRange* pRange, ExpressionMode mode);
    bool complete() const;
    core::Error innerCode(std::string* pCode);
    void updateFrom(const NotebookQueueUnit& other);

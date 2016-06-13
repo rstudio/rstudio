@@ -264,7 +264,10 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       
       if (isChunkExecuting(event.getChunkId()))
       {
-         executingUnit_.setExecutingRange(event.getExecRange());
+         if (event.getExprMode() == NotebookRangeExecutedEvent.EXPR_NEW)
+            executingUnit_.setExecutingRange(event.getExecRange());
+         else
+            executingUnit_.extendExecutingRange(event.getExecRange());
          executingUnit_.addCompletedRange(event.getExecRange());
       }
       
