@@ -92,9 +92,11 @@ function maven-gwt() {
     popd > /dev/null
   done
 
-  # Remove bundled org/objectweb/asm classes from gwt-dev
+  # Remove bundled third-parties from gwt-dev
   echo "Removing ASM classes from gwt-dev"
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "org/objectweb/asm/*"
+  echo "Removing Gson classes from gwt-dev"
+  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "com/google/gson/*"
   echo "Removing Jetty (et al.) classes from gwt-dev"
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar \
       "META-INF/services/javax.servlet.*" "META-INF/services/javax.websocket.*" "META-INF/services/org.eclipse.jetty.*" "META-INF/services/org.apache.juli.*" \

@@ -12,11 +12,17 @@
     <artifactId>gwt-servlet</artifactId>
     <packaging>jar</packaging>
     <version>${gwtVersion}</version>
-    <!-- Declare these in your project POM if using RequestFactory -->
     <dependencies>
         <dependency>
             <groupId>javax.validation</groupId>
             <artifactId>validation-api</artifactId>
+            <!-- needed by RequestFactory -->
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <!-- Used for source-mapping in stacktrace deobfuscation for logging -->
             <optional>true</optional>
         </dependency>
     </dependencies>

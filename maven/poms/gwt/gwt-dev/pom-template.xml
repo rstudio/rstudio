@@ -15,6 +15,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
         </dependency>
