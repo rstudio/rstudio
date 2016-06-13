@@ -119,7 +119,7 @@ options(connectionViewer = list(
    if (!is.null(name)) {
       previewTableCode <- sprintf(previewTableCode, name, table, limit)
       df <- eval(parse(text = previewTableCode), envir = globalenv())
-      .rs.viewDataFrame(df, table)
+      .rs.viewDataFrame(df, table, TRUE)
    }
 
    NULL

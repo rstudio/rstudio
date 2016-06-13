@@ -279,7 +279,7 @@ public class TableBrowserModel implements TreeViewModel
          
          sb.append(SafeHtmlUtil.createOpenTag("span", 
                "class", RES.cellTreeStyle().tableViewDataset(),
-               "title", "View the first 1000 records of the table"));
+               "title", "View table (up to 1,000 records"));
          sb.appendHtmlConstant("</span>");   
       }
       
