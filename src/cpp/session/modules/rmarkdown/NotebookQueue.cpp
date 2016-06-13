@@ -34,6 +34,8 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/http/SessionRequest.hpp>
 
+#define kThreadQuitCommand "thread_quit"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -57,6 +59,8 @@ public:
    NotebookQueue() 
    {
       // launch a thread to process console input
+      pInput_ = 
+         boost::make_shared<core::thread::ThreadsafeQueue<std::string> >();
       thread::safeLaunchThread(boost::bind(
                &NotebookQueue::consoleThreadMain, this), &console_);
 
@@ -67,8 +71,8 @@ public:
 
    ~NotebookQueue()
    {
-      // clean up thread
-      console_.detach();
+      // let thread clean up asynchronously
+      pInput_->enque(kThreadQuitCommand);
 
       // unregister handlers
       BOOST_FOREACH(boost::signals::connection connection, handlers_)
@@ -225,7 +229,7 @@ private:
       // serialize RPC body and send it to helper thread for submission
       std::ostringstream oss;
       json::write(rpc, oss);
-      input_.enque(oss.str());
+      pInput_->enque(oss.str());
 
       // let client know the range has been sent to R
       json::Object exec;
@@ -317,9 +321,18 @@ private:
    // main function for thread which receives console input
    void consoleThreadMain()
    {
+      // create our own reference to the threadsafe queue (this prevents it 
+      // from getting cleaned up when the parent detaches)
+      boost::shared_ptr<core::thread::ThreadsafeQueue<std::string> > pInput = 
+         pInput_;
+
       std::string input;
-      while (input_.deque(&input, boost::posix_time::not_a_date_time))
+      while (pInput->deque(&input, boost::posix_time::not_a_date_time))
       {
+         // if we were asked to quit, stop processing now
+         if (input == kThreadQuitCommand)
+            return;
+
          // loop back console input request to session -- this allows us to treat 
          // notebook console input exactly as user console input
          core::http::Response response;
@@ -386,7 +399,7 @@ private:
 
    // the thread which submits console input, and the queue which feeds it
    boost::thread console_;
-   core::thread::ThreadsafeQueue<std::string> input_;
+   boost::shared_ptr<core::thread::ThreadsafeQueue<std::string> > pInput_;
 };
 
 static boost::shared_ptr<NotebookQueue> s_queue;
