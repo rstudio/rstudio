@@ -375,7 +375,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       opts$include <- FALSE
     }
 
-    # remove leading text from the options
+    # extract engine name (can be overridden below with engine=)
+    opts$engine <- unlist(strsplit(code, split = "(\\s|,)+"))[[1]]
+
+    # trim leading text from the options
     code <- sub("^[^,]*,\\s*", "", code)
 
     # parse them, then merge with the defaults (evaluate in global environment)
@@ -388,6 +391,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
   .rs.scalarListFromList(opts)
 })
+
+.rs.addFunction("extractChunkInnerCode", function(code)
+{
+  # split into lines
+  code <- unlist(strsplit(code, "\n", fixed = TRUE))
+  
+  # find chunk indicators (safe fallbacks if absent)
+  start <- max(1, grep(.rs.reRmdChunkBegin(), code, perl = TRUE))
+  end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
+
+  paste(code[(start + 1):(end - 1)], collapse = "\n")
+});
 
 .rs.addFunction("extractRmdChunkInformation", function(rmd)
 {

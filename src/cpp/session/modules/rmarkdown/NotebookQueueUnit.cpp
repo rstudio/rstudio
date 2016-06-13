@@ -156,6 +156,11 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    return Success();
 }
 
+core::Error NotebookQueueUnit::innerCode(std::string* pCode)
+{
+   return r::exec::RFunction(".rs.extractChunkInnerCode", code_).call(pCode);
+}
+
 json::Object NotebookQueueUnit::toJson() const
 {
    // process arrays
@@ -186,9 +191,6 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
 
    // use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   std::cerr << "exec chunk with code " << code_ << std::endl;
-   std::cerr << "start exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
-
    if (idx != std::string::npos && static_cast<int>(idx) < stop)
    {
       stop = idx;
@@ -210,8 +212,6 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange)
    // return values to caller
    if (pRange)
       *pRange = executing_;
-
-   std::cerr << "final exec range " << start << " - " << stop << ": " << code_.substr(start, stop - start) << " (" << idx << ")" << std::endl;
 
    return code;
 }

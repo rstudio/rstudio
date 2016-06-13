@@ -19,6 +19,7 @@
 #include "NotebookExec.hpp"
 #include "NotebookDocQueue.hpp"
 #include "NotebookCache.hpp"
+#include "NotebookAlternateEngines.hpp"
 
 #include "../../SessionClientEventService.hpp"
 
@@ -58,6 +59,10 @@ public:
       // launch a thread to process console input
       thread::safeLaunchThread(boost::bind(
                &NotebookQueue::consoleThreadMain, this), &console_);
+
+      // register handler for chunk exec complete
+      handlers_.push_back(events().onChunkExecCompleted.connect(
+               boost::bind(&NotebookQueue::onChunkExecCompleted, this, _1, _2, _3)));
    }
 
    ~NotebookQueue()
@@ -109,22 +114,15 @@ public:
          if (execUnit_->complete())
          {
             // unit has finished executing; remove it from the queue
-            if (queue_.size() > 0)
-            {
-               boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
-               docQueue->update(execUnit_, QueueDelete, "");
-               if (docQueue->complete())
-               {
-                  queue_.pop_front();
-               }
-            }
+            popUnit(execUnit_);
 
             // notify client
             enqueueExecStateChanged(ChunkExecFinished, execContext_->options());
 
             // clean up current exec unit 
             execContext_->disconnect();
-            execUnit_ = boost::shared_ptr<NotebookQueueUnit>();
+            execContext_.reset();
+            execUnit_.reset();
          }
          else
             return executeCurrentUnit();
@@ -180,6 +178,31 @@ public:
    }
 
 private:
+
+   void onChunkExecCompleted(const std::string& docId, 
+         const std::string& chunkId, const std::string& nbCtxId)
+   {
+      if (!execUnit_)
+         return;
+
+      // if this is the currently executing chunk but it doesn't have an R
+      // execution context, it must be executing with an alternate engine; 
+      // this event signals that the alternate engine is finished, so move to
+      // the next document in the queue
+      if (execUnit_->docId() == docId && execUnit_->chunkId() == chunkId &&
+          !execContext_)
+      {
+         // remove from the queue
+         popUnit(execUnit_);
+
+         // signal client
+         enqueueExecStateChanged(ChunkExecFinished, json::Object());
+         
+         // execute the next chunk, if any
+         execUnit_.reset();
+         process();
+      }
+   }
 
    // execute the next line or expression in the current execution unit
    Error executeCurrentUnit()
@@ -242,26 +265,51 @@ private:
          bool eval = true;
          json::readObject(options, "eval", &eval);
          if (!eval)
+            return skipUnit();
+      }
+
+      // compute context
+      std::string ctx = docQueue->commitMode() == ModeCommitted ?
+         kSavedCtx : notebookCtxId();
+
+      // compute engine
+      std::string engine = "r";
+      json::readObject(options, "engine", &engine);
+      if (engine == "r")
+      {
+         execContext_ = boost::make_shared<ChunkExecContext>(
+            unit->docId(), unit->chunkId(), ctx, unit->execScope(), options,
+            docQueue->pixelWidth(), docQueue->charWidth());
+         execContext_->connect();
+      }
+      else
+      {
+         // execute with alternate engine
+         std::string innerCode;
+         error = unit->innerCode(&innerCode);
+         if (error)
          {
-            execUnit_ = unit;
-            enqueueExecStateChanged(ChunkExecCancelled, options);
-            docQueue->update(execUnit_, QueueDelete, "");
-            return executeNextUnit();
+            LOG_ERROR(error);
+         }
+         else
+         {
+            error = executeAlternateEngineChunk(
+               unit->docId(), unit->chunkId(), ctx, engine, innerCode, options);
+            if (error)
+               LOG_ERROR(error);
          }
       }
 
-      std::string ctx = docQueue->commitMode() == ModeCommitted ?
-         kSavedCtx : notebookCtxId();
-      execContext_ = boost::make_shared<ChunkExecContext>(
-         unit->docId(), unit->chunkId(), ctx, unit->execScope(), options,
-         docQueue->pixelWidth(), docQueue->charWidth());
-      execContext_->connect();
+      // if there was an error, skip the chunk
+      if (error)
+         return skipUnit();
 
       // notify client
       execUnit_ = unit;
       enqueueExecStateChanged(ChunkExecStarted, options);
 
-      executeCurrentUnit();
+      if (engine == "r")
+         executeCurrentUnit();
 
       return Success();
    }
@@ -292,6 +340,38 @@ private:
       event["options"]    = options;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkExecStateChanged, event));
+   }
+
+   Error skipUnit()
+   {
+      if (queue_.empty())
+         return Success();
+
+      boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
+      if (docQueue->complete())
+         return Success();
+
+      boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
+      popUnit(unit);
+
+      execUnit_ = unit;
+      enqueueExecStateChanged(ChunkExecCancelled, json::Object());
+
+      return executeNextUnit();
+   }
+
+   void popUnit(boost::shared_ptr<NotebookQueueUnit> pUnit)
+   {
+      if (queue_.empty())
+         return;
+
+      // remove this unit from the queue
+      boost::shared_ptr<NotebookDocQueue> docQueue = *queue_.begin();
+      docQueue->update(pUnit, QueueDelete, "");
+
+      // advance if queue is complete
+      if (docQueue->complete())
+         queue_.pop_front();
    }
 
    // the documents with active queues

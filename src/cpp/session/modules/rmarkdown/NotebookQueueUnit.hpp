@@ -58,6 +58,7 @@ public:
    core::Error parseOptions(core::json::Object* pOptions);
    std::string popExecRange(ExecRange* pRange);
    bool complete() const;
+   core::Error innerCode(std::string* pCode);
 
    // accessors
    std::string docId() const;
@@ -65,7 +66,6 @@ public:
    ExecMode execMode() const;
    ExecScope execScope() const;
    std::string code() const;
-
 
 private:
    std::string docId_;
