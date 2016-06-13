@@ -111,7 +111,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             return unit.getExecMode();
          }
       }
-      return TextEditingTargetNotebook.MODE_BATCH;
+      return NotebookQueueUnit.EXEC_MODE_BATCH;
    }
    
    public void clear()
@@ -140,8 +140,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (unit == null)
          {
             // unit is not in the queue; add it
-            queueChunkRange(chunk, range, TextEditingTargetNotebook.MODE_BATCH,
-                  TextEditingTargetNotebook.SCOPE_PARTIAL);
+            queueChunkRange(chunk, range, NotebookQueueUnit.EXEC_MODE_BATCH,
+                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
          }
          else
          {
@@ -162,8 +162,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          // no queue, create one
          createQueue("Run Chunk");
          NotebookQueueUnit unit = unitFromScope(chunk, range, 
-               TextEditingTargetNotebook.MODE_SINGLE,
-               TextEditingTargetNotebook.SCOPE_PARTIAL);
+               NotebookQueueUnit.EXEC_MODE_SINGLE,
+               NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
          queue_.addUnit(unit);
          executeQueue();
       }
@@ -174,18 +174,19 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       if (isExecuting())
       {
          queueChunkRange(chunk, scopeHelper_.getSweaveChunkInnerRange(chunk),
-               TextEditingTargetNotebook.MODE_SINGLE, 
-               TextEditingTargetNotebook.SCOPE_CHUNK);
+               NotebookQueueUnit.EXEC_MODE_SINGLE, 
+               NotebookQueueUnit.EXEC_SCOPE_CHUNK);
       }
       else
       {
          List<Scope> scopes = new ArrayList<Scope>();
          scopes.add(chunk);
-         executeChunks("Run Chunk", scopes);
+         executeChunks("Run Chunk", scopes, NotebookQueueUnit.EXEC_MODE_SINGLE);
       }
    }
    
-   public void executeChunks(String jobDesc, List<Scope> scopes)
+   public void executeChunks(String jobDesc, List<Scope> scopes,
+         int execScope)
    {
       // TODO: handle case where there's already a queue
       
@@ -195,9 +196,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       for (Scope scope: scopes)
       {
          NotebookQueueUnit unit = unitFromScope(scope,
-               scopeHelper_.getSweaveChunkInnerRange(scope),
-               TextEditingTargetNotebook.MODE_BATCH,
-               TextEditingTargetNotebook.SCOPE_CHUNK);
+               scopeHelper_.getSweaveChunkInnerRange(scope), execScope,
+               NotebookQueueUnit.EXEC_SCOPE_CHUNK);
          queue_.addUnit(unit);
       }
       

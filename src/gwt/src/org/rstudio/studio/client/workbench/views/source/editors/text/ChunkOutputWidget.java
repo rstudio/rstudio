@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
@@ -42,7 +43,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -188,7 +188,7 @@ public class ChunkOutputWidget extends Composite
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
          // override visibility flag when there's an error in batch mode
-         if (!options_.error() && mode == TextEditingTargetNotebook.MODE_BATCH)
+         if (!options_.error() && mode == NotebookQueueUnit.EXEC_MODE_BATCH)
             ensureVisible = true;
          showErrorOutput(unit.getUnhandledError(), ensureVisible);
          break;
@@ -347,7 +347,7 @@ public class ChunkOutputWidget extends Composite
          // it
          syncHeight(true, ensureVisible);
       }
-      else if (execScope == TextEditingTargetNotebook.SCOPE_CHUNK)
+      else if (execScope == NotebookQueueUnit.EXEC_SCOPE_CHUNK)
       {
          // if executing the whole chunk but no output was received, clean up
          // any prior output and hide the output
@@ -527,7 +527,7 @@ public class ChunkOutputWidget extends Composite
       flushQueuedErrors(false);
 
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
-            execMode_ == TextEditingTargetNotebook.MODE_SINGLE);
+            execMode_ == NotebookQueueUnit.EXEC_MODE_SINGLE);
    }
    
    @Override
@@ -551,7 +551,7 @@ public class ChunkOutputWidget extends Composite
       // as though the server told us it's done
       if (state_ != CHUNK_READY)
       {
-         onOutputFinished(false, TextEditingTargetNotebook.SCOPE_PARTIAL);
+         onOutputFinished(false, NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
       }
    }
 
@@ -1045,7 +1045,7 @@ public class ChunkOutputWidget extends Composite
    private ChunkOutputHost host_;
    
    private int state_ = CHUNK_EMPTY;
-   private int execMode_ = TextEditingTargetNotebook.MODE_SINGLE;
+   private int execMode_ = NotebookQueueUnit.EXEC_MODE_SINGLE;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;

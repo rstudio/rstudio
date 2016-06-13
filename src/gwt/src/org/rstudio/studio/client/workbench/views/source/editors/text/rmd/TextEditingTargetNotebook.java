@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -35,7 +34,6 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
-import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
@@ -436,7 +434,7 @@ public class TextEditingTargetNotebook
    
    public void executeChunks(String jobDesc, List<Scope> chunks)
    {
-      queue_.executeChunks(jobDesc, chunks);
+      queue_.executeChunks(jobDesc, chunks, NotebookQueueUnit.EXEC_MODE_BATCH);
    }
    
    public void executeChunk(Scope chunk)
@@ -457,7 +455,8 @@ public class TextEditingTargetNotebook
          List<Scope> chunks = new ArrayList<Scope>();
          chunks.add(getSetupChunkScope());
          chunks.add(chunk);
-         queue_.executeChunks("Run Chunks", chunks);
+         queue_.executeChunks("Run Chunks", chunks, 
+               NotebookQueueUnit.EXEC_MODE_BATCH);
       }
       else
       {
@@ -648,12 +647,12 @@ public class TextEditingTargetNotebook
          int mode = queue_.getChunkExecMode(chunkId);
          
          // no need to make chunks visible in batch mode
-         if (ensureVisible && mode == MODE_BATCH)
+         if (ensureVisible && mode == NotebookQueueUnit.EXEC_MODE_BATCH)
             ensureVisible = false;
          
          outputs_.get(chunkId).getOutputWidget()
                               .showChunkOutput(event.getOutput(), mode,
-                                  TextEditingTargetNotebook.SCOPE_PARTIAL,
+                                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
                                   ensureVisible);
       }
    }
@@ -670,7 +669,8 @@ public class TextEditingTargetNotebook
       cleanChunkExecState(event.getData().getChunkId());
       RmdChunkOutputFinishedEvent.Data data = event.getData();
 
-      ensureVisible = queue_.getChunkExecMode(data.getChunkId()) == MODE_SINGLE;
+      ensureVisible = queue_.getChunkExecMode(data.getChunkId()) == 
+            NotebookQueueUnit.EXEC_MODE_SINGLE;
 
       // if this was the setup chunk, and no errors were encountered while
       // executing it, mark it clean
@@ -1098,7 +1098,7 @@ public class TextEditingTargetNotebook
          output.getOutputWidget().setCodeExecuting(mode);
          
          // scroll the widget into view if it's a single-shot exec
-         if (mode == MODE_SINGLE)
+         if (mode == NotebookQueueUnit.EXEC_MODE_SINGLE)
             output.ensureVisible();
       }
 
@@ -1172,7 +1172,7 @@ public class TextEditingTargetNotebook
       {
          outputs_.get(chunkId)
                  .getOutputWidget().onOutputFinished(false, 
-                       TextEditingTargetNotebook.SCOPE_PARTIAL);
+                       NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
       }
       cleanChunkExecState(chunkId);
    }
@@ -1725,12 +1725,6 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
    public final static String CHUNK_RENDERED_WIDTH = "chunk_rendered_width";
-   
-   public final static int MODE_SINGLE = 0;
-   public final static int MODE_BATCH  = 1;
-   
-   public final static int SCOPE_CHUNK   = 0;
-   public final static int SCOPE_PARTIAL = 1;
    
    public final static int MODE_COMMITTED   = 0;
    public final static int MODE_UNCOMMITTED = 1;

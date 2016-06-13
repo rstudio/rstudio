@@ -92,6 +92,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
@@ -4153,7 +4154,7 @@ public class TextEditingTarget implements
    {
       docDisplay_.getScopeTree();
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), 
-            TextEditingTargetNotebook.MODE_SINGLE, false);
+            NotebookQueueUnit.EXEC_MODE_SINGLE, false);
    }
    
    public void dequeueChunk(int row)
@@ -4170,7 +4171,7 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), 
-           TextEditingTargetNotebook.MODE_SINGLE, false);
+           NotebookQueueUnit.EXEC_MODE_SINGLE, false);
    }
    
    @Handler
@@ -4182,7 +4183,7 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       Scope nextChunk = scopeHelper_.getNextSweaveChunk();
-      executeSweaveChunk(nextChunk, TextEditingTargetNotebook.MODE_SINGLE, 
+      executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE, 
             true);
       docDisplay_.setCursorPosition(nextChunk.getBodyStart());
       docDisplay_.ensureCursorVisible();
@@ -4316,7 +4317,7 @@ public class TextEditingTarget implements
       // if we found a candidate, run it
       if (setupScope != null)
       {
-         executeSweaveChunk(setupScope, TextEditingTargetNotebook.MODE_BATCH, 
+         executeSweaveChunk(setupScope, NotebookQueueUnit.EXEC_MODE_BATCH, 
                false);
       }
    }
