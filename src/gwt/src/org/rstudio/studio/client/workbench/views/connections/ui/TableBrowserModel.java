@@ -28,7 +28,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -76,7 +75,7 @@ public class TableBrowserModel implements TreeViewModel
          tableProvider_ = new TableProvider();
          fieldProviders_.clear();
          return new DefaultNodeInfo<String>(tableProvider_, 
-                                    new TextCell(),
+                                    new TableCell(),
                                     noTableSelectionModel_,
                                     null);
       }
@@ -258,6 +257,15 @@ public class TableBrowserModel implements TreeViewModel
       }
       
       private String table_;
+   }
+   
+   private static class TableCell extends AbstractCell<String> 
+   {
+      @Override
+      public void render(Cell.Context context, String table, SafeHtmlBuilder sb)
+      {
+         sb.appendEscaped(table);
+      }
    }
    
    private static class FieldCell extends AbstractCell<Field> 
