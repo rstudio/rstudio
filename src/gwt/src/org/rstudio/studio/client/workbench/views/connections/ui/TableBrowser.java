@@ -15,6 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 import com.google.gwt.core.client.GWT;
@@ -23,7 +26,10 @@ import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTree;
+import com.google.gwt.user.cellview.client.TreeNode;
 import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -46,18 +52,67 @@ public class TableBrowser extends Composite implements RequiresResize
       verticalWrapper.add(tables_);
       
       // create scroll panel and set the vertical wrapper as it's widget
-      ScrollPanel scrollPanel = new ScrollPanel();
-      scrollPanel.setSize("100%", "100%");
-      scrollPanel.setWidget(verticalWrapper);
+      scrollPanel_ = new ScrollPanel();
+      scrollPanel_.setSize("100%", "100%");
+      scrollPanel_.setWidget(verticalWrapper);
        
       // init widget
-      initWidget(scrollPanel);
+      initWidget(scrollPanel_);
    }
   
    public void update(Connection connection, String hint)
    {
       connection_ = connection;
-      tablesModel_.setConnection(connection_);  
+      
+      // capture scroll position
+      final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
+      
+      // capture expanded nodes
+      final Set<String> expandedNodes = new HashSet<String>();
+      TreeNode rootNode = tables_.getRootTreeNode();
+      for (int i = 0; i < rootNode.getChildCount(); i++)
+      {
+         if (rootNode.isChildOpen(i))
+         {
+            String node = (String)rootNode.getChildValue(i);
+            expandedNodes.add(node);
+         }
+      }
+      
+      // update the table then restore expanded nodes
+      tablesModel_.update(
+         connection_,      // connection 
+         expandedNodes,    // track nodes to expand
+         new Command() {   // table update completed, expand nodes
+            @Override
+            public void execute()
+            {
+               TreeNode rootNode = tables_.getRootTreeNode();
+               for (int i = 0; i < rootNode.getChildCount(); i++)
+               {
+                  final String nodeName = (String)(rootNode.getChildValue(i));
+                  if (expandedNodes.contains(nodeName))
+                     rootNode.setChildOpen(i, true, false);
+               }
+            }
+         },                      
+         new Command() {   // node expansion completed, restore scroll position
+            @Override
+            public void execute()
+            {
+               // delay 100ms to allow expand animation to complete
+               new Timer() {
+
+                  @Override
+                  public void run()
+                  {
+                     scrollPanel_.setVerticalScrollPosition(scrollPosition); 
+                  }
+                  
+               }.schedule(100);
+              
+            }
+         });  
    }
    
  
@@ -111,6 +166,7 @@ public class TableBrowser extends Composite implements RequiresResize
    private static final TableBrowserMessages MESSAGES 
                               = GWT.create(TableBrowserMessages.class);
    
+   private final ScrollPanel scrollPanel_;
    private final CellTree tables_;
    private final TableBrowserModel tablesModel_;
    
