@@ -378,9 +378,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     # remove leading text from the options
     code <- sub("^[^,]*,\\s*", "", code)
 
-    # parse them, then merge with the defaults
+    # parse them, then merge with the defaults (evaluate in global environment)
     opts <- .rs.mergeLists(opts,
-                           eval(parse(text = paste("list(", code, ")"))))
+                           eval(parse(text = paste("list(", code, ")")),
+                                envir = .GlobalEnv))
                            
   },
   error = function(e) {})

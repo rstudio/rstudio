@@ -51,6 +51,17 @@ public class NotebookDocQueue extends JavaScriptObject
       }
    }-*/;
    
+   public final native NotebookQueueUnit removeUnit(String chunkId) /*-{
+      for (var idx = 0; idx < this.units.length; idx++)
+      {
+         if (this.units[idx].chunk_id == chunkId)
+         {
+            this.units.splice(idx, 1);
+            return;
+         }
+      }
+   }-*/;
+   
    public final native void removeAllUnits() /*-{
       this.units = [];
    }-*/;
@@ -100,6 +111,7 @@ public class NotebookDocQueue extends JavaScriptObject
    public final static int QUEUE_OP_UPDATE = 1;
    public final static int QUEUE_OP_DELETE = 2;
    
-   public final static int CHUNK_EXEC_STARTED  = 0;
-   public final static int CHUNK_EXEC_FINISHED = 1;
+   public final static int CHUNK_EXEC_STARTED   = 0;
+   public final static int CHUNK_EXEC_FINISHED  = 1;
+   public final static int CHUNK_EXEC_CANCELLED = 2;
 }

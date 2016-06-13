@@ -44,8 +44,9 @@ namespace {
 
 enum ChunkExecState
 {
-   ChunkExecStarted  = 0,
-   ChunkExecFinished = 1
+   ChunkExecStarted   = 0,
+   ChunkExecFinished  = 1,
+   ChunkExecCancelled = 2
 };
 
 // represents the global queue of work 
@@ -233,7 +234,21 @@ private:
       if (error)
          return error;
 
-      // TODO: skip if options includes eval = false (need to notify client)
+      // in batch mode, make sure unit should be evaluated -- note that
+      // eval=FALSE units generally do not get sent up in the first place, so
+      // if we're here it's because the unit has eval=<expr>
+      if (unit->execMode() == ExecModeBatch)
+      {
+         bool eval = true;
+         json::readObject(options, "eval", &eval);
+         if (!eval)
+         {
+            execUnit_ = unit;
+            enqueueExecStateChanged(ChunkExecCancelled, options);
+            docQueue->update(execUnit_, QueueDelete, "");
+            return executeNextUnit();
+         }
+      }
 
       std::string ctx = docQueue->commitMode() == ModeCommitted ?
          kSavedCtx : notebookCtxId();

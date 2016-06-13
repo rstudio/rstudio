@@ -280,9 +280,10 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    {
       if (queue_ == null || event.getDocId() != queue_.getDocId())
          return;
-      
-      if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_STARTED)
+
+      switch (event.getExecState())
       {
+      case NotebookDocQueue.CHUNK_EXEC_STARTED:
          // find the unit
          executingUnit_ = getUnit(event.getChunkId());
 
@@ -303,9 +304,10 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          notebook_.setChunkExecuting(event.getChunkId(), 
                executingUnit_.getExecMode());
 
-      }
-      else if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
-      {
+         break;
+
+      case NotebookDocQueue.CHUNK_EXEC_FINISHED:
+
          if (executingUnit_ != null && 
              executingUnit_.getChunkId() == event.getChunkId())
          {
@@ -324,6 +326,13 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
                updateNotebookProgress();
             }
          }
+         break;
+
+      case NotebookDocQueue.CHUNK_EXEC_CANCELLED:
+
+         queue_.removeUnit(event.getChunkId());
+         notebook_.cleanChunkExecState(event.getChunkId());
+         break;
       }
    }
    
