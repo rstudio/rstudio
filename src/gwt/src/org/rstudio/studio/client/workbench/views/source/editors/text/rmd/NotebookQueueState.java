@@ -145,8 +145,15 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          }
          else
          {
+            NotebookExecRange execRange = getNotebookExecRange(chunk, range);
+
+            // is this region already queued? if so, don't double queue it
+            // (note: doesn't handle overlapping)
+            if (unit.hasPendingRange(execRange))
+               return;
+
             // unit is in the queue, modify it
-            unit.addPendingRange(getNotebookExecRange(chunk, range));
+            unit.addPendingRange(execRange);
 
             // redraw the pending lines
             renderQueueLineState(chunk, unit);

@@ -107,6 +107,18 @@ public class NotebookQueueUnit extends JavaScriptObject
       return linesFromRanges(ranges);
    }
    
+   public final boolean hasPendingRange(NotebookExecRange range)
+   {
+      JsArray<NotebookExecRange> ranges = getPending();
+      for (int i = 0; i < ranges.length(); i++)
+      {
+         if (ranges.get(i).getStart() >= range.getStart() &&
+             ranges.get(i).getStop() <= range.getStop())
+            return true;
+      }
+      return false;
+   }
+   
    private final List<Integer> linesFromRanges(
          JsArray<NotebookExecRange> ranges)
    {
