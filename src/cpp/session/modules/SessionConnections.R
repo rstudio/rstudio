@@ -108,6 +108,23 @@ options(connectionViewer = list(
       NULL
 })
 
+.rs.addFunction("connectionPreviewTable", function(finder,
+                                                   host,
+                                                   previewTableCode,
+                                                   table,
+                                                   limit) {
+
+   name <- .rs.getConnectionObjectName(finder, host)
+
+   if (!is.null(name)) {
+      previewTableCode <- sprintf(previewTableCode, name, table, limit)
+      df <- eval(parse(text = previewTableCode), envir = globalenv())
+      .rs.viewDataFrame(df, table)
+   }
+
+   NULL
+})
+
 
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
 

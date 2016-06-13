@@ -4709,6 +4709,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONNECTION_LIST_FIELDS, params, callback);
    }
    
+   @Override
+   public void connectionPreviewTable(Connection connection,
+                                      String table,
+                                      ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connection));
+      params.set(1, new JSONString(table));
+      sendRequest(RPC_SCOPE, CONNECTION_PREVIEW_TABLE, params, callback);
+   }
+   
    public void getNewSparkConnectionContext(
          ServerRequestCallback<NewSparkConnectionContext> callback)
    {
@@ -5097,6 +5108,7 @@ public class RemoteServer implements Server
    private static final String SHOW_SPARK_UI = "show_spark_ui";
    private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
+   private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";
    private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 }

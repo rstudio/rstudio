@@ -25,7 +25,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
@@ -38,6 +37,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -412,8 +412,16 @@ public class ConnectionsPresenter extends BasePresenter
    @Override
    public void onViewConnectionDataset(ViewConnectionDatasetEvent event)
    {
-      Debug.logToConsole(event.getDataset());
+      if (exploredConnection_ == null)
+         return;
       
+      GlobalProgressDelayer progress = new GlobalProgressDelayer(
+                              globalDisplay_, 100, "Previewing table...");
+      
+      server_.connectionPreviewTable(
+         exploredConnection_, 
+         event.getDataset(),
+         new VoidServerRequestCallback(progress.getIndicator())); 
    }
    
    @Handler

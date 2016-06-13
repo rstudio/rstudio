@@ -600,6 +600,11 @@
    invisible(.Call("rs_viewData", x, title, name, env, cacheKey))
 })
 
+.rs.addFunction("viewDataFrame", function(x, title) {
+   cacheKey <- .rs.addCachedData(force(x), "")
+   invisible(.Call("rs_viewData", x, title, "", emptyenv(), cacheKey))
+})
+
 .rs.addFunction("initializeDataViewer", function(server) {
     if (server) {
         .rs.registerReplaceHook("edit", "utils", function(original, name, ...) {

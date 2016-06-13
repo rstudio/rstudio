@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -277,9 +276,11 @@ public class TableBrowserModel implements TreeViewModel
       public void render(Cell.Context context, String table, SafeHtmlBuilder sb)
       {
          SafeHtmlUtil.appendSpan(sb, "", table);
-         SafeHtmlUtil.appendSpan(sb, 
-               RES.cellTreeStyle().tableViewDataset(), 
-               "");
+         
+         sb.append(SafeHtmlUtil.createOpenTag("span", 
+               "class", RES.cellTreeStyle().tableViewDataset(),
+               "title", "View the first 1000 records of the table"));
+         sb.appendHtmlConstant("</span>");   
       }
       
       @Override

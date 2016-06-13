@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 import com.google.gwt.core.client.GWT;

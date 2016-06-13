@@ -227,6 +227,20 @@ Error readConnectionParam(const json::JsonRpcRequest& request,
    return connectionFromJson(connectionJson, pConnection);
 }
 
+Error readConnectionAndTableParams(const json::JsonRpcRequest& request,
+                                   Connection* pConnection,
+                                   std::string* pTable)
+{
+   // get connection param
+   Error error = readConnectionParam(request, pConnection);
+   if (error)
+      return error;
+
+   // get table param
+   std::string table;
+   return json::readParam(request.params, 1, pTable);
+}
+
 
 Error showSparkLog(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
@@ -318,31 +332,50 @@ void connectionListTables(const json::JsonRpcRequest& request,
    }
 }
 
+void sendResponse(const Error& error,
+                  SEXP sexpResult,
+                  const json::JsonRpcFunctionContinuation& continuation,
+                  const ErrorLocation& errorLocation)
+{
+   // response
+   json::JsonRpcResponse response;
+
+   if (error)
+   {
+      core::log::logError(error, errorLocation);
+      continuation(error, &response);
+   }
+   else
+   {
+      core::json::Value jsonResult;
+      Error error = r::json::jsonValueFromObject(sexpResult, &jsonResult);
+      if (error)
+      {
+         core::log::logError(error, errorLocation);
+         continuation(error, &response);
+      }
+      else
+      {
+         response.setResult(jsonResult);
+         continuation(Success(), &response);
+      }
+   }
+}
+
+
 void connectionListFields(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& continuation)
 {
-   // get connection param
+   // get connection and table params
    Connection connection;
-   Error error = readConnectionParam(request, &connection);
-   if (error)
-   {
-      json::JsonRpcResponse response;
-      continuation(error, &response);
-      return;
-   }
-
-   // get table param
    std::string table;
-   error = json::readParam(request.params, 1, &table);
+   Error error = readConnectionAndTableParams(request, &connection, &table);
    if (error)
    {
       json::JsonRpcResponse response;
       continuation(error, &response);
       return;
    }
-
-   // response
-   json::JsonRpcResponse response;
 
    // get the list of fields
    r::sexp::Protect rProtect;
@@ -352,26 +385,38 @@ void connectionListFields(const json::JsonRpcRequest& request,
                                  connection.id.host,
                                  connection.listColumnsCode,
                                  table).call(&sexpResult, &rProtect);
+
+
+   // send the response
+   sendResponse(error, sexpResult, continuation, ERROR_LOCATION);
+}
+
+void connectionPreviewTable(const json::JsonRpcRequest& request,
+                          const json::JsonRpcFunctionContinuation& continuation)
+{
+   // get connection and table params
+   Connection connection;
+   std::string table;
+   Error error = readConnectionAndTableParams(request, &connection, &table);
    if (error)
    {
-      LOG_ERROR(error);
+      json::JsonRpcResponse response;
       continuation(error, &response);
+      return;
    }
-   else
-   {
-      core::json::Value jsonResult;
-      Error error = r::json::jsonValueFromObject(sexpResult, &jsonResult);
-      if (error)
-      {
-         LOG_ERROR(error);
-         continuation(error, &response);
-      }
-      else
-      {
-         response.setResult(jsonResult);
-         continuation(Success(), &response);
-      }
-   }
+
+   // view the table
+   r::sexp::Protect rProtect;
+   SEXP sexpResult;
+   error = r::exec::RFunction(".rs.connectionPreviewTable",
+                                 connection.finder,
+                                 connection.id.host,
+                                 connection.previewTableCode,
+                                 table,
+                                 1000).call(&sexpResult, &rProtect);
+
+   // send the response
+   sendResponse(error, sexpResult, continuation, ERROR_LOCATION);
 }
 
 Error installSpark(const json::JsonRpcRequest& request,
@@ -520,6 +565,7 @@ Error initialize()
       (bind(registerRpcMethod, "show_spark_ui", showSparkUI))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_tables", connectionListTables))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
+      (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_table", connectionPreviewTable))
       (bind(registerRpcMethod, "install_spark", installSpark))
       (bind(sourceModuleRFile, "SessionConnections.R"));
 
