@@ -137,6 +137,15 @@ Error NotebookDocQueue::update(const boost::shared_ptr<NotebookQueueUnit> unit,
          break;
 
       case QueueUpdate:
+         it = std::find_if(queue_.begin(), queue_.end(), 
+               boost::bind(chunkIdEquals, _1, unit->chunkId()));
+         if (it == queue_.end())
+         {
+            // no matching chunk ID in queue
+            break;
+         }
+         (*it)->updateFrom(*unit);
+
          break;
 
       case QueueDelete:

@@ -149,8 +149,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             unit.addPendingRange(getNotebookExecRange(chunk, range));
 
             // redraw the pending lines
-            renderLineState(chunk.getBodyStart().getRow(), 
-                  unit.getPendingLines(), ChunkRowExecState.LINE_QUEUED);
+            renderQueueLineState(chunk, unit);
 
             server_.updateNotebookExecQueue(unit, 
                   NotebookDocQueue.QUEUE_OP_UPDATE, "", 
@@ -259,6 +258,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       if (isChunkExecuting(event.getChunkId()))
       {
          executingUnit_.setExecutingRange(event.getExecRange());
+         executingUnit_.addCompletedRange(event.getExecRange());
       }
       
       // find the queue unit and convert to lines
@@ -356,17 +356,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (scope == null)
             continue;
          
-         // draw the completed lines (queue them first so they render properly
-         // in the gutter)
-         List<Integer> completed = unit.getCompletedLines();
-         int row = scope.getBodyStart().getRow();
-         renderLineState(row, completed, ChunkRowExecState.LINE_QUEUED);
-         renderLineState(row, completed, ChunkRowExecState.LINE_EXECUTED);
-
-         // draw the pending lines
-         renderLineState(row, unit.getPendingLines(), 
-               ChunkRowExecState.LINE_QUEUED);
-         
+         renderQueueLineState(scope, unit);
          notebook_.setChunkState(scope, ChunkContextToolbar.STATE_QUEUED);
       }
 
@@ -551,6 +541,23 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
            (int)Math.round(100 * ((double)(queue_.getMaxUnits() - 
                                            queue_.getUnits().length())) / 
                                   (double) queue_.getMaxUnits()));
+   }
+   
+   private void renderQueueLineState(Scope scope, NotebookQueueUnit unit)
+   {
+      int row = scope.getBodyStart().getRow();
+
+      // draw the pending lines
+      renderLineState(row, unit.getPendingLines(), 
+            ChunkRowExecState.LINE_QUEUED);
+
+      // draw the completed lines (queue them first so they render properly
+      // in the gutter)
+      List<Integer> completed = unit.getCompletedLines();
+      if (unit.getExecuting() != null)
+         completed.addAll(unit.getExecutingLines());
+      renderLineState(row, completed, ChunkRowExecState.LINE_QUEUED);
+      renderLineState(row, completed, ChunkRowExecState.LINE_EXECUTED);
    }
    
    private NotebookDocQueue queue_;

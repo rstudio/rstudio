@@ -59,6 +59,7 @@ public:
    std::string popExecRange(ExecRange* pRange);
    bool complete() const;
    core::Error innerCode(std::string* pCode);
+   void updateFrom(const NotebookQueueUnit& other);
 
    // accessors
    std::string docId() const;

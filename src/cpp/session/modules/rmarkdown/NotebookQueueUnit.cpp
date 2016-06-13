@@ -156,9 +156,34 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    return Success();
 }
 
-core::Error NotebookQueueUnit::innerCode(std::string* pCode)
+Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
    return r::exec::RFunction(".rs.extractChunkInnerCode", code_).call(pCode);
+}
+
+void NotebookQueueUnit::updateFrom(const NotebookQueueUnit& other)
+{
+   // replace code
+   code_ = other.code();
+
+   // we don't support removing or changing executable ranges, so process only
+   // additions
+   std::list<ExecRange>::iterator i = pending_.begin(); 
+   for (std::list<ExecRange>::const_iterator o = other.pending_.begin();
+        o != other.pending_.end();
+        o ++)
+   {
+      if (i == pending_.end())
+      {
+         // past end of our own range, so begin inserting elements from the 
+         // other unit's range
+         pending_.insert(i, *o);
+      }
+      else
+      {
+         i++;
+      }
+   }
 }
 
 json::Object NotebookQueueUnit::toJson() const
