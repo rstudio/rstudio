@@ -466,7 +466,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.13");
+   return module_context::isPackageVersionInstalled("rspark", "0.1.14");
 }
 
 bool activateConnections()

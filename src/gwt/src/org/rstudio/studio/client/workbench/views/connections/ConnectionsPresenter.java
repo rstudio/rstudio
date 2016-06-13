@@ -388,7 +388,7 @@ public class ConnectionsPresenter extends BasePresenter
                    "output: html_notebook\n" +
                    "---\n" +
                    "\n" +
-                   "```{r connect}\n" +
+                   "```{r setup, include=FALSE}\n" +
                    code + "\n" +
                    "```\n" +
                    "\n" +
