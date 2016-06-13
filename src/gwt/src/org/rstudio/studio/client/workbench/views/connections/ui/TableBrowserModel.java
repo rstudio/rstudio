@@ -18,12 +18,14 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
+import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowser.Resources;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.TextCell;
@@ -204,7 +206,10 @@ public class TableBrowserModel implements TreeViewModel
       @Override
       public void render(Cell.Context context, Field value, SafeHtmlBuilder sb)
       {
-         sb.appendEscaped(value.getName() + ": " + value.getType());
+         SafeHtmlUtil.appendSpan(sb, 
+                                 RES.cellTreeStyle().fieldName(), 
+                                 value.getName());
+         sb.appendEscaped(value.getType());
       }
     }
    
@@ -221,5 +226,6 @@ public class TableBrowserModel implements TreeViewModel
    private static NoSelectionModel<Field> noFieldSelectionModel_ =
          new NoSelectionModel<Field>();
    
+   static final TableBrowser.Resources RES = TableBrowser.RES;
   
 }

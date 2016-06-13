@@ -46,3 +46,10 @@
   background: white;
 }
 
+.fieldName {
+  float: left;
+  width: 130px;
+  margin-right: 15px;
+  text-overflow: ellipsis;
+}
+

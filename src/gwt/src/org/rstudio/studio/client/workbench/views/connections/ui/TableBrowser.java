@@ -86,10 +86,15 @@ public class TableBrowser extends Composite implements RequiresResize
       
       
       @Source({CellTree.Style.DEFAULT_CSS, "TableBrowser.css"})
-      public CellTree.Style cellTreeStyle();   
+      public Style cellTreeStyle();   
+      
+      public interface Style extends CellTree.Style
+      {
+         String fieldName();
+      }
    }
    
-   private static final Resources RES = GWT.create(Resources.class);
+   static final Resources RES = GWT.create(Resources.class);
    
    static {
       RES.cellTreeStyle().ensureInjected();
