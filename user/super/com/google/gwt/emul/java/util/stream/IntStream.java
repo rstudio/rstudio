@@ -16,7 +16,6 @@
 
 package java.util.stream;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalState;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkState;
 
@@ -29,6 +28,7 @@ import java.util.OptionalInt;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.Spliterators.AbstractIntSpliterator;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -74,7 +74,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
       @Override
       public IntStream build() {
-        checkCriticalState(items != null, "Builder already built");
+        checkState(items != null, "Builder already built");
         IntStream stream = Arrays.stream(items);
         items = null;
         return stream;
@@ -91,44 +91,42 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
     // TODO replace this flatMap-ish spliterator with one that directly combines the two root
     // streams
     Spliterator<? extends IntStream> spliteratorOfStreams = Arrays.asList(a, b).spliterator();
-    IntStream result =
-        new IntStreamSource(
-            null,
-            new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE, 0) {
-              IntStream nextStream;
-              Spliterator.OfInt next;
 
-              @Override
-              public boolean tryAdvance(IntConsumer action) {
-                // look for a new spliterator
-                while (advanceToNextSpliterator()) {
-                  // if we have one, try to read and use it
-                  if (next.tryAdvance(action)) {
-                    return true;
-                  } else {
-                    nextStream = null;
-                    // failed, null it out so we can find another
-                    next = null;
-                  }
-                }
+    Spliterator.OfInt spliterator =
+        new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE, 0) {
+          Spliterator.OfInt next;
+
+          @Override
+          public boolean tryAdvance(IntConsumer action) {
+            // look for a new spliterator
+            while (advanceToNextSpliterator()) {
+              // if we have one, try to read and use it
+              if (next.tryAdvance(action)) {
+                return true;
+              } else {
+                // failed, null it out so we can find another
+                next = null;
+              }
+            }
+            return false;
+          }
+
+          private boolean advanceToNextSpliterator() {
+            while (next == null) {
+              if (!spliteratorOfStreams.tryAdvance(
+                  n -> {
+                    if (n != null) {
+                      next = n.spliterator();
+                    }
+                  })) {
                 return false;
               }
+            }
+            return true;
+          }
+        };
 
-              private boolean advanceToNextSpliterator() {
-                while (next == null) {
-                  if (!spliteratorOfStreams.tryAdvance(
-                      n -> {
-                        if (n != null) {
-                          nextStream = n;
-                          next = n.spliterator();
-                        }
-                      })) {
-                    return false;
-                  }
-                }
-                return true;
-              }
-            });
+    IntStream result = new IntStreamSource(null, spliterator);
 
     result.onClose(a::close);
     result.onClose(b::close);
@@ -141,7 +139,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
   }
 
   static IntStream generate(final IntSupplier s) {
-    return StreamSupport.intStream(
+    AbstractIntSpliterator spliterator =
         new Spliterators.AbstractIntSpliterator(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           @Override
@@ -149,12 +147,14 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
             action.accept(s.getAsInt());
             return true;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.intStream(spliterator, false);
   }
 
   static IntStream iterate(int seed, IntUnaryOperator f) {
-    return StreamSupport.intStream(
+
+    AbstractIntSpliterator spliterator =
         new Spliterators.AbstractIntSpliterator(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           private int next = seed;
@@ -165,8 +165,9 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
             next = f.applyAsInt(next);
             return true;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.intStream(spliterator, false);
   }
 
   static IntStream of(int... values) {
@@ -191,7 +192,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
     }
     int count = endInclusive - startInclusive + 1;
 
-    return StreamSupport.intStream(
+    AbstractIntSpliterator spliterator =
         new Spliterators.AbstractIntSpliterator(
             count,
             Spliterator.IMMUTABLE
@@ -215,8 +216,9 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
             }
             return false;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.intStream(spliterator, false);
   }
 
   /**
@@ -266,6 +268,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
   void forEachOrdered(IntConsumer action);
 
+  @Override
   PrimitiveIterator.OfInt iterator();
 
   IntStream limit(long maxSize);
@@ -284,6 +287,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
   boolean noneMatch(IntPredicate predicate);
 
+  @Override
   IntStream parallel();
 
   IntStream peek(IntConsumer action);
@@ -292,12 +296,14 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
   int reduce(int identity, IntBinaryOperator op);
 
+  @Override
   IntStream sequential();
 
   IntStream skip(long n);
 
   IntStream sorted();
 
+  @Override
   Spliterator.OfInt spliterator();
 
   int sum();
@@ -727,7 +733,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
     @Override
     public boolean tryAdvance(IntConsumer action) {
-      if (limit <= position) {
+      if (position >= limit) {
         return false;
       }
       boolean result = original.tryAdvance(action);
@@ -819,24 +825,20 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
 
     @Override
     public OptionalInt max() {
-      terminate();
-      final ValueConsumer holder = new ValueConsumer();
-      if (spliterator.tryAdvance((int value) -> holder.value = value)) {
-        spliterator.forEachRemaining((int value) -> holder.value = Math.max(holder.value, value));
-        return OptionalInt.of(holder.value);
+      IntSummaryStatistics stats = summaryStatistics();
+      if (stats.getCount() == 0) {
+        return OptionalInt.empty();
       }
-      return OptionalInt.empty();
+      return OptionalInt.of(stats.getMax());
     }
 
     @Override
     public OptionalInt min() {
-      terminate();
-      final ValueConsumer holder = new ValueConsumer();
-      if (spliterator.tryAdvance((int value) -> holder.value = value)) {
-        spliterator.forEachRemaining((int value) -> holder.value = Math.min(holder.value, value));
-        return OptionalInt.of(holder.value);
+      IntSummaryStatistics stats = summaryStatistics();
+      if (stats.getCount() == 0) {
+        return OptionalInt.empty();
       }
-      return OptionalInt.empty();
+      return OptionalInt.of(stats.getMin());
     }
 
     @Override
@@ -914,7 +916,7 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
     @Override
     public <U> Stream<U> mapToObj(IntFunction<? extends U> mapper) {
       throwIfTerminated();
-      return new Stream.StreamSource(this, new MapToObjSpliterator<U>(mapper, spliterator));
+      return new Stream.StreamSource<U>(this, new MapToObjSpliterator<U>(mapper, spliterator));
     }
 
     @Override
@@ -935,8 +937,8 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
       throwIfTerminated();
       final Spliterator<? extends IntStream> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new IntStreamSource(
-          this,
+
+      Spliterator.OfInt flatMapSpliterator =
           new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE, 0) {
             IntStream nextStream;
             Spliterator.OfInt next;
@@ -972,7 +974,9 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
               }
               return true;
             }
-          });
+          };
+
+      return new IntStreamSource(this, flatMapSpliterator);
     }
 
     @Override
@@ -985,8 +989,8 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
     @Override
     public IntStream sorted() {
       throwIfTerminated();
-      return new IntStreamSource(
-          this,
+
+      AbstractIntSpliterator sortedSpliterator =
           new Spliterators.AbstractIntSpliterator(
               spliterator.estimateSize(), spliterator.characteristics() | Spliterator.SORTED) {
             Spliterator.OfInt ordered = null;
@@ -1006,22 +1010,26 @@ public interface IntStream extends BaseStream<Integer, IntStream> {
               }
               return ordered.tryAdvance(action);
             }
-          });
+          };
+
+      return new IntStreamSource(this, sortedSpliterator);
     }
 
     @Override
     public IntStream peek(IntConsumer action) {
       checkNotNull(action);
       throwIfTerminated();
-      return new IntStreamSource(
-          this,
+
+      AbstractIntSpliterator peekSpliterator =
           new Spliterators.AbstractIntSpliterator(
               spliterator.estimateSize(), spliterator.characteristics()) {
             @Override
             public boolean tryAdvance(final IntConsumer innerAction) {
               return spliterator.tryAdvance(action.andThen(innerAction));
             }
-          });
+          };
+
+      return new IntStreamSource(this, peekSpliterator);
     }
 
     @Override

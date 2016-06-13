@@ -16,7 +16,6 @@
 
 package java.util.stream;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalState;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkState;
 
@@ -30,6 +29,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.Spliterators.AbstractDoubleSpliterator;
+import java.util.Spliterators.AbstractIntSpliterator;
+import java.util.Spliterators.AbstractLongSpliterator;
+import java.util.Spliterators.AbstractSpliterator;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -78,7 +81,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       @Override
       @SuppressWarnings("unchecked")
       public Stream<T> build() {
-        checkCriticalState(items != null, "Builder already built");
+        checkState(items != null, "Builder already built");
         Stream<T> stream = (Stream<T>) Arrays.stream(items);
         items = null;
         return stream;
@@ -96,44 +99,42 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     // streams
     Spliterator<? extends Stream<? extends T>> spliteratorOfStreams =
         Arrays.asList(a, b).spliterator();
-    Stream<T> result =
-        new StreamSource<T>(
-            null,
-            new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE, 0) {
-              Stream<? extends T> nextStream;
-              Spliterator<? extends T> next;
 
-              @Override
-              public boolean tryAdvance(Consumer<? super T> action) {
-                // look for a new spliterator
-                while (advanceToNextSpliterator()) {
-                  // if we have one, try to read and use it
-                  if (next.tryAdvance(action)) {
-                    return true;
-                  } else {
-                    nextStream = null;
-                    // failed, null it out so we can find another
-                    next = null;
-                  }
-                }
+    AbstractSpliterator<T> spliterator =
+        new Spliterators.AbstractSpliterator<T>(Long.MAX_VALUE, 0) {
+          Spliterator<? extends T> next;
+
+          @Override
+          public boolean tryAdvance(Consumer<? super T> action) {
+            // look for a new spliterator
+            while (advanceToNextSpliterator()) {
+              // if we have one, try to read and use it
+              if (next.tryAdvance(action)) {
+                return true;
+              } else {
+                // failed, null it out so we can find another
+                next = null;
+              }
+            }
+            return false;
+          }
+
+          private boolean advanceToNextSpliterator() {
+            while (next == null) {
+              if (!spliteratorOfStreams.tryAdvance(
+                  n -> {
+                    if (n != null) {
+                      next = n.spliterator();
+                    }
+                  })) {
                 return false;
               }
+            }
+            return true;
+          }
+        };
 
-              private boolean advanceToNextSpliterator() {
-                while (next == null) {
-                  if (!spliteratorOfStreams.tryAdvance(
-                      n -> {
-                        if (n != null) {
-                          nextStream = n;
-                          next = n.spliterator();
-                        }
-                      })) {
-                    return false;
-                  }
-                }
-                return true;
-              }
-            });
+    Stream<T> result = new StreamSource<T>(null, spliterator);
 
     result.onClose(a::close);
     result.onClose(b::close);
@@ -146,7 +147,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
   }
 
   static <T> Stream<T> generate(Supplier<T> s) {
-    return StreamSupport.stream(
+    AbstractSpliterator<T> spliterator =
         new Spliterators.AbstractSpliterator<T>(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           @Override
@@ -154,12 +155,12 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
             action.accept(s.get());
             return true;
           }
-        },
-        false);
+        };
+    return StreamSupport.stream(spliterator, false);
   }
 
   static <T> Stream<T> iterate(T seed, UnaryOperator<T> f) {
-    return StreamSupport.stream(
+    AbstractSpliterator<T> spliterator =
         new Spliterators.AbstractSpliterator<T>(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           private T next = seed;
@@ -170,8 +171,8 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
             next = f.apply(next);
             return true;
           }
-        },
-        false);
+        };
+    return StreamSupport.stream(spliterator, false);
   }
 
   static <T> Stream<T> of(T t) {
@@ -702,7 +703,7 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
 
     @Override
     public boolean tryAdvance(Consumer<? super T> action) {
-      if (limit <= position) {
+      if (position >= limit) {
         return false;
       }
       boolean result = original.tryAdvance(action);
@@ -901,8 +902,8 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       throwIfTerminated();
       final Spliterator<? extends Stream<? extends R>> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new StreamSource<R>(
-          this,
+
+      AbstractSpliterator<R> flatMapSpliterator =
           new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE, 0) {
             Stream<? extends R> nextStream;
             Spliterator<? extends R> next;
@@ -938,7 +939,9 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
               }
               return true;
             }
-          });
+          };
+
+      return new StreamSource<R>(this, flatMapSpliterator);
     }
 
     @Override
@@ -946,8 +949,8 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       throwIfTerminated();
       final Spliterator<? extends IntStream> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new IntStream.IntStreamSource(
-          this,
+
+      AbstractIntSpliterator flatMapSpliterator =
           new Spliterators.AbstractIntSpliterator(Long.MAX_VALUE, 0) {
             IntStream nextStream;
             Spliterator.OfInt next;
@@ -983,7 +986,9 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
               }
               return true;
             }
-          });
+          };
+
+      return new IntStream.IntStreamSource(this, flatMapSpliterator);
     }
 
     @Override
@@ -991,8 +996,8 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       throwIfTerminated();
       final Spliterator<? extends LongStream> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new LongStream.LongStreamSource(
-          this,
+
+      AbstractLongSpliterator flatMapSpliterator =
           new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0) {
             LongStream nextStream;
             Spliterator.OfLong next;
@@ -1028,7 +1033,9 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
               }
               return true;
             }
-          });
+          };
+
+      return new LongStream.LongStreamSource(this, flatMapSpliterator);
     }
 
     @Override
@@ -1036,8 +1043,8 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
       throwIfTerminated();
       final Spliterator<? extends DoubleStream> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new DoubleStream.DoubleStreamSource(
-          this,
+
+      AbstractDoubleSpliterator flatMapSpliterator =
           new Spliterators.AbstractDoubleSpliterator(Long.MAX_VALUE, 0) {
             DoubleStream nextStream;
             Spliterator.OfDouble next;
@@ -1073,7 +1080,9 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
               }
               return true;
             }
-          });
+          };
+
+      return new DoubleStream.DoubleStreamSource(this, flatMapSpliterator);
     }
 
     @Override
@@ -1093,8 +1102,8 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
     @Override
     public Stream<T> sorted(final Comparator<? super T> comparator) {
       throwIfTerminated();
-      return new StreamSource<>(
-          this,
+
+      AbstractSpliterator<T> sortedSpliterator =
           new Spliterators.AbstractSpliterator<T>(
               spliterator.estimateSize(), spliterator.characteristics() | Spliterator.SORTED) {
             Spliterator<T> ordered = null;
@@ -1114,15 +1123,17 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
               }
               return ordered.tryAdvance(action);
             }
-          });
+          };
+
+      return new StreamSource<>(this, sortedSpliterator);
     }
 
     @Override
     public Stream<T> peek(final Consumer<? super T> action) {
       checkNotNull(action);
       throwIfTerminated();
-      return new StreamSource<>(
-          this,
+
+      AbstractSpliterator<T> peekSpliterator =
           new Spliterators.AbstractSpliterator<T>(
               spliterator.estimateSize(), spliterator.characteristics()) {
             @Override
@@ -1133,7 +1144,9 @@ public interface Stream<T> extends BaseStream<T, Stream<T>> {
                     innerAction.accept(item);
                   });
             }
-          });
+          };
+
+      return new StreamSource<>(this, peekSpliterator);
     }
 
     @Override

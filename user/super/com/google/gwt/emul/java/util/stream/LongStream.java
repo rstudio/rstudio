@@ -16,7 +16,6 @@
 
 package java.util.stream;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalState;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkState;
 
@@ -29,6 +28,7 @@ import java.util.OptionalLong;
 import java.util.PrimitiveIterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.Spliterators.AbstractLongSpliterator;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -74,7 +74,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
       @Override
       public LongStream build() {
-        checkCriticalState(items != null, "Builder already built");
+        checkState(items != null, "Builder already built");
         LongStream stream = Arrays.stream(items);
         items = null;
         return stream;
@@ -91,44 +91,42 @@ public interface LongStream extends BaseStream<Long, LongStream> {
     // TODO replace this flatMap-ish spliterator with one that directly combines the two root
     // streams
     Spliterator<? extends LongStream> spliteratorOfStreams = Arrays.asList(a, b).spliterator();
-    LongStream result =
-        new LongStreamSource(
-            null,
-            new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0) {
-              LongStream nextStream;
-              Spliterator.OfLong next;
 
-              @Override
-              public boolean tryAdvance(LongConsumer action) {
-                // look for a new spliterator
-                while (advanceToNextSpliterator()) {
-                  // if we have one, try to read and use it
-                  if (next.tryAdvance(action)) {
-                    return true;
-                  } else {
-                    nextStream = null;
-                    // failed, null it out so we can find another
-                    next = null;
-                  }
-                }
+    AbstractLongSpliterator spliterator =
+        new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0) {
+          Spliterator.OfLong next;
+
+          @Override
+          public boolean tryAdvance(LongConsumer action) {
+            // look for a new spliterator
+            while (advanceToNextSpliterator()) {
+              // if we have one, try to read and use it
+              if (next.tryAdvance(action)) {
+                return true;
+              } else {
+                // failed, null it out so we can find another
+                next = null;
+              }
+            }
+            return false;
+          }
+
+          private boolean advanceToNextSpliterator() {
+            while (next == null) {
+              if (!spliteratorOfStreams.tryAdvance(
+                  n -> {
+                    if (n != null) {
+                      next = n.spliterator();
+                    }
+                  })) {
                 return false;
               }
+            }
+            return true;
+          }
+        };
 
-              private boolean advanceToNextSpliterator() {
-                while (next == null) {
-                  if (!spliteratorOfStreams.tryAdvance(
-                      n -> {
-                        if (n != null) {
-                          nextStream = n;
-                          next = n.spliterator();
-                        }
-                      })) {
-                    return false;
-                  }
-                }
-                return true;
-              }
-            });
+    LongStream result = new LongStreamSource(null, spliterator);
 
     result.onClose(a::close);
     result.onClose(b::close);
@@ -141,7 +139,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
   }
 
   static LongStream generate(LongSupplier s) {
-    return StreamSupport.longStream(
+    AbstractLongSpliterator spltierator =
         new Spliterators.AbstractLongSpliterator(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           @Override
@@ -149,12 +147,13 @@ public interface LongStream extends BaseStream<Long, LongStream> {
             action.accept(s.getAsLong());
             return true;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.longStream(spltierator, false);
   }
 
   static LongStream iterate(long seed, LongUnaryOperator f) {
-    return StreamSupport.longStream(
+    AbstractLongSpliterator spliterator =
         new Spliterators.AbstractLongSpliterator(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           private long next = seed;
@@ -165,8 +164,8 @@ public interface LongStream extends BaseStream<Long, LongStream> {
             next = f.applyAsLong(next);
             return true;
           }
-        },
-        false);
+        };
+    return StreamSupport.longStream(spliterator, false);
   }
 
   static LongStream of(long... values) {
@@ -191,7 +190,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
     }
     long count = endInclusive - startInclusive + 1;
 
-    return StreamSupport.longStream(
+    AbstractLongSpliterator spliterator =
         new Spliterators.AbstractLongSpliterator(
             count,
             Spliterator.IMMUTABLE
@@ -215,8 +214,9 @@ public interface LongStream extends BaseStream<Long, LongStream> {
             }
             return false;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.longStream(spliterator, false);
   }
 
   /**
@@ -264,6 +264,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
   void forEachOrdered(LongConsumer action);
 
+  @Override
   PrimitiveIterator.OfLong iterator();
 
   LongStream limit(long maxSize);
@@ -282,6 +283,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
   boolean noneMatch(LongPredicate predicate);
 
+  @Override
   LongStream parallel();
 
   LongStream peek(LongConsumer action);
@@ -290,12 +292,14 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
   long reduce(long identity, LongBinaryOperator op);
 
+  @Override
   LongStream sequential();
 
   LongStream skip(long n);
 
   LongStream sorted();
 
+  @Override
   Spliterator.OfLong spliterator();
 
   long sum();
@@ -717,7 +721,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
     @Override
     public boolean tryAdvance(LongConsumer action) {
-      if (limit <= position) {
+      if (position >= limit) {
         return false;
       }
       boolean result = original.tryAdvance(action);
@@ -799,24 +803,20 @@ public interface LongStream extends BaseStream<Long, LongStream> {
 
     @Override
     public OptionalLong min() {
-      terminate();
-      final ValueConsumer holder = new ValueConsumer();
-      if (spliterator.tryAdvance((long value) -> holder.value = value)) {
-        spliterator.forEachRemaining((long value) -> holder.value = Math.min(holder.value, value));
-        return OptionalLong.of(holder.value);
+      LongSummaryStatistics stats = summaryStatistics();
+      if (stats.getCount() == 0) {
+        return OptionalLong.empty();
       }
-      return OptionalLong.empty();
+      return OptionalLong.of(stats.getMin());
     }
 
     @Override
     public OptionalLong max() {
-      terminate();
-      final ValueConsumer holder = new ValueConsumer();
-      if (spliterator.tryAdvance((long value) -> holder.value = value)) {
-        spliterator.forEachRemaining((long value) -> holder.value = Math.max(holder.value, value));
-        return OptionalLong.of(holder.value);
+      LongSummaryStatistics stats = summaryStatistics();
+      if (stats.getCount() == 0) {
+        return OptionalLong.empty();
       }
-      return OptionalLong.empty();
+      return OptionalLong.of(stats.getMax());
     }
 
     @Override
@@ -905,7 +905,7 @@ public interface LongStream extends BaseStream<Long, LongStream> {
     @Override
     public <U> Stream<U> mapToObj(LongFunction<? extends U> mapper) {
       throwIfTerminated();
-      return new Stream.StreamSource(this, new MapToObjSpliterator<U>(mapper, spliterator));
+      return new Stream.StreamSource<U>(this, new MapToObjSpliterator<U>(mapper, spliterator));
     }
 
     @Override
@@ -926,8 +926,8 @@ public interface LongStream extends BaseStream<Long, LongStream> {
       throwIfTerminated();
       final Spliterator<? extends LongStream> spliteratorOfStreams =
           new MapToObjSpliterator<>(mapper, spliterator);
-      return new LongStreamSource(
-          this,
+
+      AbstractLongSpliterator flatMapSpliterator =
           new Spliterators.AbstractLongSpliterator(Long.MAX_VALUE, 0) {
             LongStream nextStream;
             Spliterator.OfLong next;
@@ -963,7 +963,9 @@ public interface LongStream extends BaseStream<Long, LongStream> {
               }
               return true;
             }
-          });
+          };
+
+      return new LongStreamSource(this, flatMapSpliterator);
     }
 
     @Override
@@ -976,8 +978,8 @@ public interface LongStream extends BaseStream<Long, LongStream> {
     @Override
     public LongStream sorted() {
       throwIfTerminated();
-      return new LongStreamSource(
-          this,
+
+      AbstractLongSpliterator sortedSpliterator =
           new Spliterators.AbstractLongSpliterator(
               spliterator.estimateSize(), spliterator.characteristics() | Spliterator.SORTED) {
             Spliterator.OfLong ordered = null;
@@ -997,22 +999,26 @@ public interface LongStream extends BaseStream<Long, LongStream> {
               }
               return ordered.tryAdvance(action);
             }
-          });
+          };
+
+      return new LongStreamSource(this, sortedSpliterator);
     }
 
     @Override
     public LongStream peek(LongConsumer action) {
       checkNotNull(action);
       throwIfTerminated();
-      return new LongStreamSource(
-          this,
+
+      AbstractLongSpliterator peekSpliterator =
           new Spliterators.AbstractLongSpliterator(
               spliterator.estimateSize(), spliterator.characteristics()) {
             @Override
             public boolean tryAdvance(final LongConsumer innerAction) {
               return spliterator.tryAdvance(action.andThen(innerAction));
             }
-          });
+          };
+
+      return new LongStreamSource(this, peekSpliterator);
     }
 
     @Override

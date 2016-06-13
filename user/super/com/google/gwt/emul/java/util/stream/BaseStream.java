@@ -41,5 +41,6 @@ public interface BaseStream<T, S extends BaseStream<T, S>> extends AutoCloseable
 
   S onClose(Runnable closeHandler);
 
+  @Override
   void close();
 }

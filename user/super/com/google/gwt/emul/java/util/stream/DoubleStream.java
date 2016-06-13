@@ -16,7 +16,6 @@
 
 package java.util.stream;
 
-import static javaemul.internal.InternalPreconditions.checkCriticalState;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
 import static javaemul.internal.InternalPreconditions.checkState;
 
@@ -73,7 +72,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
       @Override
       public DoubleStream build() {
-        checkCriticalState(items != null, "Builder already built");
+        checkState(items != null, "Builder already built");
         DoubleStream stream = Arrays.stream(items);
         items = null;
         return stream;
@@ -90,44 +89,42 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
     // TODO replace this flatMap-ish spliterator with one that directly combines the two root
     // streams
     Spliterator<? extends DoubleStream> spliteratorOfStreams = Arrays.asList(a, b).spliterator();
-    DoubleStream result =
-        new DoubleStreamSource(
-            null,
-            new Spliterators.AbstractDoubleSpliterator(Long.MAX_VALUE, 0) {
-              DoubleStream nextStream;
-              Spliterator.OfDouble next;
 
-              @Override
-              public boolean tryAdvance(DoubleConsumer action) {
-                // look for a new spliterator
-                while (advanceToNextSpliterator()) {
-                  // if we have one, try to read and use it
-                  if (next.tryAdvance(action)) {
-                    return true;
-                  } else {
-                    nextStream = null;
-                    // failed, null it out so we can find another
-                    next = null;
-                  }
-                }
+    Spliterator.OfDouble spliterator =
+        new Spliterators.AbstractDoubleSpliterator(Long.MAX_VALUE, 0) {
+          Spliterator.OfDouble next;
+
+          @Override
+          public boolean tryAdvance(DoubleConsumer action) {
+            // look for a new spliterator
+            while (advanceToNextSpliterator()) {
+              // if we have one, try to read and use it
+              if (next.tryAdvance(action)) {
+                return true;
+              } else {
+                // failed, null it out so we can find another
+                next = null;
+              }
+            }
+            return false;
+          }
+
+          private boolean advanceToNextSpliterator() {
+            while (next == null) {
+              if (!spliteratorOfStreams.tryAdvance(
+                  n -> {
+                    if (n != null) {
+                      next = n.spliterator();
+                    }
+                  })) {
                 return false;
               }
+            }
+            return true;
+          }
+        };
 
-              private boolean advanceToNextSpliterator() {
-                while (next == null) {
-                  if (!spliteratorOfStreams.tryAdvance(
-                      n -> {
-                        if (n != null) {
-                          nextStream = n;
-                          next = n.spliterator();
-                        }
-                      })) {
-                    return false;
-                  }
-                }
-                return true;
-              }
-            });
+    DoubleStream result = new DoubleStreamSource(null, spliterator);
 
     result.onClose(a::close);
     result.onClose(b::close);
@@ -140,7 +137,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
   }
 
   static DoubleStream generate(DoubleSupplier s) {
-    return StreamSupport.doubleStream(
+    Spliterator.OfDouble spliterator =
         new Spliterators.AbstractDoubleSpliterator(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           @Override
@@ -148,12 +145,13 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
             action.accept(s.getAsDouble());
             return true;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.doubleStream(spliterator, false);
   }
 
   static DoubleStream iterate(double seed, DoubleUnaryOperator f) {
-    return StreamSupport.doubleStream(
+    Spliterator.OfDouble spliterator =
         new Spliterators.AbstractDoubleSpliterator(
             Long.MAX_VALUE, Spliterator.IMMUTABLE | Spliterator.ORDERED) {
           private double next = seed;
@@ -164,8 +162,9 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
             next = f.applyAsDouble(next);
             return true;
           }
-        },
-        false);
+        };
+
+    return StreamSupport.doubleStream(spliterator, false);
   }
 
   static DoubleStream of(double... values) {
@@ -220,6 +219,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
   void forEachOrdered(DoubleConsumer action);
 
+  @Override
   PrimitiveIterator.OfDouble iterator();
 
   DoubleStream limit(long maxSize);
@@ -238,6 +238,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
   boolean noneMatch(DoublePredicate predicate);
 
+  @Override
   DoubleStream parallel();
 
   DoubleStream peek(DoubleConsumer action);
@@ -246,12 +247,14 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
   double reduce(double identity, DoubleBinaryOperator op);
 
+  @Override
   DoubleStream sequential();
 
   DoubleStream skip(long n);
 
   DoubleStream sorted();
 
+  @Override
   Spliterator.OfDouble spliterator();
 
   double sum();
@@ -669,9 +672,10 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
     @Override
     public boolean tryAdvance(DoubleConsumer action) {
-      if (limit <= position) {
+      if (position >= limit) {
         return false;
       }
+
       boolean result = original.tryAdvance(action);
       position++;
       return result;
@@ -752,30 +756,20 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
 
     @Override
     public OptionalDouble min() {
-      terminate();
-      final ValueConsumer holder = new ValueConsumer();
-      if (spliterator.tryAdvance((double value) -> holder.value = value)) {
-        spliterator.forEachRemaining(
-            (double value) -> {
-              holder.value = Math.min(holder.value, value);
-            });
-        return OptionalDouble.of(holder.value);
+      DoubleSummaryStatistics stats = summaryStatistics();
+      if (stats.getCount() == 0) {
+        return OptionalDouble.empty();
       }
-      return OptionalDouble.empty();
+      return OptionalDouble.of(stats.getMin());
     }
 
     @Override
     public OptionalDouble max() {
-      terminate();
-      final ValueConsumer holder = new ValueConsumer();
-      if (spliterator.tryAdvance((double value) -> holder.value = value)) {
-        spliterator.forEachRemaining(
-            (double value) -> {
-              holder.value = Math.max(holder.value, value);
-            });
-        return OptionalDouble.of(holder.value);
+      DoubleSummaryStatistics stats = summaryStatistics();
+      if (stats.getCount() == 0) {
+        return OptionalDouble.empty();
       }
-      return OptionalDouble.empty();
+      return OptionalDouble.of(stats.getMax());
     }
 
     @Override
@@ -866,7 +860,7 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
     @Override
     public <U> Stream<U> mapToObj(DoubleFunction<? extends U> mapper) {
       throwIfTerminated();
-      return new Stream.StreamSource(this, new MapToObjSpliterator<U>(mapper, spliterator));
+      return new Stream.StreamSource<U>(this, new MapToObjSpliterator<U>(mapper, spliterator));
     }
 
     @Override
@@ -886,8 +880,8 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
       throwIfTerminated();
       final Spliterator<? extends DoubleStream> spliteratorOfStreams =
           new MapToObjSpliterator<DoubleStream>(mapper, spliterator);
-      return new DoubleStreamSource(
-          this,
+
+      Spliterator.OfDouble flatMapSpliterator =
           new Spliterators.AbstractDoubleSpliterator(Long.MAX_VALUE, 0) {
             DoubleStream nextStream;
             Spliterator.OfDouble next;
@@ -923,7 +917,9 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
               }
               return true;
             }
-          });
+          };
+
+      return new DoubleStreamSource(this, flatMapSpliterator);
     }
 
     @Override
@@ -936,8 +932,8 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
     @Override
     public DoubleStream sorted() {
       throwIfTerminated();
-      return new DoubleStreamSource(
-          this,
+
+      Spliterator.OfDouble sortingSpliterator =
           new Spliterators.AbstractDoubleSpliterator(
               spliterator.estimateSize(), spliterator.characteristics() | Spliterator.SORTED) {
             Spliterator.OfDouble ordered = null;
@@ -957,22 +953,26 @@ public interface DoubleStream extends BaseStream<Double, DoubleStream> {
               }
               return ordered.tryAdvance(action);
             }
-          });
+          };
+
+      return new DoubleStreamSource(this, sortingSpliterator);
     }
 
     @Override
     public DoubleStream peek(DoubleConsumer action) {
       checkNotNull(action);
       throwIfTerminated();
-      return new DoubleStreamSource(
-          this,
+
+      Spliterator.OfDouble peekSpliterator =
           new Spliterators.AbstractDoubleSpliterator(
               spliterator.estimateSize(), spliterator.characteristics()) {
             @Override
             public boolean tryAdvance(final DoubleConsumer innerAction) {
               return spliterator.tryAdvance(action.andThen(innerAction));
             }
-          });
+          };
+
+      return new DoubleStreamSource(this, peekSpliterator);
     }
 
     @Override
