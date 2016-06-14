@@ -379,10 +379,6 @@ public abstract class JDeclaredType extends JReferenceType
     return isJsFunction;
   }
 
-  public boolean isJsFunctionImplementation() {
-    return false;
-  }
-
   public boolean isClassWideExport() {
     return isClassWideExport;
   }

@@ -77,6 +77,11 @@ public class JInterfaceType extends JDeclaredType {
   }
 
   @Override
+  public boolean isJsFunctionImplementation() {
+    return false;
+  }
+
+  @Override
   public boolean isJavaLangObject() {
     return false;
   }

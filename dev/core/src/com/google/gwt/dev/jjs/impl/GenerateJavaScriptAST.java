@@ -2001,12 +2001,20 @@ public class GenerateJavaScriptAST {
           RuntimeConstants.RUNTIME_DEFINE_CLASS, defineClassArguments).makeStmt();
       addTypeDefinitionStatement(type, defineClassStatement);
 
-      if (jsPrototype != null) {
+      maybeCopyObjProperties(
+          type,
+          getPrototypeQualifierViaLookup(program.getTypeJavaLangObject(), type.getSourceInfo()),
+          globalTemp.makeRef(type.getSourceInfo()));
+    }
+
+    private void maybeCopyObjProperties(
+        JDeclaredType type, JsExpression toPrototype, JsExpression fromPrototype) {
+      if (getSuperPrototype(type) != null && !type.isJsFunctionImplementation()) {
         JsStatement statement =
         constructInvocation(type.getSourceInfo(),
             RuntimeConstants.RUNTIME_COPY_OBJECT_PROPERTIES,
-            getPrototypeQualifierViaLookup(program.getTypeJavaLangObject(), type.getSourceInfo()),
-            globalTemp.makeRef(type.getSourceInfo()))
+            fromPrototype,
+            toPrototype)
             .makeStmt();
         addTypeDefinitionStatement(type, statement);
       }
@@ -2134,14 +2142,10 @@ public class GenerateJavaScriptAST {
 
       // inline assignment of castableTypeMap field instead of using defineClass()
       setupCastMapOnPrototype(type);
-      if (jsPrototype != null) {
-        JsStatement statement =
-            constructInvocation(info,
-                RuntimeConstants.RUNTIME_COPY_OBJECT_PROPERTIES,
-                getPrototypeQualifierOf(program.getTypeJavaLangObject(), info),
-                getPrototypeQualifierOf(type, info)).makeStmt();
-        addTypeDefinitionStatement(type, statement);
-      }
+      maybeCopyObjProperties(
+          type,
+          getPrototypeQualifierOf(program.getTypeJavaLangObject(), info),
+          getPrototypeQualifierOf(type, info));
     }
 
     private void setupCastMapOnPrototype(JDeclaredType type) {

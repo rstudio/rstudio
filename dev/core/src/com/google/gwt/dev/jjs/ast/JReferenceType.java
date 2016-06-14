@@ -81,6 +81,11 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
         }
 
         @Override
+        public boolean isJsFunctionImplementation() {
+          return false;
+        }
+
+        @Override
         public boolean isJsNative() {
           return false;
         }
@@ -209,6 +214,11 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     @Override
     public boolean isJsFunction() {
       return ref.isJsFunction();
+    }
+
+    @Override
+    public boolean isJsFunctionImplementation() {
+      return ref.isJsFunctionImplementation();
     }
 
     @Override

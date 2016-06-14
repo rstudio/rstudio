@@ -256,6 +256,57 @@ public class JsFunctionTest extends GWTTestCase {
     assertSame(jsFuncionProperty.func.m(), funcInVar.m());
   }
 
+  public void testGetClass() {
+
+    MyJsFunctionInterface jsfunctionImplementation =
+        new MyJsFunctionInterface() {
+          @Override
+          public int foo(int a) {
+            return a;
+          }
+        };
+    assertEquals(MyJsFunctionInterface.class, jsfunctionImplementation.getClass());
+    assertEquals(MyJsFunctionInterface.class, ((Object) jsfunctionImplementation).getClass());
+    assertEquals(MyJsFunctionInterface.class, createMyJsFunction().getClass());
+    assertEquals(MyJsFunctionInterface.class, ((Object) createMyJsFunction()).getClass());
+  }
+
+  public void testGetClassA() {
+
+    MyJsFunctionInterface jsfunctionImplementation =
+        new MyJsFunctionInterface() {
+          @Override
+          public int foo(int a) {
+            return a;
+          }
+        };
+    assertEquals(MyJsFunctionInterface.class, ((Object) jsfunctionImplementation).getClass());
+  }
+
+  public void testGetClassB() {
+
+    MyJsFunctionInterface jsfunctionImplementation =
+        new MyJsFunctionInterface() {
+          @Override
+          public int foo(int a) {
+            return a;
+          }
+        };
+    assertEquals(MyJsFunctionInterface.class, createMyJsFunction().getClass());
+  }
+
+  public void testGetClassC() {
+
+    MyJsFunctionInterface jsfunctionImplementation =
+        new MyJsFunctionInterface() {
+          @Override
+          public int foo(int a) {
+            return a;
+          }
+        };
+    assertEquals(MyJsFunctionInterface.class, ((Object) createMyJsFunction()).getClass());
+  }
+
   // uncomment when Java8 is supported.
 //  public void testJsFunctionLambda_JS() {
 //    MyJsFunctionInterface jsFunctionInterface = a -> { return a + 2; };

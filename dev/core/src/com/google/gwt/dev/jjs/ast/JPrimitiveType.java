@@ -95,6 +95,11 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
+  public boolean isJsFunctionImplementation() {
+    return false;
+  }
+
+  @Override
   public boolean isJsNative() {
     return false;
   }

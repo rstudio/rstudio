@@ -127,6 +127,11 @@ public class JArrayType extends JReferenceType {
   }
 
   @Override
+  public boolean isJsFunctionImplementation() {
+    return false;
+  }
+
+  @Override
   public boolean isJsNative() {
     return getLeafType().isJsNative();
   }

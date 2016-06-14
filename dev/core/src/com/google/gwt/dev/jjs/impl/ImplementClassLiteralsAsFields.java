@@ -469,7 +469,7 @@ public class ImplementClassLiteralsAsFields {
    * </pre>
    */
   private JField resolveClassLiteralField(JType type) {
-    type = type.isJsNative()
+    type = type.isJsNative() || type.isJsFunction() || type.isJsFunctionImplementation()
         ? program.getJavaScriptObject() : program.normalizeJsoType(type);
     JField field = classLiteralFields.get(type);
     if (field == null) {
