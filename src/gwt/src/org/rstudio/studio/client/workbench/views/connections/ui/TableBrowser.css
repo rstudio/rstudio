@@ -36,6 +36,7 @@
   
 }
 .cellTreeTopItem {
+  font-weight: normal;
   margin-top: 0;
   padding: 2px 0px 2px 6px !important;
 }
