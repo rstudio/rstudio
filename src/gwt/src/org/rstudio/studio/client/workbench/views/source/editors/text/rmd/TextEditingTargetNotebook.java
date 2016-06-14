@@ -469,7 +469,7 @@ public class TextEditingTargetNotebook
       }
       else
       {
-         queue_.executeChunk(chunk);
+         queue_.executeChunk(chunk, NotebookQueueUnit.EXEC_MODE_SINGLE);
       }
    }
    
@@ -607,7 +607,13 @@ public class TextEditingTargetNotebook
       if (event.getDocId() != docUpdateSentinel_.getId())
          return;
       
-      queue_.executeRange(event.getScope(), event.getRange());
+      // execute setup chunk first if necessary
+      if (needsSetupChunkExecuted() && !isSetupChunkScope(event.getScope()))
+         queue_.executeChunk(getSetupChunkScope(), 
+               NotebookQueueUnit.EXEC_MODE_BATCH);
+
+      queue_.executeRange(event.getScope(), event.getRange(), 
+            NotebookQueueUnit.EXEC_MODE_SINGLE);
    }
    
    @Override
@@ -692,20 +698,21 @@ public class TextEditingTargetNotebook
       ensureVisible = queue_.getChunkExecMode(data.getChunkId()) == 
             NotebookQueueUnit.EXEC_MODE_SINGLE;
 
-      // if this was the setup chunk, and no errors were encountered while
-      // executing it, mark it clean
-      if (data.getChunkId() == SETUP_CHUNK_ID)
+      if (outputs_.containsKey(data.getChunkId()))
       {
-         if (!outputs_.get(data.getChunkId()).hasErrors())
+         ChunkOutputUi output = outputs_.get(data.getChunkId());
+         if (isSetupChunkScope(output.getScope()))
          {
-            Scope scope = getSetupChunkScope();
-            if (scope != null)
-               writeSetupCrc32(getChunkCrc32(scope));
-         }
-         else
-         {
-            ensureVisible = true;
-            validateSetupChunk_ = true;
+            writeSetupCrc32(getChunkCrc32(output.getScope()));
+            if (output.hasErrors())
+            {
+               ensureVisible = true;
+               validateSetupChunk_ = true;
+            }
+            else
+            {
+               writeSetupCrc32(getChunkCrc32(output.getScope()));
+            }
          }
       }
 

@@ -143,7 +143,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       editingTarget_.getStatusBar().hideNotebookProgress(true);
    }
    
-   public void executeRange(Scope chunk, Range range)
+   public void executeRange(Scope chunk, Range range, int mode)
    {
       if (isExecuting())
       {
@@ -155,7 +155,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (unit == null)
          {
             // unit is not in the queue; add it
-            queueChunkRange(chunk, range, NotebookQueueUnit.EXEC_MODE_BATCH,
+            queueChunkRange(chunk, range, mode,
                   NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
          }
          else
@@ -190,12 +190,12 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
    }
    
-   public void executeChunk(Scope chunk)
+   public void executeChunk(Scope chunk, int mode)
    {
       if (isExecuting())
       {
          queueChunkRange(chunk, scopeHelper_.getSweaveChunkInnerRange(chunk),
-               NotebookQueueUnit.EXEC_MODE_SINGLE, 
+               mode,
                NotebookQueueUnit.EXEC_SCOPE_CHUNK);
       }
       else
@@ -209,8 +209,6 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    public void executeChunks(String jobDesc, List<Scope> scopes,
          int execScope)
    {
-      // TODO: handle case where there's already a queue
-      
       createQueue(jobDesc);
 
       // create queue units from scopes
