@@ -241,8 +241,8 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      sendConsoleInput(execUnit_->chunkId(), 
-                       execUnit_->popExecRange(&range, mode));
+      std::string code = execUnit_->popExecRange(&range, mode); 
+      sendConsoleInput(execUnit_->chunkId(), code);
 
       // let client know the range has been sent to R
       json::Object exec;
@@ -250,6 +250,7 @@ private:
       exec["chunk_id"]   = execUnit_->chunkId();
       exec["exec_range"] = range.toJson();
       exec["expr_mode"]  = mode;
+      exec["code"]       = code;
       module_context::enqueClientEvent(
             ClientEvent(client_events::kNotebookRangeExecuted, exec));
 

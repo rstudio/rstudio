@@ -33,6 +33,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -271,6 +272,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          executingUnit_.addCompletedRange(event.getExecRange());
       }
       
+      // add to console history
+      events_.fireEvent(new ConsoleHistoryAddedEvent(event.getCode()));
+      
       // find the queue unit and convert to lines
       for (int i = 0; i < queue_.getUnits().length(); i++)
       {
@@ -309,8 +313,6 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          notebook_.setOutputOptions(event.getChunkId(), 
                event.getOptions());
 
-         // TODO: scroll the widget into view if it's a single-shot exec
-      
          notebook_.setChunkExecuting(event.getChunkId(), 
                executingUnit_.getExecMode());
 

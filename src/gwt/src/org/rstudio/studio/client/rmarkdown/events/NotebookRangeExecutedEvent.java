@@ -38,6 +38,10 @@ public class NotebookRangeExecutedEvent
          return this.chunk_id;
       }-*/;
       
+      public final native String getCode() /*-{
+         return this.code;
+      }-*/;
+
       public final native NotebookExecRange getExecRange() /*-{
          return this.exec_range;
       }-*/;
@@ -66,6 +70,11 @@ public class NotebookRangeExecutedEvent
    public String getChunkId()
    {
       return data_.getChunkId();
+   }
+   
+   public String getCode()
+   {
+      return data_.getCode();
    }
    
    public NotebookExecRange getExecRange()
