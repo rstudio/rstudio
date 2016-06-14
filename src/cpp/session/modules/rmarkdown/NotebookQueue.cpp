@@ -26,6 +26,7 @@
 #include <boost/foreach.hpp>
 
 #include <r/RInterface.hpp>
+#include <r/RExec.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Thread.hpp>
@@ -117,6 +118,17 @@ public:
          }
          if (execUnit_->complete())
          {
+            bool incomplete = false;
+
+            // if we're still in continuation mode but we're at the end of the
+            // chunk, generate an error
+            if (mode == ExprModeContinuation &&
+                execUnit_->execScope() == ExecScopeChunk)
+            {
+               incomplete = true;
+               sendIncompleteError(execUnit_);
+            }
+
             // unit has finished executing; remove it from the queue
             popUnit(execUnit_);
 
@@ -127,6 +139,11 @@ public:
             execContext_->disconnect();
             execContext_.reset();
             execUnit_.reset();
+
+            // if the unit was incomplete, we need to wait for the interrupt
+            // to complete before we execute more code
+            if (incomplete)
+               return Success();
          }
          else
             return executeCurrentUnit(mode);
@@ -218,21 +235,9 @@ private:
       if (!execUnit_)
          return Success();
 
-      json::Array arr;
-      ExecRange range(0, 0);
-      arr.push_back(execUnit_->popExecRange(&range, mode));
-      arr.push_back(execUnit_->chunkId());
-
-      // formulate request body
-      json::Object rpc;
-      rpc["method"] = "console_input";
-      rpc["params"] = arr;
-      rpc["clientId"] = clientEventService().clientId();
-
-      // serialize RPC body and send it to helper thread for submission
-      std::ostringstream oss;
-      json::write(rpc, oss);
-      pInput_->enque(oss.str());
+      ExecRange range;
+      sendConsoleInput(execUnit_->chunkId(), 
+                       execUnit_->popExecRange(&range, mode));
 
       // let client know the range has been sent to R
       json::Object exec;
@@ -244,6 +249,25 @@ private:
             ClientEvent(client_events::kNotebookRangeExecuted, exec));
 
       return Success();
+   }
+
+   void sendConsoleInput(const std::string& chunkId, const json::Value& input)
+   {
+      json::Array arr;
+      ExecRange range(0, 0);
+      arr.push_back(input);
+      arr.push_back(chunkId);
+
+      // formulate request body
+      json::Object rpc;
+      rpc["method"] = "console_input";
+      rpc["params"] = arr;
+      rpc["clientId"] = clientEventService().clientId();
+
+      // serialize RPC body and send it to helper thread for submission
+      std::ostringstream oss;
+      json::write(rpc, oss);
+      pInput_->enque(oss.str());
    }
 
    Error executeNextUnit(ExpressionMode mode)
@@ -389,6 +413,16 @@ private:
       // advance if queue is complete
       if (docQueue->complete())
          queue_.pop_front();
+   }
+
+   void sendIncompleteError(boost::shared_ptr<NotebookQueueUnit> unit)
+   {
+      // raise an error
+      r::exec::error("Incomplete expression: " + unit->executingCode());
+
+      // send an interrupt to the console to abort the unterminated 
+      // expression
+      sendConsoleInput(execUnit_->chunkId(), json::Value());
    }
 
    // the documents with active queues

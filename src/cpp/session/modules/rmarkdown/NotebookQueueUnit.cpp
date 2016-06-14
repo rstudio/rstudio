@@ -286,6 +286,11 @@ ExecMode NotebookQueueUnit::execMode() const
    return execMode_;
 }
 
+std::string NotebookQueueUnit::executingCode() const
+{
+   return code_.substr(executing_.start, executing_.stop - executing_.start);
+}
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

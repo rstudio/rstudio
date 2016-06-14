@@ -75,6 +75,7 @@ public:
    ExecMode execMode() const;
    ExecScope execScope() const;
    std::string code() const;
+   std::string executingCode() const;
 
 private:
    std::string docId_;
