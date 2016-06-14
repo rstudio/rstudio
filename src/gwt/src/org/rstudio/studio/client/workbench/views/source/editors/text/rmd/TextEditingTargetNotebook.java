@@ -434,6 +434,15 @@ public class TextEditingTargetNotebook
    
    public void executeChunks(String jobDesc, List<Scope> chunks)
    {
+      if (queue_.isExecuting())
+      {
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+               jobDesc + ": Chunks Currently Executing", 
+               "RStudio cannot execute '" + jobDesc + "' because this " +
+               "notebook is already executing code. Interrupt R, or wait " +
+               "for execution to complete.");
+         return;
+      }
       queue_.executeChunks(jobDesc, chunks, NotebookQueueUnit.EXEC_MODE_BATCH);
    }
    
