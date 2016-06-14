@@ -637,7 +637,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Maintainer = Maintainer,
       Description = "More about what it does (maybe more than one line)",
       License = License,
-      LazyData = "TRUE"
+      Encoding = "UTF-8",
+      LazyData = "true"
    )
    
    # If we filled in an 'Authors@R' field for Authors (e.g. provided for new
