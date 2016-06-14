@@ -294,7 +294,7 @@ void handleLocalhostResponse(
             // determine url prefix based on how deep we are in the path
             std::string path = ptrConnection->request().path();
             size_t slashes = std::count(path.begin(), path.end(), '/');
-            size_t up = slashes - 3;
+            size_t up = slashes >= 4 ? (slashes - 3) : 0;
             std::vector<std::string> dirs;
             for (size_t i=0; i<up; i++)
                dirs.push_back("..");
