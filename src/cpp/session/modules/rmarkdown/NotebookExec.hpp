@@ -58,6 +58,9 @@ public:
    // inject console input manually
    void onConsoleInput(const std::string& input);
 
+   // invoked to indicate that an expression has finished evaluating
+   void onExprComplete();
+
    bool hasErrors();
 
    void connect();

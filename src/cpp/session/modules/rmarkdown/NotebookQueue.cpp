@@ -235,6 +235,11 @@ private:
       if (!execUnit_)
          return Success();
 
+      // if this isn't the continuation of an expression, perform any
+      // post-expression operations
+      if (mode == ExprModeNew && execContext_)
+         execContext_->onExprComplete();
+         
       ExecRange range;
       sendConsoleInput(execUnit_->chunkId(), 
                        execUnit_->popExecRange(&range, mode));

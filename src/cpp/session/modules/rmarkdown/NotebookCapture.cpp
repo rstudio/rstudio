@@ -46,6 +46,11 @@ bool NotebookCapture::connected()
    return connected_;
 }
 
+void NotebookCapture::onExprComplete()
+{
+   // stub implementation
+}
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

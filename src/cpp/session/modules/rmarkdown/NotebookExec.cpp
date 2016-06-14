@@ -414,6 +414,15 @@ ExecScope ChunkExecContext::execScope()
    return execScope_;
 }
 
+void ChunkExecContext::onExprComplete()
+{
+   // notify capturing submodules
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      pCapture->onExprComplete();
+   }
+}
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

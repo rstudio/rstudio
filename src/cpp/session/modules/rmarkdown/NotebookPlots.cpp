@@ -131,6 +131,21 @@ void PlotCapture::saveSnapshot()
    }
 }
 
+void PlotCapture::onExprComplete()
+{
+   // if we have plots, write them out now 
+   if (hasPlots_)
+   {
+      // turn off graphics device (has side effect of flushing plots to disk)
+      removeGraphicsDevice();
+
+      // add new graphics device to capture further plots
+      Error error= createGraphicsDevice();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 void PlotCapture::removeGraphicsDevice()
 {
    // take a snapshot of the last plot's display list before we turn off the
@@ -140,18 +155,14 @@ void PlotCapture::removeGraphicsDevice()
        snapshotFile_.empty())
       saveSnapshot();
 
-   // restore the figure margins
-   Error error = r::exec::RFunction("par", sexpMargins_).call();
-   if (error)
-      LOG_ERROR(error);
-
    // turn off the graphics device -- this has the side effect of writing the
    // device's remaining output to files
-   error = r::exec::RFunction("dev.off").call();
+   Error error = r::exec::RFunction("dev.off").call();
    if (error)
       LOG_ERROR(error);
 
    processPlots(false);
+   hasPlots_ = false;
 }
 
 void PlotCapture::onBeforeNewPlot()
@@ -201,6 +212,9 @@ core::Error PlotCapture::connectPlots(double height, double width,
       height = width / kGoldenRatio;
    else if (height > 0 && width == 0)
       width = height * kGoldenRatio;
+   width_ = width;
+   height_ = height;
+   sizeBehavior_ = sizeBehavior;
 
    // save old figure parameters
    r::exec::RFunction par("par");
@@ -214,46 +228,10 @@ core::Error PlotCapture::connectPlots(double height, double width,
    // preserve until chunk is finished executing
    sexpMargins_.set(sexpMargins);
 
-   // create the notebook graphics device
-   r::exec::RFunction createDevice(".rs.createNotebookGraphicsDevice");
-
-   // the folder in which to place the rendered plots (this is a sibling of the
-   // main chunk output folder)
-   createDevice.addParam(
-         plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png");
-
-   // device dimensions
-   createDevice.addParam(height);
-   createDevice.addParam(width); 
-
-   // sizing behavior drives units -- user specified units are in inches but
-   // we use pixels when scaling automatically
-   createDevice.addParam(sizeBehavior == PlotSizeManual ? "in" : "px");
-
-   // devie parameters
-   createDevice.addParam(r::session::graphics::device::devicePixelRatio());
-   createDevice.addParam(r::session::graphics::extraBitmapParams());
-   error = createDevice.call();
+   // create the graphics device (must succeed)
+   error = createGraphicsDevice();
    if (error)
-   {
-      // this is fatal; without a graphics device we can't capture plots
       return error;
-   }
-
-   // if sizing automatically, turn on display list recording so we can do
-   // intelligent resizing later
-   if (sizeBehavior == PlotSizeAutomatic)
-   {
-      r::exec::RFunction devControl("dev.control");
-      devControl.addParam("displaylist", "enable");
-      error = devControl.call();
-      if (error)
-      {
-         // non-fatal since we'll do best-effort resizing in the absence of
-         // display lists
-         LOG_ERROR(error);
-      }
-   }
 
    // set notebook-friendly figure margins 
    error = r::exec::RFunction(".rs.setNotebookMargins").call();
@@ -277,7 +255,14 @@ void PlotCapture::disconnect()
 {
    if (connected())
    {
+      // remove the graphics device
       removeGraphicsDevice();
+
+      // restore the figure margins
+      Error error = r::exec::RFunction("par", sexpMargins_).call();
+      if (error)
+         LOG_ERROR(error);
+
       onNewPlot_.disconnect();
       onBeforeNewPlot_.disconnect();
       onBeforeNewGridPage_.disconnect();
@@ -285,6 +270,50 @@ void PlotCapture::disconnect()
    NotebookCapture::disconnect();
 }
 
+core::Error PlotCapture::createGraphicsDevice()
+{
+   Error error;
+
+   // create the notebook graphics device
+   r::exec::RFunction createDevice(".rs.createNotebookGraphicsDevice");
+
+   // the folder in which to place the rendered plots (this is a sibling of the
+   // main chunk output folder)
+   createDevice.addParam(
+         plotFolder_.absolutePath() + "/" kPlotPrefix "%03d.png");
+
+   // device dimensions
+   createDevice.addParam(height_);
+   createDevice.addParam(width_); 
+
+   // sizing behavior drives units -- user specified units are in inches but
+   // we use pixels when scaling automatically
+   createDevice.addParam(sizeBehavior_ == PlotSizeManual ? "in" : "px");
+
+   // devie parameters
+   createDevice.addParam(r::session::graphics::device::devicePixelRatio());
+   createDevice.addParam(r::session::graphics::extraBitmapParams());
+   error = createDevice.call();
+   if (error)
+      return error;
+
+   // if sizing automatically, turn on display list recording so we can do
+   // intelligent resizing later
+   if (sizeBehavior_ == PlotSizeAutomatic)
+   {
+      r::exec::RFunction devControl("dev.control");
+      devControl.addParam("displaylist", "enable");
+      error = devControl.call();
+      if (error)
+      {
+         // non-fatal since we'll do best-effort (client side) resizing in the
+         // absence of display lists
+         LOG_ERROR(error);
+      }
+   }
+
+   return Success();
+}
 core::Error initPlots()
 {
    ExecBlock initBlock;
@@ -293,7 +322,6 @@ core::Error initPlots()
 
    return initBlock.execute();
 }
-
 
 } // namespace notebook
 } // namespace rmarkdown

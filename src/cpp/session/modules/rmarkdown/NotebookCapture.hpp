@@ -22,6 +22,11 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+// NotebookCapture is an abstract class representing an object that captures
+// content for a notebook chunk. Because the details required to initiate
+// capture vary, this class is not fully RAII; instead, it keeps track of
+// whether it is "connected" (capturing output), and disconnects itself when it
+// goes out of scope.
 class NotebookCapture
 {
 public:
@@ -29,6 +34,7 @@ public:
    virtual ~NotebookCapture();
    virtual void connect();
    virtual void disconnect();
+   virtual void onExprComplete();
    bool connected();
 private:
    bool connected_;

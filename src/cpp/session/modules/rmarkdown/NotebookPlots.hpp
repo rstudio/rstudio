@@ -54,7 +54,9 @@ public:
            PlotSizeBehavior sizeBehavior,
            const core::FilePath& plotFolder);
    void disconnect();
+   void onExprComplete();
 private:
+   core::Error createGraphicsDevice();
    void processPlots(bool ignoreEmpty);
    void removeGraphicsDevice();
    void onNewPlot();
@@ -69,6 +71,8 @@ private:
    boost::signals::connection onBeforeNewPlot_;
    boost::signals::connection onBeforeNewGridPage_;
    boost::signals::connection onNewPlot_;
+   double width_;
+   double height_;
 };
 
 
