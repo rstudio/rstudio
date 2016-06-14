@@ -304,6 +304,15 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             String dbConnection = dbConnection_.getSelectedValue();
             if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DPLYR))
                builder.append("library(dplyr)\n");
+
+            boolean local = master_.isLocalMaster(master_.getSelection());
+            if (local && (cores_.getSelectedIndex() != 0))
+            {
+               builder.append("config <- spark_config()\n");
+               builder.append("config[[\"sparklyr.cores\"]] <- ");
+               builder.append(Integer.parseInt(cores_.getSelectedValue()));
+               builder.append("\n");
+            }
                
             builder.append("sc <- spark_connect(master = \"");
             builder.append(master_.getSelection());
@@ -323,14 +332,9 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             }
             
             // cores if not default
-            boolean local = master_.isLocalMaster(master_.getSelection());
             if (local && (cores_.getSelectedIndex() != 0))
             {
-               builder.append(", cores = ");
-               if (cores_.getSelectedIndex() == 0)
-                  builder.append("\"auto\"");
-               else
-                  builder.append(Integer.parseInt(cores_.getSelectedValue()));
+               builder.append(", config = config");
             }
             
             // reconnect if appropriate and not default
