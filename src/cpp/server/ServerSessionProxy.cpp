@@ -20,6 +20,7 @@
 #include <map>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -169,10 +170,19 @@ public:
 private:
    // detect when we've got the whole response and force a response and a
    // close of the socket (this is because the current version of httpuv
-   // expects a close from the client end of the socket)
+   // expects a close from the client end of the socket). however, don't
+   // do this for Jetty (as it often doesn't send a Content-Length header)
    virtual bool stopReadingAndRespond()
    {
-      return response_.body().length() >= response_.contentLength();
+      std::string server = response_.headerValue("Server");
+      if (boost::algorithm::contains(server, "Jetty"))
+      {
+         return false;
+      }
+      else
+      {
+         return response_.body().length() >= response_.contentLength();
+      }
    }
 
    // ensure that we don't close the connection when a websockets
@@ -215,6 +225,42 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
 
    // replace the header (no-op if both of the above tests fail)
    pResponse->replaceHeader(headerName, address);
+}
+
+bool isSparkUIResponse(const http::Response& response)
+{
+   using namespace boost::algorithm;
+   return contains(response.headerValue("Server"), "Jetty") &&
+          contains(response.body(), "<img src=\"/static/spark-logo") &&
+          contains(response.body(), "<div class=\"navbar navbar-static-top\">");
+}
+
+void sendSparkUIResponse(
+      const http::Response& response,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   std::string path = ptrConnection->request().path();
+   size_t slashes = std::count(path.begin(), path.end(), '/');
+   size_t up = slashes >= 4 ? (slashes - 3) : 0;
+   std::vector<std::string> dirs;
+   for (size_t i=0; i<up; i++)
+      dirs.push_back("..");
+   std::string prefix = boost::algorithm::join(dirs, "/");
+
+   http::Response fixedResponse;
+   fixedResponse.assign(response);
+   std::string body = response.body();
+   boost::algorithm::replace_all(body,
+                              "href=\"/",
+                              "href=\"" + prefix + "/");
+   boost::algorithm::replace_all(body,
+                                 "<script src=\"/",
+                                 "<script src=\"" + prefix + "/");
+   boost::algorithm::replace_all(body,
+                                 "<img src=\"/",
+                                 "<img src=\"" + prefix + "/");
+   fixedResponse.setBody(body);
+   ptrConnection->writeResponse(fixedResponse);
 }
 
 void handleLocalhostResponse(
@@ -275,7 +321,17 @@ void handleLocalhostResponse(
       }
       else
       {
-         ptrConnection->writeResponse(response);
+         // fixup bad SparkUI URLs in responses (they use paths hard
+         // coded to the root "/" and we are proxying them behind
+         // a "/p/<port>/" URL)
+         if (isSparkUIResponse(response))
+         {         
+            sendSparkUIResponse(response, ptrConnection);
+         }
+         else
+         {
+            ptrConnection->writeResponse(response);
+         }
       }
    }
 }
@@ -703,6 +759,11 @@ void proxyLocalhostRequest(
    // true for our use case
    //request.removeHeader("TE");
    //request.removeHeader("Transfer-Encoding");
+
+   // we had trouble with sending jetty accept-encoding of gzip
+   // (it returns content w/o a Content-Length which foilis our
+   // decoding code)
+   request.removeHeader("Accept-Encoding");
 
    // specify closing of the connection after the request unless this is
    // an attempt to upgrade to websockets

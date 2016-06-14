@@ -597,7 +597,12 @@
    cacheKey <- .rs.addCachedData(force(x), name)
    
    # call viewData 
-   invisible(.Call("rs_viewData", x, title, name, env, cacheKey))
+   invisible(.Call("rs_viewData", x, title, name, env, cacheKey, FALSE))
+})
+
+.rs.addFunction("viewDataFrame", function(x, title, preview) {
+   cacheKey <- .rs.addCachedData(force(x), "")
+   invisible(.Call("rs_viewData", x, title, "", emptyenv(), cacheKey, preview))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {

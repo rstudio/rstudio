@@ -75,11 +75,16 @@ public class SparkMasterChooser extends Composite
                      {
                         indicator.onCompleted();
                         
+                        // get master (prepend spark:// if necessary)
+                        String master = input.input;
+                        if (!master.startsWith("spark://"))
+                           master = "spark://" + master;
+                        
                         // add the item to the list if necessary
                         int targetItem = -1;
                         for (int i = 0; i<listBox_.getItemCount(); i++)
                         {
-                           if (listBox_.getItemText(i).equals(input.input))
+                           if (listBox_.getItemText(i).equals(master))
                            {
                               targetItem = i;
                               break;
@@ -89,7 +94,7 @@ public class SparkMasterChooser extends Composite
                         {
                            int lastIndex = listBox_.getItemCount() - 1;
                            listBox_.removeItem(lastIndex);
-                           listBox_.addItem(input.input);
+                           listBox_.addItem(master);
                            listBox_.addItem(REMOTE_SERVER);
                            targetItem = lastIndex;
                         }

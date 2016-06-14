@@ -117,7 +117,7 @@ public class DataEditingTargetWidget extends Composite
    {
 
       Toolbar toolbar = new EditingTargetToolbar(commands_, true);
-      table_.initToolbar(toolbar);
+      table_.initToolbar(toolbar, dataItem.isPreview());
 
       return toolbar;
    }

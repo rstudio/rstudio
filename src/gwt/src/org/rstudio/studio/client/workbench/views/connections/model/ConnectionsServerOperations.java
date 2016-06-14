@@ -42,6 +42,10 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
                              String table,
                              ServerRequestCallback<JsArray<Field>> callback);
    
+   void connectionPreviewTable(Connection connection,
+                               String table,
+                               ServerRequestCallback<Void> callback);
+   
    void getNewSparkConnectionContext(
             ServerRequestCallback<NewSparkConnectionContext> callback);
    

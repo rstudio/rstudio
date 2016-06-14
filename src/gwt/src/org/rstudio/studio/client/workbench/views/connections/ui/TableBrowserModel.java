@@ -16,20 +16,31 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
+import com.google.gwt.view.client.NoSelectionModel;
 import com.google.gwt.view.client.TreeViewModel;
 import com.google.inject.Inject;
 
@@ -38,19 +49,27 @@ public class TableBrowserModel implements TreeViewModel
    public TableBrowserModel()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-    
    }
    
    @Inject
-   public void initialize(ConnectionsServerOperations server)
+   public void initialize(ConnectionsServerOperations server,
+                          EventBus eventBus)
    {
       server_ = server;
+      eventBus_ = eventBus;
    }
   
    
-   public void setConnection(Connection connection)
+   public void update(Connection connection,
+                      Set<String> expandedNodes,
+                      Command onTableUpdateCompleted,
+                      Command onNodeExpansionCompleted)
    {
       connection_ = connection;
+      expandedNodeRefreshQueue_ = expandedNodes;
+      onTableUpdateCompleted_ = onTableUpdateCompleted;
+      onNodeExpansionCompleted_ = onNodeExpansionCompleted;
+      refresh();
    }
    
    @Override
@@ -59,13 +78,21 @@ public class TableBrowserModel implements TreeViewModel
       // return the list of tables for the root node
       if (value == null)
       {
-         TableProvider tableProvider = new TableProvider();
-         return new DefaultNodeInfo<String>(tableProvider, new TextCell());
+         tableProvider_ = new TableProvider();
+         fieldProviders_.clear();
+         return new DefaultNodeInfo<String>(tableProvider_, 
+                                    new TableCell(),
+                                    noTableSelectionModel_,
+                                    null);
       }
       else if (value instanceof String)
       {
-         FieldProvider columnProvider = new FieldProvider((String)value);
-         return new DefaultNodeInfo<Field>(columnProvider, new FieldCell());
+         FieldProvider fieldProvider = new FieldProvider((String)value);
+         fieldProviders_.put((String)value, fieldProvider);
+         return new DefaultNodeInfo<Field>(fieldProvider, 
+                                           new FieldCell(),
+                                           noFieldSelectionModel_,
+                                           null);
       }
       
       // Unhandled type.
@@ -78,26 +105,88 @@ public class TableBrowserModel implements TreeViewModel
    {
       return value instanceof Field;
    }
+   
+   public void refresh()
+   {
+      tableProvider_.refresh();
+   }
+   
+   public void refreshTable(String table)
+   {
+      if (fieldProviders_.containsKey(table))
+         fieldProviders_.get(table).refresh();
+   }
 
    private class TableProvider extends AsyncDataProvider<String>
    {
+      public void refresh()
+      {  
+         fieldProviders_.clear();
+         for (HasData<String> display : getDataDisplays())  
+           display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
+      }
+      
       @Override
-      protected void onRangeChanged(HasData<String> display)
+      protected void onRangeChanged(final HasData<String> display)
       {
-         server_.connectionListTables(
-            connection_, 
-            new SimpleRequestCallback<JsArrayString>() {
-               @Override
-               public void onResponseReceived(JsArrayString tables)
-               {
-                  updateRowCount(tables.length(), true);
-                  ArrayList<String> data = new ArrayList<String>();
-                  for (int i=0; i<tables.length(); i++)
-                     data.add(tables.get(i));
-                  updateRowData(0, data);
-               }    
-            });
+        if (connection_ == null)
+        {
+           clearData();
+        }
+        else
+        {
+           server_.connectionListTables(
+              connection_, 
+              new SimpleRequestCallback<JsArrayString>() {
+                 @Override
+                 public void onResponseReceived(JsArrayString tables)
+                 {
+                    updateRowCount(tables.length(), true);
+                    ArrayList<String> data = new ArrayList<String>();
+                    for (int i=0; i<tables.length(); i++)
+                       data.add(tables.get(i));
+                    updateRowData(0, data);
+                    fireUpdateCompleted();
+                 }    
+                 
+                 @Override
+                 public void onError(ServerError error)
+                 {
+                    super.onError(error);
+                    clearData();
+                 }
+              });
+        }
       } 
+      
+      private void clearData()
+      {
+         updateRowCount(0, true);
+         updateRowData(0, new ArrayList<String>());
+         fireUpdateCompleted();
+      }
+      
+      private void fireUpdateCompleted()
+      {
+         if (onTableUpdateCompleted_ != null)
+         {
+            // execute update completed
+            onTableUpdateCompleted_.execute();
+            onTableUpdateCompleted_ = null;
+            
+            // if there is no node refresh queue execute node expansion complete
+            if (expandedNodeRefreshQueue_ == null || 
+                expandedNodeRefreshQueue_.size() == 0)
+            {
+               expandedNodeRefreshQueue_ = null;
+               if (onNodeExpansionCompleted_ != null)
+               {
+                  onNodeExpansionCompleted_.execute();
+                  onNodeExpansionCompleted_ = null;
+               }
+            }
+         }
+      }
    }
    
    private class FieldProvider extends AsyncDataProvider<Field>
@@ -107,41 +196,139 @@ public class TableBrowserModel implements TreeViewModel
          table_ = table;
       }
       
-      
-      @Override
-      protected void onRangeChanged(HasData<Field> display)
+      public void refresh()
       {
-         ArrayList<Field> fields = new ArrayList<Field>();
-         fields.add(Field.create("mpg", "integer"));
-         fields.add(Field.create("vol", "numeric"));
-         fields.add(Field.create("model", "character"));
-         updateRowCount(fields.size(), true);
-         updateRowData(0, fields);
+         for (HasData<Field> display : getDataDisplays())  
+           display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
       }
       
+      @Override
+      protected void onRangeChanged(final HasData<Field> display)
+      {  
+         if (connection_ == null)
+         {
+            clearData();
+            return;
+         }
+
+         server_.connectionListFields(
+               connection_,
+               table_,
+               new SimpleRequestCallback<JsArray<Field>>() {
+                  @Override
+                  public void onResponseReceived(JsArray<Field> fields)
+                  {
+                     ArrayList<Field> data = new ArrayList<Field>();
+                     if (fields != null)
+                     {
+                        for (int i=0; i<fields.length(); i++)
+                           data.add(fields.get(i));
+                     }
+                     updateRowCount(data.size(), true);
+                     updateRowData(0, data);
+                     dequeNodeExpansion();
+                  }
+                  
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     super.onError(error);
+                     clearData();
+                  } 
+               });
+      }
       
-      @SuppressWarnings("unused")
+      private void clearData()
+      {
+         updateRowCount(0, true);
+         updateRowData(0, new ArrayList<Field>());
+         dequeNodeExpansion();
+      }
+      
+      private void dequeNodeExpansion()
+      {
+         if (expandedNodeRefreshQueue_ != null)
+         {
+            expandedNodeRefreshQueue_.remove(table_);
+            if (expandedNodeRefreshQueue_.size() == 0)
+            {
+               expandedNodeRefreshQueue_ = null;
+               if (onNodeExpansionCompleted_ != null)
+               {
+                  onNodeExpansionCompleted_.execute();
+                  onNodeExpansionCompleted_ = null;
+               }
+            }
+         }
+      }
+      
       private String table_;
    }
    
-   private static class FieldCell extends AbstractCell<Field> {
-
+   private class TableCell extends AbstractCell<String> 
+   {
+      public TableCell()
+      {
+         super("click");
+      }
+      
+      @Override
+      public void render(Cell.Context context, String table, SafeHtmlBuilder sb)
+      {
+         SafeHtmlUtil.appendSpan(sb, "", table);
+         
+         sb.append(SafeHtmlUtil.createOpenTag("span", 
+               "class", RES.cellTreeStyle().tableViewDataset(),
+               "title", "View table (up to 1,000 records"));
+         sb.appendHtmlConstant("</span>");   
+      }
+      
+      @Override
+      public void onBrowserEvent(Cell.Context context,
+              Element parent, String value, NativeEvent event,
+              ValueUpdater<String> valueUpdater) {
+          if ("click".equals(event.getType()))
+          {
+             Element eventTarget = event.getEventTarget().cast();
+             if (eventTarget.getAttribute("class").equals(
+                               RES.cellTreeStyle().tableViewDataset()))
+             {
+                eventBus_.fireEvent(new ViewConnectionDatasetEvent(value));
+             }
+          }
+      }
+   }
+   
+   private static class FieldCell extends AbstractCell<Field> 
+   {
       @Override
       public void render(Cell.Context context, Field value, SafeHtmlBuilder sb)
       {
-         sb.appendEscaped(value.getName());
-         
+         SafeHtmlUtil.appendSpan(sb, 
+                                 RES.cellTreeStyle().fieldName(), 
+                                 value.getName());
+         sb.appendEscaped(value.getType());
       }
-
-      
-    }
+   }
    
+   private TableProvider tableProvider_;
+   private HashMap<String,FieldProvider> fieldProviders_ 
+                              = new HashMap<String,FieldProvider>();
    
    private Connection connection_;
    
-   private ConnectionsServerOperations server_;
+   private Set<String> expandedNodeRefreshQueue_ = null;
+   private Command onTableUpdateCompleted_ = null;
+   private Command onNodeExpansionCompleted_ = null;
    
-  
-
+   private ConnectionsServerOperations server_;
+   private EventBus eventBus_;
+   
+   private static NoSelectionModel<String> noTableSelectionModel_ = 
+         new NoSelectionModel<String>();
+   private static NoSelectionModel<Field> noFieldSelectionModel_ =
+         new NoSelectionModel<Field>();
+   
+   static final TableBrowser.Resources RES = TableBrowser.RES;
   
 }

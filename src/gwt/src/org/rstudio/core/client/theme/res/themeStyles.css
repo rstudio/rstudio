@@ -1477,3 +1477,9 @@ body.ubuntu_mono .searchBox {
    border: 1px solid #BBB;    
 }
 
+.toolbarInfoLabel {
+   color: #606060;
+   top: -1px;
+   margin-right: 6px;
+}
+

@@ -171,4 +171,6 @@ public interface ThemeStyles extends CssResource
    String handCursor();
    
    String borderedIFrame();
+   
+   String toolbarInfoLabel();
 }

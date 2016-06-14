@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOp
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -71,7 +73,8 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter  
-                                  implements PerformConnectionEvent.Handler
+                                  implements PerformConnectionEvent.Handler,
+                                             ViewConnectionDatasetEvent.Handler
 {
    public interface Display extends WorkbenchView
    {
@@ -152,8 +155,9 @@ public class ConnectionsPresenter extends BasePresenter
          
       });
       
-      // perform connection event
+      // events
       eventBus_.addHandler(PerformConnectionEvent.TYPE, this);
+      eventBus_.addHandler(ViewConnectionDatasetEvent.TYPE, this);
       
       // set connections      
       final SessionInfo sessionInfo = session.getSessionInfo();
@@ -388,7 +392,7 @@ public class ConnectionsPresenter extends BasePresenter
                    "output: html_notebook\n" +
                    "---\n" +
                    "\n" +
-                   "```{r connect}\n" +
+                   "```{r setup, include=FALSE}\n" +
                    code + "\n" +
                    "```\n" +
                    "\n" +
@@ -403,6 +407,21 @@ public class ConnectionsPresenter extends BasePresenter
          
          display_.showConnectionProgress();
       }
+   }
+   
+   @Override
+   public void onViewConnectionDataset(ViewConnectionDatasetEvent event)
+   {
+      if (exploredConnection_ == null)
+         return;
+      
+      GlobalProgressDelayer progress = new GlobalProgressDelayer(
+                              globalDisplay_, 100, "Previewing table...");
+      
+      server_.connectionPreviewTable(
+         exploredConnection_, 
+         event.getDataset(),
+         new VoidServerRequestCallback(progress.getIndicator())); 
    }
    
    @Handler
@@ -622,4 +641,5 @@ public class ConnectionsPresenter extends BasePresenter
    
    private ArrayList<Connection> allConnections_ = new ArrayList<Connection>();
    private ArrayList<ConnectionId> activeConnections_ = new ArrayList<ConnectionId>();
+   
 }

@@ -2884,6 +2884,40 @@ Error registerAsyncRpcMethod(const std::string& name,
    return Success();
 }
 
+namespace {
+
+void performIdleOnlyAsyncRpcMethod(
+      const core::json::JsonRpcRequest& request,
+      const core::json::JsonRpcFunctionContinuation& continuation,
+      const core::json::JsonRpcAsyncFunction& function)
+{
+   if (request.isBackgroundConnection)
+   {
+      module_context::scheduleDelayedWork(
+          boost::posix_time::milliseconds(100),
+          boost::bind(function, request, continuation),
+          true);
+   }
+   else
+   {
+      function(request, continuation);
+   }
+}
+
+
+} // anonymous namespace
+
+Error registerIdleOnlyAsyncRpcMethod(
+                             const std::string& name,
+                             const core::json::JsonRpcAsyncFunction& function)
+{
+   return registerAsyncRpcMethod(name,
+                                 boost::bind(performIdleOnlyAsyncRpcMethod,
+                                                _1, _2, function));
+}
+
+
+
 Error registerRpcMethod(const std::string& name,
                         const core::json::JsonRpcFunction& function)
 {

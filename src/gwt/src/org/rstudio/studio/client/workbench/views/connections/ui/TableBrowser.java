@@ -15,82 +15,163 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.workbench.views.connections.model.Connection;
-import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.user.cellview.client.CellTree;
+import com.google.gwt.user.cellview.client.TreeNode;
+import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.inject.Inject;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class TableBrowser extends Composite implements RequiresResize
 {
    public TableBrowser()
-   {
-      RStudioGinjector.INSTANCE.injectMembers(this);
+   {  
+      // create tables model and widget
+      tablesModel_ = new TableBrowserModel();
       
-      container_ = new SimplePanel();
-      
-      tables_ = new ListBox();
+      tables_ = new CellTree(tablesModel_, null, RES, MESSAGES);
       tables_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
-      tables_.setVisibleItemCount(2);
-      tables_.setSize("100%", "100%");
+      tables_.setWidth("100%");
       
-      noTables_ = new PaneStatusMessage("(No tables)", 50);
+      // wrap in vertical panel to get correct scrollbar behavior
+      VerticalPanel verticalWrapper = new VerticalPanel();
+      verticalWrapper.setWidth("100%");
+      verticalWrapper.add(tables_);
       
-      container_.setWidget(noTables_);
-     
-      initWidget(container_);
+      // create scroll panel and set the vertical wrapper as it's widget
+      scrollPanel_ = new ScrollPanel();
+      scrollPanel_.setSize("100%", "100%");
+      scrollPanel_.setWidget(verticalWrapper);
+       
+      // init widget
+      initWidget(scrollPanel_);
    }
-   
-   @Inject
-   public void initialize(ConnectionsServerOperations server)
-   {
-      server_ = server;
-   }
-   
+  
    public void update(Connection connection, String hint)
    {
       connection_ = connection;
       
-      server_.connectionListTables(
-        connection_, 
-        new SimpleRequestCallback<JsArrayString>() {
-           @Override
-           public void onResponseReceived(JsArrayString tables)
-           {
-              tables_.clear();
-              tables_.setVisibleItemCount(Math.max(2, tables.length()));
-              for (int i = 0; i<tables.length(); i++)
-                 tables_.addItem(tables.get(i));
-              container_.setWidget(tables.length() > 0 ? tables_ : noTables_);
-           }    
-        });
-   }
-   
-   public void clear()
-   {
-      tables_.clear();
-      container_.setWidget(noTables_);
-   }
-   
+      // capture scroll position
+      final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
+      
+      // capture expanded nodes
+      final Set<String> expandedNodes = new HashSet<String>();
+      TreeNode rootNode = tables_.getRootTreeNode();
+      for (int i = 0; i < rootNode.getChildCount(); i++)
+      {
+         if (rootNode.isChildOpen(i))
+         {
+            String node = (String)rootNode.getChildValue(i);
+            expandedNodes.add(node);
+         }
+      }
+      
+      // update the table then restore expanded nodes
+      tablesModel_.update(
+         connection_,      // connection 
+         expandedNodes,    // track nodes to expand
+         new Command() {   // table update completed, expand nodes
+            @Override
+            public void execute()
+            {
+               TreeNode rootNode = tables_.getRootTreeNode();
+               for (int i = 0; i < rootNode.getChildCount(); i++)
+               {
+                  final String nodeName = (String)(rootNode.getChildValue(i));
+                  if (expandedNodes.contains(nodeName))
+                     rootNode.setChildOpen(i, true, false);
+               }
+            }
+         },                      
+         new Command() {   // node expansion completed, restore scroll position
+            @Override
+            public void execute()
+            {
+               // delay 100ms to allow expand animation to complete
+               new Timer() {
 
+                  @Override
+                  public void run()
+                  {
+                     scrollPanel_.setVerticalScrollPosition(scrollPosition); 
+                  }
+                  
+               }.schedule(100);
+              
+            }
+         });  
+   }
+   
+ 
    @Override
    public void onResize()
    {
    }
    
+   public interface Resources extends CellTree.Resources {
+      
+      ImageResource zoomDataset();
+      
+      @ImageOptions(flipRtl = true)
+      @Source("ExpandIcon.png")
+      ImageResource cellTreeClosedItem();
 
+      /**
+       * An image indicating that a node is loading.
+       */
+      @ImageOptions(flipRtl = true)
+      @Source("progress.gif")
+      ImageResource cellTreeLoading();
 
-   private final SimplePanel container_;
-   private final ListBox tables_;
-   private final PaneStatusMessage noTables_;
-   private ConnectionsServerOperations server_;
+    
+      @ImageOptions(flipRtl = true)
+      @Source("CollapseIcon.png")
+      ImageResource cellTreeOpenItem();
+      
+      
+      @Source({CellTree.Style.DEFAULT_CSS, "TableBrowser.css"})
+      public Style cellTreeStyle();   
+      
+      public interface Style extends CellTree.Style
+      {
+         String fieldName();
+         String tableViewDataset();
+      }
+   }
+   
+   static final Resources RES = GWT.create(Resources.class);
+   
+   static {
+      RES.cellTreeStyle().ensureInjected();
+   }
+   
+   @DefaultLocale("en_US")
+   public interface TableBrowserMessages extends CellTreeMessages {
+     @DefaultMessage("Show more")
+     String showMore();
+     @DefaultMessage("(No tables)")
+     String emptyTree();
+   }
+   
+   private static final TableBrowserMessages MESSAGES 
+                              = GWT.create(TableBrowserMessages.class);
+   
+   private final ScrollPanel scrollPanel_;
+   private final CellTree tables_;
+   private final TableBrowserModel tablesModel_;
    
    private Connection connection_;
 }

@@ -96,18 +96,42 @@ options(connectionViewer = list(
       character()
 })
 
+.rs.addFunction("connectionListColumns", function(finder, host, listColumnsCode, table) {
+
+   name <- .rs.getConnectionObjectName(finder, host)
+
+   if (!is.null(name)) {
+      listColumnsCode <- sprintf(listColumnsCode, name, table)
+      eval(parse(text = listColumnsCode), envir = globalenv())
+   }
+   else
+      NULL
+})
+
+.rs.addFunction("connectionPreviewTable", function(finder,
+                                                   host,
+                                                   previewTableCode,
+                                                   table,
+                                                   limit) {
+
+   name <- .rs.getConnectionObjectName(finder, host)
+
+   if (!is.null(name)) {
+      previewTableCode <- sprintf(previewTableCode, name, table, limit)
+      df <- eval(parse(text = previewTableCode), envir = globalenv())
+      .rs.viewDataFrame(df, table, TRUE)
+   }
+
+   NULL
+})
+
+
 .rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
 
   context <- list()
 
   # all previously connected to remote servers
   context$remote_servers <- .Call("rs_availableRemoteServers")
-
-  # available cores on this machine
-  context$cores <- parallel::detectCores()
-  if (is.na(context$cores))
-    context$cores <- 1
-  context$cores <- .rs.scalar(context$cores)
 
   # can we install new versions
   context$can_install_spark_versions <- .rs.scalar(rspark:::spark_can_install())

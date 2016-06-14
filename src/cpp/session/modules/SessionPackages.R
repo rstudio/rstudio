@@ -601,29 +601,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # Protect against vectors with length > 1
    getDevtoolsOption <- function(optionName, default, collapse = " ")
    {
-      option <- getOption(optionName)
-      if (!is.null(option))
-      {
-         if (length(option) > 0)
-            paste(option, collapse = collapse)
-         else
-            option
-      }
-      else default
+      devtoolsDesc <- getOption("devtools.desc")
+      if (!length(devtoolsDesc))
+         return(default)
+      
+      option <- devtoolsDesc[[optionName]]
+      if (is.null(option))
+         return(default)
+      
+      paste(option, collapse = collapse)
    }
    
-   `%||%` <- function(x, y)
-      if (is.null(x)) y else x
    
-   Author <- getDevtoolsOption("devtools.name", "Who wrote it")
+   Author <- getDevtoolsOption("Author", "Who wrote it")
    
    Maintainer <- getDevtoolsOption(
-      "devtools.desc.author",
-      "Who to complain to <yourfault@somewhere.net>"
+      "Maintainer",
+      "The package maintainer <yourself@somewhere.net>"
    )
    
    License <- getDevtoolsOption(
-      "devtools.desc.license",
+      "License",
       "What license is it under?",
       ", "
    )
@@ -635,19 +633,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Version = "0.1.0",
       Author = Author,
       Maintainer = Maintainer,
-      Description = "More about what it does (maybe more than one line)",
+      Description = c(
+         "More about what it does (maybe more than one line)",
+         "Use four spaces when indenting paragraphs within the Description."
+      ),
       License = License,
-      LazyData = "TRUE"
+      Encoding = "UTF-8",
+      LazyData = "true"
    )
-   
-   # If we filled in an 'Authors@R' field for Authors (e.g. provided for new
-   # 'devtools'), then name this field as such.
-   if (isTRUE(grepl("^\\s*(?:as\\.person|person|c)\\(", DESCRIPTION[["Maintainer"]], perl = TRUE)))
-   {
-      maintainerIdx <- which(names(DESCRIPTION) == "Maintainer")
-      names(DESCRIPTION)[[maintainerIdx]] <- "Authors@R"
-      DESCRIPTION[["Author"]] <- NULL
-   }
    
    # Create a NAMESPACE file
    NAMESPACE <- c(
@@ -915,18 +908,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # Write various files out
    
    # NOTE: write.dcf mangles whitespace so we manually construct
-   # our DCF
-   for (name in c("Depends", "Imports", "Suggests", "LinkingTo"))
-   {
-      if (name %in% names(DESCRIPTION))
-      {
-         DESCRIPTION[[name]] <- paste(
-            sep = "",
-            "\n    ",
-            paste(DESCRIPTION[[name]], collapse = ",\n    ")
-         )
-      }
-   }
+   # the text we wish to write out
+   DESCRIPTION <- lapply(DESCRIPTION, function(field) {
+      paste(field, collapse = "\n    ")
+   })
    
    names <- names(DESCRIPTION)
    values <- unlist(DESCRIPTION)
