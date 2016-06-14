@@ -227,6 +227,42 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
    pResponse->replaceHeader(headerName, address);
 }
 
+bool isSparkUIResponse(const http::Response& response)
+{
+   using namespace boost::algorithm;
+   return contains(response.headerValue("Server"), "Jetty") &&
+          contains(response.body(), "<img src=\"/static/spark-logo") &&
+          contains(response.body(), "<div class=\"navbar navbar-static-top\">");
+}
+
+void sendSparkUIResponse(
+      const http::Response& response,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   std::string path = ptrConnection->request().path();
+   size_t slashes = std::count(path.begin(), path.end(), '/');
+   size_t up = slashes >= 4 ? (slashes - 3) : 0;
+   std::vector<std::string> dirs;
+   for (size_t i=0; i<up; i++)
+      dirs.push_back("..");
+   std::string prefix = boost::algorithm::join(dirs, "/");
+
+   http::Response fixedResponse;
+   fixedResponse.assign(response);
+   std::string body = response.body();
+   boost::algorithm::replace_all(body,
+                              "href=\"/",
+                              "href=\"" + prefix + "/");
+   boost::algorithm::replace_all(body,
+                                 "<script src=\"/",
+                                 "<script src=\"" + prefix + "/");
+   boost::algorithm::replace_all(body,
+                                 "<img src=\"/",
+                                 "<img src=\"" + prefix + "/");
+   fixedResponse.setBody(body);
+   ptrConnection->writeResponse(fixedResponse);
+}
+
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<LocalhostAsyncClient> ptrLocalhost,
@@ -288,32 +324,9 @@ void handleLocalhostResponse(
          // fixup bad SparkUI URLs in responses (they use paths hard
          // coded to the root "/" and we are proxying them behind
          // a "/p/<port>/" URL)
-         if (boost::algorithm::contains(response.body(),
-                                        "<img src=\"/static/spark-logo"))
-         {
-            // determine url prefix based on how deep we are in the path
-            std::string path = ptrConnection->request().path();
-            size_t slashes = std::count(path.begin(), path.end(), '/');
-            size_t up = slashes >= 4 ? (slashes - 3) : 0;
-            std::vector<std::string> dirs;
-            for (size_t i=0; i<up; i++)
-               dirs.push_back("..");
-            std::string prefix = boost::algorithm::join(dirs, "/");
-
-            http::Response fixedResponse;
-            fixedResponse.assign(response);
-            std::string body = response.body();
-            boost::algorithm::replace_all(body,
-                                       "href=\"/",
-                                       "href=\"" + prefix + "/");
-            boost::algorithm::replace_all(body,
-                                          "<script src=\"/",
-                                          "<script src=\"" + prefix + "/");
-            boost::algorithm::replace_all(body,
-                                          "<img src=\"/",
-                                          "<img src=\"" + prefix + "/");
-            fixedResponse.setBody(body);
-            ptrConnection->writeResponse(fixedResponse);
+         if (isSparkUIResponse(response))
+         {         
+            sendSparkUIResponse(response, ptrConnection);
          }
          else
          {
