@@ -50,8 +50,11 @@ public class SimplePanelWithProgress extends SimplePanel
    
    public void showProgress(int delayMs)
    {
-      setWidget(loadProgressPanel_);
-      loadProgressPanel_.beginProgressOperation(delayMs);
+      if (!loadProgressPanel_.equals(getWidget()))
+      {
+         setWidget(loadProgressPanel_);
+         loadProgressPanel_.beginProgressOperation(delayMs);
+      }
    }
    
    public void onResize()

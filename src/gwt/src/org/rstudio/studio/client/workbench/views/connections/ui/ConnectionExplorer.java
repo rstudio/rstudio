@@ -77,7 +77,8 @@ public class ConnectionExplorer extends Composite implements RequiresResize
          @Override
          public void onConsoleBusy(ConsoleBusyEvent event)
          {
-            if (!event.isBusy())
+            isBusy_ = event.isBusy();
+            if (!isBusy_)
             {
                if (waitingForConnection_)
                {
@@ -114,7 +115,9 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    public void setConnected(boolean connected)
    {
       activePanel_ = connected ? tableBrowser_ : disconnectedUI_;
-      if (!waitingForConnection_)
+      if (isBusy_)
+         showConnectionProgress();
+      else if (!waitingForConnection_)
          showActivePanel();
    }
    
@@ -169,6 +172,8 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    private boolean waitingForConnection_ = false;
    
    private Connection connection_ = null;
+   
+   private boolean isBusy_ = false;
 
    private EventBus eventBus_;
    @SuppressWarnings("unused")
