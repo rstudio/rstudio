@@ -633,7 +633,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Version = "0.1.0",
       Author = Author,
       Maintainer = Maintainer,
-      Description = "More about what it does (maybe more than one line)",
+      Description = c(
+         "More about what it does (maybe more than one line)",
+         "Use four spaces when indenting paragraphs within the Description."
+      ),
       License = License,
       Encoding = "UTF-8",
       LazyData = "true"
@@ -905,18 +908,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # Write various files out
    
    # NOTE: write.dcf mangles whitespace so we manually construct
-   # our DCF
-   for (name in c("Depends", "Imports", "Suggests", "LinkingTo"))
-   {
-      if (name %in% names(DESCRIPTION))
-      {
-         DESCRIPTION[[name]] <- paste(
-            sep = "",
-            "\n    ",
-            paste(DESCRIPTION[[name]], collapse = ",\n    ")
-         )
-      }
-   }
+   # the text we wish to write out
+   DESCRIPTION <- lapply(DESCRIPTION, function(field) {
+      paste(field, collapse = "\n    ")
+   })
    
    names <- names(DESCRIPTION)
    values <- unlist(DESCRIPTION)
