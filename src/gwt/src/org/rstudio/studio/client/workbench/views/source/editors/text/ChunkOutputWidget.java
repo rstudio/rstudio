@@ -234,7 +234,7 @@ public class ChunkOutputWidget extends Composite
    }
     
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
-         boolean ensureVisible)
+         boolean complete, boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -251,8 +251,12 @@ public class ChunkOutputWidget extends Composite
             showChunkOutputUnit(units.get(i), mode, ensureVisible);
          }
 
-         // ensure the output is visible if requested
-         onOutputFinished(ensureVisible, scope);
+         // if complete, wrap everything up; if not (could happen for partial
+         // replay) just sync up the height
+         if (complete)
+            onOutputFinished(ensureVisible, scope);
+         else
+            syncHeight(true, ensureVisible);
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {

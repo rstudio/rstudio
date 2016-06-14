@@ -579,6 +579,16 @@ public class TextEditingTargetNotebook
       {
          output.getOutputWidget().applyCachedEditorStyle();
       }
+      
+      // update if currently executing
+      if (queue_.isExecuting())
+      {
+         NotebookQueueUnit unit = queue_.executingUnit();
+         if (unit != null)
+         {
+            setChunkExecuting(unit.getChunkId(), unit.getExecMode());
+         }
+      }
    }
    
    @Override
@@ -653,6 +663,7 @@ public class TextEditingTargetNotebook
          outputs_.get(chunkId).getOutputWidget()
                               .showChunkOutput(event.getOutput(), mode,
                                   NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
+                                  !queue_.isChunkExecuting(chunkId),
                                   ensureVisible);
       }
    }
@@ -1176,60 +1187,6 @@ public class TextEditingTargetNotebook
       }
       cleanChunkExecState(chunkId);
    }
-   
-   /* TODO: implement non R chunk execution on the server
-   private void execNonRChunk(ChunkExecQueueUnit unit)
-   {
-      // if we're using a non-R engine, farm that out to separate routine
-      String line = docDisplay_.getLine(chunk.getPreamble().getRow());
-      Map<String, String> chunkOptions = RMarkdownChunkHeaderParser.parse(line);
-       
-      String engine = StringUtil.stringValue(chunkOptions.get("engine"));
-      if (!engine.equalsIgnoreCase("r"))
-      {
-         execAlternateEngineChunk(
-               docUpdateSentinel_.getId(),
-               unit.chunkId,
-               engine,
-               unit.code,
-               chunkOptions);
-         return;
-      }
-   }
-   
-   private void execAlternateEngineChunk(String docId,
-                                         String chunkId,
-                                         String engine,
-                                         String code,
-                                         Map<String, String> options)
-   {
-      JsObject jsOptions = JsObject.createJsObject();
-      for (Map.Entry<String, String> entry : options.entrySet())
-         jsOptions.setString(entry.getKey(), entry.getValue());
-      
-      server_.executeAlternateEngineChunk(
-            docId,
-            chunkId,
-            getCommitMode(),
-            engine,
-            code,
-            jsOptions,
-            new ServerRequestCallback<String>()
-            {
-               @Override
-               public void onResponseReceived(String response)
-               {
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-   }
-    * 
-    */
    
    private void loadInitialChunkOutput()
    {

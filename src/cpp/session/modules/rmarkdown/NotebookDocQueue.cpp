@@ -21,13 +21,14 @@
 
 using namespace rstudio::core;
 
-#define kDocQueueId         "doc_id"
-#define kDocQueueJobDesc    "job_desc"
-#define kDocQueuePixelWidth "pixel_width"
-#define kDocQueueCharWidth  "pixel_width"
-#define kDocQueueUnits      "units"
-#define kDocQueueMaxUnits   "max_units"
-#define kDocQueueCommitMode "commit_mode"
+#define kDocQueueId             "doc_id"
+#define kDocQueueJobDesc        "job_desc"
+#define kDocQueuePixelWidth     "pixel_width"
+#define kDocQueueCharWidth      "pixel_width"
+#define kDocQueueUnits          "units"
+#define kDocQueueMaxUnits       "max_units"
+#define kDocQueueCommitMode     "commit_mode"
+#define kDocQueueCompletedUnits "completed_units"
 
 namespace rstudio {
 namespace session {
@@ -68,13 +69,14 @@ json::Object NotebookDocQueue::toJson() const
 
    // form JSON object for client
    json::Object queue;
-   queue[kDocQueueId]         = docId_;
-   queue[kDocQueueJobDesc]    = jobDesc_;
-   queue[kDocQueueCommitMode] = commitMode_;
-   queue[kDocQueuePixelWidth] = pixelWidth_;
-   queue[kDocQueueCharWidth]  = charWidth_;
-   queue[kDocQueueUnits]      = units;
-   queue[kDocQueueMaxUnits]   = maxUnits_;
+   queue[kDocQueueId]             = docId_;
+   queue[kDocQueueJobDesc]        = jobDesc_;
+   queue[kDocQueueCommitMode]     = commitMode_;
+   queue[kDocQueuePixelWidth]     = pixelWidth_;
+   queue[kDocQueueCharWidth]      = charWidth_;
+   queue[kDocQueueUnits]          = units;
+   queue[kDocQueueMaxUnits]       = maxUnits_;
+   queue[kDocQueueCompletedUnits] = json::Array();
 
    return queue;
 }

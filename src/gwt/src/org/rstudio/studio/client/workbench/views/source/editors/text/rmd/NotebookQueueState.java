@@ -86,7 +86,21 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    public void setQueue(NotebookDocQueue queue)
    {
       queue_ = queue;
-      renderQueueState();
+      
+      // set executing unit to front of queue
+      if (queue_.getUnits().length() > 1)
+      {
+         executingUnit_ = queue_.getUnits().get(0);
+         
+         // draw if ready
+         if (ChunkOutputWidget.isEditorStyleCached())
+         {
+            notebook_.setChunkExecuting(executingUnit_.getChunkId(), 
+                  executingUnit_.getExecMode());
+         }
+      }
+      
+      renderQueueState(true);
    }
    
    public int getChunkExecMode(String chunkId)
@@ -213,7 +227,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    public boolean isChunkExecuting(String chunkId)
    {
-      if (executingUnit_ == null)
+      if (!isExecuting() || executingUnit_ == null)
          return false;
 
       return executingUnit_.getChunkId() == chunkId;
@@ -353,7 +367,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       return executingUnit_;
    }
 
-   public void renderQueueState()
+   public void renderQueueState(boolean replay)
    {
       if (queue_ == null)
          return;
@@ -369,7 +383,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             continue;
          
          renderQueueLineState(scope, unit);
-         notebook_.setChunkState(scope, ChunkContextToolbar.STATE_QUEUED);
+         notebook_.setChunkState(scope, replay && i == 0 ? 
+               ChunkContextToolbar.STATE_EXECUTING :
+               ChunkContextToolbar.STATE_QUEUED);
       }
 
       // update the status bar
@@ -535,7 +551,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          @Override
          public void onResponseReceived(Void v)
          {
-            renderQueueState();
+            renderQueueState(false);
          }
 
          @Override
