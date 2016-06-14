@@ -305,7 +305,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DPLYR))
                builder.append("library(dplyr)\n");
                
-            builder.append("sc <- spark_connect(\"");
+            builder.append("sc <- spark_connect(master = \"");
             builder.append(master_.getSelection());
            
             // spark version
