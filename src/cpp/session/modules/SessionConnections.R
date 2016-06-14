@@ -133,12 +133,6 @@ options(connectionViewer = list(
   # all previously connected to remote servers
   context$remote_servers <- .Call("rs_availableRemoteServers")
 
-  # available cores on this machine
-  context$cores <- parallel::detectCores()
-  if (is.na(context$cores))
-    context$cores <- 1
-  context$cores <- .rs.scalar(context$cores)
-
   # can we install new versions
   context$can_install_spark_versions <- .rs.scalar(rspark:::spark_can_install())
 

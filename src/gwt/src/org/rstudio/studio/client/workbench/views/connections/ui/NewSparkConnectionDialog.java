@@ -36,12 +36,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
@@ -98,9 +95,10 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       VerticalPanel container = new VerticalPanel();    
       
       // master
-      final Grid masterGrid = new Grid(2, 2);
+      final Grid masterGrid = new Grid(1, 2);
       masterGrid.addStyleName(RES.styles().grid());
       masterGrid.addStyleName(RES.styles().masterGrid());
+      masterGrid.addStyleName(RES.styles().remote());
       Label masterLabel = new Label("Master:");
       masterLabel.addStyleName(RES.styles().label());
       masterGrid.setWidget(0, 0, masterLabel);
@@ -109,45 +107,8 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       if (lastResult_.getMaster() != null)
          master_.setSelection(lastResult_.getMaster());
       masterGrid.setWidget(0, 1, master_);
-      Label coresLabel = new Label("Local cores:");
-      masterGrid.setWidget(1, 0, coresLabel);
-      cores_ = new ListBox();
-      cores_.addItem("Auto (" + context_.getCores() + ")", "auto");
-      for (int i = context_.getCores(); i>0; i--)
-      {
-         String value = String.valueOf(i);
-         String item = value;
-         cores_.addItem(item, value);     
-      }
-      setValue(cores_, lastResult_.getCores());
-      masterGrid.setWidget(1, 1, cores_);
       container.add(masterGrid);
-
-      // auto-reconnect
-      autoReconnect_ = new CheckBox(
-            "Reconnect automatically if connection is dropped");
-      autoReconnect_.setValue(lastResult_.getReconnect());
-      autoReconnect_.setVisible(false);
-      container.add(autoReconnect_);
-    
-      // manage visiblity of master UI components
-      final Command manageMasterUI = new Command() {
-         @Override
-         public void execute()
-         {
-            boolean local = master_.isLocalMaster(master_.getSelection());
-            // don't ever show autoReconnect for now
-            // autoReconnect_.setVisible(!local);
-            if (local)
-               masterGrid.removeStyleName(RES.styles().remote());
-            else
-               masterGrid.addStyleName(RES.styles().remote());
-         }
-      };
-      manageMasterUI.execute();   
-      master_.addSelectionChangeHandler(
-                           commandSelectionChangeHandler(manageMasterUI));
-      
+ 
       // versions
       Grid versionGrid = new Grid(3, 2);
       versionGrid.addStyleName(RES.styles().grid());
@@ -321,24 +282,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
                builder.append(sparkVersion.getHadoopVersionNumber());
                builder.append("\"");
             }
-            
-            // cores if not default
-            boolean local = master_.isLocalMaster(master_.getSelection());
-            if (local && (cores_.getSelectedIndex() != 0))
-            {
-               builder.append(", cores = ");
-               if (cores_.getSelectedIndex() == 0)
-                  builder.append("\"auto\"");
-               else
-                  builder.append(Integer.parseInt(cores_.getSelectedValue()));
-            }
-            
-            // reconnect if appropriate and not default
-            if (!local && autoReconnect_.getValue())
-            {
-               builder.append(", reconnect = TRUE");
-            }
-            
+                     
             builder.append(")");
             
             // db connection if specified
@@ -358,14 +302,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       };
       updateCodeCommand.execute();
       master_.addSelectionChangeHandler(commandSelectionChangeHandler(updateCodeCommand));
-      autoReconnect_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            updateCodeCommand.execute();
-         } 
-      });
-      cores_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       sparkVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       dbConnection_.addChangeHandler(commandChangeHandler(updateCodeCommand));
@@ -386,8 +322,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       ConnectionOptions result = ConnectionOptions.create(
             master_.getSelection(),
             !master_.isLocalMaster(master_.getSelection()),
-            autoReconnect_.getValue(),
-            cores_.getSelectedValue(),
             getSelectedSparkVersion(),
             dbConnection_.getSelectedValue(),
             codePanel_.getCode(),
@@ -565,8 +499,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
    private final NewSparkConnectionContext context_;
    
    private SparkMasterChooser master_;
-   private CheckBox autoReconnect_;
-   private ListBox cores_;
    private ListBox sparkVersion_;
    private ListBox hadoopVersion_;
  

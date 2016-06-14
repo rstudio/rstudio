@@ -30,10 +30,6 @@ public class NewSparkConnectionContext extends JavaScriptObject
       return this.remote_servers;
    }-*/;
    
-   public final native int getCores()  /*-{
-      return this.cores;
-   }-*/;
-   
    public final native JsArray<SparkVersion> getSparkVersions() /*-{
       return this.spark_versions;
    }-*/;

@@ -9,14 +9,12 @@ public class ConnectionOptions extends JavaScriptObject
    
    public static final ConnectionOptions create()
    {
-      return create(null, false, false, null, null, null, null, null);
+      return create(null, false, null, null, null, null);
    }
    
    public static final native ConnectionOptions create(
                                             String master,
                                             boolean remote,
-                                            boolean reconnect,
-                                            String cores,
                                             SparkVersion sparkVersion,
                                             String dbConnection,
                                             String connectCode,
@@ -25,8 +23,6 @@ public class ConnectionOptions extends JavaScriptObject
       return {
          "master": master,
          "remote": remote,
-         "reconnect": reconnect,
-         "cores": cores,
          "spark_version": sparkVersion,
          "db_connection": dbConnection,
          "connect_code": connectCode,
@@ -36,8 +32,6 @@ public class ConnectionOptions extends JavaScriptObject
    
    public final native String getMaster() /*-{ return this.master; }-*/;
    public final native boolean getRemote() /*-{ return this.remote; }-*/;
-   public final native boolean getReconnect() /*-{ return this.reconnect; }-*/;
-   public final native String getCores() /*-{ return this.cores; }-*/;
    public final native SparkVersion getSparkVersion() /*-{ return this.spark_version; }-*/;
    public final native String getDBConnection() /*-{ return this.db_connection; }-*/;
    public final native String getConnectCode() /*-{ return this.connect_code; }-*/;

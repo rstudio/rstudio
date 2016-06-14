@@ -13,11 +13,6 @@
   margin-top: 7px;
 }
 
-
-.masterGrid.remote tbody>tr:last-child {
-  display: none;
-}
-
 .masterGrid.remote {
   margin-bottom: 5px;
 }
