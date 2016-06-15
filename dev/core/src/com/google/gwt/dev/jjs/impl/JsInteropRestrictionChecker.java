@@ -298,8 +298,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
 
     String memberDescription = JjsUtils.getReadableDescription(member);
 
-    if (!member.getEnclosingType().isJsNative()) {
-      logError(member, "JsOverlay '%s' can only be declared in a native type.", memberDescription);
+    if (!member.getEnclosingType().isJsNative() && !member.getEnclosingType().isJsFunction()) {
+      logError(member,
+          "JsOverlay '%s' can only be declared in a native type or a JsFunction interface.",
+          memberDescription);
     }
 
     if (member instanceof JConstructor) {
@@ -676,6 +678,26 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     return true;
   }
 
+  private void checkMemberOfJsFunction(JMember member) {
+    if (member.getJsMemberType() != JsMemberType.NONE) {
+      logError(member,
+          "JsFunction interface member '%s' cannot be JsMethod nor JsProperty.",
+          JjsUtils.getReadableDescription(member));
+    }
+
+    if (member.isJsOverlay() || member.isSynthetic()) {
+      return;
+    }
+
+    if (member instanceof JMethod && ((JMethod) member).isOrOverridesJsFunctionMethod()) {
+      return;
+    }
+
+    logError(member, "JsFunction interface '%s' cannot declare non-JsOverlay member '%s'.",
+        JjsUtils.getReadableDescription(member.getEnclosingType()),
+        JjsUtils.getReadableDescription(member));
+  }
+
   private void checkJsFunction(JDeclaredType type) {
     if (!isClinitEmpty(type, false)) {
       logError("JsFunction '%s' cannot have static initializer.", type);
@@ -687,7 +709,39 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
 
     if (type.isJsType()) {
       logError("'%s' cannot be both a JsFunction and a JsType at the same time.", type);
+      return;
     }
+
+    // Functional interface restriction already enforced by JSORestrictionChecker. It is safe
+    // to assume here that there is a single abstract method.
+    for (JMember member : type.getMembers()) {
+      checkMemberOfJsFunction(member);
+    }
+  }
+
+  private void checkMemberOfJsFunctionImplementation(JMember member) {
+    if (member.getJsMemberType() != JsMemberType.NONE) {
+      logError(member,
+          "JsFunction implementation member '%s' cannot be JsMethod nor JsProperty.",
+          JjsUtils.getReadableDescription(member));
+    }
+
+    if (!(member instanceof JMethod)) {
+      return;
+    }
+
+    JMethod method = (JMethod) member;
+    if (method.isOrOverridesJsFunctionMethod()
+        || method.isSynthetic()
+        || method.getOverriddenMethods().isEmpty()) {
+      return;
+    }
+
+    // Methods that are not effectively static dispatch are disallowed. In this case these
+    // could only be overridable methods of java.lang.Object, i.e. toString, hashCode and equals.
+    logError(method, "JsFunction implementation '%s' cannot implement method '%s'.",
+        JjsUtils.getReadableDescription(member.getEnclosingType()),
+        JjsUtils.getReadableDescription(method));
   }
 
   private void checkJsFunctionImplementation(JDeclaredType type) {
@@ -695,18 +749,23 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       logError("JsFunction implementation '%s' must be final.",
           type);
     }
+
     if (type.getImplements().size() != 1) {
       logError("JsFunction implementation '%s' cannot implement more than one interface.",
           type);
     }
 
+    if (type.getSuperClass() != jprogram.getTypeJavaLangObject()) {
+      logError("JsFunction implementation '%s' cannot extend a class.", type);
+    }
+
     if (type.isJsType()) {
       logError("'%s' cannot be both a JsFunction implementation and a JsType at the same time.",
           type);
+      return;
     }
-
-    if (type.getSuperClass() != jprogram.getTypeJavaLangObject()) {
-      logError("JsFunction implementation '%s' cannot extend a class.", type);
+    for (JMember member : type.getMembers()) {
+      checkMemberOfJsFunctionImplementation(member);
     }
   }
 

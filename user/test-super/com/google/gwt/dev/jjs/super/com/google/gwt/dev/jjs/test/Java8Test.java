@@ -1600,4 +1600,27 @@ public class Java8Test extends GWTTestCase {
           }
         }.fAsPredicate().apply());
   }
+
+  @JsFunction
+  interface JsFunctionInterface {
+    Double m();
+    @JsOverlay
+    default Double callM() {
+      return this.m();
+    }
+  }
+
+  private static native JsFunctionInterface createNative() /*-{
+    return function () { return 5; };
+  }-*/;
+  public void testJsFunction_withOverlay() {
+    JsFunctionInterface f = new JsFunctionInterface() {
+      @Override
+      public Double m() {
+        return new Double(2.0);
+      }
+    };
+    assertEquals(2, f.callM().intValue());
+    assertEquals(5, createNative().callM().intValue());
+  }
 }

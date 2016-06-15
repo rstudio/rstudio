@@ -1147,6 +1147,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "@JsFunction",
         "public interface Function {",
         "  int getFoo();",
+        "  @JsOverlay",
+        "  default void m() {}",
+        "  @JsOverlay",
+        "  static void n() {}",
         "}",
         "public static final class Buggy implements Function {",
         "  public int getFoo() { return 0; }",
@@ -1168,19 +1172,34 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
 
   public void testJsFunctionFails() throws Exception {
     addSnippetImport("jsinterop.annotations.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
     addSnippetImport("jsinterop.annotations.JsProperty");
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsFunction",
-        "interface Function {",
+        "public interface Function {",
         "  int getFoo();",
         "}",
-        "static final class Buggy implements Function {",
+        "public static final class Buggy implements Function {",
+        "  @JsProperty",
         "  public int getFoo() { return 0; }",
+        "  @JsMethod",
+        "  private void bleh() {}",
+        "  @JsProperty",
+        "  public int prop = 0;",
+        "  public String toString() { return \"\"; }",
+        "  public boolean equals(Object o) { return false; }",
+        "  public int hashCode() { return 0; }",
         "}",
         "@JsFunction",
-        "interface InvalidFunction {",
+        "public interface InvalidFunction {",
+        "  @JsProperty",
         "  int getFoo();",
+        "  default void m() {}",
+        "  int f = 0;",
+        "  static void n() {}",
+        "  @JsOverlay",
         "  String s = null;",
         "}",
         "static class NonFinalJsFunction implements Function {",
@@ -1204,19 +1223,38 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 14: JsFunction 'EntryPoint.InvalidFunction' cannot have static initializer.",
-        "Line 18: JsFunction implementation 'EntryPoint.NonFinalJsFunction' must be final.",
-        "Line 22: 'EntryPoint.JsFunctionMarkedAsJsType' cannot be both a JsFunction implementation "
+        "Line 14: JsFunction implementation member 'int EntryPoint.Buggy.getFoo()' "
+            + "cannot be JsMethod nor JsProperty.",
+        "Line 16: JsFunction implementation member 'void EntryPoint.Buggy.bleh()' cannot "
+            + "be JsMethod nor JsProperty.",
+        "Line 18: JsFunction implementation member 'int EntryPoint.Buggy.prop' cannot "
+            + "be JsMethod nor JsProperty.",
+        "Line 19: JsFunction implementation 'EntryPoint.Buggy' cannot implement method "
+            + "'String EntryPoint.Buggy.toString()'.",
+        "Line 20: JsFunction implementation 'EntryPoint.Buggy' cannot implement method "
+            + "'boolean EntryPoint.Buggy.equals(Object)'.",
+        "Line 21: JsFunction implementation 'EntryPoint.Buggy' cannot implement method "
+            + "'int EntryPoint.Buggy.hashCode()'.",
+        "Line 26: JsFunction interface member 'int EntryPoint.InvalidFunction.getFoo()' cannot "
+            + "be JsMethod nor JsProperty.",
+        "Line 27: JsFunction interface 'EntryPoint.InvalidFunction' cannot declare non-JsOverlay "
+            + "member 'void EntryPoint.InvalidFunction.m()'.",
+        "Line 28: JsFunction interface 'EntryPoint.InvalidFunction' cannot declare non-JsOverlay "
+            + "member 'int EntryPoint.InvalidFunction.f'.",
+        "Line 29: JsFunction interface 'EntryPoint.InvalidFunction' cannot declare non-JsOverlay "
+            + "member 'void EntryPoint.InvalidFunction.n()'.",
+        "Line 31: JsFunction implementation 'EntryPoint.NonFinalJsFunction' must be final.",
+        "Line 35: 'EntryPoint.JsFunctionMarkedAsJsType' cannot be both a JsFunction implementation "
             + "and a JsType at the same time.",
-        "Line 26: JsFunction 'EntryPoint.JsFunctionExtendsInterface' cannot extend other"
+        "Line 39: JsFunction 'EntryPoint.JsFunctionExtendsInterface' cannot extend other"
             + " interfaces.",
-        "Line 29: 'EntryPoint.InterfaceExtendsJsFunction' cannot extend "
+        "Line 42: 'EntryPoint.InterfaceExtendsJsFunction' cannot extend "
             + "JsFunction 'EntryPoint.Function'.",
-        "Line 30: Cannot do instanceof against JsFunction implementation "
+        "Line 43: Cannot do instanceof against JsFunction implementation "
             + "'EntryPoint.Buggy'.",
-        "Line 31: JsFunction implementation 'EntryPoint.JsFunctionExtendingBaseClass' cannot "
+        "Line 44: JsFunction implementation 'EntryPoint.JsFunctionExtendingBaseClass' cannot "
             + "extend a class.",
-        "Line 34: JsFunction implementation 'EntryPoint.JsFunctionMultipleInterfaces' cannot "
+        "Line 47: JsFunction implementation 'EntryPoint.JsFunctionMultipleInterfaces' cannot "
             + "implement more than one interface.");
   }
 
@@ -1753,8 +1791,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}");
 
     assertBuggyFails(
-        "Line 6: JsOverlay 'int EntryPoint.Buggy.f' can only be declared in a native type.",
-        "Line 7: JsOverlay 'void EntryPoint.Buggy.m()' can only be declared in a native type.");
+        "Line 6: JsOverlay 'int EntryPoint.Buggy.f' can only be declared in a native type "
+            + "or a JsFunction interface.",
+        "Line 7: JsOverlay 'void EntryPoint.Buggy.m()' can only be declared in a native type "
+            + "or a JsFunction interface.");
   }
 
   public void testJsTypeExtendsNativeJsTypeSucceeds() throws Exception {

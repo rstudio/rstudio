@@ -75,8 +75,6 @@ public class JSORestrictionsChecker {
       "Methods cannot be overridden in JavaScriptObject subclasses";
   public static final String ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE =
       "@JsFunction is only allowed on functional interface";
-  public static final String ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS =
-      "JsFunction cannot have default methods";
 
   private enum ClassState {
     NORMAL, JSO
@@ -220,10 +218,6 @@ public class JSORestrictionsChecker {
       if (!binding.isFunctionalInterface(type.scope)) {
         errorOn(type, ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
         return;
-      }
-      // If a functional interface has more than one method, it means it has default methods.
-      if (binding.methods().length > 1) {
-        errorOn(type, ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS);
       }
     }
 

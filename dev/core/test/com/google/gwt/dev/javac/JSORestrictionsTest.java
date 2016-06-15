@@ -411,18 +411,6 @@ public class JSORestrictionsTest extends TestCase {
         "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
   }
 
-  public void testJsFunctionNotOnInterfaceWithDefaultMethod() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import jsinterop.annotations.JsFunction;\n");
-    buggyCode.append("@JsFunction public interface Buggy {\n");
-    buggyCode.append("int foo(int x);\n");
-    buggyCode.append("default void bar() { }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(SourceLevel.JAVA8, buggyCode,
-        "Line 2: " + JSORestrictionsChecker.ERR_JS_FUNCTION_CANNOT_HAVE_DEFAULT_METHODS);
-  }
-
   /**
    * Test that when compiling buggyCode, the TypeOracleUpdater emits
    * expectedError somewhere in its output. The code should define a class named

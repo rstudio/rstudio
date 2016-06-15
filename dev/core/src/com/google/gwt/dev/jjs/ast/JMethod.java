@@ -227,7 +227,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   }
 
   private boolean isJsFunctionMethod() {
-    return enclosingType.isJsFunction();
+    return enclosingType.isJsFunction() && isAbstract();
   }
 
   public boolean isOrOverridesJsFunctionMethod() {
@@ -248,7 +248,9 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
   public boolean isJsOverlay() {
     return isJsOverlay
         || getEnclosingType().isJsoType()
-        || getEnclosingType().isJsNative() && JProgram.isClinit(this);
+        // Clinits are implicit overlays on native types and JsFunction interfaces.
+        || JProgram.isClinit(this)
+            && (getEnclosingType().isJsNative() || getEnclosingType().isJsFunction());
   }
 
   public void setSyntheticAccidentalOverride() {
