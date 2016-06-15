@@ -42,6 +42,7 @@ AugmentedJar(
         "src",
         "super",
     ],
+    compatible_with = ["//buildenv/target:appengine"],
     constraints = [],
     dojarjar = 1,
     exclude_glob = [
@@ -71,6 +72,7 @@ java_library(
             "**/RunStyleSelenium.java",
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
@@ -198,7 +200,10 @@ java_library(
         ["src/com/google/gwt/regexp/shared/*.java"],
         exclude = ["**/package-info.java"],
     ),
-    compatible_with = ["//buildenv/target:android"],
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
+    ],
     constraints = ["android"],
 )
 
@@ -225,6 +230,7 @@ java_library(
 # For example see b/3033925
 java_import(
     name = "gwt-servlet-internal",
+    compatible_with = ["//buildenv/target:appengine"],
     jars = [":libgwt-servlet-impl.jar"],
 )
 
@@ -372,6 +378,7 @@ java_library(
             "src/com/google/web/bindery/requestfactory/server/RequestFactoryJarExtractor.java",
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         "//third_party/java/servlet/servlet_api",
         "//third_party/java_src/gwt/svn/tools:servlet_deps",
@@ -399,7 +406,10 @@ java_library(
     ] + glob([
         "src/com/google/gwt/user/client/rpc/core/java/util/*_CustomFieldSerializer*.java",
     ]),
-    compatible_with = ["//buildenv/target:android"],
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
+    ],
     constraints = [
         "android",
         "gwt",
@@ -412,7 +422,10 @@ java_library(
 java_library(
     name = "gwt-jsinterop-annotations",
     srcs = glob(["src/jsinterop/**/*.java"]),
-    compatible_with = ["//buildenv/target:android"],
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
+    ],
     constraints = [
         "android",
     ],

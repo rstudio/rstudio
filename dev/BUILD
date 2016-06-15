@@ -80,6 +80,7 @@ java_library(
             "**/super/**",
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         # GWTBridge & UnsafeNativeLong
         ":compiler.standalone.super",
@@ -97,6 +98,7 @@ AugmentedJar(
         "//third_party/java_src/gwt/svn/tools:dev_jars",
         "//third_party/java_src/gwt/svn/tools:legacy_dev_jars",
     ],
+    compatible_with = ["//buildenv/target:appengine"],
     constraints = [],
     dojarjar = 1,
     wrap_javalibrary = 0,
@@ -114,6 +116,7 @@ AugmentedJar(
         ":libcompiler.standalone.super.jar",
         ":super-resources.jar",
     ],
+    compatible_with = ["//buildenv/target:appengine"],
     constraints = [],
     dojarjar = 1,
     resources = ["//tools/gwt:gwt_google_defaults"],
@@ -125,6 +128,7 @@ AugmentedJar(
 java_library(
     name = "gwt-dev-bare",
     srcs = glob(["core/src/**/*.java"]),
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java/gson",
@@ -153,6 +157,7 @@ Zip(
             "core/src/com/google/gwt/dev/js/globals/globals.html",  # for testing
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     root = "core/src",
 )
 
@@ -193,6 +198,7 @@ java_library(
             "**/testing/**",
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java/gson",
@@ -211,7 +217,11 @@ java_library(
             "core/super/com/google/gwt/dev/jjs/intrinsic/**",
         ],
     ),
-    compatible_with = ["//buildenv/target:android"],
+    compatible_with =
+        [
+            "//buildenv/target:android",
+            "//buildenv/target:appengine",
+        ],
     constraints = ["android"],
 )
 
@@ -224,6 +234,7 @@ Zip(
             "core/super/**/*.xml",
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     root = "core/super",
 )
 
