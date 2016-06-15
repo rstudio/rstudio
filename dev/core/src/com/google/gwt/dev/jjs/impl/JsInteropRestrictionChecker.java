@@ -77,6 +77,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
 
   private final JProgram jprogram;
   private final MinimalRebuildCache minimalRebuildCache;
+  private boolean wasUnusableByJsWarningReported = false;
 
   private JsInteropRestrictionChecker(JProgram jprogram,
       MinimalRebuildCache minimalRebuildCache) {
@@ -722,6 +723,11 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }
     checkStaticJsPropertyCalls();
     checkInstanceOfNativeJsTypes();
+    if (wasUnusableByJsWarningReported) {
+      logSuggestion(
+          "Suppress \"[unusable-by-js]\" warnings by adding a "
+              + "`@SuppressWarnings(\"unusable-by-js\")` annotation to the corresponding member.");
+    }
 
     boolean hasErrors = reportErrorsAndWarnings(logger);
     return !hasErrors;
@@ -782,6 +788,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }
     logWarning(x, "[unusable-by-js] %s %s is not usable by but exposed to JavaScript.", prefix,
         getMemberDescription(x));
+    wasUnusableByJsWarningReported = true;
   }
 
   private static class JsMember {

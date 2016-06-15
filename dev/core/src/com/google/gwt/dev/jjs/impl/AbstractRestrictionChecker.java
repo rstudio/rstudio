@@ -28,6 +28,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Ordering;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.collect.TreeMultimap;
 
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -38,6 +39,7 @@ public abstract class AbstractRestrictionChecker {
       = TreeMultimap.create(Ordering.natural(), AbstractTreeLogger.LOG_LINE_COMPARATOR);
   private Multimap<String, String> warningsByFilename
       = TreeMultimap.create(Ordering.natural(), AbstractTreeLogger.LOG_LINE_COMPARATOR);
+  private Set<String> suggestionMessages = Sets.newLinkedHashSet();
 
   protected static String getDescription(HasSourceInfo hasSourceInfo) {
     if (hasSourceInfo instanceof JDeclaredType) {
@@ -84,6 +86,10 @@ public abstract class AbstractRestrictionChecker {
             + String.format(format, args));
   }
 
+  protected void logSuggestion(String format, Object... args) {
+    suggestionMessages.add(String.format(format, args));
+  }
+
   protected boolean reportErrorsAndWarnings(TreeLogger logger) {
     TreeSet<String> filenamesToReport = Sets.newTreeSet(
         Iterables.concat(errorsByFilename.keySet(), warningsByFilename.keySet()));
@@ -97,6 +103,9 @@ public abstract class AbstractRestrictionChecker {
       for (String message :warningsByFilename.get(fileName)) {
         branch.log(Type.WARN, message);
       }
+    }
+    for (String message : suggestionMessages) {
+      logger.log(Type.WARN, message);
     }
     return !errorsByFilename.isEmpty();
   }

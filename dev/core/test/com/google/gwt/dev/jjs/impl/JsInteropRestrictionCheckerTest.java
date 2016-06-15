@@ -2202,7 +2202,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "is not usable by but exposed to JavaScript.",
         "Line 24: [unusable-by-js] Type of parameter 'a' in "
             + "'EntryPoint.B EntryPoint.Buggy.f4(EntryPoint.B)' is not usable by but "
-            + "exposed to JavaScript.");
+            + "exposed to JavaScript.",
+        "Suppress \"[unusable-by-js]\" warnings by adding a `@SuppressWarnings(\"unusable-by-js\")`"
+            + " annotation to the corresponding member.");
   }
 
   public void testUnusableByJsAccidentalOverrideSuppressionWarns()
@@ -2222,7 +2224,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds(
         "Line 10: [unusable-by-js] Type of parameter 'x' in "
             + "'void EntryPoint.Parent.doIt(Class)' (exposed by 'EntryPoint.Buggy') is not usable "
-            + "by but exposed to JavaScript.");
+            + "by but exposed to JavaScript.",
+        "Suppress \"[unusable-by-js]\" warnings by adding a `@SuppressWarnings(\"unusable-by-js\")`"
+            + " annotation to the corresponding member.");
   }
 
   private static final MockJavaResource jsFunctionInterface = new MockJavaResource(
