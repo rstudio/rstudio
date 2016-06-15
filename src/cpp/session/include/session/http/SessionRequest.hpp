@@ -66,6 +66,9 @@ inline core::Error sendSessionRequest(const std::string& uri,
                             pResponse);
 #else
    std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
+
+#ifdef __APPLE__
+   // on OS X desktop, we use HTTP
    if (tcpipPort.empty())
    {
       // if no standalone port, make an authenticated session request
@@ -73,6 +76,8 @@ inline core::Error sendSessionRequest(const std::string& uri,
       request.setHeader("X-Shared-Secret",
                           core::system::getenv("RS_SHARED_SECRET"));
    }
+#endif
+
    if (!tcpipPort.empty())
    {
       return core::http::sendRequest("127.0.0.1", tcpipPort, request, 
@@ -80,9 +85,20 @@ inline core::Error sendSessionRequest(const std::string& uri,
    }
    else
    {
-      // determine stream path
+      // determine stream path -- check server environment variable first
+      core::FilePath streamPath;
       std::string stream = core::system::getenv(kRStudioSessionStream);
-      core::FilePath streamPath = session::local_streams::streamPath(stream);
+      if (stream.empty())
+      {
+         // if no server environment variable, check desktop variant
+         streamPath = core::FilePath(core::system::getenv("RS_LOCAL_PEER"));
+         request.setHeader("X-Shared-Secret",
+                             core::system::getenv("RS_SHARED_SECRET"));
+      }
+      else
+      {
+         streamPath = session::local_streams::streamPath(stream);
+      }
       return core::http::sendRequest(streamPath, request, pResponse);
    }
 #endif
