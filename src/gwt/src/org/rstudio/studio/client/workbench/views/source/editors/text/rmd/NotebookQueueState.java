@@ -88,7 +88,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       queue_ = queue;
       
       // set executing unit to front of queue
-      if (queue_.getUnits().length() > 1)
+      if (queue_.getUnits().length() > 0)
       {
          executingUnit_ = queue_.getUnits().get(0);
          
