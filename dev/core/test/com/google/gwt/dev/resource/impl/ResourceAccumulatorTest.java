@@ -14,6 +14,7 @@
 package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import junit.framework.TestCase;
@@ -24,6 +25,7 @@ import java.nio.file.FileSystemException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Tests for ResourceAccumulator.
@@ -271,14 +273,21 @@ public class ResourceAccumulatorTest extends TestCase {
     return list;
   }
 
-  private PathPrefixSet pathPrefixes;
+  private Set<PathPrefixSet> pathPrefixes = Sets.newHashSet();
+
+  @Override
+  public void tearDown() {
+    pathPrefixes.clear();
+  }
 
   private PathPrefixSet createInclusivePathPrefixSet() {
-    // Set to a field to create a strong reference, otherwise will get GCed as ResourceAccumulator
-    // refers to it weakly.
-    pathPrefixes = new PathPrefixSet();
-    pathPrefixes.add(new PathPrefix("", null));
-    return pathPrefixes;
+    PathPrefixSet pathPrefixSet = new PathPrefixSet();
+    pathPrefixSet.add(new PathPrefix("", null));
+
+    // Keep the the reference until the end of the test to create a strong reference, otherwise
+    // will get GCed as ResourceAccumulator refers to it weakly.
+    pathPrefixes.add(pathPrefixSet);
+    return pathPrefixSet;
   }
 
   private void waitForFileEvents() throws InterruptedException {
