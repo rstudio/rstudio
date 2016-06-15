@@ -1140,134 +1140,84 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
-  public void testJsFunctionExtendsInterfaceFails() throws Exception {
+  public void testJsFunctionSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsFunction");
-    addSnippetClassDecl(
-        "interface AnotherInterface {}",
-        "@JsFunction",
-        "public interface Buggy extends AnotherInterface {",
-        "  void foo();",
-        "}");
-
-    assertBuggyFails("Line 6: JsFunction 'EntryPoint.Buggy' cannot extend other interfaces.");
-  }
-
-  public void testJsFunctionExtendedByInterfaceFails() throws Exception {
-    addAll(jsFunctionInterface);
-
-    addSnippetClassDecl("public interface Buggy extends MyJsFunctionInterface {}");
-
-    assertBuggyFails(
-        "Line 3: 'EntryPoint.Buggy' cannot extend JsFunction 'MyJsFunctionInterface'.");
-  }
-
-  public void testJsFunctionMarkedAsJsTypeFails() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetImport("jsinterop.annotations.JsFunction");
-    addSnippetClassDecl(
-        "@JsFunction @JsType",
-        "public interface Buggy {",
-        "  void foo();",
-        "}");
-
-    assertBuggyFails(
-        "Line 6: 'EntryPoint.Buggy' cannot be both a JsFunction and a JsType at the same time.");
-  }
-
-  public void testJsFunctionImplementationSucceeds() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
     addSnippetClassDecl(
         "@JsFunction",
         "public interface Function {",
-        "  void foo();",
+        "  int getFoo();",
         "}",
         "public static final class Buggy implements Function {",
-        "  public void foo() {",
+        "  public int getFoo() { return 0; }",
+        "  public final void blah() {}",
+        "  public void blat() {}",
+        "  private void bleh() {}",
+        "  static void blet() {",
         "    new Function() {",
-        "       public void foo() {}",
-        "    }.foo();",
+        "       public int getFoo() { return 0; }",
+        "    }.getFoo();",
         "  }",
-        "}");
+        "  String x = someString();",
+        "  static int y;",
+        "}",
+        "public static String someString() { return \"hello\"; }");
 
     assertBuggySucceeds();
   }
 
-  public void testJsFunctionImplementationWithMultipleSuperInterfacesFails() throws Exception {
-    addAll(jsFunctionInterface);
+  public void testJsFunctionFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsFunction");
+    addSnippetImport("jsinterop.annotations.JsProperty");
+    addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
-        "interface AnotherInterface {}",
-        "public static final class Buggy implements MyJsFunctionInterface, AnotherInterface {",
-        "  public int foo(int x) { return 0; }",
-        "  public int bar(int x) { return 0; }",
-        "}");
-
-    assertBuggyFails("Line 4: JsFunction implementation 'EntryPoint.Buggy' cannot "
-        + "implement more than one interface.");
-  }
-
-  public void testJsFunctionImplementationWithSuperClassFails() throws Exception {
-    addAll(jsFunctionInterface);
-    addSnippetClassDecl(
-        "public static class BaseClass {}",
-        "public static final class Buggy extends BaseClass implements MyJsFunctionInterface {",
-        "  public int foo(int x) { return 0; }",
-        "}");
-
-    assertBuggyFails("Line 4: JsFunction implementation 'EntryPoint.Buggy' cannot "
-        + "extend a class.");
-  }
-
-  public void testJsFunctionImplementationNotFinalFails() throws Exception {
-    addAll(jsFunctionInterface);
-    addSnippetClassDecl(
-        "public static class BaseClass implements MyJsFunctionInterface {",
-        "  public int foo(int x) { return 0; }",
+        "@JsFunction",
+        "interface Function {",
+        "  int getFoo();",
         "}",
-        "public static class Buggy extends BaseClass  {",
-        "}");
-
-    assertBuggyFails("Line 3: JsFunction implementation 'EntryPoint.BaseClass' must be final.");
-  }
-
-  public void testJsFunctionImplementationMarkedAsJsTypeFails() throws Exception {
-    addAll(jsFunctionInterface);
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetClassDecl(
+        "static final class Buggy implements Function {",
+        "  public int getFoo() { return 0; }",
+        "}",
+        "@JsFunction",
+        "interface InvalidFunction {",
+        "  int getFoo();",
+        "  String s = null;",
+        "}",
+        "static class NonFinalJsFunction implements Function {",
+        "  public int getFoo() { return 0; }",
+        "}",
         "@JsType",
-        "public static final class Buggy implements MyJsFunctionInterface {",
-        "  public int foo(int x) { return 0; }",
+        "static final class JsFunctionMarkedAsJsType implements Function {",
+        "  public int getFoo() { return 0; }",
+        "}",
+        "@JsFunction",
+        "interface JsFunctionExtendsInterface extends Cloneable {",
+        "  void foo();",
+        "}",
+        "interface InterfaceExtendsJsFunction extends Function {}",
+        "static class BaseClass { { if (new Object() instanceof Buggy) {} }}",
+        "static final class JsFunctionExtendingBaseClass extends BaseClass implements Function {",
+        "  public int getFoo() { return 0; }",
+        "}",
+        "static final class JsFunctionMultipleInterfaces implements Function, Cloneable {",
+        "  public int getFoo() { return 0; }",
         "}");
 
     assertBuggyFails(
-        "Line 5: 'EntryPoint.Buggy' cannot be both a JsFunction implementation and a JsType "
-            + "at the same time.");
-  }
-
-  public void testJsFunctionStaticInitializerFails() {
-    addSnippetImport("jsinterop.annotations.JsType");
-    addSnippetImport("jsinterop.annotations.JsFunction");
-    addSnippetClassDecl(
-        "public static String someString() { return \"hello\"; }",
-        "@JsFunction public interface Buggy {",
-        "  static String s = someString();",
-        "  void m();",
-        "}");
-
-    assertBuggyFails(
-        "Line 6: JsFunction 'EntryPoint.Buggy' cannot have static initializer.");
-  }
-
-  public void testJsFunctionImplementationInInstanceofFails() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsFunction");
-    addSnippetClassDecl(
-        "@JsFunction interface Function { void m(); }",
-        "final static class FunctionImplementation implements Function { public void m() {} ; }",
-        "public static class Buggy {",
-        "  public Buggy() { if (new Object() instanceof FunctionImplementation) {} }",
-        "}");
-
-    assertBuggyFails("Line 7: Cannot do instanceof against JsFunction implementation "
-        + "'EntryPoint.FunctionImplementation'.");
+        "Line 14: JsFunction 'EntryPoint.InvalidFunction' cannot have static initializer.",
+        "Line 18: JsFunction implementation 'EntryPoint.NonFinalJsFunction' must be final.",
+        "Line 22: 'EntryPoint.JsFunctionMarkedAsJsType' cannot be both a JsFunction implementation "
+            + "and a JsType at the same time.",
+        "Line 26: JsFunction 'EntryPoint.JsFunctionExtendsInterface' cannot extend other"
+            + " interfaces.",
+        "Line 29: 'EntryPoint.InterfaceExtendsJsFunction' cannot extend "
+            + "JsFunction 'EntryPoint.Function'.",
+        "Line 30: Cannot do instanceof against JsFunction implementation "
+            + "'EntryPoint.Buggy'.",
+        "Line 31: JsFunction implementation 'EntryPoint.JsFunctionExtendingBaseClass' cannot "
+            + "extend a class.",
+        "Line 34: JsFunction implementation 'EntryPoint.JsFunctionMultipleInterfaces' cannot "
+            + "implement more than one interface.");
   }
 
   public void testNativeJsTypeStaticInitializerFails() {
