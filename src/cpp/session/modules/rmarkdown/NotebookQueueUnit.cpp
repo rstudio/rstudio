@@ -225,19 +225,28 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    int start = range.start;
    int stop = range.stop;
 
-   // use the first line of the range if it's multi-line
-   size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && static_cast<int>(idx) < stop)
+   // if this is a blank line, submit it by itself
+   if (code_.at(start) == '\n')
    {
-      stop = idx;
-
-      // adjust the range to account for the code we're about to send
-      range.start = idx + 1;
+      stop = start + 1;
+      range.start = stop;
    }
    else
    {
-      // not multi line, remove range entirely
-      pending_.pop_front();
+      // use the first line of the range if it's multi-line
+      size_t idx = code_.find('\n', start + 1);
+      if (idx != std::string::npos && static_cast<int>(idx) < stop)
+      {
+         stop = idx;
+
+         // adjust the range to account for the code we're about to send
+         range.start = idx + 1;
+      }
+      else
+      {
+         // not multi line, remove range entirely
+         pending_.pop_front();
+      }
    }
 
    // mark completed and extract from code
