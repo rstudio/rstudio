@@ -133,11 +133,15 @@ public:
             popUnit(execUnit_);
 
             // notify client
-            enqueueExecStateChanged(ChunkExecFinished, execContext_->options());
+            enqueueExecStateChanged(ChunkExecFinished, execContext_ ?
+                  execContext_->options() : json::Object());
 
             // clean up current exec unit 
-            execContext_->disconnect();
-            execContext_.reset();
+            if (execContext_)
+            {
+               execContext_->disconnect();
+               execContext_.reset();
+            }
             execUnit_.reset();
 
             // if the unit was incomplete, we need to wait for the interrupt
@@ -178,6 +182,8 @@ public:
       // clean up any active execution context
       if (execContext_)
          execContext_->disconnect();
+      if (execUnit_)
+         execUnit_.reset();
 
       // remove all document queues
       queue_.clear();
@@ -195,10 +201,10 @@ public:
 
    void onConsolePrompt(const std::string& prompt)
    {
-      if (prompt == "+ ")
-         process(ExprModeContinuation);
-      else 
-         process(ExprModeNew);
+      Error error = process(prompt == "+ " ? ExprModeContinuation : 
+                                             ExprModeNew);
+      if (error)
+         LOG_ERROR(error);
    }
 
 private:
@@ -293,7 +299,7 @@ private:
       json::Object options;
       Error error = unit->parseOptions(&options);
       if (error)
-         return error;
+         LOG_ERROR(error);
 
       // in batch mode, make sure unit should be evaluated -- note that
       // eval=FALSE units generally do not get sent up in the first place, so
@@ -303,7 +309,9 @@ private:
          bool eval = true;
          json::readObject(options, "eval", &eval);
          if (!eval)
+         {
             return skipUnit();
+         }
       }
 
       // compute context
@@ -319,6 +327,8 @@ private:
             unit->docId(), unit->chunkId(), ctx, unit->execScope(), options,
             docQueue->pixelWidth(), docQueue->charWidth());
          execContext_->connect();
+         execUnit_ = unit;
+         enqueueExecStateChanged(ChunkExecStarted, options);
       }
       else
       {
@@ -331,6 +341,8 @@ private:
          }
          else
          {
+            execUnit_ = unit;
+            enqueueExecStateChanged(ChunkExecStarted, options);
             error = executeAlternateEngineChunk(
                unit->docId(), unit->chunkId(), ctx, engine, innerCode, options);
             if (error)
@@ -342,12 +354,12 @@ private:
       if (error)
          return skipUnit();
 
-      // notify client
-      execUnit_ = unit;
-      enqueueExecStateChanged(ChunkExecStarted, options);
-
       if (engine == "r")
-         executeCurrentUnit(ExprModeNew);
+      {
+         error = executeCurrentUnit(ExprModeNew);
+         if (error)
+            LOG_ERROR(error);
+      }
 
       return Success();
    }
