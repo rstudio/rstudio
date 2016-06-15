@@ -24,6 +24,7 @@
 #if !defined(_WIN32)
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/LocalStreamBlockingClient.hpp>
+#include <core/http/ConnectionRetryProfile.hpp>
 #else
 #include <core/http/NamedPipeBlockingClient.hpp>
 #endif
@@ -59,7 +60,7 @@ inline core::Error sendSessionRequest(const std::string& uri,
                        core::system::getenv("RS_SHARED_SECRET"));
    return core::http::sendRequest(pipeName,
                             request,
-                            ConnectionRetryProfile(
+                            core::http::ConnectionRetryProfile(
                                   boost::posix_time::seconds(10),
                                   boost::posix_time::milliseconds(50)),
                             pResponse);
