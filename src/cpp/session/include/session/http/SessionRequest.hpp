@@ -55,16 +55,23 @@ inline core::Error sendSessionRequest(const std::string& uri,
 #ifdef _WIN32
    // get local peer
    std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
-   pRequest->setHeader("X-Shared-Secret",
+   request.setHeader("X-Shared-Secret",
                        core::system::getenv("RS_SHARED_SECRET"));
    return core::http::sendRequest(pipeName,
-                            *pRequest,
+                            request,
                             ConnectionRetryProfile(
                                   boost::posix_time::seconds(10),
                                   boost::posix_time::milliseconds(50)),
                             pResponse);
 #else
    std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
+   if (tcpipPort.empty())
+   {
+      // if no standalone port, make an authenticated session request
+      tcpipPort = core::system::getenv(kRSessionPortNumber);
+      request.setHeader("X-Shared-Secret",
+                          core::system::getenv("RS_SHARED_SECRET"));
+   }
    if (!tcpipPort.empty())
    {
       return core::http::sendRequest("127.0.0.1", tcpipPort, request, 
