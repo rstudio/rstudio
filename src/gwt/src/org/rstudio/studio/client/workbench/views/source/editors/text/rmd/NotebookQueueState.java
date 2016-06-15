@@ -325,8 +325,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          notebook_.setOutputOptions(event.getChunkId(), 
                event.getOptions());
 
-         notebook_.setChunkExecuting(event.getChunkId(), 
-               executingUnit_.getExecMode());
+         if (executingUnit_ != null)
+            notebook_.setChunkExecuting(event.getChunkId(), 
+                  executingUnit_.getExecMode());
 
          break;
 
