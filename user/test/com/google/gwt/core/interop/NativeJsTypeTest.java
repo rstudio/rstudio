@@ -265,8 +265,8 @@ public class NativeJsTypeTest extends GWTTestCase {
     // True cases.
     assertTrue(aJsFunction instanceof NativeFunction);
     assertTrue(aJsFunction instanceof SomeFunctionalInterface);
+    assertTrue(aJsFunction instanceof NativeObject);
     // False cases.
-    assertFalse(aJsFunction instanceof NativeObject);
     assertFalse(aJsFunction instanceof NativeArray);
     assertFalse(aJsFunction instanceof NativeNumber);
     assertFalse(aJsFunction instanceof NativeString);
@@ -275,8 +275,8 @@ public class NativeJsTypeTest extends GWTTestCase {
     // True cases.
     assertTrue(anotherFunction instanceof NativeFunction);
     assertTrue(anotherFunction instanceof SomeFunctionalInterface);
+    assertTrue(anotherFunction instanceof NativeObject);
     // False cases.
-    assertFalse(anotherFunction instanceof NativeObject);
     assertFalse(anotherFunction instanceof NativeArray);
     assertFalse(anotherFunction instanceof NativeNumber);
     assertFalse(anotherFunction instanceof NativeString);
@@ -344,7 +344,25 @@ public class NativeJsTypeTest extends GWTTestCase {
     assertFalse(aBoxedNumber instanceof NativeArray);
     assertFalse(aBoxedNumber instanceof NativeFunction);
     assertFalse(aBoxedNumber instanceof NativeString);
+
+    Object nullObject = null;
+
+    assertFalse(nullObject instanceof NativeObject);
+    assertFalse(nullObject instanceof NativeArray);
+    assertFalse(nullObject instanceof NativeFunction);
+    assertFalse(nullObject instanceof NativeString);
+    assertFalse(nullObject instanceof NativeNumber);
+
+    Object undefined = getUndefined();
+    assertFalse(undefined instanceof NativeObject);
+    assertFalse(undefined instanceof NativeArray);
+    assertFalse(undefined instanceof NativeFunction);
+    assertFalse(undefined instanceof NativeString);
+    assertFalse(undefined instanceof NativeNumber);
   }
+
+  private static native Object getUndefined() /*-{
+  }-*/;
 
   @JsType(isNative = true)
   private static class UnreferencedNativeType { }

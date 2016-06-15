@@ -244,7 +244,7 @@ final class Cast {
 
   @HasNoSideEffects
   private static native boolean isJsObject(Object src)/*-{
-    return typeof(src) === "object";
+    return typeof(src) === "object" || typeof (src) == "function";
   }-*/;
 
   @HasNoSideEffects
