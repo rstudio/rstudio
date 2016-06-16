@@ -75,7 +75,9 @@ public class OptionalLongTest extends GWTTestCase {
     try {
       present.ifPresent(null);
       fail("Non-Empty Optional must throw NullPointerException if consumer is null");
-    } catch (NullPointerException | JavaScriptException e) {
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
       // expected
     }
 
@@ -99,7 +101,9 @@ public class OptionalLongTest extends GWTTestCase {
     try {
       empty.orElseGet(null);
       fail("Empty Optional must throw NullPointerException if supplier is null");
-    } catch (NullPointerException | JavaScriptException e) {
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
       // expected
     }
 
@@ -117,14 +121,18 @@ public class OptionalLongTest extends GWTTestCase {
     try {
       empty.orElseThrow(null);
       fail("Empty Optional must throw NullPointerException if supplier is null");
-    } catch (NullPointerException | JavaScriptException e) {
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
       // expected
     }
 
     try {
       empty.orElseThrow(() -> null);
       fail("Empty Optional must throw NullPointerException if supplier returns null");
-    } catch (NullPointerException | JavaScriptException e) {
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
       // expected
     }
 

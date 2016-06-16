@@ -74,7 +74,9 @@ public class StringJoinerTest extends GWTTestCase {
     try {
       joiner.merge(null);
       fail("NullPointerException must be thrown if other joiner is null");
-    } catch (NullPointerException | JavaScriptException e) {
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
       // expected
     }
   }
