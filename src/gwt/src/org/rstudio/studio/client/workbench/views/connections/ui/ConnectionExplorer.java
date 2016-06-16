@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
-import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
 import com.google.gwt.dom.client.Style;
@@ -77,31 +76,24 @@ public class ConnectionExplorer extends Composite implements RequiresResize
          @Override
          public void onConsoleBusy(ConsoleBusyEvent event)
          {
-            isBusy_ = event.isBusy();
-            if (!isBusy_)
+            // clear progress on console becoming unblocked
+            if (!event.isBusy() && containerPanel_.isProgressShowing())
             {
-               if (waitingForConnection_)
-               {
-                  waitingForConnection_ = false;
-                  showActivePanel();
-                  updateTableBrowser();
-               }
+               showActivePanel();
+               updateTableBrowser();
             }
          }
       });
    }
    
    @Inject
-   public void initialize(EventBus eventBus, 
-                          ConnectionsServerOperations server)
+   public void initialize(EventBus eventBus)
    {
       eventBus_ = eventBus;
-      server_ = server;
    }
    
    public void showConnectionProgress()
    {
-      waitingForConnection_ = true;
       containerPanel_.showProgress(50); 
    }
    
@@ -115,10 +107,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    public void setConnected(boolean connected)
    {
       activePanel_ = connected ? tableBrowser_ : disconnectedUI_;
-      if (isBusy_)
-         showConnectionProgress();
-      else if (!waitingForConnection_)
-         showActivePanel();
+      showActivePanel();
    }
    
    public String getConnectCode()
@@ -138,9 +127,6 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    public void updateTableBrowser(String hint)
    {   
-      if (waitingForConnection_)
-         return;
-      
       tableBrowser_.update(connection_, hint);
    }
    
@@ -169,14 +155,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    
    private final SimplePanelWithProgress containerPanel_;
    
-   private boolean waitingForConnection_ = false;
-   
    private Connection connection_ = null;
    
-   private boolean isBusy_ = false;
-
    private EventBus eventBus_;
-   @SuppressWarnings("unused")
-   private ConnectionsServerOperations server_;
-   
 }
