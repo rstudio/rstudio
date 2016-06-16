@@ -33,6 +33,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
@@ -140,7 +141,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          
          queue_.removeAllUnits();
       }
-      editingTarget_.getStatusBar().hideNotebookProgress(true);
+      endQueueExecution(true);
    }
    
    public void executeRange(Scope chunk, Range range, int mode)
@@ -263,6 +264,11 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
    }
    
+   public static boolean anyQueuesExecuting()
+   {
+      return executingQueues_ > 0;
+   }
+   
    // Event handlers ----------------------------------------------------------
    
    @Override
@@ -344,7 +350,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             // slate on the next execution
             if (queue_.complete())
             {
-               editingTarget_.getStatusBar().hideNotebookProgress(false);
+               endQueueExecution(false);
             }
             else
             {
@@ -388,12 +394,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       }
 
       // update the status bar
-      if (queue_.getMaxUnits() > 1)
-      {
-         editingTarget_.getStatusBar().showNotebookProgress(
-               queue_.getJobDesc());
-         updateNotebookProgress();
-      }
+      beginQueueExecution();
    }
    
    private void renderLineState(int offset, List<Integer> lines, int state)
@@ -587,6 +588,26 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       renderLineState(row, completed, ChunkRowExecState.LINE_EXECUTED);
    }
    
+   private void beginQueueExecution()
+   {
+      executingQueues_++;
+      if (queue_.getMaxUnits() > 1)
+      {
+         editingTarget_.getStatusBar().showNotebookProgress(
+               queue_.getJobDesc());
+         updateNotebookProgress();
+      }
+   }
+   
+   private void endQueueExecution(boolean hideImmediately)
+   {
+      executingQueues_--;
+      editingTarget_.getStatusBar().hideNotebookProgress(hideImmediately);
+      
+      if (executingQueues_ == 0)
+         events_.fireEvent(new ConsoleBusyEvent(false));
+   }
+   
    private NotebookDocQueue queue_;
    
    private final DocDisplay docDisplay_;
@@ -599,5 +620,6 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    
    private int pixelWidth_;
    private int charWidth_;
+   private static int executingQueues_ = 0;
    public NotebookQueueUnit executingUnit_;
 }
