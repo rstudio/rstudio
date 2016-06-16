@@ -14,14 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
-public class ConsoleExecutePendingInputEvent extends GwtEvent<ConsoleExecutePendingInputEvent.Handler>
+import com.google.gwt.event.shared.EventHandler;
+
+@JavaScriptSerializable
+public class ConsoleExecutePendingInputEvent 
+             extends CrossWindowEvent<ConsoleExecutePendingInputEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
       void onExecutePendingInput(ConsoleExecutePendingInputEvent event);
+   }
+
+   public ConsoleExecutePendingInputEvent()
+   {
    }
    
    public ConsoleExecutePendingInputEvent(String commandId)

@@ -26,11 +26,13 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -58,6 +60,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCom
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
@@ -401,7 +405,22 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // call a method on the SourceShim
       else
       {
-         commands_.getCommandById(event.getCommandId()).execute();
+         AppCommand command = commands_.getCommandById(event.getCommandId());
+         
+         // the current editor may be in another window; if one of our source
+         // windows was last focused, use that one instead
+         SourceWindowManager manager = 
+               RStudioGinjector.INSTANCE.getSourceWindowManager();
+         if (!StringUtil.isNullOrEmpty(manager.getLastFocusedSourceWindowId()))
+         {
+            RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCommand(
+                  command, SourceSatellite.NAME_PREFIX + 
+                           manager.getLastFocusedSourceWindowId());
+         }
+         else
+         {
+            command.execute();
+         }
       }
    }
    
