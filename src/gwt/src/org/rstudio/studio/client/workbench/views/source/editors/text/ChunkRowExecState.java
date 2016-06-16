@@ -112,6 +112,10 @@ public class ChunkRowExecState
    
    public void setState(int state)
    {
+      // ignore if already at this state
+      if (state_ == state)
+         return;
+      
       // if the moving to the error state, clean other states
       if (state == LINE_ERROR)
          removeClazz();
