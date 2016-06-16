@@ -419,6 +419,16 @@ void connectionPreviewTable(const json::JsonRpcRequest& request,
    sendResponse(error, sexpResult, continuation, ERROR_LOCATION);
 }
 
+std::string sparkPackageName()
+{
+   if (module_context::isPackageVersionInstalled("sparklyr", "0.1.16"))
+      return "sparklyr";
+   else if (module_context::isPackageVersionInstalled("rspark", "0.1.14"))
+      return "rspark";
+   else
+      return "";
+}
+
 Error installSpark(const json::JsonRpcRequest& request,
                    json::JsonRpcResponse* pResponse)
 {
@@ -442,9 +452,12 @@ Error installSpark(const json::JsonRpcRequest& request,
    options.redirectStdErrToStdOut = true;
 
    // build install command
-   boost::format fmt("rspark::spark_install('%1%', hadoop_version = '%2%', "
+   boost::format fmt("%1%::spark_install('%2%', hadoop_version = '%3%', "
                      "verbose = TRUE)");
-   std::string cmd = boost::str(fmt % sparkVersion % hadoopVersion);
+   std::string cmd = boost::str(fmt %
+                                 sparkPackageName() %
+                                 sparkVersion %
+                                 hadoopVersion);
 
    // build args
    std::vector<std::string> args;
@@ -511,7 +524,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("rspark", "0.1.14");
+   return !sparkPackageName().empty();
 }
 
 bool activateConnections()
