@@ -74,24 +74,14 @@ options(connectionViewer = list(
       ""
 })
 
-.rs.addFunction("sparklyrAvailable", function() {
-   .rs.isPackageVersionInstalled("sparklyr", "0.1.16")
-})
-
 .rs.addFunction("getSparkWebUrl", function(finder, host) {
    sc <- .rs.getConnectionObject(finder, host)
-   if (.rs.sparklyrAvailable())
-      sparklyr:::spark_web(sc)
-   else
-      rspark:::spark_web(sc)
+   sparklyr:::spark_web(sc)
 })
 
 .rs.addFunction("getSparkLogFile", function(finder, host) {
    sc <- .rs.getConnectionObject(finder, host)
-   if (.rs.sparklyrAvailable())
-      sparklyr:::spark_log_file(sc)
-   else
-      rspark:::spark_log_file(sc)
+   sparklyr:::spark_log_file(sc)
 })
 
 .rs.addFunction("connectionListTables", function(finder, host, listTablesCode) {
@@ -144,30 +134,19 @@ options(connectionViewer = list(
   context$remote_servers <- .Call("rs_availableRemoteServers")
 
   # can we install new versions
-  if (.rs.sparklyrAvailable())
-    canInstall <- sparklyr:::spark_can_install()
-  else
-    canInstall <- rspark:::spark_can_install()
+  canInstall <- sparklyr:::spark_can_install()
   context$can_install_spark_versions <- .rs.scalar(canInstall)
 
   # available spark versions (filter by installed if we can't install
   # new versions of spark)
-  if (.rs.sparklyrAvailable())
-    spark_versions <- sparklyr:::spark_versions()
-  else
-    spark_versions <- rspark:::spark_versions()
+  spark_versions <- sparklyr:::spark_versions()
   if (!context$can_install_spark_versions)
     spark_versions <- subset(spark_versions, spark_versions$installed)
   context$spark_versions <- spark_versions
 
   # is java installed?
-  if (.rs.sparklyrAvailable()) {
-     context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
-     context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())
-  } else {
-     context$java_installed <- .rs.scalar(rspark:::is_java_available())
-     context$java_install_url <- .rs.scalar(rspark:::java_install_url())
-  }
+  context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
+  context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())
 
   context
 })

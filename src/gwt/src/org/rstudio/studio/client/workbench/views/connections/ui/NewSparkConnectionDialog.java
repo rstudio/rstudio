@@ -250,7 +250,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             StringBuilder builder = new StringBuilder();
             
             // connect to master
-            builder.append("library(rspark)\n");    
+            builder.append("library(sparklyr)\n");    
             builder.append("sc <- spark_connect(master = \"");
             builder.append(master_.getSelection());
            
