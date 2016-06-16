@@ -42,7 +42,7 @@ public class SimplePanelWithProgress extends SimplePanel
    @Override
    public void setWidget(Widget widget)
    {
-      if (loadProgressPanel_.equals(getWidget()))
+      if (isProgressShowing())
          loadProgressPanel_.endProgressOperation();
       super.setWidget(widget);
       
@@ -50,11 +50,16 @@ public class SimplePanelWithProgress extends SimplePanel
    
    public void showProgress(int delayMs)
    {
-      if (!loadProgressPanel_.equals(getWidget()))
+      if (!isProgressShowing())
       {
          setWidget(loadProgressPanel_);
          loadProgressPanel_.beginProgressOperation(delayMs);
       }
+   }
+   
+   public boolean isProgressShowing()
+   {
+      return loadProgressPanel_.equals(getWidget());
    }
    
    public void onResize()

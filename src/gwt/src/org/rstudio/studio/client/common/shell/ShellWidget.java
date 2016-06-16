@@ -175,7 +175,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          protected void performAction(boolean shouldSchedulePassive)
          {
             scrollPanel_.onContentSizeChanged();
-            if (!DomUtils.selectionExists() && scrollPanel_.isScrolledToBottom())
+            if (!DomUtils.selectionExists() && !scrollPanel_.isScrolledToBottom())
                scrollPanel_.scrollToBottom();
          }
       };

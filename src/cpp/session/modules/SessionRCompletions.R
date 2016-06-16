@@ -2397,6 +2397,9 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("readAliases", function(path)
 {
+   if (!length(path))
+      return(character())
+
    if (file.exists(f <- file.path(path, "help", "aliases.rds")))
       names(readRDS(f))
    else
