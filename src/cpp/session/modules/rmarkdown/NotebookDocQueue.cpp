@@ -38,17 +38,13 @@ namespace notebook {
 
 NotebookDocQueue::NotebookDocQueue(const std::string& docId, 
       const std::string& jobDesc, CommitMode commitMode,
-      int pixelWidth, int charWidth) :
+      int pixelWidth, int charWidth, int maxUnits) :
       docId_(docId),
       jobDesc_(jobDesc),
       commitMode_(commitMode),
       pixelWidth_(pixelWidth),
       charWidth_(charWidth),
-      maxUnits_(0)
-{
-}
-
-NotebookDocQueue::NotebookDocQueue()
+      maxUnits_(maxUnits)
 {
 }
 
@@ -86,19 +82,23 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    boost::shared_ptr<NotebookDocQueue>* pQueue)
 {
    // extract contained unit for manipulation
-   NotebookDocQueue& queue = *pQueue->get();
    json::Array units; 
-   int commitMode = 0;
+   int commitMode = 0, pixelWidth = 0, charWidth = 0, maxUnits = 0;
+   std::string docId, jobDesc;
    Error error = json::readObject(source, 
-         kDocQueueId,         &queue.docId_,
-         kDocQueueJobDesc,    &queue.jobDesc_,
+         kDocQueueId,         &docId,
+         kDocQueueJobDesc,    &jobDesc,
          kDocQueueCommitMode, &commitMode,
-         kDocQueuePixelWidth, &queue.pixelWidth_,
-         kDocQueueCharWidth,  &queue.charWidth_,
+         kDocQueuePixelWidth, &pixelWidth,
+         kDocQueueCharWidth,  &charWidth,
          kDocQueueUnits,      &units, 
-         kDocQueueMaxUnits,   &queue.maxUnits_);
+         kDocQueueMaxUnits,   &maxUnits);
+   if (error)
+      return error;
 
-   queue.commitMode_ = static_cast<CommitMode>(commitMode);
+   *pQueue = boost::make_shared<NotebookDocQueue>(docId, jobDesc,
+         static_cast<CommitMode>(commitMode), pixelWidth, charWidth,
+         maxUnits);
 
    BOOST_FOREACH(const json::Value val, units)
    {
@@ -112,7 +112,7 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
       if (error)
          LOG_ERROR(error);
       else
-         queue.queue_.push_back(pUnit);
+         (*pQueue)->queue_.push_back(pUnit);
    }
 
    return Success();

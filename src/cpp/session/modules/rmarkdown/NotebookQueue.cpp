@@ -486,8 +486,7 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
    json::Object docObj;
    Error error = json::readParams(request.params, &docObj);
 
-   boost::shared_ptr<NotebookDocQueue> pQueue = 
-      boost::make_shared<NotebookDocQueue>();
+   boost::shared_ptr<NotebookDocQueue> pQueue;
    error = NotebookDocQueue::fromJson(docObj, &pQueue);
    if (error)
       return error;

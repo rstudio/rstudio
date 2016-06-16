@@ -40,7 +40,7 @@ class NotebookDocQueue : boost::noncopyable
 public:
    NotebookDocQueue();
    NotebookDocQueue(const std::string& docId, const std::string& jobDesc,
-         CommitMode commitMode, int pixelWith, int charWidth);
+         CommitMode commitMode, int pixelWith, int charWidth, int maxUnits);
    static core::Error fromJson(const core::json::Object& source,
       boost::shared_ptr<NotebookDocQueue>* pQueue);
    core::Error update(const boost::shared_ptr<NotebookQueueUnit> unit,
