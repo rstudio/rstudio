@@ -31,6 +31,7 @@ BluetoothRemoteGATTServer
 BluetoothRemoteGATTService
 BluetoothUUID
 Boolean
+ByteLengthQueuingStrategy
 CDATASection
 CSS
 CSSCharsetRule
@@ -72,6 +73,7 @@ CloseEvent
 Comment
 CompositionEvent
 ConvolverNode
+CountQueuingStrategy
 Counter
 Credential
 CredentialsContainer
@@ -292,6 +294,8 @@ PerformanceEntry
 PerformanceMark
 PerformanceMeasure
 PerformanceNavigation
+PerformanceObserver
+PerformanceObserverEntryList
 PerformanceResourceTiming
 PerformanceTiming
 PeriodicWave
@@ -486,6 +490,7 @@ ServiceWorkerRegistration
 Set
 ShadowRoot
 SharedWorker
+SiteBoundCredential
 SourceBuffer
 SourceBufferList
 SpeechInputEvent
@@ -493,6 +498,7 @@ SpeechSynthesisEvent
 SpeechSynthesisUtterance
 Storage
 StorageEvent
+StorageManager
 String
 StyleSheet
 StyleSheetList
