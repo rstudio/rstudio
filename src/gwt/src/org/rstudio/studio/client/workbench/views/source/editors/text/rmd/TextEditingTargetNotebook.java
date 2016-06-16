@@ -432,7 +432,7 @@ public class TextEditingTargetNotebook
       registerProgressHandlers();
    }
    
-   public void executeChunks(String jobDesc, List<Scope> chunks)
+   public void executeChunks(final String jobDesc, final List<Scope> chunks)
    {
       if (queue_.isExecuting())
       {
@@ -443,10 +443,18 @@ public class TextEditingTargetNotebook
                "for execution to complete.");
          return;
       }
-      queue_.executeChunks(jobDesc, chunks, NotebookQueueUnit.EXEC_MODE_BATCH);
+      docUpdateSentinel_.withSavedDoc(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            queue_.executeChunks(jobDesc, chunks, 
+                  NotebookQueueUnit.EXEC_MODE_BATCH);
+         }
+      });
    }
    
-   public void executeChunk(Scope chunk)
+   public void executeChunk(final Scope chunk)
    {
       // maximize the source pane if we haven't yet this session
       if (!maximizedPane_ && 
@@ -456,21 +464,28 @@ public class TextEditingTargetNotebook
          maximizedPane_ = true;
       }
       
-      // if this isn't the setup chunk, ensure the setup chunk is executed by
-      // creating a job that runs both chunks
-      if (!isSetupChunkScope(chunk) &&
-          needsSetupChunkExecuted())
+      docUpdateSentinel_.withSavedDoc(new Command() 
       {
-         List<Scope> chunks = new ArrayList<Scope>();
-         chunks.add(getSetupChunkScope());
-         chunks.add(chunk);
-         queue_.executeChunks("Run Chunks", chunks, 
-               NotebookQueueUnit.EXEC_MODE_BATCH);
-      }
-      else
-      {
-         queue_.executeChunk(chunk, NotebookQueueUnit.EXEC_MODE_SINGLE);
-      }
+         @Override
+         public void execute()
+         {
+            // if this isn't the setup chunk, ensure the setup chunk is executed
+            // by creating a job that runs both chunks
+            if (!isSetupChunkScope(chunk) &&
+                needsSetupChunkExecuted())
+            {
+               List<Scope> chunks = new ArrayList<Scope>();
+               chunks.add(getSetupChunkScope());
+               chunks.add(chunk);
+               queue_.executeChunks("Run Chunks", chunks, 
+                     NotebookQueueUnit.EXEC_MODE_BATCH);
+            }
+            else
+            {
+               queue_.executeChunk(chunk, NotebookQueueUnit.EXEC_MODE_SINGLE);
+            }
+         }
+      });
    }
    
    public void manageCommands()
@@ -612,8 +627,15 @@ public class TextEditingTargetNotebook
          queue_.executeChunk(getSetupChunkScope(), 
                NotebookQueueUnit.EXEC_MODE_BATCH);
 
-      queue_.executeRange(event.getScope(), event.getRange(), 
-            NotebookQueueUnit.EXEC_MODE_SINGLE);
+      docUpdateSentinel_.withSavedDoc(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            queue_.executeRange(event.getScope(), event.getRange(), 
+                  NotebookQueueUnit.EXEC_MODE_SINGLE);
+         }
+      });
    }
    
    @Override
@@ -625,7 +647,7 @@ public class TextEditingTargetNotebook
       
       // if nothing at all was returned, this means the chunk doesn't exist on
       // the server, so clean it up here.
-      if (event.getOutput().isEmpty())
+      if (event.getOutput().isEmpty() && !queue_.isExecuting())
       {
          events_.fireEvent(new ChunkChangeEvent(
                docUpdateSentinel_.getId(), event.getOutput().getChunkId(), 0, 
