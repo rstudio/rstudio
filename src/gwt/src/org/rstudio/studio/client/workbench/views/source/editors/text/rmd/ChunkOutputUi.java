@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineW
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
@@ -188,6 +189,17 @@ public class ChunkOutputUi
    @Override
    public void onOutputHeightChanged(int outputHeight, boolean ensureVisible)
    {
+      // if ensuring visible, also ensure that the associated code is unfolded
+      if (ensureVisible)
+      {
+         Scope scope = getScope();
+         if (scope != null)
+         {
+            display_.unfold(Range.fromPoints(scope.getPreamble(), 
+                                             scope.getEnd()));
+         }
+      }
+
       int height = 
             outputWidget_.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
                CHUNK_COLLAPSED_HEIGHT :
