@@ -297,7 +297,7 @@ pre {
    right: 3px;
    content: '';
    display: block;
-   height: 17px;
+   height: 100%;
    width: 7px;
    z-index: -100;
 }
