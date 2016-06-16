@@ -162,7 +162,12 @@ void ChunkExecContext::connect()
    if (!error)
    {
       prevWarn_.set(warnSEXP);
-      error = r::options::setOption<int>("warn", 1);
+
+      // default warning setting is 1 (log immediately), but if the warning
+      // option is set to FALSE, we want to set it to -1 (ignore warnings)
+      bool warning = true;
+      json::readObject(options_, "warning",  &warning);
+      error = r::options::setOption<int>("warn", warning ? 1 : -1);
       if (error)
          LOG_ERROR(error);
    }
