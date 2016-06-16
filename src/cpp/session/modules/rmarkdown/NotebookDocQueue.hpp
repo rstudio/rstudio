@@ -35,7 +35,7 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class NotebookDocQueue
+class NotebookDocQueue : boost::noncopyable
 {
 public:
    NotebookDocQueue();

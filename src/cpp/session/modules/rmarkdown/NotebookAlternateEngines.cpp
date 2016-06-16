@@ -39,7 +39,7 @@ namespace notebook {
 
 namespace {
 
-class ChunkExecCompletedScope
+class ChunkExecCompletedScope : boost::noncopyable
 {
 public:
    ChunkExecCompletedScope(const std::string& docId,
@@ -75,11 +75,7 @@ Error prepareCacheConsoleOutputFile(const std::string& docId,
             chunkId,
             notebook::ContextExact);
    
-   error = cachePath.removeIfExists();
-   if (error)
-      return error;
-   
-   error = cachePath.ensureDirectory();
+   error = cachePath.resetDirectory();
    if (error)
       return error;
    

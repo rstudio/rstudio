@@ -43,7 +43,8 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       jobDesc_(jobDesc),
       commitMode_(commitMode),
       pixelWidth_(pixelWidth),
-      charWidth_(charWidth)
+      charWidth_(charWidth),
+      maxUnits_(0)
 {
 }
 

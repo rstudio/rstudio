@@ -54,7 +54,7 @@ enum ExpressionMode
    ExprModeContinuation = 1
 };
 
-class NotebookQueueUnit
+class NotebookQueueUnit : boost::noncopyable
 {
 public:
    // serialization/deserialization

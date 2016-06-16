@@ -16,6 +16,8 @@
 #ifndef SESSION_NOTEBOOK_CAPTURE_HPP
 #define SESSION_NOTEBOOK_CAPTURE_HPP
 
+#include <boost/noncopyable.hpp>
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -27,7 +29,7 @@ namespace notebook {
 // capture vary, this class is not fully RAII; instead, it keeps track of
 // whether it is "connected" (capturing output), and disconnects itself when it
 // goes out of scope.
-class NotebookCapture
+class NotebookCapture : boost::noncopyable
 {
 public:
    NotebookCapture();

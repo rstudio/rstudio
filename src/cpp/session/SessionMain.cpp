@@ -94,6 +94,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionClientEventService.hpp>
 #include <session/RVersionSettings.hpp>
 
 #include "SessionAddins.hpp"
@@ -101,7 +102,6 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionModuleContextInternal.hpp"
 
 #include "SessionClientEventQueue.hpp"
-#include "SessionClientEventService.hpp"
 
 #include <session/SessionRUtil.hpp>
 

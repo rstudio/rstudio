@@ -21,8 +21,6 @@
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
 
-#include "../../SessionClientEventService.hpp"
-
 #include <boost/foreach.hpp>
 
 #include <r/RInterface.hpp>
@@ -33,6 +31,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionClientEvent.hpp>
+#include <session/SessionClientEventService.hpp>
 #include <session/http/SessionRequest.hpp>
 
 #define kThreadQuitCommand "thread_quit"
@@ -54,7 +53,7 @@ enum ChunkExecState
 };
 
 // represents the global queue of work 
-class NotebookQueue
+class NotebookQueue : boost::noncopyable
 {
 public:
    NotebookQueue() 
