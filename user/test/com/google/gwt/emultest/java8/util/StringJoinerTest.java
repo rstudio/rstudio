@@ -44,6 +44,8 @@ public class StringJoinerTest extends GWTTestCase {
       fail("NullPointerException must be thrown if any constructor parameter is null");
     } catch (NullPointerException e) {
       // expected
+    } catch (JavaScriptException e) {
+      // expected
     }
   }
 
@@ -89,6 +91,8 @@ public class StringJoinerTest extends GWTTestCase {
       joiner.setEmptyValue(null);
       fail("NullPointerException must be thrown if emptyValue is null");
     } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
       // expected
     }
   }
