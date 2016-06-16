@@ -110,7 +110,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       container.add(masterGrid);
  
       // versions
-      Grid versionGrid = new Grid(3, 2);
+      Grid versionGrid = new Grid(2, 2);
       versionGrid.addStyleName(RES.styles().grid());
       versionGrid.addStyleName(RES.styles().versionGrid());
       Label sparkLabel = new Label("Spark version:");
@@ -194,17 +194,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       sparkVersion_.addChangeHandler(
             commandChangeHandler(updateHadoopVersionsCommand));
       
-      // db connection
-      Label dbLabel = new Label("DB interface:");
-      dbLabel.addStyleName(RES.styles().label());
-      versionGrid.setWidget(2, 0, dbLabel);
-      dbConnection_ = new ListBox();
-      dbConnection_.addStyleName(RES.styles().spanningInput());
-      dbConnection_.addItem("dplyr", ConnectionOptions.DB_CONNECTION_DPLYR);
-      dbConnection_.addItem("DBI", ConnectionOptions.DB_CONNECTION_DBI);
-      dbConnection_.addItem("(None)", ConnectionOptions.DB_CONNECTION_NONE);
-      setValue(dbConnection_, lastResult_.getDBConnection());
-      versionGrid.setWidget(2, 1, dbConnection_);
       container.add(versionGrid);
       
       // info regarding installation
@@ -261,11 +250,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             StringBuilder builder = new StringBuilder();
             
             // connect to master
-            builder.append("library(rspark)\n");
-            String dbConnection = dbConnection_.getSelectedValue();
-            if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DPLYR))
-               builder.append("library(dplyr)\n");
-               
+            builder.append("library(rspark)\n");    
             builder.append("sc <- spark_connect(master = \"");
             builder.append(master_.getSelection());
            
@@ -285,18 +270,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
                      
             builder.append(")");
             
-            // db connection if specified
-            if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DPLYR))
-            {
-               builder.append("\n");
-               builder.append("db <- src_spark(sc)");
-            }
-            else if (dbConnection.equals(ConnectionOptions.DB_CONNECTION_DBI))
-            {
-               builder.append("\n");
-               builder.append("db <- dbConnect(DBISpark(sc))\n");
-            }
-            
             codePanel_.setCode(builder.toString(), null);
          }
       };
@@ -304,8 +277,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       master_.addSelectionChangeHandler(commandSelectionChangeHandler(updateCodeCommand));
       sparkVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
-      dbConnection_.addChangeHandler(commandChangeHandler(updateCodeCommand));
-     
+      
       Grid codeGrid = new Grid(1, 1);
       codeGrid.addStyleName(RES.styles().codeGrid());
       codeGrid.setWidget(0, 0, codePanel_);
@@ -323,7 +295,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             master_.getSelection(),
             !master_.isLocalMaster(master_.getSelection()),
             getSelectedSparkVersion(),
-            dbConnection_.getSelectedValue(),
             codePanel_.getCode(),
             codePanel_.getConnectVia());
       
@@ -502,8 +473,6 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
    private ListBox sparkVersion_;
    private ListBox hadoopVersion_;
  
-   private ListBox dbConnection_;
-   
    private ConnectionCodePanel codePanel_;
       
    private Session session_;

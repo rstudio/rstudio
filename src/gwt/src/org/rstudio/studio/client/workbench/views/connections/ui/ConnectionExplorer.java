@@ -42,7 +42,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // code/connecti panel
-      int codePanelHeight = 110;
+      int codePanelHeight = 90;
       disconnectedUI_ = new VerticalPanel();
       disconnectedUI_.setWidth("100%");
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
