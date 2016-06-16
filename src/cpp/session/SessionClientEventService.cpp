@@ -13,8 +13,6 @@
  *
  */
 
-#include "SessionClientEventService.hpp"
-
 #include <algorithm>
 
 #include <boost/function.hpp>
@@ -32,6 +30,7 @@
 
 #include <session/SessionOptions.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
+#include <session/SessionClientEventService.hpp>
 
 #include "SessionClientEventQueue.hpp"
 

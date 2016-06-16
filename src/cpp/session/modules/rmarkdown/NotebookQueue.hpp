@@ -1,5 +1,5 @@
 /*
- * NotebookHtmlWidgets.hpp
+ * NotebookQueue.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,15 +13,13 @@
  *
  */
 
+#ifndef SESSION_NOTEBOOK_QUEUE_HPP
+#define SESSION_NOTEBOOK_QUEUE_HPP
 
-#ifndef SESSION_NOTEBOOK_HTML_WIGETS_HPP
-#define SESSION_NOTEBOOK_HTML_WIGETS_HPP
-
-#include "NotebookCapture.hpp"
+#include <core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
-   class FilePath;
    class Error;
 }
 }
@@ -32,23 +30,15 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class HtmlCapture : public NotebookCapture
+enum QueueOperation
 {
-public:
-   HtmlCapture();
-   ~HtmlCapture();
-   core::Error connectHtmlCapture(
-         const core::FilePath& outputFolder,
-         const core::FilePath& libraryFolder,
-         const rstudio::core::json::Object& chunkOptions);
-private:
-   void disconnect();
+   QueueAdd    = 0,
+   QueueUpdate = 1,
+   QueueDelete = 2
 };
 
-core::Error initHtmlWidgets();
-
-core::Error mergeLib(const core::FilePath& source, 
-                     const core::FilePath& target);
+core::json::Value getDocQueue(const std::string& docId);
+core::Error initQueue();
 
 } // namespace notebook
 } // namespace rmarkdown

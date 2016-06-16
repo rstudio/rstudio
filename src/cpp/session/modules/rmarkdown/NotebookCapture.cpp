@@ -1,5 +1,5 @@
 /*
- * NotebookHtmlWidgets.hpp
+ * NotebookCapture.cpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,18 +13,7 @@
  *
  */
 
-
-#ifndef SESSION_NOTEBOOK_HTML_WIGETS_HPP
-#define SESSION_NOTEBOOK_HTML_WIGETS_HPP
-
 #include "NotebookCapture.hpp"
-
-namespace rstudio {
-namespace core {
-   class FilePath;
-   class Error;
-}
-}
 
 namespace rstudio {
 namespace session {
@@ -32,23 +21,35 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class HtmlCapture : public NotebookCapture
+NotebookCapture::NotebookCapture():
+   connected_(false)
+{}
+
+NotebookCapture::~NotebookCapture()
 {
-public:
-   HtmlCapture();
-   ~HtmlCapture();
-   core::Error connectHtmlCapture(
-         const core::FilePath& outputFolder,
-         const core::FilePath& libraryFolder,
-         const rstudio::core::json::Object& chunkOptions);
-private:
-   void disconnect();
-};
+   if (connected_)
+      disconnect();
+}
 
-core::Error initHtmlWidgets();
+void NotebookCapture::connect()
+{
+   connected_ = true;
+}
 
-core::Error mergeLib(const core::FilePath& source, 
-                     const core::FilePath& target);
+void NotebookCapture::disconnect()
+{
+   connected_ = false;
+}
+
+bool NotebookCapture::connected()
+{
+   return connected_;
+}
+
+void NotebookCapture::onExprComplete()
+{
+   // stub implementation
+}
 
 } // namespace notebook
 } // namespace rmarkdown
@@ -56,4 +57,3 @@ core::Error mergeLib(const core::FilePath& source,
 } // namespace session
 } // namespace rstudio
 
-#endif

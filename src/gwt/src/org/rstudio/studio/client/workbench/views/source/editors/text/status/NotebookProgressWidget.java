@@ -98,9 +98,8 @@ public class NotebookProgressWidget extends Composite
       }
    }
    
-   public void setPercent(String chunkName, int percent)
+   public void setPercent(int percent)
    {
-      // we don't currently display the chunk name anywhere
       percent_ = percent;
       updateProgressBar(true);
    }

@@ -153,13 +153,13 @@ public class ChunkOutputUi
       // we want to be sure the user can see the row beneath the output 
       // (this is just a convenient way to determine whether the entire 
       // output is visible)
-      int targetRow = getCurrentRow() + 1;
+      int targetRow = Math.min(display_.getRowCount() - 1, getCurrentRow() + 1);
       
       // if the chunk has no visible output yet, just make sure it's not too
       // close to the bottom of the screen
       if (!outputWidget_.isVisible())
       {
-         targetRow = Math.min(display_.getRowCount(), targetRow + 1);
+         targetRow = Math.min(display_.getRowCount() - 1, targetRow + 1);
       }
       
       // if the chunk and output are already taking up the whole viewport, don't

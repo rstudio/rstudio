@@ -27,21 +27,13 @@
 #include <core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
-#include <core/system/Environment.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-#if !defined(_WIN32)
-#include <core/http/TcpIpBlockingClient.hpp>
-#include <core/http/LocalStreamBlockingClient.hpp>
-#else
-#include <core/http/NamedPipeBlockingClient.hpp>
-#endif
 
 #include <session/SessionConstants.hpp>
-#if !defined(_WIN32)
-#include <session/SessionLocalStreams.hpp>
-#endif
+
+#include <session/http/SessionRequest.hpp>
 
 #include "PostbackOptions.hpp"
 
@@ -53,36 +45,6 @@ int exitFailure(const Error& error)
 {
    LOG_ERROR(error);
    return EXIT_FAILURE;
-}
-
-Error sendRequest(http::Request* pRequest, http::Response* pResponse)
-{
-#ifdef _WIN32
-   // get local peer
-   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
-   pRequest->setHeader("X-Shared-Secret",
-                       core::system::getenv("RS_SHARED_SECRET"));
-   return http::sendRequest(pipeName,
-                            *pRequest,
-                            http::ConnectionRetryProfile(
-                                  boost::posix_time::seconds(10),
-                                  boost::posix_time::milliseconds(50)),
-                            pResponse);
-#else
-   std::string tcpipPort = core::system::getenv(kRSessionStandalonePortNumber);
-   if (!tcpipPort.empty())
-   {
-      return http::sendRequest("127.0.0.1", tcpipPort, *pRequest, pResponse);
-   }
-   else
-   {
-      // determine stream path
-      std::string stream = core::system::getenv(kRStudioSessionStream);
-      FilePath streamPath = session::local_streams::streamPath(stream);
-      return http::sendRequest(streamPath, *pRequest, pResponse);
-   }
-#endif
-
 }
 
 int main(int argc, char * const argv[]) 
@@ -103,21 +65,11 @@ int main(int argc, char * const argv[])
       if ( status.exit() )
          return status.exitCode() ;
       
-       // determine postback uri
-      std::string uri = std::string(kLocalUriLocationPrefix kPostbackUriScope) + 
-                        options.command();
-      
-      // build postback request
-      http::Request request;
-      request.setMethod("POST");
-      request.setUri(uri);
-      request.setHeader("Accept", "*/*");
-      request.setHeader("Connection", "close");
-      request.setBody(options.argument());
-
-      // send it
       http::Response response;
-      error = sendRequest(&request, &response);
+      error = session::http::sendSessionRequest(
+            kLocalUriLocationPrefix kPostbackUriScope + options.command(), 
+            options.argument(), 
+            &response);
       if (error)
          return exitFailure(error);
 

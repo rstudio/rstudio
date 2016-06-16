@@ -70,15 +70,9 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    charWidth_(charWidth),
    prevCharWidth_(0),
    execScope_(execScope),
-   connected_(false),
-   hasOutput_(false)
+   hasOutput_(false),
+   hasErrors_(false)
 {
-}
-
-ChunkExecContext::~ChunkExecContext()
-{
-   if (connected_)
-      disconnect();
 }
 
 std::string ChunkExecContext::chunkId()
@@ -91,9 +85,9 @@ std::string ChunkExecContext::docId()
    return docId_;
 }
 
-bool ChunkExecContext::connected()
+json::Object ChunkExecContext::options() 
 {
-   return connected_;
+   return options_;
 }
 
 void ChunkExecContext::connect()
@@ -125,17 +119,21 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
                      kChunkOutputPlot)));
 
+   boost::shared_ptr<PlotCapture> pPlotCapture = 
+      boost::make_shared<PlotCapture>();
+   captures_.push_back(pPlotCapture);
+
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = beginPlotCapture(figHeight, figWidth, PlotSizeManual, 
-                               outputPath_);
+      error = pPlotCapture->connectPlots(figHeight, figWidth, PlotSizeManual, 
+            outputPath_);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = beginPlotCapture(0, pixelWidth_, PlotSizeAutomatic, 
-                               outputPath_);
+      error = pPlotCapture->connectPlots(0, pixelWidth_, PlotSizeAutomatic, 
+            outputPath_);
    }
    if (error)
       LOG_ERROR(error);
@@ -145,7 +143,11 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
                      kChunkOutputHtml)));
 
-   error = beginWidgetCapture(
+   boost::shared_ptr<HtmlCapture> pHtmlCapture = 
+      boost::make_shared<HtmlCapture>();
+   captures_.push_back(pHtmlCapture);
+
+   error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.parent().complete(kChunkLibDir),
             options_);
@@ -187,25 +189,21 @@ void ChunkExecContext::connect()
    }
 
    // begin capturing errors
+   boost::shared_ptr<ErrorCapture> pErrorCapture = 
+      boost::make_shared<ErrorCapture>();
+   pErrorCapture->connect();
+   captures_.push_back(pErrorCapture);
+
    connections_.push_back(events().onErrorOutput.connect(
          boost::bind(&ChunkExecContext::onError, this, _1)));
-   beginErrorCapture();
 
    // begin capturing console text
-   connections_.push_back(module_context::events().onConsolePrompt.connect(
-         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
    connections_.push_back(module_context::events().onConsoleOutput.connect(
          boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
    connections_.push_back(module_context::events().onConsoleInput.connect(
          boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
 
-   connected_ = true;
-}
-
-void ChunkExecContext::onConsolePrompt(const std::string& )
-{
-   if (connected_)
-      disconnect();
+   NotebookCapture::connect();
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
@@ -253,6 +251,9 @@ void ChunkExecContext::onError(const core::json::Object& err)
 {
    // set up folder to receive output if necessary
    initializeOutput();
+
+   // mark error state
+   hasErrors_ = true;
 
    // write the error to a file 
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
@@ -327,6 +328,12 @@ void ChunkExecContext::disconnect()
 {
    Error error;
 
+   // clean up capturing modules (includes plots, errors, and HTML widgets)
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      pCapture->disconnect();
+   }
+
    // clean up staging folder
    error = outputPath_.removeIfExists();
    if (error)
@@ -357,7 +364,7 @@ void ChunkExecContext::disconnect()
       connection.disconnect();
    }
 
-   connected_ = false;
+   NotebookCapture::disconnect();
 
    events().onChunkExecCompleted(docId_, chunkId_, nbCtxId_);
 }
@@ -397,9 +404,23 @@ void ChunkExecContext::initializeOutput()
    hasOutput_ = true;
 }
 
+bool ChunkExecContext::hasErrors()
+{
+   return hasErrors_;
+}
+
 ExecScope ChunkExecContext::execScope()
 {
    return execScope_;
+}
+
+void ChunkExecContext::onExprComplete()
+{
+   // notify capturing submodules
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      pCapture->onExprComplete();
+   }
 }
 
 } // namespace notebook

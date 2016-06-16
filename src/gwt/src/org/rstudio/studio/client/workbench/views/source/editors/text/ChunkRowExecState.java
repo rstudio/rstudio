@@ -41,7 +41,7 @@ public class ChunkRowExecState
             
             // if we're just cleaning up this line, finish the cleanup 
             // immediately rather than trying to shift 
-            if (state_ == LINE_RESTING)
+            if (state_ == LINE_RESTING || state_ == LINE_ERROR)
             {
                detach();
                return;
@@ -51,16 +51,9 @@ public class ChunkRowExecState
             // the new line
             removeClazz();
             row_ = anchor_.getRow();
-            if (state_ == LINE_ERROR)
+            for (int i = LINE_QUEUED; i <= state_; i++)
             {
-               addClazz(state_);
-            }
-            else
-            {
-               for (int i = LINE_QUEUED; i <= state_; i++)
-               {
-                  addClazz(i);
-               }
+               addClazz(i);
             }
          }
       });
@@ -112,6 +105,10 @@ public class ChunkRowExecState
    
    public void setState(int state)
    {
+      // ignore if already at this state
+      if (state_ == state)
+         return;
+      
       // if the moving to the error state, clean other states
       if (state == LINE_ERROR)
          removeClazz();

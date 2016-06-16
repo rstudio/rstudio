@@ -16,6 +16,10 @@
 #ifndef SESSION_NOTEBOOK_ERRORS_HPP
 #define SESSION_NOTEBOOK_ERRORS_HPP
 
+#include "NotebookCapture.hpp"
+
+#include <r/RSexp.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -28,7 +32,15 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-core::Error beginErrorCapture();
+class ErrorCapture : public NotebookCapture
+{
+public:
+   void connect();
+   void disconnect();
+
+private:
+   r::sexp::PreservedSEXP sexpErrHandler_;
+};
 
 core::Error initErrors();
 

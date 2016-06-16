@@ -159,6 +159,8 @@ const int kEnableConnections = 140;
 const int kConnectionListChanged = 141;
 const int kActiveConnectionsChanged = 142;
 const int kConnectionOpened = 143;
+const int kNotebookRangeExecuted = 144;
+const int kChunkExecStateChanged = 145;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -436,6 +438,10 @@ std::string ClientEvent::typeName() const
          return "active_connections_changed";
       case client_events::kConnectionOpened:
          return "connection_opened";
+      case client_events::kNotebookRangeExecuted:
+         return "notebook_range_executed";
+      case client_events::kChunkExecStateChanged:
+         return "chunk_exec_state_changed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

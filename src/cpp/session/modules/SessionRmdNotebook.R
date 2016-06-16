@@ -355,29 +355,54 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.fromJSON(.rs.base64decode(encoded))
 })
 
-.rs.addFunction("evaluateChunkOptions", function(options)
+.rs.addFunction("evaluateChunkOptions", function(code)
 {
   opts <- list()
+
+  # if several lines of code are passed, operate only on the first 
+  code <- unlist(strsplit(code, "\n", fixed = TRUE))[[1]]
+
+  # strip chunk indicators if present
+  matches <- unlist(regmatches(code, regexec(.rs.reRmdChunkBegin(), code)))
+  if (length(matches) > 1)
+    code <- matches[[2]]
+
   tryCatch({
     # if this is the setup chunk, it's not included by default
     setupIndicator <- "r setup"
-    if (identical(substring(options, 1, nchar(setupIndicator)), 
+    if (identical(substring(code, 1, nchar(setupIndicator)), 
                   setupIndicator)) {
       opts$include <- FALSE
     }
 
-    # remove leading text from the options
-    options <- sub("^[^,]*,\\s*", "", options)
+    # extract engine name (can be overridden below with engine=)
+    opts$engine <- unlist(strsplit(code, split = "(\\s|,)+"))[[1]]
 
-    # parse them, then merge with the defaults
+    # trim leading text from the options
+    code <- sub("^[^,]*,\\s*", "", code)
+
+    # parse them, then merge with the defaults (evaluate in global environment)
     opts <- .rs.mergeLists(opts,
-                           eval(parse(text = paste("list(", options, ")"))))
+                           eval(parse(text = paste("list(", code, ")")),
+                                envir = .GlobalEnv))
                            
   },
   error = function(e) {})
 
   .rs.scalarListFromList(opts)
 })
+
+.rs.addFunction("extractChunkInnerCode", function(code)
+{
+  # split into lines
+  code <- unlist(strsplit(code, "\n", fixed = TRUE))
+  
+  # find chunk indicators (safe fallbacks if absent)
+  start <- max(1, grep(.rs.reRmdChunkBegin(), code, perl = TRUE))
+  end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
+
+  paste(code[(start + 1):(end - 1)], collapse = "\n")
+});
 
 .rs.addFunction("extractRmdChunkInformation", function(rmd)
 {

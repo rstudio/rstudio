@@ -73,7 +73,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void refreshChunkOutput(String docPath, String docId, String contextId,
                            String requestId, 
-                           ServerRequestCallback<Void> requestCallback);
+                           ServerRequestCallback<NotebookDocQueue> requestCallback);
    
    void setChunkConsole(String docId, String chunkId, int commitMode, 
                         int execMode, int execScope, String options, 
@@ -84,6 +84,12 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void replayNotebookPlots(String docId, String initialChunkId, int pixelWidth, 
          ServerRequestCallback<Boolean> requestCallback);
+   
+   void executeNotebookChunks(NotebookDocQueue queue, 
+         ServerRequestCallback<Void> requestCallback);
+   
+   void updateNotebookExecQueue(NotebookQueueUnit unit, int op, 
+         String beforeChunkId, ServerRequestCallback<Void> requestCallback);
    
    void executeAlternateEngineChunk(String docId,
                                     String chunkId,

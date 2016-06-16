@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.NotebookQueueState;
 
 public class ConsoleInterruptButton extends Composite
 {
@@ -59,11 +60,20 @@ public class ConsoleInterruptButton extends Composite
          public void onBusy(BusyEvent event)
          {
             if (event.isBusy())
-            {
-               fadeInHelper_.beginShow();
-               commands_.interruptR().setEnabled(true);
                events.fireEvent(new ConsoleBusyEvent(true));
-            }
+         }
+      });
+      
+      events.addHandler(ConsoleBusyEvent.TYPE, new ConsoleBusyEvent.Handler()
+      {
+         @Override
+         public void onConsoleBusy(ConsoleBusyEvent event)
+         {
+            if (event.isBusy())
+               fadeInHelper_.beginShow();
+            else
+               fadeInHelper_.hide();
+            commands_.interruptR().setEnabled(event.isBusy());
          }
       });
 
@@ -79,8 +89,11 @@ public class ConsoleInterruptButton extends Composite
       {
          public void onConsolePrompt(ConsolePromptEvent event)
          {
-            fadeInHelper_.hide();
-            commands_.interruptR().setEnabled(false);
+            // if any notebook is currently feeding the console, wait for it
+            // to complete
+            if (NotebookQueueState.anyQueuesExecuting())
+               return;
+            
             events.fireEvent(new ConsoleBusyEvent(false));
          }
       });

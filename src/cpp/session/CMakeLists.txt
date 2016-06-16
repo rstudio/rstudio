@@ -156,8 +156,11 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp
+   modules/rmarkdown/NotebookAlternateEngines.cpp
    modules/rmarkdown/NotebookCache.cpp
+   modules/rmarkdown/NotebookCapture.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
+   modules/rmarkdown/NotebookDocQueue.cpp
    modules/rmarkdown/NotebookErrors.cpp
    modules/rmarkdown/NotebookExec.cpp
    modules/rmarkdown/NotebookHtmlWidgets.cpp
@@ -165,6 +168,8 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookPaths.cpp
    modules/rmarkdown/NotebookPlotReplay.cpp
    modules/rmarkdown/NotebookPlots.cpp
+   modules/rmarkdown/NotebookQueue.cpp
+   modules/rmarkdown/NotebookQueueUnit.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp

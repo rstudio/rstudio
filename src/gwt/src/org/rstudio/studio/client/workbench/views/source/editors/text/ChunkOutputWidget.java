@@ -31,20 +31,18 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -72,7 +70,6 @@ import com.google.gwt.user.client.ui.Widget;
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
-                                          ConsolePromptHandler,
                                           RestartStatusEvent.Handler,
                                           InterruptStatusEvent.Handler,
                                           ConsoleError.Observer
@@ -191,7 +188,7 @@ public class ChunkOutputWidget extends Composite
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
          // override visibility flag when there's an error in batch mode
-         if (!options_.error() && mode == TextEditingTargetNotebook.MODE_BATCH)
+         if (!options_.error() && mode == NotebookQueueUnit.EXEC_MODE_BATCH)
             ensureVisible = true;
          showErrorOutput(unit.getUnhandledError(), ensureVisible);
          break;
@@ -237,7 +234,7 @@ public class ChunkOutputWidget extends Composite
    }
     
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
-         boolean ensureVisible)
+         boolean complete, boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -254,8 +251,12 @@ public class ChunkOutputWidget extends Composite
             showChunkOutputUnit(units.get(i), mode, ensureVisible);
          }
 
-         // ensure the output is visible if requested
-         onOutputFinished(ensureVisible, scope);
+         // if complete, wrap everything up; if not (could happen for partial
+         // replay) just sync up the height
+         if (complete)
+            onOutputFinished(ensureVisible, scope);
+         else
+            syncHeight(true, ensureVisible);
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
@@ -350,7 +351,7 @@ public class ChunkOutputWidget extends Composite
          // it
          syncHeight(true, ensureVisible);
       }
-      else if (execScope == TextEditingTargetNotebook.SCOPE_CHUNK)
+      else if (execScope == NotebookQueueUnit.EXEC_SCOPE_CHUNK)
       {
          // if executing the whole chunk but no output was received, clean up
          // any prior output and hide the output
@@ -366,9 +367,10 @@ public class ChunkOutputWidget extends Composite
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
       showReadyState();
+      unregisterConsoleEvents();
    }
 
-   public void setCodeExecuting(boolean entireChunk, int mode)
+   public void setCodeExecuting(int mode)
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)
@@ -529,7 +531,7 @@ public class ChunkOutputWidget extends Composite
       flushQueuedErrors(false);
 
       renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
-            execMode_ == TextEditingTargetNotebook.MODE_SINGLE);
+            execMode_ == NotebookQueueUnit.EXEC_MODE_SINGLE);
    }
    
    @Override
@@ -544,14 +546,6 @@ public class ChunkOutputWidget extends Composite
    }
    
    @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
-   {
-      // stop listening to the console once the prompt appears, but don't 
-      // clear up output until we receive the output finished event
-      unregisterConsoleEvents();
-   }
-   
-   @Override
    public void onRestartStatus(RestartStatusEvent event)
    {
       if (event.getStatus() != RestartStatusEvent.RESTART_COMPLETED)
@@ -561,7 +555,7 @@ public class ChunkOutputWidget extends Composite
       // as though the server told us it's done
       if (state_ != CHUNK_READY)
       {
-         onOutputFinished(false, TextEditingTargetNotebook.SCOPE_PARTIAL);
+         onOutputFinished(false, NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
       }
    }
 
@@ -857,7 +851,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.addHandler(ConsolePromptEvent.TYPE, this);
    }
 
    private void unregisterConsoleEvents()
@@ -865,7 +858,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.removeHandler(ConsolePromptEvent.TYPE, this);
    }
    
    private void showBusyState()
@@ -1057,7 +1049,7 @@ public class ChunkOutputWidget extends Composite
    private ChunkOutputHost host_;
    
    private int state_ = CHUNK_EMPTY;
-   private int execMode_ = TextEditingTargetNotebook.MODE_SINGLE;
+   private int execMode_ = NotebookQueueUnit.EXEC_MODE_SINGLE;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;

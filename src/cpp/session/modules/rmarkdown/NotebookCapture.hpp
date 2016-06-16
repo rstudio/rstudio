@@ -1,5 +1,5 @@
 /*
- * NotebookHtmlWidgets.hpp
+ * NotebookCapture.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,18 +13,10 @@
  *
  */
 
+#ifndef SESSION_NOTEBOOK_CAPTURE_HPP
+#define SESSION_NOTEBOOK_CAPTURE_HPP
 
-#ifndef SESSION_NOTEBOOK_HTML_WIGETS_HPP
-#define SESSION_NOTEBOOK_HTML_WIGETS_HPP
-
-#include "NotebookCapture.hpp"
-
-namespace rstudio {
-namespace core {
-   class FilePath;
-   class Error;
-}
-}
+#include <boost/noncopyable.hpp>
 
 namespace rstudio {
 namespace session {
@@ -32,23 +24,23 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class HtmlCapture : public NotebookCapture
+// NotebookCapture is an abstract class representing an object that captures
+// content for a notebook chunk. Because the details required to initiate
+// capture vary, this class is not fully RAII; instead, it keeps track of
+// whether it is "connected" (capturing output), and disconnects itself when it
+// goes out of scope.
+class NotebookCapture : boost::noncopyable
 {
 public:
-   HtmlCapture();
-   ~HtmlCapture();
-   core::Error connectHtmlCapture(
-         const core::FilePath& outputFolder,
-         const core::FilePath& libraryFolder,
-         const rstudio::core::json::Object& chunkOptions);
+   NotebookCapture();
+   virtual ~NotebookCapture();
+   virtual void connect();
+   virtual void disconnect();
+   virtual void onExprComplete();
+   bool connected();
 private:
-   void disconnect();
+   bool connected_;
 };
-
-core::Error initHtmlWidgets();
-
-core::Error mergeLib(const core::FilePath& source, 
-                     const core::FilePath& target);
 
 } // namespace notebook
 } // namespace rmarkdown
@@ -56,4 +48,4 @@ core::Error mergeLib(const core::FilePath& source,
 } // namespace session
 } // namespace rstudio
 
-#endif
+#endif // SESSION_NOTEBOOK_CAPTURE_HPP

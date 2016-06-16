@@ -92,6 +92,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
@@ -4153,7 +4154,7 @@ public class TextEditingTarget implements
    {
       docDisplay_.getScopeTree();
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(position), 
-            TextEditingTargetNotebook.MODE_SINGLE, false);
+            NotebookQueueUnit.EXEC_MODE_SINGLE, false);
    }
    
    public void dequeueChunk(int row)
@@ -4170,7 +4171,7 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), 
-           TextEditingTargetNotebook.MODE_SINGLE, false);
+           NotebookQueueUnit.EXEC_MODE_SINGLE, false);
    }
    
    @Handler
@@ -4182,7 +4183,7 @@ public class TextEditingTarget implements
       docDisplay_.getScopeTree();
       
       Scope nextChunk = scopeHelper_.getNextSweaveChunk();
-      executeSweaveChunk(nextChunk, TextEditingTargetNotebook.MODE_SINGLE, 
+      executeSweaveChunk(nextChunk, NotebookQueueUnit.EXEC_MODE_SINGLE, 
             true);
       docDisplay_.setCursorPosition(nextChunk.getBodyStart());
       docDisplay_.ensureCursorVisible();
@@ -4267,20 +4268,27 @@ public class TextEditingTarget implements
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position, which);
 
       // prepare the status bar
+      String jobDesc = "";
       if (previousScopes.length > 0)
       {
          if (position != null &&
              position.getRow() > docDisplay_.getDocumentEnd().getRow())
-            statusBar_.showNotebookProgress("Run All");
+            jobDesc = "Run All";
          else if (which == TextEditingTargetScopeHelper.PREVIOUS_CHUNKS)
-            statusBar_.showNotebookProgress("Run Previous");
+            jobDesc = "Run Previous";
          else if (which == TextEditingTargetScopeHelper.FOLLOWING_CHUNKS)
-            statusBar_.showNotebookProgress("Run After");
+            jobDesc = "Run After";
       }
+      statusBar_.showNotebookProgress(jobDesc);
 
+      ArrayList<Scope> scopes = new ArrayList<Scope>();
       for (Scope scope : previousScopes)
+      {
          if (isExecutableChunk(scope))
-            executeSweaveChunk(scope, TextEditingTargetNotebook.MODE_BATCH, false);
+            scopes.add(scope);
+      }
+      
+      notebook_.executeChunks(jobDesc, scopes);
    }
    
    @Handler
@@ -4309,7 +4317,7 @@ public class TextEditingTarget implements
       // if we found a candidate, run it
       if (setupScope != null)
       {
-         executeSweaveChunk(setupScope, TextEditingTargetNotebook.MODE_BATCH, 
+         executeSweaveChunk(setupScope, NotebookQueueUnit.EXEC_MODE_BATCH, 
                false);
       }
    }
@@ -4372,17 +4380,14 @@ public class TextEditingTarget implements
             if (!range.isEmpty())
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
-               String code = scopeHelper_.getSweaveChunkText(chunk);
-               String options = 
-                     TextEditingTargetRMarkdownHelper.getRmdChunkOptionText(
-                           chunk, docDisplay_);
                if (fileType_.isRmd() && 
                    docDisplay_.showChunkOutputInline())
                {
-                  notebook_.executeChunk(chunk, code, options, mode);
+                  notebook_.executeChunk(chunk);
                }
                else
                {
+                  String code = scopeHelper_.getSweaveChunkText(chunk);
                   events_.fireEvent(new SendToConsoleEvent(code, true));
                }
                docDisplay_.collapseSelection(true);   
