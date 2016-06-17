@@ -133,17 +133,11 @@ void PlotCapture::saveSnapshot()
 
 void PlotCapture::onExprComplete()
 {
-   // if we have plots, write them out now 
-   if (hasPlots_)
-   {
-      // turn off graphics device (has side effect of flushing plots to disk)
-      removeGraphicsDevice();
-
-      // add new graphics device to capture further plots
-      Error error= createGraphicsDevice();
-      if (error)
-         LOG_ERROR(error);
-   }
+   // nothing here yet; at one point we used this to flush the output device,
+   // but that causes problems when output device needs to remain open for
+   // the case wherein multiple expressions progressively draw on the device.
+   // this leaves us with a problem wherein we don't know the expression
+   // with which to associate the plot output; see case 5701
 }
 
 void PlotCapture::removeGraphicsDevice()
