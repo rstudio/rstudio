@@ -688,6 +688,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   }
 
   private void checkJsFunctionImplementation(JDeclaredType type) {
+    if (!type.isFinal()) {
+      logError("JsFunction implementation '%s' must be final.",
+          type);
+    }
     if (type.getImplements().size() != 1) {
       logError("JsFunction implementation '%s' cannot implement more than one interface.",
           type);
@@ -704,11 +708,6 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   }
 
   private void checkJsFunctionSubtype(JDeclaredType type) {
-    JClassType superClass = type.getSuperClass();
-    if (superClass != null && superClass.isJsFunctionImplementation()) {
-      logError(type, "'%s' cannot extend JsFunction implementation '%s'.",
-          JjsUtils.getReadableDescription(type), JjsUtils.getReadableDescription(superClass));
-    }
     for (JInterfaceType superInterface : type.getImplements()) {
       if (superInterface.isJsFunction()) {
         logError(type, "'%s' cannot extend JsFunction '%s'.",

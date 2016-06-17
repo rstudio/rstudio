@@ -1140,17 +1140,6 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
-  public void testJsFunctionWithNoExtendsSucceeds() throws Exception {
-    addSnippetImport("jsinterop.annotations.JsFunction");
-    addSnippetClassDecl(
-        "@JsFunction",
-        "public interface Buggy {",
-        "  void foo();",
-        "}");
-
-    assertBuggySucceeds();
-  }
-
   public void testJsFunctionExtendsInterfaceFails() throws Exception {
     addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
@@ -1185,11 +1174,19 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 6: 'EntryPoint.Buggy' cannot be both a JsFunction and a JsType at the same time.");
   }
 
-  public void testJsFunctionImplementationWithSingleInterfaceSucceeds() throws Exception {
-    addAll(jsFunctionInterface);
+  public void testJsFunctionImplementationSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsFunction");
     addSnippetClassDecl(
-        "public static class Buggy implements MyJsFunctionInterface {",
-        "  public int foo(int x) { return 0; }",
+        "@JsFunction",
+        "public interface Function {",
+        "  void foo();",
+        "}",
+        "public static final class Buggy implements Function {",
+        "  public void foo() {",
+        "    new Function() {",
+        "       public void foo() {}",
+        "    }.foo();",
+        "  }",
         "}");
 
     assertBuggySucceeds();
@@ -1199,7 +1196,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addAll(jsFunctionInterface);
     addSnippetClassDecl(
         "interface AnotherInterface {}",
-        "public static class Buggy implements MyJsFunctionInterface, AnotherInterface {",
+        "public static final class Buggy implements MyJsFunctionInterface, AnotherInterface {",
         "  public int foo(int x) { return 0; }",
         "  public int bar(int x) { return 0; }",
         "}");
@@ -1212,7 +1209,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addAll(jsFunctionInterface);
     addSnippetClassDecl(
         "public static class BaseClass {}",
-        "public static class Buggy extends BaseClass implements MyJsFunctionInterface {",
+        "public static final class Buggy extends BaseClass implements MyJsFunctionInterface {",
         "  public int foo(int x) { return 0; }",
         "}");
 
@@ -1220,7 +1217,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         + "extend a class.");
   }
 
-  public void testJsFunctionImplementationWithSubclassesFails() throws Exception {
+  public void testJsFunctionImplementationNotFinalFails() throws Exception {
     addAll(jsFunctionInterface);
     addSnippetClassDecl(
         "public static class BaseClass implements MyJsFunctionInterface {",
@@ -1229,8 +1226,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public static class Buggy extends BaseClass  {",
         "}");
 
-    assertBuggyFails("Line 6: 'EntryPoint.Buggy' cannot extend "
-        + "JsFunction implementation 'EntryPoint.BaseClass'.");
+    assertBuggyFails("Line 3: JsFunction implementation 'EntryPoint.BaseClass' must be final.");
   }
 
   public void testJsFunctionImplementationMarkedAsJsTypeFails() throws Exception {
@@ -1238,7 +1234,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType",
-        "public static class Buggy implements MyJsFunctionInterface {",
+        "public static final class Buggy implements MyJsFunctionInterface {",
         "  public int foo(int x) { return 0; }",
         "}");
 
