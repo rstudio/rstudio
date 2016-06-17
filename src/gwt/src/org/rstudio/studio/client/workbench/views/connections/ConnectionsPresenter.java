@@ -78,7 +78,7 @@ public class ConnectionsPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView
    {
-      void showConnectionsList();
+      void showConnectionsList(boolean animate);
       
       void setConnections(List<Connection> connections);
       void setActiveConnections(List<ConnectionId> connections);
@@ -150,7 +150,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            showAllConnections();
+            showAllConnections(true);
          }
          
       });
@@ -470,7 +470,7 @@ public class ConnectionsPresenter extends BasePresenter
                public void onResponseReceived(String disconnectCode)
                {
                   eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-                  showAllConnections();
+                  showAllConnections(false);
                }
           });  
          }  
@@ -527,10 +527,10 @@ public class ConnectionsPresenter extends BasePresenter
    }
    
    
-   private void showAllConnections()
+   private void showAllConnections(boolean animate)
    {
       exploredConnection_ = null;
-      display_.showConnectionsList();
+      display_.showConnectionsList(animate);
    }
    
    private void updateConnections(JsArray<Connection> connections)

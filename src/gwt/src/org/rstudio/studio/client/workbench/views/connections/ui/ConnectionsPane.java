@@ -250,8 +250,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       installConnectionExplorerToolbar(connection);
       
-      animate(connectionsDataGrid_,
+      transitionMainPanel(
+              connectionsDataGrid_,
               connectionExplorer_,
+              true,
               true,
               new Command() {
                @Override
@@ -286,15 +288,17 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
    
    @Override
-   public void showConnectionsList()
+   public void showConnectionsList(boolean animate)
    {
       exploredConnection_ = null;
  
       installConnectionsToolbar();
       
-      animate(connectionExplorer_,
+      transitionMainPanel(
+              connectionExplorer_,
               connectionsDataGrid_,
               false,
+              animate,
               new Command() {
                 @Override
                 public void execute()
@@ -442,9 +446,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    }
 
    
-   private void animate(final Widget from,
+   private void transitionMainPanel(
+                        final Widget from,
                         final Widget to,
                         boolean rightToLeft,
+                        boolean animate,
                         final Command onComplete)
    {
       assert from != to;
@@ -468,20 +474,38 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
 
       to.setVisible(true);
       from.setVisible(true);
-      mainPanel_.animate(300, new AnimationCallback()
-      {
-         public void onAnimationComplete()
+      
+      final Command completeLayout = new Command() {
+
+         @Override
+         public void execute()
          {
             mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
             from.setVisible(false);
             mainPanel_.forceLayout();
             onComplete.execute();
          }
-
-         public void onLayout(Layer layer, double progress)
+         
+      };
+      
+      if (animate)
+      {
+         mainPanel_.animate(300, new AnimationCallback()
          {
-         }
-      });
+            public void onAnimationComplete()
+            {
+               completeLayout.execute();
+            }
+   
+            public void onLayout(Layer layer, double progress)
+            {
+            }
+         });
+      }
+      else
+      {
+         completeLayout.execute();
+      }
    }
    
    private void installConnectionsToolbar()
