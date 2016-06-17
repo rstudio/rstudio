@@ -123,7 +123,7 @@ public class ShellInteractionManager implements ShellOutputWriter
       final boolean echoInput = showInputForPrompt(promptText);
       if (echoInput)
       {
-         display_.consoleWriteInput(input);
+         display_.consoleWriteInput(input, "");
          if (Desktop.isDesktop() && BrowseCap.isWindows())
             outputPrefixToSuppress_ = commandEntry;
       }

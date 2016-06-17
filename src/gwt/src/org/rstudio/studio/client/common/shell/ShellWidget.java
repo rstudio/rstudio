@@ -291,8 +291,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output(output, styles_.output(), false);
    }
 
-   public void consoleWriteInput(final String input)
+   public void consoleWriteInput(final String input, String console)
    {
+      // if coming from another console id (i.e. notebook chunk), clear the
+      // prompt since this input hasn't been processed yet (we'll redraw when
+      // the prompt reappears)
+      if (!StringUtil.isNullOrEmpty(console))
+         prompt_.setHTML("");
+
       clearPendingInput();
       output(input, styles_.command() + KEYWORD_CLASS_NAME, false);
    }

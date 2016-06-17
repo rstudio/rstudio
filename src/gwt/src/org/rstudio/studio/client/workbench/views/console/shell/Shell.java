@@ -285,7 +285,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    
    public void onConsoleWriteInput(ConsoleWriteInputEvent event)
    {
-      view_.consoleWriteInput(event.getInput());
+      view_.consoleWriteInput(event.getInput(), event.getConsole());
    }
 
    public void onConsoleWritePrompt(ConsoleWritePromptEvent event)

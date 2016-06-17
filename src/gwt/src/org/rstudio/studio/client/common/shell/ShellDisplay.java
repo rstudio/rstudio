@@ -28,7 +28,7 @@ public interface ShellDisplay extends ShellOutputWriter,
                                       CanFocus, 
                                       HasKeyPressHandlers
 {
-   void consoleWriteInput(String input);
+   void consoleWriteInput(String input, String console);
    void consoleWritePrompt(String prompt);
    void consolePrompt(String prompt, boolean showInput) ;
    void ensureInputVisible() ;
