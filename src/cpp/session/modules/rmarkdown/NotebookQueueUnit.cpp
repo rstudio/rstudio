@@ -19,8 +19,10 @@
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/locale.hpp>
 
 #include <core/json/JsonRpc.hpp>
+#include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -111,8 +113,9 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    // extract top-level values
    json::Array completed, pending;
    int execMode, execScope;
+   std::string code;
    Error error = json::readObject(source, 
-         kQueueUnitCode,      &unit.code_,
+         kQueueUnitCode,      &code,
          kQueueUnitDocId,     &unit.docId_,
          kQueueUnitChunkId,   &unit.chunkId_,
          kQueueUnitCompleted, &completed,
@@ -122,10 +125,14 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    if (error)
       LOG_ERROR(error);
 
+   // convert enums
    unit.execMode_ = static_cast<ExecMode>(execMode);
    unit.execScope_ = static_cast<ExecScope>(execScope);
 
-   // process arrays 
+   // convert code to wide chars (so we don't have to do UTF-8 math when
+   // processing execution ranges)
+   unit.code_ = string_utils::utf8ToWide(code);
+
    error = fillExecRange(completed, &unit.completed_);
    if (error)
       LOG_ERROR(error);
@@ -140,8 +147,8 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    // evaluate this chunk's options in R
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
-   Error error = r::exec::RFunction(".rs.evaluateChunkOptions", code_)
-                                   .call(&sexpOptions, &protect);
+   Error error = r::exec::RFunction(".rs.evaluateChunkOptions", 
+               string_utils::wideToUtf8(code_)).call(&sexpOptions, &protect);
    if (error)
       return error;
 
@@ -168,7 +175,8 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
-   return r::exec::RFunction(".rs.extractChunkInnerCode", code_).call(pCode);
+   return r::exec::RFunction(".rs.extractChunkInnerCode", 
+         string_utils::wideToUtf8(code_)).call(pCode);
 }
 
 void NotebookQueueUnit::updateFrom(const NotebookQueueUnit& other)
@@ -205,7 +213,7 @@ json::Object NotebookQueueUnit::toJson() const
 
    // emit top-level values
    json::Object unit;
-   unit[kQueueUnitCode]      = code_;
+   unit[kQueueUnitCode]      = string_utils::wideToUtf8(code_);
    unit[kQueueUnitDocId]     = docId_;
    unit[kQueueUnitChunkId]   = chunkId_;
    unit[kQueueUnitCompleted] = completed;
@@ -247,13 +255,13 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
       executing_.extendTo(ExecRange(start, stop));
 
    completed_.push_back(executing_);
-   std::string code = code_.substr(start, stop - start);
+   std::wstring code = code_.substr(start, stop - start);
    
    // return values to caller
    if (pRange)
       *pRange = executing_;
 
-   return code;
+   return string_utils::wideToUtf8(code);
 }
 
 std::string NotebookQueueUnit::docId() const
@@ -266,7 +274,7 @@ std::string NotebookQueueUnit::chunkId() const
    return chunkId_;
 }
 
-std::string NotebookQueueUnit::code() const
+std::wstring NotebookQueueUnit::code() const
 {
    return code_;
 }
@@ -288,7 +296,8 @@ ExecMode NotebookQueueUnit::execMode() const
 
 std::string NotebookQueueUnit::executingCode() const
 {
-   return code_.substr(executing_.start, executing_.stop - executing_.start);
+   return string_utils::wideToUtf8(code_.substr(
+            executing_.start, executing_.stop - executing_.start));
 }
 
 } // namespace notebook

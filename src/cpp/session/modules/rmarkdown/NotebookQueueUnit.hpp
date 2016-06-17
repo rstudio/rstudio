@@ -74,7 +74,7 @@ public:
    std::string chunkId() const;
    ExecMode execMode() const;
    ExecScope execScope() const;
-   std::string code() const;
+   std::wstring code() const;
    std::string executingCode() const;
 
 private:
@@ -82,7 +82,7 @@ private:
    std::string chunkId_;
    ExecMode execMode_;
    ExecScope execScope_;
-   std::string code_;
+   std::wstring code_;
    std::list<ExecRange> completed_;
    std::list<ExecRange> pending_;
    ExecRange executing_;
