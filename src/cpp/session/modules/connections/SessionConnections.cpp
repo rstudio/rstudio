@@ -443,7 +443,7 @@ Error installSpark(const json::JsonRpcRequest& request,
    options.redirectStdErrToStdOut = true;
 
    // build install command
-   boost::format fmt("sparklyr::spark_install('%2%', hadoop_version = '%3%', "
+   boost::format fmt("sparklyr::spark_install('%1%', hadoop_version = '%2%', "
                      "verbose = TRUE)");
    std::string cmd = boost::str(fmt %
                                  sparkVersion %
