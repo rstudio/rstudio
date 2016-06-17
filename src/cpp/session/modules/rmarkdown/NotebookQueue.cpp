@@ -119,13 +119,19 @@ public:
          {
             bool incomplete = false;
 
-            // if we're still in continuation mode but we're at the end of the
-            // chunk, generate an error
             if (mode == ExprModeContinuation &&
                 execUnit_->execScope() == ExecScopeChunk)
             {
+               // if we're still in continuation mode but we're at the end of
+               // the chunk, generate an error
                incomplete = true;
                sendIncompleteError(execUnit_);
+            }
+            else if (mode == ExprModeNew && execContext_)
+            {
+               // otherwise let the context know that the last expression 
+               // finished evaluation
+               execContext_->onExprComplete();
             }
 
             // unit has finished executing; remove it from the queue

@@ -20,6 +20,7 @@
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookErrors.hpp"
+#include "NotebookWorkingDir.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -30,7 +31,6 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
-#include <session/SessionSourceDatabase.hpp>
 
 #include <iostream>
 
@@ -176,22 +176,12 @@ void ChunkExecContext::connect()
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
 
-   // reset working directory to doc path, if it has one
-   std::string docPath;
-   source_database::getPath(docId_, &docPath);
-   if (!docPath.empty())
-   {
-      FilePath targetDir = module_context::resolveAliasedPath(docPath).parent();
-      FilePath currentDir = FilePath::safeCurrentPath(targetDir);
-      if (currentDir != targetDir)
-      {
-         error = FilePath::makeCurrent(targetDir.absolutePath());
-         if (error)
-            LOG_ERROR(error);
-         else
-            prevWorkingDir_ = currentDir.absolutePath();
-      }
-   }
+   boost::shared_ptr<DirCapture> pDirCapture = boost::make_shared<DirCapture>();
+   error = pDirCapture->connectDir(docId_);
+   if (error)
+      LOG_ERROR(error);
+   else
+      captures_.push_back(pDirCapture);
 
    // begin capturing errors
    boost::shared_ptr<ErrorCapture> pErrorCapture = 
@@ -351,14 +341,6 @@ void ChunkExecContext::disconnect()
    if (!prevWarn_.isNil())
    {
       error = r::options::setOption("warn", prevWarn_.get());
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // restore working directory, if we saved one
-   if (!prevWorkingDir_.empty())
-   {
-      error = FilePath::makeCurrent(prevWorkingDir_);
       if (error)
          LOG_ERROR(error);
    }
