@@ -132,7 +132,7 @@ public class NotebookQueueUnit extends JavaScriptObject
    {
       List<Integer> lines = new ArrayList<Integer>();
       final String code = getCode();
-      int line = 0;
+      int line = 0, last = -1;
       for (int i = 0; i < code.length(); i++)
       {
          // increment line counter if we're on a new line
@@ -140,8 +140,7 @@ public class NotebookQueueUnit extends JavaScriptObject
             line++;
 
          // skip if this line was already accounted for
-         if (!lines.isEmpty() &&
-             lines.get(lines.size() - 1) == line)
+         if (line == last)
             continue;
          
          // check to see if this line is included in any of the given ranges
@@ -150,7 +149,13 @@ public class NotebookQueueUnit extends JavaScriptObject
             final NotebookExecRange range = ranges.get(j);
             if (i >= range.getStart() && i < range.getStop())
             {
+               // if this is a newline, include the previous line if not 
+               // already included
+               if (code.charAt(i) == '\n' && last != line - 1)
+                  lines.add(line - 1);
+
                lines.add(line);
+               last = line;
                continue;
             }
          }
