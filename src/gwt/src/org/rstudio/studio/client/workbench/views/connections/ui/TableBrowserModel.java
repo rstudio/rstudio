@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -121,9 +122,21 @@ public class TableBrowserModel implements TreeViewModel
    {
       public void refresh()
       {  
-         fieldProviders_.clear();
-         for (HasData<String> display : getDataDisplays())  
-           display.setVisibleRangeAndClearData(display.getVisibleRange(), true);
+         // prefetch the tables so there is no gap between clearing the
+         // table and redrawing the nodes
+         listTables(new CommandWithArg<JsArrayString>() {
+            @Override
+            public void execute(JsArrayString tables)
+            {
+               prefetchedTableList_ = tables;
+               fieldProviders_.clear();
+               for (HasData<String> display : getDataDisplays())
+               {
+                 display.setVisibleRangeAndClearData(display.getVisibleRange(), 
+                                                     true);
+               }
+            }
+        });
       }
       
       @Override
@@ -133,29 +146,21 @@ public class TableBrowserModel implements TreeViewModel
         {
            clearData();
         }
+        else if (prefetchedTableList_ != null)
+        {
+           JsArrayString tables = prefetchedTableList_;
+           prefetchedTableList_ = null;
+           updateData(tables);
+        }
         else
         {
-           server_.connectionListTables(
-              connection_, 
-              new SimpleRequestCallback<JsArrayString>() {
-                 @Override
-                 public void onResponseReceived(JsArrayString tables)
-                 {
-                    updateRowCount(tables.length(), true);
-                    ArrayList<String> data = new ArrayList<String>();
-                    for (int i=0; i<tables.length(); i++)
-                       data.add(tables.get(i));
-                    updateRowData(0, data);
-                    fireUpdateCompleted();
-                 }    
-                 
-                 @Override
-                 public void onError(ServerError error)
-                 {
-                    super.onError(error);
-                    clearData();
-                 }
-              });
+           listTables(new CommandWithArg<JsArrayString>() {
+               @Override
+               public void execute(JsArrayString tables)
+               {
+                  updateData(tables);
+               }
+           });
         }
       } 
       
@@ -164,6 +169,36 @@ public class TableBrowserModel implements TreeViewModel
          updateRowCount(0, true);
          updateRowData(0, new ArrayList<String>());
          fireUpdateCompleted();
+      }
+      
+      private void updateData(JsArrayString tables)
+      {
+         updateRowCount(tables.length(), true);
+         ArrayList<String> data = new ArrayList<String>();
+         for (int i=0; i<tables.length(); i++)
+            data.add(tables.get(i));
+         updateRowData(0, data);
+         fireUpdateCompleted();
+      }
+      
+      private void listTables(final CommandWithArg<JsArrayString> onCompleted)
+      {
+         server_.connectionListTables(
+            connection_, 
+            new SimpleRequestCallback<JsArrayString>() {
+               @Override
+               public void onResponseReceived(JsArrayString tables)
+               {
+                  onCompleted.execute(tables);
+               }    
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  super.onError(error);
+                  clearData();
+               }
+            });
       }
       
       private void fireUpdateCompleted()
@@ -316,6 +351,8 @@ public class TableBrowserModel implements TreeViewModel
                               = new HashMap<String,FieldProvider>();
    
    private Connection connection_;
+   
+   private JsArrayString prefetchedTableList_ = null;
    
    private Set<String> expandedNodeRefreshQueue_ = null;
    private Command onTableUpdateCompleted_ = null;
