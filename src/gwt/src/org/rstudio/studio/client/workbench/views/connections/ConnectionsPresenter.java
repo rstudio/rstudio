@@ -225,6 +225,7 @@ public class ConnectionsPresenter extends BasePresenter
       {
          exploreConnection(event.getConnection());
       }
+      activate();
    }
    
    public void onConnectionUpdated(ConnectionUpdatedEvent event)
