@@ -13,6 +13,12 @@
  *
  */
 
+#if defined(_WIN32)
+// Necessary to avoid compile error on Win x64
+#include <winsock2.h>
+#endif
+
+
 #include "SessionRmdNotebook.hpp"
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
