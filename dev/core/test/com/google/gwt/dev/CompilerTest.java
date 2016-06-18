@@ -993,7 +993,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.Impl",
             "package com.foo;",
-            "public class Impl implements SomeJsFunction {",
+            "public final class Impl implements SomeJsFunction {",
             "  public void m() { SomeInterface.class.getName(); } ",
             "}");
 
@@ -1146,7 +1146,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         JavaResourceBase.createMockJavaResource(
             "com.foo.Foo",
             "package com.foo;",
-            "public class Foo implements IFoo {",
+            "public final class Foo implements IFoo {",
             "  @Override public int foo(int x) { return 0; }",
             "}");
 

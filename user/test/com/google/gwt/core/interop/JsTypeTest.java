@@ -458,7 +458,7 @@ public class JsTypeTest extends GWTTestCase {
     int m();
   }
 
-  static class JavaConcreteJsFunction implements JsFunctionInterface {
+  static final class JavaConcreteJsFunction implements JsFunctionInterface {
     public int m() {
       return 5;
     }

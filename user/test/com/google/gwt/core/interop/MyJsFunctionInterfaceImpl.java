@@ -18,7 +18,7 @@ package com.google.gwt.core.interop;
 /**
  * A concrete class that implements a JsFunction interface.
  */
-public class MyJsFunctionInterfaceImpl implements MyJsFunctionInterface {
+public final class MyJsFunctionInterfaceImpl implements MyJsFunctionInterface {
 
   public int publicField = 10;
 
