@@ -199,13 +199,13 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
    * an existing non-JsMember inside a class.
    */
   public boolean exposesNonJsMember() {
-    if (isInterfaceMethod() || getJsMemberType() == JsMemberType.NONE) {
+    if (isInterfaceMethod() || !JjsUtils.exposesJsName(this)) {
       return false;
     }
 
     boolean hasNonJsMemberParent = false;
     for (JMethod overriddenMethod : overriddenMethods) {
-      if (overriddenMethod.getJsMemberType() == JsMemberType.NONE) {
+      if (!JjsUtils.exposesJsName(overriddenMethod)) {
         hasNonJsMemberParent = true;
       }
       if (overriddenMethod.exposesNonJsMember()) {

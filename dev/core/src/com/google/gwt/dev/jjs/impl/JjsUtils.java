@@ -626,6 +626,19 @@ public class JjsUtils {
     return getNativeSuperClassOrNull(superClass);
   }
 
+  /**
+   * Whether or not to use the JsName when implementing this member.
+   *
+   * <p>A member should only expose a JsName when a JsName has been assigned and the compilation
+   * has been configured to honor those names.
+   * */
+  public static boolean exposesJsName(JMember member) {
+    // JsFunction interfaces and  implementations do not have JsNames but canBeReferencedExternally
+    // or canBeImplementedExternally.
+    return member.getJsMemberType() != JsMemberType.NONE
+        && (member.canBeImplementedExternally() || member.canBeReferencedExternally());
+  }
+
   private JjsUtils() {
   }
 }

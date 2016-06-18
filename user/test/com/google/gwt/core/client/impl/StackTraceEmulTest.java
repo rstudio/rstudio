@@ -67,7 +67,7 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
     String[] methodNames = getTraceJava();
 
     StackTraceElement[] expectedTrace = new StackTraceElement[] {
-        createSTE(methodNames[0], "Throwable.java", 68),
+        createSTE(methodNames[0], "Throwable.java", 67),
         createSTE(methodNames[1], "Exception.java", 29),
         createSTE(methodNames[2], "StackTraceExamples.java", 57),
         createSTE(methodNames[3], "StackTraceExamples.java", 52),

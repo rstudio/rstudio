@@ -88,11 +88,22 @@ public class StackTraceExamples {
       }
 
       return [
-        @StackTraceCreator::getFunctionName(*)(arguments.callee),
-        @StackTraceCreator::getFunctionName(*)(arguments.callee.caller),
+        @StackTraceExamples::getFunctionName(*)(arguments.callee),
+        @StackTraceExamples::getFunctionName(*)(arguments.callee.caller),
       ];
     }
     return native1();
+  }-*/;
+
+  private static native String getFunctionName(JavaScriptObject fn) /*-{
+    return fn.name || (fn.name = @StackTraceExamples::extractFunctionName(*)(fn.toString()));
+  }-*/;
+
+  // Visible for testing
+  static native String extractFunctionName(String fnName) /*-{
+    var fnRE = /function(?:\s+([\w$]+))?\s*\(/;
+    var match = fnRE.exec(fnName);
+    return (match && match[1]) || "anonymous";
   }-*/;
 
   // Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.22 (KHTML, like Gecko)
