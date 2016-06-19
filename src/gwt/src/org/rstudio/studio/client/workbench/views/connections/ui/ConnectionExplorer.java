@@ -41,7 +41,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // code/connecti panel
-      int codePanelHeight = 90;
+      int codePanelHeight = 80;
       disconnectedUI_ = new VerticalPanel();
       disconnectedUI_.setWidth("100%");
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
@@ -54,7 +54,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       Label label = new Label("(Not connected)");
       Style labelStyle = label.getElement().getStyle();
       labelStyle.setColor("#888");
-      labelStyle.setMarginTop(15, Unit.PX);
+      labelStyle.setMarginTop(25, Unit.PX);
       labelStyle.setTextAlign(TextAlign.CENTER);
       disconnectedUI_.add(label);
       disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
