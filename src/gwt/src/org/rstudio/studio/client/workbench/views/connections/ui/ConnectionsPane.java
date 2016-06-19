@@ -44,6 +44,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
@@ -376,11 +377,14 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             commands_.newRNotebook().getImageResource(),
             "New R Notebook",
             ConnectionOptions.CONNECT_NEW_R_NOTEBOOK));
-      connectMenu.addSeparator();
-      connectMenu.addItem(connectMenuItem(
-            commands_.copyPlotToClipboard().getImageResource(),
-            "Copy to Clipboard",
-            ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
+      if (BrowseCap.INSTANCE.canCopyToClipboard())
+      {
+         connectMenu.addSeparator();
+         connectMenu.addItem(connectMenuItem(
+               commands_.copyPlotToClipboard().getImageResource(),
+               "Copy to Clipboard",
+               ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
+      }
       connectMenuButton_ = new ToolbarButton(
             "Connect", 
             commands_.newConnection().getImageResource(), 

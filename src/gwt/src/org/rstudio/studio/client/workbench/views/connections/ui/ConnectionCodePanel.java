@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -86,8 +87,11 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
       if (uiPrefs_.enableRNotebooks().getValue())
          connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
-      connectVia_.addItem("Copy to Clipboard", 
-                          ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
+      if (BrowseCap.INSTANCE.canCopyToClipboard())
+      {
+         connectVia_.addItem("Copy to Clipboard", 
+                             ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
+      }
       updateConnectViaUI_.execute();
       addConnectViaChangeHandler(new ChangeHandler() {
          @Override

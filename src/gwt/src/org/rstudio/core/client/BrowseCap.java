@@ -63,6 +63,12 @@ public class BrowseCap
       return !isInternetExplorer();
    }
    
+   public boolean canCopyToClipboard()
+   {
+      return Desktop.isDesktop() || !isSafari();
+   }
+   
+   
    public boolean isInternetExplorer()
    {
       return isUserAgent("trident");
@@ -121,6 +127,11 @@ public class BrowseCap
    public static boolean isChrome()
    {
       return isUserAgent("chrome");
+   }
+   
+   public static boolean isSafari()
+   {
+      return isUserAgent("safari") && !isChrome();
    }
    
    public static boolean isChromeLinux() 
