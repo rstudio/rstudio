@@ -108,6 +108,8 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    {
       activePanel_ = connected ? tableBrowser_ : disconnectedUI_;
       showActivePanel();
+      if (!connected)
+         tableBrowser_.clear();
    }
    
    public String getConnectCode()

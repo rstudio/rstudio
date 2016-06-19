@@ -73,6 +73,12 @@ public class TableBrowserModel implements TreeViewModel
       refresh();
    }
    
+   public void clear()
+   {
+      connection_ = null;
+      tableProvider_.clear();
+   }
+   
    @Override
    public <T> NodeInfo<?> getNodeInfo(T value)
    {
@@ -120,23 +126,33 @@ public class TableBrowserModel implements TreeViewModel
 
    private class TableProvider extends AsyncDataProvider<String>
    {
+      public void clear()
+      {
+         prefetchedTableList_ = null;
+         fieldProviders_.clear();
+         clearData();
+      }
+      
       public void refresh()
       {  
-         // prefetch the tables so there is no gap between clearing the
-         // table and redrawing the nodes
-         listTables(new CommandWithArg<JsArrayString>() {
-            @Override
-            public void execute(JsArrayString tables)
-            {
-               prefetchedTableList_ = tables;
-               fieldProviders_.clear();
-               for (HasData<String> display : getDataDisplays())
+         if (connection_ != null)
+         {
+            // prefetch the tables so there is no gap between clearing the
+            // table and redrawing the nodes
+            listTables(new CommandWithArg<JsArrayString>() {
+               @Override
+               public void execute(JsArrayString tables)
                {
-                 display.setVisibleRangeAndClearData(display.getVisibleRange(), 
-                                                     true);
+                  prefetchedTableList_ = tables;
+                  fieldProviders_.clear();
+                  for (HasData<String> display : getDataDisplays())
+                  {
+                    display.setVisibleRangeAndClearData(display.getVisibleRange(), 
+                                                        true);
+                  }
                }
-            }
-        });
+            });
+         }
       }
       
       @Override

@@ -60,10 +60,13 @@ public class TableBrowser extends Composite implements RequiresResize
       initWidget(scrollPanel_);
    }
   
-   public void update(Connection connection, String hint)
+   public void clear()
    {
-      connection_ = connection;
-      
+      tablesModel_.clear();
+   }
+   
+   public void update(Connection connection, String hint)
+   { 
       // capture scroll position
       final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
       
@@ -81,7 +84,7 @@ public class TableBrowser extends Composite implements RequiresResize
       
       // update the table then restore expanded nodes
       tablesModel_.update(
-         connection_,      // connection 
+         connection,      // connection 
          expandedNodes,    // track nodes to expand
          new Command() {   // table update completed, expand nodes
             @Override
@@ -172,6 +175,5 @@ public class TableBrowser extends Composite implements RequiresResize
    private final ScrollPanel scrollPanel_;
    private final CellTree tables_;
    private final TableBrowserModel tablesModel_;
-   
-   private Connection connection_;
+  
 }
