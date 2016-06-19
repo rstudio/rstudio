@@ -24,6 +24,7 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.DecimalMax} constraint validator
  * implementation for a {@link Number}.
  */
+@Deprecated
 public class DecimalMaxValidatorForNumber extends
     AbstractDecimalMaxValidator<Number> {
 

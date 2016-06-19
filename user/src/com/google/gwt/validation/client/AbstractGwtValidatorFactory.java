@@ -53,6 +53,7 @@ import javax.validation.spi.ConfigurationState;
  * &lt;/replace-with>
  * </pre>
  */
+@Deprecated
 public abstract class AbstractGwtValidatorFactory implements ValidatorFactory {
   private ConstraintValidatorFactory constraintValidatorFactory;
   private MessageInterpolator messageInterpolator;

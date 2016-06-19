@@ -29,6 +29,7 @@ import javax.validation.spi.ValidationProvider;
 /**
  * GWT {@link ValidationProvider}.
  */
+@Deprecated
 public final class GwtValidationProvider implements
     ValidationProvider<BaseGwtConfiguration> {
 

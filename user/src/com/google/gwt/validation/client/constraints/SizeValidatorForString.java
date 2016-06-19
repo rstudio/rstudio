@@ -21,6 +21,7 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a {@link String}.
  */
+@Deprecated
 public class SizeValidatorForString extends AbstractSizeValidator<String> {
 
   @Override

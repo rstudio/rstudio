@@ -27,6 +27,7 @@ import javax.validation.MessageInterpolator;
 /**
  * Base GWT {@link MessageInterpolator}.
  */
+@Deprecated
 abstract class BaseMessageInterpolator implements MessageInterpolator {
 
   // local version because guava is not included.

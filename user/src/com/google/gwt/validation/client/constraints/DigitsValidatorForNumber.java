@@ -24,6 +24,7 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Digits} constraint validator
  * implementation for a {@link Number}.
  */
+@Deprecated
 public class DigitsValidatorForNumber extends
     AbstractDigitsValidator<Number> {
 

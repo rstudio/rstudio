@@ -25,6 +25,7 @@ import javax.validation.constraints.Future;
  * {@link Future} constraint validator implementation for a
  * {@link java.util.Date}.
  */
+@Deprecated
 public class FutureValidatorForDate implements
     ConstraintValidator<Future, Date> {
 

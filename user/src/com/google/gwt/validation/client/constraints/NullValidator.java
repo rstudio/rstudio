@@ -22,6 +22,7 @@ import javax.validation.constraints.Null;
 /**
  * {@link Null} constraint validator implementation.
  */
+@Deprecated
 public class NullValidator implements ConstraintValidator<Null, Object> {
 
   @Override

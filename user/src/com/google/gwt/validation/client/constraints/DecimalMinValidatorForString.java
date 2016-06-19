@@ -23,6 +23,7 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.DecimalMax} constraint validator
  * implementation for a {@link String}.
  */
+@Deprecated
 public class DecimalMinValidatorForString extends
     AbstractDecimalMinValidator<String> {
 

@@ -21,6 +21,7 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a array of {@code boolean}s.
  */
+@Deprecated
 public class SizeValidatorForArrayOfBoolean extends
     AbstractSizeValidator<boolean[]> {
 

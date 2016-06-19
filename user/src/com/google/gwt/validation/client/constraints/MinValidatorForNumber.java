@@ -21,6 +21,7 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Min} constraint validator implementation
  * for a {@link Number}.
  */
+@Deprecated
 public class MinValidatorForNumber extends AbstractMinValidator<Number> {
 
   @Override

@@ -18,6 +18,7 @@ package com.google.gwt.validation.client;
 /**
  * Users and Validation providers implement this to resolve ValidationMessages.
  */
+@Deprecated
 public interface ValidationMessageResolver {
 
   /**

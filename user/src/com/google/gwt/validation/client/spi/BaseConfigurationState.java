@@ -26,6 +26,7 @@ import javax.validation.spi.ConfigurationState;
 /**
  * Base GWT implementation of {@link ConfigurationState}.
  */
+@Deprecated
 public abstract class BaseConfigurationState implements ConfigurationState {
   private final ConstraintValidatorFactory constraintValidatorFactory;
   private final MessageInterpolator messageInterpolator;

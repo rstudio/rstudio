@@ -26,6 +26,7 @@ import javax.validation.constraints.Max;
  *
  * @param <T> the type of object to validate
  */
+@Deprecated
 public abstract class AbstractMaxValidator<T> implements
     ConstraintValidator<Max, T> {
 

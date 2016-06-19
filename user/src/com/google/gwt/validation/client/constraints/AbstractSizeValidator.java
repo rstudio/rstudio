@@ -23,6 +23,7 @@ import javax.validation.constraints.Size;
  *
  * @param <T>
  */
+@Deprecated
 public abstract class AbstractSizeValidator<T> implements
     ConstraintValidator<Size, T> {
 
