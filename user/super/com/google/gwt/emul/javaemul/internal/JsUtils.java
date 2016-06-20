@@ -20,6 +20,10 @@ package javaemul.internal;
  */
 public class JsUtils {
 
+  public static native int compare(String a, String b) /*-{
+    return a == b ? 0 : (a < b ? -1 : 1);
+  }-*/;
+
   public static native boolean isFinite(double d) /*-{
     return isFinite(d);
   }-*/;

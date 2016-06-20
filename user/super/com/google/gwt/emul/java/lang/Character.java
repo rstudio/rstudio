@@ -230,7 +230,7 @@ public final class Character implements Comparable<Character>, Serializable {
    * TODO: correct Unicode handling.
    */
   public static boolean isDigit(char c) {
-    return String.valueOf(c).nativeMatches(digitRegex());
+    return digitRegex().test(String.valueOf(c));
   }
 
   private static native NativeRegExp digitRegex() /*-{
@@ -245,7 +245,7 @@ public final class Character implements Comparable<Character>, Serializable {
    * TODO: correct Unicode handling.
    */
   public static boolean isLetter(char c) {
-    return String.valueOf(c).nativeMatches(leterRegex());
+    return leterRegex().test(String.valueOf(c));
   }
 
   private static native NativeRegExp leterRegex() /*-{
@@ -256,7 +256,7 @@ public final class Character implements Comparable<Character>, Serializable {
    * TODO: correct Unicode handling.
    */
   public static boolean isLetterOrDigit(char c) {
-    return String.valueOf(c).nativeMatches(leterOrDigitRegex());
+    return leterOrDigitRegex().test(String.valueOf(c));
   }
 
   private static native NativeRegExp leterOrDigitRegex() /*-{
@@ -296,11 +296,11 @@ public final class Character implements Comparable<Character>, Serializable {
   }
 
   public static boolean isWhitespace(char ch) {
-    return String.valueOf(ch).nativeMatches(whitespaceRegex());
+    return whitespaceRegex().test(String.valueOf(ch));
   }
 
   public static boolean isWhitespace(int codePoint) {
-    return String.fromCodePoint(codePoint).nativeMatches(whitespaceRegex());
+    return whitespaceRegex().test(String.fromCodePoint(codePoint));
   }
 
   // The regex would just be /\s/, but browsers handle non-breaking spaces inconsistently. Also,

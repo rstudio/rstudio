@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,9 +15,11 @@
  */
 package java.lang;
 
+import static javaemul.internal.InternalPreconditions.checkNotNull;
+
 /**
  * A fast way to create strings using multiple appends.
- * 
+ *
  * This class is an exact clone of {@link StringBuffer} except for the name.
  * Any change made to one should be mirrored in the other.
  */
@@ -28,7 +30,7 @@ public final class StringBuilder extends AbstractStringBuilder {
   }
 
   public StringBuilder(CharSequence s) {
-    super(String.valueOf(s));
+    super(s.toString());
   }
 
   /**
@@ -41,7 +43,7 @@ public final class StringBuilder extends AbstractStringBuilder {
   }
 
   public StringBuilder(String s) {
-    super(s);
+    super(checkNotNull(s));
   }
 
   public StringBuilder append(boolean x) {

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.emultest.java.lang;
 
+import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
 
@@ -31,22 +32,13 @@ import java.util.Locale;
  */
 public class StringTest extends GWTTestCase {
 
-  static volatile boolean TRUE = true;
-
-  private static <T> T hideFromCompiler(T value) {
-    return TRUE ? value : null;
-  }
-
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testCharAt() {
-    assertEquals("abc".charAt(1), 'b');
+    assertEquals(hideFromCompiler("abc").charAt(1), 'b');
   }
 
   public void testCodePoint() {
@@ -103,6 +95,30 @@ public class StringTest extends GWTTestCase {
     assertEquals(1, nonBmpChar.codePointCount(0, 2));
   }
 
+  public void testCompareTo() {
+    assertEquals(0, hideFromCompiler("a").compareTo("a"));
+    assertEquals(-1, hideFromCompiler("a").compareTo("b"));
+    assertEquals(1, hideFromCompiler("b").compareTo("a"));
+
+    try {
+      returnNull().compareTo("");
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+
+    try {
+      returnNull().compareTo(returnNull());
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+  }
+
   public void testConcat() {
     String abc = String.valueOf(new char[] {'a', 'b', 'c'});
     String def = String.valueOf(new char[] {'d', 'e', 'f'});
@@ -118,6 +134,24 @@ public class StringTest extends GWTTestCase {
     assertEquals("abcd", s + c);
     s += c;
     assertEquals("abcd", s);
+
+    try {
+      returnNull().concat("");
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+
+    try {
+      hideFromCompiler("").concat(returnNull());
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
   }
 
   public void testConstructor() {
@@ -147,6 +181,22 @@ public class StringTest extends GWTTestCase {
     sb = new StringBuilder();
     sb.appendCodePoint(0x10400);
     assertEquals("\uD801\uDC00", new String(sb));
+
+    try {
+      new String(returnNull());
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+
+    try {
+      new String(hideFromCompiler((StringBuilder) null));
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
   }
 
   public void testConstructorBytes() {
@@ -265,26 +315,22 @@ public class StringTest extends GWTTestCase {
     }
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations. (StringBuffer tests
-   * are ok)
-   */
   public void testContains() {
     // at the beginning
-    assertTrue("abcdef".contains("ab"));
-    assertTrue("abcdef".contains(new StringBuffer("ab")));
+    assertTrue(hideFromCompiler("abcdef").contains("ab"));
+    assertTrue(hideFromCompiler("abcdef").contains(new StringBuffer("ab")));
     // at the end
-    assertTrue("abcdef".contains("ef"));
-    assertTrue("abcdef".contains(new StringBuffer("ef")));
+    assertTrue(hideFromCompiler("abcdef").contains("ef"));
+    assertTrue(hideFromCompiler("abcdef").contains(new StringBuffer("ef")));
     // in the middle
-    assertTrue("abcdef".contains("cd"));
-    assertTrue("abcdef".contains(new StringBuffer("cd")));
+    assertTrue(hideFromCompiler("abcdef").contains("cd"));
+    assertTrue(hideFromCompiler("abcdef").contains(new StringBuffer("cd")));
     // the same
-    assertTrue("abcdef".contains("abcdef"));
-    assertTrue("abcdef".contains(new StringBuffer("abcdef")));
+    assertTrue(hideFromCompiler("abcdef").contains("abcdef"));
+    assertTrue(hideFromCompiler("abcdef").contains(new StringBuffer("abcdef")));
     // not present
-    assertFalse("abcdef".contains("z"));
-    assertFalse("abcdef".contains(new StringBuffer("z")));
+    assertFalse(hideFromCompiler("abcdef").contains("z"));
+    assertFalse(hideFromCompiler("abcdef").contains(new StringBuffer("z")));
   }
 
   public void testEndsWith() {
@@ -295,38 +341,64 @@ public class StringTest extends GWTTestCase {
   }
 
   public void testEquals() {
-    assertFalse("ABC".equals("abc"));
-    assertFalse("abc".equals("ABC"));
-    assertTrue("abc".equals("abc"));
-    assertTrue("ABC".equals("ABC"));
-    assertFalse("AbC".equals("aBC"));
-    assertFalse("AbC".equals("aBC"));
-    assertTrue("".equals(""));
-    assertFalse("".equals(null));
+    assertFalse(hideFromCompiler("ABC").equals("abc"));
+    assertFalse(hideFromCompiler("abc").equals("ABC"));
+    assertTrue(hideFromCompiler("abc").equals("abc"));
+    assertTrue(hideFromCompiler("ABC").equals("ABC"));
+    assertFalse(hideFromCompiler("AbC").equals("aBC"));
+    assertFalse(hideFromCompiler("AbC").equals("aBC"));
+    assertTrue(hideFromCompiler("").equals(""));
+    assertFalse(hideFromCompiler("").equals(null));
 
-    // Randomize the string to avoid static eval.
-    double r = Math.random();
-    assertTrue((r + "").equals(r + ""));
-    assertFalse((r + "ABC").equals(r + "abc"));
-    assertFalse((r + "abc").equals(r + "ABC"));
-    assertTrue((r + "abc").equals(r + "abc"));
-    assertTrue((r + "ABC").equals(r + "ABC"));
-    assertFalse((r + "AbC").equals(r + "aBC"));
-    assertFalse((r + "AbC").equals(r + "aBC"));
+    // TODO: String.equals does not have NPE check
+/*
+    try {
+      returnNull().equals("other");
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+
+    try {
+      returnNull().equals(returnNull());
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+*/
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testEqualsIgnoreCase() {
-    assertTrue("ABC".equalsIgnoreCase("abc"));
-    assertTrue("abc".equalsIgnoreCase("ABC"));
-    assertTrue("abc".equalsIgnoreCase("abc"));
-    assertTrue("ABC".equalsIgnoreCase("ABC"));
-    assertTrue("AbC".equalsIgnoreCase("aBC"));
-    assertTrue("AbC".equalsIgnoreCase("aBC"));
-    assertTrue("".equalsIgnoreCase(""));
-    assertFalse("".equalsIgnoreCase(null));
+    assertTrue(hideFromCompiler("ABC").equalsIgnoreCase("abc"));
+    assertTrue(hideFromCompiler("abc").equalsIgnoreCase("ABC"));
+    assertTrue(hideFromCompiler("abc").equalsIgnoreCase("abc"));
+    assertTrue(hideFromCompiler("ABC").equalsIgnoreCase("ABC"));
+    assertTrue(hideFromCompiler("AbC").equalsIgnoreCase("aBC"));
+    assertTrue(hideFromCompiler("AbC").equalsIgnoreCase("aBC"));
+    assertTrue(hideFromCompiler("").equalsIgnoreCase(""));
+    assertFalse(hideFromCompiler("").equalsIgnoreCase(null));
+
+    try {
+      returnNull().equalsIgnoreCase("other");
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
+
+    try {
+      returnNull().equalsIgnoreCase(returnNull());
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
   }
 
   public void testGetBytesAscii() {
@@ -440,6 +512,15 @@ public class StringTest extends GWTTestCase {
       // get hashes again to verify the values are constant for a given string
       assertEquals(expectedHash, testStrings[i].hashCode());
     }
+
+    try {
+      returnNull().hashCode();
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
   }
 
   public void testIndexOf() {
@@ -451,6 +532,15 @@ public class StringTest extends GWTTestCase {
     assertEquals(haystack.indexOf('a', 1), -1);
     assertEquals(haystack.indexOf("bc"), 1);
     assertEquals(haystack.indexOf(""), 0);
+
+    try {
+      returnNull().indexOf("");
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
   }
 
   public void testIntern() {
@@ -458,6 +548,15 @@ public class StringTest extends GWTTestCase {
     String s2 = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
     assertTrue("strings not equal", s1.equals(s2));
     assertSame("interns are not the same reference", s1.intern(), s2.intern());
+
+    try {
+      returnNull().intern();
+      fail();
+    } catch (NullPointerException e) {
+      // expected
+    } catch (JavaScriptException e) {
+      // expected
+    }
   }
 
   public void testLastIndexOf() {
@@ -479,21 +578,18 @@ public class StringTest extends GWTTestCase {
     assertEquals(4, cat.length());
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testLowerCase() {
-    assertEquals("abc", "AbC".toLowerCase());
-    assertEquals("abc", "abc".toLowerCase());
-    assertEquals("", "".toLowerCase());
+    assertEquals("abc", hideFromCompiler("AbC").toLowerCase());
+    assertEquals("abc", hideFromCompiler("abc").toLowerCase());
+    assertEquals("", hideFromCompiler("").toLowerCase());
 
-    assertEquals("abc", "AbC".toLowerCase(Locale.US));
-    assertEquals("abc", "abc".toLowerCase(Locale.US));
-    assertEquals("", "".toLowerCase(Locale.US));
+    assertEquals("abc", hideFromCompiler("AbC").toLowerCase(Locale.US));
+    assertEquals("abc", hideFromCompiler("abc").toLowerCase(Locale.US));
+    assertEquals("", hideFromCompiler("").toLowerCase(Locale.US));
 
-    assertEquals("abc", "AbC".toLowerCase(Locale.getDefault()));
-    assertEquals("abc", "abc".toLowerCase(Locale.getDefault()));
-    assertEquals("", "".toLowerCase(Locale.getDefault()));
+    assertEquals("abc", hideFromCompiler("AbC").toLowerCase(Locale.getDefault()));
+    assertEquals("abc", hideFromCompiler("abc").toLowerCase(Locale.getDefault()));
+    assertEquals("", hideFromCompiler("").toLowerCase(Locale.getDefault()));
   }
 
   public void testMatch() {
@@ -687,14 +783,10 @@ public class StringTest extends GWTTestCase {
     assertFalse(haystack.startsWith(haystack + "j"));
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testSubstring() {
-    String haystack = "abcdefghi";
-    assertEquals("cd", haystack.substring(2, 4));
-    assertEquals("bc", "abcdef".substring(1, 3));
-    assertEquals("bcdef", "abcdef".substring(1));
+    assertEquals("cd", hideFromCompiler("abcdefghi").substring(2, 4));
+    assertEquals("bc", hideFromCompiler("abcdef").substring(1, 3));
+    assertEquals("bcdef", hideFromCompiler("abcdef").substring(1));
   }
 
   public void testToCharArray() {
@@ -712,7 +804,7 @@ public class StringTest extends GWTTestCase {
     assertEquals("concat with str.toString()", "0abcd", "0" + str.toString() + "d");
 
     // issue 4301
-    Object s = TRUE ? "abc" : createJavaScriptObject();
+    Object s = hideFromCompiler("abc");
     assertSame("s same as s.toString()", s, s.toString());
   }
 
@@ -751,21 +843,18 @@ public class StringTest extends GWTTestCase {
     trimRightAssertEquals("\u2029abc\u00a0","\u2029abc\u00a0");
   }
 
-  /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   */
   public void testUpperCase() {
-    assertEquals("ABC", "AbC".toUpperCase());
-    assertEquals("ABC", "abc".toUpperCase());
-    assertEquals("", "".toUpperCase());
+    assertEquals("ABC", hideFromCompiler("AbC").toUpperCase());
+    assertEquals("ABC", hideFromCompiler("abc").toUpperCase());
+    assertEquals("", hideFromCompiler("").toUpperCase());
 
-    assertEquals("ABC", "AbC".toUpperCase(Locale.US));
-    assertEquals("ABC", "abc".toUpperCase(Locale.US));
-    assertEquals("", "".toUpperCase(Locale.US));
+    assertEquals("ABC", hideFromCompiler("AbC").toUpperCase(Locale.US));
+    assertEquals("ABC", hideFromCompiler("abc").toUpperCase(Locale.US));
+    assertEquals("", hideFromCompiler("").toUpperCase(Locale.US));
 
-    assertEquals("ABC", "AbC".toUpperCase(Locale.getDefault()));
-    assertEquals("ABC", "abc".toUpperCase(Locale.getDefault()));
-    assertEquals("", "".toUpperCase(Locale.getDefault()));
+    assertEquals("ABC", hideFromCompiler("AbC").toUpperCase(Locale.getDefault()));
+    assertEquals("ABC", hideFromCompiler("abc").toUpperCase(Locale.getDefault()));
+    assertEquals("", hideFromCompiler("").toUpperCase(Locale.getDefault()));
   }
 
   /*
@@ -811,28 +900,20 @@ public class StringTest extends GWTTestCase {
     }
   }
 
-  private String returnNull() {
+  private <T> T hideFromCompiler(T value) {
     if (Math.random() < -1) {
       // Can never happen, but fools the compiler enough not to optimize this call.
       fail();
-      return "";
     }
-    return null;
+    return value;
+  }
+
+  private String returnNull() {
+    return hideFromCompiler(null);
   }
 
   private String toS(char from) {
     return Character.toString(from);
   }
-
-  private static Object createJavaScriptObject() {
-    if (TestUtils.isJvm()) {
-      return new Object();
-    }
-    return createJavaScriptObject0();
-  }
-
-  private static native Object createJavaScriptObject0() /*-{
-    return {};
-  }-*/;
 
 }
