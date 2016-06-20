@@ -188,6 +188,10 @@ public class TokenCursor extends JavaScriptObject
              this.moveToEndOfCurrentStatement();
    }-*/;
    
+   public native final boolean isLookingAtBinaryOp() /*-{
+      return this.isLookingAtBinaryOp();
+   }-*/;
+   
    public native final boolean isLeftAssign() /*-{
       var value = this.currentValue();
       return value === "<-" || value === "=";
