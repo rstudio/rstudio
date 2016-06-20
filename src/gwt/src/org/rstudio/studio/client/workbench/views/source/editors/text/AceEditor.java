@@ -2927,7 +2927,7 @@ public class AceEditor implements DocDisplay,
          if (!c.moveToPosition(range.getEnd()) ||
               c.getRow() != range.getEnd().getRow())
             break;
-         if (c.findOpeningBracket(new String[]{"(", "["}, true))
+         if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
          {
             range = range.extend(c.getRow(), 0);
             if (c.fwdToMatchingToken())
@@ -2948,7 +2948,7 @@ public class AceEditor implements DocDisplay,
       {
          // expand to include the current bracketed expression, if any
          c.moveToStartOfRow(row);
-         if (c.findOpeningBracket(new String[]{"(", "["}, true))
+         if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
          {
             range = range.extend(c.getRow(), 0);
             if (c.fwdToMatchingToken())
