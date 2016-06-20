@@ -569,10 +569,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    ## Validate the package name -- note that we validate this upstream
    ## but it is sensible to validate it once more here
-   if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
-      return(.rs.error(
-         "Invalid package name: the package name must start ",
-         "with a letter and follow with only alphanumeric characters"))
+   rePkgName <- "^[[:alpha:]][[:alnum:].]*"
+   if (!grepl(rePkgName, packageName))
+   {
+      msg <- paste(
+         "Invalid package name: package names should start",
+         "with a letter and contain only alphanumeric characters"
+      )
+      return(.rs.error(msg))
+   }
    
    ## Validate the package directory -- if it exists, make sure it's empty,
    ## otherwise, try to create it
@@ -581,24 +586,34 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       containedFiles <- list.files(packageDirectory) ## what about hidden files?
       if (length(containedFiles))
       {
-         return(.rs.error(
-            "Folder '", packageDirectory, "' ",
-            "already exists and is not empty"))
+         msg <- paste(
+            "Folder", shQuote(packageDirectory),
+            "already exists and is not empty"
+         )
+         return(.rs.error(msg))
       }
    }
    
-   # Otherwise, create it
-   else
+   # helper function for ensuring existence of directory
+   ensureDirectory <- function(dir)
    {
-      if (!dir.create(packageDirectory, recursive = TRUE))
-         return(.rs.error(
-            "Failed to create directory '", packageDirectory, "'"))
+      tryCatch(
+         .rs.ensureDirectory(dir),
+         error = function(e) FALSE
+      )
    }
+   
+   failedToCreateDirectoryMsg <- function(dir)
+   {
+      paste("failed to create directory", shQuote(dir))
+   }
+   
+   if (!ensureDirectory(packageDirectory))
+      return(.rs.error(failedToCreateDirectoryMsg(packageDirectory)))
    
    ## Create a DESCRIPTION file
    
    # Fill some bits based on devtools options if they're available.
-   # Protect against vectors with length > 1
    getDevtoolsOption <- function(optionName, default, collapse = " ")
    {
       devtoolsDesc <- getOption("devtools.desc")
@@ -611,7 +626,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       
       paste(option, collapse = collapse)
    }
-   
    
    Author <- getDevtoolsOption("Author", "Who wrote it")
    
@@ -650,7 +664,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # If we are using Rcpp, update DESCRIPTION and NAMESPACE
    if (usingRcpp)
    {
-      dir.create(file.path(packageDirectory, "src"), showWarnings = FALSE)
+      srcDir <- file.path(packageDirectory, "src")
+      if (!ensureDirectory(srcDir))
+         return(.rs.error(failedToCreateDirectoryMsg(srcDir)))
       
       rcppImportsStatement <- "Rcpp"
       
@@ -689,13 +705,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # add test infrastructure
    if ("testthat" %in% DESCRIPTION$Suggests)
    {
-      dir.create(file.path(packageDirectory, "tests"))
-      dir.create(file.path(packageDirectory, "tests", "testthat"))
+      testthatDir <- file.path(packageDirectory, "tests", "testthat")
+      if (!ensureDirectory(testthatDir))
+         return(.rs.error(failedToCreateDirectoryMsg(testthatDir)))
       
-      if ("devtools" %in% rownames(installed.packages()))
+      # use devtools to render a 'testthat.R' template file
+      # okay to load devtools here as we will restart the R
+      # session soon anyhow
+      if (requireNamespace("devtools", quietly = TRUE))
       {
-         # NOTE: Okay to load devtools as we will restart the R session
-         # soon anyhow
          ns <- asNamespace("devtools")
          if (exists("render_template", envir = ns))
          {
@@ -713,7 +731,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    # If we are using the MIT license, add the template
-   if (grepl("MIT\\s+\\+\\s+file\\s+LICEN[SC]E", DESCRIPTION$License, perl = TRUE))
+   reMitLicense <- "MIT\\s+\\+\\s+file\\s+LICEN[SC]E"
+   if (grepl(reMitLicense, DESCRIPTION$License, perl = TRUE))
    {
       # Guess the copyright holder
       holder <- if (!is.null(getOption("devtools.name")))
@@ -732,17 +751,19 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    # Always create 'R/', 'man/' directories
-   dir.create(file.path(packageDirectory, "R"), showWarnings = FALSE)
-   dir.create(file.path(packageDirectory, "man"))
+   dirNames <- c("R", "man")
+   for (dirName in dirNames)
+      if (!ensureDirectory(file.path(packageDirectory, dirName)))
+         return(.rs.error(failedToCreateDirectoryMsg(dirName)))
    
    # If there were no source files specified, create a simple 'hello world'
    # function -- but only if the user hasn't implicitly opted into the 'devtools'
    # ecosystem
-   if ((!length(getOption("devtools.desc"))) &&
-       (!length(sourceFiles)))
+   isPowerUser <- length(getOption("devtools.desc"))
+   hasFiles <- length(sourceFiles) > 0
+   if (!(isPowerUser || hasFiles))
    {
-      
-      # Some simple shortcuts that authors should know
+      # keyboard shortcuts useful for package authors
       sysname <- Sys.info()[["sysname"]]
       
       buildShortcut <- if (sysname == "Darwin")
@@ -808,8 +829,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if (usingRcpp)
       {
          ## Ensure 'src/' directory exists
-         if (!file.exists(file.path(packageDirectory, "src")))
-            dir.create(file.path(packageDirectory, "src"))
+         srcDir <- file.path(packageDirectory, "src")
+         if (!ensureDirectory(srcDir))
+            return(.rs.error(failedToCreateDirectoryMsg(srcDir)))
          
          ## Write a 'hello world' for C++
          helloWorldCpp <- .rs.trimCommonIndent('
@@ -865,7 +887,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          
       }
    }
-   else if (length(sourceFiles))
+   else if (hasFiles)
    {
       # Copy the source files to the appropriate sub-directory
       sourceFileExtensions <- tolower(gsub(".*\\.", "", sourceFiles, perl = TRUE))
@@ -955,7 +977,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    ## compileAttributes can fail
    if (usingRcpp &&
        .rs.isPackageVersionInstalled("Rcpp", "0.10.1") &&
-       require(Rcpp, quietly = TRUE))
+       requireNamespace("Rcpp", quietly = TRUE))
    {
       Rcpp::compileAttributes(packageDirectory)
       if (file.exists(file.path(packageDirectory, "src/rcpp_hello.cpp")))
