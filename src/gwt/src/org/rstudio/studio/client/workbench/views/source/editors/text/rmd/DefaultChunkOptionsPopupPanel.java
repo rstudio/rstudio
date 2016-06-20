@@ -167,7 +167,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       TextCursor cursor = new TextCursor(arguments);
       
       int startIndex = 0;
-      while (true)
+      do
       {
          if (!cursor.fwdToCharacter('=', false))
             break;
@@ -183,6 +183,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          
          startIndex = cursor.getIndex() + 1;
       }
+      while (cursor.moveToNextCharacter());
    }
    
    
