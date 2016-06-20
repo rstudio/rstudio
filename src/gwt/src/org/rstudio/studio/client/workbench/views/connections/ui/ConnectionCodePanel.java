@@ -19,7 +19,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
@@ -85,8 +84,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       };
       connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
       connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
+      connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
       if (BrowseCap.INSTANCE.canCopyToClipboard())
       {
          connectVia_.addItem("Copy to Clipboard", 
@@ -111,9 +109,8 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    }
    
    @Inject
-   public void initialize(UIPrefs uiPrefs)
+   public void initialize()
    {
-      uiPrefs_ = uiPrefs;
    }
    
    public boolean setConnectVia(String connectVia)
@@ -206,7 +203,6 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    private VerticalPanel container_;
    private ListBox connectVia_;
    private AceEditorWidget codeViewer_;
-   private UIPrefs uiPrefs_;
    private boolean settingCode_ = false;
    private final Command updateConnectViaUI_;
    

@@ -59,7 +59,6 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
@@ -71,13 +70,12 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
 {
    @Inject
-   public ConnectionsPane(Commands commands, EventBus eventBus, UIPrefs uiPrefs)
+   public ConnectionsPane(Commands commands, EventBus eventBus)
    {
       // initialize
       super("Connections");
       commands_ = commands;
       eventBus_ = eventBus;
-      uiPrefs_ = uiPrefs;
       
       // create main panel
       mainPanel_ = new LayoutPanel();
@@ -372,10 +370,9 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             commands_.newSourceDoc().getImageResource(),
             "New R Script",
             ConnectionOptions.CONNECT_NEW_R_SCRIPT));
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectMenu.addItem(connectMenuItem(
-            commands_.newRNotebook().getImageResource(),
-            "New R Notebook",
+      connectMenu.addItem(connectMenuItem(
+         commands_.newRNotebook().getImageResource(),
+         "New R Notebook",
             ConnectionOptions.CONNECT_NEW_R_NOTEBOOK));
       if (BrowseCap.INSTANCE.canCopyToClipboard())
       {
@@ -595,7 +592,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    
    private final Commands commands_;
    private final EventBus eventBus_;
-   private final UIPrefs uiPrefs_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources

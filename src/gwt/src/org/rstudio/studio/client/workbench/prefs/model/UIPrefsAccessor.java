@@ -540,15 +540,10 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("preferred_publish_account");
    }
-   
-   public PrefValue<Boolean> enableRNotebooks()
-   {
-      return bool("enable_r_notebooks", false);
-   }
-   
+     
    public PrefValue<Boolean> showRmdChunkOutputInline()
    {
-      return bool("show_rmd_chunk_output_inline", false);
+      return bool("rmd_chunk_output_inline", true);
    }
    
    public PrefValue<Integer> preferredDocumentOutlineWidth()

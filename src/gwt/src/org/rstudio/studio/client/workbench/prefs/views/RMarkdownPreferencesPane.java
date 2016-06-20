@@ -14,10 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 
@@ -75,20 +72,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       add(rmdViewerMode_);
 
-  
-      // Short term option to enable notebooks (this will eventually
-      // go away). This option has only three functions right now:
-      //
-      //  1) It controls whether the "New -> R Notebook" command is visible
-      //  2) It controls whether the other notebook options are visible
-      //     within the preferences pane.
-      //  3) The act of checking it automatically checks the the 
-      //     showRmdChunkOutputInline option within the UI.
-      //
-      enableNotebooks_ = checkboxPref(
-            "Enable R notebook", prefs_.enableRNotebooks());
-      add(enableNotebooks_);
-      
+       
       // show output inline for all Rmds
       final CheckBox rmdInlineOutput = checkboxPref(
             "Show output inline for all R Markdown documents",
@@ -107,34 +91,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             "notebook chunks",
             prefs_.hideConsoleOnChunkExecute());
       add(notebookHideConsole);
-      
-      // manage visibility of notebook options
-      final Command updateNotebookOptionVisibility = new Command() {
-         @Override
-         public void execute()
-         {
-            rmdInlineOutput.setVisible(enableNotebooks_.getValue());
-            autoExecuteSetupChunk.setVisible(enableNotebooks_.getValue());
-            notebookHideConsole.setVisible(enableNotebooks_.getValue());
-         } 
-      };
-      updateNotebookOptionVisibility.execute();
-      
-      // manage visibility and default rmdInlineoutput when 
-      // enable notebooks is checked
-      enableNotebooks_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            // manage visibility of other options
-            updateNotebookOptionVisibility.execute();
-            
-            // default to inline output when activating notebook mode
-            if (event.getValue())
-               rmdInlineOutput.setValue(true);
-         } 
-      });
    }
 
    @Override
@@ -160,7 +116,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
-      initialEnableNotebooksPref_ = prefs_.enableRNotebooks().getValue();
    }
    
    @Override
@@ -173,11 +128,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
-      
-      boolean enableNotebooksChanged = initialEnableNotebooksPref_ !=
-                                       enableNotebooks_.getValue();
-            
-      return requiresRestart || enableNotebooksChanged;
+                 
+      return requiresRestart;
    }
 
    private final UIPrefs prefs_;
@@ -186,7 +138,4 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget docOutlineDisplay_;
-   
-   private final CheckBox enableNotebooks_;
-   private boolean initialEnableNotebooksPref_;
 }

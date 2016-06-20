@@ -367,15 +367,6 @@ public class Source implements InsertSourceHandler,
          command.setVisible(false);
          command.setEnabled(false);
       }
-      
-      // feature flag for notebook -- this will eventually go away
-      // and these commands will always be enabled
-      if (!uiPrefs_.enableRNotebooks().getValue() &&
-          !uiPrefs_.showRmdChunkOutputInline().getValue())
-      {
-         commands.newRNotebook().setEnabled(false);
-         commands.newRNotebook().setVisible(false);
-      }
 
       // fake shortcuts for commands which we handle at a lower level
       commands.goToHelp().setShortcut(new KeyboardShortcut(112));
