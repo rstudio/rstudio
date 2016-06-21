@@ -22,14 +22,18 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 import java.io.Serializable;
 
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsType;
+
 /**
  * The first-class representation of an enumeration.
  *
  * @param <E>
  */
-public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
-    Serializable {
+@JsType
+public abstract class Enum<E extends Enum<E>> implements Comparable<E>, Serializable {
 
+  @JsIgnore
   public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) {
     JavaScriptObject enumValueOfFunc = checkNotNull(enumType).enumValueOfFunc;
     checkCriticalArgument(enumValueOfFunc != null);
@@ -92,6 +96,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     return this == other;
   }
 
+  @JsIgnore
   @SuppressWarnings("unchecked")
   public final Class<E> getDeclaringClass() {
     Class clazz = getClass();

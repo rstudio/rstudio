@@ -15,62 +15,20 @@
  */
 package java.util;
 
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsType;
+
 /**
  * Represents a set of unique objects. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Set.html">[Sun docs]</a>
  *
  * @param <E> element type.
  */
+@JsType
 public interface Set<E> extends Collection<E> {
-
-  @Override
-  boolean add(E o);
-
-  @Override
-  boolean addAll(Collection<? extends E> c);
-
-  @Override
-  void clear();
-
-  @Override
-  boolean contains(Object o);
-
-  @Override
-  boolean containsAll(Collection<?> c);
-
-  @Override
-  boolean equals(Object o);
-
-  @Override
-  int hashCode();
-
-  @Override
-  boolean isEmpty();
-
-  @Override
-  Iterator<E> iterator();
-
-  @Override
-  boolean remove(Object o);
-
-  @Override
-  boolean removeAll(Collection<?> c);
-
-  @Override
-  boolean retainAll(Collection<?> c);
-
-  @Override
-  int size();
-
+  @JsIgnore
   @Override
   default Spliterator<E> spliterator() {
     return Spliterators.spliterator(this, Spliterator.DISTINCT);
   }
-
-  @Override
-  Object[] toArray();
-
-  @Override
-  <T> T[] toArray(T[] a);
-
 }

@@ -21,6 +21,9 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsType;
+
 /**
  * General-purpose interface for storing collections of objects.
  * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Collection.html">
@@ -28,6 +31,7 @@ import java.util.stream.StreamSupport;
  *
  * @param <E> element type
  */
+@JsType
 public interface Collection<E> extends Iterable<E> {
 
   boolean add(E o);
@@ -48,9 +52,11 @@ public interface Collection<E> extends Iterable<E> {
 
   boolean isEmpty();
 
+  @JsIgnore
   @Override
   Iterator<E> iterator();
 
+  @JsIgnore
   default Stream<E> parallelStream() {
     // no parallelism in gwt
     return stream();
@@ -60,6 +66,7 @@ public interface Collection<E> extends Iterable<E> {
 
   boolean removeAll(Collection<?> c);
 
+  @JsIgnore
   default boolean removeIf(Predicate<? super E> filter) {
     checkNotNull(filter);
     boolean removed = false;
@@ -76,16 +83,19 @@ public interface Collection<E> extends Iterable<E> {
 
   int size();
 
+  @JsIgnore
   @Override
   default Spliterator<E> spliterator() {
     return Spliterators.spliterator(this, 0);
   }
 
+  @JsIgnore
   default Stream<E> stream() {
     return StreamSupport.stream(spliterator(), false);
   }
 
   Object[] toArray();
 
+  @JsIgnore
   <T> T[] toArray(T[] a);
 }

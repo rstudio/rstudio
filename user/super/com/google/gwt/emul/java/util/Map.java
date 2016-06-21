@@ -22,12 +22,16 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsType;
+
 /**
  * Abstract interface for maps.
  *
  * @param <K> key type.
  * @param <V> value type.
  */
+@JsType
 public interface Map<K, V> {
 
   /**
@@ -69,6 +73,7 @@ public interface Map<K, V> {
 
   void clear();
 
+  @JsIgnore
   default V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
     checkNotNull(remappingFunction);
 
@@ -81,6 +86,7 @@ public interface Map<K, V> {
     return value;
   }
 
+  @JsIgnore
   default V computeIfAbsent(K key, Function<? super K, ? extends V> remappingFunction) {
     checkNotNull(remappingFunction);
 
@@ -94,8 +100,9 @@ public interface Map<K, V> {
     return value;
   }
 
-  default V computeIfPresent(K key,
-                             BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+  @JsIgnore
+  default V computeIfPresent(
+      K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
     checkNotNull(remappingFunction);
 
     V value = get(key);
@@ -114,11 +121,13 @@ public interface Map<K, V> {
 
   boolean containsValue(Object value);
 
+  @JsIgnore
   Set<Entry<K, V>> entrySet();
 
   @Override
   boolean equals(Object o);
 
+  @JsIgnore
   default void forEach(BiConsumer<? super K, ? super V> consumer) {
     checkNotNull(consumer);
     for (Entry<K, V> entry : entrySet()) {
@@ -140,6 +149,7 @@ public interface Map<K, V> {
 
   Set<K> keySet();
 
+  @JsIgnore
   default V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
     checkNotNull(remappingFunction);
     checkNotNull(value);
@@ -165,6 +175,7 @@ public interface Map<K, V> {
 
   V remove(Object key);
 
+  @JsIgnore
   default boolean remove(Object key, Object value) {
     Object currentValue = get(key);
     if (!Objects.equals(currentValue, value) || (currentValue == null && !containsKey(key))) {
@@ -178,6 +189,7 @@ public interface Map<K, V> {
     return containsKey(key) ? put(key, value) : null;
   }
 
+  @JsIgnore
   default boolean replace(K key, V oldValue, V newValue) {
     Object currentValue = get(key);
     if (!Objects.equals(currentValue, oldValue) || (currentValue == null && !containsKey(key))) {
@@ -187,6 +199,7 @@ public interface Map<K, V> {
     return true;
   }
 
+  @JsIgnore
   default void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
     checkNotNull(function);
     for (Entry<K, V> entry : entrySet()) {

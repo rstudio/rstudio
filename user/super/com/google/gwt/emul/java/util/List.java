@@ -19,6 +19,10 @@ import static javaemul.internal.InternalPreconditions.checkNotNull;
 
 import java.util.function.UnaryOperator;
 
+import jsinterop.annotations.JsIgnore;
+import jsinterop.annotations.JsMethod;
+import jsinterop.annotations.JsType;
+
 /**
  * Represents a sequence of objects.
  * See <a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html">
@@ -26,57 +30,31 @@ import java.util.function.UnaryOperator;
  *
  * @param <E> element type
  */
+@JsType
 public interface List<E> extends Collection<E> {
 
-  @Override
-  boolean add(E o);
-
+  @JsMethod(name = "addAtIndex")
   void add(int index, E element);
 
-  @Override
-  boolean addAll(Collection<? extends E> c);
-
+  @JsMethod(name = "addAllAtIndex")
   boolean addAll(int index, Collection<? extends E> c);
-
-  @Override
-  void clear();
-
-  @Override
-  boolean contains(Object o);
-
-  @Override
-  boolean containsAll(Collection<?> c);
-
-  @Override
-  boolean equals(Object o);
 
   E get(int index);
 
-  @Override
-  int hashCode();
-
   int indexOf(Object o);
-
-  @Override
-  boolean isEmpty();
-
-  @Override
-  Iterator<E> iterator();
 
   int lastIndexOf(Object o);
 
+  @JsIgnore
   ListIterator<E> listIterator();
 
+  @JsIgnore
   ListIterator<E> listIterator(int from);
 
+  @JsMethod(name = "removeAtIndex")
   E remove(int index);
 
-  @Override
-  boolean remove(Object o);
-
-  @Override
-  boolean removeAll(Collection<?> c);
-
+  @JsIgnore
   default void replaceAll(UnaryOperator<E> operator) {
     checkNotNull(operator);
     for (int i = 0, size = size(); i < size; i++) {
@@ -84,14 +62,9 @@ public interface List<E> extends Collection<E> {
     }
   }
 
-  @Override
-  boolean retainAll(Collection<?> c);
-
   E set(int index, E element);
 
-  @Override
-  int size();
-
+  @JsIgnore
   @SuppressWarnings("unchecked")
   default void sort(Comparator<? super E> c) {
     Object[] a = toArray();
@@ -101,17 +74,11 @@ public interface List<E> extends Collection<E> {
     }
   }
 
+  @JsIgnore
   @Override
   default Spliterator<E> spliterator() {
     return Spliterators.spliterator(this, Spliterator.ORDERED);
   }
 
   List<E> subList(int fromIndex, int toIndex);
-
-  @Override
-  Object[] toArray();
-
-  @Override
-  <T> T[] toArray(T[] array);
-
 }
