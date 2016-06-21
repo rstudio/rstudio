@@ -80,6 +80,10 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
         "GwtIncompatibleWithStaticInnerClass.Child cannot be resolved to a type");
   }
 
+  public void testCompileGwtIncompatibleAnnotation() throws Exception {
+    assertResourcesCompileSuccessfully(GWTINCOMPATIBLE_ANNOTATION, GWTINCOMPATIBLE_ANNOTATION_TYPE);
+  }
+
   public static final MockJavaResource GWTINCOMPATIBLE_ANNOTATION = new MockJavaResource(
       "com.google.gwt.GwtIncompatible") {
     @Override
@@ -243,6 +247,17 @@ public class GwtIncompatibleJdtCompilerTest extends JdtCompilerTestBase {
       "    new GwtIncompatibleWithStaticInnerClass.Child();",
       "  }",
       "}");
+    }
+  };
+
+  public static final MockJavaResource GWTINCOMPATIBLE_ANNOTATION_TYPE = new MockJavaResource(
+      "com.google.gwt.GwtIncompatibleAnnotation") {
+    @Override
+    public CharSequence getContent() {
+      return Joiner.on("\n").join("package com.google.gwt;",
+          "@GwtIncompatible(\" not compatible \") ",
+          "public @interface GwtIncompatibleAnnotation {",
+          "}");
     }
   };
 }

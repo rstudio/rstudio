@@ -146,14 +146,17 @@ public class GwtIncompatiblePreprocessor {
    * Removes all members of a class to leave it as an empty stub.
    */
   private static void stripAllMembers(TypeDeclaration tyDecl) {
+    if (TypeDeclaration.kind(tyDecl.modifiers) == TypeDeclaration.ANNOTATION_TYPE_DECL) {
+      // Do not modify annotations at all.
+      return;
+    }
     tyDecl.superclass = null;
     tyDecl.superInterfaces = new TypeReference[0];
     tyDecl.annotations = new Annotation[0];
     tyDecl.methods = new AbstractMethodDeclaration[0];
     tyDecl.memberTypes = new TypeDeclaration[0];
     tyDecl.fields = new FieldDeclaration[0];
-    if (TypeDeclaration.kind(tyDecl.modifiers) != TypeDeclaration.INTERFACE_DECL &&
-        TypeDeclaration.kind(tyDecl.modifiers) != TypeDeclaration.ENUM_DECL) {
+    if (TypeDeclaration.kind(tyDecl.modifiers) == TypeDeclaration.CLASS_DECL) {
       // Create a default constructor so that the class is proper.
       ConstructorDeclaration constructor = tyDecl.createDefaultConstructor(true, true);
       // Mark only constructor as private so that it can not be instantiated.
