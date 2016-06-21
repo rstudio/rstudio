@@ -48,6 +48,25 @@
   do.call(what = png, args = args)
 })
 
+.rs.addFunction("setNotebookGraphicsOption", function(filename,
+  height, width, units, pixelRatio, extraArgs)
+{
+  options(device = function() {
+    .rs.createNotebookGraphicsDevice(filename, height, width, units, 
+                                     pixelRatio, extraArgs)
+    dev.control(displaylist = "enable")
+  })
+})
+
+.rs.addFunction("saveNotebookGraphics", function(plot, filename)
+{
+   save(plot, file = filename)
+})
+
+.rs.addFunction("compareNotebookGraphics", function(p1, p2) {
+   identical(p1, p2)
+})
+
 .rs.addFunction("setNotebookMargins", function() {
   #           bot  left top  right
   par(mar = c(5.1, 4.1, 2.1, 2.1))

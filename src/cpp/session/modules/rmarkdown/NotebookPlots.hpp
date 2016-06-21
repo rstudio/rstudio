@@ -50,13 +50,14 @@ class PlotCapture : public NotebookCapture
 public:
    PlotCapture();
    ~PlotCapture();
-   core::Error connectPlots(double height, double width, 
-           PlotSizeBehavior sizeBehavior,
-           const core::FilePath& plotFolder);
+   core::Error connectPlots(const std::string& docId, 
+      const std::string& chunkId, const std::string& nbCtxId, 
+      double height, double width, PlotSizeBehavior sizeBehavior,
+      const core::FilePath& plotFolder);
    void disconnect();
    void onExprComplete();
 private:
-   core::Error createGraphicsDevice();
+   core::Error setGraphicsOption();
    void processPlots(bool ignoreEmpty);
    void removeGraphicsDevice();
    void onNewPlot();
@@ -67,10 +68,21 @@ private:
    bool hasPlots_;
    PlotSizeBehavior sizeBehavior_;
    core::FilePath snapshotFile_;
+
+   std::string docId_;
+   std::string chunkId_;
+   std::string nbCtxId_;
+
    r::sexp::PreservedSEXP sexpMargins_;
+   r::sexp::PreservedSEXP deviceOption_;
+   r::sexp::PreservedSEXP lastPlot_;
+
+   unsigned lastOrdinal_;
+
    boost::signals::connection onBeforeNewPlot_;
    boost::signals::connection onBeforeNewGridPage_;
    boost::signals::connection onNewPlot_;
+
    double width_;
    double height_;
 };

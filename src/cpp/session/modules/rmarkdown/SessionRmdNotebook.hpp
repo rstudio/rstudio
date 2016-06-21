@@ -77,7 +77,8 @@ struct Events : boost::noncopyable
                 const std::string&)>
                 onChunkConsoleOutput;
 
-   boost::signal<void(const core::FilePath&, const core::FilePath&)> onPlotOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&, 
+                      unsigned ordinal)> onPlotOutput;
    boost::signal<void(const core::FilePath&, const core::FilePath&)> onHtmlOutput;
    boost::signal<void(const core::json::Object&)> onErrorOutput;
 };

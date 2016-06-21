@@ -116,8 +116,8 @@ void ChunkExecContext::connect()
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
-                     kChunkOutputPlot)));
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
+                     kChunkOutputPlot, _3)));
 
    boost::shared_ptr<PlotCapture> pPlotCapture = 
       boost::make_shared<PlotCapture>();
@@ -126,14 +126,14 @@ void ChunkExecContext::connect()
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = pPlotCapture->connectPlots(figHeight, figWidth, PlotSizeManual, 
-            outputPath_);
+      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_, 
+            figHeight, figWidth, PlotSizeManual, outputPath_);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = pPlotCapture->connectPlots(0, pixelWidth_, PlotSizeAutomatic, 
-            outputPath_);
+      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_,
+            0, pixelWidth_, PlotSizeAutomatic, outputPath_);
    }
    if (error)
       LOG_ERROR(error);
@@ -141,7 +141,7 @@ void ChunkExecContext::connect()
    // begin capturing HTML input
    connections_.push_back(events().onHtmlOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
-                     kChunkOutputHtml)));
+                     kChunkOutputHtml, 0)));
 
    boost::shared_ptr<HtmlCapture> pHtmlCapture = 
       boost::make_shared<HtmlCapture>();
@@ -202,13 +202,26 @@ void ChunkExecContext::connect()
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
-      const FilePath& metadata, int outputType)
+      const FilePath& metadata, int outputType, unsigned ordinal)
 {
    // set up folder to receive output if necessary
    initializeOutput();
 
    // put the file in sequence inside the host directory
-   FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType);
+   FilePath target;
+   if (ordinal == 0)
+   {
+      // unspecified ordinal, generate one
+      target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType);
+   }
+   else
+   {
+      // known ordinal, use it (this can occur for out of sequence events, such
+      // as plots)
+      OutputPair pair(outputType, ordinal);
+      target = chunkOutputFile(docId_, chunkId_, nbCtxId_, pair);
+   }
+
    Error error = file.move(target);
    if (error)
    {

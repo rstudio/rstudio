@@ -72,7 +72,7 @@ private:
    void onConsoleText(int type, const std::string& output, bool truncate);
    void onConsolePrompt(const std::string&);
    void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
-         int outputType);
+         int outputType, unsigned ordinal);
    void onError(const core::json::Object& err);
    void initializeOutput();
 
