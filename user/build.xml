@@ -23,8 +23,8 @@
 
   <property name="gwt.junit.testcase.dev.includes" value="${gwt.junit.testcase.includes}"/>
   <condition property="gwt.junit.testcase.dev.excludes"
-            value="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
-            else="**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
+            value="**/JSONSuite.class,**/RunAsyncSuite.class,**/*CompilerSuite.class,**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*,**/*Java8Suite.class"
+            else="**/JSONSuite.class,**/RunAsyncSuite.class,**/*CompilerSuite.class,**/*JsInteropSuite.class,**/*JreSuite.class,**/OptimizedOnly*">
     <isfalse value="${isJava8}" />
   </condition>
 
