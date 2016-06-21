@@ -541,7 +541,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       
       // create new queue
       queue_ = NotebookDocQueue.create(sentinel_.getId(), jobDesc, 
-            notebook_.getCommitMode(), pixelWidth_, charWidth_);
+            notebook_.getCommitMode(), notebook_.getPlotWidth(), charWidth_);
    }
    
    private void executeQueue()
