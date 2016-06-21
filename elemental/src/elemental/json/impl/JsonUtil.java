@@ -188,7 +188,7 @@ public class JsonUtil {
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       if (isControlChar(c)) {
-        toReturn.append(escapeStringAsUnicode(String.valueOf(c)));
+        toReturn.append(escapeCharAsUnicode(c));
       } else {
         toReturn.append(c);
       }
@@ -233,7 +233,7 @@ public class JsonUtil {
           break;
         default:
           if (isControlChar(c)) {
-            toAppend = escapeStringAsUnicode(String.valueOf(c));
+            toAppend = escapeCharAsUnicode(c);
           }
       }
       toReturn.append(toAppend);
@@ -285,11 +285,10 @@ public class JsonUtil {
   /**
    * Turn a single unicode character into a 32-bit unicode hex literal.
    */
-  private static String escapeStringAsUnicode(String match) {
-    String hexValue = Integer.toString(match.charAt(0), 16);
-    hexValue = hexValue.length() > 4 ? hexValue.substring(hexValue.length() - 4)
-        : hexValue;
-    return "\\u0000" + hexValue;
+  private static String escapeCharAsUnicode(char toEscape) {
+    String hexValue = Integer.toString(toEscape, 16);
+    int padding = 4 - hexValue.length();
+    return "\\u" + ("0000".substring(0, padding)) + hexValue;
   }
 
   private static boolean isControlChar(char c) {
