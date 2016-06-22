@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 
 /**
  * Tests for {@link TypeOracleUpdater} when provided sources.
@@ -181,6 +182,26 @@ public class CompilationUnitTypeOracleUpdaterFromSourceTest extends TypeOracleUp
     assertNull(typeOracle.findType(CU_RefsInfectedCompilationUnit.getTypeName()));
     assertNotNull(typeOracle.findType(CU_Object.getTypeName()));
     assertEquals(1, typeOracle.getTypes().length);
+  }
+
+  public void testJava8InterfaceExclusions() throws TypeOracleException {
+    String java8Interface = Joiner.on("\n").join(
+        "package test.java8;",
+        "interface Java8Interface {",
+        "  Object field = new Object();",
+        "  final int constant = 1;",
+        "  void m();",
+        "  default void n() {};",
+        "  static void o() {};",
+        "}");
+    addResource("test.java8.Java8Interface", java8Interface);
+    resources.add(CU_Object);
+    buildTypeOracle();
+
+    assertEquals(1, typeOracle.findType("test.java8.Java8Interface").getMethods().length);
+    assertEquals("m", typeOracle.findType("test.java8.Java8Interface").getMethods()[0].getName());
+    assertNotNull(typeOracle.findType(CU_Object.getTypeName()));
+    assertEquals(2, typeOracle.getTypes().length);
   }
 
   @Override

@@ -887,6 +887,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
      *
      * These differences also show up when using java.lang.reflect to look at types.
      */
+    boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
     if (signature != null) {
       // If we have a signature, use it for superclass and interfaces
       SignatureReader reader = new SignatureReader(signature);
@@ -903,7 +904,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
       }
     } else {
       // Set the super type for non-interfaces
-      if ((access & Opcodes.ACC_INTERFACE) == 0) {
+      if (!isInterface) {
         String superInternalName = classData.getSuperInternalName();
         assert Name.isInternalName(superInternalName);
         if (superInternalName != null) {
@@ -927,7 +928,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
             unresolvedType, (JClassType) possiblySubstituteRawType(interfaceType));
       }
     }
-    if (((access & Opcodes.ACC_INTERFACE) == 0) && unresolvedType.getSuperclass() == null) {
+    if (!isInterface && unresolvedType.getSuperclass() == null) {
       // Only Object or interfaces should not have a superclass
       assert "java/lang/Object".equals(classData.getInternalName());
     }
@@ -935,6 +936,11 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     // Process methods
     for (CollectMethodData method : classData.getMethods()) {
       TreeLogger branch = logger.branch(TreeLogger.SPAM, "Resolving method " + method.getName());
+      // TODO(rluble): Allow the users to ask for Java 8 features. For now these are filtered out.
+      if (isInterface && isJava8InterfaceMethod(method)) {
+        logger.log(TreeLogger.Type.SPAM, "Ignoring Java 8 interface method " + method.getName());
+        continue;
+      }
       if (!resolveMethod(branch, unresolvedType, method, typeParamLookup, context)) {
         // Already logged.
         return false;
@@ -951,8 +957,13 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
         return false;
       }
     }
-
     return true;
+  }
+
+  private boolean isJava8InterfaceMethod(CollectMethodData method) {
+    // (Normal) interface methods are abstract. Java 8 introduced the ability to declare default
+    // methods and static methods both of which are exposed as non abstract methods.
+    return (method.getAccess() & Opcodes.ACC_ABSTRACT) == 0;
   }
 
   private boolean resolveClass(
