@@ -156,18 +156,12 @@ public class Runtime {
    * Create a function that applies the specified samMethod on itself, and whose __proto__ points to
    * <code>instance</code>.
    */
-  public static native JavaScriptObject makeLambdaFunction(JavaScriptObject samMethod,
-      JavaScriptObject instance) /*-{
+  public static native JavaScriptObject makeLambdaFunction(
+      JavaScriptObject samMethod,
+      JavaScriptObject ctor,
+      JavaScriptObject ctorArguments) /*-{
     var lambda = function() { return samMethod.apply(lambda, arguments); }
-
-    if (lambda.__proto__) {
-      lambda.__proto__ = instance;
-    } else {
-      for (var prop in instance) {
-        lambda[prop] = instance[prop];
-      }
-    }
-
+    ctor.apply(lambda, ctorArguments);
     return lambda;
   }-*/;
 

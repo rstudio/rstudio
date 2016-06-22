@@ -126,7 +126,7 @@ public enum TypeCategory {
       return TypeCategory.TYPE_JS_UNKNOWN_NATIVE;
     } else if (type instanceof JClassType && type.isJsNative()) {
       return TypeCategory.TYPE_JS_NATIVE;
-    } else if (type.isJsFunction()) {
+    } else if (type.isJsFunction() || type.isJsFunctionImplementation()) {
       return TypeCategory.TYPE_JS_FUNCTION;
     }
     return TypeCategory.TYPE_JAVA_OBJECT;

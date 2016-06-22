@@ -985,18 +985,24 @@ public class GenerateJavaScriptAST {
           : ctorName.makeRef(sourceInfo);
       List<JsExpression> arguments = transform(newInstance.getArgs());
 
-      JsNew newExpr = (JsNew) JsUtils.createInvocationOrPropertyAccess(
-          InvocationStyle.NEWINSTANCE, sourceInfo, ctor, null, reference, arguments);
-
       if (newInstance.getClassType().isJsFunctionImplementation()) {
-        return constructJsFunctionObject(sourceInfo, newInstance.getClassType(), ctorName, newExpr);
+        // Synthesize makeLambdaFunction(samMethodReference, constructorReference, ctorArguments)
+        // which will create the function instance and run the constructor on it.
+        // TODO(rluble): optimize the constructor call away if it is empty.
+        return constructJsFunctionObject(
+            sourceInfo,
+            newInstance.getClassType(),
+            ctorName,
+            reference,
+            new JsArrayLiteral(sourceInfo, arguments));
       }
 
-      return newExpr;
+      return JsUtils.createInvocationOrPropertyAccess(
+          InvocationStyle.NEWINSTANCE, sourceInfo, ctor, null, reference, arguments);
     }
 
-    private JsNode constructJsFunctionObject(SourceInfo sourceInfo, JClassType type,
-        JsName ctorName, JsNew newExpr) {
+    private JsExpression constructJsFunctionObject(SourceInfo sourceInfo, JClassType type,
+        JsName ctorName, JsNameRef ctorReference, JsExpression ctorArguments) {
       // Foo.prototype.functionMethodName
       JMethod jsFunctionMethod = getJsFunctionMethod(type);
       JsNameRef funcNameRef = JsUtils.createQualifiedNameRef(sourceInfo,
@@ -1004,7 +1010,7 @@ public class GenerateJavaScriptAST {
 
       // makeLambdaFunction(Foo.prototype.functionMethodName, new Foo(...))
       return constructInvocation(sourceInfo, RuntimeConstants.RUNTIME_MAKE_LAMBDA_FUNCTION,
-          funcNameRef, newExpr);
+          funcNameRef, ctorReference, ctorArguments);
     }
 
     private JMethod getJsFunctionMethod(JClassType type) {
@@ -2513,6 +2519,11 @@ public class GenerateJavaScriptAST {
      * literal in each constructor.
      */
     private boolean initializeAtTopScope(JField x) {
+      if (x.getEnclosingType().isJsFunctionImplementation()) {
+        // JsFunction implementation are plain JS functions with no class prototype, fields
+        // need to be initialized and placed on the instance itself.
+        return false;
+      }
       if (x.getLiteralInitializer() == null) {
         return false;
       }

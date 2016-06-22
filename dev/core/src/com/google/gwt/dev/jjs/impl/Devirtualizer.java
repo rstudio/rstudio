@@ -301,14 +301,19 @@ public class Devirtualizer {
 
   /**
    * Returns true if {@code method} is an overlay method. Overlay methods include the ones that
-   * are marked as JsOverlay but also (synthetic) private instance methods on interfaces.
-   * <p>
-   * Synthetic private methods on interfaces are the result of lambdas that capture the enclosing
-   * instance and are defined on default methods.
+   * are marked as JsOverlay but also implicit overlays.
    */
   private boolean isOverlayMethod(JMethod method) {
     return method.isJsOverlay()
-        || (method.getEnclosingType() instanceof JInterfaceType && method.isPrivate());
+        // Synthetic private methods on interfaces are the result of lambdas that capture the
+        // enclosing instance and are defined on default methods; these can appear in native
+        // interfaces and thus need to be treated as overlays.
+        || (method.getEnclosingType() instanceof JInterfaceType && method.isPrivate())
+        // JsFunction implementation methods other than the other than the SAM implementation are
+        // also considered overalys to allow for lighter weight JsFuncitons.
+        // TODO(rluble): SAM implementation should also be devirtualized.
+        || (method.getEnclosingType().isJsFunctionImplementation()
+            && !method.isOrOverridesJsFunctionMethod());
   }
 
   public static void exec(JProgram program) {

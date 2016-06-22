@@ -146,13 +146,8 @@ public class JsFunctionTest extends GWTTestCase {
     assertNotNull(c2);
     ElementLikeNativeInterface i = (ElementLikeNativeInterface) createFunction();
     assertNotNull(i);
-    try {
-      MyJsFunctionInterfaceImpl c3 = (MyJsFunctionInterfaceImpl) createFunction();
-      assertNotNull(c3);
-      fail("ClassCastException should be caught.");
-    } catch (ClassCastException cce) {
-      // Expected.
-    }
+    MyJsFunctionInterfaceImpl c3 = (MyJsFunctionInterfaceImpl) createFunction();
+    assertNotNull(c3);
   }
 
   public void testCast_fromJsObject() {
@@ -302,6 +297,19 @@ public class JsFunctionTest extends GWTTestCase {
           }
         };
     assertEquals(MyJsFunctionInterface.class, ((Object) createMyJsFunction()).getClass());
+  }
+
+  public void testInstanceField() {
+
+    MyJsFunctionInterface jsfunctionImplementation =
+        new MyJsFunctionInterface() {
+          String hello = new Object().getClass().getName();
+          @Override
+          public int foo(int a) {
+            return hello.length() + a;
+          }
+        };
+    assertEquals(Object.class.getName().length() + 4, jsfunctionImplementation.foo(4));
   }
 
   // uncomment when Java8 is supported.
