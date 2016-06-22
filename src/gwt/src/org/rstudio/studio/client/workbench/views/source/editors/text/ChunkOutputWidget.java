@@ -165,36 +165,6 @@ public class ChunkOutputWidget extends Composite
    
    // Public methods ----------------------------------------------------------
    
-   public void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
-         boolean ensureVisible)
-   {
-      // no-op for empty console objects (avoid initializing output when we have
-      // nothing to show)
-      if (unit.getType() == RmdChunkOutputUnit.TYPE_TEXT && 
-          unit.getArray().length() < 1)
-         return;
-      
-      initializeOutput(unit.getType());
-      switch(unit.getType())
-      {
-      case RmdChunkOutputUnit.TYPE_TEXT:
-         showConsoleOutput(unit.getArray());
-         break;
-      case RmdChunkOutputUnit.TYPE_HTML:
-         showHtmlOutput(unit.getString(), ensureVisible);
-         break;
-      case RmdChunkOutputUnit.TYPE_PLOT:
-         showPlotOutput(unit.getString(), ensureVisible);
-         break;
-      case RmdChunkOutputUnit.TYPE_ERROR:
-         // override visibility flag when there's an error in batch mode
-         if (!options_.error() && mode == NotebookQueueUnit.EXEC_MODE_BATCH)
-            ensureVisible = true;
-         showErrorOutput(unit.getUnhandledError(), ensureVisible);
-         break;
-      }
-   }
-   
    public int getExpansionState()
    {
       return expansionState_.getValue();
@@ -248,7 +218,8 @@ public class ChunkOutputWidget extends Composite
          // each
          for (int i = 0; i < units.length(); i++)
          {
-            showChunkOutputUnit(units.get(i), mode, ensureVisible);
+            showChunkOutputUnit(units.get(i), mode, output.isReplay(), 
+                  ensureVisible);
          }
 
          // if complete, wrap everything up; if not (could happen for partial
@@ -260,7 +231,8 @@ public class ChunkOutputWidget extends Composite
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit(), mode, ensureVisible);
+         showChunkOutputUnit(output.getUnit(), mode, output.isReplay(), 
+               ensureVisible);
       }
    }
    
@@ -582,6 +554,37 @@ public class ChunkOutputWidget extends Composite
 
    // Private methods ---------------------------------------------------------
 
+   private void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
+         boolean replay, boolean ensureVisible)
+   {
+      // no-op for empty console objects (avoid initializing output when we have
+      // nothing to show)
+      if (unit.getType() == RmdChunkOutputUnit.TYPE_TEXT && 
+          unit.getArray().length() < 1)
+         return;
+      
+      initializeOutput(unit.getType());
+      switch(unit.getType())
+      {
+      case RmdChunkOutputUnit.TYPE_TEXT:
+         showConsoleOutput(unit.getArray());
+         break;
+      case RmdChunkOutputUnit.TYPE_HTML:
+         showHtmlOutput(unit.getString(), ensureVisible);
+         break;
+      case RmdChunkOutputUnit.TYPE_PLOT:
+         showPlotOutput(unit.getString(), ensureVisible);
+         break;
+      case RmdChunkOutputUnit.TYPE_ERROR:
+         // override visibility flag when there's an error in batch mode
+         if (!replay && !options_.error() && 
+             mode == NotebookQueueUnit.EXEC_MODE_BATCH)
+            ensureVisible = true;
+         showErrorOutput(unit.getUnhandledError(), ensureVisible);
+         break;
+      }
+   }
+   
    private String classOfOutput(int type)
    {
       if (type == CONSOLE_ERROR)
