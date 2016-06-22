@@ -151,6 +151,7 @@ public class TableBrowser extends Composite implements RequiresResize
       public interface Style extends CellTree.Style
       {
          String fieldName();
+         String fieldType();
          String tableViewDataset();
       }
    }

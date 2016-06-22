@@ -53,9 +53,11 @@
 
 .fieldName {
   float: left;
-  width: 130px;
-  margin-right: 15px;
-  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+
+.fieldType {
+  color: #808080;
 }
 
 @sprite .tableViewDataset {
