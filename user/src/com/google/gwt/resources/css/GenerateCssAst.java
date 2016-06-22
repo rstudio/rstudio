@@ -478,9 +478,9 @@ public class GenerateCssAst {
     }
 
     void parseExternal(String atRule) throws CSSException {
-      // @external .foo, bar; Drop the dots and commas
-      String[] parts = atRule.substring(10, atRule.length() - 1).replaceAll(
-          "(, *)|( +)", " ").replaceAll("\\.", "").split(" ");
+      // @external .foo, bar; Drop the dots, commas and ignore whitespace
+      String[] parts = atRule.substring("@external ".length(), atRule.length() - 1).replaceAll(
+          "(,|\\s)\\s*", " ").replaceAll("\\.", "").split(" ");
 
       CssExternalSelectors externals = new CssExternalSelectors();
       Collections.addAll(externals.getClasses(), parts);
