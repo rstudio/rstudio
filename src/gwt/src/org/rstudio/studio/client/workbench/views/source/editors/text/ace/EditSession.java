@@ -243,6 +243,10 @@ public class EditSession extends JavaScriptObject
       return getTokenAt(position.getRow(), position.getColumn());
    }
    
+   public native final JsArray<Token> getTokens(int row) /*-{
+      return this.getTokens(row);
+   }-*/;
+   
    public native final Token getTokenAt(int row, int column) /*-{
       return this.getTokenAt(row, column);
    }-*/;

@@ -2884,6 +2884,89 @@ public class AceEditor implements DocDisplay,
 
       return cursor.getRow();
    }
+   
+   private boolean rowEndsInBinaryOp(int row)
+   {
+      // move to the last interesting token on this line 
+      JsArray<Token> tokens = getSession().getTokens(row);
+      for (int i = tokens.length() - 1; i >= 0; i--)
+      {
+         Token t = tokens.get(i);
+         if (t.hasType("text", "comment"))
+            continue;
+         if (t.getType()  == "keyword.operator" ||
+             t.getType()  == "keyword.operator.infix" ||
+             t.getValue() == ",")
+            return true;
+         break;
+      } 
+      return false;
+   }
+
+
+   @Override
+   public Range getMultiLineExpr(Position pos, int startRow, int endRow)
+   {
+      if (!DocumentMode.isSelectionInRMode(this))
+         return null;
+
+      // start with a point range at the beginning of the row
+      Range range = Range.create(pos.getRow(), 0, pos.getRow(), 0);
+      
+      TokenCursor c = getSession().getMode().getCodeModel().getTokenCursor();
+      int row = pos.getRow();
+      
+      // extend the range down until we encounter a line which doesn't end
+      // in a binary operator
+      while (row <= endRow)
+      {
+         // extend the range to include this entire line
+         range = range.extend(row, getLength(row));
+         
+         // expand to include the current bracketed expression, if any
+         if (!c.moveToPosition(range.getEnd()) ||
+              c.getRow() != range.getEnd().getRow())
+            break;
+         if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
+         {
+            range = range.extend(c.getRow(), 0);
+            if (c.fwdToMatchingToken())
+               range = range.extend(c.getRow(), getLength(c.getRow()));
+            row = range.getEnd().getRow();
+         }
+      
+         // if we're looking at a binary operator, keep building
+         if (rowEndsInBinaryOp(row))
+            row++;
+         else
+            break;
+      }
+
+      // extend the range up to include lines which end with a binary operator
+      row = range.getStart().getRow() - 1;
+      while (row >= startRow)
+      {
+         // expand to include the current bracketed expression, if any
+         c.moveToStartOfRow(row);
+         if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
+         {
+            range = range.extend(c.getRow(), 0);
+            if (c.fwdToMatchingToken())
+               range = range.extend(c.getRow(), getLength(c.getRow()));
+            row = range.getStart().getRow();
+         }
+
+         if (rowEndsInBinaryOp(row))
+         {
+            range = range.extend(row, 0);
+            row--;
+         }
+         else
+            break;
+      }
+      
+      return range;
+   }
 
    // ---- Annotation related operations
 

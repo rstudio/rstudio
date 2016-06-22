@@ -86,10 +86,21 @@ public class EditingTargetCodeExecution
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)
       {
-         int row = docDisplay_.getSelectionStart().getRow();
-         selectionRange = Range.fromPoints(
-               Position.create(row, 0),
-               Position.create(row, docDisplay_.getLength(row)));
+         Scope scope = docDisplay_.getCurrentChunk();
+         if (scope == null)
+         {
+            int row = docDisplay_.getSelectionStart().getRow();
+            selectionRange = Range.fromPoints(
+                  Position.create(row, 0),
+                  Position.create(row, docDisplay_.getLength(row)));
+         }
+         else
+         {
+            selectionRange = docDisplay_.getMultiLineExpr(
+                  docDisplay_.getCursorPosition(), 
+                  scope.getBodyStart().getRow(), 
+                  scope.getEnd().getRow() - 1);
+         }
          
          // make it harder to step off the end of a chunk
          InsertChunkInfo insert = docDisplay_.getInsertChunkInfo();
@@ -112,6 +123,8 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
+         docDisplay_.setCursorPosition(Position.create(
+               selectionRange.getEnd().getRow(), 0));
          if (!docDisplay_.moveSelectionToNextLine(true))
             docDisplay_.moveSelectionToBlankLine();
          docDisplay_.scrollCursorIntoViewIfNecessary(3);

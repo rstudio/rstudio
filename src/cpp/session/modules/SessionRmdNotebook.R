@@ -375,17 +375,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       opts$include <- FALSE
     }
 
-    # extract engine name (can be overridden below with engine=)
+    # extract and remove engine name (can be overridden below with engine=)
     opts$engine <- unlist(strsplit(code, split = "(\\s|,)+"))[[1]]
-
-    # trim leading text from the options
-    code <- sub("^[^,]*,\\s*", "", code)
+    code <- substring(code, nchar(opts$engine) + 1)
 
     # parse them, then merge with the defaults (evaluate in global environment)
     opts <- .rs.mergeLists(opts,
-                           eval(parse(text = paste("list(", code, ")")),
+                           eval(substitute(knitr:::parse_params(code)),
                                 envir = .GlobalEnv))
-                           
   },
   error = function(e) {})
 

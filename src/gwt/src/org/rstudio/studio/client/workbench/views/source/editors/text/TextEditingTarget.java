@@ -4267,7 +4267,7 @@ public class TextEditingTarget implements
       // execute the previous chunks
       Scope[] previousScopes = scopeHelper_.getSweaveChunks(position, which);
 
-      // prepare the status bar
+      // create job description
       String jobDesc = "";
       if (previousScopes.length > 0)
       {
@@ -4279,7 +4279,6 @@ public class TextEditingTarget implements
          else if (which == TextEditingTargetScopeHelper.FOLLOWING_CHUNKS)
             jobDesc = "Run After";
       }
-      statusBar_.showNotebookProgress(jobDesc);
 
       ArrayList<Scope> scopes = new ArrayList<Scope>();
       for (Scope scope : previousScopes)
@@ -4288,7 +4287,8 @@ public class TextEditingTarget implements
             scopes.add(scope);
       }
       
-      notebook_.executeChunks(jobDesc, scopes);
+      if (!scopes.isEmpty())
+         notebook_.executeChunks(jobDesc, scopes);
    }
    
    @Handler

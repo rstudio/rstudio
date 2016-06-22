@@ -24,7 +24,7 @@ using namespace rstudio::core;
 #define kDocQueueId             "doc_id"
 #define kDocQueueJobDesc        "job_desc"
 #define kDocQueuePixelWidth     "pixel_width"
-#define kDocQueueCharWidth      "pixel_width"
+#define kDocQueueCharWidth      "char_width"
 #define kDocQueueUnits          "units"
 #define kDocQueueMaxUnits       "max_units"
 #define kDocQueueCommitMode     "commit_mode"
