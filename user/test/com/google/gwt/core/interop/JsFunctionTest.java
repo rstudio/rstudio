@@ -263,42 +263,6 @@ public class JsFunctionTest extends GWTTestCase {
     assertEquals(MyJsFunctionInterface.class, ((Object) createMyJsFunction()).getClass());
   }
 
-  public void testGetClassA() {
-
-    MyJsFunctionInterface jsfunctionImplementation =
-        new MyJsFunctionInterface() {
-          @Override
-          public int foo(int a) {
-            return a;
-          }
-        };
-    assertEquals(MyJsFunctionInterface.class, ((Object) jsfunctionImplementation).getClass());
-  }
-
-  public void testGetClassB() {
-
-    MyJsFunctionInterface jsfunctionImplementation =
-        new MyJsFunctionInterface() {
-          @Override
-          public int foo(int a) {
-            return a;
-          }
-        };
-    assertEquals(MyJsFunctionInterface.class, createMyJsFunction().getClass());
-  }
-
-  public void testGetClassC() {
-
-    MyJsFunctionInterface jsfunctionImplementation =
-        new MyJsFunctionInterface() {
-          @Override
-          public int foo(int a) {
-            return a;
-          }
-        };
-    assertEquals(MyJsFunctionInterface.class, ((Object) createMyJsFunction()).getClass());
-  }
-
   public void testInstanceField() {
 
     MyJsFunctionInterface jsfunctionImplementation =
