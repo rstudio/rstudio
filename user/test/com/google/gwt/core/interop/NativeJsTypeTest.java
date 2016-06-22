@@ -208,14 +208,22 @@ public class NativeJsTypeTest extends GWTTestCase {
     public final Object getObject() {
       return object;
     }
+
+    static {
+      clinitCalled++;
+    }
   }
+
+  private static int clinitCalled = 0;
 
   public void testNativeJsTypeWithStaticIntializer() {
     assertEquals(new Integer(3), NativeJsTypeWithStaticInitializationAndFieldAccess.object);
+    assertEquals(0, clinitCalled);
     assertEquals(
         new Integer(4), NativeJsTypeWithStaticInitializationAndStaticOverlayMethod.getObject());
      assertEquals(new Integer(5),
          new NativeJsTypeWithStaticInitializationAndInstanceOverlayMethod().getObject());
+    assertEquals(1, clinitCalled);
   }
 
   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Function")

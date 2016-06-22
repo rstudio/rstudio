@@ -25,7 +25,6 @@ import com.google.gwt.dev.jjs.ast.HasJsName;
 import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
-import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType.NestedClassDisposition;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -133,46 +132,6 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   private static boolean isInitEmpty(JDeclaredType type) {
     return type.getInitMethod() == null
         || ((JMethodBody) type.getInitMethod().getBody()).getStatements().isEmpty();
-  }
-
-  /**
-   * Returns true if the clinit for a type is locally empty (except for the call to its super
-   * clinit).
-   */
-  private static boolean isClinitEmpty(JDeclaredType type, final boolean skipDeclaration) {
-    JMethod clinit = type.getClinitMethod();
-    List<JStatement> statements = FluentIterable
-        .from(((JMethodBody) clinit.getBody()).getStatements())
-        .filter(new Predicate<JStatement>() {
-          @Override
-          public boolean apply(JStatement statement) {
-            if (!(statement instanceof JDeclarationStatement)) {
-              return true;
-            }
-            if (skipDeclaration) {
-              return false;
-            }
-            JDeclarationStatement declarationStatement = (JDeclarationStatement) statement;
-            JField field = (JField) declarationStatement.getVariableRef().getTarget();
-            return !field.isCompileTimeConstant();
-          }
-        }).toList();
-    if (statements.isEmpty()) {
-      return true;
-    }
-    return statements.size() == 1 && isClinitCall(statements.get(0), type.getSuperClass());
-  }
-
-  private static boolean isClinitCall(JStatement statement, JClassType superClass) {
-    if (superClass == null || !(statement instanceof JExpressionStatement)) {
-      return false;
-    }
-
-    JExpression expression = ((JExpressionStatement) statement).getExpr();
-    if (!(expression instanceof JMethodCall)) {
-      return false;
-    }
-    return ((JMethodCall) expression).getTarget() == superClass.getClinitMethod();
   }
 
   private void checkJsConstructors(JDeclaredType x) {
@@ -671,10 +630,6 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       logError("Native JsType '%s' cannot have initializer.", type);
     }
 
-    if (!isClinitEmpty(type, true)) {
-      logError("Native JsType '%s' cannot have static initializer.", type);
-    }
-
     return true;
   }
 
@@ -699,10 +654,6 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   }
 
   private void checkJsFunction(JDeclaredType type) {
-    if (!isClinitEmpty(type, false)) {
-      logError("JsFunction '%s' cannot have static initializer.", type);
-    }
-
     if (type.getImplements().size() > 0) {
       logError("JsFunction '%s' cannot extend other interfaces.", type);
     }

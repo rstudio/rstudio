@@ -1148,6 +1148,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "public interface Function {",
         "  int getFoo();",
         "  @JsOverlay",
+        "  String s = someString();",
+        "  @JsOverlay",
         "  default void m() {}",
         "  @JsOverlay",
         "  static void n() {}",
@@ -1199,8 +1201,6 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  default void m() {}",
         "  int f = 0;",
         "  static void n() {}",
-        "  @JsOverlay",
-        "  String s = null;",
         "}",
         "static class NonFinalJsFunction implements Function {",
         "  public int getFoo() { return 0; }",
@@ -1258,7 +1258,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
             + "implement more than one interface.");
   }
 
-  public void testNativeJsTypeStaticInitializerFails() {
+  public void testNativeJsTypeStaticInitializerSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
         "@JsType(isNative=true) public static class Buggy {",
@@ -1268,9 +1268,7 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "  static {  Object.class.getName(); }",
         "}");
 
-    assertBuggyFails(
-        "Line 4: Native JsType 'EntryPoint.Buggy' cannot have static initializer.",
-        "Line 7: Native JsType 'EntryPoint.Buggy2' cannot have static initializer.");
+    assertBuggySucceeds();
   }
 
   public void testNativeJsTypeInstanceInitializerFails() {
