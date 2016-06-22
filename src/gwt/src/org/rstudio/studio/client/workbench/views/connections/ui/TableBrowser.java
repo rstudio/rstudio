@@ -43,6 +43,7 @@ public class TableBrowser extends Composite implements RequiresResize
       tablesModel_ = new TableBrowserModel();
       
       tables_ = new CellTree(tablesModel_, null, RES, MESSAGES);
+      tables_.setDefaultNodeSize(Integer.MAX_VALUE);
       tables_.getElement().getStyle().setBorderStyle(BorderStyle.NONE);
       tables_.setWidth("100%");
       
