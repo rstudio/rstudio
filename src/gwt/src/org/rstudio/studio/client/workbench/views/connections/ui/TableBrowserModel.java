@@ -357,10 +357,10 @@ public class TableBrowserModel implements TreeViewModel
       {
          SafeHtmlUtil.appendSpan(sb, 
                                  RES.cellTreeStyle().fieldName(), 
-                                 value.getName());
+                                 value.getName() + " : ");
          SafeHtmlUtil.appendSpan(sb, 
                                  RES.cellTreeStyle().fieldType(), 
-                                 "(" + value.getType() + ")");
+                                 value.getType());
       }
    }
    
