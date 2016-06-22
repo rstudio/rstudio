@@ -535,6 +535,12 @@ public class ConnectionsPresenter extends BasePresenter
       
    }
    
+   @Handler
+   public void onSparkHelp()
+   {
+      globalDisplay_.openRStudioLink("using_spark", false);
+   }
+   
    
    private void showAllConnections(boolean animate)
    {

@@ -2822,5 +2822,11 @@ well as menu structures (for main menu and popup menus).
          desc="View the browser UI for the Spark connection"
          windowMode="main"/> 
      
+     <cmd id="sparkHelp"
+         menuLabel="Using Spark with RStudio"
+         buttonLabel=""
+         desc="Help on using Spark with RStudio"
+         windowMode="main"/>
+     
         
 </commands>
