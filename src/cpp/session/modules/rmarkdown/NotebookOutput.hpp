@@ -106,7 +106,7 @@ core::Error appendConsoleOutput(int chunkConsoleOutputType,
 // send chunk output to client
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, 
-      int outputType, const core::FilePath& path);
+      unsigned ordinal, int outputType, const core::FilePath& path);
 core::Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId,

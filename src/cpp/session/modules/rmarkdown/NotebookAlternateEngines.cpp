@@ -117,6 +117,7 @@ void reportChunkExecutionError(const std::string& docId,
             docId,
             chunkId,
             nbCtxId,
+            0, // no ordinal needed
             kChunkOutputText,
             targetPath);
 }
@@ -179,6 +180,7 @@ Error executeRcppEngineChunk(const std::string& docId,
             docId,
             chunkId,
             nbCtxId,
+            0, // no ordinal needed
             kChunkOutputText,
             targetPath);
    
@@ -329,6 +331,7 @@ Error executeStanEngineChunk(const std::string& docId,
             docId,
             chunkId,
             notebookCtxId(),
+            0, // no ordinal needed
             kChunkOutputText,
             targetPath);
    

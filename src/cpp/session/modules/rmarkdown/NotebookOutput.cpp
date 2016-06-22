@@ -39,13 +39,14 @@
 
 #include <map>
 
-#define kChunkOutputType   "output_type"
-#define kChunkOutputValue  "output_val"
-#define kChunkOutputs      "chunk_outputs"
-#define kChunkUrl          "url"
-#define kChunkId           "chunk_id"
-#define kChunkDocId        "doc_id"
-#define kRequestId         "request_id"
+#define kChunkOutputType    "output_type"
+#define kChunkOutputValue   "output_val"
+#define kChunkOutputOrdinal "output_ordinal"
+#define kChunkOutputs       "chunk_outputs"
+#define kChunkUrl           "url"
+#define kChunkId            "chunk_id"
+#define kChunkDocId         "doc_id"
+#define kRequestId          "request_id"
 
 #define MAX_ORDINAL        16777215
 #define OUTPUT_THRESHOLD   25
@@ -127,10 +128,12 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
 }
 
 Error fillOutputObject(const std::string& docId, const std::string& chunkId,
-      const std::string& nbCtxId, int outputType, const FilePath& path, 
-      json::Object* pObj)
+      const std::string& nbCtxId, unsigned ordinal, int outputType, 
+      const FilePath& path, json::Object* pObj)
 {
    (*pObj)[kChunkOutputType]  = outputType;
+   (*pObj)[kChunkOutputOrdinal] = static_cast<int>(ordinal);
+
    if (outputType == kChunkOutputError)
    {
       // error outputs can be directly read from the file
@@ -385,12 +388,12 @@ FilePath chunkOutputFile(const std::string& docId,
 }
 
 void enqueueChunkOutput(const std::string& docId,
-      const std::string& chunkId, const std::string& nbCtxId, int outputType, 
-      const FilePath& path)
+      const std::string& chunkId, const std::string& nbCtxId, unsigned ordinal, 
+      int outputType, const FilePath& path)
 {
    json::Object output;
-   Error error = fillOutputObject(docId, chunkId, nbCtxId, outputType, path, 
-         &output);
+   Error error = fillOutputObject(docId, chunkId, nbCtxId, ordinal, outputType, 
+         path, &output);
    if (error)
    {
       LOG_ERROR(error);
@@ -441,8 +444,11 @@ Error enqueueChunkOutput(
          if (outputType == kChunkOutputNone)
             continue;
 
+         // extract ordinal from filename
+         unsigned ordinal = ::strtol(outputPath.stem().c_str(), NULL, 16);
+
          // format/parse chunk output for client consumption
-         error = fillOutputObject(docId, chunkId, ctxId, outputType, 
+         error = fillOutputObject(docId, chunkId, ctxId, ordinal, outputType, 
                outputPath, &output);
          if (error)
             LOG_ERROR(error);

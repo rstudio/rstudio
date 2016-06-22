@@ -191,6 +191,7 @@ private:
                docId_,
                chunkId_,
                nbCtxId_,
+               0,  // no ordinals needed for alternate engines
                kChunkOutputText,
                target);
    }

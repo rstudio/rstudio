@@ -45,11 +45,13 @@ namespace notebook {
 namespace {
 
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
-   const std::string& nbCtxId, int outputType)
+   const std::string& nbCtxId, int outputType, unsigned *pOrdinal)
 {
    OutputPair pair = lastChunkOutput(docId, chunkId, nbCtxId);
    pair.ordinal++;
    pair.outputType = outputType;
+   if (pOrdinal)
+      *pOrdinal = pair.ordinal;
    FilePath target = chunkOutputFile(docId, chunkId, nbCtxId, pair);
    updateLastChunkOutput(docId, chunkId, pair);
    return target;
@@ -212,7 +214,8 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    if (ordinal == 0)
    {
       // unspecified ordinal, generate one
-      target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType);
+      target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType,
+            &ordinal);
    }
    else
    {
@@ -252,7 +255,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
                target.stem() + metadata.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, outputType, target);
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)
@@ -264,8 +267,9 @@ void ChunkExecContext::onError(const core::json::Object& err)
    hasErrors_ = true;
 
    // write the error to a file 
+   unsigned ordinal;
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
-         kChunkOutputError);
+         kChunkOutputError, &ordinal);
    boost::shared_ptr<std::ostream> pOfs;
    Error error = target.open_w(&pOfs, true);
    if (error)
@@ -279,7 +283,7 @@ void ChunkExecContext::onError(const core::json::Object& err)
    pOfs.reset();
 
    // send to client
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, kChunkOutputError, 
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, kChunkOutputError, 
                       target);
 }
 
