@@ -243,6 +243,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # TODO: pass encoding from frontend
    encoding <- "UTF-8"
    
+   # reset the knitr chunk counter (it can be modified as a side effect of
+   # parse_params, which is called during notebook execution)
+   knitr:::chunk_counter(reset = TRUE)
+
    # implement output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
    

@@ -47,23 +47,40 @@ public class SparkMasterChooser extends Composite
       
       listBox_ = new ListBox();
       listBox_.setWidth("100%");
-      listBox_.addItem(LOCAL, LOCAL_VALUE);
-      JsArrayString remoteServers = context.getRemoteServers();
-      for (int i = 0; i<remoteServers.length(); i++)
-        listBox_.addItem(remoteServers.get(i));
-      listBox_.addItem(REMOTE_SERVER);
+      
+      // support local connections if possible
+      if (context.getLocalConnectionsSupported())
+         listBox_.addItem(LOCAL, LOCAL_VALUE);
+      
+      // support cluster connections if possible
+      if (context.getClusterConnectionsSupported())
+      {
+         JsArrayString remoteServers = context.getRemoteServers();
+         for (int i = 0; i<remoteServers.length(); i++)
+            listBox_.addItem(remoteServers.get(i));
+         
+         // if list box is empty then add the default cluster URL
+         if (listBox_.getItemCount() == 0)
+            listBox_.addItem(DEFAULT_SPARK_MASTER);
+      
+         listBox_.addItem(CLUSTER);
+      }   
+         
+      // track last selected
       lastListBoxSelectedIndex_ = listBox_.getSelectedIndex();
+      
+      // prompt for cluster
       listBox_.addChangeHandler(new ChangeHandler() {
 
          @Override
          public void onChange(ChangeEvent event)
          {
-            if (listBox_.getSelectedValue().equals(REMOTE_SERVER))
+            if (listBox_.getSelectedValue().equals(CLUSTER))
             {
                globalDisplay_.promptForTextWithOption(
-                   "Connect to Remote Server", 
-                   "Spark cluster master node:", 
-                   "", 
+                   "Connect to Cluster", 
+                   "Spark master:", 
+                   DEFAULT_SPARK_MASTER, 
                    false, 
                    null, 
                    false, 
@@ -95,7 +112,7 @@ public class SparkMasterChooser extends Composite
                            int lastIndex = listBox_.getItemCount() - 1;
                            listBox_.removeItem(lastIndex);
                            listBox_.addItem(master);
-                           listBox_.addItem(REMOTE_SERVER);
+                           listBox_.addItem(CLUSTER);
                            targetItem = lastIndex;
                         }
                         listBox_.setSelectedIndex(targetItem);
@@ -153,6 +170,11 @@ public class SparkMasterChooser extends Composite
       }
    }
    
+   public boolean isLocalMasterSelected()
+   {
+      return isLocalMaster(getSelection());
+   }
+   
    public boolean isLocalMaster(String master)
    {
       return master.equals(LOCAL_VALUE);
@@ -173,5 +195,6 @@ public class SparkMasterChooser extends Composite
    
    private final static String LOCAL = "Local";
    private final static String LOCAL_VALUE = "local";
-   private final static String REMOTE_SERVER = "Remote Server...";
+   private final static String CLUSTER = "Cluster...";
+   private final static String DEFAULT_SPARK_MASTER = "spark://local:7077";
 }

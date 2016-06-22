@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.workbench.views.connections.model;
 
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -30,9 +32,23 @@ public class NewSparkConnectionContext extends JavaScriptObject
       return this.remote_servers;
    }-*/;
    
+   public final native String getSparkHome() /*-{
+      return this.spark_home;
+   }-*/;
+   
    public final native JsArray<SparkVersion> getSparkVersions() /*-{
       return this.spark_versions;
    }-*/;
+   
+   public final boolean getLocalConnectionsSupported()
+   {
+      return getSparkVersions().length() > 0;
+   }
+   
+   public final boolean getClusterConnectionsSupported()
+   {
+      return !StringUtil.isNullOrEmpty(getSparkHome());
+   }
    
    public final native boolean getCanInstallSparkVersions() /*-{
       return this.can_install_spark_versions;

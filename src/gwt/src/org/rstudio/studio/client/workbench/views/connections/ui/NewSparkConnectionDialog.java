@@ -59,7 +59,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
    public NewSparkConnectionDialog(NewSparkConnectionContext context,
                                    OperationWithInput<ConnectionOptions> operation)
    {
-      super("Connect to Spark Cluster", operation);
+      super("Connect to Spark", operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       context_ = context;
@@ -70,7 +70,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
            
       HelpLink helpLink = new HelpLink(
             "Using Spark with RStudio",
-            "about_shiny",
+            "using_spark",
             false);
       helpLink.addStyleName(RES.styles().helpLink());
       addLeftWidget(helpLink);   
@@ -110,9 +110,23 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       container.add(masterGrid);
  
       // versions
-      Grid versionGrid = new Grid(2, 2);
+      final Grid versionGrid = new Grid(2, 2);
       versionGrid.addStyleName(RES.styles().grid());
       versionGrid.addStyleName(RES.styles().versionGrid());
+      
+      // show and hide the version grid with master selection
+      Command onMasterChanged = new Command() {
+         @Override
+         public void execute()
+         {
+            versionGrid.setVisible(master_.isLocalMasterSelected());
+         }
+      };
+      onMasterChanged.execute();
+      master_.addSelectionChangeHandler(
+                        commandSelectionChangeHandler(onMasterChanged));
+      
+      
       Label sparkLabel = new Label("Spark version:");
       sparkLabel.addStyleName(RES.styles().label());
       versionGrid.setWidget(0, 0, sparkLabel);
@@ -207,11 +221,18 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
          {   
             SparkVersion sparkVersion = getSelectedSparkVersion();
             
-            boolean remote = !master_.isLocalMaster(master_.getSelection());
+            if (sparkVersion != null)
+            {
+               boolean remote = !master_.isLocalMaster(master_.getSelection());
             
-            infoPanel.setVisible(!sparkVersion.isInstalled());
-            if (!sparkVersion.isInstalled())
-               infoPanel.update(sparkVersion, remote);
+               infoPanel.setVisible(!sparkVersion.isInstalled());
+               if (!sparkVersion.isInstalled())
+                  infoPanel.update(sparkVersion, remote);
+            }
+            else
+            {
+               infoPanel.setVisible(false);
+            }
          }  
       };
       updateInfoPanel.execute();
@@ -253,19 +274,23 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             builder.append("library(sparklyr)\n");    
             builder.append("sc <- spark_connect(master = \"");
             builder.append(master_.getSelection());
+            builder.append("\"");
            
             // spark version
-            SparkVersion sparkVersion = getSelectedSparkVersion();
-            builder.append("\", version = \"");
-            builder.append(sparkVersion.getSparkVersionNumber());
-            builder.append("\"");
-            
-            // hadoop version if not default
-            if (!sparkVersion.isHadoopDefault())
+            if (master_.isLocalMasterSelected())
             {
-               builder.append(", hadoop_version = \"");
-               builder.append(sparkVersion.getHadoopVersionNumber());
+               SparkVersion sparkVersion = getSelectedSparkVersion();
+               builder.append(", version = \"");
+               builder.append(sparkVersion.getSparkVersionNumber());
                builder.append("\"");
+               
+               // hadoop version if not default
+               if (!sparkVersion.isHadoopDefault())
+               {
+                  builder.append(", hadoop_version = \"");
+                  builder.append(sparkVersion.getHadoopVersionNumber());
+                  builder.append("\"");
+               }
             }
                      
             builder.append(")");
@@ -293,7 +318,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       // collect the result
       ConnectionOptions result = ConnectionOptions.create(
             master_.getSelection(),
-            !master_.isLocalMaster(master_.getSelection()),
+            !master_.isLocalMasterSelected(),
             getSelectedSparkVersion(),
             codePanel_.getCode(),
             codePanel_.getConnectVia());

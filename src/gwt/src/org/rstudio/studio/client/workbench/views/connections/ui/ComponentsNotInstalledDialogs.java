@@ -42,8 +42,8 @@ public class ComponentsNotInstalledDialogs
    {    
       StringBuilder builder = new StringBuilder();
       builder.append(
-         "<p>In order to connect to a local or remote Spark " +
-         "cluster your system needs to have Java installed (" +
+         "<p>In order to connect to Spark " +
+         "your system needs to have Java installed (" +
           "no version of Java was detected).</p>");
       
       String url = null;
