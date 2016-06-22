@@ -133,6 +133,9 @@ options(connectionViewer = list(
   # all previously connected to remote servers
   context$remote_servers <- .Call("rs_availableRemoteServers")
 
+  # is there a spark home option
+  context$spark_home <- sparklyr:::spark_home()
+
   # can we install new versions
   canInstall <- sparklyr:::spark_can_install()
   context$can_install_spark_versions <- .rs.scalar(canInstall)

@@ -266,7 +266,8 @@ public class ConnectionsPresenter extends BasePresenter
                }
                
                // prompt for no spark installed
-               else if (context.getSparkVersions().length() == 0)
+               else if (!context.getLocalConnectionsSupported() &&
+                        !context.getClusterConnectionsSupported())
                {
                   ComponentsNotInstalledDialogs.showSparkNotInstalled();
                }
@@ -306,6 +307,13 @@ public class ConnectionsPresenter extends BasePresenter
                                               boolean remote,
                                               final Command command)
    {
+      // if there is no spark version then just execute immediately
+      if (sparkVersion == null)
+      {
+         command.execute();
+         return;
+      }
+      
       if (!sparkVersion.isInstalled())
       {
          globalDisplay_.showYesNoMessage(
