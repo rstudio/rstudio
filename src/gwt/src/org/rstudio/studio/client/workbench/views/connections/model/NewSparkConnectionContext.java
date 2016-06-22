@@ -40,6 +40,14 @@ public class NewSparkConnectionContext extends JavaScriptObject
       return this.spark_versions;
    }-*/;
    
+   public final native String getDefaultSparkVersion() /*-{
+      return this.spark_default;
+   }-*/;
+   
+   public final native String getDefaultHadoopVersion() /*-{
+      return this.hadoop_default;
+   }-*/;
+   
    public final boolean getLocalConnectionsSupported()
    {
       return getSparkVersions().length() > 0;

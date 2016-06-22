@@ -147,6 +147,11 @@ options(connectionViewer = list(
     spark_versions <- subset(spark_versions, spark_versions$installed)
   context$spark_versions <- spark_versions
 
+  # default spark and hadoop version
+  defaultVersion <- sparklyr:::spark_default_version()
+  context$spark_default <- .rs.scalar(defaultVersion$spark);
+  context$hadoop_default <- .rs.scalar(defaultVersion$hadoop);
+
   # is java installed?
   context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
   context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())
