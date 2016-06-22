@@ -58,6 +58,7 @@ public class AnnotationsTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  @SuppressWarnings("GetClassOnAnnotation")
   public void testAnnotationImplementor() {
     Foo f = new Foo();
     assertEquals(Foo.class, f.getClass());
