@@ -609,13 +609,16 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }.accept(jprogram);
   }
 
-  private void checkInstanceOfNativeJsTypes() {
+  private void checkInstanceOfNativeJsTypesOrJsFunctionImplementations() {
     new JVisitor() {
       @Override
       public boolean visit(JInstanceOf x, Context ctx) {
         JReferenceType type = x.getTestType();
         if (type.isJsNative() && type instanceof JInterfaceType) {
           logError(x, "Cannot do instanceof against native JsType interface '%s'.",
+              JjsUtils.getReadableDescription(type));
+        } else if (type.isJsFunctionImplementation()) {
+          logError(x, "Cannot do instanceof against JsFunction implementation '%s'.",
               JjsUtils.getReadableDescription(type));
         }
         return true;
@@ -721,7 +724,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       checkType(type);
     }
     checkStaticJsPropertyCalls();
-    checkInstanceOfNativeJsTypes();
+    checkInstanceOfNativeJsTypesOrJsFunctionImplementations();
     if (wasUnusableByJsWarningReported) {
       logSuggestion(
           "Suppress \"[unusable-by-js]\" warnings by adding a "

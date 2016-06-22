@@ -1257,6 +1257,19 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 6: JsFunction 'EntryPoint.Buggy' cannot have static initializer.");
   }
 
+  public void testJsFunctionImplementationInInstanceofFails() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsFunction");
+    addSnippetClassDecl(
+        "@JsFunction interface Function { void m(); }",
+        "final static class FunctionImplementation implements Function { public void m() {} ; }",
+        "public static class Buggy {",
+        "  public Buggy() { if (new Object() instanceof FunctionImplementation) {} }",
+        "}");
+
+    assertBuggyFails("Line 7: Cannot do instanceof against JsFunction implementation "
+        + "'EntryPoint.FunctionImplementation'.");
+  }
+
   public void testNativeJsTypeStaticInitializerFails() {
     addSnippetImport("jsinterop.annotations.JsType");
     addSnippetClassDecl(
