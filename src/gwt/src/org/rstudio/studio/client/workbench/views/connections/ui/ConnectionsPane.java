@@ -515,8 +515,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
       
-      //toolbar_.addLeftSeparator();
-      //toolbar_.addLeftWidget(commands_.sparkHelp().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.sparkHelp().createToolbarButton());
         
       toolbar_.addRightWidget(searchWidget_);
       
@@ -539,6 +539,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.sparkHelp().createToolbarButton());
       
       toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
       toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
