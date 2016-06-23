@@ -38,6 +38,32 @@ public class ComponentsNotInstalledDialogs
       showDialog("Spark Not Installed", message, null);
    }
    
+   public static void showSparkHomeNotDefined()
+   {
+      String message = 
+       "<p>Connecting with a Spark cluster requires that you are on a system " +
+       "able to communicate with the cluster in both directions, and " +
+       "requires that the SPARK_HOME environment variable refers to a  " +
+       "locally installed version of Spark that is configured to " +
+       "communicate with the cluster.</p>" +
+       "<p>Your system doesn't currently have the SPARK_HOME environment " +
+       "variable defined. Please contact your system administrator to " +
+       "ensure that the server is properly configured to connect with " +
+       "the cluster.<p>";
+      showDialog("Connect to Spark", message, null);
+   }
+   
+   public static void showServerRequiredForCluster()
+   {
+      String message = 
+            "<p>Connecting with a remote Spark cluster requires " +
+            "an RStudio Server instance that is either within the cluster " +
+            "or has a high bandwidth connection to the cluster.</p>" +
+            "<p>Please see the <strong>Using Spark with RStudio</strong> help " +
+            "link below for additional details.</p>";
+      showDialog("Connect to Spark", message, null);
+   }
+   
    public static void showJavaNotInstalled(String installUrl)
    {    
       StringBuilder builder = new StringBuilder();

@@ -147,6 +147,20 @@ options(connectionViewer = list(
     spark_versions <- subset(spark_versions, spark_versions$installed)
   context$spark_versions <- spark_versions
 
+  # default spark and hadoop version
+  defaultVersion <- sparklyr:::spark_default_version()
+  context$spark_default <- .rs.scalar(defaultVersion$spark);
+  context$hadoop_default <- .rs.scalar(defaultVersion$hadoop);
+
+  # option defining what connections are supported
+  context$connections_option <- tryCatch(
+    as.character(getOption("rstudio.spark.connections", c("local", "cluster"))),
+    error = function(e) c("local", "cluster")
+  )
+
+  # default spark cluster url
+  context$default_cluster_url <- .rs.scalar(.Call("rs_defaultSparkClusterUrl"))
+
   # is java installed?
   context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
   context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())

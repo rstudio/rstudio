@@ -451,6 +451,7 @@ public class ConnectionsPresenter extends BasePresenter
                server_.removeConnection(
                  exploredConnection_.getId(), new VoidServerRequestCallback()); 
                disconnectConnection(false);
+               showAllConnections(true);
             }
          },
          true);
@@ -479,7 +480,6 @@ public class ConnectionsPresenter extends BasePresenter
                public void onResponseReceived(String disconnectCode)
                {
                   eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-                  showAllConnections(false);
                }
           });  
          }  
@@ -533,6 +533,12 @@ public class ConnectionsPresenter extends BasePresenter
       server_.showSparkUI(exploredConnection_, 
                           new VoidServerRequestCallback());
       
+   }
+   
+   @Handler
+   public void onSparkHelp()
+   {
+      globalDisplay_.openRStudioLink("using_spark", false);
    }
    
    

@@ -15,16 +15,18 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.List;
+
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -39,7 +41,7 @@ public class SparkMasterChooser extends Composite
                                 implements CanFocus,
                                 SelectionChangeEvent.HasSelectionChangedHandlers
 {
-   public SparkMasterChooser(NewSparkConnectionContext context)
+   public SparkMasterChooser(final NewSparkConnectionContext context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
      
@@ -52,19 +54,30 @@ public class SparkMasterChooser extends Composite
       if (context.getLocalConnectionsSupported())
          listBox_.addItem(LOCAL, LOCAL_VALUE);
       
-      // support cluster connections if possible
-      if (context.getClusterConnectionsSupported())
+      // support cluster connections on RStudio Server
+      if (!Desktop.isDesktop())
       {
-         JsArrayString remoteServers = context.getRemoteServers();
-         for (int i = 0; i<remoteServers.length(); i++)
-            listBox_.addItem(remoteServers.get(i));
-         
-         // if list box is empty then add the default cluster URL
-         if (listBox_.getItemCount() == 0)
-            listBox_.addItem(DEFAULT_SPARK_MASTER);
-      
-         listBox_.addItem(CLUSTER);
+         // add remote servers if cluster connections are supported
+         if (context.getClusterConnectionsSupported())
+         {
+            List<String> clusterServers = context.getClusterServers();
+            for (int i = 0; i<clusterServers.size(); i++)
+               listBox_.addItem(clusterServers.get(i));
+            
+            if (context.getClusterConnectionsEnabled())
+            {
+               // if list box is empty then add the default cluster URL
+               if (listBox_.getItemCount() == 0)
+                  listBox_.addItem(context.getDefaultClusterUrl());
+            }
+         }
       }   
+      
+      // add cluster options if cluster connections are enabled
+      // (will message for states where we can't connect, e.g. 
+      // on the desktop or when there is no SPARK_HOME
+      if (context.getClusterConnectionsEnabled())
+         listBox_.addItem(CLUSTER);
          
       // track last selected
       lastListBoxSelectedIndex_ = listBox_.getSelectedIndex();
@@ -77,10 +90,17 @@ public class SparkMasterChooser extends Composite
          {
             if (listBox_.getSelectedValue().equals(CLUSTER))
             {
-               globalDisplay_.promptForTextWithOption(
+               if (Desktop.isDesktop())
+               {
+                  ComponentsNotInstalledDialogs.showServerRequiredForCluster();
+                  listBox_.setSelectedIndex(lastListBoxSelectedIndex_);
+               }
+               else if (context.getClusterConnectionsSupported())
+               {
+                  globalDisplay_.promptForTextWithOption(
                    "Connect to Cluster", 
                    "Spark master:", 
-                   DEFAULT_SPARK_MASTER, 
+                   context.getDefaultClusterUrl(), 
                    false, 
                    null, 
                    false, 
@@ -126,6 +146,12 @@ public class SparkMasterChooser extends Composite
                         listBox_.setSelectedIndex(lastListBoxSelectedIndex_);
                      }
                    });
+               }
+               else
+               {
+                  ComponentsNotInstalledDialogs.showSparkHomeNotDefined();
+                  listBox_.setSelectedIndex(lastListBoxSelectedIndex_);
+               }
             }
             else
             {
@@ -193,8 +219,7 @@ public class SparkMasterChooser extends Composite
    private TextBox textBox_;
    private SimplePanel panel_;
    
-   private final static String LOCAL = "Local";
+   private final static String LOCAL = "local";
    private final static String LOCAL_VALUE = "local";
    private final static String CLUSTER = "Cluster...";
-   private final static String DEFAULT_SPARK_MASTER = "spark://local:7077";
 }
