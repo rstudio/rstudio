@@ -16,6 +16,9 @@
 package org.rstudio.studio.client.workbench.views.connections.model;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -27,10 +30,7 @@ public class NewSparkConnectionContext extends JavaScriptObject
    protected NewSparkConnectionContext()
    {
    }
-   
-   public final native JsArrayString getRemoteServers() /*-{
-      return this.remote_servers;
-   }-*/;
+  
    
    public final native String getSparkHome() /*-{
       return this.spark_home;
@@ -50,12 +50,19 @@ public class NewSparkConnectionContext extends JavaScriptObject
    
    public final boolean getLocalConnectionsSupported()
    {
-      return getSparkVersions().length() > 0;
+      return hasConnectionsOption(MASTER_LOCAL) && 
+             (getSparkVersions().length() > 0);
    }
    
    public final boolean getClusterConnectionsSupported()
    {
       return !StringUtil.isNullOrEmpty(getSparkHome());
+   }
+   
+   public final boolean getNewClusterConnectionsSupported()
+   {
+      return hasConnectionsOption(MASTER_CLUSTER) &&
+             getClusterConnectionsSupported();
    }
    
    public final native boolean getCanInstallSparkVersions() /*-{
@@ -69,4 +76,55 @@ public class NewSparkConnectionContext extends JavaScriptObject
    public final native String getJavaInstallUrl() /*-{
       return this.java_install_url;
    }-*/;
+   
+   public final List<String> getClusterServers() 
+   {
+      // start with primed servers
+      ArrayList<String> servers = getDefaultClusterConnections();
+      
+      // add mru as necessary
+      JsArrayString mruServers = getRemoteServers();
+      for (int i = 0; i<mruServers.length(); i++)
+         if (!servers.contains(mruServers.get(i)))
+            servers.add(mruServers.get(i));
+      
+      return servers;
+   }
+   
+   private final native JsArrayString getRemoteServers() /*-{
+      return this.remote_servers;
+   }-*/;
+   
+   private final native JsArrayString getConnectionsOption() /*-{
+      return this.connections_option;
+   }-*/; 
+
+   private final boolean hasConnectionsOption(String option)
+   {
+      JsArrayString connectionsOption = getConnectionsOption();
+      for (int i = 0; i<connectionsOption.length(); i++)
+         if (connectionsOption.get(i).equals(option))
+            return true;
+      return false;
+   }
+   
+   private final ArrayList<String> getDefaultClusterConnections()
+   {
+      ArrayList<String> connections = new ArrayList<String>();
+      JsArrayString connectionsOption = getConnectionsOption();
+      for (int i = 0; i<connectionsOption.length(); i++)
+      {
+         String option = connectionsOption.get(i);
+         if (!MASTER_LOCAL.equals(option) && !MASTER_CLUSTER.equals(option))
+         {
+            if (!option.startsWith("spark://"))
+               option = "spark://" + option;
+            connections.add(option);
+         }
+      }
+      return connections;
+   }
+   
+   public static String MASTER_LOCAL = "local";
+   public static String MASTER_CLUSTER = "cluster";
 }

@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.List;
+
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.Operation;
@@ -25,7 +27,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
 
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -59,16 +60,19 @@ public class SparkMasterChooser extends Composite
          // add remote servers if cluster connections are supported
          if (context.getClusterConnectionsSupported())
          {
-            JsArrayString remoteServers = context.getRemoteServers();
-            for (int i = 0; i<remoteServers.length(); i++)
-               listBox_.addItem(remoteServers.get(i));
-            
+            List<String> clusterServers = context.getClusterServers();
+            for (int i = 0; i<clusterServers.size(); i++)
+               listBox_.addItem(clusterServers.get(i));
+         }
+         
+         if (context.getNewClusterConnectionsSupported())
+         {
             // if list box is empty then add the default cluster URL
             if (listBox_.getItemCount() == 0)
                listBox_.addItem(DEFAULT_SPARK_MASTER);
+            
+            listBox_.addItem(CLUSTER);
          }
-         
-         listBox_.addItem(CLUSTER);
       }   
          
       // track last selected
