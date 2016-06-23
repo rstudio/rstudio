@@ -540,6 +540,12 @@ public class UIPrefsAccessor extends Prefs
    {
       return object("preferred_publish_account");
    }
+   
+   public PrefValue<String> connectionsDbInterface()
+   {
+      return string("connections_db_interface", 
+                    ConnectionOptions.DB_INTERFACE_DPLYR);
+   }
      
    public PrefValue<Boolean> showRmdChunkOutputInline()
    {

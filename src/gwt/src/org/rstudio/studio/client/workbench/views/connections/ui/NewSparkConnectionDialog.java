@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
@@ -46,9 +45,8 @@ import com.google.inject.Inject;
 public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
 {
    @Inject
-   private void initialize(Session session, UIPrefs uiPrefs)
+   private void initialize(UIPrefs uiPrefs)
    {
-      session_ = session;
       uiPrefs_ = uiPrefs;
    }
    
@@ -89,7 +87,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       VerticalPanel container = new VerticalPanel();    
       
       // master
-      final Grid masterGrid = new Grid(1, 2);
+      final Grid masterGrid = new Grid(2, 2);
       masterGrid.addStyleName(RES.styles().grid());
       masterGrid.addStyleName(RES.styles().masterGrid());
       masterGrid.addStyleName(RES.styles().remote());
@@ -99,9 +97,22 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       master_ = new SparkMasterChooser(context_);
       master_.addStyleName(RES.styles().spanningInput());
       masterGrid.setWidget(0, 1, master_);
+      
+      // db interface
+      Label dbLabel = new Label("DB interface:");
+      dbInterface_ = new ListBox();
+      dbInterface_.addStyleName(RES.styles().spanningInput());
+      dbInterface_.addItem(ConnectionOptions.DB_INTERFACE_DPLYR);
+      dbInterface_.addItem(ConnectionOptions.DB_INTERFACE_NONE);
+      initialDbInterface_ = uiPrefs_.connectionsDbInterface().getValue();
+      setValue(dbInterface_, initialDbInterface_);
+      masterGrid.setWidget(1, 0, dbLabel);
+      masterGrid.setWidget(1, 1, dbInterface_);
+      
+      // add master grid
       container.add(masterGrid);
- 
-      // versions
+      
+      // versions grid
       final Grid versionGrid = new Grid(2, 2);
       versionGrid.addStyleName(RES.styles().grid());
       versionGrid.addStyleName(RES.styles().versionGrid());
@@ -252,8 +263,16 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
          {  
             StringBuilder builder = new StringBuilder();
             
-            // connect to master
-            builder.append("library(sparklyr)\n");    
+            // import sparklyr
+            builder.append("library(sparklyr)\n"); 
+            
+            // use dplyr if requested
+            if (dbInterface_.getSelectedValue().equals(
+                                 ConnectionOptions.DB_INTERFACE_DPLYR))
+            {
+               builder.append("library(dplyr)\n");
+            }
+            
             builder.append("sc <- spark_connect(master = \"");
             builder.append(master_.getSelection());
             builder.append("\"");
@@ -287,6 +306,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       };
       updateCodeCommand.execute();
       master_.addSelectionChangeHandler(commandSelectionChangeHandler(updateCodeCommand));
+      dbInterface_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       sparkVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       hadoopVersion_.addChangeHandler(commandChangeHandler(updateCodeCommand));
       
@@ -302,6 +322,9 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
    @Override
    protected ConnectionOptions collectInput()
    {     
+      // get the dbInterface value
+      String dbInterface = dbInterface_.getSelectedValue();
+      
       // collect the result
       ConnectionOptions result = ConnectionOptions.create(
             master_.getSelection(),
@@ -310,15 +333,15 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             codePanel_.getCode(),
             codePanel_.getConnectVia());
          
+      // if the dbInterface changed then save the pref
+      if (!dbInterface.equals(initialDbInterface_))
+      {
+         uiPrefs_.connectionsDbInterface().setGlobalValue(dbInterface);
+         uiPrefs_.writeUIPrefs();
+      }
+      
       // return result
       return result;
-   }
-   
-   @Override
-   protected void onUnload()
-   {
-      super.onUnload();
-      session_.persistClientState();
    }
    
    private ChangeHandler commandChangeHandler(final Command command) 
@@ -417,11 +440,10 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
    private SparkMasterChooser master_;
    private ListBox sparkVersion_;
    private ListBox hadoopVersion_;
+   private ListBox dbInterface_;
+   private String initialDbInterface_;
  
    private ConnectionCodePanel codePanel_;
-      
-   private Session session_;
-
-   @SuppressWarnings("unused")
+     
    private UIPrefs uiPrefs_;
 }

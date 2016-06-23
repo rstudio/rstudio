@@ -514,7 +514,7 @@ void onDeferredInit(bool newSession)
 
 bool connectionsEnabled()
 {
-   return module_context::isPackageVersionInstalled("sparklyr", "0.2.3");
+   return module_context::isPackageVersionInstalled("sparklyr", "0.2.5");
 }
 
 bool activateConnections()

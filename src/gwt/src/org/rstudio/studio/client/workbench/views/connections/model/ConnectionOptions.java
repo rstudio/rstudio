@@ -40,4 +40,7 @@ public class ConnectionOptions extends JavaScriptObject
    public static String CONNECT_COPY_TO_CLIPBOARD = "connect-copy-to-clipboard";
     
    public static String MASTER_LOCAL = NewSparkConnectionContext.MASTER_LOCAL;
+   
+   public final static String DB_INTERFACE_DPLYR = "dplyr";
+   public final static String DB_INTERFACE_NONE = "(None)";
 }
