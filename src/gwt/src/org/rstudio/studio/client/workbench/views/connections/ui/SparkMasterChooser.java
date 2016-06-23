@@ -219,7 +219,7 @@ public class SparkMasterChooser extends Composite
    private TextBox textBox_;
    private SimplePanel panel_;
    
-   private final static String LOCAL = "Local";
+   private final static String LOCAL = "local";
    private final static String LOCAL_VALUE = "local";
    private final static String CLUSTER = "Cluster...";
    private final static String DEFAULT_SPARK_MASTER = "spark://local:7077";
