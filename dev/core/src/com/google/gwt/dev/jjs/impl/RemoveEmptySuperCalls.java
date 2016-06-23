@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
@@ -35,22 +34,22 @@ public class RemoveEmptySuperCalls {
   public static class EmptySuperCallVisitor extends JModVisitor {
     @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
-      if (x.getExpr() instanceof JMethodCall && !(x.getExpr() instanceof JNewInstance)) {
-        JMethodCall call = (JMethodCall) x.getExpr();
-        if (call.getTarget() instanceof JConstructor) {
-          JConstructor ctor = (JConstructor) call.getTarget();
-          if (ctor.isEmpty() && !ctor.isJsNative()) {
-            // TODO: move this 3-way into Simplifier.
-            if (call.getArgs().isEmpty()) {
-              ctx.removeMe();
-            } else if (call.getArgs().size() == 1) {
-              ctx.replaceMe(call.getArgs().get(0).makeStatement());
-            } else {
-              JMultiExpression multi = new JMultiExpression(call.getSourceInfo());
-              multi.addExpressions(call.getArgs());
-              ctx.replaceMe(multi.makeStatement());
-            }
-          }
+      JMethodCall call = JjsUtils.getThisOrSuperConstructorCall(x);
+      if (call == null) {
+        return;
+      }
+
+      JConstructor ctor = (JConstructor) call.getTarget();
+      if (ctor.isEmpty() && !ctor.isJsNative()) {
+        // TODO: move this 3-way into Simplifier.
+        if (call.getArgs().isEmpty()) {
+          ctx.removeMe();
+        } else if (call.getArgs().size() == 1) {
+          ctx.replaceMe(call.getArgs().get(0).makeStatement());
+        } else {
+          JMultiExpression multi = new JMultiExpression(call.getSourceInfo());
+          multi.addExpressions(call.getArgs());
+          ctx.replaceMe(multi.makeStatement());
         }
       }
     }

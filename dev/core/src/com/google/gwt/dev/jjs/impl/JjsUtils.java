@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
@@ -535,6 +536,83 @@ public class JjsUtils {
     emptyMethod.freezeParamTypes();
     inType.addMethod(emptyMethod);
     return emptyMethod;
+  }
+
+  /**
+   * Extracts the this(..) or super(..) call from a statement if the statement is of the expected
+   * form. Otherwise returns null.
+   */
+  public static JMethodCall getThisOrSuperConstructorCall(
+      JStatement statement) {
+    if (!(statement instanceof JExpressionStatement)) {
+      return null;
+    }
+
+    JExpressionStatement expressionStatement = (JExpressionStatement) statement;
+    if (!(expressionStatement.getExpr() instanceof JMethodCall)
+        || expressionStatement.getExpr() instanceof JNewInstance) {
+      return null;
+    }
+
+    JMethodCall call = (JMethodCall) expressionStatement.getExpr();
+    if (call.getTarget() instanceof JConstructor && call.isStaticDispatchOnly()) {
+      return call;
+    }
+    return null;
+  }
+
+  /**
+   * Returns the JsConstructor for a class or null if it does not have any.
+   */
+  public static JConstructor getJsConstructor(JDeclaredType type) {
+    return
+        FluentIterable
+            .from(type.getConstructors())
+            .filter(new Predicate<JConstructor>() {
+              @Override
+              public boolean apply(JConstructor constructor) {
+                return constructor.isJsConstructor();
+              }
+            }).first().orNull();
+  }
+
+  /**
+   * Returns the constructor which this constructor delegates or null if none.
+   */
+  public static JConstructor getDelegatedThisOrSuperConstructor(JConstructor constructor) {
+    JStatement contructorInvocaton = FluentIterable
+            .from(constructor.getBody().getStatements())
+            .filter(new Predicate<JStatement>() {
+              @Override
+              public boolean apply(JStatement statement) {
+                return getThisOrSuperConstructorCall(statement) != null;
+              }
+            }).first().orNull();
+
+    return contructorInvocaton != null
+        ? (JConstructor) getThisOrSuperConstructorCall(contructorInvocaton).getTarget()
+        : null;
+  }
+
+  /**
+   * Returns the constructor which all others delegate to if any, otherwise null.
+   */
+  public static JConstructor getPrimaryConstructor(final JDeclaredType type) {
+    List<JConstructor> delegatedSuperConstructors = FluentIterable
+        .from(type.getConstructors())
+        .filter(new Predicate<JConstructor>() {
+          @Override
+          public boolean apply(JConstructor constructor) {
+            // Calls super constructor.
+            return getDelegatedThisOrSuperConstructor(constructor).getEnclosingType() != type;
+          }
+        })
+        .limit(2)
+        .toList();
+    if (delegatedSuperConstructors.size() == 1) {
+      return delegatedSuperConstructors.get(0);
+    }
+    return null;
   }
 
   private JjsUtils() {

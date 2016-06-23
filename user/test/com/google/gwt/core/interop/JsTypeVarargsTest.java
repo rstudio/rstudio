@@ -114,10 +114,6 @@ public class JsTypeVarargsTest extends GWTTestCase {
   }
 
   static class SubclassNativeWithVarargsConstructor extends NativeJsTypeWithVarargsConstructor {
-    SubclassNativeWithVarargsConstructor(String s, Object... args) {
-      super(1, args[0], args[1], null);
-    }
-
     SubclassNativeWithVarargsConstructor(int i, Object... args) {
       super(i, args);
     }
@@ -213,11 +209,6 @@ public class JsTypeVarargsTest extends GWTTestCase {
 
     assertSame(someNativeObject, object.a);
     assertEquals(3, object.b);
-
-    object = new SubclassNativeWithVarargsConstructor("", someNativeObject, null);
-
-    assertSame(someNativeObject, object.a);
-    assertEquals(4, object.b);
 
     object = new SubclassNativeWithVarargsConstructor(1, someNativeObject, null);
 

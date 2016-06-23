@@ -134,17 +134,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
         || ((JMethodBody) type.getInitMethod().getBody()).getStatements().isEmpty();
   }
 
-  private void checkJsConstructors(JDeclaredType x) {
-    List<JMethod> jsConstructors = FluentIterable
-        .from(x.getMethods())
-        .filter(new Predicate<JMethod>() {
-          @Override
-          public boolean apply(JMethod m) {
-            return m.isJsConstructor();
-          }
-        }).toList();
+  private void checkJsConstructors(JDeclaredType type) {
+    List<JConstructor> jsConstructors = getJsConstructors(type);
 
-    if (x.isJsNative()) {
+    if (type.isJsNative()) {
       return;
     }
 
@@ -153,32 +146,76 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }
 
     if (jsConstructors.size() > 1) {
-      logError(x, "More than one JsConstructor exists for %s.", JjsUtils.getReadableDescription(x));
+      logError(type,
+          "More than one JsConstructor exists for %s.", getDescription(type));
     }
 
     final JConstructor jsConstructor = (JConstructor) jsConstructors.get(0);
 
-    boolean anyNonDelegatingConstructor = Iterables.any(x.getMethods(), new Predicate<JMethod>() {
-      @Override
-      public boolean apply(JMethod method) {
-        return method != jsConstructor && method instanceof JConstructor
-            && !isDelegatingToConstructor((JConstructor) method, jsConstructor);
-      }
-    });
-
-    if (anyNonDelegatingConstructor) {
+    if (JjsUtils.getPrimaryConstructor(type) != jsConstructor) {
       logError(jsConstructor,
           "Constructor %s can be a JsConstructor only if all constructors in the class are "
           + "delegating to it.", getMemberDescription(jsConstructor));
     }
   }
 
+  private List<JConstructor> getJsConstructors(JDeclaredType type) {
+    return FluentIterable
+          .from(type.getConstructors())
+          .filter(new Predicate<JConstructor>() {
+            @Override
+            public boolean apply(JConstructor m) {
+              return m.isJsConstructor();
+            }
+          }).toList();
+  }
+
+  private void checkJsConstructorSubtype(JDeclaredType type) {
+    if (!isJsConstructorSubtype(type)) {
+      return;
+    }
+    if (Iterables.isEmpty(type.getConstructors())) {
+      // No constructors in the type; type is not instantiable.
+      return;
+    }
+
+    if (type.isJsNative()) {
+      return;
+    }
+
+    JClassType superClass = type.getSuperClass();
+    JConstructor superPrimaryConsructor = JjsUtils.getPrimaryConstructor(superClass);
+    if (!superClass.isJsNative() && superPrimaryConsructor == null) {
+      // Superclass has JsConstructor but does not satisfy the JsConstructor restrictions, no need
+      // to report more errors.
+      return;
+    }
+
+    JConstructor primaryConstructor = JjsUtils.getPrimaryConstructor(type);
+    if (primaryConstructor == null) {
+      logError(type,
+          "Class %s should have only one constructor delegating to the superclass since it is "
+              + "subclass of a a type with JsConstructor.", getDescription(type));
+      return;
+    }
+
+    JConstructor delegatedConstructor =
+        JjsUtils.getDelegatedThisOrSuperConstructor(primaryConstructor);
+
+    if (delegatedConstructor.isJsConstructor() ||
+        delegatedConstructor == superPrimaryConsructor) {
+      return;
+    }
+
+    logError(primaryConstructor,
+        "Constructor %s can only delegate to super constructor %s since it is a subclass of a "
+            + "type with JsConstructor.",
+        getDescription(primaryConstructor),
+        getDescription(superPrimaryConsructor));
+  }
+
   private boolean isDelegatingToConstructor(JConstructor ctor, JConstructor targetCtor) {
-    List<JStatement> statements = ctor.getBody().getBlock().getStatements();
-    JExpressionStatement statement = (JExpressionStatement) statements.get(0);
-    JMethodCall call = (JMethodCall) statement.getExpr();
-    assert call.isStaticDispatchOnly() : "Every ctor should either have this() or super() call";
-    return call.getTarget().equals(targetCtor);
+    return JjsUtils.getDelegatedThisOrSuperConstructor(ctor) == targetCtor;
   }
 
   private void checkMember(
@@ -745,6 +782,18 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     return !hasErrors;
   }
 
+  private boolean isJsConstructorSubtype(JDeclaredType type) {
+    JClassType superClass = type.getSuperClass();
+    if (superClass == null) {
+      return false;
+    }
+
+    if (JjsUtils.getJsConstructor(superClass) != null) {
+      return true;
+    }
+    return isJsConstructorSubtype(superClass);
+  }
+
   private void checkType(JDeclaredType type) {
     minimalRebuildCache.removeExportedNames(type.getName());
 
@@ -769,6 +818,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     } else {
       checkJsFunctionSubtype(type);
       checkJsConstructors(type);
+      checkJsConstructorSubtype(type);
     }
 
     Map<String, JsMember> ownGlobalNames = Maps.newHashMap();
@@ -832,7 +882,8 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
       return Maps.newLinkedHashMap();
     }
 
-    LinkedHashMap<String, JsMember> memberByLocalMemberNames = collectLocalNames(type.getSuperClass());
+    LinkedHashMap<String, JsMember> memberByLocalMemberNames =
+        collectLocalNames(type.getSuperClass());
     for (JMember member : type.getMembers()) {
       if (isCheckedLocalName(member)) {
         updateJsMembers(memberByLocalMemberNames, member);
