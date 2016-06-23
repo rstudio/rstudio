@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -54,15 +55,14 @@ public class NewSparkConnectionContext extends JavaScriptObject
              (getSparkVersions().length() > 0);
    }
    
+   public final boolean getClusterConnectionsEnabled()
+   {
+      return hasConnectionsOption(MASTER_CLUSTER);
+   }
+   
    public final boolean getClusterConnectionsSupported()
    {
       return !StringUtil.isNullOrEmpty(getSparkHome());
-   }
-   
-   public final boolean getNewClusterConnectionsSupported()
-   {
-      return hasConnectionsOption(MASTER_CLUSTER) &&
-             getClusterConnectionsSupported();
    }
    
    public final native boolean getCanInstallSparkVersions() /*-{
@@ -95,14 +95,32 @@ public class NewSparkConnectionContext extends JavaScriptObject
       return this.remote_servers;
    }-*/;
    
-   private final native JsArrayString getConnectionsOption() /*-{
+   private final List<String> getConnectionsOption() 
+   {
+      ArrayList<String> connectionsOption = new ArrayList<String>();
+      if (Desktop.isDesktop())
+      {
+         connectionsOption.add(MASTER_LOCAL);
+         connectionsOption.add(MASTER_CLUSTER);
+      }
+      else
+      {
+         JsArrayString connectionsNative = getConnectionsOptionNative();
+         for (int i = 0; i<connectionsNative.length(); i++)
+            connectionsOption.add(connectionsNative.get(i));
+      }
+      
+      return connectionsOption;
+   }
+   
+   private final native JsArrayString getConnectionsOptionNative() /*-{
       return this.connections_option;
    }-*/; 
 
    private final boolean hasConnectionsOption(String option)
    {
-      JsArrayString connectionsOption = getConnectionsOption();
-      for (int i = 0; i<connectionsOption.length(); i++)
+      List<String> connectionsOption = getConnectionsOption();
+      for (int i = 0; i<connectionsOption.size(); i++)
          if (connectionsOption.get(i).equals(option))
             return true;
       return false;
@@ -111,8 +129,8 @@ public class NewSparkConnectionContext extends JavaScriptObject
    private final ArrayList<String> getDefaultClusterConnections()
    {
       ArrayList<String> connections = new ArrayList<String>();
-      JsArrayString connectionsOption = getConnectionsOption();
-      for (int i = 0; i<connectionsOption.length(); i++)
+      List<String> connectionsOption = getConnectionsOption();
+      for (int i = 0; i<connectionsOption.size(); i++)
       {
          String option = connectionsOption.get(i);
          if (!MASTER_LOCAL.equals(option) && !MASTER_CLUSTER.equals(option))

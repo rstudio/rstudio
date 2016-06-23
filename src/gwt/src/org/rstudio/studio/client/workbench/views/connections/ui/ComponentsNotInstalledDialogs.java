@@ -53,6 +53,17 @@ public class ComponentsNotInstalledDialogs
       showDialog("Connect to Spark", message, null);
    }
    
+   public static void showServerRequiredForCluster()
+   {
+      String message = 
+            "<p>Connecting with a remote Spark cluster requires " +
+            "an RStudio Server instance that is either within the cluster " +
+            "or has a high bandwidth connection to the cluster.</p>" +
+            "<p>Please see the <strong>Using Spark with RStudio</strong> help " +
+            "link below for additional details.</p>";
+      showDialog("Connect to Spark", message, null);
+   }
+   
    public static void showJavaNotInstalled(String installUrl)
    {    
       StringBuilder builder = new StringBuilder();

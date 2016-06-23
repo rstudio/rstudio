@@ -63,17 +63,21 @@ public class SparkMasterChooser extends Composite
             List<String> clusterServers = context.getClusterServers();
             for (int i = 0; i<clusterServers.size(); i++)
                listBox_.addItem(clusterServers.get(i));
-         }
-         
-         if (context.getNewClusterConnectionsSupported())
-         {
-            // if list box is empty then add the default cluster URL
-            if (listBox_.getItemCount() == 0)
-               listBox_.addItem(DEFAULT_SPARK_MASTER);
             
-            listBox_.addItem(CLUSTER);
+            if (context.getClusterConnectionsEnabled())
+            {
+               // if list box is empty then add the default cluster URL
+               if (listBox_.getItemCount() == 0)
+                  listBox_.addItem(DEFAULT_SPARK_MASTER);
+            }
          }
       }   
+      
+      // add cluster options if cluster connections are enabled
+      // (will message for states where we can't connect, e.g. 
+      // on the desktop or when there is no SPARK_HOME
+      if (context.getClusterConnectionsEnabled())
+         listBox_.addItem(CLUSTER);
          
       // track last selected
       lastListBoxSelectedIndex_ = listBox_.getSelectedIndex();
@@ -86,7 +90,12 @@ public class SparkMasterChooser extends Composite
          {
             if (listBox_.getSelectedValue().equals(CLUSTER))
             {
-               if (context.getClusterConnectionsSupported())
+               if (Desktop.isDesktop())
+               {
+                  ComponentsNotInstalledDialogs.showServerRequiredForCluster();
+                  listBox_.setSelectedIndex(lastListBoxSelectedIndex_);
+               }
+               else if (context.getClusterConnectionsSupported())
                {
                   globalDisplay_.promptForTextWithOption(
                    "Connect to Cluster", 
