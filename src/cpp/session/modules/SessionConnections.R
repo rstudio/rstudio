@@ -158,6 +158,9 @@ options(connectionViewer = list(
     error = function(e) c("local", "cluster")
   )
 
+  # default spark cluster url
+  context$default_cluster_url <- .rs.scalar(.Call("rs_defaultSparkClusterUrl"))
+
   # is java installed?
   context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
   context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())

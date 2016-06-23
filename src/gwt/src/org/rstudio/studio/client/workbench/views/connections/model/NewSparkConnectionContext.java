@@ -91,6 +91,10 @@ public class NewSparkConnectionContext extends JavaScriptObject
       return servers;
    }
    
+   public final native String getDefaultClusterUrl() /*-{
+      return this.default_cluster_url;
+   }-*/;
+   
    private final native JsArrayString getRemoteServers() /*-{
       return this.remote_servers;
    }-*/;

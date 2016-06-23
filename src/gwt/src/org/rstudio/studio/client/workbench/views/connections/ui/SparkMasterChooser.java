@@ -68,7 +68,7 @@ public class SparkMasterChooser extends Composite
             {
                // if list box is empty then add the default cluster URL
                if (listBox_.getItemCount() == 0)
-                  listBox_.addItem(DEFAULT_SPARK_MASTER);
+                  listBox_.addItem(context.getDefaultClusterUrl());
             }
          }
       }   
@@ -100,7 +100,7 @@ public class SparkMasterChooser extends Composite
                   globalDisplay_.promptForTextWithOption(
                    "Connect to Cluster", 
                    "Spark master:", 
-                   DEFAULT_SPARK_MASTER, 
+                   context.getDefaultClusterUrl(), 
                    false, 
                    null, 
                    false, 
@@ -222,5 +222,4 @@ public class SparkMasterChooser extends Composite
    private final static String LOCAL = "local";
    private final static String LOCAL_VALUE = "local";
    private final static String CLUSTER = "Cluster...";
-   private final static String DEFAULT_SPARK_MASTER = "spark://local:7077";
 }
