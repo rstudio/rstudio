@@ -35,6 +35,8 @@ import java.util.NoSuchElementException;
  * │        │                                                     │IllegalArgumentException       │
  * │        │                                                     │ConcurrentModificationException│
  * ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
+ * │NUMERIC │Checks related to numeric operations.                │ArithmeticException            │
+ * ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
  * │TYPE    │Checks related to java type system.                  │ClassCastException             │
  * │        │                                                     │ArrayStoreException            │
  * ├────────┼─────────────────────────────────────────────────────┼───────────────────────────────┤
@@ -70,6 +72,7 @@ import java.util.NoSuchElementException;
 public final class InternalPreconditions {
 
   private static final String CHECK_TYPE = getProperty("jre.checks.type");
+  private static final String CHECK_NUMERIC = getProperty("jre.checks.numeric");
   private static final String CHECK_BOUNDS = getProperty("jre.checks.bounds");
   private static final String CHECK_API = getProperty("jre.checks.api");
 
@@ -95,6 +98,8 @@ public final class InternalPreconditions {
       (CHECK_BOUNDS.equals("AUTO") && LEVEL_NORMAL_OR_HIGHER) || CHECK_BOUNDS.equals("ENABLED");
   private static final boolean IS_API_CHECKED =
       (CHECK_API.equals("AUTO") && LEVEL_NORMAL_OR_HIGHER) || CHECK_API.equals("ENABLED");
+  private static final boolean IS_NUMERIC_CHECKED =
+      (CHECK_NUMERIC.equals("AUTO") && LEVEL_NORMAL_OR_HIGHER) || CHECK_NUMERIC.equals("ENABLED");
 
   private static final boolean IS_ASSERTED = getProperty("jre.checkedMode").equals("ENABLED");
 
@@ -176,6 +181,24 @@ public final class InternalPreconditions {
   public static void checkCriticalArrayType(boolean expression, Object errorMessage) {
     if (!expression) {
       throw new ArrayStoreException(String.valueOf(errorMessage));
+    }
+  }
+
+  public static void checkArithmetic(boolean expression) {
+    if (IS_NUMERIC_CHECKED) {
+      checkCriticalArithmetic(expression);
+    } else if (IS_ASSERTED) {
+      try {
+        checkCriticalArithmetic(expression);
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+
+  public static void checkCriticalArithmetic(boolean expression) {
+    if (!expression) {
+      throw new ArithmeticException();
     }
   }
 

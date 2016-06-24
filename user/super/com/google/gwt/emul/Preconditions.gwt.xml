@@ -17,9 +17,11 @@
 
   <define-property name="jre.checks.bounds" values="AUTO,ENABLED,DISABLED" />
   <define-property name="jre.checks.api" values="AUTO,ENABLED,DISABLED" />
+  <define-property name="jre.checks.numeric" values="AUTO,ENABLED,DISABLED" />
   <define-property name="jre.checks.type" values="AUTO,ENABLED,DISABLED" />
   <set-property name="jre.checks.bounds" value="AUTO" />
   <set-property name="jre.checks.api" value="AUTO" />
+  <set-property name="jre.checks.numeric" value="AUTO" />
   <set-property name="jre.checks.type" value="AUTO" />
 
   <define-property name="jre.checks.checkLevel" values="NORMAL,OPTIMIZED,MINIMAL" />
