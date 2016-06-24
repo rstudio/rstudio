@@ -2929,10 +2929,15 @@ public class AceEditor implements DocDisplay,
             break;
          if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
          {
-            range = range.extend(c.getRow(), 0);
-            if (c.fwdToMatchingToken())
-               range = range.extend(c.getRow(), getLength(c.getRow()));
-            row = range.getEnd().getRow();
+            // don't look upwards for { expressions (likely to be larger than
+            // we're looking for)
+            if (c.currentValue() != "{" || c.getRow() >= row)
+            {
+               range = range.extend(c.getRow(), 0);
+               if (c.fwdToMatchingToken())
+                  range = range.extend(c.getRow(), getLength(c.getRow()));
+               row = range.getEnd().getRow();
+            }
          }
       
          // if we're looking at a binary operator, keep building
@@ -2946,18 +2951,20 @@ public class AceEditor implements DocDisplay,
       row = range.getStart().getRow() - 1;
       while (row >= startRow)
       {
-         // expand to include the current bracketed expression, if any
-         c.moveToStartOfRow(row);
-         if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
-         {
-            range = range.extend(c.getRow(), 0);
-            if (c.fwdToMatchingToken())
-               range = range.extend(c.getRow(), getLength(c.getRow()));
-            row = range.getStart().getRow();
-         }
-
          if (rowEndsInBinaryOp(row))
          {
+            // expand to include the current bracketed expression, if any--this
+            // is asymmetric with the above to avoid growing the range upwards
+            // to include large { blocks such as functions and loops
+            c.moveToStartOfRow(row);
+            if (c.findOpeningBracket(new String[]{"(", "["}, false))
+            {
+               range = range.extend(c.getRow(), 0);
+               if (c.fwdToMatchingToken())
+                  range = range.extend(c.getRow(), getLength(c.getRow()));
+               row = range.getStart().getRow();
+            }
+
             range = range.extend(row, 0);
             row--;
          }
