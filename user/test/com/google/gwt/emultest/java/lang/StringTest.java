@@ -119,6 +119,7 @@ public class StringTest extends GWTTestCase {
     }
   }
 
+  @SuppressWarnings("ReturnValueIgnored")
   public void testConcat() {
     String abc = String.valueOf(new char[] {'a', 'b', 'c'});
     String def = String.valueOf(new char[] {'d', 'e', 'f'});
@@ -543,6 +544,7 @@ public class StringTest extends GWTTestCase {
     }
   }
 
+  @SuppressWarnings("ReturnValueIgnored")
   public void testIntern() {
     String s1 = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
     String s2 = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
