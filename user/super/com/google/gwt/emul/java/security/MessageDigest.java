@@ -385,10 +385,14 @@ public abstract class MessageDigest extends MessageDigestSpi {
 
   public static MessageDigest getInstance(String algorithm)
       throws NoSuchAlgorithmException {
-    if ("MD5".equals(algorithm)) {
-      return new Md5Digest();
+    switch(algorithm) {
+      case "MD5":
+        return new Md5Digest();
+      case "SHA-256":
+        return new SHA256Digest();
+      default:
+        throw new NoSuchAlgorithmException(algorithm + " not supported");
     }
-    throw new NoSuchAlgorithmException(algorithm + " not supported");
   }
 
   public static boolean isEqual(byte[] digestA, byte[] digestB) {

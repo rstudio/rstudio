@@ -80,6 +80,33 @@ public class MessageDigestTest extends EmulTestBase {
       "ae610cd119d74e5ac18c111d4a91ef3f",
   };
 
+  private String[] sha256TestData = new String[] {
+      "",
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+
+      "a",
+      "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+
+      "abc",
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+
+      "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
+      "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1",
+
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+      "db4bfcbd4da0cd85a60c3c37d3fbd8805c77f15fc6b1fdfe614ee0a7c8fdb4c0",
+
+      "a1y28pfxfkrb3dc0ysjzkc4ef5510a8fleg5nf7ld911lgl7n4bv09em",
+      "6ebf24d2f4ab987311418f72e5ddcb829bdd9f3e54593b6d22b14fb7fe639e4c",
+
+      "The SHA (Secure Hash Algorithm) is one of a number of cryptographic hash functions."
+      + " A cryptographic hash is like a signature for a text or a data file."
+      + " SHA-256 algorithm generates an almost-unique, fixed size 256-bit (32-byte) hash."
+      + " Hash is a one way function – it cannot be decrypted back. This makes it suitable for"
+      + " password validation, challenge hash authentication, anti-tamper, digital signatures.",
+      "d37e2b4fab26640551c69abc3bdf1c14534b215c7f3e1d44c0b65029c99147fb"
+  };
+
   private static void assertDigest(String expected, MessageDigest md,
       String data) throws UnsupportedEncodingException {
     byte[] bytes = data.getBytes("UTF-8");
@@ -117,6 +144,20 @@ public class MessageDigestTest extends EmulTestBase {
     MessageDigest md5 = MessageDigest.getInstance("MD5");
     for (int i = 0; i < md5TestData.length; i += 2) {
       assertDigestByByte(md5TestData[i + 1], md5, md5TestData[i]);
+    }
+  }
+
+  public void testSHA256() throws Exception {
+    MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+    for (int i = 0; i < sha256TestData.length; i += 2) {
+      assertDigest(sha256TestData[i + 1], sha256, sha256TestData[i]);
+    }
+  }
+
+  public void testSHA256ByBytes() throws Exception {
+    MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+    for (int i = 0; i < sha256TestData.length; i += 2) {
+      assertDigestByByte(sha256TestData[i + 1], sha256, sha256TestData[i]);
     }
   }
 }
