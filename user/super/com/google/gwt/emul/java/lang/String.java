@@ -410,7 +410,7 @@ public final class String implements Comparable<String>, CharSequence,
   public boolean equals(Object other) {
     // Java equality is translated into triple equality which is a quick to compare strings for
     // equality without any instanceOf checks.
-    return this == other;
+    return checkNotNull(this) == other;
   }
 
   public boolean equalsIgnoreCase(String other) {
