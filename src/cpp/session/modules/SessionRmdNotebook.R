@@ -42,6 +42,21 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .Call("rs_chunkCacheFolder", rmdPath)
 })
 
+.rs.addFunction("coalesceCsvOutput", function(chunkData) {
+  # keep all output by default
+  keep <- rep(TRUE, length(chunkData))
+
+  # coalesce contents for consecutive csv entries
+  csvs <- .rs.endsWith(names(chunkData), ".csv")
+  for (i in seq.int(1, length(csvs) - 1)) {
+    if (keep[[i]] && csvs[[i]] && csvs[[i + 1]]) {
+      chunkData[[i]] <- paste(chunkData[[i]], chunkData[[i + 1]], sep = "")
+      keep[[i + 1]] <- FALSE
+    }
+  }
+  chunkData[keep]
+})
+
 .rs.addFunction("readRnbCache", function(rmdPath, cachePath)
 {
    if (Encoding(rmdPath) == "unknown")   Encoding(rmdPath) <- "UTF-8"
@@ -161,7 +176,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          return(knitr::asis_output(""))
       }
       
-      chunkData <- rnbData$chunk_data[[chunkId]]
+      chunkData <- .rs.coalesceCsvOutput(rnbData$chunk_data[[chunkId]])
+
       outputList <- .rs.enumerate(chunkData, function(key, val) {
          
          # png output: create base64 encoded image
