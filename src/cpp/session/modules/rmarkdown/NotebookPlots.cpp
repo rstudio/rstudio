@@ -163,12 +163,17 @@ void PlotCapture::onExprComplete()
       updateLastChunkOutput(docId_, chunkId_, pair);
 
       // notify the client so it can create a placeholder
+      json::Object unit;
+      unit[kChunkOutputType]    = static_cast<int>(ChunkOutputOrdinal);
+      unit[kChunkOutputValue]   = static_cast<int>(lastOrdinal_);
+      unit[kChunkOutputOrdinal] = static_cast<int>(lastOrdinal_);
       json::Object placeholder;
-      placeholder[kChunkId]            = chunkId_;
-      placeholder[kChunkDocId]         = docId_;
-      placeholder[kChunkOutputOrdinal] = static_cast<int>(lastOrdinal_);
-      placeholder[kChunkOutputValue]   = static_cast<int>(lastOrdinal_);
-      placeholder[kChunkOutputType]    = ChunkOutputOrdinal;
+      placeholder[kChunkId]         = chunkId_;
+      placeholder[kChunkDocId]      = docId_;
+      placeholder[kChunkOutputPath] = unit;
+
+      module_context::enqueClientEvent(ClientEvent(
+               client_events::kChunkOutput, placeholder));
 
       std::cerr << "plot state changed, reserved ordinal " << lastOrdinal_ << std::endl;
    }

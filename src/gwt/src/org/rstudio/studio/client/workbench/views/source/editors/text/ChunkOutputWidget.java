@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -48,6 +49,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -63,6 +65,8 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -582,6 +586,10 @@ public class ChunkOutputWidget extends Composite
             ensureVisible = true;
          showErrorOutput(unit.getUnhandledError(), ensureVisible);
          break;
+      case RmdChunkOutputUnit.TYPE_ORDINAL:
+         // used to reserve a plot placeholder 
+         showOrdinalOutput(unit.getOrdinal());
+         break;
       }
    }
    
@@ -679,6 +687,15 @@ public class ChunkOutputWidget extends Composite
       completeUnitRender(ensureVisible);
    }
    
+   private void showOrdinalOutput(int ordinal)
+   {
+      // ordinals are placeholder elements which can be replaced with content
+      // later
+      HTML ord = new HTML("");
+      ord.getElement().getStyle().setDisplay(Display.NONE);
+      addWithOrdinal(ord, ordinal);
+   }
+
    private void showPlotOutput(String url, int ordinal, 
          final boolean ensureVisible)
    {
@@ -686,6 +703,7 @@ public class ChunkOutputWidget extends Composite
       flushQueuedErrors(ensureVisible);
 
       final Image plot = new Image();
+      Widget plotWidget = null;
       
       if (isFixedSizePlotUrl(url))
       {
@@ -693,7 +711,7 @@ public class ChunkOutputWidget extends Composite
          // initially invisible until we get sizing information (as we may 
          // have to downsample)
          plot.setVisible(false);
-         addWithOrdinal(plot, ordinal);
+         plotWidget = plot;
       }
       else
       {
@@ -701,9 +719,44 @@ public class ChunkOutputWidget extends Composite
          FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
                      ChunkOutputUi.OUTPUT_ASPECT, 
                      ChunkOutputUi.MAX_PLOT_WIDTH);
-         addWithOrdinal(fixedFrame, ordinal);
+         plotWidget = fixedFrame;
       }
-  
+
+      // check to see if the given ordinal matches one of the existing
+      // placeholder elements
+      boolean placed = false;
+      for (int i = 0; i < root_.getWidgetCount(); i++) 
+      {
+         Widget w = root_.getWidget(i);
+         String ord = w.getElement().getAttribute(ORDINAL_ATTRIBUTE);
+         if (!StringUtil.isNullOrEmpty(ord))
+         {
+            try
+            {
+               int ordAttr = Integer.parseInt(ord);
+               if (ordAttr == ordinal)
+               {
+                  // insert the plot widget after the ordinal 
+                  plotWidget.getElement().setAttribute(
+                        ORDINAL_ATTRIBUTE, "" + ordinal);
+                  if (i < root_.getWidgetCount() - 1)
+                     root_.insert(plotWidget, i + 1);
+                  else
+                     root_.add(plotWidget);
+                  placed = true;
+                  break;
+               }
+            }
+            catch(Exception e)
+            {
+               Debug.devlog("Unexpected ordinal value: " + ord);
+            }
+         }
+      }
+
+      if (!placed)
+         addWithOrdinal(plotWidget, ordinal);
+      
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
             ensureVisible));
@@ -1046,7 +1099,7 @@ public class ChunkOutputWidget extends Composite
    
    @UiField Image clear_;
    @UiField Image expand_;
-   @UiField HTMLPanel root_;
+   @UiField FlowPanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
