@@ -67,6 +67,7 @@ private:
 
    core::FilePath plotFolder_;
    bool hasPlots_;
+   bool plotPending_;
    PlotSizeBehavior sizeBehavior_;
    core::FilePath snapshotFile_;
 

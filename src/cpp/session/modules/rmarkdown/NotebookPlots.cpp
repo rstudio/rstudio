@@ -55,6 +55,7 @@ bool isPlotPath(const FilePath& path)
 
 PlotCapture::PlotCapture() :
    hasPlots_(false),
+   plotPending_(false),
    lastOrdinal_(0)
 {
 }
@@ -74,7 +75,7 @@ void PlotCapture::processPlots(bool ignoreEmpty)
    Error error = plotFolder_.children(&folderContents);
    if (error)
       LOG_ERROR(error);
-
+   
    BOOST_FOREACH(const FilePath& path, folderContents)
    {
       if (isPlotPath(path))
@@ -130,6 +131,14 @@ void PlotCapture::onExprComplete()
    if (!isGraphicsDeviceActive())
       return;
    
+   // if we were expecting a new plot to be produced by the previous
+   // expression, process the plot folder
+   if (plotPending_)
+   {
+      plotPending_ = false;
+      processPlots(true);
+   }
+
    // check the current state of the graphics device against the last known
    // state
    SEXP plot = R_NilValue;
@@ -167,6 +176,7 @@ void PlotCapture::onExprComplete()
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkOutput, placeholder));
    }
+
 }
 
 void PlotCapture::removeGraphicsDevice()
@@ -200,6 +210,7 @@ void PlotCapture::onBeforeNewPlot()
       if (sizeBehavior_ == PlotSizeAutomatic)
          saveSnapshot();
    }
+   plotPending_ = true;
    hasPlots_ = true;
 }
 
