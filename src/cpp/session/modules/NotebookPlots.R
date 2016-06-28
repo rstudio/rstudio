@@ -55,6 +55,7 @@
     .rs.createNotebookGraphicsDevice(filename, height, width, units, 
                                      pixelRatio, extraArgs)
     dev.control(displaylist = "enable")
+    .rs.setNotebookMargins()
   })
 })
 

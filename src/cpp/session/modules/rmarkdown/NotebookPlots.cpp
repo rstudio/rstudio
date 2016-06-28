@@ -131,17 +131,13 @@ void PlotCapture::onExprComplete()
       return;
 
    // no action if nothing on device list (implies no graphics output)
-   SEXP devlist = R_NilValue;
-   Error error = r::exec::RFunction("dev.list").call(&devlist, &protect);
-   if (error)
-      LOG_ERROR(error);
-   if (r::sexp::isNull(devlist))
+   if (!isGraphicsDeviceActive())
       return;
    
    // check the current state of the graphics device against the last known
    // state
    SEXP plot = R_NilValue;
-   error = r::exec::RFunction("recordPlot").call(&plot, &protect);
+   Error error = r::exec::RFunction("recordPlot").call(&plot, &protect);
    if (error)
    {
       LOG_ERROR(error);
@@ -192,13 +188,17 @@ void PlotCapture::removeGraphicsDevice()
        snapshotFile_.empty())
       saveSnapshot();
 
+   std::cerr << "remove device" << std::endl;
+
    // turn off the graphics device, if it was ever turned on -- this has the
    // side effect of writing the device's remaining output to files
-   if (hasPlots_)
+   if (isGraphicsDeviceActive())
    {
+      std::cerr << "turn off device" << std::endl;
       Error error = r::exec::RFunction("dev.off").call();
       if (error)
          LOG_ERROR(error);
+      isGraphicsDeviceActive();
 
       processPlots(false);
    }
@@ -233,7 +233,7 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    chunkId_ = chunkId;
    nbCtxId_ = nbCtxId;
 
-   std::cerr << "begin capture plots to folder " << plotFolder << std::endl;
+   std::cerr << "begin capture plots to folder " << plotFolder << " (" << plotFolder.exists() << ")" << std::endl;
 
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
@@ -265,18 +265,6 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    height_ = height;
    sizeBehavior_ = sizeBehavior;
 
-   // save old figure parameters
-   r::exec::RFunction par("par");
-   par.addParam("no.readonly", true);
-   r::sexp::Protect protect;
-   SEXP sexpMargins;
-   error = par.call(&sexpMargins, &protect);
-   if (error)
-      LOG_ERROR(error);
-
-   // preserve until chunk is finished executing
-   sexpMargins_.set(sexpMargins);
-
    // save old device option
    deviceOption_.set(r::options::getOption("device"));
 
@@ -285,11 +273,6 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    if (error)
       return error;
 
-   // set notebook-friendly figure margins 
-   error = r::exec::RFunction(".rs.setNotebookMargins").call();
-   if (error)
-      LOG_ERROR(error);
-   
    onBeforeNewPlot_ = plots::events().onBeforeNewPlot.connect(
          boost::bind(&PlotCapture::onBeforeNewPlot, this));
    
@@ -307,16 +290,11 @@ void PlotCapture::disconnect()
 {
    if (connected())
    {
-      // remove the graphics device
+      // remove the graphics device if we created it
       removeGraphicsDevice();
 
-      // restore the figure margins
-      Error error = r::exec::RFunction("par", sexpMargins_).call();
-      if (error)
-         LOG_ERROR(error);
-
       // restore the graphics device option
-      r::options::setOption("device", deviceOption_);
+      r::options::setOption("device", deviceOption_.get());
 
       onNewPlot_.disconnect();
       onBeforeNewPlot_.disconnect();
@@ -352,6 +330,19 @@ core::Error PlotCapture::setGraphicsOption()
    setOption.addParam(r::session::graphics::extraBitmapParams());
 
    return setOption.call();
+}
+
+bool PlotCapture::isGraphicsDeviceActive()
+{
+   r::sexp::Protect protect;
+   SEXP devlist = R_NilValue;
+   Error error = r::exec::RFunction("dev.list").call(&devlist, &protect);
+   if (error)
+      LOG_ERROR(error);
+   std::cerr << "check graphics device: " << r::sexp::typeAsString(devlist) << std::endl;
+   if (r::sexp::isNull(devlist))
+      return false;
+   return true;
 }
 
 core::Error initPlots()

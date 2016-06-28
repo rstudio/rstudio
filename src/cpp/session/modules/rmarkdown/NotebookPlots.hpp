@@ -63,6 +63,7 @@ private:
    void onNewPlot();
    void saveSnapshot();
    void onBeforeNewPlot();
+   bool isGraphicsDeviceActive();
 
    core::FilePath plotFolder_;
    bool hasPlots_;
@@ -73,7 +74,6 @@ private:
    std::string chunkId_;
    std::string nbCtxId_;
 
-   r::sexp::PreservedSEXP sexpMargins_;
    r::sexp::PreservedSEXP deviceOption_;
    r::sexp::PreservedSEXP lastPlot_;
 
