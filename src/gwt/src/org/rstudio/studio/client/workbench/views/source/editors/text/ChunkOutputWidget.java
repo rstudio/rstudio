@@ -749,11 +749,12 @@ public class ChunkOutputWidget extends Composite
             }
             catch(Exception e)
             {
-               Debug.devlog("Unexpected ordinal value: " + ord);
+               Debug.logException(e);
             }
          }
       }
 
+      // if we haven't placed the plot yet, add it at the end of the output
       if (!placed)
          addWithOrdinal(plotWidget, ordinal);
       
