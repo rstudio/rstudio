@@ -39,14 +39,8 @@
 
 #include <map>
 
-#define kChunkOutputType    "output_type"
-#define kChunkOutputValue   "output_val"
-#define kChunkOutputOrdinal "output_ordinal"
-#define kChunkOutputs       "chunk_outputs"
-#define kChunkUrl           "url"
-#define kChunkId            "chunk_id"
-#define kChunkDocId         "doc_id"
-#define kRequestId          "request_id"
+#define kRequestId    "request_id"
+#define kChunkOutputs "chunk_outputs"
 
 #define MAX_ORDINAL        16777215
 #define OUTPUT_THRESHOLD   25
@@ -64,32 +58,34 @@ namespace {
 typedef std::map<std::string, OutputPair> LastChunkOutput;
 LastChunkOutput s_lastChunkOutputs;
 
-unsigned chunkOutputType(const FilePath& outputPath)
+ChunkOutputType chunkOutputType(const FilePath& outputPath)
 {
-   int outputType = kChunkOutputNone;
+   ChunkOutputType outputType = ChunkOutputNone;
    if (outputPath.extensionLowerCase() == ".csv")
-      outputType = kChunkOutputText;
+      outputType = ChunkOutputText;
    else if (outputPath.extensionLowerCase() == ".png")
-      outputType = kChunkOutputPlot;
+      outputType = ChunkOutputPlot;
    else if (outputPath.extensionLowerCase() == ".html")
-      outputType = kChunkOutputHtml;
+      outputType = ChunkOutputHtml;
    else if (outputPath.extensionLowerCase() == ".error")
-      outputType = kChunkOutputError;
+      outputType = ChunkOutputError;
    return outputType;
 }
 
-std::string chunkOutputExt(unsigned outputType)
+std::string chunkOutputExt(ChunkOutputType outputType)
 {
    switch(outputType)
    {
-      case kChunkOutputText:
+      case ChunkOutputText:
          return ".csv";
-      case kChunkOutputPlot:
+      case ChunkOutputPlot:
          return ".png";
-      case kChunkOutputHtml:
+      case ChunkOutputHtml:
          return ".html";
-      case kChunkOutputError:
+      case ChunkOutputError:
          return ".error";
+      default: 
+         return "";
    }
    return "";
 }
@@ -128,13 +124,13 @@ Error chunkConsoleContents(const FilePath& consoleFile, json::Array* pArray)
 }
 
 Error fillOutputObject(const std::string& docId, const std::string& chunkId,
-      const std::string& nbCtxId, unsigned ordinal, int outputType, 
+      const std::string& nbCtxId, unsigned ordinal, ChunkOutputType outputType, 
       const FilePath& path, json::Object* pObj)
 {
-   (*pObj)[kChunkOutputType]  = outputType;
+   (*pObj)[kChunkOutputType]    = static_cast<int>(outputType);
    (*pObj)[kChunkOutputOrdinal] = static_cast<int>(ordinal);
 
-   if (outputType == kChunkOutputError)
+   if (outputType == ChunkOutputError)
    {
       // error outputs can be directly read from the file
       std::string fileContents;
@@ -147,14 +143,14 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 
      (*pObj)[kChunkOutputValue] = errorVal;
    } 
-   else if (outputType == kChunkOutputText)
+   else if (outputType == ChunkOutputText)
    {
       // deserialize console output
       json::Array consoleOutput;
       Error error = chunkConsoleContents(path, &consoleOutput);
       (*pObj)[kChunkOutputValue] = consoleOutput;
    }
-   else if (outputType == kChunkOutputPlot || outputType == kChunkOutputHtml)
+   else if (outputType == ChunkOutputPlot || outputType == ChunkOutputHtml)
    {
       // plot/HTML outputs should be requested by the client, so pass the path
       std::string url(kChunkOutputPath "/" + nbCtxId + "/" + 
@@ -163,7 +159,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 
       // if this is a plot and it doesn't have a display list, hint to client
       // that plot can't be resized
-      if (outputType == kChunkOutputPlot && path.hasExtensionLowerCase(".png"))
+      if (outputType == ChunkOutputPlot && path.hasExtensionLowerCase(".png"))
       {
          // form the path to where we'd expect the snapshot to be
          FilePath snapshotPath = path.parent().complete(
@@ -376,7 +372,7 @@ FilePath chunkOutputFile(const std::string& docId,
 FilePath chunkOutputFile(const std::string& docId, 
                          const std::string& chunkId, 
                          const std::string& nbCtxId, 
-                         unsigned outputType)
+                         ChunkOutputType outputType)
 {
    OutputPair output = lastChunkOutput(docId, chunkId, nbCtxId);
    if (output.outputType == outputType)
@@ -389,7 +385,7 @@ FilePath chunkOutputFile(const std::string& docId,
 
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, unsigned ordinal, 
-      int outputType, const FilePath& path)
+      ChunkOutputType outputType, const FilePath& path)
 {
    json::Object output;
    Error error = fillOutputObject(docId, chunkId, nbCtxId, ordinal, outputType, 
@@ -440,8 +436,8 @@ Error enqueueChunkOutput(
 
          // ascertain chunk output type from file extension; skip if extension 
          // unknown
-         int outputType = chunkOutputType(outputPath);
-         if (outputType == kChunkOutputNone)
+         ChunkOutputType outputType = chunkOutputType(outputPath);
+         if (outputType == ChunkOutputNone)
             continue;
 
          // extract ordinal from filename

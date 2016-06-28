@@ -159,8 +159,17 @@ void PlotCapture::onExprComplete()
    {
       OutputPair pair = lastChunkOutput(docId_, chunkId_, nbCtxId_);
       lastOrdinal_ = ++pair.ordinal;
-      pair.outputType = kChunkOutputPlot;
+      pair.outputType = ChunkOutputPlot;
       updateLastChunkOutput(docId_, chunkId_, pair);
+
+      // notify the client so it can create a placeholder
+      json::Object placeholder;
+      placeholder[kChunkId]            = chunkId_;
+      placeholder[kChunkDocId]         = docId_;
+      placeholder[kChunkOutputOrdinal] = static_cast<int>(lastOrdinal_);
+      placeholder[kChunkOutputValue]   = static_cast<int>(lastOrdinal_);
+      placeholder[kChunkOutputType]    = ChunkOutputOrdinal;
+
       std::cerr << "plot state changed, reserved ordinal " << lastOrdinal_ << std::endl;
    }
    else
