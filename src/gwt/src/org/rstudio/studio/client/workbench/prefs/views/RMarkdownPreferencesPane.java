@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -79,6 +80,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             prefs_.showRmdChunkOutputInline());
       add(rmdInlineOutput);
       
+      add(spacedBefore(headerLabel("R Notebooks")));
+
       // auto-execute the setup chunk
       final CheckBox autoExecuteSetupChunk = checkboxPref(
             "Execute setup chunk automatically in notebooks", 
@@ -91,6 +94,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             "notebook chunks",
             prefs_.hideConsoleOnChunkExecute());
       add(notebookHideConsole);
+      
+      add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
    }
 
    @Override

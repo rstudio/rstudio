@@ -85,6 +85,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -1211,6 +1212,20 @@ public class TextEditingTargetNotebook
                       ChunkOutputUi.MAX_PLOT_WIDTH);
    }
    
+   public void cleanScopeErrorState(Scope scope)
+   {
+      // this can be called on a timer, so ensure the scope is still valid
+      if (scope == null ||
+          scope.getBodyStart() == null ||
+          scope.getEnd() == null)
+         return;
+
+      docDisplay_.setChunkLineExecState(
+            scope.getBodyStart().getRow(), 
+            scope.getEnd().getRow(), 
+            ChunkRowExecState.LINE_NONE);
+   }
+   
    // Private methods --------------------------------------------------------
    
    private void restartThenExecute(AppCommand command)
@@ -1266,6 +1281,24 @@ public class TextEditingTargetNotebook
             });
    }
    
+   // look for a line widget associated with the given chunk ID (used to find
+   // orphans)
+   private LineWidget getLineWidget(String chunkId)
+   {
+      JsArray<LineWidget> lineWidgets = docDisplay_.getLineWidgets();
+      for (int i = 0; i < lineWidgets.length(); i++)
+      {
+         LineWidget w = lineWidgets.get(i);
+         if (w.getType() == ChunkDefinition.LINE_WIDGET_TYPE)
+         {
+            ChunkDefinition def = w.getData();
+            if (def.getChunkId() == chunkId)
+               return w;
+         }
+      }
+      return null;
+   }
+   
    // NOTE: this implements chunk removal locally; prefer firing a
    // ChunkChangeEvent if you're removing a chunk so appropriate hooks are
    // invoked elsewhere
@@ -1273,7 +1306,22 @@ public class TextEditingTargetNotebook
    {
       final ChunkOutputUi output = outputs_.get(chunkId);
       if (output == null)
+      {
+         // this case is unexpected; it means that a chunk we don't know about
+         // was removed. look for an orphaned line widget matching the chunk ID
+         // in case our output map is out of sync.
+         LineWidget w = getLineWidget(chunkId);
+         if (w != null)
+         {
+            docDisplay_.removeLineWidget(w);
+            if (w.getElement() != null)
+            {
+               w.getElement().getStyle().setDisplay(Display.NONE);
+               w.getElement().removeFromParent();
+            }
+         }
          return;
+      }
       
       // remove any errors in the gutter associated with this chunk
       cleanScopeErrorState(output.getScope());
@@ -1566,20 +1614,6 @@ public class TextEditingTargetNotebook
       }
    };
    
-   private void cleanScopeErrorState(Scope scope)
-   {
-      // this can be called on a timer, so ensure the scope is still valid
-      if (scope == null ||
-          scope.getBodyStart() == null ||
-          scope.getEnd() == null)
-         return;
-
-      docDisplay_.setChunkLineExecState(
-            scope.getBodyStart().getRow(), 
-            scope.getEnd().getRow(), 
-            ChunkRowExecState.LINE_NONE);
-   }
-   
    private void registerProgressHandlers()
    {
       // register click callback if necessary
@@ -1702,7 +1736,7 @@ public class TextEditingTargetNotebook
    private boolean isCreateNotebookSaveHandlerRunning_ = false;
    
    private int state_ = STATE_NONE;
-
+   
    // no chunk state
    private final static int STATE_NONE = 0;
    

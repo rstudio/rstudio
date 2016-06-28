@@ -387,7 +387,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (scope == null)
             continue;
          
+         // clean any existing error decoration from the scope when it 
+         // is rendered with queued state
+         notebook_.cleanScopeErrorState(scope);
+         
+         // draw the queued and executing lines
          renderQueueLineState(scope, unit);
+         
+         // update the chunk's toolbars
          notebook_.setChunkState(scope, replay && i == 0 ? 
                ChunkContextToolbar.STATE_EXECUTING :
                ChunkContextToolbar.STATE_QUEUED);
