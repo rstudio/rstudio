@@ -85,7 +85,6 @@ void PlotCapture::processPlots(bool ignoreEmpty)
             continue;
 
          // emit the plot and the snapshot file
-         std::cerr << "emit image " << path << " at position " << lastOrdinal_ << std::endl;
          events().onPlotOutput(path, snapshotFile_, lastOrdinal_);
 
          // we've consumed the snapshot file, so clear it
@@ -117,14 +116,11 @@ void PlotCapture::saveSnapshot()
       LOG_ERROR(error);
    else
       snapshotFile_ = outputFile;
-
-   std::cerr << "saved snapshot " << outputFile << std::endl;
 }
 
 void PlotCapture::onExprComplete()
 {
    r::sexp::Protect protect;
-   std::cerr << "on expr complete" << std::endl;
 
    // no action if no plots were created in this chunk
    if (!hasPlots_)
@@ -170,12 +166,6 @@ void PlotCapture::onExprComplete()
 
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkOutput, placeholder));
-
-      std::cerr << "plot state changed, reserved ordinal " << lastOrdinal_ << std::endl;
-   }
-   else
-   {
-      std::cerr << "plot state unchanged" << std::endl;
    }
 }
 
@@ -188,13 +178,10 @@ void PlotCapture::removeGraphicsDevice()
        snapshotFile_.empty())
       saveSnapshot();
 
-   std::cerr << "remove device" << std::endl;
-
    // turn off the graphics device, if it was ever turned on -- this has the
    // side effect of writing the device's remaining output to files
    if (isGraphicsDeviceActive())
    {
-      std::cerr << "turn off device" << std::endl;
       Error error = r::exec::RFunction("dev.off").call();
       if (error)
          LOG_ERROR(error);
@@ -232,8 +219,6 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    docId_ = docId;
    chunkId_ = chunkId;
    nbCtxId_ = nbCtxId;
-
-   std::cerr << "begin capture plots to folder " << plotFolder << " (" << plotFolder.exists() << ")" << std::endl;
 
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
@@ -339,7 +324,6 @@ bool PlotCapture::isGraphicsDeviceActive()
    Error error = r::exec::RFunction("dev.list").call(&devlist, &protect);
    if (error)
       LOG_ERROR(error);
-   std::cerr << "check graphics device: " << r::sexp::typeAsString(devlist) << std::endl;
    if (r::sexp::isNull(devlist))
       return false;
    return true;
