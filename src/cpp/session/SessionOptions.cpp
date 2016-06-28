@@ -293,6 +293,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-sumatra-path",
        value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),
        "Path to SumatraPDF (windows-only)")
+      ("external-winutils-path",
+       value<std::string>(&winutilsPath_)->default_value("bin/winutils"),
+       "Path to Hadoop Winutils (windows-only)")
       ("external-hunspell-dictionaries-path",
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
        "Path to hunspell dictionaries")
@@ -466,6 +469,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath_, &gnugrepPath_);
    resolvePath(resourcePath_, &msysSshPath_);
    resolvePath(resourcePath_, &sumatraPath_);
+   resolvePath(resourcePath_, &winutilsPath_);
 #endif
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);

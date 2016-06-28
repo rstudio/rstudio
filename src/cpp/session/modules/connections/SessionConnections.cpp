@@ -538,6 +538,23 @@ void onDeferredInit(bool newSession)
    }
 }
 
+void initEnvironment()
+{
+   // set RSTUDIO_WINUTILS (leave existing value alone)
+   const char * const kRStudioWinutils = "RSTUDIO_WINUTILS";
+   std::string rstudioWinutils = core::system::getenv(kRStudioWinutils);
+   if (rstudioWinutils.empty())
+      rstudioWinutils = session::options().winutilsPath().absolutePath();
+   r::exec::RFunction sysSetenv("Sys.setenv");
+   sysSetenv.addParam(kRStudioWinutils, rstudioWinutils);
+
+   // call Sys.setenv
+   Error error = sysSetenv.call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+
 } // anonymous namespace
 
 
@@ -574,6 +591,9 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
    RS_REGISTER_CALL_METHOD(rs_defaultSparkClusterUrl, 0);
+
+   // initialize environment
+   initEnvironment();
 
    // initialize connection history
    Error error = connectionHistory().initialize();

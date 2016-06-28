@@ -17,6 +17,7 @@ set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
+set WINUTILS_FILE=winutils-1.0.zip
 
 set PANDOC_VERSION=1.17.0.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
@@ -72,6 +73,14 @@ if not exist sumatra\3.1.1 (
   echo Unzipping %SUMATRA_PDF_FILE%
   unzip %UNZIP_ARGS% "%SUMATRA_PDF_FILE%" -d sumatra\3.1.1
   del "%SUMATRA_PDF_FILE%"
+)
+
+if not exist winutils\1.0 (
+  wget %WGET_ARGS% "%BASEURL%%WINUTILS_FILE%"
+  mkdir winutils\1.0
+  echo Unzipping %WINUTILS_FILE%
+  unzip %UNZIP_ARGS% "%WINUTILS_FILE%" -d winutils\1.0
+  del "%WINUTILS_FILE%"
 )
 
 if not exist ..\..\src\gwt\lib (

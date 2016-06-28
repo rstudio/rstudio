@@ -497,6 +497,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
       install(FILES resources/sumatrapdfrestrict.ini
                DESTINATION  "${RSTUDIO_INSTALL_BIN}/sumatra")
+
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/winutils.exe"
+              DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils)
+      install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/x64/winutils.exe"
+              DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
+
    endif()
 endif()
 
