@@ -101,9 +101,6 @@ function maven-gwt() {
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar \
       "META-INF/services/javax.servlet.*" "META-INF/services/javax.websocket.*" "META-INF/services/org.eclipse.jetty.*" "META-INF/services/org.apache.juli.*" \
       "org/eclipse/jetty/*" "javax/servlet/*" "javax/el/*" "org/apache/jasper/*" "org/apache/el/*" "org/apache/juli/*" "org/apache/tomcat/*"
-  echo "Removing more dependencies from gwt-dev"
-  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar \
-      "cern/*" "org/apache/tools/*" "org/apache/commons/*" "com/ibm/icu/*"
 
   # Silently skip Elemental if it doesn't exist
   gwtLibs='dev user servlet codeserver'
