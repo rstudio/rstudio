@@ -3162,6 +3162,13 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   public void onNotebookClearOutput()
+   {
+      if (notebook_ != null)
+         notebook_.onNotebookClearOutput();
+   }
+   
+   @Handler
    public void onNotebookClearAllOutput()
    {
       if (notebook_ != null)

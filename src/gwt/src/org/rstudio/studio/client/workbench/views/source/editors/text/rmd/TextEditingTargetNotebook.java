@@ -500,6 +500,8 @@ public class TextEditingTargetNotebook
       commands_.notebookCollapseAllOutput().setVisible(inlineOutput);
       commands_.notebookExpandAllOutput().setEnabled(inlineOutput);
       commands_.notebookExpandAllOutput().setVisible(inlineOutput); 
+      commands_.notebookClearOutput().setEnabled(inlineOutput); 
+      commands_.notebookClearOutput().setVisible(inlineOutput); 
       commands_.notebookClearAllOutput().setEnabled(inlineOutput); 
       commands_.notebookClearAllOutput().setVisible(inlineOutput); 
       editingDisplay_.setNotebookUIVisible(inlineOutput);
@@ -519,6 +521,27 @@ public class TextEditingTargetNotebook
    public void onNotebookExpandAllOutput()
    {
       setAllExpansionStates(ChunkOutputWidget.EXPANDED);
+   }
+   
+   public void onNotebookClearOutput()
+   {
+      // find the current chunk 
+      Scope chunk = docDisplay_.getCurrentChunk();
+      if (chunk == null)
+      {
+         // no-op if cursor is not inside a chunk
+         return;
+      }
+      
+      String chunkId = getRowChunkId(chunk.getPreamble().getRow());
+      if (chunkId == null)
+      {
+         // no-op if we don't have known output 
+         return;
+      }
+
+      events_.fireEvent(new ChunkChangeEvent(docUpdateSentinel_.getId(), 
+            chunkId, 0, ChunkChangeEvent.CHANGE_REMOVE));
    }
    
    public void onNotebookClearAllOutput()
@@ -1304,6 +1327,10 @@ public class TextEditingTargetNotebook
    // invoked elsewhere
    private void removeChunk(final String chunkId)
    {
+      // ignore if this chunk is currently executing
+      if (queue_.isChunkExecuting(chunkId))
+         return;
+      
       final ChunkOutputUi output = outputs_.get(chunkId);
       if (output == null)
       {

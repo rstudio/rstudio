@@ -1093,6 +1093,7 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
          menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
          menu.addSeparator();
+         menu.addItem(commands_.notebookClearOutput().createMenuItem(false));
          menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
          menu.addSeparator();
       }
