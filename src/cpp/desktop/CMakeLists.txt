@@ -21,12 +21,12 @@ project(DESKTOP)
 
 # require Qt 5.4
 if(WIN32)
-  set(QT_VERSION "5.4.1")
+  set(QT_VERSION "5.5.1")
+  set(QT_VERSION_SUBDIR "5.5")
 else()
   set(QT_VERSION "5.4.0")
+  set(QT_VERSION_SUBDIR "5.4")
 endif()
-
-set(QT_VERSION_SUBDIR "5.4")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
@@ -56,7 +56,7 @@ if(NOT WIN32)
    endif()
 else()
    if(NOT QT_QMAKE_EXECUTABLE)
-      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\mingw491_32")
+      set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\mingw492_32")
       if(EXISTS ${QMAKE_QT50_SDK})
          set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}\\bin\\qmake.exe")
       else()

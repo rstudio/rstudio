@@ -3,7 +3,7 @@ set PACKAGE_DIR="%CD%"
 
 REM Prepend Qt 5.4 SDK Mingw to path
 setlocal
-set PATH=C:\Qt\Qt5.4.1\Tools\mingw491_32\bin;%PATH%
+set PATH=C:\Qt\Qt5.5.1\Tools\mingw492_32\bin;%PATH%
 
 REM Strip Rtools out of the path (persume it's in the default location)
 CALL SET PATH=%PATH:C:\Rtools\bin;=%
