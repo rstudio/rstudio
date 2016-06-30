@@ -574,7 +574,7 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<Boolean> executeMultiLineStatements()
    {
-      return bool("execute_multi_line_statements", false);
+      return bool("execute_multi_line_statements", true);
    }
    
    public static final String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "show_sections_only";
