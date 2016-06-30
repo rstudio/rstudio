@@ -88,7 +88,7 @@ public class JsonUtil {
 
     @Override
     public void visit(double number, JsonContext ctx) {
-      sb.append(Double.isInfinite(number) ? "null" : format(number));
+      sb.append(Double.isInfinite(number) || Double.isNaN(number) ? "null" : format(number));
     }
 
     @Override

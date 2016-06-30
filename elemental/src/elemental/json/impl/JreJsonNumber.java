@@ -74,6 +74,9 @@ public class JreJsonNumber extends JreJsonValue implements JsonNumber {
   }
 
   public String toJson() {
+    if (Double.isInfinite(number) || Double.isNaN(number)) {
+      return "null";
+    }
     String toReturn = String.valueOf(number);
     if (toReturn.endsWith(".0")) {
       toReturn = toReturn.substring(0, toReturn.length() - 2);

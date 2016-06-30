@@ -210,6 +210,24 @@ public class JsonUtilTest extends GWTTestCase {
         JsonUtil.parse(json)));
   }
 
+  public void testStringifyDoubleNanInfinity() {
+    JsonNumber json = Json.create(Double.NaN);
+    assertEquals("null",JsonUtil.stringify(json));
+    json = Json.create(Double.POSITIVE_INFINITY);
+    assertEquals("null",JsonUtil.stringify(json));
+    json = Json.create(Double.NEGATIVE_INFINITY);
+    assertEquals("null",JsonUtil.stringify(json));
+  }
+
+  public void testJsonNumberToJsonDoubleNanInfinity() {
+    JsonNumber json = Json.create(Double.NaN);
+    assertEquals("null",json.toJson());
+    json = Json.create(Double.POSITIVE_INFINITY);
+    assertEquals("null",json.toJson());
+    json = Json.create(Double.NEGATIVE_INFINITY);
+    assertEquals("null",json.toJson());
+  }
+
   private native JsonObject nativeMethod(Object o) /*-{
     o.y = o.x + 1;
     return o;
