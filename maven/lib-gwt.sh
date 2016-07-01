@@ -111,10 +111,17 @@ function maven-gwt() {
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "org/objectweb/asm/*"
   echo "Removing Gson classes from gwt-dev"
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "com/google/gson/*"
-  echo "Removing Jetty (et al.) classes from gwt-dev"
+  echo "Removing more dependencies from gwt-dev (incl. Jetty and HTMLUnit)"
   zip -d $GWT_EXTRACT_DIR/gwt-dev.jar \
-      "META-INF/services/javax.servlet.*" "META-INF/services/javax.websocket.*" "META-INF/services/org.eclipse.jetty.*" "META-INF/services/org.apache.juli.*" \
-      "org/eclipse/jetty/*" "javax/servlet/*" "javax/el/*" "org/apache/jasper/*" "org/apache/el/*" "org/apache/juli/*" "org/apache/tomcat/*"
+      "META-INF/services/*" "javax/*" "org/w3c/*"  \
+      "org/eclipse/jetty/*" "org/apache/*" \
+      "com/gargoylesoftware/htmlunit/*" "net/sourceforge/htmlunit/*" \
+      "com/steadystate/css/*" "org/w3c/css/*" \
+      "org/cyberneko/html/*" "org/xml/sax/*" \
+      "cern/*" "com/ibm/icu/*" "java_cup/*"
+  # Remove bundled third-parties from gwt-user
+  zip -d $GWT_EXTRACT_DIR/gwt-user.jar \
+      "javax/servlet/*" "org/w3c/css/*"
 
   for i in $gwtLibs
   do

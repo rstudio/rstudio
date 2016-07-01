@@ -31,5 +31,13 @@
             <artifactId>validation-api</artifactId>
             <classifier>sources</classifier>
         </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.w3c.css</groupId>
+            <artifactId>sac</artifactId>
+        </dependency>
     </dependencies>
 </project>
