@@ -7,7 +7,7 @@ cd /rstudio/dependencies/linux
 LINUX_SYS=debian
 if [ -f /etc/redhat-release ]; then
     LINUX_SYS=yum
-else
+fi
 
 ./install-dependencies-$LINUX_SYS
 
