@@ -83,8 +83,7 @@ public class Level implements Serializable {
 
   public static Level parse(String name) {
     Logger.assertLoggingValues();
-    boolean loggingDisabled = System.getProperty("gwt.logging.enabled", "FALSE").equals("FALSE");
-    if (loggingDisabled) {
+    if (System.getProperty("jre.logging.logLevel").equals("OFF")) {
       return null;
     }
 

@@ -75,7 +75,7 @@ public class LogManager {
   }
 
   private void addLoggerImpl(Logger logger) {
-    if (System.getProperty("gwt.logging.simpleConsoleHandler", "ENABLED").equals("ENABLED")) {
+    if (System.getProperty("jre.logging.simpleConsoleHandler").equals("ENABLED")) {
       if (logger.getName().isEmpty()) {
         logger.addHandler(new SimpleConsoleLogHandler());
       }

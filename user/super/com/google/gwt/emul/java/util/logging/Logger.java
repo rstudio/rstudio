@@ -27,10 +27,11 @@ import java.util.function.Supplier;
 public class Logger {
   public static final String GLOBAL_LOGGER_NAME = "global";
 
-  private static final String LOGGING_ENABLED = System.getProperty("gwt.logging.enabled", "TRUE");
-  private static final boolean LOGGING_WARNING = LOGGING_ENABLED.equals("WARNING");
-  private static final boolean LOGGING_SEVERE = LOGGING_ENABLED.equals("SEVERE");
-  private static final boolean LOGGING_FALSE = LOGGING_ENABLED.equals("FALSE");
+  private static final String LOG_LEVEL = System.getProperty("jre.logging.logLevel");
+  private static final boolean LOGGING_INFO = LOG_LEVEL.equals("INFO");
+  private static final boolean LOGGING_WARNING = LOG_LEVEL.equals("WARNING");
+  private static final boolean LOGGING_SEVERE = LOG_LEVEL.equals("SEVERE");
+  private static final boolean LOGGING_OFF = LOG_LEVEL.equals("OFF");
 
   static {
     assertLoggingValues();
@@ -42,20 +43,25 @@ public class Logger {
 
   public static Logger getLogger(String name) {
     // Use shortcut if logging is disabled to avoid parent logger creations in LogManager
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return new Logger(name, null);
     }
     return LogManager.getLogManager().ensureLogger(name);
   }
 
   static void assertLoggingValues() {
-    if (LOGGING_ENABLED.equals("FALSE") || LOGGING_ENABLED.equals("TRUE")
-        || LOGGING_ENABLED.equals("SEVERE") || LOGGING_ENABLED.equals("WARNING")) {
+    if (LOG_LEVEL.equals("ALL")
+        || LOG_LEVEL.equals("INFO")
+        || LOG_LEVEL.equals("WARNING")
+        || LOG_LEVEL.equals("SEVERE")
+        || LOG_LEVEL.equals("OFF")) {
       return;
     }
 
-    throw new RuntimeException("Undefined value for gwt.logging.enabled: '" + LOGGING_ENABLED
-        + "'. Allowed values are TRUE, FALSE, SEVERE, WARNING");
+    throw new AssertionError(
+        "Undefined value for jre.logging.logLevel: '"
+            + LOG_LEVEL
+            + "'. Allowed values are ALL, INFO, WARNING, SEVERE, OFF");
   }
 
   private List<Handler> handlers;
@@ -65,7 +71,7 @@ public class Logger {
   private boolean useParentHandlers;
 
   protected Logger(String name, @SuppressWarnings("unused") String resourceName) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
 
@@ -75,112 +81,112 @@ public class Logger {
   }
 
   public void addHandler(Handler handler) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     handlers.add(handler);
   }
 
   public void config(String msg) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.CONFIG, msg);
   }
 
   public void config(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.CONFIG, msgSupplier);
   }
 
   public void fine(String msg) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.FINE, msg);
   }
 
   public void fine(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.FINE, msgSupplier);
   }
 
   public void finer(String msg) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.FINER, msg);
   }
 
   public void finer(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.FINER, msgSupplier);
   }
 
   public void finest(String msg) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.FINEST, msg);
   }
 
   public void finest(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING || LOGGING_INFO) {
       return;
     }
     log(Level.FINEST, msgSupplier);
   }
 
   public void info(String msg) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING) {
       return;
     }
     log(Level.INFO, msg);
   }
 
   public void info(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE || LOGGING_SEVERE || LOGGING_WARNING) {
+    if (LOGGING_OFF || LOGGING_SEVERE || LOGGING_WARNING) {
       return;
     }
     log(Level.INFO, msgSupplier);
   }
 
   public void warning(String msg) {
-    if (LOGGING_FALSE || LOGGING_SEVERE) {
+    if (LOGGING_OFF || LOGGING_SEVERE) {
       return;
     }
     log(Level.WARNING, msg);
   }
 
   public void warning(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE || LOGGING_SEVERE) {
+    if (LOGGING_OFF || LOGGING_SEVERE) {
       return;
     }
     log(Level.WARNING, msgSupplier);
   }
 
   public void severe(String msg) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     log(Level.SEVERE, msg);
   }
 
   public void severe(Supplier<String> msgSupplier) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     log(Level.SEVERE, msgSupplier);
   }
 
   public Handler[] getHandlers() {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return new Handler[0];
     }
 
@@ -188,28 +194,30 @@ public class Logger {
   }
 
   public Level getLevel() {
-    return LOGGING_FALSE ? null : level;
+    return LOGGING_OFF ? null : level;
   }
 
   public String getName() {
-    return LOGGING_FALSE ? null : name;
+    return LOGGING_OFF ? null : name;
   }
 
   public Logger getParent() {
-    return LOGGING_FALSE ? null : parent;
+    return LOGGING_OFF ? null : parent;
   }
 
   public boolean getUseParentHandlers() {
-    return LOGGING_FALSE ? false : useParentHandlers;
+    return LOGGING_OFF ? false : useParentHandlers;
   }
 
   public boolean isLoggable(Level messageLevel) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return false;
     } else if (LOGGING_SEVERE) {
       return messageLevel.intValue() >= Level.SEVERE.intValue();
     } else if (LOGGING_WARNING) {
       return messageLevel.intValue() >= Level.WARNING.intValue();
+    } else if (LOGGING_INFO) {
+      return messageLevel.intValue() >= Level.INFO.intValue();
     } else {
       return messageLevel.intValue() >= getEffectiveLevel().intValue();
     }
@@ -242,21 +250,21 @@ public class Logger {
   }
 
   public void removeHandler(Handler handler) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     handlers.remove(handler);
   }
 
   public void setLevel(Level newLevel) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     this.level = newLevel;
   }
 
   public void setParent(Logger newParent) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     if (newParent != null) {
@@ -265,7 +273,7 @@ public class Logger {
   }
 
   public void setUseParentHandlers(boolean newUseParentHandlers) {
-    if (LOGGING_FALSE) {
+    if (LOGGING_OFF) {
       return;
     }
     this.useParentHandlers = newUseParentHandlers;
