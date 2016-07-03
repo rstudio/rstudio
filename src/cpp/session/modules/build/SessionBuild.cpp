@@ -1153,7 +1153,12 @@ private:
          boost::format fmt("rmarkdown::render_site(%1%)");
          std::string format;
          if (options_.websiteOutputFormat != "all")
-            format = "output_format = '" + options_.websiteOutputFormat + "'";
+            format = "output_format = '" + options_.websiteOutputFormat + "', ";
+
+         format += ("encoding = '" +
+                    projects::projectContext().defaultEncoding() +
+                    "'");
+
          command = boost::str(fmt % format);
       }
       else if (type == "clean-all")
