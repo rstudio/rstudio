@@ -26,7 +26,7 @@ define("mode/stan_highlight_rules", ["require", "exports", "module"], function(r
   var StanHighlightRules = function() {
 
     var variableName = "[a-zA-Z][a-zA-Z0-9_]*\\b";
-    var keywords = "\\b(for|in|while|if|then|else|return)\\b";
+    var keywordsControl = "\\b(for|in|while|if|then|else|return)\\b";
     var keywordFunctions = "\\b(print|reject)\\b";
     var storageTypes = "\\b(int|real|vector|simplex|unit_vector|ordered|positive_ordered|row_vector|matrix|cholesky_factor_cov|cholesky_factor_corr|corr_matrix|cov_matrix|void)\\b";
 
@@ -97,12 +97,12 @@ define("mode/stan_highlight_rules", ["require", "exports", "module"], function(r
           token : "invalid"
         },
         {
-          regex : keywords,
-          token : "keyword"
+          regex : keywordsControl,
+          token : "keyword.control",
         },
         {
           regex : keywordFunctions,
-          token : "keyword"
+          token : "keyword.other"
         },
         {
           regex : storageTypes,
