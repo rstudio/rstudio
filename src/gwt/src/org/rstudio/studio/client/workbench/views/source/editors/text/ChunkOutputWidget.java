@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -48,6 +49,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -63,6 +65,8 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -570,10 +574,10 @@ public class ChunkOutputWidget extends Composite
          showConsoleOutput(unit.getArray());
          break;
       case RmdChunkOutputUnit.TYPE_HTML:
-         showHtmlOutput(unit.getString(), ensureVisible);
+         showHtmlOutput(unit.getString(), unit.getOrdinal(), ensureVisible);
          break;
       case RmdChunkOutputUnit.TYPE_PLOT:
-         showPlotOutput(unit.getString(), ensureVisible);
+         showPlotOutput(unit.getString(), unit.getOrdinal(), ensureVisible);
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
          // override visibility flag when there's an error in batch mode
@@ -581,6 +585,10 @@ public class ChunkOutputWidget extends Composite
              mode == NotebookQueueUnit.EXEC_MODE_BATCH)
             ensureVisible = true;
          showErrorOutput(unit.getUnhandledError(), ensureVisible);
+         break;
+      case RmdChunkOutputUnit.TYPE_ORDINAL:
+         // used to reserve a plot placeholder 
+         showOrdinalOutput(unit.getOrdinal());
          break;
       }
    }
@@ -679,12 +687,23 @@ public class ChunkOutputWidget extends Composite
       completeUnitRender(ensureVisible);
    }
    
-   private void showPlotOutput(String url, final boolean ensureVisible)
+   private void showOrdinalOutput(int ordinal)
+   {
+      // ordinals are placeholder elements which can be replaced with content
+      // later
+      HTML ord = new HTML("");
+      ord.getElement().getStyle().setDisplay(Display.NONE);
+      addWithOrdinal(ord, ordinal);
+   }
+
+   private void showPlotOutput(String url, int ordinal, 
+         final boolean ensureVisible)
    {
       // flush any queued errors
       flushQueuedErrors(ensureVisible);
 
       final Image plot = new Image();
+      Widget plotWidget = null;
       
       if (isFixedSizePlotUrl(url))
       {
@@ -692,7 +711,7 @@ public class ChunkOutputWidget extends Composite
          // initially invisible until we get sizing information (as we may 
          // have to downsample)
          plot.setVisible(false);
-         root_.add(plot);
+         plotWidget = plot;
       }
       else
       {
@@ -700,10 +719,45 @@ public class ChunkOutputWidget extends Composite
          FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
                      ChunkOutputUi.OUTPUT_ASPECT, 
                      ChunkOutputUi.MAX_PLOT_WIDTH);
-
-         root_.add(fixedFrame);
+         plotWidget = fixedFrame;
       }
-  
+
+      // check to see if the given ordinal matches one of the existing
+      // placeholder elements
+      boolean placed = false;
+      for (int i = 0; i < root_.getWidgetCount(); i++) 
+      {
+         Widget w = root_.getWidget(i);
+         String ord = w.getElement().getAttribute(ORDINAL_ATTRIBUTE);
+         if (!StringUtil.isNullOrEmpty(ord))
+         {
+            try
+            {
+               int ordAttr = Integer.parseInt(ord);
+               if (ordAttr == ordinal)
+               {
+                  // insert the plot widget after the ordinal 
+                  plotWidget.getElement().setAttribute(
+                        ORDINAL_ATTRIBUTE, "" + ordinal);
+                  if (i < root_.getWidgetCount() - 1)
+                     root_.insert(plotWidget, i + 1);
+                  else
+                     root_.add(plotWidget);
+                  placed = true;
+                  break;
+               }
+            }
+            catch(Exception e)
+            {
+               Debug.logException(e);
+            }
+         }
+      }
+
+      // if we haven't placed the plot yet, add it at the end of the output
+      if (!placed)
+         addWithOrdinal(plotWidget, ordinal);
+      
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
             ensureVisible));
@@ -737,7 +791,8 @@ public class ChunkOutputWidget extends Composite
       }
    };
    
-   private void showHtmlOutput(String url, final boolean ensureVisible)
+   private void showHtmlOutput(String url, int ordinal, 
+         final boolean ensureVisible)
    {
       // flush any queued errors
       flushQueuedErrors(ensureVisible);
@@ -755,7 +810,7 @@ public class ChunkOutputWidget extends Composite
                   ChunkOutputUi.OUTPUT_ASPECT, 
                   ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
-      root_.add(fixedFrame);
+      addWithOrdinal(fixedFrame, ordinal);
 
       final Timer renderTimeout = new RenderTimer();
 
@@ -1037,9 +1092,15 @@ public class ChunkOutputWidget extends Composite
       return url.contains("fixed_size=1");
    }
    
+   private void addWithOrdinal(Widget w, int ordinal)
+   {
+      w.getElement().setAttribute(ORDINAL_ATTRIBUTE, "" + ordinal);
+      root_.add(w);
+   }
+   
    @UiField Image clear_;
    @UiField Image expand_;
-   @UiField HTMLPanel root_;
+   @UiField FlowPanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
@@ -1067,6 +1128,8 @@ public class ChunkOutputWidget extends Composite
    private static String s_outlineColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
+
+   private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
    
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;

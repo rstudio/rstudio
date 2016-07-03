@@ -178,7 +178,7 @@ private:
       
       // get path to cache file
       FilePath target = chunkOutputFile(docId_, chunkId_, nbCtxId_,
-            kChunkOutputText);
+            ChunkOutputText);
       
       // append console data
       notebook::appendConsoleOutput(
@@ -191,7 +191,8 @@ private:
                docId_,
                chunkId_,
                nbCtxId_,
-               kChunkOutputText,
+               0,  // no ordinals needed for alternate engines
+               ChunkOutputText,
                target);
    }
    
@@ -272,7 +273,7 @@ core::Error runChunk(const std::string& docId,
             docId,
             chunkId,
             nbCtxId,
-            kChunkOutputText);
+            ChunkOutputText);
    
    error = notebook::appendConsoleOutput(
             kChunkConsoleInput,

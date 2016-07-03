@@ -133,8 +133,8 @@
                  resource="{res.collapseChunkIcon}"
                  title="Expand/Collapse Output"
                  ui:field="expand_"></g:Image>
-        <g:HTMLPanel styleName="{style.root}" ui:field="root_">
-        </g:HTMLPanel>
+        <g:FlowPanel styleName="{style.root}" ui:field="root_">
+        </g:FlowPanel>
       </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

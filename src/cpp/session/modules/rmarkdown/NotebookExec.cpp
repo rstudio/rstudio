@@ -45,11 +45,13 @@ namespace notebook {
 namespace {
 
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
-   const std::string& nbCtxId, int outputType)
+   const std::string& nbCtxId, ChunkOutputType outputType, unsigned *pOrdinal)
 {
    OutputPair pair = lastChunkOutput(docId, chunkId, nbCtxId);
    pair.ordinal++;
    pair.outputType = outputType;
+   if (pOrdinal)
+      *pOrdinal = pair.ordinal;
    FilePath target = chunkOutputFile(docId, chunkId, nbCtxId, pair);
    updateLastChunkOutput(docId, chunkId, pair);
    return target;
@@ -116,8 +118,8 @@ void ChunkExecContext::connect()
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
-                     kChunkOutputPlot)));
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
+                     ChunkOutputPlot, _3)));
 
    boost::shared_ptr<PlotCapture> pPlotCapture = 
       boost::make_shared<PlotCapture>();
@@ -126,14 +128,14 @@ void ChunkExecContext::connect()
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = pPlotCapture->connectPlots(figHeight, figWidth, PlotSizeManual, 
-            outputPath_);
+      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_, 
+            figHeight, figWidth, PlotSizeManual, outputPath_);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = pPlotCapture->connectPlots(0, pixelWidth_, PlotSizeAutomatic, 
-            outputPath_);
+      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_,
+            0, pixelWidth_, PlotSizeAutomatic, outputPath_);
    }
    if (error)
       LOG_ERROR(error);
@@ -141,7 +143,7 @@ void ChunkExecContext::connect()
    // begin capturing HTML input
    connections_.push_back(events().onHtmlOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
-                     kChunkOutputHtml)));
+                     ChunkOutputHtml, 0)));
 
    boost::shared_ptr<HtmlCapture> pHtmlCapture = 
       boost::make_shared<HtmlCapture>();
@@ -202,13 +204,27 @@ void ChunkExecContext::connect()
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
-      const FilePath& metadata, int outputType)
+      const FilePath& metadata, ChunkOutputType outputType, unsigned ordinal)
 {
    // set up folder to receive output if necessary
    initializeOutput();
 
    // put the file in sequence inside the host directory
-   FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType);
+   FilePath target;
+   if (ordinal == 0)
+   {
+      // unspecified ordinal, generate one
+      target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType,
+            &ordinal);
+   }
+   else
+   {
+      // known ordinal, use it (this can occur for out of sequence events, such
+      // as plots)
+      OutputPair pair(outputType, ordinal);
+      target = chunkOutputFile(docId_, chunkId_, nbCtxId_, pair);
+   }
+
    Error error = file.move(target);
    if (error)
    {
@@ -239,7 +255,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
                target.stem() + metadata.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, outputType, target);
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)
@@ -251,8 +267,9 @@ void ChunkExecContext::onError(const core::json::Object& err)
    hasErrors_ = true;
 
    // write the error to a file 
+   unsigned ordinal;
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
-         kChunkOutputError);
+         ChunkOutputError, &ordinal);
    boost::shared_ptr<std::ostream> pOfs;
    Error error = target.open_w(&pOfs, true);
    if (error)
@@ -266,7 +283,7 @@ void ChunkExecContext::onError(const core::json::Object& err)
    pOfs.reset();
 
    // send to client
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, kChunkOutputError, 
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, ChunkOutputError, 
                       target);
 }
 
@@ -297,7 +314,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
    // determine output filename and ensure it exists
    FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, 
-         kChunkOutputText);
+         ChunkOutputText);
    Error error = outputCsv.ensureFile();
    if (error)
    {

@@ -81,7 +81,7 @@ Error prepareCacheConsoleOutputFile(const std::string& docId,
    
    // prepare cache console output file
    *pChunkOutputFile =
-         notebook::chunkOutputFile(docId, chunkId, nbCtxId, kChunkOutputText);
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputText);
    
    return Success();
 }
@@ -117,7 +117,8 @@ void reportChunkExecutionError(const std::string& docId,
             docId,
             chunkId,
             nbCtxId,
-            kChunkOutputText,
+            0, // no ordinal needed
+            ChunkOutputText,
             targetPath);
 }
 
@@ -179,7 +180,8 @@ Error executeRcppEngineChunk(const std::string& docId,
             docId,
             chunkId,
             nbCtxId,
-            kChunkOutputText,
+            0, // no ordinal needed
+            ChunkOutputText,
             targetPath);
    
    return error;
@@ -329,7 +331,8 @@ Error executeStanEngineChunk(const std::string& docId,
             docId,
             chunkId,
             notebookCtxId(),
-            kChunkOutputText,
+            0, // no ordinal needed
+            ChunkOutputText,
             targetPath);
    
    return Success();
