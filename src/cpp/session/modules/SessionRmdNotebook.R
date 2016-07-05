@@ -43,6 +43,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 })
 
 .rs.addFunction("coalesceCsvOutput", function(chunkData) {
+  # nothing to coalesce if < 2 outputs
+  if (length(chunkData) < 2)
+    return(chunkData)
+    
   # keep all output by default
   keep <- rep(TRUE, length(chunkData))
 
