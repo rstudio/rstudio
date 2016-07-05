@@ -282,15 +282,30 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
 {
-   if (is.null(outputPath))
-      outputPath <- .rs.withChangedExtension(rmdPath, "Rnb")
-   
-   rmdPath <- path.expand(rmdPath)
-   outputPath <- path.expand(outputPath)
-   
-   cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
-   rnbData <- .rs.readRnbCache(rmdPath, cachePath)
-   .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
+   # presume success unless we fail below
+   result <- list(
+      succeeded = .rs.scalar(TRUE)
+   )
+
+   tryCatch({
+      # attempt to generate the notebook from the cache
+      rmdPath <- path.expand(rmdPath)
+      outputPath <- path.expand(outputPath)
+      
+      cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
+      rnbData <- .rs.readRnbCache(rmdPath, cachePath)
+      .rs.createNotebookFromCacheData(rnbData, rmdPath, outputPath)
+      }, 
+
+   error = function(e) {
+      # convert exception to error message for client
+      result <<- list(
+         succeeded = .rs.scalar(FALSE),
+         error_message = .rs.scalar(e$message)
+      )
+   })
+
+   result
 })
 
 .rs.addFunction("rnb.readConsoleData", function(encodedData)

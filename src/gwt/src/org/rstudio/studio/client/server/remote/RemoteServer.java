@@ -95,6 +95,7 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
+import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
@@ -4245,8 +4246,8 @@ public class RemoteServer implements Server
    
    @Override
    public void createNotebookFromCache(String rmdPath,
-                                       String outputPath,
-                                       ServerRequestCallback<Void> requestCallback)
+               String outputPath,
+               ServerRequestCallback<NotebookCreateResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(rmdPath));

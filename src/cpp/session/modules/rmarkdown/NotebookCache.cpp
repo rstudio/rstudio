@@ -32,6 +32,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 
 // The version identifier for the cache format. Changing this invalidates old
 // caches, and should be done only when making breaking changes to the 
@@ -447,10 +448,12 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       return error;
    }
    
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
    r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
    createNotebook.addParam(rmdPath);
    createNotebook.addParam(outputPath);
-   error = createNotebook.call();
+   error = createNotebook.call(&resultSEXP, &protect);
    if (error)
    {
       LOG_ERROR(error);
@@ -466,6 +469,14 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    if (chunkDefsFile.exists() && 
        chunkDefsFile.lastWriteTime() < outputFile.lastWriteTime())
       chunkDefsFile.setLastWriteTime(outputFile.lastWriteTime());
+
+   // convert the result into JSON for the client
+   json::Value result;
+   error = r::json::jsonValueFromList(resultSEXP, &result);
+   if (error)
+      LOG_ERROR(error);
+   else
+      pResponse->setResult(result);
    
    return Success();
 }

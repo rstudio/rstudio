@@ -40,6 +40,7 @@ import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
@@ -327,45 +328,6 @@ public class TextEditingTargetNotebook
                   });
          }
       }));
-   }
-   
-   public void createNotebookFromCache(final String rmdPath,
-                                       final String outputPath,
-                                       final CommandWithArg<Boolean> onCompleted)
-   {
-      Command createNotebookCmd = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            server_.createNotebookFromCache(
-                  rmdPath,
-                  outputPath,
-                  new ServerRequestCallback<Void>()
-                  {
-                     @Override
-                     public void onResponseReceived(Void v)
-                     {
-                        events_.fireEvent(new NotebookRenderFinishedEvent(
-                              docUpdateSentinel_.getId(), 
-                              docUpdateSentinel_.getPath()));
-                        
-                        if (onCompleted != null)
-                           onCompleted.execute(true);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                        if (onCompleted != null)
-                           onCompleted.execute(false);
-                     }
-                  });
-         }
-      };
-      
-      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", createNotebookCmd);
    }
    
    @Inject
@@ -1250,6 +1212,56 @@ public class TextEditingTargetNotebook
    }
    
    // Private methods --------------------------------------------------------
+   
+   private void createNotebookFromCache(final String rmdPath,
+                                       final String outputPath,
+                                       final CommandWithArg<Boolean> onCompleted)
+   {
+      Command createNotebookCmd = new Command()
+      {
+         final String warningPrefix = "Error creating notebook: ";
+         @Override
+         public void execute()
+         {
+            server_.createNotebookFromCache(
+                  rmdPath,
+                  outputPath,
+                  new ServerRequestCallback<NotebookCreateResult>()
+                  {
+                     @Override
+                     public void onResponseReceived(NotebookCreateResult result)
+                     {
+                        if (result.succeeded())
+                        {
+                           events_.fireEvent(new NotebookRenderFinishedEvent(
+                                 docUpdateSentinel_.getId(), 
+                                 docUpdateSentinel_.getPath()));
+                        }
+                        else
+                        {
+                           editingDisplay_.showWarningBar(warningPrefix +
+                                 result.getErrorMessage());
+                        }
+
+                        if (onCompleted != null)
+                           onCompleted.execute(result.succeeded());
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        editingDisplay_.showWarningBar(warningPrefix + 
+                              error.getMessage());
+                        if (onCompleted != null)
+                           onCompleted.execute(false);
+                     }
+                  });
+         }
+      };
+      
+      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", 
+            createNotebookCmd);
+   }
    
    private void restartThenExecute(AppCommand command)
    {
