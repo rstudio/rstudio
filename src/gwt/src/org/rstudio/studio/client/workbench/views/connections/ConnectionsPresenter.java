@@ -269,7 +269,7 @@ public class ConnectionsPresenter extends BasePresenter
                else if (!context.getLocalConnectionsSupported() &&
                         !context.getClusterConnectionsSupported())
                {
-                  ComponentsNotInstalledDialogs.showSparkNotInstalled();
+                  ComponentsNotInstalledDialogs.showSparkHomeNotDefined();
                }
                
                // otherwise proceed with connecting
