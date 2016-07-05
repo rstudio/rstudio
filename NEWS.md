@@ -59,6 +59,7 @@
 * Added option to limit length of lines in console history
 * Improved performance when many lines of code sent to console
 * 'save()' warnings no longer emitted when saving session state
+* Added sudo, lsb-release, and libssl1.0.0 packages to Debian dependencies
 
 ### Bug Fixes
 
