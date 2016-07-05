@@ -153,9 +153,15 @@ options(connectionViewer = list(
   context$hadoop_default <- .rs.scalar(defaultVersion$hadoop);
 
   # option defining what connections are supported
-  context$connections_option <- tryCatch(
-    as.character(getOption("rstudio.spark.connections", c("local", "cluster"))),
-    error = function(e) c("local", "cluster")
+  defaultConnections <- c("local", "cluster")
+  context$connections_option <- tryCatch({
+      connections <- getOption("rstudio.spark.connections", defaultConnections)
+      if (is.character(connections))
+         connections
+      else
+         defaultConnections
+    },
+    error = function(e) defaultConnections
   )
 
   # default spark cluster url
