@@ -80,7 +80,6 @@ private:
    std::string docId_;
    std::string chunkId_;
    std::string nbCtxId_;
-   std::string prevWorkingDir_;
    std::string pendingInput_;
    core::FilePath outputPath_;
    core::json::Object options_;

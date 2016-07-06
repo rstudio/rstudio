@@ -164,6 +164,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookErrors.cpp
    modules/rmarkdown/NotebookExec.cpp
    modules/rmarkdown/NotebookHtmlWidgets.cpp
+   modules/rmarkdown/NotebookMessages.cpp
    modules/rmarkdown/NotebookOutput.cpp
    modules/rmarkdown/NotebookPaths.cpp
    modules/rmarkdown/NotebookPlotReplay.cpp

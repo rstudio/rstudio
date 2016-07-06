@@ -74,6 +74,9 @@ core::Error executeSafely(boost::function<T()> function, T* pReturn)
 
    
 // parse and evaluate expressions  
+core::Error executeStringUnsafe(const std::string& str, 
+                        SEXP* pSEXP, 
+                        sexp::Protect* pProtect);
 core::Error executeString(const std::string& str);
 core::Error evaluateString(const std::string& str, 
                            SEXP* pSEXP, 

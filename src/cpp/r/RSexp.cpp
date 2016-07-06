@@ -178,7 +178,9 @@ SEXP asEnvironment(std::string name)
    if (name == "base")
       return R_BaseEnv;
    
-   name = "package:" + name;
+   // prefix with 'package:' if no prefix specified yet
+   if (name.find(":") == std::string::npos)
+      name = "package:" + name;
    
    SEXP envSEXP = ENCLOS(R_GlobalEnv);
    while (envSEXP != R_EmptyEnv)

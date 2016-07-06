@@ -21,6 +21,7 @@
 #include "NotebookCache.hpp"
 #include "NotebookErrors.hpp"
 #include "NotebookWorkingDir.hpp"
+#include "NotebookMessages.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -66,7 +67,6 @@ ChunkExecContext::ChunkExecContext(const std::string& docId,
    docId_(docId), 
    chunkId_(chunkId),
    nbCtxId_(nbCtxId),
-   prevWorkingDir_(""),
    options_(options),
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
@@ -109,6 +109,17 @@ void ChunkExecContext::connect()
    // wait until we actually have output)
    if (execScope_ == ExecScopeChunk)
       initializeOutput();
+
+   // suppress messages if requested
+   bool messages = true;
+   json::readObject(options_, "messages", &messages);
+   if (!messages) 
+   {
+      boost::shared_ptr<MessageCapture> pMessageCapture = 
+         boost::make_shared<MessageCapture>();
+      pMessageCapture->connect();
+      captures_.push_back(pMessageCapture);
+   }
 
    // extract knitr figure options if present
    double figWidth = 0;
