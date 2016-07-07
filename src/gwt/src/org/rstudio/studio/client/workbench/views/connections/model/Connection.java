@@ -32,7 +32,7 @@ public class Connection extends JavaScriptObject
    }-*/;
    
    public final String getHostDisplay() {
-      return getHost();
+      return getHost().replaceAll(" - sparklyr", "");
    }
    
    public final native String getFinder() /*-{
