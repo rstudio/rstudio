@@ -31,6 +31,10 @@ public class Connection extends JavaScriptObject
       return this.id.host;
    }-*/;
    
+   public final String getHostDisplay() {
+      return getHost();
+   }
+   
    public final native String getFinder() /*-{
       return this.finder;
    }-*/;

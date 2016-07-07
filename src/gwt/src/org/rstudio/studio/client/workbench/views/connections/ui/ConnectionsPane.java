@@ -120,10 +120,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          public String getValue(Connection connection)
          {
-            return connection.getHost();
+            return connection.getHostDisplay();
          }
       };      
-      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Server"));
+      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Connection"));
       connectionsDataGrid_.setColumnWidth(hostColumn_, 50, Unit.PCT);
       
       // add status column
@@ -545,7 +545,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
       toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
-      connectionName_.setText(connection.getHost());
+      connectionName_.setText(connection.getHostDisplay());
       setSecondaryToolbarVisible(true);
    }
    
