@@ -1459,7 +1459,7 @@ core::Error extractFunctionInfo(
    // the formals take as entries in that character vector). However, it does
    // not distinguish between the case of having no default value, and an
    // empty string as a default value, so we handle that specially.
-   SEXP defaultValues;
+   SEXP defaultValues = R_NilValue;
    if (extractDefaultArguments)
       protect.add(defaultValues = Rf_coerceVector(formals, STRSXP));
    
