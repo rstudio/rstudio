@@ -1,7 +1,7 @@
 #
 # CMakeCompiler.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -25,3 +25,17 @@ if(APPLE)
   endif()
 
 endif()
+
+# use Rtools on Windows (mainly for Qt Creator)
+if(WIN32 AND NOT DEFINED RSTUDIO_PACKAGE_BUILD)
+  set(RTOOLS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../dependencies/windows/Rtools33")
+  string(REGEX REPLACE "/" "\\\\" RTOOLS_TOOLCHAIN_32BIT_PATH "${RTOOLS_PATH}/mingw_32/bin")
+  set(ENV{PATH} "${RTOOLS_TOOLCHAIN_32BIT_PATH}")
+  message(STATUS "The PATH is $ENV{PATH}")
+endif()
+
+# avoid colored output (seems unreliable in cmd.exe terminal)
+if(WIN32)
+  set(CMAKE_COLOR_MAKEFILE OFF)
+endif()
+
