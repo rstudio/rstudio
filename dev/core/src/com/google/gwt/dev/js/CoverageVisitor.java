@@ -27,6 +27,7 @@ import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
+import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -113,6 +114,12 @@ public abstract class CoverageVisitor extends JsModVisitor {
   @Override public boolean visit(JsInvocation x, JsContext ctx) {
     nodesInRefContext.add(x.getQualifier());
     return true;
+  }
+
+  @Override public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+    // Do not instrument labels.
+    x.setValueExpr(accept(x.getValueExpr()));
+    return false;
   }
 
   @Override public boolean visit(JsPrefixOperation x, JsContext ctx) {

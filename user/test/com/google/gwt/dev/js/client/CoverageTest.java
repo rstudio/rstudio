@@ -34,6 +34,7 @@ public class CoverageTest extends GWTTestCase {
       put("27", 1.0);
       put("29", 1.0);
       put("31", 0.0);
+      put("33", 1.0);
   }};
 
   @Override

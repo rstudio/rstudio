@@ -30,5 +30,16 @@ public class CoverageTestModule {
     } else {
       GWT.log("This line should not be covered");
     }
+    jsniMethod();
   }
+
+  public static native void jsniMethod() /*-{
+    // There is no coverage for jsni method bodies but compilation should not fail.
+    var obj = {
+      m : function() {
+        return 1;
+      }
+    };
+    obj.m();
+  }-*/;
 }
