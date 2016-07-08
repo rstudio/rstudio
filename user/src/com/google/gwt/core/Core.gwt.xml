@@ -83,4 +83,6 @@
   <define-property name="jre.logging.simpleConsoleHandler" values="ENABLED, DISABLED" />
   <set-property name="jre.logging.simpleConsoleHandler" value="ENABLED"/>
 
+  <!-- To support legacy logging flags -->
+  <inherits name="com.google.gwt.logging.LogImpl"/>
 </module>
