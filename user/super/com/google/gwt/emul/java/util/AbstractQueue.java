@@ -62,15 +62,6 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements 
   }
 
   @Override
-  public abstract boolean offer(E o);
-
-  @Override
-  public abstract E peek();
-
-  @Override
-  public abstract E poll();
-
-  @Override
   public E remove() {
     E e = poll();
     checkElement(e != null, "Queue is empty");

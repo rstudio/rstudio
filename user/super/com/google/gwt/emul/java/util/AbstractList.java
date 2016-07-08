@@ -231,9 +231,6 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
   }
 
   @Override
-  public abstract E get(int index);
-
-  @Override
   public int hashCode() {
     return Collections.hashCode(this);
   }

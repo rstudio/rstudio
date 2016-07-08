@@ -79,9 +79,6 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   @Override
-  public abstract Iterator<E> iterator();
-
-  @Override
   public boolean remove(Object o) {
     return advanceToFind(o, true);
   }
@@ -115,9 +112,6 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     }
     return changed;
   }
-
-  @Override
-  public abstract int size();
 
   @Override
   public Object[] toArray() {

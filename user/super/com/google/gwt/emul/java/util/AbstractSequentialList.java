@@ -65,9 +65,6 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
   }
 
   @Override
-  public abstract ListIterator<E> listIterator(int index);
-
-  @Override
   public E remove(int index) {
     ListIterator<E> iter = listIterator(index);
     try {
@@ -90,8 +87,5 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
       throw new IndexOutOfBoundsException("Can't set element " + index);
     }
   }
-
-  @Override
-  public abstract int size();
 
 }

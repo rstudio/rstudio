@@ -155,9 +155,6 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   }
 
   @Override
-  public abstract Set<Entry<K, V>> entrySet();
-
-  @Override
   public boolean equals(Object obj) {
     if (obj == this) {
       return true;
