@@ -23,6 +23,10 @@ Description:
     </module>
     <module name="TreeWalker">
        <property name="fileExtensions" value="java"/>
+       <module name="LineLength">
+            <property name="max" value="100"/>
+            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+       </module>
        <module name="FileContentsHolder" />
        <module name="InterfaceIsType">
             <property name="severity" value="ignore"/>
