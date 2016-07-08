@@ -44,17 +44,7 @@ public interface Collection<E> extends Iterable<E> {
 
   boolean containsAll(Collection<?> c);
 
-  @Override
-  boolean equals(Object o);
-
-  @Override
-  int hashCode();
-
   boolean isEmpty();
-
-  @JsIgnore
-  @Override
-  Iterator<E> iterator();
 
   @JsIgnore
   default Stream<E> parallelStream() {

@@ -124,9 +124,6 @@ public interface Map<K, V> {
   @JsIgnore
   Set<Entry<K, V>> entrySet();
 
-  @Override
-  boolean equals(Object o);
-
   @JsIgnore
   default void forEach(BiConsumer<? super K, ? super V> consumer) {
     checkNotNull(consumer);
@@ -141,9 +138,6 @@ public interface Map<K, V> {
     V currentValue = get(key);
     return (currentValue == null && !containsKey(key)) ? defaultValue : currentValue;
   }
-
-  @Override
-  int hashCode();
 
   boolean isEmpty();
 
