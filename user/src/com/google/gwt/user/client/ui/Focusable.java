@@ -39,6 +39,10 @@ public interface Focusable {
    * Explicitly focus/unfocus this widget. Only one widget can have focus at a
    * time, and the widget that does will receive all keyboard events.
    * 
+   * NOTE: Most browsers fire FocusEvents asynchronously. Especially within GWT tests, you'll
+   * need to make your test asynchronous to properly do verifications. See
+   * {@code GWTTestCase#delayTestFinish} for more information on how to do this.
+   * 
    * @param focused whether this widget should take focus or release it
    */
   void setFocus(boolean focused);
