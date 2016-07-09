@@ -217,11 +217,10 @@ java_library(
             "core/super/com/google/gwt/dev/jjs/intrinsic/**",
         ],
     ),
-    compatible_with =
-        [
-            "//buildenv/target:android",
-            "//buildenv/target:appengine",
-        ],
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
+    ],
     constraints = ["android"],
 )
 
@@ -303,6 +302,9 @@ java_library(
     srcs = glob([
         "core/test/**/*.java",
     ]),
+    javacopts = [
+        "-Xep:SelfComparison:OFF",
+    ],
     deps = [
         ":compiler.standalone.super",
         ":gwt-dev-bare",
