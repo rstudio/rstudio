@@ -39,6 +39,7 @@ public interface List<E> extends Collection<E> {
   @JsMethod(name = "addAllAtIndex")
   boolean addAll(int index, Collection<? extends E> c);
 
+  @JsMethod(name = "getAtIndex")
   E get(int index);
 
   int indexOf(Object o);
@@ -62,6 +63,7 @@ public interface List<E> extends Collection<E> {
     }
   }
 
+  @JsMethod(name = "setAtIndex")
   E set(int index, E element);
 
   @JsIgnore
