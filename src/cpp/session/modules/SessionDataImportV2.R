@@ -305,10 +305,10 @@
          {
             if (identical(localFile, NULL))
             {
-               localFile <- tempfile(
+               localFile <- normalizePath(tempfile(
                   tmpdir = dirname(tempdir()),
                   fileext = resourceExtension
-               )
+               ), mustWork = FALSE, winslash = "/")
             }
 
             cacheDataCode <- append(
