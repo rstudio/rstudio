@@ -106,22 +106,16 @@ function maven-gwt() {
     zip -d $GWT_EXTRACT_DIR/gwt-servlet.jar "jsinterop/${i}/*"
   done
 
-  # Remove bundled third-parties from gwt-dev
-  echo "Removing ASM classes from gwt-dev"
-  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "org/objectweb/asm/*"
-  echo "Removing Gson classes from gwt-dev"
-  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "com/google/gson/*"
-  echo "Removing more dependencies from gwt-dev (incl. Jetty and HTMLUnit)"
-  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar \
-      "META-INF/services/*" "javax/*" "org/w3c/*"  \
-      "org/eclipse/jetty/*" "org/apache/*" \
-      "com/gargoylesoftware/htmlunit/*" "net/sourceforge/htmlunit/*" \
-      "com/steadystate/css/*" "org/w3c/css/*" \
-      "org/cyberneko/html/*" "org/xml/sax/*" \
-      "cern/*" "com/ibm/icu/*" "java_cup/*"
-  # Remove bundled third-parties from gwt-user
-  zip -d $GWT_EXTRACT_DIR/gwt-user.jar \
-      "javax/servlet/*" "org/w3c/css/*"
+  echo "Removing bundled third-parties from gwt-dev"
+  zip -q $GWT_EXTRACT_DIR/gwt-dev.jar --copy --out $GWT_EXTRACT_DIR/gwt-dev-trimmed.jar \
+      "com/google/gwt/*" "org/eclipse/jdt/*"
+  mv $GWT_EXTRACT_DIR/gwt-dev-trimmed.jar $GWT_EXTRACT_DIR/gwt-dev.jar
+  echo "Removing bundled third-parties from gwt-user"
+  zip -q $GWT_EXTRACT_DIR/gwt-user.jar --copy --out $GWT_EXTRACT_DIR/gwt-user-trimmed.jar \
+      "com/google/gwt/*" "com/google/web/bindery/*" "javaemul/*" \
+      "javax/validation/*" "org/hibernate/validator/*" \
+      "org/w3c/flute/*"
+  mv $GWT_EXTRACT_DIR/gwt-user-trimmed.jar $GWT_EXTRACT_DIR/gwt-user.jar
 
   for i in $gwtLibs
   do
@@ -129,8 +123,10 @@ function maven-gwt() {
 
     # Get rid of the INDEX.LIST file, since it's going to be out of date
     # once we rename the jar files for Maven
-    echo "Removing INDEX.LIST from gwt-${i}"
-    zip -d $CUR_FILE META-INF/INDEX.LIST
+    if ! unzip -lqq $CUR_FILE META-INF/INDEX.LIST; then
+      echo "Removing INDEX.LIST from gwt-${i}"
+      zip -d $CUR_FILE META-INF/INDEX.LIST
+    fi
 
     SOURCES_FILE=$GWT_EXTRACT_DIR/gwt-${i}-sources.jar
     zip -q $CUR_FILE --copy --out $SOURCES_FILE "*.java"
