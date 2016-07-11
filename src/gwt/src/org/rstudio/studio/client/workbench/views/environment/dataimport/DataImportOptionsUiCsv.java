@@ -92,7 +92,8 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
             !localeListBox_.getSelectedValue().isEmpty() ? localeListBox_.getSelectedValue() : null,
             !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
             !commentListBox_.getSelectedValue().isEmpty() ? commentListBox_.getSelectedValue() : null,
-            Integer.parseInt(skipTextBox_.getText()));
+            Integer.parseInt(skipTextBox_.getText()),
+            openDataViewerCheckBox_.getValue().booleanValue());
    }
    
    @Override
@@ -113,6 +114,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       
       columnNamesCheckBox_.setValue(true);
       trimSpacesCheckBox_.setValue(true);
+      openDataViewerCheckBox_.setValue(true);
       
       escapeListBox_.addItem("None", "");
       escapeListBox_.addItem("Backslash", escapeBackslash_);
@@ -207,6 +209,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       escapeListBox_.addChangeHandler(changeHandler);
       columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       trimSpacesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
+      openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       localeListBox_.addChangeHandler(changeHandler);
       naListBox_.addChangeHandler(changeHandler);
       commentListBox_.addChangeHandler(changeHandler);
@@ -255,4 +258,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    @UiField
    CheckBox trimSpacesCheckBox_;
+
+   @UiField
+   CheckBox openDataViewerCheckBox_;
 }

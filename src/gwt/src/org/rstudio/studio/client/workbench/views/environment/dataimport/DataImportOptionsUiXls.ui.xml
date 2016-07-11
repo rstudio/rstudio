@@ -64,6 +64,9 @@
                     <div class="{style.naLabel}">NA:</div>
                     <g:ListBox ui:field="naListBox_" styleName="{style.naListBox}"/>
                 </div>
+                <div class="{style.optionsRow} {style.otherRow}">
+                    <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
+                </div>
             </div>
         </div>
     </g:HTMLPanel>

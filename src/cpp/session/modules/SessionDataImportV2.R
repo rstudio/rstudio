@@ -539,7 +539,10 @@
    importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
-   importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
+   
+   if (dataImportOptions$openDataViewer) {
+      importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
+   }
 
    importInfo$importCode <- paste(
       lapply(
