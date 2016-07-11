@@ -30,10 +30,10 @@
 
 #define kNotebookChunkDefFilename "chunks.json"
 
-#define kChunkDefs         "chunk_definitions"
-#define kChunkDocWriteTime "doc_write_time"
-#define kChunkId           "chunk_id"
-#define kChunkKnitDefaults "knit_defaults"
+#define kChunkDefs           "chunk_definitions"
+#define kChunkDocWriteTime   "doc_write_time"
+#define kChunkId             "chunk_id"
+#define kChunkDefaultOptions "default_chunk_options"
 
 
 namespace rstudio {
@@ -132,6 +132,34 @@ core::Error getChunkValue(const std::string& docPath, const std::string& docId,
          return core::Success();
    }
    return getChunkDefsValue(defs, key, pValue);
+}
+
+template<typename T>
+core::Error setChunkValue(const std::string& docPath, 
+                          const std::string& docId,
+                          const std::string& key, T value)
+{
+   // find the file path to write 
+   core::FilePath defFile = chunkDefinitionsPath(docPath, docId, 
+         notebookCtxId());
+   core::Error error = defFile.parent().ensureDirectory();
+   if (error)
+      return error;
+
+   // extract existing definitions if we have them
+   core::json::Object defs;
+   if (defFile.exists())
+   {
+      error = getChunkJson(defFile, &defs);
+      if (error)
+         return error;
+   }
+
+   // update key and write out new contents
+   defs[key] = value;
+   std::ostringstream oss;
+   core::json::write(defs, oss);
+   return core::writeStringToFile(defFile, oss.str());
 }
 
 } // namespace notebook
