@@ -75,11 +75,11 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                                    .onDetectSourceExtendedType(pDoc);
 
    // amend with chunk definitions if an R Markdown document
-   json::Value chunkDefs;
+   json::Array chunkDefs;
    if (pDoc->isRMarkdownDocument())
    {
-      Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
-            NULL, &chunkDefs);
+      Error error = rmarkdown::notebook::getChunkValue(pDoc->path(), pDoc->id(),
+            kChunkDefs, &chunkDefs);
       if (error)
          LOG_ERROR(error);
    }

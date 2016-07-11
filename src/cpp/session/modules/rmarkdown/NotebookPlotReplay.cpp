@@ -170,19 +170,14 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    // extract the list of chunks to replay
    std::string docPath;
    source_database::getPath(docId, &docPath);
-   core::json::Value chunkIdVals;
-   error = getChunkDefs(docPath, docId, NULL, &chunkIdVals);
+   core::json::Array chunkIdVals;
+   error = getChunkValue(docPath, docId, kChunkDefs, &chunkIdVals);
    if (error)
       return error;
 
-   // very unlikely, but important to bail out if it happens so client doesn't
-   // wait for replay to complete
-   if (chunkIdVals.type() != json::ArrayType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
    // convert to chunk IDs
    std::vector<std::string> chunkIds;
-   extractChunkIds(chunkIdVals.get_array(), &chunkIds);
+   extractChunkIds(chunkIdVals, &chunkIds);
 
    // shuffle the chunk IDs so we re-render the visible ones first
    std::vector<std::string>::iterator it = std::find(

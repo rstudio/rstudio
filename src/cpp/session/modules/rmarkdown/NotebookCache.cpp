@@ -187,21 +187,16 @@ Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
       return Success();
 
    // extract the set of chunk IDs from the definition files
-   json::Value oldDefs;
-   json::Value newDefs;
-   error = getChunkDefs(docPath, kSavedCtx, NULL, &oldDefs);
+   json::Array oldDefs;
+   json::Array newDefs;
+   error = getChunkValue(docPath, kSavedCtx, kChunkDefs, &oldDefs);
    if (error)
       return error;
-   error = getChunkDefs(docPath, notebookCtxId(), NULL, &newDefs);
+   error = getChunkValue(docPath, notebookCtxId(), kChunkDefs, &newDefs);
    if (error)
       return error;
 
-   // ensure we got the arrays we expected
-   if (oldDefs.type() != json::ArrayType ||
-       newDefs.type() != json::ArrayType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
-   cleanChunks(cachePath, oldDefs.get_array(), newDefs.get_array());
+   cleanChunks(cachePath, oldDefs, newDefs);
    return Success();
 }
 
