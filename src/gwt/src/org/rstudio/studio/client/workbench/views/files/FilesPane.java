@@ -248,7 +248,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
           commands_.renameFile().getImageResource(), "View File", null);
        String importLabel = AppCommand.formatMenuLabel(
           StandardIcons.INSTANCE.import_dataset(), 
-          "Import Dataset", 
+          "Import Dataset...", 
           null);
        
        menu.addItem(new MenuItem(editLabel, true, onView));
