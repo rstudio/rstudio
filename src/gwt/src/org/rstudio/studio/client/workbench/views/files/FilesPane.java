@@ -239,19 +239,19 @@ public class FilesPane extends WorkbenchPane implements Files.Display
 
    @Override
    public void showDataImportFileChoice(FileSystemItem file, 
-                                  Command onEdit,
+                                  Command onView,
                                   Command onImport)
    {
        final ToolbarPopupMenu menu = new ToolbarPopupMenu();
        
        String editLabel = AppCommand.formatMenuLabel(
-          commands_.renameFile().getImageResource(), "Open in Editor", null);
+          commands_.renameFile().getImageResource(), "View File", null);
        String importLabel = AppCommand.formatMenuLabel(
           StandardIcons.INSTANCE.import_dataset(), 
           "Import Dataset", 
           null);
        
-       menu.addItem(new MenuItem(editLabel, true, onEdit));
+       menu.addItem(new MenuItem(editLabel, true, onView));
        menu.addItem(new MenuItem(importLabel, true, onImport));
        
        menu.setPopupPositionAndShow(new PositionCallback() {

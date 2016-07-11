@@ -115,7 +115,7 @@ public class Files
                               Command onBrowse);
 
       void showDataImportFileChoice(FileSystemItem file, 
-                                    Command onEdit, 
+                                    Command onView, 
                                     Command onImport);
    }
 
