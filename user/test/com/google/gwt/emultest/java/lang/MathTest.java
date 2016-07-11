@@ -501,7 +501,7 @@ public class MathTest extends GWTTestCase {
   public void testSignum() {
     assertNaN(Math.signum(Double.NaN));
     assertNegativeZero(Math.signum(-0.0));
-    assertEquals(0.0, Math.signum(0.0));
+    assertPositiveZero(Math.signum(0.0));
     assertEquals(-1, Math.signum(-2));
     assertEquals(1, Math.signum(2));
     assertEquals(-1.0, Math.signum(-Double.MAX_VALUE));

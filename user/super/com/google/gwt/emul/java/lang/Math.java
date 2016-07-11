@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import static javaemul.internal.InternalPreconditions.checkCriticalArithmetic;
+
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
@@ -70,14 +72,14 @@ public final class Math {
 
   public static int addExact(int x, int y) {
     double r = (double) x + (double) y;
-    throwOverflowIf(!isSafeIntegerRange(r));
+    checkCriticalArithmetic(isSafeIntegerRange(r));
     return (int) r;
   }
 
   public static long addExact(long x, long y) {
     long r = x + y;
     // "Hacker's Delight" 2-12 Overflow if both arguments have the opposite sign of the result
-    throwOverflowIf(((x ^ r) & (y ^ r)) < 0);
+    checkCriticalArithmetic(((x ^ r) & (y ^ r)) >= 0);
     return r;
   }
 
@@ -118,12 +120,12 @@ public final class Math {
   }
 
   public static int decrementExact(int x) {
-    throwOverflowIf(x == Integer.MIN_VALUE);
+    checkCriticalArithmetic(x != Integer.MIN_VALUE);
     return x - 1;
   }
 
   public static long decrementExact(long x) {
-    throwOverflowIf(x == Long.MIN_VALUE);
+    checkCriticalArithmetic(x != Long.MIN_VALUE);
     return x - 1;
   }
 
@@ -140,24 +142,24 @@ public final class Math {
   }
 
   public static int floorDiv(int dividend, int divisor) {
-    throwDivByZeroIf(divisor == 0);
+    checkCriticalArithmetic(divisor != 0);
     // round down division if the signs are different and modulo not zero
     return ((dividend ^ divisor) >= 0 ? dividend / divisor : ((dividend + 1) / divisor) - 1);
   }
 
   public static long floorDiv(long dividend, long divisor) {
-    throwDivByZeroIf(divisor == 0);
+    checkCriticalArithmetic(divisor != 0);
     // round down division if the signs are different and modulo not zero
     return ((dividend ^ divisor) >= 0 ? dividend / divisor : ((dividend + 1) / divisor) - 1);
   }
 
   public static int floorMod(int dividend, int divisor) {
-    throwDivByZeroIf(divisor == 0);
+    checkCriticalArithmetic(divisor != 0);
     return ((dividend % divisor) + divisor) % divisor;
   }
 
   public static long floorMod(long dividend, long divisor) {
-    throwDivByZeroIf(divisor == 0);
+    checkCriticalArithmetic(divisor != 0);
     return ((dividend % divisor) + divisor) % divisor;
   }
 
@@ -167,12 +169,12 @@ public final class Math {
   }
 
   public static int incrementExact(int x) {
-    throwOverflowIf(x == Integer.MAX_VALUE);
+    checkCriticalArithmetic(x != Integer.MAX_VALUE);
     return x + 1;
   }
 
   public static long incrementExact(long x) {
-    throwOverflowIf(x == Long.MAX_VALUE);
+    checkCriticalArithmetic(x != Long.MAX_VALUE);
     return x + 1;
   }
 
@@ -222,7 +224,7 @@ public final class Math {
 
   public static int multiplyExact(int x, int y) {
     double r = (double) x * (double) y;
-    throwOverflowIf(!isSafeIntegerRange(r));
+    checkCriticalArithmetic(isSafeIntegerRange(r));
     return (int) r;
   }
 
@@ -234,17 +236,17 @@ public final class Math {
       return 0;
     }
     long r = x * y;
-    throwOverflowIf(r / y != x);
+    checkCriticalArithmetic(r / y == x);
     return r;
   }
 
   public static int negateExact(int x) {
-    throwOverflowIf(x == Integer.MIN_VALUE);
+    checkCriticalArithmetic(x != Integer.MIN_VALUE);
     return -x;
   }
 
   public static long negateExact(long x) {
-    throwOverflowIf(x == Long.MIN_VALUE);
+    checkCriticalArithmetic(x != Long.MIN_VALUE);
     return -x;
   }
 
@@ -281,7 +283,7 @@ public final class Math {
 
   public static int subtractExact(int x, int y) {
     double r = (double) x - (double) y;
-    throwOverflowIf(!isSafeIntegerRange(r));
+    checkCriticalArithmetic(isSafeIntegerRange(r));
     return (int) r;
   }
 
@@ -289,7 +291,7 @@ public final class Math {
     long r = x - y;
     // "Hacker's Delight" Overflow if the arguments have different signs and
     // the sign of the result is different than the sign of x
-    throwOverflowIf(((x ^ y) & (x ^ r)) < 0);
+    checkCriticalArithmetic(((x ^ y) & (x ^ r)) >= 0);
     return r;
   }
 
@@ -354,7 +356,7 @@ public final class Math {
 
   public static int toIntExact(long x) {
     int ix = (int) x;
-    throwOverflowIf(ix != x);
+    checkCriticalArithmetic(ix == x);
     return ix;
   }
 
@@ -364,18 +366,6 @@ public final class Math {
 
   private static boolean isSafeIntegerRange(double value) {
     return Integer.MIN_VALUE <= value && value <= Integer.MAX_VALUE;
-  }
-
-  private static void throwDivByZeroIf(boolean condition) {
-    if (condition) {
-      throw new ArithmeticException("div by zero");
-    }
-  }
-
-  private static void throwOverflowIf(boolean condition) {
-    if (condition) {
-      throw new ArithmeticException("overflow");
-    }
   }
 
   @JsType(isNative = true, name = "Math", namespace = JsPackage.GLOBAL)
