@@ -332,11 +332,21 @@ private:
 
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
 
-      // establish execution context for the unit
-      json::Object options;
-      Error error = unit->parseOptions(&options);
+      // extract the default chunk options, then overlay with the unit's 
+      // chunk-specific options
+      json::Object options = docQueue->defaultChunkOptions();
+      json::Object chunkOptions;
+      Error error = unit->parseOptions(&chunkOptions);
       if (error)
          LOG_ERROR(error);
+      for (json::Object::iterator it = chunkOptions.begin(); 
+           it != chunkOptions.end();
+           it++)
+      {
+         options[it->first] = it->second;
+      }
+
+      // establish execution context for the unit
 
       // in batch mode, make sure unit should be evaluated -- note that
       // eval=FALSE units generally do not get sent up in the first place, so
