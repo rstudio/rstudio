@@ -143,16 +143,26 @@ RToolsInfo::RToolsInfo(const std::string& name,
       versionMax = "3.2.0";
       gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
    }
-   else if (name == "3.3")
+   else if (name == "3.3" || name == "3.4")
    {
-      // are we using R 3.3 built with gcc49?
-      if (usingMingwGcc49)
+      // are we using R 3.3 built with gcc49 or Rtools 3.4?
+      if (usingMingwGcc49 || (name == "3.4"))
       {
          // is the gcc49 toolchain available in Rtools?
          if (installPath_.childPath("mingw_32").exists())
          {
-            versionMin = "3.3.0";
-            versionMax = "3.4.99";
+            // distinct supported version ranges for Rtools 3.3 vs. 3.4
+
+            if (name == "3.3")
+            {
+               versionMin = "3.2.0";
+               versionMax = "3.3.99";
+            }
+            else // name == "3.4
+            {
+               versionMin = "3.3.0";
+               versionMax = "3.4.99";
+            }
             relativePathEntries.push_back("bin");
 
             // set environment variables
