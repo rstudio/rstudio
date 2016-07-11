@@ -135,6 +135,7 @@ import org.rstudio.studio.client.workbench.views.edit.ui.EditView;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPresenter;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentTab;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.files.Files;
 import org.rstudio.studio.client.workbench.views.files.FilesPane;
@@ -262,6 +263,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(CodeSearchLauncher.class).in(Singleton.class);
       bind(AddinsMRUList.class).asEagerSingleton();
       bind(AceEditorCommandDispatcher.class).asEagerSingleton();
+      bind(DataImportPresenter.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

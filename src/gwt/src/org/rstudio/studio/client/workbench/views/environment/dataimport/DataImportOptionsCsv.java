@@ -31,7 +31,8 @@ public class DataImportOptionsCsv extends DataImportOptions
                                                           String locale,
                                                           String na,
                                                           String comments,
-                                                          int skip) /*-{
+                                                          int skip,
+                                                          boolean openDataViewer) /*-{
       return {
          "mode": "text",
          "dataName": dataName,
@@ -44,7 +45,8 @@ public class DataImportOptionsCsv extends DataImportOptions
          "locale": locale,
          "na": na,
          "comments": comments,
-         "skip": skip > 0 ? skip : null
+         "skip": skip > 0 ? skip : null,
+         "openDataViewer": openDataViewer
       }
    }-*/;
 }

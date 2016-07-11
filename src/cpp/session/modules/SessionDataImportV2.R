@@ -305,10 +305,10 @@
          {
             if (identical(localFile, NULL))
             {
-               localFile <- tempfile(
+               localFile <- normalizePath(tempfile(
                   tmpdir = dirname(tempdir()),
                   fileext = resourceExtension
-               )
+               ), mustWork = FALSE, winslash = "/")
             }
 
             cacheDataCode <- append(
@@ -455,7 +455,7 @@
    dataName <- dataImportOptions$dataName
    if (identical(dataName, NULL) || identical(dataName, ""))
    {
-      dataName <- tolower(.rs.assemble_data_import_name(dataImportOptions))
+      dataName <- .rs.assemble_data_import_name(dataImportOptions)
       if (is.null(dataName) || identical(dataName, ""))
       {
          dataName <- "dataset"
@@ -539,7 +539,10 @@
    importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
-   importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
+   
+   if (dataImportOptions$openDataViewer) {
+      importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
+   }
 
    importInfo$importCode <- paste(
       lapply(

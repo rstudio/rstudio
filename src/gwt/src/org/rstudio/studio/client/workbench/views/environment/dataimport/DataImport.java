@@ -94,7 +94,8 @@ public class DataImport extends Composite
    }
 
    public <T> DataImport(DataImportModes dataImportMode,
-                         ProgressIndicator progressIndicator)
+                         ProgressIndicator progressIndicator,
+                         final String path)
    {
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
@@ -138,14 +139,20 @@ public class DataImport extends Composite
       {
          public void execute()
          {
-            dataImportFileChooser_.setFocus(); 
+            dataImportFileChooser_.setFocus();
+            
+            if (!path.isEmpty()) {
+               dataImportFileChooser_.locationTextBox_.setValue(path);
+               dataImportFileChooser_.switchToUpdateMode(true);
+               onFileUpdated();
+            }
          }
       });
    }
    
    public String getCode()
    {
-      return codePreview_;
+      return codeArea_.getEditor().getSession().getValue();
    }
    
    public void setZIndex(Integer zIndex)
@@ -212,6 +219,26 @@ public class DataImport extends Composite
       globalDisplay_ = globalDisplay;
    }
    
+   void onFileUpdated()
+   {
+      // Invalidate cached files, click update to refresh stale files
+      cleanPreviewResources();
+      
+      if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
+      {
+         lastSuccessfulResponse_ = null;
+         resetColumnDefinitions();
+      }
+      
+      importOptions_.setImportLocation(
+         !dataImportFileChooser_.getText().isEmpty() ?
+               dataImportFileChooser_.getText() :
+         null);
+      dataImportOptionsUi_.clearOptions();
+      dataImportOptionsUi_.setImportLocation(dataImportFileChooser_.getText());
+      previewDataImport();
+   }
+   
    @UiFactory
    DataImportFileChooser makeFileOrUrlChooserTextBox() {
       DataImportFileChooser dataImportFileChooser = new DataImportFileChooser(
@@ -220,22 +247,7 @@ public class DataImport extends Composite
                @Override
                public void execute()
                {
-                  // Invalidate cached files, click update to refresh stale files
-                  cleanPreviewResources();
-                  
-                  if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
-                  {
-                     lastSuccessfulResponse_ = null;
-                     resetColumnDefinitions();
-                  }
-                  
-                  importOptions_.setImportLocation(
-                     !dataImportFileChooser_.getText().isEmpty() ?
-                           dataImportFileChooser_.getText() :
-                     null);
-                  dataImportOptionsUi_.clearOptions();
-                  dataImportOptionsUi_.setImportLocation(dataImportFileChooser_.getText());
-                  previewDataImport();
+                  onFileUpdated();
                }
             },
             true);

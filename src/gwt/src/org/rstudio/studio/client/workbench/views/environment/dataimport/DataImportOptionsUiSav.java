@@ -26,6 +26,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiFactory;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -68,6 +69,8 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
          formatListBox_.setSelectedIndex(0);
          break;
       }
+
+      openDataViewerCheckBox_.setValue(true);
       
       updateEnabled();
    }
@@ -78,7 +81,8 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
       return DataImportOptionsSav.create(
          nameTextBox_.getValue(),
          !fileChooser_.getText().isEmpty() ? fileChooser_.getText() : null,
-         formatListBox_.getSelectedValue()
+         formatListBox_.getSelectedValue(),
+         openDataViewerCheckBox_.getValue().booleanValue()
       );
    }
    
@@ -154,9 +158,21 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
             triggerChange();
          }
       };
+
+      ValueChangeHandler<Boolean> booleanValueChangeHandler = new ValueChangeHandler<Boolean>()
+      {
+         
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> arg0)
+         {
+            updateEnabled();
+            triggerChange();
+         }
+      };
       
       nameTextBox_.addValueChangeHandler(valueChangeHandler);
       formatListBox_.addChangeHandler(changeHandler);
+      openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
    }
    
    void updateEnabled()
@@ -176,4 +192,7 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    
    @UiField
    DataImportFileChooser fileChooser_;
+
+   @UiField
+   CheckBox openDataViewerCheckBox_;
 }
