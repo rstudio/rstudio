@@ -455,7 +455,7 @@
    dataName <- dataImportOptions$dataName
    if (identical(dataName, NULL) || identical(dataName, ""))
    {
-      dataName <- tolower(.rs.assemble_data_import_name(dataImportOptions))
+      dataName <- .rs.assemble_data_import_name(dataImportOptions)
       if (is.null(dataName) || identical(dataName, ""))
       {
          dataName <- "dataset"
