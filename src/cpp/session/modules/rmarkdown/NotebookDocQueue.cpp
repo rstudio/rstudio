@@ -199,7 +199,9 @@ json::Object NotebookDocQueue::defaultChunkOptions() const
 void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
 {
    defaultOptions_ = options;
-   setChunkValue(docPath_, docId_, kChunkDefaultOptions, options);
+   Error error = setChunkValue(docPath_, docId_, kChunkDefaultOptions, options);
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // namespace notebook

@@ -766,3 +766,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    grepl("^\\s*```{[Rr]\\s+setup[\\s,}]", lines[[1]], perl = TRUE)
 })
+
+.rs.addFunction("defaultChunkOptions", function()
+{
+   .rs.scalarListFromList(knitr::opts_chunk$get())
+})
+

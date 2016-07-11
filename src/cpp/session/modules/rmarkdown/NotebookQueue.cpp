@@ -31,6 +31,7 @@
 
 #include <r/RInterface.hpp>
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Thread.hpp>
@@ -242,6 +243,31 @@ private:
          // execute the next chunk, if any
          execUnit_.reset();
          process(ExprModeNew);
+      }
+
+      if (execContext_ && !queue_.empty())
+      {
+         // get the chunk label to see if this is the setup chunk 
+         std::string label;
+         json::readObject(execContext_->options(), "label", &label);
+         if (label == "setup")
+         {
+            // when the setup chunk finishes executing, write the defaults 
+            // into the queue for subsequent chunks/executions
+            r::sexp::Protect protect;
+            SEXP defaultsSEXP = R_NilValue;
+            Error error = r::exec::RFunction(".rs.defaultChunkOptions")
+                                            .call(&defaultsSEXP, &protect);
+            if (error)
+               LOG_ERROR(error);
+            else
+            {
+               json::Value defaults;
+               r::json::jsonValueFromList(defaultsSEXP, &defaults);
+               if (defaults.type() == json::ObjectType)
+                  queue_.front()->setDefaultChunkOptions(defaults.get_obj());
+            }
+         }
       }
    }
 
