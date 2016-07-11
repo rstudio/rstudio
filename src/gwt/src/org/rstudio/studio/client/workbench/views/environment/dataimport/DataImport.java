@@ -145,7 +145,7 @@ public class DataImport extends Composite
    
    public String getCode()
    {
-      return codePreview_;
+      return codeArea_.getEditor().getSession().getValue();
    }
    
    public void setZIndex(Integer zIndex)
