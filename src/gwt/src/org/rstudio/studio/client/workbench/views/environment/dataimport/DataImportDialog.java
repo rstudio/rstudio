@@ -28,11 +28,12 @@ public class DataImportDialog extends ModalDialog<String>
    
    public DataImportDialog(DataImportModes dataImportMode,
                            String caption,
+                           String path,
                            OperationWithInput<String> operation)
    {
       super(caption, operation);
       
-      dataImport_ = new DataImport(dataImportMode, addProgressIndicator(false));
+      dataImport_ = new DataImport(dataImportMode, addProgressIndicator(false), path);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       setOkButtonCaption("Import");

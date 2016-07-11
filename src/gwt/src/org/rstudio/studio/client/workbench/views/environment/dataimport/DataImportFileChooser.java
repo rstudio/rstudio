@@ -165,7 +165,7 @@ public class DataImportFileChooser extends Composite
       lastTextBoxValue_ = locationTextBox_.getText();
    }
    
-   private void switchToUpdateMode(Boolean updateMode)
+   public void switchToUpdateMode(Boolean updateMode)
    {
       if (updateMode_ != updateMode)
       {
