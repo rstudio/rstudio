@@ -705,16 +705,22 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
       }
       return YES;
    }
+   
+   // check for empty selection (we don't want to blast the clipboard when
+   // cutting or copying and there's no text)
+   BOOL emptySelection = [[webView_ stringByEvaluatingJavaScriptFromString: @"window.desktopHooks.isSelectionEmpty()"] boolValue];
 
    // Without these, secondary/satellite windows don't respond to clipboard shortcuts
    if ([chr isEqualToString: @"x"] && mod == NSCommandKeyMask)
    {
-      [webView_ cut: self];
+      if (!emptySelection)
+         [webView_ cut: self];
       return YES;
    }
    if ([chr isEqualToString: @"c"] && mod == NSCommandKeyMask)
    {
-      [webView_ copy: self];
+      if (!emptySelection)
+         [webView_ copy: self];
       return YES;
    }
    if ([chr isEqualToString: @"v"] && mod == NSCommandKeyMask)
