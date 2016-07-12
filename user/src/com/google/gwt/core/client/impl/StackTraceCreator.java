@@ -374,7 +374,7 @@ public class StackTraceCreator {
   }-*/;
 
   private static native JsArrayString split(Object t) /*-{
-    var e = t.backingJsObject;
+    var e = t.@Throwable::backingJsObject;
     return (e && e.stack) ? e.stack.split('\n') : [];
   }-*/;
 }

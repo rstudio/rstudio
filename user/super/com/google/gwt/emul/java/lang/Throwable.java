@@ -24,7 +24,6 @@ import java.io.Serializable;
 
 import javaemul.internal.JsUtils;
 import javaemul.internal.annotations.DoNotInline;
-
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsProperty;
@@ -133,6 +132,10 @@ public class Throwable implements Serializable {
   private native void captureStackTrace() /*-{
     @com.google.gwt.core.client.impl.StackTraceCreator::captureStackTrace(*)(this);
   }-*/;
+
+  public Object getBackingJsObject() {
+    return backingJsObject;
+  }
 
   private void setBackingJsObject(Object backingJsObject) {
     this.backingJsObject = backingJsObject;

@@ -38,7 +38,7 @@ public class ConsoleLogger {
 
   private void log(String level, Throwable t, String label, boolean expanded) {
     groupStart(label + t.toString(), expanded);
-    log(level, getBackingError(t));
+    log(level, getBackingError(t, t.getBackingJsObject()));
     Throwable cause = t.getCause();
     if (cause != null) {
       log(level, cause, "Caused by: ", false);
@@ -60,7 +60,7 @@ public class ConsoleLogger {
     groupEnd.call(console);
   }-*/;
 
-  private native String getBackingError(Throwable t) /*-{
+  private native String getBackingError(Throwable t, Object backingError) /*-{
     // Converts CollectorLegacy (IE8/IE9/Safari5) function stack to something readable.
     function stringify(fnStack) {
       if (!fnStack || fnStack.length == 0) {
@@ -68,7 +68,7 @@ public class ConsoleLogger {
       }
       return "\t" + fnStack.join("\n\t");
     }
-    var backingError = t.backingJsObject;
+
     return backingError && (backingError.stack || stringify(t["fnStack"]));
   }-*/;
 }

@@ -32,7 +32,8 @@
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
       </classpath>
     </gwt.javac>
-    <gwt.javac srcdir="" destdir="${javac.junit.out}" excludes="**/EmulatedCharset.java,**/HashCodes.java">
+    <gwt.javac srcdir="" destdir="${javac.junit.out}"
+               excludes="**/EmulatedCharset.java,**/HashCodes.java,**/ConsoleLogger.java,**/SuperDevModeLogger.java">
       <src path="${gwt.root}/user/src" />
       <src path="${gwt.root}/user/super/com/google/gwt/emul/javaemul/internal"/>
       <classpath>

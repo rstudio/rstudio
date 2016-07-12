@@ -14,6 +14,7 @@
 package com.google.gwt.emultest.java.lang;
 
 import static com.google.gwt.emultest.java.lang.JsExceptionViolator.createJsException;
+import static com.google.gwt.emultest.java.lang.JsExceptionViolator.getBackingJsObject;
 
 import com.google.gwt.testing.TestUtils;
 
@@ -154,10 +155,6 @@ public class JsExceptionTest extends ThrowableTestBase {
     assertTrue(exception instanceof RuntimeException);
     assertEquals(expected, getBackingJsObject(exception));
   }
-
-  private static native Object getBackingJsObject(Throwable e) /*-{
-    return e.backingJsObject;
-  }-*/;
 
   private static native Object makeJSO() /*-{
     return {

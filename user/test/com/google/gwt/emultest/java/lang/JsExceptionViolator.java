@@ -22,4 +22,7 @@ class JsExceptionViolator {
   public static native Exception createJsException(Object wrapped) /*-{
     return @com.google.gwt.core.client.JavaScriptException::new(Ljava/lang/Object;)(wrapped);
   }-*/;
+  public static native Object getBackingJsObject(Throwable t) /*-{
+    return t.@Throwable::backingJsObject;
+  }-*/;
 }
