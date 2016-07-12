@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -76,10 +77,33 @@ public class SourceControlPreferencesPane extends PreferencesPane
       
       
       // git exe path chooser  
+      Command onGitExePathChosen = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (BrowseCap.isWindowsDesktop())
+            {
+               String gitExePath = gitExePathChooser_.getText();
+               if (!gitExePath.endsWith("git.exe"))
+               {
+                  String message = "The program '" + gitExePath + "'" +
+                     " is unlikely to be a valid git executable.\n" +
+                     "Please select a git executable called 'git.exe'.";
+                  
+                  globalDisplay.showMessage(
+                        GlobalDisplay.MSG_WARNING,
+                        "Invalid Git Executable",
+                        message);
+               }
+            }
+         }
+      };
+      
       gitExePathChooser_ = new FileChooserTextBox("",
                                                   "(Not Found)",
                                                   null,
-                                                  null);
+                                                  onGitExePathChosen);
       gitExePathLabel_ = new Label("Git executable:");
       SessionInfo sessionInfo = session.getSessionInfo();
       if (sessionInfo.getAllowVcsExeEdit())
