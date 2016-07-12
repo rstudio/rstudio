@@ -112,7 +112,7 @@ void ChunkExecContext::connect()
 
    // suppress messages if requested
    bool messages = true;
-   json::readObject(options_, "messages", &messages);
+   json::readObject(options_, "message", &messages);
    if (!messages) 
    {
       boost::shared_ptr<MessageCapture> pMessageCapture = 
