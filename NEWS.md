@@ -65,6 +65,7 @@
 ### Bug Fixes
 
 * Fixed a hang on Windows + 64bit R when errors occurred while resizing Plots pane
+* Fixed an issue where a user-defined git executable was sometimes not respected on OS X
 * Data Viewer: fixed a crash that could occur when calling 'View()' on matrix
 * R Markdown: hide chunk toolbar when chunk is hidden by folded Markdown section
 * R Markdown: fixed highlighting with multiple Markdown links on one line
