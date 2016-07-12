@@ -123,13 +123,15 @@ function maven-gwt() {
 
     # Get rid of the INDEX.LIST file, since it's going to be out of date
     # once we rename the jar files for Maven
-    if ! unzip -lqq $CUR_FILE META-INF/INDEX.LIST; then
+    if unzip -l $CUR_FILE META-INF/INDEX.LIST >/dev/null; then
       echo "Removing INDEX.LIST from gwt-${i}"
       zip -d $CUR_FILE META-INF/INDEX.LIST
     fi
 
     SOURCES_FILE=$GWT_EXTRACT_DIR/gwt-${i}-sources.jar
-    zip -q $CUR_FILE --copy --out $SOURCES_FILE "*.java"
+    if unzip -l $CUR_FILE '*.java' >/dev/null; then
+      zip -q $CUR_FILE --copy --out $SOURCES_FILE "*.java"
+    fi
   done
 
   # push parent poms
