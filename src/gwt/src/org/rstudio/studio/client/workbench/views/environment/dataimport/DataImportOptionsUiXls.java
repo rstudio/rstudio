@@ -57,7 +57,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          !sheetListBox_.getSelectedValue().isEmpty() ? sheetListBox_.getSelectedValue() : null,
          Integer.parseInt(skipTextBox_.getValue()),
          columnNamesCheckBox_.getValue().booleanValue(),
-         !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null
+         !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
+         openDataViewerCheckBox_.getValue().booleanValue()
       );
    }
    
@@ -96,6 +97,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       skipTextBox_.setText("0");
       
       columnNamesCheckBox_.setValue(true);
+      openDataViewerCheckBox_.setValue(true);
       
       sheetListBox_.addItem("Default", "");
       
@@ -141,6 +143,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       nameTextBox_.addValueChangeHandler(valueChangeHandler);
       sheetListBox_.addChangeHandler(changeHandler);
       columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
+      openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       naListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
    }
@@ -156,6 +159,9 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    
    @UiField
    ListBox naListBox_;
+
+   @UiField
+   CheckBox openDataViewerCheckBox_;
    
    private static native final String[] getSheetsFromResponse(DataImportPreviewResponse response) /*-{
       return response && response.options && response.options.sheets ? response.options.sheets : [];

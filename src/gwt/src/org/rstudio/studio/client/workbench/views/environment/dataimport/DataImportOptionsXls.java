@@ -26,7 +26,8 @@ public class DataImportOptionsXls extends DataImportOptions
       String sheet,
       int skip,
       boolean colNames,
-      String na
+      String na,
+      boolean openDataViewer
       ) /*-{
          return {
             "mode": "xls",
@@ -34,7 +35,8 @@ public class DataImportOptionsXls extends DataImportOptions
             "sheet": sheet,
             "skip": skip,
             "columnNames": colNames,
-            "na": na
+            "na": na,
+            "openDataViewer": openDataViewer
        }
    }-*/;
 }

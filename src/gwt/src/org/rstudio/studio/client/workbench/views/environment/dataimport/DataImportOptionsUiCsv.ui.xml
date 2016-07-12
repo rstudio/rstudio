@@ -114,6 +114,11 @@
                         <g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
                     </td>
                 </tr>
+                <tr class="{style.optionsRow}">
+                    <td colspan="2">
+                        <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
+                    </td>
+                </tr>
             </table>
             <table class="{style.optionsColumn}">
                 <tr class="{style.optionsRow}">

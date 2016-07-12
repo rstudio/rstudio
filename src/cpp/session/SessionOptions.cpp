@@ -300,7 +300,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
        "Path to hunspell dictionaries")
       ("external-mathjax-path",
-        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-23"),
+        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-26"),
         "Path to mathjax library")
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),

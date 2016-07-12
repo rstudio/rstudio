@@ -2,14 +2,14 @@
 
 setlocal
 
-set PATH=%PATH%;%CD%\tools
+set PATH=%CD%\tools;%PATH%
 
-set WGET_ARGS=--no-check-certificate
+set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_GCC491_FILE=boost-1.50-win-gcc491.zip
-set MINGW_FILE=mingw64-x86_64-posix-sjlj-4.9.1.zip
+set BOOST_GCC493_FILE=boost-1.50-win-rtools33-gcc493.zip
+set RTOOLS_FILE=Rtools33.exe
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.7.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
@@ -29,18 +29,24 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
-if not exist boost-1.50-win-gcc491 (
-  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC491_FILE%"
-  echo Unzipping %BOOST_GCC491_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_GCC491_FILE%"
-  del "%BOOST_GCC491_FILE%"
+set RTOOLS_DIR=%RTOOLS_FILE:.exe=%
+if not exist %RTOOLS_DIR% (
+  wget %WGET_ARGS% "%BASEURL%%RTOOLS_FILE%"
+  echo Installing '%RTOOLS_FILE%' -- please wait...
+  start /wait Rtools33.exe /verysilent /dir=%CD%\%RTOOLS_DIR%
+  if %ERRORLEVEL% EQU 0 (
+    echo '%RTOOLS_FILE%' successfully installed!
+    del %RTOOLS_FILE%
+  ) else (
+    echo Failed to install '%RTOOLS_FILE%'!
+  )
 )
 
-if not exist mingw64-x86_64-posix-sjlj-4.9.1 (
-  wget %WGET_ARGS% "%BASEURL%%MINGW_FILE%"
-  echo Unzipping %MINGW_FILE%
-  unzip %UNZIP_ARGS% "%MINGW_FILE%"
-  del "%MINGW_FILE%"
+if not exist boost-1.50-win-rtools33-gcc493 (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC493_FILE%"
+  echo Unzipping %BOOST_GCC493_FILE%
+  unzip %UNZIP_ARGS% "%BOOST_GCC493_FILE%" -d boost-1.50-win-rtools33-gcc493
+  del "%BOOST_GCC493_FILE%"
 )
 
 if not exist gnudiff (
@@ -124,11 +130,11 @@ if not exist "dictionaries\en_US.dic" (
   )
 )
 
-set MATHJAX=mathjax-23.zip
-if not exist "mathjax-23" (
+set MATHJAX=mathjax-26.zip
+if not exist "mathjax-26" (
   wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/%MATHJAX%"
   if exist "%MATHJAX%" (
-     mkdir mathjax-23
+     mkdir mathjax-26
      echo Unzipping %MATHJAX%
      unzip %UNZIP_ARGS% "%MATHJAX%"
      del "%MATHJAX%"

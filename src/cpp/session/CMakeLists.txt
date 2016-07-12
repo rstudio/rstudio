@@ -22,8 +22,8 @@ add_subdirectory(workers)
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
   message(FATAL_ERROR "Dictionaries not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-23")
-  message(FATAL_ERROR "Mathjax 2.3 not found (re-run install-dependencies script to install)")
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-26")
+  message(FATAL_ERROR "Mathjax 2.6 not found (re-run install-dependencies script to install)")
 endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
@@ -417,7 +417,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install mathjax for local html preview
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-23"
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-26"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install pandoc
@@ -507,14 +507,15 @@ if (NOT RSTUDIO_SESSION_WIN64)
    endif()
 endif()
 
- # install 64-bit gcc runtime for session win64
-if(RSTUDIO_SESSION_WIN64)
-   get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
-   install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
-                    ${GCC_PATH}/libstdc++-6.dll
-                    ${GCC_PATH}/libwinpthread-1.dll
-           DESTINATION ${RSTUDIO_INSTALL_BIN})
-endif()
+# # install 64-bit gcc runtime for session win64
+# # not needed with static build / link of gcc
+# if(RSTUDIO_SESSION_WIN64)
+#    get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
+#    install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
+#                     ${GCC_PATH}/libstdc++-6.dll
+#                     ${GCC_PATH}/libwinpthread-1.dll
+#            DESTINATION ${RSTUDIO_INSTALL_BIN})
+# endif()
 
 # add overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")

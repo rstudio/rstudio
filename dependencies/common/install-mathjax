@@ -35,12 +35,12 @@ download()
 }
 
 # download and extract mathjax if necessary
-MATHJAX_DIR=mathjax-23
+MATHJAX_DIR=mathjax-26
 if [ -d "$MATHJAX_DIR" ]
 then
    echo "Mathjax already installed"
 else
-   MATHJAX=mathjax-23.zip
+   MATHJAX=mathjax-26.zip
    download $MATHJAX
    unzip -q "$MATHJAX"
    rm $MATHJAX

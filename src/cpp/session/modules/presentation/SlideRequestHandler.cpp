@@ -153,7 +153,7 @@ std::string alternateMathjax(const std::string& prefix)
 
 std::string localMathjax()
 {
-   return alternateMathjax("mathjax-23");
+   return alternateMathjax("mathjax-26");
 }
 
 std::string copiedMathjax(const FilePath& targetFile)
@@ -183,7 +183,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    }
 
    // return fixed up html
-   return alternateMathjax(presFilesDir + "/mathjax-23");
+   return alternateMathjax(presFilesDir + "/mathjax-26");
 }
 
 std::string localWebFonts()
@@ -1154,7 +1154,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    }
 
    // special handling for mathjax assets
-   else if (boost::algorithm::starts_with(path, "mathjax-23/"))
+   else if (boost::algorithm::starts_with(path, "mathjax-26/"))
    {
       FilePath filePath =
             session::options().mathjaxPath().parent().childPath(path);

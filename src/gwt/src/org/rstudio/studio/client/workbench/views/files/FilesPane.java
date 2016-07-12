@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -236,6 +237,32 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        });
    }
 
+   @Override
+   public void showDataImportFileChoice(FileSystemItem file, 
+                                  Command onView,
+                                  Command onImport)
+   {
+       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+       
+       String editLabel = AppCommand.formatMenuLabel(
+          commands_.renameFile().getImageResource(), "View File", null);
+       String importLabel = AppCommand.formatMenuLabel(
+          StandardIcons.INSTANCE.import_dataset(), 
+          "Import Dataset...", 
+          null);
+       
+       menu.addItem(new MenuItem(editLabel, true, onView));
+       menu.addItem(new MenuItem(importLabel, true, onImport));
+       
+       menu.setPopupPositionAndShow(new PositionCallback() {
+          @Override
+          public void setPosition(int offsetWidth, int offsetHeight)
+          {
+             Event event = Event.getCurrentEvent();
+             PopupPositioner.setPopupPosition(menu, event.getClientX(), event.getClientY());
+          }
+       });
+   }
    
    @Override 
    protected Widget createMainWidget()
