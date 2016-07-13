@@ -195,9 +195,11 @@ void PlotCapture::removeGraphicsDevice()
       Error error = r::exec::RFunction("dev.off").call();
       if (error)
          LOG_ERROR(error);
-      isGraphicsDeviceActive();
 
-      processPlots(false);
+      // some operations may trigger the graphics device without actually
+      // writing a plot; ignore these
+      if (hasPlots_)
+         processPlots(false);
    }
    hasPlots_ = false;
 }

@@ -2635,7 +2635,8 @@ bool isGitInstalled()
 
    // special handling for mavericks for case where there is /usr/bin/git
    // but it's the fake on installed by osx
-   if (module_context::isOSXMavericks() &&
+   if ((s_gitExePath.empty() || s_gitExePath == "/usr/bin/git") &&
+       module_context::isOSXMavericks() &&
        !module_context::hasOSXMavericksDeveloperTools() &&
        whichGitExe().empty())
    {

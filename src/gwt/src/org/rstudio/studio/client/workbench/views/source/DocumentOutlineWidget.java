@@ -405,9 +405,9 @@ public class DocumentOutlineWidget extends Composite
       if (node.isNamespace())
          return false;
       
-      // don't show R functions or R sections in non-R files
+      // don't show R functions or R sections in non-R files (unless opted-in by the user)
       TextFileType fileType = target_.getDocDisplay().getFileType();
-      if (!fileType.isR())
+      if (!shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL) && !fileType.isR())
       {
          if (node.isFunction())
             return false;

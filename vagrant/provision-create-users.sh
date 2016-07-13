@@ -1,6 +1,12 @@
 # add users (create home directories)
 mkdir -p /primary/home
-apt-get install -y whois
+if [ -f /etc/redhat-release ]; then
+    # TODO: mkpassword from 'expect' doesn't actually generate hashed passwords; 
+    # find a utility that does
+    yum install -y expect
+else
+    apt-get install -y whois
+fi
 for userdetails in `cat /rstudio/vagrant/rstudiousers.txt`
 do
     user=`echo $userdetails | cut -f 1 -d ,`

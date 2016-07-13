@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# create local user accounts
-/rstudio/vagrant/provision-create-users.sh
-
 # install packages needed for development environment
 if [ ! -f /etc/redhat-release ]; then
+    # create local user accounts
+    /rstudio/vagrant/provision-create-users.sh
+
     apt-get install -y vim
     apt-get install -y silversearcher-ag
     apt-get install -y python-dev

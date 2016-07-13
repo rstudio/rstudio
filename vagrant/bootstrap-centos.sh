@@ -3,6 +3,10 @@
 # set motd
 cp /rstudio/vagrant/build.motd.tail /etc/motd
 
+# clean up busted URLs for centos 6.7 (see https://bugs.centos.org/view.php?id=10925)
+yum remove -y centos-release-SCL
+yum install -y centos-release-scl
+
 # add repo for R 
 su -c 'rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm'
 

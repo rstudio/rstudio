@@ -66,9 +66,12 @@ endif()
 # record git revision hash (cache it since we don't use this in development
 # mode and we don't want it to force rebuilds there)
 if(NOT RSTUDIO_SESSION_WIN64 AND NOT RSTUDIO_GIT_REVISION_HASH)
-   exec_program(git ARGS rev-parse HEAD
-                OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
-   SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
+   find_program(GIT_EXECUTABLE git)
+   if(GIT_EXECUTABLE)
+      exec_program(git ARGS rev-parse HEAD
+                   OUTPUT_VARIABLE RSTUDIO_GIT_REVISION_HASH)
+      SET(RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}" CACHE STRING "Git Revision Hash")
+   endif()
 endif()
 
 
