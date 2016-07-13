@@ -52,11 +52,14 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -214,6 +217,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCutDummy()
    {
+      if (isSelectionEmpty()) return;
       fireEditEvent(EditEvent.TYPE_CUT);
       Desktop.getFrame().clipboardCut();
    }
@@ -221,6 +225,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCopyDummy()
    {
+      if (isSelectionEmpty()) return;
       fireEditEvent(EditEvent.TYPE_COPY);
       Desktop.getFrame().clipboardCopy();
    }
@@ -368,6 +373,18 @@ public class DesktopApplicationHeader implements ApplicationHeader
                               "No Update Available", 
                               "You're using the newest version of RStudio.");
       }
+   }
+   
+   public static boolean isSelectionEmpty()
+   {
+      Element activeElement = DomUtils.getActiveElement();
+      AceEditorNative editor = AceEditorNative.getEditor(activeElement);
+      if (editor != null)
+      {
+         Selection selection = editor.getSession().getSelection();
+         return selection.isEmpty();
+      }
+      return DomUtils.getSelectionText(Document.get()).isEmpty();
    }
    
    private static boolean isFocusInAceInstance()
