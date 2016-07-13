@@ -266,6 +266,7 @@ public class DocumentOutlineWidget extends Composite
             if (target_.getDocDisplay().isScopeTreeReady(event.getPosition().getRow()))
             {
                currentScope_ = target_.getDocDisplay().getCurrentScope();
+               currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
                resetTreeStyles();
             }
          }
@@ -325,6 +326,7 @@ public class DocumentOutlineWidget extends Composite
    {
       scopeTree_ = scopeTree;
       currentScope_ = currentScope;
+      currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
       
       if (scopeTree_.length() == 0)
       {
@@ -365,9 +367,10 @@ public class DocumentOutlineWidget extends Composite
    
    private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
-      if (shouldDisplayNode(node))
-         addOrSetItem(node, depth, counter.increment());
+      if (!shouldDisplayNode(node))
+         return;
       
+      addOrSetItem(node, depth, counter.increment());
       JsArray<Scope> children = node.getChildren();
       for (int i = 0; i < children.length(); i++)
       {
@@ -444,16 +447,22 @@ public class DocumentOutlineWidget extends Composite
    
    private void setTreeItemStyles(DocumentOutlineTreeItem item)
    {
-      item.addStyleName(RES.styles().node());
-
-      // Figure out if this node is active, or the parent of an active node.
       Scope node = item.getEntry().getScopeNode();
+      item.addStyleName(RES.styles().node());
       DomUtils.toggleClass(item.getElement(), RES.styles().activeNode(), isActiveNode(node));
+   }
+   
+   private Scope getCurrentVisibleScope(Scope node)
+   {
+      for (; !node.isTopLevel(); node = node.getParentScope())
+         if (shouldDisplayNode(node))
+            return node;
+      return null;
    }
    
    private boolean isActiveNode(Scope node)
    {
-      return node.equals(currentScope_);
+      return node.equals(currentVisibleScope_);
    }
    
    private final DockLayoutPanel container_;
@@ -467,6 +476,7 @@ public class DocumentOutlineWidget extends Composite
    
    private JsArray<Scope> scopeTree_;
    private Scope currentScope_;
+   private Scope currentVisibleScope_;
    
    private UIPrefs uiPrefs_;
    
