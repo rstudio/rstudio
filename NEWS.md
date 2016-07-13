@@ -50,6 +50,7 @@
 
 ### Miscellaneous
 
+* Improved performance of 'Find in Files' tool
 * Files pane now has a fixed header row
 * Published plots are larger and responsive to changes in browser size
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
