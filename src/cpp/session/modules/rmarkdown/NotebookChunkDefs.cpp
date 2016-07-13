@@ -100,6 +100,30 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
    return chunkCacheFolder(docPath, docId, nbCtxId).childPath(fileName);
 }
 
+FilePath chunkDefinitionsPath(const std::string& docPath, 
+      const std::string docId)
+{
+   // try local context first
+   FilePath defs = chunkDefinitionsPath(docPath, docId, notebookCtxId());
+
+   // if no definitions, try the saved context
+   if (!defs.exists())
+      defs = chunkDefinitionsPath(docPath, docId, kSavedCtx);
+
+   return defs;
+}
+
+Error getChunkValues(const std::string& docPath, const std::string& docId, 
+      json::Object* pValues)
+
+{
+   FilePath defs = chunkDefinitionsPath(docPath, docId);
+   if (!defs.exists())
+      return Success();
+
+   return getChunkJson(defs, pValues);
+}
+
 Error setChunkDefs(const std::string& docPath, const std::string& docId,
                    std::time_t docTime, const json::Array& newDefs)
 {

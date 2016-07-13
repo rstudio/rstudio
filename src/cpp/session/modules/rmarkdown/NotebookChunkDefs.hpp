@@ -88,6 +88,9 @@ core::FilePath chunkDefinitionsPath(const core::FilePath& docPath,
 core::FilePath chunkDefinitionsPath(const std::string& docPath,
       const std::string& docId, const std::string& nbCtxId);
 
+core::FilePath chunkDefinitionsPath(const std::string& docPath, 
+      const std::string docId);
+
 core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
       std::time_t docTime, const core::json::Array& defs);
 
@@ -123,16 +126,16 @@ core::Error getChunkValue(const std::string& docPath, const std::string& docId,
                           const std::string& key, T *pValue)
 {
    // try local context first
-   core::FilePath defs = chunkDefinitionsPath(docPath, docId, notebookCtxId());
+   core::FilePath defs = chunkDefinitionsPath(docPath, docId);
    if (!defs.exists())
    {
-      // if no definitions, try the saved context
-      defs = chunkDefinitionsPath(docPath, docId, kSavedCtx);
-      if (!defs.exists())
-         return core::Success();
+      return core::Success();
    }
    return getChunkDefsValue(defs, key, pValue);
 }
+
+core::Error getChunkValues(const std::string& docPath, const std::string& docId, 
+      json::Object* pValues);
 
 template<typename T>
 core::Error setChunkValue(const std::string& docPath, 

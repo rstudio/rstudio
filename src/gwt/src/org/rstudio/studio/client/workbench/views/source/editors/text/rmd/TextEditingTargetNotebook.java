@@ -41,6 +41,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
+import org.rstudio.studio.client.rmarkdown.model.NotebookDoc;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
@@ -132,7 +133,8 @@ public class TextEditingTargetNotebook
       docUpdateSentinel_ = docUpdateSentinel;  
       dirtyState_ = dirtyState;
       releaseOnDismiss_ = releaseOnDismiss;
-      initialChunkDefs_ = JsArrayUtil.deepCopy(document.getChunkDefs());
+      notebookDoc_ = document.getNotebookDoc();
+      initialChunkDefs_ = JsArrayUtil.deepCopy(notebookDoc_.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
@@ -753,7 +755,7 @@ public class TextEditingTargetNotebook
 
       lastPlotWidth_ = event.getData().getWidth();
       server_.setNotebookIntProperty(docUpdateSentinel_.getId(), 
-            CHUNK_RENDERED_WIDTH, lastPlotWidth_, 
+            NotebookDoc.CHUNK_RENDERED_WIDTH, lastPlotWidth_, 
             new VoidServerRequestCallback());
 
       // clean up flag
@@ -862,15 +864,10 @@ public class TextEditingTargetNotebook
                                        TextEditingTargetNotebook.this);
          
          // read and/or set initial render width
-         String renderedWidth = docUpdateSentinel_.getProperty(
-               CHUNK_RENDERED_WIDTH);
-         if (!StringUtil.isNullOrEmpty(renderedWidth))
-            lastPlotWidth_ = StringUtil.parseInt(renderedWidth, 0);
+         lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
          if (lastPlotWidth_ == 0)
          {
             lastPlotWidth_ = getPlotWidth();
-            docUpdateSentinel_.setProperty(CHUNK_RENDERED_WIDTH, 
-                  "" + lastPlotWidth_);
          }
       }
       else
@@ -1749,6 +1746,7 @@ public class TextEditingTargetNotebook
    private final TextEditingTarget.Display editingDisplay_;
    private final TextEditingTargetChunks chunks_;
    private final DirtyState dirtyState_;
+   private final NotebookDoc notebookDoc_;
    
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
@@ -1793,7 +1791,6 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
-   public final static String CHUNK_RENDERED_WIDTH = "chunk_rendered_width";
    
    public final static int MODE_COMMITTED   = 0;
    public final static int MODE_UNCOMMITTED = 1;
