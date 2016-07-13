@@ -67,7 +67,7 @@ function maven-gwt() {
   GWT_EXTRACT_DIR=$RANDOM_DIR/$GWT_EXTRACT_DIR
 
   JAVADOC_FILE_PATH=$RANDOM_DIR/gwt-javadoc.jar
-  jar cf $JAVADOC_FILE_PATH -C $GWT_EXTRACT_DIR/doc/javadoc .
+  [ -d $GWT_EXTRACT_DIR/doc/javadoc ] && jar cf $JAVADOC_FILE_PATH -C $GWT_EXTRACT_DIR/doc/javadoc .
 
   # Create a dummy javadoc JAR for JsInterop (gwt-javadoc is too heavy)
   JSINTEROP_JAVADOC_FILE_PATH=$RANDOM_DIR/jsinterop-javadoc.jar

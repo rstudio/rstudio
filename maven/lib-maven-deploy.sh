@@ -31,12 +31,12 @@ function maven-deploy-file() {
   local pomFile=$1
   shift
 
-  if [ $# -ne 0 ] && [ "$1" != "" ]; then
-    local javadoc="-Djavadoc=$1"
+  if [ $# -ne 0 ] && [ -n "$1" ]; then
+    [ -f "$1" ] && local javadoc="-Djavadoc=$1"
     shift
   fi
-  if [ $# -ne 0 ] && [ "$1" != "" ]; then
-    local sources="-Dsources=$1"
+  if [ $# -ne 0 ] && [ -n "$1" ]; then
+    [ -f "$1" ] && local sources="-Dsources=$1"
     shift
   fi
 
