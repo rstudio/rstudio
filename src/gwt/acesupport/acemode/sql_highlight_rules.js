@@ -1,21 +1,21 @@
 /*
-* sql_highlight_rules.js
-*
-* Copyright (C) 2015 by RStudio, Inc.
-*
-* The Initial Developer of the Original Code is Jeffrey Arnold
-* Portions created by the Initial Developer are Copyright (C) 2014
-* the Initial Developer. All Rights Reserved.
-*
-* Unless you have received this program directly from RStudio pursuant
-* to the terms of a commercial license agreement with RStudio, then
-* this program is licensed to you under the terms of version 3 of the
-* GNU Affero General Public License. This program is distributed WITHOUT
-* ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
-* MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
-* AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
-*
-*/
+ * sql_highlight_rules.js
+ *
+ * Copyright (C) 2015 by RStudio, Inc.
+ *
+ * The Initial Developer of the Original Code is Jeffrey Arnold
+ * Portions created by the Initial Developer are Copyright (C) 2014
+ * the Initial Developer. All Rights Reserved.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 
 define("mode/sql_highlight_rules", ["require", "exports", "module"], function(require, exports, module) {
 
@@ -60,6 +60,26 @@ define("mode/sql_highlight_rules", ["require", "exports", "module"], function(re
             start : "/\\*",
             end : "\\*/"
         }, {
+          token : "comment.doc.tag",
+          regex : "\\?[a-zA-Z_][a-zA-Z0-9_$]*"
+        }, {
+            // Obviously these are neither keywords nor operators, but
+            // labelling them as such was the easiest way to get them
+            // to be colored distinctly from regular text
+            token : "paren.keyword.operator",
+            merge : false,
+            regex : "[[({]",
+            next  : "start"
+        },
+        {
+            // Obviously these are neither keywords nor operators, but
+            // labelling them as such was the easiest way to get them
+            // to be colored distinctly from regular text
+            token : "paren.keyword.operator",
+            merge : false,
+            regex : "[\\])}]",
+            next  : "start"
+        }, {
             token : "string",           // " string
             regex : '".*?"'
         }, {
@@ -83,7 +103,7 @@ define("mode/sql_highlight_rules", ["require", "exports", "module"], function(re
         }, {
             token : "text",
             regex : "\\s+"
-        } ]
+        }]
     };
     this.normalizeRules();
   };
