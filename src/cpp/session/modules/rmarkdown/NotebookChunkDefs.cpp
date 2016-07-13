@@ -21,9 +21,12 @@
 
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 using namespace rstudio::core;
 
@@ -32,6 +35,27 @@ namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
+namespace {
+
+Error setNotebookProperty(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string docId, key;
+   json::Value val;
+   Error error = json::readParams(request.params, &docId, &key, &val);
+   if (error)
+      return error;
+
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+   error = setChunkValue(docPath, docId, key, val);
+   if (error)
+      return error;
+
+   return Success();
+}
+
+} // anonymous namespace
 
 // given and old and new set of chunk definitions, cleans up all the chunks
 // files in the old set but not in the new set
@@ -151,6 +175,17 @@ void extractChunkIds(const json::Array& chunkOutputs,
          pIds->push_back(chunkId);
       }
    }
+}
+
+Error initChunkDefs()
+{
+   using namespace module_context;
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "set_notebook_property", setNotebookProperty));
+
+   return initBlock.execute();
 }
 
 } // namespace notebook

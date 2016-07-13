@@ -173,7 +173,8 @@ Error initialize()
       (bind(initPlots))
       (bind(initPlotReplay))
       (bind(initQueue))
-      (bind(initAlternateEngines));
+      (bind(initAlternateEngines))
+      (bind(initChunkDefs));
 
    return initBlock.execute();
 }

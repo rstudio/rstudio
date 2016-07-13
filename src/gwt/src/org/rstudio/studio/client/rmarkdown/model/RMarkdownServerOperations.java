@@ -92,6 +92,9 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    void updateNotebookExecQueue(NotebookQueueUnit unit, int op, 
          String beforeChunkId, ServerRequestCallback<Void> requestCallback);
    
+   void setNotebookIntProperty(String docId, String key, int val,
+         ServerRequestCallback<Void> requestCallback);
+   
    void executeAlternateEngineChunk(String docId,
                                     String chunkId,
                                     int commitMode,

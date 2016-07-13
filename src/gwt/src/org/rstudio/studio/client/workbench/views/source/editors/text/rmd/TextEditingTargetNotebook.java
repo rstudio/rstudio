@@ -752,8 +752,9 @@ public class TextEditingTargetNotebook
          return;
 
       lastPlotWidth_ = event.getData().getWidth();
-      docUpdateSentinel_.setProperty(CHUNK_RENDERED_WIDTH, 
-            "" + lastPlotWidth_);
+      server_.setNotebookIntProperty(docUpdateSentinel_.getId(), 
+            CHUNK_RENDERED_WIDTH, lastPlotWidth_, 
+            new VoidServerRequestCallback());
 
       // clean up flag
       resizingPlotsRemote_ = false;

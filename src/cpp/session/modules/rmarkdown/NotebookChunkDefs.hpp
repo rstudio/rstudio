@@ -162,6 +162,8 @@ core::Error setChunkValue(const std::string& docPath,
    return core::writeStringToFile(defFile, oss.str());
 }
 
+core::Error initChunkDefs();
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules
