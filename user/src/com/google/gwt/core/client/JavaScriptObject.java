@@ -132,7 +132,10 @@ public class JavaScriptObject {
    */
   @Override
   public final boolean equals(Object other) {
-    return hasEquals() ? callEquals(other) : super.equals(other);
+    if (!GWT.isClient()) {
+      return super.equals(other);
+    }
+    return hasEquals(this) ? callEquals(this, other) : super.equals(other);
   }
 
   /**
@@ -144,7 +147,10 @@ public class JavaScriptObject {
    */
   @Override
   public final int hashCode() {
-    return hasHashCode() ? callHashCode() : super.hashCode();
+    if (!GWT.isClient()) {
+      return super.hashCode();
+    }
+    return hasHashCode(this) ? callHashCode(this) : super.hashCode();
   };
 
   /**
@@ -168,19 +174,19 @@ public class JavaScriptObject {
         toStringVerbose(this) : toStringSimple(this);
   }
 
-  private native boolean hasEquals() /*-{
-    return !!this.equals;
+  private static native boolean hasEquals(Object object) /*-{
+    return !!object && !!object.equals;
   }-*/;
 
-  private native boolean hasHashCode() /*-{
-    return !!this.hashCode;
+  private static native boolean hasHashCode(Object object) /*-{
+    return !!object && !!object.hashCode;
   }-*/;
 
-  private native boolean callEquals(Object other) /*-{
-    return this.equals(other);
+  private static native boolean callEquals(Object thisObject, Object thatObject) /*-{
+    return thisObject.equals(thatObject);
   }-*/;
 
-  private native int callHashCode() /*-{
-    return this.hashCode();
+  private static native int callHashCode(Object object) /*-{
+    return object.hashCode();
   }-*/;
 }
