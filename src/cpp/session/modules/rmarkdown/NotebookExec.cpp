@@ -162,7 +162,7 @@ void ChunkExecContext::connect()
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.parent().complete(kChunkLibDir),
-            options_.mergedOptions());
+            options_.chunkOptions());
    if (error)
       LOG_ERROR(error);
 
