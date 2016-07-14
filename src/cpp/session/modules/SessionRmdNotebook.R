@@ -287,6 +287,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       succeeded = .rs.scalar(TRUE)
    )
 
+   # mark encoding if unspecified
+   if (Encoding(rmdPath) == "unknown")     Encoding(rmdPath) <- "UTF-8"
+   if (Encoding(outputPath) == "unknown")  Encoding(outputPath) <- "UTF-8"
+
    tryCatch({
       # attempt to generate the notebook from the cache
       rmdPath <- path.expand(rmdPath)
@@ -475,6 +479,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       rmdPath <- .rs.withChangedExtension(nbPath, ".Rmd")
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
+
+   # mark encoding if unspecified
+   if (Encoding(nbPath) == "unknown")     Encoding(nbPath) <- "UTF-8"
+   if (Encoding(cachePath) == "unknown")  Encoding(cachePath) <- "UTF-8"
    
    # ensure cache directory
    if (!.rs.dirExists(cachePath))
