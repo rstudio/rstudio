@@ -4306,19 +4306,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void setNotebookIntProperty(String docId, String key, int val,
-         ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(docId));
-      params.set(1, new JSONString(key));
-      params.set(2, new JSONNumber(val));
-      sendRequest(RPC_SCOPE, "set_notebook_property", params, 
-            requestCallback);
-      
-   }
-   
-   @Override
    public void interruptChunk(String docId,
                               String chunkId,
                               ServerRequestCallback<Void> requestCallback)

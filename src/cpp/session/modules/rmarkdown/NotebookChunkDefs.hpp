@@ -42,26 +42,9 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+core::Error getChunkJson(const core::FilePath& defs, core::json::Object *pJson);
+
 namespace {
-
-core::Error getChunkJson(const core::FilePath& defs, core::json::Object *pJson)
-{
-   // read the defs file 
-   std::string contents;
-   core::Error error = core::readStringFromFile(defs, &contents);
-   if (error)
-      return error;
-
-   // pull out the contents
-   core::json::Value defContents;
-   if (!core::json::parse(contents, &defContents) || 
-       defContents.type() != core::json::ObjectType)
-      return core::Error(core::json::errc::ParseError, ERROR_LOCATION);
-
-   *pJson = defContents.get_obj();
-
-   return core::Success();
-}
 
 template <typename T>
 core::Error getChunkDefsValue(const core::FilePath& defs, 
@@ -135,7 +118,7 @@ core::Error getChunkValue(const std::string& docPath, const std::string& docId,
 }
 
 core::Error getChunkValues(const std::string& docPath, const std::string& docId, 
-      json::Object* pValues);
+      core::json::Object* pValues);
 
 template<typename T>
 core::Error setChunkValue(const std::string& docPath, 
@@ -143,11 +126,15 @@ core::Error setChunkValue(const std::string& docPath,
                           const std::string& key, T value)
 {
    // find the file path to write 
-   core::FilePath defFile = chunkDefinitionsPath(docPath, docId, 
-         notebookCtxId());
-   core::Error error = defFile.parent().ensureDirectory();
-   if (error)
-      return error;
+   core::Error error;
+   core::FilePath defFile = chunkDefinitionsPath(docPath, docId);
+   if (!defFile.exists())
+   {
+      defFile = chunkDefinitionsPath(docPath, docId, notebookCtxId());
+      error = defFile.parent().ensureDirectory();
+      if (error)
+         return error;
+   }
 
    // extract existing definitions if we have them
    core::json::Object defs;
@@ -164,8 +151,6 @@ core::Error setChunkValue(const std::string& docPath,
    core::json::write(defs, oss);
    return core::writeStringToFile(defFile, oss.str());
 }
-
-core::Error initChunkDefs();
 
 } // namespace notebook
 } // namespace rmarkdown

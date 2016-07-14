@@ -35,27 +35,6 @@ namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
-namespace {
-
-Error setNotebookProperty(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* pResponse)
-{
-   std::string docId, key;
-   json::Value val;
-   Error error = json::readParams(request.params, &docId, &key, &val);
-   if (error)
-      return error;
-
-   std::string docPath;
-   source_database::getPath(docId, &docPath);
-   error = setChunkValue(docPath, docId, key, val);
-   if (error)
-      return error;
-
-   return Success();
-}
-
-} // anonymous namespace
 
 // given and old and new set of chunk definitions, cleans up all the chunks
 // files in the old set but not in the new set
@@ -111,6 +90,25 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
       defs = chunkDefinitionsPath(docPath, docId, kSavedCtx);
 
    return defs;
+}
+
+Error getChunkJson(const FilePath& defs, json::Object *pJson)
+{
+   // read the defs file 
+   std::string contents;
+   Error error = readStringFromFile(defs, &contents);
+   if (error)
+      return error;
+
+   // pull out the contents
+   json::Value defContents;
+   if (!json::parse(contents, &defContents) || 
+       defContents.type() != json::ObjectType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+
+   *pJson = defContents.get_obj();
+
+   return Success();
 }
 
 Error getChunkValues(const std::string& docPath, const std::string& docId, 
@@ -199,17 +197,6 @@ void extractChunkIds(const json::Array& chunkOutputs,
          pIds->push_back(chunkId);
       }
    }
-}
-
-Error initChunkDefs()
-{
-   using namespace module_context;
-
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-      (bind(registerRpcMethod, "set_notebook_property", setNotebookProperty));
-
-   return initBlock.execute();
 }
 
 } // namespace notebook

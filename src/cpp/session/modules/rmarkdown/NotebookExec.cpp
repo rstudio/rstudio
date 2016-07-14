@@ -111,7 +111,7 @@ void ChunkExecContext::connect()
       initializeOutput();
 
    // suppress messages if requested
-   if (!options_.getOverlayOption("messsage", true))
+   if (!options_.getOverlayOption("message", true))
    {
       boost::shared_ptr<MessageCapture> pMessageCapture = 
          boost::make_shared<MessageCapture>();

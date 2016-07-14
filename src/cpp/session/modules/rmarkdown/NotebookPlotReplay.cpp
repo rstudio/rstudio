@@ -140,6 +140,15 @@ private:
       result["width"] = width_;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkPlotRefreshFinished, result));
+
+      // if we succeeded, write the new rendered width into the notebook chunk
+      // file
+      if (exitStatus == EXIT_SUCCESS)
+      {
+         std::string docPath;
+         source_database::getPath(docId_, &docPath);
+         setChunkValue(docPath, docId_, "chunk_rendered_width", width_);
+      }
    }
 
    std::string docId_;
