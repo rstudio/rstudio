@@ -295,10 +295,8 @@ Error saveDocumentCore(const std::string& contents,
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
    if (hasChunkOutput && pDoc->isRMarkdownDocument())
    {
-      time_t docTime = pDoc->dirty() ? std::time(NULL) : 
-                                       pDoc->lastKnownWriteTime();
-      error = rmarkdown::notebook::setChunkDefs(pDoc->path(), pDoc->id(),
-            docTime, jsonChunkOutput.get_array());
+      error = rmarkdown::notebook::setChunkDefs(pDoc, 
+            jsonChunkOutput.get_array());
       if (error)
          LOG_ERROR(error);
    }

@@ -25,6 +25,8 @@
 
 #include <ctime>
 
+#include <session/SessionSourceDatabase.hpp>
+
 #include "NotebookCache.hpp"
 #include "SessionRmdNotebook.hpp"
 
@@ -74,8 +76,9 @@ core::FilePath chunkDefinitionsPath(const std::string& docPath,
 core::FilePath chunkDefinitionsPath(const std::string& docPath, 
       const std::string docId);
 
-core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
-      std::time_t docTime, const core::json::Array& defs);
+core::Error setChunkDefs(
+      boost::shared_ptr<source_database::SourceDocument> pDoc, 
+      const core::json::Array& defs);
 
 void extractChunkIds(const core::json::Array& chunkOutputs, 
                      std::vector<std::string> *pIds);

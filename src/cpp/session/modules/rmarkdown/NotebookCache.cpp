@@ -200,6 +200,29 @@ Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
    return Success();
 }
 
+void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // check for a contextual (uncommitted) chunk definitions file
+   FilePath chunkDefsFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(),
+         notebookCtxId());
+   if (!chunkDefsFile.exists())
+      return;
+
+   // if the document's contents match what's on disk, commit the chunk
+   // definition file to the saved branch
+   bool matches = false;
+   Error error = pDoc->contentsMatchDisk(&matches);
+   if (error)
+      LOG_ERROR(error);
+   if (matches)
+   {
+      error = chunkDefsFile.copy(chunkDefinitionsPath(
+               pDoc->path(), pDoc->id(), kSavedCtx));
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 void onDocRemoved(const std::string& docId, const std::string& docPath)
 {
    // always remove the uncommitted cache when the doc is closed; if it's 
@@ -610,6 +633,7 @@ Error initCache()
    using namespace module_context;
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
 

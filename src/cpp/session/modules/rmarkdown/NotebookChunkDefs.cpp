@@ -122,11 +122,11 @@ Error getChunkValues(const std::string& docPath, const std::string& docId,
    return getChunkJson(defs, pValues);
 }
 
-Error setChunkDefs(const std::string& docPath, const std::string& docId,
-                   std::time_t docTime, const json::Array& newDefs)
+Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
+                   const json::Array& newDefs)
 {
    // ensure we have a place to write the sidecar file
-   FilePath defFile = chunkDefinitionsPath(docPath, docId, 
+   FilePath defFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(), 
          notebookCtxId());
 
    // if there are no old chunk definitions and we aren't adding any new ones,
@@ -160,13 +160,16 @@ Error setChunkDefs(const std::string& docPath, const std::string& docId,
             }
 
             // clean up stale chunks
-            cleanChunks(chunkCacheFolder(docPath, docId), oldDefs, newDefs);
+            cleanChunks(chunkCacheFolder(pDoc->path(), pDoc->id()), 
+                        oldDefs, newDefs);
          }
       }
    }
 
    // update the contents of the file with the new chunk definitions and 
    // write time
+   time_t docTime = pDoc->dirty() ? std::time(NULL) : 
+                                    pDoc->lastKnownWriteTime();
    defContents[kChunkDefs] = newDefs;
    defContents[kChunkDocWriteTime] = static_cast<boost::int64_t>(docTime);
 

@@ -73,6 +73,7 @@ public:
                                   bool allowSubstChars = true);
 
    core::Error updateDirty();
+   core::Error contentsMatchDisk(bool* pMatches);
 
    // set dirty
    void setDirty(bool dirty)
