@@ -872,6 +872,10 @@ var RCodeModel = function(session, tokenizer,
                depth = value[0] === "=" ? 1 : 2;
                label = this.$session.getLine(position.row - 1).trim();
                labelStartPos.row--;
+
+               // If we have no title, bail (e.g. for horizontal rules)
+               if (label.length === 0)
+                  continue;
             }
 
             // Add to scope tree.
