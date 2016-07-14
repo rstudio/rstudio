@@ -109,6 +109,10 @@ public class TokenCursor extends JavaScriptObject
       this.moveToStartOfRow(row);
    }-*/;
    
+   public native final void moveToEndOfRow(int row) /*-{
+      this.moveToEndOfRow(row);
+   }-*/;
+   
    public native final boolean seekToNearestToken(Position position, int maxRow) /*-{
       return !! this.seekToNearestToken(position, maxRow);
    }-*/;

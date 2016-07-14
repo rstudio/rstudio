@@ -60,6 +60,16 @@ var TokenCursor = function(tokens, row, offset) {
       this.$offset = 0;
    };
 
+   this.moveToEndOfRow = function(row)
+   {
+      this.$row = row;
+      var tokens = this.$tokens[row];
+      if (tokens && tokens.length)
+         this.$offset = tokens.length - 1;
+      else
+         this.$offset = 0;
+   }
+
    // Move the cursor to the previous token. Returns true (and moves the
    // the cursor) on success; returns false (and does not move the cursor)
    // on failure.
