@@ -573,7 +573,11 @@
       dataImportOptions$canCacheData <- dataImportOptions$mode == "xls"
       dataImportOptions$cacheDataWorkingDir <- dataImportOptions$mode == "xls"
 
-      return (.rs.assemble_data_import(dataImportOptions))
+      result <- .rs.assemble_data_import(dataImportOptions)
+      Encoding(result$importCode) <- "UTF-8"
+      Encoding(result$previewCode) <- "UTF-8"
+      
+      return (result)
    }, error = function(e) {
       return(list(error = e))
    })
@@ -582,6 +586,8 @@
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
    tryCatch({
+      Encoding(dataImportOptions$importLocation) <- "UTF-8"
+     
       beforeImportFromOptions <- list(
          "text" = function() {
             # while previewing data, always return a column even if it will be skipped
