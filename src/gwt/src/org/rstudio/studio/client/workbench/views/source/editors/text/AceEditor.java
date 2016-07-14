@@ -2902,77 +2902,148 @@ public class AceEditor implements DocDisplay,
       } 
       return false;
    }
-
+   
+   private boolean rowIsEmptyOrComment(int row)
+   {
+      JsArray<Token> tokens = getSession().getTokens(row);
+      for (int i = 0, n = tokens.length(); i < n; i++)
+         if (!tokens.get(i).hasType("text", "comment"))
+            return false;
+      return true;
+   }
+   
+   private boolean rowStartsWithClosingBracket(int row)
+   {
+      JsArray<Token> tokens = getSession().getTokens(row);
+      
+      int n = tokens.length();
+      if (n == 0)
+         return false;
+      
+      for (int i = 0; i < n; i++)
+      {
+         Token token = tokens.get(i);
+         if (token.hasType("text"))
+            continue;
+         
+         String tokenValue = token.getValue();
+         return tokenValue.equals("}") ||
+                tokenValue.equals(")") ||
+                tokenValue.equals("]");
+      }
+      
+      return false;
+   }
+   
+   private boolean rowEndsWithOpenBracket(int row)
+   {
+      JsArray<Token> tokens = getSession().getTokens(row);
+      
+      int n = tokens.length();
+      if (n == 0)
+         return false;
+      
+      for (int i = 0; i < n; i++)
+      {
+         Token token = tokens.get(n - i - 1);
+         if (token.hasType("comment", "text"))
+            continue;
+         
+         String tokenValue = token.getValue();
+         return tokenValue.equals("{") ||
+                tokenValue.equals("(") ||
+                tokenValue.equals("[");
+      }
+      
+      return false;
+   }
 
    @Override
-   public Range getMultiLineExpr(Position pos, int startRow, int endRow)
+   public Range getMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)
    {
       if (!DocumentMode.isSelectionInRMode(this))
          return null;
 
-      // start with a point range at the beginning of the row
-      Range range = Range.create(pos.getRow(), 0, pos.getRow(), 0);
-      
+      // create token cursor (will be used to walk tokens as needed)
       TokenCursor c = getSession().getMode().getCodeModel().getTokenCursor();
-      int row = pos.getRow();
       
-      // extend the range down until we encounter a line which doesn't end
-      // in a binary operator
-      while (row <= endRow)
+      // assume start, end at current position
+      int startRow = pos.getRow();
+      int endRow   = pos.getRow();
+      
+      // expand to enclosing '(' or '['
+      String[] candidates = new String[]{ "(", "[" };
+      if (c.moveToPosition(pos) && c.findOpeningBracket(candidates, false))
       {
-         // extend the range to include this entire line
-         range = range.extend(row, getLength(row));
+         int startCandidate = c.getRow();
+         if (c.fwdToMatchingToken())
+         {
+            startRow = startCandidate;
+            endRow = c.getRow();
+         }
+      }
+      
+      // discover end of current statement
+      while (endRow <= endRowLimit)
+      {
+         // if the row ends with an open bracket, expand to its match
+         if (rowEndsWithOpenBracket(endRow))
+         {
+            c.moveToEndOfRow(endRow);
+            if (c.fwdToMatchingToken())
+            {
+               endRow = c.getRow();
+               continue;
+            }
+         }
+         else if (rowEndsInBinaryOp(endRow) || rowIsEmptyOrComment(endRow))
+         {
+            endRow++;
+            continue;
+         }
          
-         // expand to include the current bracketed expression, if any
-         if (!c.moveToPosition(range.getEnd()) ||
-              c.getRow() != range.getEnd().getRow())
-            break;
-         if (c.findOpeningBracket(new String[]{"(", "[", "{"}, false))
-         {
-            // don't look upwards for { expressions (likely to be larger than
-            // we're looking for)
-            if (c.currentValue() != "{" || c.getRow() >= row)
-            {
-               range = range.extend(c.getRow(), 0);
-               if (c.fwdToMatchingToken())
-                  range = range.extend(c.getRow(), getLength(c.getRow()));
-               row = range.getEnd().getRow();
-            }
-         }
-      
-         // if we're looking at a binary operator, keep building
-         if (rowEndsInBinaryOp(row))
-            row++;
-         else
-            break;
+         break;
       }
-
-      // extend the range up to include lines which end with a binary operator
-      row = range.getStart().getRow() - 1;
-      while (row >= startRow)
+      
+      // discover start of current statement
+      while (startRow >= startRowLimit)
       {
-         if (rowEndsInBinaryOp(row))
+         // if the row starts with an open bracket, expand to its match
+         if (rowStartsWithClosingBracket(startRow))
          {
-            // expand to include the current bracketed expression, if any--this
-            // is asymmetric with the above to avoid growing the range upwards
-            // to include large { blocks such as functions and loops
-            c.moveToStartOfRow(row);
-            if (c.findOpeningBracket(new String[]{"(", "["}, false))
+            c.moveToStartOfRow(startRow);
+            if (c.bwdToMatchingToken())
             {
-               range = range.extend(c.getRow(), 0);
-               if (c.fwdToMatchingToken())
-                  range = range.extend(c.getRow(), getLength(c.getRow()));
-               row = range.getStart().getRow();
+               startRow = c.getRow();
+               continue;
             }
-
-            range = range.extend(row, 0);
-            row--;
          }
-         else
-            break;
+         else if (startRow >= 0 && rowEndsInBinaryOp(startRow - 1) || rowIsEmptyOrComment(startRow - 1))
+         {
+            startRow--;
+            continue;
+         }
+         
+         break;
       }
       
-      return range;
+      // shrink selection for empty lines at borders
+      while (startRow < endRow && rowIsEmptyOrComment(startRow))
+         startRow++;
+      
+      while (endRow > startRow && rowIsEmptyOrComment(endRow))
+         endRow--;
+      
+      // fixup for single-line execution
+      if (startRow > endRow)
+         startRow = endRow;
+      
+      // return range
+      return Range.create(
+            startRow,
+            0,
+            endRow,
+            getSession().getLine(endRow).length());
    }
 
    // ---- Annotation related operations
