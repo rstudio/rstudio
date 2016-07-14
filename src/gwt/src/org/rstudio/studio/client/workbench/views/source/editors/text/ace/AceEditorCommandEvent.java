@@ -25,7 +25,8 @@ public class AceEditorCommandEvent extends GwtEvent<AceEditorCommandEvent.Handle
       YANK_BEFORE_CURSOR,
       YANK_AFTER_CURSOR,
       PASTE_LAST_YANK,
-      INSERT_ASSIGNMENT_OPERATOR
+      INSERT_ASSIGNMENT_OPERATOR,
+      INSERT_PIPE_OPERATOR
    }
    
    public static enum ExecutionPolicy

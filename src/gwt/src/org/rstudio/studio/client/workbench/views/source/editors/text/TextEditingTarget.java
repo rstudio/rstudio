@@ -498,22 +498,6 @@ public class TextEditingTarget implements
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
-            else if (ne.getKeyCode() == KeyCodes.KEY_M && (
-                  (BrowseCap.hasMetaKey() &&
-                   mod == (KeyboardShortcut.META + KeyboardShortcut.SHIFT)) ||
-                  (!BrowseCap.hasMetaKey() &&
-                   mod == (KeyboardShortcut.CTRL + KeyboardShortcut.SHIFT))))
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               
-               if (Character.isSpace(docDisplay_.getCharacterBeforeCursor()) ||
-                   (!docDisplay_.hasSelection() &&
-                         docDisplay_.getCursorPosition().getColumn() == 0))
-                  docDisplay_.insertCode("%>% ", false);
-               else
-                  docDisplay_.insertCode(" %>% ", false);
-            }
             else if (
                   prefs_.continueCommentsOnNewline().getValue() && 
                   !docDisplay_.isPopupVisible() &&

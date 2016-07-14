@@ -420,11 +420,12 @@ public class AceEditor implements DocDisplay,
                   
                   switch (event.getCommand())
                   {
-                  case YANK_REGION:                yankRegion();       break;
-                  case YANK_BEFORE_CURSOR:         yankBeforeCursor(); break;
-                  case YANK_AFTER_CURSOR:          yankAfterCursor();  break;
-                  case PASTE_LAST_YANK:            pasteLastYank();    break;
+                  case YANK_REGION:                yankRegion();               break;
+                  case YANK_BEFORE_CURSOR:         yankBeforeCursor();         break;
+                  case YANK_AFTER_CURSOR:          yankAfterCursor();          break;
+                  case PASTE_LAST_YANK:            pasteLastYank();            break;
                   case INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
+                  case INSERT_PIPE_OPERATOR:       insertPipeOperator();       break;
                   }
                }
             });
@@ -525,6 +526,19 @@ public class AceEditor implements DocDisplay,
             : " " + op + " ";
       
       insertCode(insertion, false);
+   }
+   
+   @SuppressWarnings("deprecation")
+   public void insertPipeOperator()
+   {
+      boolean hasWhitespaceBefore =
+            Character.isSpace(getCharacterBeforeCursor()) ||
+            (!hasSelection() && getCursorPosition().getColumn() == 0);
+      
+      if (hasWhitespaceBefore)
+         insertCode("%>% ", false);
+      else
+         insertCode(" %>% ", false);
    }
 
    private void indentPastedRange(Range range)
