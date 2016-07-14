@@ -213,13 +213,21 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
    {
       if (!isShinyAttached)
          runCmd = "library(shiny); ";
-      if (shinyType == modules::shiny::ShinySingleFile)
-         runCmd.append("print(");
-      runCmd.append("source('");
-      runCmd.append(shinyRunPath); 
-      runCmd.append("')");
-      if (shinyType == modules::shiny::ShinySingleFile)
-         runCmd.append("$value)");
+      
+      if (module_context::isPackageVersionInstalled("shiny", "0.13.0"))
+      {
+         runCmd.append("runApp('" + shinyRunPath + "')");
+      }
+      else
+      {
+         if (shinyType == modules::shiny::ShinySingleFile)
+            runCmd.append("print(");
+         runCmd.append("source('");
+         runCmd.append(shinyRunPath);
+         runCmd.append("')");
+         if (shinyType == modules::shiny::ShinySingleFile)
+            runCmd.append("$value)");
+      }
    }
 
    json::Object dataJson;
