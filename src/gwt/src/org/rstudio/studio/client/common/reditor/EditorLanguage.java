@@ -65,7 +65,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
          "ace/mode/python", false, true);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
-         "ace/mode/sql", false, true);
+         "mode/sql", false, true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
          "ace/mode/sh", false, false);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
