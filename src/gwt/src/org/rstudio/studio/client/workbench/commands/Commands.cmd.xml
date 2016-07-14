@@ -548,7 +548,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="yankAfterCursor" value="Ctrl+K" title="Yank Line After Cursor" />
          <shortcut refid="pasteLastYank" value="Ctrl+Y" title="Insert Yanked Text" />
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut value="Alt+-" title="Insert Assignment Operator"/>
+         <shortcut refid="insertAssignmentOperator" value="Alt+-" title="Insert Assignment Operator"/>
          <shortcut value="Cmd+Shift+M" title="Insert Pipe Operator" />
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
@@ -2631,6 +2631,10 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="pasteLastYank"
         label="Paste Last Yank"
+        context="editor"/>
+        
+   <cmd id="insertAssignmentOperator"
+        label="Insert Assignment Operator"
         context="editor"/>
         
    <cmd id="maximizeConsole"

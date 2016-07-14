@@ -420,10 +420,11 @@ public class AceEditor implements DocDisplay,
                   
                   switch (event.getCommand())
                   {
-                  case YANK_REGION:        yankRegion();       break;
-                  case YANK_BEFORE_CURSOR: yankBeforeCursor(); break;
-                  case YANK_AFTER_CURSOR:  yankAfterCursor();  break;
-                  case PASTE_LAST_YANK:    pasteLastYank();    break;
+                  case YANK_REGION:                yankRegion();       break;
+                  case YANK_BEFORE_CURSOR:         yankBeforeCursor(); break;
+                  case YANK_AFTER_CURSOR:          yankAfterCursor();  break;
+                  case PASTE_LAST_YANK:            pasteLastYank();    break;
+                  case INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
                   }
                }
             });
@@ -502,6 +503,28 @@ public class AceEditor implements DocDisplay,
          replaceSelection(yankedText_);
          setCursorPosition(getSelectionEnd());
       }
+   }
+   
+   public void insertAssignmentOperator()
+   {
+      if (DocumentMode.isCursorInRMode(this))
+         insertAssignmentOperatorImpl("<-");
+      else
+         insertAssignmentOperatorImpl("=");
+   }
+   
+   @SuppressWarnings("deprecation")
+   private void insertAssignmentOperatorImpl(String op)
+   {
+      boolean hasWhitespaceBefore =
+            Character.isSpace(getCharacterBeforeCursor()) ||
+            (!hasSelection() && getCursorPosition().getColumn() == 0);
+      
+      String insertion = hasWhitespaceBefore
+            ? op + " "
+            : " " + op + " ";
+      
+      insertCode(insertion, false);
    }
 
    private void indentPastedRange(Range range)

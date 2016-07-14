@@ -142,6 +142,7 @@ public abstract class
    public abstract AppCommand yankBeforeCursor();
    public abstract AppCommand yankAfterCursor();
    public abstract AppCommand pasteLastYank();
+   public abstract AppCommand insertAssignmentOperator();
  
    // Projects
    public abstract AppCommand newProject();
