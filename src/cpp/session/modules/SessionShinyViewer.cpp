@@ -215,7 +215,7 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
          runCmd = "library(shiny); ";
       
       if (module_context::isPackageVersionInstalled("shiny", "0.13.0") &&
-          shinyTpe == modules::shiny::ShinySingleFile)
+          shinyType == modules::shiny::ShinySingleFile)
       {
          runCmd.append("runApp('" + shinyRunPath + "')");
       }
