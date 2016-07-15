@@ -1536,7 +1536,7 @@ var RCodeModel = function(session, tokenizer,
                    currentValue === "[" ||
                    currentValue === "(")
                {
-                  continuationIndent = tab;
+                  continuationIndent += tab;
                }
 
                return this.$getIndent(
