@@ -773,13 +773,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       else if (type.equals("keydown"))
       {
          int keyCode = event.getKeyCode();
-         if (keyCode == KeyCodes.KEY_ESCAPE)
+         int modifiers = KeyboardShortcut.getModifierValue(event);
+         if (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0)
          {
             event.stopPropagation();
             event.preventDefault();
             filterWidget_.focus();
          }
-         else if (keyCode == KeyCodes.KEY_ENTER)
+         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
          {
             event.stopPropagation();
             event.preventDefault();
@@ -812,28 +813,28 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
          // Don't handle raw 'Enter' keypresses (let underlying input
          // widget process)
-         if (keyCode == KeyCodes.KEY_ENTER &&
-             (modifiers & KeyboardShortcut.NONE) == KeyboardShortcut.NONE)
-         {
+         if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
             return;
-         }
          
          // Handle any other key events.
+         if (modifiers != 0)
+            swallowNextKeyUpEvent_ = true;
+         
          event.stopPropagation();
          event.preventDefault();
          
          if (KeyboardHelper.isModifierKey(event.getKeyCode()))
             return;
          
-         if (keyCode == KeyCodes.KEY_BACKSPACE)
+         if (keyCode == KeyCodes.KEY_BACKSPACE && modifiers == 0)
          {
             buffer_.pop();
          }
-         else if (keyCode == KeyCodes.KEY_DELETE)
+         else if (keyCode == KeyCodes.KEY_DELETE && modifiers == 0)
          {
             buffer_.clear();
          }
-         else if (keyCode == KeyCodes.KEY_ESCAPE)
+         else if (keyCode == KeyCodes.KEY_ESCAPE && modifiers == 0)
          {
             buffer_.set(preview.getValue().getOriginalKeySequence());
          }
@@ -891,7 +892,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent preview)
          {
-            if (preview.getTypeInt() == Event.ONKEYDOWN)
+            if (swallowNextKeyUpEvent_ && preview.getTypeInt() == Event.ONKEYUP)
+            {
+               swallowNextKeyUpEvent_ = false;
+               preview.cancel();
+               preview.getNativeEvent().stopPropagation();
+               preview.getNativeEvent().preventDefault();
+            }
+            else if (preview.getTypeInt() == Event.ONKEYDOWN)
             {
                int keyCode = preview.getNativeEvent().getKeyCode();
                if (keyCode == KeyCodes.KEY_ESCAPE || keyCode == KeyCodes.KEY_ENTER)
@@ -938,8 +946,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      clickOkButton();
                      return;
                   }
-                  
-                  if (keyCode == KeyCodes.KEY_ESCAPE)
+                  else if (keyCode == KeyCodes.KEY_ESCAPE)
                   {
                      closeDialog();
                      return;
@@ -1430,6 +1437,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private HandlerRegistration previewHandler_;
    private List<KeyboardShortcutEntry> originalBindings_;
    private Pair<Integer, Integer> lastSelectedIndices_;
+   private boolean swallowNextKeyUpEvent_;
    
    // Columns ----
    private TextColumn<KeyboardShortcutEntry> nameColumn_;
