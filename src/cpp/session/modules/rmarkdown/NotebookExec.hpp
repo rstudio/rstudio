@@ -26,6 +26,7 @@
 
 #include "NotebookCapture.hpp"
 #include "NotebookOutput.hpp"
+#include "NotebookChunkOptions.hpp"
 
 #define kStagingSuffix "_t"
 
@@ -48,13 +49,13 @@ public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
          const std::string& nbCtxId, ExecScope execScope, 
-         const core::json::Object& options, int pixelWidth, int charWidth);
+         const ChunkOptions& options, int pixelWidth, int charWidth);
 
    // return execution context from events
    std::string chunkId();
    std::string docId();
    ExecScope execScope();
-   core::json::Object options();
+   const ChunkOptions& options();
 
    // inject console input manually
    void onConsoleInput(const std::string& input);
@@ -82,7 +83,7 @@ private:
    std::string nbCtxId_;
    std::string pendingInput_;
    core::FilePath outputPath_;
-   core::json::Object options_;
+   ChunkOptions options_;
 
    int pixelWidth_;
    int charWidth_;

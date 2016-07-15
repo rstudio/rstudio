@@ -187,22 +187,40 @@ Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
       return Success();
 
    // extract the set of chunk IDs from the definition files
-   json::Value oldDefs;
-   json::Value newDefs;
-   error = getChunkDefs(docPath, kSavedCtx, NULL, &oldDefs);
+   json::Array oldDefs;
+   json::Array newDefs;
+   error = getChunkValue(docPath, kSavedCtx, kChunkDefs, &oldDefs);
    if (error)
       return error;
-   error = getChunkDefs(docPath, notebookCtxId(), NULL, &newDefs);
+   error = getChunkValue(docPath, notebookCtxId(), kChunkDefs, &newDefs);
    if (error)
       return error;
 
-   // ensure we got the arrays we expected
-   if (oldDefs.type() != json::ArrayType ||
-       newDefs.type() != json::ArrayType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
-   cleanChunks(cachePath, oldDefs.get_array(), newDefs.get_array());
+   cleanChunks(cachePath, oldDefs, newDefs);
    return Success();
+}
+
+void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // check for a contextual (uncommitted) chunk definitions file
+   FilePath chunkDefsFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(),
+         notebookCtxId());
+   if (!chunkDefsFile.exists())
+      return;
+
+   // if the document's contents match what's on disk, commit the chunk
+   // definition file to the saved branch
+   bool matches = false;
+   Error error = pDoc->contentsMatchDisk(&matches);
+   if (error)
+      LOG_ERROR(error);
+   if (matches)
+   {
+      error = chunkDefsFile.copy(chunkDefinitionsPath(
+               pDoc->path(), pDoc->id(), kSavedCtx));
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void onDocRemoved(const std::string& docId, const std::string& docPath)
@@ -615,6 +633,7 @@ Error initCache()
    using namespace module_context;
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
 

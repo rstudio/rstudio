@@ -62,7 +62,7 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
-      ExecScope execScope, const json::Object& options, int pixelWidth, 
+      ExecScope execScope, const ChunkOptions& options, int pixelWidth, 
       int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
@@ -87,7 +87,7 @@ std::string ChunkExecContext::docId()
    return docId_;
 }
 
-json::Object ChunkExecContext::options() 
+const ChunkOptions& ChunkExecContext::options() 
 {
    return options_;
 }
@@ -111,9 +111,7 @@ void ChunkExecContext::connect()
       initializeOutput();
 
    // suppress messages if requested
-   bool messages = true;
-   json::readObject(options_, "message", &messages);
-   if (!messages) 
+   if (!options_.getOverlayOption("message", true))
    {
       boost::shared_ptr<MessageCapture> pMessageCapture = 
          boost::make_shared<MessageCapture>();
@@ -121,11 +119,12 @@ void ChunkExecContext::connect()
       captures_.push_back(pMessageCapture);
    }
 
-   // extract knitr figure options if present
+   // extract knitr figure options if present (currently supported at the 
+   // chunk level only)
    double figWidth = 0;
    double figHeight = 0;
-   json::readObject(options_, "fig.width",  &figWidth);
-   json::readObject(options_, "fig.height", &figHeight);
+   json::readObject(options_.chunkOptions(), "fig.width",  &figWidth);
+   json::readObject(options_.chunkOptions(), "fig.height", &figHeight);
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
@@ -163,7 +162,7 @@ void ChunkExecContext::connect()
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.parent().complete(kChunkLibDir),
-            options_);
+            options_.chunkOptions());
    if (error)
       LOG_ERROR(error);
 
@@ -178,8 +177,7 @@ void ChunkExecContext::connect()
 
       // default warning setting is 1 (log immediately), but if the warning
       // option is set to FALSE, we want to set it to -1 (ignore warnings)
-      bool warning = true;
-      json::readObject(options_, "warning",  &warning);
+      bool warning = options_.getOverlayOption("warning", true);
       error = r::options::setOption<int>("warn", warning ? 1 : -1);
       if (error)
          LOG_ERROR(error);

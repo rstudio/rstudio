@@ -14,10 +14,12 @@
  */
 
 #include "NotebookDocQueue.hpp"
+#include "NotebookChunkDefs.hpp"
 
 #include <boost/foreach.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 using namespace rstudio::core;
 
@@ -46,6 +48,11 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       charWidth_(charWidth),
       maxUnits_(maxUnits)
 {
+   source_database::getPath(docId_, &docPath_);
+
+   // read the default knit options for this document (this is expected to fail
+   // if these options don't exist)
+   getChunkValue(docPath_, docId_, kChunkDefaultOptions, &defaultOptions_);
 }
 
 boost::shared_ptr<NotebookQueueUnit> NotebookDocQueue::firstUnit()
@@ -100,6 +107,7 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
          static_cast<CommitMode>(commitMode), pixelWidth, charWidth,
          maxUnits);
 
+   // populate the queue units
    BOOST_FOREACH(const json::Value val, units)
    {
       // ignore non-objects
@@ -181,6 +189,19 @@ bool NotebookDocQueue::complete() const
 CommitMode NotebookDocQueue::commitMode() const
 {
    return commitMode_;
+}
+
+json::Object NotebookDocQueue::defaultChunkOptions() const
+{
+   return defaultOptions_;
+}
+
+void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
+{
+   defaultOptions_ = options;
+   Error error = setChunkValue(docPath_, docId_, kChunkDefaultOptions, options);
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // namespace notebook

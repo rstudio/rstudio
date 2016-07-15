@@ -4304,7 +4304,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "update_notebook_exec_queue", params, 
             requestCallback);
    }
-   
+
    @Override
    public void interruptChunk(String docId,
                               String chunkId,

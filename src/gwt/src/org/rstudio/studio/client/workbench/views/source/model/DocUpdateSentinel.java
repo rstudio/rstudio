@@ -368,7 +368,8 @@ public class DocUpdateSentinel
       String oldFoldSpec = sourceDoc_.getFoldSpec();
       
       final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
-      JsArray<ChunkDefinition> oldChunkDefs = sourceDoc_.getChunkDefs();
+      JsArray<ChunkDefinition> oldChunkDefs = 
+            sourceDoc_.getNotebookDoc().getChunkDefs();
       
       //String patch = DiffMatchPatch.diff(oldContents, newContents);
       SubstringDiff diff = new SubstringDiff(oldContents, newContents);

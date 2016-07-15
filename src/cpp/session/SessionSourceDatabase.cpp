@@ -284,6 +284,27 @@ Error SourceDocument::setPathAndContents(const std::string& path,
    return Success();
 }
 
+Error SourceDocument::contentsMatchDisk(bool *pMatches)
+{
+   *pMatches = false;
+   FilePath docPath = module_context::resolveAliasedPath(path());
+   if (docPath.exists() && docPath.size() <= (1024*1024))
+   {
+      std::string contents;
+      Error error = module_context::readAndDecodeFile(docPath,
+                                                      encoding(),
+                                                      true,
+                                                      &contents);
+      if (error)
+         return error;
+
+      *pMatches = contents_.length() == contents.length() && 
+                  hash_ == hash::crc32Hash(contents);
+   }
+
+   return Success();
+}
+
 Error SourceDocument::updateDirty()
 {
    if (path().empty())
@@ -304,20 +325,12 @@ Error SourceDocument::updateDirty()
       // on disk are different, because we will do that on the client side
       // and the UI logic is a little complicated.
 
-      FilePath docPath = module_context::resolveAliasedPath(path());
-      if (docPath.exists() && docPath.size() <= (1024*1024))
-      {
-         std::string contents;
-         Error error = module_context::readAndDecodeFile(docPath,
-                                                         encoding(),
-                                                         true,
-                                                         &contents);
-         if (error)
-            return error;
-
-         if (contents_.length() == contents.length() && hash_ == hash::crc32Hash(contents))
-            dirty_ = false;
-      }
+      bool matches = false;
+      Error error = contentsMatchDisk(&matches);
+      if (error)
+         return error;
+      if (matches)
+         dirty_ = false;
    }
    return Success();
 }

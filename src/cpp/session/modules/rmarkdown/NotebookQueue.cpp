@@ -26,11 +26,13 @@
 #include "NotebookDocQueue.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
+#include "NotebookChunkOptions.hpp"
 
 #include <boost/foreach.hpp>
 
 #include <r/RInterface.hpp>
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Thread.hpp>
@@ -112,10 +114,7 @@ public:
             // when an error occurs, see what the chunk options say; if they
             // have error = TRUE we can keep going, but in all other
             // circumstances we should stop right away
-            const json::Object& options = execContext_->options();
-            bool error = false;
-            json::readObject(options, "error", &error);
-            if (!error)
+            if (!execContext_->options().getOverlayOption("error", false))
             {
                clear();
                return Success();
@@ -145,7 +144,7 @@ public:
 
             // notify client
             enqueueExecStateChanged(ChunkExecFinished, execContext_ ?
-                  execContext_->options() : json::Object());
+                  execContext_->options().chunkOptions() : json::Object());
 
             // clean up current exec unit 
             if (execContext_)
@@ -243,6 +242,32 @@ private:
          execUnit_.reset();
          process(ExprModeNew);
       }
+
+      if (execContext_ && !queue_.empty())
+      {
+         // get the chunk label to see if this is the setup chunk 
+         std::string label;
+         json::readObject(execContext_->options().chunkOptions(), "label", 
+               &label);
+         if (label == "setup")
+         {
+            // when the setup chunk finishes executing, write the defaults 
+            // into the queue for subsequent chunks/executions
+            r::sexp::Protect protect;
+            SEXP defaultsSEXP = R_NilValue;
+            Error error = r::exec::RFunction(".rs.defaultChunkOptions")
+                                            .call(&defaultsSEXP, &protect);
+            if (error)
+               LOG_ERROR(error);
+            else
+            {
+               json::Value defaults;
+               r::json::jsonValueFromList(defaultsSEXP, &defaults);
+               if (defaults.type() == json::ObjectType)
+                  queue_.front()->setDefaultChunkOptions(defaults.get_obj());
+            }
+         }
+      }
    }
 
    // execute the next line or expression in the current execution unit
@@ -306,23 +331,23 @@ private:
 
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
 
-      // establish execution context for the unit
-      json::Object options;
-      Error error = unit->parseOptions(&options);
+      // extract the default chunk options, then augment with the unit's 
+      // chunk-specific options
+      json::Object chunkOptions;
+      Error error = unit->parseOptions(&chunkOptions);
       if (error)
          LOG_ERROR(error);
+      ChunkOptions options(docQueue->defaultChunkOptions(), chunkOptions);
+
+      // establish execution context for the unit
 
       // in batch mode, make sure unit should be evaluated -- note that
       // eval=FALSE units generally do not get sent up in the first place, so
       // if we're here it's because the unit has eval=<expr>
-      if (unit->execMode() == ExecModeBatch)
+      if (unit->execMode() == ExecModeBatch &&
+         !options.getOverlayOption("eval", true))
       {
-         bool eval = true;
-         json::readObject(options, "eval", &eval);
-         if (!eval)
-         {
-            return skipUnit();
-         }
+         return skipUnit();
       }
 
       // compute context
@@ -330,8 +355,7 @@ private:
          kSavedCtx : notebookCtxId();
 
       // compute engine
-      std::string engine = "r";
-      json::readObject(options, "engine", &engine);
+      std::string engine = options.getOverlayOption("engine", std::string("r"));
       if (engine == "r")
       {
          execContext_ = boost::make_shared<ChunkExecContext>(
@@ -339,7 +363,7 @@ private:
             docQueue->pixelWidth(), docQueue->charWidth());
          execContext_->connect();
          execUnit_ = unit;
-         enqueueExecStateChanged(ChunkExecStarted, options);
+         enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
       }
       else
       {
@@ -353,9 +377,10 @@ private:
          else
          {
             execUnit_ = unit;
-            enqueueExecStateChanged(ChunkExecStarted, options);
+            enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
             error = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), ctx, engine, innerCode, options);
+               unit->docId(), unit->chunkId(), ctx, engine, innerCode, 
+               options.mergedOptions());
             if (error)
                LOG_ERROR(error);
          }
