@@ -15,6 +15,8 @@
 
 #include "DesktopWebPage.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -265,6 +267,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
          // when not allowing external navigation, open an external browser
          // to view the URL
          desktop::openUrl(url);
+      }
+      else if (boost::algorithm::ends_with(host, ".youtube.com") ||
+            boost::algorithm::ends_with(host, ".vimeo.com")   ||
+            boost::algorithm::ends_with(host, ".c9.ms"))
+      {
+         navigated_ = true;
+         return true;
       }
 
       if (!navigated_)
