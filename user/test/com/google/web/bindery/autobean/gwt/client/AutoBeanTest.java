@@ -1,12 +1,12 @@
 /*
  * Copyright 2010 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,6 +26,7 @@ import com.google.web.bindery.autobean.shared.AutoBeanVisitor.ParameterizationVi
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -373,6 +374,33 @@ public class AutoBeanTest extends GWTTestCase {
 
     assertTrue(auto.isFrozen());
     assertEquals(42, intf.getInt());
+  }
+
+  public void testListShim() {
+    HasList hl = factory.hasList().as();
+    hl.setList(new ArrayList<Intf>());
+    hl.getList().add(factory.intf().as());
+    hl.getList().add(factory.intf().as());
+
+    Iterator<Intf> iter = hl.getList().iterator();
+    assertEquals(hl.getList().get(0), iter.next());
+    assertTrue(iter.hasNext());
+    assertEquals(hl.getList().get(1), iter.next());
+    // Iterator#remove became a 'default' method in Java 8; test non-regression
+    iter.remove();
+    assertFalse(iter.hasNext());
+    assertEquals(1, hl.getList().size());
+
+    // Same with ListIterator
+    hl.getList().add(factory.intf().as());
+    iter = hl.getList().listIterator();
+    assertEquals(hl.getList().get(0), iter.next());
+    assertTrue(iter.hasNext());
+    assertEquals(hl.getList().get(1), iter.next());
+    // ListIterator#remove became a 'default' method in Java 8; test non-regression
+    iter.remove();
+    assertFalse(iter.hasNext());
+    assertEquals(1, hl.getList().size());
   }
 
   public void testNested() {
