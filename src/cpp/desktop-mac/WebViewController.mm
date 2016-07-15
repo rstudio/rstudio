@@ -498,6 +498,13 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
          desktop::utils::browseURL(url);
          [listener ignore];
       }
+      // allow embedding videos from whitelisted sources
+      else if ([host hasSuffix: @".youtube.com"] ||
+               [host hasSuffix: @".vimeo.com"]   ||
+               [host hasSuffix: @".ch9.ms"])
+      {
+         [listener use];
+      }
       else
       {
          if (allowExternalNav_)
