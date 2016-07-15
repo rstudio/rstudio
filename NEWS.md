@@ -18,6 +18,7 @@
 
 ### Source Editor
 
+* Ctrl+Enter now executes current R statement when selection is empty
 * Enabled auto-pairing of backticks (\`\`) in R documents
 * Fixed regression re: folding of unnamed sections, e.g. '#####'
 * Implemented folding for sub-sections in R documents
