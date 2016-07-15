@@ -3010,7 +3010,7 @@ public class AceEditor implements DocDisplay,
       
       // expand to enclosing '(' or '['
       String[] candidates = new String[]{ "(", "[" };
-      if (c.moveToPosition(pos) && c.findOpeningBracket(candidates, false))
+      if (c.moveToPosition(pos) && c.findOpeningBracket(candidates, true))
       {
          int startCandidate = c.getRow();
          if (c.fwdToMatchingToken())
@@ -3075,12 +3075,15 @@ public class AceEditor implements DocDisplay,
       if (startRow > endRow)
          startRow = endRow;
       
-      // return range
-      return Range.create(
-            startRow,
-            0,
-            endRow,
-            getSession().getLine(endRow).length());
+      // construct range
+      int endColumn = getSession().getLine(endRow).length();
+      Range range = Range.create(startRow, 0, endRow, endColumn);
+      
+      // return empty range if nothing to execute
+      if (getTextForRange(range).trim().isEmpty())
+         range = Range.fromPoints(pos, pos);
+      
+      return range;
    }
 
    // ---- Annotation related operations
