@@ -60,6 +60,27 @@
 .rs.addFunction("rnbHooks.print.shiny.tag",      .rs.rnb.saveHtmlToCache)
 .rs.addFunction("rnbHooks.print.shiny.tag.list", .rs.rnb.saveHtmlToCache)
 
+.rs.addFunction("rnbHooks.print.knit_asis", function(x, ...) 
+{
+   ctx <- .rs.rnb.getHtmlCaptureContext()
+
+   # create temporary file paths
+   mdfile   <- tempfile("_rs_md_", fileext = ".md")
+   htmlfile <- tempfile("_rs_html_", tmpdir = ctx$outputFolder, 
+                        fileext = ".html")
+
+   # save contents to temporary file
+   cat(as.character(x), file = mdfile, sep = "\n")
+   
+   # render to HTML with pandoc
+   rmarkdown::pandoc_convert(input = rmarkdown::pandoc_path_arg(mdfile), 
+                             to = "html",
+                             output = rmarkdown::pandoc_path_arg(htmlfile))
+
+   # record in cache
+   .rs.recordHtmlWidget(htmlfile, NULL)
+})
+
 .rs.addFunction("rnbHooks.print.htmlwidget", function(x, ...) {
    ctx <- .rs.rnb.getHtmlCaptureContext()
    
@@ -182,7 +203,8 @@
       "print.htmlwidget"     = .rs.rnbHooks.print.htmlwidget,
       "print.html"           = .rs.rnbHooks.print.html,
       "print.shiny.tag"      = .rs.rnbHooks.print.shiny.tag,
-      "print.shiny.tag.list" = .rs.rnbHooks.print.shiny.tag.list
+      "print.shiny.tag.list" = .rs.rnbHooks.print.shiny.tag.list,
+      "print.knit_asis"      = .rs.rnbHooks.print.knit_asis
    )
 })
 
