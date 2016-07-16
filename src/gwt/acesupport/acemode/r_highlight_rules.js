@@ -133,7 +133,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          {
             token : function(value)
             {
-               if (builtinConstants[value])
+               if (builtinConstants.hasOwnProperty(value))
                   return "constant.language";
                else if (value.match(/^\.\.\d+$/))
                   return "variable.language";
@@ -149,9 +149,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          {
             token : function(value)
             {
-               if (builtinConstants[value])
+               if (builtinConstants.hasOwnProperty(value))
                   return "constant.language";
-               else if (keywords[value])
+               else if (keywords.hasOwnProperty(value))
                   return "keyword";
                else if (value.match(/^\.\.\d+$/))
                   return "variable.language";
@@ -192,7 +192,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       rules["#function-call-or-keyword"] = [
          {
             token : function(value) {
-               if (specialFunctions[value] || keywords[value])
+               if (specialFunctions.hasOwnProperty(value) || keywords.hasOwnProperty(value))
                   return "keyword";
                else if ($colorFunctionCalls)
                   return "identifier.support.function";
