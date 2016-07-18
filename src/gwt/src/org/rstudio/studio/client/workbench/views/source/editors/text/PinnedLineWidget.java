@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
@@ -22,7 +23,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Fold
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -54,22 +55,25 @@ public class PinnedLineWidget
       lastWidgetRow_ = row;
       moving_ = false;
       shiftPending_ = false;
+      attached_ = false;
       folded_ = folded();
+      lastPos_ = 0;
+      frozen_ = false;
+      lastScrollPos_ = display_.getScrollTop();
 
       lineWidget_ = LineWidget.create(type, row, widget_.getElement(), data);
       lineWidget_.setFixedWidth(true); 
 
-      // delay attaching the line widget to the editor surface until the next
-      // render pass
-      renderFinishedReg_ = display_.addRenderFinishedHandler(this);
-      
-      // the Ace line widget manage emits a 'changeFold' event when a line
-      // widget is destroyed; this is our only signal that it's been
-      // removed, so when it happens, we need check to see if the widget
-      // has been removed
       registrations_ = new HandlerRegistrations(
+         // the Ace line widget manage emits a 'changeFold' event when a line
+         // widget is destroyed; this is our only signal that it's been
+         // removed, so when it happens, we need check to see if the widget
+         // has been removed
          display_.addFoldChangeHandler(this),
-         renderFinishedReg_);
+
+         // delay attaching the line widget to the editor surface until the next
+         // render pass
+         display_.addRenderFinishedHandler(this));
 
       startAnchor_ = display_.createAnchor(Position.create(row, 0));
 
@@ -133,10 +137,55 @@ public class PinnedLineWidget
    public void onRenderFinished(RenderFinishedEvent event)
    {
       // add the widget to the document and notify the host
-      display_.addLineWidget(lineWidget_);
+      if (!attached_)
+      {
+         attached_ = true;
+         display_.addLineWidget(lineWidget_);
+         lastPos_ = lineWidget_.getElement().getOffsetTop();
+         lastScrollPos_ = display_.getScrollTop();
+         return;
+      }
 
-      // remove the handler (single shot)
-      renderFinishedReg_.removeHandler();
+      // if the display scrolled during this render...
+      if (display_.getScrollTop() != lastScrollPos_ && 
+          lineWidget_.getElement().getOffsetHeight() > 0)
+      {
+         if (!frozen_ && lastPos_ == lineWidget_.getElement().getOffsetTop())
+         {
+            // the widget did not move; compute the number of overlapping pixels
+            // between the viewport and this line widget
+            int visiblePx = 
+                  Math.min(
+                     lastPos_ + lineWidget_.getElement().getOffsetHeight(), 
+                     display_.getHeight()) - 
+                  Math.max(lastPos_, 0);
+            Debug.devlog("element did not move: " + lastPos_ + ", " +
+                  (lastPos_ + lineWidget_.getElement().getOffsetHeight()) + ", " + 
+                  display_.getScrollTop() +  ", " + 
+                  display_.getHeight() + " : " + visiblePx);
+            if (visiblePx > 0)
+            {
+               // if we got here, then all of the following are true:
+               // 1. the editor moved (scrolled) 
+               // 2. some portion of this line widget was visible
+               // 3. this line widget did not move
+               frozen_ = true;
+               Debug.devlog("marking frozen");
+               lineWidget_.getElement().getStyle().setVisibility(
+                     Visibility.HIDDEN);
+            }
+         }
+         else if (frozen_ && lastPos_ != lineWidget_.getElement().getOffsetTop())
+         {
+            // this widget scrolled with the editor, so it must not be frozen
+            frozen_ = false;
+            Debug.devlog("marking unfrozen");
+            lineWidget_.getElement().getStyle().setVisibility(
+                  Visibility.VISIBLE);
+         }
+      }
+      lastPos_ = lineWidget_.getElement().getOffsetTop();
+      lastScrollPos_ = display_.getScrollTop();
    }
 
    // Private methods ---------------------------------------------------------
@@ -258,8 +307,9 @@ public class PinnedLineWidget
    private final Widget widget_;
    private final Host host_;
    private final HandlerRegistrations registrations_;
-   private final HandlerRegistration renderFinishedReg_;
    private int lastWidgetRow_;
+   private int lastPos_;
+   private int lastScrollPos_;
 
    private Anchor endAnchor_;
    private Anchor startAnchor_;
@@ -268,4 +318,6 @@ public class PinnedLineWidget
    private boolean checkForRemove_;
    private boolean shiftPending_;
    private boolean folded_;
+   private boolean attached_;
+   private boolean frozen_;
 }

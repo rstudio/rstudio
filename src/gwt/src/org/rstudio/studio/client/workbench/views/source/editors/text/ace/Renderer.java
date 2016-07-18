@@ -121,7 +121,7 @@ public class Renderer extends JavaScriptObject
    public native final int getScrollLeft() /*-{
       return this.getScrollLeft() || 0;
    }-*/;
-
+   
    public native final void scrollToY(int scrollTop) /*-{
       this.scrollToY(scrollTop);
    }-*/;

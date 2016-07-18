@@ -930,6 +930,11 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getRenderer().getScrollTop();
    }
 
+   public int getHeight()
+   {
+      return widget_.getElement().getClientHeight();
+   }
+
    public void scrollToY(int y, int animateMs)
    {
       // cancel any existing scroll animation
