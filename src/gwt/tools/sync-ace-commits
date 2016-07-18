@@ -65,7 +65,6 @@ git submodule update --init --recursive
 #   Ace will (may?) be gaining new defaults in next release re: scroll behaviour
 
 git merge \
-    origin/patch/gutter-width \
     origin/bugfix/token-column \
     origin/bugfix/vim-vertical-block-eol \
     origin/bugfix/dont-place-text-area-offscreen \

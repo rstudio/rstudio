@@ -47778,15 +47778,6 @@ var Gutter = function(parentEl) {
         }
     };
 
-    function countDigits(num) {
-        return (num + "").length;
-    }
-
-    this.pad = function(n) {
-        var delta = countDigits(this.session.getLength()) - countDigits(n);
-        return Array(delta + 1).join("\u00A0") + n;
-    }
-
     this.update = function(config) {
         var session = this.session;
         var firstRow = config.firstRow;
@@ -47875,8 +47866,6 @@ var Gutter = function(parentEl) {
             var text = lastLineNumber = gutterRenderer
                 ? gutterRenderer.getText(session, row)
                 : row + firstLineNumber;
-
-            text = this.pad(text);
             if (text != cell.textNode.data)
                 cell.textNode.data = text;
 
