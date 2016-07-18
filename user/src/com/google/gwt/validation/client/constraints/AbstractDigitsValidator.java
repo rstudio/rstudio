@@ -26,7 +26,6 @@ import javax.validation.constraints.Digits;
  *
  * @param <T> the type of object to validate
  */
-@Deprecated
 public abstract class AbstractDigitsValidator<T> implements
     ConstraintValidator<Digits, T> {
 

@@ -22,7 +22,6 @@ import javax.validation.constraints.AssertTrue;
 /**
  * {@link AssertTrue} constraint validator implementation.
  */
-@Deprecated
 public class AssertTrueValidator implements
     ConstraintValidator<AssertTrue, Boolean> {
 

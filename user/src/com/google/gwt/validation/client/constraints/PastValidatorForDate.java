@@ -24,7 +24,6 @@ import javax.validation.constraints.Past;
 /**
  * {@link Past} constraint validator implementation for a {@link java.util.Date}.
  */
-@Deprecated
 public class PastValidatorForDate implements
     ConstraintValidator<Past, Date> {
 

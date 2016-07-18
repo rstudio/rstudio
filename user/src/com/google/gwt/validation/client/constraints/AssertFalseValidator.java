@@ -22,7 +22,6 @@ import javax.validation.constraints.AssertFalse;
 /**
  * {@link AssertFalse} constraint validator implementation.
  */
-@Deprecated
 public class AssertFalseValidator implements
     ConstraintValidator<AssertFalse, Boolean> {
 

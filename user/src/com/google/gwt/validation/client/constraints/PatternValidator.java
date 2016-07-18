@@ -29,7 +29,6 @@ import javax.validation.constraints.Pattern.Flag;
  * Note this implementation uses {@link RegExp} which differs from
  * {@link java.util.regex.Pattern}.
  */
-@Deprecated
 public class PatternValidator implements
     ConstraintValidator<Pattern, String> {
   private RegExp pattern;

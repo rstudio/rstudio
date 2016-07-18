@@ -91,7 +91,6 @@ import javax.validation.groups.Default;
 @Documented
 @Target(TYPE)
 @Retention(RUNTIME)
-@Deprecated
 public @interface GwtValidation {
 
   /**

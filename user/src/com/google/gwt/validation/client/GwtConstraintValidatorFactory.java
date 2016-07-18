@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorFactory;
  * {@link com.google.gwt.core.client.GWT#create(Class) GWT.create(Class)} instead. Using this
  * class throws a {@link UnsupportedOperationException}.
  */
-@Deprecated
 public final class GwtConstraintValidatorFactory implements
     ConstraintValidatorFactory {
 

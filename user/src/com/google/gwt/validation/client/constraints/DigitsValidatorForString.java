@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Digits} constraint validator
  * implementation for a {@link String}.
  */
-@Deprecated
 public class DigitsValidatorForString extends
     AbstractDigitsValidator<String> {
 

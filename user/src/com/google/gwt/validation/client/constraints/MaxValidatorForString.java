@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Max} constraint validator implementation
  * for a {@link String}.
  */
-@Deprecated
 public class MaxValidatorForString extends AbstractMaxValidator<String> {
 
   @Override

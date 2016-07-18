@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a {@link Map}.
  */
-@Deprecated
 public class SizeValidatorForMap extends AbstractSizeValidator<Map<?, ?>> {
 
   @Override

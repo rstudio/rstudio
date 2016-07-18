@@ -28,7 +28,6 @@ import javax.validation.spi.ValidationProvider;
  * The default GWT {@link ValidationProviderResolver}. This always returns the
  * single default ValidationProvider using {@link GWT#create(Class)}.
  */
-@Deprecated
 public final class GwtValidationProviderResolver implements
     ValidationProviderResolver {
 

@@ -22,7 +22,6 @@ import java.util.MissingResourceException;
 /**
  * ValidationMessageResolver using a {@link ConstantsWithLookup} source.
  */
-@Deprecated
 public abstract class AbstractValidationMessageResolver {
   private final ConstantsWithLookup messages;
 

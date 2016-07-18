@@ -27,7 +27,6 @@ import javax.validation.constraints.DecimalMax;
  * 
  * @param <T> the type of object to validate
  */
-@Deprecated
 public abstract class AbstractDecimalMaxValidator<T> implements
     ConstraintValidator<DecimalMax, T> {
 

@@ -27,7 +27,6 @@ import javax.validation.ConstraintValidatorContext;
  * @param <A> the constraint to validate
  * @param <T> the type to validate
  */
-@Deprecated
 public abstract class NotGwtCompatibleValidator<A extends Annotation, T>
     implements ConstraintValidator<A, T> {
 

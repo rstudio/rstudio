@@ -26,7 +26,6 @@ import javax.validation.constraints.Min;
  *
  * @param <T> the type of object to validate
  */
-@Deprecated
 public abstract class AbstractMinValidator<T> implements
     ConstraintValidator<Min, T> {
 

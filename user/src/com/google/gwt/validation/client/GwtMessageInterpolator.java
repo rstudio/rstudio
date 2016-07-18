@@ -22,7 +22,6 @@ import java.util.Locale;
 /**
  * Simple GWT {@link javax.validation.MessageInterpolator}.
  */
-@Deprecated
 public final class GwtMessageInterpolator extends BaseMessageInterpolator {
   // This class only has the parts the need to overridden for GWT
 

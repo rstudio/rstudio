@@ -24,7 +24,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.DecimalMin} constraint validator
  * implementation for a {@link Number}.
  */
-@Deprecated
 public class DecimalMinValidatorForNumber extends
     AbstractDecimalMinValidator<Number> {
 

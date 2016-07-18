@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Min} constraint validator implementation
  * for a {@link String}.
  */
-@Deprecated
 public class MinValidatorForString extends AbstractMinValidator<String> {
 
   @Override

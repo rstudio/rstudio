@@ -21,7 +21,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Max} constraint validator implementation
  * for a {@link Number}.
  */
-@Deprecated
 public class MaxValidatorForNumber extends AbstractMaxValidator<Number> {
 
   @Override

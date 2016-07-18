@@ -22,7 +22,6 @@ import javax.validation.constraints.NotNull;
 /**
  * {@link NotNull} constraint validator implementation.
  */
-@Deprecated
 public class NotNullValidator implements
     ConstraintValidator<NotNull, Object> {
 

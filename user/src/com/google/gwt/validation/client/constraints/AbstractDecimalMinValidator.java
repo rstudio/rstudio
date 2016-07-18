@@ -26,7 +26,6 @@ import javax.validation.constraints.DecimalMin;
  *
  * @param <T> the type of object to validate
  */
-@Deprecated
 public abstract class AbstractDecimalMinValidator<T> implements
     ConstraintValidator<DecimalMin, T> {
 

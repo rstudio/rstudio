@@ -24,7 +24,6 @@ import javax.validation.TraversableResolver;
 /**
  * Default {@link TraversableResolver}. Always allows full traversal.
  */
-@Deprecated
 public final class DefaultTraversableResolver implements TraversableResolver {
 
   @Override

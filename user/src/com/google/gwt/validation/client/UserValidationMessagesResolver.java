@@ -19,6 +19,5 @@ package com.google.gwt.validation.client;
  * Validation Providers implement this to resolve Validation Messages. including
  * overriding the default {@link ProviderValidationMessageResolver}.
  */
-@Deprecated
 public interface UserValidationMessagesResolver extends ValidationMessageResolver {
 }

@@ -23,7 +23,6 @@ import javax.validation.ConstraintValidatorContext;
  * {@link javax.validation.constraints.Size} constraint validator implementation
  * for a {@link Collection}.
  */
-@Deprecated
 public class SizeValidatorForCollection extends
     AbstractSizeValidator<Collection<?>> {
 
