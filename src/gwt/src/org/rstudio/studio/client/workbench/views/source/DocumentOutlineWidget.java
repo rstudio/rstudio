@@ -454,7 +454,7 @@ public class DocumentOutlineWidget extends Composite
    
    private Scope getCurrentVisibleScope(Scope node)
    {
-      for (; !node.isTopLevel(); node = node.getParentScope())
+      for (; node != null && !node.isTopLevel(); node = node.getParentScope())
          if (shouldDisplayNode(node))
             return node;
       return null;
@@ -462,7 +462,7 @@ public class DocumentOutlineWidget extends Composite
    
    private boolean isActiveNode(Scope node)
    {
-      return node.equals(currentVisibleScope_);
+      return node != null && node.equals(currentVisibleScope_);
    }
    
    private final DockLayoutPanel container_;
