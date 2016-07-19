@@ -55,6 +55,7 @@
 
 * Added session-default-working-dir and session-default-new-project-dir options 
 * Added sudo, lsb-release, and libssl1.0.0 packages to Debian dependencies
+* Server Pro: Ability to configure per-user and per-group session timeouts
 
 ### Miscellaneous
 
