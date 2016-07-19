@@ -51,6 +51,11 @@
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
 
+### Server
+
+* Added session-default-working-dir and session-default-new-project-dir options 
+* Added sudo, lsb-release, and libssl1.0.0 packages to Debian dependencies
+
 ### Miscellaneous
 
 * Improved performance of 'Find in Files' tool
@@ -65,7 +70,6 @@
 * Added option to limit length of lines in console history
 * Improved performance when many lines of code sent to console
 * 'save()' warnings no longer emitted when saving session state
-* Added sudo, lsb-release, and libssl1.0.0 packages to Debian dependencies
 
 ### Bug Fixes
 
