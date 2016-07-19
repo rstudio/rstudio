@@ -123,6 +123,7 @@
 * Fix error message when invoking View() on an object with no columns
 * Fix blank screen on log-in when PAM username capitalization doesn't match system
 * Prompt to save untitled (never saved) documents when closing source windows
+* Don't depend on number of call frames when detecting install.packages call
 
 
 

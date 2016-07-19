@@ -120,11 +120,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if (!is.null(repos) && !packratMode && .rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command
-         if (length(sys.calls()) > 7) {
-            installCall <- sys.call(-7)
-            installCmd <- format(installCall)
-         } else {
-            installCmd <- NULL
+         installCmd <- NULL
+         for (i in seq_along(sys.calls()))
+         {
+           if (identical(deparse(sys.call(i)[[1]]), "install.packages"))
+           {
+             installCmd <- format(sys.call(i))
+             break
+           }
          }
 
          # call back into rsession to send an event to the client
