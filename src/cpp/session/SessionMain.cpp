@@ -517,6 +517,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                                 getDefaultWorkingDirectory());
    sessionInfo["default_working_dir"] = defaultWorkingDir;
 
+   // default project dir
+   sessionInfo["default_project_dir"] = options.defaultProjectDir();
+
    // active project file
    if (projects::projectContext().hasProject())
    {

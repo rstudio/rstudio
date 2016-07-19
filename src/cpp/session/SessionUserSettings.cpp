@@ -804,7 +804,8 @@ void UserSettings::setInitialWorkingDirectory(const FilePath& filePath)
 
 FilePath UserSettings::getWorkingDirectoryValue(const std::string& key) const
 {
-   return module_context::resolveAliasedPath(settings_.get(key, "~"));
+   return module_context::resolveAliasedPath(
+            settings_.get(key, session::options().defaultWorkingDir()));
 }
 
 

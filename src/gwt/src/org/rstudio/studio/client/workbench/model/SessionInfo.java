@@ -221,7 +221,11 @@ public class SessionInfo extends JavaScriptObject
    public final native String getDefaultWorkingDir() /*-{
       return this.default_working_dir;
    }-*/;
-    
+   
+   public final native String getDefaultProjectDir() /*-{
+      return this.default_project_dir;
+   }-*/;
+
    public final native String getActiveProjectFile() /*-{
       return this.active_project_file;
    }-*/;

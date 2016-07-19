@@ -156,6 +156,10 @@ public:
 
    std::string authRequiredUserGroup() const { return authRequiredUserGroup_; }
 
+   std::string defaultWorkingDir() const { return defaultWorkingDir_.c_str(); }
+
+   std::string defaultProjectDir() const { return defaultProjectDir_.c_str(); }
+
    bool showHelpHome() const { return showHelpHome_; }
 
    bool showUserHomePage() const { return showUserHomePage_; }
@@ -521,6 +525,8 @@ private:
    bool standalone_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
+   std::string defaultWorkingDir_;
+   std::string defaultProjectDir_;
    bool showHelpHome_;
    bool showUserHomePage_;
 

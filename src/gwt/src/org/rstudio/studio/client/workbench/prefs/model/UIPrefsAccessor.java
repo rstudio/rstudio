@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
@@ -23,6 +22,7 @@ import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.plots.model.SavePlotAsPdfOptions;
@@ -33,9 +33,12 @@ import com.google.gwt.core.client.JsArrayString;
 
 public class UIPrefsAccessor extends Prefs
 {
-   public UIPrefsAccessor(JsObject uiPrefs, JsObject projectUiPrefs)
+   public UIPrefsAccessor(SessionInfo sessionInfo, 
+                          JsObject uiPrefs, 
+                          JsObject projectUiPrefs)
    {
       super(uiPrefs, projectUiPrefs);
+      sessionInfo_ = sessionInfo;
    }
    
    public PrefValue<Boolean> showLineNumbers()
@@ -339,7 +342,8 @@ public class UIPrefsAccessor extends Prefs
    
    public PrefValue<String> defaultProjectLocation()
    {
-      return string("default_project_location", FileSystemItem.HOME_PATH);
+      return string("default_project_location", 
+                    sessionInfo_.getDefaultProjectDir());
    }
    
    public PrefValue<Boolean> toolbarVisible()
@@ -609,4 +613,6 @@ public class UIPrefsAccessor extends Prefs
          return PDF_PREVIEW_RSTUDIO;
       }
    }
+   
+   private final SessionInfo sessionInfo_;
 }

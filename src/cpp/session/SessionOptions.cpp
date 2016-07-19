@@ -52,6 +52,23 @@ namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
 const char* const kDefaultRsclangPath = "bin/rsclang";
+
+void ensureDefaultDirectory(std::string* pDirectory,
+                            const std::string& userHomePath)
+{
+   if (*pDirectory != "~")
+   {
+      FilePath dir = FilePath::resolveAliasedPath(*pDirectory,
+                                                  FilePath(userHomePath));
+      Error error = dir.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         *pDirectory = "~";
+      }
+   }
+}
+
 } // anonymous namespace
 
 Options& options()
@@ -175,6 +192,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("session-save-action-default",
        value<std::string>(&saveActionDefault)->default_value(""),
          "default save action (yes, no, or ask)")
+      ("session-default-working-dir",
+       value<std::string>(&defaultWorkingDir_)->default_value("~"),
+       "default working directory for new sessions")
+      ("session-default-new-project-dir",
+       value<std::string>(&defaultProjectDir_)->default_value("~"),
+       "default directory for new projects")
       ("show-help-home",
        value<bool>(&showHelpHome_)->default_value(false),
          "show help home page at startup");
@@ -432,6 +455,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // R_USER back into HOME on Linux)
    if (standalone())
       core::system::setenv("HOME", userHomePath_);
+
+   // ensure that default working dir and default project dir exist
+   ensureDefaultDirectory(&defaultWorkingDir_, userHomePath_);
+   ensureDefaultDirectory(&defaultProjectDir_, userHomePath_);
 
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
