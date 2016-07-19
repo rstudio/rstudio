@@ -15,13 +15,12 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.junit.client.GWTTestCase;
+import org.apache.commons.collections.TestCollection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 import java.util.TreeSet;
@@ -29,12 +28,7 @@ import java.util.TreeSet;
 /**
  * Test PriorityQueue.
  */
-public class PriorityQueueTest extends GWTTestCase {
-
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
-  }
+public class PriorityQueueTest extends TestCollection {
 
   public void testAdd() {
     PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
@@ -65,6 +59,7 @@ public class PriorityQueueTest extends GWTTestCase {
       fail();
     } catch (NullPointerException expected) {
     }
+    assertTrue(Arrays.asList(1).containsAll(queue));
 
     queue = new PriorityQueue<>();
     queue.addAll(Arrays.asList(2, 1, 3));
@@ -248,38 +243,31 @@ public class PriorityQueueTest extends GWTTestCase {
     return pq;
   }
 
-  public void testIteratorRemove() {
-    PriorityQueue<Integer> queue = new PriorityQueue<>();
-    queue.add(1);
-    queue.add(2);
-    queue.add(3);
-    queue.add(5);
-    queue.add(6);
+  /**
+   * Null elements are prohibited in PriorityQueue.
+   */
+  @Override
+  protected Object[] getFullElements() {
+    return new Integer[] {1, 2, 3, 4};
+  }
 
-    int sum = 0;
-    Iterator<Integer> it = queue.iterator();
-    while (it.hasNext()) {
-      int i = it.next();
-      if (i == 2) {
-        it.remove();
-      }
-      sum += i;
-    }
-    assertEquals(17, sum);
-    assertEquals(4, queue.size());
+  @Override
+  protected Object[] getOtherElements() {
+    return new Integer[] {5, 6, 7, 8};
+  }
 
-    try {
-      queue.iterator().remove();
-      fail();
-    } catch (IllegalStateException e) { }
+  @Override
+  protected Collection makeConfirmedCollection() {
+    return new ArrayList<>();
+  }
 
-    try {
-      Iterator<Integer> itt = queue.iterator();
-      while (itt.hasNext()) {
-        it.remove();
-        it.remove();
-        fail();
-      }
-    } catch (IllegalStateException e) { };
+  @Override
+  protected Collection makeConfirmedFullCollection() {
+    return new ArrayList<>(Arrays.asList(getFullElements()));
+  }
+
+  @Override
+  protected Collection makeCollection() {
+    return new PriorityQueue();
   }
 }

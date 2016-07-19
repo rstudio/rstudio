@@ -17,7 +17,9 @@ package java.util;
 
 import static javaemul.internal.InternalPreconditions.checkArgument;
 import static javaemul.internal.InternalPreconditions.checkCriticalNotNull;
+import static javaemul.internal.InternalPreconditions.checkElement;
 import static javaemul.internal.InternalPreconditions.checkNotNull;
+import static javaemul.internal.InternalPreconditions.checkState;
 
 /**
  * An unbounded priority queue based on a priority heap.
@@ -80,14 +82,12 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
 
   @SuppressWarnings("unchecked")
   public PriorityQueue(PriorityQueue<? extends E> c) {
-    // TODO(jat): better solution
     this(c.size(), (Comparator<? super E>) c.comparator());
     addAll(c);
   }
 
   @SuppressWarnings("unchecked")
   public PriorityQueue(SortedSet<? extends E> c) {
-    // TODO(jat): better solution
     this(c.size(), (Comparator<? super E>) c.comparator());
     addAll(c);
   }
@@ -96,7 +96,12 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   public boolean addAll(Collection<? extends E> c) {
     checkNotNull(c);
     checkArgument(c != this);
-    if (heap.addAll(c)) {
+
+    int oldSize = heap.size();
+    for (E e : c) {
+      heap.add(checkCriticalNotNull(e));
+    }
+    if (oldSize != heap.size()) {
       makeHeap(0);
       return true;
     }
@@ -114,39 +119,33 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
 
   @Override
   public boolean contains(Object o) {
-    return indexOf(o) >= 0;
-  }
-
-  @Override
-  public boolean containsAll(Collection<?> c) {
-    return heap.containsAll(c);
+    return indexOf(o) != -1;
   }
 
   @Override
   public Iterator<E> iterator() {
     return new Iterator<E>() {
-      private E current = null;
-      // Make a copy of the elements so that remove() doesn't screw up the order.
-      Iterator<E> elementsToTraverse = new ArrayList<>(heap).iterator();
+      int i = 0, last = -1;
+
       @Override
       public boolean hasNext() {
-        return elementsToTraverse.hasNext();
+        return i < heap.size();
       }
 
       @Override
       public E next() {
-        current = elementsToTraverse.next();
-        return current;
+        checkElement(hasNext());
+
+        last = i++;
+        return heap.get(last);
       }
 
       @Override
       public void remove() {
-        if (current == null) {
-          throw new IllegalStateException("remove() called before iteration or removed already.");
-        }
-        // Remove the current element. Keep on iterating.
-        PriorityQueue.this.remove(current);
-        current = null;
+        checkState(last != -1);
+
+        removeAtIndex(i = last);
+        last = -1;
       }
     };
   }
@@ -238,7 +237,7 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
    *
    * @param node
    */
-  protected void makeHeap(int node) {
+  private void makeHeap(int node) {
     if (isLeaf(node)) {
       // leaf node are automatically valid heaps
       return;
@@ -259,7 +258,7 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
    * 
    * @param node the parent of the two subtrees to merge
    */
-  protected void mergeHeaps(int node) {
+  private void mergeHeaps(int node) {
     int heapSize = heap.size();
     E value = heap.get(node);
     while (!isLeaf(node, heapSize)) {
@@ -296,6 +295,10 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     return isLeaf(node, heap.size());
   }
 
+  /**
+   * This method leaves the elements at up to i-1, inclusive, untouched.
+   * This information is used by PriorityQueue iterator implementation.
+   */
   private void removeAtIndex(int index) {
     // Remove the last element; put it in place of the really removed element.
     E lastValue = heap.remove(heap.size() - 1);
