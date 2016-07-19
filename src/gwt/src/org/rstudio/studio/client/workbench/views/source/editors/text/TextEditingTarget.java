@@ -444,7 +444,6 @@ public class TextEditingTarget implements
        
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
-         @SuppressWarnings("deprecation")
          public void onKeyDown(KeyDownEvent event)
          {
             NativeEvent ne = event.getNativeEvent();

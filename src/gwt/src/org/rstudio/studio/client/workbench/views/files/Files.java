@@ -47,7 +47,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportModes;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
@@ -141,7 +140,6 @@ public class Files
       fileTypeRegistry_ = fileTypeRegistry;
       consoleDispatcher_ = consoleDispatcher;
       workbenchContext_ = workbenchContext;
-      commands_ = commands;
       
       eventBus_ = eventBus;
       server_ = server;
@@ -683,7 +681,6 @@ public class Files
    private final GlobalDisplay globalDisplay_ ;
    private final RemoteFileSystemContext fileSystemContext_;
    private final Session session_;
-   private final Commands commands_;
    private FileSystemItem currentPath_ = FileSystemItem.home();
    private boolean hasNavigatedToDirectory_ = false;
    private final Provider<FilesCopy> pFilesCopy_;
