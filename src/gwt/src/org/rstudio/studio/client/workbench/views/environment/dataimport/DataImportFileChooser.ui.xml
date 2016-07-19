@@ -15,8 +15,6 @@
             -ms-flex-grow: 1;
             -webkit-flex-grow: 1;
             flex-grow: 1;
-
-            height: 24px;
         }
         .modelTextBox {
             margin-top: 3px;
