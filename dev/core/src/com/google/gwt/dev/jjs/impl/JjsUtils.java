@@ -154,15 +154,22 @@ public class JjsUtils {
 
   /**
    * Creates a synthetic forwarding  stub in {@code type} with the same signature as
-   * {@code superTypeMethod} that dispatchs to that method..
+   * {@code superTypeMethod} that dispatchs to that method.
    */
   public static JMethod createForwardingMethod(JDeclaredType type,
       JMethod methodToDelegateTo) {
     JMethod forwardingMethod = createEmptyMethodFromExample(type, methodToDelegateTo, false);
     forwardingMethod.setForwarding();
 
-    if (methodToDelegateTo.isJsOverlay() && type.isJsNative()) {
-      forwardingMethod.isJsOverlay();
+    if (type.isJsNative()) {
+      if (methodToDelegateTo.isJsNative()) {
+        // Accidental override of native methods on native JsTypes are done by just redeclaring the
+        // native method.
+        return forwardingMethod;
+      }
+      // Otherwise the forwarding method is an overlay method with a proper body.
+      forwardingMethod.setJsOverlay();
+      forwardingMethod.setBody(new JMethodBody(methodToDelegateTo.getSourceInfo()));
     }
 
     // Create the forwarding body.

@@ -382,4 +382,42 @@ public class NativeJsTypeTest extends GWTTestCase {
   public void testUnreferencedNativeArrayInstanceOf() {
     assertTrue(createArray() instanceof UnreferencedNativeType[]);
   }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  interface NativeInterface {
+    void add(String element);
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  static class NativeSuperClass {
+    public native void add(String element);
+    public native boolean remove(String element);
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  static class NativeSubClassAccidentalOverride
+      extends NativeSuperClass implements NativeInterface {
+  }
+
+  public native NativeSubClassAccidentalOverride createNativeSubclass() /*-{
+    return {
+        add:
+            function(e) {
+              this[0] = e;
+            },
+        remove:
+            function(e) {
+              var ret = this[0] == e;
+              this[0] = undefined;
+              return ret;
+            }
+      };
+  }-*/;
+
+  public void testForwaringMethodsOnNativeClasses() {
+    NativeSubClassAccidentalOverride subClass = createNativeSubclass();
+    subClass.add("Hi");
+    assertTrue(subClass.remove("Hi"));
+    assertFalse(subClass.remove("Hi"));
+  }
 }
