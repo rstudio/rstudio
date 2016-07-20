@@ -365,6 +365,13 @@ void doSignIn(const http::Request& request,
    }
    else
    {
+      // register failed login with monitor
+      using namespace monitor;
+      client().logEvent(Event(kAuthScope,
+                              kAuthLoginFailedEvent,
+                              "",
+                              username));
+
       pResponse->setMovedTemporarily(
             request,
             applicationSignInURL(request,
