@@ -87,6 +87,28 @@ var MarkdownHighlightRules = function() {
     // regexp must not have capturing parentheses
     // regexps are ordered -> the first match is used
 
+    // handle highlighting for *abc*, _abc_ separately, as pandoc's
+    // parser is a bit more strict about where '_' can appear
+    var strongUnderscore = {
+        token: ["text", "constant.numeric"],
+        regex: "(\\s+|^)(__.+?__)\\b"
+    };
+
+    var emphasisUnderscore = {
+        token: ["text", "constant.language.boolean"],
+        regex: "(\\s+|^)(_(?=[^_])(?:(?:\\\\.)|(?:[^_\\\\]))*?_)\\b"
+    };
+
+    var strongStars = {
+        token: ["constant.numeric"],
+        regex: "([*][*].+?[*][*])"
+    };
+
+    var emphasisStars = {
+        token: ["constant.language.boolean"],
+        regex: "([*](?=[^*])(?:(?:\\\\.)|(?:[^*\\\\]))*?[*])"
+    };
+
     this.$rules = {
 
         "basic" : [{
@@ -109,13 +131,12 @@ var MarkdownHighlightRules = function() {
                 '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
                 '(\\s*"' +  escaped('"') + '"\\s*)?' +            // "title"
                 "(\\))"                                           // )
-        }, { // strong ** __
-            token : ["constant.numeric", "constant.numeric", "constant.numeric"],
-            regex : "([*]{2}|[_]{2}(?=\\S))(.*?\\S[*_]*)(\\1)"
-        }, { // emphasis * _
-            token : ["constant.language.boolean", "constant.language.boolean", "constant.language.boolean"],
-            regex : "([*]|[_](?=\\S))(.*?\\S[*_]*)(\\1)"
-        }, { //
+        },
+            strongStars,
+            strongUnderscore,
+            emphasisStars,
+            emphasisUnderscore,
+        {
             token : ["text", "keyword", "text"],
             regex : "(<)("+
                 "(?:https?|ftp|dict):[^'\">\\s]+"+
@@ -204,13 +225,12 @@ var MarkdownHighlightRules = function() {
         }, { // MathJax $...$ (org-mode style)
             token : ["markup.list","support.function","markup.list"],
             regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
-        }, { // strong ** __
-            token : ["constant.numeric", "constant.numeric", "constant.numeric"],
-            regex : "([*]{2}|[_]{2}(?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
-        }, { // emphasis * _
-            token : ["constant.language.boolean", "constant.language.boolean", "constant.language.boolean"],
-            regex : "([*]|[_](?=\\S))([^\\r]*?\\S[*_]*)(\\1)"
-        }, { // simple links <url>
+        },
+            strongStars,
+            strongUnderscore,
+            emphasisStars,
+            emphasisUnderscore,
+        { // simple links <url>
             token : ["text", "keyword", "text"],
             regex : "(<)("+
                 "(?:https?|ftp|dict):[^'\">\\s]+"+
@@ -231,7 +251,7 @@ var MarkdownHighlightRules = function() {
             regex : "-?\\@[\\w\\d-]+"
         }, {
             token : "text",
-            regex : "[^\\*_%$`\\[#<>\\\\@]+"
+            regex : "[^\\*_%$`\\[#<>\\\\@\\s]+"
         }, {
             token : "text",
             regex : "\\\\"
