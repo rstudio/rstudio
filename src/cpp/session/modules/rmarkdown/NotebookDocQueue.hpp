@@ -58,6 +58,8 @@ public:
    int charWidth() const;
    bool complete() const;
    CommitMode commitMode() const;
+   int maxUnits() const;
+   int remainingUnits() const;
 
 private:
    std::string docId_;

@@ -196,6 +196,16 @@ json::Object NotebookDocQueue::defaultChunkOptions() const
    return defaultOptions_;
 }
 
+int NotebookDocQueue::remainingUnits() const 
+{
+   return queue_.size();
+}
+
+int NotebookDocQueue::maxUnits() const
+{
+   return maxUnits_;
+}
+
 void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
 {
    defaultOptions_ = options;
