@@ -19,6 +19,7 @@
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
@@ -85,6 +86,8 @@ const char * const kErrorMessage = "errorMessage";
 const char * const kFormAction = "formAction";
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
+
+const char * const kLoginPageHtml = "loginPageHtml";
 
 enum ErrorType 
 {
@@ -243,6 +246,17 @@ void signIn(const http::Request& request,
       variables[kFormAction] = "action=\"" + variables["action"] + "\"";
 
    variables[kAppUri] = request.queryParamValue(kAppUri);
+
+   // include custom login page html
+   std::string loginPageHtml;
+   FilePath loginPageHtmlPath(server::options().authLoginPageHtml());
+   if (loginPageHtmlPath.exists())
+   {
+      Error error = core::readStringFromFile(loginPageHtmlPath, &loginPageHtml);
+      if (error)
+         LOG_ERROR(error);
+   }
+   variables[kLoginPageHtml] = loginPageHtml;
 
    // get the path to the JS file
    Options& options = server::options();

@@ -279,6 +279,9 @@ ProgramStatus Options::read(int argc,
       ("auth-encrypt-password",
         value<bool>(&authEncryptPassword_)->default_value(true),
         "encrypt password sent from login form")
+      ("auth-login-page-html",
+        value<std::string>(&authLoginPageHtml_)->default_value(""),
+        "path to file containing additional html for login page")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
         "limit to users belonging to the specified group")
