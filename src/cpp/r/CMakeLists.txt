@@ -28,7 +28,6 @@ set (R_SOURCE_FILES
    RJson.cpp
    RJsonRpc.cpp
    ROptions.cpp
-   RNullCntxt.cpp
    RRoutines.cpp
    RSexp.cpp
    RSourceManager.cpp

@@ -17,19 +17,18 @@
 #define R_INTERNAL_CONTEXT_HPP
 
 #include "RInterface.hpp"
-#include "RNullCntxt.hpp"
 #include "RCntxt.hpp"
 
 namespace rstudio {
 namespace r {
 namespace context {
 
-template<typename T> class RIntCntxt: public RCntxt
+template<typename T> class RIntCntxt: public RCntxtInterface
 {
 public:
    RIntCntxt(T *pCntxt) :
      pCntxt_(pCntxt)
-   {}
+   { }
 
    SEXP callfun() const
    {
@@ -58,10 +57,10 @@ public:
 
    RCntxt nextcontext() const
    {
-      if (pCntxt_->nextContext == NULL)
-         return RNullCntxt();
+      if (pCntxt_->nextcontext == NULL)
+         return RCntxt();
       else
-         return RIntCntxt<T>(pCntxt_->nextcontext);
+         return RCntxt(pCntxt_->nextcontext);
    }
 
    bool isNull() const

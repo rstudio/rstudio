@@ -16,8 +16,11 @@
 
 #include <r/RCntxt.hpp>
 #include <r/RExec.hpp>
-#include <r/RNullCntxt.hpp>
+#include <r/RIntCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
+#include <r/RInterface.hpp>
+
+#include <boost/make_shared.hpp>
 
 #include <core/Error.hpp>
 
@@ -26,6 +29,20 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace r {
 namespace context {
+
+RCntxt::RCntxt()
+{ }
+
+RCntxt::RCntxt(void *rawCntxt)
+{
+   if (rawCntxt == NULL)
+      return;
+   else if (contextVersion() == RVersion33)
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33> >(
+                                   static_cast<RCNTXT_33*>(rawCntxt));
+   pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32> >(
+                                static_cast<RCNTXT_32*>(rawCntxt));
+}
 
 Error RCntxt::callSummary(std::string* pCallSummary)
 {
@@ -131,7 +148,7 @@ Error RCntxt::invokeFunctionOnCall(const char* rFunction, std::string* pResult)
 
 bool RCntxt::operator==(const RCntxt& other) const
 {
-   return other.rcntxt() == rcntxt();
+   return other.pCntxt_ == pCntxt_;
 }
 
 RCntxt::iterator RCntxt::begin()
@@ -141,7 +158,42 @@ RCntxt::iterator RCntxt::begin()
 
 RCntxt::iterator RCntxt::end()
 {
-   return RCntxt::iterator(RNullCntxt());
+   return RCntxt::iterator(RCntxt());
+}
+
+bool RCntxt::isNull() const
+{
+   return pCntxt_ == NULL;
+}
+
+SEXP RCntxt::callfun() const
+{
+   return pCntxt_ ? R_NilValue : pCntxt_->callfun();
+}
+
+int RCntxt::callflag() const
+{
+   return pCntxt_ ? 0 : pCntxt_->callflag();
+}
+
+SEXP RCntxt::call() const
+{
+   return pCntxt_ ? R_NilValue : pCntxt_->call();
+}
+
+SEXP RCntxt::srcref() const
+{
+   return pCntxt_ ? R_NilValue : pCntxt_->srcref();
+}
+
+SEXP RCntxt::cloenv() const
+{
+   return pCntxt_ ? R_NilValue : pCntxt_->cloenv();
+}
+
+RCntxt RCntxt::nextcontext() const
+{
+   return RCntxt(NULL);
 }
 
 } // namespace context

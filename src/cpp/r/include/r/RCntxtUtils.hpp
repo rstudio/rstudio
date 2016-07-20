@@ -25,6 +25,14 @@ namespace context {
 
 #define BROWSER_FUNCTION 0
 
+enum RCntxtVersion
+{
+   RVersion33,
+   RVersion32
+};
+
+RCntxtVersion contextVersion();
+
 RCntxt globalContext();
    
 bool inBrowseContext();

@@ -15,28 +15,20 @@
 
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
+#include <r/RInterface.hpp>
 
 namespace rstudio {
 namespace r {
 namespace context {
 
-enum RCntxtVersion
-{
-   RVersion33,
-   RVersion32
-};
-
 // TODO: initialize this properly
 RCntxtVersion s_rCntxtVersion;
 
-RCntxt globalContext()
+RCntxtVersion contextVersion()
 {
-   if (s_rCntxtVersion == RVersion331)
-      return RIntCntxt<RCNTXT_33>(getGlobalContext<RCNTXT_33>());
-   else 
-      return RIntCntxt<RCNTXT_32>(getGlobalContext<RCNTXT_32>());
+   return s_rCntxtVersion;
 }
-   
+
 RCntxt firstFunctionContext()
 {
    RCntxt::iterator firstFunContext = RCntxt::begin();
@@ -48,8 +40,8 @@ RCntxt firstFunctionContext()
 }
 
 RCntxt getFunctionContext(const int depth,
-                          int* pFoundDepth = NULL,
-                          SEXP* pEnvironment = NULL)
+                          int* pFoundDepth,
+                          SEXP* pEnvironment)
 {
    RCntxt foundContext = NULL;
    int currentDepth = 0;
@@ -91,7 +83,7 @@ RCntxt getFunctionContext(const int depth,
    }
    if (pEnvironment)
    {
-      *pEnvironment = (foundDepth == 0 || pFoundContext == NULL) ? 
+      *pEnvironment = (foundDepth == 0 || foundContext.isNull()) ?
          R_GlobalEnv : 
          foundContext.cloenv();
    }

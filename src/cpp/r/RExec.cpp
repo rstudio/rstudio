@@ -22,6 +22,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
+#include <r/RCntxt.hpp>
 #include <r/ROptions.hpp>
 
 #include <R_ext/Parse.h>
@@ -298,8 +299,7 @@ Error evaluateString(const std::string& str,
    
 bool atTopLevelContext() 
 {
-   return getGlobalContext() != NULL &&
-          getGlobalContext()->callflag == CTXT_TOPLEVEL;
+   return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
 }
 
 RFunction::RFunction(SEXP functionSEXP)

@@ -17,6 +17,7 @@
 #define R_CONTEXT_HPP
 
 #include "RSexp.hpp"
+#include "RCntxtInterface.hpp"
 
 #include <core/Error.hpp>
 
@@ -26,9 +27,27 @@ namespace rstudio {
 namespace r {
 namespace context {
 
-class RCntxt
+// RCnxt is a public-facing class which wraps entries from the R context
+// stack (RCNXT* in the R headers), which keeps track of execution contexts
+// during the evaluation of R code. Unfortunately, the memory layout
+// in the RCNXT* struct is not identical in all R versions, and consequently
+// it's necessary to wrap them in a layer of abstraction, which this class
+// supplies.
+//
+// It has value semantics; its only data member is a shared pointer to the class
+// managing the RNCTXT* interface. It also implements simple iteration over
+// entries in the context stack. RCnxt::begin() returns an iterator beginning
+// at R_GlobalContext; RCnxt::end() returns a null context entry.
+class RCntxt: public RCntxtInterface
 {
 public:
+   // copy/equality testing
+   RCntxt();
+   RCntxt(void *rawCntxt);
+   bool operator==(const RCntxt& other) const;
+   operator bool() const { return pCntxt_; }
+
+   // utility/accessor functions
    bool hasSourceRefs();
    bool isDebugHidden();
    bool isErrorHandler();
@@ -42,29 +61,30 @@ public:
    core::Error fileName(std::string* pFileName);
    core::Error callSummary(std::string* pCallSummary);
 
-   bool operator==(const RCntxt& other) const;
-
    // implemented by R version specific internal context classes
-   virtual bool isNull() const        = 0;
-   virtual SEXP callfun() const       = 0;
-   virtual int callflag() const       = 0;
-   virtual SEXP call() const          = 0;
-   virtual SEXP srcref() const        = 0;
-   virtual SEXP cloenv() const        = 0;
-   virtual RCntxt nextcontext() const = 0;
+   bool isNull() const;
+   SEXP callfun() const;
+   int callflag() const;
+   SEXP call() const;
+   SEXP srcref() const;
+   SEXP cloenv() const;
+   RCntxt nextcontext() const;
 
    // define an iterator for easy traversal of the context stack
    template <class Value>
    class cntxt_iterator: public boost::iterator_facade<
-            cntxt_iterator<Value>, RCntxt, boost::forward_traversal_tag>
+            cntxt_iterator<Value>,
+            Value,  // value type
+            boost::forward_traversal_tag,
+            Value>  // reference type (always copies)
    {
    public:
       cntxt_iterator():
-         pCntxt_(NULL)
+         context_()
       { }
 
-      explicit cntxt_iterator(Value* pCntxt):
-         pCntxt_(pCntxt)
+      explicit cntxt_iterator(Value pCntxt):
+         context_(pCntxt)
       { }
 
    private:
@@ -72,20 +92,20 @@ public:
 
       void increment()
       {
-         pCntxt_ = pCntxt_->nextcontext();
+         context_ = context_.nextcontext();
       }
 
       bool equal(cntxt_iterator<Value> const& other) const
       {
-         return *pCntxt_ == other.pCntxt_;
+         return context_ == other.context_;
       }
 
-      Value& dereference() const
+      Value dereference() const
       {
-         return *pCntxt_;
+         return context_;
       }
 
-      Value* pCntxt_;
+      Value context_;
    };
 
    typedef cntxt_iterator<RCntxt> iterator;
@@ -95,8 +115,7 @@ public:
    static iterator end();
 
 private:
-   // raw pointer to internal RCNTXT
-   virtual void* rcntxt() const = 0;
+   boost::shared_ptr<RCntxtInterface> pCntxt_;
 
    core::Error invokeFunctionOnCall(const char* rFunction, 
                                     std::string* pResult);

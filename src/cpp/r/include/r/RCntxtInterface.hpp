@@ -1,5 +1,5 @@
 /*
- * RNullCntxt.hpp
+ * RCntxtInterface.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,28 +13,28 @@
  *
  */
 
-#ifndef R_NULL_CONTEXT_HPP
-#define R_NULL_CONTEXT_HPP
+#ifndef R_CONTEXT_INTERFACE_HPP
+#define R_CONTEXT_INTERFACE_HPP
 
-#include <core/Error.hpp>
-
-#include "RCntxt.hpp"
+#include "RSexp.hpp"
 
 namespace rstudio {
 namespace r {
 namespace context {
 
-class RNullCntxt: public RCntxt
+// forward declare
+class RCntxt;
+
+class RCntxtInterface
 {
 public:
-   bool isNull() const;
-   SEXP callfun() const;
-   int callflag() const;
-   SEXP call() const;
-   SEXP srcref() const;
-   SEXP cloenv() const;
-   RCntxt nextcontext() const;
-   void *rcntxt() const;
+   virtual bool isNull() const        = 0;
+   virtual SEXP callfun() const       = 0;
+   virtual int callflag() const       = 0;
+   virtual SEXP call() const          = 0;
+   virtual SEXP srcref() const        = 0;
+   virtual SEXP cloenv() const        = 0;
+   virtual RCntxt nextcontext() const = 0;
 };
 
 } // namespace context
