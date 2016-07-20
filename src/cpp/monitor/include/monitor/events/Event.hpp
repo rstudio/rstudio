@@ -41,7 +41,7 @@ enum EventScope
 #define kSessionQuitEvent        2004
 #define kSessionExitEvent        2005
 #define kSessionAdminSuspend     2006
-#define kSessionAdminTermiante   2007
+#define kSessionAdminTerminate   2007
 
 class Event
 {
