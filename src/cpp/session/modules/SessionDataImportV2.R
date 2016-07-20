@@ -662,6 +662,16 @@
          }
       )
 
+      parsingErrorsFromMode <- function(mode, data) {
+         modeFunc <- list(
+            "text" = function(data) {
+               length(readr::problems(data)$row)
+            }
+         )
+
+         if (identical(modeFunc[[mode]], NULL)) 0 else modeFunc[[mode]](data)
+      }
+
       if (dataImportOptions$mode %in% names(beforeImportFromOptions))
       {
          beforeImportFromOptions[[dataImportOptions$mode]]()
@@ -679,7 +689,7 @@
          columns <- .rs.describeCols(data, maxCols, maxFactors)
       }
       
-      parsingErrors <-length(readr::problems(data)$row)
+      parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
 
       cnames <- names(data)
       size <- nrow(data)
