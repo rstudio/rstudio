@@ -87,6 +87,8 @@ private:
    std::string data_;
 };
 
+std::string eventScopeAndIdAsString(const Event& event);
+
 std::ostream& operator<<(std::ostream& ostr, const Event& event);
 
 } // namespace monitor
