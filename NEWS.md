@@ -57,6 +57,7 @@
 * Added sudo, lsb-release, and libssl1.0.0 packages to Debian dependencies
 * Server Pro: Auditing for authentication and session start/suspend/exit events
 * Server Pro: Ability to configure per-user and per-group session timeouts
+* Server Pro: Ability to include custom HTML within server sign-in page
 * Server Pro: Update to Nginx 1.10.1
 
 ### Miscellaneous
