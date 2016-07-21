@@ -37,5 +37,8 @@ public interface ListIterator<E> extends Iterator<E> {
 
   int previousIndex();
 
+  @Override
+  void remove();
+
   void set(E o);
 }
