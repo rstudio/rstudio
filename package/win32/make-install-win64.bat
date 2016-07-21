@@ -17,7 +17,7 @@ set PATH=%MINGW64_64BIT_PATH%;%PATH%
 REM perform 64-bit build 
 mkdir %WIN64_BUILD_PATH%
 cd %WIN64_BUILD_PATH%
-del CMakeCache.txt
+if exist CMakeCache.txt del CMakeCache.txt
 cmake -G"MinGW Makefiles" ^
       -DCMAKE_INSTALL_PREFIX:String=%INSTALL_PATH% ^
       -DRSTUDIO_TARGET=SessionWin64 ^
