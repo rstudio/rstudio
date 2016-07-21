@@ -44,12 +44,12 @@ RCntxt::RCntxt(void *rawCntxt)
                                 static_cast<RCNTXT_32*>(rawCntxt));
 }
 
-Error RCntxt::callSummary(std::string* pCallSummary)
+Error RCntxt::callSummary(std::string* pCallSummary) const
 {
    return invokeFunctionOnCall(".rs.callSummary", pCallSummary);
 }
 
-Error RCntxt::functionName(std::string* pFunctionName)
+Error RCntxt::functionName(std::string* pFunctionName) const
 {
    return invokeFunctionOnCall(".rs.functionNameFromCall", pFunctionName);
 }
@@ -77,7 +77,7 @@ SEXP RCntxt::sourceRefs() const
    return r::sexp::getAttrib(originalFunctionCall(), "srcref");
 }
 
-std::string RCntxt::shinyFunctionLabel()
+std::string RCntxt::shinyFunctionLabel() const
 {
    std::string label;
    SEXP s = r::sexp::getAttrib(originalFunctionCall() , "_rs_shinyDebugLabel");
@@ -103,13 +103,13 @@ SEXP RCntxt::originalFunctionCall() const
    return callObject;
 }
 
-Error RCntxt::fileName(std::string* pFileName)
+Error RCntxt::fileName(std::string* pFileName) const
 {
    if (srcref() && TYPEOF(srcref()) != NILSXP)
    {
       r::sexp::Protect protect;
       SEXP fileName;
-      Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref)
+      Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref())
                     .call(&fileName, &protect);
       if (error)
           return error;
@@ -127,7 +127,8 @@ Error RCntxt::fileName(std::string* pFileName)
 // call objects can't be passed as primary values through our R interface
 // (early evaluation can be triggered) so we wrap them in an attribute attached
 // to a dummy value when we need to pass them through
-Error RCntxt::invokeFunctionOnCall(const char* rFunction, std::string* pResult)
+Error RCntxt::invokeFunctionOnCall(const char* rFunction,
+                                   std::string* pResult) const
 {
    SEXP result;
    r::sexp::Protect protect;
@@ -168,32 +169,32 @@ bool RCntxt::isNull() const
 
 SEXP RCntxt::callfun() const
 {
-   return pCntxt_ ? R_NilValue : pCntxt_->callfun();
+   return pCntxt_ ? pCntxt_->callfun() : R_NilValue;
 }
 
 int RCntxt::callflag() const
 {
-   return pCntxt_ ? 0 : pCntxt_->callflag();
+   return pCntxt_ ? pCntxt_->callflag() : 0;
 }
 
 SEXP RCntxt::call() const
 {
-   return pCntxt_ ? R_NilValue : pCntxt_->call();
+   return pCntxt_ ? pCntxt_->call() : R_NilValue;
 }
 
 SEXP RCntxt::srcref() const
 {
-   return pCntxt_ ? R_NilValue : pCntxt_->srcref();
+   return pCntxt_ ? pCntxt_->srcref() : R_NilValue;
 }
 
 SEXP RCntxt::cloenv() const
 {
-   return pCntxt_ ? R_NilValue : pCntxt_->cloenv();
+   return pCntxt_ ? pCntxt_->cloenv() : R_NilValue;
 }
 
 RCntxt RCntxt::nextcontext() const
 {
-   return RCntxt(NULL);
+   return pCntxt_ ? pCntxt_->nextcontext() : RCntxt(NULL);
 }
 
 } // namespace context

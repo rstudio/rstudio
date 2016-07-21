@@ -55,11 +55,11 @@ public:
    SEXP sourceRefs() const;
    SEXP originalFunctionCall() const;
 
-   std::string shinyFunctionLabel();
+   std::string shinyFunctionLabel() const;
 
-   core::Error functionName(std::string* pFunctionName);   
-   core::Error fileName(std::string* pFileName);
-   core::Error callSummary(std::string* pCallSummary);
+   core::Error functionName(std::string* pFunctionName) const;
+   core::Error fileName(std::string* pFileName) const;
+   core::Error callSummary(std::string* pCallSummary) const;
 
    // implemented by R version specific internal context classes
    bool isNull() const;
@@ -76,7 +76,7 @@ public:
             cntxt_iterator<Value>,
             Value,  // value type
             boost::forward_traversal_tag,
-            Value>  // reference type (always copies)
+            const Value&>  // reference type
    {
    public:
       cntxt_iterator():
@@ -100,7 +100,7 @@ public:
          return context_ == other.context_;
       }
 
-      Value dereference() const
+      const Value& dereference() const
       {
          return context_;
       }
@@ -118,7 +118,7 @@ private:
    boost::shared_ptr<RCntxtInterface> pCntxt_;
 
    core::Error invokeFunctionOnCall(const char* rFunction, 
-                                    std::string* pResult);
+                                    std::string* pResult) const;
 };
 
 } // namespace context

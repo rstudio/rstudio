@@ -1,7 +1,7 @@
 /*
  * SessionEnvironment.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -659,7 +659,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // browser call somewhere on the stack. if there isn't, then we're
       // probably just waiting for user input inside a function (e.g. scan());
       // assume the user isn't interested in seeing the function's internals.
-      if (*pContextDepth == 0 && s_browserActive)
+      if (*pContextDepth == 0 && !s_browserActive)
       {
          return;
       }
