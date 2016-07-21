@@ -25,11 +25,12 @@ namespace context {
 
 #define BROWSER_FUNCTION 0
 
+// represents the version of the memory layout of the RCNTXT structure
 enum RCntxtVersion
 {
-   RVersion33,
-   RVersion32,
-   RVersionUnknown
+   RVersion33, // R 3.3.0 and above
+   RVersion32, // R 3.2.5 and below
+   RVersionUnknown 
 };
 
 RCntxtVersion contextVersion();

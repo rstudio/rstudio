@@ -23,6 +23,8 @@ namespace rstudio {
 namespace r {
 namespace context {
 
+// header-only implementation of the RCntxtInterface; can serve as an 
+// implementation for any memory layout (depending on the template parameter)
 template<typename T> class RIntCntxt: public RCntxtInterface
 {
 public:

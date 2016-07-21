@@ -33,6 +33,8 @@ namespace context {
 RCntxt::RCntxt()
 { }
 
+// constructs an RCntxt object from a raw RNTCXT* pointer; this is where the 
+// we set up the appropriate interface pointer based on the R version
 RCntxt::RCntxt(void *rawCntxt)
 {
    if (rawCntxt == NULL)

@@ -336,7 +336,7 @@ Error setEnvironmentName(int contextDepth,
       // This would be better wrapped in an R function, but this code may
       // run during session init when tools:rstudio isn't yet attached to the
       // search path.
-      SEXP env = contextDepth > 0 && !context.isNull() ?
+      SEXP env = contextDepth > 0 && context ?
                         context.cloenv() :
                         R_GlobalEnv;
       std::string candidateEnv;

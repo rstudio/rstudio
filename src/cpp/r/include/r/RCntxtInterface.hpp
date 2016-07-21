@@ -25,15 +25,20 @@ namespace context {
 // forward declare
 class RCntxt;
 
+// RCntxtInterface represents the subset of members of the RCNTXT struct which
+// are accessed elsewhere; it may be safely extended with other members.
 class RCntxtInterface
 {
 public:
-   virtual bool isNull() const        = 0;
+   // accessors for RCNTXT entries
    virtual SEXP callfun() const       = 0;
    virtual int callflag() const       = 0;
    virtual SEXP call() const          = 0;
    virtual SEXP srcref() const        = 0;
    virtual SEXP cloenv() const        = 0;
+
+   // computed properties
+   virtual bool isNull() const        = 0;
    virtual RCntxt nextcontext() const = 0;
 };
 

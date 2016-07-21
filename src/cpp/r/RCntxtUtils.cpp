@@ -32,7 +32,7 @@ RCntxtVersion contextVersion()
    if (s_rCntxtVersion == RVersionUnknown)
    {
       // currently there are only two known memory layouts for the R context
-      // structure
+      // structure (see RCntxtVersion enum)
       bool is33 = false;
       core::Error error = r::exec::evaluateString("getRversion() >= '3.3.0'",
                                                   &is33);
