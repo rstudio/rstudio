@@ -45,13 +45,11 @@ if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
       call make-install-win64.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
 )
 
-REM create packages (skip for 'quick' build)
-if not "%1" == "quick" (
-      cd "%BUILD_DIR%"
-      cpack -G NSIS
-      if "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP
-      cd ..
-)
+REM create packages
+cd "%BUILD_DIR%"
+if not "%1" == "quick" cpack -G NSIS
+if "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP
+cd ..
 
 REM reset modified environment variables (PATH)
 endlocal
