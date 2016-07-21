@@ -134,7 +134,7 @@ enum {
 namespace rstudio {
 namespace r {
 
-void* getGlobalContext()
+inline void* getGlobalContext()
 {
    return R_GlobalContext;
 }
