@@ -355,16 +355,21 @@ void MainWindow::onClipboardDataChanged()
 {
    static QString s_data;
 
-   // if the user attempts to copy empty data to the clipboard,
+   // if the user attempts to copy empty text to the clipboard,
    // undo that action and replace it with the last copied data
    QClipboard* clipboard = QApplication::clipboard();
-   QString data = clipboard->text();
-   if (data.isEmpty() && !s_data.isEmpty())
-      clipboard->setText(s_data);
+   const QMimeData* mimeData = clipboard->mimeData();
 
-   // save the copied text to static var
-   if (!data.isEmpty())
-      s_data = data;
+   if (mimeData->hasText())
+      s_data = mimeData->text();
+
+   bool clipboardHasData =
+         mimeData->hasHtml()  ||
+         mimeData->hasImage() ||
+         mimeData->hasText();
+
+   if (!clipboardHasData)
+      clipboard->setText(s_data);
 }
 
 } // namespace desktop
