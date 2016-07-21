@@ -97,7 +97,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (ChunkOutputWidget.isEditorStyleCached())
          {
             notebook_.setChunkExecuting(executingUnit_.getChunkId(), 
-                  executingUnit_.getExecMode());
+                  executingUnit_.getExecMode(),
+                  executingUnit_.getExecScope());
          }
       }
       
@@ -333,7 +334,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
 
          if (executingUnit_ != null)
             notebook_.setChunkExecuting(event.getChunkId(), 
-                  executingUnit_.getExecMode());
+                  executingUnit_.getExecMode(), 
+                  executingUnit_.getExecScope());
 
          break;
 

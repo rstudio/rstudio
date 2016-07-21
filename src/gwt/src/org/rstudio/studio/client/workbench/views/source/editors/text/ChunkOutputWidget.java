@@ -244,8 +244,11 @@ public class ChunkOutputWidget extends Composite
                           final boolean ensureVisible)
    {
       // special behavior for chunks which don't have output included by 
-      // default
-      if (!options_.include() && !hasErrors_)
+      // default: hide unless chunk includes errors or is not being run as 
+      // a unit
+      if (!options_.include() && 
+          !hasErrors_ && 
+          execScope_ == NotebookQueueUnit.EXEC_SCOPE_CHUNK)
       {
          if (isVisible())
          {
@@ -346,7 +349,7 @@ public class ChunkOutputWidget extends Composite
       unregisterConsoleEvents();
    }
 
-   public void setCodeExecuting(int mode)
+   public void setCodeExecuting(int mode, int scope)
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)
@@ -365,6 +368,7 @@ public class ChunkOutputWidget extends Composite
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
       execMode_ = mode;
+      execScope_ = scope;
       showBusyState();
    }
    
@@ -1114,6 +1118,7 @@ public class ChunkOutputWidget extends Composite
    
    private int state_ = CHUNK_EMPTY;
    private int execMode_ = NotebookQueueUnit.EXEC_MODE_SINGLE;
+   private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
