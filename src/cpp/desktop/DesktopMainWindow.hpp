@@ -63,7 +63,6 @@ protected slots:
    void onWorkbenchInitialized();
    void resetMargins();
    void commitDataRequest(QSessionManager &manager);
-   void onClipboardDataChanged();
 
 protected:
    virtual void closeEvent(QCloseEvent*);

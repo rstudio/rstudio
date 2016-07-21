@@ -21,7 +21,6 @@
 #include <QtWebKit>
 #include <QToolBar>
 #include <QWebFrame>
-#include <QClipboard>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -92,9 +91,6 @@ MainWindow::MainWindow(QUrl url) :
    connect(qApp, SIGNAL(commitDataRequest(QSessionManager&)),
            this, SLOT(commitDataRequest(QSessionManager&)),
            Qt::DirectConnection);
-
-   connect(QApplication::clipboard(), SIGNAL(dataChanged()),
-           this, SLOT(onClipboardDataChanged()));
 
    setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
 
@@ -349,27 +345,6 @@ void MainWindow::onActivated()
 {
    if (desktopHooksAvailable())
       invokeCommand(QString::fromUtf8("vcsRefreshNoError"));
-}
-
-void MainWindow::onClipboardDataChanged()
-{
-   static QString s_data;
-
-   // if the user attempts to copy empty text to the clipboard,
-   // undo that action and replace it with the last copied data
-   QClipboard* clipboard = QApplication::clipboard();
-   const QMimeData* mimeData = clipboard->mimeData();
-
-   if (mimeData->hasText())
-      s_data = mimeData->text();
-
-   bool clipboardHasData =
-         mimeData->hasHtml()  ||
-         mimeData->hasImage() ||
-         mimeData->hasText();
-
-   if (!clipboardHasData)
-      clipboard->setText(s_data);
 }
 
 } // namespace desktop
