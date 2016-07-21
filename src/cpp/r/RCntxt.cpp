@@ -54,25 +54,25 @@ Error RCntxt::functionName(std::string* pFunctionName)
    return invokeFunctionOnCall(".rs.functionNameFromCall", pFunctionName);
 }
 
-bool RCntxt::isDebugHidden()
+bool RCntxt::isDebugHidden() const
 {
    SEXP hideFlag = r::sexp::getAttrib(callfun(), "hideFromDebugger");
    return TYPEOF(hideFlag) != NILSXP && r::sexp::asLogical(hideFlag);
 }
 
-bool RCntxt::isErrorHandler()
+bool RCntxt::isErrorHandler() const
 {
    SEXP errFlag = r::sexp::getAttrib(callfun(), "errorHandlerType");
    return TYPEOF(errFlag) == INTSXP;
 }
 
-bool RCntxt::hasSourceRefs()
+bool RCntxt::hasSourceRefs() const
 {
    SEXP refs = sourceRefs();
    return refs && TYPEOF(refs) != NILSXP;
 }
 
-SEXP RCntxt::sourceRefs()
+SEXP RCntxt::sourceRefs() const
 {
    return r::sexp::getAttrib(originalFunctionCall(), "srcref");
 }
@@ -92,7 +92,7 @@ std::string RCntxt::shinyFunctionLabel()
 // slot that includes the function's original contents. use this instead if
 // it's set up. (consider: is it safe to assume that S4 objects here are always
 // traced functions, or do we need to compare classes to be safe?)
-SEXP RCntxt::originalFunctionCall()
+SEXP RCntxt::originalFunctionCall() const
 {
    SEXP callObject = callfun();
 

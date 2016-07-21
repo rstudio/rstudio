@@ -16,17 +16,36 @@
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
+#include <r/RExec.hpp>
 
 namespace rstudio {
 namespace r {
 namespace context {
 
-// TODO: initialize this properly
-RCntxtVersion s_rCntxtVersion;
 
 RCntxtVersion contextVersion()
 {
+   // cache the context version (we look this up constantly to figure out the
+   // appropriate offsets into the RCNXT struct)
+   static RCntxtVersion s_rCntxtVersion;
+
+   if (s_rCntxtVersion == RVersionUnknown)
+   {
+      // currently there are only two known memory layouts for the R context
+      // structure
+      bool is33 = false;
+      core::Error error = r::exec::evaluateString(
+               "getRversion() > \"3.3.0\"", &is33);
+      if (error)
+         LOG_ERROR(error);
+      s_rCntxtVersion = is33 ? RVersion33 : RVersion32;
+   }
    return s_rCntxtVersion;
+}
+
+RCntxt globalContext()
+{
+   return RCntxt(getGlobalContext());
 }
 
 RCntxt firstFunctionContext()

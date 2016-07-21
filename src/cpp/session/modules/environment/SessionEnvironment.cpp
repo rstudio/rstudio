@@ -591,7 +591,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = NULL;
-   getFunctionContext(requestedDepth, NULL, &env);
+   r::context::getFunctionContext(requestedDepth, NULL, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -639,7 +639,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    s_browserActive = r::context::inBrowseContext();
    if (*pContextDepth > 0 && s_browserActive)
    {
-      context = r::globalContext();
+      context = r::context::globalContext();
       environmentTop = R_GlobalEnv;
    }
    else
@@ -647,8 +647,8 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // If we're not currently debugging, look for user code (we prefer to
       // show the user their own code on entering debug), but once debugging,
       // allow the user to explore other code.
-      context = r::getFunctionContext(BROWSER_FUNCTION,
-                                      &depth, &environmentTop);
+      context = r::context::getFunctionContext(BROWSER_FUNCTION,
+                                               &depth, &environmentTop);
    }
 
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
@@ -674,7 +674,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // start monitoring the enviroment at the new depth
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
-      *pCurrentContext = pRContext;
+      *pCurrentContext = context;
       enqueContextDepthChangedEvent(depth, pLineDebugState.get());
    }
    // if we're debugging and stayed in the same frame, update the line number
@@ -682,15 +682,16 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    {
       // we don't want to send linenumber updates if the current depth is inside
       // a debug-hidden function
-      if (!r::inDebugHiddenContext())
+      if (!r::context::inDebugHiddenContext())
       {
          // check to see if we have real source references for the currently
          // executing context
-         SEXP srcref = r::globalContext().srcref();
+         SEXP srcref = r::context::globalContext().srcref();
          if (!isValidSrcref(srcref))
          {
             // we don't, so reconstruct them from R output
-            r::context::RCntxt firstFunContext = firstFunctionContext();
+            r::context::RCntxt firstFunContext =
+                  r::context::firstFunctionContext();
             srcref = simulatedSourceRefsOfContext(firstFunContext, NULL,
                                                   pLineDebugState.get());
          }
@@ -733,7 +734,7 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
    // If looking at a non-toplevel context, start from there; otherwise, start
    // from the global environment.
    SEXP env = *pContextDepth > 0 ?
-                  pCurrentContext->cloenv(),
+                  pCurrentContext->cloenv() :
                   R_GlobalEnv;
    pResponse->setResult(environmentNames(env));
    return Success();
@@ -744,7 +745,8 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   RCntxt context = getFunctionContext(BROWSER_FUNCTION, &contextDepth);
+   r::context::RCntxt context = r::context::getFunctionContext(
+            BROWSER_FUNCTION, &contextDepth);
    if (contextDepth == 0 || !r::context::inBrowseContext())
    {
       // Not actively debugging; see if we have a stored environment name to

@@ -48,12 +48,12 @@ public:
    operator bool() const { return pCntxt_; }
 
    // utility/accessor functions
-   bool hasSourceRefs();
-   bool isDebugHidden();
-   bool isErrorHandler();
+   bool hasSourceRefs() const;
+   bool isDebugHidden() const;
+   bool isErrorHandler() const;
 
-   SEXP sourceRefs();
-   SEXP originalFunctionCall();
+   SEXP sourceRefs() const;
+   SEXP originalFunctionCall() const;
 
    std::string shinyFunctionLabel();
 

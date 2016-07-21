@@ -134,10 +134,9 @@ enum {
 namespace rstudio {
 namespace r {
 
-template<typename T>
-inline T* getGlobalContext()
+void* getGlobalContext()
 {
-   return static_cast<T*>(R_GlobalContext);
+   return R_GlobalContext;
 }
 
 } // namespace r

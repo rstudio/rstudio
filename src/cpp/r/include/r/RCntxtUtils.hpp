@@ -28,7 +28,8 @@ namespace context {
 enum RCntxtVersion
 {
    RVersion33,
-   RVersion32
+   RVersion32,
+   RVersionUnknown
 };
 
 RCntxtVersion contextVersion();

@@ -30,6 +30,7 @@
 
 #include <boost/foreach.hpp>
 
+#include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -102,7 +103,7 @@ public:
 
       // defer if R is currently executing code (we'll initiate processing when
       // the console continues)
-      if (r::getGlobalContext()->nextcontext != NULL)
+      if (r::context::globalContext().nextcontext())
          return Success();
 
       // if we have a currently executing unit, execute it; otherwise, pop the
