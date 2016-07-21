@@ -396,7 +396,9 @@
       "statistics" = function() {
          # load parameters
          options <- list()
-         options[["path"]] <- cacheOrFileFromOptions(dataImportOptions)
+
+         # current version of haven uses "path", next version uses "file"
+         options[["path"]] <- options[["file"]] <- cacheOrFileFromOptions(dataImportOptions)
          options[["b7dat"]] <- cacheOrFileFromOptions(dataImportOptions)
          options[["b7cat"]] <- cacheOrFileFromOptions(dataImportOptions, "modelLocation")
 
@@ -410,7 +412,7 @@
 
          # set special parameter types
          optionTypes <- list()
-         optionTypes[["path"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
+         optionTypes[["path"]] <- optionTypes[["file"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
          optionTypes[["b7dat"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
          optionTypes[["b7cat"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions, "modelLocation")
 
@@ -662,6 +664,16 @@
          }
       )
 
+      parsingErrorsFromMode <- function(mode, data) {
+         modeFunc <- list(
+            "text" = function(data) {
+               length(readr::problems(data)$row)
+            }
+         )
+
+         if (identical(modeFunc[[mode]], NULL)) 0 else modeFunc[[mode]](data)
+      }
+
       if (dataImportOptions$mode %in% names(beforeImportFromOptions))
       {
          beforeImportFromOptions[[dataImportOptions$mode]]()
@@ -679,7 +691,7 @@
          columns <- .rs.describeCols(data, maxCols, maxFactors)
       }
       
-      parsingErrors <-length(readr::problems(data)$row)
+      parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
 
       cnames <- names(data)
       size <- nrow(data)

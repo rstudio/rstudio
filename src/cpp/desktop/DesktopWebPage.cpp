@@ -394,5 +394,20 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
    shinyDialogUrl_ = shinyDialogUrl;
 }
 
+void WebPage::triggerAction(WebAction action, bool checked)
+{
+   // swallow copy events when the selection is empty
+   if (action == QWebPage::Copy || action == QWebPage::Cut)
+   {
+      QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
+      bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
+      if (emptySelection)
+         return;
+   }
+
+   // delegate to base
+   QWebPage::triggerAction(action, checked);
 }
-}
+
+} // namespace desktop
+} // namespace rstudio

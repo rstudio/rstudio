@@ -150,6 +150,11 @@ public:
       return authEncryptPassword_;
    }
 
+   std::string authLoginPageHtml()
+   {
+      return authLoginPageHtml_;
+   }
+
    std::string authRequiredUserGroup()
    {
       return std::string(authRequiredUserGroup_.c_str());
@@ -260,6 +265,7 @@ private:
    bool authValidateUsers_;
    int authStaySignedInDays_;
    bool authEncryptPassword_;
+   std::string authLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;

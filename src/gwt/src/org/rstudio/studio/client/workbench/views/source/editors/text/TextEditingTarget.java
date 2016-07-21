@@ -2601,6 +2601,10 @@ public class TextEditingTarget implements
    {
       docDisplay_.focus();
       
+      // Save folds (we need to remove them temporarily for the rename helper)
+      final JsArray<AceFold> folds = docDisplay_.getFolds();
+      docDisplay_.unfoldAll();
+      
       int matches = renameHelper_.renameInScope();
       if (matches <= 0)
       {
@@ -2610,6 +2614,8 @@ public class TextEditingTarget implements
             view_.getStatusBar().showMessage(message, 1000);
          }
          
+         for (AceFold fold : JsUtil.asIterable(folds))
+            docDisplay_.addFold(fold.getRange());
          return;
       }
       
@@ -2625,6 +2631,13 @@ public class TextEditingTarget implements
       docDisplay_.disableSearchHighlight();
       view_.getStatusBar().showMessage(message, new HideMessageHandler()
       {
+         private boolean onRenameFinished(boolean value)
+         {
+            for (AceFold fold : JsUtil.asIterable(folds))
+               docDisplay_.addFold(fold.getRange());
+            return value;
+         }
+         
          @Override
          public boolean onNativePreviewEvent(NativePreviewEvent preview)
          {
@@ -2638,7 +2651,7 @@ public class TextEditingTarget implements
                docDisplay_.exitMultiSelectMode();
                docDisplay_.clearSelection();
                docDisplay_.enableSearchHighlight();
-               return true;
+               return onRenameFinished(true);
             }
 
             // Otherwise, handle key events
@@ -2654,7 +2667,7 @@ public class TextEditingTarget implements
                   docDisplay_.exitMultiSelectMode();
                   docDisplay_.clearSelection();
                   docDisplay_.enableSearchHighlight();
-                  return true;
+                  return onRenameFinished(true);
                }
             }
             

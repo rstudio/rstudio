@@ -1194,8 +1194,6 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
 Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
                                   json::JsonRpcResponse* pResponse)
 {
@@ -1205,26 +1203,11 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // get document contents
-   using namespace source_database;
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   error = source_database::get(id, pDoc);
+   error = evaluateRmdParams(id);
    if (error)
    {
       LOG_ERROR(error);
       return error;
-   }
-
-   // evaluate params if we can
-   if (module_context::isPackageVersionInstalled("knitr", "1.10"))
-   {
-      error = r::exec::RFunction(".rs.evaluateRmdParams", pDoc->contents())
-                                                                      .call();
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
    }
 
    // indicate to the client whether R currently has executing code on the
@@ -1356,6 +1339,26 @@ void onResume(const Settings&)
 }
 
 } // anonymous namespace
+
+Error evaluateRmdParams(const std::string& docId)
+{
+   // get document contents
+   using namespace source_database;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   Error error = source_database::get(docId, pDoc);
+   if (error)
+      return error;
+
+   // evaluate params if we can
+   if (module_context::isPackageVersionInstalled("knitr", "1.10"))
+   {
+      error = r::exec::RFunction(".rs.evaluateRmdParams", pDoc->contents())
+                                .call();
+      if (error)
+         return error;
+   }
+   return Success();
+}
 
 bool knitParamsAvailable()
 {

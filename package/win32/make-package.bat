@@ -41,13 +41,13 @@ cd ..
 
 REM perform 64-bit build and install it into the 32-bit tree
 REM (but only do this if we are on win64)
-IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
+if "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
       call make-install-win64.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
 )
 
 REM create packages
 cd "%BUILD_DIR%"
-cpack -G NSIS
+if not "%1" == "quick" cpack -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP
 cd ..
 

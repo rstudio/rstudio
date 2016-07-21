@@ -17,8 +17,6 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QTemporaryFile>
-
-
 #include <QStyleFactory>
 
 #include <core/system/System.hpp>

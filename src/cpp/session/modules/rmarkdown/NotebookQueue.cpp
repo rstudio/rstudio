@@ -20,6 +20,7 @@
 
 
 #include "SessionRmdNotebook.hpp"
+#include "SessionRMarkdown.hpp"
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
 #include "NotebookExec.hpp"
@@ -321,6 +322,8 @@ private:
 
    Error executeNextUnit(ExpressionMode mode)
    {
+      Error error;
+
       // no work to do if we have no documents
       if (queue_.empty())
          return Success();
@@ -330,12 +333,21 @@ private:
       if (docQueue->complete())
          return Success();
 
+      // if this is the first unit in the queue, evaluate document-wide 
+      // knit parameters if appropriate
+      if (docQueue->maxUnits() == docQueue->remainingUnits())
+      {
+         error = evaluateRmdParams(docQueue->docId());
+         if (error)
+            LOG_ERROR(error);
+      }
+
       boost::shared_ptr<NotebookQueueUnit> unit = docQueue->firstUnit();
 
       // extract the default chunk options, then augment with the unit's 
       // chunk-specific options
       json::Object chunkOptions;
-      Error error = unit->parseOptions(&chunkOptions);
+      error = unit->parseOptions(&chunkOptions);
       if (error)
          LOG_ERROR(error);
       ChunkOptions options(docQueue->defaultChunkOptions(), chunkOptions);
@@ -524,6 +536,7 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
    json::Object docObj;
    Error error = json::readParams(request.params, &docObj);
 
+   // deserialize queue from json
    boost::shared_ptr<NotebookDocQueue> pQueue;
    error = NotebookDocQueue::fromJson(docObj, &pQueue);
    if (error)
