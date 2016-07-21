@@ -40,8 +40,9 @@ RCntxt::RCntxt(void *rawCntxt)
    else if (contextVersion() == RVersion33)
       pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33> >(
                                    static_cast<RCNTXT_33*>(rawCntxt));
-   pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32> >(
-                                static_cast<RCNTXT_32*>(rawCntxt));
+   else
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_32> >(
+                                   static_cast<RCNTXT_32*>(rawCntxt));
 }
 
 Error RCntxt::callSummary(std::string* pCallSummary) const

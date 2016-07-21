@@ -637,7 +637,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
    // switch back to the top level; otherwise, examine the stack and find the
    // first function there running user code.
    s_browserActive = r::context::inBrowseContext();
-   if (*pContextDepth > 0 && s_browserActive)
+   if (*pContextDepth > 0 && !s_browserActive)
    {
       context = r::context::globalContext();
       environmentTop = R_GlobalEnv;
