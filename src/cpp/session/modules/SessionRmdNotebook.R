@@ -64,7 +64,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       stop("No file at path '", rmdPath, "'")
    
    # tolerate missing cache (implies there's no chunk outputs)
-   rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
+   rmdPath <- path.expand(rmdPath)
    rmdContents <- .rs.readLines(rmdPath)
    
    # Begin collecting the units that form the Rnb data structure
