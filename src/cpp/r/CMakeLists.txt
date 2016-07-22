@@ -20,6 +20,8 @@ file(GLOB_RECURSE R_HEADER_FILES "*.h*")
 
 # source files
 set (R_SOURCE_FILES
+   RCntxt.cpp
+   RCntxtUtils.cpp
    RErrorCategory.cpp
    RExec.cpp
    RFunctionHook.cpp
