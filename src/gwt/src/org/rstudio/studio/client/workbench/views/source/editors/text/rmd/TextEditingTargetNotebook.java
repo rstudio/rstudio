@@ -598,7 +598,8 @@ public class TextEditingTargetNotebook
          NotebookQueueUnit unit = queue_.executingUnit();
          if (unit != null)
          {
-            setChunkExecuting(unit.getChunkId(), unit.getExecMode());
+            setChunkExecuting(unit.getChunkId(), unit.getExecMode(),
+                  unit.getExecScope());
          }
       }
    }
@@ -1110,7 +1111,7 @@ public class TextEditingTargetNotebook
       });
    }
    
-   public void setChunkExecuting(String chunkId, int mode)
+   public void setChunkExecuting(String chunkId, int mode, int execScope)
    {
       // let the chunk widget know it's started executing
       if (outputs_.containsKey(chunkId))
@@ -1125,7 +1126,7 @@ public class TextEditingTargetNotebook
                                                 scope.getEnd()));
          }
 
-         output.getOutputWidget().setCodeExecuting(mode);
+         output.getOutputWidget().setCodeExecuting(mode, execScope);
          
          // scroll the widget into view if it's a single-shot exec
          if (mode == NotebookQueueUnit.EXEC_MODE_SINGLE)
