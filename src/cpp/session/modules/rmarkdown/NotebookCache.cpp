@@ -151,8 +151,10 @@ Error notebookContentMatches(const FilePath& nbPath, const FilePath& rmdPath,
 {
    // extract content from notebook
    std::string nbRmdContents;
-   Error error = r::exec::RFunction(".rs.extractRmdFromNotebook", 
-         nbPath.absolutePath()).call(&nbRmdContents);
+   r::exec::RFunction extractRmdFromNotebook(
+            ".rs.extractRmdFromNotebook",
+            string_utils::utf8ToSystem(nbPath.absolutePath()));
+   Error error = extractRmdFromNotebook.call(&nbRmdContents);
    if (error) 
       return error;
    if (pContents)
@@ -303,8 +305,9 @@ void onDocAdded(const std::string& id)
    // file
    if (!cachePath.exists() && notebookPath.exists())
    {
-      error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
-            notebookPath.absolutePath()).call();
+      error = r::exec::RFunction(
+               ".rs.hydrateCacheFromNotebook",
+               string_utils::utf8ToSystem(notebookPath.absolutePath())).call();
       if (error)
          LOG_ERROR(error);
       return;
@@ -357,8 +360,10 @@ void onDocAdded(const std::string& id)
          return;
       }
 
-      error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
-            notebookPath.absolutePath()).call();
+      error = r::exec::RFunction(
+               ".rs.hydrateCacheFromNotebook", 
+               string_utils::utf8ToSystem(notebookPath.absolutePath())).call();
+      
       if (error)
          LOG_ERROR(error);
    }
@@ -565,8 +570,10 @@ Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
    }
 
    // perform the cache hydration
-   error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
-         nbPath.absolutePath(), cacheFolder.absolutePath()).call();
+   error = r::exec::RFunction(
+            ".rs.hydrateCacheFromNotebook",
+            string_utils::utf8ToSystem(nbPath.absolutePath()),
+            string_utils::utf8ToSystem(cacheFolder.absolutePath())).call();
    if (error)
       return error;
 
