@@ -127,7 +127,7 @@
             <td
               class='{style.link}'>
               <a
-                href='http://code.google.com/webtoolkit/'>
+                href='http://www.gwtproject.org/'>
                 <ui:msg
                   key='mainLinkHomepage'>GWT Homepage</ui:msg>
               </a>
@@ -138,7 +138,7 @@
             <td
               class='{style.link}'>
               <a
-                href='http://code.google.com/webtoolkit/examples/'>
+                href='http://www.gwtproject.org/examples.html'>
                 <ui:msg
                   key='mainLinkExamples'>More Examples</ui:msg>
               </a>

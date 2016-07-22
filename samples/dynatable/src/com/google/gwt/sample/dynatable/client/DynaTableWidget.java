@@ -169,9 +169,9 @@ public class DynaTableWidget extends Composite {
     }
   }
 
-  private static final String NO_CONNECTION_MESSAGE = "<p>The DynaTable example uses a <a href=\"http://code.google.com/"
-      + "webtoolkit/documentation/com.google.gwt.doc.DeveloperGuide."
-      + "RemoteProcedureCalls.html\" target=\"_blank\">Remote Procedure Call</a> "
+  private static final String NO_CONNECTION_MESSAGE = "<p>The DynaTable example uses a <a "
+      + "href=\"http://www.gwtproject.org/doc/latest/DevGuideServerCommunication.html"
+      + "#DevGuideRemoteProcedureCalls\" target=\"_blank\">Remote Procedure Call</a> "
       + "(RPC) to request data from the server.  In order for the RPC to "
       + "successfully return data, the server component must be available.</p>"
       + "<p>If you are running this demo from compiled code, the server "

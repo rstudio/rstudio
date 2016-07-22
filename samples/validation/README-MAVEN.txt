@@ -1,7 +1,7 @@
 -- Option A: Import your project into Eclipse (recommended) --
 
 Configure Eclipse following the instructions at 
-http://code.google.com/p/google-web-toolkit/wiki/WorkingWithMaven#Using_Maven_with_Google_Plugin_for_Eclipse
+https://github.com/gwtproject/old_google_code_wiki/blob/master/WorkingWithMaven.wiki.md#using-maven-with-google-plugin-for-eclipse
 
 In Eclipse, go to the File menu and choose:
 
