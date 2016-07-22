@@ -219,8 +219,8 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
                 pLineDebugState != NULL &&
                 pLineDebugState->lastDebugText.length() > 0)
                simulatedSrcref =
-                     simulatedSourceRefsOfContext(*context, NULL,
-                                                  pLineDebugState);
+                     simulatedSourceRefsOfContext(*context, 
+                           r::context::RCntxt(), pLineDebugState);
             else
                simulatedSrcref =
                      simulatedSourceRefsOfContext(*context, prevContext,
@@ -692,8 +692,8 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
             // we don't, so reconstruct them from R output
             r::context::RCntxt firstFunContext =
                   r::context::firstFunctionContext();
-            srcref = simulatedSourceRefsOfContext(firstFunContext, NULL,
-                                                  pLineDebugState.get());
+            srcref = simulatedSourceRefsOfContext(firstFunContext, 
+                  r::context::RCntxt(), pLineDebugState.get());
          }
          enqueBrowserLineChangedEvent(srcref);
       }

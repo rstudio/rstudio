@@ -17,6 +17,7 @@
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 
 namespace rstudio {
 namespace r {
@@ -33,12 +34,9 @@ RCntxtVersion contextVersion()
    {
       // currently there are only two known memory layouts for the R context
       // structure (see RCntxtVersion enum)
-      bool is33 = false;
-      core::Error error = r::exec::evaluateString("getRversion() >= '3.3.0'",
-                                                  &is33);
-      if (error)
-         LOG_ERROR(error);
-      s_rCntxtVersion = is33 ? RVersion33 : RVersion32;
+      s_rCntxtVersion = r::util::hasRequiredVersion("3.3") ? 
+         RVersion33 : 
+         RVersion32;
    }
    return s_rCntxtVersion;
 }
@@ -62,7 +60,7 @@ RCntxt getFunctionContext(const int depth,
                           int* pFoundDepth,
                           SEXP* pEnvironment)
 {
-   RCntxt foundContext = NULL;
+   RCntxt foundContext;
    int currentDepth = 0;
    int foundDepth = 0;
    SEXP browseEnv = R_NilValue;

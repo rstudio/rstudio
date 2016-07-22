@@ -28,7 +28,7 @@ namespace context {
 template<typename T> class RIntCntxt: public RCntxtInterface
 {
 public:
-   RIntCntxt(T *pCntxt) :
+   explicit RIntCntxt(T *pCntxt) :
      pCntxt_(pCntxt)
    { }
 

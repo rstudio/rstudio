@@ -43,9 +43,20 @@ class RCntxt: public RCntxtInterface
 public:
    // copy/equality testing
    RCntxt();
-   RCntxt(void *rawCntxt);
+   explicit RCntxt(void *rawCntxt);
    bool operator==(const RCntxt& other) const;
-   operator bool() const { return pCntxt_; }
+
+   // safe coercion to boolean
+   typedef void (*unspecified_bool_type)();
+   static void unspecified_bool_true() {};
+   operator unspecified_bool_type() const 
+   { 
+      return pCntxt_ ? unspecified_bool_true : 0; 
+   }
+   bool operator!() const
+   {
+      return !pCntxt_;
+   }
 
    // utility/accessor functions
    bool hasSourceRefs() const;
