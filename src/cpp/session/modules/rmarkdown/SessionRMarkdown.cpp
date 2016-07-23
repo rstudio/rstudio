@@ -37,6 +37,7 @@
 #include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RCntxtUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -1212,7 +1213,7 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
    // indicate to the client whether R currently has executing code on the
    // stack
    json::Object result;
-   result["state"] = r::getGlobalContext()->nextcontext == NULL ?
+   result["state"] = r::context::globalContext().nextcontext() ?
       RExecutionReady : RExecutionBusy;
    pResponse->setResult(result);
 

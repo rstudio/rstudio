@@ -469,8 +469,8 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    SEXP resultSEXP = R_NilValue;
    r::sexp::Protect protect;
    r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
-   createNotebook.addParam(rmdPath);
-   createNotebook.addParam(outputPath);
+   createNotebook.addParam(string_utils::utf8ToSystem(rmdPath));
+   createNotebook.addParam(string_utils::utf8ToSystem(outputPath));
    error = createNotebook.call(&resultSEXP, &protect);
    if (error)
    {
