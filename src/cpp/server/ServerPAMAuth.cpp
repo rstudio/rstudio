@@ -248,15 +248,7 @@ void signIn(const http::Request& request,
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
    // include custom login page html
-   std::string loginPageHtml;
-   FilePath loginPageHtmlPath(server::options().authLoginPageHtml());
-   if (loginPageHtmlPath.exists())
-   {
-      Error error = core::readStringFromFile(loginPageHtmlPath, &loginPageHtml);
-      if (error)
-         LOG_ERROR(error);
-   }
-   variables[kLoginPageHtml] = loginPageHtml;
+   variables[kLoginPageHtml] = server::options().authLoginPageHtml();
 
    // get the path to the JS file
    Options& options = server::options();
