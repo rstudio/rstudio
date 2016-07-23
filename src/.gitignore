@@ -1,5 +1,6 @@
 client.extras
-qtcreator-build*/
 CMakeLists.txt.user
+qtcreator-build*/
 cpp-build*/
+asan-build*/
 

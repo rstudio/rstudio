@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+: ${FLAGS="-g -O1 -Wall -Wno-long-long"}
+: ${SANFLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize=float-divide-by-zero"}
+: ${CC="clang-3.8"}
+: ${CFLAGS="${FLAGS} ${SANFLAGS}"}
+: ${CXX="clang++-3.8"}
+: ${CXXFLAGS="${FLAGS} ${SANFLAGS}"}
+
+mkdir -p asan-build
+cd asan-build
+cmake ../cpp                        \
+    -DCMAKE_C_COMPILER="${CC}"      \
+    -DCMAKE_CXX_COMPILER="${CXX}"   \
+    -DCMAKE_C_FLAGS="${CFLAGS}"     \
+    -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
+make -j10
+cd ..
