@@ -62,29 +62,28 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
       return EmbeddedPackage();
    }
 
-   // we saw the regex with explicit character class ranges fail to match
-   // on a windows 8.1 system so we are falling back to a simpler regex
-   //
-   // (note see below for another approach involving setting the locale
-   // of the regex directly -- this assumes that the matching issue is
-   // somehow related to locales)
-   boost::regex re(name + "_([^_]+)_([^\\.]+)\\.tar\\.gz");
-
-   /* another approach (which we didn't try) based on setting the regex locale
-   boost::regex re;
-   re.imbue(std::locale("en_US.UTF-8"));
-   re.assign(name + "_([0-9]+\\.[0-9]+\\.[0-9]+)_([\\d\\w]+)\\.tar\\.gz");
-   */
-
    BOOST_FOREACH(const FilePath& child, children)
    {
-      boost::smatch match;
-      if (boost::regex_match(child.filename(), match, re))
+      std::vector<std::string> splat =
+            core::algorithm::split(child.filename(), "_");
+      
+      if (splat.size() == 3)
       {
+         // extract version
+         std::string version = splat[1];
+         
+         // extract sha1
+         std::string sha1 = splat[2];
+         std::size_t idx = sha1.find('.');
+         if (idx == std::string::npos)
+            continue;
+         sha1 = sha1.substr(0, idx);
+         
+         // return embedded package info
          EmbeddedPackage pkg;
          pkg.name = name;
-         pkg.version = match[1];
-         pkg.sha1 = match[2];
+         pkg.version = version;
+         pkg.sha1 = sha1;
          pkg.archivePath = string_utils::utf8ToSystem(child.absolutePath());
          return pkg;
       }
