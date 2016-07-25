@@ -1,0 +1,93 @@
+dn: ou=People,dc=nodomain
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Groups,dc=nodomain
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=rstudiousers,ou=Groups,dc=nodomain
+objectClass: posixGroup
+cn: rstudiousers
+gidNumber: 5000
+
+dn: uid=rstudiouser,ou=People,dc=nodomain
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: rstudiouser
+sn: User
+givenName: RStudio
+cn: RStudio User
+displayName: RStudio User
+uidNumber: 10001
+gidNumber: 5000
+userPassword: rstudiouser
+gecos: RStudio User
+loginShell: /bin/bash
+homeDirectory: /primary/home/rstudiouser
+
+dn: uid=rstudiouser2,ou=People,dc=nodomain
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: rstudiouser2
+sn: User
+givenName: RStudio
+cn: RStudio User 2
+displayName: RStudio User 2
+uidNumber: 10002
+gidNumber: 5000
+userPassword: rstudiouser2
+gecos: RStudio User 2
+loginShell: /bin/bash
+homeDirectory: /primary/home/rstudiouser2
+
+dn: uid=rstudiouser3,ou=People,dc=nodomain
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: rstudiouser3
+sn: User
+givenName: RStudio
+cn: RStudio User 3
+displayName: RStudio User 3
+uidNumber: 10003
+gidNumber: 5000
+userPassword: rstudiouser3
+gecos: RStudio User 3
+loginShell: /bin/bash
+homeDirectory: /primary/home/rstudiouser3
+
+dn: uid=rstudiouser4,ou=People,dc=nodomain
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: rstudiouser4
+sn: User
+givenName: RStudio
+cn: RStudio User 4
+displayName: RStudio User 4
+uidNumber: 10004
+gidNumber: 5000
+userPassword: rstudiouser4
+gecos: RStudio User 4
+loginShell: /bin/bash
+homeDirectory: /primary/home/rstudiouser4
+
+dn: uid=rstudiouser5,ou=People,dc=nodomain
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: rstudiouser5
+sn: User
+givenName: RStudio
+cn: RStudio User 5
+displayName: RStudio User 5
+uidNumber: 10005
+gidNumber: 5000
+userPassword: rstudiouser5
+gecos: RStudio User 5
+loginShell: /bin/bash
+homeDirectory: /primary/home/rstudiouser5
+

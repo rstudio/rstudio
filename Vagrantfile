@@ -1,6 +1,23 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# This file defines a set of virtual machines which can be used together to
+# create a variety of RStudio Server configurations. Because order matters (the
+# machines will access each other to orchestrate configuration), here are some
+# recipe orders for typical configs:
+# 
+# Single server:
+# primary
+#
+# Single server with user dirs on NFS:
+# primary, nfs
+#
+# Simple load balanced configuration:
+# primary, nfs, balanced
+#
+# Load balanced configuration with auth via LDAP:
+# primary, nfs, balanced, ldap
+
 Vagrant.configure(2) do |config|
   # define primary development box
   config.vm.define "primary", primary: true do |p|
@@ -43,6 +60,32 @@ Vagrant.configure(2) do |config|
     # just a file server
     n.vm.provider "virtualbox" do |vb|
       vb.memory = "1024"
+      vb.cpus = "1"
+    end
+  end
+
+  # define an LDAP box; can be used with or without the load balancer, but 
+  # must only be started once all the servers are up since it configures them
+  config.vm.define "ldap", autostart: false do |l|
+    l.vm.box = "ubuntu/trusty64"
+    l.vm.network "private_network", ip: "192.168.55.104"
+    l.vm.provision :shell, path: "vagrant/provision-ldap-server.sh"
+
+    l.vm.provider "virtualbox" do |vb|
+      vb.memory = "1024"
+      vb.cpus = "1"
+    end
+  end
+
+  # define CentOS development box -- similar to primary box, but currently only
+  # operates in standalone mode
+  config.vm.define "centos", autostart: false do |c|
+    c.vm.box = "puphpet/centos65-x64"
+    c.vm.network "forwarded_port", guest: 8787, host: 8787, auto_correct: true
+    c.vm.provision :shell, path: "vagrant/bootstrap-centos.sh", args: 8787
+    c.vm.provision :shell, path: "vagrant/provision-primary.sh"
+    c.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
       vb.cpus = "2"
     end
   end
