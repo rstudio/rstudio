@@ -15,9 +15,6 @@
 assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("extractRmdFromNotebook", function(notebook) {
-   # ensure path encoding is marked correctly
-   if (Encoding(notebook) == "unknown")  Encoding(notebook) <- "UTF-8"
-
    # parse the notebook to get the text of the contained R markdown doc
    parsed <- try(rmarkdown::parse_html_notebook(notebook), silent = TRUE)
    if (inherits(parsed, "try-error") || is.null(parsed$rmd)) {
@@ -63,14 +60,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("readRnbCache", function(rmdPath, cachePath)
 {
-   if (Encoding(rmdPath) == "unknown")   Encoding(rmdPath) <- "UTF-8"
-   if (Encoding(cachePath) == "unknown") Encoding(cachePath) <- "UTF-8"
-   
    if (!file.exists(rmdPath))
       stop("No file at path '", rmdPath, "'")
    
    # tolerate missing cache (implies there's no chunk outputs)
-   rmdPath <- .rs.normalizePath(rmdPath, winslash = "/", mustWork = TRUE)
+   rmdPath <- path.expand(rmdPath)
    rmdContents <- .rs.readLines(rmdPath)
    
    # Begin collecting the units that form the Rnb data structure
@@ -470,10 +464,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
 
-   # mark encoding if unspecified
-   if (Encoding(nbPath) == "unknown")     Encoding(nbPath) <- "UTF-8"
-   if (Encoding(cachePath) == "unknown")  Encoding(cachePath) <- "UTF-8"
-   
    # ensure cache directory
    if (!.rs.dirExists(cachePath))
       dir.create(cachePath, recursive = TRUE)
