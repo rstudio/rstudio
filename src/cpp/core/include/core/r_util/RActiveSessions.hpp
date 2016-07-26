@@ -87,6 +87,29 @@ public:
          writeProperty("working-dir", workingDir);
    }
 
+   bool initial() const
+   {
+      if (!empty())
+      {
+         std::string value = readProperty("initial");
+         if (!value.empty())
+            return safe_convert::stringTo<bool>(value, false);
+         else
+            return false;
+      }
+      else
+         return false;
+   }
+
+   void setInitial(bool initial)
+   {
+      if (!empty())
+      {
+         std::string value = safe_convert::numberToString(initial);
+         writeProperty("initial", value);
+      }
+   }
+
    double lastUsed() const
    {
       if (!empty())
@@ -293,6 +316,14 @@ public:
 
    core::Error create(const std::string& project,
                       const std::string& working,
+                      std::string* pId) const
+   {
+      return create(project, working, false, pId);
+   }
+
+   core::Error create(const std::string& project,
+                      const std::string& working,
+                      bool initial,
                       std::string* pId) const;
 
    std::vector<boost::shared_ptr<ActiveSession> > list(
