@@ -143,6 +143,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMark
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkExecUnit;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -4269,15 +4270,15 @@ public class TextEditingTarget implements
             jobDesc = "Run After";
       }
 
-      ArrayList<Scope> scopes = new ArrayList<Scope>();
+      List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
       for (Scope scope : previousScopes)
       {
          if (isExecutableChunk(scope))
-            scopes.add(scope);
+            chunks.add(new ChunkExecUnit(scope));
       }
       
-      if (!scopes.isEmpty())
-         notebook_.executeChunks(jobDesc, scopes);
+      if (!chunks.isEmpty())
+         notebook_.executeChunks(jobDesc, chunks);
    }
    
    @Handler

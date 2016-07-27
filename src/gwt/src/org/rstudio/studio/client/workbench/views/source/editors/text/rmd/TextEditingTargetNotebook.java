@@ -397,7 +397,8 @@ public class TextEditingTargetNotebook
       registerProgressHandlers();
    }
    
-   public void executeChunks(final String jobDesc, final List<Scope> chunks)
+   public void executeChunks(final String jobDesc, 
+                             final List<ChunkExecUnit> chunks)
    {
       if (queue_.isExecuting())
       {
@@ -439,15 +440,16 @@ public class TextEditingTargetNotebook
             if (!isSetupChunkScope(chunk) &&
                 needsSetupChunkExecuted())
             {
-               List<Scope> chunks = new ArrayList<Scope>();
-               chunks.add(getSetupChunkScope());
-               chunks.add(chunk);
+               List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
+               chunks.add(new ChunkExecUnit(getSetupChunkScope()));
+               chunks.add(new ChunkExecUnit(chunk));
                queue_.executeChunks("Run Chunks", chunks, 
                      NotebookQueueUnit.EXEC_MODE_BATCH);
             }
             else
             {
-               queue_.executeChunk(chunk, NotebookQueueUnit.EXEC_MODE_SINGLE);
+               queue_.executeChunk(new ChunkExecUnit(chunk), 
+                     NotebookQueueUnit.EXEC_MODE_SINGLE);
             }
          }
       });
@@ -613,18 +615,19 @@ public class TextEditingTargetNotebook
       
       // execute setup chunk first if necessary
       if (needsSetupChunkExecuted() && !isSetupChunkScope(event.getScope()))
-         queue_.executeChunk(getSetupChunkScope(), 
-               NotebookQueueUnit.EXEC_MODE_BATCH);
-
-      docUpdateSentinel_.withSavedDoc(new Command()
       {
-         @Override
-         public void execute()
-         {
-            queue_.executeRange(event.getScope(), event.getRange(), 
-                  NotebookQueueUnit.EXEC_MODE_SINGLE);
-         }
-      });
+         List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
+         chunks.add(new ChunkExecUnit(getSetupChunkScope()));
+         chunks.add(new ChunkExecUnit(event.getScope(), event.getRange()));
+         queue_.executeChunks("Run Chunks", chunks, 
+               NotebookQueueUnit.EXEC_MODE_BATCH);
+      }
+      else
+      {
+         queue_.executeChunk(
+               new ChunkExecUnit(event.getScope(), event.getRange()), 
+               NotebookQueueUnit.EXEC_MODE_SINGLE);
+      }
    }
    
    @Override
