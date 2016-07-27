@@ -3009,16 +3009,63 @@ public class AceEditor implements DocDisplay,
       int endRow   = pos.getRow();
       
       // expand to enclosing '(' or '['
-      String[] candidates = new String[]{ "(", "[" };
-      if (c.moveToPosition(pos) && c.findOpeningBracket(candidates, true))
+      do
       {
-         int startCandidate = c.getRow();
-         if (c.fwdToMatchingToken())
+         c.setRow(pos.getRow());
+         
+         // move forward over commented / empty lines
+         int n = getSession().getLength();
+         while (rowIsEmptyOrComment(c.getRow()))
          {
-            startRow = startCandidate;
-            endRow = c.getRow();
+            if (c.getRow() == n - 1)
+               break;
+            
+            c.setRow(c.getRow() + 1);
          }
-      }
+         
+         // move to last non-right-bracket token on line
+         c.moveToEndOfRow(c.getRow());
+         while (c.valueEquals(")") || c.valueEquals("]"))
+            if (!c.moveToPreviousToken())
+               break;
+         
+         // find the top-most enclosing bracket
+         // check for function scope
+         String[] candidates = new String[] {"(", "["};
+         int savedRow = -1;
+         int savedOffset = -1;
+         while (c.findOpeningBracket(candidates, true))
+         {
+            // check for function scope
+            if (c.valueEquals("(") &&
+                c.peekBwd(1).valueEquals("function") &&
+                c.peekBwd(2).isLeftAssign())
+            {
+               ScopeFunction scope = getFunctionAtPosition(c.currentPosition(), false);
+               if (scope != null)
+                  return Range.fromPoints(scope.getPreamble(), scope.getEnd());
+            }
+            
+            // move off of opening bracket and continue lookup
+            savedRow = c.getRow();
+            savedOffset = c.getOffset();
+            if (!c.moveToPreviousToken())
+               break;
+         }
+         
+         // if we found a row, use it
+         if (savedRow != -1 && savedOffset != -1)
+         {
+            c.setRow(savedRow);
+            c.setOffset(savedOffset);
+            if (c.fwdToMatchingToken())
+            {
+               startRow = savedRow;
+               endRow = c.getRow();
+            }
+         }
+         
+      } while (false);
       
       // discover end of current statement
       while (endRow <= endRowLimit)
@@ -3074,6 +3121,24 @@ public class AceEditor implements DocDisplay,
       // fixup for single-line execution
       if (startRow > endRow)
          startRow = endRow;
+      
+      // if we've captured the body of a function definition, expand
+      // to include whole definition
+      c.setRow(startRow);
+      c.setOffset(0);
+      if (c.valueEquals("{") &&
+          c.moveToPreviousToken() &&
+          c.valueEquals(")") &&
+          c.bwdToMatchingToken() &&
+          c.moveToPreviousToken() &&
+          c.valueEquals("function") &&
+          c.moveToPreviousToken() &&
+          c.isLeftAssign())
+      {
+         ScopeFunction fn = getFunctionAtPosition(c.currentPosition(), false);
+         if (fn != null)
+            return Range.fromPoints(fn.getPreamble(), fn.getEnd());
+      }
       
       // construct range
       int endColumn = getSession().getLine(endRow).length();
