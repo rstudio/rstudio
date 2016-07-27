@@ -36,6 +36,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -128,6 +129,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     PositionCallback callback,
                                     boolean truncated)
    {
+      if (handle_ != null)
+      {
+         handle_.close();
+         handle_ = null;
+      }
+      handle_ = ShortcutManager.INSTANCE.disable();
+      
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
                                        6,
@@ -210,6 +218,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void hide()
    {
       unregisterNativeHandler();
+      if (handle_ != null)
+      {
+         handle_.close();
+         handle_ = null;
+      }
       super.hide();
    }
    
@@ -424,4 +437,5 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private final Label truncated_;
    private final NativePreviewHandler handler_;
    private HandlerRegistration handlerRegistration_;
+   private ShortcutManager.Handle handle_;
 }
