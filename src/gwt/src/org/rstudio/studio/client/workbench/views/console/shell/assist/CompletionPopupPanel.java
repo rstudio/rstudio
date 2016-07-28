@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
@@ -36,6 +38,8 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.command.KeyboardShortcut.KeyCombination;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -128,6 +132,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     PositionCallback callback,
                                     boolean truncated)
    {
+      registerIgnoredKeys();
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
                                        6,
@@ -209,6 +214,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void hide()
    {
+      unregisterIgnoredKeys();
       unregisterNativeHandler();
       super.hide();
    }
@@ -416,6 +422,29 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          handlerRegistration_.removeHandler();
    }
    
+   private void resetIgnoredKeysHandle()
+   {
+      if (handle_ != null)
+      {
+         handle_.close();
+         handle_ = null;
+      }
+   }
+   
+   private void registerIgnoredKeys()
+   {
+      resetIgnoredKeysHandle();
+      Set<KeyCombination> keySet = new HashSet<KeyCombination>();
+      keySet.add(new KeyCombination(KeyCodes.KEY_N, KeyboardShortcut.CTRL));
+      keySet.add(new KeyCombination(KeyCodes.KEY_P, KeyboardShortcut.CTRL));
+      handle_ = ShortcutManager.INSTANCE.addIgnoredKeys(keySet);
+   }
+   
+   private void unregisterIgnoredKeys()
+   {
+      resetIgnoredKeysHandle();
+   }
+   
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
@@ -424,4 +453,5 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private final Label truncated_;
    private final NativePreviewHandler handler_;
    private HandlerRegistration handlerRegistration_;
+   private ShortcutManager.Handle handle_;
 }

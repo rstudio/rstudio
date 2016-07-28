@@ -508,7 +508,16 @@ public class RCompletionManager implements CompletionManager
             return false ; // bare modifiers should do nothing
          }
          
-         if (modifier == KeyboardShortcut.NONE)
+         if (modifier == KeyboardShortcut.CTRL)
+         {
+            switch (keycode)
+            {
+            case KeyCodes.KEY_P: return popup_.selectPrev();
+            case KeyCodes.KEY_N: return popup_.selectNext();
+            }
+         }
+         
+         else if (modifier == KeyboardShortcut.NONE)
          {
             if (keycode == KeyCodes.KEY_ESCAPE)
             {

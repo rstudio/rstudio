@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,6 +67,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private ShortcutManager()
    {
       keyBuffer_ = new KeySequence();
+      ignoredKeys_ = new IgnoredKeysMap<KeyCombination>();
       keyTimer_ = new Timer()
       {
          @Override
@@ -431,6 +433,13 @@ public class ShortcutManager implements NativePreviewHandler,
             return false;
          }
       }
+
+      // Bail if this is an ignored key combination.
+      if (isIgnoredKeyCombination(keyCombination))
+      {
+         keyBuffer_.clear();
+         return false;
+      }
       
       keyBuffer_.add(keyCombination);
       
@@ -576,10 +585,71 @@ public class ShortcutManager implements NativePreviewHandler,
       return keyMaps_.get(type);
    }
    
+   private static class IgnoredKeysMap<T>
+   {
+      public IgnoredKeysMap()
+      {
+         ignoredKeys_ = new HashMap<Integer, Set<T>>();
+         count_ = 0;
+      }
+      
+      public Handle addIgnoredKeys(T keys)
+      {
+         Set<T> keySet = new HashSet<T>();
+         keySet.add(keys);
+         return addIgnoredKeys(keySet);
+      }
+      
+      public Handle addIgnoredKeys(Set<T> keySet)
+      {
+         final Integer index = count_++;
+         ignoredKeys_.put(index, keySet);
+         return new Handle()
+         {
+            @Override
+            public void close()
+            {
+               ignoredKeys_.remove(index);
+            }
+         };
+      }
+      
+      public boolean isIgnoredKeyCombination(T keys)
+      {
+         for (Map.Entry<Integer, Set<T>> entry : ignoredKeys_.entrySet())
+         {
+            Set<T> keySet = entry.getValue();
+            if (keySet.contains(keys))
+               return true;
+         }
+         
+         return false;
+      }
+      
+      private final Map<Integer, Set<T>> ignoredKeys_;
+      private Integer count_;
+   }
+   
+   public final Handle addIgnoredKeys(KeyCombination keys)
+   {
+      return ignoredKeys_.addIgnoredKeys(keys);
+   }
+   
+   public final Handle addIgnoredKeys(Set<KeyCombination> keys)
+   {
+      return ignoredKeys_.addIgnoredKeys(keys);
+   }
+   
+   public final boolean isIgnoredKeyCombination(KeyCombination keys)
+   {
+      return ignoredKeys_.isIgnoredKeyCombination(keys);
+   }
+   
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
    
    private final KeySequence keyBuffer_;
+   private final IgnoredKeysMap<KeyCombination> ignoredKeys_;
    private final Timer keyTimer_;
    private int activeEditEventType_ = EditEvent.TYPE_NONE;
    
