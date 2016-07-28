@@ -19,6 +19,7 @@
 #include "NotebookPlots.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookCache.hpp"
+#include "NotebookData.hpp"
 #include "NotebookErrors.hpp"
 #include "NotebookWorkingDir.hpp"
 #include "NotebookMessages.hpp"
@@ -209,6 +210,21 @@ void ChunkExecContext::connect()
          boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
    connections_.push_back(module_context::events().onConsoleInput.connect(
          boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
+
+   // begin capturing data
+   connections_.push_back(events().onDataOutput.connect(
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
+                     ChunkOutputData, 0)));
+
+   boost::shared_ptr<DataCapture> pDataCapture = 
+      boost::make_shared<DataCapture>();
+   captures_.push_back(pDataCapture);
+
+   error = pDataCapture->connectDataCapture(
+            outputPath_,
+            options_.chunkOptions());
+   if (error)
+      LOG_ERROR(error);
 
    NotebookCapture::connect();
 }

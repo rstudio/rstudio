@@ -35,7 +35,8 @@ enum ChunkOutputType
    ChunkOutputPlot    = 2,
    ChunkOutputHtml    = 3,
    ChunkOutputError   = 4,
-   ChunkOutputOrdinal = 5
+   ChunkOutputOrdinal = 5,
+   ChunkOutputData    = 6
 };
 
 #define kChunkConsoleInput  0
