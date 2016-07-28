@@ -17,7 +17,7 @@
 {
   assign("print.data.frame", function(x, ...) {
     output <- tempfile(pattern = "_rs_rdata_", tmpdir = outputFolder, 
-                       fileext = "rdata"),
+                       fileext = "rdata")
     save(
       x, 
       file = output)
