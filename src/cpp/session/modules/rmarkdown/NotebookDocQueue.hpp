@@ -28,6 +28,7 @@ namespace rstudio {
 
 namespace core {
    class Error;
+   class FilePath;
 }
 
 namespace session {
@@ -51,6 +52,7 @@ public:
 
    core::json::Object defaultChunkOptions() const;
    void setDefaultChunkOptions(const core::json::Object& options);
+   void setWorkingDir (const core::FilePath& workingDir);
 
    // accessors
    std::string docId() const;
@@ -60,6 +62,7 @@ public:
    CommitMode commitMode() const;
    int maxUnits() const;
    int remainingUnits() const;
+   core::FilePath workingDir() const;
 
 private:
    std::string docId_;
@@ -72,6 +75,10 @@ private:
    // the document path and its default knit chunk options
    std::string docPath_;
    core::json::Object defaultOptions_;
+
+   // the working directory in which to execute chunks (note that this will be
+   // empty unless manually specified)
+   core::FilePath workingDir_;
 
    // the queue of chunks to be executed 
    std::list<boost::shared_ptr<NotebookQueueUnit> > queue_;

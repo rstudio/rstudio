@@ -40,6 +40,12 @@ public class NotebookDoc extends JavaScriptObject
    public final native int getDocWriteTime() /*-{
       return this.doc_write_time || 0;
    }-*/;
+   
+   // returns any manually specified working directory (i.e. from the knitr
+   // root.dir option)
+   public final native String getWorkingDir() /*-{
+      return this.working_dir || "";
+   }-*/;
 
    public final static String CHUNK_RENDERED_WIDTH = "chunk_rendered_width";
 }

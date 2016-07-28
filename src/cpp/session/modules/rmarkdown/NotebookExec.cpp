@@ -62,11 +62,12 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
-      ExecScope execScope, const ChunkOptions& options, int pixelWidth, 
-      int charWidth):
+      ExecScope execScope, const core::FilePath& workingDir, 
+      const ChunkOptions& options, int pixelWidth, int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
    nbCtxId_(nbCtxId),
+   workingDir_(workingDir),
    options_(options),
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
@@ -188,7 +189,7 @@ void ChunkExecContext::connect()
    r::options::setOptionWidth(charWidth_);
 
    boost::shared_ptr<DirCapture> pDirCapture = boost::make_shared<DirCapture>();
-   error = pDirCapture->connectDir(docId_);
+   error = pDirCapture->connectDir(docId_, workingDir_);
    if (error)
       LOG_ERROR(error);
    else

@@ -35,7 +35,8 @@ class DirCapture : public NotebookCapture
 public:
    DirCapture();
    ~DirCapture();
-   core::Error connectDir(const std::string& docId);
+   core::Error connectDir(const std::string& docId, 
+                          const core::FilePath& workingDir);
    void onExprComplete();
    void disconnect();
 private:

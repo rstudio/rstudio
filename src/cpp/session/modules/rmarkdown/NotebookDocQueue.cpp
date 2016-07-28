@@ -52,7 +52,28 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
 
    // read the default knit options for this document (this is expected to fail
    // if these options don't exist)
-   getChunkValue(docPath_, docId_, kChunkDefaultOptions, &defaultOptions_);
+   json::Object vals;
+   Error error = getChunkValues(docPath_, docId_, &vals);
+   if (error)
+      return;
+
+   json::readObject(vals, kChunkDefaultOptions, &defaultOptions_);
+   
+   // read the default working dir; if it specifies a valid directory, use it
+   // as the working directory for executing chunks in this document
+   std::string workingDir;
+   json::readObject(vals, kChunkWorkingDir, &workingDir);
+   if (!workingDir.empty())
+   {
+      // convert to canonical form by expanding path and removing any empty
+      // stem (i.e. ~/foo/bar/ => /Users/smith/foo/bar)
+      core::FilePath dir = module_context::resolveAliasedPath(workingDir);
+      if (dir.stem().empty() || dir.stem() == ".")
+         dir = dir.parent();
+
+      if (dir.exists())
+         workingDir_ = dir;
+   }
 }
 
 boost::shared_ptr<NotebookQueueUnit> NotebookDocQueue::firstUnit()
@@ -206,12 +227,19 @@ int NotebookDocQueue::maxUnits() const
    return maxUnits_;
 }
 
+core::FilePath NotebookDocQueue::workingDir() const 
+{
+   return workingDir_;
+}
+
 void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
 {
    defaultOptions_ = options;
-   Error error = setChunkValue(docPath_, docId_, kChunkDefaultOptions, options);
-   if (error)
-      LOG_ERROR(error);
+}
+
+void NotebookDocQueue::setWorkingDir(const FilePath& workingDir)
+{
+   workingDir_ = workingDir;
 }
 
 } // namespace notebook

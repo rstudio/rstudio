@@ -36,6 +36,7 @@
 #define kChunkDocWriteTime   "doc_write_time"
 #define kChunkId             "chunk_id"
 #define kChunkDefaultOptions "default_chunk_options"
+#define kChunkWorkingDir     "working_dir"
 
 
 namespace rstudio {

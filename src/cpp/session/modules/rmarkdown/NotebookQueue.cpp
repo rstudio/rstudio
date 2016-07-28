@@ -23,6 +23,7 @@
 #include "SessionRMarkdown.hpp"
 #include "NotebookQueue.hpp"
 #include "NotebookQueueUnit.hpp"
+#include "NotebookChunkDefs.hpp"
 #include "NotebookExec.hpp"
 #include "NotebookDocQueue.hpp"
 #include "NotebookCache.hpp"
@@ -35,6 +36,7 @@
 #include <r/RInterface.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/RSexp.hpp>
 
 #include <core/Exec.hpp>
 #include <core/Thread.hpp>
@@ -245,30 +247,14 @@ private:
          process(ExprModeNew);
       }
 
-      if (execContext_ && !queue_.empty())
+      if (execContext_)
       {
          // get the chunk label to see if this is the setup chunk 
          std::string label;
          json::readObject(execContext_->options().chunkOptions(), "label", 
                &label);
          if (label == "setup")
-         {
-            // when the setup chunk finishes executing, write the defaults 
-            // into the queue for subsequent chunks/executions
-            r::sexp::Protect protect;
-            SEXP defaultsSEXP = R_NilValue;
-            Error error = r::exec::RFunction(".rs.defaultChunkOptions")
-                                            .call(&defaultsSEXP, &protect);
-            if (error)
-               LOG_ERROR(error);
-            else
-            {
-               json::Value defaults;
-               r::json::jsonValueFromList(defaultsSEXP, &defaults);
-               if (defaults.type() == json::ObjectType)
-                  queue_.front()->setDefaultChunkOptions(defaults.get_obj());
-            }
-         }
+            saveSetupContext();
       }
    }
 
@@ -372,8 +358,9 @@ private:
       if (engine == "r")
       {
          execContext_ = boost::make_shared<ChunkExecContext>(
-            unit->docId(), unit->chunkId(), ctx, unit->execScope(), options,
-            docQueue->pixelWidth(), docQueue->charWidth());
+            unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
+            docQueue->workingDir(), options, docQueue->pixelWidth(), 
+            docQueue->charWidth());
          execContext_->connect();
          execUnit_ = unit;
          enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
@@ -490,6 +477,74 @@ private:
       // send an interrupt to the console to abort the unterminated 
       // expression
       sendConsoleInput(execUnit_->chunkId(), json::Value());
+   }
+
+   // invoked when the current execContext_ represents a completed setup chunk
+   // execution; persists knitr options specified in the chunk into storage
+   void saveSetupContext()
+   {
+      std::string docPath;
+      source_database::getPath(execContext_->docId(), &docPath);
+
+      r::sexp::Protect protect;
+      SEXP resultSEXP = R_NilValue;
+      Error error = r::exec::RFunction(".rs.defaultChunkOptions")
+                                      .call(&resultSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         json::Value defaults;
+         r::json::jsonValueFromList(resultSEXP, &defaults);
+         if (defaults.type() == json::ObjectType)
+         {
+            // write default chunk options to cache
+            Error error = setChunkValue(docPath, execContext_->docId(), 
+                  kChunkDefaultOptions, defaults.get_obj());
+            if (error)
+               LOG_ERROR(error);
+
+            // update running queue if present
+            if (!queue_.empty())
+               queue_.front()->setDefaultChunkOptions(defaults.get_obj());
+         }
+      }
+
+      // record the root directory
+      error = r::exec::evaluateString(
+            "knitr::opts_knit$get(\"root.dir\")", &resultSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+      if (TYPEOF(resultSEXP) != NILSXP)
+      {
+         std::string workingDir = r::sexp::safeAsString(resultSEXP, "");
+         FilePath dir;
+         if (!workingDir.empty())
+            dir = module_context::resolveAliasedPath(workingDir);
+         if (dir.exists())
+         {
+            // write working dir to the cache
+            Error error = setChunkValue(docPath, execContext_->docId(), 
+                  kChunkWorkingDir, workingDir);
+            if (error)
+               LOG_ERROR(error);
+
+            // update running queue if present
+            if (!queue_.empty())
+               queue_.front()->setWorkingDir(dir);
+         }
+      }
+      else if (!error)
+      {
+         // we succeeded in checking root.dir but it was set to NULL; clear
+         // the root directory stored in the cache
+         error = setChunkValue(docPath, execContext_->docId(), 
+               kChunkWorkingDir, json::Value());
+         if (error)
+            LOG_ERROR(error);
+         if (!queue_.empty())
+            queue_.front()->setWorkingDir(FilePath());
+      }
    }
 
    // the documents with active queues

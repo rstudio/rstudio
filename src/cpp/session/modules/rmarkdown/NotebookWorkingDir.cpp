@@ -40,15 +40,30 @@ DirCapture::~DirCapture()
 {
 }
 
-Error DirCapture::connectDir(const std::string& docId)
+Error DirCapture::connectDir(const std::string& docId, 
+                             const core::FilePath& workingDir)
 {
-   // reset working directory to doc path, if it has one
-   std::string docPath;
-   source_database::getPath(docId, &docPath);
-   if (!docPath.empty())
+   if (workingDir.exists())
    {
-      // save directory we're changing to (so we can detect changes)
-      workingDir_ = module_context::resolveAliasedPath(docPath).parent();
+      // prefer manually specified working directory
+      workingDir_ = workingDir;
+   }
+   else
+   {
+      // no manually specified dir; use working directory to doc path, if it
+      // has one
+      std::string docPath;
+      source_database::getPath(docId, &docPath);
+      if (!docPath.empty())
+      {
+         workingDir_ = module_context::resolveAliasedPath(docPath).parent();
+      }
+   }
+
+   if (!workingDir_.empty())
+   {
+      // if we have a working directory, switch to it, and save directory we're
+      // changing from (so we can detect changes)
       FilePath currentDir = FilePath::safeCurrentPath(workingDir_);
       if (currentDir != workingDir_)
       {
@@ -88,7 +103,8 @@ void DirCapture::onExprComplete()
          r::exec::warning("The working directory was changed to " + 
                currentDir.absolutePath() + " inside a notebook chunk. The "
                "working directory will be reset when the chunk is finished "
-               "running.");
+               "running. Use the knitr root.dir option in the setup chunk " 
+               "to change the the working directory for notebook chunks.");
          
          // don't show warning more than once per chunk
          warned_ = true;

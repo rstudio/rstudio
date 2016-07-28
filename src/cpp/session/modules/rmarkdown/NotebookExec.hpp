@@ -49,7 +49,8 @@ public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
          const std::string& nbCtxId, ExecScope execScope, 
-         const ChunkOptions& options, int pixelWidth, int charWidth);
+         const core::FilePath& workingDir, const ChunkOptions& options, 
+         int pixelWidth, int charWidth);
 
    // return execution context from events
    std::string chunkId();
@@ -83,6 +84,7 @@ private:
    std::string nbCtxId_;
    std::string pendingInput_;
    core::FilePath outputPath_;
+   core::FilePath workingDir_;
    ChunkOptions options_;
 
    int pixelWidth_;
