@@ -417,6 +417,21 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       
       KeyCombination keyCombination = new KeyCombination(event);
+      
+      // Disable 'Ctrl+F' keybinding when Ace editor in Vim mode
+      // is focused.
+      if (keyCombination.getKeyCode() == KeyCodes.KEY_F &&
+          keyCombination.getModifier() == KeyboardShortcut.CTRL)
+      {
+         Element target = Element.as(event.getEventTarget());
+         AceEditorNative editor = AceEditorNative.getEditor(target);
+         if (editor != null && editor.isVimModeOn())
+         {
+            keyBuffer_.clear();
+            return false;
+         }
+      }
+      
       keyBuffer_.add(keyCombination);
       
       // Loop through all active key maps, and attempt to find an active
