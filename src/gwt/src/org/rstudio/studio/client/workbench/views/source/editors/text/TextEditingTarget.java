@@ -450,14 +450,7 @@ public class TextEditingTarget implements
             NativeEvent ne = event.getNativeEvent();
             int mod = KeyboardShortcut.getModifierValue(ne);
             
-            if ((mod == KeyboardShortcut.META || (mod == KeyboardShortcut.CTRL && !BrowseCap.hasMetaKey() && !docDisplay_.isEmacsModeOn()))
-                && ne.getKeyCode() == 'F')
-            {
-               event.preventDefault();
-               event.stopPropagation();
-               commands_.findReplace().execute();
-            }
-            else if (BrowseCap.hasMetaKey() && 
+            if (BrowseCap.hasMetaKey() && 
                      (mod == KeyboardShortcut.META) &&
                      (ne.getKeyCode() == 'E'))
             {
