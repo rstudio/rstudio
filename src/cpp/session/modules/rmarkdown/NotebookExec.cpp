@@ -235,6 +235,10 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
       target = chunkOutputFile(docId_, chunkId_, nbCtxId_, pair);
    }
 
+   // preserve original extension; some output types, such as plots, don't
+   // have a canonical extension
+   target = target.parent().complete(target.stem() + file.extension());
+
    Error error = file.move(target);
    if (error)
    {

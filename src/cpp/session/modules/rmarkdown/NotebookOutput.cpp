@@ -61,13 +61,14 @@ LastChunkOutput s_lastChunkOutputs;
 ChunkOutputType chunkOutputType(const FilePath& outputPath)
 {
    ChunkOutputType outputType = ChunkOutputNone;
-   if (outputPath.extensionLowerCase() == ".csv")
+   std::string ext = outputPath.extensionLowerCase();
+   if (ext == ".csv")
       outputType = ChunkOutputText;
-   else if (outputPath.extensionLowerCase() == ".png")
+   else if (ext == ".png" || ext == ".jpg" || ext == ".jpeg")
       outputType = ChunkOutputPlot;
-   else if (outputPath.extensionLowerCase() == ".html")
+   else if (ext == ".html")
       outputType = ChunkOutputHtml;
-   else if (outputPath.extensionLowerCase() == ".error")
+   else if (ext == ".error")
       outputType = ChunkOutputError;
    return outputType;
 }
@@ -159,7 +160,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 
       // if this is a plot and it doesn't have a display list, hint to client
       // that plot can't be resized
-      if (outputType == ChunkOutputPlot && path.hasExtensionLowerCase(".png"))
+      if (outputType == ChunkOutputPlot)
       {
          // form the path to where we'd expect the snapshot to be
          FilePath snapshotPath = path.parent().complete(

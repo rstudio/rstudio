@@ -32,6 +32,7 @@
 #include <r/RSexp.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
 
 #define kPlotPrefix "_rs_chunk_plot_"
 #define kGoldenRatio 1.618
@@ -49,6 +50,24 @@ bool isPlotPath(const FilePath& path)
 {
    return path.hasExtensionLowerCase(".png") &&
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
+}
+
+SEXP rs_recordExternalPlot(SEXP plotFilesSEXP)
+{
+   std::vector<std::string> plotFiles;
+   if (r::sexp::fillVectorString(plotFilesSEXP, &plotFiles))
+   {
+      BOOST_FOREACH(const std::string& plotFile, plotFiles)
+      {
+         if (plotFile.empty())
+            continue;
+         FilePath plot = module_context::resolveAliasedPath(plotFile);
+         if (!plot.exists())
+            continue;
+         events().onPlotOutput(plot, FilePath(), 0);
+      }
+   }
+   return R_NilValue;
 }
 
 } // anonymous namespace
@@ -344,6 +363,8 @@ bool PlotCapture::isGraphicsDeviceActive()
 
 core::Error initPlots()
 {
+   RS_REGISTER_CALL_METHOD(rs_recordExternalPlot, 1);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "NotebookPlots.R"));

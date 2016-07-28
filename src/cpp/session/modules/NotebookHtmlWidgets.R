@@ -81,6 +81,25 @@
    .rs.recordHtmlWidget(htmlfile, NULL)
 })
 
+.rs.addFunction("rnbHooks.print.knit_image_paths", function(x, ...) 
+{
+   .Call("rs_recordExternalPlot", vapply(x, function(path) {
+      dest <- tempfile(fileext = paste(".", tools::file_ext(path), sep = ""))
+      if (identical(substr(path, 1, 7), "http://") ||
+          identical(substr(path, 1, 8), "https://")) {
+         # if the path appears to be a URL, download it locally 
+         tryCatch({
+            suppressMessages(download.file(path, dest, quiet = TRUE))
+         },
+         error = function(e) {})
+      } else {
+         # not a URL, presume it to be an ordinary path on disk
+         file.copy(path, dest, copy.mode = FALSE)
+      }
+      dest
+   }, ""))
+})
+
 .rs.addFunction("rnbHooks.print.htmlwidget", function(x, ...) {
    ctx <- .rs.rnb.getHtmlCaptureContext()
    
@@ -200,11 +219,12 @@
 .rs.addFunction("rnb.htmlCaptureHooks", function()
 {
    list(
-      "print.htmlwidget"     = .rs.rnbHooks.print.htmlwidget,
-      "print.html"           = .rs.rnbHooks.print.html,
-      "print.shiny.tag"      = .rs.rnbHooks.print.shiny.tag,
-      "print.shiny.tag.list" = .rs.rnbHooks.print.shiny.tag.list,
-      "print.knit_asis"      = .rs.rnbHooks.print.knit_asis
+      "print.htmlwidget"       = .rs.rnbHooks.print.htmlwidget,
+      "print.html"             = .rs.rnbHooks.print.html,
+      "print.shiny.tag"        = .rs.rnbHooks.print.shiny.tag,
+      "print.shiny.tag.list"   = .rs.rnbHooks.print.shiny.tag.list,
+      "print.knit_asis"        = .rs.rnbHooks.print.knit_asis,
+      "print.knit_image_paths" = .rs.rnbHooks.print.knit_image_paths
    )
 })
 
