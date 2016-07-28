@@ -24,6 +24,9 @@
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
+
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -35,6 +38,36 @@ namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
+namespace {
+
+SEXP rs_getRmdWorkingDir(SEXP rmdFileSEXP, SEXP docIdSEXP)
+{
+   r::sexp::Protect protect;
+   FilePath dir;
+
+   // extract the document's path and ID
+   std::string docPath = r::sexp::safeAsString(rmdFileSEXP, "");
+   if (docPath.empty()) 
+      return R_NilValue;
+   std::string docId = r::sexp::safeAsString(docIdSEXP, "");
+   if (docId.empty()) 
+      return R_NilValue;
+
+   // attempt to look up the desired working directory of this document
+   std::string workingDir;
+   getChunkValue(docPath, docId, kChunkWorkingDir, &workingDir);
+   if (!workingDir.empty())
+      dir = module_context::resolveAliasedPath(workingDir);
+
+   // if we found a valid working directory, return it
+   if (dir.exists())
+      return r::sexp::create(dir.absolutePath(), &protect);
+
+   // otherwise, return nothing
+   return R_NilValue;
+}
+
+} // anonymous namespace
 
 // given and old and new set of chunk definitions, cleans up all the chunks
 // files in the old set but not in the new set
@@ -200,6 +233,12 @@ void extractChunkIds(const json::Array& chunkOutputs,
          pIds->push_back(chunkId);
       }
    }
+}
+
+core::Error initChunkDefs()
+{
+   RS_REGISTER_CALL_METHOD(rs_getRmdWorkingDir, 2);
+   return Success();
 }
 
 } // namespace notebook

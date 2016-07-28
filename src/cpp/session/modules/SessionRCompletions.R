@@ -1904,10 +1904,28 @@ assign(x = ".rs.acCompletionTypes",
       isMarkdownLink <- identical(functionCallString, "useFile")
       isRmd <- .rs.endsWith(tolower(filePath), ".rmd")
       
-      path <- if (isMarkdownLink || isRmd)
-         suppressWarnings(.rs.normalizePath(dirname(filePath)))
-      else
-         getwd()
+      path <- NULL
+      
+      if (!isMarkdownLink && isRmd) 
+      {
+         # if in an Rmd file, ask it for its desired working dir (can be changed
+         # with the knitr root.dir option)
+         path <- .Call("rs_getRmdWorkingDir", filePath, documentId)
+      }
+
+      if (is.null(path) && (isMarkdownLink || isRmd)) 
+      {
+         # for links, or R Markdown without an explicit working dir, use the
+         # base directory of the file
+         path <- suppressWarnings(.rs.normalizePath(dirname(filePath)))
+      }
+
+      if (is.null(path))
+      {
+         # in all other cases, use the current working directory for
+         # completions
+         path <- getwd()
+      }
       
       return(.rs.getCompletionsFile(token = tokenToUse,
                                     path = path,
