@@ -546,6 +546,14 @@ public class ShortcutManager implements NativePreviewHandler,
       
       if (isSaveQuitKey && isSaveQuitModifier)
          event.preventDefault();
+      
+      // Prevent 'Ctrl+Shift+B' (toggle bookmarks)
+      boolean isToggleBookmarksModifier = BrowseCap.isMacintosh()
+            ? modifiers == (KeyboardShortcut.SHIFT | KeyboardShortcut.META)
+            : modifiers == (KeyboardShortcut.SHIFT | KeyboardShortcut.CTRL);
+      
+      if (keyCode == KeyCodes.KEY_B && isToggleBookmarksModifier)
+         event.preventDefault();
    }
    
    public KeyMap getKeyMap(KeyMapType type)
