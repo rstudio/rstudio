@@ -601,9 +601,10 @@ Error executeNotebookChunks(const json::JsonRpcRequest& request,
    if (!s_queue)
       s_queue = boost::make_shared<NotebookQueue>();
 
-   // add the queue and process immediately
+   // add the queue and process after the RPC returns 
    s_queue->add(pQueue);
-   s_queue->process(ExprModeNew);
+   pResponse->setAfterResponse(
+         boost::bind(&NotebookQueue::process, s_queue, ExprModeNew));
 
    return Success();
 }
