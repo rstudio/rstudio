@@ -33,6 +33,10 @@
 #include <core/json/Json.hpp>
 #include <core/text/CsvParser.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RJson.hpp>
+#include <r/RExec.hpp>
+
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -174,6 +178,24 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
       }
 
       (*pObj)[kChunkOutputValue] = url;
+   }
+   else if (outputType == ChunkOutputData)
+   {
+      SEXP argsSEXP;
+      r::sexp::Protect rProtect;
+      Error error = r::exec::RFunction(".rs.readDataCapture", path.absolutePath()).call(
+         &argsSEXP,
+         &rProtect);
+
+      if (error)
+         return error;
+
+      json::Value valJson;
+      error = r::json::jsonValueFromList(argsSEXP, &valJson);
+      if (error)
+         return error;
+
+      (*pObj)[kChunkOutputValue] = valJson;
    }
 
    return Success();

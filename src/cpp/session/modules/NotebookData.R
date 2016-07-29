@@ -29,3 +29,14 @@
 {
   rm("print.data.frame", envir = as.environment("tools:rstudio"))
 })
+
+.rs.addFunction("readDataCapture", function(path)
+{
+  e <- new.env()
+  load(file = path, envir = e)
+
+  list(
+    types = sapply(e$x, class),
+    data = head(e$x, 1000)
+  )
+})
