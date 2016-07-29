@@ -45,14 +45,18 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
+import com.gargoylesoftware.htmlunit.javascript.host.Document;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.StyleInjector;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -121,6 +125,8 @@ public class ChunkOutputWidget extends Composite
       applyCachedEditorStyle();
       if (expansionState_.getValue() == COLLAPSED)
          setCollapsedStyles();
+
+      injectPagedTableResources();
       
       frame_.getElement().getStyle().setHeight(
             expansionState_.getValue() == COLLAPSED ? 
@@ -170,6 +176,24 @@ public class ChunkOutputWidget extends Composite
    
    // Public methods ----------------------------------------------------------
    
+   private void injectPagedTableResources()
+   {
+      injectStyleELement("/rmd_data/css/pagedtable.css", "pagedtable-css");
+      ScriptInjector.fromUrl("/rmd_data/js/pagedtable.js").inject();
+   }
+   
+   private native void injectStyleELement(String url, String id) /*-{
+      var linkElement = $doc.getElementById(id);
+      if (linkElement === null) {
+         linkElement = $doc.createElement("link");
+         linkElement.setAttribute("id", id);
+         linkElement.setAttribute("href", url);
+         linkElement.setAttribute("rel", "stylesheet");
+         
+         $doc.getElementsByTagName("head")[0].appendChild(linkElement);
+      }
+   }-*/;
+
    public int getExpansionState()
    {
       return expansionState_.getValue();
@@ -841,9 +865,18 @@ public class ChunkOutputWidget extends Composite
    }
 
    private final native void showDataOutputNative(JavaScriptObject data, Element parent) /*-{
-      var pagedTable = document.createElement("div");
-      pagedTable.appendChild(document.createTextNode(JSON.stringify(data)))
+      var pagedTable = $doc.createElement("div");
+      pagedTable.setAttribute("data-pagedtable", "");
       parent.appendChild(pagedTable);
+
+      var pagedTableSource = $doc.createElement("script");
+      pagedTableSource.setAttribute("data-pagedtable-source", "");
+      pagedTableSource.setAttribute("type", "application/json");
+      pagedTableSource.appendChild($doc.createTextNode(JSON.stringify(data)))
+      pagedTable.appendChild(pagedTableSource);
+
+      var pagedTableInstance = new PagedTable(pagedTable);
+      pagedTableInstance.render();
    }-*/;
 
    private void showDataOutput(JavaScriptObject data)
