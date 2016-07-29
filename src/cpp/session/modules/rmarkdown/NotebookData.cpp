@@ -31,6 +31,10 @@
 
 using namespace rstudio::core;
 
+
+#define kNotebookDataResource "rmd_data"
+#define kNotebookDataResourceLocation "/" kNotebookDataResource "/"
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -43,6 +47,22 @@ SEXP rs_recordData(SEXP dataFileSEXP)
 {
    events().onDataOutput(FilePath(r::sexp::safeAsString(dataFileSEXP)), FilePath());
    return R_NilValue;
+}
+
+void handleNotebookDataResReq(const http::Request& request,
+                              http::Response* pResponse)
+{
+   std::string resourceName = http::util::pathAfterPrefix(request, kNotebookDataResourceLocation);
+
+   std::string path;
+   Error error = r::exec::RFunction(
+      ".rs.packageFilePath",
+      "rmd/h/pagedtable-0.0.1/" + resourceName,
+      "rmarkdown").call(
+         &path);
+
+   core::FilePath gridResource = core::FilePath(path);
+   pResponse->setCacheableFile(gridResource, request);
 }
 
 } // anonymous namespace
@@ -81,7 +101,8 @@ core::Error initData()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (boost::bind(module_context::sourceModuleRFile, "NotebookData.R"));
+      (boost::bind(module_context::sourceModuleRFile, "NotebookData.R"))
+      (boost::bind(module_context::registerUriHandler, kNotebookDataResourceLocation, handleNotebookDataResReq));
 
    return initBlock.execute();
 }

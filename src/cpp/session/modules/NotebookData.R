@@ -40,3 +40,7 @@
     data = head(e$x, 1000)
   )
 })
+
+.rs.addFunction("packageFilePath", function(path, package) {
+  system.file(path, package = package)
+})
