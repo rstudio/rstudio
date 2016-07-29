@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -594,6 +595,9 @@ public class ChunkOutputWidget extends Composite
          // used to reserve a plot placeholder 
          showOrdinalOutput(unit.getOrdinal());
          break;
+      case RmdChunkOutputUnit.TYPE_DATA:
+         showDataOutput(unit.getOuputObject());
+         break;
       }
    }
    
@@ -834,6 +838,17 @@ public class ChunkOutputWidget extends Composite
             completeUnitRender(ensureVisible);
          };
       });
+   }
+
+   private final native void showDataOutputNative(JavaScriptObject data, Element parent) /*-{
+      var pagedTable = document.createElement("div");
+      pagedTable.appendChild(document.createTextNode(JSON.stringify(data)))
+      parent.appendChild(pagedTable);
+   }-*/;
+
+   private void showDataOutput(JavaScriptObject data)
+   {
+      showDataOutputNative(data, root_.getElement());
    }
    
    private void renderConsoleOutput(String text, String clazz, 
