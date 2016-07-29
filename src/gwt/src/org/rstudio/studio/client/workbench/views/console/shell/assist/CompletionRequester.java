@@ -187,31 +187,24 @@ public class CompletionRequester
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
          
          @Override
-         public int compare(QualifiedName lhs,
-                            QualifiedName rhs)
+         public int compare(QualifiedName lhs, QualifiedName rhs)
          {
-            int lhsScore;
-            if (RCompletionType.isFileType(lhs.type))
-               lhsScore = CodeSearchOracle.scoreMatch(
-                     basename(lhs.name), tokenSub, true);
-            else
-               lhsScore = CodeSearchOracle.scoreMatch(lhs.name, token, false);
+            int lhsScore = RCompletionType.isFileType(lhs.type)
+                  ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
+                  : CodeSearchOracle.scoreMatch(lhs.name, token, false);
             
-            int rhsScore;
-            if (RCompletionType.isFileType(rhs.type))
-               rhsScore = CodeSearchOracle.scoreMatch(
-                     basename(rhs.name), tokenSub, true);
-            else
-               rhsScore = CodeSearchOracle.scoreMatch(rhs.name, token, false);
+            int rhsScore = RCompletionType.isFileType(rhs.type)
+               ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
+               : CodeSearchOracle.scoreMatch(rhs.name, token, false);
             
             // Place arguments higher (give less penalty)
             if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
             if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
-
+            
             if (lhsScore == rhsScore)
-               return lhs.name.length() - rhs.name.length();
-            else
-               return lhsScore < rhsScore ? -1 : 1;
+               return lhs.compareTo(rhs);
+            
+            return lhsScore < rhsScore ? -1 : 1;
          }
       });
       
