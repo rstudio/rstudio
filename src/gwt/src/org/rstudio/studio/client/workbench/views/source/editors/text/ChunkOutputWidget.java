@@ -705,7 +705,16 @@ public class ChunkOutputWidget extends Composite
    {
       // flush any queued errors
       flushQueuedErrors(ensureVisible);
+      
+      if (!gallery_.isVisible())
+      {
+         gallery_.setVisible(true);
+      }
+      
+      gallery_.addPage(new ChunkPlotPage(url));
+      completeUnitRender(ensureVisible);
 
+      /*
       final Image plot = new Image();
       Widget plotWidget = null;
       
@@ -767,6 +776,7 @@ public class ChunkOutputWidget extends Composite
             ensureVisible));
 
       plot.setUrl(url);
+      */
    }
    
    private class RenderTimer extends Timer
@@ -1108,6 +1118,7 @@ public class ChunkOutputWidget extends Composite
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
+   @UiField ChunkOutputGallery gallery_;
    
    private PreWidget console_;
    private VirtualConsole vconsole_;
