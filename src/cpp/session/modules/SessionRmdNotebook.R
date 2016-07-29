@@ -98,7 +98,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkData <- lapply(chunkDirs, function(dir) {
       files <- list.files(dir, full.names = TRUE)
       contents <- lapply(files, function(file) {
-         .rs.readFile(file, binary = .rs.endsWith(file, "png"))
+         .rs.readFile(file, binary = .rs.endsWith(file, "png") || 
+                                     .rs.endsWith(file, "jpg") ||
+                                     .rs.endsWith(file, "jpeg"))
       })
       names(contents) <- basename(files)
       contents
@@ -181,6 +183,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          # png output: create base64 encoded image
          if (.rs.endsWith(key, ".png")) {
             return(rmarkdown::html_notebook_output_png(bytes = val))
+         } else if (.rs.endsWith(key, ".jpg") || .rs.endsWith(key, ".jpeg")) {
+            return(rmarkdown::html_notebook_output_img(bytes = val, 
+                                                       format = "jpeg"))
          }
          
          # console output
@@ -609,13 +614,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # extract base64 encoded content
       scraped <- .rs.scrapeHtmlAttributes(html)
-      pngDataEncoded <- substring(scraped$src, nchar("data:image/png;base64,") + 1)
-      pngData <- .rs.base64decode(pngDataEncoded, binary = TRUE)
+      ext <- if (.rs.startsWith(scraped$src, "data:image/jpeg;"))
+                 "jpeg" else "png"
+      imgDataEncoded <- substring(scraped$src, 
+         nchar(paste("data:image/", ext, ";base64,", sep = "")) + 1)
+      imgData <- .rs.base64decode(imgDataEncoded, binary = TRUE)
       
       # write to file
-      path <- outputPath(cachePath, activeChunkId, activeIndex, "png")
+      path <- outputPath(cachePath, activeChunkId, activeIndex, ext)
       .rs.ensureDirectory(dirname(path))
-      writeBin(pngData, path, useBytes = TRUE)
+      writeBin(imgData, path, useBytes = TRUE)
       
       # update state
       activeIndex <<- activeIndex + 1
