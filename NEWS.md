@@ -128,6 +128,7 @@
 * Fix blank screen on log-in when PAM username capitalization doesn't match system
 * Prompt to save untitled (never saved) documents when closing source windows
 * Don't depend on number of call frames when detecting install.packages call
+* Fix failure to install packages with long install.packages commands after restart
 
 
 
