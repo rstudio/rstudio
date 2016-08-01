@@ -35,9 +35,29 @@
   e <- new.env()
   load(file = path, envir = e)
 
+  columns <- unname(lapply(
+    names(e$x),
+    function(columnName) {
+      type <- class(e$x[[columnName]])[[1]]
+      list(
+        name = columnName,
+        type = type,
+        align = if (type == "character" || type == "factor") "left" else "right"
+      )
+    }
+  ))
+
+  data <- head(e$x, 1000)
+
+  if (length(columns) > 0) {
+    first_column = data[[1]]
+    if (is.numeric(first_column) && all(diff(first_column) == 1))
+      columns[[1]]$align <- "left"
+  }
+
   list(
-    types = sapply(e$x, class),
-    data = head(e$x, 1000)
+    columns = columns,
+    data = data
   )
 })
 
