@@ -135,8 +135,6 @@
                  ui:field="expand_"></g:Image>
         <g:FlowPanel styleName="{style.root}" ui:field="root_">
         </g:FlowPanel>
-        <txt:ChunkOutputGallery ui:field="gallery_" visible="false">
-        </txt:ChunkOutputGallery>
       </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

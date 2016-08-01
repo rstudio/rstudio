@@ -706,9 +706,11 @@ public class ChunkOutputWidget extends Composite
       // flush any queued errors
       flushQueuedErrors(ensureVisible);
       
-      if (!gallery_.isVisible())
+      if (gallery_ == null)
       {
-         gallery_.setVisible(true);
+         gallery_ = new ChunkOutputGallery();
+         root_.clear();
+         root_.add(gallery_);
       }
       
       gallery_.addPage(new ChunkPlotPage(url));
@@ -1118,14 +1120,14 @@ public class ChunkOutputWidget extends Composite
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
-   @UiField ChunkOutputGallery gallery_;
-   
+
    private PreWidget console_;
    private VirtualConsole vconsole_;
    private ProgressSpinner spinner_;
    private String queuedError_;
    private RmdChunkOptions options_;
    private ChunkOutputHost host_;
+   private ChunkOutputGallery gallery_;
    
    private int state_ = CHUNK_EMPTY;
    private int execMode_ = NotebookQueueUnit.EXEC_MODE_SINGLE;
