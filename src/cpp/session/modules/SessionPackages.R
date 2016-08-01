@@ -125,7 +125,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          {
            if (identical(deparse(sys.call(i)[[1]]), "install.packages"))
            {
-             installCmd <- format(sys.call(i))
+             installCmd <- gsub("\\s+"," ", 
+                                paste(deparse(sys.call(i)), collapse = " "))
              break
            }
          }
