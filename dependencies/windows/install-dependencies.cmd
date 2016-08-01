@@ -19,7 +19,7 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.1.zip
 set WINUTILS_FILE=winutils-1.0.zip
 
-set PANDOC_VERSION=1.17.0.2
+set PANDOC_VERSION=1.17.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
