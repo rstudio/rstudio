@@ -178,8 +178,8 @@ public class ChunkOutputWidget extends Composite
    
    private void injectPagedTableResources()
    {
-      injectStyleELement("/rmd_data/css/pagedtable.css", "pagedtable-css");
-      ScriptInjector.fromUrl("/rmd_data/js/pagedtable.js").inject();
+      injectStyleELement("/rmd_data/pagedtable.css", "pagedtable-css");
+      ScriptInjector.fromUrl("/rmd_data/pagedtable.js").inject();
    }
    
    private native void injectStyleELement(String url, String id) /*-{

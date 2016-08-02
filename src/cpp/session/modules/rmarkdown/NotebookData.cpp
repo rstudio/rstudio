@@ -54,10 +54,16 @@ void handleNotebookDataResReq(const http::Request& request,
 {
    std::string resourceName = http::util::pathAfterPrefix(request, kNotebookDataResourceLocation);
 
-   std::string script;
-   r::exec::RFunction("rmarkdown:::pagedtable_script").call(&script);
+   std::string resource;
 
-   pResponse->setBody(script);
+   if (resourceName == "pagedtable.css") {
+      r::exec::RFunction("rmarkdown:::pagedtable_style").call(&resource);
+   }
+   else if (resourceName == "pagedtable.js") {
+      r::exec::RFunction("rmarkdown:::pagedtable_script").call(&resource);
+   }
+
+   pResponse->setBody(resource);
 }
 
 } // anonymous namespace
