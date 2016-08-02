@@ -24,6 +24,13 @@
 * Profile menu enables easy stop/start of profiling or profiling of selected lines.
 * Save and load of previous profiling sessions
 
+### Spark 
+
+* Integrated support for the [sparklyr](http://spark.rstudio.com) package
+* Create and manage connections to Spark clusters and local Spark instances
+* Browse tables and columns of Spark DataFrames
+* Preview the first 1,000 rows of Spark DataFrames
+
 ### Source Editor
 
 * Ctrl+Enter now executes current R statement when selection is empty
