@@ -70,7 +70,6 @@
 ### C/C++
 
 * Provide autocompletion of header paths
-* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
 
 ### Server
@@ -96,6 +95,7 @@
 * Added option to limit length of lines in console history
 * Improved performance when many lines of code sent to console
 * 'save()' warnings no longer emitted when saving session state
+* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 
 ### Bug Fixes
 
