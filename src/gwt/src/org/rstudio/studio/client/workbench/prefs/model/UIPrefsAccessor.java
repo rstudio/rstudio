@@ -537,7 +537,7 @@ public class UIPrefsAccessor extends Prefs
 
    public PrefValue<Boolean> enableRStudioConnect()
    {
-      return bool("enable_rstudio_connect", false);
+      return bool("enable_rsconnect_publish_ui", true);
    }
    
    public PrefValue<RSConnectAccount> preferredPublishAccount()
