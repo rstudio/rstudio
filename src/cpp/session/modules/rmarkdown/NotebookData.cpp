@@ -54,15 +54,10 @@ void handleNotebookDataResReq(const http::Request& request,
 {
    std::string resourceName = http::util::pathAfterPrefix(request, kNotebookDataResourceLocation);
 
-   std::string path;
-   Error error = r::exec::RFunction(
-      ".rs.packageFilePath",
-      "rmd/h/pagedtable-0.0.1/" + resourceName,
-      "rmarkdown").call(
-         &path);
+   std::string script;
+   r::exec::RFunction("rmarkdown:::pagedtable_script").call(&script);
 
-   core::FilePath pagedTableResource(path);
-   pResponse->setCacheableFile(pagedTableResource, request);
+   pResponse->setBody(script);
 }
 
 } // anonymous namespace

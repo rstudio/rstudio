@@ -183,9 +183,12 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
    {
       SEXP argsSEXP;
       r::sexp::Protect rProtect;
-      Error error = r::exec::RFunction(".rs.readDataCapture", path.absolutePath()).call(
-         &argsSEXP,
-         &rProtect);
+
+      Error error = r::exec::RFunction(
+         ".rs.readDataCapture",
+         string_utils::utf8ToSystem(path.absolutePath())).call(
+            &argsSEXP,
+            &rProtect);
 
       if (error)
          return error;

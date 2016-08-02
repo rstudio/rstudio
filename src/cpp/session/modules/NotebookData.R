@@ -61,10 +61,6 @@
   )
 })
 
-.rs.addFunction("packageFilePath", function(path, package) {
-  system.file(path, package = package)
-})
-
 .rs.addFunction("runSqlForDataCapture", function(query, connectionName, outputFile)
 {
   conn <- get(connectionName, envir = globalenv())
