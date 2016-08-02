@@ -96,30 +96,8 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
 
       if (header != prevHeader) {
         // The header has changed, so append the previous one.
-        if (isSortable) {
-          classesBuilder.append(sortableStyle);
-        }
-        if (isSorted) {
-          classesBuilder.append(sortedStyle);
-        }
-        appendExtraStyles(prevHeader, classesBuilder);
-
-        // Render the header.
-        TableCellBuilder th =
-            tr.startTH().colSpan(prevColspan).className(classesBuilder.toString());
-        enableColumnHandlers(th, column);
-        if (prevHeader != null) {
-          // Build the header.
-          Context context = new Context(0, curColumn - prevColspan, prevHeader.getKey());
-          // Add div element with aria button role
-          if (isSortable) {
-            // TODO: Figure out aria-label and translation of label text
-            th.attribute("role", "button");
-            th.tabIndex(-1);
-          }
-          renderSortableHeader(th, context, prevHeader, isSorted, isSortAscending);
-        }
-        th.endTH();
+        buildTableHeader(tr, column, prevHeader, isSortable, isSorted, isSortAscending,
+            classesBuilder, sortableStyle, sortedStyle, prevColspan, curColumn);
 
         // Reset the previous header.
         prevHeader = header;
@@ -140,32 +118,48 @@ public class DefaultHeaderOrFooterBuilder<T> extends AbstractHeaderOrFooterBuild
       }
     }
 
-    // Append the last header.
+    // The first and last columns could be the same column.
+    classesBuilder.append(" ").append(
+        isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
+
+    // Render the last header.
+    buildTableHeader(tr, column, prevHeader, isSortable, isSorted, isSortAscending,
+        classesBuilder, sortableStyle, sortedStyle, prevColspan, curColumn);
+
+    // End the row.
+    tr.endTR();
+
+    return true;
+  }
+
+  /**
+   * Build the table header for the column.
+   */
+  private void buildTableHeader(TableRowBuilder tr, Column<T, ?> column, Header<?> header,
+      boolean isSortable, boolean isSorted, boolean isSortAscending, StringBuilder classesBuilder,
+      String sortableStyle, String sortedStyle, int prevColspan, int curColumn) {
+
     if (isSortable) {
       classesBuilder.append(sortableStyle);
     }
     if (isSorted) {
       classesBuilder.append(sortedStyle);
     }
+    appendExtraStyles(header, classesBuilder);
 
-    // The first and last columns could be the same column.
-    classesBuilder.append(" ").append(
-        isFooter ? style.lastColumnFooter() : style.lastColumnHeader());
-    appendExtraStyles(prevHeader, classesBuilder);
-
-    // Render the last header.
     TableCellBuilder th = tr.startTH().colSpan(prevColspan).className(classesBuilder.toString());
     enableColumnHandlers(th, column);
-    if (prevHeader != null) {
-      Context context = new Context(0, curColumn - prevColspan, prevHeader.getKey());
-      renderSortableHeader(th, context, prevHeader, isSorted, isSortAscending);
+    if (header != null) {
+      // Build the header.
+      Context context = new Context(0, curColumn - prevColspan, header.getKey());
+      if (isSortable) {
+        // TODO: Figure out aria-label and translation of label text
+        th.attribute("role", "button");
+        th.tabIndex(-1);
+      }
+      renderSortableHeader(th, context, header, isSorted, isSortAscending);
     }
     th.endTH();
-
-    // End the row.
-    tr.endTR();
-
-    return true;
   }
   
   /**
