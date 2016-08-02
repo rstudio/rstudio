@@ -57,13 +57,18 @@ void handleNotebookDataResReq(const http::Request& request,
    std::string resource;
 
    if (resourceName == "pagedtable.css") {
-      r::exec::RFunction("rmarkdown:::pagedtable_style").call(&resource);
+      std::string resourcePath("pagedtable/");
+      resourcePath.append(http::util::pathAfterPrefix(request, kNotebookDataResourceLocation));
+
+      core::FilePath pagedTableResource = options().rResourcesPath().childPath(resourcePath);
+
+      pResponse->setCacheableFile(pagedTableResource, request);
    }
    else if (resourceName == "pagedtable.js") {
       r::exec::RFunction("rmarkdown:::pagedtable_script").call(&resource);
-   }
 
-   pResponse->setBody(resource);
+      pResponse->setBody(resource);
+   }
 }
 
 } // anonymous namespace

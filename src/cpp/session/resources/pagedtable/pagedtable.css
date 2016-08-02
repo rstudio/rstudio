@@ -1,0 +1,96 @@
+.pagedtable {
+  overflow: auto;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.pagedtable-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.pagedtable table {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.pagedtable th {
+  padding: 0 5px 0 5px;
+  border: none;
+  border-bottom: 2px solid #dddddd;
+}
+
+.pagedtable a {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.pagedtable-index-nav {
+  cursor: pointer;
+  padding: 0 5px 0 5px;
+  float: right;
+}
+
+.pagedtable-index-nav-disabled {
+  cursor: default;
+  text-decoration: none;
+  color: #999;
+}
+
+a.pagedtable-index-nav-disabled:hover {
+  text-decoration: none;
+  color: #999;
+}
+
+.pagedtable-indexes {
+  cursor: pointer;
+  float: right;
+}
+
+.pagedtable-index-current {
+  cursor: default;
+  text-decoration: none;
+  font-weight: bold;
+  color: #333;
+}
+
+a.pagedtable-index-current:hover {
+  text-decoration: none;
+  font-weight: bold;
+  color: #333;
+}
+
+.pagedtable-index {
+  width: 30px;
+  display: inline-block;
+  text-align: center;
+}
+
+.pagedtable-footer {
+  min-width: 380px;
+  padding-top: 4px;
+  padding-bottom: 5px;
+}
+
+.pagedtable-not-empty .pagedtable-footer {
+  border-top: 2px solid #dddddd;
+}
+
+.pagedtable-info {
+  overflow: hidden;
+  max-height: 20px;
+  color: #999;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pagedtable-header-type {
+  color: #999;
+  font-weight: 100;
+}
