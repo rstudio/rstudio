@@ -18,6 +18,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.HasSourceInfo;
+import com.google.gwt.dev.jjs.ast.CanBeJsNative;
 import com.google.gwt.dev.jjs.ast.CanHaveSuppressedWarnings;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasJsInfo.JsMemberType;
@@ -563,9 +564,15 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     checkJsNamespace(member);
   }
 
-  private <T extends HasJsName & HasSourceInfo> void checkJsName(T item) {
+  private <T extends HasJsName & HasSourceInfo & CanBeJsNative> void checkJsName(T item) {
     if (item.getJsName().isEmpty()) {
       logError(item, "%s cannot have an empty name.", getDescription(item));
+    } else if (JsInteropUtil.isGlobal(item.getJsNamespace()) && item.isJsNative()) {
+      // Allow qualified names in the name field for JsPackage.GLOBAL native items for future
+      // compatibility
+      if (!JsUtils.isValidJsQualifiedName(item.getJsName())) {
+        logError(item, "%s has invalid name '%s'.", getDescription(item), item.getJsName());
+      }
     } else if (!JsUtils.isValidJsIdentifier(item.getJsName())) {
       logError(item, "%s has invalid name '%s'.", getDescription(item), item.getJsName());
     }

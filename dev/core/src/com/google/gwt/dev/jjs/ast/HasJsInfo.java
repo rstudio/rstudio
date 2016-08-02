@@ -22,7 +22,7 @@ import java.beans.Introspector;
 /**
  * Abstracts JsInterop information for the AST nodes.
  */
-public interface HasJsInfo extends HasJsName {
+public interface HasJsInfo extends HasJsName, CanBeJsNative {
   /**
    * Indicates type of JsMember.
    */
@@ -126,8 +126,6 @@ public interface HasJsInfo extends HasJsName {
   void setJsOverlay();
 
   JsMemberType getJsMemberType();
-
-  boolean isJsNative();
 
   boolean isJsMethodVarargs();
 

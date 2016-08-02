@@ -52,7 +52,7 @@ import java.util.Set;
  * initializer in the superclass chain needs to be called.
  */
 public abstract class JDeclaredType extends JReferenceType
-    implements CanHaveSuppressedWarnings, HasJsName {
+    implements CanHaveSuppressedWarnings, HasJsName, CanBeJsNative {
 
   private boolean isJsFunction;
   private boolean isJsType;
