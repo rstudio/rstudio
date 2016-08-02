@@ -61,8 +61,8 @@ void handleNotebookDataResReq(const http::Request& request,
       "rmarkdown").call(
          &path);
 
-   core::FilePath gridResource = core::FilePath(path);
-   pResponse->setCacheableFile(gridResource, request);
+   core::FilePath pagedTableResource(path);
+   pResponse->setCacheableFile(pagedTableResource, request);
 }
 
 } // anonymous namespace
