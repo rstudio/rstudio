@@ -51,6 +51,11 @@
   ))
 
   data <- head(e$x, 1000)
+  data <- as.data.frame(
+    lapply(
+      data,
+      function (y) if ("factor" %in% class(y)) as.character(y) else y),
+    stringsAsFactors = FALSE)
 
   if (length(columns) > 0) {
     first_column = data[[1]]
