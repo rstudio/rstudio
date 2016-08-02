@@ -54,7 +54,7 @@
   data <- as.data.frame(
     lapply(
       data,
-      function (y) if ("factor" %in% class(y)) as.character(y) else y),
+      function (y) as.character(y)),
     stringsAsFactors = FALSE)
 
   if (length(columns) > 0) {
