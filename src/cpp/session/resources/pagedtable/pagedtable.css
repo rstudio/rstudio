@@ -2,6 +2,8 @@
   overflow: auto;
   padding-left: 8px;
   padding-right: 8px;
+
+  font-family: "Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif;
 }
 
 .pagedtable-wrapper {
@@ -17,9 +19,17 @@
 }
 
 .pagedtable th {
-  padding: 0 5px 0 5px;
+  padding: 0 4px 3px 4px;
   border: none;
-  border-bottom: 2px solid #dddddd;
+  border-bottom: 1px solid #dddddd;
+}
+
+.pagedtable td {
+  padding: 0 4px 3px 4px;
+}
+
+.pagedtable tr:first-child td {
+  padding-top: 2px;
 }
 
 .pagedtable a {
@@ -35,17 +45,18 @@
   cursor: pointer;
   padding: 0 5px 0 5px;
   float: right;
+  color: #999;
 }
 
 .pagedtable-index-nav-disabled {
   cursor: default;
   text-decoration: none;
-  color: #999;
+  color: #ddd;
 }
 
 a.pagedtable-index-nav-disabled:hover {
   text-decoration: none;
-  color: #999;
+  color: #ddd;
 }
 
 .pagedtable-indexes {
@@ -53,23 +64,26 @@ a.pagedtable-index-nav-disabled:hover {
   float: right;
 }
 
-.pagedtable-index-current {
+a.pagedtable-index-current {
   cursor: default;
   text-decoration: none;
   font-weight: bold;
-  color: #333;
+  color: #999;
+  text-decoration: underline;
 }
 
 a.pagedtable-index-current:hover {
   text-decoration: none;
   font-weight: bold;
-  color: #333;
+  color: #999;
+  text-decoration: underline;
 }
 
 .pagedtable-index {
   width: 30px;
   display: inline-block;
   text-align: center;
+  color: #999;
 }
 
 .pagedtable-footer {
@@ -79,7 +93,7 @@ a.pagedtable-index-current:hover {
 }
 
 .pagedtable-not-empty .pagedtable-footer {
-  border-top: 2px solid #dddddd;
+  border-top: 1px solid #dddddd;
 }
 
 .pagedtable-info {
@@ -93,4 +107,6 @@ a.pagedtable-index-current:hover {
 .pagedtable-header-type {
   color: #999;
   font-weight: 100;
+  margin-top: -3px;
+  font-size: 11px;
 }
