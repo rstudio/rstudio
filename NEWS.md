@@ -24,6 +24,13 @@
 * Profile menu enables easy stop/start of profiling or profiling of selected lines.
 * Save and load of previous profiling sessions
 
+### RStudio Connect
+
+* Publish reports, applications, and plots to [RStudio Connect](https://www.rstudio.com/products/connect/)
+* One-click deployment of Shiny applications
+* Publish and schedule periodic execution of R Markdown reports 
+* Set which users and/or groups have permission to view content
+
 ### Spark 
 
 * Integrated support for the [sparklyr](http://spark.rstudio.com) package
