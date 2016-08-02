@@ -75,8 +75,7 @@ public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
                                           RestartStatusEvent.Handler,
-                                          InterruptStatusEvent.Handler,
-                                          ConsoleError.Observer
+                                          InterruptStatusEvent.Handler
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -113,7 +112,6 @@ public class ChunkOutputWidget extends Composite
    {
       chunkId_ = chunkId;
       host_ = host;
-      queuedError_ = "";
       options_ = options;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
@@ -135,7 +133,6 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               destroyConsole();
                host_.onOutputRemoved();
                break;
             };
@@ -319,10 +316,14 @@ public class ChunkOutputWidget extends Composite
              s_outlineColor != null;
    }
    
+   public static String getForegroundColor()
+   {
+      return s_color;
+   }
+   
    public void onOutputFinished(boolean ensureVisible, int execScope)
    {
-      // flush any remaining queued errors
-      flushQueuedErrors(ensureVisible);
+      presenter_.completeOutput();
       
       if (state_ != CHUNK_PRE_OUTPUT)
       {
@@ -334,16 +335,13 @@ public class ChunkOutputWidget extends Composite
       {
          // if executing the whole chunk but no output was received, clean up
          // any prior output and hide the output
-         root_.clear();
-         if (vconsole_ != null)
-            vconsole_.clear();
+         presenter_.clearOutput();
          renderedHeight_ = 0;
          setVisible(false);
          host_.onOutputHeightChanged(0, ensureVisible);
       }
 
       state_ = root_.getWidgetCount() == 0 ? CHUNK_EMPTY : CHUNK_READY;
-      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
       setOverflowStyle();
       showReadyState();
       unregisterConsoleEvents();
@@ -507,11 +505,7 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
 
-      // flush any queued errors 
-      flushQueuedErrors(false);
-
-      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
-            execMode_ == NotebookQueueUnit.EXEC_MODE_SINGLE);
+      presenter_.showConsoleText(event.getOutput());
    }
    
    @Override
@@ -520,9 +514,7 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
       
-      // queue the error -- we don't emit errors right away since a more 
-      // detailed error event may be forthcoming
-      queuedError_ += event.getError();
+      presenter_.showConsoleError(event.getError());
    }
    
    @Override
@@ -548,18 +540,6 @@ public class ChunkOutputWidget extends Composite
       completeInterrupt();
    }
 
-   @Override
-   public void onErrorBoxResize()
-   {
-      syncHeight(true, true);
-   }
-
-   @Override
-   public void runCommandWithDebug(String command)
-   {
-      // Not implemented
-   }
-
    // Private methods ---------------------------------------------------------
 
    private void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
@@ -571,214 +551,38 @@ public class ChunkOutputWidget extends Composite
           unit.getArray().length() < 1)
          return;
       
+      if (state_ == CHUNK_PRE_OUTPUT)
+      {
+         hasErrors_ = false;
+         state_ = CHUNK_POST_OUTPUT;
+      }
+      
       initializeOutput(unit.getType());
+
       switch(unit.getType())
       {
       case RmdChunkOutputUnit.TYPE_TEXT:
-         showConsoleOutput(unit.getArray());
+         presenter_.showConsoleOutput(unit.getArray());
          break;
       case RmdChunkOutputUnit.TYPE_HTML:
-         showHtmlOutput(unit.getString(), unit.getOrdinal(), ensureVisible);
+         presenter_.showHtmlOutput(unit.getString(), unit.getOrdinal());
          break;
       case RmdChunkOutputUnit.TYPE_PLOT:
-         showPlotOutput(unit.getString(), unit.getOrdinal(), ensureVisible);
+         presenter_.showPlotOutput(unit.getString(), unit.getOrdinal());
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
          // override visibility flag when there's an error in batch mode
          if (!replay && !options_.error() && 
              mode == NotebookQueueUnit.EXEC_MODE_BATCH)
             ensureVisible = true;
-         showErrorOutput(unit.getUnhandledError(), ensureVisible);
+         hasErrors_ = true;
+         presenter_.showErrorOutput(unit.getUnhandledError());
          break;
       case RmdChunkOutputUnit.TYPE_ORDINAL:
          // used to reserve a plot placeholder 
-         showOrdinalOutput(unit.getOrdinal());
+         presenter_.showOrdinalOutput(unit.getOrdinal());
          break;
       }
-   }
-   
-   private String classOfOutput(int type)
-   {
-      if (type == CONSOLE_ERROR)
-        return RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
-      else if (type == CONSOLE_INPUT)
-        return "ace_keyword";
-      return null;
-   }
-   
-   private void showConsoleOutput(JsArray<JsArrayEx> output)
-   {
-      for (int i = 0; i < output.length(); i++)
-      {
-         // the first element is the output, and the second is the text; if we
-         // don't have at least 2 elements, it's not a valid entry
-         if (output.get(i).length() < 2)
-            continue;
-
-         int outputType = output.get(i).getInt(0);
-         String outputText = output.get(i).getString(1);
-         
-         // we don't currently render input as output
-         if (outputType == CONSOLE_INPUT)
-            continue;
-         
-         if (outputType == CONSOLE_ERROR)
-         {
-            queuedError_ += outputText;
-         }
-         else
-         {
-            // release any queued errors
-            if (!queuedError_.isEmpty())
-            {
-               vconsole_.submit(queuedError_, classOfOutput(CONSOLE_ERROR));
-               queuedError_ = "";
-            }
-
-            vconsole_.submit(outputText, classOfOutput(outputType));
-         }
-      }
-      vconsole_.redraw(console_.getElement());
-      setOverflowStyle();
-   }
-   
-   private void completeUnitRender(boolean ensureVisible)
-   {
-      syncHeight(true, ensureVisible);
-   }
-   
-   private void showErrorOutput(UnhandledError err, final boolean ensureVisible)
-   {
-      hasErrors_ = true;
-      
-      // if there's only one error frame, it's not worth showing dedicated 
-      // error UX
-      if (err.getErrorFrames() != null &&
-          err.getErrorFrames().length() < 2)
-      {
-         flushQueuedErrors(ensureVisible);
-         return;
-      }
-
-      int idx = queuedError_.indexOf(err.getErrorMessage());
-      if (idx >= 0)
-      {
-         // emit any messages queued prior to the error
-         if (idx > 0)
-         {
-            renderConsoleOutput(queuedError_.substring(0, idx), 
-                  classOfOutput(CONSOLE_ERROR),
-                  ensureVisible);
-            initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
-         }
-         // leave messages following the error in the queue
-         queuedError_ = queuedError_.substring(
-               idx + err.getErrorMessage().length());
-      }
-      else
-      {
-         // flush any irrelevant messages from the stream
-         flushQueuedErrors(ensureVisible);
-      }
-      
-      UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
-      ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
-            this, null);
-      error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
-
-      root_.add(error);
-      flushQueuedErrors(ensureVisible);
-      completeUnitRender(ensureVisible);
-   }
-   
-   private void showOrdinalOutput(int ordinal)
-   {
-      // ordinals are placeholder elements which can be replaced with content
-      // later
-      HTML ord = new HTML("");
-      ord.getElement().getStyle().setDisplay(Display.NONE);
-      addWithOrdinal(ord, ordinal);
-   }
-
-   private void showPlotOutput(String url, int ordinal, 
-         final boolean ensureVisible)
-   {
-      // flush any queued errors
-      flushQueuedErrors(ensureVisible);
-      
-      if (gallery_ == null)
-      {
-         gallery_ = new ChunkOutputGallery();
-         root_.clear();
-         root_.add(gallery_);
-      }
-      
-      gallery_.addPage(new ChunkPlotPage(url));
-      completeUnitRender(ensureVisible);
-
-      /*
-      final Image plot = new Image();
-      Widget plotWidget = null;
-      
-      if (isFixedSizePlotUrl(url))
-      {
-         // if the plot is of fixed size, emit it directly, but make it
-         // initially invisible until we get sizing information (as we may 
-         // have to downsample)
-         plot.setVisible(false);
-         plotWidget = plot;
-      }
-      else
-      {
-         // if we can scale the plot, scale it
-         FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
-                     ChunkOutputUi.OUTPUT_ASPECT, 
-                     ChunkOutputUi.MAX_PLOT_WIDTH);
-         plotWidget = fixedFrame;
-      }
-
-      // check to see if the given ordinal matches one of the existing
-      // placeholder elements
-      boolean placed = false;
-      for (int i = 0; i < root_.getWidgetCount(); i++) 
-      {
-         Widget w = root_.getWidget(i);
-         String ord = w.getElement().getAttribute(ORDINAL_ATTRIBUTE);
-         if (!StringUtil.isNullOrEmpty(ord))
-         {
-            try
-            {
-               int ordAttr = Integer.parseInt(ord);
-               if (ordAttr == ordinal)
-               {
-                  // insert the plot widget after the ordinal 
-                  plotWidget.getElement().setAttribute(
-                        ORDINAL_ATTRIBUTE, "" + ordinal);
-                  if (i < root_.getWidgetCount() - 1)
-                     root_.insert(plotWidget, i + 1);
-                  else
-                     root_.add(plotWidget);
-                  placed = true;
-                  break;
-               }
-            }
-            catch(Exception e)
-            {
-               Debug.logException(e);
-            }
-         }
-      }
-
-      // if we haven't placed the plot yet, add it at the end of the output
-      if (!placed)
-         addWithOrdinal(plotWidget, ordinal);
-      
-      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
-            ensureVisible));
-
-      plot.setUrl(url);
-      */
    }
    
    private class RenderTimer extends Timer
@@ -806,119 +610,6 @@ public class ChunkOutputWidget extends Composite
          pendingRenders_--;
       }
    };
-   
-   private void showHtmlOutput(String url, int ordinal, 
-         final boolean ensureVisible)
-   {
-      // flush any queued errors
-      flushQueuedErrors(ensureVisible);
-      
-      // amend the URL to cause any contained widget to use the RStudio viewer
-      // sizing policy
-      if (url.indexOf('?') > 0)
-         url += "&";
-      else
-         url += "?";
-      url += "viewer_pane=1";
-
-      final ChunkOutputFrame frame = new ChunkOutputFrame();
-      final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
-                  ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
-
-      addWithOrdinal(fixedFrame, ordinal);
-
-      final Timer renderTimeout = new RenderTimer();
-
-      frame.loadUrl(url, new Command() 
-      {
-         @Override
-         public void execute()
-         {
-            Element body = frame.getDocument().getBody();
-            Style bodyStyle = body.getStyle();
-            
-            bodyStyle.setPadding(0, Unit.PX);
-            bodyStyle.setMargin(0, Unit.PX);
-            bodyStyle.setColor(s_color);
-            
-            renderTimeout.cancel();
-            completeUnitRender(ensureVisible);
-         };
-      });
-   }
-   
-   private void renderConsoleOutput(String text, String clazz, 
-         boolean ensureVisible)
-   {
-      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-      vconsole_.submitAndRender(text, clazz,
-            console_.getElement());
-      syncHeight(true, ensureVisible);
-   }
-   
-   private void initializeOutput(int outputType)
-   {
-      if (state_ == CHUNK_PRE_OUTPUT)
-      {
-         // if no output has been emitted yet, clean up all existing output
-         if (vconsole_ != null)
-            vconsole_.clear();
-         root_.clear();
-         hasErrors_ = false;
-         lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
-         state_ = CHUNK_POST_OUTPUT;
-      }
-      if (state_ == CHUNK_POST_OUTPUT)
-      {
-         if (lastOutputType_ == outputType)
-            return;
-         if (outputType == RmdChunkOutputUnit.TYPE_TEXT)
-         {
-            // if switching to textual output, allocate a new virtual console
-            initConsole();
-         }
-         else if (lastOutputType_ == RmdChunkOutputUnit.TYPE_TEXT)
-         {
-            // if switching from textual input, clear the text accumulator
-            if (vconsole_ != null)
-               vconsole_.clear();
-            console_ = null;
-         }
-      }
-      lastOutputType_ = outputType;
-   }
-
-   private void initConsole()
-   {
-      if (vconsole_ == null)
-         vconsole_ = new VirtualConsole();
-      else
-         vconsole_.clear();
-      if (console_ == null)
-      {
-         console_ = new PreWidget();
-         console_.getElement().removeAttribute("tabIndex");
-         console_.getElement().getStyle().setMarginTop(0, Unit.PX);
-         console_.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
-      }
-      else
-      {
-         console_.getElement().setInnerHTML("");
-      }
-
-      // attach the console
-      root_.add(console_);
-   }
-   
-   private void destroyConsole()
-   {
-      if (vconsole_ != null)
-         vconsole_.clear();
-      if (console_ != null)
-         console_.removeFromParent();
-      console_ = null;
-   }
    
    private void registerConsoleEvents()
    {
@@ -1063,55 +754,15 @@ public class ChunkOutputWidget extends Composite
       root_.getElement().getStyle().clearOpacity();
    }
    
-   private void flushQueuedErrors(boolean ensureVisible)
+   private void initializeOutput(int type)
    {
-      if (!queuedError_.isEmpty())
+      if (state_ == CHUNK_PRE_OUTPUT)
       {
-         initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-         renderConsoleOutput(queuedError_, classOfOutput(CONSOLE_ERROR), 
-               ensureVisible);
-         queuedError_ = "";
+         // if no output has been emitted yet, clean up all existing output
+         presenter_.clearOutput();
+         hasErrors_ = false;
+         state_ = CHUNK_POST_OUTPUT;
       }
-   }
-   
-   private EventListener createPlotListener(final Image plot, 
-         final boolean ensureVisible)
-   {
-      final Timer renderTimeout = new RenderTimer();
-      return new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            if (DOM.eventGetType(event) != Event.ONLOAD)
-               return;
-            
-            // if the image is of fixed size, just clamp its width to the editor
-            // surface while preserving its aspect ratio
-            if (isFixedSizePlotUrl(plot.getUrl()))
-            {
-               ImageElementEx img = plot.getElement().cast();
-               img.getStyle().setProperty("height", "auto");
-               img.getStyle().setProperty("maxWidth", "100%");
-            }
-               
-            plot.setVisible(true);
-            
-            renderTimeout.cancel();
-            completeUnitRender(ensureVisible);
-         }
-      };
-   }
-   
-   private boolean isFixedSizePlotUrl(String url)
-   {
-      return url.contains("fixed_size=1");
-   }
-   
-   private void addWithOrdinal(Widget w, int ordinal)
-   {
-      w.getElement().setAttribute(ORDINAL_ATTRIBUTE, "" + ordinal);
-      root_.add(w);
    }
    
    @UiField Image clear_;
@@ -1121,18 +772,14 @@ public class ChunkOutputWidget extends Composite
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
 
-   private PreWidget console_;
-   private VirtualConsole vconsole_;
    private ProgressSpinner spinner_;
-   private String queuedError_;
    private RmdChunkOptions options_;
    private ChunkOutputHost host_;
-   private ChunkOutputGallery gallery_;
+   private ChunkOutputPresenter presenter_;
    
    private int state_ = CHUNK_EMPTY;
    private int execMode_ = NotebookQueueUnit.EXEC_MODE_SINGLE;
    private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
-   private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
@@ -1147,7 +794,6 @@ public class ChunkOutputWidget extends Composite
    private static String s_backgroundColor = null;
    private static String s_color           = null;
 
-   private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
    
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;
@@ -1158,8 +804,4 @@ public class ChunkOutputWidget extends Composite
    public final static int CHUNK_READY       = 2;
    public final static int CHUNK_PRE_OUTPUT  = 3;
    public final static int CHUNK_POST_OUTPUT = 4;
-   
-   public final static int CONSOLE_INPUT  = 0;
-   public final static int CONSOLE_OUTPUT = 1;
-   public final static int CONSOLE_ERROR  = 2;
 }
