@@ -298,7 +298,7 @@ Error executeStanEngineChunk(const std::string& docId,
    
    // if the 'file' option was not set, set it explicitly
    if (!core::algorithm::contains(engineOptsNames, "file"))
-      fStanEngine.addParam("file", tempFile.absolutePath());
+      fStanEngine.addParam("file", string_utils::utf8ToSystem(tempFile.absolutePath()));
    
    // evaluate stan_model call
    SEXP stanModelSEXP = R_NilValue;
@@ -366,7 +366,7 @@ Error executeSqlEngineChunk(const std::string& docId,
                ".rs.runSqlForDataCapture",
                code,
                connectionName,
-               targetPath.absolutePath()).call();
+               string_utils::utf8ToSystem(targetPath.absolutePath())).call();
    if (error)
    {
       std::string message = "Failed to execute SQL chunk";
