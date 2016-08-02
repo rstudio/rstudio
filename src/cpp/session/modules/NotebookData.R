@@ -16,8 +16,8 @@
 .rs.addFunction("initDataCapture", function(outputFolder, libraryFolder)
 {
   assign("print.data.frame", function(x, ...) {
-    output <- tempfile(pattern = "_rs_rdata_", tmpdir = outputFolder, 
-                       fileext = "rdata")
+    output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
+                       fileext = "rdf")
     save(
       x, 
       file = output)

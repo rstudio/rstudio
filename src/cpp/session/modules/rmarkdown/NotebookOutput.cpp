@@ -74,7 +74,7 @@ ChunkOutputType chunkOutputType(const FilePath& outputPath)
       outputType = ChunkOutputHtml;
    else if (ext == ".error")
       outputType = ChunkOutputError;
-   else if (outputPath.extensionLowerCase() == ".rdata")
+   else if (outputPath.extensionLowerCase() == ".rdf")
       outputType = ChunkOutputData;
    return outputType;
 }
@@ -92,7 +92,7 @@ std::string chunkOutputExt(ChunkOutputType outputType)
       case ChunkOutputError:
          return ".error";
       case ChunkOutputData:
-         return ".rdata";
+         return ".rdf";
       default: 
          return "";
    }
