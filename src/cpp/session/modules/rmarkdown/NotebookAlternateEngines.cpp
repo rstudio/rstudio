@@ -338,6 +338,49 @@ Error executeStanEngineChunk(const std::string& docId,
    return Success();
 }
 
+Error executeSqlEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& nbCtxId,
+                             const std::string& code,
+                             const std::map<std::string, std::string>& options)
+{
+   Error error;
+   
+   // ensure we always emit an execution complete event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+   
+   FilePath targetPath = module_context::tempFile("_rs_rdata_", "rdata");
+
+   if (!options.count("connection"))
+   {
+      std::string message =
+         "Connection chunk option must be specify a valid DBI connection";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+
+      return Success();
+   }
+
+   // run sql and save result
+   std::string connectionName = options.find("connection")->second;
+   error = r::exec::RFunction(
+               ".rs.runSqlForDataCapture",
+               code,
+               connectionName,
+               targetPath.absolutePath()).call();
+   if (error)
+   {
+      std::string message = "Failed to execute SQL chunk";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+
+      return Success();
+   }
+   
+   // trigger data output event
+   events().onDataOutput(FilePath(targetPath), FilePath());
+   
+   return Success();
+}
+
 Error interruptEngineChunk(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -379,7 +422,9 @@ Error executeAlternateEngineChunk(const std::string& docId,
       return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "stan")
       return executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
-   
+   else if (engine == "sql")
+      return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, options);
+
    runChunk(docId, chunkId, nbCtxId, engine, code);
    return Success();
 }

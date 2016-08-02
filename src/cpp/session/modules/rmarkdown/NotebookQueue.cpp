@@ -376,6 +376,14 @@ private:
          }
          else
          {
+            if (engine == "sql")
+            {
+               execContext_ = boost::make_shared<ChunkExecContext>(
+                  unit->docId(), unit->chunkId(), ctx, unit->execScope(), options,
+                  docQueue->pixelWidth(), docQueue->charWidth());
+               execContext_->connect();
+            }
+
             execUnit_ = unit;
             enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
             error = executeAlternateEngineChunk(

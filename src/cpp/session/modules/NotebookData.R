@@ -32,7 +32,7 @@
 
 .rs.addFunction("readDataCapture", function(path)
 {
-  e <- new.env()
+  e <- new.env(parent = emptyenv())
   load(file = path, envir = e)
 
   columns <- unname(lapply(
@@ -57,10 +57,25 @@
 
   list(
     columns = columns,
-    data = data
+    data = if (length(data) == 0) list() else data
   )
 })
 
 .rs.addFunction("packageFilePath", function(path, package) {
   system.file(path, package = package)
+})
+
+.rs.addFunction("runSqlForDataCapture", function(query, connectionName, outputFile)
+{
+  conn <- get(connectionName, envir = globalenv())
+
+  res <- DBI::dbSendQuery(conn, query)
+  x <- if (!DBI::dbHasCompleted(res) || (DBI::dbGetRowCount(res) > 0))
+            DBI::dbFetch(res, n = 1000)
+  DBI::dbClearResult(res)
+
+  save(
+    x, 
+    file = outputFile
+  )
 })
