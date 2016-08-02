@@ -1,10 +1,18 @@
 ## v0.99c - Release Notes
 
+### R Notebooks
+
+* Authoring tools for [R Notebooks](http://rmarkdown.rstudio.com/r_notebooks.html)
+* Inline display for text, tabular data, graphics, and htmlwidgets in source editor
+* All code and output saved within a single notebook HTML file (.nb.html)
+* Multiple language engines including Python, Bash, SQL, Rcpp, and Stan
+* Tools for running various combinations of chunks (current, next, previous, remaining)
+
 ### Data Import
 
-* Import dataset from text via readr
-* Import dataset from Excel via readxl
-* Import dataset from SAS, SPSS, and Stata via haven
+* Import dataset from text via [readr](https://github.com/hadley/readr)
+* Import dataset from Excel via [readxl](https://github.com/hadley/readxl)
+* Import dataset from SAS, SPSS, and Stata via [haven](https://github.com/hadley/haven)
 * Preview data while importing datasets
 * Explicitly set column types while importing datasets
 * Preview and copy code while importing datasets
@@ -15,6 +23,20 @@
 * Visualize profiling results within the IDE
 * Profile menu enables easy stop/start of profiling or profiling of selected lines.
 * Save and load of previous profiling sessions
+
+### RStudio Connect
+
+* Publish reports, applications, and plots to [RStudio Connect](https://www.rstudio.com/products/connect/)
+* One-click deployment of Shiny applications
+* Publish and schedule periodic execution of R Markdown reports 
+* Set which users and/or groups have permission to view content
+
+### Spark 
+
+* Integrated support for the [sparklyr](http://spark.rstudio.com) package
+* Create and manage connections to Spark clusters and local Spark instances
+* Browse tables and columns of Spark DataFrames
+* Preview the first 1,000 rows of Spark DataFrames
 
 ### Source Editor
 
@@ -42,13 +64,12 @@
 * Add R Markdown pane to global options dialog
 * Build tab and preview support for R Markdown websites
 * Various enhancements for authoring with the bookdown package
-* Update pandoc to 1.17.0.3
+* Update pandoc to 1.17.2
 * Update MathJax to 2.6.1
 
 ### C/C++
 
 * Provide autocompletion of header paths
-* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 * Syntax highlighting of raw, wide, unicode string literals (e.g R"hello")
 
 ### Server
@@ -74,6 +95,7 @@
 * Added option to limit length of lines in console history
 * Improved performance when many lines of code sent to console
 * 'save()' warnings no longer emitted when saving session state
+* Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
 
 ### Bug Fixes
 
@@ -128,6 +150,7 @@
 * Fix blank screen on log-in when PAM username capitalization doesn't match system
 * Prompt to save untitled (never saved) documents when closing source windows
 * Don't depend on number of call frames when detecting install.packages call
+* Fix failure to install packages with long install.packages commands after restart
 
 
 

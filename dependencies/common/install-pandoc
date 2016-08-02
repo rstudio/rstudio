@@ -35,7 +35,7 @@ download()
 }
 
 # get pandoc
-PANDOC_VERSION=1.17.0.2
+PANDOC_VERSION=1.17.2
 PANDOC_DIR=pandoc/$PANDOC_VERSION
 if [ -d "$PANDOC_DIR" ]
 then
