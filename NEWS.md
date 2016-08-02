@@ -10,9 +10,9 @@
 
 ### Data Import
 
-* Import dataset from text via readr
-* Import dataset from Excel via readxl
-* Import dataset from SAS, SPSS, and Stata via haven
+* Import dataset from text via [readr](https://github.com/hadley/readr)
+* Import dataset from Excel via [readxl](https://github.com/hadley/readxl)
+* Import dataset from SAS, SPSS, and Stata via [haven](https://github.com/hadley/haven)
 * Preview data while importing datasets
 * Explicitly set column types while importing datasets
 * Preview and copy code while importing datasets
