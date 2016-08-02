@@ -1,5 +1,13 @@
 ## v0.99c - Release Notes
 
+### R Notebooks
+
+* Authoring tools for [R Notebooks](http://rmarkdown.rstudio.com/r_notebooks.html)
+* Source editor inline display for text, tabular data, graphics, and htmlwidgets
+* All code and outout saved within a single notebook HTML file (.nb.html)
+* Multiple language engines including Python, Bash, SQL, Rcpp, and Stan
+* Tools for running various combinations of chunks (current, next, previous, remaining)
+
 ### Data Import
 
 * Import dataset from text via readr
