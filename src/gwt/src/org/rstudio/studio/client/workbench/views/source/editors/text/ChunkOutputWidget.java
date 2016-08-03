@@ -15,29 +15,19 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.ImageElementEx;
-import org.rstudio.core.client.js.JsArrayEx;
-import org.rstudio.core.client.widget.FixedRatioWidget;
-import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
-import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
@@ -49,7 +39,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -66,7 +55,6 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -75,7 +63,8 @@ public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
                                           RestartStatusEvent.Handler,
-                                          InterruptStatusEvent.Handler
+                                          InterruptStatusEvent.Handler,
+                                          ChunkOutputPresenter.Host
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -123,6 +112,11 @@ public class ChunkOutputWidget extends Composite
             expansionState_.getValue() == COLLAPSED ? 
                   ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
                   ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+
+      // create the initial output stream and attach it to the frame
+      final ChunkOutputStream stream = new ChunkOutputStream(this);
+      presenter_ = stream;
+      root_.add(stream);
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -236,6 +230,12 @@ public class ChunkOutputWidget extends Composite
                ensureVisible);
       }
    }
+
+   @Override
+   public void notifyHeightChanged()
+   {
+      syncHeight(true, false);
+   }
    
    public void syncHeight(final boolean scrollToBottom, 
                           final boolean ensureVisible)
@@ -268,8 +268,7 @@ public class ChunkOutputWidget extends Composite
 
       setVisible(true);
       
-      if (root_.getElement().getScrollHeight() == 0 && 
-          root_.getElement().getFirstChildElement() != null)
+      if (root_.getElement().getScrollHeight() == 0 && presenter_.hasOutput())
       {
          // if we have no height but we do have content, mark ourselves as 
          // requiring a sync
@@ -341,7 +340,7 @@ public class ChunkOutputWidget extends Composite
          host_.onOutputHeightChanged(0, ensureVisible);
       }
 
-      state_ = root_.getWidgetCount() == 0 ? CHUNK_EMPTY : CHUNK_READY;
+      state_ = presenter_.hasOutput() ? CHUNK_EMPTY : CHUNK_READY;
       setOverflowStyle();
       showReadyState();
       unregisterConsoleEvents();
@@ -365,7 +364,6 @@ public class ChunkOutputWidget extends Composite
 
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
-      execMode_ = mode;
       execScope_ = scope;
       showBusyState();
    }
@@ -405,18 +403,11 @@ public class ChunkOutputWidget extends Composite
       Style frameStyle = frame_.getElement().getStyle();
       frameStyle.setBorderColor(s_outlineColor);
 
-      // apply the style to any frames in the output
-      for (Widget w: root_)
-      {
-         if (w instanceof ChunkOutputFrame)
-         {
-            ChunkOutputFrame frame = (ChunkOutputFrame)w;
-            Style bodyStyle = frame.getDocument().getBody().getStyle();
-            bodyStyle.setColor(s_color);
-         }
-      }
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
       frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
+
+      if (presenter_ != null)
+         presenter_.syncEditorColor(s_color);
    }
    
    public boolean hasErrors()
@@ -426,70 +417,17 @@ public class ChunkOutputWidget extends Composite
    
    public boolean hasPlots()
    {
-      for (Widget w: root_)
-      {
-         if (w instanceof FixedRatioWidget && 
-             ((FixedRatioWidget)w).getWidget() instanceof Image)
-         {
-            return true;
-         }
-      }
-      return false;
+      return presenter_.hasPlots();
+   }
+   
+   public void updatePlot(String url)
+   {
+      presenter_.updatePlot(url, style.pendingResize());
    }
 
    public void setPlotPending(boolean pending)
    {
-      for (Widget w: root_)
-      {
-         if (w instanceof FixedRatioWidget && 
-             ((FixedRatioWidget)w).getWidget() instanceof Image)
-         {
-            if (pending)
-               w.addStyleName(style.pendingResize());
-            else
-               w.removeStyleName(style.pendingResize());
-         }
-      }
-   }
-   
-   public void updatePlot(String plotUrl)
-   {
-      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
-      
-      for (Widget w: root_)
-      {
-         if (w instanceof FixedRatioWidget)
-         {
-            // extract the wrapped plot
-            FixedRatioWidget fixedFrame = (FixedRatioWidget)w;
-            if (!(fixedFrame.getWidget() instanceof Image))
-               continue;
-            Image plot = (Image)fixedFrame.getWidget();
-            
-            // get the existing URL and strip off the query string 
-            String url = plot.getUrl();
-            int idx = url.lastIndexOf('?');
-            if (idx > 0)
-               url = url.substring(0, idx);
-            
-            // verify that the plot being refreshed is the same one this widget
-            // contains
-            if (FilePathUtils.friendlyFileName(url) != plotFile)
-               continue;
-            
-            w.removeStyleName(style.pendingResize());
-            
-            // sync height (etc) when render is complete, but don't scroll to 
-            // this point
-            DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
-                  false));
-
-            // the only purpose of this resize counter is to ensure that the
-            // plot URL changes when its geometry does (it's not consumed by
-            // the server)
-            plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
-         }
-      }
+      presenter_.setPlotPending(pending, style.pendingResize());
    }
    
    public void setHost(ChunkOutputHost host)
@@ -505,6 +443,7 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
 
+      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       presenter_.showConsoleText(event.getOutput());
    }
    
@@ -565,10 +504,26 @@ public class ChunkOutputWidget extends Composite
          presenter_.showConsoleOutput(unit.getArray());
          break;
       case RmdChunkOutputUnit.TYPE_HTML:
-         presenter_.showHtmlOutput(unit.getString(), unit.getOrdinal());
+         final RenderTimer widgetTimer = new RenderTimer();
+         presenter_.showHtmlOutput(unit.getString(), unit.getOrdinal(),
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     widgetTimer.cancel();
+                  }
+               });
          break;
       case RmdChunkOutputUnit.TYPE_PLOT:
-         presenter_.showPlotOutput(unit.getString(), unit.getOrdinal());
+         final RenderTimer plotTimer = new RenderTimer();
+         presenter_.showPlotOutput(unit.getString(), unit.getOrdinal(), 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     plotTimer.cancel();
+                  }
+               });
          break;
       case RmdChunkOutputUnit.TYPE_ERROR:
          // override visibility flag when there's an error in batch mode
@@ -778,12 +733,10 @@ public class ChunkOutputWidget extends Composite
    private ChunkOutputPresenter presenter_;
    
    private int state_ = CHUNK_EMPTY;
-   private int execMode_ = NotebookQueueUnit.EXEC_MODE_SINGLE;
    private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
-   private int resizeCounter_ = 0;
    private boolean needsHeightSync_ = false;
    
    private Timer collapseTimer_ = null;
@@ -794,7 +747,6 @@ public class ChunkOutputWidget extends Composite
    private static String s_backgroundColor = null;
    private static String s_color           = null;
 
-   
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;
 

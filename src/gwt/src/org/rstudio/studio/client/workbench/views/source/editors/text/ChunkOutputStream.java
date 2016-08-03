@@ -47,10 +47,11 @@ public class ChunkOutputStream extends FlowPanel
                                implements ChunkOutputPresenter,
                                           ConsoleError.Observer
 {
-   public ChunkOutputStream(ChunkOutputHost host)
+   public ChunkOutputStream(ChunkOutputPresenter.Host host)
    {
       host_ = host;
    }
+
    @Override
    public void showConsoleText(String text)
    {
@@ -107,7 +108,7 @@ public class ChunkOutputStream extends FlowPanel
    }
 
    @Override
-   public void showPlotOutput(String url, int ordinal)
+   public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_PLOT);
@@ -170,13 +171,15 @@ public class ChunkOutputStream extends FlowPanel
          addWithOrdinal(plotWidget, ordinal);
       
       DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), createPlotListener(plot));
+      DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
+            onRenderComplete));
 
       plot.setUrl(url);
    }
 
    @Override
-   public void showHtmlOutput(String url, int ordinal)
+   public void showHtmlOutput(String url, int ordinal, 
+         final Command onRenderComplete)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
@@ -209,7 +212,7 @@ public class ChunkOutputStream extends FlowPanel
             bodyStyle.setMargin(0, Unit.PX);
             bodyStyle.setColor(ChunkOutputWidget.getForegroundColor());
             
-            host_.notifyHeightChanged();
+            onRenderComplete.execute();
          };
       });
       
@@ -296,9 +299,25 @@ public class ChunkOutputStream extends FlowPanel
       flushQueuedErrors();
       lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    }
+   
+   @Override
+   public void setPlotPending(boolean pending, String pendingStyle)
+   {
+      for (Widget w: this)
+      {
+         if (w instanceof FixedRatioWidget && 
+             ((FixedRatioWidget)w).getWidget() instanceof Image)
+         {
+            if (pending)
+               w.addStyleName(pendingStyle);
+            else
+               w.removeStyleName(pendingStyle);
+         }
+      }
+   }
 
    @Override
-   public void updatePlot(String plotUrl)
+   public void updatePlot(String plotUrl, String pendingStyle)
    {
       String plotFile = FilePathUtils.friendlyFileName(plotUrl);
       
@@ -323,11 +342,12 @@ public class ChunkOutputStream extends FlowPanel
             if (FilePathUtils.friendlyFileName(url) != plotFile)
                continue;
             
-            w.removeStyleName(style.pendingResize());
+            w.removeStyleName(pendingStyle);
             
             // sync height (etc) when render is complete, but don't scroll to 
             // this point
-            DOM.setEventListener(plot.getElement(), createPlotListener(plot));
+            DOM.setEventListener(plot.getElement(), createPlotListener(plot,
+                  null));
 
             // the only purpose of this resize counter is to ensure that the
             // plot URL changes when its geometry does (it's not consumed by
@@ -337,6 +357,41 @@ public class ChunkOutputStream extends FlowPanel
       }
    }
    
+   @Override
+   public void syncEditorColor(String color)
+   {
+      // apply the style to any frames in the output
+      for (Widget w: this)
+      {
+         if (w instanceof ChunkOutputFrame)
+         {
+            ChunkOutputFrame frame = (ChunkOutputFrame)w;
+            Style bodyStyle = frame.getDocument().getBody().getStyle();
+            bodyStyle.setColor(color);
+         }
+      }
+   }
+
+   @Override
+   public boolean hasOutput()
+   {
+      return getWidgetCount() > 0;
+   }
+
+   @Override
+   public boolean hasPlots()
+   {
+      for (Widget w: this)
+      {
+         if (w instanceof FixedRatioWidget && 
+             ((FixedRatioWidget)w).getWidget() instanceof Image)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
    // Private methods ---------------------------------------------------------
 
    private String classOfOutput(int type)
@@ -348,7 +403,8 @@ public class ChunkOutputStream extends FlowPanel
       return null;
    }
    
-   private EventListener createPlotListener(final Image plot)
+   private EventListener createPlotListener(final Image plot, 
+         final Command onRenderComplete)
    {
       return new EventListener()
       {
@@ -368,8 +424,9 @@ public class ChunkOutputStream extends FlowPanel
             }
                
             plot.setVisible(true);
-            
-            onComplete.execute();
+            if (onRenderComplete != null)
+               onRenderComplete.execute();
+            host_.notifyHeightChanged();
          }
       };
    }
@@ -437,15 +494,6 @@ public class ChunkOutputStream extends FlowPanel
       add(console_);
    }
    
-   private void destroyConsole()
-   {
-      if (vconsole_ != null)
-         vconsole_.clear();
-      if (console_ != null)
-         console_.removeFromParent();
-      console_ = null;
-   }
-   
    private void renderConsoleOutput(String text, String clazz)
    {
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
@@ -454,12 +502,13 @@ public class ChunkOutputStream extends FlowPanel
       host_.notifyHeightChanged();
    }
    
-   private final ChunkOutputHost host_;
+   private final ChunkOutputPresenter.Host host_;
    
    private PreWidget console_;
-   private String queuedError_;
+   private String queuedError_ = "";
    private VirtualConsole vconsole_;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
 
+   private static int resizeCounter_ = 0;
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
 }

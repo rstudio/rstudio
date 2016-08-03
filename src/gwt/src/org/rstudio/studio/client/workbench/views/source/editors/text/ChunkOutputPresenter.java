@@ -18,17 +18,38 @@ import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 
 public interface ChunkOutputPresenter
 {
+   public interface Host
+   {
+      void notifyHeightChanged();
+   }
+
+   // show real-time console output; invoked only interactively 
    void showConsoleText(String text);
    void showConsoleError(String error);
+
+   // show stored and/or real time objects emitted during plot execution
    void showConsoleOutput(JsArray<JsArrayEx> output);
-   void showPlotOutput(String url, int ordinal);
-   void showHtmlOutput(String url, int ordinal);
+   void showPlotOutput(String url, int ordinal, Command onRenderComplete);
+   void showHtmlOutput(String url, int ordinal, Command onRenderComplete);
    void showErrorOutput(UnhandledError error);
    void showOrdinalOutput(int ordinal);
+   
+   // show that plots will be redrawn, or update a particular plot
+   void setPlotPending(boolean pending, String pendingStyle);
+   void updatePlot(String plotUrl, String pendingStyle);
+   
+   // clear output or indicate that interactive output (or playback) is complete
    void clearOutput();
    void completeOutput();
+   
+   // query state
+   boolean hasOutput();
+   boolean hasPlots();
+   
+   void syncEditorColor(String color);
 }
 
