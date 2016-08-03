@@ -17,7 +17,7 @@
 {
   assign("print.data.frame", function(x, ...) {
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
-                       fileext = "rdf")
+                       fileext = ".rdf")
 
     x <- head(x, 1000)
 
