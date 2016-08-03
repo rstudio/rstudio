@@ -16,10 +16,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -29,6 +34,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputGallery extends Composite
+                                        implements ChunkOutputPresenter
 {
 
    private static ChunkOutputGalleryUiBinder uiBinder = GWT
@@ -45,15 +51,128 @@ public class ChunkOutputGallery extends Composite
       String selected();
    }
 
-   public ChunkOutputGallery()
+  // Public methods ----------------------------------------------------------
+
+   public ChunkOutputGallery(ChunkOutputPresenter.Host host)
    {
       pages_ = new ArrayList<ChunkOutputPage>();
+      host_ = host;
       initWidget(uiBinder.createAndBindUi(this));
    }
+
+   @Override
+   public void showConsoleText(String text)
+   {
+      ensureConsole();
+      console_.showConsoleText(text);
+   }
+
+   @Override
+   public void showConsoleError(String error)
+   {
+      ensureConsole();
+      console_.showConsoleError(error);
+   }
+
+   @Override
+   public void showConsoleOutput(JsArray<JsArrayEx> output)
+   {
+      ensureConsole();
+      console_.showConsoleOutput(output);
+   }
+
+   @Override
+   public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
+   {
+      addPage(new ChunkPlotPage(url));
+   }
+
+   @Override
+   public void showHtmlOutput(String url, int ordinal, Command onRenderComplete)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void showErrorOutput(UnhandledError error)
+   {
+      ensureConsole();
+      console_.showErrorOutput(error);
+   }
+
+   @Override
+   public void showOrdinalOutput(int ordinal)
+   {
+      // ordinals are used as placeholders to ensure plots are shown in the
+      // correct place relative to other types of output, which isn't a
+      // consideration in gallery view
+   }
+
+   @Override
+   public void setPlotPending(boolean pending, String pendingStyle)
+   {
+      for (ChunkOutputPage page: pages_)
+      {
+         if (page instanceof ChunkPlotPage)
+         {
+            ChunkPlotPage plot = (ChunkPlotPage)page;
+            if (pending)
+               plot.contentWidget().addStyleName(pendingStyle);
+            else
+               plot.contentWidget().removeStyleName(pendingStyle);
+         }
+      }
+   }
+
+   @Override
+   public void updatePlot(String plotUrl, String pendingStyle)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void clearOutput()
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void completeOutput()
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean hasOutput()
+   {
+      return pages_.size() > 0;
+   }
+
+   @Override
+   public boolean hasPlots()
+   {
+      for (ChunkOutputPage page: pages_)
+      {
+         if (page instanceof ChunkPlotPage)
+            return true;
+      }
+      return false;
+   }
+
+   @Override
+   public void syncEditorColor(String color)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   // Private methods ---------------------------------------------------------
    
-   // Public methods ----------------------------------------------------------
-   
-   public void addPage(ChunkOutputPage page)
+   private void addPage(ChunkOutputPage page)
    {
       final int index = pages_.size();
       pages_.add(page);
@@ -77,9 +196,9 @@ public class ChunkOutputGallery extends Composite
       });
       if (pages_.size() == 1)
          viewer_.add(page.contentWidget());
+      host_.notifyHeightChanged();
    }
    
-   // Private methods ---------------------------------------------------------
    
    private void setActivePage(int idx)
    {
@@ -90,7 +209,19 @@ public class ChunkOutputGallery extends Composite
       // TODO: reduce flicker by keeping content height fixed
    }
    
+   private void ensureConsole()
+   {
+      if (console_ == null)
+      {
+         console_ = new ChunkConsolePage();
+         addPage(console_);
+      }
+   }
+   
    private final ArrayList<ChunkOutputPage> pages_;
+   private final ChunkOutputPresenter.Host host_;
+
+   private ChunkConsolePage console_;
    
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;

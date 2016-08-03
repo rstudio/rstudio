@@ -114,9 +114,9 @@ public class ChunkOutputWidget extends Composite
                   ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
 
       // create the initial output stream and attach it to the frame
-      final ChunkOutputStream stream = new ChunkOutputStream(this);
-      presenter_ = stream;
-      root_.add(stream);
+      final ChunkOutputGallery gallery = new ChunkOutputGallery(this);
+      presenter_ = gallery;
+      root_.add(gallery);
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
