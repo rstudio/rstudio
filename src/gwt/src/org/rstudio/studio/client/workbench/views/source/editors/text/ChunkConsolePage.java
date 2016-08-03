@@ -28,6 +28,11 @@ public class ChunkConsolePage implements ChunkOutputPage,
    {
       stream_ = new ChunkOutputStream(this);
    }
+   
+   public ChunkConsolePage(ChunkOutputStream stream)
+   {
+      stream_ = stream;
+   }
 
    @Override
    public Widget thumbnailWidget()
@@ -44,7 +49,7 @@ public class ChunkConsolePage implements ChunkOutputPage,
    @Override
    public void notifyHeightChanged()
    {
-      // 
+      // in paged mode we have a fixed height
    }
    
    public void showConsoleText(String text)

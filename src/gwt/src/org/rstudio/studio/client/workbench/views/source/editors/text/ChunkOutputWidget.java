@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.List;
+
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -114,9 +116,9 @@ public class ChunkOutputWidget extends Composite
                   ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
 
       // create the initial output stream and attach it to the frame
-      final ChunkOutputGallery gallery = new ChunkOutputGallery(this);
-      presenter_ = gallery;
-      root_.add(gallery);
+      final ChunkOutputStream stream = new ChunkOutputStream(this);
+      presenter_ = stream;
+      root_.add(stream);
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -490,12 +492,6 @@ public class ChunkOutputWidget extends Composite
           unit.getArray().length() < 1)
          return;
       
-      if (state_ == CHUNK_PRE_OUTPUT)
-      {
-         hasErrors_ = false;
-         state_ = CHUNK_POST_OUTPUT;
-      }
-      
       initializeOutput(unit.getType());
 
       switch(unit.getType())
@@ -715,8 +711,46 @@ public class ChunkOutputWidget extends Composite
       {
          // if no output has been emitted yet, clean up all existing output
          presenter_.clearOutput();
+         if (root_.getWidgetCount() > 0)
+            root_.remove(0);
+         
+         // start with the stream presenter (we'll switch to gallery later if
+         // circumstances demand)
+         ChunkOutputStream stream = new ChunkOutputStream(this);
+         presenter_ = stream;
+         root_.add(stream);
+
          hasErrors_ = false;
          state_ = CHUNK_POST_OUTPUT;
+      }
+      else if (state_ == CHUNK_POST_OUTPUT &&
+               presenter_ instanceof ChunkOutputStream &&
+               (type == RmdChunkOutputUnit.TYPE_HTML || 
+                type == RmdChunkOutputUnit.TYPE_PLOT))
+      {
+         // if we're adding a plot or HTML widget into an existing chunk, we 
+         // need to switch to gallery mode 
+         final ChunkOutputStream stream = (ChunkOutputStream)presenter_;
+         final ChunkOutputGallery gallery = new ChunkOutputGallery(this);
+         
+         // extract all the pages from the stream and populate the gallery
+         List<ChunkOutputPage> pages = stream.extractPages();
+         if (stream.hasContent())
+         {
+            // add the stream itself if there's still anything left in it
+            gallery.addPage(new ChunkConsolePage(stream));
+         }
+         for (ChunkOutputPage page: pages)
+         {
+            gallery.addPage(page);
+         }
+         
+         // replace the stream with the gallery (the stream will live on inside
+         // the gallery's console page)
+         presenter_ = gallery;
+         if (root_.getWidgetCount() > 0)
+            root_.remove(0);
+         root_.add(gallery);
       }
    }
    

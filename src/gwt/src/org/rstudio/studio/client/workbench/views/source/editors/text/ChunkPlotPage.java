@@ -18,7 +18,6 @@ import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkPlotPage implements ChunkOutputPage

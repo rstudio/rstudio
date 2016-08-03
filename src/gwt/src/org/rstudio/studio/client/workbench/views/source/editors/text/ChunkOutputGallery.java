@@ -17,7 +17,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -31,6 +33,7 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputGallery extends Composite
@@ -58,6 +61,9 @@ public class ChunkOutputGallery extends Composite
       pages_ = new ArrayList<ChunkOutputPage>();
       host_ = host;
       initWidget(uiBinder.createAndBindUi(this));
+      content_ = new SimplePanel();
+      viewer_.add(new FixedRatioWidget(content_, ChunkOutputUi.OUTPUT_ASPECT, 
+            ChunkOutputUi.MAX_PLOT_WIDTH));
    }
 
    @Override
@@ -134,8 +140,9 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void clearOutput()
    {
-      // TODO Auto-generated method stub
-      
+      content_.clear();
+      pages_.clear();
+      filmstrip_.clear();
    }
 
    @Override
@@ -169,9 +176,7 @@ public class ChunkOutputGallery extends Composite
       
    }
 
-   // Private methods ---------------------------------------------------------
-   
-   private void addPage(ChunkOutputPage page)
+   public void addPage(ChunkOutputPage page)
    {
       final int index = pages_.size();
       pages_.add(page);
@@ -194,18 +199,18 @@ public class ChunkOutputGallery extends Composite
          }
       });
       if (pages_.size() == 1)
-         viewer_.add(page.contentWidget());
+         content_.add(page.contentWidget());
       host_.notifyHeightChanged();
    }
-   
+
+   // Private methods ---------------------------------------------------------
    
    private void setActivePage(int idx)
    {
       if (idx >= pages_.size())
          return;
-      viewer_.remove(0);
-      viewer_.add(pages_.get(idx).contentWidget());
-      // TODO: reduce flicker by keeping content height fixed
+      content_.clear();
+      content_.add(pages_.get(idx).contentWidget());
    }
    
    private void ensureConsole()
@@ -221,6 +226,7 @@ public class ChunkOutputGallery extends Composite
    private final ChunkOutputPresenter.Host host_;
 
    private ChunkConsolePage console_;
+   private SimplePanel content_;
    
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;

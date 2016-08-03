@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
@@ -215,7 +218,6 @@ public class ChunkOutputStream extends FlowPanel
             onRenderComplete.execute();
          };
       });
-      
    }
 
    @Override
@@ -383,16 +385,60 @@ public class ChunkOutputStream extends FlowPanel
    {
       for (Widget w: this)
       {
-         if (w instanceof FixedRatioWidget && 
-             ((FixedRatioWidget)w).getWidget() instanceof Image)
+         if (isPlotWidget(w))
          {
             return true;
          }
       }
       return false;
    }
+   
+   public List<ChunkOutputPage> extractPages()
+   {
+      List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
+      for (Widget w: this)
+      {
+         if (!(w instanceof FixedRatioWidget))
+            continue;
+         
+         Widget inner = ((FixedRatioWidget)w).getWidget();
+         
+         if (inner instanceof Image)
+         {
+            Image image = (Image)inner;
+            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl());
+            pages.add(plot);
+            remove(w);
+         }
+         else if (inner instanceof ChunkOutputFrame)
+         {
+            ChunkOutputFrame frame = (ChunkOutputFrame)inner;
+            ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), null);
+            pages.add(html);
+            remove(w);
+         }
+      }
+      return pages;
+   }
+   
+   public boolean hasContent()
+   {
+      for (Widget w: this)
+      {
+         if (w.isVisible() && 
+             w.getElement().getStyle().getDisplay() != "none")
+            return true;
+      }
+      return false;
+   }
 
    // Private methods ---------------------------------------------------------
+   
+   private boolean isPlotWidget(Widget w)
+   {
+     return w instanceof FixedRatioWidget && 
+             ((FixedRatioWidget)w).getWidget() instanceof Image;
+   }
 
    private String classOfOutput(int type)
    {
