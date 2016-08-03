@@ -342,7 +342,7 @@ Error executeSqlEngineChunk(const std::string& docId,
                              const std::string& chunkId,
                              const std::string& nbCtxId,
                              const std::string& code,
-                             const std::map<std::string, std::string>& options)
+                             const json::Object& options)
 {
    Error error;
    
@@ -352,22 +352,12 @@ Error executeSqlEngineChunk(const std::string& docId,
    FilePath targetPath =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
 
-   if (!options.count("connection"))
-   {
-      std::string message =
-         "Connection chunk option must specify a valid DBI connection";
-      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
-
-      return Success();
-   }
-
    // run sql and save result
-   std::string connectionName = options.find("connection")->second;
    error = r::exec::RFunction(
                ".rs.runSqlForDataCapture",
                code,
-               connectionName,
-               string_utils::utf8ToSystem(targetPath.absolutePath())).call();
+               string_utils::utf8ToSystem(targetPath.absolutePath()),
+               options).call();
    if (error)
    {
       std::string message = "Failed to execute SQL chunk";
@@ -430,7 +420,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
    else if (engine == "stan")
       return executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "sql")
-      return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, options);
+      return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
 
    runChunk(docId, chunkId, nbCtxId, engine, code);
    return Success();

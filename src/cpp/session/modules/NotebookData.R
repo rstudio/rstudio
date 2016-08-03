@@ -70,16 +70,19 @@
   )
 })
 
-.rs.addFunction("runSqlForDataCapture", function(query, connectionName, outputFile)
+.rs.addFunction("runSqlForDataCapture", function(query, outputFile, options)
 {
   # precreate directories if needed
   dir.create(dirname(outputFile), recursive = TRUE, showWarnings = FALSE)
 
-  conn <- get(connectionName, envir = globalenv())
+  maxRows <- if (is.null(options$max.print)) 1000 else as.numeric(options$max.print)
+  maxRows <- if (is.null(options$sql.max.print)) maxRows else as.numeric(options$sql.max.print)
+
+  conn <- get(options$connection, envir = globalenv())
 
   res <- DBI::dbSendQuery(conn, query)
   x <- if (!DBI::dbHasCompleted(res) || (DBI::dbGetRowCount(res) > 0))
-            DBI::dbFetch(res, n = 1000)
+            DBI::dbFetch(res, n = maxRows)
   DBI::dbClearResult(res)
 
   save(
