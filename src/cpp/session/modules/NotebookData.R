@@ -71,6 +71,9 @@
 
 .rs.addFunction("runSqlForDataCapture", function(query, connectionName, outputFile)
 {
+  # precreate directories if needed
+  dir.create(dirname(outputFile), recursive = TRUE, showWarnings = FALSE)
+
   conn <- get(connectionName, envir = globalenv())
 
   res <- DBI::dbSendQuery(conn, query)

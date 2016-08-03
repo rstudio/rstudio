@@ -348,8 +348,9 @@ Error executeSqlEngineChunk(const std::string& docId,
    
    // ensure we always emit an execution complete event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
-   
-   FilePath targetPath = module_context::tempFile("_rs_rdata_", "rdata");
+
+   FilePath targetPath =
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
 
    if (!options.count("connection"))
    {
@@ -374,10 +375,16 @@ Error executeSqlEngineChunk(const std::string& docId,
 
       return Success();
    }
-   
-   // trigger data output event
-   events().onDataOutput(FilePath(targetPath), FilePath());
-   
+
+   // forward success / failure to chunk
+   enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebookCtxId(),
+            0, // no ordinal needed
+            ChunkOutputData,
+            targetPath);
+
    return Success();
 }
 
