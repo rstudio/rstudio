@@ -19,13 +19,13 @@
 }
 
 .pagedtable th {
-  padding: 0 4px 3px 4px;
+  padding: 0 6px 3px 6px;
   border: none;
   border-bottom: 1px solid #dddddd;
 }
 
 .pagedtable td {
-  padding: 0 4px 3px 4px;
+  padding: 0 6px 3px 6px;
 }
 
 .pagedtable tr:first-child td {
