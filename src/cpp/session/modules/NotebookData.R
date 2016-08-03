@@ -51,17 +51,18 @@
   ))
 
   data <- head(e$x, 1000)
-  data <- as.data.frame(
-    lapply(
-      data,
-      function (y) as.character(y)),
-    stringsAsFactors = FALSE)
 
   if (length(columns) > 0) {
     first_column = data[[1]]
     if (is.numeric(first_column) && all(diff(first_column) == 1))
       columns[[1]]$align <- "left"
   }
+
+  data <- as.data.frame(
+    lapply(
+      data,
+      function (y) as.character(y)),
+    stringsAsFactors = FALSE)
 
   list(
     columns = columns,
