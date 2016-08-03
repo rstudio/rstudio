@@ -354,7 +354,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    if (!options.count("connection"))
    {
       std::string message =
-         "Connection chunk option must be specify a valid DBI connection";
+         "Connection chunk option must specify a valid DBI connection";
       reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
 
       return Success();
