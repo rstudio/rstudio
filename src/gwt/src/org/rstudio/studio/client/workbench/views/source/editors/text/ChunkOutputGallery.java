@@ -90,8 +90,7 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void showHtmlOutput(String url, int ordinal, Command onRenderComplete)
    {
-      // TODO Auto-generated method stub
-      
+      addPage(new ChunkHtmlPage(url, onRenderComplete));
    }
 
    @Override

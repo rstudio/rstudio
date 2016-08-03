@@ -6,11 +6,14 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    opacity: 0.5;
    cursor: pointer;
    transition: opacity 0.5s ease;
-   display: inline-block;
+   display: block;
    margin: 10px;
    padding: 0px;
    border: 2px solid gray;
    border-radius: 3px;
+   width: 100px;
+   height: 61px;
+   float: left;
 }
 
 .thumbnail:hover {
@@ -20,11 +23,19 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
 .selected {
    opacity: 1;
 }
+
+.viewer {
+   clear: both;
+}
+
+.filmstrip {
+   overflow: hidden;
+}
 </ui:style>
 <g:HTMLPanel>
-    <g:FlowPanel ui:field="filmstrip_">
+    <g:FlowPanel styleName="{style.filmstrip}" ui:field="filmstrip_">
     </g:FlowPanel>
-    <g:HTMLPanel ui:field="viewer_">
+    <g:HTMLPanel styleName="{style.viewer}" ui:field="viewer_">
     </g:HTMLPanel>
 </g:HTMLPanel>
 </ui:UiBinder> 

@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkPlotPage implements ChunkOutputPage
@@ -28,7 +29,7 @@ public class ChunkPlotPage implements ChunkOutputPage
                   ChunkOutputUi.OUTPUT_ASPECT, 100);
       plot_ = new FixedRatioWidget(new Image(url), 
                   ChunkOutputUi.OUTPUT_ASPECT, ChunkOutputUi.MAX_PLOT_WIDTH);
-      
+      url_ = url;
    }
 
    @Override
@@ -43,6 +44,12 @@ public class ChunkPlotPage implements ChunkOutputPage
       return plot_;
    }
    
-   private Widget plot_;
-   private Widget thumbnail_;
+   public String getPlotUrl()
+   {
+      return url_;
+   }
+   
+   private final Widget plot_;
+   private final Widget thumbnail_;
+   private String url_;
 }
