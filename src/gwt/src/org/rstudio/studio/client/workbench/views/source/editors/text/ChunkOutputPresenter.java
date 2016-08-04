@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 
@@ -37,6 +38,7 @@ public interface ChunkOutputPresenter
    void showHtmlOutput(String url, int ordinal, Command onRenderComplete);
    void showErrorOutput(UnhandledError error);
    void showOrdinalOutput(int ordinal);
+   void showDataOutput(JavaScriptObject data);
    
    // show that plots will be redrawn, or update a particular plot
    void setPlotPending(boolean pending, String pendingStyle);

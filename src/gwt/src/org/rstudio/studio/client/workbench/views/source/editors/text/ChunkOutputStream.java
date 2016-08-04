@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -108,7 +109,7 @@ public class ChunkOutputStream extends FlowPanel
       }
       vconsole_.redraw(console_.getElement());
    }
-
+   
    @Override
    public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
    {
@@ -271,6 +272,11 @@ public class ChunkOutputStream extends FlowPanel
       addWithOrdinal(ord, ordinal);
    }
    
+   @Override
+   public void showDataOutput(JavaScriptObject data)
+   {
+      add(new ChunkDataWidget(data));
+   }
 
    @Override
    public void onErrorBoxResize()
@@ -374,6 +380,15 @@ public class ChunkOutputStream extends FlowPanel
       List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
       for (Widget w: this)
       {
+         if (w instanceof ChunkDataWidget)
+         {
+            ChunkDataWidget widget = (ChunkDataWidget)w;
+            ChunkDataPage data = new ChunkDataPage(widget);
+            pages.add(data);
+            remove(w);
+            continue;
+         }
+
          if (!(w instanceof FixedRatioWidget))
             continue;
          

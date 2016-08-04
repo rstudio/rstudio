@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -112,6 +113,12 @@ public class ChunkOutputGallery extends Composite
       // ordinals are used as placeholders to ensure plots are shown in the
       // correct place relative to other types of output, which isn't a
       // consideration in gallery view
+   }
+
+   @Override
+   public void showDataOutput(JavaScriptObject data)
+   {
+      addPage(new ChunkDataPage(data));
    }
 
    @Override
