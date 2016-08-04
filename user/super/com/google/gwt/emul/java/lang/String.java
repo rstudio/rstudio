@@ -157,12 +157,12 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   @JsType(isNative = true, name = "Function", namespace = JsPackage.GLOBAL)
-  private static class NativeFunction<T> {
-    public native T apply(Object thisContext, Object[] argsArray);
+  private static class NativeFunction {
+    public native String apply(String thisContext, Object[] argsArray);
   }
 
   @JsProperty(name = "fromCharCode", namespace = "String")
-  private static native NativeFunction<String> getFromCharCodeFunction();
+  private static native NativeFunction getFromCharCodeFunction();
 
   public static String valueOf(char[] x) {
     return valueOf(x, 0, x.length);
