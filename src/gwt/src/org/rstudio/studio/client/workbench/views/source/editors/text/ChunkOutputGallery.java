@@ -189,6 +189,10 @@ public class ChunkOutputGallery extends Composite
       Widget thumbnail = page.thumbnailWidget();
       thumbnail.addStyleName(style.thumbnail());
       filmstrip_.add(thumbnail);
+      
+      // lock to this console if we don't have one already
+      if (page instanceof ChunkConsolePage && console_ == null)
+         console_ = (ChunkConsolePage)page;
 
       DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK);
       DOM.setEventListener(thumbnail.getElement(), new EventListener()
@@ -216,6 +220,14 @@ public class ChunkOutputGallery extends Composite
          return;
       content_.clear();
       content_.add(pages_.get(idx).contentWidget());
+      
+      // remove the selection styling from the previously active page (if any)
+      // and add it to this page
+      if (activePage_ >= 0)
+         pages_.get(activePage_).thumbnailWidget().removeStyleName(
+               style.selected());
+      pages_.get(idx).thumbnailWidget().addStyleName(style.selected());
+      activePage_ = idx;
    }
    
    private void ensureConsole()
@@ -232,6 +244,7 @@ public class ChunkOutputGallery extends Composite
 
    private ChunkConsolePage console_;
    private SimplePanel content_;
+   private int activePage_ = -1;
    
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;
