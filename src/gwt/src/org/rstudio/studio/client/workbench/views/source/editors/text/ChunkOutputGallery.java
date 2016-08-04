@@ -155,8 +155,7 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void completeOutput()
    {
-      // TODO Auto-generated method stub
-      
+      // no finalization needed in gallery view
    }
 
    @Override
@@ -205,8 +204,7 @@ public class ChunkOutputGallery extends Composite
             };
          }
       });
-      if (pages_.size() == 1)
-         content_.add(page.contentWidget());
+      setActivePage(index);
       host_.notifyHeightChanged();
    }
 

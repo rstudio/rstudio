@@ -492,7 +492,10 @@ public class ChunkOutputWidget extends Composite
           unit.getArray().length() < 1)
          return;
       
-      initializeOutput(unit.getType());
+      // prepare for rendering this output type (except for ordinals, which
+      // are not visible)
+      if (unit.getType() != RmdChunkOutputUnit.TYPE_ORDINAL)
+         initializeOutput(unit.getType());
 
       switch(unit.getType())
       {

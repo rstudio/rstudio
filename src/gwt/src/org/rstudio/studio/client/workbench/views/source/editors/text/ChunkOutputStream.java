@@ -25,7 +25,6 @@ import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
@@ -532,6 +531,5 @@ public class ChunkOutputStream extends FlowPanel
    private VirtualConsole vconsole_;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
 
-   private static int resizeCounter_ = 0;
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
 }
