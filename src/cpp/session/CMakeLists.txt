@@ -463,6 +463,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "resources/notebook"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install pagedtable
+   install(DIRECTORY "resources/pagedtable"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
