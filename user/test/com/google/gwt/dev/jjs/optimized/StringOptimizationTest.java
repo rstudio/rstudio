@@ -27,6 +27,7 @@ public class StringOptimizationTest extends OptimizationTestBase {
   private static String createString() {
     return new String();
   }
+
   private static native String getGeneratedFunctionDefintionThatTriggersStringClinit() /*-{
     return function() {
       tmp = @StringOptimizationTest::createString()();
@@ -36,6 +37,21 @@ public class StringOptimizationTest extends OptimizationTestBase {
   public void testStringClinitIsRemoved() throws Exception {
     String functionDef = getGeneratedFunctionDefintionThatTriggersStringClinit();
     assertFunctionMatches(functionDef, "tmp=''");
+  }
+
+  private static native String getGeneratedFunctionDefintionThatCallsStringFromCharCode() /*-{
+    return function() {
+      tmp = @java.lang.String::valueOf(C)('c');
+    }.toString();
+  }-*/;
+
+  /*
+   * Makes sure that static String functions are emitted without the $wnd qualifier because doing
+   * so causes runtime performance degradation.
+   */
+  public void testNativeStringDoesNotUse$wnd() throws Exception {
+    String functionDef = getGeneratedFunctionDefintionThatCallsStringFromCharCode();
+    assertFunctionMatches(functionDef, "tmp=String.fromCharCode('c')");
   }
 
 }

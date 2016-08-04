@@ -898,7 +898,7 @@ public class GenerateJavaScriptAST {
       JsNameRef methodNameRef;
       if (method.isJsNative()) {
         // Construct Constructor.prototype.jsname or Constructor.
-        methodNameRef = createJsQualifier(method.getQualifiedJsName(), sourceInfo);
+        methodNameRef = createGlobalQualifier(method.getQualifiedJsName(), sourceInfo);
       } else if (method.isConstructor()) {
         /*
          * Constructor calls through {@code this} and {@code super} are always dispatched statically
@@ -980,7 +980,7 @@ public class GenerateJavaScriptAST {
       JConstructor ctor = newInstance.getTarget();
       JsName ctorName = names.get(ctor);
       JsNameRef  reference = ctor.isJsNative()
-          ? createJsQualifier(ctor.getQualifiedJsName(), sourceInfo)
+          ? createGlobalQualifier(ctor.getQualifiedJsName(), sourceInfo)
           : ctorName.makeRef(sourceInfo);
       List<JsExpression> arguments = transform(newInstance.getArgs());
 
@@ -1105,7 +1105,7 @@ public class GenerateJavaScriptAST {
       JMethod method = jsniMethodRef.getTarget();
       if (method.isJsNative()) {
         // Construct Constructor.prototype.jsname or Constructor.
-        return createJsQualifier(method.getQualifiedJsName(), jsniMethodRef.getSourceInfo());
+        return createGlobalQualifier(method.getQualifiedJsName(), jsniMethodRef.getSourceInfo());
       }
       return names.get(method).makeRef(jsniMethodRef.getSourceInfo());
     }
@@ -1720,7 +1720,7 @@ public class GenerateJavaScriptAST {
     private JsNameRef createStaticReference(JMember member, SourceInfo sourceInfo) {
       assert member.isStatic();
       return member.isJsNative()
-          ? createJsQualifier(member.getQualifiedJsName(), sourceInfo)
+          ? createGlobalQualifier(member.getQualifiedJsName(), sourceInfo)
           : names.get(member).makeRef(sourceInfo);
     }
 
@@ -1997,7 +1997,7 @@ public class GenerateJavaScriptAST {
 
       defineClassArguments.add(transform(getRuntimeTypeReference(type)));
       defineClassArguments.add(jsPrototype == null ? transform(superTypeId) :
-          createJsQualifier(jsPrototype, type.getSourceInfo()));
+          createGlobalQualifier(jsPrototype, type.getSourceInfo()));
       defineClassArguments.add(generateCastableTypeMap(type));
       defineClassArguments.addAll(constructorArgs);
 
@@ -2128,7 +2128,7 @@ public class GenerateJavaScriptAST {
       String jsPrototype = getSuperPrototype(type);
       SourceInfo info = type.getSourceInfo();
       JsNameRef parentCtor = jsPrototype != null ?
-          createJsQualifier(jsPrototype, info) :
+          createGlobalQualifier(jsPrototype, info) :
             superClass != null ?
               names.get(superClass).makeRef(info) :
               null;
@@ -2392,9 +2392,22 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    public JsNameRef createJsQualifier(String qualifier, SourceInfo sourceInfo) {
+    public JsNameRef createGlobalQualifier(String qualifier, SourceInfo sourceInfo) {
       assert !qualifier.isEmpty();
-      return JsUtils.createQualifiedNameRef("$wnd." + qualifier, sourceInfo);
+
+      return JsUtils.createQualifiedNameRef(
+          isQualifiedThroughSpecialGlobalName(qualifier) ? qualifier : ("$wnd." + qualifier),
+          sourceInfo);
+    }
+
+    /*
+     * Some global names are considered special and should be used unqualified. Such names should
+     * not be emitted with the "$wnd." prefix as there seems to be runtime performance implications.
+     * {@see TypeCategory} for the full list.
+     */
+    private boolean isQualifiedThroughSpecialGlobalName(String qualifiedName) {
+      String topLevelName = qualifiedName.split("\\.")[0];
+      return TypeCategory.isSpecialGlobalName(topLevelName);
     }
 
     /**
