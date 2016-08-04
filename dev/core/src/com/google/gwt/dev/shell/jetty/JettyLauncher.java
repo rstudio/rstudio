@@ -293,9 +293,7 @@ public class JettyLauncher extends ServletContainerLauncher {
       // Temporarily log Jetty on the branch.
       Log.setLog(new JettyTreeLogger(branch));
       try {
-        wac.stop();
         server.stop();
-        wac.start();
         server.start();
         branch.log(TreeLogger.INFO, "Reload completed successfully");
       } catch (Exception e) {
