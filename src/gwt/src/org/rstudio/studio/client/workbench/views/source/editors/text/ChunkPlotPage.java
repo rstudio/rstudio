@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.widget.FixedRatioWidget;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.user.client.ui.Image;
@@ -48,7 +49,39 @@ public class ChunkPlotPage implements ChunkOutputPage
       return url_;
    }
    
-   private final Widget plot_;
+   public Image imageWidget()
+   {
+      if (plot_ == null || !(plot_.getWidget() instanceof Image))
+         return null;
+      return (Image)plot_.getWidget();
+   }
+   
+   public static void updateImageUrl(Widget host, Image plot, String plotUrl, 
+         String pendingStyle)
+   {
+      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
+
+      // get the existing URL and strip off the query string 
+      String url = plot.getUrl();
+      int idx = url.lastIndexOf('?');
+      if (idx > 0)
+         url = url.substring(0, idx);
+      
+      // verify that the plot being refreshed is the same one this widget
+      // contains
+      if (FilePathUtils.friendlyFileName(url) != plotFile)
+         return;
+      
+      host.removeStyleName(pendingStyle);
+      
+      // the only purpose of this resize counter is to ensure that the
+      // plot URL changes when its geometry does (it's not consumed by
+      // the server)
+      plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
+   }
+   
+   private final FixedRatioWidget plot_;
    private final Widget thumbnail_;
    private String url_;
+   private static int resizeCounter_ = 0;
 }

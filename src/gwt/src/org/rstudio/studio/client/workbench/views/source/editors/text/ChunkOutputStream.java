@@ -321,8 +321,6 @@ public class ChunkOutputStream extends FlowPanel
    @Override
    public void updatePlot(String plotUrl, String pendingStyle)
    {
-      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
-      
       for (Widget w: this)
       {
          if (w instanceof FixedRatioWidget)
@@ -333,28 +331,7 @@ public class ChunkOutputStream extends FlowPanel
                continue;
             Image plot = (Image)fixedFrame.getWidget();
             
-            // get the existing URL and strip off the query string 
-            String url = plot.getUrl();
-            int idx = url.lastIndexOf('?');
-            if (idx > 0)
-               url = url.substring(0, idx);
-            
-            // verify that the plot being refreshed is the same one this widget
-            // contains
-            if (FilePathUtils.friendlyFileName(url) != plotFile)
-               continue;
-            
-            w.removeStyleName(pendingStyle);
-            
-            // sync height (etc) when render is complete, but don't scroll to 
-            // this point
-            DOM.setEventListener(plot.getElement(), createPlotListener(plot,
-                  null));
-
-            // the only purpose of this resize counter is to ensure that the
-            // plot URL changes when its geometry does (it's not consumed by
-            // the server)
-            plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
+            ChunkPlotPage.updateImageUrl(w, plot, plotUrl, pendingStyle);
          }
       }
    }

@@ -133,8 +133,15 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void updatePlot(String plotUrl, String pendingStyle)
    {
-      // TODO Auto-generated method stub
-      
+      for (ChunkOutputPage page: pages_)
+      {
+         if (page instanceof ChunkPlotPage)
+         {
+            ChunkPlotPage plot = (ChunkPlotPage)page;
+            ChunkPlotPage.updateImageUrl(plot.contentWidget(), 
+                  plot.imageWidget(), plotUrl, pendingStyle);
+         }
+      }
    }
 
    @Override
