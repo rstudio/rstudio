@@ -1,0 +1,17 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+xmlns:g="urn:import:com.google.gwt.user.client.ui">
+<ui:style>
+.caption
+{
+   text-transform: uppercase;
+   font-size: x-small;
+   text-align: center;
+   margin-top: 45%;
+   position: relative;
+}
+</ui:style>
+<g:HTMLPanel>
+   <g:Label styleName="{style.caption}" ui:field="caption_"></g:Label>
+</g:HTMLPanel>
+</ui:UiBinder> 

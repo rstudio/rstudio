@@ -18,7 +18,6 @@ import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkConsolePage implements ChunkOutputPage,
@@ -27,17 +26,19 @@ public class ChunkConsolePage implements ChunkOutputPage,
    public ChunkConsolePage()
    {
       stream_ = new ChunkOutputStream(this);
+      thumbnail_ = new ChunkOutputThumbnail("Console");
    }
    
    public ChunkConsolePage(ChunkOutputStream stream)
    {
       stream_ = stream;
+      thumbnail_ = new ChunkOutputThumbnail("Console");
    }
 
    @Override
    public Widget thumbnailWidget()
    {
-      return new HTML("Console");
+      return thumbnail_;
    }
 
    @Override
@@ -73,6 +74,7 @@ public class ChunkConsolePage implements ChunkOutputPage,
    }
    
    private final ChunkOutputStream stream_;
+   private final Widget thumbnail_;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;

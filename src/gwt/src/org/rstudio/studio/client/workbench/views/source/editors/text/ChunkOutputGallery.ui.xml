@@ -13,7 +13,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    margin-bottom: 10px;
    padding: 3px;
    border: 1px solid gray;
-   border-radius: 3px;
+   border-radius: 2px;
    width: 100px;
    height: 61px;
    float: left;

@@ -21,13 +21,14 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkHtmlPage implements ChunkOutputPage
 {
    public ChunkHtmlPage(String url, final Command onRenderComplete)
    {
+      thumbnail_ = new ChunkOutputThumbnail("HTML");
+
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy
       if (url.indexOf('?') > 0)
@@ -61,7 +62,7 @@ public class ChunkHtmlPage implements ChunkOutputPage
    @Override
    public Widget thumbnailWidget()
    {
-      return new HTML("HTML");
+      return thumbnail_;
    }
 
    @Override
@@ -70,5 +71,6 @@ public class ChunkHtmlPage implements ChunkOutputPage
       return content_;
    }
 
+   final private Widget thumbnail_;
    final private Widget content_;
 }
