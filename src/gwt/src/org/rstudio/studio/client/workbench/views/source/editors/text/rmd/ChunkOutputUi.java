@@ -189,6 +189,10 @@ public class ChunkOutputUi
    @Override
    public void onOutputHeightChanged(int outputHeight, boolean ensureVisible)
    {
+      // don't process if we aren't attached 
+      if (!attached_)
+         return;
+      
       // if ensuring visible, also ensure that the associated code is unfolded
       if (ensureVisible)
       {
