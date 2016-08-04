@@ -164,6 +164,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookCapture.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
    modules/rmarkdown/NotebookChunkOptions.cpp
+   modules/rmarkdown/NotebookData.cpp
    modules/rmarkdown/NotebookDocQueue.cpp
    modules/rmarkdown/NotebookErrors.cpp
    modules/rmarkdown/NotebookExec.cpp

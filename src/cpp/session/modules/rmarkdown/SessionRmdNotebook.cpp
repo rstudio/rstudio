@@ -18,6 +18,7 @@
 #include "NotebookPlotReplay.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
+#include "NotebookData.hpp"
 #include "NotebookOutput.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookExec.hpp"
@@ -168,6 +169,7 @@ Error initialize()
       (bind(module_context::sourceModuleRFile, "SessionRmdNotebook.R"))
       (bind(initOutput))
       (bind(initCache))
+      (bind(initData))
       (bind(initHtmlWidgets))
       (bind(initErrors))
       (bind(initPlots))
