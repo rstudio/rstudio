@@ -76,7 +76,7 @@ options(connectionViewer = list(
 
 .rs.addFunction("getSparkWebUrl", function(finder, host) {
    sc <- .rs.getConnectionObject(finder, host)
-   sparkapi:::spark_web(sc)
+   sparklyr:::spark_web(sc)
 })
 
 .rs.addFunction("getSparkLogFile", function(finder, host) {
