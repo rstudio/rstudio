@@ -352,6 +352,15 @@ Error executeSqlEngineChunk(const std::string& docId,
    FilePath targetPath =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
 
+   // check package dependencies
+   if (!module_context::isPackageVersionInstalled("DBI", "0.4"))
+   {
+      std::string message = "Executing SQL chunks requires version 0.4 or "
+                            "later of the DBI package";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+      return Success();
+   }
+
    // run sql and save result
    error = r::exec::RFunction(
                ".rs.runSqlForDataCapture",
