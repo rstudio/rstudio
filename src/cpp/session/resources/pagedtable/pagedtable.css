@@ -67,16 +67,10 @@ a.pagedtable-index-nav-disabled:hover {
 a.pagedtable-index-current {
   cursor: default;
   text-decoration: none;
-  font-weight: bold;
   color: #999;
-  text-decoration: underline;
-}
-
-a.pagedtable-index-current:hover {
-  text-decoration: none;
-  font-weight: bold;
-  color: #999;
-  text-decoration: underline;
+  border: solid 1px #E9E9E9;
+  border-radius: 3px;
+  background-color: #FBFBFB;
 }
 
 .pagedtable-index {
@@ -88,7 +82,7 @@ a.pagedtable-index-current:hover {
 
 .pagedtable-footer {
   min-width: 380px;
-  padding-top: 4px;
+  padding-top: 9px;
   padding-bottom: 5px;
 }
 

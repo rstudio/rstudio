@@ -349,6 +349,17 @@ Error executeSqlEngineChunk(const std::string& docId,
    // ensure we always emit an execution complete event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
 
+   FilePath parentPath = notebook::chunkOutputPath(
+       docId, chunkId, nbCtxId, ContextSaved);
+   error = parentPath.ensureDirectory();
+   if (error)
+   {
+      std::string message = "Failed to create SQL chunk directory";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, parentPath);
+        
+      return Success();
+   }
+    
    FilePath targetPath =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
 
@@ -375,14 +386,16 @@ Error executeSqlEngineChunk(const std::string& docId,
       return Success();
    }
 
-   // forward success / failure to chunk
-   enqueueChunkOutput(
-            docId,
-            chunkId,
-            notebookCtxId(),
-            0, // no ordinal needed
-            ChunkOutputData,
-            targetPath);
+   if (targetPath.exists()) {
+      // forward success / failure to chunk
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               notebookCtxId(),
+               0, // no ordinal needed
+               ChunkOutputData,
+               targetPath);
+   }
 
    return Success();
 }
