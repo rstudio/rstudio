@@ -20,8 +20,9 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.IsWidget;
 
-public interface ChunkOutputPresenter
+public interface ChunkOutputPresenter extends IsWidget
 {
    public interface Host
    {

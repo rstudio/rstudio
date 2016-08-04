@@ -56,9 +56,9 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputWidget extends Composite
@@ -118,9 +118,7 @@ public class ChunkOutputWidget extends Composite
                   ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
 
       // create the initial output stream and attach it to the frame
-      final ChunkOutputStream stream = new ChunkOutputStream(this);
-      presenter_ = stream;
-      root_.add(stream);
+      attachPresenter(new ChunkOutputStream(this));
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -713,20 +711,24 @@ public class ChunkOutputWidget extends Composite
       root_.getElement().getStyle().clearOpacity();
    }
    
+   private void attachPresenter(ChunkOutputPresenter presenter)
+   {
+      if (root_.getWidget() != null)
+         root_.remove(root_.getWidget());
+      presenter_ = presenter;
+      root_.add(presenter.asWidget());
+   }
+   
    private void initializeOutput(int type)
    {
       if (state_ == CHUNK_PRE_OUTPUT)
       {
          // if no output has been emitted yet, clean up all existing output
          presenter_.clearOutput();
-         if (root_.getWidgetCount() > 0)
-            root_.remove(0);
-         
+
          // start with the stream presenter (we'll switch to gallery later if
          // circumstances demand)
-         ChunkOutputStream stream = new ChunkOutputStream(this);
-         presenter_ = stream;
-         root_.add(stream);
+         attachPresenter(new ChunkOutputStream(this));
 
          hasErrors_ = false;
          state_ = CHUNK_POST_OUTPUT;
@@ -755,16 +757,14 @@ public class ChunkOutputWidget extends Composite
          
          // replace the stream with the gallery (the stream will live on inside
          // the gallery's console page)
-         presenter_ = gallery;
-         if (root_.getWidgetCount() > 0)
-            root_.remove(0);
-         root_.add(gallery);
+         attachPresenter(gallery);
+         syncHeight(false, false);
       }
    }
    
    @UiField Image clear_;
    @UiField Image expand_;
-   @UiField FlowPanel root_;
+   @UiField SimplePanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
