@@ -2032,15 +2032,27 @@ public class DeadCodeElimination {
    * context).
    */
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
-    Set<JMethod> affectedMethods =
-        optimizerCtx.getModifiedMethodsSince(optimizerCtx.getLastStepFor(NAME));
-    affectedMethods.addAll(optimizerCtx.getMethodsByReferencedFields(
-        optimizerCtx.getModifiedFieldsSince(optimizerCtx.getLastStepFor(NAME))));
+    Set<JMethod> affectedMethods = affectedMethods(optimizerCtx);
     OptimizerStats stats = new DeadCodeElimination(program).execImpl(affectedMethods, optimizerCtx);
     optimizerCtx.setLastStepFor(NAME, optimizerCtx.getOptimizationStep());
     optimizerCtx.incOptimizationStep();
     JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
+  }
+
+  /**
+   * Return the set of methods affected (because they are or callers of) by the modifications to the
+   * given set functions.
+   */
+  private static Set<JMethod> affectedMethods(OptimizerContext optimizerCtx) {
+    Set<JMethod> modifiedMethods =
+        optimizerCtx.getModifiedMethodsSince(optimizerCtx.getLastStepFor(NAME));
+    Set<JMethod> affectedMethods = Sets.newLinkedHashSet();
+    affectedMethods.addAll(modifiedMethods);
+    affectedMethods.addAll(optimizerCtx.getCallers(modifiedMethods));
+    affectedMethods.addAll(optimizerCtx.getMethodsByReferencedFields(
+        optimizerCtx.getModifiedFieldsSince(optimizerCtx.getLastStepFor(NAME))));
+    return affectedMethods;
   }
 
   private final JProgram program;
