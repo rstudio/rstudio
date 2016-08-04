@@ -298,7 +298,7 @@ Error executeStanEngineChunk(const std::string& docId,
    
    // if the 'file' option was not set, set it explicitly
    if (!core::algorithm::contains(engineOptsNames, "file"))
-      fStanEngine.addParam("file", tempFile.absolutePath());
+      fStanEngine.addParam("file", string_utils::utf8ToSystem(tempFile.absolutePath()));
    
    // evaluate stan_model call
    SEXP stanModelSEXP = R_NilValue;
@@ -335,6 +335,46 @@ Error executeStanEngineChunk(const std::string& docId,
             ChunkOutputText,
             targetPath);
    
+   return Success();
+}
+
+Error executeSqlEngineChunk(const std::string& docId,
+                             const std::string& chunkId,
+                             const std::string& nbCtxId,
+                             const std::string& code,
+                             const json::Object& options)
+{
+   Error error;
+   
+   // ensure we always emit an execution complete event on exit
+   ChunkExecCompletedScope execScope(docId, chunkId);
+
+   FilePath targetPath =
+         notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
+
+   // run sql and save result
+   error = r::exec::RFunction(
+               ".rs.runSqlForDataCapture",
+               code,
+               string_utils::utf8ToSystem(targetPath.absolutePath()),
+               options).call();
+   if (error)
+   {
+      std::string message = "Failed to execute SQL chunk";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+
+      return Success();
+   }
+
+   // forward success / failure to chunk
+   enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebookCtxId(),
+            0, // no ordinal needed
+            ChunkOutputData,
+            targetPath);
+
    return Success();
 }
 
@@ -379,7 +419,9 @@ Error executeAlternateEngineChunk(const std::string& docId,
       return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "stan")
       return executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
-   
+   else if (engine == "sql")
+      return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
+
    runChunk(docId, chunkId, nbCtxId, engine, code);
    return Success();
 }

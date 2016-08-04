@@ -33,6 +33,10 @@
 #include <core/json/Json.hpp>
 #include <core/text/CsvParser.hpp>
 
+#include <r/RSexp.hpp>
+#include <r/RJson.hpp>
+#include <r/RExec.hpp>
+
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -70,6 +74,8 @@ ChunkOutputType chunkOutputType(const FilePath& outputPath)
       outputType = ChunkOutputHtml;
    else if (ext == ".error")
       outputType = ChunkOutputError;
+   else if (outputPath.extensionLowerCase() == ".rdf")
+      outputType = ChunkOutputData;
    return outputType;
 }
 
@@ -85,6 +91,8 @@ std::string chunkOutputExt(ChunkOutputType outputType)
          return ".html";
       case ChunkOutputError:
          return ".error";
+      case ChunkOutputData:
+         return ".rdf";
       default: 
          return "";
    }
@@ -170,6 +178,27 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
       }
 
       (*pObj)[kChunkOutputValue] = url;
+   }
+   else if (outputType == ChunkOutputData)
+   {
+      SEXP argsSEXP;
+      r::sexp::Protect rProtect;
+
+      Error error = r::exec::RFunction(
+         ".rs.readDataCapture",
+         string_utils::utf8ToSystem(path.absolutePath())).call(
+            &argsSEXP,
+            &rProtect);
+
+      if (error)
+         return error;
+
+      json::Value valJson;
+      error = r::json::jsonValueFromList(argsSEXP, &valJson);
+      if (error)
+         return error;
+
+      (*pObj)[kChunkOutputValue] = valJson;
    }
 
    return Success();
