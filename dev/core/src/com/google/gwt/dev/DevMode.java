@@ -40,8 +40,10 @@ import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerModulePathPrefix;
+import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
+import com.google.gwt.dev.util.arg.ArgHandlerStrict;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.arg.OptionModulePathPrefix;
@@ -248,6 +250,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       registerHandler(new ArgHandlerSourceLevel(options));
       registerHandler(new ArgHandlerGenerateJsInteropExports(options));
       registerHandler(new ArgHandlerIncrementalCompile(options));
+      registerHandler(new ArgHandlerScriptStyle(options));
+      registerHandler(new ArgHandlerStrict(options));
       registerHandler(new ArgHandlerModuleName(options) {
         @Override
         public String getPurpose() {
