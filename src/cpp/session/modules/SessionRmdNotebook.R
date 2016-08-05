@@ -237,6 +237,29 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             
             return(knitr::asis_output(annotated))
          }
+
+         # data chunks
+         if (.rs.endsWith(key, ".rdf")) {
+            paged_table_html = function(rdfPath) {
+              data <- .rs.readDataCapture(rdfPath)
+
+              paste(
+                "<div data-pagedtable>",
+                "  <script data-pagedtable-source type=\"application/json\">",
+                jsonlite::toJSON(data),
+                "  </script>",
+                "</div>",
+                sep = "\n"
+              )
+            }
+
+            rdfName <- .rs.withChangedExtension(key, ".rdf")
+            rdfPath <- file.path(rnbData$cache_path, chunkId, rdfName)
+            
+            return(knitr::asis_output(
+              paged_table_html(rdfPath)
+            ))
+         }
          
          # json files handled as pairs to HTML above
          if (.rs.endsWith(key, "json"))
