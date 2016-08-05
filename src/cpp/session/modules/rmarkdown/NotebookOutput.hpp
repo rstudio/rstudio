@@ -19,12 +19,13 @@
 
 #include <string>
 
-#define kChunkOutputType    "output_type"
-#define kChunkOutputValue   "output_val"
-#define kChunkOutputOrdinal "output_ordinal"
-#define kChunkUrl           "url"
-#define kChunkId            "chunk_id"
-#define kChunkDocId         "doc_id"
+#define kChunkOutputType     "output_type"
+#define kChunkOutputValue    "output_val"
+#define kChunkOutputOrdinal  "output_ordinal"
+#define kChunkOutputMetadata "output_metadata"
+#define kChunkUrl            "url"
+#define kChunkId             "chunk_id"
+#define kChunkDocId          "doc_id"
 
 #define kChunkOutputPath   "chunk_output"
 
