@@ -44,7 +44,13 @@
       type <- class(e$x[[columnName]])[[1]]
       list(
         name = columnName,
-        type = type,
+        type = switch(type,
+          "character" = "chr",
+          "numeric" = "num",
+          "integer" = "int",
+          "logical" = "logi",
+          "complex" = "cplx",
+          type),
         align = if (type == "character" || type == "factor") "left" else "right"
       )
     }
