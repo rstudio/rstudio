@@ -24,6 +24,7 @@ import com.google.gwt.dev.javac.UnitCache;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.util.DiskCachingUtil;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -69,7 +70,8 @@ public class CodeServer {
             DiskCachingUtil.computePreferredCacheDir(options.getModuleNames(), logger);
         UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
         MinimalRebuildCacheManager minimalRebuildCacheManager =
-            new MinimalRebuildCacheManager(logger, baseCacheDir);
+            createMinimalRebuildCacheManager(logger, options, baseCacheDir);
+
         outboxTable = makeOutboxTable(options, logger, unitCache, minimalRebuildCacheManager);
       } catch (Throwable t) {
         t.printStackTrace();
@@ -112,6 +114,21 @@ public class CodeServer {
     }
   }
 
+  private static MinimalRebuildCacheManager createMinimalRebuildCacheManager(
+      PrintWriterTreeLogger logger, Options options,File baseCacheDir) {
+    return new MinimalRebuildCacheManager(
+        logger,
+        baseCacheDir,
+        ImmutableMap.of(
+            "style", options.getOutput().name(),
+            "closureFormattedOutput",
+                Boolean.valueOf(options.isClosureFormattedOutput()).toString(),
+            "generateJsInteropExports",
+                Boolean.valueOf(options.shouldGenerateJsInteropExports()).toString(),
+            "methodDisplayMode", options.getMethodNameDisplayMode().name())
+    );
+  }
+
   /**
    * Starts the code server with the given command line options. To shut it down, see
    * {@link WebServer#stop}.
@@ -128,7 +145,7 @@ public class CodeServer {
         DiskCachingUtil.computePreferredCacheDir(options.getModuleNames(), startupLogger);
     UnitCache unitCache = UnitCacheSingleton.get(startupLogger, null, baseCacheDir);
     MinimalRebuildCacheManager minimalRebuildCacheManager =
-        new MinimalRebuildCacheManager(topLogger, baseCacheDir);
+        createMinimalRebuildCacheManager(topLogger, options, baseCacheDir);
     OutboxTable outboxTable =
         makeOutboxTable(options, startupLogger, unitCache, minimalRebuildCacheManager);
 

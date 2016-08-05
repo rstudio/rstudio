@@ -30,22 +30,73 @@ import java.util.Map;
  */
 public class MinimalRebuildCacheManagerTest extends TestCase {
 
-  public void testNoSuchCache() {
+  public void testCacheChange() throws InterruptedException {
+    String moduleName = "com.google.FooModule";
+    Map<String, String> initialCompilerOptions = ImmutableMap.of("option", "oldvalue");
+    PermutationDescription permutationDescription = new PermutationDescription();
+    File cacheDir = Files.createTempDir();
+
     MinimalRebuildCacheManager minimalRebuildCacheManager =
-        new MinimalRebuildCacheManager(TreeLogger.NULL, Files.createTempDir());
+        new MinimalRebuildCacheManager(
+            TreeLogger.NULL, cacheDir, initialCompilerOptions);
 
     // Make sure we start with a blank slate.
     minimalRebuildCacheManager.deleteCaches();
 
     // Construct and empty cache and also ask the manager to get a cache which does not exist.
     MinimalRebuildCache emptyCache = new MinimalRebuildCache();
-    MinimalRebuildCache noSuchCache = minimalRebuildCacheManager.getCache("com.google.FooModule",
-        new PermutationDescription());
+    MinimalRebuildCache fooCacheOld = minimalRebuildCacheManager.getCache(moduleName,
+        permutationDescription);
+
+    // Show that the manager created a new empty cache for the request of a cache that does not
+    // exist. Do not test instnace equality as getCache always returns a copy.
+    assertTrue(emptyCache.hasSameContent(fooCacheOld));
+
+    // Set some data into the cache
+    fooCacheOld.addTypeReference("Type1", "Type2");
+    assertFalse(emptyCache.hasSameContent(fooCacheOld));
+
+    // Set the cache back and shut down the manager to wait for the cache to be written to disk.
+    minimalRebuildCacheManager.enqueueAsyncWriteDiskCache(
+        moduleName, permutationDescription, fooCacheOld);
+    minimalRebuildCacheManager.shutdown();
+
+    // Change compiler options and get a new cache manager.
+    Map<String, String> newCompilerOptions = ImmutableMap.of("option", "newvalue");
+    minimalRebuildCacheManager =
+        new MinimalRebuildCacheManager(
+            TreeLogger.NULL, cacheDir, newCompilerOptions);
+
+    // Now get the cache for FooModule under different compiler flags
+    MinimalRebuildCache fooCacheNew = minimalRebuildCacheManager.getCache(moduleName,
+        permutationDescription);
 
     // Show that the manager created a new empty cache for the request of a cache that does not
     // exist.
-    assertFalse(emptyCache == noSuchCache);
-    assertTrue(emptyCache.hasSameContent(noSuchCache));
+    assertTrue(emptyCache.hasSameContent(fooCacheNew));
+    assertFalse(fooCacheOld.hasSameContent(fooCacheNew));
+
+    // Set the cache back and shut down the manager to wait for the cache to be written to disk.
+    minimalRebuildCacheManager.enqueueAsyncWriteDiskCache(
+        moduleName, permutationDescription, fooCacheNew);
+    minimalRebuildCacheManager.shutdown();
+
+    // Switch back to the initial option values and verify you get the same old cache.
+    minimalRebuildCacheManager =
+        new MinimalRebuildCacheManager(
+            TreeLogger.NULL, cacheDir, initialCompilerOptions);
+
+    // Now get the cache for FooModule under different under initial options values.
+    MinimalRebuildCache fooCacheResetOptions = minimalRebuildCacheManager.getCache(
+        moduleName,
+        permutationDescription);
+
+    // Show that the manager retrieved the already existing cache for FooModule under initial
+    // compiler options.
+    assertTrue(fooCacheOld.hasSameContent(fooCacheResetOptions));
+    minimalRebuildCacheManager.deleteCaches();
+    minimalRebuildCacheManager.shutdown();
+    cacheDir.delete();
   }
 
   public void testReload() throws InterruptedException {
@@ -53,7 +104,8 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
 
     String moduleName = "com.google.FooModule";
     MinimalRebuildCacheManager minimalRebuildCacheManager =
-        new MinimalRebuildCacheManager(TreeLogger.NULL, cacheDir);
+        new MinimalRebuildCacheManager(
+            TreeLogger.NULL, cacheDir, ImmutableMap.<String, String>of());
     PermutationDescription permutationDescription = new PermutationDescription();
 
     // Make sure we start with a blank slate.
@@ -96,7 +148,8 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
 
     // Start a new cache manager in the same folder.
     MinimalRebuildCacheManager reloadedMinimalRebuildCacheManager =
-        new MinimalRebuildCacheManager(TreeLogger.NULL, cacheDir);
+        new MinimalRebuildCacheManager(
+            TreeLogger.NULL, cacheDir, ImmutableMap.<String, String>of());
 
     // Reread the previously saved cache.
     MinimalRebuildCache reloadedCache =

@@ -26,6 +26,7 @@ import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
@@ -176,7 +177,7 @@ public class RecompilerTest extends TestCase {
     File baseCacheDir = Files.createTempDir();
     UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
     MinimalRebuildCacheManager minimalRebuildCacheManager =
-        new MinimalRebuildCacheManager(logger, baseCacheDir);
+        new MinimalRebuildCacheManager(logger, baseCacheDir, ImmutableMap.<String, String>of());
     Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
         "com.foo.SimpleModule", options, unitCache, minimalRebuildCacheManager);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
@@ -222,7 +223,7 @@ public class RecompilerTest extends TestCase {
     File baseCacheDir = Files.createTempDir();
     UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
     MinimalRebuildCacheManager minimalRebuildCacheManager =
-        new MinimalRebuildCacheManager(logger, baseCacheDir);
+        new MinimalRebuildCacheManager(logger, baseCacheDir, ImmutableMap.<String, String>of());
     Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
         "com.foo.PropertyModule", options, unitCache, minimalRebuildCacheManager);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
