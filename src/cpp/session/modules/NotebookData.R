@@ -19,7 +19,7 @@
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
-    x <- head(x, 1000)
+    x <- head(x, getOption("max.print", 1000))
 
     save(
       x, 
@@ -56,7 +56,7 @@
     }
   ))
 
-  data <- head(e$x, 1000)
+  data <- head(e$x, getOption("max.print", 1000))
 
   if (length(columns) > 0) {
     first_column = data[[1]]
@@ -81,7 +81,7 @@
   # precreate directories if needed
   dir.create(dirname(outputFile), recursive = TRUE, showWarnings = FALSE)
 
-  max.print <- if (is.null(options$max.print)) 1000 else as.numeric(options$max.print)
+  max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else as.numeric(options$max.print)
   max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
   conn <- get(options$connection, envir = globalenv())
