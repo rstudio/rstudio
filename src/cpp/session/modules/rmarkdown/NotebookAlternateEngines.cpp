@@ -349,8 +349,28 @@ Error executeSqlEngineChunk(const std::string& docId,
    // ensure we always emit an execution complete event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
 
+   FilePath parentPath = notebook::chunkOutputPath(
+       docId, chunkId, nbCtxId, ContextSaved);
+   error = parentPath.ensureDirectory();
+   if (error)
+   {
+      std::string message = "Failed to create SQL chunk directory";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, parentPath);
+        
+      return Success();
+   }
+    
    FilePath targetPath =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
+
+   // check package dependencies
+   if (!module_context::isPackageVersionInstalled("DBI", "0.4"))
+   {
+      std::string message = "Executing SQL chunks requires version 0.4 or "
+                            "later of the DBI package";
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+      return Success();
+   }
 
    // run sql and save result
    error = r::exec::RFunction(
@@ -366,14 +386,16 @@ Error executeSqlEngineChunk(const std::string& docId,
       return Success();
    }
 
-   // forward success / failure to chunk
-   enqueueChunkOutput(
-            docId,
-            chunkId,
-            notebookCtxId(),
-            0, // no ordinal needed
-            ChunkOutputData,
-            targetPath);
+   if (targetPath.exists()) {
+      // forward success / failure to chunk
+      enqueueChunkOutput(
+               docId,
+               chunkId,
+               notebookCtxId(),
+               0, // no ordinal needed
+               ChunkOutputData,
+               targetPath);
+   }
 
    return Success();
 }

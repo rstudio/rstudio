@@ -147,7 +147,7 @@ void ConnectionHistory::onConnectionsChanged()
    module_context::enqueClientEvent(event);
 }
 
-const char* const kConnectionListFile = "connections-db.json";
+const char* const kConnectionListFile = "connection-history-database.json";
 
 Error ConnectionHistory::readConnections(json::Array* pConnections)
 {

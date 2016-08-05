@@ -76,7 +76,7 @@
   dir.create(dirname(outputFile), recursive = TRUE, showWarnings = FALSE)
 
   max.print <- if (is.null(options$max.print)) 1000 else as.numeric(options$max.print)
-  max.print <- if (is.null(options$sql.max.print)) 1000 else as.numeric(options$sql.max.print)
+  max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
   conn <- get(options$connection, envir = globalenv())
   if (is.null(conn)) stop(
