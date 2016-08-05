@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.widget.FixedRatioWidget;
+import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.dom.client.Element;
@@ -25,9 +26,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkHtmlPage implements ChunkOutputPage
 {
-   public ChunkHtmlPage(String url, final Command onRenderComplete)
+   public ChunkHtmlPage(String url, NotebookHtmlMetadata metadata,
+         final Command onRenderComplete)
    {
-      thumbnail_ = new ChunkOutputThumbnail("HTML");
+      String clazz = metadata.getClasses().length() > 0 ? 
+            metadata.getClasses().get(0) : "html";
+      thumbnail_ = new ChunkOutputThumbnail(clazz, "htmlwidget");
 
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy

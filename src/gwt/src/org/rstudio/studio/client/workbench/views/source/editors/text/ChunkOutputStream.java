@@ -27,6 +27,8 @@ import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -181,8 +183,8 @@ public class ChunkOutputStream extends FlowPanel
    }
 
    @Override
-   public void showHtmlOutput(String url, int ordinal, 
-         final Command onRenderComplete)
+   public void showHtmlOutput(String url, NotebookHtmlMetadata metadata, 
+         int ordinal, final Command onRenderComplete)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
@@ -273,7 +275,8 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    @Override
-   public void showDataOutput(JavaScriptObject data)
+   public void showDataOutput(JavaScriptObject data, 
+         NotebookFrameMetadata metadata)
    {
       add(new ChunkDataWidget(data));
    }
@@ -404,7 +407,7 @@ public class ChunkOutputStream extends FlowPanel
          else if (inner instanceof ChunkOutputFrame)
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)inner;
-            ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), null);
+            ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), null, null);
             pages.add(html);
             remove(w);
          }

@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
@@ -95,9 +97,10 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
-   public void showHtmlOutput(String url, int ordinal, Command onRenderComplete)
+   public void showHtmlOutput(String url, NotebookHtmlMetadata metadata, 
+         int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkHtmlPage(url, onRenderComplete));
+      addPage(new ChunkHtmlPage(url, metadata, onRenderComplete));
    }
 
    @Override
@@ -116,9 +119,10 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
-   public void showDataOutput(JavaScriptObject data)
+   public void showDataOutput(JavaScriptObject data, 
+         NotebookFrameMetadata metadata)
    {
-      addPage(new ChunkDataPage(data));
+      addPage(new ChunkDataPage(data, metadata));
    }
 
    @Override

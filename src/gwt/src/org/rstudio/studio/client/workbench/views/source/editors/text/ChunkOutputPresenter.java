@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -36,10 +38,11 @@ public interface ChunkOutputPresenter extends IsWidget
    // show stored and/or real time objects emitted during plot execution
    void showConsoleOutput(JsArray<JsArrayEx> output);
    void showPlotOutput(String url, int ordinal, Command onRenderComplete);
-   void showHtmlOutput(String url, int ordinal, Command onRenderComplete);
+   void showHtmlOutput(String url, NotebookHtmlMetadata metadata, int ordinal, 
+         Command onRenderComplete);
    void showErrorOutput(UnhandledError error);
    void showOrdinalOutput(int ordinal);
-   void showDataOutput(JavaScriptObject data);
+   void showDataOutput(JavaScriptObject data, NotebookFrameMetadata metadata);
    
    // show that plots will be redrawn, or update a particular plot
    void setPlotPending(boolean pending, String pendingStyle);

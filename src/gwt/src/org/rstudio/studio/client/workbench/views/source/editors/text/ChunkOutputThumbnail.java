@@ -32,11 +32,13 @@ public class ChunkOutputThumbnail extends Composite
    {
    }
 
-   public ChunkOutputThumbnail(String caption)
+   public ChunkOutputThumbnail(String title, String subtitle)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      caption_.setText(caption);
+      title_.setText(title);
+      subtitle_.setText(subtitle);
    }
 
-   @UiField Label caption_;
+   @UiField Label title_;
+   @UiField Label subtitle_;
 }

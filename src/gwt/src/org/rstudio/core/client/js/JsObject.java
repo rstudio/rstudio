@@ -22,6 +22,10 @@ public class JsObject extends JavaScriptObject
    public static native JsObject createJsObject() /*-{
       return {};
    }-*/;
+   
+   public static native JsObject fromJavaScriptObject(JavaScriptObject o) /*-{
+      return o;
+   }-*/;
 
    protected JsObject() {}
 

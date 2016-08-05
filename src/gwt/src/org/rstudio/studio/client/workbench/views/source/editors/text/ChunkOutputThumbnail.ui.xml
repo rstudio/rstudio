@@ -2,16 +2,26 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 xmlns:g="urn:import:com.google.gwt.user.client.ui">
 <ui:style>
-.caption
+.title, .subtitle
 {
-   text-transform: uppercase;
-   font-size: x-small;
    text-align: center;
-   margin-top: 45%;
    position: relative;
+}
+
+.title
+{
+   font-size: 11px;
+   margin-top: 35%;
+}
+
+.subtitle
+{
+   font-size: 9px;
+   opacity: 0.7;
 }
 </ui:style>
 <g:HTMLPanel>
-   <g:Label styleName="{style.caption}" ui:field="caption_"></g:Label>
+   <g:Label styleName="{style.title}" ui:field="title_"></g:Label>
+   <g:Label styleName="{style.subtitle}" ui:field="subtitle_"></g:Label>
 </g:HTMLPanel>
 </ui:UiBinder> 

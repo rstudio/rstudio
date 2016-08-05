@@ -25,6 +25,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
@@ -504,7 +506,9 @@ public class ChunkOutputWidget extends Composite
          break;
       case RmdChunkOutputUnit.TYPE_HTML:
          final RenderTimer widgetTimer = new RenderTimer();
-         presenter_.showHtmlOutput(unit.getString(), unit.getOrdinal(),
+         presenter_.showHtmlOutput(unit.getString(), 
+               (NotebookHtmlMetadata)unit.getMetadata().cast(), 
+               unit.getOrdinal(),
                new Command() {
                   @Override
                   public void execute()
@@ -537,7 +541,8 @@ public class ChunkOutputWidget extends Composite
          presenter_.showOrdinalOutput(unit.getOrdinal());
          break;
       case RmdChunkOutputUnit.TYPE_DATA:
-         presenter_.showDataOutput(unit.getOuputObject());
+         presenter_.showDataOutput(unit.getOuputObject(), 
+               (NotebookFrameMetadata)unit.getMetadata().cast());
          break;
       }
    }
