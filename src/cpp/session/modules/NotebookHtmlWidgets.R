@@ -36,19 +36,16 @@
    
    # tempfile paths for html resources
    htmlfile <- tempfile("_rs_html_", tmpdir = ctx$outputFolder, fileext = ".html")
-   metafile <- tempfile("_rs_html_meta_", tmpdir = ctx$outputFolder, fileext = ".json")
+   depfile <- tempfile("_rs_html_deps_", tmpdir = ctx$outputFolder, fileext = ".json")
    
    # render html tags (to discover recursive dependencies + get html)
    rendered <- htmltools::renderTags(x)
-   htmlmeta <- list(dependencies = rendered$dependencies,
-                    classes = class(x))
+   htmldeps <- rendered$dependencies
    html <- rendered$html
    
-   # write out our metadata
-   cat(.rs.toJSON(htmlmeta, unbox = TRUE), file = metafile, sep = "\n")
-
-   if (length(rendered$dependencies)) {
-      # if we have html dependencies, use 'save_html'
+   if (length(htmldeps)) {
+      # if we have html dependencies, write those to file and use 'save_html'
+      cat(.rs.toJSON(htmldeps, unbox = TRUE), file = depfile, sep = "\n")
       htmltools::save_html(x, file = htmlfile, libdir = ctx$libraryFolder)
    } else {
       # otherwise, just write html to file as-is
@@ -56,7 +53,7 @@
    }
    
    # record the generated artefacts
-   .rs.recordHtmlWidget(htmlfile, metafile)
+   .rs.recordHtmlWidget(htmlfile, depfile)
 })
 
 .rs.addFunction("rnbHooks.print.html",           .rs.rnb.saveHtmlToCache)

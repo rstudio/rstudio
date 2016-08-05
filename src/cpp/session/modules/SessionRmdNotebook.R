@@ -210,13 +210,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             jsonPath <- file.path(rnbData$cache_path, chunkId, jsonName)
             if (file.exists(jsonPath)) {
                jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
-
-               # extract dependencies from named list if present (if unnamed
-               # list we presume a flat list of dependencies)
-               if ("dependencies" %in% names(jsonContents))
-                 jsonContents <- jsonContents$dependencies
-
-               # reclass all dependencies
                for (i in seq_along(jsonContents))
                   class(jsonContents[[i]]) <- "html_dependency"
                

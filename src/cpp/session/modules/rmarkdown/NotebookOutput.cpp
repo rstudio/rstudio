@@ -166,35 +166,15 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
                          docId + "/" + chunkId + "/" + 
                          path.filename());
 
+      // if this is a plot and it doesn't have a display list, hint to client
+      // that plot can't be resized
       if (outputType == ChunkOutputPlot)
       {
-         // if this is a plot and it doesn't have a display list, hint to client
-         // that plot can't be resized
-         //
          // form the path to where we'd expect the snapshot to be
          FilePath snapshotPath = path.parent().complete(
                path.stem() + kDisplayListExt);
          if (!snapshotPath.exists())
             url.append("?fixed_size=1");
-      }
-      else if (outputType == ChunkOutputHtml)
-      {
-         // if this is an HTML widget, find its metadata and send it to the
-         // client 
-         FilePath metadataPath = path.parent().complete(
-               path.stem() + ".json");
-         if (metadataPath.exists())
-         {
-            std::string contents;
-            readStringFromFile(metadataPath, &contents);
-            if (!contents.empty())
-            {
-               json::Value val;
-               json::parse(contents, &val);
-               if (val.type() == json::ObjectType)
-                  (*pObj)[kChunkOutputMetadata] = val;
-            }
-         }
       }
 
       (*pObj)[kChunkOutputValue] = url;
