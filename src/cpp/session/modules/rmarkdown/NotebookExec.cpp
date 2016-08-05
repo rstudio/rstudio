@@ -130,8 +130,8 @@ void ChunkExecContext::connect()
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
-                     ChunkOutputPlot, _3)));
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
+                     json::Value(), ChunkOutputPlot, _3)));
 
    boost::shared_ptr<PlotCapture> pPlotCapture = 
       boost::make_shared<PlotCapture>();
@@ -154,7 +154,7 @@ void ChunkExecContext::connect()
 
    // begin capturing HTML input
    connections_.push_back(events().onHtmlOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
                      ChunkOutputHtml, 0)));
 
    boost::shared_ptr<HtmlCapture> pHtmlCapture = 
@@ -213,7 +213,7 @@ void ChunkExecContext::connect()
 
    // begin capturing data
    connections_.push_back(events().onDataOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
                      ChunkOutputData, 0)));
 
    boost::shared_ptr<DataCapture> pDataCapture = 
@@ -230,7 +230,8 @@ void ChunkExecContext::connect()
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
-      const FilePath& metadata, ChunkOutputType outputType, unsigned ordinal)
+      const FilePath& sidecar, const core::json::Value& metadata, 
+      ChunkOutputType outputType, unsigned ordinal)
 {
    // set up folder to receive output if necessary
    initializeOutput();
@@ -278,14 +279,24 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
          LOG_ERROR(error);
    }
 
-   // if output metadata was provided, write it out
-   if (!metadata.empty())
+   // if output sidecar file was provided, write it out
+   if (!sidecar.empty())
    {
-      metadata.move(target.parent().complete(
-               target.stem() + metadata.extension()));
+      sidecar.move(target.parent().complete(
+               target.stem() + sidecar.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target);
+   // serialize metadata if provided
+   if (!metadata.is_null())
+   {
+      std::ostringstream oss;
+      json::write(metadata, oss);
+      error = writeStringToFile(target.parent().complete(
+               target.stem() + ".metadata"), oss.str());
+   }
+
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target,
+         metadata);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)

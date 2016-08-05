@@ -19,12 +19,15 @@
 
 #include <string>
 
-#define kChunkOutputType    "output_type"
-#define kChunkOutputValue   "output_val"
-#define kChunkOutputOrdinal "output_ordinal"
-#define kChunkUrl           "url"
-#define kChunkId            "chunk_id"
-#define kChunkDocId         "doc_id"
+#include <core/json/Json.hpp>
+
+#define kChunkOutputType     "output_type"
+#define kChunkOutputValue    "output_val"
+#define kChunkOutputOrdinal  "output_ordinal"
+#define kChunkOutputMetadata "output_metadata"
+#define kChunkUrl            "url"
+#define kChunkId             "chunk_id"
+#define kChunkDocId          "doc_id"
 
 #define kChunkOutputPath   "chunk_output"
 
@@ -119,6 +122,10 @@ core::Error appendConsoleOutput(int chunkConsoleOutputType,
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, 
       unsigned ordinal, ChunkOutputType outputType, const core::FilePath& path);
+void enqueueChunkOutput(const std::string& docId,
+      const std::string& chunkId, const std::string& nbCtxId, 
+      unsigned ordinal, ChunkOutputType outputType, const core::FilePath& path,
+      const core::json::Value& metadata);
 core::Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId,

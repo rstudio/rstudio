@@ -24,6 +24,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 
 #include <core/Exec.hpp>
 
@@ -43,9 +44,14 @@ namespace notebook {
 
 namespace {
 
-SEXP rs_recordData(SEXP dataFileSEXP)
+SEXP rs_recordData(SEXP dataFileSEXP, SEXP metadata)
 {
-   events().onDataOutput(FilePath(r::sexp::safeAsString(dataFileSEXP)), FilePath());
+   json::Value meta;
+   Error error = r::json::jsonValueFromObject(metadata, &meta);
+   if (error)
+      LOG_ERROR(error);
+   events().onDataOutput(FilePath(r::sexp::safeAsString(dataFileSEXP)), 
+         FilePath(), meta);
    return R_NilValue;
 }
 
@@ -103,7 +109,7 @@ core::Error DataCapture::connectDataCapture(
 
 core::Error initData()
 {
-   RS_REGISTER_CALL_METHOD(rs_recordData, 1);
+   RS_REGISTER_CALL_METHOD(rs_recordData, 2);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

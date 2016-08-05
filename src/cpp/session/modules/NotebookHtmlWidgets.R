@@ -13,9 +13,9 @@
 #
 #
 
-.rs.addFunction("recordHtmlWidget", function(htmlfile, depfile)
+.rs.addFunction("recordHtmlWidget", function(x, htmlfile, depfile)
 {
-   .Call("rs_recordHtmlWidget", htmlfile, depfile)
+   .Call("rs_recordHtmlWidget", htmlfile, depfile, list(classes = class(x)))
 })
 
 .rs.addFunction("rnb.setHtmlCaptureContext", function(...)
@@ -53,7 +53,7 @@
    }
    
    # record the generated artefacts
-   .rs.recordHtmlWidget(htmlfile, depfile)
+   .rs.recordHtmlWidget(x, htmlfile, depfile)
 })
 
 .rs.addFunction("rnbHooks.print.html",           .rs.rnb.saveHtmlToCache)
@@ -78,7 +78,7 @@
                              output = rmarkdown::pandoc_path_arg(htmlfile))
 
    # record in cache
-   .rs.recordHtmlWidget(htmlfile, NULL)
+   .rs.recordHtmlWidget(x, htmlfile, NULL)
 })
 
 .rs.addFunction("rnbHooks.print.knit_image_paths", function(x, ...) 
@@ -210,7 +210,7 @@
    htmltools::save_html(htmlProduct, file = htmlfile, libdir = libraryFolder)
    
    # record the saved artefacts
-   .rs.recordHtmlWidget(htmlfile, depfile)
+   .rs.recordHtmlWidget(x, htmlfile, depfile)
 })
 
 

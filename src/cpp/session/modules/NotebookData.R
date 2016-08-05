@@ -24,7 +24,9 @@
     save(
       x, 
       file = output)
-    .Call("rs_recordData", output);
+    .Call("rs_recordData", output, list(classes = class(x),
+                                        nrow = .rs.scalar(nrow(x)), 
+                                        ncol = .rs.scalar(ncol(x))))
   }, envir = as.environment("tools:rstudio"))
 })
 

@@ -79,9 +79,11 @@ struct Events : boost::noncopyable
 
    boost::signal<void(const core::FilePath&, const core::FilePath&, 
                       unsigned ordinal)> onPlotOutput;
-   boost::signal<void(const core::FilePath&, const core::FilePath&)> onHtmlOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&,
+                      const core::json::Value& metadata)> onHtmlOutput;
    boost::signal<void(const core::json::Object&)> onErrorOutput;
-   boost::signal<void(const core::FilePath&, const core::FilePath&)> onDataOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&,
+                      const core::json::Value& metadata)> onDataOutput;
 };
 
 Events& events();

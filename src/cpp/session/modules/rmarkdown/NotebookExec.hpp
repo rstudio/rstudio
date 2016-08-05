@@ -74,8 +74,9 @@ private:
          const std::string& output);
    void onConsoleText(int type, const std::string& output, bool truncate);
    void onConsolePrompt(const std::string&);
-   void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
-        ChunkOutputType outputType, unsigned ordinal);
+   void onFileOutput(const core::FilePath& file, const core::FilePath& sidecar,
+        const core::json::Value& metadata, ChunkOutputType outputType, 
+        unsigned ordinal);
    void onError(const core::json::Object& err);
    void initializeOutput();
 

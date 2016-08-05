@@ -22,8 +22,10 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
+
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 
 #include <core/Exec.hpp>
 
@@ -39,10 +41,14 @@ namespace notebook {
 
 namespace {
 
-SEXP rs_recordHtmlWidget(SEXP htmlFileSEXP, SEXP depFileSEXP)
+SEXP rs_recordHtmlWidget(SEXP htmlFileSEXP, SEXP depFileSEXP, SEXP metadata)
 {
+   json::Value meta;
+   Error error = r::json::jsonValueFromObject(metadata, &meta);
+   if (error)
+      LOG_ERROR(error);
    events().onHtmlOutput(FilePath(r::sexp::safeAsString(htmlFileSEXP)), 
-                         FilePath(r::sexp::safeAsString(depFileSEXP)));
+                         FilePath(r::sexp::safeAsString(depFileSEXP)), meta);
    return R_NilValue;
 }
 
@@ -95,7 +101,7 @@ core::Error HtmlCapture::connectHtmlCapture(
 
 core::Error initHtmlWidgets()
 {
-   RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 2);
+   RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 3);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

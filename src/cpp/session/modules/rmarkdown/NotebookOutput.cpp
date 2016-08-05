@@ -417,6 +417,15 @@ void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, unsigned ordinal, 
       ChunkOutputType outputType, const FilePath& path)
 {
+   enqueueChunkOutput(docId, chunkId, nbCtxId, ordinal, outputType, path, 
+         json::Value());
+}
+
+void enqueueChunkOutput(const std::string& docId,
+      const std::string& chunkId, const std::string& nbCtxId, unsigned ordinal, 
+      ChunkOutputType outputType, const FilePath& path, 
+      const core::json::Value& metadata)
+{
    json::Object output;
    Error error = fillOutputObject(docId, chunkId, nbCtxId, ordinal, outputType, 
          path, &output);
@@ -427,10 +436,11 @@ void enqueueChunkOutput(const std::string& docId,
    }
 
    json::Object result;
-   result[kChunkId]         = chunkId;
-   result[kChunkDocId]      = docId;
-   result[kChunkOutputPath] = output;
-   result[kRequestId]       = "";
+   result[kChunkId]             = chunkId;
+   result[kChunkDocId]          = docId;
+   result[kChunkOutputPath]     = output;
+   result[kChunkOutputMetadata] = metadata;
+   result[kRequestId]           = "";
    ClientEvent event(client_events::kChunkOutput, result);
    module_context::enqueClientEvent(event);
 }
@@ -440,19 +450,19 @@ Error enqueueChunkOutput(
       const std::string& chunkId, const std::string& nbCtxId,
       const std::string& requestId)
 {
-   FilePath outputPath = chunkOutputPath(docPath, docId, chunkId, nbCtxId,
+   FilePath outputDir = chunkOutputPath(docPath, docId, chunkId, nbCtxId,
          ContextSaved);
 
-   std::string ctxId(outputPath.parent().filename());
+   std::string ctxId(outputDir.parent().filename());
    std::vector<FilePath> outputPaths;
    json::Array outputs;
 
    // if there's an output directory at the expected location (there may not be
    // for chunks which don't have any output at all), read it into a JSON
    // object for the client
-   if (outputPath.exists())
+   if (outputDir.exists())
    {
-      Error error = outputPath.children(&outputPaths);
+      Error error = outputDir.children(&outputPaths);
       if (error) 
          LOG_ERROR(error);
 
@@ -473,6 +483,19 @@ Error enqueueChunkOutput(
          // extract ordinal from filename
          unsigned ordinal = ::strtol(outputPath.stem().c_str(), NULL, 16);
 
+         // extract metadata if present
+         json::Value meta;
+         FilePath metadata = outputDir.complete(
+               outputPath.stem() + ".metadata");
+         if (metadata.exists())
+         {
+            std::string contents;
+            error = readStringFromFile(metadata, &contents);
+            if (!contents.empty())
+               json::parse(contents, &meta);
+         }
+         output[kChunkOutputMetadata] = meta;
+         
          // format/parse chunk output for client consumption
          error = fillOutputObject(docId, chunkId, ctxId, ordinal, outputType, 
                outputPath, &output);
