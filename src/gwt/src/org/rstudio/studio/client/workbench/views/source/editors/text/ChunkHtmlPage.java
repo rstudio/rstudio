@@ -31,7 +31,7 @@ public class ChunkHtmlPage implements ChunkOutputPage
    {
       String clazz = metadata.getClasses().length() > 0 ? 
             metadata.getClasses().get(0) : "html";
-      thumbnail_ = new ChunkOutputThumbnail(clazz, "htmlwidget");
+      thumbnail_ = new ChunkOutputThumbnail(clazz, "htmlwidget", null);
 
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy

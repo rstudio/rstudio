@@ -26,13 +26,13 @@ public class ChunkConsolePage implements ChunkOutputPage,
    public ChunkConsolePage()
    {
       stream_ = new ChunkOutputStream(this);
-      thumbnail_ = new ChunkOutputThumbnail("Console", "");
+      thumbnail_ = new ChunkOutputThumbnail("Console", "", null);
    }
    
    public ChunkConsolePage(ChunkOutputStream stream)
    {
       stream_ = stream;
-      thumbnail_ = new ChunkOutputThumbnail("Console", "");
+      thumbnail_ = new ChunkOutputThumbnail("Console", "", null);
    }
 
    @Override

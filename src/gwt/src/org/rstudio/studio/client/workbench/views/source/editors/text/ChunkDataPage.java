@@ -14,13 +14,15 @@ public class ChunkDataPage implements ChunkOutputPage
       String clazz = meta.getClasses().length() > 0 ? 
             meta.getClasses().get(0) : "data";
       thumbnail_ = new ChunkOutputThumbnail(clazz, + 
-            meta.numRows() + "x" + meta.numCols());
+            meta.numRows() + "x" + meta.numCols(),
+            new ChunkFramePreview());
    }
    
    public ChunkDataPage(ChunkDataWidget content)
    {
       content_ = content;
-      thumbnail_ = new ChunkOutputThumbnail("data", "0x0");
+      thumbnail_ = new ChunkOutputThumbnail("data", "0x0", 
+            new ChunkFramePreview());
    }
 
    @Override

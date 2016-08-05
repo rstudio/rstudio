@@ -19,6 +19,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputThumbnail extends Composite
@@ -32,13 +33,16 @@ public class ChunkOutputThumbnail extends Composite
    {
    }
 
-   public ChunkOutputThumbnail(String title, String subtitle)
+   public ChunkOutputThumbnail(String title, String subtitle, Widget backdrop)
    {
       initWidget(uiBinder.createAndBindUi(this));
       title_.setText(title);
       subtitle_.setText(subtitle);
+      if (backdrop != null)
+         backdrop_.add(backdrop);
    }
 
    @UiField Label title_;
    @UiField Label subtitle_;
+   @UiField SimplePanel backdrop_;
 }
