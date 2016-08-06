@@ -1428,6 +1428,36 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Insert Chunk"
         desc="Insert a new code chunk"
         context="editor"/>
+
+   <cmd id="insertChunkR"
+        menuLabel="R Chunk"
+        desc="Insert a new R chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkBash"
+        menuLabel="Bash Chunk"
+        desc="Insert a new Bash chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkPython"
+        menuLabel="Python Chunk"
+        desc="Insert a new Python chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkRCPP"
+        menuLabel="Rcpp Chunk"
+        desc="Insert a new Rcpp chunk"
+        context="editor"/>
+        
+   <cmd id="insertChunkStan"
+        menuLabel="Stan Chunk"
+        desc="Insert a new Stan chunk"
+        context="editor"/>
+        
+   <cmd id="insertChunkSQL"
+        menuLabel="SQL Chunk"
+        desc="Insert a new SQL chunk"
+        context="editor"/>
         
    <cmd id="insertSection"
         menuLabel="_Insert Section..."
