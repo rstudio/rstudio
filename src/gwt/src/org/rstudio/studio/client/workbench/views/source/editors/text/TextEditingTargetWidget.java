@@ -280,7 +280,23 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
-      toolbar.addRightWidget(insertChunkButton_ = commands_.insertChunk().createToolbarButton());
+      ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
+      insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
+      insertChunksMenu.addSeparator();
+      insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
+      insertChunksMenu.addItem(commands_.insertChunkPython().createMenuItem(false));
+      insertChunksMenu.addItem(commands_.insertChunkRCPP().createMenuItem(false));
+      insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
+      insertChunksMenu.addItem(commands_.insertChunkStan().createMenuItem(false));
+
+      insertChunkButton_ = new ToolbarButton(
+                       "Insert",
+                       commands_.insertChunk().getImageResource(),
+                       insertChunksMenu,
+                       true);
+
+      toolbar.addRightWidget(insertChunkButton_);
+
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
       toolbar.addRightSeparator();
       toolbar.addRightWidget(runLastButton_ = commands_.executeLastCode().createToolbarButton(false));

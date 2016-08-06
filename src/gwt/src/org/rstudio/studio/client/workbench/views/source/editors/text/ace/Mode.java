@@ -26,6 +26,10 @@ public class Mode extends JavaScriptObject
          return this.value;
       }-*/;
 
+      public native final void setValue(String value) /*-{
+         this.value = value;
+      }-*/;
+
       /**
        * @return Position cursor should be navigated to, relative to the
        *       beginning of the value.

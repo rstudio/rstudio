@@ -4023,8 +4023,7 @@ public class TextEditingTarget implements
       return Position.create(endRow, endColumn);
    }
    
-   @Handler
-   void onInsertChunk()
+   private void onInsertChunk(String chunkPlaceholder)
    {
       String sel = null;
       Range selRange = null;
@@ -4045,6 +4044,7 @@ public class TextEditingTarget implements
       
       Position pos = moveCursorToNextInsertLocation();
       InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
+      insertChunkInfo.setValue(chunkPlaceholder);
       if (insertChunkInfo != null)
       {
          // inject the chunk skeleton
@@ -4079,7 +4079,43 @@ public class TextEditingTarget implements
          assert false : "Mode did not have insertChunkInfo available";
       }
    }
-   
+
+   @Handler
+   void onInsertChunkR()
+   {
+      onInsertChunk("```{r}\n\n```\n");
+   }
+
+   @Handler
+   void onInsertChunkBash()
+   {
+      onInsertChunk("```{bash}\n\n```\n");
+   }
+
+   @Handler
+   void onInsertChunkPython()
+   {
+      onInsertChunk("```{python}\n\n```\n");
+   }
+
+   @Handler
+   void onInsertChunkRCPP()
+   {
+      onInsertChunk("```{rcpp}\n\n```\n");
+   }
+
+   @Handler
+   void onInsertChunkStan()
+   {
+      onInsertChunk("```{stan}\n\n```\n");
+   }
+
+   @Handler
+   void onInsertChunkSQL()
+   {
+      onInsertChunk("```{sql}\n\n```\n");
+   }
+
    @Handler
    void onInsertSection()
    {
