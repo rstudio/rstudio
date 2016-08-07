@@ -521,6 +521,7 @@ well as menu structures (for main menu and popup menus).
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
+         <shortcut refid="insertChunkR" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R"/>
          <shortcut refid="extractFunction" value="Cmd+Alt+X"/>
          <shortcut refid="extractLocalVariable" value="Cmd+Alt+V"/>
@@ -1430,32 +1431,32 @@ well as menu structures (for main menu and popup menus).
         context="editor"/>
 
    <cmd id="insertChunkR"
-        menuLabel="R Chunk"
+        menuLabel="R"
         desc="Insert a new R chunk"
         context="editor"/>
 
    <cmd id="insertChunkBash"
-        menuLabel="Bash Chunk"
+        menuLabel="Bash"
         desc="Insert a new Bash chunk"
         context="editor"/>
 
    <cmd id="insertChunkPython"
-        menuLabel="Python Chunk"
+        menuLabel="Python"
         desc="Insert a new Python chunk"
         context="editor"/>
 
    <cmd id="insertChunkRCPP"
-        menuLabel="Rcpp Chunk"
+        menuLabel="Rcpp"
         desc="Insert a new Rcpp chunk"
         context="editor"/>
         
    <cmd id="insertChunkStan"
-        menuLabel="Stan Chunk"
+        menuLabel="Stan"
         desc="Insert a new Stan chunk"
         context="editor"/>
         
    <cmd id="insertChunkSQL"
-        menuLabel="SQL Chunk"
+        menuLabel="SQL"
         desc="Insert a new SQL chunk"
         context="editor"/>
         
