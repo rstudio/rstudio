@@ -4082,6 +4082,12 @@ public class TextEditingTarget implements
    }
 
    @Handler
+   void onInsertChunk()
+   {
+      onInsertChunkR();
+   }
+   
+   @Handler
    void onInsertChunkR()
    {
       onInsertChunk("```{r}\n\n```\n");
