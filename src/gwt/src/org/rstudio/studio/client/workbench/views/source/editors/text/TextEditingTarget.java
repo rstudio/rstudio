@@ -4044,9 +4044,10 @@ public class TextEditingTarget implements
       
       Position pos = moveCursorToNextInsertLocation();
       InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
-      insertChunkInfo.setValue(chunkPlaceholder);
       if (insertChunkInfo != null)
       {
+         insertChunkInfo.setValue(chunkPlaceholder);
+         
          // inject the chunk skeleton
          docDisplay_.insertCode(insertChunkInfo.getValue(), false);
 
