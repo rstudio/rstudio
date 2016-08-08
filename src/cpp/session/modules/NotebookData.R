@@ -68,7 +68,7 @@
   data <- as.data.frame(
     lapply(
       data,
-      function (y) as.character(y)),
+      function (y) format(y)),
     stringsAsFactors = FALSE)
 
   list(
