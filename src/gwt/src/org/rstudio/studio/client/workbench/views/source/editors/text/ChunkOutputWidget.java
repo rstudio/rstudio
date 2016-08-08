@@ -457,6 +457,7 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
       
+      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       presenter_.showConsoleError(event.getError());
    }
    

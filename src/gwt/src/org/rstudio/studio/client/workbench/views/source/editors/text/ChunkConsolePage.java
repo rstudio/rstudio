@@ -15,9 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkConsolePage implements ChunkOutputPage,
@@ -25,14 +28,12 @@ public class ChunkConsolePage implements ChunkOutputPage,
 {
    public ChunkConsolePage()
    {
-      stream_ = new ChunkOutputStream(this);
-      thumbnail_ = new ChunkOutputThumbnail("Console", "", null);
+      init(new ChunkOutputStream(this));
    }
-   
+
    public ChunkConsolePage(ChunkOutputStream stream)
    {
-      stream_ = stream;
-      thumbnail_ = new ChunkOutputThumbnail("Console", "", null);
+      init(stream);
    }
 
    @Override
@@ -44,7 +45,7 @@ public class ChunkConsolePage implements ChunkOutputPage,
    @Override
    public Widget contentWidget()
    {
-      return stream_;
+      return content_;
    }
    
    @Override
@@ -73,8 +74,21 @@ public class ChunkConsolePage implements ChunkOutputPage,
       stream_.showConsoleOutput(output);
    }
    
-   private final ChunkOutputStream stream_;
-   private final Widget thumbnail_;
+   // Private methods ---------------------------------------------------------
+   
+   private void init(ChunkOutputStream stream)
+   {
+      stream_ = stream;
+      ScrollPanel panel = new ScrollPanel();
+      panel.add(stream);
+      content_ = new FixedRatioWidget(panel, ChunkOutputUi.OUTPUT_ASPECT, 
+            ChunkOutputUi.MAX_PLOT_WIDTH);
+      thumbnail_ = new ChunkOutputThumbnail("R Console", "", null);
+   }
+
+   private ChunkOutputStream stream_;
+   private Widget thumbnail_;
+   private FixedRatioWidget content_;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
