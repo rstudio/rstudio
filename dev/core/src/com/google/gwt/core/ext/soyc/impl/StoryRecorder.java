@@ -149,7 +149,7 @@ public class StoryRecorder {
 
       logger.log(TreeLogger.INFO, "Done");
     } catch (Throwable e) {
-      logger.log(TreeLogger.ERROR, "Could not write dependency file.", e);
+      logger.log(TreeLogger.WARN, "Could not write dependency file; proceeding anyway.", e);
     }
   }
 

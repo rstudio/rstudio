@@ -132,7 +132,7 @@ public class DependencyRecorder implements MultipleDependencyGraphRecorder {
       Utility.close(writer);
 
     } catch (Throwable e) {
-      logger.log(TreeLogger.ERROR, "Could not write dependency file.", e);
+      logger.log(TreeLogger.WARN, "Could not write dependency file; proceeding anyway.", e);
     }
   }
 
