@@ -41,8 +41,8 @@ namespace notebook {
 
 enum PlotSizeBehavior
 {
-   PlotSizeAutomatic,
-   PlotSizeManual
+   PlotSizeAutomatic = 0,
+   PlotSizeManual    = 1
 };
 
 class PlotCapture : public NotebookCapture

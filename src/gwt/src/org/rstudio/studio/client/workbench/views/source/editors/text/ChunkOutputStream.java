@@ -22,7 +22,6 @@ import java.util.Map;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.core.client.widget.PreWidget;
@@ -42,9 +41,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -116,7 +112,8 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    @Override
-   public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
+   public void showPlotOutput(String url, int ordinal, 
+         final Command onRenderComplete)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_PLOT);
@@ -125,7 +122,7 @@ public class ChunkOutputStream extends FlowPanel
       final Image plot = new Image();
       Widget plotWidget = null;
       
-      if (isFixedSizePlotUrl(url))
+      if (ChunkPlotPage.isFixedSizePlotUrl(url))
       {
          // if the plot is of fixed size, emit it directly, but make it
          // initially invisible until we get sizing information (as we may 
@@ -178,9 +175,15 @@ public class ChunkOutputStream extends FlowPanel
       if (!placed)
          addWithOrdinal(plotWidget, ordinal);
       
-      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
-            onRenderComplete));
+      ChunkPlotPage.listenForRender(plot, "auto", "100%", "", new Command()
+      {
+         @Override
+         public void execute()
+         {
+            onRenderComplete.execute();
+            host_.notifyHeightChanged();
+         }
+      });
 
       plot.setUrl(url);
    }
@@ -460,34 +463,6 @@ public class ChunkOutputStream extends FlowPanel
       return null;
    }
    
-   private EventListener createPlotListener(final Image plot, 
-         final Command onRenderComplete)
-   {
-      return new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            if (DOM.eventGetType(event) != Event.ONLOAD)
-               return;
-            
-            // if the image is of fixed size, just clamp its width to the editor
-            // surface while preserving its aspect ratio
-            if (isFixedSizePlotUrl(plot.getUrl()))
-            {
-               ImageElementEx img = plot.getElement().cast();
-               img.getStyle().setProperty("height", "auto");
-               img.getStyle().setProperty("maxWidth", "100%");
-            }
-               
-            plot.setVisible(true);
-            if (onRenderComplete != null)
-               onRenderComplete.execute();
-            host_.notifyHeightChanged();
-         }
-      };
-   }
-
    private void flushQueuedErrors()
    {
       if (!queuedError_.isEmpty())
@@ -497,11 +472,6 @@ public class ChunkOutputStream extends FlowPanel
                ChunkConsolePage.CONSOLE_ERROR));
          queuedError_ = "";
       }
-   }
-   
-   private boolean isFixedSizePlotUrl(String url)
-   {
-      return url.contains("fixed_size=1");
    }
    
    private void addWithOrdinal(Widget w, int ordinal)

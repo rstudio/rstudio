@@ -41,7 +41,7 @@ public class ChunkOutputThumbnail extends Composite
       if (backdrop != null)
          backdrop_.add(backdrop);
    }
-
+   
    @UiField Label title_;
    @UiField Label subtitle_;
    @UiField SimplePanel backdrop_;

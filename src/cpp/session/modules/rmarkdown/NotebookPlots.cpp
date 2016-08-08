@@ -104,8 +104,14 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          if (ignoreEmpty && path.size() == 0)
             continue;
 
+         // record height/width along with plot
+         json::Object metadata;
+         metadata["height"] = height_;
+         metadata["width"] = width_;
+         metadata["size_behavior"] = static_cast<int>(sizeBehavior_);
+
          // emit the plot and the snapshot file
-         events().onPlotOutput(path, snapshotFile_, lastOrdinal_);
+         events().onPlotOutput(path, snapshotFile_, metadata, lastOrdinal_);
 
          // we've consumed the snapshot file, so clear it
          snapshotFile_ = FilePath();
