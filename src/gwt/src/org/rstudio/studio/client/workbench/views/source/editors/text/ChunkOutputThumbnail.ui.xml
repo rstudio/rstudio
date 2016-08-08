@@ -32,7 +32,10 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
 .backdrop:after {
   content: "";
   display: block;
-  background: linear-gradient(rgba(255, 255, 255, 0.0) 0%, rgba(255, 255, 255, 0.33) 50%, rgba(255, 255, 255, 1.0) 100%);
+  background: linear-gradient(rgba(255, 255, 255, 0.3) 0%, 
+                              rgba(255, 255, 255, 0.75) 33%, 
+                              rgba(255, 255, 255, 1.0) 80%, 
+                              rgba(255, 255, 255, 1.0) 100%);
 }
 
 .thumbnail
