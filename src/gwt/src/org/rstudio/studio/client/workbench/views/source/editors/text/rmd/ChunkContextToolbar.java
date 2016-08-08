@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkContextToolbar extends Composite
@@ -61,6 +62,7 @@ public class ChunkContextToolbar extends Composite
 
       initRunPrevious(dark);
       setRunPrevious(runPrevious);
+      initChangeChunkType();
       
       initRun();
       setRun(run);
@@ -167,11 +169,28 @@ public class ChunkContextToolbar extends Composite
          }
       });
    }
+
+   private void initChangeChunkType()
+   {
+      chunkTypeLabel_.setText("{r}");
+      DOM.sinkEvents(chunkTypeLabel_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(chunkTypeLabel_.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONCLICK)
+            {
+            }
+         }
+      });
+   }
    
    @UiField Image options_;
    @UiField Image runPrevious_;
    @UiField Image run_;
-   
+   @UiField Label chunkTypeLabel_;
+
    private final Host host_;
    private int state_;
    
