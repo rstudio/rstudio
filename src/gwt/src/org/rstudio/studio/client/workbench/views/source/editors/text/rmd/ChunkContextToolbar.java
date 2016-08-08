@@ -52,7 +52,7 @@ public class ChunkContextToolbar extends Composite
          GWT.create(ChunkContextResources.class);
 
    public ChunkContextToolbar(Host host, boolean dark, boolean runPrevious, 
-         boolean run)
+         boolean run, String engine)
    {
       host_ = host;
       state_ = STATE_RESTING;
@@ -62,7 +62,7 @@ public class ChunkContextToolbar extends Composite
 
       initRunPrevious(dark);
       setRunPrevious(runPrevious);
-      initChangeChunkType();
+      initChangeChunkEngine(engine);
       
       initRun();
       setRun(run);
@@ -97,6 +97,11 @@ public class ChunkContextToolbar extends Composite
       run_.setVisible(visible);
       runPrevious_.getElement().getStyle().setMarginRight(visible ? 5 : 33, 
             Unit.PX);
+   }
+
+   public void setEngine(String engine)
+   {
+      chunkTypeLabel_.setText("{" + engine + "}");
    }
    
    // Private methods ---------------------------------------------------------
@@ -170,9 +175,9 @@ public class ChunkContextToolbar extends Composite
       });
    }
 
-   private void initChangeChunkType()
+   private void initChangeChunkEngine(String engine)
    {
-      chunkTypeLabel_.setText("{r}");
+      chunkTypeLabel_.setText("{" + engine + "}");
       DOM.sinkEvents(chunkTypeLabel_.getElement(), Event.ONCLICK);
       DOM.setEventListener(chunkTypeLabel_.getElement(), new EventListener()
       {

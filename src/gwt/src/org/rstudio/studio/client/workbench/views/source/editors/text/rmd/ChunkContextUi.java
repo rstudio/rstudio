@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import java.util.Map;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -41,6 +45,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       host_ = lineWidgetHost;
       dark_ = dark;
       renderPass_ = renderPass;
+      engine_ = getEngine(preambleRow);
       createToolbar(preambleRow);
    }
    
@@ -80,6 +85,12 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       {
          isEval_ = isEval;
          toolbar_.setRun(isEval);
+      }
+      String engine = getEngine(row);
+      if (engine != engine_)
+      {
+         engine_ = engine;
+         toolbar_.setEngine(engine);
       }
    }
    
@@ -174,11 +185,23 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    
    private void createToolbar(int row)
    {
-      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, isEval_);
+      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, isEval_, engine_);
       toolbar_.setHeight("0px"); 
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
             toolbar_, row, null, host_);
+   }
+
+   private String getEngine(int row)
+   {
+      String line = target_.getDocDisplay().getLine(row);
+
+      Map<String, String> options = 
+         RMarkdownChunkHeaderParser.parse(line);
+      
+      String engine = StringUtil.stringValue(options.get("engine"));
+
+      return engine;
    }
 
    private final TextEditingTarget target_;
@@ -192,4 +215,5 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    
    private boolean isSetup_;
    private boolean isEval_;
+   private String engine_;
 }
