@@ -542,7 +542,8 @@ public class ChunkOutputWidget extends Composite
          break;
       case RmdChunkOutputUnit.TYPE_DATA:
          presenter_.showDataOutput(unit.getOuputObject(), 
-               (NotebookFrameMetadata)unit.getMetadata().cast());
+               (NotebookFrameMetadata)unit.getMetadata().cast(),
+               unit.getOrdinal());
          break;
       }
    }

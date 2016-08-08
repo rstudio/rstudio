@@ -7,24 +7,29 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkDataPage implements ChunkOutputPage
 {
-   public ChunkDataPage(JavaScriptObject data, JavaScriptObject metadata)
+   public ChunkDataPage(JavaScriptObject data, NotebookFrameMetadata metadata)
    {
-      content_ = new ChunkDataWidget(data);
-      NotebookFrameMetadata meta = metadata.cast();
-      String clazz = meta.getClasses().length() > 0 ? 
-            meta.getClasses().get(0) : "data";
-      thumbnail_ = new ChunkOutputThumbnail(clazz, + 
-            meta.numRows() + "x" + meta.numCols(),
-            new ChunkFramePreview());
+      this(new ChunkDataWidget(data), metadata);
    }
    
-   public ChunkDataPage(ChunkDataWidget content)
+   public ChunkDataPage(ChunkDataWidget widget, NotebookFrameMetadata metadata)
    {
-      content_ = content;
-      thumbnail_ = new ChunkOutputThumbnail("data", "0x0", 
-            new ChunkFramePreview());
+      content_ = widget;
+      if (metadata == null)
+      {
+         thumbnail_ = new ChunkOutputThumbnail("data.frame", "",
+               new ChunkFramePreview());
+      }
+      else
+      {
+         String clazz = metadata.getClasses().length() > 0 ? 
+               metadata.getClasses().get(0) : "data";
+         thumbnail_ = new ChunkOutputThumbnail(clazz, + 
+               metadata.numRows() + "x" + metadata.numCols(),
+               new ChunkFramePreview());
+      }
    }
-
+   
    @Override
    public Widget thumbnailWidget()
    {

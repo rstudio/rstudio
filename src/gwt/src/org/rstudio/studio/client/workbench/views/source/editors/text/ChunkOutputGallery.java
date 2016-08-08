@@ -120,7 +120,7 @@ public class ChunkOutputGallery extends Composite
 
    @Override
    public void showDataOutput(JavaScriptObject data, 
-         NotebookFrameMetadata metadata)
+         NotebookFrameMetadata metadata, int ordinal)
    {
       addPage(new ChunkDataPage(data, metadata));
    }

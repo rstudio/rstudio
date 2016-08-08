@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -55,6 +57,7 @@ public class ChunkOutputStream extends FlowPanel
    public ChunkOutputStream(ChunkOutputPresenter.Host host)
    {
       host_ = host;
+      metadata_ = new HashMap<Integer, JavaScriptObject>();
    }
 
    @Override
@@ -190,6 +193,9 @@ public class ChunkOutputStream extends FlowPanel
       initializeOutput(RmdChunkOutputUnit.TYPE_HTML);
       flushQueuedErrors();
       
+      // persist metadata
+      metadata_.put(ordinal, metadata);
+      
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy
       if (url.indexOf('?') > 0)
@@ -276,9 +282,10 @@ public class ChunkOutputStream extends FlowPanel
    
    @Override
    public void showDataOutput(JavaScriptObject data, 
-         NotebookFrameMetadata metadata)
+         NotebookFrameMetadata metadata, int ordinal)
    {
-      add(new ChunkDataWidget(data));
+      metadata_.put(ordinal, metadata);
+      addWithOrdinal(new ChunkDataWidget(data), ordinal);
    }
 
    @Override
@@ -383,10 +390,20 @@ public class ChunkOutputStream extends FlowPanel
       List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
       for (Widget w: this)
       {
+         // extract ordinal and metadata
+         JavaScriptObject metadata = null;
+         String ord = w.getElement().getAttribute(ORDINAL_ATTRIBUTE);
+         int ordinal = 0;
+         if (!StringUtil.isNullOrEmpty(ord))
+            ordinal = StringUtil.parseInt(ord, 0);
+         if (metadata_.containsKey(ordinal))
+            metadata = metadata_.get(ordinal);
+
          if (w instanceof ChunkDataWidget)
          {
             ChunkDataWidget widget = (ChunkDataWidget)w;
-            ChunkDataPage data = new ChunkDataPage(widget);
+            ChunkDataPage data = new ChunkDataPage(widget, 
+                  (NotebookFrameMetadata)metadata.cast());
             pages.add(data);
             remove(w);
             continue;
@@ -543,6 +560,7 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    private final ChunkOutputPresenter.Host host_;
+   private final Map<Integer, JavaScriptObject> metadata_;
    
    private PreWidget console_;
    private String queuedError_ = "";

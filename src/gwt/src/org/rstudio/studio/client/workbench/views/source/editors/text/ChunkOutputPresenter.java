@@ -42,7 +42,8 @@ public interface ChunkOutputPresenter extends IsWidget
          Command onRenderComplete);
    void showErrorOutput(UnhandledError error);
    void showOrdinalOutput(int ordinal);
-   void showDataOutput(JavaScriptObject data, NotebookFrameMetadata metadata);
+   void showDataOutput(JavaScriptObject data, NotebookFrameMetadata metadata,
+         int ordinal);
    
    // show that plots will be redrawn, or update a particular plot
    void setPlotPending(boolean pending, String pendingStyle);

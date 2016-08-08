@@ -434,13 +434,13 @@ void enqueueChunkOutput(const std::string& docId,
       LOG_ERROR(error);
       return;
    }
+   output[kChunkOutputMetadata] = metadata;
 
    json::Object result;
-   result[kChunkId]             = chunkId;
-   result[kChunkDocId]          = docId;
-   result[kChunkOutputPath]     = output;
-   result[kChunkOutputMetadata] = metadata;
-   result[kRequestId]           = "";
+   result[kChunkId]         = chunkId;
+   result[kChunkDocId]      = docId;
+   result[kChunkOutputPath] = output;
+   result[kRequestId]       = "";
    ClientEvent event(client_events::kChunkOutput, result);
    module_context::enqueClientEvent(event);
 }
