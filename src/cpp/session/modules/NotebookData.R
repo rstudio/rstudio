@@ -24,7 +24,8 @@
     save(
       x, 
       file = output)
-    .Call("rs_recordData", output);
+
+    invisible(.Call("rs_recordData", output));
   }, envir = as.environment("tools:rstudio"))
 })
 
