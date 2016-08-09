@@ -13,9 +13,17 @@
 #
 #
 
+.rs.addFunction("dataCaptureOverrides", function(outputFolder, libraryFolder)
+{
+  c(
+    "print.data.frame",
+    "print.tbl_df"
+  )
+})
+
 .rs.addFunction("initDataCapture", function(outputFolder, libraryFolder)
 {
-  assign("print.data.frame", function(x, ...) {
+  overridePrint <- function(x, ...) {
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
@@ -26,12 +34,44 @@
       file = output)
 
     invisible(.Call("rs_recordData", output));
-  }, envir = as.environment("tools:rstudio"))
+  }
+
+  lapply(.rs.dataCaptureOverrides(), function(override) {
+    assign(
+      override,
+      overridePrint,
+      envir = as.environment("tools:rstudio")
+    )
+  })
+
+  assign(
+    "dplyr_tibble_print_original",
+    getOption("dplyr.tibble.print"),
+    envir = as.environment("tools:rstudio")
+  )
+
+  options("dplyr.tibble.print" = function(x, n, width, ...) {
+    isSQL <- "tbl_sql" %in% class(x)
+    n <- if (isSQL) getOption("sql.max.print", 1000) else getOption("max.print", 10000)
+
+    print(as.data.frame(head(x, n)))
+  })
 })
 
 .rs.addFunction("releaseDataCapture", function()
 {
-  rm("print.data.frame", envir = as.environment("tools:rstudio"))
+  options(
+    "dplyr.tibble.print" = get(
+      "dplyr_tibble_print_original",
+      envir = as.environment("tools:rstudio")
+    )
+  )
+
+  overrides <- .rs.dataCaptureOverrides()
+  rm(
+    list = overrides,
+    envir = as.environment("tools:rstudio")
+  )
 })
 
 .rs.addFunction("readDataCapture", function(path)
@@ -42,22 +82,22 @@
   columns <- unname(lapply(
     names(e$x),
     function(columnName) {
-      type <- class(e$x[[columnName]])[[1]]
+      type <- tibble::type_sum(e$x[[columnName]])
       list(
         name = columnName,
-        type = switch(type,
-          "character" = "chr",
-          "numeric" = "num",
-          "integer" = "int",
-          "logical" = "logi",
-          "complex" = "cplx",
-          type),
+        type = type,
         align = if (type == "character" || type == "factor") "left" else "right"
       )
     }
   ))
 
   data <- head(e$x, getOption("max.print", 1000))
+
+  is_list <- vapply(data, is.list, logical(1))
+  data[is_list] <- lapply(data[is_list], function(x) {
+    summary <- tibble::obj_sum(x)
+    paste0("<", summary, ">")
+  })
 
   if (length(columns) > 0) {
     first_column = data[[1]]

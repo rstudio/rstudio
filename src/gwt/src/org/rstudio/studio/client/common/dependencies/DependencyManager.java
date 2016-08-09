@@ -174,6 +174,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("knitr", "1.13", true));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
+      deps.add(Dependency.cranPackage("tibble", "1.1"));
       deps.add(Dependency.embeddedPackage("rmarkdown"));
       return deps;
    }
