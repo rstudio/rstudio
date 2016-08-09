@@ -19,14 +19,14 @@
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
-    x <- head(x, 1000)
+    x <- head(x, getOption("max.print", 1000))
 
     save(
       x, 
       file = output)
-    .Call("rs_recordData", output, list(classes = class(x),
-                                        nrow = .rs.scalar(nrow(x)), 
-                                        ncol = .rs.scalar(ncol(x))))
+    invisible(.Call("rs_recordData", output, list(classes = class(x),
+                                                  nrow = .rs.scalar(nrow(x)), 
+                                                  ncol = .rs.scalar(ncol(x)))))
   }, envir = as.environment("tools:rstudio"))
 })
 
@@ -46,13 +46,19 @@
       type <- class(e$x[[columnName]])[[1]]
       list(
         name = columnName,
-        type = type,
+        type = switch(type,
+          "character" = "chr",
+          "numeric" = "num",
+          "integer" = "int",
+          "logical" = "logi",
+          "complex" = "cplx",
+          type),
         align = if (type == "character" || type == "factor") "left" else "right"
       )
     }
   ))
 
-  data <- head(e$x, 1000)
+  data <- head(e$x, getOption("max.print", 1000))
 
   if (length(columns) > 0) {
     first_column = data[[1]]
@@ -63,7 +69,7 @@
   data <- as.data.frame(
     lapply(
       data,
-      function (y) as.character(y)),
+      function (y) format(y)),
     stringsAsFactors = FALSE)
 
   list(
@@ -77,7 +83,7 @@
   # precreate directories if needed
   dir.create(dirname(outputFile), recursive = TRUE, showWarnings = FALSE)
 
-  max.print <- if (is.null(options$max.print)) 1000 else as.numeric(options$max.print)
+  max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else as.numeric(options$max.print)
   max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
   conn <- get(options$connection, envir = globalenv())

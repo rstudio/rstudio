@@ -349,6 +349,20 @@ Error executeSqlEngineChunk(const std::string& docId,
    // ensure we always emit an execution complete event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
 
+      // prepare console output file -- use tempfile on failure
+   FilePath consolePath = module_context::tempFile("data-console-", "");
+   error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &consolePath);
+   if (error)
+      LOG_ERROR(error);
+   
+   // capture console output, error
+   boost::signals::scoped_connection consoleHandler =
+         module_context::events().onConsoleOutput.connect(
+            boost::bind(chunkConsoleOutputHandler,
+                        _1,
+                        _2,
+                        consolePath)); 
+
    FilePath parentPath = notebook::chunkOutputPath(
        docId, chunkId, nbCtxId, ContextSaved);
    error = parentPath.ensureDirectory();
@@ -360,7 +374,7 @@ Error executeSqlEngineChunk(const std::string& docId,
       return Success();
    }
     
-   FilePath targetPath =
+   FilePath dataPath =
          notebook::chunkOutputFile(docId, chunkId, nbCtxId, ChunkOutputData);
 
    // check package dependencies
@@ -368,7 +382,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    {
       std::string message = "Executing SQL chunks requires version 0.4 or "
                             "later of the DBI package";
-      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, consolePath);
       return Success();
    }
 
@@ -376,17 +390,17 @@ Error executeSqlEngineChunk(const std::string& docId,
    error = r::exec::RFunction(
                ".rs.runSqlForDataCapture",
                code,
-               string_utils::utf8ToSystem(targetPath.absolutePath()),
+               string_utils::utf8ToSystem(dataPath.absolutePath()),
                options).call();
    if (error)
    {
       std::string message = "Failed to execute SQL chunk";
-      reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
+      reportChunkExecutionError(docId, chunkId, nbCtxId, message, consolePath);
 
       return Success();
    }
 
-   if (targetPath.exists()) {
+   if (dataPath.exists()) {
       // forward success / failure to chunk
       enqueueChunkOutput(
                docId,
@@ -394,8 +408,17 @@ Error executeSqlEngineChunk(const std::string& docId,
                notebookCtxId(),
                0, // no ordinal needed
                ChunkOutputData,
-               targetPath);
+               dataPath);
    }
+
+   // forward console output
+   enqueueChunkOutput(
+            docId,
+            chunkId,
+            notebookCtxId(),
+            0, // no ordinal needed
+            ChunkOutputText,
+            consolePath);
 
    return Success();
 }

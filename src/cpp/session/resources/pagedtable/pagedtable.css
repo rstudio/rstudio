@@ -24,12 +24,30 @@
   border-bottom: 1px solid #dddddd;
 }
 
+.pagedtable-empty th.pagedtable-padding-col {
+  display: none;
+}
+
+.pagedtable th.pagedtable-padding-col {
+  border-bottom: 1px solid #dddddd;
+  width: 20%;
+}
+
 .pagedtable td {
-  padding: 0 6px 3px 6px;
+  padding: 2px 6px 2px 6px;
+  border-bottom: solid 1px #F3F3F3;
+}
+
+.pagedtable tr.even {
+  background-color: #fcfcfc;
 }
 
 .pagedtable tr:first-child td {
   padding-top: 2px;
+}
+
+.pagedtable tr:last-child td {
+  border-bottom: 0;
 }
 
 .pagedtable a {

@@ -131,7 +131,7 @@ void ChunkExecContext::connect()
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
-                     json::Value(), ChunkOutputPlot, _3)));
+                     _3), ChunkOutputPlot, _4)));
 
    boost::shared_ptr<PlotCapture> pPlotCapture = 
       boost::make_shared<PlotCapture>();

@@ -28,8 +28,8 @@ public class ChunkDataWidget extends SimplePanel
 
    public static void injectPagedTableResources()
    {
-      injectStyleElement("/rmd_data/pagedtable.css", "pagedtable-css");
-      ScriptInjector.fromUrl("/rmd_data/pagedtable.js").inject();
+      injectStyleElement("rmd_data/pagedtable.css", "pagedtable-css");
+      ScriptInjector.fromUrl("rmd_data/pagedtable.js").inject();
    }
    
    // Private methods ---------------------------------------------------------
