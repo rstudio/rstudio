@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -35,6 +36,7 @@ public class ChunkPlotPage implements ChunkOutputPage
       {
          final Image thumbnail = new Image();
          thumbnail_ = new SimplePanel(thumbnail);
+         thumbnail_.getElement().getStyle().setTextAlign(TextAlign.CENTER);
 
          plot_ = new Image();
          plot_.setVisible(false);
@@ -45,15 +47,15 @@ public class ChunkPlotPage implements ChunkOutputPage
             {
                ImageElementEx plot = plot_.getElement().cast();
                ImageElementEx img = thumbnail.getElement().cast();
-               if (plot.naturalHeight() > plot.naturalWidth())
-               {
-                  img.getStyle().setProperty("height", "100%");
-                  img.getStyle().setProperty("width", "auto");
-               }
-               else
+               if (plot.naturalHeight() < plot.naturalWidth())
                {
                   img.getStyle().setProperty("width", "100%");
                   img.getStyle().setProperty("height", "auto");
+               }
+               else
+               {
+                  img.getStyle().setProperty("height", "100%");
+                  img.getStyle().setProperty("width", "auto");
                }
                thumbnail.setUrl(url);
             }

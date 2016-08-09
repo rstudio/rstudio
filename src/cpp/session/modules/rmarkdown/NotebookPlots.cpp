@@ -64,7 +64,7 @@ SEXP rs_recordExternalPlot(SEXP plotFilesSEXP)
          FilePath plot = module_context::resolveAliasedPath(plotFile);
          if (!plot.exists())
             continue;
-         events().onPlotOutput(plot, FilePath(), 0);
+         events().onPlotOutput(plot, FilePath(), json::Value(), 0);
       }
    }
    return R_NilValue;

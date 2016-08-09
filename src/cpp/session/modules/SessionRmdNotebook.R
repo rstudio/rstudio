@@ -100,7 +100,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       contents <- lapply(files, function(file) {
          .rs.readFile(file, binary = .rs.endsWith(file, "png") || 
                                      .rs.endsWith(file, "jpg") ||
-                                     .rs.endsWith(file, "jpeg"))
+                                     .rs.endsWith(file, "jpeg") ||
+                                     .rs.endsWith(file, "rdf"))
       })
       names(contents) <- basename(files)
       contents
@@ -180,11 +181,20 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
       outputList <- .rs.enumerate(chunkData, function(key, val) {
          
+         # read metadata sidecar if present
+         metadata <- NULL
+         metadataName <- .rs.withChangedExtension(key, ".metadata")
+         metadataPath <- file.path(rnbData$cache_path, chunkId, metadataName)
+         if (file.exists(metadataPath))
+            metadata <- .rs.fromJSON(.rs.readFile(metadataPath))
+
          # png output: create base64 encoded image
          if (.rs.endsWith(key, ".png")) {
-            return(rmarkdown::html_notebook_output_png(bytes = val))
+            return(rmarkdown::html_notebook_output_png(bytes = val,
+                                                       meta = metadata))
          } else if (.rs.endsWith(key, ".jpg") || .rs.endsWith(key, ".jpeg")) {
             return(rmarkdown::html_notebook_output_img(bytes = val, 
+                                                       meta = metadata,
                                                        format = "jpeg"))
          }
          
@@ -222,17 +232,19 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                annotated <- rmarkdown:::html_notebook_annotated_output(
                   bodyEl,
                   "htmlwidget",
-                  jsonContents
+                  list(dependencies = jsonContents,
+                       metadata     = metadata)
                )
                widget <- knitr::asis_output(annotated)
                attr(widget, "knit_meta") <- jsonContents
                return(widget)
             }
-            
+
             # no .json file; just return HTML as-is
             annotated <- rmarkdown:::html_notebook_annotated_output(
                val,
-               "html"
+               "html",
+               list(metadata = metadata)
             )
             
             return(knitr::asis_output(annotated))
@@ -255,16 +267,24 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
             rdfName <- .rs.withChangedExtension(key, ".rdf")
             rdfPath <- file.path(rnbData$cache_path, chunkId, rdfName)
+            browser()
             
             return(knitr::asis_output(
-              paged_table_html(rdfPath)
-            ))
+               rmarkdown:::html_notebook_annotated_output(
+                  paged_table_html(rdfPath),
+                  "frame", 
+                  list(metadata = metadata,
+                       rdf      = .rs.base64encode(val)))))
          }
          
          # json files handled as pairs to HTML above
          if (.rs.endsWith(key, "json"))
             return(NULL)
-         
+
+         # metadata files handled above
+         if (.rs.endsWith(key, "metadata"))
+            return (NULL)
+
          return(knitr::asis_output("<!-- unknown-chunk-output -->"))
       })
       
@@ -627,7 +647,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    
    # Plot Handling ----
    plotRange <- list(start = NULL, end = NULL)
-   writePlot <- function(source, range) {
+   plotMeta <- NULL
+   writePlot <- function(source, range, meta) {
       
       # get html plot output
       html <- paste(source[`:`(
@@ -648,6 +669,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       .rs.ensureDirectory(dirname(path))
       writeBin(imgData, path, useBytes = TRUE)
       
+      # write metadata if present
+      if (!is.null(meta) && !is.null(meta$metadata)) {
+        metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
+        cat(.rs.toJSON(meta, unbox = TRUE), file = metaPath, sep = "\n")
+      }
+
       # update state
       activeIndex <<- activeIndex + 1
    }
@@ -655,10 +682,45 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       if (annotation$state == "begin") {
          writeConsoleData(consoleDataBuilder)
          plotRange$start <<- annotation$row
+         plotMeta        <<- annotation$meta
       } else {
          plotRange$end <<- annotation$row
-         writePlot(nbData$source, plotRange)
+         writePlot(nbData$source, plotRange, plotMeta)
          plotRange <<- list(start = NULL, end = NULL)
+         plotMeta  <<- NULL
+      }
+   }
+
+   # Data frame handling ----
+   frameRange <- list(start = NULL, end = NULL)
+   frameMeta <- NULL
+   writeFrame <- function(source, range, meta) {
+      if (is.null(meta))
+        return(NULL);
+
+      # write out frame metadata
+      if (!is.null(meta$metadata)) {
+        metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
+        cat(.rs.toJSON(meta$metadata, unbox = TRUE), file = metaPath, sep = "\n")
+      }
+
+      # write out raw frame data
+      if (!is.null(meta$rdf)) {
+        rdfPath <- outputPath(cachePath, activeChunkId, activeIndex, "rdf")
+        writeBin(object = .rs.base64decode(meta$rdf, binary = TRUE), 
+                 con = rdfPath)
+      }
+   }
+   onFrame <- function(annotation) {
+      if (annotation$state == "begin") {
+         writeConsoleData(consoleDataBuilder)
+         frameRange$start <<- annotation$row
+         frameMeta        <<- annotation$meta
+      } else {
+         frameRange$end <<- annotation$row
+         writeFrame(nbData$source, frameRange, frameMeta)
+         frameRange <<- list(start = NULL, end = NULL)
+         frameMeta  <<- NULL
       }
    }
    
@@ -675,7 +737,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       htmlPath <- outputPath(cachePath, activeChunkId, activeIndex, "html")
       cat(htmlOutput, file = htmlPath, sep = "\n")
-      
+
+      # write metadata if present
+      if (!is.null(meta) && !is.null(meta$metadata)) {
+        metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
+        cat(.rs.toJSON(meta, unbox = TRUE), file = metaPath, sep = "\n")
+      }
+
       # update state
       activeIndex <<- activeIndex + 1
    }
@@ -758,6 +826,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
              "output"     = onOutput(annotation),
              "plot"       = onPlot(annotation),
              "html"       = onHtml(annotation),
+             "frame"      = onFrame(annotation),
              "htmlwidget" = onHtmlWidget(annotation))
       
       lastActiveAnnotation <- annotation
