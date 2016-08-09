@@ -56,7 +56,7 @@ public class ChunkHtmlPage implements ChunkOutputPage
             
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
-            bodyStyle.setColor(ChunkOutputWidget.getForegroundColor());
+            bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
             
             onRenderComplete.execute();
          };

@@ -314,14 +314,12 @@ public class ChunkOutputWidget extends Composite
    
    public static boolean isEditorStyleCached()
    {
-      return s_backgroundColor != null &&
-             s_color != null &&
-             s_outlineColor != null;
+      return s_colors != null;
    }
    
-   public static String getForegroundColor()
+   public static EditorThemeListener.Colors getEditorColors()
    {
-      return s_color;
+      return s_colors;
    }
    
    public void onOutputFinished(boolean ensureVisible, int execScope)
@@ -375,8 +373,8 @@ public class ChunkOutputWidget extends Composite
    public static void cacheEditorStyle(Element editorContainer, 
          Style editorStyle)
    {
-      s_backgroundColor = editorStyle.getBackgroundColor();
-      s_color = editorStyle.getColor();
+      String background = editorStyle.getBackgroundColor();
+      String foreground = editorStyle.getColor();
       
       // use a muted version of the text color for the outline
       ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(
@@ -387,7 +385,9 @@ public class ChunkOutputWidget extends Composite
             text.red(), text.green(), text.blue(),
             text.isDark() ? 0.12: 0.18);
 
-      s_outlineColor = outline.asRgb();
+      String border = outline.asRgb();
+      
+      s_colors = new EditorThemeListener.Colors(foreground, background, border);
    }
    
    public void showServerError(ServerError error)
@@ -405,13 +405,13 @@ public class ChunkOutputWidget extends Composite
       if (!isEditorStyleCached())
          return;
       Style frameStyle = frame_.getElement().getStyle();
-      frameStyle.setBorderColor(s_outlineColor);
+      frameStyle.setBorderColor(s_colors.border);
 
-      getElement().getStyle().setBackgroundColor(s_backgroundColor);
-      frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      getElement().getStyle().setBackgroundColor(s_colors.background);
+      frame_.getElement().getStyle().setBackgroundColor(s_colors.background);
 
       if (presenter_ != null)
-         presenter_.syncEditorColor(s_color);
+         presenter_.onEditorThemeChanged(s_colors);
    }
    
    public boolean hasErrors()
@@ -599,7 +599,7 @@ public class ChunkOutputWidget extends Composite
       }
       // create a black or white spinner as appropriate
       ColorUtil.RGBColor bgColor = 
-            ColorUtil.RGBColor.fromCss(s_backgroundColor);
+            ColorUtil.RGBColor.fromCss(s_colors.background);
       spinner_ = new ProgressSpinner(
             bgColor.isDark() ? ProgressSpinner.COLOR_WHITE :
                                ProgressSpinner.COLOR_BLACK);
@@ -615,7 +615,7 @@ public class ChunkOutputWidget extends Composite
 
    private void showReadyState()
    {
-      getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      getElement().getStyle().setBackgroundColor(s_colors.background);
       if (spinner_ != null)
       {
          spinner_.removeFromParent();
@@ -793,9 +793,7 @@ public class ChunkOutputWidget extends Composite
    private final String chunkId_;
    private final Value<Integer> expansionState_;
 
-   private static String s_outlineColor    = null;
-   private static String s_backgroundColor = null;
-   private static String s_color           = null;
+   private static EditorThemeListener.Colors s_colors;
 
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;

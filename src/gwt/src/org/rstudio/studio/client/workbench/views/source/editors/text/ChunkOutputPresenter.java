@@ -24,7 +24,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
 
-public interface ChunkOutputPresenter extends IsWidget
+public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
 {
    public interface Host
    {
@@ -56,7 +56,5 @@ public interface ChunkOutputPresenter extends IsWidget
    // query state
    boolean hasOutput();
    boolean hasPlots();
-   
-   void syncEditorColor(String color);
 }
 

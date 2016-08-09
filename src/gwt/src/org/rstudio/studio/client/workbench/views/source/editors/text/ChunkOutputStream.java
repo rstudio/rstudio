@@ -224,7 +224,7 @@ public class ChunkOutputStream extends FlowPanel
             
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
-            bodyStyle.setColor(ChunkOutputWidget.getForegroundColor());
+            bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
             
             onRenderComplete.execute();
          };
@@ -355,7 +355,7 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    @Override
-   public void syncEditorColor(String color)
+   public void onEditorThemeChanged(EditorThemeListener.Colors colors)
    {
       // apply the style to any frames in the output
       for (Widget w: this)
@@ -364,7 +364,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)w;
             Style bodyStyle = frame.getDocument().getBody().getStyle();
-            bodyStyle.setColor(color);
+            bodyStyle.setColor(colors.foreground);
          }
       }
    }

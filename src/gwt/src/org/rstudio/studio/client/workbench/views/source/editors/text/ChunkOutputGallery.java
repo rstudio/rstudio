@@ -187,10 +187,12 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
-   public void syncEditorColor(String color)
+   public void onEditorThemeChanged(EditorThemeListener.Colors colors)
    {
-      // TODO Auto-generated method stub
-      
+      for (Widget thumbnail: filmstrip_)
+      {
+         syncThumbnailColor(thumbnail, colors);
+      }
    }
 
    public void addPage(ChunkOutputPage page)
@@ -199,6 +201,8 @@ public class ChunkOutputGallery extends Composite
       pages_.add(page);
       Widget thumbnail = page.thumbnailWidget();
       thumbnail.addStyleName(style.thumbnail());
+      // apply editor color to thumbnail before 
+      syncThumbnailColor(thumbnail, ChunkOutputWidget.getEditorColors());
       filmstrip_.add(thumbnail);
       
       // lock to this console if we don't have one already
@@ -247,6 +251,21 @@ public class ChunkOutputGallery extends Composite
       {
          console_ = new ChunkConsolePage();
          addPage(console_);
+      }
+   }
+   
+   private static void syncThumbnailColor(Widget thumbnail, 
+         EditorThemeListener.Colors colors)
+   {
+      // might happen if we aren't initialized yet
+      if (colors == null || thumbnail == null)
+         return;
+      
+      // apply border color from editor
+      thumbnail.getElement().getStyle().setBorderColor(colors.foreground);
+      if (thumbnail instanceof EditorThemeListener)
+      {
+         ((EditorThemeListener)thumbnail).onEditorThemeChanged(colors);
       }
    }
    

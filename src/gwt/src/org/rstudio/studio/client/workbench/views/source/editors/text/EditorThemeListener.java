@@ -1,5 +1,5 @@
 /*
- * ChunkFramePreview.java
+ * EditorThemeListener.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -14,23 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Widget;
-
-public class ChunkFramePreview extends Composite
+public interface EditorThemeListener
 {
-   private static ChunkFramePreviewUiBinder uiBinder = GWT
-         .create(ChunkFramePreviewUiBinder.class);
-
-   interface ChunkFramePreviewUiBinder
-         extends UiBinder<Widget, ChunkFramePreview>
+   class Colors
    {
+      public Colors(String front, String back, String outline)
+      {
+         foreground = front;
+         background = back;
+         border = outline;
+      }
+      public final String foreground;
+      public final String background;
+      public final String border;
    }
-
-   public ChunkFramePreview()
-   {
-      initWidget(uiBinder.createAndBindUi(this));
-   }
+   void onEditorThemeChanged(Colors colors);
 }
