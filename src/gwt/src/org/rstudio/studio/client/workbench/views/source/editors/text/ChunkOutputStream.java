@@ -234,6 +234,8 @@ public class ChunkOutputStream extends FlowPanel
    @Override
    public void showErrorOutput(UnhandledError err)
    {
+      hasErrors_ = true;
+      
       // if there's only one error frame, it's not worth showing dedicated 
       // error UX
       if (err.getErrorFrames() != null &&
@@ -388,6 +390,12 @@ public class ChunkOutputStream extends FlowPanel
       return false;
    }
    
+   @Override
+   public boolean hasErrors()
+   {
+      return hasErrors_;
+   }
+   
    public List<ChunkOutputPage> extractPages()
    {
       List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
@@ -444,6 +452,11 @@ public class ChunkOutputStream extends FlowPanel
             return true;
       }
       return false;
+   }
+   
+   public void scrollToBottom()
+   {
+      getElement().setScrollTop(getElement().getScrollHeight());
    }
 
    // Private methods ---------------------------------------------------------
@@ -536,6 +549,7 @@ public class ChunkOutputStream extends FlowPanel
    private String queuedError_ = "";
    private VirtualConsole vconsole_;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+   private boolean hasErrors_ = false;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
 }

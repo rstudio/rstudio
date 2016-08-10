@@ -20,4 +20,5 @@ public interface ChunkOutputPage
 {
    Widget thumbnailWidget();
    Widget contentWidget();
+   void onSelected();
 }

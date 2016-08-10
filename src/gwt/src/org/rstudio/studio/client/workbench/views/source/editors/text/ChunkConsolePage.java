@@ -54,6 +54,12 @@ public class ChunkConsolePage implements ChunkOutputPage,
       // in paged mode we have a fixed height
    }
    
+   @Override
+   public void onSelected()
+   {
+      stream_.scrollToBottom();
+   }
+
    public void showConsoleText(String text)
    {
       stream_.showConsoleText(text);
@@ -72,6 +78,11 @@ public class ChunkConsolePage implements ChunkOutputPage,
    public void showConsoleOutput(JsArray<JsArrayEx> output)
    {
       stream_.showConsoleOutput(output);
+   }
+   
+   public boolean hasErrors()
+   {
+      return stream_.hasErrors();
    }
    
    // Private methods ---------------------------------------------------------

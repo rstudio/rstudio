@@ -56,5 +56,6 @@ public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
    // query state
    boolean hasOutput();
    boolean hasPlots();
+   boolean hasErrors();
 }
 

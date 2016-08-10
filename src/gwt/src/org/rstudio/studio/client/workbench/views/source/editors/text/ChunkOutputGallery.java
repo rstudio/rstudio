@@ -108,6 +108,9 @@ public class ChunkOutputGallery extends Composite
    {
       ensureConsole();
       console_.showErrorOutput(error);
+      
+      // switch back to the console so the user can see the error
+      setActivePage(0);
    }
 
    @Override
@@ -185,6 +188,14 @@ public class ChunkOutputGallery extends Composite
       }
       return false;
    }
+   
+   @Override
+   public boolean hasErrors()
+   {
+      if (console_ != null)
+         return console_.hasErrors();
+      return false;
+   }
 
    @Override
    public void onEditorThemeChanged(EditorThemeListener.Colors colors)
@@ -223,7 +234,11 @@ public class ChunkOutputGallery extends Composite
             };
          }
       });
-      setActivePage(index);
+      
+      // show this page if it's the first one, or if we don't have any errors
+      if (index == 0 || !hasErrors())
+         setActivePage(index);
+
       host_.notifyHeightChanged();
    }
 
@@ -231,8 +246,12 @@ public class ChunkOutputGallery extends Composite
    
    private void setActivePage(int idx)
    {
+      // ignore if out of bounds or no-op
       if (idx >= pages_.size())
          return;
+      if (idx == activePage_)
+         return;
+
       content_.clear();
       content_.add(pages_.get(idx).contentWidget());
       

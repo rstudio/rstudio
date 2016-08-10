@@ -76,6 +76,12 @@ public class ChunkHtmlPage implements ChunkOutputPage
       return content_;
    }
 
+   @Override
+   public void onSelected()
+   {
+      // no action necessary for HTML widgets
+   }
+
    final private Widget thumbnail_;
    final private Widget content_;
 }

@@ -42,6 +42,12 @@ public class ChunkDataPage implements ChunkOutputPage
       return content_;
    }
 
+   @Override
+   public void onSelected()
+   {
+      // no current action here (consider e.g. rewind to beginning of frame)
+   }
+
    private final Widget thumbnail_;
    private final ChunkDataWidget content_;
 }

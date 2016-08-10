@@ -87,6 +87,12 @@ public class ChunkPlotPage implements ChunkOutputPage
       return content_;
    }
    
+   @Override
+   public void onSelected()
+   {
+      // no action necessary for plots
+   }
+
    public String getPlotUrl()
    {
       return url_;
