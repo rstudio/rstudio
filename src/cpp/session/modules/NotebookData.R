@@ -13,9 +13,17 @@
 #
 #
 
+.rs.addFunction("dataCaptureOverrides", function(outputFolder, libraryFolder)
+{
+  c(
+    "print.data.frame",
+    "print.tbl_df"
+  )
+})
+
 .rs.addFunction("initDataCapture", function(outputFolder, libraryFolder)
 {
-  assign("print.data.frame", function(x, ...) {
+  overridePrint <- function(x, ...) {
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
@@ -24,15 +32,48 @@
     save(
       x, 
       file = output)
+
     invisible(.Call("rs_recordData", output, list(classes = class(x),
                                                   nrow = .rs.scalar(nrow(x)), 
                                                   ncol = .rs.scalar(ncol(x)))))
-  }, envir = as.environment("tools:rstudio"))
+  }
+
+  lapply(.rs.dataCaptureOverrides(), function(override) {
+    assign(
+      override,
+      overridePrint,
+      envir = as.environment("tools:rstudio")
+    )
+  })
+
+  assign(
+    "dplyr_tibble_print_original",
+    getOption("dplyr.tibble.print"),
+    envir = as.environment("tools:rstudio")
+  )
+
+  options("dplyr.tibble.print" = function(x, n, width, ...) {
+    isSQL <- "tbl_sql" %in% class(x)
+    n <- if (isSQL) getOption("sql.max.print", 1000) else getOption("max.print", 1000)
+
+    print(as.data.frame(head(x, n)))
+  })
 })
 
 .rs.addFunction("releaseDataCapture", function()
 {
-  rm("print.data.frame", envir = as.environment("tools:rstudio"))
+  options(
+    "dplyr.tibble.print" = get(
+      "dplyr_tibble_print_original",
+      envir = as.environment("tools:rstudio")
+    )
+  )
+
+  overrides <- .rs.dataCaptureOverrides()
+  rm(
+    list = overrides,
+    envir = as.environment("tools:rstudio")
+  )
 })
 
 .rs.addFunction("readDataCapture", function(path)
@@ -43,22 +84,25 @@
   columns <- unname(lapply(
     names(e$x),
     function(columnName) {
-      type <- class(e$x[[columnName]])[[1]]
+      column <- e$x[[columnName]]
+      baseType <- class(column)[[1]]
+      tibbleType <- tibble::type_sum(column)
+
       list(
         name = columnName,
-        type = switch(type,
-          "character" = "chr",
-          "numeric" = "num",
-          "integer" = "int",
-          "logical" = "logi",
-          "complex" = "cplx",
-          type),
-        align = if (type == "character" || type == "factor") "left" else "right"
+        type = tibbleType,
+        align = if (baseType == "character" || baseType == "factor") "left" else "right"
       )
     }
   ))
 
   data <- head(e$x, getOption("max.print", 1000))
+
+  is_list <- vapply(data, is.list, logical(1))
+  data[is_list] <- lapply(data[is_list], function(x) {
+    summary <- tibble::obj_sum(x)
+    paste0("<", summary, ">")
+  })
 
   if (length(columns) > 0) {
     first_column = data[[1]]
@@ -70,7 +114,8 @@
     lapply(
       data,
       function (y) format(y)),
-    stringsAsFactors = FALSE)
+    stringsAsFactors = FALSE,
+    optional = TRUE)
 
   list(
     columns = columns,

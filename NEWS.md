@@ -96,6 +96,7 @@
 * Improved performance when many lines of code sent to console
 * 'save()' warnings no longer emitted when saving session state
 * Update C++ unit testing library (catch) to v1.3.3 (fix gcc >=5 compilation errors)
+* Change default max.print to 1000 (was 10000)
 
 ### Bug Fixes
 
