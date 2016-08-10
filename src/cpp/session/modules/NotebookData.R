@@ -82,11 +82,14 @@
   columns <- unname(lapply(
     names(e$x),
     function(columnName) {
-      type <- tibble::type_sum(e$x[[columnName]])
+      column <- e$x[[columnName]]
+      baseType <- class(column)[[1]]
+      tibbleType <- tibble::type_sum(column)
+
       list(
         name = columnName,
-        type = type,
-        align = if (type == "character" || type == "factor") "left" else "right"
+        type = tibbleType,
+        align = if (baseType == "character" || baseType == "factor") "left" else "right"
       )
     }
   ))
@@ -109,7 +112,8 @@
     lapply(
       data,
       function (y) format(y)),
-    stringsAsFactors = FALSE)
+    stringsAsFactors = FALSE,
+    optional = TRUE)
 
   list(
     columns = columns,
