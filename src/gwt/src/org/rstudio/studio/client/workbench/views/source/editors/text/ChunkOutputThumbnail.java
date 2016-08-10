@@ -51,6 +51,8 @@ public class ChunkOutputThumbnail extends Composite
    public void onEditorThemeChanged(Colors colors)
    {
       setMaskColor(colors.background);
+      if (backdrop_ != null && backdrop_ instanceof EditorThemeListener)
+         ((EditorThemeListener)backdrop_).onEditorThemeChanged(colors);
    }
    
    private void setMaskColor(String color)

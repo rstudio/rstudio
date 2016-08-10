@@ -35,65 +35,81 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
 {
   width: 33%;
 }
+
+.outer
+{
+  padding: 3px;
+}
 </ui:style>
-<g:HTML width="100%" height="100%">
+<g:HTML styleName="{style.outer}" width="100%" height="100%">
 <table width="100%" height="100%">
    <tr>
       <th class="cell"><div class="{style.header}" style="width: 15px"></div></th>
       <th class="cell"><div class="{style.header}" style="width: 18px"></div></th>
       <th class="cell"><div class="{style.header}" style="width: 22px"></div></th>
+      <th class="cell"><div class="{style.header}" style="width: 17px"></div></th>
    </tr>
    <tr>
       <td class="cell"><div class="{style.type}" style="width: 15px"></div></td>
       <td class="cell"><div class="{style.type}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.type}" style="width: 15px"></div></td>
+      <td class="cell"><div class="{style.type}" style="width: 15px"></div></td>
    </tr>
    <tr>
-      <td colspan="3"><div class="{style.separator}"></div></td>
+      <td colspan="4"><div class="{style.separator}"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 18px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 11px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 13px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 18px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 18px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
    </tr>
    <tr>
       <td class="cell"><div class="{style.data}" style="width: 18px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 10px"></div></td>
+      <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
       <td class="cell"><div class="{style.data}" style="width: 12px"></div></td>
    </tr>
 </table>

@@ -15,11 +15,15 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkFramePreview extends Composite
+                               implements EditorThemeListener
 {
    private static ChunkFramePreviewUiBinder uiBinder = GWT
          .create(ChunkFramePreviewUiBinder.class);
@@ -32,5 +36,31 @@ public class ChunkFramePreview extends Composite
    public ChunkFramePreview()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
+   }
+
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      if (colors != null)
+         applyColors(getElement(), colors.foreground);
+   }
+   
+   // Private methods ---------------------------------------------------------
+   
+   private void applyColors(Element parent, String color)
+   {
+      NodeList<Node> children = parent.getChildNodes();
+      for (int i = 0; i < children.getLength(); i++)
+      {
+         Node node = children.getItem(i);
+         if (node.getNodeType() != Node.ELEMENT_NODE)
+            continue;
+         Element ele = Element.as(node);
+         if (ele.hasTagName("div"))
+            ele.getStyle().setBackgroundColor(color);
+         else if (ele.getChildCount() > 0)
+            applyColors(ele, color);
+      }
    }
 }
