@@ -398,6 +398,9 @@ public class ChunkOutputStream extends FlowPanel
    
    public List<ChunkOutputPage> extractPages()
    {
+      // flush any errors so they are properly accounted for
+      flushQueuedErrors();
+      
       List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
       for (Widget w: this)
       {
@@ -447,6 +450,10 @@ public class ChunkOutputStream extends FlowPanel
    {
       for (Widget w: this)
       {
+         // ignore consoles with no content
+         if (w instanceof PreWidget && w.getElement().getChildCount() == 0)
+            continue;
+         
          if (w.isVisible() && 
              w.getElement().getStyle().getDisplay() != "none")
             return true;

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
@@ -86,6 +87,17 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void showConsoleOutput(JsArray<JsArrayEx> output)
    {
+      // ignore if no actual text needs to be emitted (this prevents us from
+      // creating a spurious console page)
+      int i = 0;
+      for (; i < output.length(); i++)
+      {
+         if (!StringUtil.isNullOrEmpty(output.get(i).getString(1)))
+            break;
+      }
+      if (i == output.length())
+         return;
+      
       ensureConsole();
       console_.showConsoleOutput(output);
    }
@@ -169,7 +181,8 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void completeOutput()
    {
-      // no finalization needed in gallery view
+      if (console_ != null)
+         console_.completeOutput();
    }
 
    @Override

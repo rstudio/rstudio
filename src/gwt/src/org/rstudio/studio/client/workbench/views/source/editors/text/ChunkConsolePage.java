@@ -85,6 +85,11 @@ public class ChunkConsolePage implements ChunkOutputPage,
       return stream_.hasErrors();
    }
    
+   public void completeOutput()
+   {
+      stream_.completeOutput();
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private void scrollToBottom()
