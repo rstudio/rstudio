@@ -181,7 +181,7 @@ public class ChunkOutputStream extends FlowPanel
          public void execute()
          {
             onRenderComplete.execute();
-            host_.notifyHeightChanged();
+            onHeightChanged();
          }
       });
 
@@ -272,7 +272,7 @@ public class ChunkOutputStream extends FlowPanel
 
       add(error);
       flushQueuedErrors();
-      host_.notifyHeightChanged();
+      onHeightChanged();
    }
 
    @Override
@@ -296,7 +296,7 @@ public class ChunkOutputStream extends FlowPanel
    @Override
    public void onErrorBoxResize()
    {
-      host_.notifyHeightChanged();
+      onHeightChanged();
    }
 
    @Override
@@ -454,11 +454,6 @@ public class ChunkOutputStream extends FlowPanel
       return false;
    }
    
-   public void scrollToBottom()
-   {
-      getElement().setScrollTop(getElement().getScrollHeight());
-   }
-
    // Private methods ---------------------------------------------------------
    
    private boolean isPlotWidget(Widget w)
@@ -539,6 +534,11 @@ public class ChunkOutputStream extends FlowPanel
       initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
       vconsole_.submitAndRender(text, clazz,
             console_.getElement());
+      onHeightChanged();
+   }
+   
+   private void onHeightChanged()
+   {
       host_.notifyHeightChanged();
    }
    

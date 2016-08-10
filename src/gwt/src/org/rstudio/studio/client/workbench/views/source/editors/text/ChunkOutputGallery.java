@@ -261,6 +261,7 @@ public class ChunkOutputGallery extends Composite
          pages_.get(activePage_).thumbnailWidget().removeStyleName(
                style.selected());
       pages_.get(idx).thumbnailWidget().addStyleName(style.selected());
+      pages_.get(idx).onSelected();
       activePage_ = idx;
    }
    

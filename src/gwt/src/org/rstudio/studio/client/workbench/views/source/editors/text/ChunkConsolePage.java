@@ -51,13 +51,13 @@ public class ChunkConsolePage implements ChunkOutputPage,
    @Override
    public void notifyHeightChanged()
    {
-      // in paged mode we have a fixed height
+      scrollToBottom();
    }
    
    @Override
    public void onSelected()
    {
-      stream_.scrollToBottom();
+      scrollToBottom();
    }
 
    public void showConsoleText(String text)
@@ -87,17 +87,24 @@ public class ChunkConsolePage implements ChunkOutputPage,
    
    // Private methods ---------------------------------------------------------
    
+   private void scrollToBottom()
+   {
+      panel_.setVerticalScrollPosition(
+            panel_.getMaximumVerticalScrollPosition());
+   }
+   
    private void init(ChunkOutputStream stream)
    {
       stream_ = stream;
-      ScrollPanel panel = new ScrollPanel();
-      panel.add(stream);
-      content_ = new FixedRatioWidget(panel, ChunkOutputUi.OUTPUT_ASPECT, 
+      panel_ = new ScrollPanel();
+      panel_.add(stream);
+      content_ = new FixedRatioWidget(panel_, ChunkOutputUi.OUTPUT_ASPECT, 
             ChunkOutputUi.MAX_PLOT_WIDTH);
       thumbnail_ = new ChunkOutputThumbnail("R Console", "", null, 
             ChunkOutputWidget.getEditorColors());
    }
 
+   private ScrollPanel panel_;
    private ChunkOutputStream stream_;
    private Widget thumbnail_;
    private FixedRatioWidget content_;
