@@ -20,10 +20,12 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ChunkDataWidget extends SimplePanel
+                             implements EditorThemeListener
 {
    public ChunkDataWidget(JavaScriptObject data)
    {
       showDataOutputNative(data, getElement());
+      onDataOutputChange();
    }
 
    public static void injectPagedTableResources()
@@ -32,7 +34,20 @@ public class ChunkDataWidget extends SimplePanel
       ScriptInjector.fromUrl("rmd_data/pagedtable.js").inject();
    }
    
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      applyDataOutputStyleNative(getElement(), 
+            colors.highlight, colors.border);
+   }
+   
    // Private methods ---------------------------------------------------------
+
+   public void onDataOutputChange()
+   {
+      EditorThemeListener.Colors colors = ChunkOutputWidget.getEditorColors();
+      applyDataOutputStyleNative(getElement(), colors.highlight, colors.border);
+   }
 
    private static final native void injectStyleElement(String url, String id) /*-{
       var linkElement = $doc.getElementById(id);
@@ -46,7 +61,7 @@ public class ChunkDataWidget extends SimplePanel
       }
    }-*/;
 
-   private static final native void showDataOutputNative(JavaScriptObject data, 
+   private final native void showDataOutputNative(JavaScriptObject data, 
          Element parent) /*-{
       var pagedTable = $doc.createElement("div");
       pagedTable.setAttribute("data-pagedtable", "");
@@ -59,6 +74,40 @@ public class ChunkDataWidget extends SimplePanel
       pagedTable.appendChild(pagedTableSource);
 
       var pagedTableInstance = new PagedTable(pagedTable);
+
+      var chunkWidget = this;
+      pagedTableInstance.onChange(function() {
+         chunkWidget.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkDataWidget::onDataOutputChange()();
+      });
+      
       pagedTableInstance.render();
+   }-*/;
+
+   private static final native void applyDataOutputStyleNative(
+      Element parent,
+      String highlightColor,
+      String lowlightColor) /*-{
+      
+      var allHighlights = parent.querySelectorAll(
+         ".pagedtable tr.even," +
+         "a.pagedtable-index-current"); 
+      for (var idx = 0; idx < allHighlights.length; idx++) {
+         allHighlights[idx].style.backgroundColor = highlightColor;
+      }
+      
+      var allBottomBorders = parent.querySelectorAll(".pagedtable th,.pagedtable td");
+      for (var idx = 0; idx < allBottomBorders.length; idx++) {
+         allBottomBorders[idx].style.borderBottomColor = lowlightColor;
+      }
+      
+      var allTopBorders = parent.querySelectorAll(".pagedtable-not-empty .pagedtable-footer");
+      for (var idx = 0; idx < allTopBorders.length; idx++) {
+         allTopBorders[idx].style.borderTopColor = lowlightColor;
+      }
+      
+      var allDisabledText = parent.querySelectorAll(".pagedtable-index-nav-disabled");
+      for (var idx = 0; idx < allDisabledText.length; idx++) {
+         allDisabledText[idx].style.color = lowlightColor;
+      }
    }-*/;
 }

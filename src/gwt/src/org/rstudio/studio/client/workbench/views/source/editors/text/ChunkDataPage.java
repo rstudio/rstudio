@@ -5,7 +5,8 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChunkDataPage implements ChunkOutputPage
+public class ChunkDataPage implements ChunkOutputPage,
+                                      EditorThemeListener
 {
    public ChunkDataPage(JavaScriptObject data, NotebookFrameMetadata metadata)
    {
@@ -46,6 +47,12 @@ public class ChunkDataPage implements ChunkOutputPage
    public void onSelected()
    {
       // no current action here (consider e.g. rewind to beginning of frame)
+   }
+
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      content_.onEditorThemeChanged(colors);
    }
 
    private final Widget thumbnail_;

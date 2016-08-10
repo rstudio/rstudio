@@ -18,15 +18,17 @@ public interface EditorThemeListener
 {
    class Colors
    {
-      public Colors(String front, String back, String outline)
+      public Colors(String front, String back, String outline, String high)
       {
          foreground = front;
          background = back;
          border = outline;
+         highlight = high;
       }
       public final String foreground;
       public final String background;
       public final String border;
+      public final String highlight;
    }
    void onEditorThemeChanged(Colors colors);
 }

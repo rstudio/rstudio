@@ -387,7 +387,12 @@ public class ChunkOutputWidget extends Composite
 
       String border = outline.asRgb();
       
-      s_colors = new EditorThemeListener.Colors(foreground, background, border);
+      // highlight color used in data chunks
+      ColorUtil.RGBColor highlight = new ColorUtil.RGBColor(
+            text.red(), text.green(), text.blue(), 0.02);
+      
+      s_colors = new EditorThemeListener.Colors(foreground, background, border,
+            highlight.asRgb());
    }
    
    public void showServerError(ServerError error)

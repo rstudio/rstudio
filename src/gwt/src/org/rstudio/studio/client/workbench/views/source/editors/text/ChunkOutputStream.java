@@ -368,6 +368,10 @@ public class ChunkOutputStream extends FlowPanel
             Style bodyStyle = frame.getDocument().getBody().getStyle();
             bodyStyle.setColor(colors.foreground);
          }
+         else if (w instanceof EditorThemeListener)
+         {
+            ((EditorThemeListener)w).onEditorThemeChanged(colors);
+         }
       }
    }
 
