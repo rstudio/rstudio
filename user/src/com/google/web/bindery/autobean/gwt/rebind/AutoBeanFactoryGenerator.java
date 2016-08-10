@@ -56,7 +56,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -565,8 +564,7 @@ public class AutoBeanFactoryGenerator extends Generator {
 
     // HACK: Iterator#remove was changed to a default method in Java 8,
     // and those are hidden to generators
-    if (type.getPeerType().getQualifiedSourceName().equals(Iterator.class.getCanonicalName()) ||
-        type.getPeerType().getQualifiedSourceName().equals(ListIterator.class.getCanonicalName())) {
+    if (type.getPeerType().getQualifiedSourceName().equals(Iterator.class.getCanonicalName())) {
       sw.println("@Override public void remove() {");
       sw.indent();
       sw.println("%s.this.getWrapped().remove();", type.getSimpleSourceName());
