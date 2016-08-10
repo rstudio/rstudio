@@ -29,7 +29,6 @@
 }
 
 .pagedtable th.pagedtable-padding-col {
-  border-bottom: 1px solid #dddddd;
   width: 20%;
 }
 
@@ -117,7 +116,7 @@ a.pagedtable-index-current {
 }
 
 .pagedtable-header-type {
-  color: #999;
+  opacity: 0.5;
   font-weight: 100;
   margin-top: -3px;
   font-size: 11px;
