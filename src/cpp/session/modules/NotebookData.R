@@ -52,7 +52,7 @@
 
   options("dplyr.tibble.print" = function(x, n, width, ...) {
     isSQL <- "tbl_sql" %in% class(x)
-    n <- if (isSQL) getOption("sql.max.print", 1000) else getOption("max.print", 10000)
+    n <- if (isSQL) getOption("sql.max.print", 1000) else getOption("max.print", 1000)
 
     print(as.data.frame(head(x, n)))
   })
