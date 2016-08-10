@@ -22,7 +22,6 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
-
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RJson.hpp>

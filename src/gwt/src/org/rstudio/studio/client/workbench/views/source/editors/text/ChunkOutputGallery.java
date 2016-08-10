@@ -204,6 +204,11 @@ public class ChunkOutputGallery extends Composite
       {
          syncThumbnailColor(thumbnail, colors);
       }
+      for (ChunkOutputPage page: pages_)
+      {
+         if (page instanceof EditorThemeListener)
+            ((EditorThemeListener)page).onEditorThemeChanged(colors);
+      }
    }
 
    public void addPage(ChunkOutputPage page)

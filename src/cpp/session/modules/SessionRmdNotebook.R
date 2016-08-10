@@ -267,7 +267,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
             rdfName <- .rs.withChangedExtension(key, ".rdf")
             rdfPath <- file.path(rnbData$cache_path, chunkId, rdfName)
-            browser()
             
             return(knitr::asis_output(
                rmarkdown:::html_notebook_annotated_output(

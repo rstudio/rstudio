@@ -24,7 +24,8 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChunkHtmlPage implements ChunkOutputPage
+public class ChunkHtmlPage implements ChunkOutputPage,
+                                      EditorThemeListener
 {
    public ChunkHtmlPage(String url, NotebookHtmlMetadata metadata,
          final Command onRenderComplete)
@@ -42,22 +43,22 @@ public class ChunkHtmlPage implements ChunkOutputPage
          url += "?";
       url += "viewer_pane=1";
 
-      final ChunkOutputFrame frame = new ChunkOutputFrame();
-      content_= new FixedRatioWidget(frame, 
+      frame_ = new ChunkOutputFrame();
+      content_= new FixedRatioWidget(frame_, 
                   ChunkOutputUi.OUTPUT_ASPECT, 
                   ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
-      frame.loadUrl(url, new Command() 
+      frame_.loadUrl(url, new Command()
       {
          @Override
          public void execute()
          {
-            Element body = frame.getDocument().getBody();
+            Element body = frame_.getDocument().getBody();
             Style bodyStyle = body.getStyle();
             
             bodyStyle.setPadding(0, Unit.PX);
             bodyStyle.setMargin(0, Unit.PX);
-            bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
+            onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
             
             onRenderComplete.execute();
          };
@@ -82,6 +83,15 @@ public class ChunkHtmlPage implements ChunkOutputPage
       // no action necessary for HTML widgets
    }
 
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      Element body = frame_.getDocument().getBody();
+      Style bodyStyle = body.getStyle();
+      bodyStyle.setColor(colors.foreground);
+   }
+
+   private ChunkOutputFrame frame_;
    final private Widget thumbnail_;
    final private Widget content_;
 }
