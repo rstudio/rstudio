@@ -768,7 +768,7 @@ public class CompilerTest extends GWTTestCase {
    * Development Mode or Production Mode, but the important thing is that the
    * compiler does not crash.
    */
-  @SuppressWarnings("divzero")
+  @SuppressWarnings({"divzero", "ConstantOverflow"})
   public void testDivByZero() {
     assertTrue(Double.isNaN(0.0 / 0.0));
 
