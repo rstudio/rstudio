@@ -1039,7 +1039,7 @@ public class UnifyAst {
        * that the constructor is considered reachable as it might be needed later for instanceof
        * and casts.
        */
-      if (type.hasJsInteropEntryPoints() || type.isJsNative()) {
+      if (type.hasJsInteropEntryPoints() || type.isJsNative() || type.isJsFunction()) {
         fullFlowIntoType(type);
       }
     }
