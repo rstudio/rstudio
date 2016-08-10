@@ -338,7 +338,8 @@ public class ChunkOutputWidget extends Composite
    {
       return s_backgroundColor != null &&
              s_color != null &&
-             s_outlineColor != null;
+             s_outlineColor != null &&
+             s_highlightColor != null;
    }
    
    public void onOutputFinished(boolean ensureVisible, int execScope)
@@ -409,7 +410,12 @@ public class ChunkOutputWidget extends Composite
             text.red(), text.green(), text.blue(),
             text.isDark() ? 0.12: 0.18);
 
+      // highlight color used in data chunks
+      ColorUtil.RGBColor highlight = new ColorUtil.RGBColor(
+            text.red(), text.green(), text.blue(), 0.02);
+
       s_outlineColor = outline.asRgb();
+      s_highlightColor = highlight.asRgb();
    }
    
    public void showServerError(ServerError error)
@@ -441,6 +447,9 @@ public class ChunkOutputWidget extends Composite
       }
       getElement().getStyle().setBackgroundColor(s_backgroundColor);
       frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
+
+      // apply style changes to data chunks
+      applyDataOutputStyle();
    }
    
    public boolean hasErrors()
@@ -861,7 +870,7 @@ public class ChunkOutputWidget extends Composite
       });
    }
 
-   private final native void showDataOutputNative(JavaScriptObject data, Element parent) /*-{
+   private final native void showDataOutputNative(Element parent, JavaScriptObject data) /*-{
       var pagedTable = $doc.createElement("div");
       pagedTable.setAttribute("data-pagedtable", "");
       parent.appendChild(pagedTable);
@@ -873,12 +882,58 @@ public class ChunkOutputWidget extends Composite
       pagedTable.appendChild(pagedTableSource);
 
       var pagedTableInstance = new PagedTable(pagedTable);
+
+      var chunkWidget = this;
+      pagedTableInstance.onChange(function() {
+         chunkWidget.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget::onDataOutputChange()();
+      });
+
       pagedTableInstance.render();
    }-*/;
 
+   private final native void applyDataOutputStyleNative(
+      Element parent,
+      String highlightColor,
+      String lowlightColor) /*-{
+      
+      var allHighlights = parent.querySelectorAll(
+         ".pagedtable tr.even," +
+         "a.pagedtable-index-current"); 
+      for (var idx = 0; idx < allHighlights.length; idx++) {
+         allHighlights[idx].style.backgroundColor = highlightColor;
+      }
+      
+      var allBotomBorders = parent.querySelectorAll(".pagedtable th,.pagedtable td");
+      for (var idx = 0; idx < allBotomBorders.length; idx++) {
+         allBotomBorders[idx].style.borderBottomColor = lowlightColor;
+      }
+      
+      var allTopBorders = parent.querySelectorAll(".pagedtable-not-empty .pagedtable-footer");
+      for (var idx = 0; idx < allTopBorders.length; idx++) {
+         allTopBorders[idx].style.borderTopColor = lowlightColor;
+      }
+      
+      var allDisabledText = parent.querySelectorAll(".pagedtable-index-nav-disabled");
+      for (var idx = 0; idx < allDisabledText.length; idx++) {
+         allDisabledText[idx].style.color = lowlightColor;
+      }
+   }-*/;
+
+   public void onDataOutputChange()
+   {
+      applyDataOutputStyle();
+   }
+
    private void showDataOutput(JavaScriptObject data)
    {
-      showDataOutputNative(data, root_.getElement());
+      showDataOutputNative(root_.getElement(), data);
+
+      applyDataOutputStyle();
+   }
+
+   private void applyDataOutputStyle()
+   {
+      applyDataOutputStyleNative(root_.getElement(), s_highlightColor, s_outlineColor);
    }
    
    private void renderConsoleOutput(String text, String clazz, 
@@ -1176,6 +1231,7 @@ public class ChunkOutputWidget extends Composite
    private final Value<Integer> expansionState_;
 
    private static String s_outlineColor    = null;
+   private static String s_highlightColor    = null;
    private static String s_backgroundColor = null;
    private static String s_color           = null;
 
