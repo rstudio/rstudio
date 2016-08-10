@@ -83,7 +83,8 @@ public class ChunkConsolePage implements ChunkOutputPage,
       panel.add(stream);
       content_ = new FixedRatioWidget(panel, ChunkOutputUi.OUTPUT_ASPECT, 
             ChunkOutputUi.MAX_PLOT_WIDTH);
-      thumbnail_ = new ChunkOutputThumbnail("R Console", "", null);
+      thumbnail_ = new ChunkOutputThumbnail("R Console", "", null, 
+            ChunkOutputWidget.getEditorColors());
    }
 
    private ChunkOutputStream stream_;

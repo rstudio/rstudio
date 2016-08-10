@@ -20,7 +20,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    opacity: 0.7;
 }
 
-.backdrop, .backdrop:after
+.backdrop, .mask
 {
    position: absolute;
    top: 0px;
@@ -29,9 +29,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    height: 100%;
 }
 
-.backdrop:after {
-  content: "";
-  display: block;
+.mask {
   background: linear-gradient(rgba(255, 255, 255, 0.3) 0%, 
                               rgba(255, 255, 255, 0.75) 33%, 
                               rgba(255, 255, 255, 1.0) 80%, 
@@ -46,6 +44,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
 </ui:style>
 <g:HTMLPanel styleName="{style.thumbnail}">
    <g:SimplePanel styleName="{style.backdrop}" ui:field="backdrop_"></g:SimplePanel>
+   <g:SimplePanel styleName="{style.mask}" ui:field="mask_"></g:SimplePanel>
    <g:Label styleName="{style.title}" ui:field="title_"></g:Label>
    <g:Label styleName="{style.subtitle}" ui:field="subtitle_"></g:Label>
 </g:HTMLPanel>

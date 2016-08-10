@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.ColorUtil;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -23,6 +25,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputThumbnail extends Composite
+                                  implements EditorThemeListener
 {
 
    private static ChunkOutputThumbnailUiBinder uiBinder = GWT
@@ -33,16 +36,36 @@ public class ChunkOutputThumbnail extends Composite
    {
    }
 
-   public ChunkOutputThumbnail(String title, String subtitle, Widget backdrop)
+   public ChunkOutputThumbnail(String title, String subtitle, Widget backdrop,
+         EditorThemeListener.Colors colors)
    {
       initWidget(uiBinder.createAndBindUi(this));
       title_.setText(title);
       subtitle_.setText(subtitle);
       if (backdrop != null)
          backdrop_.add(backdrop);
+      setMaskColor(colors.background);
+   }
+
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      setMaskColor(colors.background);
    }
    
+   private void setMaskColor(String color)
+   {
+      ColorUtil.RGBColor rgb = ColorUtil.RGBColor.fromCss(color);
+      String tuple = rgb.red() + ", " + rgb.green() + ", " + rgb.blue();
+      mask_.getElement().getStyle().setProperty("backgroundImage", 
+            "linear-gradient(rgba(" + tuple + ", 0.3) 0%, "   +
+                            "rgba(" + tuple + ", 0.75) 33%, " +
+                            "rgba(" + tuple + ", 1.0) 80%, "  +
+                            "rgba(" + tuple + ", 1.0) 100%)");
+   }
+  
    @UiField Label title_;
    @UiField Label subtitle_;
    @UiField SimplePanel backdrop_;
+   @UiField SimplePanel mask_;
 }
