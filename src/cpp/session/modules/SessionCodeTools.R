@@ -1699,3 +1699,46 @@
 {
    .Call("rs_base64decode", data, binary)
 })
+
+.rs.addFunction("CRANDownloadOptionsString", function() {
+   
+   # collect elements of interest
+   repos <- getOption("repos")
+   method <- getOption("download.file.method")
+   extra <- if (identical(method, "curl"))
+      .rs.downloadFileExtraWithCurlArgs()
+   else
+      getOption("download.file.extra")
+   
+   data <- list()
+   if (length(repos)) {
+      data[["repos"]] <- sprintf(
+         "c(%s)",
+         paste(
+            names(repos),
+            .rs.surround(as.character(repos), with = "'"),
+            sep = " = ",
+            collapse = ", "
+         )
+      )
+   }
+   
+   if (length(method) && nzchar(method))
+      data[["download.file.method"]] <- .rs.surround(method, "'")
+   
+   if (length(extra) && nzchar(extra))
+      data[["download.file.extra"]] <- .rs.surround(extra, "'")
+   
+   code <- sprintf(
+      "options(%s)",
+      paste(
+         names(data),
+         data,
+         sep = " = ",
+         collapse = ", "
+      )
+   )
+   
+   code
+   
+})
