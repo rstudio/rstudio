@@ -841,6 +841,11 @@ public class TextEditingTargetNotebook
       // (this actually spins up a separate R process to re-render all the
       // plots at the new resolution)
       resizePlotsRemote_.schedule(500);
+
+      for (ChunkOutputUi output: outputs_.values())
+      {
+         output.getOutputWidget().onResize();
+      }
    }
 
    @Override

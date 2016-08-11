@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -529,6 +531,14 @@ public class ChunkOutputWidget extends Composite
    {
       host_ = host;
    }
+
+   public void onResize()
+   {
+      for(JavaScriptObject pagedTable : pagedTables_)
+      {
+         resizeDataOutputStyleNative(pagedTable);
+      }
+   }
    
    // Event handlers ----------------------------------------------------------
 
@@ -870,7 +880,7 @@ public class ChunkOutputWidget extends Composite
       });
    }
 
-   private final native void showDataOutputNative(Element parent, JavaScriptObject data) /*-{
+   private final native JavaScriptObject showDataOutputNative(Element parent, JavaScriptObject data) /*-{
       var pagedTable = $doc.createElement("div");
       pagedTable.setAttribute("data-pagedtable", "");
       parent.appendChild(pagedTable);
@@ -889,6 +899,8 @@ public class ChunkOutputWidget extends Composite
       });
 
       pagedTableInstance.render();
+
+      return pagedTableInstance;
    }-*/;
 
    private final native void applyDataOutputStyleNative(
@@ -919,6 +931,10 @@ public class ChunkOutputWidget extends Composite
       }
    }-*/;
 
+   private final native void resizeDataOutputStyleNative(JavaScriptObject pagedTable) /*-{
+      pagedTable.fitColumns(false);
+   }-*/;
+
    public void onDataOutputChange()
    {
       applyDataOutputStyle();
@@ -926,7 +942,7 @@ public class ChunkOutputWidget extends Composite
 
    private void showDataOutput(JavaScriptObject data)
    {
-      showDataOutputNative(root_.getElement(), data);
+      pagedTables_.add(showDataOutputNative(root_.getElement(), data));
 
       applyDataOutputStyle();
    }
@@ -1225,6 +1241,7 @@ public class ChunkOutputWidget extends Composite
    private boolean hasErrors_ = false;
    private int resizeCounter_ = 0;
    private boolean needsHeightSync_ = false;
+   private ArrayList<JavaScriptObject> pagedTables_ = new ArrayList<JavaScriptObject>();
    
    private Timer collapseTimer_ = null;
    private final String chunkId_;
