@@ -442,7 +442,8 @@ public class ChunkOutputStream extends FlowPanel
          else if (inner instanceof ChunkOutputFrame)
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)inner;
-            ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), null, null);
+            ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), 
+                  (NotebookHtmlMetadata)metadata.cast(), null);
             pages.add(html);
             remove(w);
          }

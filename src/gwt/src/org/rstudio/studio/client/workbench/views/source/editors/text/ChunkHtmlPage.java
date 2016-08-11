@@ -30,7 +30,7 @@ public class ChunkHtmlPage implements ChunkOutputPage,
    public ChunkHtmlPage(String url, NotebookHtmlMetadata metadata,
          final Command onRenderComplete)
    {
-      String clazz = metadata.getClasses().length() > 0 ? 
+      String clazz = metadata != null && metadata.getClasses().length() > 0 ? 
             metadata.getClasses().get(0) : "html";
       thumbnail_ = new ChunkOutputThumbnail(clazz, "htmlwidget", 
             new ChunkHtmlPreview(), ChunkOutputWidget.getEditorColors());
