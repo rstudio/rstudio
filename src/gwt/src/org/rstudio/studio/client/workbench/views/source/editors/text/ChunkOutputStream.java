@@ -465,6 +465,17 @@ public class ChunkOutputStream extends FlowPanel
       return false;
    }
    
+   public String getAllConsoleText()
+   {
+      String text = "";
+      for (Widget w: this)
+      {
+         if (w instanceof PreWidget)
+            text += w.getElement().getInnerText();
+      }
+      return text;
+   }
+   
    // Private methods ---------------------------------------------------------
    
    private boolean isPlotWidget(Widget w)

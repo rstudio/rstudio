@@ -43,7 +43,7 @@ public class ChunkDataWidget extends SimplePanel
    
    // Private methods ---------------------------------------------------------
 
-   public void onDataOutputChange()
+   private void onDataOutputChange()
    {
       EditorThemeListener.Colors colors = ChunkOutputWidget.getEditorColors();
       applyDataOutputStyleNative(getElement(), colors.highlight, colors.border);

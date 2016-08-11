@@ -62,11 +62,13 @@ public class ChunkConsolePage implements ChunkOutputPage,
 
    public void showConsoleText(String text)
    {
+      preview_.addText(text);
       stream_.showConsoleText(text);
    }
    
    public void showConsoleError(String error)
    {
+      preview_.addText(error);
       stream_.showConsoleError(error);
    }
    
@@ -77,6 +79,10 @@ public class ChunkConsolePage implements ChunkOutputPage,
    
    public void showConsoleOutput(JsArray<JsArrayEx> output)
    {
+      for (int i = 0; i < output.length(); i++)
+      {
+         preview_.addText(output.get(i).getString(1));
+      }
       stream_.showConsoleOutput(output);
    }
    
@@ -100,12 +106,14 @@ public class ChunkConsolePage implements ChunkOutputPage,
    
    private void init(ChunkOutputStream stream)
    {
+      preview_ = new ChunkConsolePreview();
+      preview_.addText(stream.getAllConsoleText());
       stream_ = stream;
       panel_ = new ScrollPanel();
       panel_.add(stream);
       content_ = new FixedRatioWidget(panel_, ChunkOutputUi.OUTPUT_ASPECT, 
             ChunkOutputUi.MAX_PLOT_WIDTH);
-      thumbnail_ = new ChunkOutputThumbnail("R Console", "", null, 
+      thumbnail_ = new ChunkOutputThumbnail("R Console", "", preview_, 
             ChunkOutputWidget.getEditorColors());
    }
 
@@ -113,6 +121,7 @@ public class ChunkConsolePage implements ChunkOutputPage,
    private ChunkOutputStream stream_;
    private Widget thumbnail_;
    private FixedRatioWidget content_;
+   private ChunkConsolePreview preview_;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
