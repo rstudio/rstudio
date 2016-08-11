@@ -24,7 +24,7 @@ public class ChunkDataWidget extends SimplePanel
 {
    public ChunkDataWidget(JavaScriptObject data)
    {
-      showDataOutputNative(data, getElement());
+      pagedTable_ = showDataOutputNative(data, getElement());
       onDataOutputChange();
    }
 
@@ -39,6 +39,11 @@ public class ChunkDataWidget extends SimplePanel
    {
       applyDataOutputStyleNative(getElement(), 
             colors.highlight, colors.border);
+   }
+   
+   public void onResize()
+   {
+      resizeDataOutputStyleNative(pagedTable_);
    }
    
    // Private methods ---------------------------------------------------------
@@ -61,7 +66,7 @@ public class ChunkDataWidget extends SimplePanel
       }
    }-*/;
 
-   private final native void showDataOutputNative(JavaScriptObject data, 
+   private final native JavaScriptObject showDataOutputNative(JavaScriptObject data, 
          Element parent) /*-{
       var pagedTable = $doc.createElement("div");
       pagedTable.setAttribute("data-pagedtable", "");
@@ -81,6 +86,8 @@ public class ChunkDataWidget extends SimplePanel
       });
       
       pagedTableInstance.render();
+      
+      return pagedTableInstance;
    }-*/;
 
    private static final native void applyDataOutputStyleNative(
@@ -110,4 +117,11 @@ public class ChunkDataWidget extends SimplePanel
          allDisabledText[idx].style.color = lowlightColor;
       }
    }-*/;
+   
+   private static final native void resizeDataOutputStyleNative(
+         JavaScriptObject pagedTable) /*-{
+     pagedTable.fitColumns(false);
+   }-*/;
+   
+   private final JavaScriptObject pagedTable_;
 }

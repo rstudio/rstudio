@@ -400,6 +400,20 @@ public class ChunkOutputStream extends FlowPanel
       return hasErrors_;
    }
    
+
+   @Override
+   public void onResize()
+   {
+      for (Widget w: this)
+      {
+         if (w instanceof ChunkDataWidget)
+         {
+            ChunkDataWidget widget = (ChunkDataWidget)w;
+            widget.onResize();
+         }
+      }
+   }
+
    public List<ChunkOutputPage> extractPages()
    {
       // flush any errors so they are properly accounted for

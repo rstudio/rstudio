@@ -457,7 +457,7 @@ public class ChunkOutputWidget extends Composite
 
    public void onResize()
    {
-      // TODO: Resize paged tables
+      presenter_.onResize();
    }
    
    // Event handlers ----------------------------------------------------------

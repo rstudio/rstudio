@@ -54,6 +54,11 @@ public class ChunkDataPage implements ChunkOutputPage,
    {
       content_.onEditorThemeChanged(colors);
    }
+   
+   public void onResize()
+   {
+      content_.onResize();
+   }
 
    private final Widget thumbnail_;
    private final ChunkDataWidget content_;

@@ -260,6 +260,18 @@ public class ChunkOutputGallery extends Composite
       host_.notifyHeightChanged();
    }
 
+   @Override
+   public void onResize()
+   {
+      for (ChunkOutputPage page: pages_)
+      {
+         if (page instanceof ChunkDataPage)
+         {
+            ((ChunkDataPage)page).onResize();
+         }
+      }
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void setActivePage(int idx)
