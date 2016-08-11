@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -391,8 +392,18 @@ public class ChunkOutputWidget extends Composite
       ColorUtil.RGBColor highlight = new ColorUtil.RGBColor(
             text.red(), text.green(), text.blue(), 0.02);
       
+      // synthesize a surface color by blending the keyword color with the 
+      // background
+      JsArrayString classes = JsArrayString.createArray().cast();
+      classes.push("ace_editor");
+      classes.push("ace_keyword");
+      ColorUtil.RGBColor surface = ColorUtil.RGBColor.fromCss(
+            DomUtils.extractCssValue(classes, "color"));
+      surface = surface.mixedWith(
+            ColorUtil.RGBColor.fromCss(background), 0.02, 1);
+      
       s_colors = new EditorThemeListener.Colors(foreground, background, border,
-            highlight.asRgb());
+            highlight.asRgb(), surface.asRgb());
    }
    
    public void showServerError(ServerError error)

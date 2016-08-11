@@ -44,13 +44,14 @@ public class ChunkOutputThumbnail extends Composite
       subtitle_.setText(subtitle);
       if (backdrop != null)
          backdrop_.add(backdrop);
-      setMaskColor(colors.background);
+      onEditorThemeChanged(colors);
    }
 
    @Override
    public void onEditorThemeChanged(Colors colors)
    {
-      setMaskColor(colors.background);
+      getElement().getStyle().setBackgroundColor(colors.surface);
+      setMaskColor(colors.surface);
       if (backdrop_ != null && backdrop_ instanceof EditorThemeListener)
          ((EditorThemeListener)backdrop_).onEditorThemeChanged(colors);
    }
@@ -60,7 +61,7 @@ public class ChunkOutputThumbnail extends Composite
       ColorUtil.RGBColor rgb = ColorUtil.RGBColor.fromCss(color);
       String tuple = rgb.red() + ", " + rgb.green() + ", " + rgb.blue();
       mask_.getElement().getStyle().setProperty("backgroundImage", 
-            "linear-gradient(rgba(" + tuple + ", 0.3) 0%, "   +
+            "linear-gradient(rgba(" + tuple + ", 0.1) 0%, "   +
                             "rgba(" + tuple + ", 0.75) 33%, " +
                             "rgba(" + tuple + ", 1.0) 80%, "  +
                             "rgba(" + tuple + ", 1.0) 100%)");
