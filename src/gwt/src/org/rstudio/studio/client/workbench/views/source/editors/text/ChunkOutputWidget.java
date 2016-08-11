@@ -454,6 +454,11 @@ public class ChunkOutputWidget extends Composite
    {
       host_ = host;
    }
+
+   public void onResize()
+   {
+      // TODO: Resize paged tables
+   }
    
    // Event handlers ----------------------------------------------------------
 

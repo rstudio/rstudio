@@ -21,7 +21,7 @@
   )
 })
 
-.rs.addFunction("initDataCapture", function(outputFolder, libraryFolder)
+.rs.addFunction("initDataCapture", function(outputFolder, options)
 {
   overridePrint <- function(x, ...) {
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
@@ -33,9 +33,10 @@
       x, 
       file = output)
 
-    invisible(.Call("rs_recordData", output, list(classes = class(x),
-                                                  nrow = .rs.scalar(nrow(x)), 
-                                                  ncol = .rs.scalar(ncol(x)))))
+    .Call("rs_recordData", output, list(classes = class(x),
+                                        nrow = .rs.scalar(nrow(x)), 
+                                        ncol = .rs.scalar(ncol(x))))
+    invisible(x)
   }
 
   lapply(.rs.dataCaptureOverrides(), function(override) {
@@ -58,6 +59,18 @@
 
     print(as.data.frame(head(x, n)))
   })
+
+  assign(
+    "print.knitr_kable",
+    function(x, ...) {
+      print(
+        knitr::asis_output(x)
+      )
+
+      invisible(x)
+    },
+    envir = as.environment("tools:rstudio")
+  )
 })
 
 .rs.addFunction("releaseDataCapture", function()
