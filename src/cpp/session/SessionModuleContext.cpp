@@ -1936,22 +1936,10 @@ std::string downloadFileMethod(const std::string& defaultMethod)
 
 std::string CRANDownloadOptions()
 {
-   std::string options("options(repos = c(CRAN='" +
-                    module_context::CRANReposURL() + "')");
-   std::string method = module_context::downloadFileMethod();
-   if (!method.empty())
-      options += ", download.file.method = '" + method + "'";
-   if (method == "curl")
-   {
-      std::string extraArgs;
-      Error error = r::exec::RFunction(".rs.downloadFileExtraWithCurlArgs")
-                                                            .call(&extraArgs);
-      if (error)
-         LOG_ERROR(error);
-      options += ", download.file.extra = '" + extraArgs + "'";
-   }
-
-   options += ")";
+   std::string options;
+   Error error = r::exec::RFunction(".rs.CRANDownloadOptionsString").call(&options);
+   if (error)
+      LOG_ERROR(error);
    return options;
 }
 
