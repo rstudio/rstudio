@@ -777,8 +777,9 @@
       if (excludeBaseClasses && class %in% c("list", "environment"))
          next
       
-      methodName <- paste(".DollarNames", class, sep = ".")
-      method <- .rs.getAnywhere(methodName, envir = envir)
+      method <- utils::getS3method(".DollarNames", class, optional = TRUE, 
+        envir = getNamespace("utils"))
+      
       if (!is.null(method))
          return(method)
    }
