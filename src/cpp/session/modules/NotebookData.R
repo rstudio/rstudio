@@ -21,7 +21,7 @@
   )
 })
 
-.rs.addFunction("initDataCapture", function(outputFolder, libraryFolder)
+.rs.addFunction("initDataCapture", function(outputFolder, options)
 {
   overridePrint <- function(x, ...) {
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
@@ -58,6 +58,18 @@
 
     print(as.data.frame(head(x, n)))
   })
+
+  assign(
+    "print.knitr_kable",
+    function(x, ...) {
+      print(
+        knitr::asis_output(x)
+      )
+
+      invisible(x)
+    },
+    envir = as.environment("tools:rstudio")
+  )
 })
 
 .rs.addFunction("releaseDataCapture", function()
