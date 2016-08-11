@@ -33,7 +33,9 @@
       x, 
       file = output)
 
-    invisible(.Call("rs_recordData", output));
+    .Call("rs_recordData", output);
+
+    invisible(x)
   }
 
   lapply(.rs.dataCaptureOverrides(), function(override) {
