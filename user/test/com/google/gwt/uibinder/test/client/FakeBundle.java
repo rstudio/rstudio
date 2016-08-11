@@ -55,7 +55,7 @@ public class FakeBundle {
   }
 
   public SafeUri aSafeUri() {
-    return UriUtils.fromSafeConstant(anUnsafeUri());
+    return UriUtils.fromTrustedString(anUnsafeUri());
   }
   
   public String aSelector() {
