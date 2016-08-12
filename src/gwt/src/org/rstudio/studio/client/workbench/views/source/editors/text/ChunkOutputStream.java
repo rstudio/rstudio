@@ -441,10 +441,11 @@ public class ChunkOutputStream extends FlowPanel
             continue;
          }
 
-         if (!(w instanceof FixedRatioWidget))
-            continue;
-         
-         Widget inner = ((FixedRatioWidget)w).getWidget();
+         // extract the inner element if this is a fixed-ratio widget (or just
+         // use raw if it's not)
+         Widget inner = w;
+         if (w instanceof FixedRatioWidget)
+            inner = ((FixedRatioWidget)w).getWidget();
          
          if (inner instanceof Image)
          {
