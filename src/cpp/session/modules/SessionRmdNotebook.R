@@ -153,6 +153,121 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       engine)
 })
 
+.rs.addFunction("rnb.outputSourcePng", function(fileName,
+                                                fileContents,
+                                                metadata,
+                                                ...)
+{
+   rmarkdown:::html_notebook_output_png(bytes = fileContents,
+                                        meta = metadata)
+})
+
+.rs.addFunction("rnb.outputSourceJpeg", function(fileName,
+                                                 fileContents,
+                                                 metadata,
+                                                 ...)
+{
+   rmarkdown:::html_notebook_output_img(bytes = fileContents,
+                                        meta = metadata,
+                                        format = "jpeg")
+})
+
+.rs.addFunction("rnb.outputSourceConsole", function(fileName,
+                                                    fileContents,
+                                                    context,
+                                                    includeSource,
+                                                    ...)
+{
+   parsed <- .rs.rnb.readConsoleData(fileContents)
+   if (!includeSource)
+      parsed <- parsed[parsed$type != 0, ]
+   if (identical(context$results, "hide"))
+      parsed <- parsed[parsed$type != 1, ]
+   attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
+   rendered <- .rs.rnb.renderConsoleData(parsed,
+                                         attributes = attributes,
+                                         context)
+   return(rendered)
+})
+
+.rs.addFunction("rnb.outputSourceHtml", function(fileName,
+                                                 fileContents,
+                                                 rnbData,
+                                                 chunkId,
+                                                 metadata,
+                                                 ...)
+{
+   # if we have a '.json' sidecar file, this is an HTML widget
+   jsonName <- .rs.withChangedExtension(fileName, ".json")
+   jsonPath <- file.path(rnbData$cache_path, chunkId, jsonName)
+   if (file.exists(jsonPath)) {
+      
+      # read and restore 'html_dependency' class (this may not be
+      # preserved in the serialized JSON file)
+      jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
+      for (i in seq_along(jsonContents))
+         class(jsonContents[[i]]) <- "html_dependency"
+      
+      # extract body element (this is effectively what the
+      # widget emitted on print in addition to aforementioned
+      # dependency information)
+      bodyEl <- .rs.extractHTMLBodyElement(fileContents)
+      
+      # annotate widget manually and return asis output
+      annotated <- rmarkdown:::html_notebook_annotated_output(
+         bodyEl,
+         "htmlwidget",
+         list(dependencies = jsonContents,
+              metadata     = metadata)
+      )
+      widget <- knitr::asis_output(annotated)
+      attr(widget, "knit_meta") <- jsonContents
+      return(widget)
+   }
+   
+   # no .json file; just return HTML as-is
+   annotated <- rmarkdown:::html_notebook_annotated_output(
+      fileContents,
+      "html",
+      list(metadata = metadata)
+   )
+   
+   knitr::asis_output(annotated)
+})
+
+.rs.addFunction("rnb.pagedTableHtml", function(rdfPath)
+{
+   data <- .rs.readDataCapture(rdfPath)
+   
+   paste(
+      "<div data-pagedtable>",
+      "  <script data-pagedtable-source type=\"application/json\">",
+      jsonlite::toJSON(data),
+      "  </script>",
+      "</div>",
+      sep = "\n"
+   )
+})
+
+.rs.addFunction("rnb.outputSourceRdf", function(fileName,
+                                                fileContents,
+                                                metadata,
+                                                rnbData,
+                                                chunkId,
+                                                ...)
+{
+   rdfName <- .rs.withChangedExtension(fileName, ".rdf")
+   rdfPath <- file.path(rnbData$cache_path, chunkId, rdfName)
+   
+   annotated <- rmarkdown:::html_notebook_annotated_output(
+      .rs.rnb.pagedTableHtml(rdfPath),
+      "frame",
+      list(metadata = metadata, rdf = .rs.base64encode(fileContents))
+   )
+   
+   knitr::asis_output(annotated)
+})
+
 .rs.addFunction("rnb.outputSource", function(rnbData) {
    force(rnbData)
    function(code, context, ...) {
@@ -178,113 +293,40 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       }
       
       chunkData <- .rs.coalesceCsvOutput(rnbData$chunk_data[[chunkId]])
+      
+      # map file extensions to handlers
+      outputHandlers <- list(
+         "png"  = .rs.rnb.outputSourcePng,
+         "jpg"  = .rs.rnb.outputSourceJpeg,
+         "jpeg" = .rs.rnb.outputSourceJpeg,
+         "csv"  = .rs.rnb.outputSourceConsole,
+         "html" = .rs.rnb.outputSourceHtml,
+         "rdf"  = .rs.rnb.outputSourceRdf
+      )
 
-      outputList <- .rs.enumerate(chunkData, function(key, val) {
+      outputList <- .rs.enumerate(chunkData, function(fileName, fileContents) {
          
          # read metadata sidecar if present
          metadata <- NULL
-         metadataName <- .rs.withChangedExtension(key, ".metadata")
+         metadataName <- .rs.withChangedExtension(fileName, ".metadata")
          metadataPath <- file.path(rnbData$cache_path, chunkId, metadataName)
          if (file.exists(metadataPath))
             metadata <- .rs.fromJSON(.rs.readFile(metadataPath))
-
-         # png output: create base64 encoded image
-         if (.rs.endsWith(key, ".png")) {
-            return(rmarkdown::html_notebook_output_png(bytes = val,
-                                                       meta = metadata))
-         } else if (.rs.endsWith(key, ".jpg") || .rs.endsWith(key, ".jpeg")) {
-            return(rmarkdown::html_notebook_output_img(bytes = val, 
-                                                       meta = metadata,
-                                                       format = "jpeg"))
-         }
          
-         # console output
-         if (.rs.endsWith(key, ".csv")) {
-            parsed <- .rs.rnb.readConsoleData(val)
-            if (!includeSource)
-               parsed <- parsed[parsed$type != 0, ]
-            if (identical(context$results, "hide"))
-               parsed <- parsed[parsed$type != 1, ]
-            attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
-            rendered <- .rs.rnb.renderConsoleData(parsed,
-                                                  attributes = attributes,
-                                                  context)
-            return(rendered)
-         }
-         
-         # html widgets
-         if (.rs.endsWith(key, ".html")) {
-            
-            # if we have a '.json' sidecar file, this is an HTML widget
-            jsonName <- .rs.withChangedExtension(key, ".json")
-            jsonPath <- file.path(rnbData$cache_path, chunkId, jsonName)
-            if (file.exists(jsonPath)) {
-               jsonContents <- .rs.fromJSON(.rs.readFile(jsonPath))
-               for (i in seq_along(jsonContents))
-                  class(jsonContents[[i]]) <- "html_dependency"
-               
-               # extract body element (this is effectively what the
-               # widget emitted on print in addition to aforementioned
-               # dependency information)
-               bodyEl <- .rs.extractHTMLBodyElement(val)
-               
-               # annotate widget manually and return asis output
-               annotated <- rmarkdown:::html_notebook_annotated_output(
-                  bodyEl,
-                  "htmlwidget",
-                  list(dependencies = jsonContents,
-                       metadata     = metadata)
-               )
-               widget <- knitr::asis_output(annotated)
-               attr(widget, "knit_meta") <- jsonContents
-               return(widget)
-            }
-
-            # no .json file; just return HTML as-is
-            annotated <- rmarkdown:::html_notebook_annotated_output(
-               val,
-               "html",
-               list(metadata = metadata)
-            )
-            
-            return(knitr::asis_output(annotated))
-         }
-
-         # data chunks
-         if (.rs.endsWith(key, ".rdf")) {
-            paged_table_html = function(rdfPath) {
-              data <- .rs.readDataCapture(rdfPath)
-
-              paste(
-                "<div data-pagedtable>",
-                "  <script data-pagedtable-source type=\"application/json\">",
-                jsonlite::toJSON(data),
-                "  </script>",
-                "</div>",
-                sep = "\n"
-              )
-            }
-
-            rdfName <- .rs.withChangedExtension(key, ".rdf")
-            rdfPath <- file.path(rnbData$cache_path, chunkId, rdfName)
-            
-            return(knitr::asis_output(
-               rmarkdown:::html_notebook_annotated_output(
-                  paged_table_html(rdfPath),
-                  "frame", 
-                  list(metadata = metadata,
-                       rdf      = .rs.base64encode(val)))))
-         }
-         
-         # json files handled as pairs to HTML above
-         if (.rs.endsWith(key, "json"))
+         # find and execute handler for extension (return NULL if no handler defined)
+         ext <- tools::file_ext(fileName)
+         handler <- outputHandlers[[ext]]
+         if (!is.function(handler))
             return(NULL)
-
-         # metadata files handled above
-         if (.rs.endsWith(key, "metadata"))
-            return (NULL)
-
-         return(knitr::asis_output("<!-- unknown-chunk-output -->"))
+         
+         handler(code = code,
+                 context = context,
+                 fileName = fileName,
+                 fileContents = fileContents,
+                 metadata = metadata,
+                 rnbData = rnbData,
+                 chunkId = chunkId,
+                 includeSource = includeSource)
       })
       
       # remove nulls and return
