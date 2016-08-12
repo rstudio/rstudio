@@ -24,6 +24,7 @@ public class ChunkDataWidget extends SimplePanel
 {
    public ChunkDataWidget(JavaScriptObject data)
    {
+      data_ = data;
       pagedTable_ = showDataOutputNative(data, getElement());
       onDataOutputChange();
    }
@@ -44,6 +45,11 @@ public class ChunkDataWidget extends SimplePanel
    public void onResize()
    {
       resizeDataOutputStyleNative(pagedTable_);
+   }
+   
+   public JavaScriptObject getData()
+   {
+      return data_;
    }
    
    // Private methods ---------------------------------------------------------
@@ -124,4 +130,5 @@ public class ChunkDataWidget extends SimplePanel
    }-*/;
    
    private final JavaScriptObject pagedTable_;
+   private final JavaScriptObject data_;
 }

@@ -19,7 +19,8 @@ public class ChunkDataPage implements ChunkOutputPage,
       if (metadata == null)
       {
          thumbnail_ = new ChunkOutputThumbnail("data.frame", "",
-               new ChunkFramePreview(), ChunkOutputWidget.getEditorColors());
+               new ChunkDataPreview(widget.getData()), 
+               ChunkOutputWidget.getEditorColors());
       }
       else
       {
@@ -27,7 +28,8 @@ public class ChunkDataPage implements ChunkOutputPage,
                metadata.getClasses().get(0) : "data";
          thumbnail_ = new ChunkOutputThumbnail(clazz, + 
                metadata.numRows() + "x" + metadata.numCols(),
-               new ChunkFramePreview(), ChunkOutputWidget.getEditorColors());
+               new ChunkDataPreview(widget.getData()), 
+               ChunkOutputWidget.getEditorColors());
       }
    }
    
