@@ -24,7 +24,7 @@
   border-bottom: 1px solid #dddddd;
 }
 
-.pagedtable-empty th.pagedtable-padding-col {
+.pagedtable-empty th {
   display: none;
 }
 

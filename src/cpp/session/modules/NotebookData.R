@@ -94,22 +94,46 @@
   e <- new.env(parent = emptyenv())
   load(file = path, envir = e)
 
-  columns <- unname(lapply(
-    names(e$x),
-    function(columnName) {
-      column <- e$x[[columnName]]
+  data <- head(e$x, getOption("max.print", 1000))
+  data <- if (is.null(data)) as.data.frame(list()) else data
+
+  columnNames <- names(data)
+  columnSequence <- seq_len(ncol(data))
+  
+  columns <- lapply(
+    columnSequence,
+    function(columnIdx) {
+      column <- data[[columnIdx]]
       baseType <- class(column)[[1]]
       tibbleType <- tibble::type_sum(column)
 
       list(
-        name = columnName,
+        label = if (!is.null(columnNames)) columnNames[[columnIdx]] else "",
+        name = columnIdx,
         type = tibbleType,
         align = if (baseType == "character" || baseType == "factor") "left" else "right"
       )
     }
-  ))
+  )
 
-  data <- head(e$x, getOption("max.print", 1000))
+  names(data) <- columnSequence
+
+  # add the names column
+  columns <- unname(
+    c(
+      list(
+        list(
+          label = "",
+          name = "__rownames__",
+          type = "",
+          align = "left"
+        )
+      ),
+      columns
+    )
+  )
+
+  data$`__rownames__` <- rownames(data)
 
   is_list <- vapply(data, is.list, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
