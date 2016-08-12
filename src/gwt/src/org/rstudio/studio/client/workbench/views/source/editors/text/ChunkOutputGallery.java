@@ -122,7 +122,14 @@ public class ChunkOutputGallery extends Composite
       console_.showErrorOutput(error);
       
       // switch back to the console so the user can see the error
-      setActivePage(0);
+      for (int i = 0; i < pages_.size(); i++)
+      {
+         if (pages_.get(i) == console_)
+         {
+            setActivePage(i);
+            break;
+         }
+      }
    }
 
    @Override
