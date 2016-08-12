@@ -503,13 +503,30 @@ public class JsPropertyTest extends GWTTestCase {
     @JsProperty
     public String field;
   }
-  private native String getB(B b)/*-{
+
+  private native String getB(B b) /*-{
     return b.field;
   }-*/;
 
-  public void testNotReadExpoprtedFieldNotPruned() {
+  public void testNotReadExportedFieldNotPruned() {
     B b = new B();
     b.field = "secret";
     assertEquals("secret", getB(b));
+  }
+
+  @JsType
+  static class ClassWithFieldNotWrittenInJava {
+    public int fieldNotWrittenInJava = 0;
+  }
+
+  private native String setFieldNotWrittenInJava(Object obj, int value) /*-{
+    obj.fieldNotWrittenInJava = value;
+  }-*/;
+
+  public void testFieldNotWrittenInJava() {
+    ClassWithFieldNotWrittenInJava obj = new ClassWithFieldNotWrittenInJava();
+    assertEquals(0, obj.fieldNotWrittenInJava);
+    setFieldNotWrittenInJava(obj, 2);
+    assertEquals(2, obj.fieldNotWrittenInJava);
   }
 }

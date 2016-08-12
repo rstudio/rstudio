@@ -73,9 +73,10 @@ public class Finalizer {
 
     @Override
     public void exit(JField x, Context ctx) {
-      if (!x.isVolatile()) {
-        maybeFinalize(x);
+      if (x.isVolatile() || x.canBeImplementedExternally() || x.canBeReferencedExternally()) {
+        return;
       }
+      maybeFinalize(x);
     }
 
     @Override
