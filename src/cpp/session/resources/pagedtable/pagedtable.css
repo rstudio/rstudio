@@ -22,6 +22,10 @@
   padding: 0 6px 3px 6px;
   border: none;
   border-bottom: 1px solid #dddddd;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pagedtable-empty th {
@@ -35,6 +39,10 @@
 .pagedtable td {
   padding: 2px 6px 2px 6px;
   border-bottom: solid 1px #F3F3F3;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pagedtable tr.even {
