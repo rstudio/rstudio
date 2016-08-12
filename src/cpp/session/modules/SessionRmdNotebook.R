@@ -169,6 +169,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("rnb.outputSourceConsole", function(fileName,
                                                     fileContents,
                                                     includeSource,
+                                                    context,
                                                     ...)
 {
    parsed <- .rs.rnb.readConsoleData(fileContents)
@@ -200,7 +201,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # extract body element (this is effectively what the
       # widget emitted on print in addition to aforementioned
       # dependency information)
-      bodyEl <- .rs.extractHTMLBodyElement(fileContents)
+      bodyEl <- htmltools::htmlPreserve(.rs.extractHTMLBodyElement(fileContents))
       
       # annotate widget manually and return asis output
       annotated <- rmarkdown:::html_notebook_annotated_output(
@@ -219,7 +220,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       "html"
    )
    
-   knitr::asis_output(annotated)
+   preserved <- htmltools::htmlPreserve(annotated)
+   knitr::asis_output(preserved)
 })
 
 .rs.addFunction("rnb.outputSourceRdf", function(fileName,
@@ -290,7 +292,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          if (!is.function(handler))
             return(NULL)
          
-         handler(fileName = fileName,
+         handler(code = code,
+                 context = context,
+                 fileName = fileName,
                  fileContents = fileContents,
                  rnbData = rnbData,
                  chunkId = chunkId,
