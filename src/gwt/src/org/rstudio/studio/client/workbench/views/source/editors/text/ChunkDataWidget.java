@@ -120,7 +120,7 @@ public class ChunkDataWidget extends SimplePanel
    
    private static final native void resizeDataOutputStyleNative(
          JavaScriptObject pagedTable) /*-{
-     pagedTable.fitColumns(false);
+     pagedTable.resizeColumns();
    }-*/;
    
    private final JavaScriptObject pagedTable_;
