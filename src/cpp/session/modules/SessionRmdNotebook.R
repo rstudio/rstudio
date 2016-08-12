@@ -220,7 +220,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          list(dependencies = jsonContents,
               metadata     = metadata)
       )
-      widget <- knitr::asis_output(annotated)
+      preserved <- htmltools::htmlPreserve(annotated)
+      widget <- knitr::asis_output(preserved)
       attr(widget, "knit_meta") <- jsonContents
       return(widget)
    }
@@ -231,8 +232,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       "html",
       list(metadata = metadata)
    )
-   
-   knitr::asis_output(annotated)
+   preserved <- htmltools::htmlPreserve(annotated)
+   knitr::asis_output(preserved)
 })
 
 .rs.addFunction("rnb.pagedTableHtml", function(rdfPath)
