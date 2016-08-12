@@ -1155,6 +1155,11 @@ public class RCompletionManager implements CompletionManager
       if (context.getToken().startsWith("-"))
          context.setToken(context.getToken().substring(1));
       
+      // fix up roxygen autocompletion for case where '@' is snug against
+      // the comment marker
+      if (context.getToken().equals("'@"))
+         context.setToken(context.getToken().substring(1));
+      
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoInsert);
