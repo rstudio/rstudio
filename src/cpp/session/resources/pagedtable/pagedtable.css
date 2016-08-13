@@ -26,6 +26,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  min-width: 27px;
 }
 
 .pagedtable-empty th {
@@ -46,7 +48,6 @@
 }
 
 .pagedtable tr.even {
-  background-color: #fcfcfc;
 }
 
 .pagedtable tr:first-child td {
