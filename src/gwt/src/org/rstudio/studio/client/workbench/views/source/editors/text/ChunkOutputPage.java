@@ -16,9 +16,21 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public interface ChunkOutputPage
+public abstract class ChunkOutputPage
 {
-   Widget thumbnailWidget();
-   Widget contentWidget();
-   void onSelected();
+   public ChunkOutputPage(int ordinal)
+   {
+      ordinal_ = ordinal;
+   }
+   
+   public int ordinal()
+   {
+      return ordinal_;
+   }
+
+   public abstract Widget thumbnailWidget();
+   public abstract Widget contentWidget();
+   public abstract void onSelected();
+   
+   private final int ordinal_;
 }

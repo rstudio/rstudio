@@ -28,10 +28,11 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChunkPlotPage implements ChunkOutputPage
+public class ChunkPlotPage extends ChunkOutputPage
 {
-   public ChunkPlotPage(final String url)
+   public ChunkPlotPage(final String url, int ordinal)
    {
+      super(ordinal);
       if (isFixedSizePlotUrl(url))
       {
          final Image thumbnail = new Image();

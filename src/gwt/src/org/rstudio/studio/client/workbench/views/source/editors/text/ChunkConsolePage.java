@@ -23,16 +23,18 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChunkConsolePage implements ChunkOutputPage,
-                                         ChunkOutputPresenter.Host
+public class ChunkConsolePage extends ChunkOutputPage
+                              implements ChunkOutputPresenter.Host
 {
    public ChunkConsolePage()
    {
+      super(0);
       init(new ChunkOutputStream(this));
    }
 
    public ChunkConsolePage(ChunkOutputStream stream)
    {
+      super(0);
       init(stream);
    }
 

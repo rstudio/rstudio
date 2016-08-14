@@ -5,16 +5,19 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChunkDataPage implements ChunkOutputPage,
-                                      EditorThemeListener
+public class ChunkDataPage extends ChunkOutputPage
+                           implements EditorThemeListener
 {
-   public ChunkDataPage(JavaScriptObject data, NotebookFrameMetadata metadata)
+   public ChunkDataPage(JavaScriptObject data, NotebookFrameMetadata metadata,
+         int ordinal)
    {
-      this(new ChunkDataWidget(data), metadata);
+      this(new ChunkDataWidget(data), metadata, ordinal);
    }
    
-   public ChunkDataPage(ChunkDataWidget widget, NotebookFrameMetadata metadata)
+   public ChunkDataPage(ChunkDataWidget widget, NotebookFrameMetadata metadata,
+         int ordinal)
    {
+      super(ordinal);
       content_ = widget;
       if (metadata == null)
       {
