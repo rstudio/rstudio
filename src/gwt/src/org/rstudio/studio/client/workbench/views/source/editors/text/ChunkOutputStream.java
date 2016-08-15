@@ -435,7 +435,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkDataWidget widget = (ChunkDataWidget)w;
             ChunkDataPage data = new ChunkDataPage(widget, 
-                  (NotebookFrameMetadata)metadata.cast());
+                  (NotebookFrameMetadata)metadata.cast(), ordinal);
             pages.add(data);
             remove(w);
             continue;
@@ -450,7 +450,7 @@ public class ChunkOutputStream extends FlowPanel
          if (inner instanceof Image)
          {
             Image image = (Image)inner;
-            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl());
+            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), ordinal);
             pages.add(plot);
             remove(w);
          }
@@ -458,7 +458,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)inner;
             ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), 
-                  (NotebookHtmlMetadata)metadata.cast(), null);
+                  (NotebookHtmlMetadata)metadata.cast(), ordinal, null);
             pages.add(html);
             remove(w);
          }

@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputGallery extends Composite
-                                        implements ChunkOutputPresenter
+                                implements ChunkOutputPresenter
 {
 
    private static ChunkOutputGalleryUiBinder uiBinder = GWT
@@ -105,14 +105,14 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkPlotPage(url));
+      addPage(new ChunkPlotPage(url, ordinal));
    }
 
    @Override
    public void showHtmlOutput(String url, NotebookHtmlMetadata metadata, 
          int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkHtmlPage(url, metadata, onRenderComplete));
+      addPage(new ChunkHtmlPage(url, metadata, ordinal, onRenderComplete));
    }
 
    @Override
@@ -144,7 +144,7 @@ public class ChunkOutputGallery extends Composite
    public void showDataOutput(JavaScriptObject data, 
          NotebookFrameMetadata metadata, int ordinal)
    {
-      addPage(new ChunkDataPage(data, metadata));
+      addPage(new ChunkDataPage(data, metadata, ordinal));
    }
 
    @Override
@@ -233,18 +233,41 @@ public class ChunkOutputGallery extends Composite
 
    public void addPage(ChunkOutputPage page)
    {
-      final int index = pages_.size();
-      pages_.add(page);
+      int idx = pages_.size();
+
+      // look for out of place inserts
+      if (page.ordinal() < maxOrdinal_)
+      {
+         for (int i = 0; i < pages_.size() - 1; i++)
+         {
+            if (page.ordinal() > pages_.get(i).ordinal() &&
+                page.ordinal() < pages_.get(i+1).ordinal())
+            {
+               idx = i+1;
+
+               // if we picked the currently active page, move it out of the
+               // way
+               if (activePage_ == idx)
+                  activePage_++;
+               break;
+            }
+         }
+      }
+      maxOrdinal_ = Math.max(maxOrdinal_, page.ordinal());
+      
+      pages_.add(idx, page);
       Widget thumbnail = page.thumbnailWidget();
       thumbnail.addStyleName(style.thumbnail());
+
       // apply editor color to thumbnail before 
       syncThumbnailColor(thumbnail, ChunkOutputWidget.getEditorColors());
-      filmstrip_.add(thumbnail);
+      filmstrip_.insert(thumbnail, idx);
       
       // lock to this console if we don't have one already
       if (page instanceof ChunkConsolePage && console_ == null)
          console_ = (ChunkConsolePage)page;
 
+      final int ordinal = page.ordinal();
       DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK);
       DOM.setEventListener(thumbnail.getElement(), new EventListener()
       {
@@ -254,15 +277,26 @@ public class ChunkOutputGallery extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               setActivePage(index);
+               // convert ordinal back to index (index can change with
+               // out-of-order insertions)
+               for (int i = 0; i < pages_.size(); i++)
+               {
+                  if (pages_.get(i).ordinal() == ordinal)
+                  {
+                     setActivePage(i);
+                     break;
+                  }
+               }
                break;
             };
          }
       });
       
       // show this page if it's the first one, or if we don't have any errors
-      if (index == 0 || !hasErrors())
-         setActivePage(index);
+      // and we're adding a last page
+      if (idx == 0 || 
+          ((idx == pages_.size() - 1) && !hasErrors()))
+         setActivePage(idx);
 
       host_.notifyHeightChanged();
    }
@@ -332,6 +366,7 @@ public class ChunkOutputGallery extends Composite
    private ChunkConsolePage console_;
    private SimplePanel content_;
    private int activePage_ = -1;
+   private int maxOrdinal_ = 0;
    
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;

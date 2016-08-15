@@ -25,12 +25,14 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ChunkHtmlPage implements ChunkOutputPage,
-                                      EditorThemeListener
+public class ChunkHtmlPage extends ChunkOutputPage
+                           implements EditorThemeListener
 {
    public ChunkHtmlPage(String url, NotebookHtmlMetadata metadata,
-         final Command onRenderComplete)
+         int ordinal, final Command onRenderComplete)
    {
+      super(ordinal);
+
       // extract classes from metadata if present
       JsArrayString classes = JsArrayString.createArray().cast();
       if (metadata != null) 
