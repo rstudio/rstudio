@@ -17,7 +17,9 @@
 {
   c(
     "print.data.frame",
-    "print.tbl_df"
+    "print.tbl_df",
+    "print.grouped_df",
+    "print.data.table"
   )
 })
 
@@ -120,7 +122,7 @@
     }
   )
 
-  names(data) <- columnSequence
+  names(data) <- as.character(columnSequence)
 
   # add the names column
   columns <- unname(
