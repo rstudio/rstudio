@@ -207,8 +207,8 @@ public class ChunkOutputUi
       int height = 
             outputWidget_.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
                CHUNK_COLLAPSED_HEIGHT :
-               Math.max(MIN_CHUNK_HEIGHT, 
-                 Math.min(outputHeight, MAX_CHUNK_HEIGHT));
+               Math.max(MIN_CHUNK_HEIGHT, outputHeight);
+
       outputWidget_.getElement().getStyle().setHeight(height, Unit.PX);
       display_.onLineWidgetChanged(lineWidget_.getLineWidget());
       

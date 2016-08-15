@@ -288,10 +288,8 @@ public class ChunkOutputWidget extends Composite
       int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
       if (expansionState_.getValue() == EXPANDED)
       {
-         int contentHeight = root_.getElement().getScrollHeight() + 19;
-         height = Math.min(
-               Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
-               ChunkOutputUi.MAX_CHUNK_HEIGHT);
+         int contentHeight = root_.getElement().getOffsetHeight() + 19;
+         height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight);
 
          // if we have renders pending, don't shrink until they're loaded 
          if (pendingRenders_ > 0 && height < renderedHeight_)
