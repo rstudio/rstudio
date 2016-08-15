@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ChunkDataWidget extends SimplePanel
@@ -25,8 +26,25 @@ public class ChunkDataWidget extends SimplePanel
    public ChunkDataWidget(JavaScriptObject data)
    {
       data_ = data;
-      pagedTable_ = showDataOutputNative(data, getElement());
-      onDataOutputChange();
+
+      initPagedTableOrDelay();
+   }
+
+   private void initPagedTableOrDelay()
+   {
+      if (pagedTableExists()) {
+         pagedTable_ = showDataOutputNative(data_, getElement());
+         onDataOutputChange();
+      }
+      else {
+         Timer t = new Timer() {
+           public void run() {
+             initPagedTableOrDelay();
+           }
+         };
+
+         t.schedule(200);
+      }
    }
 
    public static void injectPagedTableResources()
@@ -44,7 +62,10 @@ public class ChunkDataWidget extends SimplePanel
    
    public void onResize()
    {
-      resizeDataOutputStyleNative(pagedTable_);
+      if (pagedTable_ != null)
+      {
+         resizeDataOutputStyleNative(pagedTable_);
+      }
    }
    
    public JavaScriptObject getData()
@@ -70,6 +91,10 @@ public class ChunkDataWidget extends SimplePanel
          
          $doc.getElementsByTagName("head")[0].appendChild(linkElement);
       }
+   }-*/;
+
+   private final native boolean pagedTableExists() /*-{
+      return typeof(PagedTable) != "undefined";
    }-*/;
 
    private final native JavaScriptObject showDataOutputNative(JavaScriptObject data, 
@@ -129,6 +154,6 @@ public class ChunkDataWidget extends SimplePanel
      pagedTable.resizeColumns();
    }-*/;
    
-   private final JavaScriptObject pagedTable_;
+   private JavaScriptObject pagedTable_ = null;
    private final JavaScriptObject data_;
 }
