@@ -142,6 +142,9 @@ void PlotCapture::saveSnapshot()
       LOG_ERROR(error);
    else
       snapshotFile_ = outputFile;
+
+   // clear the display list now that it's been written
+   lastPlot_.releaseNow();
 }
 
 void PlotCapture::onExprComplete()
