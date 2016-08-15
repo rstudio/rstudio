@@ -337,11 +337,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          },
          {
             token : "keyword",
-            regex : "@examples",
-            next  : "rd-examples"
-         },
-         {
-            token : "keyword",
             regex : "@(?!@)[^ ]*"
          },
          {
@@ -378,54 +373,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
          }
       ];
 
-      // entrypoint for R code highlight in roxygen examples
-      this.$rules["rd-examples"] = [
-         {
-            token : "comment",
-            regex : "#+'\\s*(?=@)",
-            next  : "rd-start"
-         },
-         {
-            token : "comment",
-            regex : "#+'\\s*",
-            next  : "rd-examples-start"
-         },
-         {
-            token : "comment",
-            regex : "^",
-            next  : "start"
-         }
-      ];
-
-      // highlight R code in roxygen examples
-      this.$rules["rd-examples-start"] = [
-         {
-            token : "identifier.support.function",
-            regex : "\\\\dont(?:run|test)"
-         },
-         {
-            token : "comment",
-            regex : "^",
-            next  : "rd-examples"
-         },
-         {
-            include : "start"
-         }
-      ];
-
       this.normalizeRules();
-
-      for (var i = 0; i < this.$rules["rd-examples-start"].length; i++) {
-         var rule = this.$rules["rd-examples-start"][i];
-         if (rule.next === "start") {
-            this.$rules["rd-examples-start"][i] = {
-               token : rule.token,
-               regex : rule.regex,
-               merge : rule.merge,
-               next  : "rd-examples-start"
-            };
-         }
-      }
 
    };
 
