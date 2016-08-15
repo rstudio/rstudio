@@ -323,25 +323,58 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
 
       this.addRules(rdRules, "rd-");
-      this.$rules["rd-start"].unshift({
-          token: "text",
-          regex: "^",
-          next: "start"
-      });
-      this.$rules["rd-start"].unshift({
-         token : "keyword",
-         regex : "@(?!@)[^ ]*"
-      });
-      this.$rules["rd-start"].unshift({
-         token : "comment",
-         regex : "@@"
-      });
-      this.$rules["rd-start"].push({
-         token : "comment",
-         regex : "[^%\\\\[({\\])}]+"
-      });
+
+      // embed our own roxygen highlight rules
+      var rdStartRulesBefore = [
+         {
+            token : "comment",
+            regex : "@@"
+         },
+         {
+            token : ["keyword", "comment"],
+            regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
+            next  : "rd-highlight"
+         },
+         {
+            token : "keyword",
+            regex : "@(?!@)[^ ]*"
+         },
+         {
+            token : "comment",
+            regex : "^",
+            next  : "start"
+         }
+      ];
+
+      var rdStartRulesAfter = [
+         {
+            token : "comment",
+            regex : "[^%\\\\[({\\])}]+"
+         }
+      ];
+
+      this.$rules["rd-start"] =
+         rdStartRulesBefore.concat(this.$rules["rd-start"]).concat(rdStartRulesAfter);
+
+      // highlight terms after certain roxygen tags
+      this.$rules["rd-highlight"] = [
+         {
+            token : "identifier.support.function",
+            regex : "[a-zA-Z0-9._-]+"
+         },
+         {
+            token : "comment",
+            regex : ","
+         },
+         {
+            token : "comment",
+            regex : "\\s*",
+            next  : "rd-start"
+         }
+      ];
 
       this.normalizeRules();
+
    };
 
    oop.inherits(RHighlightRules, TextHighlightRules);
