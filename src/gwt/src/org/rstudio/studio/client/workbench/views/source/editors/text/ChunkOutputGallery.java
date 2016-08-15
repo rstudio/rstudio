@@ -244,13 +244,17 @@ public class ChunkOutputGallery extends Composite
                 page.ordinal() < pages_.get(i+1).ordinal())
             {
                idx = i+1;
+
+               // if we picked the currently active page, move it out of the
+               // way
+               if (activePage_ == idx)
+                  activePage_++;
                break;
             }
          }
       }
       maxOrdinal_ = Math.max(maxOrdinal_, page.ordinal());
-
-      final int index = idx;
+      
       pages_.add(idx, page);
       Widget thumbnail = page.thumbnailWidget();
       thumbnail.addStyleName(style.thumbnail());
@@ -263,6 +267,7 @@ public class ChunkOutputGallery extends Composite
       if (page instanceof ChunkConsolePage && console_ == null)
          console_ = (ChunkConsolePage)page;
 
+      final int ordinal = page.ordinal();
       DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK);
       DOM.setEventListener(thumbnail.getElement(), new EventListener()
       {
@@ -272,15 +277,26 @@ public class ChunkOutputGallery extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               setActivePage(index);
+               // convert ordinal back to index (index can change with
+               // out-of-order insertions)
+               for (int i = 0; i < pages_.size(); i++)
+               {
+                  if (pages_.get(i).ordinal() == ordinal)
+                  {
+                     setActivePage(i);
+                     break;
+                  }
+               }
                break;
             };
          }
       });
       
       // show this page if it's the first one, or if we don't have any errors
-      if (index == 0 || !hasErrors())
-         setActivePage(index);
+      // and we're adding a last page
+      if (idx == 0 || 
+          ((idx == pages_.size() - 1) && !hasErrors()))
+         setActivePage(idx);
 
       host_.notifyHeightChanged();
    }
