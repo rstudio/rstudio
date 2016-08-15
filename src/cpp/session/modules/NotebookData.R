@@ -16,16 +16,30 @@
 .rs.addFunction("dataCaptureOverrides", function(outputFolder, libraryFolder)
 {
   c(
-    "print.data.frame",
-    "print.tbl_df",
-    "print.grouped_df",
-    "print.data.table"
+    "print.data.frame" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
+    "print.tbl_df" = function(x, options)     list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
+    "print.grouped_df" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
+    "print.data.table" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
+    "print.tbl_lazy" = function(x, options) {
+      tblLazyData <- lapply(dplyr::tbl_vars(x), function(e) character(0))
+      names(tblLazyData) <- dplyr::tbl_vars(x)
+      lazyFrame <- do.call("data.frame", tblLazyData)
+
+      list(
+        x = lazyFrame,
+        options = options,
+        className = class(x),
+        nRow = "?",
+        nCol = "?"
+      )
+    }
+
   )
 })
 
 .rs.addFunction("initDataCapture", function(outputFolder, options)
 {
-  overridePrint <- function(x, ...) {
+  overridePrint <- function(x, options, className, nRow, nCol) {
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
@@ -38,16 +52,21 @@
       options,
       file = output)
 
-    .Call("rs_recordData", output, list(classes = class(x),
-                                        nrow = .rs.scalar(nrow(x)), 
-                                        ncol = .rs.scalar(ncol(x))))
+    .Call("rs_recordData", output, list(classes = className,
+                                        nrow = nRow, 
+                                        ncol = nCol))
     invisible(x)
   }
 
-  lapply(.rs.dataCaptureOverrides(), function(override) {
+  overrides <- .rs.dataCaptureOverrides()
+  lapply(names(overrides), function(overrideName) {
+    overrideMap <- overrides[[overrideName]]
     assign(
-      override,
-      overridePrint,
+      overrideName,
+      function(x, ...) {
+        o <- overrideMap(x, options)
+        overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
+      },
       envir = as.environment("tools:rstudio")
     )
   })
@@ -87,7 +106,7 @@
     )
   )
 
-  overrides <- .rs.dataCaptureOverrides()
+  overrides <- names(.rs.dataCaptureOverrides())
   rm(
     list = overrides,
     envir = as.environment("tools:rstudio")
