@@ -86,34 +86,45 @@ public class EditingTargetCodeExecution
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)
       {
-         Scope scope = docDisplay_.getCurrentChunk();
-         if (scope == null)
+         boolean isRoxygen = isRoxygenLine(docDisplay_.getCurrentLine());
+         if (isRoxygen)
          {
-            if (prefs_.executeMultiLineStatements().getValue())
-            {
-               // no scope to guard region, check the document itself to find
-               // the region to execute
-               selectionRange = docDisplay_.getMultiLineExpr(
-                     docDisplay_.getCursorPosition(), 1, 
-                     docDisplay_.getRowCount());
-            }
-            else
-            {
-               // single-line execution
-               int row = docDisplay_.getSelectionStart().getRow();
-               selectionRange = Range.fromPoints(
-                     Position.create(row, 0),
-                     Position.create(row, docDisplay_.getLength(row)));
-            }
+            int row = docDisplay_.getSelectionStart().getRow();
+            selectionRange = Range.fromPoints(
+                  Position.create(row, 0),
+                  Position.create(row, docDisplay_.getLength(row)));
          }
          else
          {
-            // inside a chunk, always execute multiple lines (bounded by the
-            // chunk)
-            selectionRange = docDisplay_.getMultiLineExpr(
-                  docDisplay_.getCursorPosition(), 
-                  scope.getBodyStart().getRow(), 
-                  scope.getEnd().getRow() - 1);
+            Scope scope = docDisplay_.getCurrentChunk();
+            if (scope == null)
+            {
+               if (prefs_.executeMultiLineStatements().getValue())
+               {
+                  // no scope to guard region, check the document itself to find
+                  // the region to execute
+                  selectionRange = docDisplay_.getMultiLineExpr(
+                        docDisplay_.getCursorPosition(), 1,
+                        docDisplay_.getRowCount());
+               }
+               else
+               {
+                  // single-line execution
+                  int row = docDisplay_.getSelectionStart().getRow();
+                  selectionRange = Range.fromPoints(
+                        Position.create(row, 0),
+                        Position.create(row, docDisplay_.getLength(row)));
+               }
+            }
+            else
+            {
+               // inside a chunk, always execute multiple lines (bounded by the
+               // chunk)
+               selectionRange = docDisplay_.getMultiLineExpr(
+                     docDisplay_.getCursorPosition(),
+                     scope.getBodyStart().getRow(),
+                     scope.getEnd().getRow() - 1);
+            }
          }
          
          // make it harder to step off the end of a chunk
