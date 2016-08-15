@@ -68,7 +68,7 @@
 
 .pagedtable-index-nav {
   cursor: pointer;
-  padding: 0 5px 0 5px;
+  padding: 0 5px 6px 5px;
   float: right;
   color: #999;
 }
@@ -108,6 +108,8 @@ a.pagedtable-index-current {
 .pagedtable-footer {
   padding-top: 9px;
   padding-bottom: 5px;
+  max-height: 18px;
+  overflow: hidden;
 }
 
 .pagedtable-not-empty .pagedtable-footer {

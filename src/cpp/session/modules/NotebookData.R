@@ -27,10 +27,13 @@
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
-    x <- head(x, getOption("max.print", 1000))
+    max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else options$max.print
+
+    x <- head(x, max.print)
 
     save(
-      x, 
+      x,
+      options,
       file = output)
 
     .Call("rs_recordData", output, list(classes = class(x),
@@ -96,6 +99,7 @@
 
   data <- head(e$x, getOption("max.print", 1000))
   data <- if (is.null(data)) as.data.frame(list()) else data
+  options <- e$options
 
   columnNames <- names(data)
   columnSequence <- seq_len(ncol(data))
@@ -124,7 +128,7 @@
       list(
         list(
           label = "",
-          name = "__rownames__",
+          name = "_rn_",
           type = "",
           align = "left"
         )
@@ -133,7 +137,7 @@
     )
   )
 
-  data$`__rownames__` <- rownames(data)
+  data$`_rn_` <- rownames(data)
 
   is_list <- vapply(data, is.list, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
@@ -154,9 +158,19 @@
     stringsAsFactors = FALSE,
     optional = TRUE)
 
+  pagedTableOptions <- list(
+    columns = list(
+      min = options[["cols.min.print"]],
+      max = options[["cols.print"]]
+    ),
+    rows = options[["rows.print"]],
+    pages = options[["pages.print"]]
+  )
+
   list(
     columns = columns,
-    data = if (length(data) == 0) list() else data
+    data = if (length(data) == 0) list() else data,
+    options = pagedTableOptions
   )
 })
 
