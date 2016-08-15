@@ -227,6 +227,7 @@ public class ChunkOutputStream extends FlowPanel
             bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
             
             onRenderComplete.execute();
+            onHeightChanged();
          };
       });
    }
@@ -450,7 +451,8 @@ public class ChunkOutputStream extends FlowPanel
          if (inner instanceof Image)
          {
             Image image = (Image)inner;
-            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), ordinal);
+            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), ordinal, 
+                  null);
             pages.add(plot);
             remove(w);
          }

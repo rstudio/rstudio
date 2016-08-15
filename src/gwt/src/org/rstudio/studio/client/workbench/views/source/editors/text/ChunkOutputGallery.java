@@ -105,7 +105,7 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkPlotPage(url, ordinal));
+      addPage(new ChunkPlotPage(url, ordinal, onRenderComplete));
    }
 
    @Override

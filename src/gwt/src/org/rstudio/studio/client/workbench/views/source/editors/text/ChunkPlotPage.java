@@ -30,7 +30,8 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkPlotPage extends ChunkOutputPage
 {
-   public ChunkPlotPage(final String url, int ordinal)
+   public ChunkPlotPage(final String url, int ordinal, 
+         final Command onRenderComplete)
    {
       super(ordinal);
       if (isFixedSizePlotUrl(url))
@@ -59,6 +60,7 @@ public class ChunkPlotPage extends ChunkOutputPage
                   img.getStyle().setProperty("width", "auto");
                }
                thumbnail.setUrl(url);
+               onRenderComplete.execute();
             }
          });
          plot_.setUrl(url);
@@ -69,7 +71,9 @@ public class ChunkPlotPage extends ChunkOutputPage
          // automatically expand non-fixed plots
          thumbnail_ = new FixedRatioWidget(new Image(url), 
                      ChunkOutputUi.OUTPUT_ASPECT, 100);
-         plot_ = new Image(url);
+         plot_ = new Image();
+         listenForRender(plot_, "auto", "100%", "", onRenderComplete);
+         plot_.setUrl(url);
          content_ = new FixedRatioWidget(plot_, ChunkOutputUi.OUTPUT_ASPECT, 
                ChunkOutputUi.MAX_PLOT_WIDTH);
       }
