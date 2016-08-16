@@ -144,6 +144,7 @@ set (SESSION_SOURCE_FILES
    modules/environment/EnvironmentMonitor.cpp
    modules/environment/EnvironmentUtils.cpp
    modules/environment/SessionEnvironment.cpp
+   modules/mathjax/SessionMathJax.cpp
    modules/overlay/SessionOverlay.cpp
    modules/presentation/SessionPresentation.cpp
    modules/presentation/PresentationLog.cpp
