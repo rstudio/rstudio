@@ -76,4 +76,7 @@ public interface RSConnectServerOperations
    
    void getEditPublishedDocs(String appPath,
                 ServerRequestCallback<JsArrayString> resultCallback);
+   
+   void generateAppName(String title, String appPath, String accountName,
+                ServerRequestCallback<RSConnectAppName> resultCallback);
 }

@@ -107,6 +107,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
@@ -4058,6 +4059,17 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void generateAppName(String title, String appPath, String accountName,
+         ServerRequestCallback<RSConnectAppName> resultCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(title));
+      params.set(1, new JSONString(appPath));
+      params.set(2, new JSONString(accountName));
+      sendRequest(RPC_SCOPE, "generate_app_name", params, resultCallback);
+   }
+
    @Override
    public void getEditPublishedDocs(String appPath,
          ServerRequestCallback<JsArrayString> resultCallback)

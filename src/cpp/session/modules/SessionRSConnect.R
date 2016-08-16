@@ -400,3 +400,24 @@
   }
   .rs.scalarListFromFrame(servers)
 })
+
+.rs.addJsonRpcHandler("generate_app_name", function(appTitle, appPath, account) {
+  name  <- ""
+  valid <- TRUE
+  error <- ""
+
+  # attempt to generate a name from the title
+  tryCatch({
+    name <- rsconnect::generateAppName(appTitle = appTitle, 
+                                       appPath  = appPath, 
+                                       account  = account)
+  }, error = function(e) {
+    valid <<- FALSE
+    error <<- e$message
+  })
+  
+  # report result
+  list(name  = .rs.scalar(name),
+       valid = .rs.scalar(valid),
+       error = .rs.scalar(error))
+})
