@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
+import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
@@ -264,6 +265,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AddinsMRUList.class).asEagerSingleton();
       bind(AceEditorCommandDispatcher.class).asEagerSingleton();
       bind(DataImportPresenter.class).in(Singleton.class);
+      bind(MathJax.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
