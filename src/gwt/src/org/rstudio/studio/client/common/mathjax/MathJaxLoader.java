@@ -86,8 +86,10 @@ public class MathJaxLoader
    }-*/;
    
    private static final native void setMathJaxHooks() /*-{
-      var mathjax = $wnd.MathJax;
-      // TODO
+      var MathJax = $wnd.MathJax;
+      
+      // avoid jittering
+      MathJax.Hub.processSectionDelay = 0;
    }-*/;
 
    private static ScriptElement createMathJaxScriptElement()
