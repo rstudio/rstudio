@@ -31,6 +31,9 @@ public class DeploymentMenuItem extends CheckableMenuItem
                StringUtil.isNullOrEmpty(record.getDisplayName()) ? 
             record.getServer() : 
             record.getDisplayName() + " (" + record.getServer() + ")");
+      
+      // show actual name on hover (in case titles conflict)
+      setTitle(record.getName());
       isChecked_ = isChecked;
       onInvoked_ = onInvoked;
       onStateChanged();
