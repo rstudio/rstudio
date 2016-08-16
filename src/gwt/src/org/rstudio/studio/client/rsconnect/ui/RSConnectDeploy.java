@@ -508,9 +508,9 @@ public class RSConnectDeploy extends Composite
    public void generateAppName(String title,
          final CommandWithArg<RSConnectAppName> result)
    {
-      // don't generate a name if no source is present (we'll generate one 
-      // once the source has been acquired)
-      if (source_ == null)
+      // don't generate a name if no source or account is present (we'll
+      // generate one once the source has been acquired)
+      if (source_ == null || getSelectedAccount() == null)
          return;
       
       server_.generateAppName(title, 

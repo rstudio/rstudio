@@ -69,7 +69,7 @@ public class AppNameTextbox extends Composite
    
    public void setOnNameIsInvalid(Command cmd)
    {
-      onNameIsInvalid_ = cmd;
+      onNameIsInvalidTitle_ = cmd;
    }
    
    public void setTitle(String text)
@@ -101,7 +101,7 @@ public class AppNameTextbox extends Composite
             public void execute(RSConnectAppName arg)
             {
                name_ = arg.name();
-               valid_ = arg.valid();
+               validTitle_ = arg.valid();
                error_.setText(arg.error());
                setAppNameValid(arg.valid());
             }
@@ -124,7 +124,7 @@ public class AppNameTextbox extends Composite
 
    public boolean isValid()
    {
-      return valid_;
+      return !appTitle_.getText().isEmpty() && validTitle_;
    }
    
    // Private methods ---------------------------------------------------------
@@ -134,15 +134,15 @@ public class AppNameTextbox extends Composite
       nameValidatePanel_.setVisible(!isValid);
       if (isValid && onNameIsValid_ != null)
          onNameIsValid_.execute();
-      else if (!isValid && onNameIsInvalid_ != null)
-         onNameIsInvalid_.execute();
+      else if (!isValid && onNameIsInvalidTitle_ != null)
+         onNameIsInvalidTitle_.execute();
    }
 
    private final Host host_;
    private Command onNameIsValid_;
-   private Command onNameIsInvalid_;
+   private Command onNameIsInvalidTitle_;
    private String name_;
-   private boolean valid_ = true;
+   private boolean validTitle_ = true;
    
    @UiField TextBox appTitle_;
    @UiField HTMLPanel nameValidatePanel_;
