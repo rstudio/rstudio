@@ -33,8 +33,8 @@ public class MathJax
          public void setPosition(int offsetWidth, int offsetHeight)
          {
             popup.setPopupPosition(
-                  coordinates.getPageX(),
-                  coordinates.getPageY());
+                  coordinates.getPageX() + 10,
+                  coordinates.getPageY() + 10);
             mathjaxTypeset(panel.getElement());
          }
       });
@@ -57,6 +57,12 @@ public class MathJax
          },
          "HTML-CSS": {
             availableFonts: ['TeX']
+         },
+         showProcessingMessage: false,
+         messageStyle: "none",
+         skipStartupTypeset: true,
+         menuSettings: {
+            zoom: "Click"
          }
       };
       
