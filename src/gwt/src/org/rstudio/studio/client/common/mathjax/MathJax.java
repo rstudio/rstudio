@@ -77,7 +77,7 @@ public class MathJax
                return;
             }
             
-            scheduleRender(700);
+            scheduleRender(300);
          }
       });
       

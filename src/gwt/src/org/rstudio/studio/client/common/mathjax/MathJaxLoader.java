@@ -45,6 +45,7 @@ public class MathJaxLoader
             if (isMathJaxReady())
             {
                MATHJAX_LOADED = true;
+               setMathJaxHooks();
                return false;
             }
             
@@ -59,7 +60,7 @@ public class MathJaxLoader
          return;
 
       $wnd.MathJax = {
-         extensions: ['tex2jas.js'],
+         extensions: ['tex2jax.js'],
          jax: ['input/TeX', 'output/HTML-CSS'],
          tex2jax: {
             inlineMath:  [['$', '$'], ['\\(', '\\)']],
@@ -82,6 +83,11 @@ public class MathJaxLoader
    private static final native boolean isMathJaxReady() /*-{
       var mathjax = $wnd.MathJax || {};
       return mathjax.isReady;
+   }-*/;
+   
+   private static final native void setMathJaxHooks() /*-{
+      var mathjax = $wnd.MathJax;
+      // TODO
    }-*/;
 
    private static ScriptElement createMathJaxScriptElement()
