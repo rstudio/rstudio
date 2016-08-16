@@ -42,26 +42,27 @@ public class MathJax
    
    // Private Members ----
    
-   private ScriptElement createMathJaxConfig()
-   {
-      ScriptElement el = Document.get().createScriptElement();
-      el.setType("text/x-mathjax-config");
-      el.setInnerText(
-            "MathJax.Hub.Config({"
-            + "   extensions: ['tex2jax.js'],"
-            + "   jax: ['input/TeX', 'output/HTML-CSS'],"
-            + "   tex2jax: {"
-            + "      inlineMath: [['$', '$'], ['\\(', '\\)']],"
-            + "      displayMath: [['$$', '$$'], ['\\[', '\\]']],"
-            + "      processEscapes: true"
-            + "   },"
-            + "   'HTML-CSS': {availableFonts: ['TeX']}"
-            + "});"
-      );
-      return el;
-   }
+   private static final native void initializeMathJaxConfig() /*-{
+      
+      if (typeof $wnd.MathJax !== "undefined")
+         return;
+         
+      $wnd.MathJax = {
+         extensions: ['tex2jas.js'],
+         jax: ['input/TeX', 'output/HTML-CSS'],
+         tex2jax: {
+            inlineMath:  [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+         },
+         "HTML-CSS": {
+            availableFonts: ['TeX']
+         }
+      };
+      
+   }-*/;
    
-   private ScriptElement createMathJaxLoader()
+   private ScriptElement createMathJaxScriptElement()
    {
       ScriptElement el = Document.get().createScriptElement();
       el.setAttribute("type", "text/javascript");
@@ -75,13 +76,11 @@ public class MathJax
       if (MATHJAX_LOADED)
          return;
       
-      ScriptElement configEl  = createMathJaxConfig();
-      ScriptElement mathJaxEl = createMathJaxLoader();
-      
+      initializeMathJaxConfig();
+      ScriptElement mathJaxEl = createMathJaxScriptElement();
       HeadElement headEl = Document.get().getHead();
-      
-      headEl.appendChild(configEl);
       headEl.appendChild(mathJaxEl);
+      MATHJAX_LOADED = true;
    }
    
    private static final native void mathjaxTypeset(Element el) /*-{
