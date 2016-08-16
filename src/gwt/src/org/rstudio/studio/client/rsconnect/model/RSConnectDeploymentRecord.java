@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.model;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -29,10 +30,12 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    
    public static final native RSConnectDeploymentRecord create(
          String name, 
+         String title,
          RSConnectAccount account, 
          String url) /*-{
       return {
          'name': name,
+         'title': title,
          'account': account.name,
          'server': account.server,
          'url': url
@@ -41,10 +44,12 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    
    public static final native RSConnectDeploymentRecord create(
          String name, 
+         String title,
          String account,
          String server) /*-{
       return {
          'name': name,
+         'title': title,
          'account': account,
          'server': server,
          };
@@ -52,6 +57,10 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    
    public final native String getName() /*-{
       return this.name;
+   }-*/;
+   
+   public final native String getTitle() /*-{
+      return this.title;
    }-*/;
 
    public final native String getAccountName() /*-{
@@ -91,6 +100,13 @@ public class RSConnectDeploymentRecord extends JavaScriptObject
    public final ArrayList<String> getIgnoredFiles() 
    {
       return JsArrayUtil.fromJsArrayString(getFileList("ignoredFiles"));
+   }
+   
+   public final String getDisplayName()
+   {
+      if (StringUtil.isNullOrEmpty(getTitle()))
+         return getName();
+      return getTitle();
    }
    
    public final native boolean getAsMultiple() /*-{

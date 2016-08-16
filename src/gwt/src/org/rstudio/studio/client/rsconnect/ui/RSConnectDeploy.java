@@ -451,6 +451,9 @@ public class RSConnectDeploy extends Composite
          }
       }
       
+      // TOOD: implement this
+      String appTitle = "";
+      
       // if we're redeploying to the same account, use the previous app name;
       // otherwise, read the new name the user's entered
       String appName = isUpdate() ?
@@ -465,9 +468,10 @@ public class RSConnectDeploy extends Composite
          prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
          prefs_.writeUIPrefs();
       }
-            
+      
       return new RSConnectPublishResult(
             appName, 
+            appTitle,
             getSelectedAccount(), 
             source_,
             new RSConnectPublishSettings(deployFiles, 
@@ -588,7 +592,7 @@ public class RSConnectDeploy extends Composite
       if (fromPrevious_ != null)
       {
          appProgressName_.setText(fromPrevious_.getName());
-         appExistingName_.setText(fromPrevious_.getName());
+         appExistingName_.setText(fromPrevious_.getDisplayName());
          appProgressPanel_.setVisible(true);
          appInfoPanel_.setVisible(true);
 
@@ -1041,7 +1045,7 @@ public class RSConnectDeploy extends Composite
       // that was removed
       appName_.setVisible(true);
       if (fromPrevious_ != null)
-         appName_.setText(fromPrevious_.getName());
+         appName_.setText(fromPrevious_.getDisplayName());
       appInfoPanel_.setVisible(false);
       newAppPanel_.setVisible(true);
 
