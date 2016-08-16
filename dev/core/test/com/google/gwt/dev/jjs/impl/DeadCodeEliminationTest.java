@@ -383,6 +383,8 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     // is printed as a double with the right precision.
     optimize("float", "return 1.1f;").intoString("return " + String.format("%.16g", (double) 1.1f) +
         ";");
+    optimize("boolean", "return 2d > 1;").intoString("return true;");
+    optimize("boolean", "return 1 < 2d;").intoString("return true;");
   }
 
   public void testMultiExpression_RedundantClinitRemoval() throws Exception {

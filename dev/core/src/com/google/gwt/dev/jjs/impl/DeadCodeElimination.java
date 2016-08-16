@@ -1027,7 +1027,7 @@ public class DeadCodeElimination {
         case LTE:
         case GT:
         case GTE: {
-          if (isTypeFloatingPoint(lhs) ||  isTypeFloatingPoint(lhs)) {
+          if (isTypeFloatingPoint(lhs) || isTypeFloatingPoint(rhs)) {
             // operate on doubles
             double left = toDouble(lhs);
             double right = toDouble(rhs);
