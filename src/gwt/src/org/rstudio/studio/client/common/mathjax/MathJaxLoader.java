@@ -1,0 +1,98 @@
+package org.rstudio.studio.client.common.mathjax;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.HeadElement;
+import com.google.gwt.dom.client.ScriptElement;
+import com.google.inject.Singleton;
+
+@Singleton
+public class MathJaxLoader
+{
+   public interface Callback
+   {
+      public void onLoaded(boolean alreadyLoaded);
+   }
+   
+   public MathJaxLoader()
+   {
+      ensureMathJaxLoaded();
+   }
+   
+   public static void ensureMathJaxLoaded()
+   {
+      ensureMathJaxLoaded(null);
+   }
+   
+   public static void ensureMathJaxLoaded(Callback callback)
+   {
+      if (MATHJAX_LOADED)
+      {
+         callback.onLoaded(MATHJAX_LOADED);
+         return;
+      }
+      
+      initializeMathJaxConfig();
+      ScriptElement mathJaxEl = createMathJaxScriptElement();
+      HeadElement headEl = Document.get().getHead();
+      headEl.appendChild(mathJaxEl);
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         @Override
+         public boolean execute()
+         {
+            if (isMathJaxReady())
+            {
+               MATHJAX_LOADED = true;
+               return false;
+            }
+            
+            return true;
+         }
+      }, 20);
+   }
+   
+   private static final native void initializeMathJaxConfig() /*-{
+
+      if (typeof $wnd.MathJax !== "undefined")
+         return;
+
+      $wnd.MathJax = {
+         extensions: ['tex2jas.js'],
+         jax: ['input/TeX', 'output/HTML-CSS'],
+         tex2jax: {
+            inlineMath:  [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+         },
+         "HTML-CSS": {
+            availableFonts: ['TeX']
+         },
+         showProcessingMessage: false,
+         messageStyle: "none",
+         skipStartupTypeset: true,
+         menuSettings: {
+            zoom: "Click"
+         }
+      };
+
+   }-*/;
+   
+   private static final native boolean isMathJaxReady() /*-{
+      var mathjax = $wnd.MathJax || {};
+      return mathjax.isReady;
+   }-*/;
+
+   private static ScriptElement createMathJaxScriptElement()
+   {
+      ScriptElement el = Document.get().createScriptElement();
+      el.setAttribute("type", "text/javascript");
+      el.setSrc("mathjax/MathJax.js?config=TeX-MML-AM_CHTML");
+      el.setAttribute("async", "true");
+      return el;
+   }
+   
+   private static boolean MATHJAX_LOADED = false;
+   
+}

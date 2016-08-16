@@ -1,92 +1,135 @@
+/*
+ * MathJax.java
+ *
+ * Copyright (C) 2009-16 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.studio.client.common.mathjax;
 
-import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.HeadElement;
-import com.google.gwt.dom.client.ScriptElement;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
-import com.google.inject.Singleton;
 
-@Singleton
 public class MathJax
 {
    public MathJax()
    {
-      ensureMathJaxLoaded();
-   }
-   
-   public static void renderLaTeX(final String text,
-                                  final ScreenCoordinates coordinates)
-   {
-      final ThemedPopupPanel popup = new ThemedPopupPanel(true, false);
-      final FlowPanel panel = new FlowPanel();
-      panel.getElement().setInnerText(text);
-      popup.setWidget(panel);
-      
-      popup.setPopupPositionAndShow(new PositionCallback()
+      popup_ = new MathJaxPopupPanel();
+      renderTimer_ = new Timer()
       {
          @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
+         public void run()
          {
-            popup.setPopupPosition(
-                  coordinates.getPageX() + 10,
-                  coordinates.getPageY() + 10);
-            mathjaxTypeset(panel.getElement());
+            String text = docDisplay_.getTextForRange(anchor_.getRange());
+            if (!text.equals(lastRenderedText_))
+               render(text, false);
          }
-      });
+      };
+   }
+   
+   public void renderLaTeX(final DocDisplay docDisplay, final Range range)
+   {
+      initializeRender(docDisplay, range);
+   }
+   
+   public void renderLaTeX(final String text,
+                           final ScreenCoordinates coordinates)
+   {
+      popup_.setText(text);
    }
    
    // Private Members ----
    
-   private static final native void initializeMathJaxConfig() /*-{
-      
-      if (typeof $wnd.MathJax !== "undefined")
-         return;
-         
-      $wnd.MathJax = {
-         extensions: ['tex2jas.js'],
-         jax: ['input/TeX', 'output/HTML-CSS'],
-         tex2jax: {
-            inlineMath:  [['$', '$'], ['\\(', '\\)']],
-            displayMath: [['$$', '$$'], ['\\[', '\\]']],
-            processEscapes: true
-         },
-         "HTML-CSS": {
-            availableFonts: ['TeX']
-         },
-         showProcessingMessage: false,
-         messageStyle: "none",
-         skipStartupTypeset: true,
-         menuSettings: {
-            zoom: "Click"
-         }
-      };
-      
-   }-*/;
-   
-   private ScriptElement createMathJaxScriptElement()
+   private void initializeRender(final DocDisplay docDisplay, final Range range)
    {
-      ScriptElement el = Document.get().createScriptElement();
-      el.setAttribute("type", "text/javascript");
-      el.setSrc("mathjax/MathJax.js?config=TeX-MML-AM_CHTML");
-      el.setAttribute("async", "true");
-      return el;
+      resetRenderState();
+      
+      docDisplay_ = docDisplay;
+      coordinates_ = docDisplay.documentPositionToScreenCoordinates(range.getEnd());
+      anchor_ = docDisplay.createAnchoredSelection(range.getStart(), range.getEnd());
+      cursorChangedHandler_ = docDisplay.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            Position cursorPos = event.getPosition();
+            if (anchor_ == null || !anchor_.getRange().contains(cursorPos))
+            {
+               finishRender();
+               return;
+            }
+            
+            scheduleRender(700);
+         }
+      });
+      
+      render(docDisplay.getTextForRange(range), true);
    }
    
-   private void ensureMathJaxLoaded()
+   private void resetRenderState()
    {
-      if (MATHJAX_LOADED)
-         return;
+      if (anchor_ != null)
+      {
+         anchor_.detach();
+         anchor_ = null;
+      }
       
-      initializeMathJaxConfig();
-      ScriptElement mathJaxEl = createMathJaxScriptElement();
-      HeadElement headEl = Document.get().getHead();
-      headEl.appendChild(mathJaxEl);
-      MATHJAX_LOADED = true;
+      if (cursorChangedHandler_ != null)
+      {
+         cursorChangedHandler_.removeHandler();
+         cursorChangedHandler_ = null;
+      }
+   }
+   
+   private void finishRender()
+   {
+      popup_.hide();
+   }
+   
+   private void render(String text, boolean positionPopup)
+   {
+      lastRenderedText_ = text;
+      popup_.setText(text);
+      if (!positionPopup)
+      {
+         mathjaxTypeset(popup_.getElement());
+         return;
+      }
+      
+      popup_.setPopupPositionAndShow(new PositionCallback()
+      {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            popup_.setPopupPosition(
+                  coordinates_.getPageX() + 10,
+                  coordinates_.getPageY() + 10);
+            mathjaxTypeset(popup_.getElement());
+         }
+      });
+   }
+   
+   private void scheduleRender(int delayMs)
+   {
+      renderTimer_.schedule(delayMs);
    }
    
    private static final native void mathjaxTypeset(Element el) /*-{
@@ -94,5 +137,12 @@ public class MathJax
       MathJax.Hub.Typeset(el);
    }-*/;
    
-   private static boolean MATHJAX_LOADED = false;
+   private final Timer renderTimer_;
+   private final MathJaxPopupPanel popup_;
+   
+   private DocDisplay docDisplay_;
+   private AnchoredSelection anchor_;
+   private HandlerRegistration cursorChangedHandler_;
+   private ScreenCoordinates coordinates_;
+   private String lastRenderedText_;
 }

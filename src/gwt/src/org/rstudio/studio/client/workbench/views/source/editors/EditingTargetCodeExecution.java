@@ -30,7 +30,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 
@@ -65,11 +64,12 @@ public class EditingTargetCodeExecution
    }
    
    @Inject
-   void initialize(EventBus events, UIPrefs prefs, Commands commands)
+   void initialize(EventBus events, UIPrefs prefs, Commands commands, MathJax mathjax)
    {
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
+      mathjax_ = mathjax;
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
@@ -363,10 +363,7 @@ public class EditingTargetCodeExecution
       if (range == null)
          return;
       
-      String contents = docDisplay_.getTextForRange(range);
-      ScreenCoordinates coordinates =
-            docDisplay_.documentPositionToScreenCoordinates(range.getEnd());
-      MathJax.renderLaTeX(contents, coordinates);
+      mathjax_.renderLaTeX(docDisplay_, range);
    }
    
    private Range getCurrentLaTeXRange()
@@ -406,12 +403,15 @@ public class EditingTargetCodeExecution
       return Range.fromPoints(startPos, endPos);
    }
    
-   private EventBus events_;
-   private UIPrefs prefs_;
    private final DocDisplay docDisplay_;
    private final CodeExtractor codeExtractor_;
    private final String docId_;
    private AnchoredSelection lastExecutedCode_;
+   
+   // Injected ----
+   private EventBus events_;
+   private UIPrefs prefs_;
    private Commands commands_;
+   private MathJax mathjax_;
 }
 
