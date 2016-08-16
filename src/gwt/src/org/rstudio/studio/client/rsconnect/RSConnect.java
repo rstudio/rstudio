@@ -805,7 +805,8 @@ public class RSConnect implements SessionInitHandler,
                {
                   plotMru_.addPlotMruEntry(event.getRecord().getAccountName(),
                         event.getRecord().getServer(),
-                        event.getRecord().getName());
+                        event.getRecord().getName(),
+                        event.getRecord().getTitle());
                }
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
