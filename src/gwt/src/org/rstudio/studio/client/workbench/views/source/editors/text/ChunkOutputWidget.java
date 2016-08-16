@@ -341,7 +341,7 @@ public class ChunkOutputWidget extends Composite
          host_.onOutputHeightChanged(0, ensureVisible);
       }
 
-      state_ = presenter_.hasOutput() ? CHUNK_EMPTY : CHUNK_READY;
+      state_ = presenter_.hasOutput() ? CHUNK_READY : CHUNK_EMPTY;
       setOverflowStyle();
       showReadyState();
       unregisterConsoleEvents();
