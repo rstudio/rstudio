@@ -208,22 +208,22 @@ var MarkdownHighlightRules = function() {
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
         }, { // MathJax native display \[ ... \]
-            token : "markup.list",
+            token : "latex.markup.list",
             regex : "\\\\\\[",
             next  : "mathjaxnativedisplay"
         }, { // MathJax native inline \( ... \)
-            token : "markup.list",
+            token : "latex.markup.list",
             regex : "\\\\\\(",
             next  : "mathjaxnativeinline"
         }, { // $ escape
             token : "text",
             regex : "\\\\\\$"
         }, { // MathJax $$
-            token : "markup.list",
+            token : "latex.markup.list",
             regex : "\\${2}",
             next  : "mathjaxdisplay"
         }, { // MathJax $...$ (org-mode style)
-            token : ["markup.list","support.function","markup.list"],
+            token : ["latex.markup.list","latex.support.function","latex.markup.list"],
             regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
         },
             strongStars,
@@ -366,29 +366,29 @@ var MarkdownHighlightRules = function() {
         }],
 
         "mathjaxdisplay" : [{
-            token : "markup.list",
+            token : "latex.markup.list",
             regex : "\\${2}",
             next  : "start"
         }, {
-            token : "support.function",
+            token : "latex.support.function",
             regex : "[^\\$]+"
         }],
         
         "mathjaxnativedisplay" : [{
-            token : "markup.list",
+            token : "latex.markup.list",
             regex : "\\\\\\]",
             next  : "start"
         }, {
-            token : "support.function",
+            token : "latex.support.function",
             regex : "[\\s\\S]+?"
         }],
         
         "mathjaxnativeinline" : [{
-            token : "markup.list",
+            token : "latex.markup.list",
             regex : "\\\\\\)",
             next  : "start"
         }, {
-            token : "support.function",
+            token : "latex.support.function",
             regex : "[\\s\\S]+?"
         }]
 

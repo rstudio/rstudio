@@ -120,7 +120,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    
    private Range findOptsChunk()
    {
-      TokenIterator iterator = display_.getTokenIterator(position_);
+      TokenIterator iterator = display_.createTokenIterator(position_);
       
       while (true)
       {

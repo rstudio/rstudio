@@ -3243,6 +3243,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().blockOutdent();
    }
+   
+   public ScreenCoordinates documentPositionToScreenCoordinates(Position position)
+   {
+      return widget_.getEditor().getRenderer().textToScreenCoordinates(position);
+   }
 
    public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
    {
@@ -3254,13 +3259,19 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().isRowFullyVisible(position.getRow());
    }
    
-   public TokenIterator getTokenIterator(Position pos)
+   @Override
+   public TokenIterator createTokenIterator()
    {
-      if (pos == null)
-         return TokenIterator.create(getSession());
-      else
-         return TokenIterator.create(getSession(),
-               pos.getRow(), pos.getColumn());
+      return createTokenIterator(null);
+   }
+   
+   @Override
+   public TokenIterator createTokenIterator(Position position)
+   {
+      TokenIterator it = TokenIterator.create(getSession());
+      if (position != null)
+         it.moveToPosition(position);
+      return it;
    }
 
    @Override

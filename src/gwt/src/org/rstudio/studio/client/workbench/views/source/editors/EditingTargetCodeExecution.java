@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -29,6 +30,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 
 import com.google.inject.Inject;
 
@@ -81,7 +85,14 @@ public class EditingTargetCodeExecution
          boolean moveCursorAfter,
          String functionWrapper,
          boolean onlyUseConsole)
-   {  
+   {
+      // when executing LaTeX in R Markdown, show a popup preview
+      if (isExecutingLaTeX())
+      {
+         renderLaTeX();
+         return;
+      }
+      
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)
@@ -127,14 +138,17 @@ public class EditingTargetCodeExecution
             }
          }
          
+         // if we failed to discover a range, bail
+         if (selectionRange == null)
+            return;
+         
          // make it harder to step off the end of a chunk
          InsertChunkInfo insert = docDisplay_.getInsertChunkInfo();
          if (insert != null && !StringUtil.isNullOrEmpty(insert.getValue()))
          {
             // get the selection we're about to execute; if it's the same as
             // the last line of the chunk template, don't run it
-            String code = codeExtractor_.extractCode(docDisplay_, 
-                  selectionRange);
+            String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
             String[] chunkLines = insert.getValue().split("\n");
             if (!StringUtil.isNullOrEmpty(code) &&
                 chunkLines.length > 0 &&
@@ -323,6 +337,73 @@ public class EditingTargetCodeExecution
    {
       String trimmedLine = line.trim();
       return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
+   }
+   
+   private boolean isExecutingLaTeX()
+   {
+      Range range = docDisplay_.getSelectionRange();
+      
+      for (Position pos : new Position[]{range.getStart(), range.getEnd()})
+      {
+         TokenIterator it = docDisplay_.createTokenIterator();
+         Token token = it.moveToPosition(pos);
+         if (token == null || !token.hasType("latex"))
+            return false;
+      }
+      
+      return true;
+   }
+   
+   private void renderLaTeX()
+   {
+      Range range = docDisplay_.getSelection().isEmpty()
+            ? getCurrentLaTeXRange()
+            : docDisplay_.getSelectionRange();
+      
+      if (range == null)
+         return;
+      
+      String contents = docDisplay_.getTextForRange(range);
+      ScreenCoordinates coordinates =
+            docDisplay_.documentPositionToScreenCoordinates(range.getEnd());
+      MathJax.renderLaTeX(contents, coordinates);
+   }
+   
+   private Range getCurrentLaTeXRange()
+   {
+      Position pos = docDisplay_.getCursorPosition();
+      
+      // find start of latex block
+      TokenIterator startIt = docDisplay_.createTokenIterator();
+      
+      for (Token token = startIt.moveToPosition(pos);
+           token != null;
+           token = startIt.stepBackward())
+      {
+         if (!token.hasType("latex"))
+            break;
+      }
+      startIt.stepForward();
+      
+      // find end of latex block
+      TokenIterator endIt = docDisplay_.createTokenIterator();
+      for (Token token = endIt.moveToPosition(pos);
+           token != null;
+           token = endIt.stepForward())
+      {
+         if (!token.hasType("latex"))
+            break;
+      }
+      endIt.stepBackward();
+      
+      if (startIt.getCurrentToken() == null || endIt.getCurrentToken() == null)
+         return null;
+      
+      Position startPos = startIt.getCurrentTokenPosition();
+      Position endPos = endIt.getCurrentTokenPosition();
+      endPos.setColumn(endPos.getColumn() + endIt.getCurrentToken().getValue().length());
+      
+      return Range.fromPoints(startPos, endPos);
    }
    
    private EventBus events_;

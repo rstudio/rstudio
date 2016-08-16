@@ -323,7 +323,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
-   TokenIterator getTokenIterator(Position pos);
+   TokenIterator createTokenIterator();
+   TokenIterator createTokenIterator(Position position);
 
    Anchor createAnchor(Position pos);
    
@@ -374,6 +375,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    Rectangle getPositionBounds(Position position);
    Position toDocumentPosition(ScreenCoordinates coordinates);
+   
+   ScreenCoordinates documentPositionToScreenCoordinates(Position position);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();
