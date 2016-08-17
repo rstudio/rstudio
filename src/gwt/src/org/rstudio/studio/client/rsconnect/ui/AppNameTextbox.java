@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 
 import com.google.gwt.core.client.GWT;
@@ -79,7 +80,7 @@ public class AppNameTextbox extends Composite
    
    public String getTitle()
    {
-      return appTitle_.getText();
+      return appTitle_.getText().trim();
    }
    
    public String getName()
@@ -94,7 +95,21 @@ public class AppNameTextbox extends Composite
    
    public void validateAppName()
    {
-      host_.generateAppName(appTitle_.getText(), 
+      // if we don't have enough characters, bail out early 
+      final String title = appTitle_.getText().trim();
+      if (title.length() < 3)
+      {
+         validTitle_ = false;
+         // if we also don't have focus in the box, show an error
+         if (DomUtils.getActiveElement() != appTitle_.getElement())
+         {
+            setAppNameValid(false);
+            error_.setText("The title must contain at least 3 characters.");
+         }
+         return;
+      }
+
+      host_.generateAppName(title, 
                             new CommandWithArg<RSConnectAppName>()
          {
             @Override
@@ -124,7 +139,7 @@ public class AppNameTextbox extends Composite
 
    public boolean isValid()
    {
-      return !appTitle_.getText().isEmpty() && validTitle_;
+      return !appTitle_.getText().trim().isEmpty() && validTitle_;
    }
    
    // Private methods ---------------------------------------------------------

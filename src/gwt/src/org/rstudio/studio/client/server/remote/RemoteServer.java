@@ -3933,7 +3933,7 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(account));
       params.set(5, new JSONString(server));
       params.set(6, new JSONString(appName));
-      params.set(7, new JSONString(appTitle));
+      params.set(7, new JSONString(appTitle == null ? "": appTitle));
       params.set(8, new JSONString(source.getContentCategory() == null ? "" :
             source.getContentCategory()));
       params.set(9, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));

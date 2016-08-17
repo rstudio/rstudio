@@ -474,6 +474,7 @@ public class RSConnectDeploy extends Composite
       // if the name isn't valid to begin with, we know the result immediately
       if (!appName_.isValid())
       {
+         appName_.validateAppName();
          onComplete.execute(false);
          focus();
          return;

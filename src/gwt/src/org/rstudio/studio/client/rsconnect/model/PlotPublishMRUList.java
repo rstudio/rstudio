@@ -47,7 +47,8 @@ public class PlotPublishMRUList
       
       public String asText()
       {
-         return account + "|" + server + "|" + name + "|" + title;
+         return account + "|" + server + "|" + name + 
+               (StringUtil.isNullOrEmpty(title) ? "" : "|" + title);
       }
       
       public static Entry fromText(String text)

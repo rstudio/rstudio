@@ -6,6 +6,7 @@
    {
       margin-top: 5px;
       color: red;
+      font-size: 9px;
    }
    </ui:style>
    <g:HTMLPanel>
