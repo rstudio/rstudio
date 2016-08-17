@@ -151,15 +151,16 @@ public class MathJax
       
       // typeset element
       var self = this;
-      MathJax.Hub.Typeset(el, $entry(function() {
-         
-         // restore original typesetting on failure
-         jax = MathJax.Hub.getAllJax(el)[0];
-         var error = !!(jax && jax.texError);
-         if (error) jax.Text(lastRenderedText);
-            
-         // callback to GWT
-         self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;Z)(currentText, error);
+      MathJax.Hub.Queue($entry(function() {
+         MathJax.Hub.Typeset(el, $entry(function() {
+            // restore original typesetting on failure
+            jax = MathJax.Hub.getAllJax(el)[0];
+            var error = !!(jax && jax.texError);
+            if (error) jax.Text(lastRenderedText);
+
+            // callback to GWT
+            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;Z)(currentText, error);
+         }));
       }));
    }-*/;
    
