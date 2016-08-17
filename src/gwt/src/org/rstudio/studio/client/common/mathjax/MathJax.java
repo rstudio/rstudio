@@ -104,13 +104,11 @@ public class MathJax
       popup_.hide();
    }
    
-   private void render(String text, boolean positionPopup)
+   private void render(final String text, boolean positionPopup)
    {
-      lastRenderedText_ = text;
-      popup_.setText(text);
       if (!positionPopup)
       {
-         mathjaxTypeset(popup_.getElement());
+         mathjaxTypeset(popup_.getElement(), text);
          return;
       }
       
@@ -122,7 +120,7 @@ public class MathJax
             popup_.setPopupPosition(
                   coordinates_.getPageX() + 10,
                   coordinates_.getPageY() + 10);
-            mathjaxTypeset(popup_.getElement());
+            mathjaxTypeset(popup_.getElement(), text);
          }
       });
    }
@@ -132,9 +130,38 @@ public class MathJax
       renderTimer_.schedule(delayMs);
    }
    
-   private static final native void mathjaxTypeset(Element el) /*-{
+   private void onMathJaxTypesetCompleted(String text, boolean error)
+   {
+      if (error)
+         return;
+      
+      lastRenderedText_ = text;
+   }
+   
+   private final native void mathjaxTypeset(Element el, String currentText)
+   /*-{
       var MathJax = $wnd.MathJax;
-      MathJax.Hub.Typeset(el);
+      
+      // save last rendered text
+      var lastRenderedText = "";
+      var jax = MathJax.Hub.getAllJax(el)[0];
+      if (jax) lastRenderedText = jax.originalText;
+      
+      // update text in element
+      el.innerText = currentText;
+      
+      // typeset element
+      var self = this;
+      MathJax.Hub.Typeset(el, $entry(function() {
+         
+         // restore original typesetting on failure
+         jax = MathJax.Hub.getAllJax(el)[0];
+         var error = !!(jax && jax.texError);
+         if (error) jax.Text(lastRenderedText);
+            
+         // callback to GWT
+         self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;Z)(currentText, error);
+      }));
    }-*/;
    
    private final Timer renderTimer_;
@@ -144,5 +171,5 @@ public class MathJax
    private AnchoredSelection anchor_;
    private HandlerRegistration cursorChangedHandler_;
    private ScreenCoordinates coordinates_;
-   private String lastRenderedText_;
+   private String lastRenderedText_ = "";
 }
