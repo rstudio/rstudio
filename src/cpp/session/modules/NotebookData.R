@@ -143,7 +143,7 @@
 
   names(data) <- as.character(columnSequence)
 
-  addRowNames = all.equal(.row_names_info(data), -50)
+  addRowNames = .row_names_info(data, type = 1) > 0
   if (addRowNames) {
     columns <- c(
       list(
