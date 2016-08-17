@@ -143,9 +143,8 @@ public class MathJax
       var MathJax = $wnd.MathJax;
       
       // save last rendered text
-      var lastRenderedText = "";
       var jax = MathJax.Hub.getAllJax(el)[0];
-      if (jax) lastRenderedText = jax.originalText;
+      var lastRenderedText = jax && jax.originalText || "";
       
       // update text in element
       el.innerText = currentText;
