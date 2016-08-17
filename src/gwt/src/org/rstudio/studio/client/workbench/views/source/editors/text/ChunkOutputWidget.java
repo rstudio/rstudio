@@ -502,6 +502,11 @@ public class ChunkOutputWidget extends Composite
       
       completeInterrupt();
    }
+   
+   public void setRootWidget(Widget widget)
+   {
+      root_.setWidget(widget);
+   }
 
    // Private methods ---------------------------------------------------------
 
