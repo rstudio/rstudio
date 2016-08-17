@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
@@ -355,8 +356,14 @@ public class ChunkOutputGallery extends Composite
       if (colors == null || thumbnail == null)
          return;
       
+      // create a border color by making the foreground color slightly
+      // translucent
+      ColorUtil.RGBColor fore = ColorUtil.RGBColor.fromCss(colors.foreground);
+      ColorUtil.RGBColor border = new ColorUtil.RGBColor(
+            fore.red(), fore.green(), fore.blue(), 0.5);
+      
       // apply border color from editor
-      thumbnail.getElement().getStyle().setBorderColor(colors.foreground);
+      thumbnail.getElement().getStyle().setBorderColor(border.asRgb());
       if (thumbnail instanceof EditorThemeListener)
       {
          ((EditorThemeListener)thumbnail).onEditorThemeChanged(colors);
