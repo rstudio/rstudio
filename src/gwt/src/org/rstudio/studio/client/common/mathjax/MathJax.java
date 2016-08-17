@@ -24,14 +24,18 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class MathJax
 {
-   public MathJax()
+   public MathJax(DocDisplay docDisplay)
    {
+      docDisplay_ = docDisplay;
+      bgRenderer_ = new MathJaxBackgroundRenderer(docDisplay);
       popup_ = new MathJaxPopupPanel();
       renderTimer_ = new Timer()
       {
@@ -43,23 +47,31 @@ public class MathJax
                render(text, false);
          }
       };
+      
+      docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            popup_.hide();
+         }
+      });
    }
    
-   public void renderLaTeX(final DocDisplay docDisplay, final Range range)
+   public void renderLatex(Range range)
    {
-      initializeRender(docDisplay, range);
+      initializeRender(range);
    }
    
    // Private Members ----
    
-   private void initializeRender(final DocDisplay docDisplay, final Range range)
+   private void initializeRender(final Range range)
    {
       resetRenderState();
       
-      docDisplay_ = docDisplay;
-      coordinates_ = docDisplay.documentPositionToScreenCoordinates(range.getEnd());
-      anchor_ = docDisplay.createAnchoredSelection(range.getStart(), range.getEnd());
-      cursorChangedHandler_ = docDisplay.addCursorChangedHandler(new CursorChangedHandler()
+      coordinates_ = docDisplay_.documentPositionToScreenCoordinates(range.getEnd());
+      anchor_ = docDisplay_.createAnchoredSelection(range.getStart(), range.getEnd());
+      cursorChangedHandler_ = docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
          public void onCursorChanged(CursorChangedEvent event)
@@ -75,7 +87,7 @@ public class MathJax
          }
       });
       
-      render(docDisplay.getTextForRange(range), true);
+      render(docDisplay_.getTextForRange(range), true);
    }
    
    private void resetRenderState()
@@ -158,10 +170,11 @@ public class MathJax
       }));
    }-*/;
    
+   private final DocDisplay docDisplay_;
+   private final MathJaxBackgroundRenderer bgRenderer_;
    private final Timer renderTimer_;
    private final MathJaxPopupPanel popup_;
    
-   private DocDisplay docDisplay_;
    private AnchoredSelection anchor_;
    private HandlerRegistration cursorChangedHandler_;
    private ScreenCoordinates coordinates_;

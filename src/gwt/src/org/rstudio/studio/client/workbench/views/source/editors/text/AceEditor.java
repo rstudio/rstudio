@@ -67,6 +67,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -282,6 +283,7 @@ public class AceEditor implements DocDisplay,
       
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
+      mathjax_ = new MathJax(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -3426,6 +3428,12 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   @Override
+   public void renderLatex(Range range)
+   {
+      mathjax_.renderLatex(range);
+   }
+   
    private static class BackgroundTokenizer
    {
       public BackgroundTokenizer(final AceEditor editor)
@@ -3550,6 +3558,7 @@ public class AceEditor implements DocDisplay,
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
+   private final MathJax mathjax_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

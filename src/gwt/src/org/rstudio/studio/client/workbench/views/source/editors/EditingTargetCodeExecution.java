@@ -18,7 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.mathjax.MathJax;
+import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -64,12 +64,11 @@ public class EditingTargetCodeExecution
    }
    
    @Inject
-   void initialize(EventBus events, UIPrefs prefs, Commands commands, MathJax mathjax)
+   void initialize(EventBus events, UIPrefs prefs, Commands commands)
    {
       events_ = events;
       prefs_ = prefs;
       commands_ = commands;
-      mathjax_ = mathjax;
    }
    
    public void executeSelection(boolean consoleExecuteWhenNotFocused,
@@ -89,7 +88,7 @@ public class EditingTargetCodeExecution
       // when executing LaTeX in R Markdown, show a popup preview
       if (isExecutingLaTeX())
       {
-         renderLaTeX();
+         renderLatex();
          return;
       }
       
@@ -354,53 +353,21 @@ public class EditingTargetCodeExecution
       return true;
    }
    
-   private void renderLaTeX()
+   private void renderLatex()
    {
       Range range = docDisplay_.getSelection().isEmpty()
-            ? getCurrentLaTeXRange()
+            ? getCurrentLatexRange()
             : docDisplay_.getSelectionRange();
       
       if (range == null)
          return;
       
-      mathjax_.renderLaTeX(docDisplay_, range);
+      docDisplay_.renderLatex(range);
    }
    
-   private Range getCurrentLaTeXRange()
+   private Range getCurrentLatexRange()
    {
-      Position pos = docDisplay_.getCursorPosition();
-      
-      // find start of latex block
-      TokenIterator startIt = docDisplay_.createTokenIterator();
-      
-      for (Token token = startIt.moveToPosition(pos);
-           token != null;
-           token = startIt.stepBackward())
-      {
-         if (!token.hasType("latex"))
-            break;
-      }
-      startIt.stepForward();
-      
-      // find end of latex block
-      TokenIterator endIt = docDisplay_.createTokenIterator();
-      for (Token token = endIt.moveToPosition(pos);
-           token != null;
-           token = endIt.stepForward())
-      {
-         if (!token.hasType("latex"))
-            break;
-      }
-      endIt.stepBackward();
-      
-      if (startIt.getCurrentToken() == null || endIt.getCurrentToken() == null)
-         return null;
-      
-      Position startPos = startIt.getCurrentTokenPosition();
-      Position endPos = endIt.getCurrentTokenPosition();
-      endPos.setColumn(endPos.getColumn() + endIt.getCurrentToken().getValue().length());
-      
-      return Range.fromPoints(startPos, endPos);
+      return MathJaxUtil.getLatexRange(docDisplay_);
    }
    
    private final DocDisplay docDisplay_;
@@ -412,6 +379,5 @@ public class EditingTargetCodeExecution
    private EventBus events_;
    private UIPrefs prefs_;
    private Commands commands_;
-   private MathJax mathjax_;
 }
 
