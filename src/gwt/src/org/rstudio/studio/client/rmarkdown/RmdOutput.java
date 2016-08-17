@@ -303,7 +303,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
           outputFrame_ == null || 
           outputFrame_.getWindowObject() == null ||
           outputFrame_.getWindowObject().isClosed() ||
-          outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath())
+          outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath() ||
+          !outputFrame_.getPreviewParams().getOutputFile().endsWith(".nb.html"))
         return;
       
       // redisplay the result
