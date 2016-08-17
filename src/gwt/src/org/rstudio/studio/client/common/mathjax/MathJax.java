@@ -50,12 +50,6 @@ public class MathJax
       initializeRender(docDisplay, range);
    }
    
-   public void renderLaTeX(final String text,
-                           final ScreenCoordinates coordinates)
-   {
-      popup_.setText(text);
-   }
-   
    // Private Members ----
    
    private void initializeRender(final DocDisplay docDisplay, final Range range)
