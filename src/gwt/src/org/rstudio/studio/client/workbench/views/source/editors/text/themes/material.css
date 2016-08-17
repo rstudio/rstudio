@@ -130,3 +130,29 @@
 .ace_paren.ace_keyword.ace_operator {
   color: #cc6666 !important;
 }
+.nocolor.ace_editor .ace_line span {
+  color: #de935f !important;
+}
+.ace_bracket {
+  margin: 0 !important;
+  border: 0 !important;
+  background-color: rgba(128, 128, 128, 0.5);
+}
+.ace_marker-layer .ace_foreign_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #354146;
+}
+.ace_marker-layer .ace_active_debug_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #928838;
+}
+.ace_marker-layer .ace_find_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #455054;
+}
+.ace_console_error {
+  background-color: #455054;
+}
