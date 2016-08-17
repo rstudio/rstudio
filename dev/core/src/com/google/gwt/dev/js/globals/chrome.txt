@@ -184,6 +184,7 @@ HTMLProgressElement
 HTMLQuoteElement
 HTMLScriptElement
 HTMLSelectElement
+HTMLSlotElement
 HTMLShadowElement
 HTMLSourceElement
 HTMLSpanElement
