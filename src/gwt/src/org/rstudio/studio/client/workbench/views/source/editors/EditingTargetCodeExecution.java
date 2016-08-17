@@ -86,11 +86,7 @@ public class EditingTargetCodeExecution
          boolean onlyUseConsole)
    {
       // when executing LaTeX in R Markdown, show a popup preview
-      if (isExecutingLaTeX())
-      {
-         renderLatex();
-         return;
-      }
+      if (executeLatex()) return;
       
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
@@ -353,21 +349,13 @@ public class EditingTargetCodeExecution
       return true;
    }
    
-   private void renderLatex()
+   private boolean executeLatex()
    {
-      Range range = docDisplay_.getSelection().isEmpty()
-            ? getCurrentLatexRange()
-            : docDisplay_.getSelectionRange();
-      
+      Range range = MathJaxUtil.getLatexRange(docDisplay_);
       if (range == null)
-         return;
-      
+         return false;
       docDisplay_.renderLatex(range);
-   }
-   
-   private Range getCurrentLatexRange()
-   {
-      return MathJaxUtil.getLatexRange(docDisplay_);
+      return true;
    }
    
    private final DocDisplay docDisplay_;
