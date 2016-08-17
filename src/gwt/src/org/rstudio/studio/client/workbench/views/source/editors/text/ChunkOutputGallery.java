@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -258,6 +259,7 @@ public class ChunkOutputGallery extends Composite
       
       pages_.add(idx, page);
       Widget thumbnail = page.thumbnailWidget();
+      thumbnail.getElement().setTabIndex(0);
       thumbnail.addStyleName(style.thumbnail());
 
       // apply editor color to thumbnail before 
@@ -269,7 +271,7 @@ public class ChunkOutputGallery extends Composite
          console_ = (ChunkConsolePage)page;
 
       final int ordinal = page.ordinal();
-      DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK);
+      DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK | Event.ONKEYDOWN);
       DOM.setEventListener(thumbnail.getElement(), new EventListener()
       {
          @Override
@@ -288,6 +290,15 @@ public class ChunkOutputGallery extends Composite
                      break;
                   }
                }
+               break;
+            case Event.ONKEYDOWN:
+               int dir = 0;
+               if (evt.getKeyCode() == KeyCodes.KEY_LEFT)
+                  dir = -1;
+               if (evt.getKeyCode() == KeyCodes.KEY_RIGHT)
+                  dir = 1;
+               if (dir != 0)
+                  navigateActivePage(dir);
                break;
             };
          }
@@ -315,6 +326,18 @@ public class ChunkOutputGallery extends Composite
    }
 
    // Private methods ---------------------------------------------------------
+   
+   private void navigateActivePage(int delta)
+   {
+      // add with wraparound
+      int idx = activePage_ + delta;
+      if (idx >= pages_.size())
+         idx = 0;
+      if (idx < 0)
+         idx = pages_.size() - 1;
+      
+      setActivePage(idx);
+   }
    
    private void setActivePage(int idx)
    {

@@ -23,6 +23,10 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    opacity: 1;
 }
 
+.thumbnail:focus {
+   outline: none;
+}
+
 .selected {
    opacity: 1;
    border: 2px solid gray;
