@@ -85,10 +85,12 @@ public class MathJaxLoader
             availableFonts: ['TeX']
          },
          showProcessingMessage: false,
+         showMathMenu: false,
          messageStyle: "none",
          skipStartupTypeset: true,
          menuSettings: {
-            zoom: "Click"
+            zoom: "None",
+            context: "Browser"
          }
       };
 

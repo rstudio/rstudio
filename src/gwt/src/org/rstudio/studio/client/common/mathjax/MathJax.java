@@ -17,13 +17,16 @@ package org.rstudio.studio.client.common.mathjax;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -63,6 +66,12 @@ public class MathJax
    public void renderLatex(Range range)
    {
       String text = docDisplay_.getTextForRange(range);
+      if (text.startsWith("$$") && text.endsWith("$$"))
+      {
+         renderLatexLineWidget(range, text);
+         return;
+      }
+      
       if (popup_.isShowing())
       {
          render(text);
@@ -74,6 +83,31 @@ public class MathJax
       anchor_ = docDisplay_.createAnchoredSelection(range.getStart(), range.getEnd());
       lastRenderedText_ = "";
       render(text);
+   }
+   
+   private void renderLatexLineWidget(Range range, String text)
+   {
+      int row = range.getEnd().getRow() + 1;
+      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+      
+      boolean hasWidget = widget != null;
+      if (!hasWidget)
+      {
+         Element el = createLineWidgetElement();
+         widget = LineWidget.create("mathjax", row, el);
+         docDisplay_.addLineWidget(widget);
+      }
+      
+      mathjaxTypeset(widget.getElement(), text);
+      widget.setPixelHeight(widget.getElement().getOffsetHeight());
+      docDisplay_.onLineWidgetChanged(widget);
+   }
+   
+   private Element createLineWidgetElement()
+   {
+      Element el = Document.get().createDivElement().cast();
+      el.getStyle().setPaddingLeft(20, Unit.PX);
+      return el;
    }
    
    private void resetRenderState()
