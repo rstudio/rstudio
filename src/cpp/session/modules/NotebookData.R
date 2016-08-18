@@ -177,7 +177,7 @@
   data <- as.data.frame(
     lapply(
       data,
-      function (y) format(y)),
+      function (y) encodeString(format(y, digits = getOption("digits")))),
     stringsAsFactors = FALSE,
     optional = TRUE)
 
