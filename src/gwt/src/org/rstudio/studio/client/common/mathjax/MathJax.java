@@ -84,6 +84,10 @@ public class MathJax
       String text = docDisplay_.getTextForRange(range);
       if (text.startsWith("$$") && text.endsWith("$$"))
       {
+         // don't render if chunk contents empty
+         if (isEmptyLatexChunk(text))
+            return;
+         
          renderLatexLineWidget(range, text);
          return;
       }
@@ -315,6 +319,11 @@ public class MathJax
          cursorChangedHandler_.removeHandler();
          cursorChangedHandler_ = null;
       }
+   }
+   
+   private boolean isEmptyLatexChunk(String text)
+   {
+      return text.matches("^\\$*\\s*\\$*$");
    }
    
    private final DocDisplay docDisplay_;
