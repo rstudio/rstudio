@@ -190,6 +190,8 @@ public class MathJax
          cursorChangedHandler_.removeHandler();
          cursorChangedHandler_ = null;
       }
+      
+      lastRenderedText_ = "";
    }
    
    private void render(final String text)
