@@ -72,8 +72,8 @@ public class ChunkOutputThumbnail extends Composite
       ColorUtil.RGBColor rgb = ColorUtil.RGBColor.fromCss(color);
       String tuple = rgb.red() + ", " + rgb.green() + ", " + rgb.blue();
       mask_.getElement().getStyle().setProperty("backgroundImage", 
-            "linear-gradient(rgba(" + tuple + ", 0.1) 0%, "   +
-                            "rgba(" + tuple + ", 0.75) 33%, " +
+            "linear-gradient(rgba(" + tuple + ", 0.0) 0%, "   +
+                            "rgba(" + tuple + ", 0.65) 33%, " +
                             "rgba(" + tuple + ", 1.0) 80%, "  +
                             "rgba(" + tuple + ", 1.0) 100%)");
    }
