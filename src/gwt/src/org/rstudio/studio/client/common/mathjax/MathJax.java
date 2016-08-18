@@ -53,7 +53,7 @@ public class MathJax
    public MathJax(DocDisplay docDisplay)
    {
       docDisplay_ = docDisplay;
-      bgRenderer_ = new MathJaxBackgroundRenderer(docDisplay);
+      bgRenderer_ = new MathJaxBackgroundRenderer(this, docDisplay);
       popup_ = new MathJaxPopupPanel();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
       
@@ -81,15 +81,37 @@ public class MathJax
    
    public void renderLatex(Range range)
    {
+      renderLatex(range, false);
+   }
+   
+   public void renderLatex(Range range, boolean background)
+   {
       String text = docDisplay_.getTextForRange(range);
+      
+      // render latex chunks as line widgets
       if (text.startsWith("$$") && text.endsWith("$$"))
       {
-         // don't render if chunk contents empty
-         if (isEmptyLatexChunk(text))
+         // escape hatch for background renders of line widgets that
+         // have not yet been added to the document
+         do
+         {
+            // don't render if chunk contents empty
+            if (isEmptyLatexChunk(text))
+               return;
+
+            // don't create new line widget on background render
+            if (background)
+            {
+               int row = range.getEnd().getRow();
+               LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+               if (widget == null)
+                  break;
+            }
+
+            renderLatexLineWidget(range, text);
             return;
-         
-         renderLatexLineWidget(range, text);
-         return;
+         }
+         while (false);
       }
       
       if (popup_.isShowing())
@@ -105,8 +127,14 @@ public class MathJax
       render(text);
    }
    
+   // Private Methods ----
+   
    private void renderLatexLineWidget(final Range range, final String text)
    {
+      // if there's a popup showing for this chunk, remove it
+      resetRenderState();
+      popup_.hide();
+      
       int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       

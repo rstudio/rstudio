@@ -29,8 +29,9 @@ import com.google.gwt.user.client.Timer;
 
 public class MathJaxBackgroundRenderer
 {
-   public MathJaxBackgroundRenderer(DocDisplay docDisplay)
+   public MathJaxBackgroundRenderer(MathJax mathjax, DocDisplay docDisplay)
    {
+      mathjax_ = mathjax;
       docDisplay_ = docDisplay;
       renderTimer_ = new Timer()
       {
@@ -41,7 +42,7 @@ public class MathJaxBackgroundRenderer
             if (range == null)
                return;
             
-            docDisplay_.renderLatex(range);
+            mathjax_.renderLatex(range, true);
          }
       };
       
@@ -104,8 +105,9 @@ public class MathJaxBackgroundRenderer
       }
    }
    
-   private final Timer renderTimer_;
+   private final MathJax mathjax_;
    private final DocDisplay docDisplay_;
+   private final Timer renderTimer_;
    
    private HandlerRegistration cursorChangedHandler_;
 }
