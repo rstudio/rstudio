@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.mathjax;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -98,9 +100,15 @@ public class MathJax
       if (!hasWidget)
          widget = createMathJaxLineWidget(row);
       
-      Element el = DomUtils.getFirstElementWithClassName(widget.getElement(), "mathjax-root");
+      final Element el = DomUtils.getFirstElementWithClassName(
+            widget.getElement(),
+            "mathjax-root");
+      
       mathjaxTypeset(el, text);
-      widget.setPixelHeight(el.getOffsetHeight());
+      
+      int height = el.getOffsetHeight() + 30;
+      Element ppElement = el.getParentElement().getParentElement();
+      ppElement.getStyle().setHeight(height, Unit.PX);
       docDisplay_.onLineWidgetChanged(widget);
    }
    
@@ -126,7 +134,7 @@ public class MathJax
       
       ChunkOutputWidget outputWidget = new ChunkOutputWidget(
             StringUtil.makeRandomId(8),
-            null,
+            RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
             host);
       
@@ -140,7 +148,6 @@ public class MathJax
             null,
             null);
 
-      docDisplay_.addLineWidget(plWidget.getLineWidget());
       return plWidget.getLineWidget();
    }
    
@@ -216,7 +223,8 @@ public class MathJax
             // restore original typesetting on failure
             jax = MathJax.Hub.getAllJax(el)[0];
             var error = !!(jax && jax.texError);
-            if (error) jax.Text(lastRenderedText);
+            if (error && lastRenderedText.length)
+               jax.Text(lastRenderedText);
 
             // callback to GWT
             self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;Z)(currentText, error);
