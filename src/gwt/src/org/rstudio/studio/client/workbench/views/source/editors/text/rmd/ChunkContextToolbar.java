@@ -101,7 +101,7 @@ public class ChunkContextToolbar extends Composite
 
    public void setEngine(String engine)
    {
-      chunkTypeLabel_.setText("{" + engine + "}");
+      chunkTypeLabel_.setText(engine);
    }
    
    // Private methods ---------------------------------------------------------
@@ -177,7 +177,7 @@ public class ChunkContextToolbar extends Composite
 
    private void initChangeChunkEngine(String engine)
    {
-      chunkTypeLabel_.setText("{" + engine + "}");
+      chunkTypeLabel_.setText(engine);
       DOM.sinkEvents(chunkTypeLabel_.getElement(), Event.ONCLICK);
       DOM.setEventListener(chunkTypeLabel_.getElement(), new EventListener()
       {
