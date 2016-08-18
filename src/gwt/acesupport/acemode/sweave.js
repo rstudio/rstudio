@@ -38,6 +38,7 @@ var Mode = function(suppressHighlighting, session) {
    else
       this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
 
+   this.$session = session;
    this.$outdent = new MatchingBraceOutdent();
 
    this.codeModel = new RCodeModel(
@@ -50,12 +51,13 @@ var Mode = function(suppressHighlighting, session) {
    this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
 
    this.foldingRules = this.codeModel;
-   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
-         session,
-         /^\s*<<.*>>=.*$/,
-         /^\s*@(?:\s.*)?$/
-   );
-   this.$session = session;
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(session, [
+      {
+         // sweave code chunks
+         begin : /^\s*<<.*>>=.*$/,
+         end   : /^\s*@(?:\s.*)?$/
+      }
+   ]);
 };
 oop.inherits(Mode, TextMode);
 

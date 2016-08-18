@@ -24,14 +24,11 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
          console.log(arguments[i]);
    };
 
-   var BackgroundHighlighter = function(session,
-                                        reChunkStart,
-                                        reChunkEnd)
+   var BackgroundHighlighter = function(session, highlighters)
    {
       this.$session = session;
       this.$doc = session.getDocument();
-      this.$reChunkStart = reChunkStart;
-      this.$reChunkEnd = reChunkEnd;
+      this.$highlighters = highlighters;
 
       // Listen for document change events from Ace.
       var onDocChange = function(evt)
@@ -116,6 +113,8 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
          while (fromRow > 0 && this.$rowState[fromRow - 1] == null)
             fromRow--;
 
+         this.$activeHighlighter = this.$findActiveHighlighter(fromRow);
+
          var n = this.$doc.getLength();
          // debuglog("There are " + n + " rows to be updated.");
          for (var row = fromRow; row < n; row++)
@@ -133,14 +132,13 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
 
       this.$getState = function(row)
       {
-
          var line = this.$doc.getLine(row);
          var prevRowState = this.$rowState[row - 1] || STATE_TEXT;
 
          if (prevRowState === STATE_TEXT ||
              prevRowState === STATE_CHUNK_END)
          {
-            if (this.$reChunkStart.test(line))
+            if (this.$beginChunkHighlight(line))
                return STATE_CHUNK_START;
             else
                return STATE_TEXT;
@@ -148,7 +146,7 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
          else if (prevRowState === STATE_CHUNK_START ||
                   prevRowState === STATE_CHUNK_BODY)
          {
-            if (this.$reChunkEnd.test(line))
+            if (this.$endChunkHighlight(line))
                return STATE_CHUNK_END;
             else
                return STATE_CHUNK_BODY;
@@ -156,6 +154,54 @@ define("mode/background_highlighter", ["require", "exports", "module"], function
 
          // shouldn't be reached
          return STATE_TEXT;
+      };
+
+      this.$findActiveHighlighter = function(fromRow)
+      {
+         for (var row = fromRow; row >= 0; row--)
+         {
+            var state = this.$rowState[row];
+            if (state === STATE_TEXT)
+               return null;
+
+            var line = this.$doc.getLine(row);
+            if (state == STATE_CHUNK_START)
+            {
+               var highlighter = this.$beginChunkHighlight(line);
+               if (highlighter)
+                  return highlighter;
+            }
+         }
+
+         return null;
+      };
+
+      this.$beginChunkHighlight = function(line)
+      {
+         for (var i = 0; i < this.$highlighters.length; i++)
+         {
+            var highlighter = this.$highlighters[i];
+            if (highlighter.begin.test(line))
+            {
+               this.$activeHighlighter = highlighter;
+               return highlighter;
+            }
+         }
+
+         return null;
+      };
+
+      this.$endChunkHighlight = function(line)
+      {
+         if (this.$activeHighlighter == null)
+            return null;
+
+         if (!this.$activeHighlighter.end.test(line))
+            return null;
+
+         var highlighter = this.$activeHighlighter;
+         this.$activeHighlighter = null;
+         return highlighter;
       };
 
       this.$insertNewRows = function(index, count)
