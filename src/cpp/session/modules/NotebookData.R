@@ -175,14 +175,25 @@
 
   if (length(columns) > 0) {
     first_column = data[[1]]
-    if (is.numeric(first_column) && all(diff(first_column) == 1))
+    if (is.numeric(first_column) && isTRUE(all(diff(first_column) == 1)))
       columns[[1]]$align <- "left"
   }
 
   data <- as.data.frame(
     lapply(
       data,
-      function (y) encodeString(format(y, digits = getOption("digits")))),
+      function (y) {
+        # escape NAs from character columns
+        if (typeof(y) == "character") {
+          y[y == "NA"] <- "__NA__"
+        }
+
+        y <- encodeString(format(y, digits = getOption("digits")))
+
+        # trim spaces
+        gsub("^\\s+|\\s+$", "", y)
+      }
+    ),
     stringsAsFactors = FALSE,
     optional = TRUE)
 

@@ -130,3 +130,8 @@ a.pagedtable-index-current {
   margin-top: -3px;
   font-size: 11px;
 }
+
+.pagedtable-na-cell {
+  font-style: italic;
+  opacity: 0.3;
+}
