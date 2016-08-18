@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
@@ -41,7 +43,6 @@ import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class MathJax
 {
@@ -56,6 +57,18 @@ public class MathJax
       bgRenderer_ = new MathJaxBackgroundRenderer(this, docDisplay);
       popup_ = new MathJaxPopupPanel();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
+      onPopupTypeset_ = new MathJaxTypesetCallback()
+      {
+         @Override
+         public void onMathJaxTypesetComplete(boolean error)
+         {
+            int offsetWidth  = popup_.getOffsetWidth();
+            int offsetHeight = popup_.getOffsetHeight();
+            ScreenCoordinates coordinates = computePopupPosition(offsetWidth, offsetHeight);
+            popup_.setPopupPosition(coordinates.getPageX(), coordinates.getPageY());
+            popup_.show();
+         }
+      };
       
       docDisplay_.addBlurHandler(new BlurHandler()
       {
@@ -116,15 +129,15 @@ public class MathJax
       
       if (popup_.isShowing())
       {
-         render(text);
+         renderPopup(text);
          return;
       }
       
       resetRenderState();
-      coordinates_ = docDisplay_.documentPositionToScreenCoordinates(range.getEnd());
+      range_ = range;
       anchor_ = docDisplay_.createAnchoredSelection(range.getStart(), range.getEnd());
       lastRenderedText_ = "";
-      render(text);
+      renderPopup(text);
    }
    
    // Private Methods ----
@@ -244,31 +257,34 @@ public class MathJax
       lastRenderedText_ = "";
    }
    
-   private void render(final String text)
+   private void renderPopup(final String text)
    {
-      // no need to re-render if text hasn't changed
+      // no need to re-render if text hasn't changed or is empty
       if (text.equals(lastRenderedText_))
          return;
       
-      // no need to re-position popup if already showing
+      // if empty, hide popup
+      if (text.isEmpty())
+      {
+         popup_.hide();
+         resetRenderState();
+         return;
+      }
+      
+      // no need to re-position popup if already showing;
+      // just typeset
       if (popup_.isShowing())
       {
          mathjaxTypeset(popup_.getElement(), text);
          return;
       }
       
-      // position popup and typeset
-      popup_.setPopupPositionAndShow(new PositionCallback()
-      {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            popup_.setPopupPosition(
-                  coordinates_.getPageX() + 10,
-                  coordinates_.getPageY() + 10);
-            mathjaxTypeset(popup_.getElement(), text);
-         }
-      });
+      // attach popup to DOM but render offscreen
+      popup_.setPopupPosition(100000, 100000);
+      popup_.show();
+      
+      // typeset and position after typesetting finished
+      mathjaxTypeset(popup_.getElement(), text, onPopupTypeset_);
    }
    
    private void endRender()
@@ -349,6 +365,17 @@ public class MathJax
       }
    }
    
+   private ScreenCoordinates computePopupPosition(int offsetWidth, int offsetHeight)
+   {
+      Rectangle bounds = docDisplay_.getRangeBounds(range_);
+      Point center = bounds.center();
+      
+      int pageX = bounds.getRight() + 10;
+      int pageY = center.getY() - (offsetHeight / 2);
+      
+      return ScreenCoordinates.create(pageX, pageY);
+   }
+   
    private boolean isEmptyLatexChunk(String text)
    {
       return text.matches("^\\$*\\s*\\$*$");
@@ -357,10 +384,11 @@ public class MathJax
    private final DocDisplay docDisplay_;
    private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxPopupPanel popup_;
+   private final MathJaxTypesetCallback onPopupTypeset_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
    
    private AnchoredSelection anchor_;
+   private Range range_;
    private HandlerRegistration cursorChangedHandler_;
-   private ScreenCoordinates coordinates_;
    private String lastRenderedText_ = "";
 }

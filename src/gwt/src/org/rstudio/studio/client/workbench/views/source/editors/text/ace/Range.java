@@ -33,6 +33,21 @@ public class Range extends JavaScriptObject
       var Range = $wnd.require('ace/range').Range;
       return Range.fromPoints(start, end);
    }-*/;
+   
+   public static native Range toOrientedRange(Range range) /*-{
+      var Range = $wnd.require('ace/range').Range;
+      
+      // swap begin, end if Range is not 'forward'
+      if (range.start.row > range.end.row || (
+            range.start.row == range.end.row &&
+            range.start.column > range.end.column))
+      {
+         return Range.fromPoints(range.end, range.start);
+      }
+      
+      // return new range if already forward range
+      return Range.fromPoints(range.start, range.end);
+   }-*/;
 
    public final native Position getStart() /*-{
       return this.start;
@@ -72,6 +87,10 @@ public class Range extends JavaScriptObject
    
    public final native boolean contains(Range range) /*-{
       return this.contains(range);
+   }-*/;
+   
+   public final native boolean isMultiLine() /*-{
+      return this.isMultiLine();
    }-*/;
    
    public final native boolean containsRightExclusive(Position position)

@@ -1367,6 +1367,47 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public Rectangle getRangeBounds(Range range)
+   {
+      range = Range.toOrientedRange(range);
+      
+      Renderer renderer = widget_.getEditor().getRenderer();
+      if (!range.isMultiLine())
+      {
+         ScreenCoordinates start = documentPositionToScreenCoordinates(range.getStart());
+         ScreenCoordinates end   = documentPositionToScreenCoordinates(range.getEnd());
+         
+         int width  = (end.getPageX() - start.getPageX()) + (int) renderer.getCharacterWidth();
+         int height = (end.getPageY() - start.getPageY()) + (int) renderer.getLineHeight();
+         
+         return new Rectangle(start.getPageX(), start.getPageY(), width, height);
+      }
+      
+      Position startPos = range.getStart();
+      Position endPos   = range.getEnd();
+      int startRow = startPos.getRow();
+      int endRow   = endPos.getRow();
+      
+      // figure out top left coordinates
+      ScreenCoordinates topLeft = documentPositionToScreenCoordinates(Position.create(startRow, 0));
+      
+      // figure out bottom right coordinates (need to walk rows to figure out longest line)
+      ScreenCoordinates bottomRight = documentPositionToScreenCoordinates(Position.create(endPos));
+      for (int row = startRow; row <= endRow; row++)
+      {
+         Position rowEndPos = Position.create(row, getLength(row));
+         ScreenCoordinates coords = documentPositionToScreenCoordinates(rowEndPos);
+         if (coords.getPageX() > bottomRight.getPageX())
+            bottomRight = ScreenCoordinates.create(coords.getPageX(), bottomRight.getPageY());
+      }
+      
+      // construct resulting range
+      int width  = (bottomRight.getPageX() - topLeft.getPageX()) + (int) renderer.getCharacterWidth();
+      int height = (bottomRight.getPageY() - topLeft.getPageY()) + (int) renderer.getLineHeight();
+      return new Rectangle(topLeft.getPageX(), topLeft.getPageY(), width, height);
+   }
+   
+   @Override
    public Rectangle getPositionBounds(InputEditorPosition position)
    {
       Position pos = ((AceInputEditorPosition) position).getValue();
