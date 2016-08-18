@@ -40,6 +40,11 @@
 .rs.addFunction("initDataCapture", function(outputFolder, options)
 {
   overridePrint <- function(x, options, className, nRow, nCol) {
+    options <- if (is.null(options)) list() else options
+    
+    optionRowNames <- options[["rownames.print"]]
+    options[["rownames.print"]] <- if (is.null(optionRowNames)) (.row_names_info(data, type = 1) > 0) else optionRowNames
+
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
 
@@ -143,7 +148,7 @@
 
   names(data) <- as.character(columnSequence)
 
-  addRowNames = .row_names_info(data, type = 1) > 0
+  addRowNames = options[["rownames.print"]]
   if (addRowNames) {
     columns <- c(
       list(
