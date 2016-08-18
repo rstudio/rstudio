@@ -13,6 +13,7 @@
  *
  */
 
+#include "SessionRmdNotebook.hpp"
 #include "NotebookCapture.hpp"
 
 namespace rstudio {
@@ -49,6 +50,13 @@ bool NotebookCapture::connected()
 void NotebookCapture::onExprComplete()
 {
    // stub implementation
+}
+
+bool NotebookCapture::onCondition(Condition condition, 
+                                  const std::string& message)
+{
+   // default is to ignore condition
+   return false;
 }
 
 } // namespace notebook

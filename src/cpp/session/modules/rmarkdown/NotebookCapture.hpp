@@ -17,6 +17,7 @@
 #define SESSION_NOTEBOOK_CAPTURE_HPP
 
 #include <boost/noncopyable.hpp>
+#include <string>
 
 namespace rstudio {
 namespace session {
@@ -38,6 +39,10 @@ public:
    virtual void disconnect();
    virtual void onExprComplete();
    bool connected();
+
+   // gives capturing context a chance to handle a condition; returns true if
+   // the condition was handled by the context
+   virtual bool onCondition(Condition condition, const std::string& message);
 private:
    bool connected_;
 };

@@ -13,6 +13,7 @@
  *
  */
 
+#include "SessionRmdNotebook.hpp"
 #include "NotebookWorkingDir.hpp"
 
 #include <r/RExec.hpp>

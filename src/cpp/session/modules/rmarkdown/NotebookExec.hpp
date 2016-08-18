@@ -78,6 +78,7 @@ private:
         const core::json::Value& metadata, ChunkOutputType outputType, 
         unsigned ordinal);
    void onError(const core::json::Object& err);
+   bool onCondition(Condition condition, const std::string &message);
    void initializeOutput();
 
    std::string docId_;

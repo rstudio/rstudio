@@ -25,6 +25,7 @@
 #include "NotebookErrors.hpp"
 #include "NotebookQueue.hpp"
 #include "NotebookAlternateEngines.hpp"
+#include "NotebookConditions.hpp"
 
 #include <iostream>
 
@@ -176,7 +177,8 @@ Error initialize()
       (bind(initPlotReplay))
       (bind(initQueue))
       (bind(initAlternateEngines))
-      (bind(initChunkDefs));
+      (bind(initChunkDefs))
+      (bind(initConditions));
 
    return initBlock.execute();
 }
