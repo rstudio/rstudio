@@ -283,7 +283,11 @@ public class TextEditingTargetWidget
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
       insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
       insertChunksMenu.addSeparator();
-      insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
+
+      if (!BrowseCap.isWindows()) {
+         insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
+      }
+
       insertChunksMenu.addItem(commands_.insertChunkPython().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkRCPP().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
