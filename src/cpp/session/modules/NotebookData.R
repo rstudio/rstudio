@@ -221,9 +221,13 @@
   max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else as.numeric(options$max.print)
   max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
+  if (is.null(options$connection)) stop(
+    "The 'connection' option (DBI connection) is required for sql chunks."
+  )
+
   conn <- get(options$connection, envir = globalenv())
   if (is.null(conn)) stop(
-    "The 'connection' option (DBI connection) is required for sql chunks."
+    "The 'connection' option must be a valid DBI connection."
   )
 
   # Return char vector of sql interpolation param names
