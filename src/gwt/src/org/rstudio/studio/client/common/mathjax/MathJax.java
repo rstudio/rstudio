@@ -57,7 +57,7 @@ public class MathJax
    {
       docDisplay_ = docDisplay;
       bgRenderer_ = new MathJaxBackgroundRenderer(this, docDisplay);
-      popup_ = new MathJaxPopupPanel();
+      popup_ = new MathJaxPopupPanel(this);
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
       onPopupTypeset_ = new MathJaxTypesetCallback()
       {
@@ -104,7 +104,8 @@ public class MathJax
       String text = docDisplay_.getTextForRange(range);
       
       // render latex chunks as line widgets
-      if (text.startsWith("$$") && text.endsWith("$$"))
+      boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
+      if (isLatexChunk)
       {
          // escape hatch for background renders of line widgets that
          // have not yet been added to the document
@@ -129,6 +130,8 @@ public class MathJax
          while (false);
       }
       
+      // if the popup is already showing, just re-render within that popup
+      // (don't reset render state)
       if (popup_.isShowing())
       {
          renderPopup(text);
@@ -139,7 +142,16 @@ public class MathJax
       range_ = range;
       anchor_ = docDisplay_.createAnchoredSelection(range.getStart(), range.getEnd());
       lastRenderedText_ = "";
+      popup_.setRenderToolbarVisible(isLatexChunk);
       renderPopup(text);
+   }
+   
+   public void promotePopupToLineWidget()
+   {
+      if (range_ == null)
+         return;
+      
+      renderLatex(range_, false);
    }
    
    // Private Methods ----
@@ -277,7 +289,7 @@ public class MathJax
       // just typeset
       if (popup_.isShowing())
       {
-         mathjaxTypeset(popup_.getElement(), text);
+         mathjaxTypeset(popup_.getContentElement(), text);
          return;
       }
       
@@ -286,7 +298,7 @@ public class MathJax
       popup_.show();
       
       // typeset and position after typesetting finished
-      mathjaxTypeset(popup_.getElement(), text, onPopupTypeset_);
+      mathjaxTypeset(popup_.getContentElement(), text, onPopupTypeset_);
    }
    
    private void endRender()
