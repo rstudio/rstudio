@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.common.mathjax;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -29,7 +31,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
-
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -38,6 +39,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
@@ -53,6 +55,7 @@ public class MathJax
       docDisplay_ = docDisplay;
       bgRenderer_ = new MathJaxBackgroundRenderer(docDisplay);
       popup_ = new MathJaxPopupPanel();
+      cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
       
       docDisplay_.addBlurHandler(new BlurHandler()
       {
@@ -146,15 +149,29 @@ public class MathJax
       ChunkOutputHost host = new ChunkOutputHost()
       {
          @Override
-         public void onOutputRemoved()
+         public void onOutputRemoved(final ChunkOutputWidget widget)
          {
-            // TODO Auto-generated method stub
+            final PinnedLineWidget plw = cowToPlwMap_.get(widget);
+            if (plw == null)
+               return;
+            
+            FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  cowToPlwMap_.remove(widget);
+                  plw.detach();
+               }
+            });
+            anim.run(400);
          }
          
          @Override
-         public void onOutputHeightChanged(int height, boolean ensureVisible)
+         public void onOutputHeightChanged(ChunkOutputWidget widget,
+                                           int height,
+                                           boolean ensureVisible)
          {
-            // TODO Auto-generated method stub
          }
       };
       
@@ -174,6 +191,7 @@ public class MathJax
             null,
             null);
 
+      cowToPlwMap_.put(outputWidget, plWidget);
       return plWidget.getLineWidget();
    }
    
@@ -302,6 +320,7 @@ public class MathJax
    private final DocDisplay docDisplay_;
    private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxPopupPanel popup_;
+   private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
    
    private AnchoredSelection anchor_;
    private HandlerRegistration cursorChangedHandler_;
