@@ -1,0 +1,27 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+<ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
+<ui:style>
+.icon
+{
+  margin-right: 5px;
+}
+.contents
+{
+  font-size: 9px;
+}
+</ui:style>
+<g:VerticalPanel>
+   <g:HorizontalPanel visible="false" ui:field="messageBar_">
+     <g:Image styleName="{style.icon}" resource="{res.infoSmall}"></g:Image>
+     <g:VerticalPanel styleName="{style.contents}" ui:field="messages_">
+     </g:VerticalPanel>
+   </g:HorizontalPanel>
+   <g:HorizontalPanel visible="false" ui:field="warningBar_">
+     <g:Image styleName="{style.icon}" resource="{res.warningSmall}"></g:Image>
+     <g:VerticalPanel styleName="{style.contents}" ui:field="warnings_">
+     </g:VerticalPanel>
+   </g:HorizontalPanel>
+</g:VerticalPanel>
+</ui:UiBinder> 

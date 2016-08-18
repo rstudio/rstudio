@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
@@ -105,7 +106,8 @@ public class ChunkOutputGallery extends Composite
    }
 
    @Override
-   public void showPlotOutput(String url, int ordinal, Command onRenderComplete)
+   public void showPlotOutput(String url, NotebookPlotMetadata metadata,
+         int ordinal, Command onRenderComplete)
    {
       addPage(new ChunkPlotPage(url, ordinal, onRenderComplete));
    }

@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -112,8 +113,8 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    @Override
-   public void showPlotOutput(String url, int ordinal, 
-         final Command onRenderComplete)
+   public void showPlotOutput(String url, NotebookPlotMetadata metadata, 
+         int ordinal, final Command onRenderComplete)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_PLOT);
@@ -137,6 +138,12 @@ public class ChunkOutputStream extends FlowPanel
                      ChunkOutputUi.OUTPUT_ASPECT, 
                      ChunkOutputUi.MAX_PLOT_WIDTH);
          plotWidget = fixedFrame;
+      }
+      
+      // draw the metadata
+      if (metadata.getConditions().length() > 0)
+      {
+         add(new ChunkConditionBar(metadata.getConditions()));
       }
 
       // check to see if the given ordinal matches one of the existing
