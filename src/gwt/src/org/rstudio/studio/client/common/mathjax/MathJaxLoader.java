@@ -59,7 +59,7 @@ public class MathJaxLoader
             if (isMathJaxReady())
             {
                MATHJAX_LOADED = true;
-               setMathJaxHooks();
+               onMathJaxLoaded();
                return false;
             }
             
@@ -67,6 +67,13 @@ public class MathJaxLoader
          }
       }, 20);
    }
+   
+   private static final native void onMathJaxLoaded() /*-{
+      var MathJax = $wnd.MathJax;
+      
+      // avoid jittering
+      MathJax.Hub.processSectionDelay = 0;
+   }-*/;
    
    private static final native void initializeMathJaxConfig() /*-{
 
@@ -102,10 +109,6 @@ public class MathJaxLoader
    }-*/;
    
    private static final native void setMathJaxHooks() /*-{
-      var MathJax = $wnd.MathJax;
-      
-      // avoid jittering
-      MathJax.Hub.processSectionDelay = 0;
    }-*/;
 
    private static ScriptElement createMathJaxScriptElement()

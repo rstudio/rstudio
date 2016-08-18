@@ -30,6 +30,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -41,6 +43,11 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class MathJax
 {
+   interface MathJaxTypesetCallback
+   {
+      void onMathJaxTypesetComplete(boolean error);
+   }
+   
    public MathJax(DocDisplay docDisplay)
    {
       docDisplay_ = docDisplay;
@@ -91,9 +98,9 @@ public class MathJax
       render(text);
    }
    
-   private void renderLatexLineWidget(Range range, String text)
+   private void renderLatexLineWidget(final Range range, final String text)
    {
-      int row = range.getEnd().getRow() + 1;
+      int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       
       boolean hasWidget = widget != null;
@@ -104,12 +111,31 @@ public class MathJax
             widget.getElement(),
             "mathjax-root");
       
-      mathjaxTypeset(el, text);
-      
-      int height = el.getOffsetHeight() + 30;
-      Element ppElement = el.getParentElement().getParentElement();
-      ppElement.getStyle().setHeight(height, Unit.PX);
+      // call 'onLineWidgetChanged' to ensure the widget is attached
       docDisplay_.onLineWidgetChanged(widget);
+      
+      // defer typesetting just to ensure that the widget has actually been
+      // attached to the DOM
+      final LineWidget lineWidget = widget;
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            mathjaxTypeset(el, text, new MathJaxTypesetCallback()
+            {
+               @Override
+               public void onMathJaxTypesetComplete(boolean error)
+               {
+                  // re-position the element
+                  int height = el.getOffsetHeight() + 30;
+                  Element ppElement = el.getParentElement().getParentElement();
+                  ppElement.getStyle().setHeight(height, Unit.PX);
+                  docDisplay_.onLineWidgetChanged(lineWidget);
+               }
+            });
+         }
+      });
    }
    
    private LineWidget createMathJaxLineWidget(int row)
@@ -199,13 +225,28 @@ public class MathJax
       popup_.hide();
    }
    
-   private void onMathJaxTypesetCompleted(String text, boolean error)
+   private void onMathJaxTypesetCompleted(String text,
+                                          boolean error,
+                                          Object commandObject)
    {
+      if (commandObject != null && commandObject instanceof MathJaxTypesetCallback)
+      {
+         MathJaxTypesetCallback callback = (MathJaxTypesetCallback) commandObject;
+         callback.onMathJaxTypesetComplete(error);
+      }
+      
       if (error) return;
       lastRenderedText_ = text;
    }
    
-   private final native void mathjaxTypeset(Element el, String currentText)
+   private final void mathjaxTypeset(Element el, String currentText)
+   {
+      mathjaxTypeset(el, currentText, null);
+   }
+   
+   private final native void mathjaxTypeset(Element el,
+                                            String currentText,
+                                            Object command)
    /*-{
       var MathJax = $wnd.MathJax;
       
@@ -227,7 +268,7 @@ public class MathJax
                jax.Text(lastRenderedText);
 
             // callback to GWT
-            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;Z)(currentText, error);
+            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;ZLjava/lang/Object;)(currentText, error, command);
          }));
       }));
    }-*/;
