@@ -15,8 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -41,9 +43,18 @@ public class ChunkOutputThumbnail extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       title_.setText(title);
-      subtitle_.setText(subtitle);
+
+      // move the title down if there's no subtitle
+      if (StringUtil.isNullOrEmpty(subtitle))
+         title_.getElement().getStyle().setMarginTop(45, Unit.PCT);
+      else
+         subtitle_.setText(subtitle);
+
+      // add a backdrop if we have one
       if (backdrop != null)
          backdrop_.add(backdrop);
+      
+      // apply the initial set of colors
       onEditorThemeChanged(colors);
    }
 

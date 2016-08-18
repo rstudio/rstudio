@@ -29,8 +29,8 @@ public class ChunkDataPage extends ChunkOutputPage
       {
          String clazz = metadata.getClasses().length() > 0 ? 
                metadata.getClasses().get(0) : "data";
-         thumbnail_ = new ChunkOutputThumbnail(clazz, + 
-               metadata.numRows() + "x" + metadata.numCols(),
+         thumbnail_ = new ChunkOutputThumbnail(clazz, 
+               "[ " + metadata.numRows() + " x " + metadata.numCols() + " ]",
                new ChunkDataPreview(widget.getData()), 
                ChunkOutputWidget.getEditorColors());
       }

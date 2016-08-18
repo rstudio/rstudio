@@ -46,6 +46,7 @@ public class AceThemes
    public static final String IDLE_FINGERS = "Idle Fingers";
    public static final String KATZENMILCH = "Katzenmilch";
    public static final String KR_THEME = "Kr Theme";
+   public static final String MATERIAL = "Material";
    public static final String MERBIVORE_SOFT = "Merbivore Soft";
    public static final String MERBIVORE = "Merbivore";
    public static final String MONO_INDUSTRIAL = "Mono Industrial";
@@ -86,6 +87,7 @@ public class AceThemes
       addTheme(IDLE_FINGERS, res.idle_fingers(), true);
       addTheme(KATZENMILCH, res.katzenmilch(), false);
       addTheme(KR_THEME, res.kr_theme(), true);
+      addTheme(MATERIAL, res.material(), true);
       addTheme(MERBIVORE_SOFT, res.merbivore_soft(), true);
       addTheme(MERBIVORE, res.merbivore(), true);
       addTheme(MONO_INDUSTRIAL, res.mono_industrial(), true);

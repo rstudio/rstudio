@@ -143,9 +143,9 @@
 
   names(data) <- as.character(columnSequence)
 
-  # add the names column
-  columns <- unname(
-    c(
+  addRowNames = .row_names_info(data, type = 1) > 0
+  if (addRowNames) {
+    columns <- c(
       list(
         list(
           label = "",
@@ -156,9 +156,11 @@
       ),
       columns
     )
-  )
 
-  data$`_rn_` <- rownames(data)
+    data$`_rn_` <- rownames(data)
+  }
+
+  columns <- unname(columns)
 
   is_list <- vapply(data, is.list, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
@@ -175,7 +177,7 @@
   data <- as.data.frame(
     lapply(
       data,
-      function (y) format(y)),
+      function (y) encodeString(format(y, digits = getOption("digits")))),
     stringsAsFactors = FALSE,
     optional = TRUE)
 
