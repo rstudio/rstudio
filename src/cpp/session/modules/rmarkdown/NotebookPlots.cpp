@@ -109,6 +109,7 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          metadata["height"] = height_;
          metadata["width"] = width_;
          metadata["size_behavior"] = static_cast<int>(sizeBehavior_);
+         metadata["conditions"] = endConditionCapture();
 
          // emit the plot and the snapshot file
          events().onPlotOutput(path, snapshotFile_, metadata, lastOrdinal_);
@@ -240,12 +241,14 @@ void PlotCapture::onBeforeNewPlot()
       if (sizeBehavior_ == PlotSizeAutomatic)
          saveSnapshot();
    }
+   beginConditionCapture();
    plotPending_ = true;
    hasPlots_ = true;
 }
 
 void PlotCapture::onNewPlot()
 {
+   beginConditionCapture();
    hasPlots_ = true;
    processPlots(true);
 }

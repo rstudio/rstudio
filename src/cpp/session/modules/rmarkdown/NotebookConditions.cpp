@@ -57,7 +57,7 @@ void ConditionCapture::connect()
    Error error = r::exec::executeStringUnsafe(
          ".Internal(.addCondHands(c(\"warning\", \"message\"), "
          " list(warning = function(m) { "
-         "   .Call(\"rs_signalNotebookCondition(\", " + 
+         "   .Call(\"rs_signalNotebookCondition\", " + 
                       safe_convert::numberToString(ConditionWarning) + "L, "
          "          m$message); "
          "   invokeRestart(\"muffleWarning\") "

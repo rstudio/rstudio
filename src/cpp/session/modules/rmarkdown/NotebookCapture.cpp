@@ -22,6 +22,8 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+using namespace rstudio::core;
+
 NotebookCapture::NotebookCapture():
    connected_(false)
 {}
@@ -55,8 +57,43 @@ void NotebookCapture::onExprComplete()
 bool NotebookCapture::onCondition(Condition condition, 
                                   const std::string& message)
 {
+   if (capturingConditions())
+   {
+      json::Array cond;
+      cond.push_back(static_cast<int>(condition));
+      cond.push_back(message);
+      conditions_->push_back(cond);
+      return true;
+   }
+
    // default is to ignore condition
    return false;
+}
+
+void NotebookCapture::beginConditionCapture()
+{
+   // skip if already capturing conditions
+   if (conditions_)
+      return;
+   conditions_ = boost::make_shared<core::json::Array>();
+}
+
+json::Value NotebookCapture::endConditionCapture()
+{
+   if (conditions_)
+   {
+      json::Value conditions = *conditions_;
+      conditions_.reset();
+      return conditions;
+   }
+   
+   // return null by default;
+   return json::Value();
+}
+
+bool NotebookCapture::capturingConditions()
+{
+   return conditions_;
 }
 
 } // namespace notebook

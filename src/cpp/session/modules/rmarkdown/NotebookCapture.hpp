@@ -16,6 +16,8 @@
 #ifndef SESSION_NOTEBOOK_CAPTURE_HPP
 #define SESSION_NOTEBOOK_CAPTURE_HPP
 
+#include <core/json/Json.hpp>
+
 #include <boost/noncopyable.hpp>
 #include <string>
 
@@ -43,8 +45,15 @@ public:
    // gives capturing context a chance to handle a condition; returns true if
    // the condition was handled by the context
    virtual bool onCondition(Condition condition, const std::string& message);
+
+protected:
+   void beginConditionCapture();
+   bool capturingConditions();
+   core::json::Value endConditionCapture();
+
 private:
    bool connected_;
+   boost::shared_ptr<core::json::Array> conditions_;
 };
 
 } // namespace notebook
