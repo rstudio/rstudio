@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -64,6 +67,7 @@ public class MathJax
       docDisplay_ = docDisplay;
       bgRenderer_ = new MathJaxBackgroundRenderer(this, docDisplay);
       popup_ = new MathJaxPopupPanel(this);
+      handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
       onPopupTypeset_ = new MathJaxTypesetCallback()
       {
@@ -78,16 +82,7 @@ public class MathJax
          }
       };
       
-      docDisplay_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            endRender();
-         }
-      });
-      
-      popup_.addAttachHandler(new AttachEvent.Handler()
+      handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          @Override
          public void onAttachOrDetach(AttachEvent event)
@@ -97,7 +92,26 @@ public class MathJax
             else
                endCursorMonitoring();
          }
-      });
+      }));
+      
+      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            endRender();
+         }
+      }));
+      
+      handlers_.add(docDisplay_.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+               detachHandlers();
+         }
+      }));
    }
    
    public void renderLatex(Range range)
@@ -427,10 +441,18 @@ public class MathJax
       return text.matches("^\\$*\\s*\\$*$");
    }
    
+   private void detachHandlers()
+   {
+      for (HandlerRegistration handler : handlers_)
+         handler.removeHandler();
+      handlers_.clear();
+   }
+   
    private final DocDisplay docDisplay_;
    private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxPopupPanel popup_;
    private final MathJaxTypesetCallback onPopupTypeset_;
+   private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
    
    private AnchoredSelection anchor_;
