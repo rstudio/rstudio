@@ -70,9 +70,9 @@ public class MathJaxLoader
             }
             
             RETRY_COUNT++;
-            return RETRY_COUNT < 20;
+            return RETRY_COUNT < 50;
          }
-      }, 50);
+      }, 500);
    }
    
    // Private Methods ----
