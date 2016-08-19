@@ -48,7 +48,7 @@ public class MathJaxLoader
    {
       if (MATHJAX_LOADED)
       {
-         callback.onLoaded(MATHJAX_LOADED);
+         if (callback != null) callback.onLoaded(MATHJAX_LOADED);
          return;
       }
       
@@ -64,7 +64,7 @@ public class MathJaxLoader
             if (isMathJaxReady())
             {
                MATHJAX_LOADED = true;
-               callback.onLoaded(false);
+               if (callback != null) callback.onLoaded(false);
                onMathJaxLoaded();
                return false;
             }
@@ -98,7 +98,8 @@ public class MathJaxLoader
             processEscapes: true
          },
          "HTML-CSS": {
-            availableFonts: ['TeX']
+            minScaleAdjust: 125,
+            availableFonts: []
          },
          showProcessingMessage: false,
          showMathMenu: false,
