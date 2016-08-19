@@ -75,6 +75,8 @@ public class MathJaxLoader
       }, 50);
    }
    
+   // Private Methods ----
+   
    private static final native void onMathJaxLoaded() /*-{
       var MathJax = $wnd.MathJax;
       
