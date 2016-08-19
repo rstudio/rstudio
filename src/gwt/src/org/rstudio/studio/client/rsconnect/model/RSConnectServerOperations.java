@@ -46,7 +46,7 @@ public interface RSConnectServerOperations
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void publishContent(RSConnectPublishSource source, 
-               String account, String server, String appName, 
+               String account, String server, String appName, String appTitle,
                RSConnectPublishSettings settings,
                ServerRequestCallback<Boolean> requestCallback);
    
@@ -76,4 +76,7 @@ public interface RSConnectServerOperations
    
    void getEditPublishedDocs(String appPath,
                 ServerRequestCallback<JsArrayString> resultCallback);
+   
+   void generateAppName(String title, String appPath, String accountName,
+                ServerRequestCallback<RSConnectAppName> resultCallback);
 }

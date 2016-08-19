@@ -193,7 +193,7 @@ void reportStanExecutionError(const std::string& docId,
                               const FilePath& targetPath)
 {
    std::string message =
-         "engine.opts$x must be a character string providing a "
+         "engine.opts$output.var must be a character string providing a "
          "name for the returned `stanmodel` object";
    reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
 }
@@ -241,7 +241,8 @@ Error executeStanEngineChunk(const std::string& docId,
    }
    RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
    
-   // ensure existence of 'engine.opts' with 'x' parameter
+   // ensure existence of 'engine.opts' with 'output.var' parameter
+   // ('x' also allowed for backwards compatibility)
    if (!options.count("engine.opts"))
    {
       reportStanExecutionError(docId, chunkId, nbCtxId, targetPath);
@@ -276,9 +277,9 @@ Error executeStanEngineChunk(const std::string& docId,
    std::string modelName;
    for (std::size_t i = 0, n = r::sexp::length(engineOptsSEXP); i < n; ++i)
    {
-      // skip 'x' engine option (this is the variable we wish to assign to
+      // skip 'output.var' engine option (this is the variable we wish to assign to
       // after evaluating the stan model)
-      if (engineOptsNames[i] == "x")
+      if (engineOptsNames[i] == "output.var" || engineOptsNames[i] == "x")
       {
          modelName = r::sexp::asString(VECTOR_ELT(engineOptsSEXP, i));
          continue;
@@ -459,7 +460,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
          options[it->first] = it->second.get_str();
    }
    
-   // handle Rcpp specially
+   // handle some engines with their own custom routines
    if (engine == "Rcpp")
       return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "stan")
@@ -467,7 +468,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
    else if (engine == "sql")
       return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
 
-   runChunk(docId, chunkId, nbCtxId, engine, code);
+   runChunk(docId, chunkId, nbCtxId, engine, code, options);
    return Success();
 }
 

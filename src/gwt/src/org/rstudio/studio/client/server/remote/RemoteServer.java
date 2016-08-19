@@ -107,6 +107,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
@@ -3918,7 +3919,7 @@ public class RemoteServer implements Server
    @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
-         String server, String appName, 
+         String server, String appName, String appTitle,
          RSConnectPublishSettings settings,
          ServerRequestCallback<Boolean> requestCallback)
    {
@@ -3932,12 +3933,13 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(account));
       params.set(5, new JSONString(server));
       params.set(6, new JSONString(appName));
-      params.set(7, new JSONString(source.getContentCategory() == null ? "" :
+      params.set(7, new JSONString(appTitle == null ? "": appTitle));
+      params.set(8, new JSONString(source.getContentCategory() == null ? "" :
             source.getContentCategory()));
-      params.set(8, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
-      params.set(9, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
-      params.set(10, JSONBoolean.getInstance(settings.getAsMultiple()));
-      params.set(11, JSONBoolean.getInstance(settings.getAsStatic()));
+      params.set(9, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
+      params.set(10, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
+      params.set(11, JSONBoolean.getInstance(settings.getAsMultiple()));
+      params.set(12, JSONBoolean.getInstance(settings.getAsStatic()));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
@@ -4058,6 +4060,18 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   @Override
+   public void generateAppName(String title, String appPath, String accountName,
+         ServerRequestCallback<RSConnectAppName> resultCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(title));
+      params.set(1, new JSONString(StringUtil.isNullOrEmpty(appPath) ? 
+            "" : appPath));
+      params.set(2, new JSONString(accountName));
+      sendRequest(RPC_SCOPE, "generate_app_name", params, resultCallback);
+   }
+
    @Override
    public void getEditPublishedDocs(String appPath,
          ServerRequestCallback<JsArrayString> resultCallback)

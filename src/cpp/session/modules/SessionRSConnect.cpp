@@ -84,7 +84,8 @@ public:
          const std::string& sourceDoc,
          const std::string& account,
          const std::string& server,
-         const std::string& app,
+         const std::string& appName,
+         const std::string& appTitle,
          const std::string& contentCategory,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
@@ -147,7 +148,8 @@ public:
                 string_utils::singleQuotedStrEscape(sourceDoc) + "', ") + 
              "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
              "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
-             "appName = '" + string_utils::singleQuotedStrEscape(app) + "', " + 
+             "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
+             "appTitle = '" + string_utils::singleQuotedStrEscape(appTitle) + "', " + 
              (contentCategory.empty() ? "" : "contentCategory = '" + 
                 contentCategory + "', ") +
              "launch.browser = function (url) { "
@@ -246,11 +248,11 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 {
    json::Array sourceFiles, additionalFiles, ignoredFiles;
    std::string sourceDir, sourceFile, sourceDoc, account, server, appName,
-               contentCategory;
+               appTitle, contentCategory;
    bool asMultiple = false, asStatic = false;
    Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
                                    &sourceFile, &sourceDoc, &account, &server, 
-                                   &appName, &contentCategory, 
+                                   &appName, &appTitle, &contentCategory, 
                                    &additionalFiles, &ignoredFiles, 
                                    &asMultiple, &asStatic);
    if (error)
@@ -265,7 +267,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    {
       error = RSConnectPublish::create(sourceDir, sourceFiles, 
                                        sourceFile, sourceDoc, 
-                                       account, server, appName, 
+                                       account, server, appName, appTitle,
                                        contentCategory,
                                        additionalFiles,
                                        ignoredFiles, asMultiple,

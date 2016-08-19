@@ -39,11 +39,26 @@ namespace notebook {
 
 core::shell_utils::ShellCommand shellCommandForEngine(
       const std::string& engine,
-      const core::FilePath& scriptPath)
+      const core::FilePath& scriptPath,
+      const std::map<std::string, std::string>& options)
 {
-   core::shell_utils::ShellCommand command(engine);
+   using namespace core;
+   using namespace core::string_utils;
+   using namespace core::shell_utils;
    
-   command << core::string_utils::utf8ToSystem(scriptPath.absolutePathNative());
+   // determine engine path -- respect chunk option 'engine.path' if supplied
+   std::string enginePath = engine;
+   if (options.count("engine.path"))
+      enginePath = options.at("engine.path");
+   
+   ShellCommand command(enginePath);
+   
+   // pass along 'engine.opts' if supplied
+   if (options.count("engine.opts"))
+      command << EscapeFilesOnly << options.at("engine.opts") << EscapeAll;
+   
+   // pass path to file
+   command << utf8ToSystem(scriptPath.absolutePathNative());
    
    return command;
 }
@@ -246,7 +261,8 @@ core::Error runChunk(const std::string& docId,
                      const std::string& chunkId,
                      const std::string& nbCtxId,
                      const std::string& engine,
-                     const std::string& code)
+                     const std::string& code,
+                     const std::map<std::string, std::string>& chunkOptions)
 {
    using namespace core;
    typedef core::shell_utils::ShellCommand ShellCommand;
@@ -261,7 +277,7 @@ core::Error runChunk(const std::string& docId,
    }
    
    // get command
-   ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath);
+   ShellCommand command = notebook::shellCommandForEngine(engine, scriptPath, chunkOptions);
 
    // create process
    boost::shared_ptr<ExecuteChunkOperation> operation =

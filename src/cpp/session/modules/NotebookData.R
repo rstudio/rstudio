@@ -175,14 +175,25 @@
 
   if (length(columns) > 0) {
     first_column = data[[1]]
-    if (is.numeric(first_column) && all(diff(first_column) == 1))
+    if (is.numeric(first_column) && isTRUE(all(diff(first_column) == 1)))
       columns[[1]]$align <- "left"
   }
 
   data <- as.data.frame(
     lapply(
       data,
-      function (y) encodeString(format(y, digits = getOption("digits")))),
+      function (y) {
+        # escape NAs from character columns
+        if (typeof(y) == "character") {
+          y[y == "NA"] <- "__NA__"
+        }
+
+        y <- encodeString(format(y, digits = getOption("digits")))
+
+        # trim spaces
+        gsub("^\\s+|\\s+$", "", y)
+      }
+    ),
     stringsAsFactors = FALSE,
     optional = TRUE)
 
@@ -210,9 +221,13 @@
   max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else as.numeric(options$max.print)
   max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
+  if (is.null(options$connection)) stop(
+    "The 'connection' option (DBI connection) is required for sql chunks."
+  )
+
   conn <- get(options$connection, envir = globalenv())
   if (is.null(conn)) stop(
-    "The 'connection' option (DBI connection) is required for sql chunks."
+    "The 'connection' option must be a valid DBI connection."
   )
 
   # Return char vector of sql interpolation param names

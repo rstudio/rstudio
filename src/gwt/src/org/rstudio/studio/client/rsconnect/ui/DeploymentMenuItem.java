@@ -28,9 +28,12 @@ public class DeploymentMenuItem extends CheckableMenuItem
    {
       // we don't know the name of RPubs-deployed content, so don't show it
       super(record.getServer() == "rpubs.com" || 
-               StringUtil.isNullOrEmpty(record.getName()) ? 
+               StringUtil.isNullOrEmpty(record.getDisplayName()) ? 
             record.getServer() : 
-            record.getName() + " (" + record.getServer() + ")");
+            record.getDisplayName() + " (" + record.getServer() + ")");
+      
+      // show actual name on hover (in case titles conflict)
+      setTitle(record.getName());
       isChecked_ = isChecked;
       onInvoked_ = onInvoked;
       onStateChanged();
