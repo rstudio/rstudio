@@ -18,6 +18,7 @@ import org.rstudio.core.client.js.JsArrayEx;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
@@ -34,6 +35,11 @@ public class ChunkConditionBar extends Composite
    interface ChunkConditionBarUiBinder
          extends UiBinder<Widget, ChunkConditionBar>
    {
+   }
+
+   public interface ConditionStyle extends CssResource
+   {
+      String contents();
    }
 
    public ChunkConditionBar(JsArray<JsArrayEx> conditions)
@@ -58,7 +64,9 @@ public class ChunkConditionBar extends Composite
             continue;
          }
          bar.setVisible(true);
-         contents.add(new Label(conditions.get(i).getString(1)));
+         Label entry = new Label(conditions.get(i).getString(1));
+         entry.addStyleName(style.contents());
+         contents.add(entry);
       }
    }
    
@@ -66,6 +74,7 @@ public class ChunkConditionBar extends Composite
    @UiField HorizontalPanel warningBar_;
    @UiField VerticalPanel messages_;
    @UiField VerticalPanel warnings_;
+   @UiField ConditionStyle style;
    
    // symmetric with enum on server
    public final static int CONDITION_MESSAGE = 0;

@@ -2,14 +2,17 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
 <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
-<ui:style>
+<ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkConditionBar.ConditionStyle">
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+
 .icon
 {
   margin-right: 5px;
 }
 .contents
 {
-  font-size: 9px;
+  font-size: 11px;
+  font-family: proportionalFont;
 }
 </ui:style>
 <g:VerticalPanel>
