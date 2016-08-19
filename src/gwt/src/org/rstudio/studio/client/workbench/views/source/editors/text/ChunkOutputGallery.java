@@ -175,8 +175,7 @@ public class ChunkOutputGallery extends Composite
          if (page instanceof ChunkPlotPage)
          {
             ChunkPlotPage plot = (ChunkPlotPage)page;
-            ChunkPlotPage.updateImageUrl(plot.contentWidget(), 
-                  plot.imageWidget(), plotUrl, pendingStyle);
+            plot.updateImageUrl(plotUrl, pendingStyle);
          }
       }
    }

@@ -123,35 +123,17 @@ public class ChunkOutputStream extends FlowPanel
       // persist metadata
       metadata_.put(ordinal, metadata);
       
-      final Image plot = new Image();
-      Widget plotWidget = null;
+      final ChunkPlotWidget plot = new ChunkPlotWidget(url, metadata, 
+            new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  onRenderComplete.execute();
+                  onHeightChanged();
+               }
+            });
       
-      if (ChunkPlotPage.isFixedSizePlotUrl(url))
-      {
-         // if the plot is of fixed size, emit it directly, but make it
-         // initially invisible until we get sizing information (as we may 
-         // have to downsample)
-         plot.setVisible(false);
-         plotWidget = plot;
-      }
-      else
-      {
-         // if we can scale the plot, scale it
-         FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
-                     ChunkOutputUi.OUTPUT_ASPECT, 
-                     ChunkOutputUi.MAX_PLOT_WIDTH);
-         plotWidget = fixedFrame;
-      }
-      
-      // draw the metadata
-      if (metadata.getConditions().length() > 0)
-      {
-         ChunkConditionBar bar = new ChunkConditionBar(
-               metadata.getConditions());
-         bar.onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
-         add(bar);
-      }
-
       // check to see if the given ordinal matches one of the existing
       // placeholder elements
       boolean placed = false;
@@ -167,12 +149,12 @@ public class ChunkOutputStream extends FlowPanel
                if (ordAttr == ordinal)
                {
                   // insert the plot widget after the ordinal 
-                  plotWidget.getElement().setAttribute(
+                  plot.getElement().setAttribute(
                         ORDINAL_ATTRIBUTE, "" + ordinal);
                   if (i < getWidgetCount() - 1)
-                     insert(plotWidget, i + 1);
+                     insert(plot, i + 1);
                   else
-                     add(plotWidget);
+                     add(plot);
                   placed = true;
                   break;
                }
@@ -186,19 +168,7 @@ public class ChunkOutputStream extends FlowPanel
 
       // if we haven't placed the plot yet, add it at the end of the output
       if (!placed)
-         addWithOrdinal(plotWidget, ordinal);
-      
-      ChunkPlotPage.listenForRender(plot, "auto", "100%", "", new Command()
-      {
-         @Override
-         public void execute()
-         {
-            onRenderComplete.execute();
-            onHeightChanged();
-         }
-      });
-
-      plot.setUrl(url);
+         addWithOrdinal(plot, ordinal);
    }
 
    @Override
@@ -357,15 +327,12 @@ public class ChunkOutputStream extends FlowPanel
    {
       for (Widget w: this)
       {
-         if (w instanceof FixedRatioWidget)
+         if (w instanceof ChunkPlotWidget)
          {
-            // extract the wrapped plot
-            FixedRatioWidget fixedFrame = (FixedRatioWidget)w;
-            if (!(fixedFrame.getWidget() instanceof Image))
-               continue;
-            Image plot = (Image)fixedFrame.getWidget();
-            
-            ChunkPlotPage.updateImageUrl(w, plot, plotUrl, pendingStyle);
+            // ask the plot to sync this URL (it contains the logic for 
+            // determining whether it matches the URL)
+            ChunkPlotWidget plot = (ChunkPlotWidget)w;
+            plot.updateImageUrl(plotUrl, pendingStyle);
          }
       }
    }
@@ -466,13 +433,12 @@ public class ChunkOutputStream extends FlowPanel
          if (w instanceof FixedRatioWidget)
             inner = ((FixedRatioWidget)w).getWidget();
          
-         if (inner instanceof Image)
+         if (inner instanceof ChunkPlotWidget)
          {
-            Image image = (Image)inner;
-            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), 
-                  (NotebookPlotMetadata)metadata.cast(),
-                  ordinal, null);
-            pages.add(plot);
+            ChunkPlotWidget plot = (ChunkPlotWidget)inner;
+            ChunkPlotPage page = new ChunkPlotPage(plot.plotUrl(),
+                  plot.getMetadata(), ordinal, null);
+            pages.add(page);
             remove(w);
          }
          else if (inner instanceof ChunkOutputFrame)
