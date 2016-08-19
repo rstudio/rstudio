@@ -53,11 +53,12 @@ core::shell_utils::ShellCommand shellCommandForEngine(
    
    ShellCommand command(enginePath);
    
-   command << utf8ToSystem(scriptPath.absolutePathNative());
-   
    // pass along 'engine.opts' if supplied
    if (options.count("engine.opts"))
       command << EscapeFilesOnly << options.at("engine.opts") << EscapeAll;
+   
+   // pass path to file
+   command << utf8ToSystem(scriptPath.absolutePathNative());
    
    return command;
 }
