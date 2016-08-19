@@ -184,9 +184,8 @@ public class MathJax
    
    private void renderLatexLineWidget(final Range range, final String text)
    {
-      // if there's a popup showing for this chunk, remove it
-      resetRenderState();
-      popup_.hide();
+      // end a previous render session if necessary (e.g. if a popup is showing)
+      endRender();
       
       int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
@@ -306,8 +305,7 @@ public class MathJax
       // if empty, hide popup
       if (text.isEmpty())
       {
-         popup_.hide();
-         resetRenderState();
+         endRender();
          return;
       }
       
