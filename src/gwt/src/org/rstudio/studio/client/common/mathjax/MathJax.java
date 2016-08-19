@@ -20,8 +20,11 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -45,6 +48,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.inject.Inject;
 
 public class MathJax
 {
@@ -55,6 +59,8 @@ public class MathJax
    
    public MathJax(DocDisplay docDisplay)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       docDisplay_ = docDisplay;
       bgRenderer_ = new MathJaxBackgroundRenderer(this, docDisplay);
       popup_ = new MathJaxPopupPanel(this);
@@ -102,13 +108,16 @@ public class MathJax
    public void renderLatex(Range range, boolean background)
    {
       String text = docDisplay_.getTextForRange(range);
+      String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getGlobalValue();
+      
+      // never render background popups if user opted out
+      if (background && pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
+         return;
       
       // render latex chunks as line widgets
       boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
       if (isLatexChunk)
       {
-         // escape hatch for background renders of line widgets that
-         // have not yet been added to the document
          do
          {
             // don't render if chunk contents empty
@@ -121,7 +130,18 @@ public class MathJax
                int row = range.getEnd().getRow();
                LineWidget widget = docDisplay_.getLineWidgetForRow(row);
                if (widget == null)
+               {
+                  // respect preference for rendering popups
+                  if (pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY) ||
+                      pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
+                  {
+                     return;
+                  }
+                  
+                  // break out of upper do loop and attempt rendering popup as opposed
+                  // to line widget
                   break;
+               }
             }
 
             renderLatexLineWidget(range, text);
@@ -155,6 +175,12 @@ public class MathJax
    }
    
    // Private Methods ----
+   
+   @Inject
+   private void initialize(UIPrefs uiPrefs)
+   {
+      uiPrefs_ = uiPrefs;
+   }
    
    private void renderLatexLineWidget(final Range range, final String text)
    {
@@ -413,4 +439,7 @@ public class MathJax
    private Range range_;
    private HandlerRegistration cursorChangedHandler_;
    private String lastRenderedText_ = "";
+   
+   // Injected ----
+   private UIPrefs uiPrefs_;
 }

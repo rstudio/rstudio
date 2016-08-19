@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.NewFileMenu;
 import org.rstudio.studio.client.common.impl.DesktopFileDialogs;
 import org.rstudio.studio.client.common.latex.LatexProgramRegistry;
+import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
@@ -188,6 +189,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ConnectionExplorer connectionExplorer);
    void injectMembers(TableBrowser tableBrowser);
    void injectMembers(TableBrowserModel tableBrowserModel);
+   void injectMembers(MathJax mathjax);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
