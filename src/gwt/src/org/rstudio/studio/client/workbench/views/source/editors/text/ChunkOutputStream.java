@@ -143,7 +143,10 @@ public class ChunkOutputStream extends FlowPanel
       // draw the metadata
       if (metadata.getConditions().length() > 0)
       {
-         add(new ChunkConditionBar(metadata.getConditions()));
+         ChunkConditionBar bar = new ChunkConditionBar(
+               metadata.getConditions());
+         bar.onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
+         add(bar);
       }
 
       // check to see if the given ordinal matches one of the existing
@@ -448,6 +451,11 @@ public class ChunkOutputStream extends FlowPanel
             remove(w);
             continue;
          }
+         else if (w instanceof ChunkConditionBar)
+         {
+            remove(w);
+            continue;
+         }
 
          // extract the inner element if this is a fixed-ratio widget (or just
          // use raw if it's not)
@@ -458,8 +466,9 @@ public class ChunkOutputStream extends FlowPanel
          if (inner instanceof Image)
          {
             Image image = (Image)inner;
-            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), ordinal, 
-                  null);
+            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), 
+                  (NotebookPlotMetadata)metadata.cast(),
+                  ordinal, null);
             pages.add(plot);
             remove(w);
          }

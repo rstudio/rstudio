@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.js.JsArrayEx;
 
 import com.google.gwt.core.client.GWT;
@@ -28,6 +29,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkConditionBar extends Composite
+                               implements EditorThemeListener
 {
    private static ChunkConditionBarUiBinder uiBinder = GWT
          .create(ChunkConditionBarUiBinder.class);
@@ -70,11 +72,24 @@ public class ChunkConditionBar extends Composite
       }
    }
    
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      // create a background color by softening the foreground
+      ColorUtil.RGBColor foreground = 
+            ColorUtil.RGBColor.fromCss(colors.foreground);
+      ColorUtil.RGBColor background = new ColorUtil.RGBColor(
+            foreground.red(), foreground.green(), foreground.blue(), 0.1);
+
+      panel_.getElement().getStyle().setBackgroundColor(background.asRgb());
+   }
+
    @UiField HorizontalPanel messageBar_;
    @UiField HorizontalPanel warningBar_;
    @UiField VerticalPanel messages_;
    @UiField VerticalPanel warnings_;
    @UiField ConditionStyle style;
+   @UiField VerticalPanel panel_;
    
    // symmetric with enum on server
    public final static int CONDITION_MESSAGE = 0;

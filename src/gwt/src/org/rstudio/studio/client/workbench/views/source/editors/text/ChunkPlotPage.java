@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.dom.client.Style.TextAlign;
@@ -26,14 +27,17 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkPlotPage extends ChunkOutputPage
+                           implements EditorThemeListener
 {
-   public ChunkPlotPage(final String url, int ordinal, 
-         final Command onRenderComplete)
+   public ChunkPlotPage(final String url, NotebookPlotMetadata metadata, 
+         int ordinal, final Command onRenderComplete)
    {
       super(ordinal);
+      Widget content;
       if (isFixedSizePlotUrl(url))
       {
          final Image thumbnail = new Image();
@@ -64,7 +68,7 @@ public class ChunkPlotPage extends ChunkOutputPage
             }
          });
          plot_.setUrl(url);
-         content_ = plot_;
+         content = plot_;
       }
       else
       {
@@ -74,10 +78,29 @@ public class ChunkPlotPage extends ChunkOutputPage
          plot_ = new Image();
          listenForRender(plot_, "auto", "100%", "", onRenderComplete);
          plot_.setUrl(url);
-         content_ = new FixedRatioWidget(plot_, ChunkOutputUi.OUTPUT_ASPECT, 
+         content = new FixedRatioWidget(plot_, ChunkOutputUi.OUTPUT_ASPECT, 
                ChunkOutputUi.MAX_PLOT_WIDTH);
       }
       url_ = url;
+      
+      // if no metadata, use the plot as-is
+      if (metadata == null || metadata.getConditions().length() == 0)
+      {
+         content_ = content;
+      }
+      else
+      {
+         // otherwise, group with metadata
+         VerticalPanel outer = new VerticalPanel();
+         conditions_ = new ChunkConditionBar(metadata.getConditions());
+         conditions_.onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
+         outer.add(conditions_);
+         outer.add(content);
+         outer.setHeight("100%");
+         outer.setWidth("100%");
+
+         content_ = outer;
+      }
    }
 
    @Override
@@ -96,6 +119,13 @@ public class ChunkPlotPage extends ChunkOutputPage
    public void onSelected()
    {
       // no action necessary for plots
+   }
+
+   @Override
+   public void onEditorThemeChanged(Colors colors)
+   {
+      if (conditions_ != null)
+         conditions_.onEditorThemeChanged(colors);
    }
 
    public String getPlotUrl()
@@ -171,6 +201,7 @@ public class ChunkPlotPage extends ChunkOutputPage
    private final Widget content_;
    private final Image plot_;
    private final Widget thumbnail_;
+   private ChunkConditionBar conditions_;
    private String url_;
    private static int resizeCounter_ = 0;
 }
