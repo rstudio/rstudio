@@ -216,26 +216,41 @@ public class ChunkContextToolbar extends Composite
             if (DOM.eventGetType(event) == Event.ONCLICK)
             {
                Commands commands = RStudioGinjector.INSTANCE.getCommands();
+               String engineLabel = chunkTypeLabel_.getText();
                
                final ToolbarPopupMenu switchChunksMenu = new ToolbarPopupMenu();
-               switchChunksMenu.addItem(createMenuItemForType(
-                     commands.switchToChunkR(), "r"));
-               switchChunksMenu.addSeparator();
-
-               if (!BrowseCap.isWindows()) {
+               
+               if (engineLabel != "r") {
+                  switchChunksMenu.addItem(createMenuItemForType(
+                        commands.switchToChunkR(), "r"));
+                  switchChunksMenu.addSeparator();
+               }
+               
+               if (!BrowseCap.isWindows() && engineLabel != "bash") {
                   switchChunksMenu.addItem(createMenuItemForType(
                         commands.switchToChunkBash(), "bash"));
                }
 
-               switchChunksMenu.addItem(createMenuItemForType(
-                     commands.switchToChunkPython(), "python"));
-               switchChunksMenu.addItem(createMenuItemForType(
-                     commands.switchToChunkRCPP(), "rcpp"));
-               switchChunksMenu.addItem(createMenuItemForType(
-                     commands.switchToChunkSQL(), "sql"));
-               switchChunksMenu.addItem(createMenuItemForType(
-                     commands.switchToChunkStan(), "stan"));
-
+               if (engineLabel != "python") {
+                  switchChunksMenu.addItem(createMenuItemForType(
+                        commands.switchToChunkPython(), "python"));
+               }
+               
+               if (engineLabel != "rcpp") {
+                  switchChunksMenu.addItem(createMenuItemForType(
+                        commands.switchToChunkRCPP(), "rcpp"));
+               }
+               
+               if (engineLabel != "sql") {
+                  switchChunksMenu.addItem(createMenuItemForType(
+                        commands.switchToChunkSQL(), "sql"));
+               }
+               
+               if (engineLabel != "stan") {
+                  switchChunksMenu.addItem(createMenuItemForType(
+                        commands.switchToChunkStan(), "stan"));
+               }
+               
                switchChunksMenu.setPopupPositionAndShow(new PositionCallback() 
                {
                   @Override
