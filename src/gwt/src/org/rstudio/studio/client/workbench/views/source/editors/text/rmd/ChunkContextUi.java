@@ -186,6 +186,8 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
             
             String newFirstLine = firstLine.replaceFirst("{[a-zA-Z]+", "{" + chunkType);
             docDisplay.replaceRange(Range.fromPoints(start, linedEnd), newFirstLine);
+            
+            target_.getNotebook().clearChunkOutput(chunk_);
          }
       }
    }
