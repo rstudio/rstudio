@@ -111,6 +111,7 @@ public class KeyboardHelper
       map[19] = "Pause";
       map[20] = "CapsLock";
       map[27] = "Escape";
+      map[32] = "Space";
       map[33] = "PageUp";
       map[34] = "PageDown";
       map[35] = "End";
