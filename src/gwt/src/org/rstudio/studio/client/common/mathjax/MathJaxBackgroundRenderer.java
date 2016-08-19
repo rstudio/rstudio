@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -24,6 +27,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
 
@@ -33,6 +37,8 @@ public class MathJaxBackgroundRenderer
    {
       mathjax_ = mathjax;
       docDisplay_ = docDisplay;
+      handlers_ = new ArrayList<HandlerRegistration>();
+      
       renderTimer_ = new Timer()
       {
          @Override
@@ -46,32 +52,42 @@ public class MathJaxBackgroundRenderer
          }
       };
       
-      docDisplay_.addFocusHandler(new FocusHandler()
+      handlers_.add(docDisplay_.addFocusHandler(new FocusHandler()
       {
          @Override
          public void onFocus(FocusEvent event)
          {
             beginMonitoring();
          }
-      });
+      }));
       
-      docDisplay_.addEditorModeChangedHandler(new EditorModeChangedEvent.Handler()
+      handlers_.add(docDisplay_.addEditorModeChangedHandler(new EditorModeChangedEvent.Handler()
       {
          @Override
          public void onEditorModeChanged(EditorModeChangedEvent event)
          {
             beginMonitoring();
          }
-      });
+      }));
       
-      docDisplay_.addBlurHandler(new BlurHandler()
+      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
       {
          @Override
          public void onBlur(BlurEvent event)
          {
             endMonitoring();
          }
-      });
+      }));
+      
+      handlers_.add(docDisplay_.addAttachHandler(new AttachEvent.Handler()
+      {
+         @Override
+         public void onAttachOrDetach(AttachEvent event)
+         {
+            if (!event.isAttached())
+               resetHandlers();
+         }
+      }));
    }
    
    private void beginMonitoring()
@@ -98,6 +114,10 @@ public class MathJaxBackgroundRenderer
    
    private void resetHandlers()
    {
+      for (HandlerRegistration handler : handlers_)
+         handler.removeHandler();
+      handlers_.clear();
+      
       if (cursorChangedHandler_ != null)
       {
          cursorChangedHandler_.removeHandler();
@@ -107,6 +127,7 @@ public class MathJaxBackgroundRenderer
    
    private final MathJax mathjax_;
    private final DocDisplay docDisplay_;
+   private final List<HandlerRegistration> handlers_;
    private final Timer renderTimer_;
    
    private HandlerRegistration cursorChangedHandler_;

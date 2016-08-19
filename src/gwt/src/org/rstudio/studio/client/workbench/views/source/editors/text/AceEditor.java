@@ -2069,6 +2069,11 @@ public class AceEditor implements DocDisplay,
    {
       return handlers_.addHandler(SaveFileEvent.TYPE, handler);
    }
+   
+   public HandlerRegistration addAttachHandler(AttachEvent.Handler handler)
+   {
+      return widget_.addAttachHandler(handler);
+   }
 
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
    {
