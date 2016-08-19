@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -35,16 +36,19 @@ public class PlotPublishMRUList
 {
    public static class Entry 
    {
-      public Entry(String accountIn, String serverIn, String nameIn)
+      public Entry(String accountIn, String serverIn, String nameIn, 
+            String titleIn)
       {
          account = accountIn;
          server = serverIn;
          name = nameIn;
+         title = titleIn;
       }
       
       public String asText()
       {
-         return account + "|" + server + "|" + name;
+         return account + "|" + server + "|" + name + 
+               (StringUtil.isNullOrEmpty(title) ? "" : "|" + title);
       }
       
       public static Entry fromText(String text)
@@ -53,12 +57,14 @@ public class PlotPublishMRUList
          if (pieces.length < 3)
             return null;
          
-         return new Entry(pieces[0], pieces[1], pieces[2]);
+         return new Entry(pieces[0], pieces[1], pieces[2],
+               pieces.length > 3 ? pieces[3] : "");
       }
 
       public final String account;
       public final String server;
       public final String name;
+      public final String title;
    }
 
    @Inject 
@@ -84,9 +90,14 @@ public class PlotPublishMRUList
          if (entry == null)
             continue;
          
+         // format the display name: pick title if specified, name if not
+         String displayName = StringUtil.isNullOrEmpty(mruEntry.title) ?
+               mruEntry.name : mruEntry.title;
+         displayName += " (" + mruEntry.server + ")";
+         
          menu.addItem(new MenuItem(AppCommand.formatMenuLabel(
                RSConnectResources.INSTANCE.republishPlot(), 
-               mruEntry.name + " (" + mruEntry.server + ")", null), true, 
+               displayName, null), true, 
                new Command() 
          {
             @Override
@@ -98,9 +109,10 @@ public class PlotPublishMRUList
       }
    }
    
-   public void addPlotMruEntry(String account, String server, String name)
+   public void addPlotMruEntry(String account, String server, String name,
+         String title)
    {
-      Entry mruEntry = new Entry(account, server, name);
+      Entry mruEntry = new Entry(account, server, name, title);
       plotMru_.prepend(mruEntry.asText());
    }
    

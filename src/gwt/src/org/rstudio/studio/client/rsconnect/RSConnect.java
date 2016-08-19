@@ -714,7 +714,7 @@ public class RSConnect implements SessionInitHandler,
                result.getSettings().getAsStatic(),
                launchBrowser, 
                RSConnectDeploymentRecord.create(result.getAppName(), 
-                     result.getAccount(), ""));
+                     result.getAppTitle(), result.getAccount(), ""));
 
          // we can't raise the main window if we aren't in desktop mode, so show
          // a dialog to guide the user there
@@ -734,7 +734,7 @@ public class RSConnect implements SessionInitHandler,
                result.getSettings(),
                launchBrowser,
                RSConnectDeploymentRecord.create(result.getAppName(), 
-                     result.getAccount(), "")));
+                     result.getAppTitle(), result.getAccount(), "")));
       }
    }
    
@@ -788,6 +788,7 @@ public class RSConnect implements SessionInitHandler,
                              event.getRecord().getAccountName(), 
                              event.getRecord().getServer(),
                              event.getRecord().getName(), 
+                             event.getRecord().getTitle(),
                              event.getSettings(),
       new ServerRequestCallback<Boolean>()
       {
@@ -804,7 +805,8 @@ public class RSConnect implements SessionInitHandler,
                {
                   plotMru_.addPlotMruEntry(event.getRecord().getAccountName(),
                         event.getRecord().getServer(),
-                        event.getRecord().getName());
+                        event.getRecord().getName(),
+                        event.getRecord().getTitle());
                }
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
