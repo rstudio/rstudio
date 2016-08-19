@@ -39,6 +39,11 @@ public class MathJaxLoader
       ensureMathJaxLoaded(null);
    }
    
+   public static boolean isMathJaxLoaded()
+   {
+      return MATHJAX_LOADED;
+   }
+   
    public static void ensureMathJaxLoaded(Callback callback)
    {
       if (MATHJAX_LOADED)
@@ -59,6 +64,7 @@ public class MathJaxLoader
             if (isMathJaxReady())
             {
                MATHJAX_LOADED = true;
+               callback.onLoaded(false);
                onMathJaxLoaded();
                return false;
             }
