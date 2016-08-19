@@ -86,6 +86,8 @@ private:
 
    double width_;
    double height_;
+
+   core::json::Value lastCondition_;
 };
 
 

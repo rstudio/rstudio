@@ -23,6 +23,7 @@
   box-sizing: border-box;
   width: 100%;
   padding: 4px;
+  border-radius: 3px;
 }
 
 .host

@@ -120,6 +120,9 @@ public class ChunkOutputStream extends FlowPanel
       initializeOutput(RmdChunkOutputUnit.TYPE_PLOT);
       flushQueuedErrors();
       
+      // persist metadata
+      metadata_.put(ordinal, metadata);
+      
       final Image plot = new Image();
       Widget plotWidget = null;
       

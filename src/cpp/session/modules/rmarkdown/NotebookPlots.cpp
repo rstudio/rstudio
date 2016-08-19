@@ -109,7 +109,7 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          metadata["height"] = height_;
          metadata["width"] = width_;
          metadata["size_behavior"] = static_cast<int>(sizeBehavior_);
-         metadata["conditions"] = endConditionCapture();
+         metadata["conditions"] = lastCondition_;
 
          // emit the plot and the snapshot file
          events().onPlotOutput(path, snapshotFile_, metadata, lastOrdinal_);
@@ -117,6 +117,9 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          // we've consumed the snapshot file, so clear it
          snapshotFile_ = FilePath();
          lastOrdinal_ = 0;
+
+         // clean up consumed conditions
+         lastCondition_ = json::Value();
 
          // clean up the plot so it isn't emitted twice
          error = path.removeIfExists();
@@ -159,6 +162,10 @@ void PlotCapture::onExprComplete()
    // no action if nothing on device list (implies no graphics output)
    if (!isGraphicsDeviceActive())
       return;
+
+   // finish capturing the conditions, if any
+   if (capturingConditions())
+      lastCondition_ = endConditionCapture();
    
    // if we were expecting a new plot to be produced by the previous
    // expression, process the plot folder
