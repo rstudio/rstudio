@@ -115,9 +115,6 @@ public class MathJaxLoader
       return mathjax.isReady;
    }-*/;
    
-   private static final native void setMathJaxHooks() /*-{
-   }-*/;
-
    private static ScriptElement createMathJaxScriptElement()
    {
       ScriptElement el = Document.get().createScriptElement();
