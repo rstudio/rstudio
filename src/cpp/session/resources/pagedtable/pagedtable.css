@@ -105,6 +105,22 @@ a.pagedtable-index-current {
   color: #999;
 }
 
+.pagedtable-index-separator-left {
+  display: inline-block;
+  color: #999;
+  font-size: 9px;
+  padding: 0 0 0 0;
+  cursor: default;
+}
+
+.pagedtable-index-separator-right {
+  display: inline-block;
+  color: #999;
+  font-size: 9px;
+  padding: 0 4px 0 0;
+  cursor: default;
+}
+
 .pagedtable-footer {
   padding-top: 9px;
   padding-bottom: 5px;
