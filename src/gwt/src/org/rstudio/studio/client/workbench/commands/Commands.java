@@ -67,6 +67,12 @@ public abstract class
    public abstract AppCommand insertChunkRCPP();
    public abstract AppCommand insertChunkStan(); 
    public abstract AppCommand insertChunkSQL();
+   public abstract AppCommand switchToChunkR();
+   public abstract AppCommand switchToChunkBash();
+   public abstract AppCommand switchToChunkPython();
+   public abstract AppCommand switchToChunkRCPP();
+   public abstract AppCommand switchToChunkStan(); 
+   public abstract AppCommand switchToChunkSQL();
    public abstract AppCommand insertSection();
    public abstract AppCommand executePreviousChunks();
    public abstract AppCommand executeSubsequentChunks();

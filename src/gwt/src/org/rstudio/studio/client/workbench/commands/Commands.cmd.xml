@@ -1459,6 +1459,36 @@ well as menu structures (for main menu and popup menus).
         menuLabel="SQL"
         desc="Insert a new SQL chunk"
         context="editor"/>
+
+   <cmd id="switchToChunkR"
+        menuLabel="R"
+        desc="Switch chunk to R"
+        context="editor"/>
+
+   <cmd id="switchToChunkBash"
+        menuLabel="Bash"
+        desc="Switch chunk to Bash"
+        context="editor"/>
+
+   <cmd id="switchToChunkPython"
+        menuLabel="Python"
+        desc="Switch chunk to Python"
+        context="editor"/>
+
+   <cmd id="switchToChunkRCPP"
+        menuLabel="Rcpp"
+        desc="Switch chunk to Rcpp"
+        context="editor"/>
+        
+   <cmd id="switchToChunkStan"
+        menuLabel="Stan"
+        desc="Switch chunk to Stan"
+        context="editor"/>
+        
+   <cmd id="switchToChunkSQL"
+        menuLabel="SQL"
+        desc="Switch chunk to SQL"
+        context="editor"/>
         
    <cmd id="insertSection"
         menuLabel="_Insert Section..."
