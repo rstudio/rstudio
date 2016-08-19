@@ -1002,7 +1002,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if (identical(sysName, "Windows")) {
       if (isR32)
          "wininet"
-      else if (setInternet2(NA))
+      else if (isTRUE(utils::setInternet2(NA)))
          "internal"
       else
          ""
@@ -1055,7 +1055,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    # if internal then see if were using windows internal with inet2
    else if (identical(method, "internal")) {
-      identical(Sys.info()[['sysname']], "Windows") && setInternet2(NA)
+      identical(Sys.info()[['sysname']], "Windows") && isTRUE(utils::setInternet2(NA))
    }
    
    # method with unknown properties (e.g. "lynx") or unresolved auto
