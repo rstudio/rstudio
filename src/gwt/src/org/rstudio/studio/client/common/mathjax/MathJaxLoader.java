@@ -63,9 +63,10 @@ public class MathJaxLoader
                return false;
             }
             
-            return true;
+            RETRY_COUNT++;
+            return RETRY_COUNT < 20;
          }
-      }, 20);
+      }, 50);
    }
    
    private static final native void onMathJaxLoaded() /*-{
@@ -121,5 +122,6 @@ public class MathJaxLoader
    }
    
    private static boolean MATHJAX_LOADED = false;
+   private static int RETRY_COUNT = 0;
    
 }
