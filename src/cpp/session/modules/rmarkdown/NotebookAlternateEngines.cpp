@@ -460,7 +460,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
          options[it->first] = it->second.get_str();
    }
    
-   // handle Rcpp specially
+   // handle some engines with their own custom routines
    if (engine == "Rcpp")
       return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "stan")
@@ -468,7 +468,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
    else if (engine == "sql")
       return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
 
-   runChunk(docId, chunkId, nbCtxId, engine, code);
+   runChunk(docId, chunkId, nbCtxId, engine, code, options);
    return Success();
 }
 
