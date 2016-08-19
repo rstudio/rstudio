@@ -44,7 +44,7 @@ public class MathJaxLoader
       return MATHJAX_LOADED;
    }
    
-   public static void ensureMathJaxLoaded(Callback callback)
+   public static void ensureMathJaxLoaded(final Callback callback)
    {
       if (MATHJAX_LOADED)
       {
