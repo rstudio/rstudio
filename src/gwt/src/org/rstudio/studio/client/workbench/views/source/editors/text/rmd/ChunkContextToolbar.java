@@ -14,18 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkContextToolbar extends Composite
@@ -46,6 +56,7 @@ public class ChunkContextToolbar extends Composite
       void showOptions(int x, int y);
       void interruptChunk();
       void dequeueChunk();
+      void switchChunk(String chunkType);
    }
    
    public final static ChunkContextResources RES = 
@@ -174,18 +185,71 @@ public class ChunkContextToolbar extends Composite
          }
       });
    }
+   
+   private MenuItem createMenuItemForType(final AppCommand command, final String chunkType)
+   {
+      SafeHtml menuHTML = new SafeHtmlBuilder().appendHtmlConstant(
+         command.getMenuHTML(false)).toSafeHtml();
+      
+      MenuItem menuItem = new MenuItem(
+         menuHTML,
+         new Command()
+         {
+            public void execute()
+            {
+               host_.switchChunk(chunkType);
+            }
+         });
+      
+      return menuItem;
+   }
 
    private void initChangeChunkEngine(String engine)
    {
       chunkTypeLabel_.setText(engine);
-      DOM.sinkEvents(chunkTypeLabel_.getElement(), Event.ONCLICK);
-      DOM.setEventListener(chunkTypeLabel_.getElement(), new EventListener()
+      DOM.sinkEvents(chunkTypePanel_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(chunkTypePanel_.getElement(), new EventListener()
       {
          @Override
          public void onBrowserEvent(Event event)
          {
             if (DOM.eventGetType(event) == Event.ONCLICK)
             {
+               Commands commands = RStudioGinjector.INSTANCE.getCommands();
+               
+               final ToolbarPopupMenu switchChunksMenu = new ToolbarPopupMenu();
+               switchChunksMenu.addItem(createMenuItemForType(
+                     commands.switchToChunkR(), "r"));
+               switchChunksMenu.addSeparator();
+
+               if (!BrowseCap.isWindows()) {
+                  switchChunksMenu.addItem(createMenuItemForType(
+                        commands.switchToChunkBash(), "bash"));
+               }
+
+               switchChunksMenu.addItem(createMenuItemForType(
+                     commands.switchToChunkPython(), "python"));
+               switchChunksMenu.addItem(createMenuItemForType(
+                     commands.switchToChunkRCPP(), "rcpp"));
+               switchChunksMenu.addItem(createMenuItemForType(
+                     commands.switchToChunkSQL(), "sql"));
+               switchChunksMenu.addItem(createMenuItemForType(
+                     commands.switchToChunkStan(), "stan"));
+
+               switchChunksMenu.setPopupPositionAndShow(new PositionCallback() 
+               {
+                  @Override
+                  public void setPosition(int offsetWidth, 
+                                          int offsetHeight)
+                  {
+                     switchChunksMenu.setPopupPosition(
+                        chunkTypePanel_.getAbsoluteLeft() +
+                        chunkTypePanel_.getOffsetWidth() -
+                        offsetWidth + 15, 
+                        chunkTypePanel_.getAbsoluteTop() + 
+                        chunkTypePanel_.getOffsetHeight());
+                  } 
+               });
             }
          }
       });
@@ -195,6 +259,7 @@ public class ChunkContextToolbar extends Composite
    @UiField Image runPrevious_;
    @UiField Image run_;
    @UiField Label chunkTypeLabel_;
+   @UiField HTMLPanel chunkTypePanel_;
 
    private final Host host_;
    private int state_;

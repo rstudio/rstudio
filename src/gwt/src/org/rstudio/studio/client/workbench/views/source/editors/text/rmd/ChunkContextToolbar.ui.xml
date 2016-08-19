@@ -69,7 +69,7 @@
    </ui:style>
    <g:HTMLPanel styleName="{style.wrapper}">
      <g:FlowPanel styleName="{style.toolbar}">
-        <g:HTMLPanel styleName="{style.button} {style.chunkType}">
+        <g:HTMLPanel ui:field="chunkTypePanel_" styleName="{style.button} {style.chunkType}">
           <g:Label ui:field="chunkTypeLabel_"
                    styleName="{style.chunkTypeLabel} "
                    title="Change Chunk Type"/>
