@@ -421,11 +421,6 @@ public class ChunkOutputStream extends FlowPanel
             remove(w);
             continue;
          }
-         else if (w instanceof ChunkConditionBar)
-         {
-            remove(w);
-            continue;
-         }
 
          // extract the inner element if this is a fixed-ratio widget (or just
          // use raw if it's not)

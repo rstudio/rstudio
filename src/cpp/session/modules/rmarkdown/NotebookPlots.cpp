@@ -109,7 +109,17 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          metadata["height"] = height_;
          metadata["width"] = width_;
          metadata["size_behavior"] = static_cast<int>(sizeBehavior_);
-         metadata["conditions"] = lastCondition_;
+
+         // use cached conditions if we have them; otherwise, check accumulator
+         if (conditions_.empty())
+         {
+            metadata["conditions"] = endConditionCapture();
+         }
+         else
+         {
+            metadata["conditions"] = conditions_.front();
+            conditions_.pop_front();
+         }
 
          // emit the plot and the snapshot file
          events().onPlotOutput(path, snapshotFile_, metadata, lastOrdinal_);
@@ -117,9 +127,6 @@ void PlotCapture::processPlots(bool ignoreEmpty)
          // we've consumed the snapshot file, so clear it
          snapshotFile_ = FilePath();
          lastOrdinal_ = 0;
-
-         // clean up consumed conditions
-         lastCondition_ = json::Value();
 
          // clean up the plot so it isn't emitted twice
          error = path.removeIfExists();
@@ -165,7 +172,7 @@ void PlotCapture::onExprComplete()
 
    // finish capturing the conditions, if any
    if (capturingConditions())
-      lastCondition_ = endConditionCapture();
+      conditions_.push_back(endConditionCapture());
    
    // if we were expecting a new plot to be produced by the previous
    // expression, process the plot folder

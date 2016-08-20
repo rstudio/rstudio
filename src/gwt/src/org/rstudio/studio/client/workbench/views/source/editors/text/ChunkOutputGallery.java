@@ -19,12 +19,10 @@ import java.util.ArrayList;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsArrayEx;
-import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -69,8 +67,7 @@ public class ChunkOutputGallery extends Composite
       host_ = host;
       initWidget(uiBinder.createAndBindUi(this));
       content_ = new SimplePanel();
-      viewer_.add(new FixedRatioWidget(content_, ChunkOutputUi.OUTPUT_ASPECT, 
-            ChunkOutputUi.MAX_PLOT_WIDTH));
+      viewer_.add(content_);
    }
 
    @Override
