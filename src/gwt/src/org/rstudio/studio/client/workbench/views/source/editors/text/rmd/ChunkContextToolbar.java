@@ -226,7 +226,7 @@ public class ChunkContextToolbar extends Composite
                   switchChunksMenu.addSeparator();
                }
                
-               if (!BrowseCap.isWindows() && engineLabel != "bash") {
+               if (!BrowseCap.isWindowsDesktop() && engineLabel != "bash") {
                   switchChunksMenu.addItem(createMenuItemForType(
                         commands.switchToChunkBash(), "bash"));
                }
