@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -112,33 +113,27 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    @Override
-   public void showPlotOutput(String url, int ordinal, 
-         final Command onRenderComplete)
+   public void showPlotOutput(String url, NotebookPlotMetadata metadata, 
+         int ordinal, final Command onRenderComplete)
    {
       // flush any queued errors
       initializeOutput(RmdChunkOutputUnit.TYPE_PLOT);
       flushQueuedErrors();
       
-      final Image plot = new Image();
-      Widget plotWidget = null;
+      // persist metadata
+      metadata_.put(ordinal, metadata);
       
-      if (ChunkPlotPage.isFixedSizePlotUrl(url))
-      {
-         // if the plot is of fixed size, emit it directly, but make it
-         // initially invisible until we get sizing information (as we may 
-         // have to downsample)
-         plot.setVisible(false);
-         plotWidget = plot;
-      }
-      else
-      {
-         // if we can scale the plot, scale it
-         FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
-                     ChunkOutputUi.OUTPUT_ASPECT, 
-                     ChunkOutputUi.MAX_PLOT_WIDTH);
-         plotWidget = fixedFrame;
-      }
-
+      final ChunkPlotWidget plot = new ChunkPlotWidget(url, metadata, 
+            new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  onRenderComplete.execute();
+                  onHeightChanged();
+               }
+            });
+      
       // check to see if the given ordinal matches one of the existing
       // placeholder elements
       boolean placed = false;
@@ -154,12 +149,12 @@ public class ChunkOutputStream extends FlowPanel
                if (ordAttr == ordinal)
                {
                   // insert the plot widget after the ordinal 
-                  plotWidget.getElement().setAttribute(
+                  plot.getElement().setAttribute(
                         ORDINAL_ATTRIBUTE, "" + ordinal);
                   if (i < getWidgetCount() - 1)
-                     insert(plotWidget, i + 1);
+                     insert(plot, i + 1);
                   else
-                     add(plotWidget);
+                     add(plot);
                   placed = true;
                   break;
                }
@@ -173,19 +168,7 @@ public class ChunkOutputStream extends FlowPanel
 
       // if we haven't placed the plot yet, add it at the end of the output
       if (!placed)
-         addWithOrdinal(plotWidget, ordinal);
-      
-      ChunkPlotPage.listenForRender(plot, "auto", "100%", "", new Command()
-      {
-         @Override
-         public void execute()
-         {
-            onRenderComplete.execute();
-            onHeightChanged();
-         }
-      });
-
-      plot.setUrl(url);
+         addWithOrdinal(plot, ordinal);
    }
 
    @Override
@@ -344,15 +327,12 @@ public class ChunkOutputStream extends FlowPanel
    {
       for (Widget w: this)
       {
-         if (w instanceof FixedRatioWidget)
+         if (w instanceof ChunkPlotWidget)
          {
-            // extract the wrapped plot
-            FixedRatioWidget fixedFrame = (FixedRatioWidget)w;
-            if (!(fixedFrame.getWidget() instanceof Image))
-               continue;
-            Image plot = (Image)fixedFrame.getWidget();
-            
-            ChunkPlotPage.updateImageUrl(w, plot, plotUrl, pendingStyle);
+            // ask the plot to sync this URL (it contains the logic for 
+            // determining whether it matches the URL)
+            ChunkPlotWidget plot = (ChunkPlotWidget)w;
+            plot.updateImageUrl(plotUrl, pendingStyle);
          }
       }
    }
@@ -448,12 +428,12 @@ public class ChunkOutputStream extends FlowPanel
          if (w instanceof FixedRatioWidget)
             inner = ((FixedRatioWidget)w).getWidget();
          
-         if (inner instanceof Image)
+         if (inner instanceof ChunkPlotWidget)
          {
-            Image image = (Image)inner;
-            ChunkPlotPage plot = new ChunkPlotPage(image.getUrl(), ordinal, 
-                  null);
-            pages.add(plot);
+            ChunkPlotWidget plot = (ChunkPlotWidget)inner;
+            ChunkPlotPage page = new ChunkPlotPage(plot.plotUrl(),
+                  plot.getMetadata(), ordinal, null);
+            pages.add(page);
             remove(w);
          }
          else if (inner instanceof ChunkOutputFrame)

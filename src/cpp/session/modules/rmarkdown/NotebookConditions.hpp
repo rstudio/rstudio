@@ -1,5 +1,5 @@
 /*
- * NotebookMessages.hpp
+ * NotebookConditions.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_NOTEBOOK_MESSAGES_HPP
-#define SESSION_NOTEBOOK_MESSAGES_HPP
+#ifndef SESSION_NOTEBOOK_CONDITIONS_HPP
+#define SESSION_NOTEBOOK_CONDITIONS_HPP
 
 #include "NotebookCapture.hpp"
 
@@ -32,12 +32,14 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class MessageCapture : public NotebookCapture
+class ConditionCapture : public NotebookCapture
 {
 public:
    void connect();
    void disconnect();
 };
+
+core::Error initConditions();
 
 } // namespace notebook
 } // namespace rmarkdown

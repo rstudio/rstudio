@@ -86,6 +86,8 @@ private:
 
    double width_;
    double height_;
+
+   std::list<core::json::Value> conditions_;
 };
 
 

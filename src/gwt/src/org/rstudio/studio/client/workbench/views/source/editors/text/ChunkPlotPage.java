@@ -16,33 +16,29 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.widget.FixedRatioWidget;
-import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkPlotPage extends ChunkOutputPage
+                           implements EditorThemeListener
 {
-   public ChunkPlotPage(final String url, int ordinal, 
-         final Command onRenderComplete)
+   public ChunkPlotPage(final String url, NotebookPlotMetadata metadata, 
+         int ordinal, final Command onRenderComplete)
    {
       super(ordinal);
-      if (isFixedSizePlotUrl(url))
+      if (ChunkPlotWidget.isFixedSizePlotUrl(url))
       {
          final Image thumbnail = new Image();
          thumbnail_ = new SimplePanel(thumbnail);
          thumbnail_.getElement().getStyle().setTextAlign(TextAlign.CENTER);
 
-         plot_ = new Image();
-         plot_.setVisible(false);
-         listenForRender(plot_, "auto", "100%", "", new Command() 
+         plot_ = new ChunkPlotWidget(url, metadata, new Command() 
          {
             @Override
             public void execute()
@@ -63,21 +59,14 @@ public class ChunkPlotPage extends ChunkOutputPage
                onRenderComplete.execute();
             }
          });
-         plot_.setUrl(url);
-         content_ = plot_;
       }
       else
       {
          // automatically expand non-fixed plots
          thumbnail_ = new FixedRatioWidget(new Image(url), 
                      ChunkOutputUi.OUTPUT_ASPECT, 100);
-         plot_ = new Image();
-         listenForRender(plot_, "auto", "100%", "", onRenderComplete);
-         plot_.setUrl(url);
-         content_ = new FixedRatioWidget(plot_, ChunkOutputUi.OUTPUT_ASPECT, 
-               ChunkOutputUi.MAX_PLOT_WIDTH);
+         plot_ = new ChunkPlotWidget(url, metadata, onRenderComplete);
       }
-      url_ = url;
    }
 
    @Override
@@ -89,7 +78,7 @@ public class ChunkPlotPage extends ChunkOutputPage
    @Override
    public Widget contentWidget()
    {
-      return content_;
+      return plot_;
    }
    
    @Override
@@ -98,79 +87,29 @@ public class ChunkPlotPage extends ChunkOutputPage
       // no action necessary for plots
    }
 
-   public String getPlotUrl()
+   @Override
+   public void onEditorThemeChanged(Colors colors)
    {
-      return url_;
+      if (conditions_ != null)
+         conditions_.onEditorThemeChanged(colors);
+   }
+   
+   public void updateImageUrl(String url, String pendingStyle)
+   {
+      plot_.updateImageUrl(url, pendingStyle);
+   }
+
+   public String plotUrl()
+   {
+      return plot_.plotUrl();
    }
    
    public Image imageWidget()
    {
-      return plot_;
+      return plot_.imageWidget();
    }
    
-   public static void updateImageUrl(Widget host, Image plot, String plotUrl, 
-         String pendingStyle)
-   {
-      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
-
-      // get the existing URL and strip off the query string 
-      String url = plot.getUrl();
-      int idx = url.lastIndexOf('?');
-      if (idx > 0)
-         url = url.substring(0, idx);
-      
-      // verify that the plot being refreshed is the same one this widget
-      // contains
-      if (FilePathUtils.friendlyFileName(url) != plotFile)
-         return;
-      
-      host.removeStyleName(pendingStyle);
-      
-      // the only purpose of this resize counter is to ensure that the
-      // plot URL changes when its geometry does (it's not consumed by
-      // the server)
-      plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
-   }
-   
-   public static void listenForRender(final Image plot, final String height, 
-         final String maxWidth, final String maxHeight,
-         final Command onRenderComplete)
-   {
-      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), 
-         new EventListener()
-         {
-            @Override
-            public void onBrowserEvent(Event event)
-            {
-               if (DOM.eventGetType(event) != Event.ONLOAD)
-                  return;
-               
-               // if the image is of fixed size, just clamp its width to the
-               // editor surface while preserving its aspect ratio
-               if (ChunkPlotPage.isFixedSizePlotUrl(plot.getUrl()))
-               {
-                  ImageElementEx img = plot.getElement().cast();
-                  img.getStyle().setProperty("height", height);
-                  img.getStyle().setProperty("maxWidth", maxWidth);
-                  img.getStyle().setProperty("maxHeight", maxHeight);
-               }
-                  
-               plot.setVisible(true);
-               if (onRenderComplete != null)
-                  onRenderComplete.execute();
-            }
-         });
-   }
-
-   public static boolean isFixedSizePlotUrl(String url)
-   {
-      return url.contains("fixed_size=1");
-   }
-   
-   private final Widget content_;
-   private final Image plot_;
+   private final ChunkPlotWidget plot_;
    private final Widget thumbnail_;
-   private String url_;
-   private static int resizeCounter_ = 0;
+   private ChunkConditionBar conditions_;
 }

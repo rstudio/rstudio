@@ -18,6 +18,7 @@ import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -37,7 +38,8 @@ public interface ChunkOutputPresenter extends IsWidget, EditorThemeListener
 
    // show stored and/or real time objects emitted during plot execution
    void showConsoleOutput(JsArray<JsArrayEx> output);
-   void showPlotOutput(String url, int ordinal, Command onRenderComplete);
+   void showPlotOutput(String url, NotebookPlotMetadata metadata, int ordinal, 
+         Command onRenderComplete);
    void showHtmlOutput(String url, NotebookHtmlMetadata metadata, int ordinal, 
          Command onRenderComplete);
    void showErrorOutput(UnhandledError error);

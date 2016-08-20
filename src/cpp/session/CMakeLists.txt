@@ -164,12 +164,12 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookCapture.cpp
    modules/rmarkdown/NotebookChunkDefs.cpp
    modules/rmarkdown/NotebookChunkOptions.cpp
+   modules/rmarkdown/NotebookConditions.cpp
    modules/rmarkdown/NotebookData.cpp
    modules/rmarkdown/NotebookDocQueue.cpp
    modules/rmarkdown/NotebookErrors.cpp
    modules/rmarkdown/NotebookExec.cpp
    modules/rmarkdown/NotebookHtmlWidgets.cpp
-   modules/rmarkdown/NotebookMessages.cpp
    modules/rmarkdown/NotebookOutput.cpp
    modules/rmarkdown/NotebookPaths.cpp
    modules/rmarkdown/NotebookPlotReplay.cpp

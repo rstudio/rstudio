@@ -1,5 +1,5 @@
 /*
- * NotebookMessages.cpp
+ * NotebookConditions.cpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -14,10 +14,13 @@
  */
 
 #include "SessionRmdNotebook.hpp"
-#include "NotebookMessages.hpp"
+#include "NotebookConditions.hpp"
+
+#include <core/SafeConvert.hpp>
 
 #include <r/RExec.hpp>
-#include <r/RExec.hpp>
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 using namespace rstudio::core;
 
@@ -26,18 +29,45 @@ namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
+namespace {
 
-void MessageCapture::connect()
+SEXP rs_signalNotebookCondition(SEXP condition, SEXP message)
+{
+   // extract message (make sure we got one)
+   std::string msg = r::sexp::safeAsString(message, "");
+   if (msg.empty())
+      return R_NilValue;
+
+   // broadcast signaled condition to notebook exec context
+   events().onCondition(
+      static_cast<Condition>(r::sexp::asInteger(condition)), msg);
+
+   return R_NilValue;
+}
+
+} // anonymous namespace
+
+void ConditionCapture::connect()
 {
    // create a parsed expression which will disable messages; this is 
-   // effectively identical to suppressMessages() but we need to evaluate it
+   // effectively identical to suppressConditions() but we need to evaluate it
    // at the top level so we can influence the global handler stack.   
    r::sexp::Protect protect;
    SEXP retSEXP = R_NilValue;
    Error error = r::exec::executeStringUnsafe(
-         ".Internal(.addCondHands(\"message\", list(message = function(m) { "
+         ".Internal(.addCondHands(c(\"warning\", \"message\"), "
+         " list(warning = function(m) { "
+         "   .Call(\"rs_signalNotebookCondition\", " + 
+                      safe_convert::numberToString(ConditionWarning) + "L, "
+         "          m$message); "
+         "   invokeRestart(\"muffleWarning\") "
+         " }, message = function(m) { "
+         "   .Call(\"rs_signalNotebookCondition\", " + 
+                      safe_convert::numberToString(ConditionMessage) + "L, "
+         "          m$message); "
          "   invokeRestart(\"muffleMessage\") "
-         "}), .GlobalEnv, NULL, TRUE))", &retSEXP, &protect);
+         " } "
+         "), .GlobalEnv, NULL, TRUE))", &retSEXP, &protect);
    if (error)
    {
       LOG_ERROR(error);
@@ -60,7 +90,7 @@ void MessageCapture::connect()
    NotebookCapture::connect();
 }
 
-void MessageCapture::disconnect()
+void ConditionCapture::disconnect()
 {
    if (connected())
    {
@@ -86,6 +116,11 @@ void MessageCapture::disconnect()
    NotebookCapture::disconnect();
 }
 
+core::Error initConditions()
+{
+   RS_REGISTER_CALL_METHOD(rs_signalNotebookCondition, 2);
+   return Success();
+}
 
 } // namespace notebook
 } // namespace rmarkdown
