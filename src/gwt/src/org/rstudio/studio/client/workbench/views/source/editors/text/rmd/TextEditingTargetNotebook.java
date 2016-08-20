@@ -493,6 +493,11 @@ public class TextEditingTargetNotebook
    {
       // find the current chunk 
       Scope chunk = docDisplay_.getCurrentChunk();
+      clearChunkOutput(chunk);
+   }
+
+   public void clearChunkOutput(Scope chunk)
+   {
       if (chunk == null)
       {
          // no-op if cursor is not inside a chunk

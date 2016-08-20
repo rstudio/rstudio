@@ -284,7 +284,7 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
       insertChunksMenu.addSeparator();
 
-      if (!BrowseCap.isWindows()) {
+      if (!BrowseCap.isWindowsDesktop()) {
          insertChunksMenu.addItem(commands_.insertChunkBash().createMenuItem(false));
       }
 

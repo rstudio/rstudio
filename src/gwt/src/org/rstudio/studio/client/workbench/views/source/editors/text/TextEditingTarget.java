@@ -6155,6 +6155,11 @@ public class TextEditingTarget implements
    {
       return statusBar_;
    }
+
+   public TextEditingTargetNotebook getNotebook()
+   {
+      return notebook_;
+   }
    
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
