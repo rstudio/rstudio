@@ -212,7 +212,6 @@ public class MathJax
       range_ = range;
       anchor_ = docDisplay_.createAnchoredSelection(range.getStart(), range.getEnd());
       lastRenderedText_ = "";
-      popup_.setRenderToolbarVisible(isLatexChunk);
       renderPopup(text, callback);
    }
    
