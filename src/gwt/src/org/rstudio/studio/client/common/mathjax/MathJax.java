@@ -49,7 +49,6 @@ import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
@@ -104,16 +103,14 @@ public class MathJax
                return;
             }
             
-            // render latex in document on startup
-            Timer timer = new Timer()
+            MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
             {
                @Override
-               public void run()
+               public void onLoaded(boolean alreadyLoaded)
                {
                   renderLatex();
                }
-            };
-            timer.schedule(700);
+            });
          }
       }));
    }
@@ -134,9 +131,39 @@ public class MathJax
       renderLatex(range, background, null);
    }
    
-   public void renderLatex(Range range,
-                           boolean background,
-                           MathJaxTypesetCallback callback)
+   public void renderLatex(final Range range,
+                           final boolean background,
+                           final MathJaxTypesetCallback callback)
+   {
+      MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
+      {
+         @Override
+         public void onLoaded(boolean alreadyLoaded)
+         {
+            renderLatexImpl(range, background, callback);
+         }
+      });
+   }
+   
+   public void promotePopupToLineWidget()
+   {
+      if (range_ == null)
+         return;
+      
+      renderLatex(range_, false);
+   }
+   
+   // Private Methods ----
+   
+   @Inject
+   private void initialize(UIPrefs uiPrefs)
+   {
+      uiPrefs_ = uiPrefs;
+   }
+   
+   private void renderLatexImpl(final Range range,
+                                final boolean background,
+                                final MathJaxTypesetCallback callback)
    {
       String text = docDisplay_.getTextForRange(range);
       String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getGlobalValue();
@@ -187,22 +214,6 @@ public class MathJax
       lastRenderedText_ = "";
       popup_.setRenderToolbarVisible(isLatexChunk);
       renderPopup(text, callback);
-   }
-   
-   public void promotePopupToLineWidget()
-   {
-      if (range_ == null)
-         return;
-      
-      renderLatex(range_, false);
-   }
-   
-   // Private Methods ----
-   
-   @Inject
-   private void initialize(UIPrefs uiPrefs)
-   {
-      uiPrefs_ = uiPrefs;
    }
    
    private void renderLatexLineWidget(final Range range,

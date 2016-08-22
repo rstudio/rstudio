@@ -39,13 +39,20 @@ public class MathJaxRenderQueue
       
    }
    
-   public void enqueueAndRender(List<Range> ranges)
+   public void enqueueAndRender(final List<Range> ranges)
    {
-      ranges_.addAll(ranges);
-      if (isRunning_)
-         return;
-      
-      renderNext();
+      MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
+      {
+         @Override
+         public void onLoaded(boolean alreadyLoaded)
+         {
+            ranges_.addAll(ranges);
+            if (isRunning_)
+               return;
+
+            renderNext();
+         }
+      });
    }
    
    // Private Methods ----
