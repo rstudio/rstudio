@@ -17,6 +17,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    width: 100px;
    height: 61px;
    float: left;
+   position: relative;
 }
 
 .thumbnail:hover {

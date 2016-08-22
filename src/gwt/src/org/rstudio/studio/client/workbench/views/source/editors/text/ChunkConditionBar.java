@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.js.JsArrayEx;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -70,6 +71,10 @@ public class ChunkConditionBar extends Composite
          entry.addStyleName(style.contents());
          contents.add(entry);
       }
+
+      // limit bar width to plot width
+      getElement().getStyle().setProperty("maxWidth", 
+            "" + ChunkOutputUi.MAX_PLOT_WIDTH + "px");
    }
    
    @Override
@@ -79,7 +84,7 @@ public class ChunkConditionBar extends Composite
       ColorUtil.RGBColor foreground = 
             ColorUtil.RGBColor.fromCss(colors.foreground);
       ColorUtil.RGBColor background = new ColorUtil.RGBColor(
-            foreground.red(), foreground.green(), foreground.blue(), 0.1);
+            foreground.red(), foreground.green(), foreground.blue(), 0.075);
 
       panel_.getElement().getStyle().setBackgroundColor(background.asRgb());
    }

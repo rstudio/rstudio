@@ -15,12 +15,17 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TextAlign;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -32,10 +37,13 @@ public class ChunkPlotPage extends ChunkOutputPage
          int ordinal, final Command onRenderComplete)
    {
       super(ordinal);
+      
+      thumbnail_ = new HTMLPanel("");
+      
       if (ChunkPlotWidget.isFixedSizePlotUrl(url))
       {
          final Image thumbnail = new Image();
-         thumbnail_ = new SimplePanel(thumbnail);
+         thumbnail_.add(thumbnail);
          thumbnail_.getElement().getStyle().setTextAlign(TextAlign.CENTER);
 
          plot_ = new ChunkPlotWidget(url, metadata, new Command() 
@@ -63,9 +71,40 @@ public class ChunkPlotPage extends ChunkOutputPage
       else
       {
          // automatically expand non-fixed plots
-         thumbnail_ = new FixedRatioWidget(new Image(url), 
-                     ChunkOutputUi.OUTPUT_ASPECT, 100);
+         thumbnail_.add(new FixedRatioWidget(new Image(url), 
+                     ChunkOutputUi.OUTPUT_ASPECT, 100));
          plot_ = new ChunkPlotWidget(url, metadata, onRenderComplete);
+      }
+      
+      // look for messages or warnings in metadata
+      boolean hasMessages = false;
+      boolean hasWarnings = false;
+      if (metadata != null)
+      {
+         for (int i = 0; i < metadata.getConditions().length(); i++)
+         {
+            int condition = metadata.getConditions().get(i).getInt(0);
+            if (condition == ChunkConditionBar.CONDITION_MESSAGE)
+               hasMessages = true;
+            else if (condition == ChunkConditionBar.CONDITION_WARNING)
+               hasWarnings = true;
+         }
+      }
+      
+      if (hasMessages || hasWarnings)
+      {
+         Image condImage = new Image();
+         if (hasWarnings)
+            condImage.setResource(ThemeResources.INSTANCE.warningSmall());
+         else if (hasMessages)
+            condImage.setResource(ThemeResources.INSTANCE.infoSmall());
+         condImage.setWidth("8px");
+         condImage.setHeight("7px");
+         Style style = condImage.getElement().getStyle();
+         style.setPosition(Position.ABSOLUTE);
+         style.setBottom(5, Unit.PX);
+         style.setRight(5, Unit.PX);
+         thumbnail_.add(condImage);
       }
    }
 
@@ -110,6 +149,6 @@ public class ChunkPlotPage extends ChunkOutputPage
    }
    
    private final ChunkPlotWidget plot_;
-   private final Widget thumbnail_;
+   private final HTMLPanel thumbnail_;
    private ChunkConditionBar conditions_;
 }
