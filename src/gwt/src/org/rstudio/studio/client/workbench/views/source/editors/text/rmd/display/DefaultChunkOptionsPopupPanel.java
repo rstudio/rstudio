@@ -1,4 +1,4 @@
-package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
 import com.google.gwt.user.client.Command;
 
@@ -19,6 +19,8 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    public DefaultChunkOptionsPopupPanel()
    {
       super(true);
+      
+      enginePanel_.setVisible(false);
    }
    
    @Override

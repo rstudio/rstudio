@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,13 +25,22 @@ import java.util.Map;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MiniPopupPanel;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.ThemedCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox;
+import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -59,6 +68,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
 
 public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 {
@@ -76,10 +86,21 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected abstract void synchronize();
    protected abstract void revert();
    
+   @Inject
+   private void initialize(WorkbenchContext workbench,
+                           FileDialogs fileDialogs,
+                           RemoteFileSystemContext rfsContext)
+   {
+      fileDialogs_ = fileDialogs;
+      rfsContext_ = rfsContext;
+   }
+   
    public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
    {
       super(true);
       setVisible(false);
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
       
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
@@ -210,21 +231,16 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(nameAndOutputGrid);
       
-      panel_.add(verticalSpacer(4));
-      
       showWarningsInOutputCb_ = makeTriStateCheckBox(
             "Show warnings",
             "warning");
       panel_.add(showWarningsInOutputCb_);
       
-      panel_.add(verticalSpacer(6));
-      
       showMessagesInOutputCb_ = makeTriStateCheckBox(
             "Show messages",
             "message");
-      panel_.add(showMessagesInOutputCb_);
       
-      panel_.add(verticalSpacer(6));
+      panel_.add(showMessagesInOutputCb_);
       
       useCustomFigureCheckbox_ = new ThemedCheckBox("Use custom figure size");
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
@@ -251,13 +267,13 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       figureDimensionsPanel_ = new Grid(2, 2);
       figureDimensionsPanel_.getElement().getStyle().setMarginTop(5, Unit.PX);
       
-      figWidthBox_ = makeInputBox("fig.width");
+      figWidthBox_ = makeInputBox("fig.width", false);
       Label widthLabel = new Label("Width (inches):");
       widthLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(0, 0, widthLabel);
       figureDimensionsPanel_.setWidget(0, 1, figWidthBox_);
       
-      figHeightBox_ = makeInputBox("fig.height");
+      figHeightBox_ = makeInputBox("fig.height", false);
       Label heightLabel = new Label("Height (inches):");
       heightLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(1, 0, heightLabel);
@@ -265,12 +281,66 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(figureDimensionsPanel_);
       
-      panel_.add(verticalSpacer(8));
+      enginePanel_ = new Grid(2, 3);
+      enginePanel_.getElement().getStyle().setMarginTop(5, Unit.PX);
+      
+      enginePathBox_ = makeInputBox("engine.path", true);
+      enginePathBox_.getElement().getStyle().setWidth(120, Unit.PX);
+      Label enginePathLabel = new Label("Engine path:");
+      SmallButton enginePathBrowseButton = new SmallButton("...");
+      enginePathBrowseButton.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // infer the start navigation directory
+            String path = enginePathBox_.getValue();
+            FileSystemItem initialPath = path.isEmpty()
+                  ? FileSystemItem.createDir("~/")
+                  : FileSystemItem.createDir(FilePathUtils.dirFromFile(path));
+            
+            fileDialogs_.openFile(
+                  "Select Engine",
+                  rfsContext_,
+                  initialPath,
+                  new ProgressOperationWithInput<FileSystemItem>()
+                  {
+                     @Override
+                     public void execute(FileSystemItem input, ProgressIndicator indicator)
+                     {
+                        if (input == null)
+                        {
+                           indicator.onCompleted();
+                           return;
+                        }
+                        
+                        String path = StringUtil.notNull(input.getPath());
+                        path = path.replaceAll("\\\\", "\\\\\\\\");
+                        enginePathBox_.setValue(path);
+                        set("engine.path", StringUtil.ensureQuoted(path));
+                        synchronize();
+                        indicator.onCompleted();
+                     }
+                  });
+         }
+      });
+      enginePanel_.setWidget(0, 0, enginePathLabel);
+      enginePanel_.setWidget(0, 1, enginePathBox_);
+      enginePanel_.setWidget(0, 2, enginePathBrowseButton);
+      
+      engineOptsBox_ = makeInputBox("engine.opts", true);
+      engineOptsBox_.getElement().getStyle().setWidth(120, Unit.PX);
+      Label engineOptsLabel = new Label("Engine options:");
+      enginePanel_.setWidget(1, 0, engineOptsLabel);
+      enginePanel_.setWidget(1, 1, engineOptsBox_);
+      
+      panel_.add(enginePanel_);
       
       HorizontalPanel footerPanel = new HorizontalPanel();
       footerPanel.getElement().getStyle().setWidth(100, Unit.PCT);
       
       FlowPanel linkPanel = new FlowPanel();
+      linkPanel.add(new VerticalSpacer("8px"));
       HelpLink helpLink = new HelpLink("Chunk options", "chunk-options", false);
       linkPanel.add(helpLink);
       
@@ -325,7 +395,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       tbChunkLabel_.setFocus(true);
    }
    
-   private TextBox makeInputBox(final String option)
+   private TextBox makeInputBox(final String option, final boolean enquote)
    {
       final TextBox box = new TextBox();
       box.getElement().setAttribute("placeholder", "Default");
@@ -342,10 +412,19 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                public void execute()
                {
                   String text = box.getText().trim();
-                  if (StringUtil.isNullOrEmpty(text))
+                  boolean isEmpty = StringUtil.isNullOrEmpty(text);
+                  
+                  if (enquote && !isEmpty)
+                  {
+                     text = StringUtil.ensureQuoted(text);
+                     text = text.replaceAll("\\\\", "\\\\\\\\");
+                  }
+                  
+                  if (isEmpty)
                      unset(option);
                   else
                      set(option, text);
+                  
                   synchronize();
                }
             });
@@ -374,6 +453,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                   synchronize();
                }
             });
+      checkBox.getElement().getStyle().setMargin(2, Unit.PX);
       return checkBox;
    }
    
@@ -483,6 +563,20 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             if (has("message"))
                showMessagesInOutputCb_.setValue(getBoolean("message"));
             
+            if (has("engine.path"))
+            {
+               String enginePath = StringUtil.stringValue(get("engine.path"));
+               enginePath = enginePath.replaceAll("\\\\\\\\", "\\\\");
+               enginePathBox_.setValue(enginePath);
+            }
+            
+            if (has("engine.opts"))
+            {
+               String engineOpts = StringUtil.stringValue(get("engine.opts"));
+               engineOpts = engineOpts.replaceAll("\\\\\\\\", "\\\\");
+               engineOptsBox_.setValue(engineOpts);
+            }
+            
             setVisible(true);
          }
       };
@@ -508,14 +602,6 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    {
       hide();
       display_.focus();
-   }
-   
-   private FlowPanel verticalSpacer(int sizeInPixels)
-   {
-      FlowPanel panel = new FlowPanel();
-      panel.setWidth("100%");
-      panel.setHeight("" + sizeInPixels + "px");
-      return panel;
    }
    
    private int getPriority(String key)
@@ -565,6 +651,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected final Grid figureDimensionsPanel_;
    protected final TextBox figWidthBox_;
    protected final TextBox figHeightBox_;
+   protected final Grid enginePanel_;
+   protected final TextBox enginePathBox_;
+   protected final TextBox engineOptsBox_;
    protected final SmallButton revertButton_;
    protected final SmallButton applyButton_;
    protected final ThemedCheckBox useCustomFigureCheckbox_;
@@ -620,4 +709,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    static {
       RES.styles().ensureInjected();
    }
+   
+   // Injected ----
+   protected FileDialogs fileDialogs_;
+   protected RemoteFileSystemContext rfsContext_;
+   
 }

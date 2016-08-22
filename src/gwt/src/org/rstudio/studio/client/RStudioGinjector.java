@@ -109,8 +109,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
@@ -190,6 +191,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TableBrowser tableBrowser);
    void injectMembers(TableBrowserModel tableBrowserModel);
    void injectMembers(MathJax mathjax);
+   void injectMembers(ChunkOptionsPopupPanel panel);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
