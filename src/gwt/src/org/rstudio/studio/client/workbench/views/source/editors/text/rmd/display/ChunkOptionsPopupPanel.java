@@ -25,13 +25,18 @@ import java.util.Map;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NativeEventHandler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MiniPopupPanel;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.core.client.widget.ThemedCheckBox;
 import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -261,14 +266,52 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       panel_.add(figureDimensionsPanel_);
       
-      enginePanel_ = new Grid(2, 2);
+      enginePanel_ = new Grid(2, 3);
       enginePanel_.getElement().getStyle().setMarginTop(5, Unit.PX);
       
       enginePathBox_ = makeInputBox("engine.path", true);
       enginePathBox_.getElement().getStyle().setWidth(120, Unit.PX);
       Label enginePathLabel = new Label("Engine path:");
+      SmallButton enginePathBrowseButton = new SmallButton("Browse...");
+      enginePathBrowseButton.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // infer the start navigation directory
+            String path = enginePathBox_.getValue();
+            FileSystemItem initialPath = path.isEmpty()
+                  ? FileSystemItem.createDir("~/")
+                  : FileSystemItem.createDir(FilePathUtils.dirFromFile(path));
+            
+            RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+                  "Select Engine",
+                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
+                  initialPath,
+                  new ProgressOperationWithInput<FileSystemItem>()
+                  {
+                     @Override
+                     public void execute(FileSystemItem input, ProgressIndicator indicator)
+                     {
+                        if (input == null)
+                        {
+                           indicator.onCompleted();
+                           return;
+                        }
+                        
+                        String path = StringUtil.notNull(input.getPath());
+                        path = path.replaceAll("\\\\", "\\\\\\\\");
+                        enginePathBox_.setValue(path);
+                        set("engine.path", StringUtil.ensureQuoted(path));
+                        synchronize();
+                        indicator.onCompleted();
+                     }
+                  });
+         }
+      });
       enginePanel_.setWidget(0, 0, enginePathLabel);
       enginePanel_.setWidget(0, 1, enginePathBox_);
+      enginePanel_.setWidget(0, 2, enginePathBrowseButton);
       
       engineOptsBox_ = makeInputBox("engine.opts", true);
       engineOptsBox_.getElement().getStyle().setWidth(120, Unit.PX);
