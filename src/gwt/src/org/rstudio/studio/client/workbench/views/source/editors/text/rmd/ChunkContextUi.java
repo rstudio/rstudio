@@ -233,7 +233,6 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          RMarkdownChunkHeaderParser.parse(line);
       
       String engine = StringUtil.stringValue(options.get("engine"));
-
       return engine;
    }
    

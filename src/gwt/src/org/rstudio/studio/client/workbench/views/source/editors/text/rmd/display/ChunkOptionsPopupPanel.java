@@ -357,7 +357,10 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                   boolean isEmpty = StringUtil.isNullOrEmpty(text);
                   
                   if (enquote && !isEmpty)
+                  {
                      text = StringUtil.ensureQuoted(text);
+                     text = text.replaceAll("\\\\", "\\\\\\\\");
+                  }
                   
                   if (isEmpty)
                      unset(option);
@@ -505,12 +508,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             if (has("engine.path"))
             {
                String enginePath = StringUtil.stringValue(get("engine.path"));
+               enginePath = enginePath.replaceAll("\\\\\\\\", "\\\\");
                enginePathBox_.setValue(enginePath);
             }
             
             if (has("engine.opts"))
             {
                String engineOpts = StringUtil.stringValue(get("engine.opts"));
+               engineOpts = engineOpts.replaceAll("\\\\\\\\", "\\\\");
                engineOptsBox_.setValue(engineOpts);
             }
             
