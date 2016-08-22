@@ -322,6 +322,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    String getTextForRange(Range range);
    
+   void tokenizeDocument();
+   void retokenizeDocument();
    Token getTokenAt(int row, int column);
    Token getTokenAt(Position position);
    TokenIterator createTokenIterator();

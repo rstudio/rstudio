@@ -85,6 +85,8 @@ public class MathJaxUtil
    public static boolean isSelectionWithinLatexChunk(DocDisplay docDisplay)
    {
       Range range = getLatexRange(docDisplay);
+      if (range == null)
+         return false;
       
       Token startToken = docDisplay.getTokenAt(range.getStart().getRow(), 0);
       if (startToken == null || !startToken.getValue().equals("$$"))
@@ -99,6 +101,7 @@ public class MathJaxUtil
    
    public static List<Range> findLatexChunks(DocDisplay docDisplay)
    {
+      docDisplay.tokenizeDocument();
       List<Range> ranges = new ArrayList<Range>();
       
       Position startPos = null;
