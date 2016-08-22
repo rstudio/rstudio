@@ -49,6 +49,7 @@
       vertical-align: top;
       text-align: center;
       margin-right: 6px;
+      display: none
    }
 
    .chunkTypeLabel

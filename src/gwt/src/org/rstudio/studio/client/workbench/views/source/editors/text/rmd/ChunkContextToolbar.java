@@ -73,7 +73,6 @@ public class ChunkContextToolbar extends Composite
 
       initRunPrevious(dark);
       setRunPrevious(runPrevious);
-      initChangeChunkEngine(engine);
       
       initRun();
       setRun(run);
