@@ -38,6 +38,16 @@ public class MathJaxUtil
       // find start of latex block
       TokenIterator startIt = docDisplay.createTokenIterator();
       
+      // avoid case where token iterator moves back across lines
+      // to discover a latex block
+      Token startToken = startIt.moveToPosition(pos);
+      if (startToken != null &&
+          startToken.hasAllTypes("latex", "end") &&
+          startIt.getCurrentTokenRow() != pos.getRow())
+      {
+         return null;
+      }
+      
       for (Token token = startIt.moveToPosition(pos);
            token != null;
            token = startIt.stepBackward())
