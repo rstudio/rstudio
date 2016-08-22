@@ -80,6 +80,24 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             prefs_.showRmdChunkOutputInline());
       add(rmdInlineOutput);
       
+      // behavior for latex popups
+      latexPreviewWidget_ = new SelectWidget(
+            "Show latex preview on cursor idle: ",
+            new String[] {
+                  "Never",
+                  "Inline latex only",
+                  "Always"
+            },
+            new String[] {
+                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER,
+                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY,
+                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS
+            },
+            false,
+            true,
+            false);
+      add(latexPreviewWidget_);
+      
       add(spacedBefore(headerLabel("R Notebooks")));
 
       // auto-execute the setup chunk
@@ -121,6 +139,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
+      latexPreviewWidget_.setValue(prefs_.showLatexPreviewOnCursorIdle().getValue().toString());
    }
    
    @Override
@@ -133,6 +152,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       prefs_.rmdViewerType().setGlobalValue(Integer.decode(
             rmdViewerMode_.getValue()));
+      
+      prefs_.showLatexPreviewOnCursorIdle().setGlobalValue(
+            latexPreviewWidget_.getValue());
                  
       return requiresRestart;
    }
@@ -143,4 +165,5 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget docOutlineDisplay_;
+   private final SelectWidget latexPreviewWidget_;
 }

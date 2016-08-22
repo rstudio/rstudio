@@ -65,6 +65,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -209,16 +210,12 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
 
+   HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
-   
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
-   
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
-   
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
-   
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
-   
    HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler);
 
    boolean isScopeTreeReady(int row);
@@ -323,7 +320,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
-   TokenIterator getTokenIterator(Position pos);
+   TokenIterator createTokenIterator();
+   TokenIterator createTokenIterator(Position position);
 
    Anchor createAnchor(Position pos);
    
@@ -373,7 +371,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void splitIntoLines();
    
    Rectangle getPositionBounds(Position position);
+   Rectangle getRangeBounds(Range range);
+   
    Position toDocumentPosition(ScreenCoordinates coordinates);
+   ScreenCoordinates documentPositionToScreenCoordinates(Position position);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();
@@ -410,4 +411,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToLineEnd();
    
    void toggleTokenInfo();
+   
+   void renderLatex(Range range);
 }

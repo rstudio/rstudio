@@ -133,7 +133,7 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               host_.onOutputRemoved();
+               host_.onOutputRemoved(ChunkOutputWidget.this);
                break;
             };
          }
@@ -256,7 +256,7 @@ public class ChunkOutputWidget extends Composite
          if (isVisible())
          {
             setVisible(false);
-            host_.onOutputHeightChanged(0, ensureVisible);
+            host_.onOutputHeightChanged(this, 0, ensureVisible);
          }
          return;
       }
@@ -309,7 +309,7 @@ public class ChunkOutputWidget extends Composite
       frame_.getElement().getStyle().setHeight(height, Unit.PX);
          
       // allocate some extra space so the cursor doesn't touch the output frame
-      host_.onOutputHeightChanged(height + 7, ensureVisible);
+      host_.onOutputHeightChanged(this, height + 7, ensureVisible);
    }
    
    public static boolean isEditorStyleCached()
@@ -339,7 +339,7 @@ public class ChunkOutputWidget extends Composite
          presenter_.clearOutput();
          renderedHeight_ = 0;
          setVisible(false);
-         host_.onOutputHeightChanged(0, ensureVisible);
+         host_.onOutputHeightChanged(this, 0, ensureVisible);
       }
 
       state_ = presenter_.hasOutput() ? CHUNK_READY : CHUNK_EMPTY;
@@ -502,6 +502,11 @@ public class ChunkOutputWidget extends Composite
          return;
       
       completeInterrupt();
+   }
+   
+   public void setRootWidget(Widget widget)
+   {
+      root_.setWidget(widget);
    }
 
    // Private methods ---------------------------------------------------------
@@ -701,7 +706,7 @@ public class ChunkOutputWidget extends Composite
             {
                renderedHeight_ = 
                      ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
-               host_.onOutputHeightChanged(renderedHeight_, ensureVisible);
+               host_.onOutputHeightChanged(ChunkOutputWidget.this, renderedHeight_, ensureVisible);
             }
             
          };

@@ -1436,8 +1436,8 @@ public class RCompletionManager implements CompletionManager
       // escape early for (non-examples) roxygen
       if (firstLine.matches("\\s*#+'.*"))
       {
-         TokenIterator it = docDisplay_.getTokenIterator(input_.getCursorPosition());
-         for (Token currentToken = it.getCurrentToken();
+         TokenIterator it = docDisplay_.createTokenIterator();
+         for (Token currentToken = it.moveToPosition(input_.getCursorPosition());
               currentToken != null;
               currentToken = it.stepBackward())
          {

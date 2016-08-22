@@ -35,19 +35,25 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    public MiniPopupPanel()
    {
       super();
-      commonInit();
+      commonInit(true);
    }
 
    public MiniPopupPanel(boolean autoHide)
    {
       super(autoHide);
-      commonInit();
+      commonInit(true);
    }
 
    public MiniPopupPanel(boolean autoHide, boolean modal)
    {
       super(autoHide, modal);
-      commonInit();
+      commonInit(true);
+   }
+   
+   public MiniPopupPanel(boolean autoHide, boolean modal, boolean useStyleSheet)
+   {
+      super(autoHide, modal);
+      commonInit(useStyleSheet);
    }
    
    @Override
@@ -64,7 +70,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
       super.hide();
    }
    
-   private void commonInit()
+   private void commonInit(boolean useStyleSheet)
    {
       escapeHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -81,7 +87,11 @@ public class MiniPopupPanel extends DecoratedPopupPanel
             }
          }
       });
-      addStyleName(RES.styles().popupPanel());
+      
+      if (useStyleSheet)
+      {
+         addStyleName(RES.styles().popupPanel());
+      }
    }
    
    private void addDragHandler()

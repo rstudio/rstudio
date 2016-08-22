@@ -46,6 +46,11 @@ public class Renderer extends JavaScriptObject
       return this.textToScreenCoordinates(row, col);
    }-*/;
    
+   public final ScreenCoordinates textToScreenCoordinates(Position pos)
+   {
+      return textToScreenCoordinates(pos.getRow(), pos.getColumn());
+   }
+   
    public native final Position screenToTextCoordinates(int pageX, int pageY) /*-{
       return this.screenToTextCoordinates(pageX, pageY);
    }-*/;

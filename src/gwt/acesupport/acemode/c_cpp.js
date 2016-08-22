@@ -79,11 +79,13 @@ var Mode = function(suppressHighlighting, session) {
    this.$behaviour = new CStyleBehaviour(this.codeModel);
    this.$cpp_outdent = new CppMatchingBraceOutdent(this.codeModel);
    
-   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
-      session,
-      /^\s*\/\*{3,}\s*[Rr]\s*$/,
-      /^\s*\*\//
-   );
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(session, [
+      {
+         // r code chunks
+         begin : /^\s*\/\*{3,}\s*[Rr]\s*$/,
+         end   : /^\s*\*\//
+      }
+   ]);
 
    if (!window.NodeWebkit)     
       this.foldingRules = new CppStyleFoldMode();

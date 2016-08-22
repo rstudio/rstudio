@@ -67,6 +67,7 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -282,6 +283,7 @@ public class AceEditor implements DocDisplay,
       
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
+      mathjax_ = new MathJax(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -1365,6 +1367,47 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public Rectangle getRangeBounds(Range range)
+   {
+      range = Range.toOrientedRange(range);
+      
+      Renderer renderer = widget_.getEditor().getRenderer();
+      if (!range.isMultiLine())
+      {
+         ScreenCoordinates start = documentPositionToScreenCoordinates(range.getStart());
+         ScreenCoordinates end   = documentPositionToScreenCoordinates(range.getEnd());
+         
+         int width  = (end.getPageX() - start.getPageX()) + (int) renderer.getCharacterWidth();
+         int height = (end.getPageY() - start.getPageY()) + (int) renderer.getLineHeight();
+         
+         return new Rectangle(start.getPageX(), start.getPageY(), width, height);
+      }
+      
+      Position startPos = range.getStart();
+      Position endPos   = range.getEnd();
+      int startRow = startPos.getRow();
+      int endRow   = endPos.getRow();
+      
+      // figure out top left coordinates
+      ScreenCoordinates topLeft = documentPositionToScreenCoordinates(Position.create(startRow, 0));
+      
+      // figure out bottom right coordinates (need to walk rows to figure out longest line)
+      ScreenCoordinates bottomRight = documentPositionToScreenCoordinates(Position.create(endPos));
+      for (int row = startRow; row <= endRow; row++)
+      {
+         Position rowEndPos = Position.create(row, getLength(row));
+         ScreenCoordinates coords = documentPositionToScreenCoordinates(rowEndPos);
+         if (coords.getPageX() > bottomRight.getPageX())
+            bottomRight = ScreenCoordinates.create(coords.getPageX(), bottomRight.getPageY());
+      }
+      
+      // construct resulting range
+      int width  = (bottomRight.getPageX() - topLeft.getPageX()) + (int) renderer.getCharacterWidth();
+      int height = (bottomRight.getPageY() - topLeft.getPageY()) + (int) renderer.getLineHeight();
+      return new Rectangle(topLeft.getPageX(), topLeft.getPageY(), width, height);
+   }
+   
+   @Override
    public Rectangle getPositionBounds(InputEditorPosition position)
    {
       Position pos = ((AceInputEditorPosition) position).getValue();
@@ -2025,6 +2068,11 @@ public class AceEditor implements DocDisplay,
    public HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler)
    {
       return handlers_.addHandler(SaveFileEvent.TYPE, handler);
+   }
+   
+   public HandlerRegistration addAttachHandler(AttachEvent.Handler handler)
+   {
+      return widget_.addAttachHandler(handler);
    }
 
    public HandlerRegistration addEditorFocusHandler(FocusHandler handler)
@@ -3243,6 +3291,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().blockOutdent();
    }
+   
+   public ScreenCoordinates documentPositionToScreenCoordinates(Position position)
+   {
+      return widget_.getEditor().getRenderer().textToScreenCoordinates(position);
+   }
 
    public Position screenCoordinatesToDocumentPosition(int pageX, int pageY)
    {
@@ -3254,13 +3307,19 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().isRowFullyVisible(position.getRow());
    }
    
-   public TokenIterator getTokenIterator(Position pos)
+   @Override
+   public TokenIterator createTokenIterator()
    {
-      if (pos == null)
-         return TokenIterator.create(getSession());
-      else
-         return TokenIterator.create(getSession(),
-               pos.getRow(), pos.getColumn());
+      return createTokenIterator(null);
+   }
+   
+   @Override
+   public TokenIterator createTokenIterator(Position position)
+   {
+      TokenIterator it = TokenIterator.create(getSession());
+      if (position != null)
+         it.moveToPosition(position);
+      return it;
    }
 
    @Override
@@ -3415,6 +3474,12 @@ public class AceEditor implements DocDisplay,
       AceEditor.this.fireEvent(new LineWidgetsChangedEvent());
    }
    
+   @Override
+   public void renderLatex(Range range)
+   {
+      mathjax_.renderLatex(range);
+   }
+   
    private static class BackgroundTokenizer
    {
       public BackgroundTokenizer(final AceEditor editor)
@@ -3539,6 +3604,7 @@ public class AceEditor implements DocDisplay,
    private boolean showChunkOutputInline_ = false;
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
+   private final MathJax mathjax_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

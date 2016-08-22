@@ -187,7 +187,9 @@ public class ChunkOutputUi
    }
 
    @Override
-   public void onOutputHeightChanged(int outputHeight, boolean ensureVisible)
+   public void onOutputHeightChanged(ChunkOutputWidget widget,
+                                     int outputHeight,
+                                     boolean ensureVisible)
    {
       // don't process if we aren't attached 
       if (!attached_)
@@ -205,11 +207,11 @@ public class ChunkOutputUi
       }
 
       int height = 
-            outputWidget_.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
+            widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
                CHUNK_COLLAPSED_HEIGHT :
                Math.max(MIN_CHUNK_HEIGHT, outputHeight);
 
-      outputWidget_.getElement().getStyle().setHeight(height, Unit.PX);
+      widget.getElement().getStyle().setHeight(height, Unit.PX);
       display_.onLineWidgetChanged(lineWidget_.getLineWidget());
       
       // if we need to ensure that this output is visible, wait for the event
@@ -221,7 +223,7 @@ public class ChunkOutputUi
    }
 
    @Override
-   public void onOutputRemoved()
+   public void onOutputRemoved(ChunkOutputWidget widget)
    {
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(
               new ChunkChangeEvent(docId_, chunkId_, 0, 

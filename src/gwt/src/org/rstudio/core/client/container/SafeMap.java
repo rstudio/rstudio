@@ -30,6 +30,8 @@ public class SafeMap<K, V>
    
    public V get(K key)
    {
+      if (!data_.containsKey(key))
+         return null;
       return data_.get(key);
    }
    

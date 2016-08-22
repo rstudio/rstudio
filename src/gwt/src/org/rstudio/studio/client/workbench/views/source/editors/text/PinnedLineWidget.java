@@ -241,7 +241,8 @@ public class PinnedLineWidget
          // ensure widget is detached
          widget_.getElement().removeFromParent();
          detachAnchors();
-         host_.onLineWidgetRemoved(lineWidget_);
+         if (host_ != null)
+            host_.onLineWidgetRemoved(lineWidget_);
          return true;
       }
       return false;

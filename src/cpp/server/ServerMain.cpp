@@ -171,6 +171,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/agreement", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/presentation", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/pdf_js", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/mathjax", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
