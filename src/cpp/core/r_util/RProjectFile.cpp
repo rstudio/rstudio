@@ -208,34 +208,6 @@ void setBuildPackageDefaults(const std::string& packagePath,
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
 
-bool isWebsiteDirectory(const FilePath& projectDir)
-{
-   // look for an index.Rmd or index.md
-   FilePath indexFile = projectDir.childPath("index.Rmd");
-   if (!indexFile.exists())
-      indexFile = projectDir.childPath("index.md");
-   if (indexFile.exists())
-   {
-      // look for _site.yml
-      FilePath siteFile = projectDir.childPath("_site.yml");
-      if (siteFile.exists())
-      {
-         return true;
-      }
-      // no _site.yml, is there a custom site generator?
-      else
-      {
-         static const boost::regex reSite("^site:.*$");
-         std::string yaml = yaml::extractYamlHeader(indexFile);
-         return boost::regex_search(yaml.begin(), yaml.end(), reSite);
-      }
-   }
-   else
-   {
-      return false;
-   }
-}
-
 std::string detectBuildType(const FilePath& projectFilePath,
                             const RProjectBuildDefaults& buildDefaults,
                             RProjectConfig* pConfig)
@@ -984,6 +956,34 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig)
    {
       pConfig->packageInstallArgs = kPackageInstallArgsDefault;
       return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool isWebsiteDirectory(const FilePath& projectDir)
+{
+   // look for an index.Rmd or index.md
+   FilePath indexFile = projectDir.childPath("index.Rmd");
+   if (!indexFile.exists())
+      indexFile = projectDir.childPath("index.md");
+   if (indexFile.exists())
+   {
+      // look for _site.yml
+      FilePath siteFile = projectDir.childPath("_site.yml");
+      if (siteFile.exists())
+      {
+         return true;
+      }
+      // no _site.yml, is there a custom site generator?
+      else
+      {
+         static const boost::regex reSite("^site:.*$");
+         std::string yaml = yaml::extractYamlHeader(indexFile);
+         return boost::regex_search(yaml.begin(), yaml.end(), reSite);
+      }
    }
    else
    {
