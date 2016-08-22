@@ -32,4 +32,12 @@ public class ListUtil
             filtered.add(object);
       return filtered;
    }
+   
+   @SafeVarargs
+   public static <T> List<T> create(T... ts)
+   {
+      List<T> result = new ArrayList<T>(ts.length);
+      for (T t : ts) result.add(t);
+      return result;
+   }
 }

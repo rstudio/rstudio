@@ -49,6 +49,7 @@ import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
@@ -67,20 +68,9 @@ public class MathJax
       docDisplay_ = docDisplay;
       popup_ = new MathJaxPopupPanel(this);
       bgRenderer_ = new MathJaxBackgroundRenderer(this, popup_, docDisplay_);
+      renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
-      onPopupTypeset_ = new MathJaxTypesetCallback()
-      {
-         @Override
-         public void onMathJaxTypesetComplete(boolean error)
-         {
-            int offsetWidth  = popup_.getOffsetWidth();
-            int offsetHeight = popup_.getOffsetHeight();
-            ScreenCoordinates coordinates = computePopupPosition(offsetWidth, offsetHeight);
-            popup_.setPopupPosition(coordinates.getPageX(), coordinates.getPageY());
-            popup_.show();
-         }
-      };
       
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
@@ -109,9 +99,29 @@ public class MathJax
          public void onAttachOrDetach(AttachEvent event)
          {
             if (!event.isAttached())
+            {
                detachHandlers();
+               return;
+            }
+            
+            // render latex in document on startup
+            Timer timer = new Timer()
+            {
+               @Override
+               public void run()
+               {
+                  renderLatex();
+               }
+            };
+            timer.schedule(700);
          }
       }));
+   }
+   
+   public void renderLatex()
+   {
+      final List<Range> ranges = MathJaxUtil.findLatexChunks(docDisplay_);
+      renderQueue_.enqueueAndRender(ranges);
    }
    
    public void renderLatex(Range range)
@@ -120,6 +130,13 @@ public class MathJax
    }
    
    public void renderLatex(Range range, boolean background)
+   {
+      renderLatex(range, background, null);
+   }
+   
+   public void renderLatex(Range range,
+                           boolean background,
+                           MathJaxTypesetCallback callback)
    {
       String text = docDisplay_.getTextForRange(range);
       String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getGlobalValue();
@@ -152,7 +169,7 @@ public class MathJax
             }
          }
 
-         renderLatexLineWidget(range, text);
+         renderLatexLineWidget(range, text, callback);
          return;
       }
       
@@ -160,7 +177,7 @@ public class MathJax
       // (don't reset render state)
       if (popup_.isShowing())
       {
-         renderPopup(text);
+         renderPopup(text, callback);
          return;
       }
       
@@ -169,7 +186,7 @@ public class MathJax
       anchor_ = docDisplay_.createAnchoredSelection(range.getStart(), range.getEnd());
       lastRenderedText_ = "";
       popup_.setRenderToolbarVisible(isLatexChunk);
-      renderPopup(text);
+      renderPopup(text, callback);
    }
    
    public void promotePopupToLineWidget()
@@ -188,7 +205,9 @@ public class MathJax
       uiPrefs_ = uiPrefs;
    }
    
-   private void renderLatexLineWidget(final Range range, final String text)
+   private void renderLatexLineWidget(final Range range,
+                                      final String text,
+                                      final MathJaxTypesetCallback callback)
    {
       // end a previous render session if necessary (e.g. if a popup is showing)
       endRender();
@@ -225,6 +244,10 @@ public class MathJax
                   Element ppElement = el.getParentElement().getParentElement();
                   ppElement.getStyle().setHeight(height, Unit.PX);
                   docDisplay_.onLineWidgetChanged(lineWidget);
+                  
+                  // invoke supplied callback
+                  if (callback != null)
+                     callback.onMathJaxTypesetComplete(error);
                }
             });
          }
@@ -302,7 +325,8 @@ public class MathJax
       lastRenderedText_ = "";
    }
    
-   private void renderPopup(final String text)
+   private void renderPopup(final String text,
+                            final MathJaxTypesetCallback callback)
    {
       // no need to re-render if text hasn't changed or is empty
       if (text.equals(lastRenderedText_))
@@ -319,7 +343,7 @@ public class MathJax
       // just typeset
       if (popup_.isShowing())
       {
-         mathjaxTypeset(popup_.getContentElement(), text);
+         mathjaxTypeset(popup_.getContentElement(), text, callback);
          return;
       }
       
@@ -328,7 +352,24 @@ public class MathJax
       popup_.show();
       
       // typeset and position after typesetting finished
-      mathjaxTypeset(popup_.getContentElement(), text, onPopupTypeset_);
+      mathjaxTypeset(popup_.getContentElement(), text, new MathJaxTypesetCallback()
+      {
+         
+         @Override
+         public void onMathJaxTypesetComplete(boolean error)
+         {
+            // re-position popup after render
+            int offsetWidth  = popup_.getOffsetWidth();
+            int offsetHeight = popup_.getOffsetHeight();
+            ScreenCoordinates coordinates = computePopupPosition(offsetWidth, offsetHeight);
+            popup_.setPopupPosition(coordinates.getPageX(), coordinates.getPageY());
+            popup_.show();
+            
+            // invoke user callback if provided
+            if (callback != null)
+               callback.onMathJaxTypesetComplete(error);
+         }
+      });
    }
    
    private void endRender()
@@ -443,7 +484,7 @@ public class MathJax
    private final DocDisplay docDisplay_;
    private final MathJaxPopupPanel popup_;
    private final MathJaxBackgroundRenderer bgRenderer_;
-   private final MathJaxTypesetCallback onPopupTypeset_;
+   private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
    

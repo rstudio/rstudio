@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -82,6 +85,33 @@ public class MathJaxUtil
          return false;
       
       return true;
+   }
+   
+   public static List<Range> findLatexChunks(DocDisplay docDisplay)
+   {
+      List<Range> ranges = new ArrayList<Range>();
       
+      Position startPos = null;
+      for (int i = 0, n = docDisplay.getRowCount(); i < n; i++)
+      {
+         Position pos = Position.create(i, 0);
+         Token token = docDisplay.getTokenAt(Position.create(i, 0));
+         if (token == null)
+            continue;
+         
+         if (token.hasAllTypes("latex", "begin"))
+         {
+            startPos = pos;
+            continue;
+         }
+         
+         if (token.hasAllTypes("latex", "end"))
+         {
+            ranges.add(Range.fromPoints(startPos, Position.create(i, 2)));
+            continue;
+         }
+      }
+      
+      return ranges;
    }
 }
