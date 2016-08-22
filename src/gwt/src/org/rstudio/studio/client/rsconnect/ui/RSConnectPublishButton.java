@@ -673,23 +673,6 @@ public class RSConnectPublishButton extends Composite
       if (manuallyHidden_)
          return false;
       
-      // websites
-      SessionInfo sessionInfo = session_.getSessionInfo();
-      String buildType = sessionInfo.getBuildToolsType();
-      if (buildType.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
-      {
-         // if this is an Rmd with a content path
-         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
-             !StringUtil.isNullOrEmpty(contentPath_))
-         {
-            // ...and if the content path is within the website dir,
-            // then don't show the publish button
-            String websiteDir = sessionInfo.getBuildTargetDir();
-            if (contentPath_.startsWith(websiteDir))
-               return false;
-         }
-      }
-
       // looks like we should be visible
       return true;
    }
