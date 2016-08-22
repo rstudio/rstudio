@@ -20,6 +20,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 
 public class RSConnectPublishSource
 {
+   // invoked when publishing Shiny applications
    public RSConnectPublishSource(String sourceDir, String sourceFile)
    {
       sourceFile_ = sourceDir;
@@ -29,18 +30,20 @@ public class RSConnectPublishSource
       deployDir_ = sourceDir;
       contentCategory_ = null;
       isShiny_ = true;
+      websiteDir_ = null;
       isSingleFileShiny_ = sourceDir != sourceFile;
    }
 
-   public RSConnectPublishSource(String sourceFile, boolean isSelfContained, 
-         boolean isShiny, String description, int type)
+   public RSConnectPublishSource(String sourceFile, String websiteDir, 
+         boolean isSelfContained, boolean isShiny, String description, int type)
    {
-      this(sourceFile, sourceFile, isSelfContained, isShiny, description,
-            type);
+      this(sourceFile, sourceFile, websiteDir, isSelfContained, isShiny, 
+            description, type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
-         boolean isSelfContained, boolean isShiny, String description, int type)
+         String websiteDir, boolean isSelfContained, boolean isShiny, 
+         String description, int type)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
@@ -48,6 +51,7 @@ public class RSConnectPublishSource
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
+      websiteDir_ = websiteDir;
 
       // consider plots and raw HTML published from the viewer pane to be 
       // plots 
@@ -59,7 +63,8 @@ public class RSConnectPublishSource
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 
-         boolean isSelfContained, boolean isShiny, String description)
+         String websiteDir, boolean isSelfContained, boolean isShiny, 
+         String description)
    {
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
@@ -68,17 +73,19 @@ public class RSConnectPublishSource
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
       contentCategory_ = null;
+      websiteDir_ = websiteDir;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
             .getParentPathString();
    }
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
-         String deployFile, boolean isSelfContained, boolean isShiny, 
-         String description)
+         String deployFile, String websiteDir, boolean isSelfContained, 
+         boolean isShiny, String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
       deployFile_ = deployFile;
+      websiteDir_ = websiteDir;
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
@@ -150,11 +157,22 @@ public class RSConnectPublishSource
       return contentCategory_;
    }
    
+   public boolean isWebsiteRmd()
+   {
+      return !StringUtil.isNullOrEmpty(websiteDir_);
+   }
+   
+   public String getWebsiteDir()
+   {
+      return websiteDir_;
+   }
+   
    private final String deployFile_;
    private final String deployDir_;
    private final String sourceFile_;
    private final String description_;
    private final String contentCategory_;
+   private final String websiteDir_;
    private final boolean isSelfContained_;
    private final boolean isShiny_;
    private final boolean isSingleFileShiny_;

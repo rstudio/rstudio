@@ -148,7 +148,6 @@ public class RSConnectDeploy extends Composite
          asStatic_ = fromPrevious.getAsStatic();
       }
       
-      
       // inject dependencies 
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -764,9 +763,13 @@ public class RSConnectDeploy extends Composite
          return;
       }
 
-      // read the parent directory if we're "deploying" a .R file
+      // read the parent directory if we're "deploying" a .R file, or a 
+      // website
       final String fileSource = source_.isDocument() ? 
-            source_.getDeployFile() : source_.getDeployDir();
+            source_.isWebsiteRmd() ? 
+                  source_.getWebsiteDir() :
+                  source_.getDeployFile() : 
+            source_.getDeployDir();
       indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
             fileSource,

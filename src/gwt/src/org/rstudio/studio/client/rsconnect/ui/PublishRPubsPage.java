@@ -56,6 +56,7 @@ public class PublishRPubsPage
             new RSConnectPublishSource(
                   initialData_.getOriginatingEvent().getPath(), 
                   initialData_.getOriginatingEvent().getHtmlFile(),
+                  null, // website directory
                   initialData_.isSelfContained(),
                   initialData_.isShiny(),
                   initialData_.getDescription(),

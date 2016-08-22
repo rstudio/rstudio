@@ -53,7 +53,6 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
@@ -584,8 +583,8 @@ public class RSConnectPublishButton extends Composite
                   public void execute(String htmlFile)
                   {
                      RSConnectPublishSource source = 
-                           new RSConnectPublishSource(htmlFile, true, false,
-                                 "Plot", contentType_);
+                           new RSConnectPublishSource(htmlFile, null, 
+                                 true, false, "Plot", contentType_);
                      ArrayList<String> deployFiles = new ArrayList<String>();
                      deployFiles.add(FilePathUtils.friendlyFileName(htmlFile));
                      RSConnectPublishSettings settings = 

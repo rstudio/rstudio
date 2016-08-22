@@ -108,7 +108,6 @@ public class RSConnect implements SessionInitHandler,
                     RSAccountConnector connector,
                     Provider<UIPrefs> pUiPrefs,
                     PlotPublishMRUList plotMru)
-                    
    {
       commands_ = commands;
       display_ = display;
@@ -203,7 +202,7 @@ public class RSConnect implements SessionInitHandler,
          {
          case CONTENT_TYPE_APP:
          case CONTENT_TYPE_APP_SINGLE:
-            publishAsCode(event, true);
+            publishAsCode(event, null, true);
             break;
          case CONTENT_TYPE_PRES:
          case CONTENT_TYPE_PLOT:
@@ -228,12 +227,14 @@ public class RSConnect implements SessionInitHandler,
                         publishAsFiles(event, 
                               new RSConnectPublishSource(event.getPath(), 
                                     event.getHtmlFile(), 
+                                    arg.getWebsiteDir(),
                                     arg.isSelfContained(), 
                                     arg.isShiny(),
                                     arg.getDescription(),
                                     event.getContentType()));
                      else
-                        publishAsCode(event, arg.isShiny());
+                        publishAsCode(event, arg.getWebsiteDir(), 
+                              arg.isShiny());
                   }
                });
             }
@@ -304,14 +305,15 @@ public class RSConnect implements SessionInitHandler,
             else
             {
                // single Shiny doc
-               publishAsCode(event, true);
+               publishAsCode(event, input.getWebsiteDir(), true);
             }
          }
          else
          {
             if (input.isConnectUIEnabled())
             {
-               if (input.hasDocOutput() || input.isMultiRmd())
+               if (input.hasDocOutput() || 
+                   (input.isMultiRmd() && !input.isWebsiteRmd()))
                {
                   // need to disambiguate between code/output and/or
                   // single/multi page
@@ -320,7 +322,7 @@ public class RSConnect implements SessionInitHandler,
                else
                {
                   // we don't have output, always publish the code
-                  publishAsCode(event, false);
+                  publishAsCode(event, input.getWebsiteDir(), false);
                }
             }
             else if (input.isSelfContained() && input.hasDocOutput())
@@ -340,11 +342,12 @@ public class RSConnect implements SessionInitHandler,
       else if (input.getContentType() == CONTENT_TYPE_APP ||
                input.getContentType() == CONTENT_TYPE_APP_SINGLE)
       {
-         publishAsCode(event, true);
+         publishAsCode(event, null, true);
       }
    }
    
-   private void publishAsCode(RSConnectActionEvent event, boolean isShiny)
+   private void publishAsCode(RSConnectActionEvent event, String websiteDir,
+         boolean isShiny)
    {
       RSConnectPublishSource source = null;
       if (event.getContentType() == CONTENT_TYPE_APP ||
@@ -369,7 +372,7 @@ public class RSConnect implements SessionInitHandler,
       }
       else
       {
-         source = new RSConnectPublishSource(event.getPath(), 
+         source = new RSConnectPublishSource(event.getPath(), websiteDir,
             false, isShiny, null, event.getContentType());
       }
          
@@ -383,6 +386,7 @@ public class RSConnect implements SessionInitHandler,
       {
          source = new RSConnectPublishSource(
                      input.getOriginatingEvent().getFromPreview(),
+                     input.getWebsiteDir(),
                      input.isSelfContained(),
                      input.isShiny(),
                      input.getDescription());
@@ -391,6 +395,7 @@ public class RSConnect implements SessionInitHandler,
       {
          source = new RSConnectPublishSource(
                input.getOriginatingEvent().getHtmlFile(),
+               input.getWebsiteDir(),
                input.isSelfContained(), 
                input.isShiny(),
                input.getDescription(),
@@ -649,6 +654,7 @@ public class RSConnect implements SessionInitHandler,
          String sourceFile,
          String deployDir,
          String deployFile, 
+         String websiteDir,
          String description,
          JsArrayString deployFiles,
          JsArrayString additionalFiles,
@@ -660,9 +666,10 @@ public class RSConnect implements SessionInitHandler,
          boolean launch, 
          JavaScriptObject record) /*-{
       $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile, 
-                                    description, deployFiles, additionalFiles, 
-                                    ignoredFiles, isSelfContained, isShiny,
-                                    asMultiple, asStatic, launch, record);
+                                    websiteDir, description, deployFiles, 
+                                    additionalFiles, ignoredFiles, isSelfContained, 
+                                    isShiny, asMultiple, asStatic, launch, 
+                                    record);
    }-*/;
    
    
@@ -701,6 +708,7 @@ public class RSConnect implements SessionInitHandler,
                result.getSource().getSourceFile(), 
                result.getSource().getDeployDir(), 
                result.getSource().getDeployFile(), 
+               result.getSource().getWebsiteDir(),
                result.getSource().getDescription(),
                JsArrayUtil.toJsArrayString(
                      result.getSettings().getDeployFiles()),
@@ -936,8 +944,8 @@ public class RSConnect implements SessionInitHandler,
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
-         function(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
+         function(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record) {
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
          }
       ); 
    }-*/;
@@ -945,6 +953,7 @@ public class RSConnect implements SessionInitHandler,
    private void deployToRSConnect(String sourceFile, 
                                   String deployDir, 
                                   String deployFile, 
+                                  String websiteDir,
                                   String description,
                                   JsArrayString deployFiles, 
                                   JsArrayString additionalFiles, 
@@ -973,7 +982,7 @@ public class RSConnect implements SessionInitHandler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
-                  isSelfContained, isShiny, description),
+                  websiteDir, isSelfContained, isShiny, description),
             new RSConnectPublishSettings(deployFilesList, 
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic), 
             launch, record));
@@ -994,6 +1003,7 @@ public class RSConnect implements SessionInitHandler,
                   input.setIsShiny(details.isShinyRmd());
                   input.setIsSelfContained(details.isSelfContained());
                   input.setHasConnectAccount(details.hasConnectAccount());
+                  input.setWebsiteDir(details.websiteDir());
                   if (StringUtil.isNullOrEmpty(input.getDescription()))
                   {
                      if (details.getTitle() != null && 
