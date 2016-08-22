@@ -49,7 +49,6 @@ import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
 
@@ -465,16 +464,9 @@ public class MathJax
       Rectangle bounds = docDisplay_.getRangeBounds(range_);
       Point center = bounds.center();
       
-      int pageX = bounds.getRight() + 10;
-      int pageY = center.getY() - (offsetHeight / 2);
-      
-      // check for overflow -- in such a case, display below rather than beside
-      int windowWidth = Window.getClientWidth();
-      if (pageX + offsetWidth >= (windowWidth - 10))
-      {
-         pageX = center.getX() - (offsetWidth / 2);
-         pageY = bounds.getBottom() + 10;
-      }
+      // prefer displaying popup below associated text
+      int pageX = center.getX() - (offsetWidth / 2);
+      int pageY = bounds.getBottom() + 10;
       
       return ScreenCoordinates.create(pageX, pageY);
    }
