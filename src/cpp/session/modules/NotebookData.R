@@ -297,3 +297,17 @@
     )
   }
 })
+
+.rs.addJsonRpcHandler("default_sql_connection_name", function()
+{
+  dbiClassNames <- lapply(methods::.S4methods("dbGetQuery"), function(methodInfo) {
+    methodInfoSplit <- strsplit(methodInfo, split = ",")[[1]]
+    methodInfoSplit[[2]]
+  })
+
+  dbiObjectNames <- Filter(function(objName) {
+    any(class(get(objName, envir = globalenv())) %in% dbiClassNames)
+  }, ls(envir = globalenv()))
+
+  if (length(dbiObjectNames) > 0) .rs.scalar(dbiObjectNames[[1]]) else null
+})

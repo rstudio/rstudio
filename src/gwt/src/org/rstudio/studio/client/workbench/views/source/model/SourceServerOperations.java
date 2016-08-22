@@ -236,4 +236,6 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void extractRmdFromNotebook(String inputPath,
          ServerRequestCallback<SourceDocumentResult> requestCallback);
+
+   public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback);
 }
