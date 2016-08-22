@@ -43,7 +43,7 @@
     options <- if (is.null(options)) list() else options
     
     optionRowNames <- options[["rownames.print"]]
-    options[["rownames.print"]] <- if (is.null(optionRowNames)) (.row_names_info(data, type = 1) > 0) else optionRowNames
+    options[["rownames.print"]] <- if (is.null(optionRowNames)) (.row_names_info(x, type = 1) > 0) else optionRowNames
 
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
@@ -148,7 +148,7 @@
 
   names(data) <- as.character(columnSequence)
 
-  addRowNames = options[["rownames.print"]]
+  addRowNames = isTRUE(options[["rownames.print"]])
   if (addRowNames) {
     columns <- c(
       list(
@@ -215,6 +215,18 @@
 
 .rs.addFunction("runSqlForDataCapture", function(sql, outputFile, options)
 {
+  is_sql_update_query <- function(query) {
+    # remove line comments
+    query <- gsub("^\\s*--.*\n", "", query)
+
+    # remove multi-line comments
+    if (grepl("^\\s*\\/\\*.*", query)) {
+      query <- gsub(".*\\*\\/", "", query)
+    }
+
+    grepl("^\\s*(INSERT|UPDATE|DELETE|CREATE).*", query)
+  }
+
   # precreate directories if needed
   dir.create(dirname(outputFile), recursive = TRUE, showWarnings = FALSE)
 
@@ -231,28 +243,28 @@
   )
 
   # Return char vector of sql interpolation param names
-  varnames_from_sql = function(conn, sql) {
-    varPos = DBI::sqlParseVariables(conn, sql)
+  varnames_from_sql <- function(conn, sql) {
+    varPos <- DBI::sqlParseVariables(conn, sql)
     if (length(varPos$start) > 0) {
-      varNames = substring(sql, varPos$start, varPos$end)
+      varNames <- substring(sql, varPos$start, varPos$end)
       sub("^\\?", "", varNames)
     }
   }
 
   # Vectorized version of exists
-  mexists = function(x, env = globalenv(), inherits = TRUE) {
+  mexists <- function(x, env = globalenv(), inherits = TRUE) {
     vapply(x, exists, logical(1), where = env, inherits = inherits)
   }
 
   # Interpolate a sql query based on the variables in an environment
-  interpolate_from_env = function(conn, sql, env = globalenv(), inherits = TRUE) {
-    names = unique(varnames_from_sql(conn, sql))
-    names_missing = names[!mexists(names, env, inherits)]
+  interpolate_from_env <- function(conn, sql, env = globalenv(), inherits = TRUE) {
+    names <- unique(varnames_from_sql(conn, sql))
+    names_missing <- names[!mexists(names, env, inherits)]
     if (length(names_missing) > 0) {
       stop("Object(s) not found: ", paste('"', names_missing, '"', collapse = ", "))
     }
 
-    args = if (length(names) > 0) setNames(
+    args <- if (length(names) > 0) setNames(
       mget(names, envir = env, inherits = inherits), names
     )
 
@@ -260,24 +272,18 @@
   }
 
   # extract options
-  varname = options$output.var
+  varname <- options$output.var
 
   # execute query -- when we are printing with an enforced max.print we
   # use dbFetch so as to only pull down the required number of records
-  query = interpolate_from_env(conn, sql)
-  if (is.null(varname) && max.print > 0) {
-    res = DBI::dbSendQuery(conn, query)
-    data = if (!DBI::dbHasCompleted(res) || (DBI::dbGetRowCount(res) > 0))
-              DBI::dbFetch(res, n = max.print)
+  query <- interpolate_from_env(conn, sql)
+  if (is.null(varname) && max.print > 0 && !is_sql_update_query(query)) {
+    res <- DBI::dbSendQuery(conn, query)
+    data <- DBI::dbFetch(res, n = max.print)
     DBI::dbClearResult(res)
   } else {
-    data = DBI::dbGetQuery(conn, query)
+    data <- DBI::dbGetQuery(conn, query)
   }
-
-  res <- DBI::dbSendQuery(conn, query)
-  x <- if (!DBI::dbHasCompleted(res) || (DBI::dbGetRowCount(res) > 0))
-            DBI::dbFetch(res, n = max.print)
-  DBI::dbClearResult(res)
 
   # assign varname if requested, otherwise print
   if (!is.null(varname)) {
