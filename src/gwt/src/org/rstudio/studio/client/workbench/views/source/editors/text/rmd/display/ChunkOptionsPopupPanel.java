@@ -287,7 +287,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       enginePathBox_ = makeInputBox("engine.path", true);
       enginePathBox_.getElement().getStyle().setWidth(120, Unit.PX);
       Label enginePathLabel = new Label("Engine path:");
-      SmallButton enginePathBrowseButton = new SmallButton("Browse...");
+      SmallButton enginePathBrowseButton = new SmallButton("...");
       enginePathBrowseButton.addClickHandler(new ClickHandler()
       {
          @Override
