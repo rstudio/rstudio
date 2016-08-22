@@ -415,7 +415,9 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
             def.getChunkId(), execMode, chunk.getExecScope(), code);
       
-      unit.addPendingRange(getNotebookExecRange(scope, range));
+      // add a pending range (if it has any content)
+      if (!range.getStart().isEqualTo(range.getEnd()))
+         unit.addPendingRange(getNotebookExecRange(scope, range));
       
       return unit;
    }

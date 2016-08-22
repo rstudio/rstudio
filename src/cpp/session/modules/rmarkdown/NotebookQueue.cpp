@@ -272,17 +272,26 @@ private:
          
       ExecRange range;
       std::string code = execUnit_->popExecRange(&range, mode); 
-      sendConsoleInput(execUnit_->chunkId(), code);
+      if (code.empty())
+      {
+         // no code to evaluate--skip this unit
+         skipUnit();
+      }
+      else 
+      {
+         // send code to console 
+         sendConsoleInput(execUnit_->chunkId(), code);
 
-      // let client know the range has been sent to R
-      json::Object exec;
-      exec["doc_id"]     = execUnit_->docId();
-      exec["chunk_id"]   = execUnit_->chunkId();
-      exec["exec_range"] = range.toJson();
-      exec["expr_mode"]  = mode;
-      exec["code"]       = code;
-      module_context::enqueClientEvent(
-            ClientEvent(client_events::kNotebookRangeExecuted, exec));
+         // let client know the range has been sent to R
+         json::Object exec;
+         exec["doc_id"]     = execUnit_->docId();
+         exec["chunk_id"]   = execUnit_->chunkId();
+         exec["exec_range"] = range.toJson();
+         exec["expr_mode"]  = mode;
+         exec["code"]       = code;
+         module_context::enqueClientEvent(
+               ClientEvent(client_events::kNotebookRangeExecuted, exec));
+      }
 
       return Success();
    }
@@ -345,6 +354,12 @@ private:
       // if we're here it's because the unit has eval=<expr>
       if (unit->execMode() == ExecModeBatch &&
          !options.getOverlayOption("eval", true))
+      {
+         return skipUnit();
+      }
+
+      // skip unit if it has no code to execute
+      if (!unit->hasPendingRanges())
       {
          return skipUnit();
       }

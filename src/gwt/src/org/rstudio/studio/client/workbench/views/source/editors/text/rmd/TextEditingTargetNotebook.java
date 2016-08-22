@@ -67,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ScopePredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -140,6 +141,7 @@ public class TextEditingTargetNotebook
       editingTarget_ = editingTarget;
       chunks_ = chunks;
       editingDisplay_ = editingDisplay;
+      scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // initialize the display's default output mode based on 
@@ -1522,6 +1524,11 @@ public class TextEditingTargetNotebook
       Scope setupScope = getSetupChunkScope();
       if (setupScope != null)
       {
+         // make sure there's some code to execute
+         Range range = scopeHelper_.getSweaveChunkInnerRange(setupScope);
+         if (range.getStart().isEqualTo(range.getEnd()))
+            return false;
+
          String crc32 = getChunkCrc32(setupScope);
 
          // compare with previously known hash; if it differs, re-run the
@@ -1768,6 +1775,7 @@ public class TextEditingTargetNotebook
    private final TextEditingTargetChunks chunks_;
    private final DirtyState dirtyState_;
    private final NotebookDoc notebookDoc_;
+   private final TextEditingTargetScopeHelper scopeHelper_;
    
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;

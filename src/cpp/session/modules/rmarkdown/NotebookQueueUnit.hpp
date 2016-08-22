@@ -68,6 +68,7 @@ public:
    bool complete() const;
    core::Error innerCode(std::string* pCode);
    void updateFrom(const NotebookQueueUnit& other);
+   bool hasPendingRanges();
 
    // accessors
    std::string docId() const;
