@@ -36,8 +36,11 @@ import org.rstudio.core.client.widget.TriStateCheckBox;
 import org.rstudio.core.client.widget.VerticalSpacer;
 import org.rstudio.core.client.widget.TriStateCheckBox.State;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -65,6 +68,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
 
 public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
 {
@@ -82,10 +86,21 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected abstract void synchronize();
    protected abstract void revert();
    
+   @Inject
+   private void initialize(WorkbenchContext workbench,
+                           FileDialogs fileDialogs,
+                           RemoteFileSystemContext rfsContext)
+   {
+      fileDialogs_ = fileDialogs;
+      rfsContext_ = rfsContext;
+   }
+   
    public ChunkOptionsPopupPanel(boolean includeChunkNameUI)
    {
       super(true);
       setVisible(false);
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
       
       chunkOptions_ = new HashMap<String, String>();
       originalChunkOptions_ = new HashMap<String, String>();
@@ -284,9 +299,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                   ? FileSystemItem.createDir("~/")
                   : FileSystemItem.createDir(FilePathUtils.dirFromFile(path));
             
-            RStudioGinjector.INSTANCE.getFileDialogs().openFile(
+            fileDialogs_.openFile(
                   "Select Engine",
-                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
+                  rfsContext_,
                   initialPath,
                   new ProgressOperationWithInput<FileSystemItem>()
                   {
@@ -694,4 +709,9 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    static {
       RES.styles().ensureInjected();
    }
+   
+   // Injected ----
+   protected FileDialogs fileDialogs_;
+   protected RemoteFileSystemContext rfsContext_;
+   
 }
