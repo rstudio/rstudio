@@ -93,7 +93,7 @@ json::Value NotebookCapture::endConditionCapture()
 
 bool NotebookCapture::capturingConditions()
 {
-   return conditions_;
+   return !!conditions_;
 }
 
 } // namespace notebook
