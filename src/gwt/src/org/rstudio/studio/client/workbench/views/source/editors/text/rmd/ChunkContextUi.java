@@ -30,6 +30,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.CustomEngineChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -128,9 +132,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    @Override
    public void showOptions(int x, int y)
    {
-      ChunkOptionsPopupPanel panel = isSetupChunk(lineWidget_.getRow()) ?
-         new SetupChunkOptionsPopupPanel() :
-         new DefaultChunkOptionsPopupPanel();
+      ChunkOptionsPopupPanel panel = createPopupPanel();
       
       panel.init(target_.getDocDisplay(), chunkPosition());
       panel.show();
@@ -233,6 +235,19 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       String engine = StringUtil.stringValue(options.get("engine"));
 
       return engine;
+   }
+   
+   private ChunkOptionsPopupPanel createPopupPanel()
+   {
+      int row = lineWidget_.getRow();
+      if (isSetupChunk(row))
+         return new SetupChunkOptionsPopupPanel();
+      
+      String engine = getEngine(row);
+      if (!engine.toLowerCase().equals("r"))
+         return new CustomEngineChunkOptionsPopupPanel();
+      
+      return new DefaultChunkOptionsPopupPanel();
    }
 
    private final TextEditingTarget target_;
