@@ -65,8 +65,8 @@ public class MathJax
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       docDisplay_ = docDisplay;
-      bgRenderer_ = new MathJaxBackgroundRenderer(this, docDisplay);
       popup_ = new MathJaxPopupPanel(this);
+      bgRenderer_ = new MathJaxBackgroundRenderer(this, popup_, docDisplay_);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
       onPopupTypeset_ = new MathJaxTypesetCallback()
@@ -132,36 +132,28 @@ public class MathJax
       boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
       if (isLatexChunk)
       {
-         do
-         {
-            // don't render if chunk contents empty
-            if (isEmptyLatexChunk(text))
-               return;
+         // don't render if chunk contents empty
+         if (isEmptyLatexChunk(text))
+            return;
 
-            // don't create new line widget on background render
-            if (background)
+         // don't create new line widget on background render
+         if (background)
+         {
+            int row = range.getEnd().getRow();
+            LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+            if (widget == null)
             {
-               int row = range.getEnd().getRow();
-               LineWidget widget = docDisplay_.getLineWidgetForRow(row);
-               if (widget == null)
+               // respect preference for rendering popups
+               if (pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER) ||
+                   pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY))
                {
-                  // respect preference for rendering popups
-                  if (pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY) ||
-                      pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
-                  {
-                     return;
-                  }
-                  
-                  // break out of upper do loop and attempt rendering popup as opposed
-                  // to line widget
-                  break;
+                  return;
                }
             }
-
-            renderLatexLineWidget(range, text);
-            return;
          }
-         while (false);
+
+         renderLatexLineWidget(range, text);
+         return;
       }
       
       // if the popup is already showing, just re-render within that popup
@@ -449,8 +441,8 @@ public class MathJax
    }
    
    private final DocDisplay docDisplay_;
-   private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxPopupPanel popup_;
+   private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxTypesetCallback onPopupTypeset_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;

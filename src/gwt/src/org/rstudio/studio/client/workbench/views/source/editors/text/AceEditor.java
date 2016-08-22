@@ -3308,6 +3308,18 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public Token getTokenAt(int row, int column)
+   {
+      return getSession().getTokenAt(row, column);
+   }
+   
+   @Override
+   public Token getTokenAt(Position position)
+   {
+      return getSession().getTokenAt(position);
+   }
+   
+   @Override
    public TokenIterator createTokenIterator()
    {
       return createTokenIterator(null);

@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -320,6 +321,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
+   
+   Token getTokenAt(int row, int column);
+   Token getTokenAt(Position position);
    TokenIterator createTokenIterator();
    TokenIterator createTokenIterator(Position position);
 

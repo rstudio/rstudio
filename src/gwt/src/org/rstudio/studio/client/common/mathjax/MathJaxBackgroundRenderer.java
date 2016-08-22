@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.mathjax;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
@@ -33,9 +34,12 @@ import com.google.gwt.user.client.Timer;
 
 public class MathJaxBackgroundRenderer
 {
-   public MathJaxBackgroundRenderer(MathJax mathjax, DocDisplay docDisplay)
+   public MathJaxBackgroundRenderer(MathJax mathjax,
+                                    MathJaxPopupPanel popup,
+                                    DocDisplay docDisplay)
    {
       mathjax_ = mathjax;
+      popup_ = popup;
       docDisplay_ = docDisplay;
       handlers_ = new ArrayList<HandlerRegistration>();
       
@@ -102,7 +106,13 @@ public class MathJaxBackgroundRenderer
          @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            renderTimer_.schedule(700);
+            int delayMs = 700;
+            if (MathJaxUtil.isSelectionWithinLatexChunk(docDisplay_))
+               delayMs = 200;
+            else if (popup_.isShowing())
+               delayMs = 200;
+            
+            renderTimer_.schedule(delayMs);
          }
       });
    }
@@ -126,6 +136,7 @@ public class MathJaxBackgroundRenderer
    }
    
    private final MathJax mathjax_;
+   private final MathJaxPopupPanel popup_;
    private final DocDisplay docDisplay_;
    private final List<HandlerRegistration> handlers_;
    private final Timer renderTimer_;

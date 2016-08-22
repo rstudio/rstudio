@@ -68,4 +68,20 @@ public class MathJaxUtil
       
       return Range.fromPoints(startPos, endPos);
    }
+   
+   public static boolean isSelectionWithinLatexChunk(DocDisplay docDisplay)
+   {
+      Range range = getLatexRange(docDisplay);
+      
+      Token startToken = docDisplay.getTokenAt(range.getStart().getRow(), 0);
+      if (startToken == null || !startToken.getValue().equals("$$"))
+         return false;
+      
+      Token endToken = docDisplay.getTokenAt(range.getEnd().getRow(), 0);
+      if (endToken == null || !endToken.getValue().equals("$$"))
+         return false;
+      
+      return true;
+      
+   }
 }
