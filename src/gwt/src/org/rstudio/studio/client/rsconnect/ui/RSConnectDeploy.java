@@ -811,9 +811,10 @@ public class RSConnectDeploy extends Composite
                                  fromPrevious_.getAdditionalFiles() : null, 
                            fromPrevious_ != null ? 
                                  fromPrevious_.getIgnoredFiles() : null);
-                     setPrimaryFile(
-                           FileSystemItem.createFile(
-                                 source_.getDeployFile()).getName());
+                     if (!source_.isWebsiteRmd())
+                        setPrimaryFile(
+                              FileSystemItem.createFile(
+                                    source_.getDeployFile()).getName());
                   }
                   
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()

@@ -56,16 +56,19 @@ public class RSConnectPublishSource
       isSingleFileShiny_ = false;
       websiteDir_ = websiteDir;
 
-      // consider plots and raw HTML published from the viewer pane to be 
-      // plots 
       String category = null;
-      if ((type == RSConnect.CONTENT_TYPE_DOCUMENT || 
-           type == RSConnect.CONTENT_TYPE_HTML) &&
-          !StringUtil.isNullOrEmpty(websiteDir))
+      if (type == RSConnect.CONTENT_TYPE_WEBSITE)
+      {
+         // websites are always deployed as sites
          category = RSConnect.CONTENT_CATEGORY_SITE;
+      }
       else if (type == RSConnect.CONTENT_TYPE_PLOT || 
                type == RSConnect.CONTENT_TYPE_HTML) 
+      {
+         // consider plots and raw HTML published from the viewer pane to be 
+         // plots 
          category = RSConnect.CONTENT_CATEGORY_PLOT;
+      }
       contentCategory_ = category;
 
       deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
