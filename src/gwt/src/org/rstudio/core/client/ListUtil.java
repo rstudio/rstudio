@@ -33,7 +33,7 @@ public class ListUtil
       return filtered;
    }
    
-   @SafeVarargs
+   @SuppressWarnings("unchecked")
    public static <T> List<T> create(T... ts)
    {
       List<T> result = new ArrayList<T>(ts.length);
