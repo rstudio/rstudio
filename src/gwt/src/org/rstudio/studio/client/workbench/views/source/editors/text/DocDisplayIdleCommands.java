@@ -16,8 +16,12 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
+import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleMonitor.IdleState;
@@ -38,6 +42,7 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Image;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -45,11 +50,19 @@ public class DocDisplayIdleCommands
 {
    public DocDisplayIdleCommands()
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       PREVIEW_LINK = previewLink();
       PREVIEW_LATEX = previewLatex();
    }
    
    // Private Methods ----
+   
+   @Inject
+   private void initialize(SourceWindowManager swm)
+   {
+      swm_ = swm;
+   }
    
    // Latex Preview ----
    
@@ -121,13 +134,7 @@ public class DocDisplayIdleCommands
    {
       // for local images, construct a path that the server URI redirects
       // will handle properly
-      String srcPath = href;
-      if (!href.startsWith("http"))
-      {
-         srcPath = href.startsWith("~/")
-               ? "files/" + href.substring(2)
-               : "file_show?path=" + StringUtil.encodeURIComponent(href);
-      }
+      String srcPath = imgSrcPathFromHref(href);
       
       // check to see if we already have a popup showing for this image;
       // if we do then bail early
@@ -144,6 +151,28 @@ public class DocDisplayIdleCommands
             docDisplay.documentPositionToScreenCoordinates(position);
       panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
       panel.show();
+   }
+   
+   private String imgSrcPathFromHref(String href)
+   {
+      // return paths that have a custom / external protocol as-is
+      Pattern reProtocol = Pattern.create("^\\w+://");
+      if (reProtocol.test(href))
+         return href;
+      
+      // make relative paths absolute
+      String absPath = href;
+      if (FilePathUtils.pathIsRelative(href))
+      {
+         // TODO: infer correct parent dir based on knitr params?
+         String docPath = swm_.getCurrentDocPath();
+         absPath = FilePathUtils.dirFromFile(docPath) + "/" + absPath;
+      }
+      
+      if (absPath.startsWith("~/"))
+         return "files/" + StringUtil.encodeURIComponent(absPath.substring(2));
+      else
+         return "file_show?path=" + StringUtil.encodeURIComponent(absPath);
    }
    
    private static Position resolvePosition(DocDisplay docDisplay, IdleState state)
@@ -274,4 +303,7 @@ public class DocDisplayIdleCommands
    
    public final IdleCommand PREVIEW_LINK;
    public final IdleCommand PREVIEW_LATEX;
+   
+   // Injected ----
+   private SourceWindowManager swm_;
 }
