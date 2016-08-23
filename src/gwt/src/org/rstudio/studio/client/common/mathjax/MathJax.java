@@ -44,11 +44,10 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
 
@@ -68,25 +67,15 @@ public class MathJax
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
+      renderTimer_ = new RenderTimer();
       
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
-            if (event.isAttached())
-               beginCursorMonitoring();
-            else
-               endCursorMonitoring();
-         }
-      }));
-      
-      handlers_.add(docDisplay_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            endRender();
+            if (!event.isAttached())
+               endRender();
          }
       }));
       
@@ -111,6 +100,41 @@ public class MathJax
             });
          }
       }));
+      
+      handlers_.add(docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
+      {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            Position position = event.getPosition();
+            
+            // re-render line widgets eagerly when editing within latex chunk
+            Range range = MathJaxUtil.getLatexRange(docDisplay_);
+            if (range != null && range.contains(position) && MathJaxUtil.isSelectionWithinLatexChunk(docDisplay_))
+            {
+               renderTimer_.schedule(range, true, 50);
+               return;
+            }
+            
+            // end a render session for inline latex
+            if (anchor_ == null || !anchor_.getRange().contains(position))
+            {
+               endRender();
+               return;
+            }
+            
+            // re-render inline latex (deferred so that anchor can update)
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  renderTimer_.schedule(anchor_.getRange(), true, 50);
+               }
+            });
+         }
+      }));
+      
    }
    
    public void renderLatex()
@@ -324,12 +348,6 @@ public class MathJax
          anchor_ = null;
       }
       
-      if (cursorChangedHandler_ != null)
-      {
-         cursorChangedHandler_.removeHandler();
-         cursorChangedHandler_ = null;
-      }
-      
       lastRenderedText_ = "";
    }
    
@@ -434,30 +452,6 @@ public class MathJax
       }));
    }-*/;
    
-   private void beginCursorMonitoring()
-   {
-      endCursorMonitoring();
-      cursorChangedHandler_ = docDisplay_.addCursorChangedHandler(new CursorChangedHandler()
-      {
-         @Override
-         public void onCursorChanged(CursorChangedEvent event)
-         {
-            Position position = event.getPosition();
-            if (anchor_ == null || !anchor_.getRange().contains(position))
-               endRender();
-         }
-      });
-   }
-   
-   private void endCursorMonitoring()
-   {
-      if (cursorChangedHandler_ != null)
-      {
-         cursorChangedHandler_.removeHandler();
-         cursorChangedHandler_ = null;
-      }
-   }
-   
    private ScreenCoordinates computePopupPosition(int offsetWidth, int offsetHeight)
    {
       Rectangle bounds = docDisplay_.getRangeBounds(range_);
@@ -482,15 +476,47 @@ public class MathJax
       handlers_.clear();
    }
    
+   private void scheduleRender(final Range range)
+   {
+      renderTimer_.schedule(range, false, 200);
+   }
+   
+   private class RenderTimer
+   {
+      public RenderTimer()
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               renderLatex(range_, background_);
+            }
+         };
+      }
+      
+      public void schedule(Range range, boolean background, int delayMs)
+      {
+         range_ = range;
+         background_ = background;
+         timer_.schedule(delayMs);
+      }
+      
+      private final Timer timer_;
+      
+      private Range range_;
+      private boolean background_;
+   }
+   
    private final DocDisplay docDisplay_;
    private final MathJaxPopupPanel popup_;
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
+   private final RenderTimer renderTimer_;
    
    private AnchoredSelection anchor_;
    private Range range_;
-   private HandlerRegistration cursorChangedHandler_;
    private String lastRenderedText_ = "";
    
    // Injected ----
