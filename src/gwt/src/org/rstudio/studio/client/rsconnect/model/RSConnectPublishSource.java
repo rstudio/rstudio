@@ -85,7 +85,7 @@ public class RSConnectPublishSource
       isStatic_ = isStatic;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
-      contentCategory_ = StringUtil.isNullOrEmpty(websiteDir) ? 
+      contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
             RSConnect.CONTENT_CATEGORY_SITE : null;
       websiteDir_ = websiteDir;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())

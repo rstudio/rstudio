@@ -787,6 +787,23 @@ public class RSConnectPublishButton extends Composite
          {
             populatedPath_ = contentPath_;
             populating_ = false;
+            
+            // if publishing a website but not content, filter deployments 
+            // that are static (as we can't update them)
+            if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE && 
+                (docPreview_ == null || 
+                 StringUtil.isNullOrEmpty(docPreview_.getOutputFile())))
+            {
+               JsArray<RSConnectDeploymentRecord> codeRecs = 
+                     JsArray.createArray().cast();
+               for (int i = 0; i < recs.length(); i++)
+               {
+                  if (!recs.get(i).getAsStatic())
+                     codeRecs.push(recs.get(i));
+               }
+               recs = codeRecs;
+            }
+
             setPreviousDeployments(recs);
             if (callback != null)
                callback.onPopupMenu(menu);
