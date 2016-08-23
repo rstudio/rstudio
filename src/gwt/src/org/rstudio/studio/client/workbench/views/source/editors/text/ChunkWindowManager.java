@@ -1,5 +1,5 @@
 /*
- * SourceWindowManager.java
+ * ChunkWindowManager.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -39,7 +39,7 @@ public class ChunkWindowManager
       Point position = new Point(0, 0);
       
       pSatelliteManager_.get().openSatellite(
-         NAME_PREFIX + docId + "_" + chunkId, 
+         ChunkSatellite.NAME_PREFIX + docId + "_" + chunkId, 
          ChunkWindowParams.create(docId, chunkId), 
          size, false, position);
    }
@@ -47,6 +47,4 @@ public class ChunkWindowManager
    // Members -----------------------------------------------------------------
    
    private final Provider<SatelliteManager> pSatelliteManager_;
-   
-   public final static String NAME_PREFIX = "chunk_window_";
 }

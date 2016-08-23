@@ -87,6 +87,7 @@ import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.Manipulato
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
@@ -198,6 +199,13 @@ public class RStudio implements EntryPoint
                            view.startsWith(SourceSatellite.NAME_PREFIX))
                   {
                      SourceSatellite satellite = new SourceSatellite(view);
+                     satellite.go(RootLayoutPanel.get(), 
+                           dismissProgressAnimation);
+                  }
+                  else if (view != null && 
+                           view.startsWith(ChunkSatellite.NAME_PREFIX))
+                  {
+                     ChunkSatellite satellite = new ChunkSatellite(view);
                      satellite.go(RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }

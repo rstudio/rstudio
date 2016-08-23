@@ -1,5 +1,5 @@
 /*
- * ChunkWindowParams.java
+ * ChunkSatelliteView.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -14,27 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.common.satellite.SatelliteApplicationView;
 
-public class ChunkWindowParams extends JavaScriptObject
+public interface ChunkSatelliteView extends SatelliteApplicationView
 {
-   protected ChunkWindowParams()
-   {
-   }
-
-   public final static native ChunkWindowParams create(
-      String docId, String chunkId) /*-{
-      return { 
-         "doc_id" : docId,
-         "chunk_id": chunkId,
-      };
-   }-*/;
-   
-   public final native String getDocId() /*-{
-      return this.doc_id;
-   }-*/;
-
-   public final native String getChunkId() /*-{
-      return this.chunk_id;
-   }-*/;
 }

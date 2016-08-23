@@ -1,7 +1,7 @@
 /*
- * SourceSatellite.java
+ * ChunkSatellite.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,25 +13,25 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source;
+package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatelliteView;
+import org.rstudio.studio.client.workbench.views.source.SourceSatelliteView;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-public class SourceSatellite extends SatelliteApplication
+public class ChunkSatellite extends SatelliteApplication
 {
    // note that there's special behavior attached to this name in the desktop
    // frame 
-   public static final String NAME_PREFIX = "source_window_";
+   public static final String NAME_PREFIX = "chunk_window_";
    
-   public SourceSatellite(String name)
+   public ChunkSatellite(String name)
    {
       name_ = name;
       RStudioGinjector.INSTANCE.injectMembers(this);
