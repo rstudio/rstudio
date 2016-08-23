@@ -432,6 +432,11 @@ public class AceEditorNative extends JavaScriptObject {
       return this.commands;
    }-*/;
    
+   public final void tokenizeDocument()
+   {
+      tokenizeUpToRow(getSession().getLength() - 1);
+   }
+   
    public final void retokenizeDocument()
    {
       resetTokenizer();

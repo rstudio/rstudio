@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -34,6 +37,16 @@ public class MathJaxUtil
       
       // find start of latex block
       TokenIterator startIt = docDisplay.createTokenIterator();
+      
+      // avoid case where token iterator moves back across lines
+      // to discover a latex block
+      Token startToken = startIt.moveToPosition(pos);
+      if (startToken != null &&
+          startToken.hasAllTypes("latex", "end") &&
+          startIt.getCurrentTokenRow() != pos.getRow())
+      {
+         return null;
+      }
       
       for (Token token = startIt.moveToPosition(pos);
            token != null;
@@ -72,6 +85,8 @@ public class MathJaxUtil
    public static boolean isSelectionWithinLatexChunk(DocDisplay docDisplay)
    {
       Range range = getLatexRange(docDisplay);
+      if (range == null)
+         return false;
       
       Token startToken = docDisplay.getTokenAt(range.getStart().getRow(), 0);
       if (startToken == null || !startToken.getValue().equals("$$"))
@@ -82,6 +97,34 @@ public class MathJaxUtil
          return false;
       
       return true;
+   }
+   
+   public static List<Range> findLatexChunks(DocDisplay docDisplay)
+   {
+      docDisplay.tokenizeDocument();
+      List<Range> ranges = new ArrayList<Range>();
       
+      Position startPos = null;
+      for (int i = 0, n = docDisplay.getRowCount(); i < n; i++)
+      {
+         Position pos = Position.create(i, 0);
+         Token token = docDisplay.getTokenAt(Position.create(i, 0));
+         if (token == null)
+            continue;
+         
+         if (token.hasAllTypes("latex", "begin"))
+         {
+            startPos = pos;
+            continue;
+         }
+         
+         if (token.hasAllTypes("latex", "end"))
+         {
+            ranges.add(Range.fromPoints(startPos, Position.create(i, 2)));
+            continue;
+         }
+      }
+      
+      return ranges;
    }
 }

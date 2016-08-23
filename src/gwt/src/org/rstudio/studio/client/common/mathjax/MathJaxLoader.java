@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.mathjax;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
@@ -34,23 +37,15 @@ public class MathJaxLoader
       ensureMathJaxLoaded();
    }
    
-   public static void ensureMathJaxLoaded()
-   {
-      ensureMathJaxLoaded(null);
-   }
-   
    public static boolean isMathJaxLoaded()
    {
       return MATHJAX_LOADED;
    }
    
-   public static void ensureMathJaxLoaded(final Callback callback)
+   public static void ensureMathJaxLoaded()
    {
       if (MATHJAX_LOADED)
-      {
-         if (callback != null) callback.onLoaded(MATHJAX_LOADED);
          return;
-      }
       
       initializeMathJaxConfig();
       ScriptElement mathJaxEl = createMathJaxScriptElement();
@@ -64,7 +59,8 @@ public class MathJaxLoader
             if (isMathJaxReady())
             {
                MATHJAX_LOADED = true;
-               if (callback != null) callback.onLoaded(false);
+               for (Callback callback : MATHJAX_CALLBACKS)
+                  callback.onLoaded(false);
                onMathJaxLoaded();
                return false;
             }
@@ -73,6 +69,20 @@ public class MathJaxLoader
             return RETRY_COUNT < 50;
          }
       }, 500);
+   }
+   
+   public static final void withMathJaxLoaded(Callback callback)
+   {
+      if (callback == null)
+         return;
+         
+      if (MATHJAX_LOADED)
+      {
+         callback.onLoaded(true);
+         return;
+      }
+      
+      MATHJAX_CALLBACKS.add(callback);
    }
    
    // Private Methods ----
@@ -127,6 +137,7 @@ public class MathJaxLoader
       return el;
    }
    
+   private static List<Callback> MATHJAX_CALLBACKS = new ArrayList<Callback>();
    private static boolean MATHJAX_LOADED = false;
    private static int RETRY_COUNT = 0;
    

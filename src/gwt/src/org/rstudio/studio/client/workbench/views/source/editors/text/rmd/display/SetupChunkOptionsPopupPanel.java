@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
+package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
@@ -53,6 +53,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       figureDimensionsPanel_.setVisible(false);
       useCustomFigureCheckbox_.setVisible(false);
       revertButton_.setVisible(false);
+      enginePanel_.setVisible(false);
       
       setHeader("Default Chunk Options", true);
    }

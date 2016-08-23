@@ -3308,6 +3308,18 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void tokenizeDocument()
+   {
+      widget_.getEditor().tokenizeDocument();
+   }
+   
+   @Override
+   public void retokenizeDocument()
+   {
+      widget_.getEditor().retokenizeDocument();
+   }
+   
+   @Override
    public Token getTokenAt(int row, int column)
    {
       return getSession().getTokenAt(row, column);

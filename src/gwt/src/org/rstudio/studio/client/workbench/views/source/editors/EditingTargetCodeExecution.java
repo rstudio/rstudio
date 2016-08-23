@@ -30,9 +30,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
-
 import com.google.inject.Inject;
 
 public class EditingTargetCodeExecution
@@ -332,21 +329,6 @@ public class EditingTargetCodeExecution
    {
       String trimmedLine = line.trim();
       return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
-   }
-   
-   private boolean isExecutingLaTeX()
-   {
-      Range range = docDisplay_.getSelectionRange();
-      
-      for (Position pos : new Position[]{range.getStart(), range.getEnd()})
-      {
-         TokenIterator it = docDisplay_.createTokenIterator();
-         Token token = it.moveToPosition(pos);
-         if (token == null || !token.hasType("latex"))
-            return false;
-      }
-      
-      return true;
    }
    
    private boolean executeLatex()

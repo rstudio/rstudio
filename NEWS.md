@@ -3,7 +3,7 @@
 ### R Notebooks
 
 * Authoring tools for [R Notebooks](http://rmarkdown.rstudio.com/r_notebooks.html)
-* Inline display for text, tabular data, graphics, and htmlwidgets in source editor
+* Inline display for text, latex, tabular data, graphics, and htmlwidgets in source editor
 * All code and output saved within a single notebook HTML file (.nb.html)
 * Multiple language engines including Python, Bash, SQL, Rcpp, and Stan
 * Tools for running various combinations of chunks (current, next, previous, remaining)
