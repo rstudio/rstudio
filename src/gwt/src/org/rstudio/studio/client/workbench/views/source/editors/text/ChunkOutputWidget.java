@@ -92,6 +92,9 @@ public class ChunkOutputWidget extends Composite
 
       @Source("RemoveChunkIcon.png")
       ImageResource removeChunkIcon();
+
+      @Source("PopoutChunkIcon.png")
+      ImageResource popoutIcon();
    }
    
    public interface ChunkStyle extends CssResource
@@ -153,11 +156,28 @@ public class ChunkOutputWidget extends Composite
          }
       };
 
+      EventListener popoutChunkEvent = new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               popoutChunk();
+               break;
+            };
+         }
+      };
+
       DOM.sinkEvents(expander_.getElement(), Event.ONCLICK);
       DOM.setEventListener(expander_.getElement(), toggleExpansion);
       
       DOM.sinkEvents(expand_.getElement(), Event.ONCLICK);
       DOM.setEventListener(expand_.getElement(), toggleExpansion);
+
+      DOM.sinkEvents(popout_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(popout_.getElement(), popoutChunkEvent);
       
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
@@ -638,6 +658,7 @@ public class ChunkOutputWidget extends Composite
 
       clear_.setVisible(false);
       expand_.setVisible(false);
+      popout_.setVisible(false);
    }
 
    private void showReadyState()
@@ -655,6 +676,7 @@ public class ChunkOutputWidget extends Composite
 
       clear_.setVisible(true);
       expand_.setVisible(true);
+      popout_.setVisible(true);
    }
    
    private void setOverflowStyle()
@@ -684,6 +706,11 @@ public class ChunkOutputWidget extends Composite
          return;
       }
       showReadyState();
+   }
+
+   private void popoutChunk()
+   {
+      
    }
    
    private void toggleExpansionState(final boolean ensureVisible)
@@ -799,6 +826,7 @@ public class ChunkOutputWidget extends Composite
    
    @UiField Image clear_;
    @UiField Image expand_;
+   @UiField Image popout_;
    @UiField SimplePanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;

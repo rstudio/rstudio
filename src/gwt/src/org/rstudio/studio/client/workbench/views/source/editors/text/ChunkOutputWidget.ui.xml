@@ -6,7 +6,7 @@
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.Resources"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   .clear, .expand
+   .clear, .expand, .popout
    {
       position: absolute;
       top: 2px;
@@ -25,6 +25,17 @@
    {
       right: 35px;
       transition: transform 400ms ease, -webkit-transform 400ms ease;
+   }
+
+   .popout 
+   {
+      right: 58px;
+      width: 14px;
+      height: 14px;
+      top: 0px;
+      filter: grayscale(100%);
+      -webkit-filter: grayscale(100%);
+      opacity: 0.7;
    }
    
    .collapsed .expand
@@ -123,6 +134,10 @@
       <g:HTMLPanel styleName="{style.expander}"
                ui:field="expander_"></g:HTMLPanel>
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
+        <g:Image styleName="{style.popout}" 
+                 resource="{res.popoutIcon}"
+                 title="Show in new window"
+                 ui:field="popout_"></g:Image>
         <g:Image styleName="{style.clear}"
                  ui:field="clear_"
                  resource="{res.removeChunkIcon}"
