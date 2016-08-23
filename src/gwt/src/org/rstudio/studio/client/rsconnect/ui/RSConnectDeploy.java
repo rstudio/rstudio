@@ -752,7 +752,8 @@ public class RSConnectDeploy extends Composite
       
       // if this is a self-contained document, we don't need to scrape it for
       // dependencies; just inject it directly into the list.
-      if (source_.isSelfContained())
+      if (source_.isSelfContained() && source_.isStatic() && 
+          !source_.isWebsiteRmd())
       {
          ArrayList<String> files = new ArrayList<String>();
          FileSystemItem selfContained = FileSystemItem.createFile(
@@ -763,13 +764,19 @@ public class RSConnectDeploy extends Composite
          return;
       }
 
-      // read the parent directory if we're "deploying" a .R file, or a 
-      // website
+      // ternery operator maps to appropriate files to list for deployment:
+      // website code    - website code directory 
+      // static website  - website build directory
+      // document        - R Markdown document
+      // non-document    - Shiny app directory
       final String fileSource = source_.isDocument() ? 
             source_.isWebsiteRmd() ? 
-                  source_.getWebsiteDir() :
+                  source_.isStatic() ? 
+                     source_.getDeployDir() :
+                     source_.getWebsiteDir() :
                   source_.getDeployFile() : 
             source_.getDeployDir();
+
       indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
             fileSource,
@@ -926,7 +933,8 @@ public class RSConnectDeploy extends Composite
    {
       // If this is a self-contained file, don't show the file list; instead, 
       // show the description of what we're about to publish
-      if (source_.isSelfContained()) 
+      if (source_.isSelfContained() && source_.isStatic() && 
+          !source_.isWebsiteRmd()) 
       {
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);

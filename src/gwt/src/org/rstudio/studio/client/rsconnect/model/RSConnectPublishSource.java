@@ -31,25 +31,28 @@ public class RSConnectPublishSource
       contentCategory_ = null;
       isShiny_ = true;
       websiteDir_ = null;
+      isStatic_ = false;
       isSingleFileShiny_ = sourceDir != sourceFile;
    }
 
    public RSConnectPublishSource(String sourceFile, String websiteDir, 
-         boolean isSelfContained, boolean isShiny, String description, int type)
+         boolean isSelfContained, boolean isStatic, boolean isShiny, 
+         String description, int type)
    {
-      this(sourceFile, sourceFile, websiteDir, isSelfContained, isShiny, 
-            description, type);
+      this(sourceFile, sourceFile, websiteDir, isSelfContained, isStatic, 
+            isShiny, description, type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
-         String websiteDir, boolean isSelfContained, boolean isShiny, 
-         String description, int type)
+         String websiteDir, boolean isSelfContained, boolean isStatic, 
+         boolean isShiny, String description, int type)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
       description_ = description;
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
+      isStatic_ = isStatic;
       isSingleFileShiny_ = false;
       websiteDir_ = websiteDir;
 
@@ -69,13 +72,14 @@ public class RSConnectPublishSource
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 
-         String websiteDir, boolean isSelfContained, boolean isShiny, 
-         String description)
+         String websiteDir, boolean isSelfContained, boolean isStatic, 
+         boolean isShiny, String description)
    {
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
       description_ = description;
       isSelfContained_ = isSelfContained;
+      isStatic_ = isStatic;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
       contentCategory_ = StringUtil.isNullOrEmpty(websiteDir) ? 
@@ -87,13 +91,14 @@ public class RSConnectPublishSource
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
          String deployFile, String websiteDir, boolean isSelfContained, 
-         boolean isShiny, String description)
+         boolean isStatic, boolean isShiny, String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
       deployFile_ = deployFile;
       websiteDir_ = websiteDir;
       isSelfContained_ = isSelfContained;
+      isStatic_ = isStatic;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
       description_ = description;
@@ -177,6 +182,11 @@ public class RSConnectPublishSource
       return websiteDir_;
    }
    
+   public boolean isStatic()
+   {
+      return isStatic_;
+   }
+   
    private final String deployFile_;
    private final String deployDir_;
    private final String sourceFile_;
@@ -186,4 +196,5 @@ public class RSConnectPublishSource
    private final boolean isSelfContained_;
    private final boolean isShiny_;
    private final boolean isSingleFileShiny_;
+   private final boolean isStatic_;
 }

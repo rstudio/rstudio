@@ -58,6 +58,7 @@ public class PublishRPubsPage
                   initialData_.getOriginatingEvent().getHtmlFile(),
                   null, // website directory
                   initialData_.isSelfContained(),
+                  true, // as static
                   initialData_.isShiny(),
                   initialData_.getDescription(),
                   initialData_.getContentType()));

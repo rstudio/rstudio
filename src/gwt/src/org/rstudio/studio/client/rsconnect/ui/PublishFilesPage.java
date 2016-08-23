@@ -45,7 +45,8 @@ public class PublishFilesPage
                source = new RSConnectPublishSource(
                               input.getOriginatingEvent().getFromPreview(),
                               input.getWebsiteDir(),
-                              input.isSelfContained() && asStatic,
+                              input.isSelfContained(),
+                              asStatic,
                               input.isShiny(),
                               input.getDescription());
             }
@@ -55,7 +56,8 @@ public class PublishFilesPage
                               input.getOriginatingEvent().getPath(),
                               input.getOriginatingEvent().getHtmlFile(),
                               input.getWebsiteDir(),
-                              input.isSelfContained() && asStatic,
+                              input.isSelfContained(),
+                              asStatic,
                               input.isShiny(),
                               input.getDescription(),
                               input.getContentType());
@@ -67,7 +69,8 @@ public class PublishFilesPage
             contents_.setPublishSource(
                   new RSConnectPublishSource(input.getSourceRmd().getPath(),
                         input.getWebsiteDir(),
-                        input.isSelfContained() && asStatic,
+                        input.isSelfContained(),
+                        asStatic, 
                         input.isShiny(),
                         input.getDescription(),
                         input.getContentType()),

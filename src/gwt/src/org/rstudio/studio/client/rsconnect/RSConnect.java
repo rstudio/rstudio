@@ -231,6 +231,7 @@ public class RSConnect implements SessionInitHandler,
                                     event.getHtmlFile(), 
                                     arg.getWebsiteDir(),
                                     arg.isSelfContained(), 
+                                    true,
                                     arg.isShiny(),
                                     arg.getDescription(),
                                     event.getContentType()));
@@ -297,7 +298,14 @@ public class RSConnect implements SessionInitHandler,
       }
       else if (input.getContentType() == CONTENT_TYPE_WEBSITE)
       {
-         publishWithWizard(input);
+         if (input.hasDocOutput())
+         {
+            publishWithWizard(input);
+         }
+         else
+         {
+            publishAsCode(event, input.getWebsiteDir(), false);
+         }
       }
       else if (input.getContentType() == CONTENT_TYPE_DOCUMENT)
       {
@@ -379,7 +387,7 @@ public class RSConnect implements SessionInitHandler,
       else
       {
          source = new RSConnectPublishSource(event.getPath(), websiteDir,
-            false, isShiny, null, event.getContentType());
+            false, false, isShiny, null, event.getContentType());
       }
          
       publishAsFiles(event, source);
@@ -395,6 +403,7 @@ public class RSConnect implements SessionInitHandler,
                      input.getOriginatingEvent().getFromPreview(),
                      input.getWebsiteDir(),
                      input.isSelfContained(),
+                     true, 
                      input.isShiny(),
                      input.getDescription());
       }
@@ -404,6 +413,7 @@ public class RSConnect implements SessionInitHandler,
                input.getOriginatingEvent().getHtmlFile(),
                input.getWebsiteDir(),
                input.isSelfContained(), 
+               true,
                input.isShiny(),
                input.getDescription(),
                input.getContentType());
@@ -992,7 +1002,7 @@ public class RSConnect implements SessionInitHandler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
-                  websiteDir, isSelfContained, isShiny, description),
+                  websiteDir, isSelfContained, asStatic, isShiny, description),
             new RSConnectPublishSettings(deployFilesList, 
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic), 
             launch, record));
