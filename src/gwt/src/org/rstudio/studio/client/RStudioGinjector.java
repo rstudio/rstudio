@@ -100,7 +100,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleCommands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
@@ -195,7 +194,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(MathJax mathjax);
    void injectMembers(ChunkOptionsPopupPanel panel);
    void injectMembers(DocDisplayIdleMonitor monitor);
-   void injectMembers(DocDisplayIdleCommands commands);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

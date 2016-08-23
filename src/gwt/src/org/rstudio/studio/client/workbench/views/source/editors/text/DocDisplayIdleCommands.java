@@ -16,9 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MiniPopupPanel;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleMonitor.IdleState;
@@ -34,7 +32,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -42,19 +39,11 @@ public class DocDisplayIdleCommands
 {
    public DocDisplayIdleCommands()
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
       PREVIEW_LINK = previewLink();
       PREVIEW_LATEX = previewLatex();
    }
    
    // Private Methods ----
-   
-   @Inject
-   private void initialize(FilesServerOperations filesServer)
-   {
-      filesServer_ = filesServer;
-   }
    
    // Latex Preview ----
    
@@ -212,7 +201,4 @@ public class DocDisplayIdleCommands
    
    public final IdleCommand PREVIEW_LINK;
    public final IdleCommand PREVIEW_LATEX;
-   
-   // Injected ----
-   private FilesServerOperations filesServer_;
 }
