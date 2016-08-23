@@ -203,6 +203,7 @@ public class ChunkContextToolbar extends Composite
       return menuItem;
    }
 
+   @SuppressWarnings("unused")
    private void initChangeChunkEngine(String engine)
    {
       chunkTypeLabel_.setText(engine);
