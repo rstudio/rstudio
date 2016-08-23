@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -29,9 +30,14 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Image;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -131,16 +137,11 @@ public class DocDisplayIdleCommands
          return;
       
       // construct image el, place in popup, and show
-      ImageElement imgEl = Document.get().createImageElement();
-      imgEl.setAttribute("src", srcPath);
-      imgEl.getStyle().setProperty("maxWidth", "100px");
+      AnchoredPopupPanel panel = new AnchoredPopupPanel(docDisplay, tokenRange, srcPath);
+      panel.getElement().setId(encoded);
       
       ScreenCoordinates coordinates =
             docDisplay.documentPositionToScreenCoordinates(position);
-      
-      AnchoredPopupPanel panel = new AnchoredPopupPanel(docDisplay, tokenRange);
-      panel.getElement().setId(encoded);
-      panel.getElement().appendChild(imgEl);
       panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
       panel.show();
    }
@@ -159,10 +160,34 @@ public class DocDisplayIdleCommands
    
    private static class AnchoredPopupPanel extends MiniPopupPanel
    {
-      public AnchoredPopupPanel(DocDisplay docDisplay, Range range)
+      public AnchoredPopupPanel(DocDisplay docDisplay, Range range, String href)
       {
          super(true, false);
          
+         // defer visibility until image has finished loading
+         setVisible(false);
+         image_ = new Image(href);
+         image_.addLoadHandler(new LoadHandler()
+         {
+            @Override
+            public void onLoad(LoadEvent event)
+            {
+               showSmall();
+            }
+         });
+         add(image_);
+         
+         // allow zoom with double-click
+         addDomHandler(new DoubleClickHandler()
+         {
+            @Override
+            public void onDoubleClick(DoubleClickEvent event)
+            {
+               toggleSize();
+            }
+         }, DoubleClickEvent.getType());
+         
+         // use anchor + cursor changed handler for smart auto-dismiss
          anchor_ = docDisplay.createAnchoredSelection(
                range.getStart(),
                range.getEnd());
@@ -189,6 +214,47 @@ public class DocDisplayIdleCommands
          });
       }
       
+      private boolean isSmall()
+      {
+         ImageElementEx el = image_.getElement().cast();
+         Style style = el.getStyle();
+         return
+               SMALL_MAX_WIDTH.equals(style.getProperty("maxWidth")) ||
+               SMALL_MAX_HEIGHT.equals(style.getProperty("maxHeight"));
+      }
+      
+      private void showSmall()
+      {
+         showWithDimensions(SMALL_MAX_WIDTH, SMALL_MAX_HEIGHT);
+      }
+      
+      private void showLarge()
+      {
+         showWithDimensions(LARGE_MAX_WIDTH, LARGE_MAX_HEIGHT);
+      }
+      
+      private void showWithDimensions(String width, String height)
+      {
+         setVisible(true);
+         
+         ImageElementEx el = image_.getElement().cast();
+         Style style = el.getStyle();
+         
+         boolean isWide = el.naturalWidth() > el.naturalHeight();
+         if (isWide)
+            style.setProperty("maxWidth", width);
+         else
+            style.setProperty("maxHeight", height);
+      }
+      
+      private void toggleSize()
+      {
+         if (isSmall())
+            showLarge();
+         else
+            showSmall();
+      }
+      
       private void detachHandlers()
       {
          anchor_.detach();
@@ -197,6 +263,13 @@ public class DocDisplayIdleCommands
       
       private final AnchoredSelection anchor_;
       private final HandlerRegistration handler_;
+      private final Image image_;
+      
+      private static final String SMALL_MAX_WIDTH  = "100px";
+      private static final String SMALL_MAX_HEIGHT = "100px";
+      
+      private static final String LARGE_MAX_WIDTH  = "400px";
+      private static final String LARGE_MAX_HEIGHT = "600px";
    }
    
    public final IdleCommand PREVIEW_LINK;
