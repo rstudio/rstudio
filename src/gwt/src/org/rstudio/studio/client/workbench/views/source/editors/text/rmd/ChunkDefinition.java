@@ -71,7 +71,7 @@ public class ChunkDefinition extends JavaScriptObject
    }-*/;
    
    public native final String getDocumentId() /*-{
-      return this.docuemnt_id;
+      return this.document_id;
    }-*/;
    
    public native final String getChunkId() /*-{
