@@ -53,6 +53,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JsArray;
@@ -721,15 +722,36 @@ public class RSConnectPublishButton extends Composite
          return;
       }
    
+      String contentPath = contentPath_;
+      boolean parent = false;
+
       // if this is a Shiny application and an .R file is being invoked, check
       // for deployments of its parent path (single-file apps have
       // CONTENT_TYPE_APP_SINGLE and their own deployment records)
-      String contentPath = contentPath_;
       if (contentType_ == RSConnect.CONTENT_TYPE_APP &&
-          StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) {
+          StringUtil.getExtension(contentPath_).equalsIgnoreCase("r")) 
+         parent = true;
+      
+      // if this is a document in a website, use the parent path
+      if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+          session_.getSessionInfo().getBuildToolsType() == 
+             SessionInfo.BUILD_TOOLS_WEBSITE)
+      {
+         if (!StringUtil.isNullOrEmpty(contentPath_))
+         {
+            String websiteDir = session_.getSessionInfo().getBuildTargetDir();
+            if (contentPath_.startsWith(websiteDir))
+               parent = true;
+         }
+      }
+      
+      // apply parent path if needed
+      if (parent)
+      {
          FileSystemItem fsiContent = FileSystemItem.createFile(contentPath_);
          contentPath = fsiContent.getParentPathString();
       }
+
       populating_ = true;
       server_.getRSConnectDeployments(contentPath, 
             outputPath_ == null ? "" : outputPath_,
