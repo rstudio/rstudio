@@ -4023,7 +4023,7 @@ public class TextEditingTarget implements
       return Position.create(endRow, endColumn);
    }
    
-   private void onInsertChunk(String chunkPlaceholder)
+   private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
       String sel = null;
       Range selRange = null;
@@ -4071,8 +4071,8 @@ public class TextEditingTarget implements
                
          Position cursorPosition = insertChunkInfo.getCursorPosition();
          docDisplay_.setCursorPosition(Position.create(
-               pos.getRow() + cursorPosition.getRow(),
-               cursorPosition.getColumn()));
+               pos.getRow() + cursorPosition.getRow() + rowOffset,
+               colOffset));
          docDisplay_.focus();
       }
       else
@@ -4090,37 +4090,58 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunkR()
    {
-      onInsertChunk("```{r}\n\n```\n");
+      onInsertChunk("```{r}\n\n```\n", 1, 0);
    }
 
    @Handler
    void onInsertChunkBash()
    {
-      onInsertChunk("```{bash}\n\n```\n");
+      onInsertChunk("```{bash}\n\n```\n", 1, 0);
    }
 
    @Handler
    void onInsertChunkPython()
    {
-      onInsertChunk("```{python}\n\n```\n");
+      onInsertChunk("```{python}\n\n```\n", 1, 0);
    }
 
    @Handler
    void onInsertChunkRCPP()
    {
-      onInsertChunk("```{rcpp}\n\n```\n");
+      onInsertChunk("```{rcpp}\n\n```\n", 1, 0);
    }
 
    @Handler
    void onInsertChunkStan()
    {
-      onInsertChunk("```{stan}\n\n```\n");
+      onInsertChunk("```{stan output.var=}\n\n```\n", 0, 20);
    }
 
    @Handler
    void onInsertChunkSQL()
    {
-      onInsertChunk("```{sql}\n\n```\n");
+      server_.defaultSqlConnectionName(new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String name)
+         {
+            if (name != null)
+            {
+               onInsertChunk("```{sql connection=" + name + "}\n\n```\n", 1, 0);
+            }
+            else
+            {
+               onInsertChunk("```{sql connection=}\n\n```\n", 0, 19);
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            onInsertChunk("```{sql connection=}\n\n```\n", 0, 19);
+         }
+      });
    }
 
    @Handler

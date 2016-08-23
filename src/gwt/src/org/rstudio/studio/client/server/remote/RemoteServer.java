@@ -4776,6 +4776,13 @@ public class RemoteServer implements Server
                   new ConsoleProcessCallbackAdapter(callback));
    }
 
+   @Override
+   public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, SQL_CHUNK_DEFAULT_CONNECTION, params, requestCallback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5148,4 +5155,6 @@ public class RemoteServer implements Server
    private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";
    private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
+
+   private static final String SQL_CHUNK_DEFAULT_CONNECTION = "default_sql_connection_name";
 }
