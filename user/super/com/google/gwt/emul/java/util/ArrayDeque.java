@@ -72,7 +72,6 @@ public class ArrayDeque<E> extends AbstractCollection<E> implements Deque<E>, Cl
     @Override
     public void remove() {
       checkState(lastIndex >= 0);
-      checkConcurrentModification(head <= lastIndex && lastIndex < tail);
 
       if (removeAtIndex(lastIndex) < 0) {
         // if left-shifted, undo increment in next()
@@ -107,7 +106,6 @@ public class ArrayDeque<E> extends AbstractCollection<E> implements Deque<E>, Cl
     @Override
     public void remove() {
       checkState(lastIndex >= 0);
-      checkConcurrentModification(head <= lastIndex && lastIndex < tail);
 
       if (removeAtIndex(lastIndex) > 0) {
         // if right-shifted, undo decrement in next()
@@ -382,11 +380,7 @@ public class ArrayDeque<E> extends AbstractCollection<E> implements Deque<E>, Cl
     if (out.length < size) {
       out = ArrayHelper.createFrom(out, size);
     }
-    Object[] dest = out;
-    final int mask = size - 1;
-    for (int i = head, dstIdx = 0; dstIdx < size; i = (i + 1) & mask, ++dstIdx) {
-      dest[dstIdx] = array[i];
-    }
+    copyElements(out, size);
     if (out.length > size) {
       out[size] = null;
     }
@@ -423,6 +417,19 @@ public class ArrayDeque<E> extends AbstractCollection<E> implements Deque<E>, Cl
   }
 
   /**
+   * Copies {@code count} ArrayDeque's elements to {@code dest} array.
+   * The method is safe to use when ArrayDeque's array has been rolled over,
+   * i.e. {@code head == tail}.
+   * It is assumed that {@code count < size()}.
+   */
+  private void copyElements(Object[] dest, int count) {
+    final int mask = array.length - 1;
+    for (int i = head, dstIdx = 0; dstIdx < count; i = (i + 1) & mask, ++dstIdx) {
+      dest[dstIdx] = array[i];
+    }
+  }
+
+  /**
    * Increase the capacity of this deque when full, i.e.,
    * when head and tail have wrapped around to become equal.
    */
@@ -435,11 +442,12 @@ public class ArrayDeque<E> extends AbstractCollection<E> implements Deque<E>, Cl
     int newLength = nextArrayLength(numElements);
     if (head != 0) {
       E[] newArray = ArrayHelper.createFrom(array, newLength);
-      array = toArray(newArray);
+      copyElements(newArray, numElements);
+      array = newArray;
+      head = 0;
     } else {
       ArrayHelper.setLength(array, newLength);
     }
-    head = 0;
     tail = numElements;
   }
 
@@ -454,6 +462,9 @@ public class ArrayDeque<E> extends AbstractCollection<E> implements Deque<E>, Cl
     final int mask = array.length - 1;
     int headDistance = (i - head) & mask;
     int tailDistance = (tail - i) & mask;
+    int size = (tail - head) & mask;
+
+    checkConcurrentModification(headDistance < size);
     if (headDistance >= tailDistance) {
       shiftLeftAtIndex(i);
       return -1;
