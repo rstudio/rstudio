@@ -49,7 +49,7 @@ public class Token extends JavaScriptObject
    }-*/;
    
    public native final int getColumn() /*-{
-      return this.column;
+      return this.column || this.start;
    }-*/;
    
    public final boolean valueEquals(String value)
