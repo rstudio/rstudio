@@ -249,6 +249,9 @@ public class EditSession extends JavaScriptObject
    
    public native final Token getTokenAt(int row, int column) /*-{
       var token = this.getTokenAt(row, column);
+      if (token == null)
+         return null;
+         
       return {
          value  : token.value,
          type   : token.type,

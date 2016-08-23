@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplayIdleMonitor.IdleCommand;
@@ -44,6 +45,7 @@ public class DocDisplayIdleCommands
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       PREVIEW_LINK = previewLink();
+      PREVIEW_LATEX = previewLatex();
    }
    
    // Private Methods ----
@@ -53,6 +55,32 @@ public class DocDisplayIdleCommands
    {
       filesServer_ = filesServer;
    }
+   
+   // Latex Preview ----
+   
+   private IdleCommand previewLatex()
+   {
+      return new IdleCommand()
+      {
+         @Override
+         public void execute(DocDisplay docDisplay, IdleState state)
+         {
+            onPreviewLatex(docDisplay, state);
+         }
+      };
+   }
+   
+   private void onPreviewLatex(DocDisplay docDisplay, IdleState state)
+   {
+      Position position = resolvePosition(docDisplay, state);
+      Range range = MathJaxUtil.getLatexRange(docDisplay, position);
+      if (range == null)
+         return;
+      
+      docDisplay.renderLatex(range);
+   }
+   
+   // Link Preview ----
    
    private IdleCommand previewLink()
    {
@@ -140,8 +168,6 @@ public class DocDisplayIdleCommands
       return Position.create(0, 0);
    }
    
-   public final IdleCommand PREVIEW_LINK;
-   
    private static class AnchoredPopupPanel extends MiniPopupPanel
    {
       public AnchoredPopupPanel(DocDisplay docDisplay, Range range)
@@ -183,6 +209,9 @@ public class DocDisplayIdleCommands
       private final AnchoredSelection anchor_;
       private final HandlerRegistration handler_;
    }
+   
+   public final IdleCommand PREVIEW_LINK;
+   public final IdleCommand PREVIEW_LATEX;
    
    // Injected ----
    private FilesServerOperations filesServer_;

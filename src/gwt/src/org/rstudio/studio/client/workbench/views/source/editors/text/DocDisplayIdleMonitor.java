@@ -201,6 +201,7 @@ public class DocDisplayIdleMonitor
    private void attachCommands()
    {
       registerCommand(idleCommands_.PREVIEW_LINK);
+      registerCommand(idleCommands_.PREVIEW_LATEX);
    }
    
    public static class IdleState
