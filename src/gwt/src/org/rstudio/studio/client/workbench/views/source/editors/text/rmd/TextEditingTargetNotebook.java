@@ -801,7 +801,7 @@ public class TextEditingTargetNotebook
          case ChunkChangeEvent.CHANGE_CREATE:
             createChunkOutput(ChunkDefinition.create(event.getRow(), 
                   1, true, ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(),
-                  event.getChunkId(), 
+                  event.getDocId(), event.getChunkId(), 
                   getKnitrChunkLabel(event.getRow(), docDisplay_, 
                         new ScopeList(docDisplay_))));
             break;

@@ -105,9 +105,10 @@ public class ChunkOutputWidget extends Composite
       String pendingResize();
    }
 
-   public ChunkOutputWidget(String chunkId, RmdChunkOptions options, 
+   public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
          int expansionState, ChunkOutputHost host)
    {
+      documentId_ = documentId;
       chunkId_ = chunkId;
       host_ = host;
       options_ = options;
@@ -164,7 +165,7 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-
+               popoutChunk();
                break;
             };
          }
@@ -182,6 +183,8 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
       events.addHandler(InterruptStatusEvent.TYPE, this);
+
+      chunkWindowManager_ = RStudioGinjector.INSTANCE.getChunkWindowManager();
    }
    
    // Public methods ----------------------------------------------------------
@@ -710,7 +713,7 @@ public class ChunkOutputWidget extends Composite
 
    private void popoutChunk()
    {
-      
+      chunkWindowManager_.openChunkWindow(documentId_, chunkId_);
    }
    
    private void toggleExpansionState(final boolean ensureVisible)
@@ -836,6 +839,7 @@ public class ChunkOutputWidget extends Composite
    private RmdChunkOptions options_;
    private ChunkOutputHost host_;
    private ChunkOutputPresenter presenter_;
+   private ChunkWindowManager chunkWindowManager_;
    
    private int state_ = CHUNK_EMPTY;
    private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
@@ -845,6 +849,7 @@ public class ChunkOutputWidget extends Composite
    private boolean needsHeightSync_ = false;
    
    private Timer collapseTimer_ = null;
+   private final String documentId_;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
 

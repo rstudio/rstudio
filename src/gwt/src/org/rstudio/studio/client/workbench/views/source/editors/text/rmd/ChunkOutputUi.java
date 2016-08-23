@@ -54,7 +54,7 @@ public class ChunkOutputUi
       boolean hasOutput = widget != null;
       if (widget == null) 
       {
-         widget = new ChunkOutputWidget(def.getChunkId(), def.getOptions(), 
+         widget = new ChunkOutputWidget(def.getDocumentId(), def.getChunkId(), def.getOptions(), 
                                         def.getExpansionState(), this);
       }
       else

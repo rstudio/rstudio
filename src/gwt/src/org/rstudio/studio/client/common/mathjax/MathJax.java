@@ -299,6 +299,7 @@ public class MathJax
       
       ChunkOutputWidget outputWidget = new ChunkOutputWidget(
             StringUtil.makeRandomId(8),
+            StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
             host);

@@ -502,8 +502,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
          if (StringUtil.isNullOrEmpty(newId))
             newId = "c" + StringUtil.makeRandomId(12);
          chunkDef = ChunkDefinition.create(row, 1, true, 
-               ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(), newId,
-               TextEditingTargetNotebook.getKnitrChunkLabel(row, docDisplay_, 
+               ChunkOutputWidget.EXPANDED, RmdChunkOptions.create(), sentinel_.getId(),
+               newId, TextEditingTargetNotebook.getKnitrChunkLabel(row, docDisplay_, 
                                   new ScopeList(docDisplay_)));
          
          if (newId == TextEditingTargetNotebook.SETUP_CHUNK_ID)
