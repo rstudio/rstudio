@@ -951,9 +951,9 @@ public class RSConnectDeploy extends Composite
       // if the app name textbox isn't populated, derive from the filename
       // (for apps and documents--other content types use temporary filenames)
       if (appName_.getTitle().isEmpty() && 
-            contentType_ == RSConnect.CONTENT_TYPE_APP || 
-            contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
-            contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
+            (contentType_ == RSConnect.CONTENT_TYPE_APP || 
+             contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
+             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT))
       {
          // set the app name to the filename
          String appTitle = 
@@ -969,6 +969,14 @@ public class RSConnectDeploy extends Composite
          }
 
          setUnsanitizedAppName(appTitle);
+      }
+      
+      // for websites, use the directory name
+      if (appName_.getTitle().isEmpty() && 
+          contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+      {
+         setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
+               source_.getWebsiteDir()));
       }
       
       ImageResource illustration = null;

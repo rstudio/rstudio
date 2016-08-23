@@ -45,10 +45,10 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    }
    
    public static RSConnectActionEvent DeployDocEvent(RenderedDocPreview params,
-         RSConnectDeploymentRecord fromPrevious)
+         int type, RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY,
-            RSConnect.CONTENT_TYPE_DOCUMENT, 
+            type,
             params.getSourceFile(),
             params.getOutputFile(), 
             null,

@@ -204,7 +204,9 @@ public class RSConnectPublishButton extends Composite
             (params.getResult().isHtml() &&
              params.getResult().getFormat() != null))
       {
-         setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
+         setContentType(params.isWebsiteRmd() ? 
+               RSConnect.CONTENT_TYPE_DOCUMENT :
+               RSConnect.CONTENT_TYPE_WEBSITE);
          docPreview_ = new RenderedDocPreview(params);
          setContentPath(params.getResult().getTargetFile(),
                params.getOutputFile());
@@ -240,7 +242,31 @@ public class RSConnectPublishButton extends Composite
    {
       docPreview_ = new RenderedDocPreview(rmd, "", isStatic);
       setContentPath(rmd, "");
-      setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
+
+      SessionInfo sessionInfo = session_.getSessionInfo();
+      String buildType = sessionInfo.getBuildToolsType();
+
+      boolean setType = false;
+      if (buildType.equals(SessionInfo.BUILD_TOOLS_WEBSITE))
+      {
+         // if this is an Rmd with a content path
+         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+             !StringUtil.isNullOrEmpty(contentPath_))
+         {
+            // ...and if the content path is within the website dir,
+            String websiteDir = sessionInfo.getBuildTargetDir();
+            if (contentPath_.startsWith(websiteDir))
+            {
+               setType = true;
+               setContentType(RSConnect.CONTENT_TYPE_WEBSITE);
+            }
+         }
+      }
+
+      // if we haven't set the type yet, apply it
+      if (!setType)
+         setContentType(RSConnect.CONTENT_TYPE_DOCUMENT);
+
       applyVisiblity();
    }
    
@@ -265,7 +291,8 @@ public class RSConnectPublishButton extends Composite
          // moving to a document type: get its deployment status 
          if (contentType == RSConnect.CONTENT_TYPE_DOCUMENT ||
              contentType == RSConnect.CONTENT_TYPE_APP ||
-             contentType == RSConnect.CONTENT_TYPE_APP_SINGLE)
+             contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
+             contentType == RSConnect.CONTENT_TYPE_WEBSITE)
             populateDeployments(true);
          
          // moving to a raw HTML type: erase the deployment list
@@ -321,8 +348,11 @@ public class RSConnectPublishButton extends Composite
       {
          RenderedDocPreview docPreview = 
                new RenderedDocPreview(event.getResult());
-         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-               docPreview, publishAfterRmdRender_));
+         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(docPreview,
+               event.getResult().isWebsite() ? 
+                     RSConnect.CONTENT_TYPE_WEBSITE : 
+                     RSConnect.CONTENT_TYPE_DOCUMENT,
+               publishAfterRmdRender_));
       }
       publishAfterRmdRender_ = null;
       rmdRenderPending_ = false;
@@ -462,9 +492,13 @@ public class RSConnectPublishButton extends Composite
                break;
             }
             events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-                  docPreview_, previous));
+                  docPreview_, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
          }
          break;
+      case RSConnect.CONTENT_TYPE_WEBSITE:
+            events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
+                  docPreview_, RSConnect.CONTENT_TYPE_WEBSITE, previous));
+          break;
       default: 
          // should never happen 
          display_.showErrorMessage("Can't Publish " + 
@@ -733,17 +767,8 @@ public class RSConnectPublishButton extends Composite
          parent = true;
       
       // if this is a document in a website, use the parent path
-      if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
-          session_.getSessionInfo().getBuildToolsType() == 
-             SessionInfo.BUILD_TOOLS_WEBSITE)
-      {
-         if (!StringUtil.isNullOrEmpty(contentPath_))
-         {
-            String websiteDir = session_.getSessionInfo().getBuildTargetDir();
-            if (contentPath_.startsWith(websiteDir))
-               parent = true;
-         }
-      }
+      if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+         parent = true;
       
       // apply parent path if needed
       if (parent)
@@ -810,7 +835,7 @@ public class RSConnectPublishButton extends Composite
                RenderedDocPreview preview = new RenderedDocPreview(
                      target, response.getOutputFile(), true);
                events_.fireEvent(RSConnectActionEvent.DeployDocEvent(
-                     preview, previous));
+                     preview, RSConnect.CONTENT_TYPE_DOCUMENT, previous));
             }
             else
             {

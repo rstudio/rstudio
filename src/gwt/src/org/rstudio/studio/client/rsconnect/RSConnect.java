@@ -156,7 +156,8 @@ public class RSConnect implements SessionInitHandler,
       depsPending_ = true; 
       dependencyManager_.withRSConnect(
          "Publishing content", 
-         event.getContentType() == CONTENT_TYPE_DOCUMENT,
+         event.getContentType() == CONTENT_TYPE_DOCUMENT ||
+         event.getContentType() == CONTENT_TYPE_WEBSITE,
          null, new CommandWithArg<Boolean>() {
             @Override
             public void execute(Boolean succeeded)
@@ -208,6 +209,7 @@ public class RSConnect implements SessionInitHandler,
          case CONTENT_TYPE_PLOT:
          case CONTENT_TYPE_HTML:
          case CONTENT_TYPE_DOCUMENT:
+         case CONTENT_TYPE_WEBSITE:
             if (event.getFromPrevious().getServer().equals("rpubs.com"))
             {
                publishAsRPubs(event);
@@ -292,6 +294,10 @@ public class RSConnect implements SessionInitHandler,
          {
             publishAsStatic(input);
          }
+      }
+      else if (input.getContentType() == CONTENT_TYPE_WEBSITE)
+      {
+         publishWithWizard(input);
       }
       else if (input.getContentType() == CONTENT_TYPE_DOCUMENT)
       {
@@ -382,7 +388,8 @@ public class RSConnect implements SessionInitHandler,
    private void publishAsStatic(RSConnectPublishInput input)
    {
       RSConnectPublishSource source = null;
-      if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT)
+      if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT ||
+          input.getContentType() == RSConnect.CONTENT_TYPE_WEBSITE)
       {
          source = new RSConnectPublishSource(
                      input.getOriginatingEvent().getFromPreview(),
@@ -693,6 +700,8 @@ public class RSConnect implements SessionInitHandler,
          return "Document";
       case RSConnect.CONTENT_TYPE_PRES:
          return "Presentation";
+      case RSConnect.CONTENT_TYPE_WEBSITE:
+         return "Website";
       }
       return "Content";
    }
@@ -1082,6 +1091,9 @@ public class RSConnect implements SessionInitHandler,
    
    // A .Rpres presentation
    public final static int CONTENT_TYPE_PRES       = 6;
+   
+   // A page in an R Markdown website
+   public final static int CONTENT_TYPE_WEBSITE    = 7;
    
    public final static String CONTENT_CATEGORY_PLOT = "plot";
    public final static String CONTENT_CATEGORY_SITE = "site";

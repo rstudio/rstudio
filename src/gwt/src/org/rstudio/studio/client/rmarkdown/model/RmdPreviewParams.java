@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.model;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -54,6 +55,10 @@ public class RmdPreviewParams extends JavaScriptObject
       return this.result.is_shiny_document;
    }-*/;
    
+   public native final String getWebsiteDir() /*-{
+      return this.website_dir;
+   }-*/;
+   
    public native final int getScrollPosition() /*-{
       return this.scroll_position;
    }-*/;
@@ -82,5 +87,10 @@ public class RmdPreviewParams extends JavaScriptObject
       
       // default size (html_document and others)
       return new Size(1100, 1000 + chromeHeight);
+   }
+   
+   public final boolean isWebsiteRmd() 
+   {
+      return !StringUtil.isNullOrEmpty(getWebsiteDir());
    }
 }
