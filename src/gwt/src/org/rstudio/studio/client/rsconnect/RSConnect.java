@@ -818,7 +818,8 @@ public class RSConnect implements SessionInitHandler,
                }
                launchBrowser_ = event.getLaunchBrowser();
                events_.fireEvent(new RSConnectDeploymentStartedEvent(
-                     event.getSource().getDeployKey(), 
+                     event.getSource().isWebsiteRmd() ? "" :
+                       event.getSource().getDeployKey(), 
                      event.getSource().getDescription()));
             }
             else
@@ -1083,4 +1084,5 @@ public class RSConnect implements SessionInitHandler,
    public final static int CONTENT_TYPE_PRES       = 6;
    
    public final static String CONTENT_CATEGORY_PLOT = "plot";
+   public final static String CONTENT_CATEGORY_SITE = "site";
 }

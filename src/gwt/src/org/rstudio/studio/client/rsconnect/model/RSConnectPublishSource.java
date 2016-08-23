@@ -55,9 +55,15 @@ public class RSConnectPublishSource
 
       // consider plots and raw HTML published from the viewer pane to be 
       // plots 
-      contentCategory_ = (type == RSConnect.CONTENT_TYPE_PLOT  ||
-            type == RSConnect.CONTENT_TYPE_HTML) ? 
-                  RSConnect.CONTENT_CATEGORY_PLOT : null;
+      String category = null;
+      if ((type == RSConnect.CONTENT_TYPE_DOCUMENT || 
+           type == RSConnect.CONTENT_TYPE_HTML) &&
+          !StringUtil.isNullOrEmpty(websiteDir))
+         category = RSConnect.CONTENT_CATEGORY_SITE;
+      else if (type == RSConnect.CONTENT_TYPE_PLOT || 
+               type == RSConnect.CONTENT_TYPE_HTML) 
+         category = RSConnect.CONTENT_CATEGORY_PLOT;
+      contentCategory_ = category;
 
       deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
    }
@@ -72,7 +78,8 @@ public class RSConnectPublishSource
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
-      contentCategory_ = null;
+      contentCategory_ = StringUtil.isNullOrEmpty(websiteDir) ? 
+            RSConnect.CONTENT_CATEGORY_SITE : null;
       websiteDir_ = websiteDir;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
             .getParentPathString();
@@ -90,7 +97,8 @@ public class RSConnectPublishSource
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
       description_ = description;
-      contentCategory_ = null;
+      contentCategory_ = StringUtil.isNullOrEmpty(websiteDir) ? 
+            RSConnect.CONTENT_CATEGORY_SITE : null;
    }
    
    public String getDeployFile()
@@ -124,6 +132,8 @@ public class RSConnectPublishSource
       if (isSingleFileShiny_)
          return FileSystemItem.createDir(getDeployDir())
                               .completePath(getDeployFile());
+      else if (contentCategory_ == RSConnect.CONTENT_CATEGORY_SITE)
+         return getDeployDir();
       return isDocument() ? getSourceFile() : getDeployDir();
    }
    
