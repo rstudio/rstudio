@@ -73,7 +73,7 @@ public class DocDisplayIdleCommands
       if (token == null)
          return;
 
-      if (!token.hasAllTypes("href"))
+      if (!token.hasType("href"))
          return;
 
       Range tokenRange = Range.fromPoints(
