@@ -164,7 +164,7 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               popoutChunk();
+
                break;
             };
          }

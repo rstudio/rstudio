@@ -136,7 +136,7 @@
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
         <g:Image styleName="{style.popout}" 
                  resource="{res.popoutIcon}"
-                 title="Show in new window"
+                 title="Show in New Window"
                  ui:field="popout_"></g:Image>
         <g:Image styleName="{style.clear}"
                  ui:field="clear_"
