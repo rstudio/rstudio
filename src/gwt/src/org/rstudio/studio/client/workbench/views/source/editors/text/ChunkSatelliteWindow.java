@@ -80,6 +80,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       mainPanel.add(chunkOutputWidget_);
       mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
+      
+      mainPanel.getElement().getStyle().setBackgroundColor("#FFF");
 
       pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
          chunkWindowParams_.getDocId(),
