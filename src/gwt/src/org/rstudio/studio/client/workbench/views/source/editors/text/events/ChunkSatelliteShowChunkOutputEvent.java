@@ -1,5 +1,5 @@
 /*
- * ChunkSatelliteUpdateOutputEvent.java
+ * ChunkSatelliteShowChunkOutputEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -22,43 +22,29 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteUpdateOutputEvent 
-             extends CrossWindowEvent<ChunkSatelliteUpdateOutputEvent.Handler>
+public class ChunkSatelliteShowChunkOutputEvent 
+             extends CrossWindowEvent<ChunkSatelliteShowChunkOutputEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteUpdateOutputEvent(ChunkSatelliteUpdateOutputEvent event);
+      void onChunkSatelliteShowChunkOutput(ChunkSatelliteShowChunkOutputEvent event);
    }
 
-   public ChunkSatelliteUpdateOutputEvent()
+   public ChunkSatelliteShowChunkOutputEvent()
    {
    }
    
-   public ChunkSatelliteUpdateOutputEvent(
-      String docId,
-      String chunkId,
+   public ChunkSatelliteShowChunkOutputEvent(
       RmdChunkOutput rmdChunkOutput,
       int mode,
       int scope,
       boolean complete
    )
    {
-      docId_ = docId;
-      chunkId_ = chunkId;
       rmdChunkOutput_ = rmdChunkOutput;
       mode_ = mode;
       scope_ = scope;
       complete_ = complete;
-   }
-
-   public String getDocId()
-   {
-      return docId_;
-   }
-
-   public String getChunkId()
-   {
-      return chunkId_;
    }
    
    public RmdChunkOutput getOutput()
@@ -90,11 +76,9 @@ public class ChunkSatelliteUpdateOutputEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteUpdateOutputEvent(this);
+      handler.onChunkSatelliteShowChunkOutput(this);
    }
    
-   private String docId_;
-   private String chunkId_;
    private RmdChunkOutput rmdChunkOutput_;
    private int mode_;
    private int scope_;

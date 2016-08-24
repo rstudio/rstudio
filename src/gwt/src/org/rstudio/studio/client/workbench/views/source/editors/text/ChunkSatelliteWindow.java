@@ -28,14 +28,16 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteUpdateOutputEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 @Singleton
 public class ChunkSatelliteWindow extends SatelliteWindow
                                   implements ChunkSatelliteView,
-                                             ChunkSatelliteUpdateOutputEvent.Handler
+                                             ChunkSatelliteShowChunkOutputEvent.Handler,
+                                             ChunkSatelliteCodeExecutingEvent.Handler
 {
 
    @Inject
@@ -87,11 +89,11 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          chunkWindowParams_.getDocId(),
          chunkWindowParams_.getChunkId()));
 
-      pEventBus_.get().addHandler(ChunkSatelliteUpdateOutputEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkSatelliteShowChunkOutputEvent.TYPE, this);
    }
 
    @Override
-   public void onChunkSatelliteUpdateOutputEvent(ChunkSatelliteUpdateOutputEvent event)
+   public void onChunkSatelliteShowChunkOutput(ChunkSatelliteShowChunkOutputEvent event)
    {
       chunkOutputWidget_.showChunkOutput(
          event.getOutput(),
@@ -99,6 +101,14 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          event.getScope(),
          event.getComplete(),
          false);
+   }
+   
+   @Override
+   public void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event)
+   {
+      chunkOutputWidget_.setCodeExecuting(
+         event.getMode(),
+         event.getScope());
    }
 
    @Override

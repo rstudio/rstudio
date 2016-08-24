@@ -28,6 +28,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
@@ -80,7 +81,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteUpdateOutputEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
@@ -726,23 +728,23 @@ public class TextEditingTargetNotebook
       {
          int mode = queue_.getChunkExecMode(chunkId);
          
-         forwardOutputToSatellite(
+         forwardEventToSatellite(
             docUpdateSentinel_.getId(),
             chunkId,
-            event.getOutput(),
-            mode,
-            NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
-            !queue_.isChunkExecuting(chunkId));
+            new ChunkSatelliteShowChunkOutputEvent(
+                  event.getOutput(),
+                  mode,
+                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
+                  !queue_.isChunkExecuting(chunkId)
+               )
+         );
       }
    }
 
-   private void forwardOutputToSatellite(
+   private void forwardEventToSatellite(
       String docId,
       String chunkId,
-      RmdChunkOutput rmdChunkOutput,
-      int mode,
-      int scope,
-      boolean complete
+      CrossWindowEvent<?> event
    )
    {
       if (satelliteChunks_.contains(chunkId))
@@ -754,19 +756,8 @@ public class TextEditingTargetNotebook
          
          if (satelliteManager.satelliteWindowExists(windowName))
          {
-            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);
-            
-            events_.fireEventToSatellite(
-               new ChunkSatelliteUpdateOutputEvent(
-                  docId,
-                  chunkId,
-                  rmdChunkOutput,
-                  mode,
-                  scope,
-                  complete
-               ),
-               satelliteWindow
-            );
+            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);     
+            events_.fireEventToSatellite(event, satelliteWindow);
          }
       }
    }
@@ -826,6 +817,11 @@ public class TextEditingTargetNotebook
    @Override
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
+      forwardEventToSatellite(
+         docUpdateSentinel_.getId(),
+         event.getConsole(),
+         event
+      );
    }
    
    @Override
@@ -1240,6 +1236,15 @@ public class TextEditingTargetNotebook
          }
 
          output.getOutputWidget().setCodeExecuting(mode, execScope);
+
+         forwardEventToSatellite(
+            docUpdateSentinel_.getId(),
+            chunkId,
+            new ChunkSatelliteCodeExecutingEvent(
+                  mode,
+                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL
+               )
+         );
          
          // scroll the widget into view if it's a single-shot exec
          if (mode == NotebookQueueUnit.EXEC_MODE_SINGLE)
