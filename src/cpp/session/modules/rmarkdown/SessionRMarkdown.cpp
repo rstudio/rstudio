@@ -39,6 +39,8 @@
 #include <r/RRoutines.hpp>
 #include <r/RCntxtUtils.hpp>
 
+#include <core/r_util/RProjectFile.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
@@ -576,16 +578,23 @@ private:
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
 
-      // for HTML documents, check to see whether they've been published
+      json::Value websiteDir;
       if (outputFile_.extensionLowerCase() == ".html")
       {
+         // check for previous publishing
          resultJson["rpubs_published"] =
                !module_context::previousRpubsUploadId(outputFile_).empty();
+
+         // check to see if this is a website directory
+         if (r_util::isWebsiteDirectory(targetFile_.parent()))
+            websiteDir = createAliasedPath(targetFile_.parent());
       }
       else
       {
          resultJson["rpubs_published"] = false;
       }
+
+      resultJson["website_dir"] = websiteDir;
 
       resultJson["force_maximize"] = forceMaximize;
 
@@ -976,6 +985,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       resultJson["output_url"] = assignOutputUrl(outputFile.absolutePath());
       resultJson["output_format"] = outputFormat;
       resultJson["is_shiny_document"] = false;
+      resultJson["website_dir"] = json::Value();
       resultJson["has_shiny_content"] = false;
       resultJson["rpubs_published"] =
             !module_context::previousRpubsUploadId(outputFile).empty();

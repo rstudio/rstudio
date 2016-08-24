@@ -53,14 +53,23 @@ public class ToolbarFileLabel
   
    public void setFileName(String fileName)
    {
-      fileImage_.setResource(RStudioGinjector.INSTANCE.getFileTypeRegistry()
-                                                .getIconForFilename(fileName));
-      
-      String shortFileName = StringUtil.shortPathName(
-                                 FileSystemItem.createFile(fileName), 
-                                 ThemeStyles.INSTANCE.subtitle(), 
-                                 maxNameWidth_);
-      fileLabel_.setText(shortFileName);
+      if (StringUtil.isNullOrEmpty(fileName))
+      {
+         fileImage_.setVisible(false);
+         fileLabel_.setText("");
+      }
+      else
+      {
+         fileImage_.setResource(RStudioGinjector.INSTANCE.getFileTypeRegistry()
+                                                   .getIconForFilename(fileName));
+         fileImage_.setVisible(true);
+         
+         String shortFileName = StringUtil.shortPathName(
+                                    FileSystemItem.createFile(fileName), 
+                                    ThemeStyles.INSTANCE.subtitle(), 
+                                    maxNameWidth_);
+         fileLabel_.setText(shortFileName);
+      }
    }
    
    private final int maxNameWidth_;

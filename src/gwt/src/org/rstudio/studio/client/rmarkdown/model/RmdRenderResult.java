@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 
 import com.google.gwt.core.client.JsArray;
@@ -101,6 +102,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
       return this.has_shiny_content;
    }-*/;
    
+   public final native String getWebsiteDir() /*-{
+      return this.website_dir;
+   }-*/;
+   
    public final native boolean viewed() /*-{
       return !!this.viewed;
    }-*/;
@@ -124,6 +129,11 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    public final boolean getRestoreAnchor()
    {
       return isHtmlPresentation() || isHtmlDashboard();
+   }
+   
+   public final boolean isWebsite()
+   {
+      return !StringUtil.isNullOrEmpty(getWebsiteDir());
    }
    
    // indicates whether this result represents the same *output* document as

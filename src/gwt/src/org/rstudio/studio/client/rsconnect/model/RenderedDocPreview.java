@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
@@ -26,6 +27,7 @@ public class RenderedDocPreview
       sourceFile_ = params.getTargetFile();
       outputFile_ = params.getOutputFile();
       isStatic_ = !params.isShinyDocument();
+      websiteDir_ = params.getWebsiteDir();
    }
    
    public RenderedDocPreview(HTMLPreviewResult result)
@@ -33,6 +35,7 @@ public class RenderedDocPreview
       sourceFile_ = result.getSourceFile();
       outputFile_ = result.getHtmlFile();
       isStatic_ = true;
+      websiteDir_ = null;
    }
    
    public RenderedDocPreview(RmdRenderResult result)
@@ -40,6 +43,7 @@ public class RenderedDocPreview
       sourceFile_ = result.getTargetFile();
       outputFile_ = result.getOutputFile();
       isStatic_ = !result.isShinyDocument();
+      websiteDir_ = null;
    }
    
    public RenderedDocPreview(String sourceFile, String outputFile, 
@@ -48,6 +52,7 @@ public class RenderedDocPreview
       sourceFile_ = sourceFile;
       outputFile_ = outputFile;
       isStatic_ = isStatic;
+      websiteDir_ = null;
    }
    
    public String getSourceFile()
@@ -60,6 +65,11 @@ public class RenderedDocPreview
       return outputFile_;
    }
    
+   public String getWebsiteDir()
+   {
+      return websiteDir_;
+   }
+   
    public boolean isStatic()
    {
       return isStatic_;
@@ -70,7 +80,13 @@ public class RenderedDocPreview
       isStatic_ = isStatic;
    }
    
+   public boolean isWebsite()
+   {
+      return !StringUtil.isNullOrEmpty(websiteDir_);
+   }
+   
    private final String sourceFile_;
    private final String outputFile_;
+   private final String websiteDir_;
    private boolean isStatic_;
 }
