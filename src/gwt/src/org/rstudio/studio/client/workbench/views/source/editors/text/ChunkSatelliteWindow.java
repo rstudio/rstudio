@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -24,7 +26,9 @@ import com.google.inject.Singleton;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 @Singleton
 public class ChunkSatelliteWindow extends SatelliteWindow
@@ -41,6 +45,36 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
+      chunkWindowParams_ = params.cast();
+
+      String title = "RStudio Chunk Window";
+      Window.setTitle(title);
+
+      ChunkOutputHost chunkOutputHost = new ChunkOutputHost()
+      {
+         @Override
+         public void onOutputRemoved(final ChunkOutputWidget widget)
+         {
+         }
+         
+         @Override
+         public void onOutputHeightChanged(ChunkOutputWidget widget,
+                                           int height,
+                                           boolean ensureVisible)
+         {
+         }
+      };
+      
+      chunkOutputWidget_ = new ChunkOutputWidget(
+         chunkWindowParams_.getDocId(),
+         chunkWindowParams_.getChunkId(),
+         RmdChunkOptions.create(),
+         ChunkOutputWidget.EXPANDED,
+         chunkOutputHost);
+      
+      mainPanel.add(chunkOutputWidget_);
+      mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
+      mainPanel.setWidgetTopBottom(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
    }
 
    @Override
@@ -53,4 +87,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    {
       return this;
    }
+
+   private ChunkOutputWidget chunkOutputWidget_;
+   private ChunkWindowParams chunkWindowParams_;
 }
