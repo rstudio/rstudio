@@ -31,20 +31,21 @@ public class ChunkWindowManager
       pSatelliteManager_ = pSatelliteManager;
    }
 
-   // Public methods ---------------------------------------------------------
-
    public void openChunkWindow(String docId, String chunkId)
    {
       Size size = new Size(800, 800);
       Point position = new Point(0, 0);
       
       pSatelliteManager_.get().openSatellite(
-         ChunkSatellite.NAME_PREFIX + docId + "_" + chunkId, 
+         getName(docId, chunkId), 
          ChunkWindowParams.create(docId, chunkId), 
          size, false, position);
    }
    
-   // Members -----------------------------------------------------------------
+   private String getName(String docId, String chunkId)
+   {
+      return ChunkSatellite.NAME_PREFIX + docId + "_" + chunkId;
+   }
    
    private final Provider<SatelliteManager> pSatelliteManager_;
 }

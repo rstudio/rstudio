@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
@@ -119,7 +120,8 @@ public class TextEditingTargetNotebook
                           ScopeTreeReadyEvent.Handler,
                           PinnedLineWidget.Host,
                           SourceDocAddedEvent.Handler,
-                          RenderFinishedEvent.Handler
+                          RenderFinishedEvent.Handler,
+                          ChunkSatelliteWindowOpenedEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetChunks chunks,
@@ -137,6 +139,7 @@ public class TextEditingTargetNotebook
       notebookDoc_ = document.getNotebookDoc();
       initialChunkDefs_ = JsArrayUtil.deepCopy(notebookDoc_.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
+      windowOutputs_ = new HashMap<String, ChunkOutputWidget>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
       chunks_ = chunks;
@@ -753,6 +756,12 @@ public class TextEditingTargetNotebook
             // set dirty state if necessary
             setDirtyState();
          }
+
+         if (windowOutputs_.containsKey(data.getChunkId()))
+         {
+            windowOutputs_.get(data.getChunkId())
+                          .onOutputFinished(ensureVisible, data.getScope());
+         }
       }
    }
 
@@ -863,6 +872,19 @@ public class TextEditingTargetNotebook
             Debug.logException(e);
          }
       }
+   }
+
+   @Override
+   public void onChunkSatelliteWindowOpened(ChunkSatelliteWindowOpenedEvent event)
+   {
+      String docId = event.getDocId();
+      String chunkId = event.getChunkId();
+      ChunkOutputWidget outputWidget = event.getChunkOutputWidget();
+
+      if (docId != docUpdateSentinel_.getId())
+         return;
+
+      windowOutputs_.put(chunkId, outputWidget);
    }
 
    @Override
@@ -1761,6 +1783,7 @@ public class TextEditingTargetNotebook
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
+   private HashMap<String, ChunkOutputWidget> windowOutputs_;
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;

@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 @Singleton
@@ -40,6 +41,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
                                Provider<FontSizeManager> pFSManager)
    {
       super(pEventBus, pFSManager);
+      
+      pEventBus_ = pEventBus;
    }
 
    @Override
@@ -75,6 +78,11 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       mainPanel.add(chunkOutputWidget_);
       mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
+
+      pEventBus_.get().fireEvent(new ChunkSatelliteWindowOpenedEvent(
+         chunkWindowParams_.getDocId(),
+         chunkWindowParams_.getChunkId(),
+         chunkOutputWidget_));
    }
 
    @Override
@@ -88,6 +96,13 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       return this;
    }
 
+   public ChunkOutputWidget getOutputWidget()
+   {
+      return chunkOutputWidget_;
+   }
+
    private ChunkOutputWidget chunkOutputWidget_;
    private ChunkWindowParams chunkWindowParams_;
+   
+   private final Provider<EventBus> pEventBus_;
 }
