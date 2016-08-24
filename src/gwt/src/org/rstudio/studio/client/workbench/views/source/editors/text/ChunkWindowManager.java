@@ -42,7 +42,7 @@ public class ChunkWindowManager
          size, false, position);
    }
    
-   private String getName(String docId, String chunkId)
+   public String getName(String docId, String chunkId)
    {
       return ChunkSatellite.NAME_PREFIX + docId + "_" + chunkId;
    }

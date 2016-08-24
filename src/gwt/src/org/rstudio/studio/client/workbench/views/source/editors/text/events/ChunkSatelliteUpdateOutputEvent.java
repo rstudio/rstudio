@@ -1,5 +1,5 @@
 /*
- * ChunkSatelliteWindowOpenedEvent.java
+ * ChunkSatelliteUpdateOutputEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -21,19 +21,19 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteWindowOpenedEvent 
-             extends CrossWindowEvent<ChunkSatelliteWindowOpenedEvent.Handler>
+public class ChunkSatelliteUpdateOutputEvent 
+             extends CrossWindowEvent<ChunkSatelliteUpdateOutputEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteWindowOpened(ChunkSatelliteWindowOpenedEvent event);
+      void onChunkSatelliteUpdateOutputEvent(ChunkSatelliteUpdateOutputEvent event);
    }
 
-   public ChunkSatelliteWindowOpenedEvent()
+   public ChunkSatelliteUpdateOutputEvent()
    {
    }
    
-   public ChunkSatelliteWindowOpenedEvent(
+   public ChunkSatelliteUpdateOutputEvent(
       String docId,
       String chunkId)
    {
@@ -60,7 +60,7 @@ public class ChunkSatelliteWindowOpenedEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteWindowOpened(this);
+      handler.onChunkSatelliteUpdateOutputEvent(this);
    }
    
    private String docId_;

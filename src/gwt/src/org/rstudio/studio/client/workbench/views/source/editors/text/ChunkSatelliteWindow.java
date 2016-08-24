@@ -28,12 +28,14 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteUpdateOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 @Singleton
 public class ChunkSatelliteWindow extends SatelliteWindow
-                                  implements ChunkSatelliteView
+                                  implements ChunkSatelliteView,
+                                             ChunkSatelliteUpdateOutputEvent.Handler
 {
 
    @Inject
@@ -79,10 +81,16 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
       mainPanel.setWidgetTopBottom(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
 
-      pEventBus_.get().fireEvent(new ChunkSatelliteWindowOpenedEvent(
+      pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
          chunkWindowParams_.getDocId(),
-         chunkWindowParams_.getChunkId(),
-         chunkOutputWidget_));
+         chunkWindowParams_.getChunkId()));
+
+      pEventBus_.get().addHandler(ChunkSatelliteUpdateOutputEvent.TYPE, this);
+   }
+
+   @Override
+   public void onChunkSatelliteUpdateOutputEvent(ChunkSatelliteUpdateOutputEvent event)
+   {
    }
 
    @Override

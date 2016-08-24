@@ -24,6 +24,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -34,6 +35,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
@@ -60,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -73,6 +76,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteUpdateOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
@@ -139,7 +143,7 @@ public class TextEditingTargetNotebook
       notebookDoc_ = document.getNotebookDoc();
       initialChunkDefs_ = JsArrayUtil.deepCopy(notebookDoc_.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
-      windowOutputs_ = new HashMap<String, ChunkOutputWidget>();
+      satelliteChunks_ = new ArrayList<String>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
       chunks_ = chunks;
@@ -391,6 +395,8 @@ public class TextEditingTargetNotebook
                   syncOutputMode();
                }
             }));
+      
+      events_.addHandler(ChunkSatelliteWindowOpenedEvent.TYPE, this);
    }
    
    public void onActivate()
@@ -757,10 +763,25 @@ public class TextEditingTargetNotebook
             setDirtyState();
          }
 
-         if (windowOutputs_.containsKey(data.getChunkId()))
+         if (satelliteChunks_.contains(data.getChunkId()))
          {
-            windowOutputs_.get(data.getChunkId())
-                          .onOutputFinished(ensureVisible, data.getScope());
+            SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
+            ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
+            
+            String windowName = chunkWindowManager.getName(data.getDocId(), data.getChunkId());
+            
+            if (satelliteManager.satelliteWindowExists(windowName))
+            {
+               WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);
+               
+               events_.fireEventToSatellite(
+                  new ChunkSatelliteUpdateOutputEvent(
+                     data.getDocId(),
+                     data.getChunkId()
+                  ),
+                  satelliteWindow
+               );
+            }
          }
       }
    }
@@ -879,12 +900,11 @@ public class TextEditingTargetNotebook
    {
       String docId = event.getDocId();
       String chunkId = event.getChunkId();
-      ChunkOutputWidget outputWidget = event.getChunkOutputWidget();
 
       if (docId != docUpdateSentinel_.getId())
          return;
 
-      windowOutputs_.put(chunkId, outputWidget);
+      satelliteChunks_.add(chunkId);
    }
 
    @Override
@@ -1783,7 +1803,7 @@ public class TextEditingTargetNotebook
    
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
-   private HashMap<String, ChunkOutputWidget> windowOutputs_;
+   private ArrayList<String> satelliteChunks_;
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;
