@@ -762,6 +762,26 @@ public class TextEditingTargetNotebook
       }
    }
 
+   private void forwardEventToAllSatellites(
+      String docId,
+      CrossWindowEvent<?> event
+   )
+   {
+      for (String chunkId : satelliteChunks_)
+      {
+         SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
+         ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
+         
+         String windowName = chunkWindowManager.getName(docId, chunkId);
+         
+         if (satelliteManager.satelliteWindowExists(windowName))
+         {
+            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);     
+            events_.fireEventToSatellite(event, satelliteWindow);
+         }
+      }
+   }
+
    @Override
    public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
    {
@@ -827,6 +847,11 @@ public class TextEditingTargetNotebook
    @Override
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
+      forwardEventToSatellite(
+         docUpdateSentinel_.getId(),
+         event.getConsole(),
+         event
+      );
    }
 
    @Override
@@ -996,6 +1021,11 @@ public class TextEditingTargetNotebook
       
       // clear currently executing chunk
       cleanCurrentExecChunk();
+
+      forwardEventToAllSatellites(
+         docUpdateSentinel_.getId(),
+         event
+      );
    }
 
    @Override
@@ -1021,6 +1051,11 @@ public class TextEditingTargetNotebook
             return;
          }
       }
+
+      forwardEventToAllSatellites(
+         docUpdateSentinel_.getId(),
+         event
+      );
    }
 
    @Override
