@@ -54,6 +54,7 @@
 * The various 'yank' commands are now rebindable (Ctrl + Y, Ctrl + K, Ctrl + U)
 * Insert assignment operator (Alt+-, '<-') is now rebindable
 * Insert pipe operator (Cmd+Shift+M, '%>%') is now rebindable
+* Enable implementors of .DollarNames to provide custom types
 
 ### R Markdown
 
