@@ -78,7 +78,10 @@ public class ChunkDataWidget extends SimplePanel
    private void onDataOutputChange()
    {
       EditorThemeListener.Colors colors = ChunkOutputWidget.getEditorColors();
-      applyDataOutputStyleNative(getElement(), colors.highlight, colors.border);
+      if (colors != null)
+      {
+         applyDataOutputStyleNative(getElement(), colors.highlight, colors.border);
+      }
    }
 
    private static final native void injectStyleElement(String url, String id) /*-{
