@@ -90,6 +90,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          chunkWindowParams_.getChunkId()));
 
       pEventBus_.get().addHandler(ChunkSatelliteShowChunkOutputEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
    }
 
    @Override
