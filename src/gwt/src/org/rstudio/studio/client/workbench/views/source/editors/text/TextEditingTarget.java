@@ -871,6 +871,10 @@ public class TextEditingTarget implements
                   url = url.substring(0, url.length() - 1);
             }
             
+            // trim off trailing punctuation (characters unlikely
+            // to be found at the end of a URL)
+            url = url.replaceAll("[,.?!@#$%^&*;:-]+$", "");
+            
             navigateToUrl(url);
             return true;
          }
