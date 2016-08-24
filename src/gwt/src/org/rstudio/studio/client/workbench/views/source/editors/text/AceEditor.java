@@ -477,10 +477,25 @@ public class AceEditor implements DocDisplay,
          return;
       
       Position cursorPos = getCursorPosition();
-      int lineLength = getLine(cursorPos.getRow()).length();
-      setSelectionRange(Range.fromPoints(
-            cursorPos,
-            Position.create(cursorPos.getRow(), lineLength)));
+      String line = getLine(cursorPos.getRow());
+      int lineLength = line.length();
+      
+      // if the cursor is already at the end of the line
+      // (allowing for trailing whitespace), then eat the
+      // newline as well; otherwise, just eat to end of line
+      String rest = line.substring(cursorPos.getColumn());
+      if (rest.trim().isEmpty())
+      {
+         setSelectionRange(Range.fromPoints(
+               cursorPos,
+               Position.create(cursorPos.getRow() + 1, 0)));
+      }
+      else
+      {
+         setSelectionRange(Range.fromPoints(
+               cursorPos,
+               Position.create(cursorPos.getRow(), lineLength)));
+      }
       
       if (Desktop.isDesktop())
          commands_.cutDummy().execute();
