@@ -789,8 +789,7 @@ public class TextEditingTarget implements
    
    private void navigateToUrl(String url)
    {
-      // if the url starts with a plain 'www.', then append http
-      // prefix
+      // allow web links starting with 'www'
       if (url.startsWith("www."))
          url = "http://" + url;
       
