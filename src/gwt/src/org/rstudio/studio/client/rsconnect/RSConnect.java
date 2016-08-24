@@ -965,7 +965,7 @@ public class RSConnect implements SessionInitHandler,
       var thiz = this;     
       $wnd.deployToRSConnect = $entry(
          function(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
          }
       ); 
    }-*/;
