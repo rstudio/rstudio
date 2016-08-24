@@ -787,8 +787,13 @@ public class TextEditingTarget implements
             });
    }
    
-   private void navigateToUrl(final String url)
+   private void navigateToUrl(String url)
    {
+      // if the url starts with a plain 'www.', then append http
+      // prefix
+      if (url.startsWith("www."))
+         url = "http://" + url;
+      
       // attempt to open web links in a new window
       Pattern reWebLink = Pattern.create("^https?://");
       if (reWebLink.test(url))
@@ -798,7 +803,8 @@ public class TextEditingTarget implements
       }
       
       // treat other URLs as paths to files on the server
-      server_.stat(url, new ServerRequestCallback<FileSystemItem>()
+      final String finalUrl = url;
+      server_.stat(finalUrl, new ServerRequestCallback<FileSystemItem>()
       {
          @Override
          public void onResponseReceived(FileSystemItem file)
@@ -806,8 +812,7 @@ public class TextEditingTarget implements
             // inform user non-obtrusively if no file found
             if (file == null || !file.exists())
             {
-               String message = "No file at path '" + url + "'";
-               globalDisplay_.showWarningBar(false, message);
+               view_.showWarningBar("No file at path '" + finalUrl + "'.");
                return;
             }
             
@@ -845,7 +850,7 @@ public class TextEditingTarget implements
       // check to see if this position lies within a web link
       String line = docDisplay_.getLine(position.getRow());
       int column = position.getColumn();
-      Pattern reWebLink = Pattern.create("https?://\\S+");
+      Pattern reWebLink = Pattern.create("(?:https?://|www)\\S+");
       for (Match match = reWebLink.match(line, 0);
            match != null;
            match = match.nextMatch())
