@@ -457,7 +457,7 @@ public class RSConnectDeploy extends Composite
       
       return new RSConnectPublishResult(
             appName, 
-            appTitle,
+            isUpdate() ? null : appTitle,
             getSelectedAccount(), 
             source_,
             new RSConnectPublishSettings(deployFiles, 

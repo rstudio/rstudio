@@ -121,9 +121,9 @@ public:
             false);
 
       // if an R Markdown document or HTML document is being deployed, mark it
-      // as the primary file 
+      // as the primary file, unless deploying a website
       std::string primaryDoc;
-      if (!file.empty())
+      if (!file.empty() && contentCategory != "site")
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
          std::string extension = docFile.extensionLowerCase();
@@ -150,7 +150,8 @@ public:
              "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
              "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
              "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
-             "appTitle = '" + string_utils::singleQuotedStrEscape(appTitle) + "', " + 
+             (appTitle.empty() ? "" : "appTitle = '" + 
+                string_utils::singleQuotedStrEscape(appTitle) + "', ") + 
              (contentCategory.empty() ? "" : "contentCategory = '" + 
                 contentCategory + "', ") +
              "launch.browser = function (url) { "

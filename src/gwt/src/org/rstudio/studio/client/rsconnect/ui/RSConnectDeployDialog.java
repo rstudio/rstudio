@@ -55,7 +55,7 @@ public class RSConnectDeployDialog
       connect_ = connect;
       
       // create a default app name
-      String defaultName = source.isDocument() ? 
+      String defaultName = source.isDocument() && !source.isWebsiteRmd() ? 
                FileSystemItem.createFile(source.getSourceFile()).getStem() :
                FilePathUtils.friendlyFileName(source.getDeployDir());
       contents_.setUnsanitizedAppName(defaultName);

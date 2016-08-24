@@ -106,6 +106,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -3928,8 +3929,11 @@ public class RemoteServer implements Server
       params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
       params.set(2, new JSONString(source.isDocument() ||
             source.isSingleFileShiny() ? source.getDeployFileName() : ""));
-      params.set(3, new JSONString(source.isDocument() && source.getSourceFile() != null ? 
-            source.getSourceFile() : ""));
+      params.set(3, new JSONString(
+            source.isDocument() && 
+            source.getSourceFile() != null && 
+            source.getContentCategory() != RSConnect.CONTENT_CATEGORY_SITE ?
+               source.getSourceFile() : ""));
       params.set(4, new JSONString(account));
       params.set(5, new JSONString(server));
       params.set(6, new JSONString(appName));
