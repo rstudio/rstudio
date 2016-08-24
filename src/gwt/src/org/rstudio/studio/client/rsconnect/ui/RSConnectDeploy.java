@@ -245,8 +245,6 @@ public class RSConnectDeploy extends Composite
          }
       });
       
-      
-      
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
       {
