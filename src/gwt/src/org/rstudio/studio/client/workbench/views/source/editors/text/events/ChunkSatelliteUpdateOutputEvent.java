@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 
 import com.google.gwt.event.shared.EventHandler;
 
@@ -35,10 +36,19 @@ public class ChunkSatelliteUpdateOutputEvent
    
    public ChunkSatelliteUpdateOutputEvent(
       String docId,
-      String chunkId)
+      String chunkId,
+      RmdChunkOutput rmdChunkOutput,
+      int mode,
+      int scope,
+      boolean complete
+   )
    {
       docId_ = docId;
       chunkId_ = chunkId;
+      rmdChunkOutput_ = rmdChunkOutput;
+      mode_ = mode;
+      scope_ = scope;
+      complete_ = complete;
    }
 
    public String getDocId()
@@ -49,6 +59,26 @@ public class ChunkSatelliteUpdateOutputEvent
    public String getChunkId()
    {
       return chunkId_;
+   }
+   
+   public RmdChunkOutput getOutput()
+   {
+      return rmdChunkOutput_;
+   }
+   
+   public int getMode()
+   {
+      return mode_;
+   }
+   
+   public int getScope()
+   {
+      return scope_;
+   }
+   
+   public Boolean getComplete()
+   {
+      return complete_;
    }
 
    @Override
@@ -65,6 +95,10 @@ public class ChunkSatelliteUpdateOutputEvent
    
    private String docId_;
    private String chunkId_;
+   private RmdChunkOutput rmdChunkOutput_;
+   private int mode_;
+   private int scope_;
+   private boolean complete_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

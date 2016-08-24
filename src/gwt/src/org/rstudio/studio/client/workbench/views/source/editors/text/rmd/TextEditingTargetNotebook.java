@@ -711,6 +711,54 @@ public class TextEditingTargetNotebook
                                   !queue_.isChunkExecuting(chunkId),
                                   ensureVisible);
       }
+
+      if (satelliteChunks_.contains(chunkId))
+      {
+         int mode = queue_.getChunkExecMode(chunkId);
+         
+         forwardOutputToSatellite(
+            docUpdateSentinel_.getId(),
+            chunkId,
+            event.getOutput(),
+            mode,
+            NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
+            !queue_.isChunkExecuting(chunkId));
+      }
+   }
+
+   private void forwardOutputToSatellite(
+      String docId,
+      String chunkId,
+      RmdChunkOutput rmdChunkOutput,
+      int mode,
+      int scope,
+      boolean complete
+   )
+   {
+      if (satelliteChunks_.contains(chunkId))
+      {
+         SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
+         ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
+         
+         String windowName = chunkWindowManager.getName(docId, chunkId);
+         
+         if (satelliteManager.satelliteWindowExists(windowName))
+         {
+            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);
+            
+            events_.fireEventToSatellite(
+               new ChunkSatelliteUpdateOutputEvent(
+                  docId,
+                  chunkId,
+                  rmdChunkOutput,
+                  mode,
+                  scope,
+                  complete
+               ),
+               satelliteWindow
+            );
+         }
+      }
    }
 
    @Override
@@ -761,27 +809,6 @@ public class TextEditingTargetNotebook
 
             // set dirty state if necessary
             setDirtyState();
-         }
-
-         if (satelliteChunks_.contains(data.getChunkId()))
-         {
-            SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
-            ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
-            
-            String windowName = chunkWindowManager.getName(data.getDocId(), data.getChunkId());
-            
-            if (satelliteManager.satelliteWindowExists(windowName))
-            {
-               WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);
-               
-               events_.fireEventToSatellite(
-                  new ChunkSatelliteUpdateOutputEvent(
-                     data.getDocId(),
-                     data.getChunkId()
-                  ),
-                  satelliteWindow
-               );
-            }
          }
       }
    }

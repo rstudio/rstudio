@@ -91,6 +91,12 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkSatelliteUpdateOutputEvent(ChunkSatelliteUpdateOutputEvent event)
    {
+      chunkOutputWidget_.showChunkOutput(
+         event.getOutput(),
+         event.getMode(),
+         event.getScope(),
+         event.getComplete(),
+         false);
    }
 
    @Override
