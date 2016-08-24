@@ -854,7 +854,24 @@ public class TextEditingTarget implements
          int endIdx   = match.getIndex() + match.getValue().length();
          if (startIdx <= column && column <= endIdx)
          {
-            navigateToUrl(match.getValue());
+            // attempt to trim off enclosing quotes, etc
+            String url = match.getValue();
+            for (int index = startIdx - 1; index >= 0; index--)
+            {
+               char beforeStart = line.charAt(index);
+               boolean needsTrim =
+                     beforeStart == '(' && url.endsWith(")")  ||
+                     beforeStart == '[' && url.endsWith("]")  ||
+                     beforeStart == '{' && url.endsWith("}")  ||
+                     beforeStart == '[' && url.endsWith("]")  ||
+                     beforeStart == '"' && url.endsWith("\"") ||
+                     beforeStart == '\'' && url.endsWith("'");
+
+               if (needsTrim)
+                  url = url.substring(0, url.length() - 1);
+            }
+            
+            navigateToUrl(url);
             return true;
          }
       }
