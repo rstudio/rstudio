@@ -47,6 +47,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -143,7 +144,12 @@ public class ChunkOutputWidget extends Composite
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full)
       {
-         frame_.getElement().getStyle().setHeight(100, Unit.PCT);
+         frame_.getElement().getStyle().setTop(0, Unit.PX);
+         frame_.getElement().getStyle().setBottom(0, Unit.PX);
+         frame_.getElement().getStyle().setLeft(0, Unit.PX);
+         frame_.getElement().getStyle().setRight(0, Unit.PX);
+         frame_.getElement().getStyle().setPosition(Position.ABSOLUTE);
+
          frame_.getElement().getStyle().setPadding(0, Unit.PX);
          
          getElement().getStyle().setPadding(0, Unit.PX);
@@ -357,7 +363,9 @@ public class ChunkOutputWidget extends Composite
       renderedHeight_ = height;
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
-      frame_.getElement().getStyle().setHeight(height, Unit.PX);
+      
+      if (chunkOutputSize_ != ChunkOutputSize.Full)
+         frame_.getElement().getStyle().setHeight(height, Unit.PX);
          
       // allocate some extra space so the cursor doesn't touch the output frame
       host_.onOutputHeightChanged(this, height + 7, ensureVisible);
