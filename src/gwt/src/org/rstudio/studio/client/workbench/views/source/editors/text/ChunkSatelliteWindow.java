@@ -29,6 +29,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOutputFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
@@ -37,7 +38,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 public class ChunkSatelliteWindow extends SatelliteWindow
                                   implements ChunkSatelliteView,
                                              ChunkSatelliteShowChunkOutputEvent.Handler,
-                                             ChunkSatelliteCodeExecutingEvent.Handler
+                                             ChunkSatelliteCodeExecutingEvent.Handler,
+                                             ChunkSatelliteOutputFinishedEvent.Handler
 {
 
    @Inject
@@ -92,6 +94,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
 
       pEventBus_.get().addHandler(ChunkSatelliteShowChunkOutputEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkSatelliteOutputFinishedEvent.TYPE, this);
    }
 
    @Override
@@ -110,6 +113,14 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    {
       chunkOutputWidget_.setCodeExecuting(
          event.getMode(),
+         event.getScope());
+   }
+
+   @Override
+   public void onChunkSatelliteOutputFinished(ChunkSatelliteOutputFinishedEvent event)
+   {
+      chunkOutputWidget_.onOutputFinished(
+         event.getEnsureVisible(),
          event.getScope());
    }
 

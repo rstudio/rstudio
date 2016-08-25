@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOutputFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -830,6 +831,18 @@ public class TextEditingTargetNotebook
 
             // set dirty state if necessary
             setDirtyState();
+         }
+
+         if (satelliteChunks_.contains(data.getChunkId()))
+         {
+            forwardEventToSatelliteChunk(
+               docUpdateSentinel_.getId(),
+               data.getChunkId(),
+               new ChunkSatelliteOutputFinishedEvent(
+                  ensureVisible,
+                  data.getScope()
+               )
+            );
          }
       }
    }
