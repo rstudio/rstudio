@@ -45,6 +45,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -108,10 +109,23 @@ public class ChunkOutputWidget extends Composite
    public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
          int expansionState, ChunkOutputHost host)
    {
+      this(
+         documentId,
+         chunkId,
+         options, 
+         expansionState, 
+         host,
+         ChunkOutputSize.Default);
+   }
+
+   public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
+         int expansionState, ChunkOutputHost host, ChunkOutputSize chunkOutputSize)
+   {
       documentId_ = documentId;
       chunkId_ = chunkId;
       host_ = host;
       options_ = options;
+      chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
@@ -120,13 +134,27 @@ public class ChunkOutputWidget extends Composite
 
       ChunkDataWidget.injectPagedTableResources();
       
-      frame_.getElement().getStyle().setHeight(
-            expansionState_.getValue() == COLLAPSED ? 
-                  ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
-                  ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+      if (chunkOutputSize_ == ChunkOutputSize.Default)
+      {
+         frame_.getElement().getStyle().setHeight(
+               expansionState_.getValue() == COLLAPSED ? 
+                     ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
+                     ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
+         frame_.getElement().getStyle().setHeight(100, Unit.PCT);
+         frame_.getElement().getStyle().setPadding(0, Unit.PX);
+         
+         getElement().getStyle().setPadding(0, Unit.PX);
+         
+         clear_.getElement().getStyle().setDisplay(Display.NONE);
+         expand_.getElement().getStyle().setDisplay(Display.NONE);
+         popout_.getElement().getStyle().setDisplay(Display.NONE);
+      }
 
       // create the initial output stream and attach it to the frame
-      attachPresenter(new ChunkOutputStream(this));
+      attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -792,7 +820,7 @@ public class ChunkOutputWidget extends Composite
 
          // start with the stream presenter (we'll switch to gallery later if
          // circumstances demand)
-         attachPresenter(new ChunkOutputStream(this));
+         attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
 
          hasErrors_ = false;
          state_ = CHUNK_POST_OUTPUT;
@@ -840,6 +868,7 @@ public class ChunkOutputWidget extends Composite
    private ChunkOutputHost host_;
    private ChunkOutputPresenter presenter_;
    private ChunkWindowManager chunkWindowManager_;
+   private ChunkOutputSize chunkOutputSize_;
    
    private int state_ = CHUNK_EMPTY;
    private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;

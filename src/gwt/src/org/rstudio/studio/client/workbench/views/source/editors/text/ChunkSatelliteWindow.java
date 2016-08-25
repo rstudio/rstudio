@@ -77,7 +77,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          chunkWindowParams_.getChunkId(),
          RmdChunkOptions.create(),
          ChunkOutputWidget.EXPANDED,
-         chunkOutputHost);
+         chunkOutputHost,
+         ChunkOutputSize.Full);
       
       mainPanel.add(chunkOutputWidget_);
       mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);

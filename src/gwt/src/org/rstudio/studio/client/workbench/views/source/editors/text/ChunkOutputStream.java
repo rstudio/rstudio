@@ -40,6 +40,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -53,7 +54,13 @@ public class ChunkOutputStream extends FlowPanel
 {
    public ChunkOutputStream(ChunkOutputPresenter.Host host)
    {
+      this(host, ChunkOutputSize.Default);
+   }
+   
+   public ChunkOutputStream(ChunkOutputPresenter.Host host, ChunkOutputSize chunkOutputSize)
+   {
       host_ = host;
+      chunkOutputSize_ = chunkOutputSize;
       metadata_ = new HashMap<Integer, JavaScriptObject>();
    }
 
@@ -191,11 +198,23 @@ public class ChunkOutputStream extends FlowPanel
       url += "viewer_pane=1";
 
       final ChunkOutputFrame frame = new ChunkOutputFrame();
-      final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
-                  ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
-      addWithOrdinal(fixedFrame, ordinal);
+      if (chunkOutputSize_ == ChunkOutputSize.Default) {
+         final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
+                     ChunkOutputUi.OUTPUT_ASPECT, 
+                     ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+
+         addWithOrdinal(fixedFrame, ordinal);
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Full) {
+         getParent().getElement().getStyle().setProperty("minHeight", "100%");
+         getParent().getElement().getStyle().setMargin(0, Unit.PX);
+         
+         frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
+         frame.getElement().getStyle().setWidth(100, Unit.PCT);
+         frame.getElement().getStyle().setHeight(100, Unit.PCT);
+         addWithOrdinal(frame, ordinal);
+      }
 
       frame.loadUrl(url, new Command() 
       {
@@ -570,6 +589,7 @@ public class ChunkOutputStream extends FlowPanel
    private VirtualConsole vconsole_;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private boolean hasErrors_ = false;
+   private ChunkOutputSize chunkOutputSize_;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
 }
