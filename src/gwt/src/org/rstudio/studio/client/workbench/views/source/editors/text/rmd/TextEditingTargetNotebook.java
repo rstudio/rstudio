@@ -1485,7 +1485,7 @@ public class TextEditingTargetNotebook
             docUpdateSentinel_.getId(), 
             contextId_,
             Integer.toHexString(requestId_), 
-            null,
+            "",
             new ServerRequestCallback<NotebookDocQueue>()
             {
                @Override
