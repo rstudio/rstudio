@@ -38,7 +38,7 @@ public class SourceSatellite extends SatelliteApplication
    }
 
    @Inject
-   public void initialize(ChunkSatelliteView view,
+   public void initialize(SourceSatelliteView view,
                           Satellite satellite,
                           Provider<AceThemes> pAceThemes,
                           ApplicationUncaughtExceptionHandler exHandler)
