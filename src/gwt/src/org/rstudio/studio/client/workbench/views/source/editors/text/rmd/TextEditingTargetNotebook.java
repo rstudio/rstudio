@@ -728,7 +728,7 @@ public class TextEditingTargetNotebook
       {
          int mode = queue_.getChunkExecMode(chunkId);
          
-         forwardEventToSatellite(
+         forwardEventToSatelliteChunk(
             docUpdateSentinel_.getId(),
             chunkId,
             new ChunkSatelliteShowChunkOutputEvent(
@@ -741,7 +741,7 @@ public class TextEditingTargetNotebook
       }
    }
 
-   private void forwardEventToSatellite(
+   private void forwardEventToSatelliteChunk(
       String docId,
       String chunkId,
       CrossWindowEvent<?> event
@@ -762,7 +762,7 @@ public class TextEditingTargetNotebook
       }
    }
 
-   private void forwardEventToAllSatellites(
+   private void forwardEventToSatelliteAllChunks(
       String docId,
       CrossWindowEvent<?> event
    )
@@ -837,7 +837,7 @@ public class TextEditingTargetNotebook
    @Override
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      forwardEventToSatellite(
+      forwardEventToSatelliteChunk(
          docUpdateSentinel_.getId(),
          event.getConsole(),
          event
@@ -847,7 +847,7 @@ public class TextEditingTargetNotebook
    @Override
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      forwardEventToSatellite(
+      forwardEventToSatelliteChunk(
          docUpdateSentinel_.getId(),
          event.getConsole(),
          event
@@ -1022,7 +1022,7 @@ public class TextEditingTargetNotebook
       // clear currently executing chunk
       cleanCurrentExecChunk();
 
-      forwardEventToAllSatellites(
+      forwardEventToSatelliteAllChunks(
          docUpdateSentinel_.getId(),
          event
       );
@@ -1052,7 +1052,7 @@ public class TextEditingTargetNotebook
          }
       }
 
-      forwardEventToAllSatellites(
+      forwardEventToSatelliteAllChunks(
          docUpdateSentinel_.getId(),
          event
       );
@@ -1272,7 +1272,7 @@ public class TextEditingTargetNotebook
 
          output.getOutputWidget().setCodeExecuting(mode, execScope);
 
-         forwardEventToSatellite(
+         forwardEventToSatelliteChunk(
             docUpdateSentinel_.getId(),
             chunkId,
             new ChunkSatelliteCodeExecutingEvent(
