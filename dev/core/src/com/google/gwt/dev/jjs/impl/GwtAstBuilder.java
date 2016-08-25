@@ -1255,11 +1255,28 @@ public class GwtAstBuilder {
       ctor.freezeParamTypes();
       samMethod.freezeParamTypes();
 
+      // Create necessary bridges.
+      createFunctionalExpressionBridges(innerLambdaClass, x, samMethod);
+
       // replace (x,y,z) -> expr with 'new Lambda(args)'
       replaceLambdaWithInnerClassAllocation(x, info, innerLambdaClass, ctor, synthArgs);
       popMethodInfo();
       // Add the newly generated type
       newTypes.add(innerLambdaClass);
+    }
+
+    private void createFunctionalExpressionBridges(
+        JClassType functionalExpressionImplementationClass,
+        FunctionalExpression functionalExpression,
+        JMethod functionalInterfaceAbstractMethod) {
+      // TODO(rluble): create bridges that might be needed for default methods.
+      if (functionalExpression.getRequiredBridges() != null) {
+        for (MethodBinding methodBinding : functionalExpression.getRequiredBridges()) {
+          // Create bridges.
+          createBridgeMethod(functionalExpressionImplementationClass, methodBinding,
+              functionalInterfaceAbstractMethod);
+        }
+      }
     }
 
     private void createLambdaSamMethod(LambdaExpression x, JMethod interfaceMethod, SourceInfo info,
@@ -1411,6 +1428,7 @@ public class GwtAstBuilder {
         assert capturedLocalReference != null;
         allocLambda.addArg(capturedLocalReference);
       }
+
       // put the result on the stack, and pop out synthetic method from the scope
       push(allocLambda);
     }
@@ -1883,7 +1901,9 @@ public class GwtAstBuilder {
             samBinding.parameters[paramNumber
                 + (samBinding.parameters.length - referredMethodBinding.parameters.length)];
         // if it is not the trailing param or varargs, or interface method is already varargs
-        if (varArgInitializers == null || !referredMethodBinding.isVarargs() || (paramNumber < varArg)) {
+        if (varArgInitializers == null
+            || !referredMethodBinding.isVarargs()
+            || (paramNumber < varArg)) {
           destParam = referredMethodBinding.parameters[paramNumber];
           paramExpr = boxOrUnboxExpression(paramExpr, samParameterBinding, destParam);
           samCall.addArg(paramExpr);
@@ -1919,6 +1939,8 @@ public class GwtAstBuilder {
       innerLambdaClass.addMethod(samMethod);
       ctor.freezeParamTypes();
       samMethod.freezeParamTypes();
+
+      createFunctionalExpressionBridges(innerLambdaClass, x, samMethod);
 
       JConstructor lambdaCtor = null;
       for (JMethod method : innerLambdaClass.getMethods()) {
@@ -2703,15 +2725,16 @@ public class GwtAstBuilder {
      * have been installed on the GWT types.
      * </p>
      */
-    private void addBridgeMethods(SourceTypeBinding clazzBinding) {
+    private void addBridgeMethods(SourceTypeBinding classBinding) {
       /*
        * JDT adds bridge methods in all the places GWT needs them. Use JDT's
        * bridge methods.
        */
-      if (clazzBinding.syntheticMethods() != null) {
-        for (SyntheticMethodBinding synthmeth : clazzBinding.syntheticMethods()) {
-          if (synthmeth.purpose == SyntheticMethodBinding.BridgeMethod && !synthmeth.isStatic()) {
-            createBridgeMethod(synthmeth);
+      if (classBinding.syntheticMethods() != null) {
+        for (SyntheticMethodBinding syntheticMethodBinding : classBinding.syntheticMethods()) {
+          if (syntheticMethodBinding.purpose == SyntheticMethodBinding.BridgeMethod
+              && !syntheticMethodBinding.isStatic()) {
+            createBridgeMethod(syntheticMethodBinding);
           }
         }
       }
@@ -2748,35 +2771,65 @@ public class GwtAstBuilder {
       return call;
     }
 
-    /**
-     * Create a bridge method. It calls a same-named method with the same
-     * arguments, but with a different type signature.
-     */
     private void createBridgeMethod(SyntheticMethodBinding jdtBridgeMethod) {
-      JMethod implmeth = typeMap.get(jdtBridgeMethod.targetMethod);
-      SourceInfo info = implmeth.getSourceInfo();
+      JMethod targetMethod = typeMap.get(jdtBridgeMethod.targetMethod);
+      createBridgeMethod(curClass.type, jdtBridgeMethod, targetMethod);
+    }
+
+    private void createBridgeMethod(
+        JDeclaredType enclosingType, MethodBinding sourceMethodBinding, JMethod targetMethod) {
+      JType returnType = typeMap.get(sourceMethodBinding.returnType);
+      Iterable<JType> parameterTypes =
+          FluentIterable.from(Arrays.asList(sourceMethodBinding.parameters)).transform(
+              new Function<TypeBinding, JType>() {
+                @Override
+                public JType apply(TypeBinding typeBinding) {
+                  return typeMap.get(typeBinding.erasure());
+                }
+              });
+
+      Iterable<JClassType> thrownExceptionTypes =
+          FluentIterable.from(Arrays.asList(sourceMethodBinding.thrownExceptions)).transform(
+          new Function<ReferenceBinding, JClassType>() {
+            @Override
+            public JClassType apply(ReferenceBinding exceptionReferenceBinding) {
+              return (JClassType) typeMap.get(exceptionReferenceBinding.erasure());
+            }
+          });
+
+      JMethod bridgeMethod = createBridgeMethod(
+          enclosingType, targetMethod, parameterTypes, returnType, thrownExceptionTypes);
+      typeMap.setMethod(sourceMethodBinding, bridgeMethod);
+    }
+
+      /**
+       * Create a bridge method. It calls a same-named method with the same
+       * arguments, but with a different type signature.
+       */
+    private JMethod createBridgeMethod(JDeclaredType enclosingType,
+        JMethod targetMethod, Iterable<JType> parameterTypes, JType returnType,
+        Iterable<JClassType> thrownExceptions) {
+      SourceInfo info = targetMethod.getSourceInfo();
       JMethod bridgeMethod =
-          new JMethod(info, implmeth.getName(), curClass.type, typeMap
-              .get(jdtBridgeMethod.returnType), false, false, implmeth.isFinal(), implmeth
-              .getAccess());
-      typeMap.setMethod(jdtBridgeMethod, bridgeMethod);
+          new JMethod(info, targetMethod.getName(), enclosingType, returnType, false, false,
+              targetMethod.isFinal(), targetMethod.getAccess());
       bridgeMethod.setBody(new JMethodBody(info));
-      curClass.type.addMethod(bridgeMethod);
+      enclosingType.addMethod(bridgeMethod);
       bridgeMethod.setSynthetic();
       int paramIdx = 0;
-      List<JParameter> implParams = implmeth.getParams();
-      for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
-        JParameter param = implParams.get(paramIdx++);
-        JType paramType = typeMap.get(jdtParamType.erasure());
-        bridgeMethod.createFinalParameter(param.getSourceInfo(), param.getName(), paramType);
+      List<JParameter> implParams = targetMethod.getParams();
+      for (JType parameterType : parameterTypes) {
+        JParameter parameter = implParams.get(paramIdx++);
+        bridgeMethod.createFinalParameter(
+            parameter.getSourceInfo(), parameter.getName(), parameterType);
       }
-      for (ReferenceBinding exceptionReference : jdtBridgeMethod.thrownExceptions) {
-        bridgeMethod.addThrownException((JClassType) typeMap.get(exceptionReference.erasure()));
+      for (JClassType thrownException : thrownExceptions) {
+        bridgeMethod.addThrownException(thrownException);
       }
       bridgeMethod.freezeParamTypes();
 
       // create a call and pass all arguments through, casting if necessary
-      JMethodCall call = new JMethodCall(info, makeThisRef(info), implmeth);
+      JMethodCall call = new JMethodCall(info, makeThisRef(info), targetMethod);
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
         call.addArg(maybeCast(implParams.get(i).getType(), param.makeRef(info)));
@@ -2788,6 +2841,7 @@ public class GwtAstBuilder {
       } else {
         body.getBlock().addStmt(call.makeReturnStatement());
       }
+      return bridgeMethod;
     }
 
     private void writeEnumValuesMethod(JEnumType type, JMethod method) {

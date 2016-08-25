@@ -1623,4 +1623,47 @@ public class Java8Test extends GWTTestCase {
     assertEquals(2, f.callM().intValue());
     assertEquals(5, createNative().callM().intValue());
   }
+
+  interface FunctionalExpressionBridges_I<T> {
+    T apply(T t);
+    // TODO(rluble): uncomment the line below to when bridges for default methods are created
+    // in functional expressions
+    // FunctionalExpressionBridges_I<T> m(T t);
+  }
+
+  @FunctionalInterface
+  interface FunctionalExpressionBridges_J<T extends Comparable>
+      extends FunctionalExpressionBridges_I<T> {
+    T apply(T t);
+
+    // Overrides I.m() and specializes return type
+    default FunctionalExpressionBridges_J<T> m(T t) {
+      return this;
+    }
+  }
+
+  public static String identity(String s) {
+    return s;
+  }
+
+  public void testFunctionalExpressionBridges() {
+    FunctionalExpressionBridges_J<String> ann = new FunctionalExpressionBridges_J<String>() {
+      @Override
+      public String apply(String string) {
+        return string;
+      }
+    };
+
+    assertBrigdeDispatchIsCorrect(ann);
+    assertBrigdeDispatchIsCorrect((String s) -> s + "");
+    assertBrigdeDispatchIsCorrect(Java8Test::identity);
+  }
+
+  private void assertBrigdeDispatchIsCorrect(
+      FunctionalExpressionBridges_J<String> functionalExpression) {
+    assertEquals("Hello", functionalExpression.m(null).apply("Hello"));
+    assertEquals("Hello", functionalExpression.apply("Hello"));
+    assertEquals("Hello",
+        ((FunctionalExpressionBridges_I<String>) functionalExpression).apply("Hello"));
+  }
 }
