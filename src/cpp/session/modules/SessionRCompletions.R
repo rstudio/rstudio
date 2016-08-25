@@ -1135,7 +1135,7 @@ assign(x = ".rs.acCompletionTypes",
 
          # See if types were provided
          types <- attr(names, "types")
-         if (!is.null(types) && length(types) == length(names))
+         if (is.integer(types) && length(types) == length(names))
             type <- types
          
          # NOTE: Getting the types forces evaluation; we avoid that if
