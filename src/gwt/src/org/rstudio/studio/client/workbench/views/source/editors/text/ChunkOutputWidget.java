@@ -421,12 +421,8 @@ public class ChunkOutputWidget extends Composite
       showBusyState();
    }
    
-   public static void cacheEditorStyle(Element editorContainer, 
-         Style editorStyle)
-   {
-      String background = editorStyle.getBackgroundColor();
-      String foreground = editorStyle.getColor();
-      
+   public static void cacheEditorStyle(String foregroundColor, String backgroundColor)
+   {      
       // use a muted version of the text color for the outline
       ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(
             DomUtils.extractCssValue("ace_editor", "color"));
@@ -450,9 +446,9 @@ public class ChunkOutputWidget extends Composite
       ColorUtil.RGBColor surface = ColorUtil.RGBColor.fromCss(
             DomUtils.extractCssValue(classes, "color"));
       surface = surface.mixedWith(
-            ColorUtil.RGBColor.fromCss(background), 0.02, 1);
+            ColorUtil.RGBColor.fromCss(backgroundColor), 0.02, 1);
       
-      s_colors = new EditorThemeListener.Colors(foreground, background, border,
+      s_colors = new EditorThemeListener.Colors(foregroundColor, backgroundColor, border,
             highlight.asRgb(), surface.asRgb());
    }
    

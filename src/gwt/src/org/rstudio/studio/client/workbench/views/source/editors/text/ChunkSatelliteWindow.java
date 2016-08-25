@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOutputFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
@@ -39,7 +40,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
                                   implements ChunkSatelliteView,
                                              ChunkSatelliteShowChunkOutputEvent.Handler,
                                              ChunkSatelliteCodeExecutingEvent.Handler,
-                                             ChunkSatelliteOutputFinishedEvent.Handler
+                                             ChunkSatelliteOutputFinishedEvent.Handler,
+                                             ChunkSatelliteCacheEditorStyleEvent.Handler
 {
 
    @Inject
@@ -88,13 +90,14 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       
       mainPanel.getElement().getStyle().setBackgroundColor("#FFF");
 
-      pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
-         chunkWindowParams_.getDocId(),
-         chunkWindowParams_.getChunkId()));
-
       pEventBus_.get().addHandler(ChunkSatelliteShowChunkOutputEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteOutputFinishedEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkSatelliteCacheEditorStyleEvent.TYPE, this);
+
+      pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
+         chunkWindowParams_.getDocId(),
+         chunkWindowParams_.getChunkId()));
    }
 
    @Override
@@ -122,6 +125,17 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       chunkOutputWidget_.onOutputFinished(
          event.getEnsureVisible(),
          event.getScope());
+   }
+
+   @Override
+   public void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event)
+   {
+      ChunkOutputWidget.cacheEditorStyle(
+         event.getForegroundColor(),
+         event.getBackgroundColor()
+      );
+
+      chunkOutputWidget_.applyCachedEditorStyle();
    }
 
    @Override

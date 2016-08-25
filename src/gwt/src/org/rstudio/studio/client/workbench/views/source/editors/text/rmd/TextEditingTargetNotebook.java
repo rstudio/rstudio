@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOutputFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
@@ -615,13 +616,23 @@ public class TextEditingTargetNotebook
    {
       // update cached style 
       editorStyle_ = event.getStyle();
-      ChunkOutputWidget.cacheEditorStyle(event.getEditorContent(),
-            editorStyle_);
+      ChunkOutputWidget.cacheEditorStyle(
+         editorStyle_.getColor(),
+         editorStyle_.getBackgroundColor()
+      );
       
       for (ChunkOutputUi output: outputs_.values())
       {
          output.getOutputWidget().applyCachedEditorStyle();
       }
+
+      forwardEventToSatelliteAllChunks(
+         docUpdateSentinel_.getId(),
+         new ChunkSatelliteCacheEditorStyleEvent(
+            editorStyle_.getColor(),
+            editorStyle_.getBackgroundColor()
+         )
+      );
       
       // update if currently executing
       if (queue_.isExecuting())
@@ -985,6 +996,14 @@ public class TextEditingTargetNotebook
          return;
 
       satelliteChunks_.add(chunkId);
+
+      forwardEventToSatelliteAllChunks(
+         docId,
+         new ChunkSatelliteCacheEditorStyleEvent(
+            editorStyle_.getColor(),
+            editorStyle_.getBackgroundColor()
+         )
+      );
    }
 
    @Override
