@@ -20,6 +20,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 
 public class RSConnectPublishSource
 {
+   // invoked when publishing Shiny applications
    public RSConnectPublishSource(String sourceDir, String sourceFile)
    {
       sourceFile_ = sourceDir;
@@ -29,61 +30,83 @@ public class RSConnectPublishSource
       deployDir_ = sourceDir;
       contentCategory_ = null;
       isShiny_ = true;
+      websiteDir_ = null;
+      isStatic_ = false;
       isSingleFileShiny_ = sourceDir != sourceFile;
    }
 
-   public RSConnectPublishSource(String sourceFile, boolean isSelfContained, 
-         boolean isShiny, String description, int type)
+   public RSConnectPublishSource(String sourceFile, String websiteDir, 
+         boolean isSelfContained, boolean isStatic, boolean isShiny, 
+         String description, int type)
    {
-      this(sourceFile, sourceFile, isSelfContained, isShiny, description,
-            type);
+      this(sourceFile, sourceFile, websiteDir, isSelfContained, isStatic, 
+            isShiny, description, type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
-         boolean isSelfContained, boolean isShiny, String description, int type)
+         String websiteDir, boolean isSelfContained, boolean isStatic, 
+         boolean isShiny, String description, int type)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
       description_ = description;
       isSelfContained_ = isSelfContained;
       isShiny_ = isShiny;
+      isStatic_ = isStatic;
       isSingleFileShiny_ = false;
+      websiteDir_ = websiteDir;
 
-      // consider plots and raw HTML published from the viewer pane to be 
-      // plots 
-      contentCategory_ = (type == RSConnect.CONTENT_TYPE_PLOT  ||
-            type == RSConnect.CONTENT_TYPE_HTML) ? 
-                  RSConnect.CONTENT_CATEGORY_PLOT : null;
+      String category = null;
+      if (type == RSConnect.CONTENT_TYPE_WEBSITE)
+      {
+         // websites are always deployed as sites
+         category = RSConnect.CONTENT_CATEGORY_SITE;
+      }
+      else if (type == RSConnect.CONTENT_TYPE_PLOT || 
+               type == RSConnect.CONTENT_TYPE_HTML) 
+      {
+         // consider plots and raw HTML published from the viewer pane to be 
+         // plots 
+         category = RSConnect.CONTENT_CATEGORY_PLOT;
+      }
+      contentCategory_ = category;
 
       deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 
-         boolean isSelfContained, boolean isShiny, String description)
+         String websiteDir, boolean isSelfContained, boolean isStatic, 
+         boolean isShiny, String description)
    {
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
       description_ = description;
       isSelfContained_ = isSelfContained;
+      isStatic_ = isStatic;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
-      contentCategory_ = null;
+      contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
+            RSConnect.CONTENT_CATEGORY_SITE : null;
+      websiteDir_ = websiteDir;
       deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
             .getParentPathString();
    }
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
-         String deployFile, boolean isSelfContained, boolean isShiny, 
-         String description)
+         String deployFile, String websiteDir, boolean isSelfContained, 
+         boolean isStatic, boolean isShiny, String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
       deployFile_ = deployFile;
+      websiteDir_ = websiteDir;
       isSelfContained_ = isSelfContained;
+      isStatic_ = isStatic;
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
       description_ = description;
-      contentCategory_ = null;
+      contentCategory_ = StringUtil.isNullOrEmpty(websiteDir) ? 
+            RSConnect.CONTENT_CATEGORY_SITE : null;
    }
    
    public String getDeployFile()
@@ -117,6 +140,8 @@ public class RSConnectPublishSource
       if (isSingleFileShiny_)
          return FileSystemItem.createDir(getDeployDir())
                               .completePath(getDeployFile());
+      else if (contentCategory_ == RSConnect.CONTENT_CATEGORY_SITE)
+         return getDeployDir();
       return isDocument() ? getSourceFile() : getDeployDir();
    }
    
@@ -150,12 +175,29 @@ public class RSConnectPublishSource
       return contentCategory_;
    }
    
+   public boolean isWebsiteRmd()
+   {
+      return !StringUtil.isNullOrEmpty(websiteDir_);
+   }
+   
+   public String getWebsiteDir()
+   {
+      return websiteDir_;
+   }
+   
+   public boolean isStatic()
+   {
+      return isStatic_;
+   }
+   
    private final String deployFile_;
    private final String deployDir_;
    private final String sourceFile_;
    private final String description_;
    private final String contentCategory_;
+   private final String websiteDir_;
    private final boolean isSelfContained_;
    private final boolean isShiny_;
    private final boolean isSingleFileShiny_;
+   private final boolean isStatic_;
 }

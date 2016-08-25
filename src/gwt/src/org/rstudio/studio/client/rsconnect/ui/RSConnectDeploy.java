@@ -148,7 +148,6 @@ public class RSConnectDeploy extends Composite
          asStatic_ = fromPrevious.getAsStatic();
       }
       
-      
       // inject dependencies 
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -245,8 +244,6 @@ public class RSConnectDeploy extends Composite
             }
          }
       });
-      
-      
       
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
@@ -458,7 +455,7 @@ public class RSConnectDeploy extends Composite
       
       return new RSConnectPublishResult(
             appName, 
-            appTitle,
+            isUpdate() ? null : appTitle,
             getSelectedAccount(), 
             source_,
             new RSConnectPublishSettings(deployFiles, 
@@ -753,7 +750,8 @@ public class RSConnectDeploy extends Composite
       
       // if this is a self-contained document, we don't need to scrape it for
       // dependencies; just inject it directly into the list.
-      if (source_.isSelfContained())
+      if (source_.isSelfContained() && source_.isStatic() && 
+          !source_.isWebsiteRmd())
       {
          ArrayList<String> files = new ArrayList<String>();
          FileSystemItem selfContained = FileSystemItem.createFile(
@@ -764,9 +762,19 @@ public class RSConnectDeploy extends Composite
          return;
       }
 
-      // read the parent directory if we're "deploying" a .R file
+      // ternery operator maps to appropriate files to list for deployment:
+      // website code    - website code directory 
+      // static website  - website build directory
+      // document        - R Markdown document
+      // non-document    - Shiny app directory
       final String fileSource = source_.isDocument() ? 
-            source_.getDeployFile() : source_.getDeployDir();
+            source_.isWebsiteRmd() ? 
+                  source_.isStatic() ? 
+                     source_.getDeployDir() :
+                     source_.getWebsiteDir() :
+                  source_.getDeployFile() : 
+            source_.getDeployDir();
+
       indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
             fileSource,
@@ -801,9 +809,10 @@ public class RSConnectDeploy extends Composite
                                  fromPrevious_.getAdditionalFiles() : null, 
                            fromPrevious_ != null ? 
                                  fromPrevious_.getIgnoredFiles() : null);
-                     setPrimaryFile(
-                           FileSystemItem.createFile(
-                                 source_.getDeployFile()).getName());
+                     if (!source_.isWebsiteRmd())
+                        setPrimaryFile(
+                              FileSystemItem.createFile(
+                                    source_.getDeployFile()).getName());
                   }
                   
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -923,7 +932,8 @@ public class RSConnectDeploy extends Composite
    {
       // If this is a self-contained file, don't show the file list; instead, 
       // show the description of what we're about to publish
-      if (source_.isSelfContained()) 
+      if (source_.isSelfContained() && source_.isStatic() && 
+          !source_.isWebsiteRmd()) 
       {
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
@@ -948,9 +958,9 @@ public class RSConnectDeploy extends Composite
       // if the app name textbox isn't populated, derive from the filename
       // (for apps and documents--other content types use temporary filenames)
       if (appName_.getTitle().isEmpty() && 
-            contentType_ == RSConnect.CONTENT_TYPE_APP || 
-            contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
-            contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
+            (contentType_ == RSConnect.CONTENT_TYPE_APP || 
+             contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
+             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT))
       {
          // set the app name to the filename
          String appTitle = 
@@ -966,6 +976,14 @@ public class RSConnectDeploy extends Composite
          }
 
          setUnsanitizedAppName(appTitle);
+      }
+      
+      // for websites, use the directory name
+      if (appName_.getTitle().isEmpty() && 
+          contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+      {
+         setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
+               source_.getWebsiteDir()));
       }
       
       ImageResource illustration = null;

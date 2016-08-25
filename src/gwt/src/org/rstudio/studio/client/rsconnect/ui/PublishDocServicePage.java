@@ -44,7 +44,7 @@ public class PublishDocServicePage
       String rscDesc = RSConnectAccountWizard.SERVICE_DESCRIPTION;
            
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> connectPage;
-      if (input.isMultiRmd())
+      if (input.isMultiRmd() && !input.isWebsiteRmd())
       {
          connectPage = new PublishMultiplePage(rscTitle, rscDesc, 
                RSConnectResources.INSTANCE.localAccountIcon(), input);

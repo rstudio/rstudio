@@ -33,16 +33,17 @@ public class RSConnectPublishWizard
    private static WizardPage<RSConnectPublishInput, RSConnectPublishResult>
       createFirstPage(RSConnectPublishInput input)
    {
-      if (!input.hasDocOutput() && input.isMultiRmd())
+      if (!input.hasDocOutput() && input.isMultiRmd() && !input.isWebsiteRmd())
       {
          // multiple docs -- see if we should send them all up
          return new PublishMultiplePage("Publish", "Publish", null, input);
       }
-      else if (!input.isMultiRmd() && 
-               (!input.isExternalUIEnabled() || !input.isSelfContained()))
+      else if (input.isWebsiteRmd() || !input.isMultiRmd() && 
+               (!input.isExternalUIEnabled() || !input.isSelfContained() ||
+                 input.isWebsiteRmd()))
       {
          // a single doc, but it can't go to RPubs because RPubs is disabled,
-         // or because the doc is not self-contained
+         // or because the doc is not self-contained, or is a website
          return new PublishReportSourcePage("Publish", "Publish", null, input, 
                false);
       }

@@ -85,6 +85,9 @@ public class AppNameTextbox extends Composite
    
    public String getName()
    {
+      // return current title if no generated name is available
+      if (StringUtil.isNullOrEmpty(name_))
+         return getTitle();
       return name_;
    }
    

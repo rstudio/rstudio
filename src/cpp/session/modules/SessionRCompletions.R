@@ -829,7 +829,12 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("selectFuzzyMatches", function(completions, token)
 {
-   completions[.rs.fuzzyMatches(completions, token)]
+   types <- attr(completions, "types")
+   matches <- .rs.fuzzyMatches(completions, token)
+   completions <- completions[matches]
+   if (!is.null(types))
+      attr(completions, "types") <- types[matches]
+   completions
 })
 
 .rs.addFunction("formCompletionVector", function(object, default, n)
@@ -1127,10 +1132,15 @@ assign(x = ".rs.acCompletionTypes",
          }
          
          names <- .rs.selectFuzzyMatches(allNames, token)
+
+         # See if types were provided
+         types <- attr(names, "types")
+         if (is.integer(types) && length(types) == length(names))
+            type <- types
          
          # NOTE: Getting the types forces evaluation; we avoid that if
          # there are too many names to evaluate.
-         if (length(names) > 2E2)
+         else if (length(names) > 2E2)
             type <- .rs.acCompletionTypes$UNKNOWN
          else
          {

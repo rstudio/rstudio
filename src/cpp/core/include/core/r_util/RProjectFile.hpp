@@ -140,6 +140,9 @@ FilePath projectFromDirectory(const FilePath& directoryPath);
 // the previous default value)
 bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig);
 
+// indicate whether the given directory is an R Markdown website
+bool isWebsiteDirectory(const FilePath& projectDir);
+
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio

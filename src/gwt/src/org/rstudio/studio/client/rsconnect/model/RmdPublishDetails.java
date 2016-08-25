@@ -42,4 +42,8 @@ public class RmdPublishDetails extends JavaScriptObject
    public final native boolean hasConnectAccount() /*-{
       return this.has_connect_account;
    }-*/;
+   
+   public final native String websiteDir() /*-{
+      return this.website_dir;
+   }-*/;
 }

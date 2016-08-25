@@ -334,7 +334,7 @@
 })
 
 
-.rs.addJsonRpcHandler("get_rmd_publish_details", function(target) {
+.rs.addFunction("getRmdPublishDetails", function(target) {
   # check for multiple R Markdown documents in the directory 
   rmds <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"),
                      all.files = FALSE, recursive = FALSE, ignore.case = TRUE,

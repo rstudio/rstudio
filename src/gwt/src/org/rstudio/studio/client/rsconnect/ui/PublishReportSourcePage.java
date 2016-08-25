@@ -47,16 +47,20 @@ public class PublishReportSourcePage
                            new ArrayList<WizardPage<RSConnectPublishInput, 
                                                     RSConnectPublishResult>>();
       
+      String descriptor = "document";
+      if (asMultiple)
+         descriptor = "documents";
+      if (input.isWebsiteRmd())
+         descriptor = "website";
+      
       pages.add(new PublishFilesPage("Publish " +
-            (asMultiple? "documents" : "document") + " with source code",
+            descriptor + " with source code",
             "Choose this option if you want to create " + 
             (asMultiple ? "scheduled reports" : "a scheduled report") + " or " +
-            "execute your " + 
-            (asMultiple ? "documents" : "document") + " on the server.", 
+            "rebuild your " + descriptor + " on the server.", 
             RSConnectResources.INSTANCE.publishDocWithSource(), 
             input, asMultiple, false));
-      String staticTitle = "Publish finished " + 
-            (asMultiple ? "documents" : "document") + " only";
+      String staticTitle = "Publish finished " + descriptor + " only";
       String staticSubtitle = "Choose this option to publish the content as " +
              "it appears in RStudio.";
       pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
