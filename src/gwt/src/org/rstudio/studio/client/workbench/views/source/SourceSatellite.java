@@ -19,7 +19,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatelliteView;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
