@@ -43,8 +43,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
                                              ChunkSatelliteShowChunkOutputEvent.Handler,
                                              ChunkSatelliteCodeExecutingEvent.Handler,
                                              ChunkSatelliteOutputFinishedEvent.Handler,
-                                             ChunkSatelliteCacheEditorStyleEvent.Handler,
-                                             RmdChunkOutputEvent.Handler
+                                             ChunkSatelliteCacheEditorStyleEvent.Handler
 {
 
    @Inject
@@ -92,8 +91,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       mainPanel.setWidgetTopBottom(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
 
       mainPanel.addStyleName("ace_editor");
-      
-      mainPanel.getElement().getStyle().setBackgroundColor("#FFF");
 
       pEventBus_.get().addHandler(ChunkSatelliteShowChunkOutputEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
@@ -152,24 +149,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    public Widget getWidget()
    {
       return this;
-   }
-
-   @Override
-   public void onRmdChunkOutput(RmdChunkOutputEvent event)
-   {
-      // ignore if not targeted at this document
-      if (event.getOutput().getDocId() != chunkWindowParams_.getDocId())
-         return;
-
-      if (event.getOutput().getChunkId() != chunkWindowParams_.getChunkId())
-         return;
-
-      chunkOutputWidget_.showChunkOutput(
-         event.getOutput(),
-         NotebookQueueUnit.EXEC_MODE_SINGLE,
-         NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
-         false,
-         false);
    }
 
    public ChunkOutputWidget getOutputWidget()
