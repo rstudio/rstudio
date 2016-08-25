@@ -1004,6 +1004,11 @@ public class TextEditingTargetNotebook
             editorStyle_.getBackgroundColor()
          )
       );
+
+      Scope chunk = getChunkScope(chunkId);
+      clearChunkOutput(chunk);
+
+      refreshChunk(chunkId);
    }
 
    @Override
@@ -1480,6 +1485,7 @@ public class TextEditingTargetNotebook
             docUpdateSentinel_.getId(), 
             contextId_,
             Integer.toHexString(requestId_), 
+            null,
             new ServerRequestCallback<NotebookDocQueue>()
             {
                @Override
@@ -1917,6 +1923,32 @@ public class TextEditingTargetNotebook
                docUpdateSentinel_.getId(), true, 
                new VoidServerRequestCallback());
       }
+   }
+
+   private void refreshChunk(String chunkId)
+   {
+      requestId_ = nextRequestId_++;
+      server_.refreshChunkOutput(
+         docUpdateSentinel_.getPath(),
+         docUpdateSentinel_.getId(), 
+         contextId_,
+         Integer.toHexString(requestId_), 
+         chunkId,
+         new ServerRequestCallback<NotebookDocQueue>()
+         {
+            @Override
+            public void onResponseReceived(NotebookDocQueue queue)
+            {
+               if (queue != null)
+                  queue_.setQueue(queue);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

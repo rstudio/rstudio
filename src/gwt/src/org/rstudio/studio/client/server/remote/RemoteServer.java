@@ -4227,7 +4227,7 @@ public class RemoteServer implements Server
    
    @Override
    public void refreshChunkOutput(String docPath, String docId, 
-         String contextId, String requestId, 
+         String contextId, String requestId, String chunkId,
          ServerRequestCallback<NotebookDocQueue> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4235,6 +4235,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(docId));
       params.set(2, new JSONString(contextId));
       params.set(3, new JSONString(requestId));
+      params.set(4, new JSONString(chunkId));
       sendRequest(RPC_SCOPE,
             "refresh_chunk_output",
             params,
