@@ -777,9 +777,7 @@
       if (excludeBaseClasses && class %in% c("list", "environment"))
          next
       
-      method <- utils::getS3method(".DollarNames", class, optional = TRUE, 
-        envir = getNamespace("utils"))
-      
+      method <- utils::getS3method(".DollarNames", class, optional = TRUE)
       if (!is.null(method))
          return(method)
    }
