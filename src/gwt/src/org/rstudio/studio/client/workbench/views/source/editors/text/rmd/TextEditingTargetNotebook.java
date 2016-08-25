@@ -154,6 +154,7 @@ public class TextEditingTargetNotebook
       initialChunkDefs_ = JsArrayUtil.deepCopy(notebookDoc_.getChunkDefs());
       outputs_ = new HashMap<String, ChunkOutputUi>();
       satelliteChunks_ = new ArrayList<String>();
+      satelliteChunkRequestIds_ = new ArrayList<String>();
       setupCrc32_ = docUpdateSentinel_.getProperty(LAST_SETUP_CRC32);
       editingTarget_ = editingTarget;
       chunks_ = chunks;
@@ -689,6 +690,24 @@ public class TextEditingTargetNotebook
 
       String chunkId = event.getOutput().getChunkId();
       
+      // ignore requests performed to initialize satellite chunks
+      if (satelliteChunkRequestIds_.contains(event.getOutput().getRequestId()))
+      {
+         int mode = queue_.getChunkExecMode(chunkId);
+         
+         forwardEventToSatelliteChunk(
+            docUpdateSentinel_.getId(),
+            chunkId,
+            new ChunkSatelliteShowChunkOutputEvent(
+                  event.getOutput(),
+                  mode,
+                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
+                  !queue_.isChunkExecuting(chunkId)
+               )
+         );
+         return;
+      }
+      
       // if this is the currently executing chunk and it has an error...
       NotebookQueueUnit unit = queue_.executingUnit();
       if (unit != null &&
@@ -802,10 +821,26 @@ public class TextEditingTargetNotebook
          return;
       boolean ensureVisible = true;
       
+      RmdChunkOutputFinishedEvent.Data data = event.getData();
+      
+      // ignore requests performed to initialize satellite chunks
+      if (satelliteChunkRequestIds_.contains(event.getData().getRequestId()))
+      {
+         forwardEventToSatelliteChunk(
+               docUpdateSentinel_.getId(),
+               data.getChunkId(),
+               new ChunkSatelliteOutputFinishedEvent(
+                  ensureVisible,
+                  data.getScope()
+               )
+            );
+         
+         return;
+      }
+      
       // clean up execution state
       cleanChunkExecState(event.getData().getChunkId());
-      RmdChunkOutputFinishedEvent.Data data = event.getData();
-
+      
       ensureVisible = queue_.getChunkExecMode(data.getChunkId()) == 
             NotebookQueueUnit.EXEC_MODE_SINGLE;
 
@@ -1005,10 +1040,7 @@ public class TextEditingTargetNotebook
          )
       );
 
-      Scope chunk = getChunkScope(chunkId);
-      clearChunkOutput(chunk);
-
-      refreshChunk(chunkId);
+      refreshSatelliteChunk(chunkId);
    }
 
    @Override
@@ -1925,9 +1957,11 @@ public class TextEditingTargetNotebook
       }
    }
 
-   private void refreshChunk(String chunkId)
+   private void refreshSatelliteChunk(String chunkId)
    {
       requestId_ = nextRequestId_++;
+      satelliteChunkRequestIds_.add(Integer.toHexString(requestId_));
+
       server_.refreshChunkOutput(
          docUpdateSentinel_.getPath(),
          docUpdateSentinel_.getId(), 
@@ -1954,6 +1988,7 @@ public class TextEditingTargetNotebook
    private JsArray<ChunkDefinition> initialChunkDefs_;
    private HashMap<String, ChunkOutputUi> outputs_;
    private ArrayList<String> satelliteChunks_;
+   private ArrayList<String> satelliteChunkRequestIds_;
    private HandlerRegistration progressClickReg_;
    private HandlerRegistration scopeTreeReg_;
    private HandlerRegistration progressCancelReg_;

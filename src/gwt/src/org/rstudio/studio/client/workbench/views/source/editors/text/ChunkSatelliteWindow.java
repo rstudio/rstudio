@@ -26,6 +26,8 @@ import com.google.inject.Singleton;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
@@ -41,7 +43,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
                                              ChunkSatelliteShowChunkOutputEvent.Handler,
                                              ChunkSatelliteCodeExecutingEvent.Handler,
                                              ChunkSatelliteOutputFinishedEvent.Handler,
-                                             ChunkSatelliteCacheEditorStyleEvent.Handler
+                                             ChunkSatelliteCacheEditorStyleEvent.Handler,
+                                             RmdChunkOutputEvent.Handler
 {
 
    @Inject
@@ -149,6 +152,24 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    public Widget getWidget()
    {
       return this;
+   }
+
+   @Override
+   public void onRmdChunkOutput(RmdChunkOutputEvent event)
+   {
+      // ignore if not targeted at this document
+      if (event.getOutput().getDocId() != chunkWindowParams_.getDocId())
+         return;
+
+      if (event.getOutput().getChunkId() != chunkWindowParams_.getChunkId())
+         return;
+
+      chunkOutputWidget_.showChunkOutput(
+         event.getOutput(),
+         NotebookQueueUnit.EXEC_MODE_SINGLE,
+         NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
+         false,
+         false);
    }
 
    public ChunkOutputWidget getOutputWidget()
