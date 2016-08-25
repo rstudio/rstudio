@@ -367,10 +367,9 @@ public class DocumentOutlineWidget extends Composite
    
    private void buildScopeTreeImpl(Scope node, int depth, Counter counter)
    {
-      if (!shouldDisplayNode(node))
-         return;
+      if (shouldDisplayNode(node))
+         addOrSetItem(node, depth, counter.increment());
       
-      addOrSetItem(node, depth, counter.increment());
       JsArray<Scope> children = node.getChildren();
       for (int i = 0; i < children.length(); i++)
       {
@@ -408,9 +407,9 @@ public class DocumentOutlineWidget extends Composite
       if (node.isNamespace())
          return false;
       
-      // don't show R functions or R sections in non-R files (unless opted-in by the user)
+      // don't show R functions or R sections in .Rmd unless requested
       TextFileType fileType = target_.getDocDisplay().getFileType();
-      if (!shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL) && !fileType.isR())
+      if (!shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL) && fileType.isRmd())
       {
          if (node.isFunction())
             return false;
@@ -419,7 +418,7 @@ public class DocumentOutlineWidget extends Composite
             return false;
       }
       
-      // Filter out anonymous functions.
+      // filter out anonymous functions
       // TODO: Annotate scope tree in such a way that this isn't necessary
       if (node.getLabel() != null && node.getLabel().startsWith("<function>"))
          return false;
