@@ -701,9 +701,12 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() == EXPANDED)
          root_.getElement().getStyle().setOpacity(1);
 
-      clear_.setVisible(true);
-      expand_.setVisible(true);
-      popout_.setVisible(true);
+      if (chunkOutputSize_ != ChunkOutputSize.Full)
+      {
+         clear_.setVisible(true);
+         expand_.setVisible(true);
+         popout_.setVisible(true);
+      }
    }
    
    private void setOverflowStyle()
