@@ -19,16 +19,20 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
-import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
-import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
+import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
@@ -39,20 +43,24 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 
 @Singleton
 public class ChunkSatelliteWindow extends SatelliteWindow
-                                  implements ChunkSatelliteView,
+                                  implements RequiresResize,
+                                             ChunkSatelliteView,
                                              ChunkSatelliteShowChunkOutputEvent.Handler,
                                              ChunkSatelliteCodeExecutingEvent.Handler,
                                              ChunkSatelliteOutputFinishedEvent.Handler,
-                                             ChunkSatelliteCacheEditorStyleEvent.Handler
+                                             ChunkSatelliteCacheEditorStyleEvent.Handler,
+                                             ChunkPlotRefreshedEvent.Handler
 {
 
    @Inject
    public ChunkSatelliteWindow(Provider<EventBus> pEventBus,
-                               Provider<FontSizeManager> pFSManager)
+                               Provider<FontSizeManager> pFSManager,
+                               RMarkdownServerOperations server)
    {
       super(pEventBus, pFSManager);
       
       pEventBus_ = pEventBus;
+      server_ = server;
    }
 
    @Override
@@ -96,6 +104,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteOutputFinishedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCacheEditorStyleEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkPlotRefreshedEvent.TYPE, this);
 
       pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
          chunkWindowParams_.getDocId(),
@@ -151,6 +160,43 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       return this;
    }
 
+   @Override
+   public void onResize()
+   {
+      server_.replayNotebookPlots(
+         chunkWindowParams_.getDocId(), 
+         chunkWindowParams_.getChunkId(),
+         /* plotWidth */ 1000,
+         new ServerRequestCallback<Boolean>()
+         {
+            @Override
+            public void onResponseReceived(Boolean started)
+            {
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         }
+      );
+   }
+
+   @Override
+   public void onChunkPlotRefreshed(ChunkPlotRefreshedEvent event)
+   {
+      // ignore if targeted at another document
+      if (event.getData().getDocId() != chunkWindowParams_.getDocId())
+         return;
+      
+      // ignore if targeted at another chunk
+      if (event.getData().getChunkId() != chunkWindowParams_.getChunkId())
+         return;
+      
+      chunkOutputWidget_.updatePlot(event.getData().getPlotUrl());
+   }
+
    public ChunkOutputWidget getOutputWidget()
    {
       return chunkOutputWidget_;
@@ -160,4 +206,5 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    private ChunkWindowParams chunkWindowParams_;
    
    private final Provider<EventBus> pEventBus_;
+   private final RMarkdownServerOperations server_;
 }
