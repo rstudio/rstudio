@@ -140,6 +140,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       chunkOutputWidget_.onOutputFinished(
          event.getEnsureVisible(),
          event.getScope());
+
+      resizePlotsRemote_.schedule(1);
    }
 
    @Override
