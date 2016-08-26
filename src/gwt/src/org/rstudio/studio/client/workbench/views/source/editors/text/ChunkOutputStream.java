@@ -62,6 +62,11 @@ public class ChunkOutputStream extends FlowPanel
       host_ = host;
       chunkOutputSize_ = chunkOutputSize;
       metadata_ = new HashMap<Integer, JavaScriptObject>();
+
+      if (chunkOutputSize_ == ChunkOutputSize.Full) {
+         getElement().getStyle().setWidth(100, Unit.PCT);
+         getElement().getStyle().setHeight(100, Unit.PCT);
+      }
    }
 
    @Override
@@ -139,7 +144,7 @@ public class ChunkOutputStream extends FlowPanel
                   onRenderComplete.execute();
                   onHeightChanged();
                }
-            });
+            }, chunkOutputSize_);
       
       // check to see if the given ordinal matches one of the existing
       // placeholder elements
@@ -207,9 +212,6 @@ public class ChunkOutputStream extends FlowPanel
          addWithOrdinal(fixedFrame, ordinal);
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full) {
-         getParent().getElement().getStyle().setProperty("minHeight", "100%");
-         getParent().getElement().getStyle().setMargin(0, Unit.PX);
-         
          frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
          frame.getElement().getStyle().setWidth(100, Unit.PCT);
          frame.getElement().getStyle().setHeight(100, Unit.PCT);
