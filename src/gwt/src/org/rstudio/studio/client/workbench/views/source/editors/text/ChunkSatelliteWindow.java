@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -28,6 +29,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
@@ -49,7 +51,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
                                              ChunkSatelliteCodeExecutingEvent.Handler,
                                              ChunkSatelliteOutputFinishedEvent.Handler,
                                              ChunkSatelliteCacheEditorStyleEvent.Handler,
-                                             ChunkPlotRefreshedEvent.Handler
+                                             ChunkPlotRefreshedEvent.Handler,
+                                             ChunkPlotRefreshFinishedEvent.Handler
 {
 
    @Inject
@@ -105,6 +108,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       pEventBus_.get().addHandler(ChunkSatelliteOutputFinishedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCacheEditorStyleEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkPlotRefreshedEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkPlotRefreshFinishedEvent.TYPE, this);
 
       pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
          chunkWindowParams_.getDocId(),
@@ -163,24 +167,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onResize()
    {
-      server_.replayNotebookPlots(
-         chunkWindowParams_.getDocId(), 
-         chunkWindowParams_.getChunkId(),
-         /* plotWidth */ 1000,
-         new ServerRequestCallback<Boolean>()
-         {
-            @Override
-            public void onResponseReceived(Boolean started)
-            {
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         }
-      );
+      resizePlotsRemote_.schedule(250);
    }
 
    @Override
@@ -196,15 +183,54 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       
       chunkOutputWidget_.updatePlot(event.getData().getPlotUrl());
    }
+   
+   @Override
+   public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
+   {
+      resizingPlotsRemote_ = false;
+   }
 
    public ChunkOutputWidget getOutputWidget()
    {
       return chunkOutputWidget_;
    }
 
+   private Timer resizePlotsRemote_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         // avoid reentrancy
+         if (resizingPlotsRemote_)
+            return;
+         
+         server_.replayNotebookChunkPlots(
+            chunkWindowParams_.getDocId(), 
+            chunkWindowParams_.getChunkId(),
+            chunkOutputWidget_.getOffsetWidth(),
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean started)
+               {
+                  resizingPlotsRemote_ = true;
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            }
+         );
+      }
+   };
+
    private ChunkOutputWidget chunkOutputWidget_;
    private ChunkWindowParams chunkWindowParams_;
    
    private final Provider<EventBus> pEventBus_;
    private final RMarkdownServerOperations server_;
+
+   private boolean resizingPlotsRemote_ = false;
 }

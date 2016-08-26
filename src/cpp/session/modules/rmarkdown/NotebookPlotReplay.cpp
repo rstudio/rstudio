@@ -230,6 +230,58 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string docId;
+   std::string chunkId;
+   int pixelWidth = 0;
+   Error error = json::readParams(request.params, &docId, 
+         &chunkId, &pixelWidth);
+   if (error)
+      return error;
+
+   // do nothing if we're already replaying plots (consider: maybe better to
+   // abort and restart with the new pixel width?)
+   if (s_pPlotReplayer && s_pPlotReplayer->isRunning())
+   {
+      pResponse->setResult(false);
+      return Success();
+   }
+
+   // extract the list of chunks to replay
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+
+   // look for snapshot files
+   std::vector<FilePath> snapshotFiles;
+
+   // find the storage location for this chunk output
+   FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
+         ContextSaved);
+   if (!path.exists())
+      return Success();
+
+   // look for snapshot files
+   std::vector<FilePath> contents;
+   error = path.children(&contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return Success();
+   }
+
+   BOOST_FOREACH(const FilePath content, contents)
+   {
+      if (content.hasExtensionLowerCase(kDisplayListExt))
+         snapshotFiles.push_back(content);
+   }
+
+   s_pPlotReplayer = ReplayPlots::create(docId, pixelWidth, snapshotFiles);
+   pResponse->setResult(true);
+
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -239,7 +291,8 @@ core::Error initPlotReplay()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput));
+      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput))
+      (bind(registerRpcMethod, "replay_notebook_chunk_plots", replayChunkPlotOutput));
 
    return initBlock.execute();
 }

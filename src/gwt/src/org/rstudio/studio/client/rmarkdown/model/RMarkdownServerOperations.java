@@ -85,6 +85,9 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    
    void replayNotebookPlots(String docId, String initialChunkId, int pixelWidth, 
          ServerRequestCallback<Boolean> requestCallback);
+
+   void replayNotebookChunkPlots(String docId, String chunkId, int pixelWidth, 
+         ServerRequestCallback<Boolean> requestCallback);
    
    void executeNotebookChunks(NotebookDocQueue queue, 
          ServerRequestCallback<Void> requestCallback);
