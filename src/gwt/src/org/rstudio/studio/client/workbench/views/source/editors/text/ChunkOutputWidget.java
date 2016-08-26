@@ -149,7 +149,7 @@ public class ChunkOutputWidget extends Composite
          frame_.getElement().getStyle().setLeft(0, Unit.PX);
          frame_.getElement().getStyle().setRight(0, Unit.PX);
          frame_.getElement().getStyle().setPosition(Position.ABSOLUTE);
-         frame_.getElement().getStyle().setPadding(0, Unit.PX);
+         frame_.getElement().getStyle().setPadding(10, Unit.PX);
          frame_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
          root_.getElement().getStyle().setWidth(100, Unit.PCT);
