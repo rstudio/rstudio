@@ -1858,6 +1858,7 @@ public class TextEditingTargetNotebook
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
                chunkId,
                plotWidth,
+               0,
                new ServerRequestCallback<String>()
                {
                   @Override

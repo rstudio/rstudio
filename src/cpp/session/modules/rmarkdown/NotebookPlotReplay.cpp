@@ -53,6 +53,7 @@ public:
          const std::string& docId, 
          const std::string& replayId,
          int width,
+         int height,
          bool persistOutput,
          const std::vector<FilePath>& snapshotFiles)
    {
@@ -84,6 +85,7 @@ public:
       // form command to pass to R 
       std::string cmd(".rs.replayNotebookPlots(" + 
                       safe_convert::numberToString(width) + ", " + 
+                      safe_convert::numberToString(height) + ", " + 
                       safe_convert::numberToString(
                          r::session::graphics::device::devicePixelRatio()) +
                       ", " +
@@ -180,8 +182,9 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    std::string docId;
    std::string initialChunkId;
    int pixelWidth = 0;
+   int pixelHeight = 0;
    Error error = json::readParams(request.params, &docId, 
-         &initialChunkId, &pixelWidth);
+         &initialChunkId, &pixelWidth, &pixelHeight);
    if (error)
       return error;
 
@@ -241,7 +244,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       }
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, true, snapshotFiles);
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, true, snapshotFiles);
    pResponse->setResult(replayId);
 
    return Success();
@@ -254,8 +257,9 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
    std::string docId;
    std::string chunkId;
    int pixelWidth = 0;
+   int pixelHeight = 0;
    Error error = json::readParams(request.params, &docId, 
-         &chunkId, &pixelWidth);
+         &chunkId, &pixelWidth, &pixelHeight);
    if (error)
       return error;
 
@@ -295,7 +299,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
          snapshotFiles.push_back(content);
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, false, snapshotFiles);
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, false, snapshotFiles);
    pResponse->setResult(replayId);
 
    return Success();

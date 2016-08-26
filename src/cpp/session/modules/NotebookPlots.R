@@ -69,7 +69,7 @@
   par(mar = c(5.1, 4.1, 2.1, 2.1))
 })
 
-.rs.addFunction("replayNotebookPlots", function(width, pixelRatio, tempFile, extraArgs) {
+.rs.addFunction("replayNotebookPlots", function(width, height, pixelRatio, tempFile, extraArgs) {
   # open stdin (for consuming snapshots from parent process)
   stdin <- file("stdin")
 
@@ -88,8 +88,11 @@
     # output from the device
     output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
                     sep = ".")
-    .rs.createNotebookGraphicsDevice(output, width / 1.618, width, 
-                                     "px", pixelRatio, extraArgs);
+
+    height <- if (height <= 0) width / 1.618 else height
+
+    .rs.createNotebookGraphicsDevice(output, height, width, 
+                                     "px", pixelRatio, extraArgs)
 
     # actually replay the plot onto the device
     tryCatch({
