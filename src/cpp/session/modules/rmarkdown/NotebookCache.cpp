@@ -204,6 +204,10 @@ Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
 
 void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   // ignore if doc is unsaved (no path)
+   if (pDoc->path().empty())
+      return;
+
    // check for a contextual (uncommitted) chunk definitions file
    FilePath chunkDefsFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(),
          notebookCtxId());
