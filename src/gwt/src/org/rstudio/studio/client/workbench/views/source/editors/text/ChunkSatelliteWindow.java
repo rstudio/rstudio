@@ -173,6 +173,10 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkPlotRefreshed(ChunkPlotRefreshedEvent event)
    {
+      // ignore replays that are not targeting this instance
+      if (currentPlotsReplayId_ != event.getData().getReplayId())
+         return;
+
       // ignore if targeted at another document
       if (event.getData().getDocId() != chunkWindowParams_.getDocId())
          return;
@@ -187,7 +191,11 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
    {
-      resizingPlotsRemote_ = false;
+      // ignore replays that are not targeting this instance
+      if (currentPlotsReplayId_ != event.getData().getReplayId())
+         return;
+
+      currentPlotsReplayId_ = null;
    }
 
    public ChunkOutputWidget getOutputWidget()
@@ -201,24 +209,25 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       public void run()
       {
          // avoid reentrancy
-         if (resizingPlotsRemote_)
+         if (currentPlotsReplayId_ != null)
             return;
          
          server_.replayNotebookChunkPlots(
             chunkWindowParams_.getDocId(), 
             chunkWindowParams_.getChunkId(),
             chunkOutputWidget_.getOffsetWidth(),
-            new ServerRequestCallback<Boolean>()
+            new ServerRequestCallback<String>()
             {
                @Override
-               public void onResponseReceived(Boolean started)
+               public void onResponseReceived(String replayId)
                {
-                  resizingPlotsRemote_ = true;
+                  currentPlotsReplayId_ = replayId;
                }
 
                @Override
                public void onError(ServerError error)
                {
+                  currentPlotsReplayId_ = null;
                   Debug.logError(error);
                }
             }
@@ -232,5 +241,5 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    private final Provider<EventBus> pEventBus_;
    private final RMarkdownServerOperations server_;
 
-   private boolean resizingPlotsRemote_ = false;
+   private String currentPlotsReplayId_ = null;
 }

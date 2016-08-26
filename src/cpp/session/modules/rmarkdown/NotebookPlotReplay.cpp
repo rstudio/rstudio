@@ -51,6 +51,7 @@ class ReplayPlots : public async_r::AsyncRProcess
 public:
    static boost::shared_ptr<ReplayPlots> create(
          const std::string& docId, 
+         const std::string& replayId,
          int width,
          const std::vector<FilePath>& snapshotFiles)
    {
@@ -90,6 +91,7 @@ public:
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
       pReplayer->docId_ = docId;
+      pReplayer->replayId_ = replayId;
       pReplayer->width_ = width;
       pReplayer->start(cmd.c_str(), FilePath(),
                        async_r::R_PROCESS_VANILLA,
@@ -121,6 +123,7 @@ private:
          json::Object result;
          result["chunk_id"] = png.parent().filename();
          result["doc_id"] = docId_;
+         result["replay_id"] = replayId_;
          result["plot_url"] = kChunkOutputPath "/" + 
             png.parent().parent().filename() + "/" + // context ID = folder name
             docId_ + "/" + 
@@ -138,6 +141,7 @@ private:
       json::Object result;
       result["doc_id"] = docId_;
       result["width"] = width_;
+      result["replay_id"] = replayId_;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkPlotRefreshFinished, result));
 
@@ -152,6 +156,7 @@ private:
    }
 
    std::string docId_;
+   std::string replayId_;
    int width_;
 };
 
@@ -160,6 +165,7 @@ boost::shared_ptr<ReplayPlots> s_pPlotReplayer;
 Error replayPlotOutput(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
+   std::string replayId = core::system::generateUuid();
    std::string docId;
    std::string initialChunkId;
    int pixelWidth = 0;
@@ -224,8 +230,8 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       }
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, pixelWidth, snapshotFiles);
-   pResponse->setResult(true);
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, snapshotFiles);
+   pResponse->setResult(replayId);
 
    return Success();
 }
@@ -233,6 +239,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
 Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
+   std::string replayId = core::system::generateUuid();
    std::string docId;
    std::string chunkId;
    int pixelWidth = 0;
@@ -277,8 +284,8 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
          snapshotFiles.push_back(content);
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, pixelWidth, snapshotFiles);
-   pResponse->setResult(true);
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, snapshotFiles);
+   pResponse->setResult(replayId);
 
    return Success();
 }

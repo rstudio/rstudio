@@ -916,6 +916,12 @@ public class TextEditingTargetNotebook
    @Override
    public void onChunkPlotRefreshFinished(ChunkPlotRefreshFinishedEvent event)
    {
+      // ignore replays that are not targeting this instance
+      if (currentPlotsReplayId_ != event.getData().getReplayId())
+         return;
+
+      currentPlotsReplayId_ = null;
+
       // ignore if targeted at another document
       if (event.getData().getDocId() != docUpdateSentinel_.getId())
          return;
@@ -935,6 +941,10 @@ public class TextEditingTargetNotebook
    @Override
    public void onChunkPlotRefreshed(ChunkPlotRefreshedEvent event)
    {
+      // ignore replays that are not targeting this instance
+      if (currentPlotsReplayId_ != event.getData().getReplayId())
+         return;
+
       // ignore if targeted at another document
       if (event.getData().getDocId() != docUpdateSentinel_.getId())
          return;
@@ -1848,16 +1858,18 @@ public class TextEditingTargetNotebook
          server_.replayNotebookPlots(docUpdateSentinel_.getId(), 
                chunkId,
                plotWidth,
-               new ServerRequestCallback<Boolean>()
+               new ServerRequestCallback<String>()
                {
                   @Override
-                  public void onResponseReceived(Boolean started)
+                  public void onResponseReceived(String replayId)
                   {
-                     // server returns false in the case wherein there's already
+                     // server returns empty in the case wherein there's already
                      // a resize RPC in process (could be from e.g. another 
                      // notebook in this session)
-                     if (!started)
+                     if (replayId == null || replayId.isEmpty())
                         return;
+
+                     currentPlotsReplayId_ = replayId;
                      
                      // don't replay a request for this width again
                      lastPlotWidth_ = plotWidth;
@@ -1871,6 +1883,8 @@ public class TextEditingTargetNotebook
                   @Override
                   public void onError(ServerError error)
                   {
+                     currentPlotsReplayId_ = null;
+
                      Debug.logError(error);
                   }
                });
@@ -2031,6 +2045,8 @@ public class TextEditingTargetNotebook
    private boolean isCreateNotebookSaveHandlerRunning_ = false;
    
    private int state_ = STATE_NONE;
+
+   private String currentPlotsReplayId_ = null;
    
    // no chunk state
    private final static int STATE_NONE = 0;
