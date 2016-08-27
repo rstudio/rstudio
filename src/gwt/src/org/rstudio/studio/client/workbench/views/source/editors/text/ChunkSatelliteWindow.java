@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
@@ -27,6 +28,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
@@ -96,6 +98,9 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          ChunkOutputWidget.EXPANDED,
          chunkOutputHost,
          ChunkOutputSize.Full);
+
+      Element ele = chunkOutputWidget_.getElement();
+      ele.addClassName(ThemeStyles.INSTANCE.selectableText());
       
       mainPanel.add(chunkOutputWidget_);
       mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
