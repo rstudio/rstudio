@@ -82,7 +82,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    json::Object result;
    result["doc_id"] = docId;
    result["request_id"] = requestId;
-   result["chunk_id"] = "";
+   result["chunk_id"] = singleChunkId.empty() ? "" : singleChunkId;
    result["type"] = kFinishedReplay;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
