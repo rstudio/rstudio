@@ -846,7 +846,7 @@ public class ChunkOutputWidget extends Composite
          // if we're adding a block widget into an existing chunk, we 
          // need to switch to gallery mode 
          final ChunkOutputStream stream = (ChunkOutputStream)presenter_;
-         final ChunkOutputGallery gallery = new ChunkOutputGallery(this);
+         final ChunkOutputGallery gallery = new ChunkOutputGallery(this, chunkOutputSize_);
 
          // replace the stream with the gallery (the stream will live on inside
          // the gallery's console page). Perform this operation before adding pages,

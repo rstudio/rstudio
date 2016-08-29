@@ -40,7 +40,7 @@ public class ChunkDataPreview extends Composite
    
    public ChunkDataPreview(JavaScriptObject data)
    {
-      data_ = new ChunkDataWidget(data);
+      data_ = new ChunkDataWidget(data, ChunkOutputSize.Default);
 
       initWidget(uiBinder.createAndBindUi(this));
       dataHost_.add(data_);

@@ -9,9 +9,9 @@ public class ChunkDataPage extends ChunkOutputPage
                            implements EditorThemeListener
 {
    public ChunkDataPage(JavaScriptObject data, NotebookFrameMetadata metadata,
-         int ordinal)
+         int ordinal, ChunkOutputSize chunkOutputSize)
    {
-      this(new ChunkDataWidget(data), metadata, ordinal);
+      this(new ChunkDataWidget(data, chunkOutputSize), metadata, ordinal);
    }
    
    public ChunkDataPage(ChunkDataWidget widget, NotebookFrameMetadata metadata,

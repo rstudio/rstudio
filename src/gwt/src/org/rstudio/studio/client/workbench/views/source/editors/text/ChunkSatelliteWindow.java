@@ -175,6 +175,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    public void onResize()
    {
       resizePlotsRemote_.schedule(250);
+      chunkOutputWidget_.onResize();
    }
 
    @Override

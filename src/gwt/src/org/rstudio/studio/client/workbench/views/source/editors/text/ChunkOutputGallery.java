@@ -61,10 +61,13 @@ public class ChunkOutputGallery extends Composite
 
   // Public methods ----------------------------------------------------------
 
-   public ChunkOutputGallery(ChunkOutputPresenter.Host host)
+   public ChunkOutputGallery(
+      ChunkOutputPresenter.Host host,
+      ChunkOutputSize chunkOutputSize)
    {
       pages_ = new ArrayList<ChunkOutputPage>();
       host_ = host;
+      chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       content_ = new SimplePanel();
       viewer_.add(content_);
@@ -145,7 +148,7 @@ public class ChunkOutputGallery extends Composite
    public void showDataOutput(JavaScriptObject data, 
          NotebookFrameMetadata metadata, int ordinal)
    {
-      addPage(new ChunkDataPage(data, metadata, ordinal));
+      addPage(new ChunkDataPage(data, metadata, ordinal, chunkOutputSize_));
    }
 
    @Override
@@ -393,6 +396,7 @@ public class ChunkOutputGallery extends Composite
    
    private final ArrayList<ChunkOutputPage> pages_;
    private final ChunkOutputPresenter.Host host_;
+   private final ChunkOutputSize chunkOutputSize_;
 
    private ChunkConsolePage console_;
    private SimplePanel content_;
