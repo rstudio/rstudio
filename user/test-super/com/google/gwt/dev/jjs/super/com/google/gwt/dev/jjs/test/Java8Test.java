@@ -1628,7 +1628,7 @@ public class Java8Test extends GWTTestCase {
     T apply(T t);
     // TODO(rluble): uncomment the line below to when bridges for default methods are created
     // in functional expressions
-    // FunctionalExpressionBridges_I<T> m(T t);
+    FunctionalExpressionBridges_I<T> m(T t);
   }
 
   @FunctionalInterface

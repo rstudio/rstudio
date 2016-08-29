@@ -1269,7 +1269,6 @@ public class GwtAstBuilder {
         JClassType functionalExpressionImplementationClass,
         FunctionalExpression functionalExpression,
         JMethod functionalInterfaceAbstractMethod) {
-      // TODO(rluble): create bridges that might be needed for default methods.
       if (functionalExpression.getRequiredBridges() != null) {
         for (MethodBinding methodBinding : functionalExpression.getRequiredBridges()) {
           // Create bridges.
@@ -2556,12 +2555,10 @@ public class GwtAstBuilder {
         processEnumType((JEnumType) type);
       }
 
-      if (type instanceof JClassType) {
-        if (type.isJsNative()) {
-          maybeImplementJavaLangObjectMethodsOnNativeClass(type);
-        }
-        addBridgeMethods(x.binding);
+      if (type instanceof JClassType && type.isJsNative()) {
+        maybeImplementJavaLangObjectMethodsOnNativeClass(type);
       }
+      addBridgeMethods(x.binding);
 
       curClass = classStack.pop();
     }
@@ -2776,54 +2773,38 @@ public class GwtAstBuilder {
       createBridgeMethod(curClass.type, jdtBridgeMethod, targetMethod);
     }
 
-    private void createBridgeMethod(
+    /**
+     * Create a bridge method. It calls a same-named method with the same
+     * arguments, but with a different type signature.
+     */
+    private JMethod createBridgeMethod(
         JDeclaredType enclosingType, MethodBinding sourceMethodBinding, JMethod targetMethod) {
+
       JType returnType = typeMap.get(sourceMethodBinding.returnType);
-      Iterable<JType> parameterTypes =
-          FluentIterable.from(Arrays.asList(sourceMethodBinding.parameters)).transform(
-              new Function<TypeBinding, JType>() {
-                @Override
-                public JType apply(TypeBinding typeBinding) {
-                  return typeMap.get(typeBinding.erasure());
-                }
-              });
+      Iterable<JType> parameterTypes = mapTypes(sourceMethodBinding.parameters);
+      Iterable<JClassType> thrownExceptionTypes = mapTypes(sourceMethodBinding.thrownExceptions);
 
-      Iterable<JClassType> thrownExceptionTypes =
-          FluentIterable.from(Arrays.asList(sourceMethodBinding.thrownExceptions)).transform(
-          new Function<ReferenceBinding, JClassType>() {
-            @Override
-            public JClassType apply(ReferenceBinding exceptionReferenceBinding) {
-              return (JClassType) typeMap.get(exceptionReferenceBinding.erasure());
-            }
-          });
-
-      JMethod bridgeMethod = createBridgeMethod(
-          enclosingType, targetMethod, parameterTypes, returnType, thrownExceptionTypes);
-      typeMap.setMethod(sourceMethodBinding, bridgeMethod);
-    }
-
-      /**
-       * Create a bridge method. It calls a same-named method with the same
-       * arguments, but with a different type signature.
-       */
-    private JMethod createBridgeMethod(JDeclaredType enclosingType,
-        JMethod targetMethod, Iterable<JType> parameterTypes, JType returnType,
-        Iterable<JClassType> thrownExceptions) {
       SourceInfo info = targetMethod.getSourceInfo();
       JMethod bridgeMethod =
           new JMethod(info, targetMethod.getName(), enclosingType, returnType, false, false,
               targetMethod.isFinal(), targetMethod.getAccess());
       bridgeMethod.setBody(new JMethodBody(info));
-      enclosingType.addMethod(bridgeMethod);
+      if (enclosingType instanceof JInterfaceType) {
+        // Mark bridges created in interfaces as default methods so they are processed correctly
+        // by the rest of the pipeline.
+        bridgeMethod.setDefaultMethod();
+      }
       bridgeMethod.setSynthetic();
-      int paramIdx = 0;
+
+      enclosingType.addMethod(bridgeMethod);
+      int paramIndex = 0;
       List<JParameter> implParams = targetMethod.getParams();
       for (JType parameterType : parameterTypes) {
-        JParameter parameter = implParams.get(paramIdx++);
+        JParameter parameter = implParams.get(paramIndex++);
         bridgeMethod.createFinalParameter(
             parameter.getSourceInfo(), parameter.getName(), parameterType);
       }
-      for (JClassType thrownException : thrownExceptions) {
+      for (JClassType thrownException : thrownExceptionTypes) {
         bridgeMethod.addThrownException(thrownException);
       }
       bridgeMethod.freezeParamTypes();
@@ -2841,6 +2822,7 @@ public class GwtAstBuilder {
       } else {
         body.getBlock().addStmt(call.makeReturnStatement());
       }
+      typeMap.setMethod(sourceMethodBinding, bridgeMethod);
       return bridgeMethod;
     }
 
@@ -3664,6 +3646,16 @@ public class GwtAstBuilder {
     }
   }
 
+  private <T extends JType> Iterable<T> mapTypes(TypeBinding[] types) {
+    return FluentIterable.from(Arrays.asList(types)).transform(
+        new Function<TypeBinding, T>() {
+          @Override
+          public T apply(TypeBinding typeBinding) {
+            return (T) typeMap.get(typeBinding.erasure());
+          }
+        });
+  }
+
   static class ClassInfo {
     public final JClassType classType;
     public final ClassScope scope;
@@ -4185,17 +4177,11 @@ public class GwtAstBuilder {
     TypeBinding[] params =
         JdtUtil.getAnnotationParameterTypeBindingArray(specializeAnnotation, "params");
     assert params != null : "params is a mandatory field";
-    List<JType> paramTypes = new ArrayList<JType>();
-    for (TypeBinding pType : params) {
-      paramTypes.add(typeMap.get(pType));
-    }
+    List<JType> paramTypes = Lists.newArrayList(mapTypes(params));
 
     TypeBinding returns =
         JdtUtil.getAnnotationParameterTypeBinding(specializeAnnotation, "returns");
-    JType returnsType = null;
-    if (returns != null) {
-      returnsType = typeMap.get(returns);
-    }
+    JType returnsType = returns == null ? null : typeMap.get(returns);
 
     String targetMethod = JdtUtil.getAnnotationParameterString(specializeAnnotation, "target");
     assert targetMethod != null : "target is a mandatory parameter";
