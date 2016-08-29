@@ -222,13 +222,20 @@ public class EditSession extends JavaScriptObject
       return this.getMarkers(true)[id];
    }-*/;
    
+   public final AnchoredRange createAnchoredRange(Position start, Position end)
+   {
+      return createAnchoredRange(start, end, true);
+   }
+   
    public final native AnchoredRange createAnchoredRange(Position start,
-                                                         Position end) /*-{
+                                                         Position end,
+                                                         boolean insertRight)
+   /*-{
       var Range = $wnd.require("ace/range").Range;
       var result = new Range();
       result.start = this.doc.createAnchor(start.row, start.column);
       result.end = this.doc.createAnchor(end.row, end.column);
-      result.end.$insertRight = true;
+      result.end.$insertRight = insertRight;
       return result;
    }-*/;
    

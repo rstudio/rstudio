@@ -554,6 +554,10 @@ public class TextEditingTarget implements
          @Override
          public void onCommandClick(CommandClickEvent event)
          {
+            // force cursor position
+            Position position = event.getDocumentPosition();
+            docDisplay_.setCursorPosition(position);
+            
             if (fileType_.canCompilePDF() && 
                 commands_.synctexSearch().isEnabled())
             {

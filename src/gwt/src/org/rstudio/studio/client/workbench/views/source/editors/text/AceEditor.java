@@ -284,6 +284,7 @@ public class AceEditor implements DocDisplay,
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
       mathjax_ = new MathJax(this);
+      bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -340,11 +341,8 @@ public class AceEditor implements DocDisplay,
                event.preventDefault();
                event.stopPropagation();
 
-               // set the cursor position
-               setCursorPosition(event.getDocumentPosition());
-
                // go to function definition
-               fireEvent(new CommandClickEvent());
+               fireEvent(new CommandClickEvent(event.getDocumentPosition()));
             }
             else
             {
@@ -3271,8 +3269,7 @@ public class AceEditor implements DocDisplay,
       infoBar_.show();
    }
 
-   public Range createAnchoredRange(Position start,
-                                    Position end)
+   public AnchoredRange createAnchoredRange(Position start, Position end)
    {
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }
@@ -3644,6 +3641,7 @@ public class AceEditor implements DocDisplay,
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
    private final MathJax mathjax_;
+   private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

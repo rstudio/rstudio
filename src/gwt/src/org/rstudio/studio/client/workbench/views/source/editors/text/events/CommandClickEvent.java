@@ -17,13 +17,28 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+
 public class CommandClickEvent extends GwtEvent<CommandClickEvent.Handler>
 {
+   public CommandClickEvent(Position position)
+   {
+      position_ = position;
+   }
+   
+   public Position getDocumentPosition()
+   {
+      return position_;
+   }
+   
+   private final Position position_;
+   
+   // Boilerplate ----
+   
    public interface Handler extends EventHandler
    {
       void onCommandClick(CommandClickEvent event);
    }
-
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 
