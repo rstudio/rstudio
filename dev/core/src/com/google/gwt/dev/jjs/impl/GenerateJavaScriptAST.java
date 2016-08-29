@@ -527,7 +527,6 @@ public class GenerateJavaScriptAST {
     private final JsName arrayLength = objectScope.declareUnobfuscatableName("length");
     private final JsName globalTemp = topScope.declareUnobfuscatableName("_");
     private final JsName prototype = objectScope.declareUnobfuscatableName("prototype");
-    private final JsName call = objectScope.declareUnobfuscatableName("call");
 
     @Override
     public JsExpression transformArrayLength(JArrayLength expression) {
@@ -898,7 +897,7 @@ public class GenerateJavaScriptAST {
       JsNameRef methodNameRef;
       if (method.isJsNative()) {
         // Construct Constructor.prototype.jsname or Constructor.
-        methodNameRef = createGlobalQualifier(method.getQualifiedJsName(), sourceInfo);
+        methodNameRef = createGlobalQualifier(method, sourceInfo);
       } else if (method.isConstructor()) {
         /*
          * Constructor calls through {@code this} and {@code super} are always dispatched statically
@@ -980,7 +979,7 @@ public class GenerateJavaScriptAST {
       JConstructor ctor = newInstance.getTarget();
       JsName ctorName = names.get(ctor);
       JsNameRef  reference = ctor.isJsNative()
-          ? createGlobalQualifier(ctor.getQualifiedJsName(), sourceInfo)
+          ? createGlobalQualifier(ctor, sourceInfo)
           : ctorName.makeRef(sourceInfo);
       List<JsExpression> arguments = transform(newInstance.getArgs());
 
@@ -1105,7 +1104,7 @@ public class GenerateJavaScriptAST {
       JMethod method = jsniMethodRef.getTarget();
       if (method.isJsNative()) {
         // Construct Constructor.prototype.jsname or Constructor.
-        return createGlobalQualifier(method.getQualifiedJsName(), jsniMethodRef.getSourceInfo());
+        return createGlobalQualifier(method, jsniMethodRef.getSourceInfo());
       }
       return names.get(method).makeRef(jsniMethodRef.getSourceInfo());
     }
@@ -1688,7 +1687,7 @@ public class GenerateJavaScriptAST {
     }
 
     private JsExpression buildClosureStyleCastMapFromArrayLiteral(
-            List<JsExpression> runtimeTypeIdLiterals, SourceInfo sourceInfo) {
+        List<JsExpression> runtimeTypeIdLiterals, SourceInfo sourceInfo) {
       /*
        * goog.object.createSet('foo', 'bar', 'baz') is optimized by closure compiler into
        * {'foo': !0, 'bar': !0, baz: !0}
@@ -1720,7 +1719,7 @@ public class GenerateJavaScriptAST {
     private JsNameRef createStaticReference(JMember member, SourceInfo sourceInfo) {
       assert member.isStatic();
       return member.isJsNative()
-          ? createGlobalQualifier(member.getQualifiedJsName(), sourceInfo)
+          ? createGlobalQualifier(member, sourceInfo)
           : names.get(member).makeRef(sourceInfo);
     }
 
@@ -2015,8 +2014,7 @@ public class GenerateJavaScriptAST {
     private void maybeCopyObjProperties(
         JDeclaredType type, JsExpression toPrototype, JsExpression fromPrototype) {
       if (getSuperPrototype(type) != null && !type.isJsFunctionImplementation()) {
-        JsStatement statement =
-        constructInvocation(type.getSourceInfo(),
+        JsStatement statement = constructInvocation(type.getSourceInfo(),
             RuntimeConstants.RUNTIME_COPY_OBJECT_PROPERTIES,
             fromPrototype,
             toPrototype)
@@ -2037,7 +2035,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassDefinition(JDeclaredType type) {
-        assert !program.isRepresentedAsNativeJsPrimitive(type);
+      assert !program.isRepresentedAsNativeJsPrimitive(type);
 
       if (closureCompilerFormatEnabled) {
         generateClosureTypeDefinition(type);
@@ -2242,10 +2240,10 @@ public class GenerateJavaScriptAST {
       generatePrototypeAssignment(method, name, rhs, method.getJsMemberType());
     }
 
-     /**
-      * Create a vtable assignment of the form _.polyname = rhs; and register the line as
-      * created for {@code method}.
-      */
+    /**
+     * Create a vtable assignment of the form _.polyname = rhs; and register the line as
+     * created for {@code method}.
+     */
     private void generatePrototypeAssignment(JMethod method, JsName name, JsExpression rhs,
         JsMemberType memberType) {
       SourceInfo sourceInfo = method.getSourceInfo();
@@ -2275,9 +2273,9 @@ public class GenerateJavaScriptAST {
 
       JsObjectLiteral definePropertyLiteral =
           JsObjectLiteral.builder(sourceInfo)
-               // {name: {get: function() { ..... }} or {set : function (v) {....}}}
+              // {name: {get: function() { ..... }} or {set : function (v) {....}}}
               .add(name, JsObjectLiteral.builder(sourceInfo)
-                      // {get: function() { ..... }} or {set : function (v) {....}}
+                  // {get: function() { ..... }} or {set : function (v) {....}}
                   .add(method.getJsMemberType().getPropertyAccessorKey(), methodDefinitionStatement)
                   .build())
               .build();
@@ -2335,7 +2333,7 @@ public class GenerateJavaScriptAST {
      * variable _ points the JavaScript prototype for {@code type}.
      */
     private void generatePrototypeDefinitions(JDeclaredType type) {
-        assert !program.isRepresentedAsNativeJsPrimitive(type);
+      assert !program.isRepresentedAsNativeJsPrimitive(type);
 
       // Emit synthetic methods first. In JsInterop we allow a more user written method to be named
       // with the same name as a synthetic bridge (required due to generics) relying that the
@@ -2390,24 +2388,6 @@ public class GenerateJavaScriptAST {
         // both names have to point to the same function.
         generatePrototypeDefinitionAlias(method, getPackagePrivateName(method));
       }
-    }
-
-    public JsNameRef createGlobalQualifier(String qualifier, SourceInfo sourceInfo) {
-      assert !qualifier.isEmpty();
-
-      return JsUtils.createQualifiedNameRef(
-          isQualifiedThroughSpecialGlobalName(qualifier) ? qualifier : ("$wnd." + qualifier),
-          sourceInfo);
-    }
-
-    /*
-     * Some global names are considered special and should be used unqualified. Such names should
-     * not be emitted with the "$wnd." prefix as there seems to be runtime performance implications.
-     * {@see TypeCategory} for the full list.
-     */
-    private boolean isQualifiedThroughSpecialGlobalName(String qualifiedName) {
-      String topLevelName = qualifiedName.split("\\.")[0];
-      return TypeCategory.isSpecialGlobalName(topLevelName);
     }
 
     /**
@@ -3087,5 +3067,26 @@ public class GenerateJavaScriptAST {
 
   private JsName getIndexedFieldJsName(String indexedName) {
     return names.get(program.getIndexedField(indexedName));
+  }
+
+  private static final String WINDOW = "window";
+
+  private static boolean isWindow(String jsNamespace) {
+    return jsNamespace != null
+        && (WINDOW.equals(jsNamespace) || jsNamespace.startsWith(WINDOW + "."));
+  }
+
+  private static JsNameRef createGlobalQualifier(JMember member, SourceInfo sourceInfo) {
+    if (isWindow(member.getJsNamespace())) {
+      return JsUtils.createQualifiedNameRef(
+          member.getQualifiedJsName().substring(WINDOW.length() + 1), sourceInfo);
+    }
+    return createGlobalQualifier(member.getQualifiedJsName(), sourceInfo);
+  }
+
+  private static JsNameRef createGlobalQualifier(String qualifier, SourceInfo sourceInfo) {
+    assert !qualifier.isEmpty();
+
+    return JsUtils.createQualifiedNameRef("$wnd." + qualifier, sourceInfo);
   }
 }

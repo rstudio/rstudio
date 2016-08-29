@@ -157,12 +157,12 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   @JsType(isNative = true, name = "Function", namespace = JsPackage.GLOBAL)
-  private static class NativeFunction {
-    public native String apply(String thisContext, Object[] argsArray);
+  private static class NativeFunction<T> {
+    public native T apply(Object thisContext, Object[] argsArray);
   }
 
-  @JsProperty(name = "fromCharCode", namespace = "String")
-  private static native NativeFunction getFromCharCodeFunction();
+  @JsProperty(name = "String.fromCharCode", namespace = "window")
+  private static native NativeFunction<String> getFromCharCodeFunction();
 
   public static String valueOf(char[] x) {
     return valueOf(x, 0, x.length);
@@ -410,7 +410,7 @@ public final class String implements Comparable<String>, CharSequence,
   public boolean equals(Object other) {
     // Java equality is translated into triple equality which is a quick to compare strings for
     // equality without any instanceOf checks.
-    return checkNotNull(this) == other;
+    return this == other;
   }
 
   public boolean equalsIgnoreCase(String other) {
@@ -489,11 +489,11 @@ public final class String implements Comparable<String>, CharSequence,
   public int lastIndexOf(String str) {
     return asNativeString().lastIndexOf(str);
   }
-  
+
   public int lastIndexOf(String str, int start) {
     return asNativeString().lastIndexOf(str, start);
   }
-  
+
   @Override
   public int length() {
     return asNativeString().length;
@@ -724,7 +724,7 @@ public final class String implements Comparable<String>, CharSequence,
   public String toUpperCase() {
     return asNativeString().toLocaleUpperCase();
   }
-  
+
   // See the notes in lowerCase pair.
   public String toUpperCase(Locale locale) {
     return locale == Locale.getDefault()
@@ -753,7 +753,7 @@ public final class String implements Comparable<String>, CharSequence,
     return start > 0 || end < length ? substring(start, end) : this;
   }
 
-  @JsType(isNative = true, name = "String", namespace = JsPackage.GLOBAL)
+  @JsType(isNative = true, name = "String", namespace = "window")
   private static class NativeString {
     public static native String fromCharCode(char x);
     public int length;

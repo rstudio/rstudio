@@ -31,7 +31,7 @@ public class StringOptimizationTest extends OptimizationTestBase {
   private static native String getGeneratedFunctionDefintionThatTriggersStringClinit() /*-{
     return function() {
       tmp = @StringOptimizationTest::createString()();
-     }.toString();
+    }.toString();
   }-*/;
 
   public void testStringClinitIsRemoved() throws Exception {
@@ -53,5 +53,4 @@ public class StringOptimizationTest extends OptimizationTestBase {
     String functionDef = getGeneratedFunctionDefintionThatCallsStringFromCharCode();
     assertFunctionMatches(functionDef, "tmp=String.fromCharCode('c')");
   }
-
 }

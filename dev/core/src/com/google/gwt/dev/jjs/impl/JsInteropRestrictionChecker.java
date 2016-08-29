@@ -1,11 +1,11 @@
 /*
  * Copyright 2015 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -567,13 +567,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   private <T extends HasJsName & HasSourceInfo & CanBeJsNative> void checkJsName(T item) {
     if (item.getJsName().isEmpty()) {
       logError(item, "%s cannot have an empty name.", getDescription(item));
-    } else if (JsInteropUtil.isGlobal(item.getJsNamespace()) && item.isJsNative()) {
+    } else if ((item.isJsNative() && !JsUtils.isValidJsQualifiedName(item.getJsName()))
+        || (!item.isJsNative() && !JsUtils.isValidJsIdentifier(item.getJsName()))) {
       // Allow qualified names in the name field for JsPackage.GLOBAL native items for future
       // compatibility
-      if (!JsUtils.isValidJsQualifiedName(item.getJsName())) {
-        logError(item, "%s has invalid name '%s'.", getDescription(item), item.getJsName());
-      }
-    } else if (!JsUtils.isValidJsIdentifier(item.getJsName())) {
       logError(item, "%s has invalid name '%s'.", getDescription(item), item.getJsName());
     }
   }

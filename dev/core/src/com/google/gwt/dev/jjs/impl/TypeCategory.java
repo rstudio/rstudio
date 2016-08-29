@@ -135,10 +135,6 @@ public enum TypeCategory {
     return TypeCategory.TYPE_JAVA_OBJECT;
   }
 
-  public static boolean isSpecialGlobalName(String name) {
-    return specialGlobalNames.containsKey(name);
-  }
-
   private static Map<String, TypeCategory> specialGlobalNames =
       ImmutableMap.<String,TypeCategory>builder()
           .put("Object", TYPE_JS_OBJECT)
