@@ -71,11 +71,14 @@ import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
+import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
+import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -139,6 +142,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
@@ -554,13 +558,20 @@ public class TextEditingTarget implements
          @Override
          public void onCommandClick(CommandClickEvent event)
          {
+            Position position = event.getDocumentPosition();
+            if (attemptNavigationToUrl(position))
+               return;
+            
+            // force cursor position
+            docDisplay_.setCursorPosition(position);
+            
             if (fileType_.canCompilePDF() && 
                 commands_.synctexSearch().isEnabled())
             {
                // warn firefox users that this doesn't really work in Firefox
                if (BrowseCap.isFirefox() && !BrowseCap.isMacintosh())
                   SynctexUtils.maybeShowFirefoxWarning("PDF preview");
-               
+
                doSynctexSearch(true);
             }
             else
@@ -774,6 +785,107 @@ public class TextEditingTarget implements
                   }
                }
             });
+   }
+   
+   private void navigateToUrl(String url)
+   {
+      // allow web links starting with 'www'
+      if (url.startsWith("www."))
+         url = "http://" + url;
+      
+      // attempt to open web links in a new window
+      Pattern reWebLink = Pattern.create("^https?://");
+      if (reWebLink.test(url))
+      {
+         globalDisplay_.openWindow(url);
+         return;
+      }
+      
+      // treat other URLs as paths to files on the server
+      final String finalUrl = url;
+      server_.stat(finalUrl, new ServerRequestCallback<FileSystemItem>()
+      {
+         @Override
+         public void onResponseReceived(FileSystemItem file)
+         {
+            // inform user non-obtrusively if no file found
+            if (file == null || !file.exists())
+            {
+               view_.showWarningBar("No file at path '" + finalUrl + "'.");
+               return;
+            }
+            
+            // if we have a registered filetype for this file, try
+            // to open it in the IDE; otherwise open in browser
+            FileType fileType = fileTypeRegistry_.getTypeForFile(file);
+            if (fileType != null && fileType instanceof EditableFileType)
+            {
+               fileType.openFile(file, null, NavigationMethods.DEFAULT, events_);
+            }
+            else
+            {
+               events_.fireEvent(new OpenFileInBrowserEvent(file));
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+   
+   private boolean attemptNavigationToUrl(final Position position)
+   {
+      // check to see if we're on a token with the 'href' type
+      Token token = docDisplay_.getTokenAt(position);
+      if (token != null && token.hasType("href"))
+      {
+         navigateToUrl(token.getValue());
+         return true;
+      }
+      
+      // check to see if this position lies within a web link
+      String line = docDisplay_.getLine(position.getRow());
+      int column = position.getColumn();
+      Pattern reWebLink = Pattern.create("(?:https?://|www)\\S+");
+      for (Match match = reWebLink.match(line, 0);
+           match != null;
+           match = match.nextMatch())
+      {
+         int startIdx = match.getIndex();
+         int endIdx   = match.getIndex() + match.getValue().length();
+         if (startIdx <= column && column <= endIdx)
+         {
+            // attempt to trim off enclosing quotes, etc
+            String url = match.getValue();
+            for (int index = startIdx - 1; index >= 0; index--)
+            {
+               char beforeStart = line.charAt(index);
+               boolean needsTrim =
+                     beforeStart == '(' && url.endsWith(")")  ||
+                     beforeStart == '[' && url.endsWith("]")  ||
+                     beforeStart == '{' && url.endsWith("}")  ||
+                     beforeStart == '[' && url.endsWith("]")  ||
+                     beforeStart == '"' && url.endsWith("\"") ||
+                     beforeStart == '\'' && url.endsWith("'");
+
+               if (needsTrim)
+                  url = url.substring(0, url.length() - 1);
+            }
+            
+            // trim off trailing punctuation (characters unlikely
+            // to be found at the end of a URL)
+            url = url.replaceAll("[,.?!@#$%^&*;:-]+$", "");
+            
+            navigateToUrl(url);
+            return true;
+         }
+      }
+      
+      // not applicable for url navigation; return false
+      return false;
    }
    
    static {
