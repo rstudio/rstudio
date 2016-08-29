@@ -140,11 +140,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withRMarkdown(String progressCaption, String userAction, 
          final Command command)
    {
-     withDependencies(   
+     withDependencies(
         progressCaption,
         userAction, 
         rmarkdownDependenciesArray(), 
-        true, // we want to update to the embedded versoin if needed
+        true, // we want to update to the embedded version if needed
         new CommandWithArg<Boolean>()
         {
          @Override
@@ -157,6 +157,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
      );
    }
    
+   public void withRMarkdown(String progressCaption, String userAction, 
+         final CommandWithArg<Boolean> command)
+   {
+     withDependencies(
+        progressCaption,
+        userAction, 
+        rmarkdownDependenciesArray(), 
+        true, 
+        command);
+   }
+
    public static List<Dependency> rmarkdownDependencies()
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
