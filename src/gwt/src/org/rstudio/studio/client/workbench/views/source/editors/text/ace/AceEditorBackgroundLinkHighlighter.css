@@ -1,5 +1,10 @@
 .highlight {
 	position: absolute;
-	margin-top: -1px;
+	margin-top: -3px;
 	border-bottom: 1px solid #1a0dab;
+}
+
+.hover {
+	pointer-events: all;
+	cursor: pointer;
 }

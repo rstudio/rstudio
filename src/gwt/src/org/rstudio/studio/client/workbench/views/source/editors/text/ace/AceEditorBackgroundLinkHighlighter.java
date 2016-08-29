@@ -18,8 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
+import org.rstudio.core.client.MouseTracker;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -39,14 +43,24 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Docu
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
 
 public class AceEditorBackgroundLinkHighlighter
    implements DocumentChangedEvent.Handler,
-              CommandClickEvent.Handler
+              CommandClickEvent.Handler,
+              MouseMoveHandler,
+              AttachEvent.Handler
 {
    interface Highlighter
    {
@@ -57,12 +71,14 @@ public class AceEditorBackgroundLinkHighlighter
    private void initialize(GlobalDisplay globalDisplay,
                            FileTypeRegistry fileTypeRegistry,
                            EventBus events,
-                           FilesServerOperations server)
+                           FilesServerOperations server,
+                           MouseTracker mouseTracker)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
       server_ = server;
+      mouseTracker_ = mouseTracker;
    }
    
    public AceEditorBackgroundLinkHighlighter(AceEditor editor)
@@ -97,6 +113,8 @@ public class AceEditorBackgroundLinkHighlighter
       
       editor_.addDocumentChangedHandler(this);
       editor_.addCommandClickHandler(this);
+      editor_.addMouseMoveHandler(this);
+      editor_.addAttachHandler(this);
    }
    
    private void highlightRow(int row)
@@ -105,7 +123,7 @@ public class AceEditorBackgroundLinkHighlighter
          highlighter.highlight(editor_, editor_.getLine(row), row);
    }
    
-   private void registerActiveMarker(int row, int markerId, final Range range)
+   private void registerActiveMarker(int row, String id, int markerId, final Range range)
    {
       if (!activeMarkers_.containsKey(row))
          activeMarkers_.put(row, new ArrayList<MarkerRegistration>());
@@ -119,7 +137,7 @@ public class AceEditorBackgroundLinkHighlighter
          {
             if (range.intersects(marker.getRange()))
             {
-               editor_.getSession().removeMarker(marker.getId());
+               editor_.getSession().removeMarker(marker.getMarkerId());
                return false;
             }
             return true;
@@ -127,8 +145,59 @@ public class AceEditorBackgroundLinkHighlighter
       });
       
       // add our new marker
-      filtered.add(new MarkerRegistration(markerId, range));
+      filtered.add(new MarkerRegistration(id, markerId, range));
       activeMarkers_.put(row, filtered);
+   }
+   
+   private void beginHighlight(int pageX, int pageY, int modifier)
+   {
+      if (!(modifier == KeyboardShortcut.CTRL || modifier == KeyboardShortcut.META))
+         return;
+      
+      Position position = editor_.screenCoordinatesToDocumentPosition(pageX, pageY);
+      
+      int row = position.getRow();
+      if (!activeMarkers_.containsKey(row))
+         return;
+      
+      List<MarkerRegistration> markers = activeMarkers_.get(row);
+      MarkerRegistration activeMarker = null;
+      for (MarkerRegistration marker : markers)
+      {
+         if (marker.getRange().contains(position))
+         {
+            activeMarker = marker;
+            break;
+         }
+      }
+      
+      if (activeMarker == null)
+         return;
+      
+      Element el = DomUtils.elementFromPoint(pageX, pageY);
+      if (el == null)
+         return;
+      
+      String id = activeMarker.getId();
+      Element markerEl = DomUtils.getFirstElementWithClassName(el, id);
+      if (markerEl == null)
+         return;
+      
+      if (activeHighlightMarkerEl_ != null && activeHighlightMarkerEl_ != markerEl)
+         activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
+         
+      markerEl.addClassName(RES.styles().hover());
+      activeHighlightMarkerEl_ = markerEl;
+      
+   }
+   
+   private void endHighlight()
+   {
+      if (activeHighlightMarkerEl_ == null)
+         return;
+      
+      activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
+      activeHighlightMarkerEl_ = null;
    }
    
    private void clearMarkers(final Range range)
@@ -149,7 +218,7 @@ public class AceEditorBackgroundLinkHighlighter
             {
                if (range.contains(marker.getRange()))
                {
-                  editor_.getSession().removeMarker(marker.getId());
+                  editor_.getSession().removeMarker(marker.getMarkerId());
                   return false;
                }
                
@@ -239,6 +308,11 @@ public class AceEditorBackgroundLinkHighlighter
          int startIdx = match.getIndex();
          int endIdx   = match.getIndex() + match.getValue().length();
          
+         // ensure that the discovered url is not within a string
+         Token token = editor_.getTokenAt(Position.create(row, startIdx));
+         if (token.hasType("string"))
+            continue;
+         
          // trim off trailing punctuation (characters unlikely
          // to be found at the end of a url)
          String url = match.getValue();
@@ -285,14 +359,48 @@ public class AceEditorBackgroundLinkHighlighter
          }
          
          // create an anchored range and add a marker for it
+         String id = "ace_link-" + StringUtil.makeRandomId(8);
+         String styles = RES.styles().highlight() + " " + id;
          AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
-         int markerId = editor.getSession().addMarker(anchoredRange, RES.styles().highlight(), "text", false);
-         registerActiveMarker(row, markerId, anchoredRange);
+         int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
+         registerActiveMarker(row, id, markerId, anchoredRange);
       }
    }
    
    // Event Handlers ---
    
+   @Override
+   public void onAttachOrDetach(AttachEvent event)
+   {
+      if (event.isAttached())
+      {
+         previewHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+         {
+            @Override
+            public void onPreviewNativeEvent(NativePreviewEvent preview)
+            {
+               int type = preview.getTypeInt();
+               if (type == Event.ONKEYDOWN || type == Event.ONKEYPRESS)
+               {
+                  int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
+                  beginHighlight(mouseTracker_.getLastMouseX(), mouseTracker_.getLastMouseY(), modifier);
+               }
+               else if (type == Event.ONKEYUP)
+               {
+                  endHighlight();
+               }
+            }
+         });
+      }
+      else
+      {
+         if (previewHandler_ != null)
+         {
+            previewHandler_.removeHandler();
+            previewHandler_ = null;
+         }
+      }
+   }
    @Override
    public void onDocumentChanged(DocumentChangedEvent event)
    {
@@ -325,6 +433,15 @@ public class AceEditorBackgroundLinkHighlighter
       }
    }
    
+   @Override
+   public void onMouseMove(MouseMoveEvent event)
+   {
+      beginHighlight(
+            event.getClientX(),
+            event.getClientY(),
+            KeyboardShortcut.getModifierValue(event.getNativeEvent()));
+   }
+   
    // Resources ----
    
    interface Resources extends ClientBundle
@@ -336,6 +453,7 @@ public class AceEditorBackgroundLinkHighlighter
    interface Styles extends CssResource
    {
       String highlight();
+      String hover();
    }
    
    public static Resources RES = GWT.create(Resources.class);
@@ -347,15 +465,21 @@ public class AceEditorBackgroundLinkHighlighter
    
    private static class MarkerRegistration
    {
-      public MarkerRegistration(int id, Range range)
+      public MarkerRegistration(String id, int markerId, Range range)
       {
          id_ = id;
+         markerId_ = markerId;
          range_ = range;
       }
       
-      public int getId()
+      public String getId()
       {
          return id_;
+      }
+      
+      public int getMarkerId()
+      {
+         return markerId_;
       }
       
       public Range getRange()
@@ -363,7 +487,8 @@ public class AceEditorBackgroundLinkHighlighter
          return range_;
       }
       
-      private final int id_;
+      private final String id_;
+      private final int markerId_;
       private final Range range_;
    }
    
@@ -375,9 +500,13 @@ public class AceEditorBackgroundLinkHighlighter
    private int nextHighlightStart_;
    private static final int N_HIGHLIGHT_ROWS = 200;
    
+   private HandlerRegistration previewHandler_;
+   private Element activeHighlightMarkerEl_;
+   
    // Injected ----
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus events_;
    private FilesServerOperations server_;
+   private MouseTracker mouseTracker_;
 }

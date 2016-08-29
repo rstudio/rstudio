@@ -2729,6 +2729,11 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addBlurHandler(handler);
    }
+   
+   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
+   {
+      return widget_.addMouseMoveHandler(handler);
+   }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
@@ -2749,10 +2754,15 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addKeyDownHandler(handler);
    }
-
+   
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
       return widget_.addKeyPressHandler(handler);
+   }
+   
+   public HandlerRegistration addKeyUpHandler(KeyUpHandler handler)
+   {
+      return widget_.addKeyUpHandler(handler);
    }
 
    public void autoHeight()

@@ -255,7 +255,11 @@ public class EditSession extends JavaScriptObject
    }-*/;
    
    public native final Token getTokenAt(int row, int column) /*-{
-      return this.getTokenAt(row, column);
+      var token = this.getTokenAt(row, column);
+      if (token == null)
+         return null;
+      token.column = token.start;
+      return token;
    }-*/;
    
    public native final void setFoldStyle(String style) /*-{
