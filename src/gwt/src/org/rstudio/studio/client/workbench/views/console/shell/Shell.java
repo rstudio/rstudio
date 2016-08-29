@@ -33,6 +33,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -64,6 +65,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 import java.util.ArrayList;
 
@@ -170,7 +172,21 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       
       addKeyDownPreviewHandler(new HistoryCompletionManager(
             view_.getInputEditorDisplay(), server));
-
+      
+      // we need to explicitly connect a paste handler on Desktop
+      // to ensure the completion popup is dismissed in shell on paste
+      if (Desktop.isDesktop())
+      {
+         view_.getInputEditorDisplay().addPasteHandler(new PasteEvent.Handler()
+         {
+            @Override
+            public void onPaste(PasteEvent event)
+            {
+               completionManager.onPaste(event);
+            }
+         });
+      }
+      
       AceEditorNative.syncUiPrefs(uiPrefs);
 
       sessionInit(session);
