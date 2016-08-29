@@ -284,6 +284,7 @@ public class AceEditor implements DocDisplay,
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
       mathjax_ = new MathJax(this);
+      monitor_ = new DocDisplayIdleMonitor(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -3644,6 +3645,7 @@ public class AceEditor implements DocDisplay,
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
    private final MathJax mathjax_;
+   private final DocDisplayIdleMonitor monitor_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
