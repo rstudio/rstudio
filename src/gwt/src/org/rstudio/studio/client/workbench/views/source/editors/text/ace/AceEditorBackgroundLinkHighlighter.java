@@ -350,8 +350,8 @@ public class AceEditorBackgroundLinkHighlighter
       }
 
       // create an anchored range and add a marker for it
-      final String id = "ace_link-" + StringUtil.makeRandomId(16);
-      final String styles = RES.styles().highlight() + " " + id;
+      final String id = "ace_marker-" + StringUtil.makeRandomId(16);
+      final String styles = RES.styles().highlight() + " ace_marker " + id;
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
       int markerId = editor.getSession().addMarker(anchoredRange, styles, MarkerRenderer.create(styles), true);
       registerActiveMarker(row, id, markerId, anchoredRange);
@@ -557,7 +557,7 @@ public class AceEditorBackgroundLinkHighlighter
    @Override
    public void onCommandClick(CommandClickEvent event)
    {
-      Position position = event.getDocumentPosition();
+      Position position = event.getEvent().getDocumentPosition();
       int row = position.getRow();
       if (!activeMarkers_.containsKey(row))
          return;

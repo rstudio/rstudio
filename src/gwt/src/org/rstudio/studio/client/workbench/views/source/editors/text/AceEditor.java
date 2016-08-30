@@ -342,7 +342,7 @@ public class AceEditor implements DocDisplay,
                event.stopPropagation();
 
                // go to function definition
-               fireEvent(new CommandClickEvent(event.getDocumentPosition()));
+               fireEvent(new CommandClickEvent(event));
             }
             else
             {

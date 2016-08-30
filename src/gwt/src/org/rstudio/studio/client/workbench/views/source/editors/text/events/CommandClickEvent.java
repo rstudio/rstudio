@@ -14,24 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
 
 public class CommandClickEvent extends GwtEvent<CommandClickEvent.Handler>
 {
-   public CommandClickEvent(Position position)
+   public CommandClickEvent(AceClickEvent event)
    {
-      position_ = position;
+      event_ = event;
    }
    
-   public Position getDocumentPosition()
+   public AceClickEvent getEvent()
    {
-      return position_;
+      return event_;
    }
    
-   private final Position position_;
+   public NativeEvent getNativeEvent()
+   {
+      return event_.getNativeEvent();
+   }
+   
+   private final AceClickEvent event_;
    
    // Boilerplate ----
    
