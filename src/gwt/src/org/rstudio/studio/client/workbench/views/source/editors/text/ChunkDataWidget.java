@@ -121,6 +121,7 @@ public class ChunkDataWidget extends SimplePanel
       pagedTable.setAttribute("data-pagedtable", "");
 
       if (fullSize) {
+         pagedTable.setAttribute("class", "pagedtable-expand");
          pagedTable.style.width = "100%";
          pagedTable.style.height = "100%";
       }
