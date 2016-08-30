@@ -368,6 +368,13 @@ private:
       std::string ctx = docQueue->commitMode() == ModeCommitted ?
          kSavedCtx : notebookCtxId();
 
+      // if this is the setup chunk, prepare for its execution by switching
+      // knitr chunk defaults
+      std::string label;
+      json::readObject(chunkOptions, "label", &label);
+      if (label == "setup")
+         prepareSetupContext();
+
       // compute engine
       std::string engine = options.getOverlayOption("engine", std::string("r"));
       if (engine == "r")
@@ -492,6 +499,16 @@ private:
       // send an interrupt to the console to abort the unterminated 
       // expression
       sendConsoleInput(execUnit_->chunkId(), json::Value());
+   }
+
+   // invoked prior to executing the setup chunk; we use this to set notebook-
+   // specific defaults for knitr chunk options (since they are persisted after
+   // the setup chunk completes)
+   void prepareSetupContext()
+   {
+      Error error = r::exec::RFunction(".rs.setDefaultChunkOptions").call();
+      if (error)
+         LOG_ERROR(error);
    }
 
    // invoked when the current execContext_ represents a completed setup chunk

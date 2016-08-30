@@ -902,3 +902,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.scalarListFromList(knitr::opts_chunk$get())
 })
 
+.rs.addFunction("setDefaultChunkOptions", function()
+{
+   knitr::opts_chunk$set(error = FALSE)
+})
+
