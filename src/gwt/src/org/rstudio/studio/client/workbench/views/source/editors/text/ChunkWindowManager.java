@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.*;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.zoom.ZoomUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -31,9 +32,9 @@ public class ChunkWindowManager
       pSatelliteManager_ = pSatelliteManager;
    }
 
-   public void openChunkWindow(String docId, String chunkId)
+   public void openChunkWindow(String docId, String chunkId, Size sourceSize)
    {
-      Size size = new Size(800, 800);
+      Size size = ZoomUtils.getZoomWindowSize(sourceSize, new Size(850,1100));
       Point position = new Point(0, 0);
       
       pSatelliteManager_.get().openSatellite(

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.List;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ProgressSpinner;
@@ -737,7 +738,11 @@ public class ChunkOutputWidget extends Composite
 
    private void popoutChunk()
    {
-      chunkWindowManager_.openChunkWindow(documentId_, chunkId_);
+      chunkWindowManager_.openChunkWindow(
+         documentId_,
+         chunkId_,
+         new Size(getElement().getOffsetWidth(), getElement().getOffsetHeight())
+      );
    }
    
    private void toggleExpansionState(final boolean ensureVisible)
