@@ -14,11 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+@JavaScriptSerializable
 public class ChunkChangeEvent 
-             extends GwtEvent<ChunkChangeEvent.Handler>
+             extends CrossWindowEvent<ChunkChangeEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
@@ -28,6 +32,14 @@ public class ChunkChangeEvent
    public static final GwtEvent.Type<ChunkChangeEvent.Handler> TYPE =
       new GwtEvent.Type<ChunkChangeEvent.Handler>();
    
+   public ChunkChangeEvent()
+   {
+      docId_ = null;
+      chunkId_ = null;
+      row_ = 0;
+      type_ = 0;
+   }
+
    public ChunkChangeEvent(String docId, String chunkId, int row, int type)
    {
       docId_ = docId;

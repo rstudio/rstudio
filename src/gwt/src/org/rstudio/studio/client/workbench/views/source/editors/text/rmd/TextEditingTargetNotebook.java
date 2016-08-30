@@ -973,6 +973,12 @@ public class TextEditingTargetNotebook
             break;
          case ChunkChangeEvent.CHANGE_REMOVE:
             removeChunk(event.getChunkId());
+
+            forwardEventToSatelliteChunk(
+               event.getDocId(),
+               event.getChunkId(),
+               event
+            );
             break;
       }
    }

@@ -28,6 +28,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Chun
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
+import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
 @Singleton
 public class ChunkSatelliteWindow extends SatelliteWindow
@@ -54,7 +56,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
                                              ChunkSatelliteOutputFinishedEvent.Handler,
                                              ChunkSatelliteCacheEditorStyleEvent.Handler,
                                              ChunkPlotRefreshedEvent.Handler,
-                                             ChunkPlotRefreshFinishedEvent.Handler
+                                             ChunkPlotRefreshFinishedEvent.Handler,
+                                             ChunkChangeEvent.Handler
 {
 
    @Inject
@@ -114,6 +117,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       pEventBus_.get().addHandler(ChunkSatelliteCacheEditorStyleEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkPlotRefreshedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkPlotRefreshFinishedEvent.TYPE, this);
+      pEventBus_.get().addHandler(ChunkChangeEvent.TYPE, this);
 
       pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
          chunkWindowParams_.getDocId(),
@@ -204,6 +208,23 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          return;
 
       currentPlotsReplayId_ = null;
+   }
+
+   @Override
+   public void onChunkChange(ChunkChangeEvent event)
+   {
+      String docId = chunkWindowParams_.getDocId();
+      String chunkId = chunkWindowParams_.getChunkId();
+      
+      if (event.getDocId() != docId || event.getChunkId() != chunkId)
+         return;
+      
+      switch(event.getChangeType())
+      {
+         case ChunkChangeEvent.CHANGE_REMOVE:
+            WindowEx.get().close();  
+            break;
+      }
    }
 
    public ChunkOutputWidget getOutputWidget()
