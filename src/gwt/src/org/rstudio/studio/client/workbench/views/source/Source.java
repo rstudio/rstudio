@@ -350,6 +350,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.shrinkSelection());
       dynamicCommands_.add(commands.toggleDocumentOutline());
       dynamicCommands_.add(commands.knitWithParameters());
+      dynamicCommands_.add(commands.clearKnitrCache());
       dynamicCommands_.add(commands.goToNextSection());
       dynamicCommands_.add(commands.goToPrevSection());
       dynamicCommands_.add(commands.goToNextChunk());

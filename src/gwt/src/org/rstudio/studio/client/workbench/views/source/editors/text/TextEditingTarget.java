@@ -5227,6 +5227,52 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onClearKnitrCache()
+   {
+      withSavedDoc(new Command() {
+         @Override
+         public void execute()
+         {
+            // determine the cache path (use relative path if possible)
+            String path = docUpdateSentinel_.getPath();
+            FileSystemItem fsi = FileSystemItem.createFile(path);
+            path = fsi.getParentPath().completePath(fsi.getStem() + "_cache");
+            String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
+                workbenchContext_.getCurrentWorkingDir());
+            if (relativePath != null)
+               path = relativePath;
+            final String docPath = path;
+            
+            globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION, 
+               "Clear Knitr Cache", 
+               "Clearing the Knitr cache will delete the cache " +
+               "directory for this document (\"" + docPath + "\"). " +
+               "\n\nAre you sure you want to clear the cache now?",
+               false,
+               new Operation() {
+                  @Override
+                  public void execute()
+                  {
+                     String code = "unlink(" + 
+                                   ConsoleDispatcher.escapedPath(docPath) + 
+                                   ", recursive = TRUE)";
+                     events_.fireEvent(new SendToConsoleEvent(code, true));
+                  }
+               },
+               null,
+               true);  
+            
+         }
+         
+      });
+      
+     
+   }
+   
+   
+   
+   @Handler
    void onSynctexSearch()
    {
       doSynctexSearch(true);
