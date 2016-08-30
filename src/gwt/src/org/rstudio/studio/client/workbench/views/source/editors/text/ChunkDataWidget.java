@@ -35,6 +35,10 @@ public class ChunkDataWidget extends SimplePanel
          getElement().getStyle().setProperty("display", "-ms-flexbox");
          getElement().getStyle().setProperty("display", "-webkit-flex");
          getElement().getStyle().setProperty("display", "flex");
+
+         getElement().getStyle().setProperty("msFlexGrow", "1");
+         getElement().getStyle().setProperty("webkitFlexGrow", "1");
+         getElement().getStyle().setProperty("flexGrow", "1");
       }
 
       initPagedTableOrDelay();
