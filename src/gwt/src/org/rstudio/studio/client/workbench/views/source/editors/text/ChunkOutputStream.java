@@ -65,7 +65,10 @@ public class ChunkOutputStream extends FlowPanel
 
       if (chunkOutputSize_ == ChunkOutputSize.Full) {
          getElement().getStyle().setWidth(100, Unit.PCT);
-         getElement().getStyle().setHeight(100, Unit.PCT);
+
+         getElement().getStyle().setProperty("display", "-ms-flexbox");
+         getElement().getStyle().setProperty("display", "-webkit-flex");
+         getElement().getStyle().setProperty("display", "flex");
       }
    }
 

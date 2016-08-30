@@ -31,7 +31,10 @@ public class ChunkDataWidget extends SimplePanel
 
       if (chunkOutputSize_ == ChunkOutputSize.Full) {
          getElement().getStyle().setWidth(100, Unit.PCT);
-         getElement().getStyle().setHeight(100, Unit.PCT);
+
+         getElement().getStyle().setProperty("display", "-ms-flexbox");
+         getElement().getStyle().setProperty("display", "-webkit-flex");
+         getElement().getStyle().setProperty("display", "flex");
       }
 
       initPagedTableOrDelay();
@@ -123,7 +126,6 @@ public class ChunkDataWidget extends SimplePanel
       if (fullSize) {
          pagedTable.setAttribute("class", "pagedtable-expand");
          pagedTable.style.width = "100%";
-         pagedTable.style.height = "100%";
       }
 
       parent.appendChild(pagedTable);

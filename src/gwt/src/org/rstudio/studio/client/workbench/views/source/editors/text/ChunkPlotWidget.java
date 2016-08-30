@@ -89,8 +89,14 @@ public class ChunkPlotWidget extends Composite
          HTMLPanel panel = new HTMLPanel("");
          
          panel.getElement().getStyle().setWidth(100, Unit.PCT);
-         panel.getElement().getStyle().setHeight(100, Unit.PCT);
+         
+         panel.getElement().getStyle().setProperty("display", "-ms-flexbox");
+         panel.getElement().getStyle().setProperty("display", "-webkit-flex");
          panel.getElement().getStyle().setProperty("display", "flex");
+
+         plot_.getElement().getStyle().setProperty("display", "-ms-flexbox");
+         plot_.getElement().getStyle().setProperty("display", "-webkit-flex");
+         plot_.getElement().getStyle().setProperty("display", "flex");
 
          plot_.getElement().getStyle().setWidth(100, Unit.PCT);
          

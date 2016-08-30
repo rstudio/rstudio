@@ -55,6 +55,7 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    flex-direction: column;
 
    height: 100%;
+   width: 100%;
 }
 
 .expand .filmstrip {
