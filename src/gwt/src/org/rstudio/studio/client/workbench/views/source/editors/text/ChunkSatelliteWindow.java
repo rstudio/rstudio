@@ -158,7 +158,8 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    {
       ChunkOutputWidget.cacheEditorStyle(
          event.getForegroundColor(),
-         event.getBackgroundColor()
+         event.getBackgroundColor(),
+         event.getAceEditorColor()
       );
 
       chunkOutputWidget_.applyCachedEditorStyle();

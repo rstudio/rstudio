@@ -35,11 +35,13 @@ public class ChunkSatelliteCacheEditorStyleEvent
 
    public ChunkSatelliteCacheEditorStyleEvent(
       String foregroundColor,
-      String backgroundColor
+      String backgroundColor,
+      String aceEditorColor
    )
    {
       foregroundColor_ = foregroundColor;
       backgroundColor_ = backgroundColor;
+      aceEditorColor_ = aceEditorColor;
    }
    
    public String getBackgroundColor()
@@ -50,6 +52,11 @@ public class ChunkSatelliteCacheEditorStyleEvent
    public String getForegroundColor()
    {
       return foregroundColor_;
+   }
+   
+   public String getAceEditorColor()
+   {
+      return aceEditorColor_;
    }
 
    @Override
@@ -66,6 +73,7 @@ public class ChunkSatelliteCacheEditorStyleEvent
 
    private String foregroundColor_;
    private String backgroundColor_;
+   private String aceEditorColor_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

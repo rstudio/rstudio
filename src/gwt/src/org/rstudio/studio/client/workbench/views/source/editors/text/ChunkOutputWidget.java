@@ -434,11 +434,13 @@ public class ChunkOutputWidget extends Composite
       showBusyState();
    }
    
-   public static void cacheEditorStyle(String foregroundColor, String backgroundColor)
+   public static void cacheEditorStyle(
+      String foregroundColor,
+      String backgroundColor,
+      String aceEditorColor)
    {      
       // use a muted version of the text color for the outline
-      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(
-            DomUtils.extractCssValue("ace_editor", "color"));
+      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(aceEditorColor);
       
       // dark themes require a slightly more pronounced color
       ColorUtil.RGBColor outline = new ColorUtil.RGBColor(

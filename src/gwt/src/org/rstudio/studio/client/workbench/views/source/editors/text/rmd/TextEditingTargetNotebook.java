@@ -24,6 +24,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
@@ -619,7 +620,8 @@ public class TextEditingTargetNotebook
       editorStyle_ = event.getStyle();
       ChunkOutputWidget.cacheEditorStyle(
          editorStyle_.getColor(),
-         editorStyle_.getBackgroundColor()
+         editorStyle_.getBackgroundColor(),
+         DomUtils.extractCssValue("ace_editor", "color")
       );
       
       for (ChunkOutputUi output: outputs_.values())
@@ -631,7 +633,8 @@ public class TextEditingTargetNotebook
          docUpdateSentinel_.getId(),
          new ChunkSatelliteCacheEditorStyleEvent(
             editorStyle_.getColor(),
-            editorStyle_.getBackgroundColor()
+            editorStyle_.getBackgroundColor(),
+            DomUtils.extractCssValue("ace_editor", "color")
          )
       );
       
@@ -1052,7 +1055,8 @@ public class TextEditingTargetNotebook
          docId,
          new ChunkSatelliteCacheEditorStyleEvent(
             editorStyle_.getColor(),
-            editorStyle_.getBackgroundColor()
+            editorStyle_.getBackgroundColor(),
+            DomUtils.extractCssValue("ace_editor", "color")
          )
       );
 
