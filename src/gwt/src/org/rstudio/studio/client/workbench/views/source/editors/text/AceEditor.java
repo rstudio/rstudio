@@ -284,6 +284,7 @@ public class AceEditor implements DocDisplay,
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
       mathjax_ = new MathJax(this);
+      bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -340,11 +341,8 @@ public class AceEditor implements DocDisplay,
                event.preventDefault();
                event.stopPropagation();
 
-               // set the cursor position
-               setCursorPosition(event.getDocumentPosition());
-
                // go to function definition
-               fireEvent(new CommandClickEvent());
+               fireEvent(new CommandClickEvent(event));
             }
             else
             {
@@ -2731,6 +2729,11 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addBlurHandler(handler);
    }
+   
+   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
+   {
+      return widget_.addMouseMoveHandler(handler);
+   }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
@@ -2751,10 +2754,15 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.addKeyDownHandler(handler);
    }
-
+   
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
       return widget_.addKeyPressHandler(handler);
+   }
+   
+   public HandlerRegistration addKeyUpHandler(KeyUpHandler handler)
+   {
+      return widget_.addKeyUpHandler(handler);
    }
 
    public void autoHeight()
@@ -3271,8 +3279,7 @@ public class AceEditor implements DocDisplay,
       infoBar_.show();
    }
 
-   public Range createAnchoredRange(Position start,
-                                    Position end)
+   public AnchoredRange createAnchoredRange(Position start, Position end)
    {
       return widget_.getEditor().getSession().createAnchoredRange(start, end);
    }
@@ -3644,6 +3651,7 @@ public class AceEditor implements DocDisplay,
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
    private final MathJax mathjax_;
+   private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

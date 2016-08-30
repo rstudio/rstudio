@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.event.dom.client.*;
@@ -554,6 +555,21 @@ public class TextEditingTarget implements
          @Override
          public void onCommandClick(CommandClickEvent event)
          {
+            // bail if the target is a link marker (implies already handled)
+            NativeEvent nativeEvent = event.getNativeEvent();
+            Element target = nativeEvent.getEventTarget().cast();
+            if (target != null && target.hasClassName("ace_marker"))
+            {
+               nativeEvent.stopPropagation();
+               nativeEvent.preventDefault();
+               return;
+            }
+            
+            // force cursor position
+            Position position = event.getEvent().getDocumentPosition();
+            docDisplay_.setCursorPosition(position);
+            
+            // delegate to handlers
             if (fileType_.canCompilePDF() && 
                 commands_.synctexSearch().isEnabled())
             {
