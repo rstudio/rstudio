@@ -192,6 +192,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatelliteView;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatelliteWindow;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandDispatcher;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
@@ -398,6 +401,9 @@ public class RStudioGinModule extends AbstractGinModule
       install(new GinFactoryModuleBuilder()
          .implement(CompileOutputPaneDisplay.class, CompileOutputPane.class)
          .build(CompileOutputPaneFactory.class));
+
+      bind(ChunkWindowManager.class).in(Singleton.class);
+      bind(ChunkSatelliteView.class).to(ChunkSatelliteWindow.class);
    }
 
    private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)

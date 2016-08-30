@@ -51,7 +51,10 @@ class ReplayPlots : public async_r::AsyncRProcess
 public:
    static boost::shared_ptr<ReplayPlots> create(
          const std::string& docId, 
+         const std::string& replayId,
          int width,
+         int height,
+         bool persistOutput,
          const std::vector<FilePath>& snapshotFiles)
    {
       // create the text to send to the process (it'll be read on stdin
@@ -82,15 +85,20 @@ public:
       // form command to pass to R 
       std::string cmd(".rs.replayNotebookPlots(" + 
                       safe_convert::numberToString(width) + ", " + 
+                      safe_convert::numberToString(height) + ", " + 
                       safe_convert::numberToString(
                          r::session::graphics::device::devicePixelRatio()) +
-                         ", "
+                      ", " +
+                      (persistOutput ? "FALSE" : "TRUE") +
+                      ", " +
                       "'" + extraParams + "')");
 
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
       pReplayer->docId_ = docId;
+      pReplayer->replayId_ = replayId;
       pReplayer->width_ = width;
+      pReplayer->persistOutput_ = persistOutput;
       pReplayer->start(cmd.c_str(), FilePath(),
                        async_r::R_PROCESS_VANILLA,
                        sources,
@@ -115,16 +123,23 @@ private:
          if (!png.exists())
             continue;
 
+         FilePath chunkBase = png;
+         if (!persistOutput_) chunkBase = png.parent();
+
          // create the event and send to the client. consider: this makes some
          // assumptions about the way output URLs are formed and some
          // assumptions about cache structure that might be better localized.
          json::Object result;
-         result["chunk_id"] = png.parent().filename();
+         result["chunk_id"] = chunkBase.parent().filename();
          result["doc_id"] = docId_;
+         result["replay_id"] = replayId_;
+
          result["plot_url"] = kChunkOutputPath "/" + 
-            png.parent().parent().filename() + "/" + // context ID = folder name
+            chunkBase.parent().parent().filename() + "/" + // context ID = folder name
             docId_ + "/" + 
-            png.parent().filename() + "/" + 
+            chunkBase.parent().filename() + 
+            "/" + 
+            (persistOutput_ ? "" : png.parent().filename() + "/") +
             png.filename();
 
          ClientEvent event(client_events::kChunkPlotRefreshed, result);
@@ -138,12 +153,13 @@ private:
       json::Object result;
       result["doc_id"] = docId_;
       result["width"] = width_;
+      result["replay_id"] = replayId_;
       module_context::enqueClientEvent(ClientEvent(
                client_events::kChunkPlotRefreshFinished, result));
 
       // if we succeeded, write the new rendered width into the notebook chunk
       // file
-      if (exitStatus == EXIT_SUCCESS)
+      if (exitStatus == EXIT_SUCCESS && persistOutput_)
       {
          std::string docPath;
          source_database::getPath(docId_, &docPath);
@@ -152,6 +168,8 @@ private:
    }
 
    std::string docId_;
+   std::string replayId_;
+   bool persistOutput_;
    int width_;
 };
 
@@ -160,11 +178,13 @@ boost::shared_ptr<ReplayPlots> s_pPlotReplayer;
 Error replayPlotOutput(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
+   std::string replayId = core::system::generateUuid();
    std::string docId;
    std::string initialChunkId;
    int pixelWidth = 0;
+   int pixelHeight = 0;
    Error error = json::readParams(request.params, &docId, 
-         &initialChunkId, &pixelWidth);
+         &initialChunkId, &pixelWidth, &pixelHeight);
    if (error)
       return error;
 
@@ -224,12 +244,91 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
       }
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, pixelWidth, snapshotFiles);
-   pResponse->setResult(true);
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, true, snapshotFiles);
+   pResponse->setResult(replayId);
 
    return Success();
 }
 
+Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   std::string replayId = core::system::generateUuid();
+   std::string docId;
+   std::string chunkId;
+   int pixelWidth = 0;
+   int pixelHeight = 0;
+   Error error = json::readParams(request.params, &docId, 
+         &chunkId, &pixelWidth, &pixelHeight);
+   if (error)
+      return error;
+
+   // do nothing if we're already replaying plots (consider: maybe better to
+   // abort and restart with the new pixel width?)
+   if (s_pPlotReplayer && s_pPlotReplayer->isRunning())
+   {
+      pResponse->setResult(false);
+      return Success();
+   }
+
+   // extract the list of chunks to replay
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+
+   // look for snapshot files
+   std::vector<FilePath> snapshotFiles;
+
+   // find the storage location for this chunk output
+   FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
+         ContextSaved);
+   if (!path.exists())
+      return Success();
+
+   // look for snapshot files
+   std::vector<FilePath> contents;
+   error = path.children(&contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return Success();
+   }
+
+   BOOST_FOREACH(const FilePath content, contents)
+   {
+      if (content.hasExtensionLowerCase(kDisplayListExt))
+         snapshotFiles.push_back(content);
+   }
+
+   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, false, snapshotFiles);
+   pResponse->setResult(replayId);
+
+   return Success();
+}
+
+Error cleanReplayChunkPlotOutput(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   std::string docId;
+   std::string chunkId;
+   Error error = json::readParams(request.params, &docId, &chunkId);
+   if (error)
+      return error;
+
+   // extract the list of chunks to replay
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+
+   FilePath chunkFilePath = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
+      ContextSaved);
+
+   FilePath tempFilePath = chunkFilePath.complete("temp");
+
+   error = tempFilePath.remove();
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
+}
 
 } // anonymous namespace
 
@@ -239,7 +338,9 @@ core::Error initPlotReplay()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput));
+      (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput))
+      (bind(registerRpcMethod, "replay_notebook_chunk_plots", replayChunkPlotOutput))
+      (bind(registerRpcMethod, "clean_replay_notebook_chunk_plots", cleanReplayChunkPlotOutput));
 
    return initBlock.execute();
 }

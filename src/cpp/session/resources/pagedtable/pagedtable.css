@@ -147,6 +147,10 @@ a.pagedtable-index-current {
   font-size: 11px;
 }
 
+.pagedtable-expand .pagedtable-header-type {
+  margin-top: 0px;
+}
+
 .pagedtable-na-cell {
   font-style: italic;
   opacity: 0.3;

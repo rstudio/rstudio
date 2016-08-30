@@ -214,11 +214,13 @@ public class ClientEventDispatcher
          {
             ConsoleText output = event.getData();
             eventBus_.fireEvent(new ConsoleWriteOutputEvent(output));
+            eventBus_.fireEventToAllSatellites(new ConsoleWriteOutputEvent(output));
          }
          else if (type.equals(ClientEvent.ConsoleError))
          {
             ConsoleText error = event.getData();
             eventBus_.fireEvent(new ConsoleWriteErrorEvent(error));
+            eventBus_.fireEventToAllSatellites(new ConsoleWriteErrorEvent(error));
          }
          else if (type.equals(ClientEvent.ConsoleWritePrompt))
          {

@@ -57,17 +57,28 @@ public class ChunkOutputGallery extends Composite
    {
       String thumbnail();
       String selected();
+      String expand();
+      String content();
    }
 
   // Public methods ----------------------------------------------------------
 
-   public ChunkOutputGallery(ChunkOutputPresenter.Host host)
+   public ChunkOutputGallery(
+      ChunkOutputPresenter.Host host,
+      ChunkOutputSize chunkOutputSize)
    {
       pages_ = new ArrayList<ChunkOutputPage>();
       host_ = host;
+      chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       content_ = new SimplePanel();
       viewer_.add(content_);
+
+      if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
+         addStyleName(style.expand());
+         content_.addStyleName(style.content());
+      }
    }
 
    @Override
@@ -106,14 +117,14 @@ public class ChunkOutputGallery extends Composite
    public void showPlotOutput(String url, NotebookPlotMetadata metadata,
          int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkPlotPage(url, metadata, ordinal, onRenderComplete));
+      addPage(new ChunkPlotPage(url, metadata, ordinal, onRenderComplete, chunkOutputSize_));
    }
 
    @Override
    public void showHtmlOutput(String url, NotebookHtmlMetadata metadata, 
          int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkHtmlPage(url, metadata, ordinal, onRenderComplete));
+      addPage(new ChunkHtmlPage(url, metadata, ordinal, onRenderComplete, chunkOutputSize_));
    }
 
    @Override
@@ -145,7 +156,7 @@ public class ChunkOutputGallery extends Composite
    public void showDataOutput(JavaScriptObject data, 
          NotebookFrameMetadata metadata, int ordinal)
    {
-      addPage(new ChunkDataPage(data, metadata, ordinal));
+      addPage(new ChunkDataPage(data, metadata, ordinal, chunkOutputSize_));
    }
 
    @Override
@@ -359,6 +370,11 @@ public class ChunkOutputGallery extends Composite
       
       // this page may have a different height than its predecessor
       host_.notifyHeightChanged();
+      
+      if (pages_.get(idx) instanceof ChunkDataPage)
+      {
+         ((ChunkDataPage)pages_.get(idx)).onResize();
+      }
    }
    
    private void ensureConsole()
@@ -393,6 +409,7 @@ public class ChunkOutputGallery extends Composite
    
    private final ArrayList<ChunkOutputPage> pages_;
    private final ChunkOutputPresenter.Host host_;
+   private final ChunkOutputSize chunkOutputSize_;
 
    private ChunkConsolePage console_;
    private SimplePanel content_;

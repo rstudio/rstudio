@@ -40,6 +40,10 @@ public class ChunkPlotRefreshFinishedEvent
       public final native int getWidth() /*-{
          return this.width;
       }-*/;
+
+      public final native String getReplayId() /*-{
+         return this.replay_id;
+      }-*/;
    }
    
 

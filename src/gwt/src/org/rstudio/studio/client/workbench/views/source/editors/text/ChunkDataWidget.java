@@ -17,15 +17,29 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.ScriptInjector;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ChunkDataWidget extends SimplePanel
                              implements EditorThemeListener
 {
-   public ChunkDataWidget(JavaScriptObject data)
+   public ChunkDataWidget(JavaScriptObject data, ChunkOutputSize chunkOutputSize)
    {
       data_ = data;
+      chunkOutputSize_ = chunkOutputSize;
+
+      if (chunkOutputSize_ == ChunkOutputSize.Full) {
+         getElement().getStyle().setWidth(100, Unit.PCT);
+
+         getElement().getStyle().setProperty("display", "-ms-flexbox");
+         getElement().getStyle().setProperty("display", "-webkit-flex");
+         getElement().getStyle().setProperty("display", "flex");
+
+         getElement().getStyle().setProperty("msFlexGrow", "1");
+         getElement().getStyle().setProperty("webkitFlexGrow", "1");
+         getElement().getStyle().setProperty("flexGrow", "1");
+      }
 
       initPagedTableOrDelay();
    }
@@ -33,7 +47,11 @@ public class ChunkDataWidget extends SimplePanel
    private void initPagedTableOrDelay()
    {
       if (pagedTableExists()) {
-         pagedTable_ = showDataOutputNative(data_, getElement());
+         pagedTable_ = showDataOutputNative(
+            data_,
+            getElement(),
+            chunkOutputSize_ == ChunkOutputSize.Full);
+
          onDataOutputChange();
       }
       else {
@@ -64,7 +82,11 @@ public class ChunkDataWidget extends SimplePanel
    {
       if (pagedTable_ != null)
       {
-         resizeDataOutputStyleNative(pagedTable_);
+         resizeDataOutputStyleNative(
+            pagedTable_,
+            getElement().getOffsetWidth(),
+            getElement().getOffsetHeight()
+         );
       }
    }
    
@@ -78,7 +100,10 @@ public class ChunkDataWidget extends SimplePanel
    private void onDataOutputChange()
    {
       EditorThemeListener.Colors colors = ChunkOutputWidget.getEditorColors();
-      applyDataOutputStyleNative(getElement(), colors.highlight, colors.border);
+      if (colors != null)
+      {
+         applyDataOutputStyleNative(getElement(), colors.highlight, colors.border);
+      }
    }
 
    private static final native void injectStyleElement(String url, String id) /*-{
@@ -98,16 +123,32 @@ public class ChunkDataWidget extends SimplePanel
    }-*/;
 
    private final native JavaScriptObject showDataOutputNative(JavaScriptObject data, 
-         Element parent) /*-{
+         Element parent, boolean fullSize) /*-{
       var pagedTable = $doc.createElement("div");
       pagedTable.setAttribute("data-pagedtable", "");
+
+      if (fullSize) {
+         pagedTable.setAttribute("class", "pagedtable-expand");
+         pagedTable.style.width = "100%";
+      }
+
       parent.appendChild(pagedTable);
 
       var pagedTableSource = $doc.createElement("script");
       pagedTableSource.setAttribute("data-pagedtable-source", "");
       pagedTableSource.setAttribute("type", "application/json");
+
+      var originalOptions = JSON.parse(JSON.stringify(data.options));
+      if (fullSize) {
+         data.options.rows.min = 1;
+         data.options.rows.max = null;
+         data.options.columns.max = null;
+      }
+
       pagedTableSource.appendChild($doc.createTextNode(JSON.stringify(data)))
       pagedTable.appendChild(pagedTableSource);
+
+      data.options = originalOptions;
 
       var pagedTableInstance = new PagedTable(pagedTable);
 
@@ -116,7 +157,7 @@ public class ChunkDataWidget extends SimplePanel
          chunkWidget.@org.rstudio.studio.client.workbench.views.source.editors.text.ChunkDataWidget::onDataOutputChange()();
       });
       
-      pagedTableInstance.render();
+      pagedTableInstance.init();
       
       return pagedTableInstance;
    }-*/;
@@ -150,10 +191,13 @@ public class ChunkDataWidget extends SimplePanel
    }-*/;
    
    private static final native void resizeDataOutputStyleNative(
-         JavaScriptObject pagedTable) /*-{
-     pagedTable.resizeColumns();
+      JavaScriptObject pagedTable,
+      int newWidth,
+      int newHeight) /*-{
+     pagedTable.resize(newWidth, newHeight);
    }-*/;
    
    private JavaScriptObject pagedTable_ = null;
    private final JavaScriptObject data_;
+   private final ChunkOutputSize chunkOutputSize_;
 }

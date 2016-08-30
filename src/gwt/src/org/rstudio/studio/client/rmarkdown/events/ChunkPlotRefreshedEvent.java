@@ -44,6 +44,10 @@ public class ChunkPlotRefreshedEvent
       public final native String getPlotUrl() /*-{
          return this.plot_url;
       }-*/;
+      
+      public final native String getReplayId() /*-{
+      return this.replay_id;
+   }-*/;
    }
    
    public ChunkPlotRefreshedEvent(Data data)

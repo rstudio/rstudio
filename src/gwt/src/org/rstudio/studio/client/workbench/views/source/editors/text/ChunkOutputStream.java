@@ -40,6 +40,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -53,8 +54,26 @@ public class ChunkOutputStream extends FlowPanel
 {
    public ChunkOutputStream(ChunkOutputPresenter.Host host)
    {
+      this(host, ChunkOutputSize.Default);
+   }
+   
+   public ChunkOutputStream(ChunkOutputPresenter.Host host, ChunkOutputSize chunkOutputSize)
+   {
       host_ = host;
+      chunkOutputSize_ = chunkOutputSize;
       metadata_ = new HashMap<Integer, JavaScriptObject>();
+
+      if (chunkOutputSize_ == ChunkOutputSize.Full) {
+         getElement().getStyle().setWidth(100, Unit.PCT);
+
+         getElement().getStyle().setProperty("display", "-ms-flexbox");
+         getElement().getStyle().setProperty("display", "-webkit-flex");
+         getElement().getStyle().setProperty("display", "flex");
+
+         getElement().getStyle().setProperty("msFlexDirection", "column");
+         getElement().getStyle().setProperty("webkitFlexDirection", "column");
+         getElement().getStyle().setProperty("flexDirection", "column");
+      }
    }
 
    @Override
@@ -132,7 +151,7 @@ public class ChunkOutputStream extends FlowPanel
                   onRenderComplete.execute();
                   onHeightChanged();
                }
-            });
+            }, chunkOutputSize_);
       
       // check to see if the given ordinal matches one of the existing
       // placeholder elements
@@ -191,11 +210,21 @@ public class ChunkOutputStream extends FlowPanel
       url += "viewer_pane=1";
 
       final ChunkOutputFrame frame = new ChunkOutputFrame();
-      final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
-                  ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
-      addWithOrdinal(fixedFrame, ordinal);
+      if (chunkOutputSize_ == ChunkOutputSize.Default) {
+         final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
+                     ChunkOutputUi.OUTPUT_ASPECT, 
+                     ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+
+         addWithOrdinal(fixedFrame, ordinal);
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Full) {
+         frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
+         frame.getElement().getStyle().setWidth(100, Unit.PCT);
+         frame.getElement().getStyle().setHeight(100, Unit.PCT);
+
+         addWithOrdinal(frame, ordinal);
+      }
 
       frame.loadUrl(url, new Command() 
       {
@@ -274,7 +303,7 @@ public class ChunkOutputStream extends FlowPanel
          NotebookFrameMetadata metadata, int ordinal)
    {
       metadata_.put(ordinal, metadata);
-      addWithOrdinal(new ChunkDataWidget(data), ordinal);
+      addWithOrdinal(new ChunkDataWidget(data, chunkOutputSize_), ordinal);
    }
 
    @Override
@@ -432,7 +461,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkPlotWidget plot = (ChunkPlotWidget)inner;
             ChunkPlotPage page = new ChunkPlotPage(plot.plotUrl(),
-                  plot.getMetadata(), ordinal, null);
+                  plot.getMetadata(), ordinal, null, chunkOutputSize_);
             pages.add(page);
             remove(w);
          }
@@ -440,7 +469,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)inner;
             ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), 
-                  (NotebookHtmlMetadata)metadata.cast(), ordinal, null);
+                  (NotebookHtmlMetadata)metadata.cast(), ordinal, null, chunkOutputSize_);
             pages.add(html);
             remove(w);
          }
@@ -570,6 +599,7 @@ public class ChunkOutputStream extends FlowPanel
    private VirtualConsole vconsole_;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private boolean hasErrors_ = false;
+   private ChunkOutputSize chunkOutputSize_;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
 }

@@ -20,11 +20,13 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -35,9 +37,16 @@ public class ChunkPlotWidget extends Composite
    public ChunkPlotWidget(String url, NotebookPlotMetadata metadata, 
          final Command onRenderComplete)
    {
+      this(url, metadata, onRenderComplete, ChunkOutputSize.Default);
+   }
+
+   public ChunkPlotWidget(String url, NotebookPlotMetadata metadata, 
+         final Command onRenderComplete, ChunkOutputSize chunkOutputSize)
+   {
       plot_ = new Image();
       url_ = url;
       metadata_ = metadata;
+      chunkOutputSize_ = chunkOutputSize;
 
       DOM.sinkEvents(plot_.getElement(), Event.ONLOAD);
       DOM.setEventListener(plot_.getElement(), 
@@ -74,6 +83,26 @@ public class ChunkPlotWidget extends Composite
          // initially invisible until we get sizing information (as we may 
          // have to downsample)
          plot_.setVisible(false);
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
+         HTMLPanel panel = new HTMLPanel("");
+         
+         panel.getElement().getStyle().setWidth(100, Unit.PCT);
+         
+         panel.getElement().getStyle().setProperty("display", "-ms-flexbox");
+         panel.getElement().getStyle().setProperty("display", "-webkit-flex");
+         panel.getElement().getStyle().setProperty("display", "flex");
+
+         plot_.getElement().getStyle().setProperty("display", "-ms-flexbox");
+         plot_.getElement().getStyle().setProperty("display", "-webkit-flex");
+         plot_.getElement().getStyle().setProperty("display", "flex");
+
+         plot_.getElement().getStyle().setWidth(100, Unit.PCT);
+         
+         panel.add(plot_);
+         host_ = panel;
+         root = panel;
       }
       else
       {
@@ -157,6 +186,7 @@ public class ChunkPlotWidget extends Composite
    private final String url_;
    private final Image plot_;
    private final NotebookPlotMetadata metadata_;
-   private FixedRatioWidget host_;
+   private final ChunkOutputSize chunkOutputSize_;
+   private Widget host_;
    private ChunkConditionBar conditions_;
 }

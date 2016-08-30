@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.List;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ProgressSpinner;
@@ -92,6 +93,9 @@ public class ChunkOutputWidget extends Composite
 
       @Source("RemoveChunkIcon.png")
       ImageResource removeChunkIcon();
+
+      @Source("PopoutChunkIcon.png")
+      ImageResource popoutIcon();
    }
    
    public interface ChunkStyle extends CssResource
@@ -100,14 +104,29 @@ public class ChunkOutputWidget extends Composite
       String collapsed();
       String spinner();
       String pendingResize();
+      String fullsize();
    }
 
-   public ChunkOutputWidget(String chunkId, RmdChunkOptions options, 
+   public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
          int expansionState, ChunkOutputHost host)
    {
+      this(
+         documentId,
+         chunkId,
+         options, 
+         expansionState, 
+         host,
+         ChunkOutputSize.Default);
+   }
+
+   public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
+         int expansionState, ChunkOutputHost host, ChunkOutputSize chunkOutputSize)
+   {
+      documentId_ = documentId;
       chunkId_ = chunkId;
       host_ = host;
       options_ = options;
+      chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
@@ -116,13 +135,20 @@ public class ChunkOutputWidget extends Composite
 
       ChunkDataWidget.injectPagedTableResources();
       
-      frame_.getElement().getStyle().setHeight(
-            expansionState_.getValue() == COLLAPSED ? 
-                  ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
-                  ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+      if (chunkOutputSize_ == ChunkOutputSize.Default)
+      {
+         frame_.getElement().getStyle().setHeight(
+               expansionState_.getValue() == COLLAPSED ? 
+                     ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
+                     ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
+         addStyleName(style.fullsize());
+      }
 
       // create the initial output stream and attach it to the frame
-      attachPresenter(new ChunkOutputStream(this));
+      attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -153,15 +179,34 @@ public class ChunkOutputWidget extends Composite
          }
       };
 
+      EventListener popoutChunkEvent = new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               popoutChunk();
+               break;
+            };
+         }
+      };
+
       DOM.sinkEvents(expander_.getElement(), Event.ONCLICK);
       DOM.setEventListener(expander_.getElement(), toggleExpansion);
       
       DOM.sinkEvents(expand_.getElement(), Event.ONCLICK);
       DOM.setEventListener(expand_.getElement(), toggleExpansion);
+
+      DOM.sinkEvents(popout_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(popout_.getElement(), popoutChunkEvent);
       
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
       events.addHandler(InterruptStatusEvent.TYPE, this);
+
+      chunkWindowManager_ = RStudioGinjector.INSTANCE.getChunkWindowManager();
    }
    
    // Public methods ----------------------------------------------------------
@@ -306,7 +351,9 @@ public class ChunkOutputWidget extends Composite
       renderedHeight_ = height;
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
-      frame_.getElement().getStyle().setHeight(height, Unit.PX);
+      
+      if (chunkOutputSize_ != ChunkOutputSize.Full)
+         frame_.getElement().getStyle().setHeight(height, Unit.PX);
          
       // allocate some extra space so the cursor doesn't touch the output frame
       host_.onOutputHeightChanged(this, height + 7, ensureVisible);
@@ -370,15 +417,13 @@ public class ChunkOutputWidget extends Composite
       showBusyState();
    }
    
-   public static void cacheEditorStyle(Element editorContainer, 
-         Style editorStyle)
-   {
-      String background = editorStyle.getBackgroundColor();
-      String foreground = editorStyle.getColor();
-      
+   public static void cacheEditorStyle(
+      String foregroundColor,
+      String backgroundColor,
+      String aceEditorColor)
+   {      
       // use a muted version of the text color for the outline
-      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(
-            DomUtils.extractCssValue("ace_editor", "color"));
+      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(aceEditorColor);
       
       // dark themes require a slightly more pronounced color
       ColorUtil.RGBColor outline = new ColorUtil.RGBColor(
@@ -399,9 +444,9 @@ public class ChunkOutputWidget extends Composite
       ColorUtil.RGBColor surface = ColorUtil.RGBColor.fromCss(
             DomUtils.extractCssValue(classes, "color"));
       surface = surface.mixedWith(
-            ColorUtil.RGBColor.fromCss(background), 0.02, 1);
+            ColorUtil.RGBColor.fromCss(backgroundColor), 0.02, 1);
       
-      s_colors = new EditorThemeListener.Colors(foreground, background, border,
+      s_colors = new EditorThemeListener.Colors(foregroundColor, backgroundColor, border,
             highlight.asRgb(), surface.asRgb());
    }
    
@@ -638,6 +683,7 @@ public class ChunkOutputWidget extends Composite
 
       clear_.setVisible(false);
       expand_.setVisible(false);
+      popout_.setVisible(false);
    }
 
    private void showReadyState()
@@ -653,8 +699,12 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() == EXPANDED)
          root_.getElement().getStyle().setOpacity(1);
 
-      clear_.setVisible(true);
-      expand_.setVisible(true);
+      if (chunkOutputSize_ != ChunkOutputSize.Full)
+      {
+         clear_.setVisible(true);
+         expand_.setVisible(true);
+         popout_.setVisible(true);
+      }
    }
    
    private void setOverflowStyle()
@@ -684,6 +734,15 @@ public class ChunkOutputWidget extends Composite
          return;
       }
       showReadyState();
+   }
+
+   private void popoutChunk()
+   {
+      chunkWindowManager_.openChunkWindow(
+         documentId_,
+         chunkId_,
+         new Size(getElement().getOffsetWidth(), getElement().getOffsetHeight())
+      );
    }
    
    private void toggleExpansionState(final boolean ensureVisible)
@@ -762,7 +821,7 @@ public class ChunkOutputWidget extends Composite
 
          // start with the stream presenter (we'll switch to gallery later if
          // circumstances demand)
-         attachPresenter(new ChunkOutputStream(this));
+         attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
 
          hasErrors_ = false;
          state_ = CHUNK_POST_OUTPUT;
@@ -771,12 +830,21 @@ public class ChunkOutputWidget extends Composite
                presenter_ instanceof ChunkOutputStream &&
                (type == RmdChunkOutputUnit.TYPE_HTML || 
                 type == RmdChunkOutputUnit.TYPE_PLOT ||
-                type == RmdChunkOutputUnit.TYPE_DATA))
+                type == RmdChunkOutputUnit.TYPE_DATA ||
+                chunkOutputSize_ == ChunkOutputSize.Full))
       {
          // if we're adding a block widget into an existing chunk, we 
          // need to switch to gallery mode 
          final ChunkOutputStream stream = (ChunkOutputStream)presenter_;
-         final ChunkOutputGallery gallery = new ChunkOutputGallery(this);
+         final ChunkOutputGallery gallery = new ChunkOutputGallery(this, chunkOutputSize_);
+
+         // replace the stream with the gallery (the stream will live on inside
+         // the gallery's console page). Perform this operation before adding pages,
+         // otherwise, in some situations (satellite chunks), attachPresenter()
+         // would perform the attachment by temporarily deattaching which causes
+         // all the events to be lost and clicks to stop working. Instead, attach
+         // the gallery before to maintain the event listers assigned in addPage().
+         attachPresenter(gallery);
          
          // extract all the pages from the stream and populate the gallery
          List<ChunkOutputPage> pages = stream.extractPages();
@@ -790,15 +858,13 @@ public class ChunkOutputWidget extends Composite
             gallery.addPage(page);
          }
          
-         // replace the stream with the gallery (the stream will live on inside
-         // the gallery's console page)
-         attachPresenter(gallery);
          syncHeight(false, false);
       }
    }
    
    @UiField Image clear_;
    @UiField Image expand_;
+   @UiField Image popout_;
    @UiField SimplePanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
@@ -808,6 +874,8 @@ public class ChunkOutputWidget extends Composite
    private RmdChunkOptions options_;
    private ChunkOutputHost host_;
    private ChunkOutputPresenter presenter_;
+   private ChunkWindowManager chunkWindowManager_;
+   private ChunkOutputSize chunkOutputSize_;
    
    private int state_ = CHUNK_EMPTY;
    private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
@@ -817,6 +885,7 @@ public class ChunkOutputWidget extends Composite
    private boolean needsHeightSync_ = false;
    
    private Timer collapseTimer_ = null;
+   private final String documentId_;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
 

@@ -200,9 +200,12 @@
   pagedTableOptions <- list(
     columns = list(
       min = options[["cols.min.print"]],
-      max = options[["cols.print"]]
+      max = if (is.null(options[["cols.print"]])) 10 else options[["cols.print"]]
     ),
-    rows = options[["rows.print"]],
+    rows = list(
+      min = if (is.null(options[["rows.print"]])) 10 else options[["rows.print"]],
+      max = if (is.null(options[["rows.print"]])) 10 else options[["rows.print"]]
+    ),
     pages = options[["pages.print"]]
   )
 

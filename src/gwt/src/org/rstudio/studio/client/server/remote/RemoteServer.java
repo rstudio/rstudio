@@ -4227,7 +4227,7 @@ public class RemoteServer implements Server
    
    @Override
    public void refreshChunkOutput(String docPath, String docId, 
-         String contextId, String requestId, 
+         String contextId, String requestId, String chunkId,
          ServerRequestCallback<NotebookDocQueue> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4235,6 +4235,7 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(docId));
       params.set(2, new JSONString(contextId));
       params.set(3, new JSONString(requestId));
+      params.set(4, new JSONString(chunkId));
       sendRequest(RPC_SCOPE,
             "refresh_chunk_output",
             params,
@@ -4275,13 +4276,36 @@ public class RemoteServer implements Server
 
    @Override
    public void replayNotebookPlots(String docId, String initialChunkId,
-         int pixelWidth, ServerRequestCallback<Boolean> requestCallback)
+         int pixelWidth, int pixelHeight, ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(initialChunkId));
       params.set(2, new JSONNumber(pixelWidth));
+      params.set(3, new JSONNumber(pixelHeight));
       sendRequest(RPC_SCOPE, "replay_notebook_plots", params, requestCallback);
+   }
+
+   @Override
+   public void replayNotebookChunkPlots(String docId, String chunkId,
+         int pixelWidth, int pixelHeight, ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      params.set(2, new JSONNumber(pixelWidth));
+      params.set(3, new JSONNumber(pixelHeight));
+      sendRequest(RPC_SCOPE, "replay_notebook_chunk_plots", params, requestCallback);
+   }
+
+   @Override
+   public void cleanReplayNotebookChunkPlots(String docId, String chunkId,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      sendRequest(RPC_SCOPE, "clean_replay_notebook_chunk_plots", params, requestCallback);
    }
    
    @Override

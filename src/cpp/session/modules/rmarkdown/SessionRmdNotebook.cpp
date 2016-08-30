@@ -64,7 +64,8 @@ std::string s_activeConsole;
 boost::shared_ptr<ChunkExecContext> s_execContext;
 
 void replayChunkOutputs(const std::string& docPath, const std::string& docId,
-      const std::string& requestId, const json::Array& chunkOutputs) 
+      const std::string& requestId, const std::string& singleChunkId,
+      const json::Array& chunkOutputs) 
 {
    std::vector<std::string> chunkIds;
    extractChunkIds(chunkOutputs, &chunkIds);
@@ -72,13 +73,16 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    // find all the chunks and play them back to the client
    BOOST_FOREACH(const std::string& chunkId, chunkIds)
    {
-      enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
+      if (singleChunkId.empty() || singleChunkId == chunkId)
+      {
+         enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
+      }
    }
 
    json::Object result;
    result["doc_id"] = docId;
    result["request_id"] = requestId;
-   result["chunk_id"] = "";
+   result["chunk_id"] = singleChunkId.empty() ? "" : singleChunkId;
    result["type"] = kFinishedReplay;
    ClientEvent event(client_events::kChunkOutputFinished, result);
    module_context::enqueClientEvent(event);
@@ -89,9 +93,9 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract path to doc to be refreshed
-   std::string docPath, docId, nbCtxId, requestId;
+   std::string docPath, docId, nbCtxId, requestId, chunkId;
    Error error = json::readParams(request.params, &docPath, &docId, &nbCtxId,
-         &requestId);
+         &requestId, &chunkId);
    if (error)
       return error;
 
@@ -108,7 +112,7 @@ Error refreshChunkOutput(const json::JsonRpcRequest& request,
    if (!error) 
    {
       pResponse->setAfterResponse(
-            boost::bind(replayChunkOutputs, docPath, docId, requestId, 
+            boost::bind(replayChunkOutputs, docPath, docId, requestId, chunkId, 
                         chunkDefs));
    }
 

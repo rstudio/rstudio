@@ -100,6 +100,8 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
@@ -193,6 +195,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TableBrowserModel tableBrowserModel);
    void injectMembers(MathJax mathjax);
    void injectMembers(ChunkOptionsPopupPanel panel);
+   void injectMembers(ChunkSatellite satellite);
    void injectMembers(AceEditorBackgroundLinkHighlighter highlighter);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
@@ -225,4 +228,5 @@ public interface RStudioGinjector extends Ginjector
    SourceWindowManager getSourceWindowManager();
    SourceWindow getSourceWindow();
    Server getServer();
+   ChunkWindowManager getChunkWindowManager();
 }

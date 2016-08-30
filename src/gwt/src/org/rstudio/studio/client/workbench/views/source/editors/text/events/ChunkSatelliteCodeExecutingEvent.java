@@ -1,5 +1,5 @@
 /*
- * InterruptInitiatedEvent.java
+ * ChunkSatelliteCodeExecutingEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,36 +12,44 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.events;
+
+package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class InterruptStatusEvent extends CrossWindowEvent<InterruptStatusEvent.Handler>
-{
-   public final static int INTERRUPT_INITIATED = 0;
-   public final static int INTERRUPT_COMPLETED = 1;
-   
+public class ChunkSatelliteCodeExecutingEvent 
+             extends CrossWindowEvent<ChunkSatelliteCodeExecutingEvent.Handler>
+{  
    public interface Handler extends EventHandler
    {
-      void onInterruptStatus(InterruptStatusEvent event);
+      void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event);
    }
 
-   public InterruptStatusEvent()
+   public ChunkSatelliteCodeExecutingEvent()
    {
-      status_ = -1;
-   }
-
-   public InterruptStatusEvent(int status)
-   {
-      status_ = status;
    }
    
-   public int getStatus()
+   public ChunkSatelliteCodeExecutingEvent(
+      int mode, int scope
+   )
    {
-      return status_;
+      mode_ = mode;
+      scope_ = scope;
+   }
+   
+   public int getMode()
+   {
+      return mode_;
+   }
+
+
+   public int getScope()
+   {
+      return scope_;
    }
 
    @Override
@@ -53,9 +61,11 @@ public class InterruptStatusEvent extends CrossWindowEvent<InterruptStatusEvent.
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onInterruptStatus(this);
+      handler.onChunkSatelliteCodeExecuting(this);
    }
-   
-   private final int status_; 
+
+   private int mode_;
+   private int scope_;
+
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

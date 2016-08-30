@@ -14,15 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
+@JavaScriptSerializable
+public class ConsoleWriteOutputEvent extends CrossWindowEvent<ConsoleWriteOutputHandler>
 {
    public static final GwtEvent.Type<ConsoleWriteOutputHandler> TYPE =
       new GwtEvent.Type<ConsoleWriteOutputHandler>();
-    
+   
+   public ConsoleWriteOutputEvent()
+   {
+      output_ = null;
+   }
+   
    public ConsoleWriteOutputEvent(ConsoleText output)
    {
       output_ = output;
