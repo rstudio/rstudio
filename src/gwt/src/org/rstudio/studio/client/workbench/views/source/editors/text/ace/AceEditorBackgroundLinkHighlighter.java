@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -60,7 +61,8 @@ public class AceEditorBackgroundLinkHighlighter
    implements DocumentChangedEvent.Handler,
               CommandClickEvent.Handler,
               MouseMoveHandler,
-              AttachEvent.Handler
+              AttachEvent.Handler,
+              EditorModeChangedEvent.Handler
 {
    interface Highlighter
    {
@@ -112,9 +114,16 @@ public class AceEditorBackgroundLinkHighlighter
       highlighters_.add(webLinkHighlighter());
       
       editor_.addDocumentChangedHandler(this);
+      editor_.addEditorModeChangedHandler(this);
       editor_.addCommandClickHandler(this);
       editor_.addMouseMoveHandler(this);
       editor_.addAttachHandler(this);
+   }
+   
+   private void refreshHighlighters(String mode)
+   {
+      highlighters_.clear();
+      highlighters_.add(webLinkHighlighter());
    }
    
    private void highlightRow(int row)
@@ -188,7 +197,6 @@ public class AceEditorBackgroundLinkHighlighter
          
       markerEl.addClassName(RES.styles().hover());
       activeHighlightMarkerEl_ = markerEl;
-      
    }
    
    private void endHighlight()
@@ -401,6 +409,7 @@ public class AceEditorBackgroundLinkHighlighter
          }
       }
    }
+   
    @Override
    public void onDocumentChanged(DocumentChangedEvent event)
    {
@@ -411,6 +420,12 @@ public class AceEditorBackgroundLinkHighlighter
       int row = event.getEvent().getRange().getStart().getRow();
       nextHighlightStart_ = Math.min(nextHighlightStart_, row);
       timer_.schedule(700);
+   }
+   
+   @Override
+   public void onEditorModeChanged(EditorModeChangedEvent event)
+   {
+      refreshHighlighters(event.getMode());
    }
    
    @Override
