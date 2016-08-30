@@ -618,7 +618,7 @@ public class AceEditorBackgroundLinkHighlighter
             var left = 4 + range.start.column * config.characterWidth;
 
             html.push(
-                "<div title='Ctrl+Click to open link.' class='", clazz, "' style='",
+                "<div title='Open Link (Ctrl+Click)' class='", clazz, "' style='",
                 "height:", height, "px;",
                 "width:", width, "px;",
                 "top:", top, "px;",
