@@ -69,6 +69,10 @@ public class ChunkOutputStream extends FlowPanel
          getElement().getStyle().setProperty("display", "-ms-flexbox");
          getElement().getStyle().setProperty("display", "-webkit-flex");
          getElement().getStyle().setProperty("display", "flex");
+
+         getElement().getStyle().setProperty("-ms-flex-direction", "column");
+         getElement().getStyle().setProperty("-webkit-flex-direction", "column");
+         getElement().getStyle().setProperty("flex-direction", "column");
       }
    }
 
