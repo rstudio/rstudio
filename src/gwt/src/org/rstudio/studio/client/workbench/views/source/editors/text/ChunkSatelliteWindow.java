@@ -26,10 +26,11 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
@@ -76,7 +77,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    {
       chunkWindowParams_ = params.cast();
 
-      String title = "RStudio Chunk Window";
+      String title = "RStudio: Notebook Output";
       Window.setTitle(title);
 
       ChunkOutputHost chunkOutputHost = new ChunkOutputHost()
