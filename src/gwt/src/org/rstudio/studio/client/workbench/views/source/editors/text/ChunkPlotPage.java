@@ -33,7 +33,7 @@ public class ChunkPlotPage extends ChunkOutputPage
                            implements EditorThemeListener
 {
    public ChunkPlotPage(final String url, NotebookPlotMetadata metadata, 
-         int ordinal, final Command onRenderComplete)
+         int ordinal, final Command onRenderComplete, ChunkOutputSize chunkOutputSize)
    {
       super(ordinal);
       
@@ -72,7 +72,7 @@ public class ChunkPlotPage extends ChunkOutputPage
          // automatically expand non-fixed plots
          thumbnail_.add(new FixedRatioWidget(new Image(url), 
                      ChunkOutputUi.OUTPUT_ASPECT, 100));
-         plot_ = new ChunkPlotWidget(url, metadata, onRenderComplete);
+         plot_ = new ChunkPlotWidget(url, metadata, onRenderComplete, chunkOutputSize);
       }
       
       // look for messages or warnings in metadata

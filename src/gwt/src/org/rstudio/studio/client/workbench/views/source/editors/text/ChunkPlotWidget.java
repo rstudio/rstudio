@@ -90,9 +90,9 @@ public class ChunkPlotWidget extends Composite
          
          panel.getElement().getStyle().setWidth(100, Unit.PCT);
          panel.getElement().getStyle().setHeight(100, Unit.PCT);
+         panel.getElement().getStyle().setProperty("display", "flex");
 
          plot_.getElement().getStyle().setWidth(100, Unit.PCT);
-         plot_.getElement().getStyle().setHeight(100, Unit.PCT);
          
          panel.add(plot_);
          host_ = panel;

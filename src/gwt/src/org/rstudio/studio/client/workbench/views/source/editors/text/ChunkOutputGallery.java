@@ -57,6 +57,8 @@ public class ChunkOutputGallery extends Composite
    {
       String thumbnail();
       String selected();
+      String expand();
+      String content();
    }
 
   // Public methods ----------------------------------------------------------
@@ -71,6 +73,12 @@ public class ChunkOutputGallery extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       content_ = new SimplePanel();
       viewer_.add(content_);
+
+      if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
+         addStyleName(style.expand());
+         content_.addStyleName(style.content());
+      }
    }
 
    @Override
@@ -109,14 +117,14 @@ public class ChunkOutputGallery extends Composite
    public void showPlotOutput(String url, NotebookPlotMetadata metadata,
          int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkPlotPage(url, metadata, ordinal, onRenderComplete));
+      addPage(new ChunkPlotPage(url, metadata, ordinal, onRenderComplete, chunkOutputSize_));
    }
 
    @Override
    public void showHtmlOutput(String url, NotebookHtmlMetadata metadata, 
          int ordinal, Command onRenderComplete)
    {
-      addPage(new ChunkHtmlPage(url, metadata, ordinal, onRenderComplete));
+      addPage(new ChunkHtmlPage(url, metadata, ordinal, onRenderComplete, chunkOutputSize_));
    }
 
    @Override
@@ -362,6 +370,11 @@ public class ChunkOutputGallery extends Composite
       
       // this page may have a different height than its predecessor
       host_.notifyHeightChanged();
+      
+      if (pages_.get(idx) instanceof ChunkDataPage)
+      {
+         ((ChunkDataPage)pages_.get(idx)).onResize();
+      }
    }
    
    private void ensureConsole()

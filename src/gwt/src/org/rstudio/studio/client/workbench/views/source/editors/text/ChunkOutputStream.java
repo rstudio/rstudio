@@ -453,7 +453,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkPlotWidget plot = (ChunkPlotWidget)inner;
             ChunkPlotPage page = new ChunkPlotPage(plot.plotUrl(),
-                  plot.getMetadata(), ordinal, null);
+                  plot.getMetadata(), ordinal, null, chunkOutputSize_);
             pages.add(page);
             remove(w);
          }
@@ -461,7 +461,7 @@ public class ChunkOutputStream extends FlowPanel
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)inner;
             ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), 
-                  (NotebookHtmlMetadata)metadata.cast(), ordinal, null);
+                  (NotebookHtmlMetadata)metadata.cast(), ordinal, null, chunkOutputSize_);
             pages.add(html);
             remove(w);
          }

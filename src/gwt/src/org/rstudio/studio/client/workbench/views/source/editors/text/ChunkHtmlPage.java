@@ -29,7 +29,7 @@ public class ChunkHtmlPage extends ChunkOutputPage
                            implements EditorThemeListener
 {
    public ChunkHtmlPage(String url, NotebookHtmlMetadata metadata,
-         int ordinal, final Command onRenderComplete)
+         int ordinal, final Command onRenderComplete, ChunkOutputSize chunkOutputSize)
    {
       super(ordinal);
 
@@ -52,9 +52,16 @@ public class ChunkHtmlPage extends ChunkOutputPage
       url += "viewer_pane=1";
 
       frame_ = new ChunkOutputFrame();
-      content_= new FixedRatioWidget(frame_, 
-                  ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+      
+      if (chunkOutputSize != ChunkOutputSize.Full) {
+         content_ = new FixedRatioWidget(frame_, 
+               ChunkOutputUi.OUTPUT_ASPECT, 
+               ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+      }
+      else {
+         frame_.getElement().getStyle().setWidth(100, Unit.PCT);
+         content_ = frame_;
+      }
 
       frame_.loadUrl(url, new Command()
       {

@@ -44,6 +44,45 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
 .filmstrip {
    overflow: hidden;
 }
+
+.expand {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+
+   -ms-flex-direction: column;
+   -webkit-flex-direction: column;
+   flex-direction: column;
+
+   height: 100%;
+}
+
+.expand .filmstrip {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+
+   padding-bottom: 12px;
+}
+
+.expand .viewer {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+
+   -ms-flex-grow: 1;
+   -webkit-flex-grow: 1;
+   flex-grow: 1;
+}
+
+.expand .content {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+
+   width: 100%;
+}
+
 </ui:style>
 <g:HTMLPanel>
     <g:FlowPanel styleName="{style.filmstrip}" ui:field="filmstrip_">
