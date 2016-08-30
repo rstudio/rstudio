@@ -1,5 +1,5 @@
 /*
- * CommandClickEvent.java
+ * AceMouseMoveEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,41 +12,43 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.events;
+package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
-
-public class CommandClickEvent extends GwtEvent<CommandClickEvent.Handler>
+public class AceMouseMoveEvent extends GwtEvent<AceMouseMoveEvent.Handler>
 {
-   public CommandClickEvent(AceClickEvent event)
+   public interface Handler extends EventHandler
+   {
+      void onMouseMove(AceMouseMoveEvent event);
+   }
+
+   public AceMouseMoveEvent(AceMouseEventNative event)
    {
       event_ = event;
    }
-   
-   public AceClickEvent getEvent()
+
+   public void stopPropagation()
    {
-      return event_;
+      event_.stopPropagation();
    }
-   
+
+   public void preventDefault()
+   {
+      event_.preventDefault();
+   }
+
+   public Position getDocumentPosition()
+   {
+      return event_.getDocumentPosition();
+   }
+
    public NativeEvent getNativeEvent()
    {
       return event_.getNativeEvent();
    }
-   
-   private final AceClickEvent event_;
-   
-   // Boilerplate ----
-   
-   public interface Handler extends EventHandler
-   {
-      void onCommandClick(CommandClickEvent event);
-   }
-   
-   public static final Type<Handler> TYPE = new Type<Handler>();
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -57,6 +59,10 @@ public class CommandClickEvent extends GwtEvent<CommandClickEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCommandClick(this);
+      handler.onMouseMove(this);
    }
+
+   private final AceMouseEventNative event_;
+
+   public static final Type<Handler> TYPE = new Type<Handler>();
 }

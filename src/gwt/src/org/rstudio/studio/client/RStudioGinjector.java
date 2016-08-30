@@ -107,6 +107,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
@@ -195,6 +196,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(MathJax mathjax);
    void injectMembers(ChunkOptionsPopupPanel panel);
    void injectMembers(ChunkSatellite satellite);
+   void injectMembers(AceEditorBackgroundLinkHighlighter highlighter);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

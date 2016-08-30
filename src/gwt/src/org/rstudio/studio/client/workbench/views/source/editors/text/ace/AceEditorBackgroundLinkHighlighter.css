@@ -1,0 +1,16 @@
+@def BORDER_COLOR #9a9aba;
+
+.highlight {
+	position: absolute;
+	margin-top: -3px;
+	border-bottom: 1px solid BORDER_COLOR;
+	pointer-events: all;
+}
+
+.hover {
+	position: absolute;
+	margin-top: -3px;
+	border-bottom: 1px solid BORDER_COLOR;
+	pointer-events: auto;
+	cursor: pointer;
+}

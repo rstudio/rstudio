@@ -68,6 +68,13 @@ public class Range extends JavaScriptObject
    public final native boolean isEmpty() /*-{
       return this.isEmpty();
    }-*/;
+   
+   public final boolean isEqualTo(Range range)
+   {
+      return
+            getStart().isEqualTo(range.getStart()) &&
+            getEnd().isEqualTo(range.getEnd());
+   }
 
    public final native Range extend(int row, int column) /*-{
       return this.extend(row, column);
@@ -86,7 +93,11 @@ public class Range extends JavaScriptObject
    }-*/;
    
    public final native boolean contains(Range range) /*-{
-      return this.contains(range);
+      return this.containsRange(range);
+   }-*/;
+   
+   public final native boolean intersects(Range range) /*-{
+      return this.intersects(range);
    }-*/;
    
    public final native boolean isMultiLine() /*-{
