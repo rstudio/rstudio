@@ -26,8 +26,6 @@ import com.google.inject.Provider;
 
 public class ChunkSatellite extends SatelliteApplication
 {
-   // note that there's special behavior attached to this name in the desktop
-   // frame 
    public static final String NAME_PREFIX = "chunk_window_";
    
    public ChunkSatellite(String name)

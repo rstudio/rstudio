@@ -134,6 +134,7 @@ public class ChunkDataWidget extends SimplePanel
       pagedTableSource.setAttribute("data-pagedtable-source", "");
       pagedTableSource.setAttribute("type", "application/json");
 
+      var originalOptions = JSON.parse(JSON.stringify(data.options));
       if (fullSize) {
          data.options.rows.min = 1;
          data.options.rows.max = null;
@@ -142,6 +143,8 @@ public class ChunkDataWidget extends SimplePanel
 
       pagedTableSource.appendChild($doc.createTextNode(JSON.stringify(data)))
       pagedTable.appendChild(pagedTableSource);
+
+      data.options = originalOptions;
 
       var pagedTableInstance = new PagedTable(pagedTable);
 
