@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.server.ServerError;
@@ -128,9 +129,18 @@ public class AceEditorBackgroundLinkHighlighter
    
    private void refreshHighlighters(String mode)
    {
-      highlighters_.clear();
-      highlighters_.add(webLinkHighlighter());
-      // highlighters_.add(testthatErrorHighlighter());
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            TextFileType fileType = editor_.getFileType();
+            highlighters_.clear();
+            highlighters_.add(webLinkHighlighter());
+            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
+               highlighters_.add(markdownLinkHighlighter());
+         }
+      });
    }
    
    private void highlightRow(int row)
@@ -410,6 +420,33 @@ public class AceEditorBackgroundLinkHighlighter
       }
    }
    
+   private Highlighter markdownLinkHighlighter()
+   {
+      return new Highlighter()
+      {
+         @Override
+         public void highlight(AceEditor editor, String line, int row)
+         {
+            onMarkdownLinkHighlight(editor, line, row);
+         }
+      };
+   }
+   
+   private void onMarkdownLinkHighlight(AceEditor editor,
+                                        String line,
+                                        int row)
+   {
+      Pattern reMarkdownLink = Pattern.create("(\\[[^\\]]+\\])(\\([^\\)]+\\))");
+      for (Match match = reMarkdownLink.match(line, 0);
+           match != null;
+           match = match.nextMatch())
+      {
+         int startIdx = match.getIndex() + match.getGroup(1).length() + 1;
+         int endIdx   = match.getIndex() + match.getValue().length() - 1;
+         highlight(editor, row, startIdx, endIdx);
+      }
+   }
+   
    @SuppressWarnings("unused")
    private Highlighter testthatErrorHighlighter()
    {
@@ -579,7 +616,7 @@ public class AceEditorBackgroundLinkHighlighter
             var left = 4 + range.start.column * config.characterWidth;
 
             html.push(
-                "<div title='Use Ctrl+Click to Navigate to URL.' class='", clazz, "' style='",
+                "<div title='Ctrl+Click to open link.' class='", clazz, "' style='",
                 "height:", height, "px;",
                 "width:", width, "px;",
                 "top:", top, "px;",
