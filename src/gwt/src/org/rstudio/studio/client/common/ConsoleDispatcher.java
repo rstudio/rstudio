@@ -195,7 +195,7 @@ public class ConsoleDispatcher
          commands_.activateConsole().execute();
    }
    
-   private String escapedPath(String path)
+   public static String escapedPath(String path)
    {
       String escapedPath = "'" +
                            path.replace("\\", "\\\\").replace("'", "\\'") +

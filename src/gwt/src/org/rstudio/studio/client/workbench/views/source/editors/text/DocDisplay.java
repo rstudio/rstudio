@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasD
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasLineWidgetsChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
@@ -218,6 +219,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
    HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler);
+   HandlerRegistration addPasteHandler(PasteEvent.Handler handler);
 
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);

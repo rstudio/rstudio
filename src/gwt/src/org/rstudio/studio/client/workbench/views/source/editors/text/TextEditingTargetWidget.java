@@ -867,6 +867,21 @@ public class TextEditingTargetWidget
       
       }
       
+      final AppCommand clearKnitrCache = commands_.clearKnitrCache();
+      rmdFormatButton_.addSeparator();
+      ScheduledCommand cmd = new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            clearKnitrCache.execute();
+         }
+      };
+      MenuItem item = new MenuItem(clearKnitrCache.getMenuHTML(false),
+                                   true,
+                                   cmd); 
+      rmdFormatButton_.addMenuItem(item, clearKnitrCache.getMenuLabel(false));
+      
       
       showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
             RmdOutput.TYPE_STATIC);

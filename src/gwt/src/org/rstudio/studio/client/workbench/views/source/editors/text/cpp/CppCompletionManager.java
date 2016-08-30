@@ -51,6 +51,8 @@ public class CppCompletionManager implements CompletionManager
    public void onPaste(PasteEvent event)
    {
       hideCompletionPopup();
+      if (rCompletionManager_ != null)
+         rCompletionManager_.onPaste(event);
    }
    
    public CppCompletionManager(DocDisplay docDisplay,

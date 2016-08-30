@@ -35,6 +35,8 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
@@ -43,7 +45,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class DependencyManager implements InstallShinyEvent.Handler
+public class DependencyManager implements InstallShinyEvent.Handler,
+                                          PackageStateChangedHandler
 {
    @Inject
    public DependencyManager(GlobalDisplay globalDisplay,
@@ -52,8 +55,10 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
+      satisfied_ = new ArrayList<Dependency>();
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
+      eventBus.addHandler(PackageStateChangedEvent.TYPE, this);
    }
    
    public void withDependencies(String progressCaption,
@@ -140,11 +145,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withRMarkdown(String progressCaption, String userAction, 
          final Command command)
    {
-     withDependencies(   
+     withDependencies(
         progressCaption,
         userAction, 
         rmarkdownDependenciesArray(), 
-        true, // we want to update to the embedded versoin if needed
+        true, // we want to update to the embedded version if needed
         new CommandWithArg<Boolean>()
         {
          @Override
@@ -157,6 +162,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
      );
    }
    
+   public void withRMarkdown(String progressCaption, String userAction, 
+         final CommandWithArg<Boolean> command)
+   {
+     withDependencies(
+        progressCaption,
+        userAction, 
+        rmarkdownDependenciesArray(), 
+        true, 
+        command);
+   }
+
    public static List<Dependency> rmarkdownDependencies()
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
@@ -287,6 +303,16 @@ public class DependencyManager implements InstallShinyEvent.Handler
                 new Command() { public void execute() {}});
    }
    
+   @Override
+   public void onPackageStateChanged(PackageStateChangedEvent event)
+   {
+      // when the package state changes, clear the dependency cache -- this
+      // is extremely conservative as it's unlikely most (or any) of the
+      // packages have been invalidated, but it's safe to do so since it'll
+      // just cause us to hit the server once more to verify
+      satisfied_.clear();
+   }
+
    public void withDataImportCSV(String userAction, final Command command)
    {
      withDependencies(
@@ -582,12 +608,30 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                  final boolean silentEmbeddedUpdate,
                                  final CommandWithArg<Boolean> onComplete)
    {
-      // convert dependencies to JsArray
-      JsArray<Dependency> deps = JsArray.createArray().cast();
-      deps.setLength(dependencies.length);
-      for (int i = 0; i<deps.length(); i++)
-         deps.set(i, dependencies[i]);
+      // convert dependencies to JsArray, excluding satisfied dependencies
+      final JsArray<Dependency> deps = JsArray.createArray().cast();
+      for (int i = 0; i < dependencies.length; i++)
+      {
+         boolean satisfied = false;
+         for (Dependency d: satisfied_)
+         {
+            if (dependencies[i].isEqualTo(d))
+            {
+               satisfied = true;
+               break;
+            }
+         }
+         if (!satisfied)
+            deps.push(dependencies[i]);
+      }
       
+      // if no unsatisfied dependencies were found, we're done already
+      if (deps.length() == 0)
+      {
+         onComplete.execute(true);
+         return;
+      }
+
       // create progress indicator
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
@@ -604,6 +648,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                               final JsArray<Dependency> unsatisfiedDeps)
          {
             progress.onCompleted();
+            updateSatisfied(deps, unsatisfiedDeps);
             
             // if we've satisfied all dependencies then execute the command
             if (unsatisfiedDeps.length() == 0)
@@ -837,24 +882,78 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withUnsatisfiedDependencies(final Dependency dependency,
                                            final ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
+      // determine if already satisfied
+      for (Dependency d: satisfied_)
+      {
+         if (d.isEqualTo(dependency))
+         {
+            JsArray<Dependency> empty = JsArray.createArray().cast();
+            requestCallback.onResponseReceived(empty);
+            return;
+         }
+      }
+
       List<Dependency> dependencies = new ArrayList<Dependency>();
       dependencies.add(dependency);
       withUnsatisfiedDependencies(dependencies, requestCallback);
    }
    
-   public void withUnsatisfiedDependencies(final List<Dependency> dependencies,
+   private void withUnsatisfiedDependencies(final List<Dependency> dependencies,
                                            final ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
-      JsArray<Dependency> jsDependencies = JsArray.createArray(dependencies.size()).cast();
+      final JsArray<Dependency> jsDependencies = 
+            JsArray.createArray(dependencies.size()).cast();
       for (int i = 0; i < dependencies.size(); i++)
          jsDependencies.set(i, dependencies.get(i));
       
       server_.unsatisfiedDependencies(
             jsDependencies,
             false,
-            requestCallback);
+            new ServerRequestCallback<JsArray<Dependency>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<Dependency> unsatisfied)
+               {
+                  updateSatisfied(jsDependencies, unsatisfied);
+                  requestCallback.onResponseReceived(unsatisfied);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  requestCallback.onError(error);
+               }
+            });
+   }
+   
+   /**
+    * Updates the cache of satisfied dependencies.
+    * 
+    * @param all The dependencies that were requested
+    * @param unsatisfied The dependencies that were not satisfied
+    */
+   private void updateSatisfied(JsArray<Dependency> all, 
+                                JsArray<Dependency> unsatisfied)
+   {
+      for (int i = 0; i < all.length(); i++)
+      {
+         boolean satisfied = true;
+         for (int j = 0; j < unsatisfied.length(); j++)
+         {
+            if (unsatisfied.get(j).isEqualTo(all.get(i)))
+            {
+               satisfied = false;
+               break;
+            }
+         }
+         if (satisfied)
+         {
+            satisfied_.add(all.get(i));
+         }
+      }
    }
    
    private final GlobalDisplay globalDisplay_;
    private final DependencyServerOperations server_;
+   private final ArrayList<Dependency> satisfied_;
 }

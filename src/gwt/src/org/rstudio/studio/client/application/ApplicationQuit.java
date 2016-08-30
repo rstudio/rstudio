@@ -27,7 +27,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
@@ -45,6 +44,7 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.TimedProgressIndicator;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -467,11 +467,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // set restart pending for desktop
       setPendinqQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
-      ProgressIndicator progress = new GlobalProgressDelayer(
-                                             globalDisplay_,
-                                             200,
-                                             "Restarting R...").getIndicator();
-                                       
+      TimedProgressIndicator progress = new TimedProgressIndicator(
+            globalDisplay_.getProgressIndicator("Error"));
+      progress.onTimedProgress("Restarting R", 1000);
+
       // perform the suspend and restart
       eventBus_.fireEvent(
                   new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));

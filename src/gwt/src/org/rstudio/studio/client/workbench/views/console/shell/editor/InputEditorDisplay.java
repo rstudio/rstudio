@@ -16,9 +16,12 @@ package org.rstudio.studio.client.workbench.views.console.shell.editor;
 
 import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HasText;
+
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 public interface InputEditorDisplay extends HasAllFocusHandlers,
                                             HasClickHandlers,
@@ -58,4 +61,6 @@ public interface InputEditorDisplay extends HasAllFocusHandlers,
    
    void goToLineStart();
    void goToLineEnd();
+   
+   HandlerRegistration addPasteHandler(PasteEvent.Handler handler);
 }

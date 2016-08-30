@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -33,7 +32,6 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
@@ -44,7 +42,6 @@ import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
-import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDoc;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -87,9 +84,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
-import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -226,89 +220,6 @@ public class TextEditingTargetNotebook
       // render to ensure that ace places the line widgets correctly)
       releaseOnDismiss.add(docDisplay_.addRenderFinishedHandler(this));
       
-      releaseOnDismiss.add(docDisplay_.addSaveCompletedHandler(new SaveFileHandler()
-      {
-         @Override
-         public void onSaveFile(SaveFileEvent event)
-         {
-            // bail if save handler already running (avoid accumulating
-            // multiple notebook creation requests)
-            if (isCreateNotebookSaveHandlerRunning_)
-               return;
-            
-            // bail if this was an autosave
-            if (event.isAutosave())
-               return;
-            
-            // bail if we don't render chunks inline (for safety--notebooks
-            // are always in this mode)
-            if (!docDisplay_.showChunkOutputInline())
-               return;
-            
-            // bail if no notebook output format
-            if (!editingTarget_.hasRmdNotebook())
-               return;
-            
-            final String rmdPath = docUpdateSentinel_.getPath();
-            
-            // bail if unsaved doc (no point in generating notebooks for those)
-            if (StringUtil.isNullOrEmpty(rmdPath))
-               return;
-            
-            final String outputPath =
-                  FilePathUtils.filePathSansExtension(rmdPath) + 
-                  RmdOutput.NOTEBOOK_EXT;
-            
-            isCreateNotebookSaveHandlerRunning_ = true;
-            
-            dependencyManager_.withUnsatisfiedDependencies(
-                  Dependency.embeddedPackage("rmarkdown"),
-                  new ServerRequestCallback<JsArray<Dependency>>()
-                  {
-                     @Override
-                     public void onResponseReceived(JsArray<Dependency> unsatisfiedDependencies)
-                     {
-                        if (unsatisfiedDependencies.length() == 0)
-                        {
-                           CommandWithArg<Boolean> onCompleted = new CommandWithArg<Boolean>()
-                           {
-                              @Override
-                              public void execute(Boolean arg)
-                              {
-                                 isCreateNotebookSaveHandlerRunning_ = false;
-                              }
-                           };
-                           
-                           createNotebookFromCache(rmdPath, outputPath, onCompleted);
-                           return;
-                        }
-                        
-                        Dependency dependency = unsatisfiedDependencies.get(0);
-                        String message;
-                        
-                        if (StringUtil.isNullOrEmpty(dependency.getVersion()))
-                        {
-                           message = "The rmarkdown package is not installed; notebook HTML file will not be generated.";
-                        }
-                        else
-                        {
-                           message = "An updated version of the rmarkdown package is required to generate notebook HTML files.";
-                        }
-                        
-                        editingDisplay_.showWarningBar(message);
-                        isCreateNotebookSaveHandlerRunning_ = false;
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  }
-            );
-         }
-      }));
-      
       releaseOnDismiss_.add(editingTarget_.addInterruptChunkHandler(new InterruptChunkEvent.Handler()
       {
          @Override
@@ -365,7 +276,6 @@ public class TextEditingTargetNotebook
       prefs_ = prefs;
       commands_ = commands;
       pSourceWindowManager_ = pSourceWindowManager;
-      dependencyManager_ = dependencyManager;
       queue_ = new NotebookQueueState(docDisplay_, editingTarget_, 
             docUpdateSentinel_, server, events, this);
       
@@ -403,6 +313,12 @@ public class TextEditingTargetNotebook
                   syncOutputMode();
                }
             }));
+
+      // set up HTML rendering on save
+      htmlRenderer_ = new NotebookHtmlRenderer(docDisplay_, 
+            editingTarget_, editingDisplay_, docUpdateSentinel_, 
+            server_, events_, dependencyManager);
+      releaseOnDismiss_.add(docDisplay_.addSaveCompletedHandler(htmlRenderer_));
    }
    
    public void onActivate()
@@ -1421,56 +1337,6 @@ public class TextEditingTargetNotebook
    
    // Private methods --------------------------------------------------------
    
-   private void createNotebookFromCache(final String rmdPath,
-                                       final String outputPath,
-                                       final CommandWithArg<Boolean> onCompleted)
-   {
-      Command createNotebookCmd = new Command()
-      {
-         final String warningPrefix = "Error creating notebook: ";
-         @Override
-         public void execute()
-         {
-            server_.createNotebookFromCache(
-                  rmdPath,
-                  outputPath,
-                  new ServerRequestCallback<NotebookCreateResult>()
-                  {
-                     @Override
-                     public void onResponseReceived(NotebookCreateResult result)
-                     {
-                        if (result.succeeded())
-                        {
-                           events_.fireEvent(new NotebookRenderFinishedEvent(
-                                 docUpdateSentinel_.getId(), 
-                                 docUpdateSentinel_.getPath()));
-                        }
-                        else
-                        {
-                           editingDisplay_.showWarningBar(warningPrefix +
-                                 result.getErrorMessage());
-                        }
-
-                        if (onCompleted != null)
-                           onCompleted.execute(result.succeeded());
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        editingDisplay_.showWarningBar(warningPrefix + 
-                              error.getMessage());
-                        if (onCompleted != null)
-                           onCompleted.execute(false);
-                     }
-                  });
-         }
-      };
-      
-      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", 
-            createNotebookCmd);
-   }
-   
    private void restartThenExecute(AppCommand command)
    {
       if (commands_.restartR().isEnabled())
@@ -2003,9 +1869,9 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
-   private DependencyManager dependencyManager_;
    private UIPrefs prefs_;
    private Commands commands_;
+   private NotebookHtmlRenderer htmlRenderer_;
 
    private RMarkdownServerOperations server_;
    private SourceServerOperations source_;
@@ -2023,7 +1889,6 @@ public class TextEditingTargetNotebook
    private int lastPlotWidth_ = 0;
    private boolean resizingPlotsRemote_ = false;
    private boolean maximizedPane_ = false;
-   private boolean isCreateNotebookSaveHandlerRunning_ = false;
    
    private int state_ = STATE_NONE;
 

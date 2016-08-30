@@ -78,4 +78,12 @@ public class Dependency extends JavaScriptObject
    public final native boolean getVersionSatisfied() /*-{
       return this.version_satisfied;
    }-*/;
+   
+   public final boolean isEqualTo(Dependency other)
+   {
+      return (getType()    == other.getType() &&
+              getName()    == other.getName() &&
+              getVersion() == other.getVersion() &&
+              getSource()  == other.getSource());
+   }
 }

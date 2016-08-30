@@ -143,6 +143,7 @@ public abstract class
    public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
    public abstract AppCommand knitWithParameters();
+   public abstract AppCommand clearKnitrCache();
    public abstract AppCommand notebookExpandAllOutput();
    public abstract AppCommand notebookCollapseAllOutput();
    public abstract AppCommand notebookClearOutput();
