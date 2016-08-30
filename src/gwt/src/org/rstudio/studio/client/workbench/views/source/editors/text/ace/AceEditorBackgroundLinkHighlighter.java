@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
+import org.rstudio.core.client.MapUtil;
+import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.MouseTracker;
@@ -44,6 +46,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
@@ -151,7 +155,7 @@ public class AceEditorBackgroundLinkHighlighter
          {
             if (range.intersects(marker.getRange()))
             {
-               editor_.getSession().removeMarker(marker.getMarkerId());
+               marker.detach();
                return false;
             }
             return true;
@@ -231,7 +235,7 @@ public class AceEditorBackgroundLinkHighlighter
             {
                if (range.contains(marker.getRange()))
                {
-                  editor_.getSession().removeMarker(marker.getMarkerId());
+                  marker.detach();
                   return false;
                }
                
@@ -464,6 +468,32 @@ public class AceEditorBackgroundLinkHighlighter
       int row = event.getEvent().getRange().getStart().getRow();
       nextHighlightStart_ = Math.min(nextHighlightStart_, row);
       timer_.schedule(700);
+      
+      // update marker positions (deferred so that anchors update)
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            final SafeMap<Integer, List<MarkerRegistration>> newMarkers =
+                  new SafeMap<Integer, List<MarkerRegistration>>();
+            MapUtil.forEach(activeMarkers_, new ForEachCommand<Integer, List<MarkerRegistration>>()
+            {
+               @Override
+               public void execute(Integer oldRow, List<MarkerRegistration> markers)
+               {
+                  if (markers == null || markers.isEmpty())
+                     return;
+
+                  // all markers here should have same row
+                  int newRow = markers.get(0).getRange().getStart().getRow();
+                  newMarkers.put(newRow, markers);
+               }
+            });
+            activeMarkers_.clear();
+            activeMarkers_ = newMarkers;
+         }
+      });
    }
    
    @Override
@@ -533,7 +563,7 @@ public class AceEditorBackgroundLinkHighlighter
       
       public void detach()
       {
-         editor_.getSession().removeMarker(markerId_);
+         editor_.getSession().removeMarker(getMarkerId());
          range_.detach();
       }
       
@@ -559,9 +589,9 @@ public class AceEditorBackgroundLinkHighlighter
    
    private final AceEditor editor_;
    private final List<Highlighter> highlighters_;
-   private final SafeMap<Integer, List<MarkerRegistration>> activeMarkers_;
    private final Timer timer_;
    
+   private SafeMap<Integer, List<MarkerRegistration>> activeMarkers_;
    private int nextHighlightStart_;
    private static final int N_HIGHLIGHT_ROWS = 200;
    
