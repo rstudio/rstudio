@@ -305,6 +305,31 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error cleanReplayChunkPlotOutput(const json::JsonRpcRequest& request,
+                                 json::JsonRpcResponse* pResponse)
+{
+   std::string docId;
+   std::string chunkId;
+   Error error = json::readParams(request.params, &docId, &chunkId);
+   if (error)
+      return error;
+
+   // extract the list of chunks to replay
+   std::string docPath;
+   source_database::getPath(docId, &docPath);
+
+   FilePath chunkFilePath = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
+      ContextSaved);
+
+   FilePath tempFilePath = chunkFilePath.complete("temp");
+
+   error = tempFilePath.remove();
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
+}
+
 } // anonymous namespace
 
 core::Error initPlotReplay()
@@ -314,7 +339,8 @@ core::Error initPlotReplay()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "replay_notebook_plots", replayPlotOutput))
-      (bind(registerRpcMethod, "replay_notebook_chunk_plots", replayChunkPlotOutput));
+      (bind(registerRpcMethod, "replay_notebook_chunk_plots", replayChunkPlotOutput))
+      (bind(registerRpcMethod, "clean_replay_notebook_chunk_plots", cleanReplayChunkPlotOutput));
 
    return initBlock.execute();
 }

@@ -20,6 +20,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,6 +39,7 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
@@ -117,6 +120,25 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       pEventBus_.get().addHandler(ChunkPlotRefreshedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkPlotRefreshFinishedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkChangeEvent.TYPE, this);
+      
+      Window.addWindowClosingHandler(new ClosingHandler()
+      {
+         @Override
+         public void onWindowClosing(ClosingEvent arg0)
+         {
+            server_.cleanReplayNotebookChunkPlots(
+               chunkWindowParams_.getDocId(), 
+               chunkWindowParams_.getChunkId(),
+                  new ServerRequestCallback<Void>()
+                  {
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                     }
+                  }
+            );
+         }
+      });
 
       pEventBus_.get().fireEventToMainWindow(new ChunkSatelliteWindowOpenedEvent(
          chunkWindowParams_.getDocId(),
