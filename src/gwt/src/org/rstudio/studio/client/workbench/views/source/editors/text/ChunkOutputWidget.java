@@ -45,9 +45,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Overflow;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -105,6 +103,7 @@ public class ChunkOutputWidget extends Composite
       String collapsed();
       String spinner();
       String pendingResize();
+      String fullsize();
    }
 
    public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
@@ -144,24 +143,7 @@ public class ChunkOutputWidget extends Composite
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full)
       {
-         frame_.getElement().getStyle().setTop(0, Unit.PX);
-         frame_.getElement().getStyle().setBottom(0, Unit.PX);
-         frame_.getElement().getStyle().setLeft(0, Unit.PX);
-         frame_.getElement().getStyle().setRight(0, Unit.PX);
-         frame_.getElement().getStyle().setPosition(Position.ABSOLUTE);
-         frame_.getElement().getStyle().setPadding(10, Unit.PX);
-         frame_.getElement().getStyle().setBorderWidth(0, Unit.PX);
-
-         root_.getElement().getStyle().setWidth(100, Unit.PCT);
-         root_.getElement().getStyle().setHeight(100, Unit.PCT);
-         root_.getElement().getStyle().setPadding(0, Unit.PX);
-         root_.getElement().getStyle().setMargin(0, Unit.PX);
-         
-         getElement().getStyle().setPadding(0, Unit.PX);
-         
-         clear_.getElement().getStyle().setDisplay(Display.NONE);
-         expand_.getElement().getStyle().setDisplay(Display.NONE);
-         popout_.getElement().getStyle().setDisplay(Display.NONE);
+         addStyleName(style.fullsize());
       }
 
       // create the initial output stream and attach it to the frame
