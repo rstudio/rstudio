@@ -35,6 +35,8 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
@@ -43,7 +45,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class DependencyManager implements InstallShinyEvent.Handler
+public class DependencyManager implements InstallShinyEvent.Handler,
+                                          PackageStateChangedHandler
 {
    @Inject
    public DependencyManager(GlobalDisplay globalDisplay,
@@ -55,6 +58,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       satisfied_ = new ArrayList<Dependency>();
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
+      eventBus.addHandler(PackageStateChangedEvent.TYPE, this);
    }
    
    public void withDependencies(String progressCaption,
@@ -299,6 +303,16 @@ public class DependencyManager implements InstallShinyEvent.Handler
                 new Command() { public void execute() {}});
    }
    
+   @Override
+   public void onPackageStateChanged(PackageStateChangedEvent event)
+   {
+      // when the package state changes, clear the dependency cache -- this
+      // is extremely conservative as it's unlikely most (or any) of the
+      // packages have been invalidated, but it's safe to do so since it'll
+      // just cause us to hit the server once more to verify
+      satisfied_.clear();
+   }
+
    public void withDataImportCSV(String userAction, final Command command)
    {
      withDependencies(
