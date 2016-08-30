@@ -6,10 +6,6 @@
   font-family: "Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif;
 }
 
-.pagedtable-expand .pagedtable {
-  /* width: 100%; */
-}
-
 .pagedtable-wrapper {
   border: 1px solid #ccc;
   border-radius: 4px;
