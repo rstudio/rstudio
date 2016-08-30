@@ -146,13 +146,16 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
    std::map<std::string,std::string> idMap = projectIdsMap(projectIdsPath);
    std::map<std::string,std::string>::iterator it;
 
-   // see if the project came from another user
-   bool fromOtherUser = !projectId.userId().empty() &&
-            projectId.userId() != core::r_util::obfuscatedUserId(::geteuid());
+   // use fully qualified project ID (user + path) if we don't own this project
+   // and shared storage is provisioned
+   bool useQualifiedId = 
+           !projectId.userId().empty() &&
+           projectId.userId() != core::r_util::obfuscatedUserId(::geteuid()) &&
+           sharedStoragePath.complete(kProjectSharedDir).exists();
 
    // if it did, use the fully qualified name; otherwise, use just the project
    // ID (our own projects are stored unqualified in the map)
-   if (fromOtherUser)
+   if (useQualifiedId)
       it = idMap.find(projectId.asString());
    else
       it = idMap.find(projectId.id());
@@ -162,7 +165,7 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
       // we found it!
       return it->second;
    }
-   else if (fromOtherUser)
+   else if (useQualifiedId)
    {
       // this project does not belong to us; see if it has an entry in shared
       // storage
@@ -200,6 +203,10 @@ inline std::string toFilePath(const core::r_util::ProjectId& projectId,
 inline std::string sharedProjectId(const core::FilePath& sharedStoragePath,
                                    const std::string& projectDir)
 {
+   // skip if no shared storage path 
+   if (!sharedStoragePath.complete(kProjectSharedDir).exists())
+      return "";
+
    // enumerate the project entries in shared storage (this should succeed)
    std::vector<core::FilePath> projectEntries;
    core::Error error = sharedStoragePath.complete(kProjectSharedDir)

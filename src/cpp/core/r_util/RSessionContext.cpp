@@ -38,6 +38,8 @@
 
 #ifndef _WIN32
 #include <sys/stat.h>
+#include <unistd.h>
+#include <core/system/PosixUser.hpp>
 #endif
 
 #define kSessionSuffix "-d"
@@ -93,10 +95,16 @@ bool SessionScope::isWorkspaces() const
    return project_.id() == kWorkspacesId;
 }
 
+// This function is intended to tell us whether a given path corresponds to an
+// RStudio shared project owned by another user but shared with this user. It
+// is primarily used to disallow opening shared projects when they're disabled.
+// For this reason, it returns false for projects which are shared using
+// ordinary filesystem attributes.
 bool isSharedPath(const std::string& projectPath,
                   const core::FilePath& userHomePath)
 {
 #ifndef _WIN32
+   Error error;
    // ensure this is a real path
    FilePath projectDir = FilePath::resolveAliasedPath(projectPath,
                                                       userHomePath);
@@ -106,15 +114,41 @@ bool isSharedPath(const std::string& projectPath,
    struct stat st;
    if (::stat(projectDir.absolutePath().c_str(), &st) == 0)
    {
-      // consider this project to be shared if we aren't the owner
-      if (st.st_uid != ::geteuid())
+      // not shared if we own the directory
+      if (st.st_uid == ::geteuid())
+         return false;
+
+      // not shared if file permissions give everyone access
+      if (st.st_mode & (S_IROTH | S_IWOTH | S_IXOTH)) 
+         return false;
+
+      core::system::user::User user;
+      error = core::system::user::currentUser(&user);
+      if (error)
       {
-         return true;
+         LOG_ERROR(error);
+         return false;
       }
+
+      // not shared if our group owns the directory 
+      if (st.st_gid == user.groupId)
+         return false;
+
+#ifndef __APPLE__
+      // not shared if we're in any of the groups that own the directory
+      // (note that this checks supplementary group IDs only, so the check
+      // against the primary group ID above is still required)
+      if (::group_member(st.st_gid))
+         return false;
+#endif 
+
+      // if we got this far, we likely have access due to project sharing
+      // (ACLs)
+      return true;
    }
    else
    {
-      Error error = systemError(errno, ERROR_LOCATION);
+      error = systemError(errno, ERROR_LOCATION);
       error.addProperty("path", projectDir.absolutePath());
       LOG_ERROR(error);
    }
