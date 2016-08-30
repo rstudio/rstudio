@@ -43,8 +43,6 @@
       width: 14px;
       height: 14px;
       top: 0px;
-      filter: grayscale(100%);
-      -webkit-filter: grayscale(100%);
       opacity: 0.7;
    }
    
