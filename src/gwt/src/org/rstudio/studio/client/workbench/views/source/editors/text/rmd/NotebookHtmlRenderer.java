@@ -103,14 +103,6 @@ public class NotebookHtmlRenderer
    private void createNotebookDeferred(final String rmdPath, 
                                        final String outputPath)
    {
-      // if we already know that dependencies are met, go ahead and generate
-      // the notebook directly
-      if (satisfiedDependencies_)
-      {
-         createNotebookFromCache(rmdPath, outputPath);
-         return;
-      }
-      
       dependencyManager_.withUnsatisfiedDependencies(
             Dependency.embeddedPackage("rmarkdown"),
             new ServerRequestCallback<JsArray<Dependency>>()
@@ -169,8 +161,6 @@ public class NotebookHtmlRenderer
                return;
             }
 
-            Debug.devlog("notebook render initiated");
-            satisfiedDependencies_ = true;
             server_.createNotebookFromCache(
                   rmdPath,
                   outputPath,
@@ -205,19 +195,11 @@ public class NotebookHtmlRenderer
          }
       };
       
-      if (satisfiedDependencies_)
-      {
-         createNotebookCmd.execute(true);
-      }
-      else
-      {
-         dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", 
-               createNotebookCmd);
-      }
+      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks", 
+            createNotebookCmd);
    }
    
    private boolean isRunning_;
-   private boolean satisfiedDependencies_ = false;
 
    private final DocDisplay display_;
    private final TextEditingTarget target_;
