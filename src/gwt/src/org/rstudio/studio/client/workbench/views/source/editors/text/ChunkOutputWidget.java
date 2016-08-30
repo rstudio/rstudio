@@ -830,7 +830,8 @@ public class ChunkOutputWidget extends Composite
                presenter_ instanceof ChunkOutputStream &&
                (type == RmdChunkOutputUnit.TYPE_HTML || 
                 type == RmdChunkOutputUnit.TYPE_PLOT ||
-                type == RmdChunkOutputUnit.TYPE_DATA))
+                type == RmdChunkOutputUnit.TYPE_DATA ||
+                chunkOutputSize_ == ChunkOutputSize.Full))
       {
          // if we're adding a block widget into an existing chunk, we 
          // need to switch to gallery mode 
