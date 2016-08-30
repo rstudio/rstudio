@@ -297,10 +297,12 @@ public class AceEditorBackgroundLinkHighlighter
          @Override
          public void onResponseReceived(FileSystemItem file)
          {
-            // inform user non-obtrusively if no file found
+            // inform user when no file found
             if (file == null || !file.exists())
             {
-               globalDisplay_.showWarningBar(false, "No file at path '" + finalUrl + "'.");
+               String message = "No file at path '" + finalUrl + "'.";
+               String caption = "Error navigating to file";
+               globalDisplay_.showErrorMessage(caption, message);
                return;
             }
             
