@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsUtil;
 
@@ -53,10 +54,11 @@ public class PaneConfig extends JavaScriptObject
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Environment");
       tabSet1.push("History");
+      tabSet1.push("Connections");
       tabSet1.push("Build");
       tabSet1.push("VCS");
       tabSet1.push("Presentation");
-      tabSet1.push("Connections");
+    
 
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
@@ -75,9 +77,9 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getAllTabs()
    {
-      return new String[] {"Environment", "History", "Files", "Plots",
+      return new String[] {"Environment", "History", "Files", "Plots", "Connections",
                            "Packages", "Help", "Build", "VCS", "Presentation",
-                           "Viewer", "Connections"};
+                           "Viewer"};
    }
 
    public static String[] getAlwaysVisibleTabs()
@@ -208,6 +210,17 @@ public class PaneConfig extends JavaScriptObject
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
 
+      // Presentation tab must always be at the end of the ts1 tabset (this 
+      // is so that activating it works even in the presense of optionally
+      // visible tabs). This is normally an invariant but for a time during 
+      // the v0.99-1000 preview we allowed the Connections tab to be the 
+      // last one in the tabset.
+      if (!ts1.get(ts1.length() - 1).equals("Presentation"))
+      {
+         Debug.logToConsole("Invaliding tabset config (Presentation index)");
+         return false;
+      }
+      
       // If any of these tabs are missing, then they can be added
       Set<String> addableTabs = makeSet(getAddableTabs());
 
