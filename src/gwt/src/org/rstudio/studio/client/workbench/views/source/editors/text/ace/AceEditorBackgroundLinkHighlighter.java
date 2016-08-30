@@ -111,19 +111,21 @@ public class AceEditorBackgroundLinkHighlighter
       
       
       highlighters_ = new ArrayList<Highlighter>();
-      highlighters_.add(webLinkHighlighter());
       
       editor_.addDocumentChangedHandler(this);
       editor_.addEditorModeChangedHandler(this);
       editor_.addCommandClickHandler(this);
       editor_.addMouseMoveHandler(this);
       editor_.addAttachHandler(this);
+      
+      refreshHighlighters(editor_.getModeId());
    }
    
    private void refreshHighlighters(String mode)
    {
       highlighters_.clear();
       highlighters_.add(webLinkHighlighter());
+      // highlighters_.add(testthatErrorHighlighter());
    }
    
    private void highlightRow(int row)
@@ -132,7 +134,10 @@ public class AceEditorBackgroundLinkHighlighter
          highlighter.highlight(editor_, editor_.getLine(row), row);
    }
    
-   private void registerActiveMarker(int row, String id, int markerId, final Range range)
+   private void registerActiveMarker(int row,
+                                     String id,
+                                     int markerId,
+                                     final AnchoredRange range)
    {
       if (!activeMarkers_.containsKey(row))
          activeMarkers_.put(row, new ArrayList<MarkerRegistration>());
@@ -253,6 +258,11 @@ public class AceEditorBackgroundLinkHighlighter
          return;
       }
       
+      // handle testthat links
+      Pattern reSrcRef = Pattern.create("@[^#]+#\\d+");
+      if (reSrcRef.test(url))
+         return;
+      
       // treat other URLs as paths to files on the server
       final String finalUrl = url;
       server_.stat(finalUrl, new ServerRequestCallback<FileSystemItem>()
@@ -290,6 +300,33 @@ public class AceEditorBackgroundLinkHighlighter
    
    
    // Highlighter Implementations ----
+   
+   private void highlight(AceEditor editor,
+                          int row,
+                          int startColumn,
+                          int endColumn)
+   {
+      // check to see if we already have a marker for this range
+      Position start = Position.create(row, startColumn);
+      Position end   = Position.create(row, endColumn);
+      Range range = Range.fromPoints(start, end);
+      if (activeMarkers_.containsKey(row))
+      {
+         List<MarkerRegistration> markers = activeMarkers_.get(row);
+         for (MarkerRegistration marker : markers)
+         {
+            if (marker.getRange().isEqualTo(range))
+               return;
+         }
+      }
+
+      // create an anchored range and add a marker for it
+      String id = "ace_link-" + StringUtil.makeRandomId(8);
+      String styles = RES.styles().highlight() + " " + id;
+      AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
+      registerActiveMarker(row, id, markerId, anchoredRange);
+   }
    
    private Highlighter webLinkHighlighter()
    {
@@ -352,26 +389,33 @@ public class AceEditorBackgroundLinkHighlighter
          // apply trimming
          endIdx -= trimLeftCount;
          
-         // check to see if we already have a marker for this range
-         Position start = Position.create(row, startIdx);
-         Position end = Position.create(row, endIdx);
-         Range range = Range.fromPoints(start, end);
-         if (activeMarkers_.containsKey(row))
+         highlight(editor, row, startIdx, endIdx);
+      }
+   }
+   
+   @SuppressWarnings("unused")
+   private Highlighter testthatErrorHighlighter()
+   {
+      return new Highlighter()
+      {
+         @Override
+         public void highlight(AceEditor editor, String line, int row)
          {
-            List<MarkerRegistration> markers = activeMarkers_.get(row);
-            for (MarkerRegistration marker : markers)
-            {
-               if (marker.getRange().isEqualTo(range))
-                  continue;
-            }
+            onTestthatErrorHighlight(editor, line, row);
          }
-         
-         // create an anchored range and add a marker for it
-         String id = "ace_link-" + StringUtil.makeRandomId(8);
-         String styles = RES.styles().highlight() + " " + id;
-         AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
-         int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
-         registerActiveMarker(row, id, markerId, anchoredRange);
+      };
+   }
+   
+   private void onTestthatErrorHighlight(AceEditor editor, String line, int row)
+   {
+      Pattern reTestthatError = Pattern.create("\\(@[^#]+#\\d+\\)");
+      for (Match match = reTestthatError.match(line, 0);
+           match != null;
+           match = match.nextMatch())
+      {
+         int startIdx = match.getIndex() + 1;
+         int endIdx   = match.getIndex() + match.getValue().length() - 1;
+         highlight(editor, row, startIdx, endIdx);
       }
    }
    
@@ -478,13 +522,19 @@ public class AceEditorBackgroundLinkHighlighter
    
    // Private Members ----
    
-   private static class MarkerRegistration
+   private class MarkerRegistration
    {
-      public MarkerRegistration(String id, int markerId, Range range)
+      public MarkerRegistration(String id, int markerId, AnchoredRange range)
       {
          id_ = id;
          markerId_ = markerId;
          range_ = range;
+      }
+      
+      public void detach()
+      {
+         editor_.getSession().removeMarker(markerId_);
+         range_.detach();
       }
       
       public String getId()
@@ -497,14 +547,14 @@ public class AceEditorBackgroundLinkHighlighter
          return markerId_;
       }
       
-      public Range getRange()
+      public AnchoredRange getRange()
       {
          return range_;
       }
       
       private final String id_;
       private final int markerId_;
-      private final Range range_;
+      private final AnchoredRange range_;
    }
    
    private final AceEditor editor_;
