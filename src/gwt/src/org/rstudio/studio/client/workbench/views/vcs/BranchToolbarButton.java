@@ -25,8 +25,11 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.js.JsUtil;
@@ -104,52 +107,64 @@ public class BranchToolbarButton extends ToolbarButton
       rootMenu.clearItems();
       JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
       
-      // split into local and remote lists
+      // separate branches based on remote name
+      Map<String, List<String>> branchMap = new LinkedHashMap<String, List<String>>();
       List<String> localBranches = new ArrayList<String>();
-      List<String> remoteBranches = new ArrayList<String>();
+      branchMap.put("(local branches)", localBranches);
       for (String branch : JsUtil.asIterable(branches))
       {
          if (branch.startsWith("remotes/"))
-            remoteBranches.add(branch);
+         {
+            JsArrayString parts = StringUtil.split(branch, "/");
+            if (parts.length() > 2)
+            {
+               String remote = parts.get(1);
+               if (!branchMap.containsKey(remote))
+                  branchMap.put(remote, new ArrayList<String>());
+               List<String> remoteBranches = branchMap.get(remote);
+               remoteBranches.add(branch);
+            }
+         }
          else
+         {
             localBranches.add(branch);
+         }
       }
       
       onBeforePopulateMenu(rootMenu);
       
       // populate local branches
-      populateMenuSection(rootMenu, "Local Branches", localBranches);
-      populateMenuSection(rootMenu, "Remote Branches", remoteBranches);
+      populateMenu(rootMenu, branchMap);
    }
    
-   private void populateMenuSection(ToolbarPopupMenu menu,
-                                    String caption,
-                                    List<String> branches)
+   private void populateMenu(final ToolbarPopupMenu menu, final Map<String, List<String>> branchMap)
    {
-      menu.addSeparator(caption, false);
-
-      if (branches.isEmpty())
+      MapUtil.forEach(branchMap, new MapUtil.ForEachCommand<String, List<String>>()
       {
-      }
-      else
-      {
-         for (String branch : branches)
+         @Override
+         public void execute(String caption, List<String> branches)
          {
-            // skip detached branches
-            if (branch.contains("HEAD detached at"))
-               continue;
-            
-            // skip HEAD branches
-            if (branch.contains("HEAD ->"))
-               continue;
-            
-            final String branchLabel = branch.replaceAll("^remotes/", "");
-            final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
-            menu.addItem(new MenuItem(
-                  branchLabel,
-                  new SwitchBranchCommand(branchLabel, branchValue)));
+            menu.addSeparator(caption, false);
+            for (String branch : branches)
+            {
+               // skip detached branches
+               if (branch.contains("HEAD detached at"))
+                  continue;
+
+               // skip HEAD branches
+               if (branch.contains("HEAD ->"))
+                  continue;
+               
+               // construct branch label without remotes prefix
+
+               final String branchLabel = branch.replaceAll("^remotes/" + caption + "/", "");
+               final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
+               menu.addItem(new MenuItem(
+                     branchLabel,
+                     new SwitchBranchCommand(branchLabel, branchValue)));
+            }
          }
-      }
+      });
    }
 
    protected void onBeforePopulateMenu(ToolbarPopupMenu rootMenu)
