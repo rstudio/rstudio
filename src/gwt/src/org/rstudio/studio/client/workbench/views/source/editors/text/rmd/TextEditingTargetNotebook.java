@@ -59,10 +59,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -134,9 +130,7 @@ public class TextEditingTargetNotebook
                           PinnedLineWidget.Host,
                           SourceDocAddedEvent.Handler,
                           RenderFinishedEvent.Handler,
-                          ChunkSatelliteWindowOpenedEvent.Handler,
-                          ConsoleWriteOutputHandler,
-                          ConsoleWriteErrorHandler
+                          ChunkSatelliteWindowOpenedEvent.Handler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetChunks chunks,
@@ -397,10 +391,6 @@ public class TextEditingTargetNotebook
             events_.addHandler(SourceDocAddedEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(ChunkSatelliteWindowOpenedEvent.TYPE, this));
-      releaseOnDismiss_.add(
-            events_.addHandler(ConsoleWriteOutputEvent.TYPE, this));
-      releaseOnDismiss_.add(
-            events_.addHandler(ConsoleWriteErrorEvent.TYPE, this));
       
       // subscribe to global rmd output inline preference and sync
       // again when it changes
@@ -894,26 +884,6 @@ public class TextEditingTargetNotebook
             );
          }
       }
-   }
-
-   @Override
-   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
-   {
-      forwardEventToSatelliteChunk(
-         docUpdateSentinel_.getId(),
-         event.getConsole(),
-         event
-      );
-   }
-   
-   @Override
-   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
-   {
-      forwardEventToSatelliteChunk(
-         docUpdateSentinel_.getId(),
-         event.getConsole(),
-         event
-      );
    }
 
    @Override
