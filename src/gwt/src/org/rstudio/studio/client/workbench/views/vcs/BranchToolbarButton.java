@@ -23,8 +23,13 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -95,19 +100,51 @@ public class BranchToolbarButton extends ToolbarButton
    public void onVcsRefresh(VcsRefreshEvent event)
    {
       ToolbarPopupMenu rootMenu = getMenu();
+      rootMenu.setAutoHideRedundantSeparators(false);
       rootMenu.clearItems();
-      JsArrayString branches = pVcsState_.get().getBranchInfo()
-            .getBranches();
-
-      onBeforePopulateMenu(rootMenu);
-      for (int i = 0; i < branches.length(); i++)
+      JsArrayString branches = pVcsState_.get().getBranchInfo().getBranches();
+      
+      // split into local and remote lists
+      List<String> localBranches = new ArrayList<String>();
+      List<String> remoteBranches = new ArrayList<String>();
+      for (String branch : JsUtil.asIterable(branches))
       {
-         String branch = branches.get(i);
-         final String branchLabel = branch.replaceFirst("^remotes/", "");
-         final String branchValue = branch.replaceFirst(" ->.*", "");
-         rootMenu.addItem(new MenuItem(branchLabel,
-                                       new SwitchBranchCommand(branchLabel,
-                                                               branchValue)));
+         if (branch.startsWith("remotes/"))
+            remoteBranches.add(branch);
+         else
+            localBranches.add(branch);
+      }
+      
+      onBeforePopulateMenu(rootMenu);
+      
+      // populate local branches
+      populateMenuSection(rootMenu, "Local Branches", localBranches);
+      populateMenuSection(rootMenu, "Remote Branches", remoteBranches);
+   }
+   
+   private void populateMenuSection(ToolbarPopupMenu menu,
+                                    String caption,
+                                    List<String> branches)
+   {
+      menu.addSeparator(caption, false);
+
+      if (branches.isEmpty())
+      {
+      }
+      else
+      {
+         for (String branch : branches)
+         {
+            // skip detached branches
+            if (branch.contains("HEAD detached at"))
+               continue;
+            
+            final String branchLabel = branch.replaceAll("^remotes/", "");
+            final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
+            menu.addItem(new MenuItem(
+                  branchLabel,
+                  new SwitchBranchCommand(branchLabel, branchValue)));
+         }
       }
    }
 

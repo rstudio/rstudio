@@ -23,8 +23,15 @@ public class LabelledMenuSeparator extends MenuItemSeparator
 {
    public LabelledMenuSeparator(String text)
    {
+      this(text, true);
+   }
+   
+   public LabelledMenuSeparator(String text, boolean includeLineSeparator)
+   {
       Label label = new Label(text);
       label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+      if (!includeLineSeparator)
+         getElement().removeAllChildren();
       getElement().appendChild(label.getElement());
    }
 }

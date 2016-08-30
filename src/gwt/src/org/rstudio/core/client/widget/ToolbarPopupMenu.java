@@ -113,6 +113,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator(new LabelledMenuSeparator(label));
    }
    
+   public void addSeparator(String label, boolean includeLineSeparator)
+   {
+      menuBar_.addSeparator(new LabelledMenuSeparator(label, includeLineSeparator));
+   }
+   
    public void addSeparator(int minPx)
    {
       menuBar_.addSeparator(new MinWidthMenuSeparator(minPx));
@@ -126,6 +131,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void focus()
    {
       menuBar_.focus();
+   }
+   
+   public void setAutoHideRedundantSeparators(boolean value)
+   {
+      menuBar_.setAutoHideRedundantSeparators(value);
    }
 
    public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)

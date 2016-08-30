@@ -573,7 +573,28 @@ public:
    core::Error checkout(const std::string& id,
                         boost::shared_ptr<ConsoleProcess>* ppCP)
    {
-      return createConsoleProc(ShellArgs() << "checkout" << id << "--",
+      ShellArgs args;
+      if (id.find("remotes/") == 0)
+      {
+         // check out a local copy of branch, tracking remote
+         std::vector<std::string> splat = core::algorithm::split(id, "/");
+         if (splat.size() > 2)
+         {
+            std::string branch = core::algorithm::join(splat.begin() + 2, splat.end(), "/");
+            args << "checkout" << branch << "--";
+         }
+         else
+         {
+            // shouldn't happen, but provide valid shell command regardless
+            args << "checkout" << id << "--";
+         }
+      }
+      else
+      {
+         args << "checkout" << id << "--";
+      }
+      
+      return createConsoleProc(args,
                                "Git Checkout " + id,
                                true,
                                ppCP);
