@@ -52,6 +52,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
+      satisfied_ = new ArrayList<Dependency>();
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
    }
@@ -593,12 +594,30 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                  final boolean silentEmbeddedUpdate,
                                  final CommandWithArg<Boolean> onComplete)
    {
-      // convert dependencies to JsArray
-      JsArray<Dependency> deps = JsArray.createArray().cast();
-      deps.setLength(dependencies.length);
-      for (int i = 0; i<deps.length(); i++)
-         deps.set(i, dependencies[i]);
+      // convert dependencies to JsArray, excluding satisfied dependencies
+      final JsArray<Dependency> deps = JsArray.createArray().cast();
+      for (int i = 0; i < dependencies.length; i++)
+      {
+         boolean satisfied = false;
+         for (Dependency d: satisfied_)
+         {
+            if (dependencies[i].isEqualTo(d))
+            {
+               satisfied = true;
+               break;
+            }
+         }
+         if (!satisfied)
+            deps.push(dependencies[i]);
+      }
       
+      // if no unsatisfied dependencies were found, we're done already
+      if (deps.length() == 0)
+      {
+         onComplete.execute(true);
+         return;
+      }
+
       // create progress indicator
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
@@ -615,6 +634,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                               final JsArray<Dependency> unsatisfiedDeps)
          {
             progress.onCompleted();
+            updateSatisfied(deps, unsatisfiedDeps);
             
             // if we've satisfied all dependencies then execute the command
             if (unsatisfiedDeps.length() == 0)
@@ -848,24 +868,78 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withUnsatisfiedDependencies(final Dependency dependency,
                                            final ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
+      // determine if already satisfied
+      for (Dependency d: satisfied_)
+      {
+         if (d.isEqualTo(dependency))
+         {
+            JsArray<Dependency> empty = JsArray.createArray().cast();
+            requestCallback.onResponseReceived(empty);
+            return;
+         }
+      }
+
       List<Dependency> dependencies = new ArrayList<Dependency>();
       dependencies.add(dependency);
       withUnsatisfiedDependencies(dependencies, requestCallback);
    }
    
-   public void withUnsatisfiedDependencies(final List<Dependency> dependencies,
+   private void withUnsatisfiedDependencies(final List<Dependency> dependencies,
                                            final ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
-      JsArray<Dependency> jsDependencies = JsArray.createArray(dependencies.size()).cast();
+      final JsArray<Dependency> jsDependencies = 
+            JsArray.createArray(dependencies.size()).cast();
       for (int i = 0; i < dependencies.size(); i++)
          jsDependencies.set(i, dependencies.get(i));
       
       server_.unsatisfiedDependencies(
             jsDependencies,
             false,
-            requestCallback);
+            new ServerRequestCallback<JsArray<Dependency>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<Dependency> unsatisfied)
+               {
+                  updateSatisfied(jsDependencies, unsatisfied);
+                  requestCallback.onResponseReceived(unsatisfied);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  requestCallback.onError(error);
+               }
+            });
+   }
+   
+   /**
+    * Updates the cache of satisfied dependencies.
+    * 
+    * @param all The dependencies that were requested
+    * @param unsatisfied The dependencies that were not satisfied
+    */
+   private void updateSatisfied(JsArray<Dependency> all, 
+                                JsArray<Dependency> unsatisfied)
+   {
+      for (int i = 0; i < all.length(); i++)
+      {
+         boolean satisfied = true;
+         for (int j = 0; j < unsatisfied.length(); j++)
+         {
+            if (unsatisfied.get(j).isEqualTo(all.get(i)))
+            {
+               satisfied = false;
+               break;
+            }
+         }
+         if (satisfied)
+         {
+            satisfied_.add(all.get(i));
+         }
+      }
    }
    
    private final GlobalDisplay globalDisplay_;
    private final DependencyServerOperations server_;
+   private final ArrayList<Dependency> satisfied_;
 }
