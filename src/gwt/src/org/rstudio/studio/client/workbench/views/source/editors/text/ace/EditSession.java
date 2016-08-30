@@ -185,6 +185,14 @@ public class EditSession extends JavaScriptObject
                                      boolean inFront) /*-{
       return this.addMarker(range, clazz, type, inFront);
    }-*/;
+   
+   public native final int addMarker(Range range,
+                                     String clazz,
+                                     JavaScriptObject renderer,
+                                     boolean inFront)
+   /*-{
+      return this.addMarker(range, clazz, renderer, inFront);
+   }-*/;
 
    public native final void removeMarker(int markerId) /*-{
       this.removeMarker(markerId);

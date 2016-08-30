@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -167,7 +168,7 @@ public class AceEditorBackgroundLinkHighlighter
       activeMarkers_.put(row, filtered);
    }
    
-   private void beginHighlight(int pageX, int pageY, int modifier)
+   private void beginDetectClickTarget(int pageX, int pageY, int modifier)
    {
       if (!(modifier == KeyboardShortcut.CTRL || modifier == KeyboardShortcut.META))
          return;
@@ -196,24 +197,36 @@ public class AceEditorBackgroundLinkHighlighter
       if (el == null)
          return;
       
+      // the element might itself be the marker we want to update, or
+      // it may be the editor instance. handle each case
       String id = activeMarker.getId();
-      Element markerEl = DomUtils.getFirstElementWithClassName(el, id);
+      Element markerEl = el.hasClassName(id)
+            ? el
+            : DomUtils.getFirstElementWithClassName(el, id);
       if (markerEl == null)
          return;
       
       if (activeHighlightMarkerEl_ != null && activeHighlightMarkerEl_ != markerEl)
+      {
+         activeHighlightMarkerEl_.addClassName(RES.styles().highlight());
          activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
-         
+      }
+      
+      markerEl.removeClassName(RES.styles().highlight());
       markerEl.addClassName(RES.styles().hover());
       activeHighlightMarkerEl_ = markerEl;
    }
    
-   private void endHighlight()
+   private void endDetectClickTarget()
    {
       if (activeHighlightMarkerEl_ == null)
          return;
       
+      // restore highlight styles
+      activeHighlightMarkerEl_.addClassName(RES.styles().highlight());
       activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
+      
+      // unset active el
       activeHighlightMarkerEl_ = null;
    }
    
@@ -305,7 +318,7 @@ public class AceEditorBackgroundLinkHighlighter
    
    // Highlighter Implementations ----
    
-   private void highlight(AceEditor editor,
+   private void highlight(final AceEditor editor,
                           int row,
                           int startColumn,
                           int endColumn)
@@ -325,10 +338,10 @@ public class AceEditorBackgroundLinkHighlighter
       }
 
       // create an anchored range and add a marker for it
-      String id = "ace_link-" + StringUtil.makeRandomId(8);
-      String styles = RES.styles().highlight() + " " + id;
+      final String id = "ace_link-" + StringUtil.makeRandomId(16);
+      final String styles = RES.styles().highlight() + " " + id;
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, MarkerRenderer.create(styles), true);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
    
@@ -439,11 +452,11 @@ public class AceEditorBackgroundLinkHighlighter
                if (type == Event.ONKEYDOWN || type == Event.ONKEYPRESS)
                {
                   int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
-                  beginHighlight(mouseTracker_.getLastMouseX(), mouseTracker_.getLastMouseY(), modifier);
+                  beginDetectClickTarget(mouseTracker_.getLastMouseX(), mouseTracker_.getLastMouseY(), modifier);
                }
                else if (type == Event.ONKEYUP)
                {
-                  endHighlight();
+                  endDetectClickTarget();
                }
             }
          });
@@ -525,7 +538,7 @@ public class AceEditorBackgroundLinkHighlighter
    @Override
    public void onMouseMove(MouseMoveEvent event)
    {
-      beginHighlight(
+      beginDetectClickTarget(
             event.getClientX(),
             event.getClientY(),
             KeyboardShortcut.getModifierValue(event.getNativeEvent()));
@@ -551,6 +564,30 @@ public class AceEditorBackgroundLinkHighlighter
    }
    
    // Private Members ----
+   
+   private static class MarkerRenderer extends JavaScriptObject
+   {
+      protected MarkerRenderer() {}
+      
+      public static final native MarkerRenderer create(final String clazz) /*-{
+         var MarkerPrototype = $wnd.require("ace/layer/marker").Marker.prototype;
+         return $entry(function(html, range, left, top, config) {
+            var height = config.lineHeight;
+            var width = (range.end.column - range.start.column) * config.characterWidth;
+
+            var top  = MarkerPrototype.$getTop(range.start.row, config);
+            var left = 4 + range.start.column * config.characterWidth;
+
+            html.push(
+                "<div title='Use Ctrl+Click to Navigate to URL.' class='", clazz, "' style='",
+                "height:", height, "px;",
+                "width:", width, "px;",
+                "top:", top, "px;",
+                "left:", left, "px;", "'></div>"
+            );
+         });
+      }-*/;
+   }
    
    private class MarkerRegistration
    {

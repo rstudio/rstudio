@@ -2,9 +2,13 @@
 	position: absolute;
 	margin-top: -3px;
 	border-bottom: 1px solid #1a0dab;
+	pointer-events: all;
 }
 
 .hover {
-	pointer-events: all;
+	position: absolute;
+	margin-top: -3px;
+	border-bottom: 1px solid #1a0dab;
+	pointer-events: auto;
 	cursor: pointer;
 }
