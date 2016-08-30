@@ -4884,7 +4884,7 @@ public class TextEditingTarget implements
    
    void renderRmd(final String paramsFile)
    { 
-      events_.fireEvent(new RmdRenderPendingEvent());
+      events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
       
       final int type = isShinyDoc() ? RmdOutput.TYPE_SHINY:
                                       isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:

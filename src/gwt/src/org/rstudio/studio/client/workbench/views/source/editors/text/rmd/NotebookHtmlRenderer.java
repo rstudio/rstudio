@@ -22,6 +22,8 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -35,9 +37,13 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 
 public class NotebookHtmlRenderer
-             implements SaveFileHandler
+             implements SaveFileHandler,
+                        RmdRenderPendingEvent.Handler,
+                        RenderRmdEvent.Handler
 {
    public NotebookHtmlRenderer(DocDisplay display, TextEditingTarget target,
          TextEditingTarget.Display editingDisplay,
@@ -51,6 +57,42 @@ public class NotebookHtmlRenderer
       sentinel_ = sentinel;
       events_ = events;
       dependencyManager_ = dependencyManager;
+      
+      events_.addHandler(RmdRenderPendingEvent.TYPE, this);
+      events_.addHandler(RenderRmdEvent.TYPE, this);
+   }
+
+   @Override
+   public void onRmdRenderPending(RmdRenderPendingEvent event)
+   {
+      if (event.getDocId() != sentinel_.getId())
+         return;
+      
+      // wait up to a second for the R Markdown render to start before we 
+      // initiate a render of the notebook
+      renderTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (renderCommand_ != null)
+            {
+               renderCommand_.execute();
+            }
+         }
+      };
+      renderTimer_.schedule(1000);
+   }
+
+   @Override
+   public void onRenderRmd(RenderRmdEvent event)
+   {
+      if (renderTimer_ != null && renderTimer_.isRunning())
+      {
+         renderTimer_.run();
+         renderTimer_.cancel();
+         renderTimer_ = null;
+      }
    }
 
    @Override
@@ -83,19 +125,30 @@ public class NotebookHtmlRenderer
       final String outputPath =
             FilePathUtils.filePathSansExtension(rmdPath) + 
             RmdOutput.NOTEBOOK_EXT;
-      
-      // mark as running and schedule the work to create the notebook from
-      // the cache -- we defer this so that other operations that run post-
-      // save can complete immediately 
-      isRunning_ = true;
-      Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+
+      // create the command to render the notebook
+      Command renderCommand = new Command()
       {
          @Override
          public void execute()
          {
+            isRunning_ = true;
             createNotebookDeferred(rmdPath, outputPath);
          }
-      });
+      };
+      
+      // if an R Markdown render is pending, wait for it to start before we ask
+      // the notebook to render; this ensures that in the case where we're
+      // rendering both the notebook and another format that the other format
+      // starts first
+      if (renderTimer_ != null && renderTimer_.isRunning())
+      {
+         renderCommand_ = renderCommand;
+      }
+      else
+      {
+         renderCommand.execute();
+      }
    }
    
    // Private methods ---------------------------------------------------------
@@ -200,6 +253,8 @@ public class NotebookHtmlRenderer
    }
    
    private boolean isRunning_;
+   private Timer renderTimer_;
+   private Command renderCommand_;
 
    private final DocDisplay display_;
    private final TextEditingTarget target_;
