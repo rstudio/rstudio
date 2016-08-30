@@ -580,8 +580,9 @@ public:
          std::vector<std::string> splat = core::algorithm::split(id, "/");
          if (splat.size() > 2)
          {
-            std::string branch = core::algorithm::join(splat.begin() + 2, splat.end(), "/");
-            args << "checkout" << branch << "--";
+            std::string localBranch = core::algorithm::join(splat.begin() + 2, splat.end(), "/");
+            std::string remoteBranch = core::algorithm::join(splat.begin() + 1, splat.end(), "/");
+            args << "checkout" << "-b" << localBranch << remoteBranch << "--";
          }
          else
          {

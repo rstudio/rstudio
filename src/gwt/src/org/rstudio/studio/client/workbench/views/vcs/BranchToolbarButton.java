@@ -139,6 +139,10 @@ public class BranchToolbarButton extends ToolbarButton
             if (branch.contains("HEAD detached at"))
                continue;
             
+            // skip HEAD branches
+            if (branch.contains("HEAD ->"))
+               continue;
+            
             final String branchLabel = branch.replaceAll("^remotes/", "");
             final String branchValue = branch.replaceAll("\\s+\\-\\>.*", "");
             menu.addItem(new MenuItem(
