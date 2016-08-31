@@ -88,6 +88,7 @@
 * Improved performance of 'Find in Files' tool
 * Attempting to cut or copy with an empty selection no longer clears the clipboard
 * Files pane now has a fixed header row
+* Attempting to check out remote git branch now checks out local copy tracking remote
 * Published plots are larger and responsive to changes in browser size
 * Implement gt/gT bindings in Vim mode to switch to next/previous tab
 * Always provide file completions for top-level current directory
