@@ -114,6 +114,9 @@ var MarkdownHighlightRules = function() {
         "basic" : [{
             token : "constant.language.escape",
             regex : /\\[\\`*_{}\[\]()#+\-.!]/
+        }, { // inline r code
+            token : "support.function.inline_r_chunk",
+            regex : "`r (?:.*?[^`])`"
         }, { // code span `
             token : ["support.function", "support.function", "support.function"],
             regex : "(`+)(.*?[^`])(\\1)"
@@ -149,7 +152,10 @@ var MarkdownHighlightRules = function() {
            token : "empty_line",
            regex : '^$',
            next: "allowBlock"
-        }, { // code span
+        }, { // inline r code
+            token : "support.function.inline_r_chunk",
+            regex : "`r (?:.*?[^`])`"
+        }, { // code span `
             token : ["support.function", "support.function", "support.function"],
             regex : "(`+)([^\\r]*?[^`])(\\1)"
         }, { // h1 with equals
