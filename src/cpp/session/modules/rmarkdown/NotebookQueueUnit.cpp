@@ -244,7 +244,7 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
 
    // use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && static_cast<int>(idx) < stop)
+   if (idx != std::string::npos && static_cast<int>(idx) < (stop - 1))
    {
       stop = idx;
 
