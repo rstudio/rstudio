@@ -305,6 +305,7 @@ public class MathJax
             host);
       
       outputWidget.setRootWidget(panel);
+      outputWidget.hideSatellitePopup();
 
       PinnedLineWidget plWidget = new PinnedLineWidget(
             "mathjax",

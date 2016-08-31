@@ -556,6 +556,12 @@ public class ChunkOutputWidget extends Composite
       root_.setWidget(widget);
    }
 
+   public void hideSatellitePopup()
+   {
+      popout_.setVisible(false);
+      hideSatellitePopup_ = true;
+   }
+
    // Private methods ---------------------------------------------------------
 
    private void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
@@ -701,7 +707,7 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() == EXPANDED)
          root_.getElement().getStyle().setOpacity(1);
 
-      if (chunkOutputSize_ != ChunkOutputSize.Full)
+      if (chunkOutputSize_ != ChunkOutputSize.Full && !hideSatellitePopup_)
       {
          clear_.setVisible(true);
          expand_.setVisible(true);
@@ -885,6 +891,7 @@ public class ChunkOutputWidget extends Composite
    private int pendingRenders_ = 0;
    private boolean hasErrors_ = false;
    private boolean needsHeightSync_ = false;
+   private boolean hideSatellitePopup_ = false;
    
    private Timer collapseTimer_ = null;
    private final String documentId_;
