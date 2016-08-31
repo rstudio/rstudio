@@ -28,6 +28,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,6 +149,30 @@ public class BranchToolbarButton extends ToolbarButton
          @Override
          public void execute(final String caption, final List<String> branches)
          {
+            // place commonly-used branches at the top
+            Collections.sort(branches, new Comparator<String>()
+            {
+               private final String[] specialBranches_ = new String[] {
+                     "master",
+                     "develop",
+                     "trunk"
+               };
+               
+               @Override
+               public int compare(String o1, String o2)
+               {
+                  for (String specialBranch : specialBranches_)
+                  {
+                     if (o1.endsWith(specialBranch))
+                        return -1;
+                     else if (o2.endsWith(specialBranch))
+                        return 1;
+                  }
+                  
+                  return o1.compareToIgnoreCase(o2);
+               }
+            });
+            
             menu.addSeparator(new CustomMenuItemSeparator()
             {
                @Override
