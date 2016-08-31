@@ -345,6 +345,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
 
          queue_.removeUnit(event.getChunkId());
          notebook_.cleanChunkExecState(event.getChunkId());
+         if (queue_.complete())
+            endQueueExecution(false);
          break;
       }
    }

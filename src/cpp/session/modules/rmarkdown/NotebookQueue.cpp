@@ -474,6 +474,8 @@ private:
       execUnit_ = unit;
       enqueueExecStateChanged(ChunkExecCancelled, json::Object());
 
+      execUnit_.reset();
+
       return executeNextUnit(ExprModeNew);
    }
 
