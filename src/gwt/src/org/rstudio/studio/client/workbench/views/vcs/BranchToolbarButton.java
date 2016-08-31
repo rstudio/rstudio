@@ -187,6 +187,7 @@ public class BranchToolbarButton extends ToolbarButton
                   return label;
                }
             });
+            menu.addSeparator();
             
             for (String branch : branches)
             {
