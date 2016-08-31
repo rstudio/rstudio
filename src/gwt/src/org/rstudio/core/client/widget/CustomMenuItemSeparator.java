@@ -1,7 +1,7 @@
 /*
- * LabelledMenuSeparator.java
+ * CustomMenuItemSeparator.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,25 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.theme.res.ThemeStyles;
-
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
+import com.google.gwt.user.client.ui.Widget;
 
-public class LabelledMenuSeparator extends MenuItemSeparator
+public abstract class CustomMenuItemSeparator extends MenuItemSeparator
 {
-   public LabelledMenuSeparator(String text)
+   // the actual widget to be used as a separator
+   public abstract Widget createMainWidget();
+   
+   public Widget getMainWidget()
    {
-      Label label = new Label(text);
-      label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
-      getElement().appendChild(label.getElement());
+      return widget_;
    }
+   
+   public CustomMenuItemSeparator()
+   {
+      widget_ = createMainWidget();
+      getElement().removeAllChildren();
+      getElement().appendChild(widget_.getElement());
+   }
+   
+   private final Widget widget_;
 }

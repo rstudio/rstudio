@@ -15,12 +15,15 @@
 package org.rstudio.studio.client.workbench.views.vcs;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -33,6 +36,8 @@ import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.WidgetHandlerRegistration;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.CustomMenuItemSeparator;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -110,7 +115,7 @@ public class BranchToolbarButton extends ToolbarButton
       // separate branches based on remote name
       Map<String, List<String>> branchMap = new LinkedHashMap<String, List<String>>();
       List<String> localBranches = new ArrayList<String>();
-      branchMap.put("(local branches)", localBranches);
+      branchMap.put(LOCAL_BRANCHES, localBranches);
       for (String branch : JsUtil.asIterable(branches))
       {
          if (branch.startsWith("remotes/"))
@@ -132,8 +137,6 @@ public class BranchToolbarButton extends ToolbarButton
       }
       
       onBeforePopulateMenu(rootMenu);
-      
-      // populate local branches
       populateMenu(rootMenu, branchMap);
    }
    
@@ -142,9 +145,23 @@ public class BranchToolbarButton extends ToolbarButton
       MapUtil.forEach(branchMap, new MapUtil.ForEachCommand<String, List<String>>()
       {
          @Override
-         public void execute(String caption, List<String> branches)
+         public void execute(final String caption, final List<String> branches)
          {
-            menu.addSeparator(caption, false);
+            menu.addSeparator(new CustomMenuItemSeparator()
+            {
+               @Override
+               public Widget createMainWidget()
+               {
+                  String branchLabel = caption.equals(LOCAL_BRANCHES)
+                        ? LOCAL_BRANCHES
+                        : "(Remote: " + caption + ")";
+                  Label label = new Label(branchLabel);
+                  label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
+                  label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
+                  return label;
+               }
+            });
+            
             for (String branch : branches)
             {
                // skip detached branches
@@ -174,4 +191,5 @@ public class BranchToolbarButton extends ToolbarButton
    protected final Provider<GitState> pVcsState_;
 
    private static final String NO_BRANCH = "(No branch)";
+   private static final String LOCAL_BRANCHES = "(local branches)";
 }

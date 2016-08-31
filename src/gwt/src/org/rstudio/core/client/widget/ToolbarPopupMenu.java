@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
@@ -108,14 +109,14 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator();
    }
    
+   public void addSeparator(MenuItemSeparator separator)
+   {
+      menuBar_.addSeparator(separator);
+   }
+   
    public void addSeparator(String label)
    {
       menuBar_.addSeparator(new LabelledMenuSeparator(label));
-   }
-   
-   public void addSeparator(String label, boolean includeLineSeparator)
-   {
-      menuBar_.addSeparator(new LabelledMenuSeparator(label, includeLineSeparator));
    }
    
    public void addSeparator(int minPx)

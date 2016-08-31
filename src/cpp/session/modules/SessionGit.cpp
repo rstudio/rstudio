@@ -32,8 +32,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
-#include <core/BoostLamda.hpp>
 
+#include <core/BoostLamda.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/ShellUtils.hpp>
@@ -83,6 +83,7 @@ namespace {
 
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
+std::vector<std::string> s_branches;
 std::string s_gitExePath;
 uint64_t s_gitVersion;
 const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
@@ -567,6 +568,7 @@ public:
          pBranches->push_back(line.substr(2));
       }
 
+      s_branches = *pBranches;
       return Success();
    }
 
@@ -576,13 +578,23 @@ public:
       ShellArgs args;
       if (id.find("remotes/") == 0)
       {
-         // check out a local copy of branch, tracking remote
          std::vector<std::string> splat = core::algorithm::split(id, "/");
          if (splat.size() > 2)
          {
             std::string localBranch = core::algorithm::join(splat.begin() + 2, splat.end(), "/");
             std::string remoteBranch = core::algorithm::join(splat.begin() + 1, splat.end(), "/");
-            args << "checkout" << "-b" << localBranch << remoteBranch << "--";
+            
+            // if we don't have a local copy of this branch, then
+            // check out a local copy of branch, tracking remote;
+            // otherwise just check out our local copy
+            if (core::algorithm::contains(s_branches, localBranch))
+            {
+               args << "checkout" << localBranch << "--";
+            }
+            else
+            {
+               args << "checkout" << "-b" << localBranch << remoteBranch << "--";
+            }
          }
          else
          {
