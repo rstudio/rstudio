@@ -205,6 +205,8 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
       events.addHandler(InterruptStatusEvent.TYPE, this);
+      events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
+      events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
 
       chunkWindowManager_ = RStudioGinjector.INSTANCE.getChunkWindowManager();
    }

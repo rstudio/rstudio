@@ -14,23 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
-import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-@JavaScriptSerializable
-public class ConsoleWriteErrorEvent extends CrossWindowEvent<ConsoleWriteErrorHandler>
+public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorHandler>
 {
    public static final GwtEvent.Type<ConsoleWriteErrorHandler> TYPE =
       new GwtEvent.Type<ConsoleWriteErrorHandler>();
-    
-   public ConsoleWriteErrorEvent()
-   {
-      error_ = null;
-   }
-
+      
    public ConsoleWriteErrorEvent(ConsoleText error)
    {
       error_ = error;

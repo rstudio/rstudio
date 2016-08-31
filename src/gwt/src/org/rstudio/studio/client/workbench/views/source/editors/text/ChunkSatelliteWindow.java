@@ -35,6 +35,9 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.server.ServerError;
@@ -43,8 +46,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOutputFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
@@ -53,13 +54,13 @@ import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 public class ChunkSatelliteWindow extends SatelliteWindow
                                   implements RequiresResize,
                                              ChunkSatelliteView,
-                                             ChunkSatelliteShowChunkOutputEvent.Handler,
                                              ChunkSatelliteCodeExecutingEvent.Handler,
-                                             ChunkSatelliteOutputFinishedEvent.Handler,
                                              ChunkSatelliteCacheEditorStyleEvent.Handler,
                                              ChunkPlotRefreshedEvent.Handler,
                                              ChunkPlotRefreshFinishedEvent.Handler,
-                                             ChunkChangeEvent.Handler
+                                             ChunkChangeEvent.Handler,
+                                             RmdChunkOutputFinishedEvent.Handler,
+                                             RmdChunkOutputEvent.Handler
 {
 
    @Inject
@@ -113,13 +114,13 @@ public class ChunkSatelliteWindow extends SatelliteWindow
 
       mainPanel.addStyleName("ace_editor");
 
-      pEventBus_.get().addHandler(ChunkSatelliteShowChunkOutputEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCodeExecutingEvent.TYPE, this);
-      pEventBus_.get().addHandler(ChunkSatelliteOutputFinishedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkSatelliteCacheEditorStyleEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkPlotRefreshedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkPlotRefreshFinishedEvent.TYPE, this);
       pEventBus_.get().addHandler(ChunkChangeEvent.TYPE, this);
+      pEventBus_.get().addHandler(RmdChunkOutputFinishedEvent.TYPE, this);
+      pEventBus_.get().addHandler(RmdChunkOutputEvent.TYPE, this);
       
       Window.addWindowClosingHandler(new ClosingHandler()
       {
@@ -144,17 +145,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          chunkWindowParams_.getDocId(),
          chunkWindowParams_.getChunkId()));
    }
-
-   @Override
-   public void onChunkSatelliteShowChunkOutput(ChunkSatelliteShowChunkOutputEvent event)
-   {
-      chunkOutputWidget_.showChunkOutput(
-         event.getOutput(),
-         event.getMode(),
-         event.getScope(),
-         event.getComplete(),
-         false);
-   }
    
    @Override
    public void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event)
@@ -162,16 +152,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       chunkOutputWidget_.setCodeExecuting(
          event.getMode(),
          event.getScope());
-   }
-
-   @Override
-   public void onChunkSatelliteOutputFinished(ChunkSatelliteOutputFinishedEvent event)
-   {
-      chunkOutputWidget_.onOutputFinished(
-         event.getEnsureVisible(),
-         event.getScope());
-
-      resizePlotsRemote_.schedule(1);
    }
 
    @Override
@@ -247,6 +227,41 @@ public class ChunkSatelliteWindow extends SatelliteWindow
             WindowEx.get().close();  
             break;
       }
+   }
+
+   @Override
+   public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
+   {
+      if (event.getData().getDocId() != chunkWindowParams_.getDocId())
+         return;
+
+      if (event.getData().getChunkId() != chunkWindowParams_.getChunkId())
+         return;
+      
+      RmdChunkOutputFinishedEvent.Data data = event.getData();
+
+      chunkOutputWidget_.onOutputFinished(
+         false,
+         data.getScope());
+
+      resizePlotsRemote_.schedule(1);
+   }
+
+   @Override
+   public void onRmdChunkOutput(RmdChunkOutputEvent event)
+   {
+      if (event.getOutput().getDocId() != chunkWindowParams_.getDocId())
+         return;
+
+      if (event.getOutput().getChunkId() != chunkWindowParams_.getChunkId())
+         return;
+
+      chunkOutputWidget_.showChunkOutput(
+         event.getOutput(),
+         NotebookQueueUnit.EXEC_MODE_SINGLE,
+         NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
+         false,
+         false);
    }
 
    public ChunkOutputWidget getOutputWidget()

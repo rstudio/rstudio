@@ -34,9 +34,7 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
@@ -77,8 +75,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOutputFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteShowChunkOutputEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
@@ -601,21 +597,7 @@ public class TextEditingTargetNotebook
       
       // ignore requests performed to initialize satellite chunks
       if (satelliteChunkRequestIds_.contains(event.getOutput().getRequestId()))
-      {
-         int mode = queue_.getChunkExecMode(chunkId);
-         
-         forwardEventToSatelliteChunk(
-            docUpdateSentinel_.getId(),
-            chunkId,
-            new ChunkSatelliteShowChunkOutputEvent(
-                  event.getOutput(),
-                  mode,
-                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
-                  !queue_.isChunkExecuting(chunkId)
-               )
-         );
          return;
-      }
       
       // if this is the currently executing chunk and it has an error...
       NotebookQueueUnit unit = queue_.executingUnit();
@@ -662,22 +644,6 @@ public class TextEditingTargetNotebook
                                   NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
                                   !queue_.isChunkExecuting(chunkId),
                                   ensureVisible);
-      }
-
-      if (satelliteChunks_.contains(chunkId))
-      {
-         int mode = queue_.getChunkExecMode(chunkId);
-         
-         forwardEventToSatelliteChunk(
-            docUpdateSentinel_.getId(),
-            chunkId,
-            new ChunkSatelliteShowChunkOutputEvent(
-                  event.getOutput(),
-                  mode,
-                  NotebookQueueUnit.EXEC_SCOPE_PARTIAL,
-                  !queue_.isChunkExecuting(chunkId)
-               )
-         );
       }
    }
 
@@ -734,18 +700,7 @@ public class TextEditingTargetNotebook
       
       // ignore requests performed to initialize satellite chunks
       if (satelliteChunkRequestIds_.contains(event.getData().getRequestId()))
-      {
-         forwardEventToSatelliteChunk(
-               docUpdateSentinel_.getId(),
-               data.getChunkId(),
-               new ChunkSatelliteOutputFinishedEvent(
-                  ensureVisible,
-                  data.getScope()
-               )
-            );
-         
          return;
-      }
       
       // clean up execution state
       cleanChunkExecState(event.getData().getChunkId());
@@ -786,18 +741,6 @@ public class TextEditingTargetNotebook
 
             // set dirty state if necessary
             setDirtyState();
-         }
-
-         if (satelliteChunks_.contains(data.getChunkId()))
-         {
-            forwardEventToSatelliteChunk(
-               docUpdateSentinel_.getId(),
-               data.getChunkId(),
-               new ChunkSatelliteOutputFinishedEvent(
-                  ensureVisible,
-                  data.getScope()
-               )
-            );
          }
       }
    }
@@ -1245,8 +1188,6 @@ public class TextEditingTargetNotebook
                                                 scope.getEnd()));
          }
 
-         output.getOutputWidget().setCodeExecuting(mode, execScope);
-
          forwardEventToSatelliteChunk(
             docUpdateSentinel_.getId(),
             chunkId,
@@ -1255,6 +1196,8 @@ public class TextEditingTargetNotebook
                   NotebookQueueUnit.EXEC_SCOPE_PARTIAL
                )
          );
+
+         output.getOutputWidget().setCodeExecuting(mode, execScope);
          
          // scroll the widget into view if it's a single-shot exec
          if (mode == NotebookQueueUnit.EXEC_MODE_SINGLE)
