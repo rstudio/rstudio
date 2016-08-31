@@ -205,8 +205,8 @@ public class RSConnectPublishButton extends Composite
              params.getResult().getFormat() != null))
       {
          setContentType(params.isWebsiteRmd() ? 
-               RSConnect.CONTENT_TYPE_DOCUMENT :
-               RSConnect.CONTENT_TYPE_WEBSITE);
+               RSConnect.CONTENT_TYPE_WEBSITE :
+               RSConnect.CONTENT_TYPE_DOCUMENT);
          docPreview_ = new RenderedDocPreview(params);
          setContentPath(params.getResult().getTargetFile(),
                params.getOutputFile());
