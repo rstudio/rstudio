@@ -229,6 +229,22 @@ inline std::string join(const std::vector<std::string>& container, const std::st
    return boost::algorithm::join(container, delim);
 }
 
+template <typename Iterator>
+inline std::string join(Iterator begin, Iterator end, const std::string& delim)
+{
+   if (begin >= end)
+      return std::string();
+   
+   std::string result;
+   result += *begin;
+   for (Iterator it = begin + 1; it != end; ++it)
+   {
+      result += delim;
+      result += *it;
+   }
+   return result;
+}
+
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio

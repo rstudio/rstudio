@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
@@ -108,6 +109,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator();
    }
    
+   public void addSeparator(MenuItemSeparator separator)
+   {
+      menuBar_.addSeparator(separator);
+   }
+   
    public void addSeparator(String label)
    {
       menuBar_.addSeparator(new LabelledMenuSeparator(label));
@@ -126,6 +132,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void focus()
    {
       menuBar_.focus();
+   }
+   
+   public void setAutoHideRedundantSeparators(boolean value)
+   {
+      menuBar_.setAutoHideRedundantSeparators(value);
    }
 
    public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)
