@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 import com.google.gwt.core.client.Scheduler;
@@ -108,15 +109,6 @@ public class MathJax
                detachHandlers();
                return;
             }
-            
-            MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
-            {
-               @Override
-               public void onLoaded(boolean alreadyLoaded)
-               {
-                  renderLatex();
-               }
-            });
          }
       }));
       
@@ -152,6 +144,36 @@ public class MathJax
             });
          }
       }));
+      
+      // one-shot command for rendering of latex on startup; we hide it
+      // in an anonymous Command object just to avoid leaking state into
+      // the MathJax class and wait for scope tree to ensure document
+      // has been tokenized + rendered
+      new Command()
+      {
+         private HandlerRegistration handler_;
+         
+         @Override
+         public void execute()
+         {
+            handler_ = docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+            {
+               @Override
+               public void onScopeTreeReady(ScopeTreeReadyEvent event)
+               {
+                  handler_.removeHandler();
+                  MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
+                  {
+                     @Override
+                     public void onLoaded(boolean alreadyLoaded)
+                     {
+                        renderLatex();
+                     }
+                  });
+               }
+            });
+         }
+      }.execute();
    }
    
    public void renderLatex()
