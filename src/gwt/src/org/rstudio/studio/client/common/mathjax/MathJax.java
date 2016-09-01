@@ -123,16 +123,23 @@ public class MathJax
          @Override
          public void onDocumentChanged(DocumentChangedEvent event)
          {
-            MapUtil.forEach(cowToPlwMap_, new ForEachCommand<ChunkOutputWidget, PinnedLineWidget>()
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
-               public void execute(ChunkOutputWidget cow, PinnedLineWidget plw)
+               public void execute()
                {
-                  // dismiss the mathjax line widget if the associated chunk text has
-                  // been mutated such that it is no longer a mathjax chunk
-                  Pattern reMathJax = Pattern.create("^\\s*\\$\\$\\s*$");
-                  if (!reMathJax.test(docDisplay_.getLine(plw.getRow())))
-                     removeChunkOutputWidget(cow);
+                  MapUtil.forEach(cowToPlwMap_, new ForEachCommand<ChunkOutputWidget, PinnedLineWidget>()
+                  {
+                     @Override
+                     public void execute(ChunkOutputWidget cow, PinnedLineWidget plw)
+                     {
+                        // dismiss the mathjax line widget if the associated chunk text has
+                        // been mutated such that it is no longer a mathjax chunk
+                        Pattern reMathJax = Pattern.create("^\\s*\\$\\$\\s*$");
+                        if (!reMathJax.test(docDisplay_.getLine(plw.getRow())))
+                           removeChunkOutputWidget(cow);
+                     }
+                  });
                }
             });
          }
