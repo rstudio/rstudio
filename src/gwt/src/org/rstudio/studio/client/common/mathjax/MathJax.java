@@ -17,12 +17,15 @@ package org.rstudio.studio.client.common.mathjax;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.MapUtil;
+import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
@@ -38,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 import com.google.gwt.core.client.Scheduler;
@@ -109,6 +113,26 @@ public class MathJax
                public void onLoaded(boolean alreadyLoaded)
                {
                   renderLatex();
+               }
+            });
+         }
+      }));
+      
+      handlers_.add(docDisplay_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+      {
+         @Override
+         public void onDocumentChanged(DocumentChangedEvent event)
+         {
+            MapUtil.forEach(cowToPlwMap_, new ForEachCommand<ChunkOutputWidget, PinnedLineWidget>()
+            {
+               @Override
+               public void execute(ChunkOutputWidget cow, PinnedLineWidget plw)
+               {
+                  // dismiss the mathjax line widget if the associated chunk text has
+                  // been mutated such that it is no longer a mathjax chunk
+                  Pattern reMathJax = Pattern.create("^\\s*\\$\\$\\s*$");
+                  if (!reMathJax.test(docDisplay_.getLine(plw.getRow())))
+                     removeChunkOutputWidget(cow);
                }
             });
          }
@@ -264,7 +288,26 @@ public class MathJax
       });
    }
    
-   private FlowPanel createMathJaxWidget()
+   private void removeChunkOutputWidget(final ChunkOutputWidget widget)
+   {
+      final PinnedLineWidget plw = cowToPlwMap_.get(widget);
+      if (plw == null)
+         return;
+
+      FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            cowToPlwMap_.remove(widget);
+            plw.detach();
+         }
+      });
+      
+      anim.run(400);
+   }
+   
+   private FlowPanel createMathJaxContainerWidget()
    {
       final FlowPanel panel = new FlowPanel();
       panel.addStyleName(MATHJAX_ROOT_CLASSNAME);
@@ -278,27 +321,14 @@ public class MathJax
    
    private LineWidget createMathJaxLineWidget(int row)
    {
-      final FlowPanel panel = createMathJaxWidget();
+      final FlowPanel panel = createMathJaxContainerWidget();
       
       ChunkOutputHost host = new ChunkOutputHost()
       {
          @Override
          public void onOutputRemoved(final ChunkOutputWidget widget)
          {
-            final PinnedLineWidget plw = cowToPlwMap_.get(widget);
-            if (plw == null)
-               return;
-            
-            FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  cowToPlwMap_.remove(widget);
-                  plw.detach();
-               }
-            });
-            anim.run(400);
+            removeChunkOutputWidget(widget);
          }
          
          @Override
