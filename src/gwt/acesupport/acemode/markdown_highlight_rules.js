@@ -124,7 +124,7 @@ var MarkdownHighlightRules = function() {
             token : ["text", "keyword", "text", "constant", "text"],
             regex : "(\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
         }, { // link by url
-            token : ["text", "keyword", "text", "markup", "string", "text"],
+            token : ["text", "keyword", "text", "markup.href", "string", "text"],
             regex : "(\\[)(" +                                    // [
                 escaped("]") +                                    // link text
                 ")(\\]\\()"+                                      // ](

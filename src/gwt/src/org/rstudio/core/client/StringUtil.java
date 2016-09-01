@@ -1075,6 +1075,11 @@ public class StringUtil
       return $wnd.encodeURI(string);
    }-*/;
    
+   public static final native String encodeURIComponent(String string) /*-{
+      return $wnd.encodeURIComponent(string);
+   }-*/;
+   
+   
    public static final native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");
    }-*/;
