@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
@@ -137,6 +138,11 @@ public class MathJax
                         // been mutated such that it is no longer a mathjax chunk
                         Pattern reMathJax = Pattern.create("^\\s*\\$\\$\\s*$");
                         if (!reMathJax.test(docDisplay_.getLine(plw.getRow())))
+                           removeChunkOutputWidget(cow);
+                        
+                        // detect whether start of associated chunk has been destroyed
+                        Token token = docDisplay_.getTokenAt(Position.create(plw.getRow() - 1, 0));
+                        if (token != null && !token.hasType("latex"))
                            removeChunkOutputWidget(cow);
                      }
                   });
