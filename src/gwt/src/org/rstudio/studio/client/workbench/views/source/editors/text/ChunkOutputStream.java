@@ -211,6 +211,11 @@ public class ChunkOutputStream extends FlowPanel
             addWithOrdinal(fixedFrame, ordinal);
          }
          else {
+            // reduce size of html widget as much as possible and add scroll,
+            // once it loads, we will adjust the height appropiately.
+            frame.getElement().getStyle().setHeight(25, Unit.PX);
+            frame.getElement().getStyle().setOverflow(Overflow.SCROLL);
+
             frame.getElement().getStyle().setWidth(100, Unit.PCT);
             addWithOrdinal(frame, ordinal);
          }
