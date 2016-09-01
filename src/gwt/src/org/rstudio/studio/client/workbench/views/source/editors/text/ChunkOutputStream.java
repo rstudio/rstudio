@@ -200,12 +200,20 @@ public class ChunkOutputStream extends FlowPanel
 
       final ChunkOutputFrame frame = new ChunkOutputFrame();
 
-      if (chunkOutputSize_ == ChunkOutputSize.Default) {
-         final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
-                     ChunkOutputUi.OUTPUT_ASPECT, 
-                     ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+      boolean canExpand = metadata.getSizingPolicyKnitrFigure();
 
-         addWithOrdinal(fixedFrame, ordinal);
+      if (chunkOutputSize_ == ChunkOutputSize.Default) {
+         if (canExpand) {
+            final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
+                        ChunkOutputUi.OUTPUT_ASPECT, 
+                        ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+
+            addWithOrdinal(fixedFrame, ordinal);
+         }
+         else {
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
+            addWithOrdinal(frame, ordinal);
+         }
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full) {
          frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
