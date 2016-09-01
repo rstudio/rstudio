@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
@@ -230,7 +231,7 @@ public class MathJax
       
       final Element el = DomUtils.getFirstElementWithClassName(
             widget.getElement(),
-            "mathjax-root");
+            MATHJAX_ROOT_CLASSNAME);
       
       // call 'onLineWidgetChanged' to ensure the widget is attached
       docDisplay_.onLineWidgetChanged(widget);
@@ -263,10 +264,21 @@ public class MathJax
       });
    }
    
-   private LineWidget createMathJaxLineWidget(int row)
+   private FlowPanel createMathJaxWidget()
    {
       final FlowPanel panel = new FlowPanel();
-      panel.getElement().addClassName("mathjax-root");
+      panel.addStyleName(MATHJAX_ROOT_CLASSNAME);
+      
+      Style style = panel.getElement().getStyle();
+      style.setProperty("pointerEvents", "none");
+      style.setCursor(Style.Cursor.DEFAULT);
+      
+      return panel;
+   }
+   
+   private LineWidget createMathJaxLineWidget(int row)
+   {
+      final FlowPanel panel = createMathJaxWidget();
       
       ChunkOutputHost host = new ChunkOutputHost()
       {
@@ -294,6 +306,13 @@ public class MathJax
                                            int height,
                                            boolean ensureVisible)
          {
+            final PinnedLineWidget plw = cowToPlwMap_.get(widget);
+            if (plw == null)
+               return;
+            
+            LineWidget lineWidget = plw.getLineWidget();
+            lineWidget.setPixelHeight(height);
+            docDisplay_.onLineWidgetChanged(lineWidget);
          }
       };
       
@@ -499,4 +518,6 @@ public class MathJax
    
    // Injected ----
    private UIPrefs uiPrefs_;
+   
+   public static final String MATHJAX_ROOT_CLASSNAME = "rstudio-mathjax-root";
 }
