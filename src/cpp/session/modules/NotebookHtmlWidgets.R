@@ -15,7 +15,10 @@
 
 .rs.addFunction("recordHtmlWidget", function(x, htmlfile, depfile)
 {
-   .Call("rs_recordHtmlWidget", htmlfile, depfile, list(classes = class(x)))
+   .Call("rs_recordHtmlWidget", htmlfile, depfile, list(
+      classes = class(x),
+      sizingPolicy = x$sizingPolicy
+   ))
 })
 
 .rs.addFunction("rnb.setHtmlCaptureContext", function(...)
