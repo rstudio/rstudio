@@ -781,6 +781,7 @@ public class ChunkOutputWidget extends Composite
       {
          clearCollapsedStyles();
          expansionState_.setValue(EXPANDED, true);
+         syncHeight(true, ensureVisible);
          collapseTimer_ = new Timer()
          {
             @Override
