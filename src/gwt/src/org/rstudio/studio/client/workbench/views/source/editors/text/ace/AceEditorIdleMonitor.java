@@ -133,6 +133,7 @@ public class AceEditorIdleMonitor
    private void registerCommands()
    {
       registerCommand(idleCommands_.PREVIEW_LINK);
+      registerCommand(idleCommands_.PREVIEW_LATEX);
    }
    
    public static class IdleState
@@ -174,7 +175,6 @@ public class AceEditorIdleMonitor
    private static final SafeMap<AceEditor, Map<HandlerRegistration, IdleCommand>> COMMAND_MAP;
    
    static {
-      
       MOUSE_MOVE_TIMER = new Timer()
       {
          @Override

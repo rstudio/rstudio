@@ -20,6 +20,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
@@ -53,6 +54,7 @@ public class AceEditorIdleCommands
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       PREVIEW_LINK = previewLink();
+      PREVIEW_LATEX = previewLatex();
    }
    
    // Private Methods ----
@@ -61,6 +63,30 @@ public class AceEditorIdleCommands
    private void initialize(SourceWindowManager swm)
    {
       swm_ = swm;
+   }
+   
+// Latex Preview ----
+   
+   private IdleCommand previewLatex()
+   {
+      return new IdleCommand()
+      {
+         @Override
+         public void execute(AceEditor editor, IdleState state)
+         {
+            onPreviewLatex(editor, state);
+         }
+      };
+   }
+   
+   private void onPreviewLatex(AceEditor editor, IdleState state)
+   {
+      Position position = resolvePosition(editor, state);
+      Range range = MathJaxUtil.getLatexRange(editor, position);
+      if (range == null)
+         return;
+      
+      editor.renderLatex(range);
    }
    
    // Link Preview ----
@@ -278,6 +304,7 @@ public class AceEditorIdleCommands
    }
    
    public final IdleCommand PREVIEW_LINK;
+   public final IdleCommand PREVIEW_LATEX;
    
    // Injected ----
    private SourceWindowManager swm_;

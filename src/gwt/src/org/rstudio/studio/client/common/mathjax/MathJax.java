@@ -73,7 +73,6 @@ public class MathJax
       
       docDisplay_ = docDisplay;
       popup_ = new MathJaxPopupPanel(this);
-      bgRenderer_ = new MathJaxBackgroundRenderer(this, popup_, docDisplay_);
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
@@ -573,7 +572,6 @@ public class MathJax
    
    private final DocDisplay docDisplay_;
    private final MathJaxPopupPanel popup_;
-   private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
