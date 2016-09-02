@@ -559,6 +559,11 @@ public class ChunkOutputWidget extends Composite
       popout_.setVisible(false);
       hideSatellitePopup_ = true;
    }
+   
+   public HTMLPanel getFrame()
+   {
+      return frame_;
+   }
 
    // Private methods ---------------------------------------------------------
 

@@ -388,6 +388,8 @@ public class MathJax
       
       ChunkOutputHost host = new ChunkOutputHost()
       {
+         private int lastHeight_ = Integer.MAX_VALUE;
+         
          @Override
          public void onOutputRemoved(final ChunkOutputWidget widget)
          {
@@ -403,6 +405,14 @@ public class MathJax
             if (plw == null)
                return;
             
+            // munge the size of the frame, to avoid issues where the
+            // frame's size changes following a collapse + expand
+            boolean isExpansion = lastHeight_ <= height;
+            if (isExpansion)
+               widget.getFrame().setHeight((height + 4) + "px");
+            lastHeight_ = height;
+            
+            // update the height and report to doc display
             LineWidget lineWidget = plw.getLineWidget();
             lineWidget.setPixelHeight(height);
             docDisplay_.onLineWidgetChanged(lineWidget);

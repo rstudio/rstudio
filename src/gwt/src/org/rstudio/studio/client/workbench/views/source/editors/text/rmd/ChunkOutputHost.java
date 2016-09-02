@@ -19,5 +19,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutput
 public interface ChunkOutputHost
 {
    void onOutputHeightChanged(ChunkOutputWidget widget, int height, boolean ensureVisible);
+
    void onOutputRemoved(ChunkOutputWidget widget);
 }
