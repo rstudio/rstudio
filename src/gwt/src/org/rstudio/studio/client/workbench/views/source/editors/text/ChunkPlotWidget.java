@@ -79,10 +79,12 @@ public class ChunkPlotWidget extends Composite
       
       if (isFixedSizePlotUrl(url))
       {
+         boolean hide = chunkOutputSize_ != ChunkOutputSize.Default;
+
          // if the plot is of fixed size, emit it directly, but make it
          // initially invisible until we get sizing information (as we may 
          // have to downsample)
-         plot_.setVisible(false);
+         plot_.setVisible(hide);
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full)
       {
