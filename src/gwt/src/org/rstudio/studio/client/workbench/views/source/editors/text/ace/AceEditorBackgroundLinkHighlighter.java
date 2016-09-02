@@ -644,9 +644,6 @@ public class AceEditorBackgroundLinkHighlighter
       clickEvent.stopPropagation();
       clickEvent.preventDefault();
       
-      pageX_ = event.getClientX();
-      pageY_ = event.getClientY();
-      
       // on OS X, we immediately open the popup as otherwise the link
       // will be opened in the background
       if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
@@ -668,8 +665,8 @@ public class AceEditorBackgroundLinkHighlighter
          return;
       
       boolean hasMouseMoved =
-            Math.abs(event.getClientX() - pageX_) >= 2 ||
-            Math.abs(event.getClientY() - pageY_) >= 2;
+            Math.abs(event.getClientX() - mouseTracker_.getLastMouseX()) >= 2 ||
+            Math.abs(event.getClientY() - mouseTracker_.getLastMouseY()) >= 2;
       
       if (hasMouseMoved)
          return;
@@ -774,9 +771,6 @@ public class AceEditorBackgroundLinkHighlighter
    private final List<Highlighter> highlighters_;
    private final Timer timer_;
    private final List<HandlerRegistration> handlers_;
-   
-   private int pageX_;
-   private int pageY_;
    
    private SafeMap<Integer, List<MarkerRegistration>> activeMarkers_;
    private int nextHighlightStart_;
