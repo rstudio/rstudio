@@ -139,7 +139,7 @@ public class AceEditorIdleCommands
       
       // check to see if we already have a popup showing for this image;
       // if we do then bail early
-      String encoded = StringUtil.encodeURIComponent(srcPath);
+      String encoded = StringUtil.encodeURIComponent(href);
       Element el = Document.get().getElementById(encoded);
       if (el != null)
          return;
@@ -170,10 +170,7 @@ public class AceEditorIdleCommands
          absPath = FilePathUtils.dirFromFile(docPath) + "/" + absPath;
       }
       
-      if (absPath.startsWith("~/"))
-         return "files/" + StringUtil.encodeURIComponent(absPath.substring(2));
-      else
-         return "file_show?path=" + StringUtil.encodeURIComponent(absPath);
+      return "file_show?path=" + StringUtil.encodeURIComponent(absPath) + "&id=" + ID++;
    }
    
    private static Position resolvePosition(AceEditor editor, IdleState state)
@@ -305,6 +302,8 @@ public class AceEditorIdleCommands
    
    public final IdleCommand PREVIEW_LINK;
    public final IdleCommand PREVIEW_LATEX;
+   
+   private static int ID;
    
    // Injected ----
    private SourceWindowManager swm_;
