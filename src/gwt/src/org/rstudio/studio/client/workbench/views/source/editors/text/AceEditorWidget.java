@@ -490,9 +490,19 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, BlurEvent.getType());
    }
    
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return addDomHandler(handler, MouseDownEvent.getType());
+   }
+   
    public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
    {
       return addDomHandler(handler, MouseMoveEvent.getType());
+   }
+   
+   public HandlerRegistration addMouseUpHandler(MouseUpHandler handler)
+   {
+      return addDomHandler(handler, MouseUpEvent.getType());
    }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)

@@ -349,7 +349,7 @@ public class AceEditor implements DocDisplay,
       addAceClickHandler(new AceClickEvent.Handler()
       {
          @Override
-         public void onClick(AceClickEvent event)
+         public void onAceClick(AceClickEvent event)
          {
             fixVerticalOffsetBug();
             if (DomUtils.isCommandClick(event.getNativeEvent()))
@@ -2752,9 +2752,19 @@ public class AceEditor implements DocDisplay,
       return widget_.addBlurHandler(handler);
    }
    
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return widget_.addMouseDownHandler(handler);
+   }
+   
    public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
    {
       return widget_.addMouseMoveHandler(handler);
+   }
+   
+   public HandlerRegistration addMouseUpHandler(MouseUpHandler handler)
+   {
+      return widget_.addMouseUpHandler(handler);
    }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
