@@ -656,6 +656,10 @@ public class AceEditorBackgroundLinkHighlighter
    @Override
    public void onMouseUp(MouseUpEvent mouseUpEvent)
    {
+      // clicks handled in 'onAceClick' for OS X web mode
+      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
+         return;
+      
       NativeEvent event = mouseUpEvent.getNativeEvent();
       if (!isRequiredClickModifier(event))
          return;
