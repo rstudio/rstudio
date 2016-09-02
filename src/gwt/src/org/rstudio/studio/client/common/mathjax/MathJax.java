@@ -119,10 +119,20 @@ public class MathJax
             @Override
             public void run()
             {
-               if (anchor_ != null)
+               // re-render latex in a visible mathjax popup
+               if (popup_.isShowing() && anchor_ != null)
                {
                   renderLatex(anchor_.getRange(), true);
                   return;
+               }
+               
+               // re-render latex in a line widget
+               Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+               if (token != null && token.hasType("latex"))
+               {
+                  Range range = MathJaxUtil.getLatexRange(docDisplay_);
+                  if (range != null)
+                     renderLatex(range, true);
                }
             }
          };
