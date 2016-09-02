@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.MapUtil;
@@ -180,7 +182,11 @@ public class AceEditorBackgroundLinkHighlighter
    
    private void beginDetectClickTarget(int pageX, int pageY, int modifier)
    {
-      if (!(modifier == KeyboardShortcut.CTRL || modifier == KeyboardShortcut.META))
+      boolean isCtrlClick = BrowseCap.isMacintosh()
+            ? modifier == KeyboardShortcut.META
+            : modifier == KeyboardShortcut.CTRL;
+      
+      if (!isCtrlClick)
          return;
       
       Position position = editor_.screenCoordinatesToDocumentPosition(pageX, pageY);
