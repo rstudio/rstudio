@@ -57,6 +57,7 @@ import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
 
@@ -73,7 +74,6 @@ public class MathJax
       
       docDisplay_ = docDisplay;
       popup_ = new MathJaxPopupPanel(this);
-      bgRenderer_ = new MathJaxBackgroundRenderer(this, popup_, docDisplay_);
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
@@ -114,9 +114,34 @@ public class MathJax
       
       handlers_.add(docDisplay_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
       {
+         Timer bgRenderTimer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               // re-render latex in a visible mathjax popup
+               if (popup_.isShowing() && anchor_ != null)
+               {
+                  renderLatex(anchor_.getRange(), true);
+                  return;
+               }
+               
+               // re-render latex in a line widget
+               Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+               if (token != null && token.hasType("latex"))
+               {
+                  Range range = MathJaxUtil.getLatexRange(docDisplay_);
+                  if (range != null)
+                     renderLatex(range, true);
+               }
+            }
+         };
+         
          @Override
          public void onDocumentChanged(DocumentChangedEvent event)
          {
+            bgRenderTimer_.schedule(200);
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -419,6 +444,7 @@ public class MathJax
          cursorChangedHandler_ = null;
       }
       
+      range_ = null;
       lastRenderedText_ = "";
    }
    
@@ -573,7 +599,6 @@ public class MathJax
    
    private final DocDisplay docDisplay_;
    private final MathJaxPopupPanel popup_;
-   private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
