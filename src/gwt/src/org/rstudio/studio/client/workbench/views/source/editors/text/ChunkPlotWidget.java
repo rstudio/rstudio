@@ -35,12 +35,6 @@ public class ChunkPlotWidget extends Composite
                              implements EditorThemeListener
 {
    public ChunkPlotWidget(String url, NotebookPlotMetadata metadata, 
-         final Command onRenderComplete)
-   {
-      this(url, metadata, onRenderComplete, ChunkOutputSize.Default);
-   }
-
-   public ChunkPlotWidget(String url, NotebookPlotMetadata metadata, 
          final Command onRenderComplete, ChunkOutputSize chunkOutputSize)
    {
       plot_ = new Image();
@@ -79,12 +73,18 @@ public class ChunkPlotWidget extends Composite
       
       if (isFixedSizePlotUrl(url))
       {
-         boolean hide = chunkOutputSize_ != ChunkOutputSize.Default;
-
-         // if the plot is of fixed size, emit it directly, but make it
-         // initially invisible until we get sizing information (as we may 
-         // have to downsample)
-         plot_.setVisible(hide);
+         if (chunkOutputSize_ == ChunkOutputSize.Full) {
+            HTMLPanel panel = new HTMLPanel("");
+            panel.add(plot_);
+            host_ = panel;
+            root = panel;
+         }
+         else {
+            // if the plot is of fixed size, emit it directly, but make it
+            // initially invisible until we get sizing information (as we may 
+            // have to downsample)
+            plot_.setVisible(false);
+         }
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full)
       {

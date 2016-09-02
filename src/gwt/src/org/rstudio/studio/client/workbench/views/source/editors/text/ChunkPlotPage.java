@@ -65,7 +65,7 @@ public class ChunkPlotPage extends ChunkOutputPage
                thumbnail.setUrl(url);
                onRenderComplete.execute();
             }
-         });
+         }, chunkOutputSize);
       }
       else
       {
