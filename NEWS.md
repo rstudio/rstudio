@@ -41,7 +41,7 @@
 ### Source Editor
 
 * Ctrl+Enter now executes current R statement when selection is empty
-* Use Ctrl+Click to open web / markdown links
+* Use Shift+Click to open web links in source editor (Command+Click on OS X)
 * Enabled auto-pairing of backticks (\`\`) in R documents
 * Fixed regression re: folding of unnamed sections, e.g. '#####'
 * Implemented folding for sub-sections in R documents
