@@ -210,7 +210,7 @@ public class ChunkOutputWidget extends Composite
    }
    
    // Public methods ----------------------------------------------------------
-   
+
    public int getExpansionState()
    {
       return expansionState_.getValue();
@@ -845,12 +845,6 @@ public class ChunkOutputWidget extends Composite
          final ChunkOutputStream stream = (ChunkOutputStream)presenter_;
          final ChunkOutputGallery gallery = new ChunkOutputGallery(this, chunkOutputSize_);
 
-         // replace the stream with the gallery (the stream will live on inside
-         // the gallery's console page). Perform this operation before adding pages,
-         // otherwise, in some situations (satellite chunks), attachPresenter()
-         // would perform the attachment by temporarily deattaching which causes
-         // all the events to be lost and clicks to stop working. Instead, attach
-         // the gallery before to maintain the event listers assigned in addPage().
          attachPresenter(gallery);
          
          // extract all the pages from the stream and populate the gallery
