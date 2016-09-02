@@ -359,7 +359,13 @@ public class AceEditorBackgroundLinkHighlighter
       final String id = "ace_marker-" + StringUtil.makeRandomId(16);
       final String styles = RES.styles().highlight() + " ace_marker " + id;
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, MarkerRenderer.create(styles), true);
+      
+      final String title = BrowseCap.isMacintosh()
+            ? "Open Link (Command+Click)"
+            : "Open Link (Ctrl+Click)";
+      MarkerRenderer renderer = MarkerRenderer.create(styles, title);
+      
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
    
@@ -614,7 +620,7 @@ public class AceEditorBackgroundLinkHighlighter
    {
       protected MarkerRenderer() {}
       
-      public static final native MarkerRenderer create(final String clazz) /*-{
+      public static final native MarkerRenderer create(final String clazz, final String title) /*-{
          var MarkerPrototype = $wnd.require("ace/layer/marker").Marker.prototype;
          return $entry(function(html, range, left, top, config) {
             var height = config.lineHeight;
@@ -624,7 +630,7 @@ public class AceEditorBackgroundLinkHighlighter
             var left = 4 + range.start.column * config.characterWidth;
 
             html.push(
-                "<div title='Open Link (Ctrl+Click)' class='", clazz, "' style='",
+                "<div title='" + title + "' class='", clazz, "' style='",
                 "height:", height, "px;",
                 "width:", width, "px;",
                 "top:", top, "px;",
