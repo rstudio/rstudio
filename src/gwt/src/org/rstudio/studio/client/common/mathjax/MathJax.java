@@ -57,6 +57,7 @@ import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
 
@@ -113,9 +114,24 @@ public class MathJax
       
       handlers_.add(docDisplay_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
       {
+         Timer bgRenderTimer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               if (anchor_ != null)
+               {
+                  renderLatex(anchor_.getRange(), true);
+                  return;
+               }
+            }
+         };
+         
          @Override
          public void onDocumentChanged(DocumentChangedEvent event)
          {
+            bgRenderTimer_.schedule(200);
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -418,6 +434,7 @@ public class MathJax
          cursorChangedHandler_ = null;
       }
       
+      range_ = null;
       lastRenderedText_ = "";
    }
    
