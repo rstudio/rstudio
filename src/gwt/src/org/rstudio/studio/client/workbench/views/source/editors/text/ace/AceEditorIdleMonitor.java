@@ -20,17 +20,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.container.SafeMap;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
-
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
@@ -46,12 +43,17 @@ public class AceEditorIdleMonitor
       public void execute(AceEditor editor, IdleState state);
    }
    
+   @Inject
+   private void initialize(AceEditorIdleCommands idleCommands)
+   {
+      idleCommands_ = idleCommands;
+   }
+   
    public AceEditorIdleMonitor(AceEditor editor)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       editor_ = editor;
-      handlers_ = new ArrayList<HandlerRegistration>();
       monitors_ = new ArrayList<HandlerRegistration>();
       commands_ = new HashMap<HandlerRegistration, IdleCommand>();
       timer_ = new Timer()
@@ -59,21 +61,14 @@ public class AceEditorIdleMonitor
          @Override
          public void run()
          {
-            int type = cursorMovedLast_
-                  ? IdleState.STATE_CURSOR_IDLE
-                  : IdleState.STATE_MOUSE_IDLE;
-            
-            IdleState state = new IdleState(type, mouseX_, mouseY_, modifiers_);
-            for (Map.Entry<HandlerRegistration, IdleCommand> entry : commands_.entrySet())
-            {
-               IdleCommand command = entry.getValue();
-               command.execute(editor_, state);
-            }
+            executeIdleCommands(editor_, IdleState.STATE_CURSOR_IDLE);
          }
       };
       
+      COMMAND_MAP.put(editor, commands_);
+      
       registerCommands();
-      attachHandlers();
+      beginMonitoring();
    }
    
    public HandlerRegistration registerCommand(final IdleCommand command)
@@ -92,44 +87,30 @@ public class AceEditorIdleMonitor
    
    // Private Methods ----
    
-   @Inject
-   private void initialize(AceEditorIdleCommands idleCommands)
+   private static void executeIdleCommands(AceEditor editor, int type)
    {
-      idleCommands_ = idleCommands;
+      IdleState state = new IdleState(type, mouseX_, mouseY_, modifiers_);
+      Map<HandlerRegistration, IdleCommand> commandMap = COMMAND_MAP.get(editor);
+      for (Map.Entry<HandlerRegistration, IdleCommand> entry : commandMap.entrySet())
+      {
+         IdleCommand command = entry.getValue();
+         command.execute(editor, state);
+      }
    }
    
-   private void attachHandlers()
+   private void beginMonitoring()
    {
-      detachHandlers();
-      
-      handlers_.add(editor_.addFocusHandler(new FocusHandler()
+      monitors_.add(editor_.addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
-         public void onFocus(FocusEvent event)
+         public void onCursorChanged(CursorChangedEvent event)
          {
-            beginMonitoring();
+            mouseMovedLast_ = false;
+            timer_.schedule(DELAY_MS);
          }
       }));
       
-      handlers_.add(editor_.addBlurHandler(new BlurHandler()
-      {
-         @Override
-         public void onBlur(BlurEvent event)
-         {
-            endMonitoring();
-         }
-      }));
-      
-      handlers_.add(editor_.addEditorModeChangedHandler(new EditorModeChangedEvent.Handler()
-      {
-         @Override
-         public void onEditorModeChanged(EditorModeChangedEvent event)
-         {
-            beginMonitoring();
-         }
-      }));
-      
-      handlers_.add(editor_.addAttachHandler(new AttachEvent.Handler()
+      monitors_.add(editor_.addAttachHandler(new AttachEvent.Handler()
       {
          @Override
          public void onAttachOrDetach(AttachEvent event)
@@ -140,62 +121,12 @@ public class AceEditorIdleMonitor
       }));
    }
    
-   private void detachHandlers()
-   {
-      detach(handlers_);
-   }
-   
-   private void beginMonitoring()
-   {
-      endMonitoring();
-      
-      if (!editor_.isFocused())
-         return;
-      
-      monitors_.add(Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent preview)
-         {
-            if (preview.getTypeInt() != Event.ONMOUSEMOVE)
-               return;
-            
-            NativeEvent event = preview.getNativeEvent();
-            cursorMovedLast_ = false;
-            modifiers_ = KeyboardShortcut.getModifierValue(event);
-            mouseX_ = event.getClientX();
-            mouseY_ = event.getClientY();
-            timer_.schedule(DELAY_MS);
-         }
-      }));
-      
-      monitors_.add(editor_.addCursorChangedHandler(new CursorChangedHandler()
-      {
-         @Override
-         public void onCursorChanged(CursorChangedEvent event)
-         {
-            cursorMovedLast_ = true;
-            timer_.schedule(DELAY_MS);
-         }
-      }));
-   }
-   
-   private void endMonitoring()
-   {
-      detach(monitors_);
-   }
-   
-   private void detach(List<HandlerRegistration> handlers)
-   {
-      for (HandlerRegistration handler : handlers)
-         handler.removeHandler();
-      handlers.clear();
-   }
-   
    private void onDetach()
    {
-      detach(handlers_);
-      detach(monitors_);
+      for (HandlerRegistration monitor : monitors_)
+         monitor.removeHandler();
+      monitors_.clear();
+      COMMAND_MAP.remove(editor_);
       commands_.clear();
    }
    
@@ -229,15 +160,57 @@ public class AceEditorIdleMonitor
    }
    
    private final AceEditor editor_;
-   private final List<HandlerRegistration> handlers_;
    private final List<HandlerRegistration> monitors_;
    private final Map<HandlerRegistration, IdleCommand> commands_;
    private final Timer timer_;
    
-   private boolean cursorMovedLast_;
-   private int modifiers_;
-   private int mouseX_;
-   private int mouseY_;
+   private static boolean mouseMovedLast_;
+   private static int modifiers_;
+   private static int mouseX_;
+   private static int mouseY_;
+   
+   private static final Timer MOUSE_MOVE_TIMER;
+   private static final HandlerRegistration MOUSE_MOVE_HANDLER;
+   private static final SafeMap<AceEditor, Map<HandlerRegistration, IdleCommand>> COMMAND_MAP;
+   
+   static {
+      
+      MOUSE_MOVE_TIMER = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            if (!mouseMovedLast_)
+               return;
+            
+            Element el = DomUtils.elementFromPoint(mouseX_, mouseY_);
+            AceEditor editor = AceEditor.getEditor(el);
+            if (editor == null)
+               return;
+            
+            executeIdleCommands(editor, IdleState.STATE_MOUSE_IDLE);
+         }
+      };
+      
+      MOUSE_MOVE_HANDLER = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
+         {
+            mouseMovedLast_ = preview.getTypeInt() == Event.ONMOUSEMOVE;
+            if (!mouseMovedLast_)
+               return;
+            
+            NativeEvent event = preview.getNativeEvent();
+            modifiers_ = KeyboardShortcut.getModifierValue(event);
+            mouseX_ = event.getClientX();
+            mouseY_ = event.getClientY();
+            MOUSE_MOVE_TIMER.schedule(DELAY_MS);
+         }
+      });
+      
+      COMMAND_MAP = new SafeMap<AceEditor, Map<HandlerRegistration, IdleCommand>>();
+   }
    
    private static final int DELAY_MS = 700;
    
