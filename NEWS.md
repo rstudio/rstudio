@@ -59,6 +59,7 @@
 
 ### R Markdown
 
+* Inline preview for MathJax equations
 * Show custom formats in Knit menu
 * Show options menu and Knit w/ Params for custom formats
 * Use "Run Document" for custom formats with runtime: shiny
