@@ -81,7 +81,7 @@
   <target name="test.dev" depends="javac.tests" description="Run development mode tests">
     <mkdir dir="reports/htmlunit.dev" />
     <junit fork="yes" printsummary="yes" haltonfailure="yes" maxmemory="256m">
-      <sysproperty key="gwt.args" value="-logLevel WARN -war www-test" />
+      <sysproperty key="gwt.args" value="-devMode -logLevel WARN -war www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
         <pathelement location="@srcFolder" />
@@ -104,7 +104,7 @@
   <target name="test.prod" depends="javac.tests" description="Run production mode tests">
     <mkdir dir="reports/htmlunit.prod" />
     <junit fork="yes" printsummary="yes" haltonfailure="yes" maxmemory="256m">
-      <sysproperty key="gwt.args" value="-prod -logLevel WARN -war www-test" />
+      <sysproperty key="gwt.args" value="-logLevel WARN -war www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
         <pathelement location="@srcFolder" />
