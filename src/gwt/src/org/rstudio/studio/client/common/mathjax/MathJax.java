@@ -52,6 +52,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -501,18 +502,35 @@ public class MathJax
       popup_.hide();
    }
    
-   private void onMathJaxTypesetCompleted(String text,
+   private void onMathJaxTypesetCompleted(Object mathjaxElObject,
+                                          String text,
                                           boolean error,
                                           Object commandObject)
    {
+      // execute callback
       if (commandObject != null && commandObject instanceof MathJaxTypesetCallback)
       {
          MathJaxTypesetCallback callback = (MathJaxTypesetCallback) commandObject;
          callback.onMathJaxTypesetComplete(error);
       }
       
-      if (error) return;
-      lastRenderedText_ = text;
+      // if mathjax displayed an error, try re-rendering once more
+      Element mathjaxEl = (Element) mathjaxElObject;
+      Element[] errorEls = DomUtils.getElementsByClassName(mathjaxEl, "MathJax_Error");
+      if (errorEls != null && errorEls.length > 0)
+      {
+         mathjaxEl.getStyle().setVisibility(Visibility.HIDDEN);
+      }
+      else
+      {
+         mathjaxEl.getStyle().setVisibility(Visibility.VISIBLE);
+      }
+      
+      
+      if (!error)
+      {
+         lastRenderedText_ = text;
+      }
    }
    
    private final void mathjaxTypeset(Element el, String currentText)
@@ -544,7 +562,7 @@ public class MathJax
                jax.Text(lastRenderedText);
 
             // callback to GWT
-            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;ZLjava/lang/Object;)(currentText, error, command);
+            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/Object;Ljava/lang/String;ZLjava/lang/Object;)(el, currentText, error, command);
          }));
       }));
    }-*/;
