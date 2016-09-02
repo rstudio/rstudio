@@ -623,6 +623,7 @@ public class AceEditorBackgroundLinkHighlighter
       {
          if (registration.getRange().contains(position))
          {
+            endDetectClickTarget();
             String url = editor_.getTextForRange(registration.getRange());
             navigateToUrl(url);
             return;
@@ -648,6 +649,7 @@ public class AceEditorBackgroundLinkHighlighter
       // will be opened in the background
       if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
       {
+         endDetectClickTarget();
          String url = editor_.getTextForRange(marker.getRange());
          navigateToUrl(url);
       }
@@ -678,6 +680,7 @@ public class AceEditorBackgroundLinkHighlighter
       event.stopPropagation();
       event.preventDefault();
       
+      endDetectClickTarget();
       String url = editor_.getTextForRange(marker.getRange());
       navigateToUrl(url);
    }
