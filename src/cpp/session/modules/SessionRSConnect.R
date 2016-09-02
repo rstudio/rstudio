@@ -334,7 +334,7 @@
 })
 
 
-.rs.addFunction("getRmdPublishDetails", function(target) {
+.rs.addFunction("getRmdPublishDetails", function(target, encoding) {
   # check for multiple R Markdown documents in the directory 
   rmds <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"),
                      all.files = FALSE, recursive = FALSE, ignore.case = TRUE,
@@ -343,7 +343,7 @@
   # see if this format is self-contained (defaults to true for HTML-based 
   # formats)
   selfContained <- TRUE
-  lines <- readLines(target, warn = FALSE)
+  lines <- readLines(target, encoding = encoding, warn = FALSE)
   outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
   if (is.list(outputFormat$options) &&
       identical(outputFormat$options$self_contained, FALSE)) {

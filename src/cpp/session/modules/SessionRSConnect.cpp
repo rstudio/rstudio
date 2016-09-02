@@ -30,6 +30,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 #define kFinishedMarker "Deployment completed: "
 #define kRSConnectFolder "rsconnect/"
@@ -381,11 +382,27 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    std::string target;
    Error error = json::readParams(request.params, &target);
 
+   // look up the source document in the database to see if we know its
+   // encoding
+   std::string encoding("unknown");
+   std::string id;
+   source_database::getId(target, &id);
+   if (!id.empty())
+   {
+      boost::shared_ptr<source_database::SourceDocument> pDoc(
+               new source_database::SourceDocument());
+      error = source_database::get(id, pDoc);
+      if (error)
+         LOG_ERROR(error);
+      else
+         encoding = pDoc->encoding();
+   }
+
    // extract publish details we can discover with R
    r::sexp::Protect protect;
    SEXP sexpDetails;
-   error = r::exec::RFunction(".rs.getRmdPublishDetails", target).call(
-         &sexpDetails, &protect);
+   error = r::exec::RFunction(".rs.getRmdPublishDetails",
+                              target, encoding).call(&sexpDetails, &protect);
    if (error)
       return error;
 
