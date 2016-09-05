@@ -23,9 +23,14 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -67,7 +72,7 @@ public class AceEditorIdleMonitor
       
       COMMAND_MAP.put(editor, commands_);
       
-      registerCommands();
+      refreshCommands();
       beginMonitoring();
    }
    
@@ -100,6 +105,22 @@ public class AceEditorIdleMonitor
    
    private void beginMonitoring()
    {
+      monitors_.add(editor_.addEditorModeChangedHandler(new EditorModeChangedEvent.Handler()
+      {
+         @Override
+         public void onEditorModeChanged(EditorModeChangedEvent event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  refreshCommands();
+               }
+            });
+         }
+      }));
+      
       monitors_.add(editor_.addCursorChangedHandler(new CursorChangedHandler()
       {
          @Override
@@ -130,10 +151,20 @@ public class AceEditorIdleMonitor
       commands_.clear();
    }
    
-   private void registerCommands()
+   private void refreshCommands()
    {
-      registerCommand(idleCommands_.PREVIEW_LINK);
-      registerCommand(idleCommands_.PREVIEW_LATEX);
+      commands_.clear();
+      
+      // attach commands based on file type
+      TextFileType fileType = editor_.getFileType();
+      if (fileType == null)
+         return;
+      
+      if (fileType.isRmd())
+      {
+         registerCommand(idleCommands_.PREVIEW_LINK);
+         registerCommand(idleCommands_.PREVIEW_LATEX);
+      }
    }
    
    public static class IdleState
@@ -171,7 +202,7 @@ public class AceEditorIdleMonitor
    private static int mouseY_;
    
    private static final Timer MOUSE_MOVE_TIMER;
-   private static final HandlerRegistration MOUSE_MOVE_HANDLER;
+   @SuppressWarnings("unused") private static final HandlerRegistration MOUSE_MOVE_HANDLER;
    private static final SafeMap<AceEditor, Map<HandlerRegistration, IdleCommand>> COMMAND_MAP;
    
    static {
