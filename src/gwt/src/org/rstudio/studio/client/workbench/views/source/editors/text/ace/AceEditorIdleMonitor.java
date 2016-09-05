@@ -105,6 +105,7 @@ public class AceEditorIdleMonitor
    
    private void beginMonitoring()
    {
+      endMonitoring();
       monitors_.add(editor_.addEditorModeChangedHandler(new EditorModeChangedEvent.Handler()
       {
          @Override
@@ -142,11 +143,16 @@ public class AceEditorIdleMonitor
       }));
    }
    
-   private void onDetach()
+   private void endMonitoring()
    {
       for (HandlerRegistration monitor : monitors_)
          monitor.removeHandler();
       monitors_.clear();
+   }
+   
+   private void onDetach()
+   {
+      endMonitoring();
       COMMAND_MAP.remove(editor_);
       commands_.clear();
    }
