@@ -18,6 +18,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Rend
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -56,8 +58,9 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -133,14 +136,8 @@ public class AceEditorIdleCommands
             Position.create(position.getRow(), token.getColumn() + token.getValue().length()));
             
       String href = token.getValue();
-      if (href.endsWith(".png")  ||
-          href.endsWith(".jpg")  ||
-          href.endsWith(".jpeg") ||
-          href.endsWith(".gif")  ||
-          href.endsWith(".svg"))
-      {
+      if (isImageHref(href))
          onPreviewImage(editor, href, position, tokenRange);
-      }
    }
    
    private void onPreviewImage(AceEditor editor,
@@ -161,8 +158,7 @@ public class AceEditorIdleCommands
       
       // display stand-alone links as line widgets
       String line = editor.getLine(position.getRow());
-      boolean isStandloneLink = line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*$");
-      if (isStandloneLink)
+      if (isStandaloneMarkdownLink(line))
       {
          onPreviewImageLineWidget(editor, href, position, tokenRange);
          return;
@@ -213,14 +209,19 @@ public class AceEditorIdleCommands
                   cow.set(null);
 
                   // detach pinned line widget
-                  plw.get().detach();
+                  if (plw.get() != null)
+                     plw.get().detach();
                   plw.set(null);
 
                   // detach render handler
-                  renderHandler.get().removeHandler();
+                  if (renderHandler.get() != null)
+                     renderHandler.get().removeHandler();
+                  renderHandler.set(null);
 
                   // detach doc changed handler
-                  docChangedHandler.get().removeHandler();
+                  if (docChangedHandler.get() != null)
+                     docChangedHandler.get().removeHandler();
+                  docChangedHandler.set(null);
                }
             });
             
@@ -228,10 +229,9 @@ public class AceEditorIdleCommands
          }
       };
       
-      // construct our image
-      final FlowPanel container = new FlowPanel();
-      final Image image = new Image(imgSrcPathFromHref(href));
-      container.add(image);
+      // construct placeholder for image
+      final SimplePanel container = new SimplePanel();
+      final Label noImageLabel = new Label("(No image at path " + href + ")");
       
       // resize command (used by various routines that need to respond
       // to width / height change events)
@@ -240,13 +240,56 @@ public class AceEditorIdleCommands
          @Override
          public void execute(Integer height)
          {
+            // defend against missing chunk output widget (can happen if a widget
+            // is closed / dismissed before image finishes loading)
             ChunkOutputWidget widget = cow.get();
+            if (widget == null)
+               return;
+            
             widget.getFrame().setHeight(height + "px");
             LineWidget lw = plw.get().getLineWidget();
             lw.setPixelHeight(height);
             editor.onLineWidgetChanged(lw);
          }
       };
+      
+      // construct our image
+      final Image image = new Image(imgSrcPathFromHref(href));
+      
+      // add load handlers to image
+      final Element imgEl = image.getElement();
+      DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
+      DOM.setEventListener(imgEl, new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONLOAD)
+            {
+               // set styles
+               ImageElementEx imgEl = image.getElement().cast();
+               
+               int minWidth = Math.min(imgEl.naturalWidth(), 100);
+               int maxWidth = Math.min(imgEl.naturalWidth(), 650);
+               
+               Style style = imgEl.getStyle();
+               style.setProperty("width", "100%");
+               style.setProperty("minWidth", minWidth + "px");
+               style.setProperty("maxWidth", maxWidth + "px"); 
+               
+               // attach to container
+               container.setWidget(image);
+               
+               // update widget
+               int height = image.getOffsetHeight() + 10;
+               onResize.execute(height);
+            }
+            else if (DOM.eventGetType(event) == Event.ONERROR)
+            {
+               container.setWidget(noImageLabel);
+            }
+         }
+      });
       
       // handle editor resize events
       final Timer renderTimer = new Timer()
@@ -279,6 +322,21 @@ public class AceEditorIdleCommands
       // initialize doc changed handler
       docChangedHandler.set(editor.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
       {
+         String href_;
+         final Timer refreshImageTimer = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               // if the discovered href isn't an image link, just bail
+               if (!isImageHref(href_))
+                  return;
+               
+               // set new src location (load handler will replace label as needed)
+               image.getElement().setAttribute("src", imgSrcPathFromHref(href_));
+            }
+         };
+         
          @Override
          public void onDocumentChanged(DocumentChangedEvent event)
          {
@@ -287,40 +345,33 @@ public class AceEditorIdleCommands
             if (range.getStart().getRow() <= row && row <= range.getEnd().getRow())
             {
                String line = editor.getLine(row);
-               boolean isStandloneLink = line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*$");
-               if (!isStandloneLink)
+               if (isStandaloneMarkdownLink(line))
+               {
+                  // check to see if the URL text has been updated
+                  Token hrefToken = null;
+                  JsArray<Token> tokens = editor.getSession().getTokens(row);
+                  for (Token token : JsUtil.asIterable(tokens))
+                  {
+                     if (token.hasType("href"))
+                     {
+                        hrefToken = token;
+                        break;
+                     }
+                  }
+                  
+                  if (hrefToken == null)
+                     return;
+                  
+                  href_ = hrefToken.getValue();
+                  refreshImageTimer.schedule(700);
+               }
+               else
+               {
                   onDetach.execute();
+               }
             }
          }
       }));
-      
-      // add load handlers to image
-      final Element imgEl = image.getElement();
-      DOM.sinkEvents(imgEl, Event.ONLOAD);
-      DOM.setEventListener(imgEl, new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event event)
-         {
-            if (DOM.eventGetType(event) == Event.ONLOAD)
-            {
-               // set styles
-               ImageElementEx imgEl = image.getElement().cast();
-               
-               int minWidth = Math.min(imgEl.naturalWidth(), 100);
-               int maxWidth = Math.min(imgEl.naturalWidth(), 650);
-               
-               Style style = imgEl.getStyle();
-               style.setProperty("width", "100%");
-               style.setProperty("minWidth", minWidth + "px");
-               style.setProperty("maxWidth", maxWidth + "px"); 
-               
-               // update widget
-               int height = image.getOffsetHeight() + 10;
-               onResize.execute(height);
-            }
-         }
-      });
       
       ChunkOutputHost host = new ChunkOutputHost()
       {
@@ -382,6 +433,21 @@ public class AceEditorIdleCommands
       
       assert false : "Unhandled idle state type '" + type + "'";
       return Position.create(0, 0);
+   }
+   
+   private static boolean isStandaloneMarkdownLink(String line)
+   {
+      return line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*$");
+   }
+   
+   private static boolean isImageHref(String href)
+   {
+      return
+          href.endsWith(".png")  ||
+          href.endsWith(".jpg")  ||
+          href.endsWith(".jpeg") ||
+          href.endsWith(".gif")  ||
+          href.endsWith(".svg");
    }
    
    private static class AnchoredPopupPanel extends MiniPopupPanel
