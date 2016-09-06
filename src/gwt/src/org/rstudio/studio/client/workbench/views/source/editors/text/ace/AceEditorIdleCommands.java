@@ -292,6 +292,7 @@ public class AceEditorIdleCommands
             else if (DOM.eventGetType(event) == Event.ONERROR)
             {
                container.setWidget(noImageLabel);
+               onResize.execute(50);
             }
          }
       });
@@ -338,6 +339,7 @@ public class AceEditorIdleCommands
                   return;
                
                // set new src location (load handler will replace label as needed)
+               container.setWidget(new SimplePanel());
                noImageLabel.setText("(No image at path " + href_ + ")");
                image.getElement().setAttribute("src", imgSrcPathFromHref(href_));
             }
