@@ -14,16 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
+import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorIdleMonitor.IdleState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -31,6 +37,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
 import com.google.gwt.dom.client.Document;
@@ -42,6 +51,12 @@ import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -112,7 +127,7 @@ public class AceEditorIdleCommands
 
       if (!token.hasType("href"))
          return;
-
+      
       Range tokenRange = Range.fromPoints(
             Position.create(position.getRow(), token.getColumn()),
             Position.create(position.getRow(), token.getColumn() + token.getValue().length()));
@@ -144,6 +159,15 @@ public class AceEditorIdleCommands
       if (el != null)
          return;
       
+      // display stand-alone links as line widgets
+      String line = editor.getLine(position.getRow());
+      boolean isStandloneLink = line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*$");
+      if (isStandloneLink)
+      {
+         onPreviewImageLineWidget(editor, href, position, tokenRange);
+         return;
+      }
+      
       // construct image el, place in popup, and show
       AnchoredPopupPanel panel = new AnchoredPopupPanel(editor, tokenRange, srcPath);
       panel.getElement().setId(encoded);
@@ -152,6 +176,181 @@ public class AceEditorIdleCommands
             editor.documentPositionToScreenCoordinates(position);
       panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
       panel.show();
+   }
+   
+   private void onPreviewImageLineWidget(final AceEditor editor,
+                                         final String href,
+                                         final Position position,
+                                         final Range tokenRange)
+   {
+      // if we already have a line widget for this row, bail
+      LineWidget lineWidget = editor.getLineWidgetForRow(position.getRow());
+      if (lineWidget != null)
+         return;
+      
+      // shared mutable state that we hide in this closure
+      final Mutable<PinnedLineWidget>  plw = new Mutable<PinnedLineWidget>();
+      final Mutable<ChunkOutputWidget> cow = new Mutable<ChunkOutputWidget>();
+      final Mutable<HandlerRegistration> docChangedHandler = new Mutable<HandlerRegistration>(); 
+      final Mutable<HandlerRegistration> renderHandler = new Mutable<HandlerRegistration>();
+      
+      // command that ensures state is cleaned up when widget hidden
+      final Command onDetach = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            ChunkOutputWidget widget = cow.get();
+            if (widget == null)
+               return;
+            
+            FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
+            {
+               @Override
+               public void execute()
+               {
+                  // detach chunk output widget
+                  cow.set(null);
+
+                  // detach pinned line widget
+                  plw.get().detach();
+                  plw.set(null);
+
+                  // detach render handler
+                  renderHandler.get().removeHandler();
+
+                  // detach doc changed handler
+                  docChangedHandler.get().removeHandler();
+               }
+            });
+            
+            anim.run(400);
+         }
+      };
+      
+      // construct our image
+      final FlowPanel container = new FlowPanel();
+      final Image image = new Image(imgSrcPathFromHref(href));
+      container.add(image);
+      
+      // resize command (used by various routines that need to respond
+      // to width / height change events)
+      final CommandWithArg<Integer> onResize = new CommandWithArg<Integer>()
+      {
+         @Override
+         public void execute(Integer height)
+         {
+            ChunkOutputWidget widget = cow.get();
+            widget.getFrame().setHeight(height + "px");
+            LineWidget lw = plw.get().getLineWidget();
+            lw.setPixelHeight(height);
+            editor.onLineWidgetChanged(lw);
+         }
+      };
+      
+      // handle editor resize events
+      final Timer renderTimer = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            int height = image.getOffsetHeight() + 30;
+            onResize.execute(height);
+         }
+      };
+      
+      // initialize render handler
+      renderHandler.set(editor.addRenderFinishedHandler(new RenderFinishedEvent.Handler()
+      {
+         private int width_;
+         
+         @Override
+         public void onRenderFinished(RenderFinishedEvent event)
+         {
+            int width = editor.getWidget().getOffsetWidth();
+            if (width == width_)
+               return;
+            
+            width_ = width;
+            renderTimer.schedule(50);
+         }
+      }));
+      
+      // initialize doc changed handler
+      docChangedHandler.set(editor.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+      {
+         @Override
+         public void onDocumentChanged(DocumentChangedEvent event)
+         {
+            int row = plw.get().getRow();
+            Range range = event.getEvent().getRange();
+            if (range.getStart().getRow() <= row && row <= range.getEnd().getRow())
+            {
+               String line = editor.getLine(row);
+               boolean isStandloneLink = line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*$");
+               if (!isStandloneLink)
+                  onDetach.execute();
+            }
+         }
+      }));
+      
+      // add load handlers to image
+      final Element imgEl = image.getElement();
+      DOM.sinkEvents(imgEl, Event.ONLOAD);
+      DOM.setEventListener(imgEl, new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event event)
+         {
+            if (DOM.eventGetType(event) == Event.ONLOAD)
+            {
+               // set styles
+               ImageElementEx imgEl = image.getElement().cast();
+               
+               int minWidth = Math.min(imgEl.naturalWidth(), 100);
+               int maxWidth = Math.min(imgEl.naturalWidth(), 650);
+               
+               Style style = imgEl.getStyle();
+               style.setProperty("width", "100%");
+               style.setProperty("minWidth", minWidth + "px");
+               style.setProperty("maxWidth", maxWidth + "px"); 
+               
+               // update widget
+               int height = image.getOffsetHeight() + 10;
+               onResize.execute(height);
+            }
+         }
+      });
+      
+      ChunkOutputHost host = new ChunkOutputHost()
+      {
+         @Override
+         public void onOutputRemoved(final ChunkOutputWidget widget)
+         {
+            onDetach.execute();
+         }
+         
+         @Override
+         public void onOutputHeightChanged(ChunkOutputWidget widget,
+                                           int height,
+                                           boolean ensureVisible)
+         {
+            onResize.execute(height);
+         }
+      };
+      
+      cow.set(new ChunkOutputWidget(
+            StringUtil.makeRandomId(8),
+            StringUtil.makeRandomId(8),
+            RmdChunkOptions.create(),
+            ChunkOutputWidget.EXPANDED,
+            host));
+      
+      ChunkOutputWidget outputWidget = cow.get();
+      outputWidget.setRootWidget(container);
+      outputWidget.hideSatellitePopup();
+
+      plw.set(new PinnedLineWidget("image", editor, outputWidget, position.getRow(), null, null));
    }
    
    private String imgSrcPathFromHref(String href)
