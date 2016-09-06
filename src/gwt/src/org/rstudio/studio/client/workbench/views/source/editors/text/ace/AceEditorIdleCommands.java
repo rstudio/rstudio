@@ -143,10 +143,6 @@ public class AceEditorIdleCommands
                                Position position,
                                Range tokenRange)
    {
-      // for local images, construct a path that the server URI redirects
-      // will handle properly
-      String srcPath = imgSrcPathFromHref(href);
-      
       // check to see if we already have a popup showing for this image;
       // if we do then bail early
       String encoded = StringUtil.encodeURIComponent(href);
@@ -342,6 +338,7 @@ public class AceEditorIdleCommands
                   return;
                
                // set new src location (load handler will replace label as needed)
+               noImageLabel.setText("(No image at path " + href_ + ")");
                image.getElement().setAttribute("src", imgSrcPathFromHref(href_));
             }
          };
