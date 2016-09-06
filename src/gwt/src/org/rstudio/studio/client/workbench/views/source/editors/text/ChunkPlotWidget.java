@@ -122,7 +122,7 @@ public class ChunkPlotWidget extends Composite
       {
          // otherwise, group with metadata
          HTMLPanel outer = new HTMLPanel("");
-         conditions_ = new ChunkConditionBar(metadata.getConditions());
+         conditions_ = new ChunkConditionBar(metadata.getConditions(), chunkOutputSize_);
          conditions_.onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
          outer.add(conditions_);
          outer.add(root);
