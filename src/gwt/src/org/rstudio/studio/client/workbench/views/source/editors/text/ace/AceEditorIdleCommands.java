@@ -49,8 +49,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -165,7 +163,7 @@ public class AceEditorIdleCommands
       }
       
       // construct image el, place in popup, and show
-      AnchoredPopupPanel panel = new AnchoredPopupPanel(editor, tokenRange, srcPath);
+      AnchoredPopupPanel panel = new AnchoredPopupPanel(editor, tokenRange, href);
       panel.getElement().setId(encoded);
       
       ScreenCoordinates coordinates =
@@ -450,7 +448,7 @@ public class AceEditorIdleCommands
           href.endsWith(".svg");
    }
    
-   private static class AnchoredPopupPanel extends MiniPopupPanel
+   private class AnchoredPopupPanel extends MiniPopupPanel
    {
       public AnchoredPopupPanel(AceEditor editor, Range range, String href)
       {
@@ -458,16 +456,28 @@ public class AceEditorIdleCommands
          
          // defer visibility until image has finished loading
          setVisible(false);
-         image_ = new Image(href);
-         image_.addLoadHandler(new LoadHandler()
+         image_ = new Image(imgSrcPathFromHref(href));
+         error_ = new Label("No image at path " + href);
+         
+         final Element imgEl = image_.getElement();
+         DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
+         DOM.setEventListener(imgEl, new EventListener()
          {
             @Override
-            public void onLoad(LoadEvent event)
+            public void onBrowserEvent(Event event)
             {
-               showSmall();
+               if (DOM.eventGetType(event) == Event.ONLOAD)
+               {
+                  setWidget(image_);
+                  showSmall();
+               }
+               else
+               {
+                  setWidget(error_);
+                  setVisible(true);
+               }
             }
          });
-         add(image_);
          
          // allow zoom with double-click
          setTitle("Double-Click to Zoom");
@@ -557,6 +567,7 @@ public class AceEditorIdleCommands
       private final AnchoredSelection anchor_;
       private final HandlerRegistration handler_;
       private final Image image_;
+      private final Label error_;
       
       private static final String SMALL_MAX_WIDTH  = "100px";
       private static final String SMALL_MAX_HEIGHT = "100px";
