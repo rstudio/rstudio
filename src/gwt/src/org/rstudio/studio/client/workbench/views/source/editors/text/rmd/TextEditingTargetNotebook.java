@@ -1280,6 +1280,13 @@ public class TextEditingTargetNotebook
 
    public void onDismiss()
    {
+      closeAllSatelliteChunks();
+   }
+   
+   // Private methods --------------------------------------------------------
+
+   private void closeAllSatelliteChunks()
+   {
       SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
       ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
 
@@ -1296,8 +1303,6 @@ public class TextEditingTargetNotebook
          }
       }
    }
-   
-   // Private methods --------------------------------------------------------
    
    private void restartThenExecute(AppCommand command)
    {
@@ -1428,6 +1433,9 @@ public class TextEditingTargetNotebook
          cleanScopeErrorState(output.getScope());
          output.remove();
       }
+
+      closeAllSatelliteChunks();
+      
       outputs_.clear();
    }
    
