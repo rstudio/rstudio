@@ -1277,6 +1277,25 @@ public class TextEditingTargetNotebook
             scope.getEnd().getRow(), 
             ChunkRowExecState.LINE_NONE);
    }
+
+   public void onDismiss()
+   {
+      SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
+      ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
+
+      String docId = docUpdateSentinel_.getId();
+
+      for (String chunkId : satelliteChunks_)
+      {
+         String windowName = chunkWindowManager.getName(docId, chunkId);
+         
+         if (satelliteManager.satelliteWindowExists(windowName))
+         {
+            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);     
+            satelliteWindow.close();
+         }
+      }
+   }
    
    // Private methods --------------------------------------------------------
    
