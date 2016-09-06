@@ -1302,6 +1302,8 @@ public class TextEditingTargetNotebook
             satelliteWindow.close();
          }
       }
+
+      satelliteChunks_.clear();
    }
    
    private void restartThenExecute(AppCommand command)
