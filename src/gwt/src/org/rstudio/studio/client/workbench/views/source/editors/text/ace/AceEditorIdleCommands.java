@@ -191,35 +191,46 @@ public class AceEditorIdleCommands
       // command that ensures state is cleaned up when widget hidden
       final Command onDetach = new Command()
       {
+         private void detach()
+         {
+            // detach chunk output widget
+            cow.set(null);
+
+            // detach pinned line widget
+            if (plw.get() != null)
+               plw.get().detach();
+            plw.set(null);
+
+            // detach render handler
+            if (renderHandler.get() != null)
+               renderHandler.get().removeHandler();
+            renderHandler.set(null);
+
+            // detach doc changed handler
+            if (docChangedHandler.get() != null)
+               docChangedHandler.get().removeHandler();
+            docChangedHandler.set(null);
+         }
+         
          @Override
          public void execute()
          {
+            // if the associated chunk output widget has been cleaned up,
+            // make a last-ditch detach effort anyhow
             ChunkOutputWidget widget = cow.get();
             if (widget == null)
+            {
+               detach();
                return;
+            }
             
+            // fade out and then detach
             FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
             {
                @Override
                public void execute()
                {
-                  // detach chunk output widget
-                  cow.set(null);
-
-                  // detach pinned line widget
-                  if (plw.get() != null)
-                     plw.get().detach();
-                  plw.set(null);
-
-                  // detach render handler
-                  if (renderHandler.get() != null)
-                     renderHandler.get().removeHandler();
-                  renderHandler.set(null);
-
-                  // detach doc changed handler
-                  if (docChangedHandler.get() != null)
-                     docChangedHandler.get().removeHandler();
-                  docChangedHandler.set(null);
+                  detach();
                }
             });
             
