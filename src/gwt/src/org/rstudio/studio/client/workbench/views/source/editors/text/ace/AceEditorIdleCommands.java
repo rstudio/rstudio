@@ -328,8 +328,8 @@ public class AceEditorIdleCommands
       // initialize doc changed handler
       docChangedHandler.set(editor.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
       {
-         String href_;
-         final Timer refreshImageTimer = new Timer()
+         private String href_ = href;
+         private final Timer refreshImageTimer = new Timer()
          {
             @Override
             public void run()
@@ -370,6 +370,12 @@ public class AceEditorIdleCommands
                   if (hrefToken == null)
                      return;
                   
+                  // if we have the same href as before, don't update
+                  // (avoid flickering + re-requests of same URL)
+                  if (hrefToken.getValue().equals(href_))
+                     return;
+                  
+                  // cache href and schedule refresh of image
                   href_ = hrefToken.getValue();
                   refreshImageTimer.schedule(700);
                }
