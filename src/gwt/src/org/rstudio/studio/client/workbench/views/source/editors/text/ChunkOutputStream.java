@@ -40,6 +40,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
@@ -73,6 +74,8 @@ public class ChunkOutputStream extends FlowPanel
          getElement().getStyle().setProperty("msFlexDirection", "column");
          getElement().getStyle().setProperty("webkitFlexDirection", "column");
          getElement().getStyle().setProperty("flexDirection", "column");
+
+         getElement().getStyle().setOverflow(Overflow.AUTO);
       }
    }
 
