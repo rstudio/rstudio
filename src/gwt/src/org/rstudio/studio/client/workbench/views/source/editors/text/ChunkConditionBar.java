@@ -45,8 +45,10 @@ public class ChunkConditionBar extends Composite
       String contents();
    }
 
-   public ChunkConditionBar(JsArray<JsArrayEx> conditions)
+   public ChunkConditionBar(JsArray<JsArrayEx> conditions, ChunkOutputSize chunkOutputSize)
    {
+      chunkOutputSize_ = chunkOutputSize;
+
       initWidget(uiBinder.createAndBindUi(this));
       for (int i = 0; i < conditions.length(); i++)
       {
@@ -72,9 +74,12 @@ public class ChunkConditionBar extends Composite
          contents.add(entry);
       }
 
-      // limit bar width to plot width
-      getElement().getStyle().setProperty("maxWidth", 
-            "" + ChunkOutputUi.MAX_PLOT_WIDTH + "px");
+      if (chunkOutputSize_ != ChunkOutputSize.Full)
+      {
+         // limit bar width to plot width
+         getElement().getStyle().setProperty("maxWidth", 
+               "" + ChunkOutputUi.MAX_PLOT_WIDTH + "px");
+      }
    }
    
    @Override
@@ -99,4 +104,6 @@ public class ChunkConditionBar extends Composite
    // symmetric with enum on server
    public final static int CONDITION_MESSAGE = 0;
    public final static int CONDITION_WARNING = 1;
+
+   final ChunkOutputSize chunkOutputSize_;
 }

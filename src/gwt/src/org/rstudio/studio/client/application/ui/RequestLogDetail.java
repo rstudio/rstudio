@@ -22,6 +22,18 @@ import org.rstudio.core.client.jsonrpc.RequestLogEntry;
 
 public class RequestLogDetail extends Composite
 {
+   private native String tryPrettyJson(String raw) /*-{
+      var pretty = raw;
+
+      try {
+        pretty = JSON.stringify(JSON.parse(raw), null, 2);
+      }
+      catch(e) {
+      }
+
+      return pretty;
+   }-*/;
+
    public RequestLogDetail(RequestLogEntry entry)
    {
       String req = entry.getRequestData();
@@ -33,10 +45,10 @@ public class RequestLogDetail extends Composite
       HTML html = new HTML();
       html.setText("Request ID: " + entry.getRequestId() + "\n\n"
                    + "== REQUEST ======\n"
-                   + req
+                   + tryPrettyJson(req)
                    + "\n\n"
                    + "== RESPONSE ======\n"
-                   + resp
+                   + tryPrettyJson(resp)
                    + "\n");
       html.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
 
