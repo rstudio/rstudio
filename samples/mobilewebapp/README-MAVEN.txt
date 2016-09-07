@@ -50,33 +50,21 @@ own GWT jars into their local maven repo.
 
 If you prefer to work from the command line, you can use Maven to
 build your project (http://maven.apache.org/). You will also need Java
-1.6 JDK. Maven uses the supplied 'pom.xml' file which describes
+1.7 JDK. Maven uses the supplied 'pom.xml' file which describes
 exactly how to build your project. This file has been tested to work
 against Maven 3.3.1. The following assumes 'mvn' is on your command
-line path. Also, see note below if you have gae.home set in settings.xml.
+line path.
 
-To run development mode use the Maven Plugin for AppEngine and Maven
-Plugin for GWT.
+To run development mode use the Google App Engine Maven plugin and
+Maven Plugin for GWT.
 
   mvn appengine:devserver_start
   mvn gwt:codeserver
   mvn appengine:devserver_stop
 
-To compile your project for deployment, just type 'mvn package'.
+To compile your project for deployment, just type 'mvn clean package'.
 
 For a full listing of other goals, visit:
 https://tbroyer.github.io/gwt-maven-plugin/plugin-info.html
+https://cloud.google.com/appengine/docs/java/tools/maven#reference_available_goals
 
--- Important Note:
-
-The gae-maven-plugin requires a locally extracted copy of the App
-Engine SDK in order to run. The gae:unpack goal can do this for you
-automatically, by downloading and extracting the contents of
-com.google.appengine:appengine-java-sdk:zip into your local maven
-repository. The mobilewebapp POM should take care of this, as it
-includes the gae:unpack goal. However, if you have gae.home set in
-your settings.xml, it won't work properly. The gae:unpack goal will
-only work correctly if sdkDir / gae.home are not set. For more info,
-see this bug report
-(https://github.com/maven-gae-plugin/maven-gae-plugin/issues/8)
-against the maven-gae-plugin.

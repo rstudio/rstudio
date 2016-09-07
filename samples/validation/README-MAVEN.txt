@@ -44,16 +44,21 @@ own GWT jars into their local maven repo.
 
 If you prefer to work from the command line, you can use Maven to
 build your project (http://maven.apache.org/). You will also need Java
-1.6 JDK. Maven uses the supplied 'pom.xml' file which describes
+1.7 JDK. Maven uses the supplied 'pom.xml' file which describes
 exactly how to build your project. This file has been tested to work
 against Maven 3.3.1. The following assumes 'mvn' is on your command
 line path.
 
-To run development mode use the Maven GWT Plugin.
+To run development mode use the Maven Plugin for GWT, first prepare
+the webapp:
+
+  mvn war:exploded -Dgwt.skipCompilation=true
+
+then
 
   mvn gwt:devmode
 
-To compile your project for deployment, just type 'mvn package'.
+To compile your project for deployment, just type 'mvn clean package'.
 
 For a full listing of other goals, visit:
 https://tbroyer.github.io/gwt-maven-plugin/plugin-info.html
