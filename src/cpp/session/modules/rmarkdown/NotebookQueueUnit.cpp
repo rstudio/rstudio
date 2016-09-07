@@ -237,6 +237,13 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    if (pending_.empty())
       return "";
 
+   // inline chunks always execute all their code at once
+   if (execScope_ == ExecScopeInline)
+   {
+      pending_.clear();
+      return string_utils::wideToUtf8(code_);
+   }
+
    // extract next range to execute
    ExecRange& range = *pending_.begin();
    int start = range.start;
