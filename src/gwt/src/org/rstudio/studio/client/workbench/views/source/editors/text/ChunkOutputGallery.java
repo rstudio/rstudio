@@ -381,7 +381,7 @@ public class ChunkOutputGallery extends Composite
    {
       if (console_ == null)
       {
-         console_ = new ChunkConsolePage();
+         console_ = new ChunkConsolePage(chunkOutputSize_);
          addPage(console_);
       }
    }

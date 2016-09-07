@@ -20,21 +20,26 @@ import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkConsolePage extends ChunkOutputPage
                               implements ChunkOutputPresenter.Host
 {
-   public ChunkConsolePage()
+   public ChunkConsolePage(ChunkOutputSize chunkOutputSize)
    {
       super(0);
+      
+      chunkOutputSize_ = chunkOutputSize;
       init(new ChunkOutputStream(this));
    }
 
-   public ChunkConsolePage(ChunkOutputStream stream)
+   public ChunkConsolePage(ChunkOutputStream stream, ChunkOutputSize chunkOutputSize)
    {
       super(0);
+
+      chunkOutputSize_ = chunkOutputSize;
       init(stream);
    }
 
@@ -113,8 +118,16 @@ public class ChunkConsolePage extends ChunkOutputPage
       stream_ = stream;
       panel_ = new ScrollPanel();
       panel_.add(stream);
-      content_ = new FixedRatioWidget(panel_, ChunkOutputUi.OUTPUT_ASPECT, 
-            ChunkOutputUi.MAX_PLOT_WIDTH);
+
+      if (chunkOutputSize_ != ChunkOutputSize.Full) {
+         content_ = new FixedRatioWidget(panel_, ChunkOutputUi.OUTPUT_ASPECT, 
+               ChunkOutputUi.MAX_PLOT_WIDTH);
+      }
+      else { 
+         panel_.getElement().getStyle().setWidth(100, Unit.PCT);
+         content_ = panel_;
+      }
+
       thumbnail_ = new ChunkOutputThumbnail("R Console", "", preview_, 
             ChunkOutputWidget.getEditorColors());
    }
@@ -122,10 +135,12 @@ public class ChunkConsolePage extends ChunkOutputPage
    private ScrollPanel panel_;
    private ChunkOutputStream stream_;
    private Widget thumbnail_;
-   private FixedRatioWidget content_;
+   private Widget content_;
    private ChunkConsolePreview preview_;
    
    public final static int CONSOLE_INPUT  = 0;
    public final static int CONSOLE_OUTPUT = 1;
    public final static int CONSOLE_ERROR  = 2;
+
+   private final ChunkOutputSize chunkOutputSize_;
 }

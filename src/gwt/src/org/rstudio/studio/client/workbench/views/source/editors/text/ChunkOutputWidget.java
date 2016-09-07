@@ -856,7 +856,7 @@ public class ChunkOutputWidget extends Composite
          if (stream.hasContent())
          {
             // add the stream itself if there's still anything left in it
-            gallery.addPage(new ChunkConsolePage(stream));
+            gallery.addPage(new ChunkConsolePage(stream, chunkOutputSize_));
          }
          for (ChunkOutputPage page: pages)
          {
