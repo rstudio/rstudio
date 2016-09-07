@@ -405,8 +405,8 @@ public class AceEditorIdleCommands
       };
       
       cow.set(new ChunkOutputWidget(
-            StringUtil.makeRandomId(8),
-            StringUtil.makeRandomId(8),
+            "",
+            "md-image-preview-" + StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
             host));
