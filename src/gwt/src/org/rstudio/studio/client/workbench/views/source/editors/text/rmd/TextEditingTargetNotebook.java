@@ -1277,8 +1277,34 @@ public class TextEditingTargetNotebook
             scope.getEnd().getRow(), 
             ChunkRowExecState.LINE_NONE);
    }
+
+   public void onDismiss()
+   {
+      closeAllSatelliteChunks();
+   }
    
    // Private methods --------------------------------------------------------
+
+   private void closeAllSatelliteChunks()
+   {
+      SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
+      ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
+
+      String docId = docUpdateSentinel_.getId();
+
+      for (String chunkId : satelliteChunks_)
+      {
+         String windowName = chunkWindowManager.getName(docId, chunkId);
+         
+         if (satelliteManager.satelliteWindowExists(windowName))
+         {
+            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);     
+            satelliteWindow.close();
+         }
+      }
+
+      satelliteChunks_.clear();
+   }
    
    private void restartThenExecute(AppCommand command)
    {
@@ -1409,6 +1435,9 @@ public class TextEditingTargetNotebook
          cleanScopeErrorState(output.getScope());
          output.remove();
       }
+
+      closeAllSatelliteChunks();
+      
       outputs_.clear();
    }
    

@@ -28,18 +28,11 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkPlotWidget extends Composite
                              implements EditorThemeListener
 {
-   public ChunkPlotWidget(String url, NotebookPlotMetadata metadata, 
-         final Command onRenderComplete)
-   {
-      this(url, metadata, onRenderComplete, ChunkOutputSize.Default);
-   }
-
    public ChunkPlotWidget(String url, NotebookPlotMetadata metadata, 
          final Command onRenderComplete, ChunkOutputSize chunkOutputSize)
    {
@@ -79,10 +72,18 @@ public class ChunkPlotWidget extends Composite
       
       if (isFixedSizePlotUrl(url))
       {
-         // if the plot is of fixed size, emit it directly, but make it
-         // initially invisible until we get sizing information (as we may 
-         // have to downsample)
-         plot_.setVisible(false);
+         if (chunkOutputSize_ == ChunkOutputSize.Full) {
+            HTMLPanel panel = new HTMLPanel("");
+            panel.add(plot_);
+            host_ = panel;
+            root = panel;
+         }
+         else {
+            // if the plot is of fixed size, emit it directly, but make it
+            // initially invisible until we get sizing information (as we may 
+            // have to downsample)
+            plot_.setVisible(false);
+         }
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full)
       {
@@ -94,13 +95,14 @@ public class ChunkPlotWidget extends Composite
          panel.getElement().getStyle().setProperty("display", "-webkit-flex");
          panel.getElement().getStyle().setProperty("display", "flex");
 
-         plot_.getElement().getStyle().setProperty("display", "-ms-flexbox");
-         plot_.getElement().getStyle().setProperty("display", "-webkit-flex");
-         plot_.getElement().getStyle().setProperty("display", "flex");
+         panel.getElement().getStyle().setProperty("msFlexGrow", "1");
+         panel.getElement().getStyle().setProperty("webkitFlexGrow", "1");
+         panel.getElement().getStyle().setProperty("flexGrow", "1");
 
-         plot_.getElement().getStyle().setWidth(100, Unit.PCT);
-         
-         panel.add(plot_);
+         panel.getElement().getStyle().setProperty("backgroundImage", "url(\"" + url + "\")");
+         panel.getElement().getStyle().setProperty("backgroundSize", "100% 100%");
+
+         plotDiv_ = panel;
          host_ = panel;
          root = panel;
       }
@@ -118,13 +120,25 @@ public class ChunkPlotWidget extends Composite
       if (metadata != null && metadata.getConditions().length() > 0)
       {
          // otherwise, group with metadata
-         VerticalPanel outer = new VerticalPanel();
-         conditions_ = new ChunkConditionBar(metadata.getConditions());
+         HTMLPanel outer = new HTMLPanel("");
+         conditions_ = new ChunkConditionBar(metadata.getConditions(), chunkOutputSize_);
          conditions_.onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
          outer.add(conditions_);
          outer.add(root);
          outer.setHeight("100%");
          outer.setWidth("100%");
+         
+         if (chunkOutputSize_ == ChunkOutputSize.Full)
+         {
+            outer.getElement().getStyle().setProperty("display", "-ms-flexbox");
+            outer.getElement().getStyle().setProperty("display", "-webkit-flex");
+            outer.getElement().getStyle().setProperty("display", "flex");
+
+            outer.getElement().getStyle().setProperty("msFlexDirection", "column");
+            outer.getElement().getStyle().setProperty("webkitFlexDirection", "column");
+            outer.getElement().getStyle().setProperty("flexDirection", "column");
+         }
+         
          root = outer;
       }
       
@@ -179,12 +193,18 @@ public class ChunkPlotWidget extends Composite
       // the only purpose of this resize counter is to ensure that the
       // plot URL changes when its geometry does (it's not consumed by
       // the server)
-      plot_.setUrl(plotUrl + "?resize=" + resizeCounter_++);
+      String plotUrlRefresh = plotUrl + "?resize=" + resizeCounter_++;
+
+      plot_.setUrl(plotUrlRefresh);
+
+      if (plotDiv_ != null)
+         plotDiv_.getElement().getStyle().setProperty("backgroundImage", "url(\"" + plotUrlRefresh + "\")");
    }
    
    private static int resizeCounter_ = 0;
    private final String url_;
    private final Image plot_;
+   private HTMLPanel plotDiv_ = null;
    private final NotebookPlotMetadata metadata_;
    private final ChunkOutputSize chunkOutputSize_;
    private Widget host_;

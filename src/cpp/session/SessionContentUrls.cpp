@@ -90,6 +90,11 @@ Error contentFileInfo(const std::string& contentUrl,
    // get title parameter
    *pTitle = http::util::fieldValue<std::string>(fields, "title", "(Untitled)");
 
+   // use only the first line of the title 
+   size_t newline = pTitle->find("\n");
+   if (newline != std::string::npos)
+      *pTitle = pTitle->substr(0, newline);
+   
    // get file parameter
    std::string contentFile = http::util::fieldValue(fields, "file");
    if (contentFile.empty())

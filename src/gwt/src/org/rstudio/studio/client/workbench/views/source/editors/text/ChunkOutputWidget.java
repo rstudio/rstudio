@@ -210,7 +210,7 @@ public class ChunkOutputWidget extends Composite
    }
    
    // Public methods ----------------------------------------------------------
-   
+
    public int getExpansionState()
    {
       return expansionState_.getValue();
@@ -559,6 +559,11 @@ public class ChunkOutputWidget extends Composite
       popout_.setVisible(false);
       hideSatellitePopup_ = true;
    }
+   
+   public HTMLPanel getFrame()
+   {
+      return frame_;
+   }
 
    // Private methods ---------------------------------------------------------
 
@@ -787,6 +792,7 @@ public class ChunkOutputWidget extends Composite
             @Override
             public void run()
             {
+               syncHeight(true, ensureVisible);
                frame_.getElement().getStyle().clearProperty("transition");
             }
          };
@@ -834,22 +840,16 @@ public class ChunkOutputWidget extends Composite
       }
       else if (state_ == CHUNK_POST_OUTPUT &&
                presenter_ instanceof ChunkOutputStream &&
-               (type == RmdChunkOutputUnit.TYPE_HTML || 
-                type == RmdChunkOutputUnit.TYPE_PLOT ||
-                type == RmdChunkOutputUnit.TYPE_DATA ||
-                chunkOutputSize_ == ChunkOutputSize.Full))
+               (isBlockType(type) || 
+                isBlockType(type) != isBlockType(lastOutputType_)))
       {
-         // if we're adding a block widget into an existing chunk, we 
-         // need to switch to gallery mode 
+         // we switch to gallery mode when we have either two block-type
+         // outputs (e.g. two plots), or a block-type output combined with 
+         // non-block output (e.g. a plot and some text)
          final ChunkOutputStream stream = (ChunkOutputStream)presenter_;
-         final ChunkOutputGallery gallery = new ChunkOutputGallery(this, chunkOutputSize_);
+         final ChunkOutputGallery gallery = new ChunkOutputGallery(this, 
+               chunkOutputSize_);
 
-         // replace the stream with the gallery (the stream will live on inside
-         // the gallery's console page). Perform this operation before adding pages,
-         // otherwise, in some situations (satellite chunks), attachPresenter()
-         // would perform the attachment by temporarily deattaching which causes
-         // all the events to be lost and clicks to stop working. Instead, attach
-         // the gallery before to maintain the event listers assigned in addPage().
          attachPresenter(gallery);
          
          // extract all the pages from the stream and populate the gallery
@@ -857,7 +857,7 @@ public class ChunkOutputWidget extends Composite
          if (stream.hasContent())
          {
             // add the stream itself if there's still anything left in it
-            gallery.addPage(new ChunkConsolePage(stream));
+            gallery.addPage(new ChunkConsolePage(stream, chunkOutputSize_));
          }
          for (ChunkOutputPage page: pages)
          {
@@ -866,6 +866,24 @@ public class ChunkOutputWidget extends Composite
          
          syncHeight(false, false);
       }
+      
+      lastOutputType_ = type;
+   }
+   
+   private boolean isBlockType(int type)
+   {
+      switch (type)
+      {
+      case RmdChunkOutputUnit.TYPE_PLOT:
+      case RmdChunkOutputUnit.TYPE_DATA:
+      case RmdChunkOutputUnit.TYPE_HTML:
+          return true;
+      case RmdChunkOutputUnit.TYPE_TEXT:
+      case RmdChunkOutputUnit.TYPE_ERROR:
+      case RmdChunkOutputUnit.TYPE_ORDINAL:
+         return false;
+      }
+      return true;
    }
    
    @UiField Image clear_;
@@ -887,6 +905,7 @@ public class ChunkOutputWidget extends Composite
    private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
+   private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private boolean hasErrors_ = false;
    private boolean needsHeightSync_ = false;
    private boolean hideSatellitePopup_ = false;

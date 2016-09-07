@@ -944,7 +944,7 @@ void viewPdfPostback(const std::string& pdfPath,
 void handleFileShow(const http::Request& request, http::Response* pResponse)
 {
    // get the file path
-   FilePath filePath(request.queryParamValue("path"));
+   FilePath filePath = module_context::resolveAliasedPath(request.queryParamValue("path"));
    if (!filePath.exists())
    {
       pResponse->setNotFoundError(request.uri());

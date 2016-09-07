@@ -64,6 +64,9 @@ xmlns:g="urn:import:com.google.gwt.user.client.ui">
    display: flex;
 
    padding-bottom: 12px;
+
+   min-height: 70px;
+   height: 70px;
 }
 
 .expand .viewer {

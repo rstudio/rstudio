@@ -17,12 +17,15 @@ package org.rstudio.studio.client.common.mathjax;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.MapUtil;
+import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
@@ -35,20 +38,27 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
 
@@ -65,7 +75,6 @@ public class MathJax
       
       docDisplay_ = docDisplay;
       popup_ = new MathJaxPopupPanel(this);
-      bgRenderer_ = new MathJaxBackgroundRenderer(this, popup_, docDisplay_);
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
@@ -101,17 +110,96 @@ public class MathJax
                detachHandlers();
                return;
             }
+         }
+      }));
+      
+      handlers_.add(docDisplay_.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+      {
+         Timer bgRenderTimer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               // re-render latex in a visible mathjax popup
+               if (popup_.isShowing() && anchor_ != null)
+               {
+                  renderLatex(anchor_.getRange(), true);
+                  return;
+               }
+               
+               // re-render latex in a line widget
+               Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+               if (token != null && token.hasType("latex"))
+               {
+                  Range range = MathJaxUtil.getLatexRange(docDisplay_);
+                  if (range != null)
+                     renderLatex(range, true);
+               }
+            }
+         };
+         
+         @Override
+         public void onDocumentChanged(DocumentChangedEvent event)
+         {
+            bgRenderTimer_.schedule(200);
             
-            MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
-               public void onLoaded(boolean alreadyLoaded)
+               public void execute()
                {
-                  renderLatex();
+                  MapUtil.forEach(cowToPlwMap_, new ForEachCommand<ChunkOutputWidget, PinnedLineWidget>()
+                  {
+                     @Override
+                     public void execute(ChunkOutputWidget cow, PinnedLineWidget plw)
+                     {
+                        // dismiss the mathjax line widget if the associated chunk text has
+                        // been mutated such that it is no longer a mathjax chunk
+                        Pattern reMathJax = Pattern.create("^\\s*\\$\\$\\s*$");
+                        if (!reMathJax.test(docDisplay_.getLine(plw.getRow())))
+                           removeChunkOutputWidget(cow);
+                        
+                        // detect whether start of associated chunk has been destroyed
+                        TokenIterator it = docDisplay_.createTokenIterator();
+                        Token token = it.moveToPosition(plw.getRow() - 1, 0);
+                        if (token != null && !token.hasType("latex"))
+                           removeChunkOutputWidget(cow);
+                     }
+                  });
                }
             });
          }
       }));
+      
+      // one-shot command for rendering of latex on startup; we hide it
+      // in an anonymous Command object just to avoid leaking state into
+      // the MathJax class and wait for scope tree to ensure document
+      // has been tokenized + rendered
+      new Command()
+      {
+         private HandlerRegistration handler_;
+         
+         @Override
+         public void execute()
+         {
+            handler_ = docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
+            {
+               @Override
+               public void onScopeTreeReady(ScopeTreeReadyEvent event)
+               {
+                  handler_.removeHandler();
+                  MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
+                  {
+                     @Override
+                     public void onLoaded(boolean alreadyLoaded)
+                     {
+                        renderLatex();
+                     }
+                  });
+               }
+            });
+         }
+      }.execute();
    }
    
    public void renderLatex()
@@ -230,7 +318,7 @@ public class MathJax
       
       final Element el = DomUtils.getFirstElementWithClassName(
             widget.getElement(),
-            "mathjax-root");
+            MATHJAX_ROOT_CLASSNAME);
       
       // call 'onLineWidgetChanged' to ensure the widget is attached
       docDisplay_.onLineWidgetChanged(widget);
@@ -263,30 +351,49 @@ public class MathJax
       });
    }
    
-   private LineWidget createMathJaxLineWidget(int row)
+   private void removeChunkOutputWidget(final ChunkOutputWidget widget)
+   {
+      final PinnedLineWidget plw = cowToPlwMap_.get(widget);
+      if (plw == null)
+         return;
+
+      FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
+      {
+         @Override
+         public void execute()
+         {
+            cowToPlwMap_.remove(widget);
+            plw.detach();
+         }
+      });
+      
+      anim.run(400);
+   }
+   
+   private FlowPanel createMathJaxContainerWidget()
    {
       final FlowPanel panel = new FlowPanel();
-      panel.getElement().addClassName("mathjax-root");
+      panel.addStyleName(MATHJAX_ROOT_CLASSNAME);
+      
+      Style style = panel.getElement().getStyle();
+      style.setProperty("pointerEvents", "none");
+      style.setCursor(Style.Cursor.DEFAULT);
+      
+      return panel;
+   }
+   
+   private LineWidget createMathJaxLineWidget(int row)
+   {
+      final FlowPanel panel = createMathJaxContainerWidget();
       
       ChunkOutputHost host = new ChunkOutputHost()
       {
+         private int lastHeight_ = Integer.MAX_VALUE;
+         
          @Override
          public void onOutputRemoved(final ChunkOutputWidget widget)
          {
-            final PinnedLineWidget plw = cowToPlwMap_.get(widget);
-            if (plw == null)
-               return;
-            
-            FadeOutAnimation anim = new FadeOutAnimation(widget, new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  cowToPlwMap_.remove(widget);
-                  plw.detach();
-               }
-            });
-            anim.run(400);
+            removeChunkOutputWidget(widget);
          }
          
          @Override
@@ -294,6 +401,21 @@ public class MathJax
                                            int height,
                                            boolean ensureVisible)
          {
+            final PinnedLineWidget plw = cowToPlwMap_.get(widget);
+            if (plw == null)
+               return;
+            
+            // munge the size of the frame, to avoid issues where the
+            // frame's size changes following a collapse + expand
+            boolean isExpansion = lastHeight_ <= height;
+            if (isExpansion)
+               widget.getFrame().setHeight((height + 4) + "px");
+            lastHeight_ = height;
+            
+            // update the height and report to doc display
+            LineWidget lineWidget = plw.getLineWidget();
+            lineWidget.setPixelHeight(height);
+            docDisplay_.onLineWidgetChanged(lineWidget);
          }
       };
       
@@ -333,6 +455,7 @@ public class MathJax
          cursorChangedHandler_ = null;
       }
       
+      range_ = null;
       lastRenderedText_ = "";
    }
    
@@ -389,18 +512,35 @@ public class MathJax
       popup_.hide();
    }
    
-   private void onMathJaxTypesetCompleted(String text,
+   private void onMathJaxTypesetCompleted(Object mathjaxElObject,
+                                          String text,
                                           boolean error,
                                           Object commandObject)
    {
+      // execute callback
       if (commandObject != null && commandObject instanceof MathJaxTypesetCallback)
       {
          MathJaxTypesetCallback callback = (MathJaxTypesetCallback) commandObject;
          callback.onMathJaxTypesetComplete(error);
       }
       
-      if (error) return;
-      lastRenderedText_ = text;
+      // if mathjax displayed an error, try re-rendering once more
+      Element mathjaxEl = (Element) mathjaxElObject;
+      Element[] errorEls = DomUtils.getElementsByClassName(mathjaxEl, "MathJax_Error");
+      if (errorEls != null && errorEls.length > 0)
+      {
+         mathjaxEl.getStyle().setVisibility(Visibility.HIDDEN);
+      }
+      else
+      {
+         mathjaxEl.getStyle().setVisibility(Visibility.VISIBLE);
+      }
+      
+      
+      if (!error)
+      {
+         lastRenderedText_ = text;
+      }
    }
    
    private final void mathjaxTypeset(Element el, String currentText)
@@ -432,7 +572,7 @@ public class MathJax
                jax.Text(lastRenderedText);
 
             // callback to GWT
-            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/String;ZLjava/lang/Object;)(currentText, error, command);
+            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/Object;Ljava/lang/String;ZLjava/lang/Object;)(el, currentText, error, command);
          }));
       }));
    }-*/;
@@ -487,7 +627,6 @@ public class MathJax
    
    private final DocDisplay docDisplay_;
    private final MathJaxPopupPanel popup_;
-   private final MathJaxBackgroundRenderer bgRenderer_;
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
@@ -499,4 +638,6 @@ public class MathJax
    
    // Injected ----
    private UIPrefs uiPrefs_;
+   
+   public static final String MATHJAX_ROOT_CLASSNAME = "rstudio-mathjax-root";
 }

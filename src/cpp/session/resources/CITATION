@@ -3,11 +3,11 @@ bibentry("Manual",
          author = person("RStudio Team"),
          organization = "RStudio, Inc.",
          address      = "Boston, MA",
-         year         = "2015",
+         year         = "2016",
          url          = "http://www.rstudio.com/",
          
          textVersion = 
-         paste("RStudio Team (2015). ", 
+         paste("RStudio Team (2016). ", 
                "RStudio: Integrated Development for R. ",
                "RStudio, Inc., Boston, MA ",
                "URL http://www.rstudio.com/.",

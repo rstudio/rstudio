@@ -108,9 +108,15 @@ public class ChunkSatelliteWindow extends SatelliteWindow
       Element ele = chunkOutputWidget_.getElement();
       ele.addClassName(ThemeStyles.INSTANCE.selectableText());
       
-      mainPanel.add(chunkOutputWidget_);
-      mainPanel.setWidgetLeftRight(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
-      mainPanel.setWidgetTopBottom(chunkOutputWidget_, 0, Unit.PX, 0, Unit.PX);
+      // Append the chunkOutputWidget as an HTML element, not as a widget.
+      // Why? Chunks are widgets that are attached to the ACE editor as HTML
+      // elements, not as widgets. The reason being that GWT does not support
+      // triggering events for widgets that are not attached to their hierarchy.
+      // Therefore, if we attach this element as a widget, GWT will remove 
+      // events in some cases which will cause functionality to be lost.
+      mainPanel.getElement().appendChild(chunkOutputWidget_.getElement());
+
+      chunkOutputWidget_.getElement().getStyle().setHeight(100, Unit.PCT);
 
       mainPanel.addStyleName("ace_editor");
 

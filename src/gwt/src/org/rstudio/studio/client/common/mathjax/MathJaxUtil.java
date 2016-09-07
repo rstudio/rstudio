@@ -72,7 +72,12 @@ public class MathJaxUtil
             break;
       }
       
-      if (startIt.getCurrentToken() == null || endIt.getCurrentToken() == null)
+      Token lhsToken = startIt.getCurrentToken();
+      if (lhsToken == null || !lhsToken.hasAllTypes("latex", "begin"))
+         return null;
+      
+      Token rhsToken = endIt.getCurrentToken();
+      if (rhsToken == null || !rhsToken.hasAllTypes("latex", "end"))
          return null;
       
       Position startPos = startIt.getCurrentTokenPosition();

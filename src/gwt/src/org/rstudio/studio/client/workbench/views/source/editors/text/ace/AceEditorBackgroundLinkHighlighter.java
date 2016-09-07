@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.MapUtil;
@@ -51,8 +53,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -64,11 +69,14 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
 
 public class AceEditorBackgroundLinkHighlighter
-   implements DocumentChangedEvent.Handler,
-              CommandClickEvent.Handler,
-              MouseMoveHandler,
-              AttachEvent.Handler,
-              EditorModeChangedEvent.Handler
+      implements
+            AceClickEvent.Handler,
+            AttachEvent.Handler,
+            CommandClickEvent.Handler,
+            DocumentChangedEvent.Handler,
+            EditorModeChangedEvent.Handler,
+            MouseMoveHandler,
+            MouseUpHandler
 {
    interface Highlighter
    {
@@ -118,17 +126,20 @@ public class AceEditorBackgroundLinkHighlighter
       
       highlighters_ = new ArrayList<Highlighter>();
       
-      editor_.addDocumentChangedHandler(this);
-      editor_.addEditorModeChangedHandler(this);
-      editor_.addCommandClickHandler(this);
-      editor_.addMouseMoveHandler(this);
-      editor_.addAttachHandler(this);
+      handlers_ = new ArrayList<HandlerRegistration>();
+      handlers_.add(editor_.addAceClickHandler(this));
+      handlers_.add(editor_.addAttachHandler(this));
+      handlers_.add(editor_.addDocumentChangedHandler(this));
+      handlers_.add(editor_.addEditorModeChangedHandler(this));
+      handlers_.add(editor_.addMouseMoveHandler(this));
+      handlers_.add(editor_.addMouseUpHandler(this));
       
       refreshHighlighters(editor_.getModeId());
    }
    
    private void refreshHighlighters(String mode)
    {
+      clearAllMarkers();
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -139,6 +150,9 @@ public class AceEditorBackgroundLinkHighlighter
             highlighters_.add(webLinkHighlighter());
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
+            
+            nextHighlightStart_ = 0;
+            timer_.schedule(700);
          }
       });
    }
@@ -178,28 +192,46 @@ public class AceEditorBackgroundLinkHighlighter
       activeMarkers_.put(row, filtered);
    }
    
-   private void beginDetectClickTarget(int pageX, int pageY, int modifier)
+   private boolean isRequiredClickModifier(int modifier)
    {
-      if (!(modifier == KeyboardShortcut.CTRL || modifier == KeyboardShortcut.META))
-         return;
-      
+      return BrowseCap.isMacintosh()
+            ? modifier == KeyboardShortcut.META
+            : modifier == KeyboardShortcut.SHIFT;
+   }
+   
+   private boolean isRequiredClickModifier(NativeEvent event)
+   {
+      return isRequiredClickModifier(KeyboardShortcut.getModifierValue(event));
+   }
+   
+   private MarkerRegistration getTargetedMarker(NativeEvent event)
+   {
+      int pageX = event.getClientX();
+      int pageY = event.getClientY();
+      return getTargetedMarker(pageX, pageY);
+   }
+   
+   private MarkerRegistration getTargetedMarker(int pageX, int pageY)
+   {
       Position position = editor_.screenCoordinatesToDocumentPosition(pageX, pageY);
-      
       int row = position.getRow();
       if (!activeMarkers_.containsKey(row))
-         return;
+         return null;
       
       List<MarkerRegistration> markers = activeMarkers_.get(row);
-      MarkerRegistration activeMarker = null;
       for (MarkerRegistration marker : markers)
-      {
          if (marker.getRange().contains(position))
-         {
-            activeMarker = marker;
-            break;
-         }
-      }
+            return marker;
       
+      return null;
+   }
+   
+   private void beginDetectClickTarget(int pageX, int pageY, int modifier)
+   {
+      if (!isRequiredClickModifier(modifier))
+         return;
+      
+      MarkerRegistration activeMarker = getTargetedMarker(pageX, pageY);
       if (activeMarker == null)
          return;
       
@@ -238,6 +270,20 @@ public class AceEditorBackgroundLinkHighlighter
       
       // unset active el
       activeHighlightMarkerEl_ = null;
+   }
+   
+   private void clearAllMarkers()
+   {
+      MapUtil.forEach(activeMarkers_, new ForEachCommand<Integer, List<MarkerRegistration>>()
+      {
+         @Override
+         public void execute(Integer row, List<MarkerRegistration> markers)
+         {
+            for (MarkerRegistration marker : markers)
+               marker.detach();
+         }
+      });
+      activeMarkers_.clear();
    }
    
    private void clearMarkers(final Range range)
@@ -353,7 +399,13 @@ public class AceEditorBackgroundLinkHighlighter
       final String id = "ace_marker-" + StringUtil.makeRandomId(16);
       final String styles = RES.styles().highlight() + " ace_marker " + id;
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, MarkerRenderer.create(styles), true);
+      
+      final String title = BrowseCap.isMacintosh()
+            ? "Open Link (Command+Click)"
+            : "Open Link (Shift+Click)";
+      MarkerRenderer renderer = MarkerRenderer.create(styles, title);
+      
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
    
@@ -488,7 +540,7 @@ public class AceEditorBackgroundLinkHighlighter
             public void onPreviewNativeEvent(NativePreviewEvent preview)
             {
                int type = preview.getTypeInt();
-               if (type == Event.ONKEYDOWN || type == Event.ONKEYPRESS)
+               if (type == Event.ONKEYDOWN)
                {
                   int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
                   beginDetectClickTarget(mouseTracker_.getLastMouseX(), mouseTracker_.getLastMouseY(), modifier);
@@ -502,6 +554,10 @@ public class AceEditorBackgroundLinkHighlighter
       }
       else
       {
+         for (HandlerRegistration handler : handlers_)
+            handler.removeHandler();
+         handlers_.clear();
+         
          if (previewHandler_ != null)
          {
             previewHandler_.removeHandler();
@@ -567,11 +623,66 @@ public class AceEditorBackgroundLinkHighlighter
       {
          if (registration.getRange().contains(position))
          {
+            endDetectClickTarget();
             String url = editor_.getTextForRange(registration.getRange());
             navigateToUrl(url);
             return;
          }
       }
+   }
+   
+   @Override
+   public void onAceClick(AceClickEvent clickEvent)
+   {
+      NativeEvent event = clickEvent.getNativeEvent();
+      if (!isRequiredClickModifier(event))
+         return;
+      
+      MarkerRegistration marker = getTargetedMarker(event);
+      if (marker == null)
+         return;
+      
+      clickEvent.stopPropagation();
+      clickEvent.preventDefault();
+      
+      // on OS X, we immediately open the popup as otherwise the link
+      // will be opened in the background
+      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
+      {
+         endDetectClickTarget();
+         String url = editor_.getTextForRange(marker.getRange());
+         navigateToUrl(url);
+      }
+   }
+   
+   @Override
+   public void onMouseUp(MouseUpEvent mouseUpEvent)
+   {
+      // clicks handled in 'onAceClick' for OS X web mode
+      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
+         return;
+      
+      NativeEvent event = mouseUpEvent.getNativeEvent();
+      if (!isRequiredClickModifier(event))
+         return;
+      
+      MarkerRegistration marker = getTargetedMarker(event);
+      if (marker == null)
+         return;
+      
+      boolean hasMouseMoved =
+            Math.abs(event.getClientX() - mouseTracker_.getLastMouseX()) >= 2 ||
+            Math.abs(event.getClientY() - mouseTracker_.getLastMouseY()) >= 2;
+      
+      if (hasMouseMoved)
+         return;
+      
+      event.stopPropagation();
+      event.preventDefault();
+      
+      endDetectClickTarget();
+      String url = editor_.getTextForRange(marker.getRange());
+      navigateToUrl(url);
    }
    
    @Override
@@ -608,7 +719,7 @@ public class AceEditorBackgroundLinkHighlighter
    {
       protected MarkerRenderer() {}
       
-      public static final native MarkerRenderer create(final String clazz) /*-{
+      public static final native MarkerRenderer create(final String clazz, final String title) /*-{
          var MarkerPrototype = $wnd.require("ace/layer/marker").Marker.prototype;
          return $entry(function(html, range, left, top, config) {
             var height = config.lineHeight;
@@ -618,7 +729,7 @@ public class AceEditorBackgroundLinkHighlighter
             var left = 4 + range.start.column * config.characterWidth;
 
             html.push(
-                "<div title='Open Link (Ctrl+Click)' class='", clazz, "' style='",
+                "<div title='" + title + "' class='", clazz, "' style='",
                 "height:", height, "px;",
                 "width:", width, "px;",
                 "top:", top, "px;",
@@ -666,6 +777,7 @@ public class AceEditorBackgroundLinkHighlighter
    private final AceEditor editor_;
    private final List<Highlighter> highlighters_;
    private final Timer timer_;
+   private final List<HandlerRegistration> handlers_;
    
    private SafeMap<Integer, List<MarkerRegistration>> activeMarkers_;
    private int nextHighlightStart_;

@@ -2489,8 +2489,6 @@ public class TextEditingTarget implements
       return fsi;
    }
 
-
-
    public void onDismiss(int dismissType)
    {
       docUpdateSentinel_.stop();
@@ -2504,6 +2502,9 @@ public class TextEditingTarget implements
       docDisplay_.endCollabSession();
 
       codeExecution_.detachLastExecuted();
+
+      if (notebook_ != null)
+         notebook_.onDismiss();
    }
 
    public ReadOnlyValue<Boolean> dirtyState()

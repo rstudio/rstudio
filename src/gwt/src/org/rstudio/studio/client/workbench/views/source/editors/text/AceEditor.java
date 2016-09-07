@@ -266,6 +266,23 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
+   
+   public static final native AceEditor getEditor(Element el)
+   /*-{
+      for (; el != null; el = el.parentElement)
+         if (el.$RStudioAceEditor != null)
+            return el.$RStudioAceEditor;
+   }-*/;
+   
+   private static final native void attachToWidget(Element el, AceEditor editor)
+   /*-{
+      el.$RStudioAceEditor = editor;
+   }-*/;
+   
+   private static final native void detachFromWidget(Element el)
+   /*-{
+      el.$RStudioAceEditor = null;
+   }-*/;
 
    @Inject
    public AceEditor()
@@ -273,8 +290,7 @@ public class AceEditor implements DocDisplay,
       widget_ = new AceEditorWidget();
       snippets_ = new SnippetHelper(this);
       editorEventListeners_ = new ArrayList<HandlerRegistration>();
-      ElementIds.assignElementId(widget_.getElement(),
-                                 ElementIds.SOURCE_TEXT_EDITOR);
+      ElementIds.assignElementId(widget_.getElement(), ElementIds.SOURCE_TEXT_EDITOR);
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
@@ -285,6 +301,7 @@ public class AceEditor implements DocDisplay,
       vim_ = new Vim(this);
       mathjax_ = new MathJax(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
+      bgIdleMonitor_ = new AceEditorIdleMonitor(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -332,7 +349,7 @@ public class AceEditor implements DocDisplay,
       addAceClickHandler(new AceClickEvent.Handler()
       {
          @Override
-         public void onClick(AceClickEvent event)
+         public void onAceClick(AceClickEvent event)
          {
             fixVerticalOffsetBug();
             if (DomUtils.isCommandClick(event.getNativeEvent()))
@@ -381,6 +398,11 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
+            if (event.isAttached())
+               attachToWidget(widget_.getElement(), AceEditor.this);
+            else
+               detachFromWidget(widget_.getElement());
+            
             if (!event.isAttached())
             {
                for (HandlerRegistration handler : editorEventListeners_)
@@ -2730,9 +2752,19 @@ public class AceEditor implements DocDisplay,
       return widget_.addBlurHandler(handler);
    }
    
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return widget_.addMouseDownHandler(handler);
+   }
+   
    public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
    {
       return widget_.addMouseMoveHandler(handler);
+   }
+   
+   public HandlerRegistration addMouseUpHandler(MouseUpHandler handler)
+   {
+      return widget_.addMouseUpHandler(handler);
    }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
@@ -3652,6 +3684,7 @@ public class AceEditor implements DocDisplay,
    private final Vim vim_;
    private final MathJax mathjax_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
+   private final AceEditorIdleMonitor bgIdleMonitor_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
