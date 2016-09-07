@@ -622,6 +622,8 @@ public class GenerateJavaScriptAST {
       if (type.isJsNative()) {
         // Emit JsOverlay static methods for native JsTypes.
         emitStaticMethods(type);
+        // Emit JsOverlay (static) fields for native JsTypes.
+        emitFields(type);
         return null;
       }
 
@@ -1726,6 +1728,10 @@ public class GenerateJavaScriptAST {
     private void emitFields(JDeclaredType type) {
       JsVars vars = new JsVars(type.getSourceInfo());
       for (JField field : type.getFields()) {
+        if (field.isJsNative()) {
+          // Nothing to output for native fields.
+          continue;
+        }
         JsExpression initializer = null;
         // if we need an initial value, create an assignment
         if (initializeAtTopScope(field)) {

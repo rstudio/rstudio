@@ -420,4 +420,20 @@ public class NativeJsTypeTest extends GWTTestCase {
     assertTrue(subClass.remove("Hi"));
     assertFalse(subClass.remove("Hi"));
   }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  static class NativeClassWithStaticOverlayFields {
+    @JsOverlay
+    static String uninitializedString;
+    @JsOverlay
+    static int uninitializedInt;
+    @JsOverlay
+    static int initializedInt = 5;
+  }
+
+  public void testUninitializedStaticOverlayField() {
+    assertEquals(0, NativeClassWithStaticOverlayFields.uninitializedInt);
+    assertEquals(5, NativeClassWithStaticOverlayFields.initializedInt);
+    assertNull(NativeClassWithStaticOverlayFields.uninitializedString);
+  }
 }
