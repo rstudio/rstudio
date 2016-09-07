@@ -48,6 +48,9 @@ public:
 
    // return overlay only
    const core::json::Object& chunkOptions() const;
+   
+   // return defaults (from setup chunk)
+   const core::json::Object& defaultOptions() const;
 
    // returned merged object with all options
    core::json::Object mergedOptions() const;

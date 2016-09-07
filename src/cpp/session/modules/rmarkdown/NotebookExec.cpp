@@ -120,12 +120,9 @@ void ChunkExecContext::connect()
    connections_.push_back(events().onCondition.connect(
          boost::bind(&ChunkExecContext::onCondition, this, _1, _2)));
 
-   // extract knitr figure options if present (currently supported at the 
-   // chunk level only)
-   double figWidth = 0;
-   double figHeight = 0;
-   json::readObject(options_.chunkOptions(), "fig.width",  &figWidth);
-   json::readObject(options_.chunkOptions(), "fig.height", &figHeight);
+   // extract knitr figure options if present
+   double figWidth = options_.getOverlayOption("fig.width", 0.0);
+   double figHeight = options_.getOverlayOption("fig.height", 0.0);
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
