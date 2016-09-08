@@ -49,6 +49,7 @@ public class PriorityQueueTest extends GWTTestCase {
     assertTrue(Arrays.asList(1, 2).containsAll(queue));
   }
 
+  @SuppressWarnings("ModifyingCollectionWithItself")
   public void testAddAll() {
     PriorityQueue<Integer> queue = new PriorityQueue<>();
     try {

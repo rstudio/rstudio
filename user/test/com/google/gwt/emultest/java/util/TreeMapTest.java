@@ -612,6 +612,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     _assertEquals(map.keySet(), keySet.descendingSet());
   }
 
+  @SuppressWarnings("ModifyingCollectionWithItself")
   public void testDescendingKeySet_viewPut() {
     K[] keys = getSortedKeys();
     V[] values = getSortedValues();
@@ -1974,6 +1975,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     _assertEmpty(map);
   }
 
+  @SuppressWarnings("ModifyingCollectionWithItself")
   public void testNavigableKeySet_viewPut() {
     K[] keys = getSortedKeys();
     V[] values = getSortedValues();
