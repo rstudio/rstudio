@@ -379,6 +379,12 @@ private:
 
       // compute engine
       std::string engine = options.getOverlayOption("engine", std::string("r"));
+
+      // normalize engine case - if the chunk doesn't have an engine specified
+      // it will receive the knitr default of "R"
+      if (engine == "R")
+         engine = "r";
+
       if (engine == "r")
       {
          // establish execution context unless we're an inline chunk

@@ -59,7 +59,8 @@ public class EditingTargetCodeExecution
       docDisplay_ = docDisplay;
       codeExtractor_ = codeExtractor;
       docId_ = docId;
-      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(docId);
+      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(docDisplay,
+            docId);
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    

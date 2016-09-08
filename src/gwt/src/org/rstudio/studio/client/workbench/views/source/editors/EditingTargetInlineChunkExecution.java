@@ -14,91 +14,115 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors;
 
-import java.util.ArrayList;
-import java.util.List;
 
-import org.rstudio.core.client.Debug;
+import java.util.HashMap;
+
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputFinishedEvent;
+import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
-import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkInlineOutput;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
 
 public class EditingTargetInlineChunkExecution
-      implements RmdChunkOutputEvent.Handler,
-                 RmdChunkOutputFinishedEvent.Handler
+      implements ConsoleWriteOutputHandler,
+                 ConsoleWriteErrorHandler,
+                 ChunkExecStateChangedEvent.Handler
 {
    @Inject
    private void initialize(EventBus events)
    {
       events_ = events;
+      events_.addHandler(ConsoleWriteOutputEvent.TYPE, this);
+      events_.addHandler(ConsoleWriteErrorEvent.TYPE, this);
+      events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
    }
    
-   public EditingTargetInlineChunkExecution(String docId)
+   public EditingTargetInlineChunkExecution(DocDisplay display, String docId)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
+      display_ = display;
       docId_ = docId;
-      handlers_ = new ArrayList<HandlerRegistration>();
+      outputs_ = new HashMap<String, ChunkInlineOutput>();
    }
    
    public void execute(Range range)
    {
-      clearHandlers();
-      
-      handlers_.add(events_.addHandler(RmdChunkOutputEvent.TYPE, this));
-      handlers_.add(events_.addHandler(RmdChunkOutputFinishedEvent.TYPE, this));
+      final String chunkId = "i" + StringUtil.makeRandomId(12);
       
       // create dummy scope for execution
       Scope scope = Scope.createRScopeNode(
-            StringUtil.makeRandomId(8),
+            chunkId,
             range.getStart(),
             range.getEnd(),
             Scope.SCOPE_TYPE_CHUNK);
       
+      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId);
+      
+      final ScreenCoordinates pos = computePopupPosition(range);
+      output.setPopupPosition(pos.getPageX(), pos.getPageY());
+      output.show();
+      outputs_.put(chunkId, output);
+
       SendToChunkConsoleEvent event =
-            new SendToChunkConsoleEvent(docId_, scope, range, NotebookQueueUnit.EXEC_SCOPE_INLINE);
+            new SendToChunkConsoleEvent(docId_, scope, range, 
+                  NotebookQueueUnit.EXEC_SCOPE_INLINE);
       events_.fireEvent(event);
-   }
-   
-   private void clearHandlers()
-   {
-      for (HandlerRegistration handler : handlers_)
-         handler.removeHandler();
-      handlers_.clear();
    }
    
    // Handlers ----
    
    @Override
-   public void onRmdChunkOutputFinished(RmdChunkOutputFinishedEvent event)
+   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      Debug.logObject(event.getData());
-      Debug.logToRConsole("RmdChunkOutputFinishedEvent");
+      if (outputs_.containsKey(event.getConsole()))
+        outputs_.get(event.getConsole()).onConsoleWriteError(event);
    }
 
    @Override
-   public void onRmdChunkOutput(RmdChunkOutputEvent event)
+   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      Debug.logToRConsole("RmdChunkOutputEvent");
-      RmdChunkOutput output = event.getOutput();
+      if (outputs_.containsKey(event.getConsole()))
+        outputs_.get(event.getConsole()).onConsoleWriteOutput(event);
    }
-   
+
+   @Override
+   public void onChunkExecStateChanged(ChunkExecStateChangedEvent event)
+   {
+   }
+
+   private ScreenCoordinates computePopupPosition(Range range)
+   {
+      Rectangle bounds = display_.getRangeBounds(range);
+      Point center = bounds.center();
+      
+      int pageX = center.getX() - (100 / 2);
+      int pageY = bounds.getBottom() + 10;
+      
+      return ScreenCoordinates.create(pageX, pageY);
+   }
+
    // Private Members ----
 
    private final String docId_;
-   private final List<HandlerRegistration> handlers_;
+   private final DocDisplay display_;
+   private final HashMap<String, ChunkInlineOutput> outputs_;
    
    // Injected ----
    private EventBus events_;
-
 }
