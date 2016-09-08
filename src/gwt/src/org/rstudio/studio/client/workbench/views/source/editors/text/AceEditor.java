@@ -302,6 +302,7 @@ public class AceEditor implements DocDisplay,
       mathjax_ = new MathJax(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       bgIdleMonitor_ = new AceEditorIdleMonitor(this);
+      autocorrect_ = new AceEditorAutocorrect(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -3685,6 +3686,7 @@ public class AceEditor implements DocDisplay,
    private final MathJax mathjax_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
    private final AceEditorIdleMonitor bgIdleMonitor_;
+   private final AceEditorAutocorrect autocorrect_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
