@@ -34,13 +34,12 @@ public class ChunkWindowManager
 
    public void openChunkWindow(String docId, String chunkId, Size sourceSize)
    {
-      Size size = ZoomUtils.getZoomWindowSize(sourceSize, new Size(850,1100));
-      Point position = new Point(0, 0);
+      Size size = ZoomUtils.getZoomWindowSize(sourceSize, null);
       
       pSatelliteManager_.get().openSatellite(
          getName(docId, chunkId), 
          ChunkWindowParams.create(docId, chunkId), 
-         size, false, position);
+         size);
    }
    
    public String getName(String docId, String chunkId)
