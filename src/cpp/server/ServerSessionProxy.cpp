@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -71,9 +71,11 @@ namespace session_proxy {
    
 namespace {
 
-Error launchSessionRecovery(const http::Request& request,
-                            bool firstAttempt,
-                            const r_util::SessionContext& context)
+Error launchSessionRecovery(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const http::Request& request,
+      bool firstAttempt,
+      const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
    // session then return session unavilable error
@@ -98,18 +100,21 @@ Error launchSessionRecovery(const http::Request& request,
 
    // attempt to launch the session only if this is the first recovery attempt
    if (firstAttempt)
-      return sessionManager().launchSession(context);
+      return sessionManager().launchSession(ptrConnection->ioService(), 
+            context);
    else
       return Success();
 }
 
-http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& context)
+http::ConnectionRetryProfile sessionRetryProfile(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context)
 {
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               _1, _2, context);
+                                               ptrConnection, _1, _2, context);
    return retryProfile;
 }
 
@@ -665,7 +670,7 @@ void proxyContentRequest(
    proxyRequest(context,
                 ptrConnection,
                 boost::bind(handleContentError, ptrConnection, context, _1),
-                sessionRetryProfile(context));
+                sessionRetryProfile(ptrConnection, context));
 }
 
 void proxyRpcRequest(
@@ -688,7 +693,7 @@ void proxyRpcRequest(
    proxyRequest(context,
                 ptrConnection,
                 boost::bind(handleRpcError, ptrConnection, context, _1),
-                sessionRetryProfile(context));
+                sessionRetryProfile(ptrConnection, context));
 }
    
 void proxyEventsRequest(
