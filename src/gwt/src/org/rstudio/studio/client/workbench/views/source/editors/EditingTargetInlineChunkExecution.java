@@ -67,6 +67,7 @@ public class EditingTargetInlineChunkExecution
    
    public void execute(Range range)
    {
+      // synthesize an identifier for this chunk execution
       final String chunkId = "i" + StringUtil.makeRandomId(12);
       
       // check to see if we're already showing a panel for this range; if we
@@ -75,8 +76,20 @@ public class EditingTargetInlineChunkExecution
       {
          if (output.range().isEqualTo(range))
          {
-            output.hide();
-            outputs_.remove(output.chunkId());
+            if (output.state() == ChunkInlineOutput.State.Finished)
+            {
+               // remove old, completed output for this input
+               output.hide();
+               outputs_.remove(output.chunkId());
+            }
+            else
+            {
+               // we already have an output panel for this input, and it's
+               // either waiting to execute or currently executing. ignore this
+               // request to re-execute the range, as it's likely to be an
+               // unintended duplicate.
+               return;
+            }
          }
       }
       
@@ -135,8 +148,13 @@ public class EditingTargetInlineChunkExecution
       
       ChunkInlineOutput output = outputs_.get(event.getChunkId());
       
-      if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
+      if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_STARTED)
       {
+         output.setState(ChunkInlineOutput.State.Started);
+      }
+      else if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
+      {
+         output.setState(ChunkInlineOutput.State.Finished);
          final ScreenCoordinates pos = computePopupPosition(
                output.range(), output.getOffsetWidth());
          output.setPopupPosition(pos.getPageX(), pos.getPageY());

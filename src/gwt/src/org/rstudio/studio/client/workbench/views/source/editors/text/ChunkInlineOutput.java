@@ -30,6 +30,13 @@ public class ChunkInlineOutput extends MiniPopupPanel
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler
 {
+   public enum State
+   {
+      Queued,
+      Started,
+      Finished
+   }
+
    public ChunkInlineOutput(String chunkId, Range range) 
    {
       super(true, false, true);
@@ -38,6 +45,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
       console_ = new PreWidget();
       chunkId_ = chunkId;
       range_ = range;
+      state_ = State.Queued;
       getElement().getStyle().setBackgroundColor("#ffffff");
       console_.getElement().getStyle().setMargin(7, Unit.PX);
       
@@ -52,6 +60,16 @@ public class ChunkInlineOutput extends MiniPopupPanel
    public Range range()
    {
       return range_;
+   }
+   
+   public State state()
+   {
+      return state_;
+   }
+   
+   public void setState(State state)
+   {
+      state_ = state;
    }
    
    @Override
@@ -70,4 +88,5 @@ public class ChunkInlineOutput extends MiniPopupPanel
    private final PreWidget console_;
    private final String chunkId_;
    private final Range range_;
+   private State state_;
 }
