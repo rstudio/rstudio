@@ -24,7 +24,9 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
-import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 
 public class ChunkInlineOutput extends MiniPopupPanel
                                implements ConsoleWriteOutputHandler,
@@ -46,8 +48,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
       chunkId_ = chunkId;
       range_ = range;
       state_ = State.Queued;
-      getElement().getStyle().setBackgroundColor("#ffffff");
-      console_.getElement().getStyle().setMargin(7, Unit.PX);
+      addStyleName(RES.styles().panel());
       
       setWidget(console_);
    }
@@ -73,15 +74,35 @@ public class ChunkInlineOutput extends MiniPopupPanel
    }
    
    @Override
-   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
+   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      vconsole_.submitAndRender(event.getError(), "black", console_.getElement());
+      vconsole_.submitAndRender(event.getOutput(), 
+            RES.styles().output(), console_.getElement());
    }
 
    @Override
-   public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
+   public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      vconsole_.submitAndRender(event.getOutput(), "black", console_.getElement());
+      vconsole_.submitAndRender(event.getError(), 
+            RES.styles().error(), console_.getElement());
+   }
+
+   public interface Styles extends CssResource
+   {
+      String panel();
+      String output();
+      String error();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("ChunkInlineOutput.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
    }
 
    private final VirtualConsole vconsole_;
