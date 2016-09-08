@@ -36,23 +36,24 @@ rstudio-server force-suspend-all
 # create openssl softlinks based off SuSE version 
 if test -f /etc/SuSE-release
 then
-  if test -d /lib64
+  if test -d /usr/lib64 || test -d /lib64
   then
-    architecture_dir='/lib64'
+    architecture_dir='lib64'
   else
-    architecture_dir='/usr/lib'
+    architecture_dir='lib'
   fi
 
-  function compare_versions() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+  compare_versions() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
   version_number=$(cat /etc/SuSE-release | grep "VERSION" | sed 's/[^0-9,.]*//g')
 
+  # verify if release version number is greater than 11
   if compare_versions $version_number 11
   then
     ln -s $architecture_dir/libssl.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
     ln -s $architecture_dir/libcrypto.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
   else
-    ln -s $architecture_dir/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
-    ln -s $architecture_dir/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
+    ln -s /usr/$architecture_dir/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
+    ln -s /usr/$architecture_dir/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
   fi
 fi
 
