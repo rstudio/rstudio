@@ -35,6 +35,12 @@ const core::json::Object& ChunkOptions::chunkOptions() const
    return chunkOptions_;
 }
 
+const core::json::Object& ChunkOptions::defaultOptions() const
+{
+   return defaultOptions_;
+}
+
+
 core::json::Object ChunkOptions::mergedOptions() const
 {
    json::Object merged(defaultOptions_);

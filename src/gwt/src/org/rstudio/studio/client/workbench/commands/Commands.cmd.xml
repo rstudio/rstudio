@@ -522,7 +522,6 @@ well as menu structures (for main menu and popup menus).
       <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
       <shortcutgroup name="Source Editor">
          <shortcut refid="insertChunk" value="Cmd+Alt+I"/>
-         <shortcut refid="insertChunkR" value="Cmd+Alt+I"/>
          <shortcut refid="insertSection" value="Cmd+Shift+R"/>
          <shortcut refid="extractFunction" value="Cmd+Alt+X"/>
          <shortcut refid="extractLocalVariable" value="Cmd+Alt+V"/>

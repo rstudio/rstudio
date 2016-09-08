@@ -2429,8 +2429,10 @@ public class TextEditingTarget implements
          return;
       }
       
+      
       if (prefs_.stripTrailingWhitespace().getValue() &&
-          !fileType_.isMarkdown())
+          !fileType_.isMarkdown() &&
+          !name_.getValue().equals("DESCRIPTION"))
       {
          String code = docDisplay_.getCode();
          Pattern pattern = Pattern.create("[ \t]+$");
@@ -4101,7 +4103,11 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
-      onInsertChunkR();
+      InsertChunkInfo info = docDisplay_.getInsertChunkInfo();
+      if (info == null)
+         return;
+      
+      onInsertChunk(info.getValue(), 1, 0);
    }
    
    @Handler

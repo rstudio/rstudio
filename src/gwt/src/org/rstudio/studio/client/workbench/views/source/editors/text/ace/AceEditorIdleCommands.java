@@ -44,6 +44,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -345,8 +347,7 @@ public class AceEditorIdleCommands
             }
          };
          
-         @Override
-         public void onDocumentChanged(DocumentChangedEvent event)
+         private void onDocumentChangedImpl(DocumentChangedEvent event)
          {
             int row = plw.get().getRow();
             Range range = event.getEvent().getRange();
@@ -384,6 +385,25 @@ public class AceEditorIdleCommands
                   onDetach.execute();
                }
             }
+         }
+         
+         @Override
+         public void onDocumentChanged(final DocumentChangedEvent event)
+         {
+            // ignore 'removeLines' events as they won't mutate the actual
+            // line containing the markdown link
+            String action = event.getEvent().getAction();
+            if (action.equals("removeLines"))
+               return;
+            
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  onDocumentChangedImpl(event);
+               }
+            });
          }
       }));
       
