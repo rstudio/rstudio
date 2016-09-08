@@ -144,6 +144,13 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
 
 Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 {
+   // inline chunks have no options
+   if (execScope_ == ExecScopeInline)
+   {
+      *pOptions = json::Object();
+      return Success();
+   }
+
    // evaluate this chunk's options in R
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
