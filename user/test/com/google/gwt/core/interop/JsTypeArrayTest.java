@@ -41,6 +41,27 @@ public class JsTypeArrayTest extends GWTTestCase {
 
   /* MAKE SURE EACH TYPE IS ONLY USED ONCE PER TEST CASE */
 
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "String")
+  private static class SomeJsType { }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+  private static class SomeOtherJsType { }
+
+  public void testJsTypeArray() {
+    Object[] array = new SomeJsType[10];
+
+    array[0] = new SomeJsType();
+    array[0] = new SomeOtherJsType();
+    array[0] = new Object();
+
+    assertTrue(array instanceof SomeJsType[]);
+    assertTrue(array instanceof SomeOtherJsType[]);
+    assertTrue(array instanceof Object[]);
+
+    SomeOtherJsType[] other1 = (SomeOtherJsType[]) array;
+    SomeOtherJsType[] other2 = (SomeOtherJsType[]) new Object[0];
+  }
+
   @JsType(isNative = true)
   interface SimpleJsTypeReturnFromNative { }
 
