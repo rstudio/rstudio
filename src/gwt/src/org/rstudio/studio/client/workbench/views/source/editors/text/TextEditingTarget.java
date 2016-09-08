@@ -4101,7 +4101,11 @@ public class TextEditingTarget implements
    @Handler
    void onInsertChunk()
    {
-      onInsertChunkR();
+      InsertChunkInfo info = docDisplay_.getInsertChunkInfo();
+      if (info == null)
+         return;
+      
+      onInsertChunk(info.getValue(), 1, 0);
    }
    
    @Handler
