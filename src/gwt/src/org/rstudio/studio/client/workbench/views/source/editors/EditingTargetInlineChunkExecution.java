@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
+import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
@@ -35,6 +36,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 
@@ -65,6 +69,17 @@ public class EditingTargetInlineChunkExecution
    {
       final String chunkId = "i" + StringUtil.makeRandomId(12);
       
+      // check to see if we're already showing a panel for this range; if we
+      // are, remove it to make way for the new one
+      for (ChunkInlineOutput output: outputs_.values())
+      {
+         if (output.range().isEqualTo(range))
+         {
+            output.hide();
+            outputs_.remove(output.chunkId());
+         }
+      }
+      
       // create dummy scope for execution
       Scope scope = Scope.createRScopeNode(
             chunkId,
@@ -72,10 +87,19 @@ public class EditingTargetInlineChunkExecution
             range.getEnd(),
             Scope.SCOPE_TYPE_CHUNK);
       
-      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId);
-      
-      final ScreenCoordinates pos = computePopupPosition(range);
-      output.setPopupPosition(pos.getPageX(), pos.getPageY());
+      // create popup panel to host output
+      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId, range);
+      output.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            outputs_.remove(chunkId);
+         }
+      });
+
+      // render offscreen until complete
+      output.setPopupPosition(-100000, -100000);
       output.show();
       outputs_.put(chunkId, output);
 
@@ -104,14 +128,28 @@ public class EditingTargetInlineChunkExecution
    @Override
    public void onChunkExecStateChanged(ChunkExecStateChangedEvent event)
    {
+      // ignore if not targeted at one of our chunks
+      if (event.getDocId() != docId_ || 
+          !outputs_.containsKey(event.getChunkId()))
+         return;
+      
+      ChunkInlineOutput output = outputs_.get(event.getChunkId());
+      
+      if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
+      {
+         final ScreenCoordinates pos = computePopupPosition(
+               output.range(), output.getOffsetWidth());
+         output.setPopupPosition(pos.getPageX(), pos.getPageY());
+         output.show();
+      }
    }
 
-   private ScreenCoordinates computePopupPosition(Range range)
+   private ScreenCoordinates computePopupPosition(Range range, int width)
    {
       Rectangle bounds = display_.getRangeBounds(range);
       Point center = bounds.center();
       
-      int pageX = center.getX() - (100 / 2);
+      int pageX = center.getX() - (width / 2);
       int pageY = bounds.getBottom() + 10;
       
       return ScreenCoordinates.create(pageX, pageY);

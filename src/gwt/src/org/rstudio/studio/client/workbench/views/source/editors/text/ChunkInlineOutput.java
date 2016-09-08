@@ -18,24 +18,28 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.widget.MiniPopupPanel;
 import org.rstudio.core.client.widget.PreWidget;
-import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+
+import com.google.gwt.dom.client.Style.Unit;
 
 public class ChunkInlineOutput extends MiniPopupPanel
                                implements ConsoleWriteOutputHandler,
-                                          ConsoleWriteErrorHandler,
-                                          ChunkExecStateChangedEvent.Handler
+                                          ConsoleWriteErrorHandler
 {
-   public ChunkInlineOutput(String chunkId) 
+   public ChunkInlineOutput(String chunkId, Range range) 
    {
       super(true, false, true);
       
       vconsole_ = new VirtualConsole();
       console_ = new PreWidget();
       chunkId_ = chunkId;
+      range_ = range;
+      getElement().getStyle().setBackgroundColor("#ffffff");
+      console_.getElement().getStyle().setMargin(7, Unit.PX);
       
       setWidget(console_);
    }
@@ -45,13 +49,11 @@ public class ChunkInlineOutput extends MiniPopupPanel
       return chunkId_;
    }
    
-   @Override
-   public void onChunkExecStateChanged(ChunkExecStateChangedEvent event)
+   public Range range()
    {
-      // TODO Auto-generated method stub
-      
+      return range_;
    }
-
+   
    @Override
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
@@ -67,4 +69,5 @@ public class ChunkInlineOutput extends MiniPopupPanel
    private final VirtualConsole vconsole_;
    private final PreWidget console_;
    private final String chunkId_;
+   private final Range range_;
 }
