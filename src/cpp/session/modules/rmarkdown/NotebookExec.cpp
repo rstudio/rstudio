@@ -127,7 +127,13 @@ void ChunkExecContext::connect()
    // if 'fig.asp' is set, then use that to override 'fig.height'
    double figAsp = options_.getOverlayOption("fig.asp", 0.0);
    if (figAsp != 0.0)
+   {
+      // if figWidth is unset, default to 7.0
+      if (figWidth == 0.0)
+         figWidth = 7.0;
+      
       figHeight = figWidth * figAsp;
+   }
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
