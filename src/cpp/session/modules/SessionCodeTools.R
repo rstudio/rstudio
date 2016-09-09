@@ -538,8 +538,47 @@
 
    if (length(pieces) > 1)
       print(help(pieces[2], package=pieces[1], help_type='html'))
-   else
-      print(help(pieces[1], help_type='html', try.all.packages=T))
+   else {
+      # try custom help handler, otherwise fall through to default handler
+      helpUrl <- .rs.getCustomHelpUrl(token)
+      if (!is.null(helpUrl))
+         if (nzchar(helpUrl)) # handlers return "" to indicate no help available
+            utils::browseURL(helpUrl)
+      else
+         print(help(pieces[1], help_type='html', try.all.packages=TRUE))
+   }
+})
+
+# check to see whether there is a custom help handler for this token
+.rs.addFunction("getCustomHelpUrl", function(token) {
+   
+   # if the token has a '$' in it then it might have a custom
+   # help handler that can field this request
+   if (grepl("\\$", token)) {
+      
+      # split on $ (it has at least one so components will be > 1)
+      components <- strsplit(token, "\\$")[[1]]
+      topic <- components[[length(components)]]
+      source <- paste(components[1:length(components)-1], collapse = "$")
+      
+      # evaluate the source
+      source <- tryCatch(eval(parse(text = source), envir = globalenv()), 
+                         error = function(e) NULL)
+      
+      # look for a help url handler
+      if (!is.null(source)) {
+         for (cls in class(source)) {
+            res <- utils::getAnywhere(paste0("help_url_handler.", cls))
+            if (length(res$objs) > 0) {
+               handler <- res$objs[[1]]
+               return (handler(topic, source))
+            }
+         }
+      }
+   }
+   
+   # default to none found
+   NULL
 })
 
 .rs.addJsonRpcHandler("execute_r_code", function(code)

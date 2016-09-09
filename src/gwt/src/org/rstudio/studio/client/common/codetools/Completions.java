@@ -29,7 +29,8 @@ public class Completions extends JavaScriptObject
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
                                                       boolean overrideInsertParens,
-                                                      boolean cacheable)
+                                                      boolean cacheable,
+                                                      String helpHandler)
    /*-{
       return {
          token: [token],
@@ -40,7 +41,8 @@ public class Completions extends JavaScriptObject
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
          overrideInsertParens: overrideInsertParens,
-         cacheable: cacheable
+         cacheable: cacheable,
+         helpHandler: helpHandler
       };
    }-*/;
 
@@ -109,6 +111,10 @@ public class Completions extends JavaScriptObject
    
    public final native boolean getOverrideInsertParens() /*-{
       return this.overrideInsertParens;
+   }-*/;
+   
+   public final native String getHelpHandler() /*-{
+      return this.helpHandler;
    }-*/;
    
    

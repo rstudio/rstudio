@@ -206,6 +206,47 @@ public class HelpInfo extends JavaScriptObject
    private final native String getPackageName() /*-{
       return this.pkgname ? this.pkgname[0] : null ;
    }-*/;
+   
+   public static class Custom extends JavaScriptObject
+   {
+      protected Custom()
+      {  
+      }
+      
+      public final native String getPackageName() /*-{
+         return this.package_name[0];
+      }-*/;
+
+   
+      public final native String getTitle() /*-{
+         return this.title ? this.title[0] : null;
+      }-*/;
+
+      public final native String getSignature() /*-{
+         return this.signature ? this.signature[0]: null;
+      }-*/;
+   
+      public final native String getDescription() /*-{
+         return this.description[0];
+      }-*/;
+      
+      public final ParsedInfo toParsedInfo() 
+      {
+         HashMap<String,String> values = new HashMap<String,String>();
+         values.put("Title", getTitle());
+         values.put("Description", getDescription());
+         HashMap<String, String> args = new HashMap<String,String>();
+         HashMap<String, String> slots = new HashMap<String,String>();
+         
+         return new ParsedInfo(getPackageName(),
+                               getSignature(),
+                               values,
+                               args,
+                               slots);
+      }
+      
+   }
+   
 
    public static class ParsedInfo
    {

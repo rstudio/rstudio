@@ -1004,6 +1004,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
    
+   public void getCustomHelp(String helpHandler,
+                             String topic, 
+                             String source,
+                             ServerRequestCallback<HelpInfo.Custom> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(helpHandler));
+      params.set(1, new JSONString(topic));
+      params.set(2, new JSONString(source));
+      sendRequest(RPC_SCOPE, GET_CUSTOM_HELP, params, requestCallback);
+   }
+
+   
    public void showHelpTopic(String what, String from, int type)
    {
       JSONArray params = new JSONArray() ;
@@ -1017,6 +1030,20 @@ public class RemoteServer implements Server
                   SHOW_HELP_TOPIC,
                   params,
                   null) ;
+   }
+   
+   public void showCustomHelpTopic(String helpHandler, 
+                                   String topic, 
+                                   String source)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(helpHandler));
+      params.set(1, new JSONString(topic));
+      params.set(2, new JSONString(source));
+      sendRequest(RPC_SCOPE, 
+                  SHOW_CUSTOM_HELP_TOPIC, 
+                  params, 
+                  null);
    }
    
    public void search(String query, 
@@ -4902,6 +4929,8 @@ public class RemoteServer implements Server
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
    private static final String SEARCH = "search" ;
+   private static final String GET_CUSTOM_HELP = "get_custom_help";
+   private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic" ;
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";

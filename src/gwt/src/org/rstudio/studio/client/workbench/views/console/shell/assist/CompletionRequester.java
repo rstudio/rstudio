@@ -298,7 +298,7 @@ public class CompletionRequester
       ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
       }
 
       CompletionResult result = new CompletionResult(
@@ -385,7 +385,7 @@ public class CompletionRequester
             // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
                if (comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
             
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
@@ -404,7 +404,7 @@ public class CompletionRequester
             // Get other server completions
             for (int i = 0; i < comp.length(); i++)
                if (!comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
             
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
@@ -680,7 +680,8 @@ public class CompletionRequester
                   "",
                   false,
                   false,
-                  true);
+                  true,
+                  null);
             
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -733,14 +734,21 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      
       public QualifiedName(
             String name, String source, boolean shouldQuote, int type)
+      {
+         this(name, source, shouldQuote, type, null);
+      }
+      
+      public QualifiedName(
+            String name, String source, boolean shouldQuote, int type, String helpHandler)
       {
          this.name = name;
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
+         this.helpHandler = helpHandler;
+         
       }
       
       public QualifiedName(String name, String source)
@@ -749,6 +757,7 @@ public class CompletionRequester
          this.source = source;
          this.shouldQuote = false;
          this.type = RCompletionType.UNKNOWN;
+         this.helpHandler = null;
       }
       
       public static QualifiedName createSnippet(String name)
@@ -757,7 +766,8 @@ public class CompletionRequester
                name,
                "snippet",
                false,
-               RCompletionType.SNIPPET);
+               RCompletionType.SNIPPET,
+               null);
       }
       
       @Override
@@ -842,9 +852,12 @@ public class CompletionRequester
                RES.styles().completion(),
                name);
 
-         // Display the source for functions and snippets
-         if (RCompletionType.isFunctionType(type) ||
-             type == RCompletionType.SNIPPET)
+         // Display the source for functions and snippets (unless there
+         // is a custom helpHandler provided, indicating that the "source"
+         // isn't a package but rather some custom DollarNames scope)
+         if ((RCompletionType.isFunctionType(type) ||
+             type == RCompletionType.SNIPPET) &&
+             helpHandler == null)
          {
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -962,6 +975,7 @@ public class CompletionRequester
       public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
+      public final String helpHandler;
       private static final FileTypeRegistry FILE_TYPE_REGISTRY =
             RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }

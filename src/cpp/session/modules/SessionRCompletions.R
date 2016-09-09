@@ -854,7 +854,8 @@ assign(x = ".rs.acCompletionTypes",
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE,
-                                            cacheable = TRUE)
+                                            cacheable = TRUE,
+                                            helpHandler = NULL)
 {
    if (is.null(results))
       results <- character()
@@ -901,7 +902,8 @@ assign(x = ".rs.acCompletionTypes",
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
-        cacheable = .rs.scalar(cacheable))
+        cacheable = .rs.scalar(cacheable),
+        helpHandler = .rs.scalar(helpHandler))
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -1028,6 +1030,7 @@ assign(x = ".rs.acCompletionTypes",
       allNames <- character()
       names <- character()
       type <- numeric()
+      helpHandler <- NULL
       
       if (isAt)
       {
@@ -1064,6 +1067,9 @@ assign(x = ".rs.acCompletionTypes",
          if (is.function(dollarNamesMethod))
          {
             allNames <- dollarNamesMethod(object)
+            
+            # check for custom helpHandler
+            helpHandler <- attr(allNames, "helpHandler")
          }
          
          # Reference class generators / objects
@@ -1164,7 +1170,8 @@ assign(x = ".rs.acCompletionTypes",
          packages = string,
          quote = FALSE,
          type = type,
-         excludeOtherCompletions = TRUE
+         excludeOtherCompletions = TRUE,
+         helpHandler = helpHandler
       )
    }
    
