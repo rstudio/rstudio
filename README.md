@@ -40,7 +40,7 @@
 
    if you want to specify a different version number run:
 
-   `$ ant elemental clean dist-dev -Dgwt.version=x.x.x`
+   `$ ant clean elemental dist-dev -Dgwt.version=x.x.x`
 
  - To compile everything including examples you have to run
 
