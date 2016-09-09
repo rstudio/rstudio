@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.rmarkdown.events;
 
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
@@ -28,12 +29,28 @@ public class SendToChunkConsoleEvent
    {
       void onSendToChunkConsole(SendToChunkConsoleEvent event);
    }
-
+   
    public SendToChunkConsoleEvent(String docId, Scope scope, Range range)
+   {
+      this(docId, scope, range, null);
+   }
+
+   public SendToChunkConsoleEvent(String docId, Scope scope, Range range, Integer execScope)
    {
       docId_ = docId;
       scope_ = scope;
       range_ = range;
+      
+      if (execScope == null)
+      {
+         execScope_ = range == null
+               ? NotebookQueueUnit.EXEC_SCOPE_CHUNK
+               : NotebookQueueUnit.EXEC_SCOPE_PARTIAL;
+      }
+      else
+      {
+         execScope_ = execScope;
+      }
    }
 
    public String getDocId()
@@ -55,6 +72,11 @@ public class SendToChunkConsoleEvent
    {
       return range_;
    }
+   
+   public int getExecScope()
+   {
+      return execScope_;
+   }
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -71,6 +93,7 @@ public class SendToChunkConsoleEvent
    private final String docId_;
    private Scope scope_;
    private final Range range_;
+   private final int execScope_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

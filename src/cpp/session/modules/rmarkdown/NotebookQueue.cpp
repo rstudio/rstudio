@@ -233,7 +233,9 @@ private:
       // execution context, it must be executing with an alternate engine; 
       // this event signals that the alternate engine is finished, so move to
       // the next document in the queue
-      if (execUnit_->docId() == docId && execUnit_->chunkId() == chunkId &&
+      if (execUnit_->docId() == docId && 
+          execUnit_->chunkId() == chunkId &&
+          execUnit_->execScope() != ExecScopeInline &&
           !execContext_)
       {
          // remove from the queue
@@ -377,13 +379,23 @@ private:
 
       // compute engine
       std::string engine = options.getOverlayOption("engine", std::string("r"));
+
+      // normalize engine case - if the chunk doesn't have an engine specified
+      // it will receive the knitr default of "R"
+      if (engine == "R")
+         engine = "r";
+
       if (engine == "r")
       {
-         execContext_ = boost::make_shared<ChunkExecContext>(
-            unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
-            docQueue->workingDir(), options, docQueue->pixelWidth(), 
-            docQueue->charWidth());
-         execContext_->connect();
+         // establish execution context unless we're an inline chunk
+         if (unit->execScope() != ExecScopeInline)
+         {
+            execContext_ = boost::make_shared<ChunkExecContext>(
+               unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
+               docQueue->workingDir(), options, docQueue->pixelWidth(), 
+               docQueue->charWidth());
+            execContext_->connect();
+         }
          execUnit_ = unit;
          enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
       }

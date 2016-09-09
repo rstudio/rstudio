@@ -564,14 +564,14 @@ public class TextEditingTargetNotebook
       {
          List<ChunkExecUnit> chunks = new ArrayList<ChunkExecUnit>();
          chunks.add(new ChunkExecUnit(getSetupChunkScope()));
-         chunks.add(new ChunkExecUnit(event.getScope(), event.getRange()));
+         chunks.add(new ChunkExecUnit(event.getScope(), event.getRange(), event.getExecScope()));
          queue_.executeChunks("Run Chunks", chunks, 
                NotebookQueueUnit.EXEC_MODE_BATCH);
       }
       else
       {
          queue_.executeChunk(
-               new ChunkExecUnit(event.getScope(), event.getRange()), 
+               new ChunkExecUnit(event.getScope(), event.getRange(), event.getExecScope()), 
                NotebookQueueUnit.EXEC_MODE_SINGLE);
       }
    }

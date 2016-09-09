@@ -198,6 +198,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       // create queue units from scopes
       for (ChunkExecUnit chunk: units)
       {
+
          NotebookQueueUnit unit = unitFromScope(chunk, execMode);
          queue_.addUnit(unit);
       }
@@ -407,15 +408,23 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
 
       // find associated chunk definition
       String id = null;
-      if (TextEditingTargetNotebook.isSetupChunkScope(scope))
-         id = TextEditingTargetNotebook.SETUP_CHUNK_ID;
-      ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), id);
+      if (chunk.getExecScope() == NotebookQueueUnit.EXEC_SCOPE_INLINE)
+      {
+         id = chunk.getScope().getLabel();
+      }
+      else
+      {
+         if (TextEditingTargetNotebook.isSetupChunkScope(scope))
+            id = TextEditingTargetNotebook.SETUP_CHUNK_ID;
+         ChunkDefinition def = getChunkDefAtRow(scope.getEnd().getRow(), id);
+         id = def.getChunkId();
+      }
 
       String code = docDisplay_.getCode(
          scope.getPreamble(),
          scope.getEnd());
       NotebookQueueUnit unit = NotebookQueueUnit.create(sentinel_.getId(), 
-            def.getChunkId(), execMode, chunk.getExecScope(), code);
+            id, execMode, chunk.getExecScope(), code);
       
       // add a pending range (if it has any content)
       if (!range.getStart().isEqualTo(range.getEnd()))

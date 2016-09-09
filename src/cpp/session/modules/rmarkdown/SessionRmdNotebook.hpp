@@ -50,7 +50,9 @@ enum ExecScope
    // an entire chunk is being executed
    ExecScopeChunk   = 0,
    // a section of a chunk is being executed (e.g. via Ctrl+Enter)
-   ExecScopePartial = 1
+   ExecScopePartial = 1,
+   // an inline R chunk is being executed
+   ExecScopeInline  = 2
 };
 
 enum CommitMode

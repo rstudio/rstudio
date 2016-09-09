@@ -98,6 +98,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetInlineChunkExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
@@ -201,6 +202,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditorBackgroundLinkHighlighter highlighter);
    void injectMembers(AceEditorIdleMonitor monitor);
    void injectMembers(AceEditorIdleCommands commands);
+   void injectMembers(EditingTargetInlineChunkExecution executor);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

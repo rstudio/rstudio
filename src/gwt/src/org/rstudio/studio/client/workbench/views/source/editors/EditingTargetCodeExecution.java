@@ -30,6 +30,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+
 import com.google.inject.Inject;
 
 public class EditingTargetCodeExecution
@@ -57,6 +59,8 @@ public class EditingTargetCodeExecution
       docDisplay_ = docDisplay;
       codeExtractor_ = codeExtractor;
       docId_ = docId;
+      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(docDisplay,
+            docId);
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -83,7 +87,12 @@ public class EditingTargetCodeExecution
          boolean onlyUseConsole)
    {
       // when executing LaTeX in R Markdown, show a popup preview
-      if (executeLatex()) return;
+      if (executeLatex())
+         return;
+      
+      // when executing inline R code, show a popup preview
+      if (executeInlineChunk())
+         return;
       
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
@@ -340,9 +349,29 @@ public class EditingTargetCodeExecution
       return true;
    }
    
+   private boolean executeInlineChunk()
+   {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
+      Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (token == null || !token.hasType("inline_r_chunk"))
+         return false;
+      
+      // construct range to execute, trimming off the "`r ...`" boundaries
+      int row = docDisplay_.getCursorPosition().getRow();
+      int startColumn = token.getColumn() + 3;
+      int endColumn   = token.getColumn() + token.getValue().length() - 1;
+      Range range = Range.create(row, startColumn, row, endColumn);
+      
+      inlineChunkExecutor_.execute(range);
+      return true;
+   }
+   
    private final DocDisplay docDisplay_;
    private final CodeExtractor codeExtractor_;
    private final String docId_;
+   private final EditingTargetInlineChunkExecution inlineChunkExecutor_;
    private AnchoredSelection lastExecutedCode_;
    
    // Injected ----
