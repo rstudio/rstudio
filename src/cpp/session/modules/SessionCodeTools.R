@@ -844,7 +844,10 @@
       help <- helpHandlerFunc("completion", name, src)
       if (is.null(help))
          return(NULL)
-      return (help$signature)
+      signature <- help$signature
+      paren <- regexpr("\\(", signature)[[1]]
+      signature <- substring(signature, paren)
+      return (.rs.scalar(signature))
    }
 
    if (identical(src, ""))
