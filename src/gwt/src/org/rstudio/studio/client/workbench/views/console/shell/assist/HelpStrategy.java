@@ -187,6 +187,36 @@ public class HelpStrategy
          return;
       }
 
+      if (selectedItem.helpHandler != null)
+      {
+         server_.getCustomHelp(selectedItem.helpHandler,
+                               selectedItem.name,
+                               selectedItem.source,
+               new ServerRequestCallback<HelpInfo.Custom>() {
+            @Override
+            public void onError(ServerError error)
+            {
+               display.clearHelp(false) ;
+            }
+
+            public void onResponseReceived(HelpInfo.Custom response)
+            {
+               if (response != null)
+               {
+                  HelpInfo.ParsedInfo info = response.toParsedInfo();
+                  cache_.put(selectedItem, info);
+                  doShowParameterHelp(info, name, display);
+               }
+               else
+               {
+                  display.setHelpVisible(false);
+                  display.clearHelp(false) ;
+               }
+            }
+         }) ;
+      }
+      else
+      {
          server_.getHelp(selectedItem.source,
                          null,
                          selectedItem.type,
@@ -213,6 +243,7 @@ public class HelpStrategy
                }
             }
          }) ;
+      }
    }
    
    private void doShowParameterHelp(final ParsedInfo info,
