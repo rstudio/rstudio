@@ -44,6 +44,7 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -229,22 +230,32 @@ public class ChunkOutputStream extends FlowPanel
          addWithOrdinal(frame, ordinal);
       }
 
-      frame.loadUrl(url, new Command() 
+      Element body = frame.getDocument().getBody();
+      Style bodyStyle = body.getStyle();
+            
+      bodyStyle.setPadding(0, Unit.PX);
+      bodyStyle.setMargin(0, Unit.PX);
+      bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
+
+      final String fullUrl = url;
+      Timer frameLoadTimer = new Timer()
       {
          @Override
-         public void execute()
+         public void run()
          {
-            Element body = frame.getDocument().getBody();
-            Style bodyStyle = body.getStyle();
-            
-            bodyStyle.setPadding(0, Unit.PX);
-            bodyStyle.setMargin(0, Unit.PX);
-            bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
-            
-            onRenderComplete.execute();
-            onHeightChanged();
-         };
-      });
+            frame.loadUrl(fullUrl , new Command() 
+            {
+               @Override
+               public void execute()
+               {
+                  onRenderComplete.execute();
+                  onHeightChanged();
+               };
+            });
+         }
+      };
+
+      frameLoadTimer.schedule(250);
    }
 
    @Override

@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkHtmlPage extends ChunkOutputPage
@@ -63,21 +64,41 @@ public class ChunkHtmlPage extends ChunkOutputPage
          content_ = frame_;
       }
 
-      frame_.loadUrl(url, new Command()
+      final String fullUrl = url;
+      Timer frameLoadTimer = new Timer()
       {
          @Override
-         public void execute()
+         public void run()
          {
-            Element body = frame_.getDocument().getBody();
-            Style bodyStyle = body.getStyle();
+            frame_.loadUrl(fullUrl , new Command() 
+            {
+               @Override
+               public void execute()
+               {
+                  Element body = frame_.getDocument().getBody();
+                  Style bodyStyle = body.getStyle();
             
-            bodyStyle.setPadding(0, Unit.PX);
-            bodyStyle.setMargin(0, Unit.PX);
-            onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
-            
-            onRenderComplete.execute();
-         };
-      });
+                  bodyStyle.setPadding(0, Unit.PX);
+                  bodyStyle.setMargin(0, Unit.PX);
+
+                  onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
+
+                  Timer frameFinishLoadTimer = new Timer()
+                  {
+                     @Override
+                     public void run()
+                     {
+                        onRenderComplete.execute();
+                     }
+                  };
+
+                  frameFinishLoadTimer.schedule(100);
+               };
+            });
+         }
+      };
+
+      frameLoadTimer.schedule(400);
    }
       
    @Override
