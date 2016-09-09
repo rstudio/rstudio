@@ -71,6 +71,12 @@ public class ChunkSatelliteCacheEditorStyleEvent
       handler.onChunkSatelliteCacheEditorStyle(this);
    }
 
+   @Override
+   public boolean forward()
+   {
+      return false;
+   }
+
    private String foregroundColor_;
    private String backgroundColor_;
    private String aceEditorColor_;

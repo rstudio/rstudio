@@ -1,5 +1,5 @@
 /*
- * ChunkSatelliteCodeExecutingEvent.java
+ * ChunkSatelliteOpenWindowEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,41 +15,48 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteCodeExecutingEvent 
-             extends CrossWindowEvent<ChunkSatelliteCodeExecutingEvent.Handler>
+public class ChunkSatelliteOpenWindowEvent 
+             extends CrossWindowEvent<ChunkSatelliteOpenWindowEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event);
+      void onChunkSatelliteWindowOpened(ChunkSatelliteOpenWindowEvent event);
    }
 
-   public ChunkSatelliteCodeExecutingEvent()
+   public ChunkSatelliteOpenWindowEvent()
    {
    }
    
-   public ChunkSatelliteCodeExecutingEvent(
-      int mode, int scope
-   )
+   public ChunkSatelliteOpenWindowEvent(
+      String docId,
+      String chunkId,
+      Size size)
    {
-      mode_ = mode;
-      scope_ = scope;
-   }
-   
-   public int getMode()
-   {
-      return mode_;
+      docId_ = docId;
+      chunkId_ = chunkId;
+      size_ = size;
    }
 
-
-   public int getScope()
+   public String getDocId()
    {
-      return scope_;
+      return docId_;
+   }
+
+   public String getChunkId()
+   {
+      return chunkId_;
+   }
+
+   public Size getSize()
+   {
+      return size_;
    }
 
    @Override
@@ -61,17 +68,19 @@ public class ChunkSatelliteCodeExecutingEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteCodeExecuting(this);
+      handler.onChunkSatelliteWindowOpened(this);
    }
 
    @Override
    public boolean forward()
    {
-      return false;
+      // this event was intended to be used to notify the main window
+      return true;
    }
-
-   private int mode_;
-   private int scope_;
+   
+   private String docId_;
+   private String chunkId_;
+   private Size size_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
