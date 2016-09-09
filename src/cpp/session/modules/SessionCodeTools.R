@@ -541,11 +541,12 @@
    else {
       # try custom help handler, otherwise fall through to default handler
       helpUrl <- .rs.getCustomHelpUrl(token)
-      if (!is.null(helpUrl))
+      if (!is.null(helpUrl)) {
          if (nzchar(helpUrl)) # handlers return "" to indicate no help available
             utils::browseURL(helpUrl)
-      else
+      } else {
          print(help(pieces[1], help_type='html', try.all.packages=TRUE))
+      }
    }
 })
 
