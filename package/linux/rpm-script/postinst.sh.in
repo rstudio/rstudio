@@ -49,8 +49,8 @@ then
   # verify if release version number is greater than 11
   if compare_versions $version_number 11
   then
-    ln -s $architecture_dir/libssl.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
-    ln -s $architecture_dir/libcrypto.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
+    ln -s /$architecture_dir/libssl.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
+    ln -s /$architecture_dir/libcrypto.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
   else
     ln -s /usr/$architecture_dir/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
     ln -s /usr/$architecture_dir/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
