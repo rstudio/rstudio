@@ -399,6 +399,8 @@ public class TextEditingTargetNotebook
       commands_.notebookClearOutput().setVisible(inlineOutput); 
       commands_.notebookClearAllOutput().setEnabled(inlineOutput); 
       commands_.notebookClearAllOutput().setVisible(inlineOutput); 
+      commands_.notebookToggleExpansion().setEnabled(inlineOutput); 
+      commands_.notebookToggleExpansion().setVisible(inlineOutput); 
       editingDisplay_.setNotebookUIVisible(inlineOutput);
    }
    
@@ -423,6 +425,17 @@ public class TextEditingTargetNotebook
       // find the current chunk 
       Scope chunk = docDisplay_.getCurrentChunk();
       clearChunkOutput(chunk);
+   }
+   
+   public void onNotebookToggleExpansion()
+   {
+      String chunkId = getCurrentChunkId();
+      if (chunkId == null || !outputs_.containsKey(chunkId))
+         return;
+     ChunkOutputWidget widget = outputs_.get(chunkId).getOutputWidget();
+     widget.setExpansionState(
+           widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ? 
+                 ChunkOutputWidget.EXPANDED : ChunkOutputWidget.COLLAPSED);
    }
 
    public void clearChunkOutput(Scope chunk)
@@ -1816,6 +1829,14 @@ public class TextEditingTargetNotebook
                Debug.logError(error);
             }
          });
+   }
+   
+   private String getCurrentChunkId()
+   {
+      Scope chunk = docDisplay_.getCurrentChunk();
+      if (chunk == null)
+         return null;
+      return getRowChunkId(chunk.getPreamble().getRow());
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

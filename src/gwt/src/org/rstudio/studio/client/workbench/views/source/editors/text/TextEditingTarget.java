@@ -3182,6 +3182,13 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   public void onNotebookToggleExpansion()
+   {
+      if (notebook_ != null)
+         notebook_.onNotebookToggleExpansion();
+   }
+
+   @Handler
    public void onRestartRRunAllChunks()
    {
       if (notebook_ != null)

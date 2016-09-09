@@ -148,6 +148,7 @@ public abstract class
    public abstract AppCommand notebookCollapseAllOutput();
    public abstract AppCommand notebookClearOutput();
    public abstract AppCommand notebookClearAllOutput();
+   public abstract AppCommand notebookToggleExpansion();
    public abstract AppCommand renameInScope();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
