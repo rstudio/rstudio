@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.files;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -275,6 +277,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());
       dockPanel.add(filesList_);
+      
       // return container
       return dockPanel;
    }
@@ -290,7 +293,14 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       }
       else
       {
-         filesList_.redraw();
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               filesList_.redraw();
+            }
+         });
       }
    }
 
