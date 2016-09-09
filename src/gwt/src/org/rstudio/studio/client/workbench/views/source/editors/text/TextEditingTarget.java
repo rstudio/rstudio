@@ -1258,9 +1258,17 @@ public class TextEditingTarget implements
       
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
-      if (!StringUtil.isNullOrEmpty(contents))
-         view_.initWidgetSize();
       docDisplay_.setCode(contents, false);
+      
+      // show outline view (deferred so that widget itself can be sized first)
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            view_.initWidgetSize();
+         }
+      });
       
       // Load and apply folds.
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());

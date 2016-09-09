@@ -215,8 +215,11 @@ public class TextEditingTargetWidget
    {
       if (target_.getPreferredOutlineWidgetVisibility())
       {
-         double size = target_.getPreferredOutlineWidgetSize();
+         double editorSize = editorPanel_.getOffsetWidth();
+         double widgetSize = target_.getPreferredOutlineWidgetSize();
+         double size = Math.min(editorSize, widgetSize);
          editorPanel_.setWidgetSize(docOutlineWidget_, size);
+         toggleDocOutlineButton_.setLatched(true);
       }
    }
    
@@ -407,7 +410,7 @@ public class TextEditingTargetWidget
                   // animate to that position for a slightly nicer visual treatment.
                   final double destination = docOutlineWidget_.getOffsetWidth() > 5
                         ? 0
-                        : target_.getPreferredOutlineWidgetSize();
+                        : Math.min(editorPanel_.getOffsetWidth(), target_.getPreferredOutlineWidgetSize());
                   
                   // Update tooltip ('Show'/'Hide' depending on current visibility)
                   String title = toggleDocOutlineButton_.getTitle();
