@@ -303,6 +303,11 @@ Error handleChunkOutputRequest(const http::Request& request,
       pResponse->setFile(target, request, HtmlWidgetFilter());
    }
 
+   if (options().programMode() != kSessionProgramModeServer)
+   {
+       pResponse->setNoCacheHeaders();
+   }
+
    return Success();
 }
 
