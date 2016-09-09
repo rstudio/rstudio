@@ -22,11 +22,15 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErro
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ChunkInlineOutput extends MiniPopupPanel
                                implements ConsoleWriteOutputHandler,
@@ -39,16 +43,27 @@ public class ChunkInlineOutput extends MiniPopupPanel
       Finished
    }
 
-   public ChunkInlineOutput(String chunkId, Range range) 
+   public ChunkInlineOutput(String chunkId, final AnchoredSelection selection) 
    {
       super(true, false, true);
       
       vconsole_ = new VirtualConsole();
       console_ = new PreWidget();
       chunkId_ = chunkId;
-      range_ = range;
+      selection_ = selection;
       state_ = State.Queued;
       addStyleName(RES.styles().panel());
+      
+      // detach anchored selection when closing so we don't accumulate 
+      // unused anchors in the document
+      addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> arg0)
+         {
+            selection.detach();
+         }
+      });
       
       setWidget(console_);
    }
@@ -60,7 +75,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
    
    public Range range()
    {
-      return range_;
+      return selection_.getRange();
    }
    
    public State state()
@@ -108,6 +123,6 @@ public class ChunkInlineOutput extends MiniPopupPanel
    private final VirtualConsole vconsole_;
    private final PreWidget console_;
    private final String chunkId_;
-   private final Range range_;
+   private final AnchoredSelection selection_;
    private State state_;
 }

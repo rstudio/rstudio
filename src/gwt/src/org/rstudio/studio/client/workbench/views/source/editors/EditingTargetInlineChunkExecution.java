@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import java.util.HashMap;
 
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -31,10 +32,14 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutp
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkInlineOutput;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
@@ -98,13 +103,34 @@ public class EditingTargetInlineChunkExecution
             Scope.SCOPE_TYPE_CHUNK);
       
       // create popup panel to host output
-      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId, range);
+      final ChunkInlineOutput output = new ChunkInlineOutput(chunkId, 
+            display_.createAnchoredSelection(range.getStart(), range.getEnd()));
+      
+      // auto dismiss the panel when the cursor leaves the inline chunk
+      final Mutable<HandlerRegistration> cursorHandler =
+            new Mutable<HandlerRegistration>();
+      cursorHandler.set(display_.addCursorChangedHandler(
+            new CursorChangedHandler()
+      {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            Position position = event.getPosition();
+            if (!output.range().contains(position))
+            {
+               output.hide();
+            }
+         }
+      }));
+
+      // when the popup is dismissed, clean up local state
       output.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
             outputs_.remove(chunkId);
+            cursorHandler.get().removeHandler();
          }
       });
 
