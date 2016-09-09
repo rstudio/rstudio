@@ -18,14 +18,21 @@ import org.rstudio.core.client.*;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOpenWindowEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ChunkWindowManager implements ChunkSatelliteOpenWindowEvent.Handler
+public class ChunkWindowManager
+   implements ChunkSatelliteOpenWindowEvent.Handler,
+              ChunkSatelliteWindowOpenedEvent.Handler,
+              ChunkSatelliteCodeExecutingEvent.Handler,
+              ChunkSatelliteCacheEditorStyleEvent.Handler
 {
    @Inject
    public ChunkWindowManager(
@@ -37,6 +44,7 @@ public class ChunkWindowManager implements ChunkSatelliteOpenWindowEvent.Handler
       events_ = events;
       
       events_.addHandler(ChunkSatelliteOpenWindowEvent.TYPE, this);
+      events_.addHandler(ChunkSatelliteWindowOpenedEvent.TYPE, this);
    }
 
    public void openChunkWindow(String docId, String chunkId, Size sourceSize)
@@ -52,6 +60,24 @@ public class ChunkWindowManager implements ChunkSatelliteOpenWindowEvent.Handler
          getName(event.getDocId(), event.getChunkId()), 
          ChunkWindowParams.create(event.getDocId(), event.getChunkId()), 
          event.getSize());
+   }
+
+   @Override
+   public void onChunkSatelliteWindowOpened(ChunkSatelliteWindowOpenedEvent event)
+   {
+      events_.fireEventToAllSatellites(event);
+   }
+
+   @Override
+   public void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event)
+   {
+      events_.fireEventToAllSatellites(event);
+   }
+
+   @Override
+   public void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event)
+   {
+      events_.fireEventToAllSatellites(event);
    }
    
    public String getName(String docId, String chunkId)
