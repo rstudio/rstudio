@@ -27,7 +27,7 @@ public class ChunkSatelliteOpenWindowEvent
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteWindowOpened(ChunkSatelliteOpenWindowEvent event);
+      void onChunkSatelliteOpenWindow(ChunkSatelliteOpenWindowEvent event);
    }
 
    public ChunkSatelliteOpenWindowEvent()
@@ -68,7 +68,7 @@ public class ChunkSatelliteOpenWindowEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteWindowOpened(this);
+      handler.onChunkSatelliteOpenWindow(this);
    }
 
    @Override

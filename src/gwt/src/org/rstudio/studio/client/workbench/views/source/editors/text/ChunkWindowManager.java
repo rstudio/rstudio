@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.*;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCloseWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteOpenWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
@@ -30,20 +32,23 @@ import com.google.inject.Singleton;
 @Singleton
 public class ChunkWindowManager
    implements ChunkSatelliteOpenWindowEvent.Handler,
+              ChunkSatelliteCloseWindowEvent.Handler,
               ChunkSatelliteWindowOpenedEvent.Handler,
               ChunkSatelliteCodeExecutingEvent.Handler,
               ChunkSatelliteCacheEditorStyleEvent.Handler
 {
    @Inject
    public ChunkWindowManager(
-         Provider<SatelliteManager> pSatelliteManager,
-         EventBus events
-         )
+      Provider<SatelliteManager> pSatelliteManager,
+      EventBus events,
+      SatelliteManager satelliteManager
+   )
    {
       pSatelliteManager_ = pSatelliteManager;
       events_ = events;
       
       events_.addHandler(ChunkSatelliteOpenWindowEvent.TYPE, this);
+      events_.addHandler(ChunkSatelliteCloseWindowEvent.TYPE, this);
       events_.addHandler(ChunkSatelliteWindowOpenedEvent.TYPE, this);
    }
 
@@ -54,12 +59,25 @@ public class ChunkWindowManager
       events_.fireEvent(new ChunkSatelliteOpenWindowEvent(docId, chunkId, size));
    }
 
-   public void onChunkSatelliteWindowOpened(ChunkSatelliteOpenWindowEvent event)
+   @Override
+   public void onChunkSatelliteOpenWindow(ChunkSatelliteOpenWindowEvent event)
    {
       pSatelliteManager_.get().openSatellite(
          getName(event.getDocId(), event.getChunkId()), 
          ChunkWindowParams.create(event.getDocId(), event.getChunkId()), 
          event.getSize());
+   }
+   
+   @Override
+   public void onChunkSatelliteCloseWindow(ChunkSatelliteCloseWindowEvent event)
+   {
+      String windowName = getName(event.getDocId(), event.getChunkId());
+      
+      if (pSatelliteManager_.get().satelliteWindowExists(windowName))
+      {
+         WindowEx satelliteWindow = pSatelliteManager_.get().getSatelliteWindowObject(windowName);     
+         satelliteWindow.close();
+      }
    }
 
    @Override

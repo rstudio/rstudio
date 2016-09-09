@@ -74,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCloseWindowEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCodeExecutingEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteWindowOpenedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
@@ -544,9 +545,9 @@ public class TextEditingTargetNotebook
          output.getOutputWidget().applyCachedEditorStyle();
       }
 
-      forwardEventToSatelliteAllChunks(
-         docUpdateSentinel_.getId(),
+      events_.fireEvent(
          new ChunkSatelliteCacheEditorStyleEvent(
+            docUpdateSentinel_.getId(),
             editorStyle_.getColor(),
             editorStyle_.getBackgroundColor(),
             DomUtils.extractCssValue("ace_editor", "color")
@@ -893,9 +894,9 @@ public class TextEditingTargetNotebook
 
       satelliteChunks_.add(chunkId);
 
-      forwardEventToSatelliteAllChunks(
-         docId,
+      events_.fireEvent(
          new ChunkSatelliteCacheEditorStyleEvent(
+            docId,
             editorStyle_.getColor(),
             editorStyle_.getBackgroundColor(),
             DomUtils.extractCssValue("ace_editor", "color")
@@ -1201,10 +1202,9 @@ public class TextEditingTargetNotebook
                                                 scope.getEnd()));
          }
 
-         forwardEventToSatelliteChunk(
-            docUpdateSentinel_.getId(),
-            chunkId,
+         events_.fireEvent(
             new ChunkSatelliteCodeExecutingEvent(
+                  docUpdateSentinel_.getId(),
                   mode,
                   NotebookQueueUnit.EXEC_SCOPE_PARTIAL
                )
@@ -1300,20 +1300,11 @@ public class TextEditingTargetNotebook
 
    private void closeAllSatelliteChunks()
    {
-      SatelliteManager satelliteManager = RStudioGinjector.INSTANCE.getSatelliteManager();
-      ChunkWindowManager chunkWindowManager = RStudioGinjector.INSTANCE.getChunkWindowManager();
-
       String docId = docUpdateSentinel_.getId();
 
       for (String chunkId : satelliteChunks_)
       {
-         String windowName = chunkWindowManager.getName(docId, chunkId);
-         
-         if (satelliteManager.satelliteWindowExists(windowName))
-         {
-            WindowEx satelliteWindow = satelliteManager.getSatelliteWindowObject(windowName);     
-            satelliteWindow.close();
-         }
+         events_.fireEvent(new ChunkSatelliteCloseWindowEvent(docId, chunkId));
       }
 
       satelliteChunks_.clear();

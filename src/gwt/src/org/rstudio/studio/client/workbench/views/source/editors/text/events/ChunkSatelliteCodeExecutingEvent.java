@@ -34,18 +34,23 @@ public class ChunkSatelliteCodeExecutingEvent
    }
    
    public ChunkSatelliteCodeExecutingEvent(
-      int mode, int scope
+      String docId, int mode, int scope
    )
    {
+      docId_ = docId;
       mode_ = mode;
       scope_ = scope;
+   }
+
+   public String getDocId()
+   {
+      return docId_;
    }
    
    public int getMode()
    {
       return mode_;
    }
-
 
    public int getScope()
    {
@@ -70,6 +75,7 @@ public class ChunkSatelliteCodeExecutingEvent
       return false;
    }
 
+   private String docId_;
    private int mode_;
    private int scope_;
 

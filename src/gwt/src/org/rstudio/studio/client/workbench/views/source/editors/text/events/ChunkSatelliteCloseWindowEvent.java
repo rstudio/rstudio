@@ -1,5 +1,5 @@
 /*
- * ChunkSatelliteCacheEditorStyleEvent.java
+ * ChunkSatelliteCloseWindowEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -21,49 +21,34 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteCacheEditorStyleEvent 
-             extends CrossWindowEvent<ChunkSatelliteCacheEditorStyleEvent.Handler>
+public class ChunkSatelliteCloseWindowEvent 
+             extends CrossWindowEvent<ChunkSatelliteCloseWindowEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event);
+      void onChunkSatelliteCloseWindow(ChunkSatelliteCloseWindowEvent event);
    }
 
-   public ChunkSatelliteCacheEditorStyleEvent()
+   public ChunkSatelliteCloseWindowEvent()
    {
    }
-
-   public ChunkSatelliteCacheEditorStyleEvent(
+   
+   public ChunkSatelliteCloseWindowEvent(
       String docId,
-      String foregroundColor,
-      String backgroundColor,
-      String aceEditorColor
-   )
+      String chunkId)
    {
       docId_ = docId;
-      foregroundColor_ = foregroundColor;
-      backgroundColor_ = backgroundColor;
-      aceEditorColor_ = aceEditorColor;
+      chunkId_ = chunkId;
    }
 
    public String getDocId()
    {
       return docId_;
    }
-   
-   public String getBackgroundColor()
+
+   public String getChunkId()
    {
-      return backgroundColor_;
-   }
-   
-   public String getForegroundColor()
-   {
-      return foregroundColor_;
-   }
-   
-   public String getAceEditorColor()
-   {
-      return aceEditorColor_;
+      return chunkId_;
    }
 
    @Override
@@ -75,19 +60,18 @@ public class ChunkSatelliteCacheEditorStyleEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteCacheEditorStyle(this);
+      handler.onChunkSatelliteCloseWindow(this);
    }
 
    @Override
    public boolean forward()
    {
-      return false;
+      // this event was intended to be used to notify the main window
+      return true;
    }
-
+   
    private String docId_;
-   private String foregroundColor_;
-   private String backgroundColor_;
-   private String aceEditorColor_;
+   private String chunkId_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
