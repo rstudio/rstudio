@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@
 #include <map>
 
 #include <boost/signals.hpp>
+#include <boost/asio/io_service.hpp>
 
 #include <core/Thread.hpp>
 
@@ -57,11 +58,13 @@ private:
 
 public:
    // launching
-   core::Error launchSession(const core::r_util::SessionContext& context);
+   core::Error launchSession(boost::asio::io_service& ioService,
+                             const core::r_util::SessionContext& context);
    void removePendingLaunch(const core::r_util::SessionContext& context);
 
    // set a custom session launcher
    typedef boost::function<core::Error(
+                           boost::asio::io_service&,
                            const core::r_util::SessionLaunchProfile&)>
                                                   SessionLaunchFunction;
    void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
@@ -79,6 +82,7 @@ private:
    // default session launcher -- runs the process then uses the
    // ChildProcessTracker to track it's pid for later reaping
    core::Error launchAndTrackSession(
+                        boost::asio::io_service&,
                         const core::r_util::SessionLaunchProfile& profile);
 
 private:

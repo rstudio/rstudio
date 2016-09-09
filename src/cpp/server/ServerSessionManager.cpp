@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -164,10 +164,11 @@ SessionManager::SessionManager()
 {
    // set default session launcher
    sessionLaunchFunction_ = boost::bind(&SessionManager::launchAndTrackSession,
-                                           this, _1);
+                                           this, _1, _2);
 }
 
-Error SessionManager::launchSession(const r_util::SessionContext& context)
+Error SessionManager::launchSession(boost::asio::io_service& ioService,
+      const r_util::SessionContext& context)
 {
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
@@ -212,7 +213,7 @@ Error SessionManager::launchSession(const r_util::SessionContext& context)
    }
 
    // launch the session
-   Error error = sessionLaunchFunction_(profile);
+   Error error = sessionLaunchFunction_(ioService, profile);
    if (error)
    {
       removePendingLaunch(context);
@@ -237,6 +238,7 @@ void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter)
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
 Error SessionManager::launchAndTrackSession(
+                           boost::asio::io_service&,
                            const core::r_util::SessionLaunchProfile& profile)
 {
    // if we are root then assume the identity of the user
