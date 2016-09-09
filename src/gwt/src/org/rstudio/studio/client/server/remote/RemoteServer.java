@@ -742,11 +742,13 @@ public class RemoteServer implements Server
    
    public void getArgs(String name,
                        String source,
+                       String helpHandler,
                        ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(name));
       params.set(1, new JSONString(source));
+      params.set(2,  new JSONString(StringUtil.notNull(helpHandler)));
       sendRequest(
             RPC_SCOPE,
             GET_ARGS,

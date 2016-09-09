@@ -832,8 +832,20 @@
    NULL
 })
 
-.rs.addJsonRpcHandler("get_args", function(name, src)
+.rs.addJsonRpcHandler("get_args", function(name, src, helpHandler)
 {
+   # call custom help handler if provided
+   if (nzchar(helpHandler)) {
+      helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)),
+                                  error = function(e) NULL)
+      if (!is.function(helpHandlerFunc))
+         return(NULL)
+      help <- helpHandlerFunc("completion", name, src)
+      if (is.null(help))
+         return(NULL)
+      return (help$signature)
+   }
+
    if (identical(src, ""))
       src <- .GlobalEnv
    

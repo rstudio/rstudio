@@ -68,6 +68,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void getArgs(String name,
                 String source,
+                String helpHandler,
                 ServerRequestCallback<String> callback);
    
    void extractChunkOptions(
