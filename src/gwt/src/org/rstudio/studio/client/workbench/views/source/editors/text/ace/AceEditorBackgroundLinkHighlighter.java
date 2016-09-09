@@ -426,11 +426,12 @@ public class AceEditorBackgroundLinkHighlighter
       // use a regex that captures all non-space characters within
       // a web link, and then fix up the captured link by removing
       // trailing punctuation, etc. as required
-      Pattern reWebLink = Pattern.create("(?:https?://|www.)\\S+");
+      Pattern reWebLink = createWebLinkPattern();
       for (Match match = reWebLink.match(line, 0);
            match != null;
            match = match.nextMatch())
       {
+         // compute start, end index for discovered URL
          int startIdx = match.getIndex();
          int endIdx   = match.getIndex() + match.getValue().length();
          
@@ -439,39 +440,44 @@ public class AceEditorBackgroundLinkHighlighter
          if (token.hasType("string"))
             continue;
          
+         String url = match.getValue();
+         
+         // trim off enclosing brackets
+         if (!url.matches(reWebLink()))
+         {
+            startIdx++;
+            endIdx--;
+            url = url.substring(1, url.length() - 1);
+         }
+         
          // trim off trailing punctuation (characters unlikely
          // to be found at the end of a url)
-         String url = match.getValue();
          String trimmed = url.replaceAll("[,.?!@#$%^&*;:-]+$", "");
          endIdx -= (url.length() - trimmed.length());
          url = trimmed;
          
-         // attempt to trim off enclosing quotes, etc
-         int trimLeftCount = 0;
-         for (int index = startIdx - 1; index >= 0; index--)
-         {
-            char beforeStart = line.charAt(index);
-            boolean needsTrim =
-                  beforeStart == '('  && url.endsWith(")")  ||
-                  beforeStart == '['  && url.endsWith("]")  ||
-                  beforeStart == '{'  && url.endsWith("}")  ||
-                  beforeStart == '['  && url.endsWith("]")  ||
-                  beforeStart == '<'  && url.endsWith(">")  ||
-                  beforeStart == '"'  && url.endsWith("\"") ||
-                  beforeStart == '\'' && url.endsWith("'");
-
-            if (needsTrim)
-            {
-               url = url.substring(0, url.length() - 1);
-               trimLeftCount++;
-            }
-         }
-         
-         // apply trimming
-         endIdx -= trimLeftCount;
-         
+         // perform highlighting
          highlight(editor, row, startIdx, endIdx);
       }
+   }
+   
+   private static String reWebLink()
+   {
+      return "(?:\\w+://|www.)\\S+";
+   }
+   
+   private static Pattern createWebLinkPattern()
+   {
+      String rePattern = StringUtil.join(new String[] {
+            "\\{" + reWebLink() + "?\\}",
+            "\\(" + reWebLink() + "?\\)",
+            "\\[" + reWebLink() + "?\\]",
+            "\\<" + reWebLink() + "?\\>",
+            "'"   + reWebLink() + "'",
+            "\""  + reWebLink() + "\"",
+            reWebLink()
+      }, "|");
+      return Pattern.create(rePattern);
    }
    
    private Highlighter markdownLinkHighlighter()
