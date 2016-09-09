@@ -1209,6 +1209,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "   @JsMethod(namespace = \"\") public static void o() {}",
         "   @JsProperty(namespace = \"\") public int p;",
         "   @JsMethod(namespace = \"a\") public void q() {}",
+        "}",
+        "@JsType(namespace = \"<window>\") public static class JsTypeOnWindow{",
+        "   @JsProperty(namespace = \"<window>\") public static int r;",
+        "   @JsMethod(namespace = \"<window>\") public static  void s() {}",
         "}");
 
     assertBuggyFails(
@@ -1217,7 +1221,10 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 8: 'int EntryPoint.Buggy.n' has invalid namespace 's^'.",
         "Line 9: 'void EntryPoint.Buggy.o()' cannot have an empty namespace.",
         "Line 10: Instance member 'int EntryPoint.Buggy.p' cannot declare a namespace.",
-        "Line 11: Instance member 'void EntryPoint.Buggy.q()' cannot declare a namespace.");
+        "Line 11: Instance member 'void EntryPoint.Buggy.q()' cannot declare a namespace.",
+        "Line 13: '<window>' can only be used as a namespace of native types and members.",
+        "Line 14: '<window>' can only be used as a namespace of native types and members.",
+        "Line 15: '<window>' can only be used as a namespace of native types and members.");
   }
 
   public void testJsNameGlobalNamespacesSucceeds() throws Exception {
@@ -1232,10 +1239,16 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "   @JsMethod(namespace = JsPackage.GLOBAL, name = \"a.b\") public static native void o();",
         "}",
         "@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = \"a.c\")",
-        "public static class OtherBuggy {",
+        "public static class NativeOnGlobalNamespace {",
         "   @JsMethod(namespace = JsPackage.GLOBAL, name = \"a.d\") static native void o();",
         "   @JsMethod(namespace = JsPackage.GLOBAL, name = \"a.e\") static native void getP();",
         "   @JsProperty(namespace = JsPackage.GLOBAL, name = \"a.f\") public static int n;",
+        "}",
+        "@JsType(isNative = true, namespace = \"<window>\", name = \"a.g\")",
+        "public static class NativeOnWindowNamespace {",
+        "   @JsMethod(namespace = \"<window>\", name = \"a.h\") static native void q();",
+        "   @JsMethod(namespace = \"<window>\", name = \"a.i\") static native void getR();",
+        "   @JsProperty(namespace = \"<window>\", name = \"a.j\") public static int s;",
         "}");
 
     assertBuggySucceeds();

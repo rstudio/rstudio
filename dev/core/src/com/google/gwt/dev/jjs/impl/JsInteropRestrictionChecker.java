@@ -575,11 +575,17 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
     }
   }
 
-  private <T extends HasJsName & HasSourceInfo> void checkJsNamespace(T item) {
+  private <T extends HasJsName & HasSourceInfo & CanBeJsNative> void checkJsNamespace(T item) {
     if (JsInteropUtil.isGlobal(item.getJsNamespace())) {
       return;
     }
-    if (item.getJsNamespace().isEmpty()) {
+    if (JsInteropUtil.isWindow(item.getJsNamespace())) {
+      if (item.isJsNative()) {
+        return;
+      }
+      logError(item, "'%s' can only be used as a namespace of native types and members.",
+          item.getJsNamespace());
+    } else if (item.getJsNamespace().isEmpty()) {
       logError(item, "%s cannot have an empty namespace.", getDescription(item));
     } else if (!JsUtils.isValidJsQualifiedName(item.getJsNamespace())) {
       logError(item, "%s has invalid namespace '%s'.", getDescription(item), item.getJsNamespace());

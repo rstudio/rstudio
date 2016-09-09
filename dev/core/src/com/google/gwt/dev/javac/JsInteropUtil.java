@@ -23,9 +23,13 @@ import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
+
+import java.util.List;
 
 /**
  * Utility functions to interact with JDT classes for JsInterop.
@@ -36,6 +40,26 @@ public final class JsInteropUtil {
 
   public static boolean isGlobal(String jsNamespace) {
     return "<global>".equals(jsNamespace);
+  }
+
+  public static boolean isWindow(String jsNamespace) {
+    return "<window>".equals(jsNamespace);
+  }
+
+  public static String normalizeQualifier(String qualifier) {
+    assert !qualifier.isEmpty();
+    List<String> components = Lists.newArrayList(qualifier.split("\\."));
+    if (isWindow(components.get(0))) {
+      // Emit unqualified if '<window>' namespace was specified.
+      components.remove(0);
+    } else if (isGlobal(components.get(0))) {
+      // Replace global with $wnd.
+      components.set(0, "$wnd");
+    } else {
+      // still emit $wnd as rest implicitly points to global.
+      components.add(0, "$wnd");
+    }
+    return Joiner.on('.').join(components);
   }
 
   public static void maybeSetJsInteropProperties(JDeclaredType type, Annotation[] annotations) {
@@ -129,4 +153,5 @@ public final class JsInteropUtil {
   private static AnnotationBinding getInteropAnnotation(Annotation[] annotations, String name) {
     return JdtUtil.getAnnotation(annotations, "jsinterop.annotations." + name);
   }
+
 }

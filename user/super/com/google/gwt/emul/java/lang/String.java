@@ -161,7 +161,7 @@ public final class String implements Comparable<String>, CharSequence,
     public native String apply(String thisContext, Object[] argsArray);
   }
 
-  @JsProperty(name = "String.fromCharCode", namespace = "window")
+  @JsProperty(name = "String.fromCharCode", namespace = "<window>")
   private static native NativeFunction getFromCharCodeFunction();
 
   public static String valueOf(char[] x) {
@@ -753,7 +753,7 @@ public final class String implements Comparable<String>, CharSequence,
     return start > 0 || end < length ? substring(start, end) : this;
   }
 
-  @JsType(isNative = true, name = "String", namespace = "window")
+  @JsType(isNative = true, name = "String", namespace = "<window>")
   private static class NativeString {
     public static native String fromCharCode(char x);
     public int length;

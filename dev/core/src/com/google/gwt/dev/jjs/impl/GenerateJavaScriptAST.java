@@ -25,6 +25,7 @@ import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.dev.common.InliningMode;
+import com.google.gwt.dev.javac.JsInteropUtil;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -899,7 +900,7 @@ public class GenerateJavaScriptAST {
       JsNameRef methodNameRef;
       if (method.isJsNative()) {
         // Construct Constructor.prototype.jsname or Constructor.
-        methodNameRef = createGlobalQualifier(method, sourceInfo);
+        methodNameRef = createGlobalQualifier(method.getQualifiedJsName(), sourceInfo);
       } else if (method.isConstructor()) {
         /*
          * Constructor calls through {@code this} and {@code super} are always dispatched statically
@@ -981,7 +982,7 @@ public class GenerateJavaScriptAST {
       JConstructor ctor = newInstance.getTarget();
       JsName ctorName = names.get(ctor);
       JsNameRef  reference = ctor.isJsNative()
-          ? createGlobalQualifier(ctor, sourceInfo)
+          ? createGlobalQualifier(ctor.getQualifiedJsName(), sourceInfo)
           : ctorName.makeRef(sourceInfo);
       List<JsExpression> arguments = transform(newInstance.getArgs());
 
@@ -1106,7 +1107,7 @@ public class GenerateJavaScriptAST {
       JMethod method = jsniMethodRef.getTarget();
       if (method.isJsNative()) {
         // Construct Constructor.prototype.jsname or Constructor.
-        return createGlobalQualifier(method, jsniMethodRef.getSourceInfo());
+        return createGlobalQualifier(method.getQualifiedJsName(), jsniMethodRef.getSourceInfo());
       }
       return names.get(method).makeRef(jsniMethodRef.getSourceInfo());
     }
@@ -1721,7 +1722,7 @@ public class GenerateJavaScriptAST {
     private JsNameRef createStaticReference(JMember member, SourceInfo sourceInfo) {
       assert member.isStatic();
       return member.isJsNative()
-          ? createGlobalQualifier(member, sourceInfo)
+          ? createGlobalQualifier(member.getQualifiedJsName(), sourceInfo)
           : names.get(member).makeRef(sourceInfo);
     }
 
@@ -3075,24 +3076,7 @@ public class GenerateJavaScriptAST {
     return names.get(program.getIndexedField(indexedName));
   }
 
-  private static final String WINDOW = "window";
-
-  private static boolean isWindow(String jsNamespace) {
-    return jsNamespace != null
-        && (WINDOW.equals(jsNamespace) || jsNamespace.startsWith(WINDOW + "."));
-  }
-
-  private static JsNameRef createGlobalQualifier(JMember member, SourceInfo sourceInfo) {
-    if (isWindow(member.getJsNamespace())) {
-      return JsUtils.createQualifiedNameRef(
-          member.getQualifiedJsName().substring(WINDOW.length() + 1), sourceInfo);
-    }
-    return createGlobalQualifier(member.getQualifiedJsName(), sourceInfo);
-  }
-
   private static JsNameRef createGlobalQualifier(String qualifier, SourceInfo sourceInfo) {
-    assert !qualifier.isEmpty();
-
-    return JsUtils.createQualifiedNameRef("$wnd." + qualifier, sourceInfo);
+     return JsUtils.createQualifiedNameRef(JsInteropUtil.normalizeQualifier(qualifier), sourceInfo);
   }
 }

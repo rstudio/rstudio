@@ -25,6 +25,7 @@ import javaemul.internal.annotations.DoNotInline;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -435,5 +436,36 @@ public class NativeJsTypeTest extends GWTTestCase {
     assertEquals(0, NativeClassWithStaticOverlayFields.uninitializedInt);
     assertEquals(5, NativeClassWithStaticOverlayFields.initializedInt);
     assertNull(NativeClassWithStaticOverlayFields.uninitializedString);
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "window")
+  private static class MainWindow {
+    public static Object window;
+  }
+
+  // <window> is a special qualifier that allows referencing the iframe window instead of the main
+  // window.
+  @JsType(isNative = true, namespace = "<window>", name = "window")
+  private static class IFrameWindow {
+    public static Object window;
+  }
+
+  @JsType(isNative = true)
+  private static class AlsoMainWindow {
+    @JsProperty(namespace = JsPackage.GLOBAL)
+    public static Object window;
+  }
+
+  @JsType(isNative = true)
+  private static class AlsoIFrameWindow {
+    @JsProperty(namespace = "<window>")
+    public static Object window;
+  }
+
+  public void testMainWindowIsNotIFrameWindow() {
+    assertSame(IFrameWindow.window, AlsoIFrameWindow.window);
+    assertNotSame(AlsoIFrameWindow.window, AlsoMainWindow.window);
+    assertNotSame(IFrameWindow.window, MainWindow.window);
+    assertSame(MainWindow.window, AlsoMainWindow.window);
   }
 }

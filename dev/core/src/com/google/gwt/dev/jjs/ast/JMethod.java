@@ -172,9 +172,9 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     if (actualJsName.isEmpty()) {
       assert !needsDynamicDispatch();
       return namespace;
-    } else if (JsInteropUtil.isGlobal(namespace)) {
+    } else if (JsInteropUtil.isGlobal(namespace) || JsInteropUtil.isWindow(namespace)) {
       assert !needsDynamicDispatch();
-      return actualJsName;
+      return namespace + "." + actualJsName;
     } else {
       return namespace + (isStatic() ? "." : ".prototype.") + actualJsName;
     }
