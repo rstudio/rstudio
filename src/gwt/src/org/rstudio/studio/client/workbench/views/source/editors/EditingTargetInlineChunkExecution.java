@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 
 import java.util.HashMap;
 
-import org.rstudio.core.client.Point;
-import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -34,7 +32,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkInline
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -155,22 +152,9 @@ public class EditingTargetInlineChunkExecution
       else if (event.getExecState() == NotebookDocQueue.CHUNK_EXEC_FINISHED)
       {
          output.setState(ChunkInlineOutput.State.Finished);
-         final ScreenCoordinates pos = computePopupPosition(
-               output.range(), output.getOffsetWidth());
-         output.setPopupPosition(pos.getPageX(), pos.getPageY());
+         output.positionNearRange(display_, output.range());
          output.show();
       }
-   }
-
-   private ScreenCoordinates computePopupPosition(Range range, int width)
-   {
-      Rectangle bounds = display_.getRangeBounds(range);
-      Point center = bounds.center();
-      
-      int pageX = center.getX() - (width / 2);
-      int pageY = bounds.getBottom() + 10;
-      
-      return ScreenCoordinates.create(pageX, pageY);
    }
 
    // Private Members ----

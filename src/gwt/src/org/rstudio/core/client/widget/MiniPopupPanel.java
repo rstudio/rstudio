@@ -14,7 +14,11 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -54,6 +58,24 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    {
       super(autoHide, modal);
       commonInit(useStyleSheet);
+   }
+   
+   public void positionNearRange(DocDisplay display, Range range)
+   {
+      Rectangle bounds = display.getRangeBounds(range);
+      Point center = bounds.center();
+      
+      int pageX = center.getX() - (getOffsetWidth() / 2);
+
+      // prefer displaying popup below associated text, but place above text
+      // if it won't fit below
+      int pageY = bounds.getBottom() + 10;
+      if (pageY + getOffsetHeight() > display.getBounds().getBottom())
+      {
+         pageY = bounds.getTop() - 10 - getOffsetHeight();
+      }
+      
+      setPopupPosition(pageX, pageY);
    }
    
    @Override

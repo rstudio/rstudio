@@ -19,8 +19,6 @@ import java.util.List;
 
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
-import org.rstudio.core.client.Point;
-import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
@@ -40,7 +38,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
@@ -493,10 +490,7 @@ public class MathJax
          public void onMathJaxTypesetComplete(boolean error)
          {
             // re-position popup after render
-            int offsetWidth  = popup_.getOffsetWidth();
-            int offsetHeight = popup_.getOffsetHeight();
-            ScreenCoordinates coordinates = computePopupPosition(offsetWidth, offsetHeight);
-            popup_.setPopupPosition(coordinates.getPageX(), coordinates.getPageY());
+            popup_.positionNearRange(docDisplay_, range_);
             popup_.show();
             
             // invoke user callback if provided
@@ -599,18 +593,6 @@ public class MathJax
          cursorChangedHandler_.removeHandler();
          cursorChangedHandler_ = null;
       }
-   }
-   
-   private ScreenCoordinates computePopupPosition(int offsetWidth, int offsetHeight)
-   {
-      Rectangle bounds = docDisplay_.getRangeBounds(range_);
-      Point center = bounds.center();
-      
-      // prefer displaying popup below associated text
-      int pageX = center.getX() - (offsetWidth / 2);
-      int pageY = bounds.getBottom() + 10;
-      
-      return ScreenCoordinates.create(pageX, pageY);
    }
    
    private boolean isEmptyLatexChunk(String text)

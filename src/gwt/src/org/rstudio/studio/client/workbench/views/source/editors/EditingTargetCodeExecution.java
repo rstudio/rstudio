@@ -355,7 +355,7 @@ public class EditingTargetCodeExecution
          return false;
       
       Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
-      if (!token.hasType("inline_r_chunk"))
+      if (token == null || !token.hasType("inline_r_chunk"))
          return false;
       
       // construct range to execute, trimming off the "`r ...`" boundaries
