@@ -123,6 +123,11 @@ void ChunkExecContext::connect()
    // extract knitr figure options if present
    double figWidth = options_.getOverlayOption("fig.width", 0.0);
    double figHeight = options_.getOverlayOption("fig.height", 0.0);
+   
+   // if 'fig.asp' is set, then use that to override 'fig.height'
+   double figAsp = options_.getOverlayOption("fig.asp", 0.0);
+   if (figAsp != 0.0)
+      figHeight = figWidth * figAsp;
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
