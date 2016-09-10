@@ -803,8 +803,17 @@ public class PaneManager
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
       }
       
-      int index = tabToIndex_.get(tab);
-      panel.selectTab(index);
+      if (tabToIndex_.containsKey(tab))
+      {
+         int index = tabToIndex_.get(tab);
+         panel.selectTab(index);
+      }
+      else
+      {
+         // unexpected; why are we trying to activate a suppressed tab?
+         Debug.logWarning("Attempt to activate suppressed or unavailable " +
+                          "tab '" + tab.name() + "')");
+      }
    }
    
    public void activateTab(String tabName)
@@ -950,6 +959,7 @@ public class PaneManager
                                  MinimizedModuleTabLayoutPanel minimized)
    {
       ArrayList<WorkbenchTab> tabList = new ArrayList<WorkbenchTab>();
+      int tabIdx = 0;
       for (int i = 0; i < tabs.size(); i++)
       {
          Tab tab = tabs.get(i);
@@ -957,7 +967,11 @@ public class PaneManager
          
          wbTabToTab_.put(wbTab, tab);
          tabToPanel_.put(tab, tabPanel);
-         tabToIndex_.put(tab, i);
+         
+         // exclude suppressed tabs from the index since they aren't added to
+         // the panel
+         if (!wbTab.isSuppressed())
+            tabToIndex_.put(tab, tabIdx++);
          
          tabList.add(wbTab);
       }

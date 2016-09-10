@@ -1,0 +1,17 @@
+@CHARSET "US-ASCII";
+
+.output {
+  color: #303030;
+}
+
+.error {
+  color: #f03030;
+}
+
+.panel {
+  background-color: #ffffff;
+}
+
+.panel pre {
+  margin: 7px;
+}

@@ -144,6 +144,13 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
 
 Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 {
+   // inline chunks have no options
+   if (execScope_ == ExecScopeInline)
+   {
+      *pOptions = json::Object();
+      return Success();
+   }
+
    // evaluate this chunk's options in R
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
@@ -236,6 +243,13 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    // do we have any unevaluated code in this execution unit?
    if (pending_.empty())
       return "";
+
+   // inline chunks always execute all their code at once
+   if (execScope_ == ExecScopeInline)
+   {
+      pending_.clear();
+      return string_utils::wideToUtf8(code_);
+   }
 
    // extract next range to execute
    ExecRange& range = *pending_.begin();

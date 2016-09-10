@@ -166,6 +166,7 @@ public class NotebookQueueUnit extends JavaScriptObject
    
    public final static int EXEC_SCOPE_CHUNK   = 0;
    public final static int EXEC_SCOPE_PARTIAL = 1;
+   public final static int EXEC_SCOPE_INLINE  = 2;
    
    public final static int EXEC_MODE_SINGLE = 0;
    public final static int EXEC_MODE_BATCH  = 1;

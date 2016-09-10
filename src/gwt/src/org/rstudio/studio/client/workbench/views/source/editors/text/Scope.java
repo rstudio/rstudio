@@ -22,6 +22,17 @@ public class Scope extends JavaScriptObject
 {
    protected Scope()
    {}
+   
+   public static final native Scope createRScopeNode(String label,
+                                                     Position start,
+                                                     Position end,
+                                                     int scopeType)
+   /*-{
+      var ScopeNode = $wnd.require("mode/r_scope_tree").ScopeNode;
+      var node = new ScopeNode(label, start, start, scopeType);
+      node.end = end;
+      return node;
+   }-*/;
 
    public native final String getLabel() /*-{
       return this.label;
@@ -121,4 +132,8 @@ public class Scope extends JavaScriptObject
       return this.attributes && this.attributes.depth || 0;
    }-*/;
 
+   public static final int SCOPE_TYPE_ROOT    = 1;
+   public static final int SCOPE_TYPE_BRACE   = 2;
+   public static final int SCOPE_TYPE_CHUNK   = 3;
+   public static final int SCOPE_TYPE_SECTION = 4;
 }

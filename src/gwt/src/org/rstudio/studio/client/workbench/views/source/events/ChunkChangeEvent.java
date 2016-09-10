@@ -80,6 +80,12 @@ public class ChunkChangeEvent
       return TYPE;
    }
    
+   @Override
+   public boolean forward()
+   {
+      return false;
+   }
+   
    private String docId_;
    private String chunkId_;
    private int row_;

@@ -77,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
@@ -1433,30 +1432,9 @@ public class RCompletionManager implements CompletionManager
       if (firstLine.matches("^\\s*[?].*"))
          return new AutocompletionContext(token, AutocompletionContext.TYPE_HELP);
       
-      // escape early for (non-examples) roxygen
+      // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
-      {
-         TokenIterator it = docDisplay_.createTokenIterator();
-         for (Token currentToken = it.moveToPosition(input_.getCursorPosition());
-              currentToken != null;
-              currentToken = it.stepBackward())
-         {
-            if (it.bwdToMatchingToken())
-               continue;
-            
-            String tokenContents = currentToken.getValue();
-            if (tokenContents.startsWith("@"))
-            {
-               // if we discovered an '@examples' tag, then we want to use R code style completion
-               if (tokenContents.equals("@examples"))
-                  break;
-
-               return new AutocompletionContext(
-                     token,
-                     AutocompletionContext.TYPE_ROXYGEN);
-            }
-         }
-      }
+         return new AutocompletionContext(token, AutocompletionContext.TYPE_ROXYGEN);
       
       // If the token has '$' or '@', add in the autocompletion context --
       // note that we still need parent contexts to give more information

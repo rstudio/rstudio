@@ -22,13 +22,14 @@ public class ChunkExecUnit
 {
    public ChunkExecUnit(Scope scope)
    {
-      this(scope, null);
+      this(scope, null, NotebookQueueUnit.EXEC_SCOPE_CHUNK);
    }
-
-   public ChunkExecUnit(Scope scope, Range range)
+   
+   public ChunkExecUnit(Scope scope, Range range, int execScope)
    {
       scope_ = scope;
       range_ = range;
+      execScope_ = execScope;
    }
    
    public Scope getScope()
@@ -43,10 +44,10 @@ public class ChunkExecUnit
 
    public int getExecScope()
    {
-      return range_ == null ? NotebookQueueUnit.EXEC_SCOPE_CHUNK :
-         NotebookQueueUnit.EXEC_SCOPE_PARTIAL;
+      return execScope_;
    }
    
    private final Scope scope_;
    private final Range range_;
+   private final int execScope_;
 }
