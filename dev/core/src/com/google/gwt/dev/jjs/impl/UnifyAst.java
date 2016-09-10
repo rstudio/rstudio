@@ -825,12 +825,13 @@ public class UnifyAst {
     // visitor execution after unification. Since we don't want those fields are methods to be
     // prematurely pruned here we defensively trace them now.
     for (JClassType type : program.codeGenTypes) {
-      for (JMethod method : type.getMethods()) {
-        flowInto(method);
-      }
-      for (JField field : type.getFields()) {
-        flowInto(field);
-      }
+      flowInto(type);
+    }
+
+    // Make sure that the rewriting pass for the types that are represented as natives have the
+    // needed members available.
+    for (JDeclaredType type : program.getRepresentedAsNativeTypes()) {
+      flowInto(type);
     }
 
     if (incrementalCompile) {
@@ -1124,11 +1125,15 @@ public class UnifyAst {
     // attempt is shorter.
     processedStaleTypeNames.add(typeName);
     instantiate(type);
-    for (JField field : type.getFields()) {
-      flowInto(field);
-    }
+    flowInto(type);
+  }
+
+  private void flowInto(JDeclaredType type) {
     for (JMethod method : type.getMethods()) {
       flowInto(method);
+    }
+    for (JField field : type.getFields()) {
+      flowInto(field);
     }
   }
 

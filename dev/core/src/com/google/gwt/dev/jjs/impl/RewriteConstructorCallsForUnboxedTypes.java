@@ -23,10 +23,14 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +53,7 @@ public class RewriteConstructorCallsForUnboxedTypes extends JModVisitor {
       createMethodsByType.put(unboxedType, createMethods);
       for (JMethod method : unboxedType.getMethods()) {
         if (method.getName().startsWith(NATIVE_TYPE_CREATEMETHOD_PREFIX)) {
-          createMethods.put(method.getOriginalParamTypes().toString(), method);
+          createMethods.put(getParametersAsString(method), method);
         }
       }
     }
@@ -67,7 +71,7 @@ public class RewriteConstructorCallsForUnboxedTypes extends JModVisitor {
     JMethod createMethod =
         createMethodsByType
             .get(ctor.getEnclosingType())
-            .get(ctor.getOriginalParamTypes().toString());
+            .get(getParametersAsString(ctor));
     assert createMethod != null;
 
     JMethodCall createCall = new JMethodCall(x.getSourceInfo(), null, createMethod);
@@ -84,13 +88,23 @@ public class RewriteConstructorCallsForUnboxedTypes extends JModVisitor {
       JMethod createMethod =
           createMethodsByType
               .get(ctor.getEnclosingType())
-              .get(ctor.getOriginalParamTypes().toString());
+              .get(getParametersAsString(ctor));
       assert createMethod != null;
 
       JsniMethodRef newJsniMethodRef = new JsniMethodRef(x.getSourceInfo(),
           x.getIdent(), createMethod, program.getJavaScriptObject());
       ctx.replaceMe(newJsniMethodRef);
     }
+  }
+
+  private static String getParametersAsString(JMethod method) {
+    return Joiner.on(",").join(Iterables.transform(method.getOriginalParamTypes(),
+        new Function<JType, String>() {
+          @Override
+          public String apply(JType type) {
+            return type.getJsniSignatureName();
+          }
+        }));
   }
 
   private static final String NAME = RewriteConstructorCallsForUnboxedTypes.class

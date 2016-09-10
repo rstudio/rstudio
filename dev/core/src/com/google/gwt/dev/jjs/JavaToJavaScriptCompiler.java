@@ -328,9 +328,6 @@ public final class JavaToJavaScriptCompiler {
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
 
-      // Rewrite calls to from boxed constructor types to specialized unboxed methods
-      RewriteConstructorCallsForUnboxedTypes.exec(jprogram);
-
       // (2) Transform unresolved Java AST to resolved Java AST
       ResolvePermutationDependentValues
           .exec(jprogram, properties, permutation.getPropertyAndBindingInfos());
@@ -350,6 +347,9 @@ public final class JavaToJavaScriptCompiler {
       // constants) and 2) after all normalizations to collect synthetic references (e.g. to
       // record references to runtime classes like LongLib).
       maybeRecordReferencesAndControlFlow(false);
+
+      // Rewrite calls to from boxed constructor types to specialized unboxed methods
+      RewriteConstructorCallsForUnboxedTypes.exec(jprogram);
 
       // Replace compile time constants by their values.
       // TODO(rluble): eventually move to normizeSemantics.
