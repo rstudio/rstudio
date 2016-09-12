@@ -297,7 +297,11 @@ options(help_type = "html")
    if (!is.function(helpHandlerFunc))
       return()
    
-   helpHandlerFunc("completion", topic, source)
+   results <- helpHandlerFunc("completion", topic, source)
+   if (!is.null(results))
+      results$description <- .rs.markdownToHTML(results$description)
+     
+   results 
 })
 
 .rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
@@ -307,7 +311,13 @@ options(help_type = "html")
    if (!is.function(helpHandlerFunc))
       return()
    
-   helpHandlerFunc("parameter", NULL, source)
+   results <- helpHandlerFunc("parameter", NULL, source)
+   if (!is.null(results)) {
+      results$arg_descriptions <- sapply(results$arg_descriptions, 
+                                         .rs.markdownToHTML)
+   }
+   
+   results
 })
 
 .rs.addJsonRpcHandler("show_custom_help_topic", function(helpHandler, topic, source) {

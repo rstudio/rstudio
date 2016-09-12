@@ -260,6 +260,10 @@
    .Call("rs_restartR", afterRestartCommand)
 })
 
+.rs.addFunction("markdownToHTML", function(content) {
+   .Call("rs_markdownToHTML", content)
+})
+
 .rs.addFunction("readUiPref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
