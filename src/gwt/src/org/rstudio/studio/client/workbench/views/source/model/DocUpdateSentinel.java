@@ -460,7 +460,7 @@ public class DocUpdateSentinel
                         // can use them for change detection the next
                         // time around
                         sourceDoc_.setFoldSpec(foldSpec);
-                        sourceDoc_.setChunkDefs(newChunkDefs);
+                        sourceDoc_.getNotebookDoc().setChunkDefs(newChunkDefs);
                         
                         onSuccessfulUpdate(newContents,
                                            newHash,

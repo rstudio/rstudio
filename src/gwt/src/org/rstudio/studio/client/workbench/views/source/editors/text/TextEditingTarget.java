@@ -3123,7 +3123,8 @@ public class TextEditingTarget implements
                {
                   if (docs.get(i).getId() == getId())
                   {
-                     docs.get(i).setChunkDefs(docDisplay_.getChunkDefs());
+                     docs.get(i).getNotebookDoc().setChunkDefs(
+                           docDisplay_.getChunkDefs());
                      docs.get(i).setContents(docDisplay_.getCode());
                      docs.get(i).setDirty(dirtyState_.getValue());
                      break;
