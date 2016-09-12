@@ -857,8 +857,10 @@
       if (is.null(help))
          return(NULL)
       signature <- help$signature
-      paren <- regexpr("\\(", signature)[[1]]
-      signature <- substring(signature, paren)
+      if (!is.null(signature)) {
+         paren <- regexpr("\\(", signature)[[1]]
+         signature <- substring(signature, paren)
+      }
       return (.rs.scalar(signature))
    }
 
