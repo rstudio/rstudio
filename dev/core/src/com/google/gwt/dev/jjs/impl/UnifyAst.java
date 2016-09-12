@@ -679,7 +679,7 @@ public class UnifyAst {
    * to an UnableToCompleteException at the UnifyAst public function boundaries
    */
   private boolean errorsFound = false;
-  private final Set<CompilationUnit> failedUnits = Sets.newIdentityHashSet();
+  private final Set<CompilationUnit> unitsWithErrorsAlreadyReported = Sets.newIdentityHashSet();
   private final Map<String, JField> fieldMap = Maps.newHashMap();
 
   /**
@@ -983,7 +983,7 @@ public class UnifyAst {
 
   private void assimilateSourceUnit(CompilationUnit unit, boolean reportErrors) {
     if (unit.isError()) {
-      if (failedUnits.add(unit) && reportErrors) {
+      if (reportErrors && unitsWithErrorsAlreadyReported.add(unit)) {
         CompilationProblemReporter.reportErrors(logger, unit, false);
         CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
             compilerContext, unit.getTypeName(), true);

@@ -1582,6 +1582,76 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkIncrementalRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption.DETAILED);
   }
 
+  public void testIncrementalRecompile_withErrors()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    MockResource moduleResource =
+        JavaResourceBase.createMockResource(
+            "com/foo/Errors.gwt.xml",
+            "<module>",
+            "  <source path=''/>",
+            "  <entry-point class='com.foo.ErrorsEntryPoint'/>",
+            "  <add-linker name='xsiframe'/>",
+            "</module>");
+
+    MockJavaResource entryPointResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.ErrorsEntryPoint",
+            "package com.foo;",
+            "import com.google.gwt.core.client.EntryPoint;",
+            "public class ErrorsEntryPoint implements EntryPoint {",
+            "  public void onModuleLoad() {",
+            "    Foo.foo();",
+            "  }",
+            "}");
+
+    MockJavaResource fooResource =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "public class Foo {",
+            "  public static void foo() {",
+            "  }",
+            "}");
+
+    MockJavaResource fooResourceWithErrors =
+        JavaResourceBase.createMockJavaResource(
+            "com.foo.Foo",
+            "package com.foo;",
+            "public class Foo {",
+            "  public static void foo() {",
+            "    // x() method is not defined anywhere, should result in a compile error.",
+            "    x();",
+            "  }",
+            "}");
+
+    MinimalRebuildCache minimalRebuildCache = new MinimalRebuildCache();
+    File applicationDir = Files.createTempDir();
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+    compilerOptions.setSourceLevel(SourceLevel.JAVA8);
+
+    // Compile the application with no errors.
+    compileToJs(TreeLogger.NULL, compilerOptions, applicationDir, "com.foo.Errors",
+        Lists.newArrayList(moduleResource, entryPointResource, fooResource), minimalRebuildCache,
+        emptySet, JsOutputOption.OBFUSCATED);
+
+    // Recompile and expect error reporting.
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError("Line 5: The method x() is undefined for the type Foo", null);
+    UnitTestTreeLogger errorLogger = builder.createLogger();
+    try {
+      // Recompile but now the changed file has an error
+      compileToJs(errorLogger, compilerOptions, applicationDir, "com.foo.Errors",
+          Lists.newArrayList(moduleResource, entryPointResource, fooResourceWithErrors),
+          minimalRebuildCache,
+          emptySet, JsOutputOption.OBFUSCATED);
+      fail("Compile should have failed");
+    } catch (UnableToCompleteException expected) {
+      errorLogger.assertLogEntriesContainExpected();
+    }
+  }
+
   public void testIncrementalRecompile_functionSignatureChange() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Not testing recompile equality with Pretty/Obfuscated output since the JsIncrementalNamer's
