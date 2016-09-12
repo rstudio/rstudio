@@ -380,7 +380,7 @@ public class MathJax
       // some cludgey workarounds for MathJax sizing on Windows
       if (BrowseCap.isWindowsDesktop())
       {
-         style.setProperty("fontSize", "200% !important");
+         style.setFontSize(200, Unit.PCT);
          style.setProperty("marginTop", "-20px");
       }
       
