@@ -39,5 +39,9 @@ public interface HelpServerOperations
          String source,
          ServerRequestCallback<HelpInfo.Custom> requestCallback);
    
+   void getCustomParameterHelp(String helpHandler,
+                               String source,
+                               ServerRequestCallback<HelpInfo.Custom> requestCallback);
+   
    void showCustomHelpTopic(String helpHandler, String topic, String source);
 }

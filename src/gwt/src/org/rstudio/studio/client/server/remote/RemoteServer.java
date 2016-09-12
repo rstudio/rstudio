@@ -1017,6 +1017,16 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(source));
       sendRequest(RPC_SCOPE, GET_CUSTOM_HELP, params, requestCallback);
    }
+   
+   public void getCustomParameterHelp(String helpHandler,
+                                      String source,
+                                      ServerRequestCallback<HelpInfo.Custom> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(helpHandler));
+      params.set(1, new JSONString(source));
+      sendRequest(RPC_SCOPE, GET_CUSTOM_PARAMETER_HELP, params, requestCallback);
+   }
 
    
    public void showHelpTopic(String what, String from, int type)
@@ -4932,6 +4942,7 @@ public class RemoteServer implements Server
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
    private static final String SEARCH = "search" ;
    private static final String GET_CUSTOM_HELP = "get_custom_help";
+   private static final String GET_CUSTOM_PARAMETER_HELP = "get_custom_parameter_help";
    private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic" ;
 
    private static final String STAT = "stat";

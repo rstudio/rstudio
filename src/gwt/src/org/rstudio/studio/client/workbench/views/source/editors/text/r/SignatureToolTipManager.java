@@ -485,11 +485,11 @@ public class SignatureToolTipManager
          @Override
          public void onResponseReceived(String arguments)
          {
-            final String signature = fnString + arguments;
-            
             if (StringUtil.isNullOrEmpty(arguments))
                return;
             
+            final String signature = fnString + arguments;
+              
             resolvePositionAndShow(signature, position);
          }
 

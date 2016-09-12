@@ -293,6 +293,16 @@ options(help_type = "html")
    helpHandlerFunc("completion", topic, source)
 })
 
+.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   helpHandlerFunc("parameter", NULL, source)
+})
+
 .rs.addJsonRpcHandler("show_custom_help_topic", function(helpHandler, topic, source) {
    
    helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
