@@ -699,7 +699,11 @@ public class ChunkOutputWidget extends Composite
 
    private void showReadyState()
    {
-      getElement().getStyle().setBackgroundColor(s_colors.background);
+      if (getElement() != null && getElement().getStyle() != null)
+      {
+         getElement().getStyle().setBackgroundColor(s_colors.background);
+      }
+
       if (spinner_ != null)
       {
          spinner_.removeFromParent();
