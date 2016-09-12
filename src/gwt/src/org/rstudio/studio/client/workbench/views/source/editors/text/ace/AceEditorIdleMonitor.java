@@ -158,11 +158,13 @@ public class AceEditorIdleMonitor
       endMonitoring();
       COMMAND_MAP.remove(editor_);
       commands_.clear();
+      timer_.cancel();
    }
    
    private void refreshCommands()
    {
       commands_.clear();
+      timer_.cancel();
       
       // attach commands based on file type
       TextFileType fileType = editor_.getFileType();
