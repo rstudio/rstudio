@@ -96,6 +96,9 @@ public class AceEditorIdleMonitor
    {
       IdleState state = new IdleState(type, mouseX_, mouseY_, modifiers_);
       Map<HandlerRegistration, IdleCommand> commandMap = COMMAND_MAP.get(editor);
+      if (commandMap == null)
+         return;
+      
       for (Map.Entry<HandlerRegistration, IdleCommand> entry : commandMap.entrySet())
       {
          IdleCommand command = entry.getValue();
