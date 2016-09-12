@@ -854,7 +854,8 @@ assign(x = ".rs.acCompletionTypes",
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE,
-                                            cacheable = TRUE)
+                                            cacheable = TRUE,
+                                            helpHandler = NULL)
 {
    if (is.null(results))
       results <- character()
@@ -901,7 +902,8 @@ assign(x = ".rs.acCompletionTypes",
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
-        cacheable = .rs.scalar(cacheable))
+        cacheable = .rs.scalar(cacheable),
+        helpHandler = .rs.scalar(helpHandler))
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -942,6 +944,9 @@ assign(x = ".rs.acCompletionTypes",
    # If one completion states we are not cacheable, that setting is 'sticky'
    if (length(new$cacheable) && !new$cacheable)
       old$cacheable <- new$cacheable
+   
+   if (length(new$helpHandler))
+      old$helpHandler <- new$helpHandler
    
    old
 })
@@ -1028,6 +1033,7 @@ assign(x = ".rs.acCompletionTypes",
       allNames <- character()
       names <- character()
       type <- numeric()
+      helpHandler <- NULL
       
       if (isAt)
       {
@@ -1064,6 +1070,9 @@ assign(x = ".rs.acCompletionTypes",
          if (is.function(dollarNamesMethod))
          {
             allNames <- dollarNamesMethod(object)
+            
+            # check for custom helpHandler
+            helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
          }
          
          # Reference class generators / objects
@@ -1164,7 +1173,8 @@ assign(x = ".rs.acCompletionTypes",
          packages = string,
          quote = FALSE,
          type = type,
-         excludeOtherCompletions = TRUE
+         excludeOtherCompletions = TRUE,
+         helpHandler = helpHandler
       )
    }
    
@@ -1766,6 +1776,29 @@ assign(x = ".rs.acCompletionTypes",
    )
    
    ## Handle some special cases early
+   
+   # custom help handler for arguments
+   if (.rs.acContextTypes$FUNCTION %in% type) {
+      scope <- string[[length(string)]]
+      custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
+      if (!is.null(custom)) {
+         formals <- custom$handler(custom$topic, custom$source)
+         if (!is.null(formals)) {
+            results <- paste(formals$formals, "= ")
+            results <- .rs.selectFuzzyMatches(results, token)
+            return(.rs.makeCompletions(
+               token = token,
+               results = results,
+               packages = scope,
+               type = .rs.acCompletionTypes$ARGUMENT,
+               excludeOtherCompletions = TRUE,
+               helpHandler = formals$helpHandler)
+            )
+         } else {
+            return (.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+         }
+      }
+   }
    
    # help
    if (.rs.acContextTypes$HELP %in% type)

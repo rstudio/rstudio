@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.help.model ;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 
 import org.rstudio.core.client.dom.DomUtils;
@@ -206,6 +207,66 @@ public class HelpInfo extends JavaScriptObject
    private final native String getPackageName() /*-{
       return this.pkgname ? this.pkgname[0] : null ;
    }-*/;
+   
+   public static class Custom extends JavaScriptObject
+   {
+      protected Custom()
+      {  
+      }
+      
+      public final native String getPackageName() /*-{
+         return this.package_name ? this.package_name[0] : "";
+      }-*/;
+
+   
+      public final native String getTitle() /*-{
+         return this.title ? this.title[0] : "";
+      }-*/;
+
+      public final native String getSignature() /*-{
+         return this.signature ? this.signature[0]: "";
+      }-*/;
+   
+      public final native String getDescription() /*-{
+         return this.description ? this.description[0] : "";
+      }-*/;
+      
+      public final native JsArrayString getArgs() /*-{
+         return this.args;
+      }-*/;
+      
+      public final native JsArrayString getArgDescriptions() /*-{
+         return this.arg_descriptions;
+      }-*/;
+      
+      public final ParsedInfo toParsedInfo() 
+      {
+         // values
+         HashMap<String,String> values = new HashMap<String,String>();
+         values.put("Title", getTitle());
+         values.put("Description", getDescription());
+         
+         // args
+         HashMap<String, String> args = null;
+         JsArrayString jsArgs = getArgs();
+         JsArrayString jsArgDescriptions = getArgDescriptions();
+         if (jsArgs != null && jsArgDescriptions != null)
+         {
+            args = new HashMap<String,String>();
+            for (int i =0; i<jsArgs.length(); i++)
+               args.put(jsArgs.get(i), jsArgDescriptions.get(i));
+         }
+          
+         // return parsed info
+         return new ParsedInfo(getPackageName(),
+                               getSignature(),
+                               values,
+                               args,
+                               null);
+      }
+      
+   }
+   
 
    public static class ParsedInfo
    {

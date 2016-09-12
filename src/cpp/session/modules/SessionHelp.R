@@ -290,6 +290,39 @@ options(help_type = "html")
       return()
 })
 
+.rs.addJsonRpcHandler("get_custom_help", function(helpHandler, topic, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   helpHandlerFunc("completion", topic, source)
+})
+
+.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   helpHandlerFunc("parameter", NULL, source)
+})
+
+.rs.addJsonRpcHandler("show_custom_help_topic", function(helpHandler, topic, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   url <- helpHandlerFunc("url", topic, source)
+   if (!is.null(url) && nzchar(url)) # handlers return "" for no help topic
+      utils::browseURL(url)
+})
+
+
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
    # If 'src' is the name of something on the searchpath, get that object

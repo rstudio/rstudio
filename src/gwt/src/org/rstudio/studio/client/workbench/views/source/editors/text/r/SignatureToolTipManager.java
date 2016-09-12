@@ -273,12 +273,14 @@ public class SignatureToolTipManager
       return boring.some(function(x) { return x === name; });
    }-*/;
    
-   public void displayToolTip(final String name, final String source)
+   public void displayToolTip(final String name, 
+                              final String source,
+                              String helpHandler)
    {
       if (isBoringFunction(name))
          return;
       
-      server_.getArgs(name, source, new ServerRequestCallback<String>()
+      server_.getArgs(name, source, helpHandler, new ServerRequestCallback<String>()
       {
          @Override
          public void onResponseReceived(String response)
@@ -478,16 +480,16 @@ public class SignatureToolTipManager
       setAnchor(cursor.cloneCursor());
       
       final String fnString = callString;
-      server_.getArgs(fnString, "", new ServerRequestCallback<String>() {
+      server_.getArgs(fnString, "", "", new ServerRequestCallback<String>() {
          
          @Override
          public void onResponseReceived(String arguments)
          {
-            final String signature = fnString + arguments;
-            
             if (StringUtil.isNullOrEmpty(arguments))
                return;
             
+            final String signature = fnString + arguments;
+              
             resolvePositionAndShow(signature, position);
          }
 

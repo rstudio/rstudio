@@ -2096,7 +2096,9 @@ public class RCompletionManager implements CompletionManager
             editor.moveCursorLeft();
          
          if (RCompletionType.isFunctionType(qualifiedName.type))
-            sigTipManager_.displayToolTip(qualifiedName.name, qualifiedName.source);
+            sigTipManager_.displayToolTip(qualifiedName.name, 
+                                          qualifiedName.source,
+                                          qualifiedName.helpHandler);
       }
       
       private final Invalidation.Token invalidationToken_ ;

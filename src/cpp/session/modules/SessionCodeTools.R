@@ -538,8 +538,60 @@
 
    if (length(pieces) > 1)
       print(help(pieces[2], package=pieces[1], help_type='html'))
+   else {
+      # try custom help handler, otherwise fall through to default handler
+      helpUrl <- .rs.getCustomHelpUrl(token)
+      if (!is.null(helpUrl)) {
+         if (nzchar(helpUrl)) # handlers return "" to indicate no help available
+            utils::browseURL(helpUrl)
+      } else {
+         print(help(pieces[1], help_type='html', try.all.packages=TRUE))
+      }
+   }
+})
+
+.rs.addFunction("findCustomHelpContext", function(token, handler) {
+   
+   # if the token has a '$' in it then it might have a custom
+   # help handler that can field this request
+   if (grepl("\\$", token)) {
+      
+      # split on $ (it has at least one so components will be > 1)
+      components <- strsplit(token, "\\$")[[1]]
+      topic <- components[[length(components)]]
+      source <- paste(components[1:(length(components)-1)], collapse = "$")
+      
+      # evaluate the source
+      source <- tryCatch(eval(parse(text = source), envir = globalenv()), 
+                         error = function(e) NULL)
+      
+      # look for a help url handler
+      if (!is.null(source)) {
+         for (cls in class(source)) {
+            res <- utils::getAnywhere(paste(handler, ".", cls, sep=""))
+            if (length(res$objs) > 0) {
+               return(list(
+                  topic = topic,
+                  source = source,
+                  handler = res$objs[[1]]
+               ))
+            }
+         }
+      }
+   }
+   
+   # default to none found
+   NULL
+   
+})
+
+# check to see whether there is a custom help handler for this token
+.rs.addFunction("getCustomHelpUrl", function(token) {
+   custom <- .rs.findCustomHelpContext(token, "help_url_handler")
+   if (!is.null(custom))
+      custom$handler(custom$topic, custom$source)
    else
-      print(help(pieces[1], help_type='html', try.all.packages=T))
+      NULL
 })
 
 .rs.addJsonRpcHandler("execute_r_code", function(code)
@@ -793,8 +845,26 @@
    NULL
 })
 
-.rs.addJsonRpcHandler("get_args", function(name, src)
+.rs.addJsonRpcHandler("get_args", function(name, src, helpHandler)
 {
+   # call custom help handler if provided
+   if (nzchar(helpHandler)) {
+      helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)),
+                                  error = function(e) NULL)
+      if (!is.function(helpHandlerFunc))
+         return(NULL)
+      help <- helpHandlerFunc("completion", name, src)
+      if (is.null(help))
+         return(NULL)
+      signature <- help$signature
+      if (!is.null(signature)) {
+         paren <- regexpr("\\(", signature)[[1]]
+         if (paren != -1)
+            signature <- substring(signature, paren)
+      }
+      return (.rs.scalar(signature))
+   }
+
    if (identical(src, ""))
       src <- .GlobalEnv
    
