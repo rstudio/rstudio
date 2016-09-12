@@ -945,6 +945,9 @@ assign(x = ".rs.acCompletionTypes",
    if (length(new$cacheable) && !new$cacheable)
       old$cacheable <- new$cacheable
    
+   if (length(new$helpHandler))
+      old$helpHandler <- new$helpHandler
+   
    old
 })
 
@@ -1773,6 +1776,25 @@ assign(x = ".rs.acCompletionTypes",
    )
    
    ## Handle some special cases early
+   
+   # custom help handler for arguments
+   if (.rs.acContextTypes$FUNCTION %in% type) {
+      scope <- string[[length(string)]]
+      custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
+      if (!is.null(custom)) {
+         formals <- custom$handler(custom$topic, custom$source)
+         results <- paste(formals$formals, "= ")
+         results <- .rs.selectFuzzyMatches(results, token)
+         return(.rs.makeCompletions(
+            token = token,
+            results = results,
+            packages = scope,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            excludeOtherCompletions = TRUE,
+            helpHandler = formals$helpHandler)
+         )
+      }
+   }
    
    # help
    if (.rs.acContextTypes$HELP %in% type)

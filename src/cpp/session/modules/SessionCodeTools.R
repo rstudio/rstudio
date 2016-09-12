@@ -550,8 +550,7 @@
    }
 })
 
-# check to see whether there is a custom help handler for this token
-.rs.addFunction("getCustomHelpUrl", function(token) {
+.rs.addFunction("findCustomHelpContext", function(token, handler) {
    
    # if the token has a '$' in it then it might have a custom
    # help handler that can field this request
@@ -569,10 +568,13 @@
       # look for a help url handler
       if (!is.null(source)) {
          for (cls in class(source)) {
-            res <- utils::getAnywhere(paste0("help_url_handler.", cls))
+            res <- utils::getAnywhere(paste0(handler, ".", cls))
             if (length(res$objs) > 0) {
-               handler <- res$objs[[1]]
-               return (handler(topic, source))
+               return(list(
+                  topic = topic,
+                  source = source,
+                  handler = res$objs[[1]]
+               ))
             }
          }
       }
@@ -580,6 +582,16 @@
    
    # default to none found
    NULL
+   
+})
+
+# check to see whether there is a custom help handler for this token
+.rs.addFunction("getCustomHelpUrl", function(token) {
+   custom <- .rs.findCustomHelpContext(token, "help_url_handler")
+   if (!is.null(custom))
+      custom$handler(custom$topic, custom$source)
+   else
+      NULL
 })
 
 .rs.addJsonRpcHandler("execute_r_code", function(code)
