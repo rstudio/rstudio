@@ -410,7 +410,7 @@ public class ChunkOutputStream extends FlowPanel
    {
       for (Widget w: this)
       {
-         if (isPlotWidget(w))
+         if (w instanceof ChunkPlotWidget)
          {
             return true;
          }
@@ -519,12 +519,6 @@ public class ChunkOutputStream extends FlowPanel
    
    // Private methods ---------------------------------------------------------
    
-   private boolean isPlotWidget(Widget w)
-   {
-     return w instanceof FixedRatioWidget && 
-             ((FixedRatioWidget)w).getWidget() instanceof Image;
-   }
-
    private String classOfOutput(int type)
    {
       if (type == ChunkConsolePage.CONSOLE_ERROR)
