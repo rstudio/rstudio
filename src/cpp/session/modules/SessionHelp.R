@@ -301,7 +301,7 @@ options(help_type = "html")
       return()
    
    url <- helpHandlerFunc("url", topic, source)
-   if (!is.null(url))
+   if (!is.null(url) && nzchar(url)) # handlers return "" for no help topic
       utils::browseURL(url)
 })
 
