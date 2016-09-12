@@ -157,6 +157,7 @@
 * Prompt to save untitled (never saved) documents when closing source windows
 * Don't depend on number of call frames when detecting install.packages call
 * Fix failure to install packages with long install.packages commands after restart
+* Server Pro: Fix issue causing sporadic session launch failures when using PAM sessions
 
 
 
