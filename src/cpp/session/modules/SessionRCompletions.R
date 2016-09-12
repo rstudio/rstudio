@@ -1072,7 +1072,7 @@ assign(x = ".rs.acCompletionTypes",
             allNames <- dollarNamesMethod(object)
             
             # check for custom helpHandler
-            helpHandler <- attr(allNames, "helpHandler")
+            helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
          }
          
          # Reference class generators / objects
