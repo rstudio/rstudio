@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.mathjax;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
@@ -375,6 +376,13 @@ public class MathJax
       Style style = panel.getElement().getStyle();
       style.setProperty("pointerEvents", "none");
       style.setCursor(Style.Cursor.DEFAULT);
+      
+      // some cludgey workarounds for MathJax sizing on Windows
+      if (BrowseCap.isWindowsDesktop())
+      {
+         style.setProperty("fontSize", "200% !important");
+         style.setProperty("marginTop", "-20px");
+      }
       
       return panel;
    }
