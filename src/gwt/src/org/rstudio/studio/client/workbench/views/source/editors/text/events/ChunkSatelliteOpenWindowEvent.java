@@ -74,7 +74,6 @@ public class ChunkSatelliteOpenWindowEvent
    @Override
    public boolean forward()
    {
-      // this event was intended to be used to notify the main window
       return true;
    }
    

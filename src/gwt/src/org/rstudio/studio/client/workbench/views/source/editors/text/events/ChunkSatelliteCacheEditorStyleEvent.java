@@ -81,7 +81,7 @@ public class ChunkSatelliteCacheEditorStyleEvent
    @Override
    public boolean forward()
    {
-      return false;
+      return true;
    }
 
    private String docId_;

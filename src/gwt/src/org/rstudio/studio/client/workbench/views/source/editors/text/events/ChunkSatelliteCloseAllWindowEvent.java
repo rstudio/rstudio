@@ -1,5 +1,5 @@
 /*
- * ChunkSatelliteCloseWindowEvent.java
+ * ChunkSatelliteCloseAllWindowEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -21,34 +21,27 @@ import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteCloseWindowEvent 
-             extends CrossWindowEvent<ChunkSatelliteCloseWindowEvent.Handler>
+public class ChunkSatelliteCloseAllWindowEvent 
+             extends CrossWindowEvent<ChunkSatelliteCloseAllWindowEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteCloseWindow(ChunkSatelliteCloseWindowEvent event);
+      void onChunkSatelliteCloseAllWindow(ChunkSatelliteCloseAllWindowEvent event);
    }
 
-   public ChunkSatelliteCloseWindowEvent()
+   public ChunkSatelliteCloseAllWindowEvent()
    {
    }
    
-   public ChunkSatelliteCloseWindowEvent(
-      String docId,
-      String chunkId)
+   public ChunkSatelliteCloseAllWindowEvent(
+      String docId)
    {
       docId_ = docId;
-      chunkId_ = chunkId;
    }
 
    public String getDocId()
    {
       return docId_;
-   }
-
-   public String getChunkId()
-   {
-      return chunkId_;
    }
 
    @Override
@@ -60,18 +53,16 @@ public class ChunkSatelliteCloseWindowEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteCloseWindow(this);
+      handler.onChunkSatelliteCloseAllWindow(this);
    }
 
    @Override
    public boolean forward()
    {
-      // this event was intended to be used to notify the main window
       return true;
    }
    
    private String docId_;
-   private String chunkId_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
