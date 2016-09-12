@@ -215,20 +215,20 @@ public class HelpInfo extends JavaScriptObject
       }
       
       public final native String getPackageName() /*-{
-         return this.package_name[0];
+         return this.package_name ? this.package_name[0] : "";
       }-*/;
 
    
       public final native String getTitle() /*-{
-         return this.title ? this.title[0] : null;
+         return this.title ? this.title[0] : "";
       }-*/;
 
       public final native String getSignature() /*-{
-         return this.signature ? this.signature[0]: null;
+         return this.signature ? this.signature[0]: "";
       }-*/;
    
       public final native String getDescription() /*-{
-         return this.description[0];
+         return this.description ? this.description[0] : "";
       }-*/;
       
       public final native JsArrayString getArgs() /*-{
