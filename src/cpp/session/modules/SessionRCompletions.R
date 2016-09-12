@@ -1783,16 +1783,20 @@ assign(x = ".rs.acCompletionTypes",
       custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
       if (!is.null(custom)) {
          formals <- custom$handler(custom$topic, custom$source)
-         results <- paste(formals$formals, "= ")
-         results <- .rs.selectFuzzyMatches(results, token)
-         return(.rs.makeCompletions(
-            token = token,
-            results = results,
-            packages = scope,
-            type = .rs.acCompletionTypes$ARGUMENT,
-            excludeOtherCompletions = TRUE,
-            helpHandler = formals$helpHandler)
-         )
+         if (!is.null(formals)) {
+            results <- paste(formals$formals, "= ")
+            results <- .rs.selectFuzzyMatches(results, token)
+            return(.rs.makeCompletions(
+               token = token,
+               results = results,
+               packages = scope,
+               type = .rs.acCompletionTypes$ARGUMENT,
+               excludeOtherCompletions = TRUE,
+               helpHandler = formals$helpHandler)
+            )
+         } else {
+            return (.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+         }
       }
    }
    
