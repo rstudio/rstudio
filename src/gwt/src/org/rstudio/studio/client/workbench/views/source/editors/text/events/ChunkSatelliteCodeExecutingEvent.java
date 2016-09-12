@@ -34,18 +34,29 @@ public class ChunkSatelliteCodeExecutingEvent
    }
    
    public ChunkSatelliteCodeExecutingEvent(
-      int mode, int scope
+      String docId, String chunkId, int mode, int scope
    )
    {
+      docId_ = docId;
+      chunkId_ = chunkId;
       mode_ = mode;
       scope_ = scope;
+   }
+
+   public String getDocId()
+   {
+      return docId_;
+   }
+   
+   public String getChunkId()
+   {
+      return chunkId_;
    }
    
    public int getMode()
    {
       return mode_;
    }
-
 
    public int getScope()
    {
@@ -64,6 +75,14 @@ public class ChunkSatelliteCodeExecutingEvent
       handler.onChunkSatelliteCodeExecuting(this);
    }
 
+   @Override
+   public boolean forward()
+   {
+      return true;
+   }
+
+   private String docId_;
+   private String chunkId_;
    private int mode_;
    private int scope_;
 

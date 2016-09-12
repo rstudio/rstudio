@@ -1,5 +1,5 @@
 /*
- * ChunkSatelliteWindowOpenedEvent.java
+ * ChunkSatelliteOpenWindowEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,30 +15,33 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.event.shared.EventHandler;
 
 @JavaScriptSerializable
-public class ChunkSatelliteWindowOpenedEvent 
-             extends CrossWindowEvent<ChunkSatelliteWindowOpenedEvent.Handler>
+public class ChunkSatelliteOpenWindowEvent 
+             extends CrossWindowEvent<ChunkSatelliteOpenWindowEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
-      void onChunkSatelliteWindowOpened(ChunkSatelliteWindowOpenedEvent event);
+      void onChunkSatelliteOpenWindow(ChunkSatelliteOpenWindowEvent event);
    }
 
-   public ChunkSatelliteWindowOpenedEvent()
+   public ChunkSatelliteOpenWindowEvent()
    {
    }
    
-   public ChunkSatelliteWindowOpenedEvent(
+   public ChunkSatelliteOpenWindowEvent(
       String docId,
-      String chunkId)
+      String chunkId,
+      Size size)
    {
       docId_ = docId;
       chunkId_ = chunkId;
+      size_ = size;
    }
 
    public String getDocId()
@@ -51,6 +54,11 @@ public class ChunkSatelliteWindowOpenedEvent
       return chunkId_;
    }
 
+   public Size getSize()
+   {
+      return size_;
+   }
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -60,7 +68,7 @@ public class ChunkSatelliteWindowOpenedEvent
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onChunkSatelliteWindowOpened(this);
+      handler.onChunkSatelliteOpenWindow(this);
    }
 
    @Override
@@ -71,6 +79,7 @@ public class ChunkSatelliteWindowOpenedEvent
    
    private String docId_;
    private String chunkId_;
+   private Size size_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

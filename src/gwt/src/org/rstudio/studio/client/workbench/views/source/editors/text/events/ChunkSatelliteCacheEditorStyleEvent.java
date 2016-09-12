@@ -34,14 +34,21 @@ public class ChunkSatelliteCacheEditorStyleEvent
    }
 
    public ChunkSatelliteCacheEditorStyleEvent(
+      String docId,
       String foregroundColor,
       String backgroundColor,
       String aceEditorColor
    )
    {
+      docId_ = docId;
       foregroundColor_ = foregroundColor;
       backgroundColor_ = backgroundColor;
       aceEditorColor_ = aceEditorColor;
+   }
+
+   public String getDocId()
+   {
+      return docId_;
    }
    
    public String getBackgroundColor()
@@ -71,6 +78,13 @@ public class ChunkSatelliteCacheEditorStyleEvent
       handler.onChunkSatelliteCacheEditorStyle(this);
    }
 
+   @Override
+   public boolean forward()
+   {
+      return true;
+   }
+
+   private String docId_;
    private String foregroundColor_;
    private String backgroundColor_;
    private String aceEditorColor_;

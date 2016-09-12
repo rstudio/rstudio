@@ -155,6 +155,11 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkSatelliteCodeExecuting(ChunkSatelliteCodeExecutingEvent event)
    {
+      String docId = chunkWindowParams_.getDocId();
+      
+      if (event.getDocId() != docId)
+         return;
+
       chunkOutputWidget_.setCodeExecuting(
          event.getMode(),
          event.getScope());
@@ -163,6 +168,11 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    @Override
    public void onChunkSatelliteCacheEditorStyle(ChunkSatelliteCacheEditorStyleEvent event)
    {
+      String docId = chunkWindowParams_.getDocId();
+      
+      if (event.getDocId() != docId)
+         return;
+
       ChunkOutputWidget.cacheEditorStyle(
          event.getForegroundColor(),
          event.getBackgroundColor(),
