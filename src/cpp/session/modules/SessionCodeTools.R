@@ -568,7 +568,7 @@
       # look for a help url handler
       if (!is.null(source)) {
          for (cls in class(source)) {
-            res <- utils::getAnywhere(paste0(handler, ".", cls))
+            res <- utils::getAnywhere(paste(handler, ".", cls, sep=""))
             if (length(res$objs) > 0) {
                return(list(
                   topic = topic,
