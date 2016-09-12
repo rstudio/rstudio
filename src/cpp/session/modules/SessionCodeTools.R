@@ -559,7 +559,7 @@
       # split on $ (it has at least one so components will be > 1)
       components <- strsplit(token, "\\$")[[1]]
       topic <- components[[length(components)]]
-      source <- paste(components[1:length(components)-1], collapse = "$")
+      source <- paste(components[1:(length(components)-1)], collapse = "$")
       
       # evaluate the source
       source <- tryCatch(eval(parse(text = source), envir = globalenv()), 
