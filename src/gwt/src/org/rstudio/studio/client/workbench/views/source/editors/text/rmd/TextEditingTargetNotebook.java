@@ -126,7 +126,8 @@ public class TextEditingTargetNotebook
                                     DirtyState dirtyState,
                                     DocUpdateSentinel docUpdateSentinel,
                                     SourceDocument document,
-                                    ArrayList<HandlerRegistration> releaseOnDismiss)
+                                    ArrayList<HandlerRegistration> releaseOnDismiss,
+                                    DependencyManager dependencyManager)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;  
@@ -141,6 +142,7 @@ public class TextEditingTargetNotebook
       chunks_ = chunks;
       editingDisplay_ = editingDisplay;
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
+      dependencyManager_ = dependencyManager;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       // initialize the display's default output mode based on 
@@ -855,37 +857,44 @@ public class TextEditingTargetNotebook
    @Override
    public void onRenderFinished(RenderFinishedEvent event)
    {
-      // single shot rendering of output line widgets (we wait until after the
-      // first render to ensure that ace places the line widgets correctly)
-      if (initialChunkDefs_ != null)
-      {
-         for (int i = 0; i < initialChunkDefs_.length(); i++)
+      dependencyManager_.withRMarkdown("R Notebook",
+         "Opening R Notebook", new Command() {
+         @Override
+         public void execute()
          {
-            createChunkOutput(initialChunkDefs_.get(i));
-         }
-         // if we got chunk content, load initial chunk output from server
-         if (initialChunkDefs_.length() > 0)
-            loadInitialChunkOutput();
+            // single shot rendering of output line widgets (we wait until after the
+            // first render to ensure that ace places the line widgets correctly)
+            if (initialChunkDefs_ != null)
+            {
+               for (int i = 0; i < initialChunkDefs_.length(); i++)
+               {
+                  createChunkOutput(initialChunkDefs_.get(i));
+               }
+               // if we got chunk content, load initial chunk output from server
+               if (initialChunkDefs_.length() > 0)
+                  loadInitialChunkOutput();
 
-         initialChunkDefs_ = null;
-         
-         // sync to editor style changes
-         editingTarget_.addEditorThemeStyleChangedHandler(
-                                       TextEditingTargetNotebook.this);
-         
-         // read and/or set initial render width
-         lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
-         if (lastPlotWidth_ == 0)
-         {
-            lastPlotWidth_ = getPlotWidth();
+               initialChunkDefs_ = null;
+               
+               // sync to editor style changes
+               editingTarget_.addEditorThemeStyleChangedHandler(
+                                             TextEditingTargetNotebook.this);
+               
+               // read and/or set initial render width
+               lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
+               if (lastPlotWidth_ == 0)
+               {
+                  lastPlotWidth_ = getPlotWidth();
+               }
+            }
+            else
+            {
+               // on ordinary render, we need to sync any chunk line widgets that have
+               // just been laid out; debounce this
+               syncHeightTimer_.schedule(250);
+            }
          }
-      }
-      else
-      {
-         // on ordinary render, we need to sync any chunk line widgets that have
-         // just been laid out; debounce this
-         syncHeightTimer_.schedule(250);
-      }
+      });
    }
 
    @Override
@@ -1779,6 +1788,7 @@ public class TextEditingTargetNotebook
    private final DirtyState dirtyState_;
    private final NotebookDoc notebookDoc_;
    private final TextEditingTargetScopeHelper scopeHelper_;
+   private final DependencyManager dependencyManager_;
    
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;

@@ -1235,7 +1235,7 @@ public class TextEditingTarget implements
       chunks_ = new TextEditingTargetChunks(this);
       notebook_ = new TextEditingTargetNotebook(this, chunks_, view_, 
             docDisplay_, dirtyState_, docUpdateSentinel_, document, 
-            releaseOnDismiss_);
+            releaseOnDismiss_, dependencyManager_);
       view_.addResizeHandler(notebook_);
       
       

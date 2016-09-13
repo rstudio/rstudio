@@ -2453,31 +2453,12 @@ public class Source implements InsertSourceHandler,
     
    public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
-      if (event.getFileType().isRmd())
-      {
-         dependencyManager_.withRMarkdown("R Notebook",
-            "Opening R Notebook", new Command() {
-            @Override
-            public void execute()
-            {
-               doOpenSourceFile(event.getFile(),
-                          event.getFileType(),
-                          event.getPosition(),
-                          null, 
-                          event.getNavigationMethod(),
-                          false);
-            }
-         });
-      }
-      else
-      {
-        doOpenSourceFile(event.getFile(),
-                       event.getFileType(),
-                       event.getPosition(),
-                       null, 
-                       event.getNavigationMethod(),
-                       false);
-      }
+      doOpenSourceFile(event.getFile(),
+                     event.getFileType(),
+                     event.getPosition(),
+                     null, 
+                     event.getNavigationMethod(),
+                     false);
    }
    
    
