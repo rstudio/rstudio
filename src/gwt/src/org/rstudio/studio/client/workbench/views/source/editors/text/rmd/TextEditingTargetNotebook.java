@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -858,43 +859,45 @@ public class TextEditingTargetNotebook
    public void onRenderFinished(RenderFinishedEvent event)
    {
       dependencyManager_.withRMarkdown("R Notebook",
-         "Opening R Notebook", new Command() {
-         @Override
-         public void execute()
+         "Opening R Notebook", new CommandWithArg<Boolean>()
          {
-            // single shot rendering of output line widgets (we wait until after the
-            // first render to ensure that ace places the line widgets correctly)
-            if (initialChunkDefs_ != null)
+            @Override
+            public void execute(Boolean arg)
             {
-               for (int i = 0; i < initialChunkDefs_.length(); i++)
+               // single shot rendering of output line widgets (we wait until after the
+               // first render to ensure that ace places the line widgets correctly)
+               if (initialChunkDefs_ != null)
                {
-                  createChunkOutput(initialChunkDefs_.get(i));
+                  for (int i = 0; i < initialChunkDefs_.length(); i++)
+                  {
+                     createChunkOutput(initialChunkDefs_.get(i));
+                  }
+                  // if we got chunk content, load initial chunk output from server
+                  if (initialChunkDefs_.length() > 0)
+                     loadInitialChunkOutput();
+   
+                  initialChunkDefs_ = null;
+                  
+                  // sync to editor style changes
+                  editingTarget_.addEditorThemeStyleChangedHandler(
+                                                TextEditingTargetNotebook.this);
+                  
+                  // read and/or set initial render width
+                  lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
+                  if (lastPlotWidth_ == 0)
+                  {
+                     lastPlotWidth_ = getPlotWidth();
+                  }
                }
-               // if we got chunk content, load initial chunk output from server
-               if (initialChunkDefs_.length() > 0)
-                  loadInitialChunkOutput();
-
-               initialChunkDefs_ = null;
-               
-               // sync to editor style changes
-               editingTarget_.addEditorThemeStyleChangedHandler(
-                                             TextEditingTargetNotebook.this);
-               
-               // read and/or set initial render width
-               lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
-               if (lastPlotWidth_ == 0)
+               else
                {
-                  lastPlotWidth_ = getPlotWidth();
+                  // on ordinary render, we need to sync any chunk line widgets that have
+                  // just been laid out; debounce this
+                  syncHeightTimer_.schedule(250);
                }
-            }
-            else
-            {
-               // on ordinary render, we need to sync any chunk line widgets that have
-               // just been laid out; debounce this
-               syncHeightTimer_.schedule(250);
             }
          }
-      });
+      );
    }
 
    @Override
