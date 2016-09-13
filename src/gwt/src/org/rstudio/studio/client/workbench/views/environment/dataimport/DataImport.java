@@ -317,7 +317,7 @@ public class DataImport extends Composite
    {
       globalDisplay_.promptForText(
          title,
-         "Please a comma separated list of factors",
+         "Please insert a comma separated list of factors",
          "",
          new OperationWithInput<String>()
          {
