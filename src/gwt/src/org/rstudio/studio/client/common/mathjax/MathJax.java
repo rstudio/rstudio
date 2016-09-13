@@ -45,16 +45,18 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Docu
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -372,18 +374,9 @@ public class MathJax
    {
       final FlowPanel panel = new FlowPanel();
       panel.addStyleName(MATHJAX_ROOT_CLASSNAME);
-      
-      Style style = panel.getElement().getStyle();
-      style.setProperty("pointerEvents", "none");
-      style.setCursor(Style.Cursor.DEFAULT);
-      
-      // some cludgey workarounds for MathJax sizing on Windows
+      panel.addStyleName(RES.styles().mathjaxRoot());
       if (BrowseCap.isWindowsDesktop())
-      {
-         style.setFontSize(200, Unit.PCT);
-         style.setProperty("marginTop", "-20px");
-      }
-      
+         panel.addStyleName(RES.styles().mathjaxRootWindows());
       return panel;
    }
    
@@ -613,6 +606,24 @@ public class MathJax
       for (HandlerRegistration handler : handlers_)
          handler.removeHandler();
       handlers_.clear();
+   }
+   
+   public interface Styles extends CssResource
+   {
+      String mathjaxRoot();
+      String mathjaxRootWindows();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("MathJax.css")
+      Styles styles();
+   }
+
+   private static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
    }
    
    private final DocDisplay docDisplay_;
