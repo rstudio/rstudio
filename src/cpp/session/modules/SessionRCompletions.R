@@ -1779,7 +1779,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # custom help handler for arguments
    if (.rs.acContextTypes$FUNCTION %in% type) {
-      scope <- string[[length(string)]]
+      scope <- string[[1]]
       custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
       if (!is.null(custom)) {
          formals <- custom$handler(custom$topic, custom$source)
