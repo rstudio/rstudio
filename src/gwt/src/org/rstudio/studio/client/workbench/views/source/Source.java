@@ -2451,14 +2451,14 @@ public class Source implements InsertSourceHandler,
    }
    
     
-   public void onOpenSourceFile(OpenSourceFileEvent event)
+   public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
       doOpenSourceFile(event.getFile(),
-                       event.getFileType(),
-                       event.getPosition(),
-                       null, 
-                       event.getNavigationMethod(),
-                       false);
+                     event.getFileType(),
+                     event.getPosition(),
+                     null, 
+                     event.getNavigationMethod(),
+                     false);
    }
    
    
