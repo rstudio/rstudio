@@ -75,15 +75,14 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
       // find all the chunks and play them back to the client
       BOOST_FOREACH(const std::string& chunkId, chunkIds)
       {
-         if (singleChunkId.empty() || singleChunkId == chunkId)
-         {
-            enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
-         }
+         enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
       }
    }
    else
    {
-      enqueueChunkOutput(docPath, docId, singleChunkId, notebookCtxId(), requestId);
+      // play back a specific chunk
+      enqueueChunkOutput(docPath, docId, singleChunkId, notebookCtxId(), 
+            requestId);
    }
 
    json::Object result;
