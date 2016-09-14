@@ -1483,3 +1483,7 @@ body.ubuntu_mono .searchBox {
    margin-right: 6px;
 }
 
+.displayNone {
+	display: none !important;
+}
+
