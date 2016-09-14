@@ -858,46 +858,49 @@ public class TextEditingTargetNotebook
    @Override
    public void onRenderFinished(RenderFinishedEvent event)
    {
-      dependencyManager_.withRMarkdown("R Notebook",
-         "Opening R Notebook", new CommandWithArg<Boolean>()
+      // single shot rendering of output line widgets (we wait until after the
+      // first render to ensure that ace places the line widgets correctly)
+      if (initialChunkDefs_ != null)
+      {
+         for (int i = 0; i < initialChunkDefs_.length(); i++)
          {
-            @Override
-            public void execute(Boolean arg)
-            {
-               // single shot rendering of output line widgets (we wait until after the
-               // first render to ensure that ace places the line widgets correctly)
-               if (initialChunkDefs_ != null)
-               {
-                  for (int i = 0; i < initialChunkDefs_.length(); i++)
-                  {
-                     createChunkOutput(initialChunkDefs_.get(i));
-                  }
-                  // if we got chunk content, load initial chunk output from server
-                  if (initialChunkDefs_.length() > 0)
-                     loadInitialChunkOutput();
-   
-                  initialChunkDefs_ = null;
-                  
-                  // sync to editor style changes
-                  editingTarget_.addEditorThemeStyleChangedHandler(
-                                                TextEditingTargetNotebook.this);
-                  
-                  // read and/or set initial render width
-                  lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
-                  if (lastPlotWidth_ == 0)
-                  {
-                     lastPlotWidth_ = getPlotWidth();
-                  }
-               }
-               else
-               {
-                  // on ordinary render, we need to sync any chunk line widgets that have
-                  // just been laid out; debounce this
-                  syncHeightTimer_.schedule(250);
-               }
-            }
+            createChunkOutput(initialChunkDefs_.get(i));
          }
-      );
+         // if we got chunk content, load initial chunk output from server --
+         // note that some outputs need the rmarkdown package to render, so 
+         // update that silently if needed
+         if (initialChunkDefs_.length() > 0)
+         {
+            dependencyManager_.withRMarkdown("R Notebook",
+               null, new CommandWithArg<Boolean>()
+               {
+                  @Override
+                  public void execute(Boolean arg)
+                  {
+                     loadInitialChunkOutput();
+                  }
+               });
+         }
+
+         initialChunkDefs_ = null;
+         
+         // sync to editor style changes
+         editingTarget_.addEditorThemeStyleChangedHandler(
+                                       TextEditingTargetNotebook.this);
+         
+         // read and/or set initial render width
+         lastPlotWidth_ = notebookDoc_.getChunkRenderedWidth();
+         if (lastPlotWidth_ == 0)
+         {
+            lastPlotWidth_ = getPlotWidth();
+         }
+      }
+      else
+      {
+         // on ordinary render, we need to sync any chunk line widgets that have
+         // just been laid out; debounce this
+         syncHeightTimer_.schedule(250);
+      }
    }
 
    @Override
