@@ -253,14 +253,14 @@ public class ChunkSatelliteWindow extends SatelliteWindow
 
       if (event.getData().getChunkId() != chunkWindowParams_.getChunkId())
          return;
+
+      resizePlotsRemote_.schedule(10);
       
       RmdChunkOutputFinishedEvent.Data data = event.getData();
 
       chunkOutputWidget_.onOutputFinished(
          false,
          data.getScope());
-
-      resizePlotsRemote_.schedule(1);
    }
 
    @Override
@@ -293,7 +293,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          // avoid reentrancy
          if (currentPlotsReplayId_ != null)
             return;
-         
+
          server_.replayNotebookChunkPlots(
             chunkWindowParams_.getDocId(), 
             chunkWindowParams_.getChunkId(),

@@ -70,13 +70,20 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    std::vector<std::string> chunkIds;
    extractChunkIds(chunkOutputs, &chunkIds);
 
-   // find all the chunks and play them back to the client
-   BOOST_FOREACH(const std::string& chunkId, chunkIds)
+   if (singleChunkId.empty())
    {
-      if (singleChunkId.empty() || singleChunkId == chunkId)
+      // find all the chunks and play them back to the client
+      BOOST_FOREACH(const std::string& chunkId, chunkIds)
       {
-         enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
+         if (singleChunkId.empty() || singleChunkId == chunkId)
+         {
+            enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
+         }
       }
+   }
+   else
+   {
+      enqueueChunkOutput(docPath, docId, singleChunkId, notebookCtxId(), requestId);
    }
 
    json::Object result;
