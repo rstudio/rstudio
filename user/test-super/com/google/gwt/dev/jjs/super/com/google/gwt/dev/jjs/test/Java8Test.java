@@ -1666,4 +1666,16 @@ public class Java8Test extends GWTTestCase {
     assertEquals("Hello",
         ((FunctionalExpressionBridges_I<String>) functionalExpression).apply("Hello"));
   }
+
+  static class ClassWithAVeryLoooooooooooooooooooooooooooooooooooongName {
+    public static String m() {
+      return null;
+    }
+  }
+   // Regression test for bug: #9426.
+  public void testCorrectNaming() {
+    Function<String> f = ClassWithAVeryLoooooooooooooooooooooooooooooooooooongName::m;
+    assertNotNull(f);
+  }
 }
+

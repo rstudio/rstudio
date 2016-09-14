@@ -110,6 +110,7 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
@@ -1223,9 +1224,9 @@ public class GwtAstBuilder {
       // Create an inner class to implement the interface and SAM method.
       // class lambda$0$Type implements T {}
 
-      String innerLambdaClassName =
-          JdtUtil.getClassName(x.binding.declaringClass) + "$" + String.valueOf(x.binding.selector);
-      JClassType innerLambdaClass = createInnerClass(innerLambdaClassName, x, info, funcType);
+      String innerLambdaImplementationClassShortName = String.valueOf(x.binding.selector);
+      JClassType innerLambdaClass = createInnerClass(
+          curClass.getClassOrInterface(), innerLambdaImplementationClassShortName, info, funcType);
       JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
 
       // locals captured by the lambda and saved as fields on the anonymous inner class
@@ -1467,11 +1468,12 @@ public class GwtAstBuilder {
       return ctor.createFinalParameter(info, paramName, paramType);
     }
 
-    private JClassType createInnerClass(String name, FunctionalExpression x, SourceInfo info,
-        JInterfaceType... funcType) {
-      JClassType innerLambdaClass = new JClassType(info, name + "$Type", false, true);
-      innerLambdaClass.setEnclosingType((JDeclaredType) typeMap.get(x.binding.declaringClass));
-      for (JInterfaceType type : funcType) {
+    private JClassType createInnerClass(JDeclaredType enclosingType, String shortNname,
+        SourceInfo info, JInterfaceType... superInterfaces) {
+      JClassType innerLambdaClass = new JClassType(info,
+          Joiner.on('$').join(enclosingType.getName(), shortNname, "Type"), false, true);
+      innerLambdaClass.setEnclosingType(enclosingType);
+      for (JInterfaceType type : superInterfaces) {
         innerLambdaClass.addImplements(type);
       }
       innerLambdaClass.setSuperClass(javaLangObject);
@@ -1785,14 +1787,14 @@ public class GwtAstBuilder {
 
       // Constructors, overloading and generics means that the safest approach is to consider
       // each different member reference as a different lambda implementation.
-      String lambdaName =  JdtUtil.getClassName(curClass.typeDecl.binding) + "$"
-          + String.valueOf(nextReferenceExpressionId++) + "methodref$"
-          + (x.binding.isConstructor() ? "ctor" : String.valueOf(x.binding.selector));
-
+      String lambdaImplementationClassShortName =
+          String.valueOf(nextReferenceExpressionId++) + "methodref$"
+              + (x.binding.isConstructor() ? "ctor" : String.valueOf(x.binding.selector));
       List<JExpression> enclosingThisRefs = Lists.newArrayList();
 
       // Create an inner class to hold the implementation of the interface
-      JClassType innerLambdaClass = createInnerClass(lambdaName, x, info, funcType);
+      JClassType innerLambdaClass = createInnerClass(
+          curClass.getClassOrInterface(), lambdaImplementationClassShortName, info, funcType);
       newTypes.add(innerLambdaClass);
 
       JConstructor ctor = new JConstructor(info, innerLambdaClass, AccessModifier.PRIVATE);
@@ -1806,7 +1808,7 @@ public class GwtAstBuilder {
       if (hasQualifier) {
         // this.$$outer = $$outer
         JField outerField = createAndBindCapturedLambdaParameter(info, OUTER_LAMBDA_PARAM_NAME,
-            innerLambdaClass.getEnclosingType(), ctor, ctorBody);
+            referredMethod.getEnclosingType(), ctor, ctorBody);
         instance = new JFieldRef(info,
             new JThisRef(info, innerLambdaClass), outerField, innerLambdaClass);
       } else if (referredMethod instanceof JConstructor) {

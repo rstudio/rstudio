@@ -284,6 +284,10 @@ public abstract class JDeclaredType extends JReferenceType
       return new String[] { getShortName() };
     }
 
+    assert getShortName().startsWith(enclosingType.getShortName())
+        : "Innerclass name  " + getShortName() + " does not start with enclosing class name "
+        + enclosingType.getShortName();
+
     String className = StringInterner.get().intern(
         getShortName().substring(enclosingType.getShortName().length() + 1));
 
