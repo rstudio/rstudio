@@ -31,6 +31,7 @@ BluetoothRemoteGATTServer
 BluetoothRemoteGATTService
 BluetoothUUID
 Boolean
+BroadcastChannel
 ByteLengthQueuingStrategy
 CDATASection
 CSS
@@ -79,6 +80,7 @@ Credential
 CredentialsContainer
 Crypto
 CryptoKey
+CustomElementRegistry
 CustomEvent
 DOMError
 DOMException
@@ -318,6 +320,7 @@ Promise
 PromiseRejectionEvent
 PushManager
 PushSubscription
+PushSubscriptionOptions
 RGBColor
 RTCCertificate
 RTCIceCandidate
@@ -609,6 +612,7 @@ confirm
 console
 createImageBitmap
 crypto
+customElements
 decodeURI
 decodeURIComponent
 defaultStatus
