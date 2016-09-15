@@ -471,7 +471,7 @@ public class AceEditorIdleCommands
    
    private static boolean isStandaloneMarkdownLink(String line)
    {
-      return line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*$");
+      return line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*(?:{.*)?$");
    }
    
    private static boolean isImageHref(String href)
