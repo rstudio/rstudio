@@ -49,6 +49,7 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -434,6 +435,7 @@ public class AceEditorIdleCommands
       ChunkOutputWidget outputWidget = cow.get();
       outputWidget.setRootWidget(container);
       outputWidget.hideSatellitePopup();
+      outputWidget.getElement().getStyle().setMarginTop(4, Unit.PX);
 
       plw.set(new PinnedLineWidget("image", editor, outputWidget, position.getRow(), null, null));
    }
