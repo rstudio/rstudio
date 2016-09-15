@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
@@ -330,9 +331,30 @@ public class MathJax
       int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       
-      boolean hasWidget = widget != null;
-      if (!hasWidget)
-         widget = createMathJaxLineWidget(row);
+      if (widget == null)
+      {
+         // if we don't have a widget, create one and render the LaTeX once
+         // the widget is attached to the editor
+         createMathJaxLineWidget(row, new CommandWithArg<LineWidget>()
+         {
+            @Override
+            public void execute(LineWidget w)
+            {
+               renderLatexLineWidget(w, range, text, callback);
+            }
+         });
+      }
+      else
+      {
+         renderLatexLineWidget(widget, range, text, callback);
+      }
+   }
+
+   private void renderLatexLineWidget(LineWidget widget,
+                                     final Range range,
+                                     final String text,
+                                     final MathJaxTypesetCallback callback)
+   {
       
       final Element el = DomUtils.getFirstElementWithClassName(
             widget.getElement(),
@@ -398,7 +420,8 @@ public class MathJax
       return panel;
    }
    
-   private LineWidget createMathJaxLineWidget(int row)
+   private void createMathJaxLineWidget(int row, 
+         final CommandWithArg<LineWidget> onAttached)
    {
       final FlowPanel panel = createMathJaxContainerWidget();
       
@@ -435,7 +458,7 @@ public class MathJax
          }
       };
       
-      ChunkOutputWidget outputWidget = new ChunkOutputWidget(
+      final ChunkOutputWidget outputWidget = new ChunkOutputWidget(
             StringUtil.makeRandomId(8),
             StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
@@ -451,10 +474,23 @@ public class MathJax
             outputWidget,
             row,
             null,
-            null);
+            new PinnedLineWidget.Host()
+            {
+               @Override
+               public void onLineWidgetRemoved(LineWidget widget)
+               {
+                  // no action necessary here; this is taken care of by the
+                  // hosting chunk (see onOutputRemoved)
+               }
+               
+               @Override
+               public void onLineWidgetAdded(LineWidget widget)
+               {
+                  onAttached.execute(widget);
+               }
+            });
 
       cowToPlwMap_.put(outputWidget, plWidget);
-      return plWidget.getLineWidget();
    }
    
    private void resetRenderState()
@@ -525,30 +561,47 @@ public class MathJax
       popup_.hide();
    }
    
-   private void onMathJaxTypesetCompleted(Object mathjaxElObject,
-                                          String text,
-                                          boolean error,
-                                          Object commandObject)
+   private void onMathJaxTypesetCompleted(final Object mathjaxElObject,
+                                          final String text,
+                                          final boolean error,
+                                          final Object commandObject,
+                                          final int attempt)
    {
+      final Element mathjaxEl = (Element) mathjaxElObject;
+
+      if (attempt < MAX_RENDER_ATTEMPTS)
+      {
+         // if mathjax displayed an error, try re-rendering once more
+         Element[] errorEls = DomUtils.getElementsByClassName(mathjaxEl, 
+               "MathJax_Error");
+         if (errorEls != null && errorEls.length > 0 &&
+             attempt < MAX_RENDER_ATTEMPTS)
+         {
+            // hide the error and retry in 25ms (experimentally this seems to
+            // produce a better shot at rendering successfully than an immediate
+            // or deferred retry)
+            mathjaxEl.getStyle().setVisibility(Visibility.HIDDEN);
+            new Timer()
+            {
+               @Override
+               public void run()
+               {
+                  mathjaxTypeset(mathjaxEl, text, commandObject, attempt + 1);
+               }
+            }.schedule(25);
+            return;
+         }
+      }
+      
+      // show whatever we've got (could be an error if we ran out of retries)
+      mathjaxEl.getStyle().setVisibility(Visibility.VISIBLE);
+      
       // execute callback
       if (commandObject != null && commandObject instanceof MathJaxTypesetCallback)
       {
          MathJaxTypesetCallback callback = (MathJaxTypesetCallback) commandObject;
          callback.onMathJaxTypesetComplete(error);
       }
-      
-      // if mathjax displayed an error, try re-rendering once more
-      Element mathjaxEl = (Element) mathjaxElObject;
-      Element[] errorEls = DomUtils.getElementsByClassName(mathjaxEl, "MathJax_Error");
-      if (errorEls != null && errorEls.length > 0)
-      {
-         mathjaxEl.getStyle().setVisibility(Visibility.HIDDEN);
-      }
-      else
-      {
-         mathjaxEl.getStyle().setVisibility(Visibility.VISIBLE);
-      }
-      
       
       if (!error)
       {
@@ -560,10 +613,17 @@ public class MathJax
    {
       mathjaxTypeset(el, currentText, null);
    }
+
+   private final void mathjaxTypeset(Element el, String currentText, 
+         Object command)
+   {
+      mathjaxTypeset(el, currentText, command, 0);
+   }
    
    private final native void mathjaxTypeset(Element el,
                                             String currentText,
-                                            Object command)
+                                            Object command,
+                                            int attempt)
    /*-{
       var MathJax = $wnd.MathJax;
       
@@ -585,7 +645,7 @@ public class MathJax
                jax.Text(lastRenderedText);
 
             // callback to GWT
-            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/Object;Ljava/lang/String;ZLjava/lang/Object;)(el, currentText, error, command);
+            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/Object;Ljava/lang/String;ZLjava/lang/Object;I)(el, currentText, error, command, attempt);
          }));
       }));
    }-*/;
@@ -657,6 +717,11 @@ public class MathJax
    
    // Injected ----
    private UIPrefs uiPrefs_;
+   
+   // sometimes MathJax fails to render initially but succeeds if asked to do so
+   // again; this is the maximum number of times we'll try to re-render the same
+   // text automatically before giving up
+   private static final int MAX_RENDER_ATTEMPTS = 2;
    
    public static final String MATHJAX_ROOT_CLASSNAME = "rstudio-mathjax-root";
 }

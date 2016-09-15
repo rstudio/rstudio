@@ -41,6 +41,7 @@ public class PinnedLineWidget
 {
    public interface Host
    {
+      void onLineWidgetAdded(LineWidget widget);
       void onLineWidgetRemoved(LineWidget widget);
    }
 
@@ -134,6 +135,8 @@ public class PinnedLineWidget
    {
       // add the widget to the document and notify the host
       display_.addLineWidget(lineWidget_);
+      if (host_ != null)
+         host_.onLineWidgetAdded(lineWidget_);
 
       // remove the handler (single shot)
       renderFinishedReg_.removeHandler();

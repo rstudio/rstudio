@@ -940,6 +940,13 @@ public class TextEditingTargetNotebook
          }
       }
    }
+   
+   @Override
+   public void onLineWidgetAdded(LineWidget widget)
+   {
+      // no action necessary; this just lets us know that a chunk output has
+      // been attached to the DOM
+   }
 
    @Override
    public void onLineWidgetRemoved(LineWidget widget)

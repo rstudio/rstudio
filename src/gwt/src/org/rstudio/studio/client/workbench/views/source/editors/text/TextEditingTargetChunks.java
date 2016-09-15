@@ -60,6 +60,13 @@ public class TextEditingTargetChunks
    }
 
    @Override
+   public void onLineWidgetAdded(LineWidget widget)
+   {
+      // no action necessary; this just lets us know that a chunk toolbar has
+      // been attached to the DOM
+   }
+
+   @Override
    public void onLineWidgetRemoved(LineWidget widget)
    {
       // remove the widget from our internal list
