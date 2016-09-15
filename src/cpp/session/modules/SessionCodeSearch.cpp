@@ -903,6 +903,8 @@ private:
                filename == "cleanup.win" ||
                filename == "Makevars" ||
                filename == "Makevars.win" ||
+               filename == "LICENSE" ||
+               filename == "LICENCE" ||
                filePath.hasTextMimeType());
    }
 
