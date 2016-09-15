@@ -142,7 +142,6 @@ public class MathJax
          public void onDocumentChanged(DocumentChangedEvent event)
          {
             bgRenderTimer_.schedule(200);
-            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -153,17 +152,36 @@ public class MathJax
                      @Override
                      public void execute(ChunkOutputWidget cow, PinnedLineWidget plw)
                      {
-                        // dismiss the mathjax line widget if the associated chunk text has
-                        // been mutated such that it is no longer a mathjax chunk
-                        Pattern reMathJax = Pattern.create("^\\s*\\$\\$\\s*$");
-                        if (!reMathJax.test(docDisplay_.getLine(plw.getRow())))
-                           removeChunkOutputWidget(cow);
+                        // for single-line chunks, e.g. with '$$ ... $$', detect
+                        // if the boundaries have been mutated
+                        int row = plw.getRow();
+                        String line = docDisplay_.getLine(row);
+                        Pattern reDoubleDollarStart = Pattern.create("^\\s*\\$\\$");
+                        Pattern reDoubleDollarEnd   = Pattern.create("\\$\\$\\s*$");
                         
-                        // detect whether start of associated chunk has been destroyed
-                        TokenIterator it = docDisplay_.createTokenIterator();
-                        Token token = it.moveToPosition(plw.getRow() - 1, 0);
-                        if (token != null && !token.hasType("latex"))
+                        boolean isMathJax =
+                              reDoubleDollarStart.test(line) &&
+                              reDoubleDollarEnd.test(line);
+                        
+                        if (!isMathJax)
+                        {
                            removeChunkOutputWidget(cow);
+                           return;
+                        }
+                        
+                        // for mathjax 'chunks', detect whether the start of the
+                        // chunk has been mutated / destroyed
+                        Pattern reDoubleDollar = Pattern.create("^\\s*\\$\\$\\s*$");
+                        if (reDoubleDollar.test(line))
+                        {
+                           TokenIterator it = docDisplay_.createTokenIterator();
+                           Token token = it.moveToPosition(row - 1, 0);
+                           if (token != null && !token.hasType("latex"))
+                           {
+                              removeChunkOutputWidget(cow);
+                              return;
+                           }
+                        }
                      }
                   });
                }
