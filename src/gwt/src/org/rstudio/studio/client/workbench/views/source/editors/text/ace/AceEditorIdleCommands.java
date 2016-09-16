@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -430,7 +431,8 @@ public class AceEditorIdleCommands
             "md-image-preview-" + StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
-            host));
+            host,
+            ChunkOutputSize.Bare));
       
       ChunkOutputWidget outputWidget = cow.get();
       outputWidget.setRootWidget(container);

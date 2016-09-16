@@ -10,6 +10,11 @@
    {
       padding: 0;
    }
+   
+   .baresize
+   {
+      margin-top: 5px;
+   }
 
    .clear, .expand, .popout
    {

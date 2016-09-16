@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -335,7 +336,10 @@ public class MathJax
       {
          // if we don't have a widget, create one and render the LaTeX once
          // the widget is attached to the editor
-         createMathJaxLineWidget(row, new CommandWithArg<LineWidget>()
+         createMathJaxLineWidget(row, 
+               // render bare output if start and end are on the same line
+               range.getStart().getRow() == range.getEnd().getRow(), 
+               new CommandWithArg<LineWidget>()
          {
             @Override
             public void execute(LineWidget w)
@@ -420,7 +424,7 @@ public class MathJax
       return panel;
    }
    
-   private void createMathJaxLineWidget(int row, 
+   private void createMathJaxLineWidget(int row, boolean bare,
          final CommandWithArg<LineWidget> onAttached)
    {
       final FlowPanel panel = createMathJaxContainerWidget();
@@ -463,7 +467,8 @@ public class MathJax
             StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
-            host);
+            host,
+            bare ? ChunkOutputSize.Bare : ChunkOutputSize.Default);
       
       outputWidget.setRootWidget(panel);
       outputWidget.hideSatellitePopup();

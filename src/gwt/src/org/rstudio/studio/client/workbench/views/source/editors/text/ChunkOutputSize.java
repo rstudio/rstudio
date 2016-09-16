@@ -15,6 +15,12 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 public enum ChunkOutputSize {
-  Default,
-  Full
+   // an ordinary chunk output
+   Default,
+   
+   // a chunk output which is not associated with a code chunk
+   Bare,
+   
+   // a chunk output which fills its container
+   Full
 }
