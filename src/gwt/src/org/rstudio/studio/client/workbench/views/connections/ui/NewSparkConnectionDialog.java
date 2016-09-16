@@ -122,7 +122,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
          @Override
          public void execute()
          {
-            versionGrid.setVisible(master_.isLocalMasterSelected());
+            versionGrid.setVisible(master_.isLocalMasterSelected() && context_.getSparkHome() == null);
          }
       };
       onMasterChanged.execute();
@@ -215,7 +215,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
          {   
             SparkVersion sparkVersion = getSelectedSparkVersion();
             
-            if (sparkVersion != null)
+            if (sparkVersion != null && context_.getSparkHome() == null)
             {
                boolean remote = !master_.isLocalMaster(master_.getSelection());
             

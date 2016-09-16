@@ -257,7 +257,7 @@ public class ConnectionsPresenter extends BasePresenter
                                                    "New Connection...") {
    
             @Override
-            protected void onSuccess(NewSparkConnectionContext context)
+            protected void onSuccess(final NewSparkConnectionContext context)
             {
                // prompt for no java installed
                if (!context.isJavaInstalled())
@@ -285,6 +285,7 @@ public class ConnectionsPresenter extends BasePresenter
                         withRequiredSparkInstallation(
                               result.getSparkVersion(),
                               result.getRemote(),
+                              context.getSparkHome() != null,
                               new Command() {
                                  @Override
                                  public void execute()
@@ -305,6 +306,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    private void withRequiredSparkInstallation(final SparkVersion sparkVersion,
                                               boolean remote,
+                                              boolean hasSparkHome,
                                               final Command command)
    {
       // if there is no spark version then just execute immediately
@@ -314,7 +316,7 @@ public class ConnectionsPresenter extends BasePresenter
          return;
       }
       
-      if (!sparkVersion.isInstalled())
+      if (!sparkVersion.isInstalled() && !hasSparkHome)
       {
          globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION, 
