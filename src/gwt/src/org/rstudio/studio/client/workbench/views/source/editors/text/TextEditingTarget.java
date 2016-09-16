@@ -1238,7 +1238,6 @@ public class TextEditingTarget implements
             releaseOnDismiss_, dependencyManager_);
       view_.addResizeHandler(notebook_);
       
-      
       // ensure that Makefile and Makevars always use tabs
       name_.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
@@ -1519,10 +1518,20 @@ public class TextEditingTarget implements
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
       
-      // for R Markdown docs, populate the popup menu with a list of available
-      // formats
       if (extendedType_.equals(SourceDocument.XT_RMARKDOWN))
+      {
+         // populate the popup menu with a list of available formats
          updateRmdFormatList();
+
+         // register idle monitor; automatically creates/refreshes previews
+         // of images and LaTeX equations
+         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(docDisplay_,
+               docUpdateSentinel_);
+
+         // auto preview images
+         if (extendedType_.equals(SourceDocument.XT_RMARKDOWN))
+            new ImagePreviewer(docDisplay_, docUpdateSentinel_);
+      }
       
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
       {
@@ -6300,6 +6309,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
+   private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;
    private boolean ignoreDeletes_;

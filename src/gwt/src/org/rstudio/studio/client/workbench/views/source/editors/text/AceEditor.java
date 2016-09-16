@@ -301,7 +301,6 @@ public class AceEditor implements DocDisplay,
       vim_ = new Vim(this);
       mathjax_ = new MathJax(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
-      bgIdleMonitor_ = new AceEditorIdleMonitor(this);
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -3386,6 +3385,12 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public JsArray<Token> getTokens(int row)
+   {
+      return getSession().getTokens(row);
+   }
+   
+   @Override
    public TokenIterator createTokenIterator()
    {
       return createTokenIterator(null);
@@ -3684,7 +3689,6 @@ public class AceEditor implements DocDisplay,
    private final Vim vim_;
    private final MathJax mathjax_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
-   private final AceEditorIdleMonitor bgIdleMonitor_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {

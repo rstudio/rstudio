@@ -100,6 +100,8 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetInlineChunkExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorIdleCommands;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
@@ -109,8 +111,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorIdleCommands;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorIdleMonitor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
@@ -200,7 +200,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ChunkOptionsPopupPanel panel);
    void injectMembers(ChunkSatellite satellite);
    void injectMembers(AceEditorBackgroundLinkHighlighter highlighter);
-   void injectMembers(AceEditorIdleMonitor monitor);
+   void injectMembers(TextEditingTargetIdleMonitor monitor);
    void injectMembers(AceEditorIdleCommands commands);
    void injectMembers(EditingTargetInlineChunkExecution executor);
    

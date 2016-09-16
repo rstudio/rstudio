@@ -1,5 +1,5 @@
 /*
- * AceEditorIdleCommands.java
+ * ImagePreviewer.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,7 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
+package org.rstudio.studio.client.workbench.views.source.editors.text;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Mutable;
@@ -21,28 +24,18 @@ import org.rstudio.core.client.dom.ImageElementEx;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.widget.MiniPopupPanel;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FilePathUtils;
-import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
-import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorIdleMonitor.IdleCommand;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorIdleMonitor.IdleState;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -51,9 +44,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.DoubleClickEvent;
-import com.google.gwt.event.dom.client.DoubleClickHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -63,70 +53,38 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
-@Singleton
-public class AceEditorIdleCommands
+public class ImagePreviewer
+             implements ScopeTreeReadyEvent.Handler
 {
-   public AceEditorIdleCommands()
+   public ImagePreviewer(DocDisplay display, DocUpdateSentinel sentinel)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
+      display_ = display;
+      sentinel_ = sentinel;
+      reg_ = display.addScopeTreeReadyHandler(this);
+   }
+
+   @Override
+   public void onScopeTreeReady(ScopeTreeReadyEvent event)
+   {
+      // remove single-shot handler
+      reg_.removeHandler();
       
-      PREVIEW_LINK = previewLink();
-      PREVIEW_LATEX = previewLatex();
-   }
-   
-   // Private Methods ----
-   
-   @Inject
-   private void initialize(SourceWindowManager swm)
-   {
-      swm_ = swm;
-   }
-   
-// Latex Preview ----
-   
-   private IdleCommand previewLatex()
-   {
-      return new IdleCommand()
-      {
-         @Override
-         public void execute(AceEditor editor, IdleState state)
-         {
-            onPreviewLatex(editor, state);
-         }
-      };
-   }
-   
-   private void onPreviewLatex(AceEditor editor, IdleState state)
-   {
-      Position position = resolvePosition(editor, state);
-      Range range = MathJaxUtil.getLatexRange(editor, position);
-      if (range == null)
-         return;
+      // find the list of images
+      List<Range> imageRanges = findImages();
       
-      editor.renderLatex(range);
-   }
-   
-   // Link Preview ----
-   
-   private IdleCommand previewLink()
-   {
-      return new IdleCommand()
+      // preview each
+      for (Range r: imageRanges)
       {
-         @Override
-         public void execute(AceEditor editor, IdleState idleState)
-         {
-            onPreviewLink(editor, idleState);
-         }
-      };
+         onPreviewLink(display_, sentinel_, Position.create(r.getEnd().getRow(), 
+               r.getEnd().getColumn() - 1));
+      }
    }
-   
-   private void onPreviewLink(AceEditor editor, IdleState idleState)
+
+   public static void onPreviewLink(DocDisplay display, 
+         DocUpdateSentinel sentinel, Position position)
    {
-      Position position = resolvePosition(editor, idleState);
-      Token token = editor.getTokenAt(position);
+      Token token = display.getTokenAt(position);
       if (token == null)
          return;
 
@@ -135,58 +93,32 @@ public class AceEditorIdleCommands
       
       Range tokenRange = Range.fromPoints(
             Position.create(position.getRow(), token.getColumn()),
-            Position.create(position.getRow(), token.getColumn() + token.getValue().length()));
+            Position.create(position.getRow(), 
+                  token.getColumn() + token.getValue().length()));
             
       String href = token.getValue();
-      if (isImageHref(href))
-         onPreviewImage(editor, href, position, tokenRange);
+      if (ImagePreviewer.isImageHref(href))
+         onPreviewImage(display, sentinel, href, position, tokenRange);
    }
    
-   private void onPreviewImage(AceEditor editor,
-                               String href,
-                               Position position,
-                               Range tokenRange)
-   {
-      // check to see if we already have a popup showing for this image;
-      // if we do then bail early
-      String encoded = StringUtil.encodeURIComponent(href);
-      Element el = Document.get().getElementById(encoded);
-      if (el != null)
-         return;
-      
-      // display stand-alone links as line widgets
-      String line = editor.getLine(position.getRow());
-      if (isStandaloneMarkdownLink(line))
-      {
-         onPreviewImageLineWidget(editor, href, position, tokenRange);
-         return;
-      }
-      
-      // construct image el, place in popup, and show
-      AnchoredPopupPanel panel = new AnchoredPopupPanel(editor, tokenRange, href);
-      panel.getElement().setId(encoded);
-      
-      ScreenCoordinates coordinates =
-            editor.documentPositionToScreenCoordinates(position);
-      panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
-      panel.show();
-   }
-   
-   private void onPreviewImageLineWidget(final AceEditor editor,
-                                         final String href,
-                                         final Position position,
-                                         final Range tokenRange)
+   private static void onPreviewImageLineWidget(final DocDisplay display,
+                                                final DocUpdateSentinel sentinel,
+                                                final String href, 
+                                                final Position position,
+                                                final Range tokenRange)
    {
       // if we already have a line widget for this row, bail
-      LineWidget lineWidget = editor.getLineWidgetForRow(position.getRow());
+      LineWidget lineWidget = display.getLineWidgetForRow(position.getRow());
       if (lineWidget != null)
          return;
       
       // shared mutable state that we hide in this closure
       final Mutable<PinnedLineWidget>  plw = new Mutable<PinnedLineWidget>();
       final Mutable<ChunkOutputWidget> cow = new Mutable<ChunkOutputWidget>();
-      final Mutable<HandlerRegistration> docChangedHandler = new Mutable<HandlerRegistration>(); 
-      final Mutable<HandlerRegistration> renderHandler = new Mutable<HandlerRegistration>();
+      final Mutable<HandlerRegistration> docChangedHandler = 
+            new Mutable<HandlerRegistration>(); 
+      final Mutable<HandlerRegistration> renderHandler = 
+            new Mutable<HandlerRegistration>();
       
       // command that ensures state is cleaned up when widget hidden
       final Command onDetach = new Command()
@@ -258,12 +190,12 @@ public class AceEditorIdleCommands
             widget.getFrame().setHeight(height + "px");
             LineWidget lw = plw.get().getLineWidget();
             lw.setPixelHeight(height);
-            editor.onLineWidgetChanged(lw);
+            display.onLineWidgetChanged(lw);
          }
       };
       
       // construct our image
-      final Image image = new Image(imgSrcPathFromHref(href));
+      final Image image = new Image(imgSrcPathFromHref(sentinel, href));
       
       // add load handlers to image
       final Element imgEl = image.getElement();
@@ -313,24 +245,26 @@ public class AceEditorIdleCommands
       };
       
       // initialize render handler
-      renderHandler.set(editor.addRenderFinishedHandler(new RenderFinishedEvent.Handler()
+      renderHandler.set(display.addRenderFinishedHandler(
+            new RenderFinishedEvent.Handler()
       {
          private int width_;
          
          @Override
          public void onRenderFinished(RenderFinishedEvent event)
          {
-            int width = editor.getWidget().getOffsetWidth();
+            int width = display.getBounds().getWidth();
             if (width == width_)
                return;
             
             width_ = width;
-            renderTimer.schedule(50);
+            renderTimer.schedule(100);
          }
       }));
       
       // initialize doc changed handler
-      docChangedHandler.set(editor.addDocumentChangedHandler(new DocumentChangedEvent.Handler()
+      docChangedHandler.set(display.addDocumentChangedHandler(
+            new DocumentChangedEvent.Handler()
       {
          private String href_ = href;
          private final Timer refreshImageTimer = new Timer()
@@ -339,13 +273,14 @@ public class AceEditorIdleCommands
             public void run()
             {
                // if the discovered href isn't an image link, just bail
-               if (!isImageHref(href_))
+               if (!ImagePreviewer.isImageHref(href_))
                   return;
                
                // set new src location (load handler will replace label as needed)
                container.setWidget(new SimplePanel());
                noImageLabel.setText("(No image at path " + href_ + ")");
-               image.getElement().setAttribute("src", imgSrcPathFromHref(href_));
+               image.getElement().setAttribute("src", imgSrcPathFromHref(
+                     sentinel, href_));
             }
          };
          
@@ -355,12 +290,12 @@ public class AceEditorIdleCommands
             Range range = event.getEvent().getRange();
             if (range.getStart().getRow() <= row && row <= range.getEnd().getRow())
             {
-               String line = editor.getLine(row);
-               if (isStandaloneMarkdownLink(line))
+               String line = display.getLine(row);
+               if (ImagePreviewer.isStandaloneMarkdownLink(line))
                {
                   // check to see if the URL text has been updated
                   Token hrefToken = null;
-                  JsArray<Token> tokens = editor.getSession().getTokens(row);
+                  JsArray<Token> tokens = display.getTokens(row);
                   for (Token token : JsUtil.asIterable(tokens))
                   {
                      if (token.hasType("href"))
@@ -439,40 +374,25 @@ public class AceEditorIdleCommands
       outputWidget.hideSatellitePopup();
       outputWidget.getElement().getStyle().setMarginTop(4, Unit.PX);
 
-      plw.set(new PinnedLineWidget("image", editor, outputWidget, position.getRow(), null, null));
+      plw.set(new PinnedLineWidget("image", display, outputWidget, 
+            position.getRow(), null, null));
    }
    
-   private String imgSrcPathFromHref(String href)
+   private List<Range> findImages()
    {
-      // return paths that have a custom / external protocol as-is
-      Pattern reProtocol = Pattern.create("^\\w+://");
-      if (reProtocol.test(href))
-         return href;
-      
-      // make relative paths absolute
-      String absPath = href;
-      if (FilePathUtils.pathIsRelative(href))
+      List<Range> ranges = new ArrayList<Range>();
+      for (int i = 0, n = display_.getRowCount(); i < n; i++)
       {
-         // TODO: infer correct parent dir based on knitr params?
-         String docPath = swm_.getCurrentDocPath();
-         absPath = FilePathUtils.dirFromFile(docPath) + "/" + absPath;
+         String line = display_.getLine(i);
+         if (isStandaloneMarkdownLink(line))
+         {
+            ranges.add(Range.create(i, 0, i, line.length()));
+         }
       }
       
-      return "file_show?path=" + StringUtil.encodeURIComponent(absPath) + "&id=" + ID++;
+      return ranges;
    }
-   
-   private static Position resolvePosition(AceEditor editor, IdleState state)
-   {
-      int type = state.getType();
-      if (type == IdleState.STATE_CURSOR_IDLE)
-         return editor.getCursorPosition();
-      else if (type == IdleState.STATE_MOUSE_IDLE)
-         return editor.screenCoordinatesToDocumentPosition(state.getMouseX(), state.getMouseY());
-      
-      assert false : "Unhandled idle state type '" + type + "'";
-      return Position.create(0, 0);
-   }
-   
+
    private static boolean isStandaloneMarkdownLink(String line)
    {
       return line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*(?:{.*)?$");
@@ -487,140 +407,64 @@ public class AceEditorIdleCommands
           href.endsWith(".gif")  ||
           href.endsWith(".svg");
    }
-   
-   private class AnchoredPopupPanel extends MiniPopupPanel
+
+   private static String imgSrcPathFromHref(DocUpdateSentinel sentinel, 
+                                            String href)
    {
-      public AnchoredPopupPanel(AceEditor editor, Range range, String href)
+      // return paths that have a custom / external protocol as-is
+      Pattern reProtocol = Pattern.create("^\\w+://");
+      if (reProtocol.test(href))
+         return href;
+      
+      // make relative paths absolute
+      String absPath = href;
+      if (FilePathUtils.pathIsRelative(href))
       {
-         super(true, false);
-         
-         // defer visibility until image has finished loading
-         setVisible(false);
-         image_ = new Image(imgSrcPathFromHref(href));
-         error_ = new Label("No image at path " + href);
-         
-         final Element imgEl = image_.getElement();
-         DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
-         DOM.setEventListener(imgEl, new EventListener()
-         {
-            @Override
-            public void onBrowserEvent(Event event)
-            {
-               if (DOM.eventGetType(event) == Event.ONLOAD)
-               {
-                  setWidget(image_);
-                  showSmall();
-               }
-               else
-               {
-                  setWidget(error_);
-                  setVisible(true);
-               }
-            }
-         });
-         
-         // allow zoom with double-click
-         setTitle("Double-Click to Zoom");
-         addDomHandler(new DoubleClickHandler()
-         {
-            @Override
-            public void onDoubleClick(DoubleClickEvent event)
-            {
-               toggleSize();
-            }
-         }, DoubleClickEvent.getType());
-         
-         // use anchor + cursor changed handler for smart auto-dismiss
-         anchor_ = editor.createAnchoredSelection(
-               range.getStart(),
-               range.getEnd());
-         
-         handler_ = editor.addCursorChangedHandler(new CursorChangedHandler()
-         {
-            @Override
-            public void onCursorChanged(CursorChangedEvent event)
-            {
-               Position position = event.getPosition();
-               if (!anchor_.getRange().contains(position))
-                  hide();
-            }
-         });
-         
-         addAttachHandler(new AttachEvent.Handler()
-         {
-            @Override
-            public void onAttachOrDetach(AttachEvent event)
-            {
-               if (!event.isAttached())
-                  detachHandlers();
-            }
-         });
+         String docPath = sentinel.getPath();
+         absPath = FilePathUtils.dirFromFile(docPath) + "/" + absPath;
       }
       
-      private boolean isSmall()
-      {
-         ImageElementEx el = image_.getElement().cast();
-         Style style = el.getStyle();
-         return
-               SMALL_MAX_WIDTH.equals(style.getProperty("maxWidth")) ||
-               SMALL_MAX_HEIGHT.equals(style.getProperty("maxHeight"));
-      }
-      
-      private void showSmall()
-      {
-         showWithDimensions(SMALL_MAX_WIDTH, SMALL_MAX_HEIGHT);
-      }
-      
-      private void showLarge()
-      {
-         showWithDimensions(LARGE_MAX_WIDTH, LARGE_MAX_HEIGHT);
-      }
-      
-      private void showWithDimensions(String width, String height)
-      {
-         setVisible(true);
-         
-         ImageElementEx el = image_.getElement().cast();
-         Style style = el.getStyle();
-         
-         boolean isWide = el.naturalWidth() > el.naturalHeight();
-         if (isWide)
-            style.setProperty("maxWidth", width);
-         else
-            style.setProperty("maxHeight", height);
-      }
-      
-      private void toggleSize()
-      {
-         if (isSmall())
-            showLarge();
-         else
-            showSmall();
-      }
-      
-      private void detachHandlers()
-      {
-         anchor_.detach();
-         handler_.removeHandler();
-      }
-      
-      private final AnchoredSelection anchor_;
-      private final HandlerRegistration handler_;
-      private final Image image_;
-      private final Label error_;
-      
-      private static final String SMALL_MAX_WIDTH  = "100px";
-      private static final String SMALL_MAX_HEIGHT = "100px";
-      
-      private static final String LARGE_MAX_WIDTH  = "400px";
-      private static final String LARGE_MAX_HEIGHT = "600px";
+      return "file_show?path=" + StringUtil.encodeURIComponent(absPath) + 
+            "&id=" + IMAGE_ID++;
    }
    
-   public final IdleCommand PREVIEW_LINK;
-   public final IdleCommand PREVIEW_LATEX;
+   private static void onPreviewImage(DocDisplay display, 
+                                      DocUpdateSentinel sentinel,
+                                      String href,
+                                      Position position,
+                                      Range tokenRange)
+   {
+      // check to see if we already have a popup showing for this image;
+      // if we do then bail early
+      String encoded = StringUtil.encodeURIComponent(href);
+      Element el = Document.get().getElementById(encoded);
+      if (el != null)
+         return;
+      
+      // display stand-alone links as line widgets
+      String line = display.getLine(position.getRow());
+      if (isStandaloneMarkdownLink(line))
+      {
+         onPreviewImageLineWidget(display, sentinel,
+               href, position, tokenRange);
+         return;
+      }
+      
+      // construct image el, place in popup, and show
+      ImagePreviewPopup panel = new ImagePreviewPopup(display, tokenRange, 
+            href, imgSrcPathFromHref(sentinel, href));
+      panel.getElement().setId(encoded);
+      
+      ScreenCoordinates coordinates =
+            display.documentPositionToScreenCoordinates(position);
+      panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
+      panel.show();
+   }
    
-   private static int ID;
    
-   // Injected ----
-   private SourceWindowManager swm_;
+   private final DocDisplay display_;
+   private final DocUpdateSentinel sentinel_;
+   private final HandlerRegistration reg_;
+   
+   private static int IMAGE_ID = 0;
 }
