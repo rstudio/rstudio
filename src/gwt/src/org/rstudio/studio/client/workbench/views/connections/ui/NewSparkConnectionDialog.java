@@ -278,7 +278,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
             builder.append("sc <- spark_connect(master = \"");
             builder.append(masterComponents[0]);
             builder.append("\"");
-            if (masterComponents.length > 0)
+            if (masterComponents.length > 1)
             {
                builder.append(", app_name = \"");
                builder.append(masterComponents[1]);
