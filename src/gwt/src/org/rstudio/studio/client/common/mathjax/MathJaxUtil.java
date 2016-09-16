@@ -120,6 +120,23 @@ public class MathJaxUtil
          if (token.hasAllTypes("latex", "begin"))
          {
             startPos = pos;
+            
+            // get the length of this line to see if it could be an inline
+            // LaTeX chunk (e.g. $$ x = y $$)
+            int length = docDisplay.getLength(i);
+            if (length < 5)
+               continue;
+            
+            // get the last token on the row; if it's a LaTeX end token then
+            // consider the row to be an inline LaTeX chunk
+            Token endLineToken = docDisplay.getTokenAt(
+                  Position.create(i, docDisplay.getLength(i)));
+            if (endLineToken != null && 
+                endLineToken.hasAllTypes("latex", "end"))
+            {
+               ranges.add(Range.fromPoints(startPos, 
+                                           Position.create(i, length)));
+            }
             continue;
          }
          
