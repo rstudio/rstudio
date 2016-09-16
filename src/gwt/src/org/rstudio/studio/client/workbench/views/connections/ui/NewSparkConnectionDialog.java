@@ -273,9 +273,17 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
                builder.append("library(dplyr)\n");
             }
             
+            String[] masterComponents = master_.getSelection().split(" - ");
+
             builder.append("sc <- spark_connect(master = \"");
-            builder.append(master_.getSelection());
+            builder.append(masterComponents[0]);
             builder.append("\"");
+            if (masterComponents.length > 0)
+            {
+               builder.append(", app_name = \"");
+               builder.append(masterComponents[1]);
+               builder.append("\"");
+            }
            
             // spark version
             if (master_.isLocalMasterSelected())
