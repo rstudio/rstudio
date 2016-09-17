@@ -644,6 +644,7 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     return access == AccessModifier.DEFAULT.ordinal();
   }
 
+  @Override
   public boolean isExternal() {
     return getEnclosingType().isExternal();
   }

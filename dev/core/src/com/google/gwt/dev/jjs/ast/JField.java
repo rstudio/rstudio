@@ -224,6 +224,7 @@ public class JField extends JVariable implements JMember {
     return isCompileTimeConstant;
   }
 
+  @Override
   public boolean isExternal() {
     return getEnclosingType().isExternal();
   }

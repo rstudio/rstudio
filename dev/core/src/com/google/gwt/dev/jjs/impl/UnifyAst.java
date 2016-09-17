@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -27,8 +28,8 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.PrecompilationContext;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -48,6 +49,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
+import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.Specialization;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -84,6 +86,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -236,25 +239,13 @@ public class UnifyAst {
     }
 
     @Override
-    public void endVisit(JExpressionStatement x, Context ctx) {
-      if (x.getExpr() instanceof JMethodCall) {
-        JMethodCall call = (JMethodCall) x.getExpr();
-        JMethod target = call.getTarget();
-        if (GWT_DEBUGGER_METHOD_CALLS.contains(target.getQualifiedName())) {
-          // We should see all calls here because GWT.debugger() returns void.
-          ctx.replaceMe(new JDebuggerStatement(x.getSourceInfo()));
-        }
-      }
-    }
-
-    @Override
     public void endVisit(JField x, Context ctx) {
       assert false : "Should not get here";
     }
 
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
-      JField field = translate(x.getField());
+      JField field = translate(x.getSourceInfo(), x.getField());
       flowInto(field);
       x.resolve(field);
       // Should not have an overridden type at this point.
@@ -285,21 +276,7 @@ public class UnifyAst {
         assert errorsFound;
         return;
       }
-      String targetSignature = target.getQualifiedName();
-      if (MAGIC_METHOD_CALLS.contains(targetSignature)) {
-        if (GWT_DEBUGGER_METHOD_CALLS.contains(targetSignature)) {
-          return; // handled in endVisit for JExpressionStatement
-        }
-        JExpression result = handleMagicMethodCall(x, targetSignature);
-        if (result == null) {
-          // Error of some sort.
-          result = JNullLiteral.INSTANCE;
-        }
-        result = this.accept(result);
-        ctx.replaceMe(result);
-        return;
-      }
-        // Should not have an overridden type at this point.
+      // Should not have an overridden type at this point.
       assert x instanceof JNewInstance || x.getType() == target.getType();
 
       flowInto(target);
@@ -310,10 +287,8 @@ public class UnifyAst {
       HasName node = x.getNode();
       if (node instanceof JType) {
         node = translate((JType) node);
-      } else if (node instanceof JField) {
-        node = translate((JField) node);
-      } else if (node instanceof JMethod) {
-        node = translate((JMethod) node);
+      } else if (node instanceof JMember) {
+        node = translate(x.getSourceInfo(), (JMember) node);
       } else {
         assert false : "Should not get here";
       }
@@ -349,7 +324,7 @@ public class UnifyAst {
 
     @Override
     public void endVisit(JsniMethodRef x, Context ctx) {
-      JMethod target = translate(x.getTarget());
+      JMethod target = translate(x.getSourceInfo(), x.getTarget());
       x.resolve(target, program.getJavaScriptObject());
       flowInto(target);
     }
@@ -391,6 +366,19 @@ public class UnifyAst {
     }
 
     @Override
+    public boolean visit(JExpressionStatement x, Context ctx) {
+      if (x.getExpr() instanceof JMethodCall) {
+        JMethodCall call = (JMethodCall) x.getExpr();
+        JMethod target = call.getTarget();
+        if (GWT_DEBUGGER_METHOD_CALLS.contains(target.getQualifiedName())) {
+          // We should see all calls here because GWT.debugger() returns void.
+          ctx.replaceMe(new JDebuggerStatement(x.getSourceInfo()));
+        }
+      }
+      return true;
+    }
+
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
       // Only visit contents of methods defined in types which are part of this compile. Visit
@@ -402,10 +390,40 @@ public class UnifyAst {
 
     @Override
     public boolean visit(JMethodCall x, Context ctx) {
-      JMethod target = translate(x.getTarget());
+      JMethod target = translate(x.getSourceInfo(), x.getTarget());
       x.resolve(target);
-      // Special handling.
-      return !MAGIC_METHOD_CALLS.contains(target.getQualifiedName());
+      // Special handling for magic method calls.
+      JExpression replacement = maybeHandleMagicMethodCall(x);
+      if (replacement != null) {
+        ctx.replaceMe(accept(replacement));
+        return false;
+      }
+      return true;
+    }
+
+    private JExpression maybeHandleMagicMethodCall(JMethodCall methodCall) {
+      JExpression result;
+      switch (methodCall.getTarget().getQualifiedName()) {
+        case GWT_CREATE:
+        case OLD_GWT_CREATE:
+          result = createRebindExpression(methodCall);
+          break;
+        case IMPL_GET_NAME_OF:
+          result = handleImplNameOf(methodCall);
+          break;
+        case SYSTEM_GET_PROPERTY:
+        case SYSTEM_GET_PROPERTY_WITH_DEFAULT:
+          result =  handleSystemGetProperty(methodCall);
+          break;
+        default:
+          // Not a magic method call, return null so that it does not get replaced.
+          return null;
+      }
+      if (result == null) {
+        // Handled magic call possibly with an error.
+        return JNullLiteral.INSTANCE;
+      }
+      return result;
     }
 
     private JExpression handleSystemGetProperty(JMethodCall gwtGetPropertyCall) {
@@ -485,18 +503,21 @@ public class UnifyAst {
         }
         minimalRebuildCache.recordRebinderTypeForReboundType(reboundTypeName,
             currentMethod.getEnclosingType().getName());
-        rpo.getGeneratorContext().setCurrentRebindBinaryTypeName(reboundTypeName);
+        rebindPermutationOracle
+            .getGeneratorContext().setCurrentRebindBinaryTypeName(reboundTypeName);
       }
-      String reqType = BinaryName.toSourceName(reboundTypeName);
+      String requestedType = BinaryName.toSourceName(reboundTypeName);
       List<String> answers;
       try {
-        answers = Lists.newArrayList(rpo.getAllPossibleRebindAnswers(logger, reqType));
+        answers = Lists.newArrayList(
+            rebindPermutationOracle.getAllPossibleRebindAnswers(logger, requestedType));
         if (incrementalCompile) {
           // Accumulate generated artifacts so that they can be output on recompiles even if no
           // generators are run.
-          minimalRebuildCache.addGeneratedArtifacts(rpo.getGeneratorContext().getArtifacts());
+          ArtifactSet artifacts = rebindPermutationOracle.getGeneratorContext().getArtifacts();
+          minimalRebuildCache.addGeneratedArtifacts(artifacts);
         }
-        rpo.getGeneratorContext().finish(logger);
+        rebindPermutationOracle.getGeneratorContext().finish(logger);
         if (incrementalCompile) {
           // There may be more types known to be modified after Generator execution, which would
           // mean the previous stale types calculation was too small. Redo it.
@@ -506,7 +527,7 @@ public class UnifyAst {
           fullFlowIntoRemainingStaleTypes();
         }
       } catch (UnableToCompleteException e) {
-        error(gwtCreateCall, "Failed to resolve '" + reqType + "' via deferred binding");
+        error(gwtCreateCall, "Failed to resolve '" + requestedType + "' via deferred binding");
         return null;
       }
 
@@ -545,7 +566,7 @@ public class UnifyAst {
         return instantiationExpressions.get(0);
       }
       return JPermutationDependentValue
-          .createTypeRebind(program, gwtCreateCall.getSourceInfo(), reqType,
+          .createTypeRebind(program, gwtCreateCall.getSourceInfo(), requestedType,
               answers, instantiationExpressions);
     }
 
@@ -579,20 +600,6 @@ public class UnifyAst {
         program.addPinnedMethod((JMethod) node);
       }
       return new JNameOf(x.getSourceInfo(), program.getTypeJavaLangString(), (HasName) node);
-    }
-
-    private JExpression handleMagicMethodCall(JMethodCall x, String targetSignature) {
-      switch (targetSignature) {
-        case GWT_CREATE:
-        case OLD_GWT_CREATE:
-          return createRebindExpression(x);
-        case IMPL_GET_NAME_OF:
-          return handleImplNameOf(x);
-        case SYSTEM_GET_PROPERTY:
-        case SYSTEM_GET_PROPERTY_WITH_DEFAULT:
-          return handleSystemGetProperty(x);
-      }
-      throw new InternalCompilerException("Unknown magic method");
     }
   }
 
@@ -654,19 +661,9 @@ public class UnifyAst {
       Sets.newLinkedHashSet(Arrays.asList(GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT));
 
   /**
-   * Methods for which the call site must be replaced with magic AST nodes.
-   */
-  private static final Set<String> MAGIC_METHOD_CALLS = Sets.newLinkedHashSet(Arrays.asList(
-      GWT_CREATE, GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT, SYSTEM_GET_PROPERTY,
-      SYSTEM_GET_PROPERTY_WITH_DEFAULT,
-      OLD_GWT_CREATE, IMPL_GET_NAME_OF));
-
-  /**
    * Methods with magic implementations that the compiler must insert.
    */
-  private static final Set<String> MAGIC_METHOD_IMPLS = Sets.newLinkedHashSet(Arrays.asList(
-      GWT_IS_CLIENT, OLD_GWT_IS_CLIENT, GWT_IS_PROD_MODE, OLD_GWT_IS_PROD_MODE, GWT_IS_SCRIPT,
-      OLD_GWT_IS_SCRIPT, CLASS_DESIRED_ASSERTION_STATUS, CLASS_IS_CLASS_METADATA_ENABLED));
+  private final Map<String, JBooleanLiteral> replacementValueByMagicMethodQualifiedName;
 
   private final CompilationState compilationState;
   private final Map<String, CompiledClass> compiledClassesByInternalName;
@@ -680,7 +677,6 @@ public class UnifyAst {
    */
   private boolean errorsFound = false;
   private final Set<CompilationUnit> unitsWithErrorsAlreadyReported = Sets.newIdentityHashSet();
-  private final Map<String, JField> fieldMap = Maps.newHashMap();
 
   /**
    * The set of types currently known to be instantiable. Like
@@ -705,9 +701,9 @@ public class UnifyAst {
 
   private final TreeLogger logger;
   private final CompilerContext compilerContext;
-  private final Map<String, JMethod> methodMap = Maps.newHashMap();
+  private final Map<String, JMember> resolvedMembersByQualifiedName = Maps.newHashMap();
   private final JProgram program;
-  private final RebindPermutationOracle rpo;
+  private final RebindPermutationOracle rebindPermutationOracle;
   private final Set<String> reboundTypeNames = Sets.newHashSet();
 
   /**
@@ -728,10 +724,11 @@ public class UnifyAst {
    * A work queue of methods whose bodies we need to traverse. Prevents
    * excessive stack use.
    */
-  private final Queue<JMethod> todo = Lists.newLinkedList();
+  private final Queue<JMethod> methodsPending = Lists.newLinkedList();
 
-  private final Set<String> virtualMethodsLive = Sets.newHashSet();
-  private final Multimap<String, JMethod> virtualMethodsPending = LinkedListMultimap.create();
+  private final Set<String> liveVirtualMethods = Sets.newHashSet();
+  private final Multimap<String, JMethod> pendingVirtualMethodsBySignature =
+      LinkedListMultimap.create();
 
   private NameBasedTypeLocator sourceNameBasedTypeLocator;
   private NameBasedTypeLocator binaryNameBasedTypeLocator;
@@ -750,8 +747,8 @@ public class UnifyAst {
     this.compilerContext = compilerContext;
     this.program = program;
     this.jsProgram = jsProgram;
-    this.rpo = precompilationContext.getRebindPermutationOracle();
-    this.compilationState = rpo.getCompilationState();
+    this.rebindPermutationOracle = precompilationContext.getRebindPermutationOracle();
+    this.compilationState = rebindPermutationOracle.getCompilationState();
     this.compiledClassesByInternalName = compilationState.getClassFileMap();
     this.compiledClassesBySourceName = compilationState.getClassFileMapBySource();
     initializeNameBasedLocators();
@@ -761,6 +758,23 @@ public class UnifyAst {
           minimalRebuildCache.computeAndClearStaleTypesCache(logger, program.typeOracle);
       checkPreambleTypesStillFresh(logger);
     }
+
+    // Magical methods are implemented by replacing their bodies during unification.
+    replacementValueByMagicMethodQualifiedName =
+        ImmutableMap.<String, JBooleanLiteral>builder()
+            .put(GWT_IS_CLIENT, JBooleanLiteral.TRUE)
+            .put(OLD_GWT_IS_CLIENT, JBooleanLiteral.TRUE)
+            .put(GWT_IS_PROD_MODE, JBooleanLiteral.TRUE)
+            .put(OLD_GWT_IS_PROD_MODE, JBooleanLiteral.TRUE)
+            .put(GWT_IS_SCRIPT, JBooleanLiteral.TRUE)
+            .put(OLD_GWT_IS_SCRIPT, JBooleanLiteral.TRUE)
+            .put(
+                CLASS_DESIRED_ASSERTION_STATUS,
+                JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()))
+            .put(
+                CLASS_IS_CLASS_METADATA_ENABLED,
+                JBooleanLiteral.get(!compilerContext.getOptions().isClassMetadataDisabled()))
+            .build();
   }
 
   public void addRootTypes(Collection<String> rootTypeSourceNames) {
@@ -788,6 +802,7 @@ public class UnifyAst {
     if (errorsFound) {
       throw new UnableToCompleteException();
     }
+    JavaAstVerifier.assertProgramIsConsistent(program);
   }
 
   /**
@@ -812,7 +827,6 @@ public class UnifyAst {
       if (rootType == null) {
         continue;
       }
-
       rootTypeBinaryNames.add(rootType.getName());
       if (rootType.hasJsInteropEntryPoints()) {
         fullFlowIntoType(rootType);
@@ -847,8 +861,8 @@ public class UnifyAst {
     instantiate(program.getTypeJavaLangString());
     // ControlFlowAnalyzer.rescueByConcat().
     flowInto(program.getIndexedMethod(RuntimeConstants.OBJECT_TO_STRING));
-    mapApi(program.getTypeJavaLangString());
-    flowInto(methodMap.get("java.lang.String.valueOf(C)Ljava/lang/String;"));
+    flowInto((JMethod)
+        resolvedMembersByQualifiedName.get("java.lang.String.valueOf(C)Ljava/lang/String;"));
 
     // FixAssignmentsToUnboxOrCast
     AutoboxUtils autoboxUtils = new AutoboxUtils(program);
@@ -904,7 +918,7 @@ public class UnifyAst {
     // pruned.
     for (JMethod method : newStubMethods) {
       if (instantiatedTypes.contains(method.getEnclosingType()) &&
-          virtualMethodsLive.contains(method.getSignature())) {
+          liveVirtualMethods.contains(method.getSignature())) {
         liveFieldsAndMethods.add(method);
       }
     }
@@ -917,6 +931,7 @@ public class UnifyAst {
       // Already logged.
       throw new UnableToCompleteException();
     }
+    JavaAstVerifier.assertProgramIsConsistent(program);
   }
 
   /**
@@ -1000,16 +1015,17 @@ public class UnifyAst {
     // TODO(zundel): ask for a recompile if deserialization fails?
     List<JDeclaredType> types = unit.getTypes();
     assert containsAllTypes(unit, types);
-    for (JDeclaredType t : types) {
-      program.addType(t);
+    for (JDeclaredType type : types) {
+      program.addType(type);
       // If we're compiling per file and we already have currently valid output for this type.
-      if (incrementalCompile && !needsNewJs(t)) {
+      if (incrementalCompile && !needsNewJs(type)) {
         // Then make sure we don't output new Js for this type.
-        program.addReferenceOnlyType(t);
+        program.addReferenceOnlyType(type);
       }
     }
-    for (JDeclaredType t : types) {
-      resolveType(t);
+    for (JDeclaredType type : types) {
+      resolveType(type);
+      processType(type);
     }
     // When compiling per file.
     if (incrementalCompile) {
@@ -1090,13 +1106,17 @@ public class UnifyAst {
   }
 
   private void error(JNode x, String errorMessage) {
+    error(x.getSourceInfo(), errorMessage);
+  }
+
+  private void error(SourceInfo sourceInfo, String errorMessage) {
     errorsFound = true;
     TreeLogger branch =
         logger
-            .branch(TreeLogger.ERROR, "Errors in '" + x.getSourceInfo().getFileName() + "'", null);
+            .branch(TreeLogger.ERROR, "Errors in '" + sourceInfo.getFileName() + "'", null);
     // Append 'Line #: msg' to the error message.
     StringBuilder msgBuf = new StringBuilder();
-    int line = x.getSourceInfo().getStartLine();
+    int line = sourceInfo.getStartLine();
     if (line > 0) {
       msgBuf.append("Line ");
       msgBuf.append(line);
@@ -1169,36 +1189,29 @@ public class UnifyAst {
     }
 
     liveFieldsAndMethods.add(method);
-    JType originalReturnType = translate(method.getOriginalReturnType());
-    List<JType> originalParamTypes =
-        Lists.newArrayListWithCapacity(method.getOriginalParamTypes().size());
-    for (JType originalParamType : method.getOriginalParamTypes()) {
-      originalParamTypes.add(translate(originalParamType));
-    }
-    JType returnType = translate(method.getType());
-    List<JClassType> thrownExceptions =
-        Lists.newArrayListWithCapacity(method.getThrownExceptions().size());
-    for (JClassType thrownException : method.getThrownExceptions()) {
-      thrownExceptions.add(translate(thrownException));
-    }
-    method.resolve(originalReturnType, originalParamTypes, returnType, thrownExceptions);
+
+    method.resolve(
+        translate(method.getOriginalReturnType()),
+        translate(method.getOriginalParamTypes()),
+        translate(method.getType()),
+        translate(method.getThrownExceptions()));
+
     if (method.isStatic()) {
       staticInitialize(method.getEnclosingType());
     } else if (method.canBePolymorphic()) {
       String signature = method.getSignature();
-      if (!virtualMethodsLive.contains(signature)) {
-        virtualMethodsLive.add(signature);
-        Iterable<JMethod> pending = virtualMethodsPending.removeAll(signature);
-        for (JMethod p : pending) {
-          assert instantiatedTypes.contains(p.getEnclosingType());
-          flowInto(p);
+      if (!liveVirtualMethods.contains(signature)) {
+        liveVirtualMethods.add(signature);
+        for (JMethod pendingMethod : pendingVirtualMethodsBySignature.removeAll(signature)) {
+          assert instantiatedTypes.contains(pendingMethod.getEnclosingType());
+          flowInto(pendingMethod);
         }
       }
     }
     resolveSpecialization(method);
 
-    // Queue up visit / resolve on the body.
-    todo.add(method);
+    // Queue up the method to resolve the method body.
+    methodsPending.add(method);
   }
 
   private void resolveSpecialization(JMethod method) {
@@ -1207,7 +1220,6 @@ public class UnifyAst {
       return;
     }
     Specialization specialization = method.getSpecialization();
-    List<JType> resolvedParams = Lists.newArrayList();
     if (specialization.getParams() == null) {
       logger.log(Type.ERROR, "Missing 'params' attribute at @SpecializeMethod for method "
           + method.getQualifiedName());
@@ -1215,26 +1227,25 @@ public class UnifyAst {
       return;
     }
 
-    for (JType param : specialization.getParams()) {
-      resolvedParams.add(translate(param));
-    }
+    List<JType> resolvedParams = translate(specialization.getParams());
+
     JType resolvedReturn = translate(specialization.getReturns());
 
     String targetMethodSignature = JjsUtils.computeSignature(
         specialization.getTarget(), resolvedParams, resolvedReturn, false);
 
-    JMethod targetMethod = translate(JMethod.getExternalizedMethod(
-        method.getEnclosingType().getName(), targetMethodSignature, false));
+    JMethod targetMethod = JMethod.getExternalizedMethod(
+        method.getEnclosingType().getName(), targetMethodSignature, false);
+    JMethod resolvedTargetMethod = translate(method.getSourceInfo(), targetMethod);
 
-    if (targetMethod == null) {
-      errorsFound = true;
-      logger.log(Type.ERROR, "Unable to locate @SpecializeMethod target "
+    if (resolvedTargetMethod.isExternal()) {
+      error(method.getSourceInfo(), "Unable to locate @SpecializeMethod target "
           + targetMethodSignature + " for method " + method.getQualifiedName());
       return;
     }
 
-    flowInto(targetMethod);
-    specialization.resolve(resolvedParams, resolvedReturn, targetMethod);
+    flowInto(resolvedTargetMethod);
+    specialization.resolve(resolvedParams, resolvedReturn, resolvedTargetMethod);
   }
 
   public NameBasedTypeLocator getSourceNameBasedTypeLocator() {
@@ -1344,11 +1355,11 @@ public class UnifyAst {
       }
 
       String signature = method.getSignature();
-      if (virtualMethodsLive.contains(signature)) {
-        assert !virtualMethodsPending.containsKey(signature);
+      if (liveVirtualMethods.contains(signature)) {
+        assert !pendingVirtualMethodsBySignature.containsKey(signature);
         flowInto(method);
       } else {
-        virtualMethodsPending.put(signature, method);
+        pendingVirtualMethodsBySignature.put(signature, method);
       }
     }
 
@@ -1380,40 +1391,28 @@ public class UnifyAst {
    */
   private void mainLoop() {
     UnifyVisitor visitor = new UnifyVisitor();
-    while (!todo.isEmpty()) {
-      visitor.accept(todo.poll());
+    while (!methodsPending.isEmpty()) {
+      visitor.accept(methodsPending.poll());
     }
   }
 
-  private void mapApi(JDeclaredType type) {
+  private void processType(JDeclaredType type) {
     assert !type.isExternal();
-    for (JField field : type.getFields()) {
-      String sig = type.getName() + '.' + field.getSignature();
-      fieldMap.put(sig, field);
+    for (JMember member : type.getMembers()) {
+      String qualifiedName = member.getQualifiedName();
+      resolvedMembersByQualifiedName.put(qualifiedName, member);
+      replaceMagicMethodBodies(member);
     }
-    for (JMethod method : type.getMethods()) {
-      String methodSignature = method.getQualifiedName();
-      methodMap.put(methodSignature, method);
-      if (!MAGIC_METHOD_IMPLS.contains(methodSignature)) {
-        continue;
-      }
-      if (methodSignature.startsWith("com.google.gwt.core.client.GWT.")
-          || methodSignature.startsWith("com.google.gwt.core.shared.GWT.")) {
-        // GWT.isClient, GWT.isScript, GWT.isProdMode all true.
-        JjsUtils.replaceMethodBody(method, JBooleanLiteral.TRUE);
-        continue;
-      }
-      assert methodSignature.startsWith("java.lang.Class.");
-      if (CLASS_DESIRED_ASSERTION_STATUS.equals(methodSignature)) {
-        JjsUtils.replaceMethodBody(method,
-            JBooleanLiteral.get(compilerContext.getOptions().isEnableAssertions()));
-      } else if (CLASS_IS_CLASS_METADATA_ENABLED.equals(methodSignature)) {
-        JjsUtils.replaceMethodBody(method,
-            JBooleanLiteral.get(!compilerContext.getOptions().isClassMetadataDisabled()));
-      } else {
-        assert false;
-      }
+  }
+
+  private void replaceMagicMethodBodies(JMember member) {
+    JExpression replacementExpression =
+        replacementValueByMagicMethodQualifiedName.get(member.getQualifiedName());
+    if (replacementExpression == null) {
+      // Not a special method that needs replacement
+      return;
     }
+    JjsUtils.replaceMethodBody((JMethod) member, replacementExpression);
   }
 
   /**
@@ -1512,95 +1511,47 @@ public class UnifyAst {
   }
 
   /**
-   * Replaces an external (stub) reference node to a particular class by the actual AST node if
-   * necessary.
-   */
-  private JClassType translate(JClassType type) {
-    return (JClassType) translate((JDeclaredType) type);
-  }
-
-  /**
    * Replaces an external (stub) reference node to a particular type by the actual AST node if
    * necessary.
    */
-  private JDeclaredType translate(JDeclaredType type) {
+  private <T extends JDeclaredType> T translate(T type) {
     if (!type.isExternal()) {
       return type;
     }
-    String typeName = type.getName();
-    JDeclaredType newType = internalFindType(typeName, binaryNameBasedTypeLocator, true);
-    if (newType == null) {
+
+    T resolvedType = (T) internalFindType(type.getName(), binaryNameBasedTypeLocator, true);
+    if (resolvedType == null) {
       assert errorsFound;
       return type;
     }
-    assert !newType.isExternal();
-    return newType;
+    assert !resolvedType.isExternal();
+    return resolvedType;
   }
 
   /**
-   * Replaces an external (stub) reference node to a particular field by the actual AST node if
+   * Replaces an external (stub) reference node to a particular member by the actual AST node if
    * necessary.
    */
-  private JField translate(JField field) {
-    if (!field.isExternal()) {
-      return field;
+  private <T extends JMember> T translate(SourceInfo sourceInfo, T member) {
+    if (!member.isExternal()) {
+      return member;
     }
 
-    JDeclaredType enclosingType = field.getEnclosingType();
-    String sig = enclosingType.getName() + '.' + field.getSignature();
-    JField newField = fieldMap.get(sig);
-    if (newField != null) {
-      return newField;
-    }
-
-    enclosingType = translate(enclosingType);
+    JDeclaredType enclosingType = translate(member.getEnclosingType());
     if (enclosingType.isExternal()) {
       assert errorsFound;
-      return field;
-    }
-    mapApi(enclosingType);
-
-    // Now the field should be there.
-    field = fieldMap.get(sig);
-    if (field == null) {
-      // TODO: error logging
-      throw new NoSuchFieldError(sig);
+      return member;
     }
 
-    assert !field.isExternal();
-    return field;
-  }
-
-  /**
-   * Replaces an external (stub) reference node to a particular method by the actual AST node if
-   * necessary.
-   */
-  private JMethod translate(JMethod method) {
-    if (!method.isExternal()) {
-      return method;
+    String qualifiedName = member.getQualifiedName();
+    T resolvedMember = (T) resolvedMembersByQualifiedName.get(qualifiedName);
+    if (resolvedMember == null) {
+      error(sourceInfo, "Reference to '" + qualifiedName + "' could not be resolved");
+      return member;
     }
 
-    String sig = method.getQualifiedName();
-    JMethod newMethod = methodMap.get(sig);
-    if (newMethod != null) {
-      return newMethod;
-    }
-
-    JDeclaredType enclosingType = translate(method.getEnclosingType());
-    if (enclosingType.isExternal()) {
-      assert errorsFound;
-      return method;
-    }
-    mapApi(enclosingType);
-
-    // Now the method should be there.
-    method = methodMap.get(sig);
-    if (method == null) {
-      // TODO: error logging
-      throw new NoSuchMethodError(sig);
-    }
-    assert !method.isExternal();
-    return method;
+    assert !resolvedMember.isExternal();
+    return resolvedMember;
   }
 
   /**
@@ -1631,5 +1582,13 @@ public class UnifyAst {
       return type;
     }
     return translate((JReferenceType) type);
+  }
+
+  private <T extends JType> List<T> translate(List<T> types) {
+    List<T> translatedTypes = Lists.newArrayListWithCapacity(types.size());
+    for (T type : types) {
+      translatedTypes.add((T) translate(type));
+    }
+    return translatedTypes;
   }
 }

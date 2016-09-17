@@ -54,7 +54,7 @@ public class JavaAstVerifier extends JVisitor {
 
   JavaAstVerifier(JProgram program) {
     this.program = program;
-    for (JDeclaredType type :program.getModuleDeclaredTypes()) {
+    for (JDeclaredType type :program.getDeclaredTypes()) {
       membersByType.putAll(type, type.getMethods());
       membersByType.putAll(type, type.getFields());
     }

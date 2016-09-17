@@ -31,5 +31,7 @@ public interface JMember extends HasEnclosingType, HasName, HasJsInfo, HasType, 
 
   boolean isSynthetic();
 
+  boolean isExternal();
+
   String getQualifiedName();
 }
