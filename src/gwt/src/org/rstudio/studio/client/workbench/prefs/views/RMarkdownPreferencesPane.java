@@ -80,12 +80,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             prefs_.showRmdChunkOutputInline());
       add(rmdInlineOutput);
       
-      // behavior for latex popups
+      // behavior for latex and image preview popups
       latexPreviewWidget_ = new SelectWidget(
-            "Show latex preview on cursor idle: ",
+            "Show equation and image previews: ",
             new String[] {
                   "Never",
-                  "Inline latex only",
+                  "Inline only",
                   "Always"
             },
             new String[] {

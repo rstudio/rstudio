@@ -73,13 +73,13 @@ public class MathJax
    
    public MathJax(DocDisplay docDisplay)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
       docDisplay_ = docDisplay;
       popup_ = new MathJaxPopupPanel(this);
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
+
+      RStudioGinjector.INSTANCE.injectMembers(this);
       
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
@@ -191,35 +191,6 @@ public class MathJax
          }
       }));
       
-      // one-shot command for rendering of latex on startup; we hide it
-      // in an anonymous Command object just to avoid leaking state into
-      // the MathJax class and wait for scope tree to ensure document
-      // has been tokenized + rendered
-      new Command()
-      {
-         private HandlerRegistration handler_;
-         
-         @Override
-         public void execute()
-         {
-            handler_ = docDisplay_.addScopeTreeReadyHandler(new ScopeTreeReadyEvent.Handler()
-            {
-               @Override
-               public void onScopeTreeReady(ScopeTreeReadyEvent event)
-               {
-                  handler_.removeHandler();
-                  MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
-                  {
-                     @Override
-                     public void onLoaded(boolean alreadyLoaded)
-                     {
-                        renderLatex();
-                     }
-                  });
-               }
-            });
-         }
-      }.execute();
    }
    
    public void renderLatex()
@@ -266,6 +237,42 @@ public class MathJax
    private void initialize(UIPrefs uiPrefs)
    {
       uiPrefs_ = uiPrefs;
+
+      // one-shot command for rendering of latex on startup; we hide it in an
+      // anonymous Command object just to avoid leaking state into the MathJax
+      // class and wait for scope tree to ensure document has been tokenized +
+      // rendered
+      if (uiPrefs_.showLatexPreviewOnCursorIdle().getValue() == 
+            UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
+      {
+         new Command()
+         {
+            private HandlerRegistration handler_;
+            
+            @Override
+            public void execute()
+            {
+               handler_ = docDisplay_.addScopeTreeReadyHandler(
+                     new ScopeTreeReadyEvent.Handler()
+               {
+                  @Override
+                  public void onScopeTreeReady(ScopeTreeReadyEvent event)
+                  {
+                     handler_.removeHandler();
+                     MathJaxLoader.withMathJaxLoaded(
+                           new MathJaxLoader.Callback()
+                     {
+                        @Override
+                        public void onLoaded(boolean alreadyLoaded)
+                        {
+                           renderLatex();
+                        }
+                     });
+                  }
+               });
+            }
+         }.execute();
+      }
    }
    
    private void renderLatexImpl(final Range range,

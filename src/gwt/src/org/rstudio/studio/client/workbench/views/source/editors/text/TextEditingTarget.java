@@ -1528,8 +1528,10 @@ public class TextEditingTarget implements
          bgIdleMonitor_ = new TextEditingTargetIdleMonitor(docDisplay_,
                docUpdateSentinel_);
 
-         // auto preview images
-         if (extendedType_.equals(SourceDocument.XT_RMARKDOWN))
+         // auto preview images if enabled
+         if (extendedType_.equals(SourceDocument.XT_RMARKDOWN) &&
+             prefs_.showLatexPreviewOnCursorIdle().getValue() == 
+                UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
             new ImagePreviewer(docDisplay_, docUpdateSentinel_);
       }
       
