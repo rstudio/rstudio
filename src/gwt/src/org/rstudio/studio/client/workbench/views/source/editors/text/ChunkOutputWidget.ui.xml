@@ -13,7 +13,7 @@
    
    .baresize
    {
-      margin-top: 5px;
+      padding-top: 5px;
    }
 
    .clear, .expand, .popout
@@ -23,6 +23,11 @@
       padding: 5px;
       cursor: pointer;
       z-index: 25;
+   }
+   
+   .baresize .clear, .baresize .expand, .baresize .popout
+   {
+      top: 7px;
    }
 
    .fullsize .clear, .fullsize .expand, .fullsize .popout
