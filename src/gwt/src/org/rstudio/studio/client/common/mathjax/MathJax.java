@@ -118,7 +118,7 @@ public class MathJax
                // re-render latex in a visible mathjax popup
                if (popup_.isShowing() && anchor_ != null)
                {
-                  renderLatex(anchor_.getRange(), true);
+                  renderLatex(anchor_.getRange(), false);
                   return;
                }
                
@@ -128,7 +128,7 @@ public class MathJax
                {
                   Range range = MathJaxUtil.getLatexRange(docDisplay_);
                   if (range != null)
-                     renderLatex(range, true);
+                     renderLatex(range, false);
                }
             }
          };
