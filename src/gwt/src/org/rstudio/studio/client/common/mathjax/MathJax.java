@@ -192,18 +192,19 @@ public class MathJax
       renderQueue_.enqueueAndRender(ranges);
    }
    
-   public void renderLatex(Range range)
+   public void renderLatex(Range range, boolean forcePopup)
    {
-      renderLatex(range, false);
+      renderLatex(range, false, forcePopup);
    }
    
-   public void renderLatex(Range range, boolean background)
+   public void renderLatex(Range range, boolean background, boolean forcePopup)
    {
-      renderLatex(range, background, null);
+      renderLatex(range, background, forcePopup, null);
    }
    
    public void renderLatex(final Range range,
                            final boolean background,
+                           final boolean forcePopup,
                            final MathJaxTypesetCallback callback)
    {
       MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
@@ -211,7 +212,7 @@ public class MathJax
          @Override
          public void onLoaded(boolean alreadyLoaded)
          {
-            renderLatexImpl(range, background, callback);
+            renderLatexImpl(range, background, forcePopup, callback);
          }
       });
    }
@@ -228,20 +229,24 @@ public class MathJax
    
    private void renderLatexImpl(final Range range,
                                 final boolean background,
+                                final boolean forcePopup,
                                 final MathJaxTypesetCallback callback)
    {
       String text = docDisplay_.getTextForRange(range);
       
       // render latex chunks as line widgets
-      boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
-      if (isLatexChunk)
+      if (!forcePopup)
       {
-         // don't render if chunk contents empty
-         if (isEmptyLatexChunk(text))
-            return;
+         boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
+         if (isLatexChunk)
+         {
+            // don't render if chunk contents empty
+            if (isEmptyLatexChunk(text))
+               return;
 
-         renderLatexLineWidget(range, text, callback);
-         return;
+            renderLatexLineWidget(range, text, callback);
+            return;
+         }
       }
       
       // if the popup is already showing, just re-render within that popup

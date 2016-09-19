@@ -38,7 +38,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.BaseMenuBar;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -1112,6 +1111,25 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
+      menu.addSeparator();
+
+      String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getValue();
+      menu.addItem(new DocPropMenuItem(
+            "Preview Images and Equations", docUpdateSentinel_, 
+            docUpdateSentinel_.getBoolProperty(
+               TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
+               pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER),
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
+            DocUpdateSentinel.PROPERTY_TRUE));
+      menu.addItem(new DocPropMenuItem(
+            "Show Previews Inline", docUpdateSentinel_, 
+            docUpdateSentinel_.getBoolProperty(
+               TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+                 pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS),
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+            DocUpdateSentinel.PROPERTY_TRUE));
+      menu.addSeparator();
+      
       if (uiPrefs_.showRmdChunkOutputInline().getValue() &&
           type != RmdOutput.TYPE_SHINY)
       {
@@ -1130,6 +1148,8 @@ public class TextEditingTargetWidget
             menu.addSeparator();
          }
          
+         menu.addSeparator();
+
          menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
          menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
          menu.addSeparator();
@@ -1138,24 +1158,6 @@ public class TextEditingTargetWidget
          menu.addSeparator();
       }
       
-      BaseMenuBar previewMenu = new BaseMenuBar(true);
-      previewMenu.addItem(new DocPropMenuItem(
-            "Always", docUpdateSentinel_, true, 
-            TextEditingTargetNotebook.CONTENT_PREVIEW,
-            UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS));
-      previewMenu.addItem(new DocPropMenuItem(
-            "Inline only", docUpdateSentinel_, false,
-            TextEditingTargetNotebook.CONTENT_PREVIEW,
-            UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY));
-      previewMenu.addItem(new DocPropMenuItem(
-            "Never", docUpdateSentinel_, false, 
-            TextEditingTargetNotebook.CONTENT_PREVIEW,
-            UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER));
-      
-      menu.addItem(new MenuItem(
-            AppCommand.formatMenuLabel(null, "Preview Images/Equations", null), 
-            true,
-            previewMenu));
       menu.addSeparator();
            
       if (showOutputOptions)

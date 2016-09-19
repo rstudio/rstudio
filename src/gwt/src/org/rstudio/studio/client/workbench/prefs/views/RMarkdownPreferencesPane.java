@@ -85,8 +85,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             "Show equation and image previews: ",
             new String[] {
                   "Never",
-                  "Inline only",
-                  "Always"
+                  "In a popup",
+                  "Inline"
             },
             new String[] {
                   UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER,

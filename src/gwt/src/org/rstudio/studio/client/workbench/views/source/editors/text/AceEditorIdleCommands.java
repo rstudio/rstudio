@@ -66,18 +66,17 @@ public class AceEditorIdleCommands
          return;
       
       String pref = prefs_.showLatexPreviewOnCursorIdle().getValue();
-      if (sentinel.hasProperty(TextEditingTargetNotebook.CONTENT_PREVIEW))
-         pref = sentinel.getProperty(TextEditingTargetNotebook.CONTENT_PREVIEW);
       
-      String text = display.getTextForRange(range);
-      
-      // preview if preview is always enabled, or if we're only previewing 
-      // inline and this isn't a line chunk
-      if (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS ||
-          (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY &&
-             !(text.startsWith("$$") && text.endsWith("$$"))))
+      // preview if preview is always enabled, or specifically enabled for this
+      // document
+      if (sentinel.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
+            pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
       {
-         display.renderLatex(range);
+         display.renderLatex(range, 
+               !sentinel.getBoolProperty(
+                     TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+                     pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY));
       }
    }
    
@@ -91,7 +90,7 @@ public class AceEditorIdleCommands
          public void execute(DocDisplay display, DocUpdateSentinel sentinel, 
                IdleState idleState)
          {
-            ImagePreviewer.onPreviewLink(display, sentinel, 
+            ImagePreviewer.onPreviewLink(display, sentinel, prefs_,
                   resolvePosition(display, idleState));
          }
       };

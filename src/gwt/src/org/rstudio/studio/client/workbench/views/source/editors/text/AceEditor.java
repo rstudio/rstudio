@@ -3558,9 +3558,9 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void renderLatex(Range range)
+   public void renderLatex(Range range, boolean forcePopup)
    {
-      mathjax_.renderLatex(range);
+      mathjax_.renderLatex(range, forcePopup);
    }
    
    @Override

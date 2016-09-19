@@ -422,6 +422,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void toggleTokenInfo();
    
-   void renderLatex(Range range);
+   void renderLatex(Range range, boolean forcePopup);
    void renderLatex();
 }

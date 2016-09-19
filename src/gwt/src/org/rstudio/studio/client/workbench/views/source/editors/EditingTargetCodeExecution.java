@@ -345,7 +345,7 @@ public class EditingTargetCodeExecution
       Range range = MathJaxUtil.getLatexRange(docDisplay_);
       if (range == null)
          return false;
-      docDisplay_.renderLatex(range);
+      docDisplay_.renderLatex(range, false);
       return true;
    }
    

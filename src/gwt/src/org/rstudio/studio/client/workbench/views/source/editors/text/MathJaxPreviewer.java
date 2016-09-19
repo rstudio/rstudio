@@ -28,35 +28,27 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class MathJaxPreviewer
-             implements ScopeTreeReadyEvent.Handler
+             implements ScopeTreeReadyEvent.Handler,
+                        ValueChangeHandler<String>
 {
    public MathJaxPreviewer(DocDisplay display, DocUpdateSentinel sentinel, 
          UIPrefs prefs)
    {
       display_= display;
+      sentinel_ = sentinel;
       String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
-      if (sentinel.hasProperty(TextEditingTargetNotebook.CONTENT_PREVIEW))
-         pref = sentinel.getProperty(TextEditingTargetNotebook.CONTENT_PREVIEW);
       
       sentinel.addPropertyValueChangeHandler(
-            TextEditingTargetNotebook.CONTENT_PREVIEW, 
-            new ValueChangeHandler<String>()
-            {
-               @Override
-               public void onValueChange(ValueChangeEvent<String> val)
-               {
-                  // add previews when switching to "always"; remove them for
-                  // other values
-                  if (val.getValue() == 
-                        UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
-                     renderAllLatex();
-                  else
-                     removeAllLatex();
-               }
-            });
-
-      if (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, this);
+      sentinel.addPropertyValueChangeHandler(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, this);
+      
+      if (sentinel.getBoolProperty(
+                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
+          pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
+      { 
          reg_ = display.addScopeTreeReadyHandler(this);
+      }
    }
    
    @Override
@@ -65,6 +57,22 @@ public class MathJaxPreviewer
       reg_.removeHandler();
 
       renderAllLatex();
+   }
+
+   @Override
+   public void onValueChange(ValueChangeEvent<String> arg0)
+   {
+      if (sentinel_.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, true) &&
+          sentinel_.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, true))
+      {
+         renderAllLatex();
+      }
+      else
+      {
+         removeAllLatex();
+      }
    }
   
    private void renderAllLatex()
@@ -84,5 +92,6 @@ public class MathJaxPreviewer
    }
    
    private final DocDisplay display_;
+   private final DocUpdateSentinel sentinel_;
    private HandlerRegistration reg_;
 }

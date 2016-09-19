@@ -60,36 +60,28 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ImagePreviewer
-             implements ScopeTreeReadyEvent.Handler
+             implements ScopeTreeReadyEvent.Handler,
+                        ValueChangeHandler<String>
 {
    public ImagePreviewer(DocDisplay display, DocUpdateSentinel sentinel, 
          UIPrefs prefs)
    {
       display_ = display;
       sentinel_ = sentinel;
+      prefs_ = prefs;
       String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
-      if (sentinel.hasProperty(TextEditingTargetNotebook.CONTENT_PREVIEW))
-         pref = sentinel.getProperty(TextEditingTargetNotebook.CONTENT_PREVIEW);
       
       sentinel.addPropertyValueChangeHandler(
-            TextEditingTargetNotebook.CONTENT_PREVIEW, 
-            new ValueChangeHandler<String>()
-            {
-               @Override
-               public void onValueChange(ValueChangeEvent<String> val)
-               {
-                  // add previews when switching to "always"; remove them for
-                  // other values
-                  if (val.getValue() == 
-                        UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
-                     previewAllLinks();
-                  else
-                     removeAllPreviews();
-               }
-            });
-
-      if (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, this);
+      sentinel.addPropertyValueChangeHandler(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, this);
+      
+      if (sentinel.getBoolProperty(
+                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
+                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
+      { 
          reg_ = display.addScopeTreeReadyHandler(this);
+      }
    }
 
    @Override
@@ -101,6 +93,22 @@ public class ImagePreviewer
       previewAllLinks();
    }
    
+   @Override
+   public void onValueChange(ValueChangeEvent<String> val)
+   {
+      if (sentinel_.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, true) &&
+          sentinel_.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, true))
+      {
+         previewAllLinks();
+      }
+      else
+      {
+         removeAllPreviews();
+      }
+   }
+   
    private void previewAllLinks()
    {
       // find the list of images
@@ -109,8 +117,9 @@ public class ImagePreviewer
       // preview each
       for (Range r: imageRanges)
       {
-         onPreviewLink(display_, sentinel_, Position.create(r.getEnd().getRow(), 
-               r.getEnd().getColumn() - 1));
+         onPreviewLink(display_, sentinel_, prefs_, 
+               Position.create(r.getEnd().getRow(), 
+                               r.getEnd().getColumn() - 1));
       }
    }
    
@@ -126,7 +135,7 @@ public class ImagePreviewer
    }
 
    public static void onPreviewLink(DocDisplay display, 
-         DocUpdateSentinel sentinel, Position position)
+         DocUpdateSentinel sentinel, UIPrefs prefs, Position position)
    {
       Token token = display.getTokenAt(position);
       if (token == null)
@@ -142,7 +151,7 @@ public class ImagePreviewer
             
       String href = token.getValue();
       if (ImagePreviewer.isImageHref(href))
-         onPreviewImage(display, sentinel, href, position, tokenRange);
+         onPreviewImage(display, sentinel, prefs, href, position, tokenRange);
    }
    
    private static void onPreviewImageLineWidget(final DocDisplay display,
@@ -474,6 +483,7 @@ public class ImagePreviewer
    
    private static void onPreviewImage(DocDisplay display, 
                                       DocUpdateSentinel sentinel,
+                                      UIPrefs prefs,
                                       String href,
                                       Position position,
                                       Range tokenRange)
@@ -485,9 +495,21 @@ public class ImagePreviewer
       if (el != null)
          return;
       
-      // display stand-alone links as line widgets
+      String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
+      
+      // skip if disabled entirely
+      if (!sentinel.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
+            pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
+         return;
+      
+      // display stand-alone links as line widgets (if enabled)
       String line = display.getLine(position.getRow());
-      if (isStandaloneMarkdownLink(line))
+      if (isStandaloneMarkdownLink(line) && 
+          sentinel.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+            prefs.showLatexPreviewOnCursorIdle().getValue() == 
+                UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       {
          onPreviewImageLineWidget(display, sentinel,
                href, position, tokenRange);
@@ -504,10 +526,10 @@ public class ImagePreviewer
       panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
       panel.show();
    }
-   
-   
+
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
+   private final UIPrefs prefs_;
    private HandlerRegistration reg_;
 
    private static final String LINE_WIDGET_TYPE = "image-preview" ;
