@@ -1847,6 +1847,7 @@ public class TextEditingTargetNotebook
    public final static String CHUNK_OUTPUT_TYPE    = "chunk_output_type";
    public final static String CHUNK_OUTPUT_INLINE  = "inline";
    public final static String CHUNK_OUTPUT_CONSOLE = "console";
+   public final static String CONTENT_PREVIEW      = "content_preview";
    
    public final static int MODE_COMMITTED   = 0;
    public final static int MODE_UNCOMMITTED = 1;

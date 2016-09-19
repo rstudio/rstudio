@@ -26,6 +26,8 @@ import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -35,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Docu
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
@@ -44,6 +47,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -57,11 +62,34 @@ import com.google.gwt.user.client.ui.SimplePanel;
 public class ImagePreviewer
              implements ScopeTreeReadyEvent.Handler
 {
-   public ImagePreviewer(DocDisplay display, DocUpdateSentinel sentinel)
+   public ImagePreviewer(DocDisplay display, DocUpdateSentinel sentinel, 
+         UIPrefs prefs)
    {
       display_ = display;
       sentinel_ = sentinel;
-      reg_ = display.addScopeTreeReadyHandler(this);
+      String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
+      if (sentinel.hasProperty(TextEditingTargetNotebook.CONTENT_PREVIEW))
+         pref = sentinel.getProperty(TextEditingTargetNotebook.CONTENT_PREVIEW);
+      
+      sentinel.addPropertyValueChangeHandler(
+            TextEditingTargetNotebook.CONTENT_PREVIEW, 
+            new ValueChangeHandler<String>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<String> val)
+               {
+                  // add previews when switching to "always"; remove them for
+                  // other values
+                  if (val.getValue() == 
+                        UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
+                     previewAllLinks();
+                  else
+                     removeAllPreviews();
+               }
+            });
+
+      if (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
+         reg_ = display.addScopeTreeReadyHandler(this);
    }
 
    @Override
@@ -70,6 +98,11 @@ public class ImagePreviewer
       // remove single-shot handler
       reg_.removeHandler();
       
+      previewAllLinks();
+   }
+   
+   private void previewAllLinks()
+   {
       // find the list of images
       List<Range> imageRanges = findImages();
       
@@ -78,6 +111,17 @@ public class ImagePreviewer
       {
          onPreviewLink(display_, sentinel_, Position.create(r.getEnd().getRow(), 
                r.getEnd().getColumn() - 1));
+      }
+   }
+   
+   private void removeAllPreviews()
+   {
+      JsArray<LineWidget> widgets = display_.getLineWidgets();
+      for (int i = 0; i < widgets.length(); i++)
+      {
+         LineWidget widget = widgets.get(i);
+         if (widget.getType() == LINE_WIDGET_TYPE)
+            display_.removeLineWidget(widget);
       }
    }
 
@@ -374,7 +418,7 @@ public class ImagePreviewer
       outputWidget.hideSatellitePopup();
       outputWidget.getElement().getStyle().setMarginTop(4, Unit.PX);
 
-      plw.set(new PinnedLineWidget("image", display, outputWidget, 
+      plw.set(new PinnedLineWidget(LINE_WIDGET_TYPE, display, outputWidget, 
             position.getRow(), null, null));
    }
    
@@ -464,7 +508,8 @@ public class ImagePreviewer
    
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
-   private final HandlerRegistration reg_;
-   
+   private HandlerRegistration reg_;
+
+   private static final String LINE_WIDGET_TYPE = "image-preview" ;
    private static int IMAGE_ID = 0;
 }

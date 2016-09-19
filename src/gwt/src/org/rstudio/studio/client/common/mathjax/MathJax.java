@@ -26,11 +26,8 @@ import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -44,7 +41,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 
 import com.google.gwt.core.client.GWT;
@@ -62,7 +58,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.inject.Inject;
 
 public class MathJax
 {
@@ -79,8 +74,6 @@ public class MathJax
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
 
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -233,58 +226,11 @@ public class MathJax
    
    // Private Methods ----
    
-   @Inject
-   private void initialize(UIPrefs uiPrefs)
-   {
-      uiPrefs_ = uiPrefs;
-
-      // one-shot command for rendering of latex on startup; we hide it in an
-      // anonymous Command object just to avoid leaking state into the MathJax
-      // class and wait for scope tree to ensure document has been tokenized +
-      // rendered
-      if (uiPrefs_.showLatexPreviewOnCursorIdle().getValue() == 
-            UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS)
-      {
-         new Command()
-         {
-            private HandlerRegistration handler_;
-            
-            @Override
-            public void execute()
-            {
-               handler_ = docDisplay_.addScopeTreeReadyHandler(
-                     new ScopeTreeReadyEvent.Handler()
-               {
-                  @Override
-                  public void onScopeTreeReady(ScopeTreeReadyEvent event)
-                  {
-                     handler_.removeHandler();
-                     MathJaxLoader.withMathJaxLoaded(
-                           new MathJaxLoader.Callback()
-                     {
-                        @Override
-                        public void onLoaded(boolean alreadyLoaded)
-                        {
-                           renderLatex();
-                        }
-                     });
-                  }
-               });
-            }
-         }.execute();
-      }
-   }
-   
    private void renderLatexImpl(final Range range,
                                 final boolean background,
                                 final MathJaxTypesetCallback callback)
    {
       String text = docDisplay_.getTextForRange(range);
-      String pref = uiPrefs_.showLatexPreviewOnCursorIdle().getGlobalValue();
-      
-      // never render background popups if user opted out
-      if (background && pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
-         return;
       
       // render latex chunks as line widgets
       boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
@@ -293,22 +239,6 @@ public class MathJax
          // don't render if chunk contents empty
          if (isEmptyLatexChunk(text))
             return;
-
-         // don't create new line widget on background render
-         if (background)
-         {
-            int row = range.getEnd().getRow();
-            LineWidget widget = docDisplay_.getLineWidgetForRow(row);
-            if (widget == null)
-            {
-               // respect preference for rendering popups
-               if (pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER) ||
-                   pref.equals(UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY))
-               {
-                  return;
-               }
-            }
-         }
 
          renderLatexLineWidget(range, text, callback);
          return;
@@ -481,7 +411,7 @@ public class MathJax
       outputWidget.hideSatellitePopup();
 
       PinnedLineWidget plWidget = new PinnedLineWidget(
-            "mathjax",
+            LINE_WIDGET_TYPE,
             docDisplay_,
             outputWidget,
             row,
@@ -727,13 +657,11 @@ public class MathJax
    private HandlerRegistration cursorChangedHandler_;
    private String lastRenderedText_ = "";
    
-   // Injected ----
-   private UIPrefs uiPrefs_;
-   
    // sometimes MathJax fails to render initially but succeeds if asked to do so
    // again; this is the maximum number of times we'll try to re-render the same
    // text automatically before giving up
    private static final int MAX_RENDER_ATTEMPTS = 2;
    
+   public static final String LINE_WIDGET_TYPE = "mathjax-preview";
    public static final String MATHJAX_ROOT_CLASSNAME = "rstudio-mathjax-root";
 }

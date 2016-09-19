@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.BaseMenuBar;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureHeightEvent;
@@ -64,6 +65,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -1135,6 +1137,26 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
          menu.addSeparator();
       }
+      
+      BaseMenuBar previewMenu = new BaseMenuBar(true);
+      previewMenu.addItem(new DocPropMenuItem(
+            "Always", docUpdateSentinel_, true, 
+            TextEditingTargetNotebook.CONTENT_PREVIEW,
+            UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS));
+      previewMenu.addItem(new DocPropMenuItem(
+            "Inline only", docUpdateSentinel_, false,
+            TextEditingTargetNotebook.CONTENT_PREVIEW,
+            UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY));
+      previewMenu.addItem(new DocPropMenuItem(
+            "Never", docUpdateSentinel_, false, 
+            TextEditingTargetNotebook.CONTENT_PREVIEW,
+            UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER));
+      
+      menu.addItem(new MenuItem(
+            AppCommand.formatMenuLabel(null, "Preview Images/Equations", null), 
+            true,
+            previewMenu));
+      menu.addSeparator();
            
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));

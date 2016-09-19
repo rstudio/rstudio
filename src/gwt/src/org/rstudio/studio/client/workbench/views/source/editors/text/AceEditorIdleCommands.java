@@ -15,13 +15,16 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -31,6 +34,12 @@ public class AceEditorIdleCommands
    {
       PREVIEW_LINK = previewLink();
       PREVIEW_LATEX = previewLatex();
+   }
+   
+   @Inject
+   private void initialize(UIPrefs uiPrefs)
+   {
+      prefs_ = uiPrefs;
    }
    
    // Latex Preview ----
@@ -43,19 +52,33 @@ public class AceEditorIdleCommands
          public void execute(DocDisplay display, DocUpdateSentinel sentinel, 
                IdleState state)
          {
-            onPreviewLatex(display, state);
+            onPreviewLatex(display, sentinel, state);
          }
       };
    }
    
-   private void onPreviewLatex(DocDisplay display, IdleState state)
+   private void onPreviewLatex(DocDisplay display, DocUpdateSentinel sentinel, 
+         IdleState state)
    {
       Position position = resolvePosition(display, state);
       Range range = MathJaxUtil.getLatexRange(display, position);
       if (range == null)
          return;
       
-      display.renderLatex(range);
+      String pref = prefs_.showLatexPreviewOnCursorIdle().getValue();
+      if (sentinel.hasProperty(TextEditingTargetNotebook.CONTENT_PREVIEW))
+         pref = sentinel.getProperty(TextEditingTargetNotebook.CONTENT_PREVIEW);
+      
+      String text = display.getTextForRange(range);
+      
+      // preview if preview is always enabled, or if we're only previewing 
+      // inline and this isn't a line chunk
+      if (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS ||
+          (pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY &&
+             !(text.startsWith("$$") && text.endsWith("$$"))))
+      {
+         display.renderLatex(range);
+      }
    }
    
    // Link Preview ----
@@ -86,6 +109,8 @@ public class AceEditorIdleCommands
       assert false : "Unhandled idle state type '" + type + "'";
       return Position.create(0, 0);
    }
+
+   private UIPrefs prefs_;
    
    public final IdleCommand PREVIEW_LINK;
    public final IdleCommand PREVIEW_LATEX;

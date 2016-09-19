@@ -3563,6 +3563,12 @@ public class AceEditor implements DocDisplay,
       mathjax_.renderLatex(range);
    }
    
+   @Override
+   public void renderLatex()
+   {
+      mathjax_.renderLatex();
+   }
+   
    private static class BackgroundTokenizer
    {
       public BackgroundTokenizer(final AceEditor editor)
