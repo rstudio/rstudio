@@ -1117,7 +1117,7 @@ public class JsInliner {
     // Invariant: singleInvokations(fn) = null => calls to fn have not been seen
     //            singleInvokations(fn) = MULTIPLE =>  multiple callsites to fn have been seen.
     //            singleInvokations(fn) = caller =>  one callsite has been seen an occurs in caller.
-    private final Map<JsFunction, JsFunction> singleInvocations = Maps.newHashMap();
+    private final Map<JsFunction, JsFunction> singleInvocations = Maps.newLinkedHashMap();
 
     // Indicates multiple invocations were found (only identity is used).
     private static final JsFunction MULTIPLE = JsFunction.createSentinel();
