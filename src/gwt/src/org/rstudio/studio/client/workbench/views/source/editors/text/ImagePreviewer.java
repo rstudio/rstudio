@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Mutable;
@@ -114,15 +112,16 @@ public class ImagePreviewer
    
    private void previewAllLinks()
    {
-      // find the list of images
-      List<Range> imageRanges = findImages();
-      
-      // preview each
-      for (Range r: imageRanges)
+      for (int i = 0, n = display_.getRowCount(); i < n; i++)
       {
-         onPreviewLink(display_, sentinel_, prefs_, 
-               Position.create(r.getEnd().getRow(), 
-                               r.getEnd().getColumn() - 1));
+         String line = display_.getLine(i);
+         if (isStandaloneMarkdownLink(line))
+         {
+            // perform a preview with the cursor on the href (past the opening
+            // parenthetical)
+            onPreviewLink(display_, sentinel_, prefs_, 
+                  Position.create(i, line.indexOf('(') + 2));
+         }
       }
    }
    
@@ -434,21 +433,6 @@ public class ImagePreviewer
             position.getRow(), null, null));
    }
    
-   private List<Range> findImages()
-   {
-      List<Range> ranges = new ArrayList<Range>();
-      for (int i = 0, n = display_.getRowCount(); i < n; i++)
-      {
-         String line = display_.getLine(i);
-         if (isStandaloneMarkdownLink(line))
-         {
-            ranges.add(Range.create(i, 0, i, line.length()));
-         }
-      }
-      
-      return ranges;
-   }
-
    private static boolean isStandaloneMarkdownLink(String line)
    {
       return line.matches("^\\s*!\\s*\\[[^\\]]*\\]\\s*\\([^)]*\\)\\s*(?:{.*)?$");
