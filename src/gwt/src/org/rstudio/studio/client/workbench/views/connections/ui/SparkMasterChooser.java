@@ -112,10 +112,8 @@ public class SparkMasterChooser extends Composite
                      {
                         indicator.onCompleted();
                         
-                        // get master (prepend spark:// if necessary)
+                        // get master
                         String master = input.input;
-                        if (!master.startsWith("spark://"))
-                           master = "spark://" + master;
                         
                         // add the item to the list if necessary
                         int targetItem = -1;
