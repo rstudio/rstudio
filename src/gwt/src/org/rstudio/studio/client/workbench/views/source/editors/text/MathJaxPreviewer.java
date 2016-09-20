@@ -46,8 +46,11 @@ public class MathJaxPreviewer
       
       if (sentinel.getBoolProperty(
                 TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-          pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
-      { 
+                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS) &&
+          sentinel.getBoolProperty(
+                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
+                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
+      {
          reg_ = display_.addScopeTreeReadyHandler(this);
       }
    }
