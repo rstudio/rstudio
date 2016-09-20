@@ -457,7 +457,7 @@ public class MakeCallsStatic {
     return exec(program, addRuntimeChecks, new FullOptimizerContext(program));
   }
 
-  protected Set<JMethod> toBeMadeStatic = Sets.newHashSet();
+  protected Set<JMethod> toBeMadeStatic = Sets.newLinkedHashSet();
 
   private final JProgram program;
   private final StaticCallConverter converter;

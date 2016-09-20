@@ -25,6 +25,7 @@ import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -292,7 +293,7 @@ public class JTypeOracle implements Serializable {
   /**
    * A set of all classes in the current program.
    */
-  private Set<String> allClasses = Sets.newHashSet();
+  private Set<String> allClasses = Sets.newLinkedHashSet();
 
   /**
    * A map of all classes to the set of interfaces that they could theoretically
@@ -306,7 +307,7 @@ public class JTypeOracle implements Serializable {
    * The set of all interfaces that are initially implemented by both a Java and
    * Overlay type.
    */
-  private final Set<String> dualImplInterfaces = Sets.newHashSet();
+  private final Set<String> dualImplInterfaces = Sets.newLinkedHashSet();
 
   /**
    * A map of all classes to the set of interfaces they implement,
@@ -335,7 +336,7 @@ public class JTypeOracle implements Serializable {
    * A map of all interfaces that are implemented by overlay types to the
    * overlay type that initially implements it.
    */
-  private final Map<String, String> jsoByInterface = Maps.newHashMap();
+  private final Map<String, String> jsoByInterface = Maps.newLinkedHashMap();
 
   /**
    * A mapping from the type name to the actual type instance.
@@ -1151,7 +1152,7 @@ public class JTypeOracle implements Serializable {
   private Map<String, JMethod> getOrCreateInstanceMethodsBySignatureForType(JClassType type) {
     Map<String, JMethod> methodsBySignature = methodsBySignatureForType.get(type);
     if (methodsBySignature == null) {
-      methodsBySignature = Maps.newHashMap();
+      methodsBySignature = Maps.newLinkedHashMap();
       JClassType superClass = type.getSuperClass();
       Map<String, JMethod> parentMethods = superClass == null
           ? Collections.<String, JMethod>emptyMap()
@@ -1189,8 +1190,8 @@ public class JTypeOracle implements Serializable {
    * Computes the transitive closure of a relation.
    */
   private Multimap<String, String> transitiveClosure(Multimap<String, String> relation) {
-    Multimap<String, String> transitiveClosure = HashMultimap.create();
-    Set<String> domain = Sets.newHashSet(relation.keySet());
+    Multimap<String, String> transitiveClosure = LinkedHashMultimap.create();
+    Set<String> domain = Sets.newLinkedHashSet(relation.keySet());
     domain.addAll(relation.values());
     for (String element : domain) {
       expandTransitiveClosureForElement(relation, element, transitiveClosure);
