@@ -28,6 +28,8 @@ import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.mathjax.display.MathJaxPopupPanel;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -42,6 +44,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Curs
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -66,9 +70,12 @@ public class MathJax
       void onMathJaxTypesetComplete(boolean error);
    }
    
-   public MathJax(DocDisplay docDisplay)
+   public MathJax(DocDisplay docDisplay, DocUpdateSentinel sentinel,
+         UIPrefs prefs)
    {
       docDisplay_ = docDisplay;
+      sentinel_ = sentinel;
+      prefs_ = prefs;
       popup_ = new MathJaxPopupPanel(this);
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
@@ -192,19 +199,18 @@ public class MathJax
       renderQueue_.enqueueAndRender(ranges);
    }
    
-   public void renderLatex(Range range, boolean forcePopup)
+   public void renderLatex(Range range)
    {
-      renderLatex(range, false, forcePopup);
+      renderLatex(range, false);
    }
    
-   public void renderLatex(Range range, boolean background, boolean forcePopup)
+   public void renderLatex(Range range, boolean background)
    {
-      renderLatex(range, background, forcePopup, null);
+      renderLatex(range, background,  null);
    }
    
    public void renderLatex(final Range range,
                            final boolean background,
-                           final boolean forcePopup,
                            final MathJaxTypesetCallback callback)
    {
       MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
@@ -212,7 +218,7 @@ public class MathJax
          @Override
          public void onLoaded(boolean alreadyLoaded)
          {
-            renderLatexImpl(range, background, forcePopup, callback);
+            renderLatexImpl(range, background, callback);
          }
       });
    }
@@ -229,13 +235,16 @@ public class MathJax
    
    private void renderLatexImpl(final Range range,
                                 final boolean background,
-                                final boolean forcePopup,
                                 final MathJaxTypesetCallback callback)
    {
       String text = docDisplay_.getTextForRange(range);
       
-      // render latex chunks as line widgets
-      if (!forcePopup)
+      // render latex chunks as line widgets unless document or global
+      // preferences indicate otherwise
+      if (sentinel_.getBoolProperty(
+            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+            prefs_.showLatexPreviewOnCursorIdle().getValue() == 
+               UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       {
          boolean isLatexChunk = text.startsWith("$$") && text.endsWith("$$");
          if (isLatexChunk)
@@ -652,6 +661,8 @@ public class MathJax
    }
    
    private final DocDisplay docDisplay_;
+   private final DocUpdateSentinel sentinel_;
+   private final UIPrefs prefs_;
    private final MathJaxPopupPanel popup_;
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;

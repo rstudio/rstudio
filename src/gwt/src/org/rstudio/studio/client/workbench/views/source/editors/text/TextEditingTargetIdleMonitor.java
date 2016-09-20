@@ -45,7 +45,7 @@ public class TextEditingTargetIdleMonitor
 {
    interface IdleCommand
    {
-      public void execute(DocDisplay display, DocUpdateSentinel sentinal, 
+      public void execute(TextEditingTarget target, DocUpdateSentinel sentinal, 
             IdleState state);
    }
    
@@ -55,27 +55,27 @@ public class TextEditingTargetIdleMonitor
       idleCommands_ = idleCommands;
    }
    
-   public TextEditingTargetIdleMonitor(DocDisplay display, 
+   public TextEditingTargetIdleMonitor(final TextEditingTarget editingTarget, 
          DocUpdateSentinel sentinel)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      IdleTarget target = new IdleTarget(editingTarget, sentinel);
       
-      display_ = display;
+      display_ = editingTarget.getDocDisplay();
       sentinel_ = sentinel;
       monitors_ = new ArrayList<HandlerRegistration>();
-      commands_ = new HashMap<HandlerRegistration, IdleCommand>();
+      commands_ = target.commands;
       timer_ = new Timer()
       {
          @Override
          public void run()
          {
-            executeIdleCommands(display_, sentinel_, 
+            executeIdleCommands(editingTarget, sentinel_, 
                   IdleState.STATE_CURSOR_IDLE);
          }
       };
       
-      COMMAND_MAP.put(display, commands_);
-      SENTINEL_MAP.put(display,  sentinel_);
+      TARGET_MAP.put(editingTarget.getDocDisplay(), target);
       
       refreshCommands();
       beginMonitoring();
@@ -97,19 +97,19 @@ public class TextEditingTargetIdleMonitor
    
    // Private Methods ----
    
-   private static void executeIdleCommands(DocDisplay display, 
+   private static void executeIdleCommands(TextEditingTarget editingTarget, 
          DocUpdateSentinel sentinel, int type)
    {
       IdleState state = new IdleState(type, mouseX_, mouseY_, modifiers_);
-      Map<HandlerRegistration, IdleCommand> commandMap = 
-            COMMAND_MAP.get(display);
-      if (commandMap == null)
+      IdleTarget target = TARGET_MAP.get(editingTarget.getDocDisplay());
+      if (target == null)
          return;
       
-      for (Map.Entry<HandlerRegistration, IdleCommand> entry : commandMap.entrySet())
+      for (Map.Entry<HandlerRegistration, IdleCommand> entry : 
+               target.commands.entrySet())
       {
          IdleCommand command = entry.getValue();
-         command.execute(display, sentinel, state);
+         command.execute(target.target, sentinel, state);
       }
    }
    
@@ -164,7 +164,7 @@ public class TextEditingTargetIdleMonitor
    private void onDetach()
    {
       endMonitoring();
-      COMMAND_MAP.remove(display_);
+      TARGET_MAP.remove(display_);
       commands_.clear();
       timer_.cancel();
    }
@@ -222,15 +222,25 @@ public class TextEditingTargetIdleMonitor
    private static int mouseY_;
    
    private static final Timer MOUSE_MOVE_TIMER;
+   
+   private static final SafeMap<DocDisplay, IdleTarget> TARGET_MAP;
+   
+   private class IdleTarget
+   {
+      public IdleTarget(TextEditingTarget t, DocUpdateSentinel s)
+      {
+         target = t;
+         sentinel = s;
+         commands = new HashMap<HandlerRegistration, IdleCommand>();
+      }
+      public final TextEditingTarget target;
+      public final DocUpdateSentinel sentinel;
+      public final Map<HandlerRegistration, IdleCommand> commands;
+   }
 
    @SuppressWarnings("unused") 
    private static final HandlerRegistration MOUSE_MOVE_HANDLER;
 
-   private static final SafeMap<DocDisplay, 
-                                Map<HandlerRegistration, IdleCommand>> 
-                        COMMAND_MAP;
-   private static final SafeMap<DocDisplay, DocUpdateSentinel> SENTINEL_MAP;
-   
    static {
       MOUSE_MOVE_TIMER = new Timer()
       {
@@ -245,9 +255,10 @@ public class TextEditingTargetIdleMonitor
             if (editor == null)
                return;
             
-            DocUpdateSentinel sentinel = SENTINEL_MAP.get(editor);
-            if (sentinel != null)
-               executeIdleCommands(editor, sentinel, IdleState.STATE_MOUSE_IDLE);
+            IdleTarget target = TARGET_MAP.get(editor);
+            if (target != null)
+               executeIdleCommands(target.target, target.sentinel, 
+                     IdleState.STATE_MOUSE_IDLE);
          }
       };
       
@@ -267,10 +278,8 @@ public class TextEditingTargetIdleMonitor
             MOUSE_MOVE_TIMER.schedule(DELAY_MS);
          }
       });
-      
-      COMMAND_MAP = new SafeMap<DocDisplay, 
-                                Map<HandlerRegistration, IdleCommand>>();
-      SENTINEL_MAP = new SafeMap<DocDisplay, DocUpdateSentinel>();
+
+       TARGET_MAP = new SafeMap<DocDisplay, IdleTarget>();
    }
    
    private static final int DELAY_MS = 700;

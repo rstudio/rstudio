@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -41,9 +42,9 @@ public class EditingTargetCodeExecution
       String extractCode(DocDisplay docDisplay, Range range);
    }
    
-   public EditingTargetCodeExecution(DocDisplay docDisplay, String docId)
+   public EditingTargetCodeExecution(DocDisplay display, String docId)
    {
-      this(docDisplay, docId, new CodeExtractor() {
+      this(null, display, docId, new CodeExtractor() {
          @Override
          public String extractCode(DocDisplay docDisplay, Range range)
          {
@@ -52,15 +53,17 @@ public class EditingTargetCodeExecution
       });
    }
    
-   public EditingTargetCodeExecution(DocDisplay docDisplay,
+   public EditingTargetCodeExecution(TextEditingTarget target,
+                                     DocDisplay display,
                                      String docId,
                                      CodeExtractor codeExtractor)
    {
-      docDisplay_ = docDisplay;
+      target_ = target;
+      docDisplay_ = display;
       codeExtractor_ = codeExtractor;
       docId_ = docId;
-      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(docDisplay,
-            docId);
+      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(
+            target.getDocDisplay(), docId);
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -342,10 +345,14 @@ public class EditingTargetCodeExecution
    
    private boolean executeLatex()
    {
+      // need a suitable editing target to render LaTeX chunks
+      if (target_ == null)
+         return false;
+      
       Range range = MathJaxUtil.getLatexRange(docDisplay_);
       if (range == null)
          return false;
-      docDisplay_.renderLatex(range, false);
+      target_.renderLatex(range);
       return true;
    }
    
@@ -369,6 +376,7 @@ public class EditingTargetCodeExecution
    }
    
    private final DocDisplay docDisplay_;
+   private final TextEditingTarget target_;
    private final CodeExtractor codeExtractor_;
    private final String docId_;
    private final EditingTargetInlineChunkExecution inlineChunkExecutor_;

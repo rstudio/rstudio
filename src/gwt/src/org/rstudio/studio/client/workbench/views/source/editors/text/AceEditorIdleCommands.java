@@ -49,19 +49,19 @@ public class AceEditorIdleCommands
       return new IdleCommand()
       {
          @Override
-         public void execute(DocDisplay display, DocUpdateSentinel sentinel, 
-               IdleState state)
+         public void execute(TextEditingTarget target, 
+               DocUpdateSentinel sentinel, IdleState state)
          {
-            onPreviewLatex(display, sentinel, state);
+            onPreviewLatex(target, sentinel, state);
          }
       };
    }
    
-   private void onPreviewLatex(DocDisplay display, DocUpdateSentinel sentinel, 
-         IdleState state)
+   private void onPreviewLatex(TextEditingTarget target, 
+         DocUpdateSentinel sentinel, IdleState state)
    {
-      Position position = resolvePosition(display, state);
-      Range range = MathJaxUtil.getLatexRange(display, position);
+      Position position = resolvePosition(target.getDocDisplay(), state);
+      Range range = MathJaxUtil.getLatexRange(target.getDocDisplay(), position);
       if (range == null)
          return;
       
@@ -73,10 +73,7 @@ public class AceEditorIdleCommands
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
             pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
       {
-         display.renderLatex(range, 
-               !sentinel.getBoolProperty(
-                     TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-                     pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY));
+         target.renderLatex(range);
       }
    }
    
@@ -87,11 +84,11 @@ public class AceEditorIdleCommands
       return new IdleCommand()
       {
          @Override
-         public void execute(DocDisplay display, DocUpdateSentinel sentinel, 
-               IdleState idleState)
+         public void execute(TextEditingTarget target, 
+               DocUpdateSentinel sentinel, IdleState idleState)
          {
-            ImagePreviewer.onPreviewLink(display, sentinel, prefs_,
-                  resolvePosition(display, idleState));
+            ImagePreviewer.onPreviewLink(target.getDocDisplay(), sentinel, 
+                  prefs_, resolvePosition(target.getDocDisplay(), idleState));
          }
       };
    }

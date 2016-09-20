@@ -77,6 +77,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -1201,7 +1202,7 @@ public class TextEditingTarget implements
       id_ = document.getId();
       fileContext_ = fileContext;
       fileType_ = (TextFileType) type;
-      codeExecution_ = new EditingTargetCodeExecution(docDisplay_, getId(), 
+      codeExecution_ = new EditingTargetCodeExecution(this, docDisplay_, getId(), 
             this);
       extendedType_ = document.getExtendedType();
       extendedType_ = rmarkdownHelper_.detectExtendedType(document.getContents(),
@@ -1525,12 +1526,15 @@ public class TextEditingTarget implements
 
          // register idle monitor; automatically creates/refreshes previews
          // of images and LaTeX equations
-         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(docDisplay_,
+         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(this, 
                docUpdateSentinel_);
+         
+         // set up mathjax
+         mathjax_ = new MathJax(docDisplay_, docUpdateSentinel_, prefs_);
 
          // auto preview images and equations
          new ImagePreviewer(docDisplay_, docUpdateSentinel_, prefs_);
-         new MathJaxPreviewer(docDisplay_, docUpdateSentinel_, prefs_);
+         new MathJaxPreviewer(this, docUpdateSentinel_, prefs_);
       }
       
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
@@ -4427,6 +4431,18 @@ public class TextEditingTarget implements
                false);
       }
    }
+   
+   public void renderLatex()
+   {
+      if (mathjax_ != null)
+         mathjax_.renderLatex();
+   }
+   
+   public void renderLatex(Range range)
+   {
+      if (mathjax_ != null)
+         mathjax_.renderLatex(range);
+   }
 
    public String getDefaultNamePrefix()
    {
@@ -6322,6 +6338,7 @@ public class TextEditingTarget implements
    private final LintManager lintManager_;
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
+   private MathJax mathjax_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

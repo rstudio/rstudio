@@ -67,7 +67,7 @@ public class MathJaxRenderQueue
       }
       
       isRunning_ = true;
-      mathjax_.renderLatex(range, false, false, callback_);
+      mathjax_.renderLatex(range, false, callback_);
       return true;
    }
    

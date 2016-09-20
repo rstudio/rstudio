@@ -31,10 +31,11 @@ public class MathJaxPreviewer
              implements ScopeTreeReadyEvent.Handler,
                         ValueChangeHandler<String>
 {
-   public MathJaxPreviewer(DocDisplay display, DocUpdateSentinel sentinel, 
+   public MathJaxPreviewer(TextEditingTarget target, DocUpdateSentinel sentinel, 
          UIPrefs prefs)
    {
-      display_= display;
+      target_ = target;
+      display_= target.getDocDisplay();
       sentinel_ = sentinel;
       String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
       
@@ -47,7 +48,7 @@ public class MathJaxPreviewer
                 TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
           pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       { 
-         reg_ = display.addScopeTreeReadyHandler(this);
+         reg_ = display_.addScopeTreeReadyHandler(this);
       }
    }
    
@@ -77,7 +78,7 @@ public class MathJaxPreviewer
   
    private void renderAllLatex()
    {
-      display_.renderLatex();
+      target_.renderLatex();
    }
    
    private void removeAllLatex()
@@ -92,6 +93,7 @@ public class MathJaxPreviewer
    }
    
    private final DocDisplay display_;
+   private final TextEditingTarget target_;
    private final DocUpdateSentinel sentinel_;
    private HandlerRegistration reg_;
 }
