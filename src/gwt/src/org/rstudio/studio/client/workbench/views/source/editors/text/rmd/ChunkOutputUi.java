@@ -56,7 +56,7 @@ public class ChunkOutputUi
       if (widget == null) 
       {
          widget = new ChunkOutputWidget(docId_, def.getChunkId(), 
-               def.getOptions(), def.getExpansionState(), this, 
+               def.getOptions(), def.getExpansionState(), true, this, 
                ChunkOutputSize.Default);
       }
       else

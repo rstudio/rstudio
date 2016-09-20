@@ -417,10 +417,11 @@ public class ImagePreviewer
       };
       
       cow.set(new ChunkOutputWidget(
-            "",
+            sentinel.getId(),
             "md-image-preview-" + StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
+            false,  // can close
             host,
             ChunkOutputSize.Bare));
       

@@ -106,10 +106,12 @@ public class ChunkOutputWidget extends Composite
       String pendingResize();
       String fullsize();
       String baresize();
+      String noclear();
    }
 
-   public ChunkOutputWidget(String documentId, String chunkId, RmdChunkOptions options, 
-         int expansionState, ChunkOutputHost host, ChunkOutputSize chunkOutputSize)
+   public ChunkOutputWidget(String documentId, String chunkId, 
+         RmdChunkOptions options, int expansionState, boolean canClose, 
+         ChunkOutputHost host, ChunkOutputSize chunkOutputSize)
    {
       documentId_ = documentId;
       chunkId_ = chunkId;
@@ -139,6 +141,8 @@ public class ChunkOutputWidget extends Composite
       {
          addStyleName(style.baresize());
       }
+      if (!canClose)
+         addStyleName(style.noclear());
 
       // create the initial output stream and attach it to the frame
       attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));

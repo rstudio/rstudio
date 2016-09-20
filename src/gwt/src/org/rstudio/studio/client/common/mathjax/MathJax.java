@@ -418,6 +418,7 @@ public class MathJax
             StringUtil.makeRandomId(8),
             RmdChunkOptions.create(),
             ChunkOutputWidget.EXPANDED,
+            false, // can close
             host,
             bare ? ChunkOutputSize.Bare : ChunkOutputSize.Default);
       

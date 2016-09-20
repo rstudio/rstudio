@@ -41,10 +41,20 @@
       padding: 5px;
    }
    
+   .noclear .clear
+   {
+      display: none;
+   }
+   
    .expand 
    {
       right: 35px;
       transition: transform 400ms ease, -webkit-transform 400ms ease;
+   }
+   
+   .noclear .expand
+   {
+      right: 12px;
    }
 
    .popout 

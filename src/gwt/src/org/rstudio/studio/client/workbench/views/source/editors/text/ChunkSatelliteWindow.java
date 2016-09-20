@@ -102,6 +102,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
          chunkWindowParams_.getChunkId(),
          RmdChunkOptions.create(),
          ChunkOutputWidget.EXPANDED,
+         false,  // can close
          chunkOutputHost,
          ChunkOutputSize.Full);
 
