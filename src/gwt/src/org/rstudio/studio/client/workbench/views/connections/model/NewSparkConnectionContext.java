@@ -139,8 +139,6 @@ public class NewSparkConnectionContext extends JavaScriptObject
          String option = connectionsOption.get(i);
          if (!MASTER_LOCAL.equals(option) && !MASTER_CLUSTER.equals(option))
          {
-            if (!option.startsWith("spark://"))
-               option = "spark://" + option;
             connections.add(option);
          }
       }
