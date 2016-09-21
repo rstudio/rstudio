@@ -136,6 +136,10 @@ public class ChunkPlotWidget extends Composite
             outer.getElement().getStyle().setProperty("msFlexDirection", "column");
             outer.getElement().getStyle().setProperty("webkitFlexDirection", "column");
             outer.getElement().getStyle().setProperty("flexDirection", "column");
+
+            outer.getElement().getStyle().setProperty("msFlexGrow", "1");
+            outer.getElement().getStyle().setProperty("webkitFlexGrow", "1");
+            outer.getElement().getStyle().setProperty("flexGrow", "1");
          }
          else
          {
