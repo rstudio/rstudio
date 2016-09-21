@@ -304,7 +304,10 @@ public class RootPanel extends AbsolutePanel {
    *
    * @param clearDom if {@code true} this method will also remove any DOM
    *  elements that are not widgets.
+   *
+   * @deprecated Simply removing all DOM elements can cause issues with other elements in the page.
    */
+  @Deprecated
   public void clear(boolean clearDom) {
     clear();
 
