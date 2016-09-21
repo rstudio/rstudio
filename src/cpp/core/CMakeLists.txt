@@ -183,7 +183,7 @@ if (UNIX)
    
          set(CORE_SYSTEM_LIBRARIES
             ${CORE_SYSTEM_LIBRARIES}
-            -lssl -lcrypto)
+            -L/usr/local/opt/openssl/lib -lssl -lcrypto)
    
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
