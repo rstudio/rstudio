@@ -13,13 +13,17 @@ function setupWaitForBodyLoad(callback) {
 
   // If the page is not already loaded, setup some listeners and timers to
   // detect when it is done.
-  function onBodyDone() {
+  function checkBodyDone() {
     if (!bodyDone) {
+      if (!isBodyLoaded()) {
+        return;
+      }
+
       bodyDone = true;
       callback();
 
       if ($doc.removeEventListener) {
-        $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
+        $doc.removeEventListener("readystatechange", checkBodyDone, false);
       }
       if (onBodyDoneTimerId) {
         clearInterval(onBodyDoneTimerId);
@@ -27,15 +31,13 @@ function setupWaitForBodyLoad(callback) {
     }
   }
 
-  // For everyone that supports DOMContentLoaded.
+  // For everyone that supports readystatechange.
   if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
+    $doc.addEventListener("readystatechange", checkBodyDone, false);
   }
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
   var onBodyDoneTimerId = setInterval(function() {
-    if (isBodyLoaded()) {
-      onBodyDone();
-    }
-  }, 50);
+    checkBodyDone();
+  }, 10);
 }
