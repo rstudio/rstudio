@@ -403,9 +403,8 @@ public class AceEditorBackgroundLinkHighlighter
       final String title = BrowseCap.isMacintosh()
             ? "Open Link (Command+Click)"
             : "Open Link (Shift+Click)";
-      MarkerRenderer renderer = MarkerRenderer.create(styles, title);
       
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
    
