@@ -97,8 +97,7 @@ public class Runtime {
     return @Runtime::portableObjCreate(*)(superPrototype);
   }-*/;
 
-  public static native void copyObjectProperties(JavaScriptObject from,
-      JavaScriptObject to) /*-{
+  public static native void copyObjectProperties(JavaScriptObject from, JavaScriptObject to) /*-{
     for (var property in from) {
       if (to[property] === undefined) {
         to[property] = from[property];
