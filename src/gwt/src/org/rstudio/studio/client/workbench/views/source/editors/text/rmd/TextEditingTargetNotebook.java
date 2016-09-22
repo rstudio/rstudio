@@ -213,7 +213,7 @@ public class TextEditingTargetNotebook
       
       // rendering of chunk output line widgets (we wait until after the first
       // render to ensure that ace places the line widgets correctly)
-      releaseOnDismiss.add(docDisplay_.addRenderFinishedHandler(this));
+      renderFinishedReg_ = docDisplay_.addRenderFinishedHandler(this);
       
       releaseOnDismiss_.add(editingTarget_.addInterruptChunkHandler(new InterruptChunkEvent.Handler()
       {
@@ -895,12 +895,7 @@ public class TextEditingTargetNotebook
             lastPlotWidth_ = getPlotWidth();
          }
       }
-      else
-      {
-         // on ordinary render, we need to sync any chunk line widgets that have
-         // just been laid out; debounce this
-         syncHeightTimer_.schedule(250);
-      }
+      renderFinishedReg_.removeHandler();
    }
 
    @Override
@@ -1710,30 +1705,6 @@ public class TextEditingTargetNotebook
       }
    }
    
-   private final Timer syncHeightTimer_ = new Timer()
-   {
-      @Override
-      public void run()
-      {
-         // compute top/bottom of the doc (we'll sync widgets that lie in this
-         // range)
-         int top = docDisplay_.getFirstVisibleRow();
-         int bot = docDisplay_.getLastVisibleRow();
-
-         // sync any widgets that need it
-         for (ChunkOutputUi output: outputs_.values())
-         {
-            ChunkOutputWidget widget = output.getOutputWidget();
-            if (output.getCurrentRow() >= top &&
-                output.getCurrentRow() <= bot && 
-                widget.needsHeightSync())
-            {
-               output.getOutputWidget().syncHeight(false, false);
-            }
-         }
-      }
-   };
-   
    private void setDirtyState()
    {
       if (getCommitMode() == MODE_UNCOMMITTED && !dirtyState_.getValue())
@@ -1802,6 +1773,7 @@ public class TextEditingTargetNotebook
    private final NotebookDoc notebookDoc_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private final DependencyManager dependencyManager_;
+   private final HandlerRegistration renderFinishedReg_;
    
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;

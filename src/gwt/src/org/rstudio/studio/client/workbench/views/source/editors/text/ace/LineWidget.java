@@ -113,6 +113,14 @@ public class LineWidget extends JavaScriptObject
       this.coverGutter = coverGutter;
    }-*/;
    
+   public native final boolean pending() /*-{
+      return this.pending || false;
+   }-*/;
+   
+   public native final void setPending(boolean pending) /*-{
+      this.pending = pending;
+   }-*/;
+   
    public final native <T> T getData() /*-{
       return this.data;
    }-*/;

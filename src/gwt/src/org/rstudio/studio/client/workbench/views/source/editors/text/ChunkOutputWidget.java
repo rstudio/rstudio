@@ -213,11 +213,6 @@ public class ChunkOutputWidget extends Composite
       return expansionState_.getValue();
    }
    
-   public boolean needsHeightSync()
-   {
-      return needsHeightSync_;
-   }
-   
    public void setExpansionState(int state)
    {
       if (state == expansionState_.getValue())
@@ -310,22 +305,11 @@ public class ChunkOutputWidget extends Composite
       // don't sync if Ace hasn't positioned us yet
       if (StringUtil.isNullOrEmpty(getElement().getStyle().getTop()))
       {
-         needsHeightSync_ = true;
          return;
       }
 
       setVisible(true);
       
-      if (root_.getElement().getScrollHeight() == 0 && presenter_.hasOutput())
-      {
-         // if we have no height but we do have content, mark ourselves as 
-         // requiring a sync
-         needsHeightSync_ = true;
-      }
-      else
-      {
-         needsHeightSync_ = false;
-      }
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
       int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
@@ -908,7 +892,6 @@ public class ChunkOutputWidget extends Composite
    private int pendingRenders_ = 0;
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private boolean hasErrors_ = false;
-   private boolean needsHeightSync_ = false;
    private boolean hideSatellitePopup_ = false;
    
    private Timer collapseTimer_ = null;

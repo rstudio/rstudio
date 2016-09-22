@@ -28,6 +28,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.PreElement;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -44,6 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -299,6 +301,7 @@ public class AceEditor implements DocDisplay,
       backgroundTokenizer_ = new BackgroundTokenizer(this);
       vim_ = new Vim(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
+      pendingLineWidgets_ = new ArrayList<LineWidget>();
       
       widget_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
@@ -319,7 +322,26 @@ public class AceEditor implements DocDisplay,
             AceEditor.this.fireEvent(new FoldChangeEvent());
          }
       });
+      
 
+      addRenderFinishedHandler(new RenderFinishedEvent.Handler()
+      {
+         @Override
+         public void onRenderFinished(RenderFinishedEvent event)
+         {
+            // if the document's been scrolled, schedule a check to show any
+            // pending line widgets made visible
+            int top = getScrollTop();
+            if (lastScrollTop_ != top)
+            {
+               pendingWidgetTimer_.schedule(200);
+               lastScrollTop_ = top;
+            }
+         }
+         
+         private int lastScrollTop_ = 0;
+      });
+      
       addPasteHandler(new PasteEvent.Handler()
       {
          @Override
@@ -3468,6 +3490,16 @@ public class AceEditor implements DocDisplay,
    @Override
    public void addLineWidget(LineWidget widget)
    {
+      if (widget.getRow() < getFirstVisibleRow())
+      {
+         // Ace has a bug that's triggered when adding a line widget above the
+         // currently visible line. Hide line widgets that fall into this
+         // category.
+         Debug.devlog("pending widget " + widget.getRow() + " / " + getFirstVisibleRow());
+         pendingLineWidgets_.add(widget);
+         widget.setPending(true);
+         widget.getElement().getStyle().setDisplay(Display.NONE);
+      }
       widget_.getLineWidgetManager().addLineWidget(widget);
       fireLineWidgetsChanged();
    }
@@ -3476,6 +3508,8 @@ public class AceEditor implements DocDisplay,
    public void removeLineWidget(LineWidget widget)
    {
       widget_.getLineWidgetManager().removeLineWidget(widget);
+      if (widget.pending())
+         pendingLineWidgets_.remove(widget);
       fireLineWidgetsChanged();
    }
    
@@ -3483,12 +3517,16 @@ public class AceEditor implements DocDisplay,
    public void removeAllLineWidgets()
    {
       widget_.getLineWidgetManager().removeAllLineWidgets();
+      pendingLineWidgets_.clear();
       fireLineWidgetsChanged();
    }
    
    @Override
    public void onLineWidgetChanged(LineWidget widget)
    {
+      // don't sync widget if it's still pending
+      if (widget.pending())
+         return;
       widget_.getLineWidgetManager().onWidgetChanged(widget);
       fireLineWidgetsChanged();
    }
@@ -3652,6 +3690,38 @@ public class AceEditor implements DocDisplay,
       private double startTime_ = -1;
       private AnimationScheduler.AnimationHandle handle_;
    }
+
+   private final Timer pendingWidgetTimer_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         Debug.devlog("test for pending widgets");
+         // early abort if no pending widgets
+         if (pendingLineWidgets_.isEmpty())
+            return;
+         
+         // bring the widgets into view
+         int top = getFirstVisibleRow();
+         for (int i = pendingLineWidgets_.size() - 1; i >= 0; i--)
+         {
+            LineWidget widget = pendingLineWidgets_.get(i);
+            
+            // bring into view if the widget is below the top of the viewport
+            // and has been positioned by Ace
+            if (widget.getRow() >= top && !StringUtil.isNullOrEmpty(
+                  widget.getElement().getStyle().getTop()))
+            {
+               Debug.devlog("restore widget " + widget.getRow() + " / " + top);
+               widget.getElement().getStyle().setDisplay(Display.BLOCK);
+               widget.setPending(false);
+               pendingLineWidgets_.remove(i);
+               onLineWidgetChanged(widget);
+            }
+         }
+      }
+   };
+   
    
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
@@ -3680,6 +3750,7 @@ public class AceEditor implements DocDisplay,
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
+   private final ArrayList<LineWidget> pendingLineWidgets_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
