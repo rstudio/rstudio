@@ -306,7 +306,21 @@ public class InterfaceGenerator extends ToolBase {
     return Lists.newArrayList(Iterables.transform(constantsNames, new Function<String, String>() {
       @Override
       public String apply(String constantName) {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constantName);
+        String lowerCase = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, constantName);
+
+        // If we cannot revert the method name to the original constant name, use the
+        // original constant name.
+        // This case happens when number are used after an underscore:
+        // CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, "DEF_1") returns def1
+        // but CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, "def1") returns DEF1 and the
+        // GssResourceGenerator is not able to match the name of the method with the name of the
+        // constant .
+        if (!constantName.equals(CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE,
+            lowerCase))) {
+          return constantName;
+        }
+
+        return lowerCase;
       }
     }));
   }
