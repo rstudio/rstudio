@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -384,7 +385,9 @@ public class DesktopApplicationHeader implements ApplicationHeader
          Selection selection = editor.getSession().getSelection();
          return selection.isEmpty();
       }
-      return DomUtils.getSelectionText(Document.get()).isEmpty();
+      
+      String selectionText = DomUtils.getSelectionText(Document.get());
+      return StringUtil.isNullOrEmpty(selectionText);
    }
    
    private static boolean isFocusInAceInstance()
