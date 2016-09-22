@@ -104,13 +104,14 @@ public class MathJaxUtil
       return true;
    }
    
-   public static List<Range> findLatexChunks(DocDisplay docDisplay)
+   public static List<Range> findLatexChunks(int startRow, 
+         DocDisplay docDisplay)
    {
       docDisplay.tokenizeDocument();
       List<Range> ranges = new ArrayList<Range>();
       
       Position startPos = null;
-      for (int i = 0, n = docDisplay.getRowCount(); i < n; i++)
+      for (int i = startRow, n = docDisplay.getRowCount(); i < n; i++)
       {
          Position pos = Position.create(i, 0);
          Token token = docDisplay.getTokenAt(Position.create(i, 0));

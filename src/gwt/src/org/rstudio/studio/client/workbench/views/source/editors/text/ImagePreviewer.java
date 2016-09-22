@@ -112,7 +112,8 @@ public class ImagePreviewer
    
    private void previewAllLinks()
    {
-      for (int i = 0, n = display_.getRowCount(); i < n; i++)
+      for (int i = display_.getFirstVisibleRow(), n = display_.getRowCount(); 
+           i < n; i++)
       {
          String line = display_.getLine(i);
          if (isStandaloneMarkdownLink(line))

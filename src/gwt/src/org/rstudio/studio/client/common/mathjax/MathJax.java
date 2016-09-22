@@ -195,7 +195,8 @@ public class MathJax
    
    public void renderLatex()
    {
-      final List<Range> ranges = MathJaxUtil.findLatexChunks(docDisplay_);
+      final List<Range> ranges = MathJaxUtil.findLatexChunks(
+            docDisplay_.getFirstVisibleRow(), docDisplay_);
       renderQueue_.enqueueAndRender(ranges);
    }
    
