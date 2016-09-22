@@ -403,8 +403,10 @@ public class AceEditorBackgroundLinkHighlighter
       final String title = BrowseCap.isMacintosh()
             ? "Open Link (Command+Click)"
             : "Open Link (Shift+Click)";
+      MarkerRenderer renderer =
+            MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
       
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
    
@@ -724,22 +726,23 @@ public class AceEditorBackgroundLinkHighlighter
    {
       protected MarkerRenderer() {}
       
-      public static final native MarkerRenderer create(final String clazz, final String title) /*-{
-         var MarkerPrototype = $wnd.require("ace/layer/marker").Marker.prototype;
+      public static final native MarkerRenderer create(final AceEditorNative editor,
+                                                       final String clazz,
+                                                       final String title)
+      /*-{
+         var markerBack = editor.renderer.$markerBack;
          return $entry(function(html, range, left, top, config) {
-            var height = config.lineHeight;
-            var width = (range.end.column - range.start.column) * config.characterWidth;
-
-            var top  = MarkerPrototype.$getTop(range.start.row, config);
-            var left = 4 + range.start.column * config.characterWidth;
-
-            html.push(
-                "<div title='" + title + "' class='", clazz, "' style='",
-                "height:", height, "px;",
-                "width:", width, "px;",
-                "top:", top, "px;",
-                "left:", left, "px;", "'></div>"
-            );
+            // HACK: we take advantage of an implementation detail of
+            // Ace's 'drawTextMarker' implementation. Ace constructs
+            // HTML for the generated markers with code of the form:
+            //
+            //    html = "<div style='..." + extraStyle + "'>"
+            //
+            // We take advantage of this, and inject our 'extraStyle'
+            // to close the style attribute we were intended to be
+            // locked in, and instead inject a 'title' attribute instead.
+            var extra = "' title='" + title;
+            return markerBack.drawTextMarker(html, range, clazz, config, extra);
          });
       }-*/;
    }
