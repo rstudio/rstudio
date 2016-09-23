@@ -173,4 +173,6 @@ public interface ThemeStyles extends CssResource
    String borderedIFrame();
    
    String toolbarInfoLabel();
+   
+   String displayNone();
 }
