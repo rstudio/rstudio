@@ -742,7 +742,10 @@ public class AceEditorBackgroundLinkHighlighter
             // to close the style attribute we were intended to be
             // locked in, and instead inject a 'title' attribute instead.
             var extra = "' title='" + title;
-            return markerBack.drawTextMarker(html, range, clazz, config, extra);
+            if (range.isMultiLine())
+               return markerBack.drawTextMarker(html, range, clazz, config, extra);
+            else
+               return markerBack.drawSingleLineMarker(html, range, clazz, config, 0, extra);
          });
       }-*/;
    }
