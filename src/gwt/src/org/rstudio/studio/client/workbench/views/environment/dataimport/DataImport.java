@@ -308,6 +308,40 @@ public class DataImport extends Composite
             }
          });
    }
+
+   private void promptForFactorString(
+      String title,
+      final Operation complete,
+      final String columnName,
+      final String columnType)
+   {
+      globalDisplay_.promptForText(
+         title,
+         "Please insert a comma separated list of factors",
+         "",
+         new OperationWithInput<String>()
+         {
+            @Override
+            public void execute(final String formatString)
+            {
+               String[] parts = formatString.split(",");
+
+               String factorsString = "";
+               boolean first = true;
+               for (String part : parts)
+               {
+                  part = part.replaceAll("^\\s+|\\s+$", "");
+
+                  if (!first) factorsString = factorsString + ", ";
+                  factorsString = factorsString + "\"" + part + "\"";
+                  first = false;
+               }
+
+               importOptions_.setColumnDefinition(columnName, columnType, "c(" + factorsString + ")");
+               complete.execute();
+            }
+         });
+   }
    
    private Operation onColumnMenuShow(final DataImportPreviewResponse response)
    {
@@ -364,8 +398,8 @@ public class DataImport extends Composite
                   }
                   else if (input == "factor")
                   {
-                     promptForParseString(
-                        "Factors", "c()", completeAndPreview, column.getName(), input);
+                     promptForFactorString(
+                        "Factors", completeAndPreview, column.getName(), input);
                   }
                   else
                   {
