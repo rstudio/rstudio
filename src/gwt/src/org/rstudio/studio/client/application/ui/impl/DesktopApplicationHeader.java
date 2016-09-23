@@ -59,7 +59,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -384,7 +383,14 @@ public class DesktopApplicationHeader implements ApplicationHeader
          Selection selection = editor.getSession().getSelection();
          return selection.isEmpty();
       }
-      return DomUtils.getSelectionText(Document.get()).isEmpty();
+      
+      // NOTE: we currently use this for managing copy + paste
+      // behaviors, but copy + paste seems to do the right thing
+      // regardless of whether the user has highlighted some text
+      // or not _outside_ of an Ace instance, and we can't always
+      // detect if the document has a selection (e.g. if an iframe
+      // has focus)
+      return false;
    }
    
    private static boolean isFocusInAceInstance()
