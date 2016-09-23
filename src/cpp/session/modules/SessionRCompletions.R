@@ -1460,10 +1460,17 @@ assign(x = ".rs.acCompletionTypes",
    # Keywords are really from the base package
    packages[packages == "keywords"] <- "base"
    
+   # discover completion matches for this token
    keep <- .rs.fuzzyMatches(results, token)
    results <- results[keep]
    packages <- packages[keep]
    
+   # remove duplicates (assume first element masks next)
+   dupes    <- duplicated(results)
+   results  <- results[!dupes]
+   packages <- packages[!dupes]
+   
+   # re-order the completion results (lexically)
    order <- order(results)
    
    # If the token is 'T' or 'F', prefer 'TRUE' and 'FALSE' completions
