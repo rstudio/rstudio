@@ -31,6 +31,7 @@
 
 #include <core/FilePath.hpp>
 #include <core/Exec.hpp>
+#include <core/StringUtils.hpp>
 
 #include <r/RInterface.hpp>
 #include <r/RFunctionHook.hpp>
@@ -149,8 +150,10 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::R_DefParams(pRP);
 
    // set paths (copy to new string so we can provide char*)
-   std::string* pRHome = new std::string(rHome.absolutePath());
-   std::string* pUserHome = new std::string(userHome.absolutePath());
+   std::string* pRHome = new std::string(
+            core::string_utils::utf8ToSystem(rHome.absolutePath()));
+   std::string* pUserHome = new std::string(
+            core::string_utils::utf8ToSystem(userHome.absolutePath()));
    pRP->rhome = const_cast<char*>(pRHome->c_str());
    pRP->home = const_cast<char*>(pUserHome->c_str());
 
