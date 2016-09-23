@@ -433,7 +433,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     expectedMethods.addAll(expected);
     if (addObjectMethods) {
       TypeOracle oracle = moduleContext.getOracle();
-      expectedMethods.addAll(Arrays.asList(oracle.getJavaLangObject().getMethods()));
+      expectedMethods.addAll(
+          Arrays.asList(oracle.getJavaLangObject().getOverridableMethods()));
     }
 
     for (JMethod method : actual) {

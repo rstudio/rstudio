@@ -77,9 +77,12 @@ public class Object {
   }
 
   public String toString() {
-    return getClass().getName() + '@' + Integer.toHexString(hashCode());
+    return toString(this);
   }
 
+  private static String toString(Object object) {
+    return object.getClass().getName() + '@' + Integer.toHexString(object.hashCode());
+  }
   /**
    * Never called; here for JRE compatibility.
    *

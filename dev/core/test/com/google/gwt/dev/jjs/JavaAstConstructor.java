@@ -292,6 +292,7 @@ public class JavaAstConstructor {
                   "  public static void bootstrap() {}",
                   "  public static void emptyMethod() {}",
                   "  public static void getClassPrototype() {}",
+                  "  public static String toString(Object object) { return null; }",
                   "  static native void typeMarkerFn() /*-{}-*/;",
                   "}");
         }

@@ -471,9 +471,15 @@ public class NativeJsTypeTest extends GWTTestCase {
 
   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Error")
   private static class NativeError {
+    public String message;
   }
 
+  private static final String ERROR_FROM_NATIVE_ERROR_SUBCLASS = "error from NativeErrorSubclass";
+
   private static class NativeErrorSubclass extends NativeError {
+    public NativeErrorSubclass() {
+      message = ERROR_FROM_NATIVE_ERROR_SUBCLASS;
+    }
   }
 
   public void testObjectPropertiesAreCopied() {
@@ -482,8 +488,6 @@ public class NativeJsTypeTest extends GWTTestCase {
     // Make sure the subclass is a proper Java object (the typeMarker should be one of the
     // properties copied from java.lang.Object).
     assertFalse(error instanceof JavaScriptObject);
-    // TODO(rluble): NativeErrorSubclass should have inherited Error toString behavior not
-    // j.l.Object.toString behavior.
-    // assertTrue(error.toString().matches("[0-9a-zA-Z$_.]+@[0-9a-fA-F]+"));
+    assertTrue(error.toString().contains(ERROR_FROM_NATIVE_ERROR_SUBCLASS));
   }
 }

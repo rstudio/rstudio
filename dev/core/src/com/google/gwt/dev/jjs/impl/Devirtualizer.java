@@ -245,8 +245,12 @@ public class Devirtualizer {
       // and optimizations need to be strong enough to perform the same kind of size reductions
       // achieved by keeping track of singleImpls.
 
-      //
-      if (!program.typeOracle.isDualJsoInterface(targetType) &&
+      if (method.getSignature().equals("toString()Ljava/lang/String;")) {
+        // Object.toString is special because: 1) every JS object has it and 2) GWT creates
+        // a bridge from toString to its implementation method.
+        devirtualMethodByMethod.put(
+            method, program.getIndexedMethod(RuntimeConstants.RUNTIME_TO_STRING));
+      } else if (!program.typeOracle.isDualJsoInterface(targetType) &&
           program.typeOracle.isSingleJsoImpl(targetType)) {
         // Optimize the trampoline away when there is ONLY JSO dispatch.
         // TODO(rluble): verify that this case can not arise in optimized mode and if so

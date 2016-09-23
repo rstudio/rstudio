@@ -212,4 +212,11 @@ public class Runtime {
     }
     Object.defineProperties(proto,  propertyDefinition);
   }-*/;
+
+  public static native String toString(Object object) /*-{
+    if (Array.isArray(object) && @Util::hasTypeMarker(*)(object)) {
+       return @Object::toString(Ljava/lang/Object;)(object);
+    }
+    return object.toString();
+  }-*/;
 }

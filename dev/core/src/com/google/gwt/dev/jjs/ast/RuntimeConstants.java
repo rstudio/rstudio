@@ -92,6 +92,7 @@ public class RuntimeConstants {
   public static final String RUNTIME_GET_CLASS_PROTOTYPE = "Runtime.getClassPrototype";
   public static final String RUNTIME_MAKE_LAMBDA_FUNCTION = "Runtime.makeLambdaFunction";
   public static final String RUNTIME_PROVIDE = "Runtime.provide";
+  public static final String RUNTIME_TO_STRING = "Runtime.toString";
   public static final String RUNTIME_TYPE_MARKER_FN = "Runtime.typeMarkerFn";
   public static final String RUNTIME_UNIQUE_ID = "Runtime.uniqueId";
 

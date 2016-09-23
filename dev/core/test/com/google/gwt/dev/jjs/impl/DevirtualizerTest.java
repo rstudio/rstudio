@@ -151,8 +151,78 @@ public class DevirtualizerTest extends OptimizerTestBase {
     result.intoString(expected);
   }
 
+  public void testDevirtualizeObjectMethods() throws UnableToCompleteException {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class NativeClass {",
+        "}",
+        "public static class NativeClassSubclass extends NativeClass {",
+        "}");
+
+    String code = Joiner.on('\n').join(
+        "NativeClass nativeClass = null;",
+        "nativeClass.toString();",
+        "nativeClass.equals(nativeClass);",
+        "nativeClass.hashCode();",
+        "NativeClassSubclass subclass = null;",
+        "subclass.toString();",
+        "subclass.equals(subclass);",
+        "subclass.hashCode();"
+        );
+
+    String expected = Joiner.on('\n').join(
+        "EntryPoint$NativeClass nativeClass = null;",
+        "Runtime.toString(nativeClass);",
+        "Object.equals_Ljava_lang_Object__Z__devirtual$(nativeClass, nativeClass);",
+        "Object.hashCode__I__devirtual$(nativeClass);",
+        "EntryPoint$NativeClassSubclass subclass = null;",
+        "Runtime.toString(subclass);",
+        "Object.equals_Ljava_lang_Object__Z__devirtual$(subclass, subclass);",
+        "Object.hashCode__I__devirtual$(subclass);");
+    Result result = optimize("void", code);
+    result.intoString(expected);
+  }
+
+  public void testDevirtualizeObjectMethodsExplicitelyDefined() throws UnableToCompleteException {
+    addSnippetImport("jsinterop.annotations.JsType");
+    addSnippetImport("jsinterop.annotations.JsOverlay");
+    addSnippetClassDecl(
+        "@JsType(isNative=true) public static class NativeClass {",
+        "  public native String toString();",
+        "  public native int hashCode();",
+        "  public native boolean equals(Object o);",
+        "}",
+        "public static class NativeClassSubclass extends NativeClass {",
+        "}");
+
+    String code = Joiner.on('\n').join(
+        "NativeClass nativeClass = null;",
+        "nativeClass.toString();",
+        "nativeClass.equals(nativeClass);",
+        "nativeClass.hashCode();",
+        "NativeClassSubclass subclass = null;",
+        "subclass.toString();",
+        "subclass.equals(subclass);",
+        "subclass.hashCode();"
+    );
+
+    String expected = Joiner.on('\n').join(
+        "EntryPoint$NativeClass nativeClass = null;",
+        "Runtime.toString(nativeClass);",
+        "Object.equals_Ljava_lang_Object__Z__devirtual$(nativeClass, nativeClass);",
+        "Object.hashCode__I__devirtual$(nativeClass);",
+        "EntryPoint$NativeClassSubclass subclass = null;",
+        "Runtime.toString(subclass);",
+        "Object.equals_Ljava_lang_Object__Z__devirtual$(subclass, subclass);",
+        "Object.hashCode__I__devirtual$(subclass);");
+    Result result = optimize("void", code);
+    result.intoString(expected);
+  }
+
   @Override
   protected boolean doOptimizeMethod(TreeLogger logger, JProgram program, JMethod method) {
+    ReplaceCallsToNativeJavaLangObjectOverrides.exec(program);
     Devirtualizer.exec(program);
     return true;
   }
