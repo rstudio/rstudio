@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -60,7 +59,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -386,8 +384,13 @@ public class DesktopApplicationHeader implements ApplicationHeader
          return selection.isEmpty();
       }
       
-      String selectionText = DomUtils.getSelectionText(Document.get());
-      return StringUtil.isNullOrEmpty(selectionText);
+      // NOTE: we currently use this for managing copy + paste
+      // behaviors, but copy + paste seems to do the right thing
+      // regardless of whether the user has highlighted some text
+      // or not _outside_ of an Ace instance, and we can't always
+      // detect if the document has a selection (e.g. if an iframe
+      // has focus)
+      return false;
    }
    
    private static boolean isFocusInAceInstance()
