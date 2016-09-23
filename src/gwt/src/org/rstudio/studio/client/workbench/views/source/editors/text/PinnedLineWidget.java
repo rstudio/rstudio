@@ -41,7 +41,6 @@ public class PinnedLineWidget
 {
    public interface Host
    {
-      int getHeight(LineWidget widget);
       void onLineWidgetAdded(LineWidget widget);
       void onLineWidgetRemoved(LineWidget widget);
    }

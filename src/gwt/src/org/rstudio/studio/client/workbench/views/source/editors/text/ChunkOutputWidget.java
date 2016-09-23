@@ -96,17 +96,28 @@ public class ChunkOutputWidget extends Composite
 
       @Source("PopoutChunkIcon.png")
       ImageResource popoutIcon();
+      
+      @Source("ChunkOutputWidget.css")
+      ChunkStyles styles();
    }
    
-   public interface ChunkStyle extends CssResource
+   public interface ChunkStyles extends CssResource
    {
-      String overflowY();
-      String collapsed();
-      String spinner();
-      String pendingResize();
-      String fullsize();
       String baresize();
+      String clear();
+      String collapsed();
+      String expand();
+      String expander();
+      String frame();
+      String fullsize();
       String noclear();
+      String outer();
+      String overflowY();
+      String pendingResize();
+      String popout();
+      String root();
+      String spinner();
+      String empty();
    }
 
    public ChunkOutputWidget(String documentId, String chunkId, 
@@ -135,14 +146,14 @@ public class ChunkOutputWidget extends Composite
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full)
       {
-         addStyleName(style.fullsize());
+         addStyleName(RES.styles().fullsize());
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Bare)
       {
-         addStyleName(style.baresize());
+         addStyleName(RES.styles().baresize());
       }
       if (!canClose)
-         addStyleName(style.noclear());
+         addStyleName(RES.styles().noclear());
 
       // create the initial output stream and attach it to the frame
       attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
@@ -467,12 +478,12 @@ public class ChunkOutputWidget extends Composite
    
    public void updatePlot(String url)
    {
-      presenter_.updatePlot(url, style.pendingResize());
+      presenter_.updatePlot(url, RES.styles().pendingResize());
    }
 
    public void setPlotPending(boolean pending)
    {
-      presenter_.setPlotPending(pending, style.pendingResize());
+      presenter_.setPlotPending(pending, RES.styles().pendingResize());
    }
    
    public void setHost(ChunkOutputHost host)
@@ -668,7 +679,7 @@ public class ChunkOutputWidget extends Composite
             bgColor.isDark() ? ProgressSpinner.COLOR_WHITE :
                                ProgressSpinner.COLOR_BLACK);
 
-      spinner_.getElement().addClassName(style.spinner());
+      spinner_.getElement().addClassName(RES.styles().spinner());
       frame_.add(spinner_);
       spinner_.getElement().getStyle().setOpacity(1);
       root_.getElement().getStyle().setOpacity(0.2);
@@ -707,14 +718,14 @@ public class ChunkOutputWidget extends Composite
    {
       Element ele = root_.getElement();
       boolean hasOverflow = ele.getScrollHeight() > ele.getOffsetHeight();
-      if (hasOverflow && !root_.getElement().hasClassName(style.overflowY()))
+      if (hasOverflow && !root_.getElement().hasClassName(RES.styles().overflowY()))
       {
-         frame_.getElement().addClassName(style.overflowY());
+         frame_.getElement().addClassName(RES.styles().overflowY());
       }
       else if (!hasOverflow && 
-               root_.getElement().hasClassName(style.overflowY()))
+               root_.getElement().hasClassName(RES.styles().overflowY()))
       {
-         frame_.getElement().removeClassName(style.overflowY());
+         frame_.getElement().removeClassName(RES.styles().overflowY());
       }
    }
    
@@ -787,7 +798,7 @@ public class ChunkOutputWidget extends Composite
    
    private void setCollapsedStyles()
    {
-      getElement().addClassName(style.collapsed());
+      getElement().addClassName(RES.styles().collapsed());
       root_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
       root_.getElement().getStyle().setOpacity(0);
       frame_.getElement().getStyle().setHeight(
@@ -796,7 +807,7 @@ public class ChunkOutputWidget extends Composite
    
    private void clearCollapsedStyles()
    {
-      getElement().removeClassName(style.collapsed());
+      getElement().removeClassName(RES.styles().collapsed());
       root_.getElement().getStyle().clearOverflow();
       root_.getElement().getStyle().clearOpacity();
    }
@@ -875,10 +886,15 @@ public class ChunkOutputWidget extends Composite
    @UiField Image expand_;
    @UiField Image popout_;
    @UiField SimplePanel root_;
-   @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
 
+   public static Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
+   
    private ProgressSpinner spinner_;
    private RmdChunkOptions options_;
    private ChunkOutputHost host_;

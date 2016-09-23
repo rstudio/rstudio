@@ -1,0 +1,182 @@
+@CHARSET "US-ASCII";
+
+.fullsize
+{
+   padding: 0;
+}
+
+.baresize
+{
+   padding-top: 5px;
+}
+
+.clear, .expand, .popout
+{
+   position: absolute;
+   top: 2px;
+   padding: 5px;
+   cursor: pointer;
+   z-index: 25;
+}
+
+.baresize .clear, .baresize .expand, .baresize .popout
+{
+   top: 7px;
+}
+
+.fullsize .clear, .fullsize .expand, .fullsize .popout
+{
+   display: none;
+}
+
+.clear
+{
+   right: 12px;
+   padding: 5px;
+}
+
+.noclear .clear
+{
+   display: none;
+}
+
+.expand 
+{
+   right: 35px;
+   transition: transform 400ms ease, -webkit-transform 400ms ease;
+}
+
+.noclear .expand
+{
+   right: 12px;
+}
+
+.popout 
+{
+   right: 58px;
+   width: 14px;
+   height: 14px;
+   top: 0px;
+   opacity: 0.7;
+}
+
+.collapsed .expand
+{
+   transform: rotate(180deg);
+   -webkit-transform: rotate(180deg);
+}
+
+.overflowY .clear
+{
+   right: 25px;
+}
+
+.overflowY .expand
+{
+   right: 48px;
+}
+
+.overflowY .popout
+{
+   right: 71px;
+}
+
+.frame
+{
+   border: 1px solid #e5e5e5;
+   padding-top: 10px;
+   overflow: hidden;
+}
+
+.fullsize .frame
+{
+   top: 0;
+   bottom: 0;
+   left: 0;
+   right: 0;
+   position: absolute;
+   padding: 10px;
+   padding-bottom: 20px;
+   border-width: 0;
+}
+
+.outer
+{
+   padding-bottom: 10px;
+   position: relative;
+}
+
+.root
+{
+   position: relative;
+   transition: opacity 400ms ease;
+   margin: 10px;
+}
+
+.fullsize .root
+{
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+
+   width: 100%;
+   height: 100%;
+   padding: 0;
+   margin: 0;
+}
+
+.root pre 
+{
+   margin-bottom: 0px;
+}
+
+.empty
+{
+   margin-left: auto;
+   margin-right: auto;
+   overflow: hidden;
+   opacity: 0.50;
+   text-align: center;
+   font-style: italic;
+}
+
+.collapsed
+{
+}
+
+.expander
+{
+   position: absolute;
+   top: 0px;
+   left: 0px;
+   display: none;
+   z-index: 25;
+}
+
+.collapsed .expander
+{
+   display: block;
+   width: 90%;
+   height: 25px;
+   cursor: pointer;
+}
+
+.spinner
+{
+   display: block;
+   position: absolute;
+   top: 50%;
+   left: 50%;
+   z-index: 25;
+   width: 20px;
+   height: 20px;
+   opacity: 0;
+   margin: -10px 0 0 -10px;
+   transition: opacity 400ms ease;
+}
+
+.pendingResize
+{
+   opacity: 0.5;
+   transition: opacity 400ms ease;
+}

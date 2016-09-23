@@ -45,7 +45,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -3495,7 +3494,6 @@ public class AceEditor implements DocDisplay,
          // Ace has a bug that's triggered when adding a line widget above the
          // currently visible line. Hide line widgets that fall into this
          // category.
-         Debug.devlog("pending widget " + widget.getRow() + " / " + getFirstVisibleRow());
          pendingLineWidgets_.add(widget);
          widget.setPending(true);
          widget.getElement().getStyle().setDisplay(Display.NONE);
@@ -3696,7 +3694,6 @@ public class AceEditor implements DocDisplay,
       @Override
       public void run()
       {
-         Debug.devlog("test for pending widgets");
          // early abort if no pending widgets
          if (pendingLineWidgets_.isEmpty())
             return;
@@ -3712,13 +3709,45 @@ public class AceEditor implements DocDisplay,
             if (widget.getRow() >= top && !StringUtil.isNullOrEmpty(
                   widget.getElement().getStyle().getTop()))
             {
-               Debug.devlog("restore widget " + widget.getRow() + " / " + top);
-               widget.getElement().getStyle().setDisplay(Display.BLOCK);
-               widget.setPending(false);
+               restoreWidget(widget);
                pendingLineWidgets_.remove(i);
-               onLineWidgetChanged(widget);
             }
          }
+      }
+      
+      private void restoreWidget(LineWidget widget)
+      {
+         // make widget visible
+         widget.getElement().getStyle().setDisplay(Display.BLOCK);
+         
+         // if there's a known root element, restore its size too
+         Element frame = DomUtils.getFirstElementWithClassName(
+               widget.getElement(), 
+               ChunkOutputWidget.RES.styles().frame());
+         if (frame != null)
+         {
+            Element root = DomUtils.getFirstElementWithClassName(
+                  frame, ChunkOutputWidget.RES.styles().root());
+            if (root != null) try
+            {
+               int height = root.getOffsetHeight() + 
+                  Integer.parseInt(DomUtils.getComputedStyles(frame)
+                        .getPaddingTop().replace("px", "")) + 
+                  Integer.parseInt(DomUtils.getComputedStyles(widget.getElement())
+                        .getPaddingTop().replace("px", ""));
+               frame.getStyle().setHeight(height, Unit.PX);
+               widget.setPixelHeight(height);
+            }
+            catch (Exception e)
+            {
+               // fallback (on unit parse errors, etc.)
+               widget.setPixelHeight(frame.getOffsetHeight());
+            }
+         }
+
+         widget.setPending(false);
+         onLineWidgetChanged(widget);
+         
       }
    };
    
