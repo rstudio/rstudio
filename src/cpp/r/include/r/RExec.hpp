@@ -176,29 +176,33 @@ public:
    
    // COPYING: boost::noncopyable
    
-   void addParam(SEXP param)
+   RFunction& addParam(SEXP param)
    {
       addParam(std::string(), param);
+      return *this;
    }
    
    template <typename T>
-   void addParam(const T& param)
+   RFunction& addParam(const T& param)
    {
       addParam(std::string(), param);
+      return *this;
    }
    
-   void addParam(const std::string& name, SEXP param)
+   RFunction& addParam(const std::string& name, SEXP param)
    {
       params_.push_back(Param(name, param));
+      return *this;
    }
                         
    template <typename T>
-   void addParam(const std::string& name, const T& param)
+   RFunction& addParam(const std::string& name, const T& param)
    {
       r::sexp::Protect protect;
       SEXP paramSEXP = sexp::create(param, &protect);
       preserver_.add(paramSEXP);
       params_.push_back(Param(name, paramSEXP));
+      return *this;
    }
                         
    core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);

@@ -304,6 +304,74 @@ void listEnvironment(SEXP env,
    }
 }
 
+namespace {
+
+bool hasActiveBindingImpl(const std::string& name,
+                          const SEXP envirSEXP,
+                          std::set<SEXP>* pVisitedObjects)
+{
+   // sanity check that we have an environment
+   if (!isEnvironment(envirSEXP))
+      return false;
+   
+   // check for active binding
+   if (isActiveBinding(name, envirSEXP))
+      return true;
+   
+   // resolve the object (discover in that frame)
+   SEXP nameSEXP = Rf_install(name.c_str());
+   SEXP varSEXP = Rf_findVarInFrame(envirSEXP, nameSEXP);
+   
+   // check for special values
+   if (varSEXP == R_UnboundValue || varSEXP == R_MissingArg)
+      return false;
+   
+   // avoid cycles
+   if (pVisitedObjects->count(varSEXP)) return false;
+   pVisitedObjects->insert(varSEXP);
+   
+   // bail if the discovered object is not an environment
+   // NOTE: we permit both primitive R environments (ENVSXPs)
+   // as well as S4 objects subclassing environment (e.g. refclasses)
+   if (!isEnvironment(varSEXP))
+      return false;
+   
+   // list the bindings in this object
+   // NOTE: can't use lsInternal as we may receive S4 objects subclassing
+   // environment (ie, objects that 'behave' like environments but aren't
+   // actually the primitive ENVSXP that routine accepts)
+   std::vector<std::string> bindings;
+   Error error = RFunction("base:::ls")
+         .addParam("envir", varSEXP)
+         .call(&bindings);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   
+   // loop through the associated bindings and see if any of them
+   // are active bindings
+   BOOST_FOREACH(const std::string& binding, bindings)
+   {
+      if (hasActiveBindingImpl(binding, varSEXP, pVisitedObjects))
+         return true;
+   }
+   
+   // no child binding has active binding; return false
+   return false;
+}
+
+} // end anonymous namespace
+
+bool hasActiveBinding(const std::string& name, const SEXP envirSEXP)
+{
+   // avoid cycles when searching recursively
+   std::set<SEXP> visitedObjects;
+   return hasActiveBindingImpl(name, envirSEXP, &visitedObjects);
+}
+
 bool isActiveBinding(const std::string& name, const SEXP env)
 {
    // R_BindingIsActive throws error on .Last.value check; avoid that and
@@ -457,6 +525,28 @@ bool isNull(SEXP object)
    return Rf_isNull(object) == TRUE;
 }
 
+bool isEnvironment(SEXP object)
+{
+   // detect primitive environments (fast path)
+   if (TYPEOF(object) == ENVSXP)
+      return true;
+   
+   // call back to R to detect S4 objects subclassing environment
+   if (TYPEOF(object) == S4SXP)
+   {
+      bool result = false;
+      Error error = RFunction("base:::is.environment")
+            .addParam(object)
+            .call(&result);
+
+      if (error)
+         LOG_ERROR(error);
+      
+      return result;
+   }
+   
+   return false;
+}
 
 SEXP getNames(SEXP sexp)
 {
