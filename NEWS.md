@@ -1,4 +1,4 @@
-## v0.99c - Release Notes
+## v1.0 - Release Notes
 
 ### R Notebooks
 

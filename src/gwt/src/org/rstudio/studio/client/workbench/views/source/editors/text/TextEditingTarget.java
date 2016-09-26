@@ -4394,7 +4394,8 @@ public class TextEditingTarget implements
       for (Scope scope : previousScopes)
       {
          if (isExecutableChunk(scope))
-            chunks.add(new ChunkExecUnit(scope));
+            chunks.add(
+                  new ChunkExecUnit(scope, NotebookQueueUnit.EXEC_MODE_BATCH));
       }
       
       if (!chunks.isEmpty())
