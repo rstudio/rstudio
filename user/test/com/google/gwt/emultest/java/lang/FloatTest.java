@@ -64,6 +64,7 @@ public class FloatTest extends GWTTestCase {
     assertTrue(Float.compare(Float.POSITIVE_INFINITY, Float.NaN) < 0);
   }
 
+  @SuppressWarnings("SelfComparison")
   public void testCompareTo() {
     Float float1 = new Float(1f);
     Float float2 = new Float(2f);

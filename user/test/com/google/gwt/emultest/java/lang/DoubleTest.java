@@ -130,6 +130,7 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(b != s);
   }
 
+  @SuppressWarnings("SelfComparison")
   public void testCompareTo() {
     Double zero = new Double(0.0);
     Double three = new Double(3.0);
