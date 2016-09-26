@@ -3468,6 +3468,12 @@ public class AceEditor implements DocDisplay,
    @Override
    public void addLineWidget(LineWidget widget)
    {
+      // position the element far offscreen if it's above the currently
+      // visible row; Ace does not position line widgets above the viewport
+      // until the document is scrolled there
+      if (widget.getRow() < getFirstVisibleRow())
+         widget.getElement().getStyle().setTop(-10000, Unit.PX);
+      
       widget_.getLineWidgetManager().addLineWidget(widget);
       fireLineWidgetsChanged();
    }
