@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.regexp.shared.RegExp;
 
 public class ChunkContextUi implements ChunkContextToolbar.Host
 {
@@ -49,7 +48,6 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       int preambleRow = chunk.getPreamble().getRow();
       preambleRow_ = preambleRow;
       isSetup_ = isSetupChunk(preambleRow);
-      isEval_ = isEvalChunk(preambleRow);
       host_ = lineWidgetHost;
       dark_ = dark;
       renderPass_ = renderPass;
@@ -87,12 +85,6 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       {
          isSetup_ = isSetup;
          toolbar_.setRunPrevious(!isSetup_);
-      }
-      boolean isEval = isEvalChunk(row);
-      if (isEval != isEval_)
-      {
-         isEval_ = isEval;
-         toolbar_.setRun(isEval);
       }
       String engine = getEngine(row);
       if (engine != engine_)
@@ -209,16 +201,9 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       return line.contains("r setup");
    }
    
-   private boolean isEvalChunk(int row) 
-   {
-      String line = target_.getDocDisplay().getLine(row);
-      RegExp evalFalseReg = RegExp.compile("\\beval\\s*=\\s*FALSE\\b");
-      return evalFalseReg.exec(line) == null;
-   }
-   
    private void createToolbar(int row)
    {
-      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, isEval_, engine_);
+      toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, engine_);
       toolbar_.setHeight("0px"); 
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
@@ -260,6 +245,5 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    private int renderPass_;
    
    private boolean isSetup_;
-   private boolean isEval_;
    private String engine_;
 }
