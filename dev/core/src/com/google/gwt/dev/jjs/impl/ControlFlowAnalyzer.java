@@ -46,6 +46,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JUnsafeTypeCoercion;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -198,30 +199,7 @@ public class ControlFlowAnalyzer {
 
     @Override
     public boolean visit(JCastOperation x, Context ctx) {
-      // Rescue any JavaScriptObject type that is the target of a cast.
-      JType targetType = x.getCastType();
-
-      if (!canBeInstantiatedInJavaScript(targetType)) {
-        return true;
-      }
-      rescue((JReferenceType) targetType, true);
-      JType exprType = x.getExpr().getType();
-      if (program.typeOracle.isSingleJsoImpl(targetType)) {
-        /*
-         * It's a JSO interface, check if the source expr can be a live JSO:
-         * 1) source is java.lang.Object (JSO could have been assigned to it)
-         * 2) source is JSO
-         * 3) source is SingleJSO interface whose implementor is live
-         */
-        if (program.getTypeJavaLangObject() == exprType
-            || program.typeOracle.canBeJavaScriptObject(exprType)) {
-          // source is JSO or SingleJso interface whose implementor is live
-          JClassType jsoImplementor =
-              program.typeOracle.getSingleJsoImpl((JReferenceType) targetType);
-          rescue(jsoImplementor, true);
-        }
-      }
-
+      rescueByTypeCoercion(x.getCastType(), x.getExpr().getType());
       return true;
     }
 
@@ -507,6 +485,35 @@ public class ControlFlowAnalyzer {
       // rescue and instantiate java.lang.String
       rescue(program.getTypeJavaLangString(), true);
       return true;
+    }
+
+    @Override
+    public boolean visit(JUnsafeTypeCoercion x, Context ctx) {
+      rescueByTypeCoercion(x.getCoercionType(), x.getExpression().getType());
+      return true;
+    }
+
+    private void rescueByTypeCoercion(JType targetType, JType expressionType) {
+      // Rescue any JavaScriptObject type that is the target of a cast.
+      if (!canBeInstantiatedInJavaScript(targetType)) {
+        return;
+      }
+      rescue((JReferenceType) targetType, true);
+      if (program.typeOracle.isSingleJsoImpl(targetType)) {
+        /*
+         * It's a JSO interface, check if the source expr can be a live JSO:
+         * 1) source is java.lang.Object (JSO could have been assigned to it)
+         * 2) source is JSO
+         * 3) source is SingleJSO interface whose implementor is live
+         */
+        if (program.getTypeJavaLangObject() == expressionType
+            || program.typeOracle.canBeJavaScriptObject(expressionType)) {
+          // source is JSO or SingleJso interface whose implementor is live
+          JClassType jsoImplementor =
+              program.typeOracle.getSingleJsoImpl((JReferenceType) targetType);
+          rescue(jsoImplementor, true);
+        }
+      }
     }
 
     private boolean canBeInstantiatedInJavaScript(JType type) {

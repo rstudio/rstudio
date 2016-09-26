@@ -92,6 +92,7 @@ import com.google.gwt.dev.jjs.ast.JTransformer;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
+import com.google.gwt.dev.jjs.ast.JUnsafeTypeCoercion;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
@@ -1150,6 +1151,11 @@ public class GenerateJavaScriptAST {
       }
 
       return jsTry;
+    }
+
+    @Override
+    public JsNode transformUnsafeTypeCoercion(JUnsafeTypeCoercion unsafeTypeCoercion) {
+      return transform(unsafeTypeCoercion.getExpression());
     }
 
     @Override

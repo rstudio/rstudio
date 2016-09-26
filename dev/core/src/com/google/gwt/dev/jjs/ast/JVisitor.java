@@ -477,6 +477,10 @@ public class JVisitor {
     endVisit((JExpression) x, ctx);
   }
 
+  public void endVisit(JUnsafeTypeCoercion x, Context ctx) {
+    endVisit((JExpression) x, ctx);
+  }
+
   public void endVisit(JValueLiteral x, Context ctx) {
     endVisit((JLiteral) x, ctx);
   }
@@ -790,6 +794,10 @@ public class JVisitor {
   }
 
   public boolean visit(JUnaryOperation x, Context ctx) {
+    return visit((JExpression) x, ctx);
+  }
+
+  public boolean visit(JUnsafeTypeCoercion x, Context ctx) {
     return visit((JExpression) x, ctx);
   }
 

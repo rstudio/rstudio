@@ -67,6 +67,7 @@ import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JUnsafeTypeCoercion;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.RuntimeConstants;
 import com.google.gwt.dev.jjs.ast.js.JDebuggerStatement;
@@ -358,6 +359,11 @@ public class UnifyAst {
           types.set(i, resolvedType);
         }
       }
+    }
+
+    @Override
+    public void endVisit(JUnsafeTypeCoercion x, Context ctx) {
+      x.resolve(translate(x.getCoercionType()));
     }
 
     @Override

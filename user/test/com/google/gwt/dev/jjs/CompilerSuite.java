@@ -39,6 +39,7 @@ import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
 import com.google.gwt.dev.jjs.test.ObjectIdentityTest;
 import com.google.gwt.dev.jjs.test.SingleJsoImplTest;
+import com.google.gwt.dev.jjs.test.UncheckedCastTest;
 import com.google.gwt.dev.jjs.test.VarargsTest;
 import com.google.gwt.dev.jjs.test.singlejso.TypeHierarchyTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -81,6 +82,7 @@ public class CompilerSuite {
     suite.addTestSuite(ObjectIdentityTest.class);
     suite.addTestSuite(SingleJsoImplTest.class);
     suite.addTestSuite(TypeHierarchyTest.class);
+    suite.addTestSuite(UncheckedCastTest.class);
     suite.addTestSuite(VarargsTest.class);
     // $JUnit-END$
 

@@ -220,7 +220,8 @@ public class JTransformer<T> {
   }
 
   public T missing(JNode x) {
-    throw new InternalCompilerException("Missing transform for " + x);
+    throw new InternalCompilerException(
+        "Missing transform for " + x + " (" + x.getClass().getSimpleName() + ")");
   }
 
   public T transformNullLiteral(JNullLiteral x) {
@@ -336,6 +337,10 @@ public class JTransformer<T> {
   }
 
   public T transformVariableRef(JVariableRef x) {
+    return transformExpression(x);
+  }
+
+  public T transformUnsafeTypeCoercion(JUnsafeTypeCoercion x) {
     return transformExpression(x);
   }
 
@@ -1020,6 +1025,12 @@ public class JTransformer<T> {
     public final boolean visit(JUnaryOperation x, Context ctx) {
       assert result == null;
       result = transformUnaryOperation(x);
+      return false;
+    }
+
+    public final boolean visit(JUnsafeTypeCoercion x, Context ctx) {
+      assert result == null;
+      result = transformUnsafeTypeCoercion(x);
       return false;
     }
 

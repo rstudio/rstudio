@@ -91,6 +91,7 @@ import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
+import com.google.gwt.dev.jjs.ast.JUnsafeTypeCoercion;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
@@ -1541,24 +1542,26 @@ public class GwtAstBuilder {
           }
         }
 
-        JMethodCall call = new JMethodCall(info, receiver, method);
+        JMethodCall methodCall = new JMethodCall(info, receiver, method);
 
         // On a super ref, don't allow polymorphic dispatch. Oddly enough,
         // QualifiedSuperReference not derived from SuperReference!
         boolean isSuperRef =
             x.receiver instanceof SuperReference || x.receiver instanceof QualifiedSuperReference;
         if (isSuperRef) {
-          call.setStaticDispatchOnly();
+          methodCall.setStaticDispatchOnly();
         }
 
-        // The arguments come first...
-        call.addArgs(arguments);
+        // The arguments come first.
+        methodCall.addArgs(arguments);
 
         if (x.valueCast != null) {
-          JType castType = typeMap.get(x.valueCast);
-          push(maybeCast(castType, call));
+          JType targetType = typeMap.get(x.valueCast);
+          push(isUncheckedGenericMethodCall(x)
+              ? maybeInsertUnsafeTypeCoersion(targetType, methodCall)
+              : maybeCast(targetType, methodCall));
         } else {
-          push(call);
+          push(methodCall);
         }
       } catch (Throwable e) {
         throw translateException(x, e);
@@ -1568,7 +1571,6 @@ public class GwtAstBuilder {
     @Override
     public void endVisit(MethodDeclaration x, ClassScope scope) {
       try {
-
         if (x.isNative()) {
           processNativeMethod(x);
         } else {
@@ -3068,12 +3070,20 @@ public class GwtAstBuilder {
 
     private JExpression maybeCast(JType expected, JExpression expression) {
       if (expected != expression.getType()) {
-        // Must be a generic; insert a cast operation.
-        JReferenceType toType = (JReferenceType) expected;
-        return new JCastOperation(expression.getSourceInfo(), toType, expression);
-      } else {
-        return expression;
+        // Must be a generic cast; insert a cast operation.
+        return new JCastOperation(expression.getSourceInfo(), expected, expression);
       }
+
+      return expression;
+    }
+
+      private JExpression maybeInsertUnsafeTypeCoersion(JType expected, JExpression expression) {
+      if (expected != expression.getType()) {
+        // A generic call marked as @UncheckedCast.
+        return new JUnsafeTypeCoercion(expression.getSourceInfo(), expected, expression);
+      }
+
+      return expression;
     }
 
     private JNode pop() {
@@ -4152,7 +4162,15 @@ public class GwtAstBuilder {
     x.setSuppressedWarnings(JdtUtil.getSuppressedWarnings(annotations));
   }
 
-  private void maybeSetInliningMode(AbstractMethodDeclaration x, JMethod method) {
+  private static boolean isUncheckedGenericMethodCall(MessageSend messageSend) {
+    if (messageSend.binding.genericMethod() != null) {
+      return JdtUtil.getAnnotation(messageSend.binding.genericMethod(),
+          "javaemul.internal.annotations.UncheckedCast") != null;
+    }
+    return false;
+  }
+
+  private static void maybeSetInliningMode(AbstractMethodDeclaration x, JMethod method) {
     MethodBinding bind = x.binding;
     if (JdtUtil.getAnnotation(bind, "javaemul.internal.annotations.DoNotInline") != null) {
       method.setInliningMode(InliningMode.DO_NOT_INLINE);
@@ -4161,8 +4179,7 @@ public class GwtAstBuilder {
     }
   }
 
-  private void maybeSetHasNoSideEffects(AbstractMethodDeclaration x,
-      JMethod method) {
+  private static void maybeSetHasNoSideEffects(AbstractMethodDeclaration x, JMethod method) {
     if (JdtUtil.getAnnotation(x.binding,
         "javaemul.internal.annotations.HasNoSideEffects") != null) {
       method.setHasSideEffects(false);
