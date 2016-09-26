@@ -21,7 +21,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -63,7 +62,7 @@ public class ChunkContextToolbar extends Composite
          GWT.create(ChunkContextResources.class);
 
    public ChunkContextToolbar(Host host, boolean dark, boolean runPrevious, 
-         boolean run, String engine)
+         String engine)
    {
       host_ = host;
       state_ = STATE_RESTING;
@@ -75,7 +74,6 @@ public class ChunkContextToolbar extends Composite
       setRunPrevious(runPrevious);
       
       initRun();
-      setRun(run);
    }
 
    // Public methods ----------------------------------------------------------
@@ -102,13 +100,6 @@ public class ChunkContextToolbar extends Composite
       runPrevious_.setVisible(visible);
    }
    
-   public void setRun(boolean visible)
-   {
-      run_.setVisible(visible);
-      runPrevious_.getElement().getStyle().setMarginRight(visible ? 5 : 33, 
-            Unit.PX);
-   }
-
    public void setEngine(String engine)
    {
       chunkTypeLabel_.setText(engine);
