@@ -139,10 +139,7 @@ var RMarkdownHighlightRules = function() {
        ["start", "listblock", "allowBlock"]
    );
 
-   // Embed YAML highlight rules, but ensure that they can only be
-   // found at the start of a document. We do this by moving all of the
-   // start rules to a second '$start' state, and ensuring that YAML headers
-   // can only be encountered in the initial 'start' state.
+   // ensure that YAML highlight rules only start of document
    this.$rules["$start"] = this.$rules["start"].slice();
    for (var key in this.$rules)
    {
@@ -153,7 +150,16 @@ var RMarkdownHighlightRules = function() {
             stateRules[i].next = "$start";
       }
    }
-   
+
+   // escape eagerly from 'start' to '$start' state
+   var startRules = this.$rules["start"];
+   for (var i = 0; i < startRules.length; i++)
+   {
+      if (startRules[i].next == null)
+         startRules[i].next = "$start";
+   }
+
+   // Embed YAML highlighting rules
    Utils.embedRules(
       this,
       YamlHighlightRules,
@@ -166,7 +172,6 @@ var RMarkdownHighlightRules = function() {
       token: ["string"],
       regex: makeDateRegex()
    });
-
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
