@@ -247,7 +247,7 @@ assign(x = ".rs.acCompletionTypes",
    # If we're trying to get completions from a directory that doesn't
    # exist, give up
    if (!file.exists(directory))
-      return(.rs.emptyCompletions())
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
    
    # When checking if the path lies within the project directory,
    # we just do a substring check -- so make sure that the path
@@ -282,7 +282,7 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Bail out early if we didn't get any completions.
    if (!length(absolutePaths))
-      return(.rs.emptyCompletions())
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
    
    ## Because the completions returned will replace the whole token,
    ## we need to be careful in how we construct the return result. In particular,
