@@ -214,22 +214,22 @@ var MarkdownHighlightRules = function() {
             token : "constant",
             regex : "^[ ]{0,2}(?:[ ]?\\_[ ]?){3,}\\s*$"
         }, { // MathJax native display \[ ... \]
-            token : "latex.markup.list.begin",
+            token : "latex.markup.list.string.begin",
             regex : "\\\\\\[",
             next  : "mathjaxnativedisplay"
         }, { // MathJax native inline \( ... \)
-            token : "latex.markup.list.begin",
+            token : "latex.markup.list.string.begin",
             regex : "\\\\\\(",
             next  : "mathjaxnativeinline"
         }, { // $ escape
             token : "text",
             regex : "\\\\\\$"
         }, { // MathJax $$
-            token : "latex.markup.list.begin",
+            token : "latex.markup.list.string.begin",
             regex : "\\${2}",
             next  : "mathjaxdisplay"
         }, { // MathJax $...$ (org-mode style)
-            token : ["latex.markup.list.begin","latex.support.function","latex.markup.list.end"],
+            token : ["latex.markup.list.string.begin","latex.support.function","latex.markup.list.string.end"],
             regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
         },
             strongStars,
@@ -372,7 +372,7 @@ var MarkdownHighlightRules = function() {
         }],
 
         "mathjaxdisplay" : [{
-            token : "latex.markup.list.end",
+            token : "latex.markup.list.string.end",
             regex : "\\${2}",
             next  : "start"
         }, {
@@ -381,7 +381,7 @@ var MarkdownHighlightRules = function() {
         }],
         
         "mathjaxnativedisplay" : [{
-            token : "latex.markup.list.end",
+            token : "latex.markup.list.string.end",
             regex : "\\\\\\]",
             next  : "start"
         }, {
@@ -390,7 +390,7 @@ var MarkdownHighlightRules = function() {
         }],
         
         "mathjaxnativeinline" : [{
-            token : "latex.markup.list.end",
+            token : "latex.markup.list.string.end",
             regex : "\\\\\\)",
             next  : "start"
         }, {
