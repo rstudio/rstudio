@@ -7,6 +7,7 @@
 ### Miscellaneous
 
 * Add Ctrl+Tab / Ctrl+Shift+Tab shortcuts to navigate tabs (Desktop only)
+* Improved sizing of htmlwidgets in R Notebooks
 
 ### Bug Fixes
 
