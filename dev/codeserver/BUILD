@@ -20,7 +20,7 @@
 # released under various licenses, but Google owns the copyright
 licenses(["unencumbered"])
 
-subinclude("//third_party/java_src/gwt:build-macros")
+load("//third_party/java_src/gwt:build-macros.bzl", "AugmentedJar")
 
 # The codeserver jar, built the open source way.
 # For GWT internal use only.

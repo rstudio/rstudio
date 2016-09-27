@@ -25,7 +25,7 @@ package(
     ],
 )
 
-subinclude("//third_party/java_src/gwt:build-macros")
+load("//third_party/java_src/gwt:build-macros.bzl", "AugmentedJar")
 
 # The classes in gwt-user.jar that GWT applications can depend on.
 # We want the final output of this NOT to depend on gwt-dev,
@@ -66,8 +66,8 @@ java_library(
         ],
         exclude = [
             "src/com/google/gwt/junit/**/*.java",  # see gwt-testing
-            "**/ConsoleLogger.java", # relies on internal APIs
-            "**/SuperDevModeLogger.java", # relies on ConsoleLogger
+            "**/ConsoleLogger.java",  # relies on internal APIs
+            "**/SuperDevModeLogger.java",  # relies on ConsoleLogger
             "**/EmulatedCharset.java",
             "**/HashCodes.java",  # relies on java8 only APIs
             "**/RunStyleSelenium.java",
@@ -110,6 +110,7 @@ java_library(
         "src/com/google/gwt/core/shared/GwtIncompatible.java",
         "src/com/google/gwt/user/server/Base64Utils.java",
     ],
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         "//third_party/java_src/gwt/svn/trunk/dev:requestfactory-apt-deps",
     ],
@@ -440,6 +441,7 @@ AugmentedJar(
         "src": ["src/com/google/gwt/junit/**"],
         "super": ["super/com/google/gwt/junit/**"],
     },
+    compatible_with = ["//buildenv/target:appengine"],
     dojarjar = 1,
     exclude_glob = [
         "**/package.html",
@@ -459,6 +461,7 @@ java_library(
             "**/RunStyleSelenium.java",
         ],
     ),
+    compatible_with = ["//buildenv/target:appengine"],
     deps = [
         ":gwt-user-bare",
         "//third_party/java/junit",
@@ -513,6 +516,11 @@ AugmentedJar(
         "//third_party/java_src/gwt:gwt-dev",  # for the post-jarjar names
         "//third_party/java_src/gwt:gwt-testing",
         "//third_party/java_src/gwt/svn/trunk/dev:dev-test-code",
+    ],
+    javacopts = [
+        "-Xep:SelfComparison:OFF",  # go/self-comparison-lsc
+        "-Xep:SelfEquals:OFF",  # go/self-equals-lsc
+        "-Xep:IdentityBinaryExpression:OFF",
     ],
     deps = [
         "//third_party/java/jsr305_annotations",

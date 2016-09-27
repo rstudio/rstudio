@@ -22,7 +22,7 @@ package(
     default_visibility = ["//third_party/java_src/gwt:__pkg__"],
 )
 
-subinclude("//third_party/java_src/gwt:build-macros")
+load("//third_party/java_src/gwt:build-macros.bzl", "AugmentedJar", "Zip")
 
 package_group(
     name = "showcase_friends",
@@ -65,7 +65,15 @@ gwt_application(
 
 java_library(
     name = "showcase_lib",
-    srcs = [":showcase.jar"],
+    srcs = [":showcase.srcjar"],
+    constraints = [
+        "gwt",
+        "public",
+    ],
+    deps = [
+        "//third_party/java_src/gwt",
+        "//third_party/java_src/gwt:gwt-dev",
+    ],
 )
 
 AugmentedJar(
@@ -79,6 +87,15 @@ AugmentedJar(
         "//third_party/java_src/gwt",
         "//third_party/java_src/gwt:gwt-dev",
     ],
+)
+
+# we need to rename the jar file to end with .srcjar
+# for it to be valid input into a java_library rule
+genrule(
+    name = "rename_jar",
+    srcs = [":showcase.jar"],
+    outs = ["showcase.srcjar"],
+    cmd = "cp $(location :showcase.jar) $@",
 )
 
 # Provides the contents of the showcase war directory as a handy zip file

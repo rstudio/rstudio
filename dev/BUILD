@@ -25,7 +25,7 @@ package(
     ],
 )
 
-subinclude("//third_party/java_src/gwt:build-macros")
+load("//third_party/java_src/gwt:build-macros.bzl", "AugmentedJar", "GwtTestSuites", "Zip")
 
 # This target logically corresponds to gwt-dev.jar but doesn't
 # actually create it, for faster builds after a compiler change.
@@ -62,6 +62,7 @@ java_library(
         "core/src/com/google/gwt/dev/util/Name.java",
         "core/src/com/google/gwt/dev/util/StringKey.java",
     ],
+    compatible_with = ["//buildenv/target:appengine"],
 )
 
 # Dependencies of gwt-servlet.jar. (Included in server run-time classpaths.)
@@ -93,8 +94,6 @@ AugmentedJar(
     name = "gwt-dev-deps",
     srcs = [],
     added_jars = [
-        "//third_party/java_src/gwt/legacy:libdev-bare.jar",
-        "//third_party/java_src/gwt/legacy:dev-resources.jar",
         "//third_party/java_src/gwt/svn/tools:dev_jars",
         "//third_party/java_src/gwt/svn/tools:legacy_dev_jars",
     ],
@@ -250,21 +249,10 @@ java_library(
         "core/super/com/google/gwt/core/client/GwtScriptOnly.java",
         "core/super/com/google/gwt/core/client/UnsafeNativeLong.java",
     ],
-    compatible_with = ["//buildenv/target:android"],
-    constraints = [
-        "android",
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
     ],
-)
-
-# A minimal library for a subset of the internal annotations for the
-# GWT compiler.
-java_library(
-    name = "gwt-dev-internal-annotations",
-    srcs = [
-        "core/super/javaemul/internal/annotations/CompilerHint.java",
-        "core/super/javaemul/internal/annotations/DoNotInline.java",
-    ],
-    compatible_with = ["//buildenv/target:android"],
     constraints = [
         "android",
     ],
@@ -304,6 +292,7 @@ java_library(
     ]),
     javacopts = [
         "-Xep:SelfComparison:OFF",
+        "-Xep:SelfEquals:OFF",
     ],
     deps = [
         ":compiler.standalone.super",
