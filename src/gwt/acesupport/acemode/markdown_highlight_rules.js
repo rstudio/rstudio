@@ -246,18 +246,18 @@ var MarkdownHighlightRules = function() {
         }, {
             // embedded latex command
             token : "keyword",
-            regex : "\\\\(?:[a-zA-z0-9]+|[^a-zA-z0-9])"
+            regex : "\\\\(?:[a-zA-Z0-9]+|[^a-zA-Z0-9])"
         }, {
-            // embedded latex arg
-            token : ["paren.keyword.operator", "text", "paren.keyword.operator"],
-            regex : "(\\{)([^\\}]*)(\\})"
+            // brackets
+            token : "paren.keyword.operator",
+            regex : "[{}]"
         }, {
             // pandoc citation
             token : "markup.list",
             regex : "-?\\@[\\w\\d-]+"
         }, {
             token : "text",
-            regex : "[^\\*_%$`\\[#<>\\\\@\\s]+"
+            regex : "[^\\*_%$`\\[#<>{}\\\\@\\s]+"
         }, {
             token : "text",
             regex : "\\\\"
@@ -368,7 +368,7 @@ var MarkdownHighlightRules = function() {
             next  : "fieldblock"
         }, {
             token : "text",
-            regex : ".+"
+            regex : "[^{}]+"
         }],
 
         "mathjaxdisplay" : [{
