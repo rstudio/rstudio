@@ -105,7 +105,7 @@ public class RSConnectPublishSource
       isShiny_ = isShiny;
       isSingleFileShiny_ = false;
       description_ = description;
-      contentCategory_ = StringUtil.isNullOrEmpty(websiteDir) ? 
+      contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
             RSConnect.CONTENT_CATEGORY_SITE : null;
    }
    
