@@ -233,6 +233,8 @@ public class ImagePreviewer
       // to width / height change events)
       final CommandWithArg<Integer> onResize = new CommandWithArg<Integer>()
       {
+         private int state_ = -1;
+         
          @Override
          public void execute(Integer height)
          {
@@ -242,6 +244,12 @@ public class ImagePreviewer
             if (widget == null)
                return;
             
+            // don't resize if the chunk widget if we were already collapsed
+            int state = widget.getExpansionState();
+            if (state == state_ && state == ChunkOutputWidget.COLLAPSED)
+               return;
+            
+            state_ = state;
             widget.getFrame().setHeight(height + "px");
             LineWidget lw = plw.get().getLineWidget();
             lw.setPixelHeight(height);
