@@ -51,6 +51,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -60,7 +61,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 public class MathJax
@@ -673,6 +677,31 @@ public class MathJax
    private Range range_;
    private HandlerRegistration cursorChangedHandler_;
    private String lastRenderedText_ = "";
+   
+   // don't allow MathJax widgets to steal focus on click
+   static {
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent preview)
+         {
+            if (preview.getTypeInt() != Event.ONMOUSEDOWN)
+               return;
+            
+            Element targetEl = preview.getNativeEvent().getEventTarget().cast();
+            if (targetEl.getChildCount() == 0)
+               return;
+            
+            Element childEl = targetEl.getChild(0).cast();
+            if (!childEl.hasClassName("rstudio-mathjax-root"))
+               return;
+
+            NativeEvent event = preview.getNativeEvent();
+            event.stopPropagation();
+            event.preventDefault();
+         }
+      });
+   }
    
    // sometimes MathJax fails to render initially but succeeds if asked to do so
    // again; this is the maximum number of times we'll try to re-render the same
