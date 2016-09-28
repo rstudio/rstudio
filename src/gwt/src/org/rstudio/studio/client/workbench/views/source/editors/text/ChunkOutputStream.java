@@ -235,7 +235,11 @@ public class ChunkOutputStream extends FlowPanel
             
       bodyStyle.setPadding(0, Unit.PX);
       bodyStyle.setMargin(0, Unit.PX);
-      bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
+
+      if (ChunkOutputWidget.getEditorColors() != null)
+      {
+         bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
+      }
 
       final String fullUrl = url;
       Timer frameLoadTimer = new Timer()
