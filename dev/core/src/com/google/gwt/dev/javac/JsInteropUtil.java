@@ -151,7 +151,7 @@ public final class JsInteropUtil {
   }
 
   private static AnnotationBinding getInteropAnnotation(Annotation[] annotations, String name) {
-    return JdtUtil.getAnnotation(annotations, "jsinterop.annotations." + name);
+    return JdtUtil.getAnnotationByName(annotations, "jsinterop.annotations." + name);
   }
 
 }

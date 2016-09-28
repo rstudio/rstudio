@@ -210,21 +210,21 @@ public class JSORestrictionsChecker {
       return true;
     }
 
-    private void checkJsFunction(TypeDeclaration type, TypeBinding typeBinding) {
-      ReferenceBinding binding = (ReferenceBinding) typeBinding;
-      if (JdtUtil.getAnnotation(binding, "jsinterop.annotations.JsFunction") == null) {
+    private void checkJsFunction(TypeDeclaration type) {
+      if (JdtUtil.getAnnotationByName(
+          type.annotations, "jsinterop.annotations.JsFunction") == null) {
         return;
       }
-      if (!binding.isFunctionalInterface(type.scope)) {
+      if (!type.binding.isFunctionalInterface(type.scope)) {
         errorOn(type, ERR_JS_FUNCTION_ONLY_ALLOWED_ON_FUNCTIONAL_INTERFACE);
         return;
       }
     }
 
     private ClassState checkType(TypeDeclaration type) {
-      SourceTypeBinding binding = type.binding;
-      checkJsFunction(type, binding);
+      checkJsFunction(type);
 
+      SourceTypeBinding binding = type.binding;
       if (!JdtUtil.isJsoSubclass(binding)) {
         return ClassState.NORMAL;
       }

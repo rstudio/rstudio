@@ -711,6 +711,9 @@ public class JdtCompiler {
     options.sourceLevel = jdtSourceLevel;
     options.targetJDK = jdtSourceLevel;
 
+    // Make sure the annotations are stored in and accessible through the bindings.
+    options.storeAnnotations = true;
+
     // Generate debug info for debugging the output.
     options.produceDebugAttributes =
         ClassFileConstants.ATTR_VARS | ClassFileConstants.ATTR_LINES
