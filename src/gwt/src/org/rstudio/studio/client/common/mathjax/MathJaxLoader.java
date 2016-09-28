@@ -111,7 +111,7 @@ public class MathJaxLoader
             minScaleAdjust: 125,
             availableFonts: []
          },
-         showProcessingMessage: false,
+         showProcessingMessages: false,
          showMathMenu: false,
          messageStyle: "none",
          skipStartupTypeset: true,
