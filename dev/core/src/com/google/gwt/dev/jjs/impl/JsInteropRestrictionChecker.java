@@ -413,7 +413,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
         break;
       case PROPERTY:
         JField field = (JField) member;
-        if (field.hasInitializer()) {
+        if (field.isFinal()) {
+          logError(member, "Native JsType field %s cannot be final.",
+              getMemberDescription(member));
+        } else if (field.hasInitializer()) {
           logError(member, "Native JsType field %s cannot have initializer.",
               getMemberDescription(member));
         }

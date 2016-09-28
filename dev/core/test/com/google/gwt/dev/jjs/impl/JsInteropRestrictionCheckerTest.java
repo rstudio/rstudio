@@ -1763,8 +1763,15 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "@JsType(isNative=true) public static final class FinalType {",
         "  @JsOverlay public void n() { }",
         "}",
+        "@JsType(isNative=true) public interface NativeInterface {",
+        "  @JsOverlay public static Object object = new Object();",
+        "  @JsOverlay public static final Object other = new Object();",
+        "  @JsOverlay public Object another = new Object();",
+        "  @JsOverlay public final Object yetAnother = new Object();",
+        "}",
         "@JsType(isNative=true) public static class Buggy {",
         "  @JsOverlay public static Object object = new Object();",
+        "  @JsOverlay public static final Object other = new Object();",
         "  @JsOverlay public static void m() { }",
         "  @JsOverlay public static void m(int x) { }",
         "  @JsOverlay private static void m(boolean x) { }",
@@ -2029,7 +2036,9 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}",
         "@JsType(isNative=true) static class Buggy {",
         "  public static final int s = 42;",
-        "  public int f = 42;",
+        "  public static int t = 42;",
+        "  public final int f = 42;",
+        "  public int g = 42;",
         "  @JsIgnore public Buggy() { }",
         "  @JsIgnore public int x;",
         "  @JsIgnore public native void n();",
@@ -2052,19 +2061,21 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggyFails(
         "Line 7: Native JsType member 'void EntryPoint.Interface.n()' cannot have @JsIgnore.",
         "Line 9: Native JsType 'EntryPoint.Buggy' cannot have initializer.",
-        "Line 10: Native JsType field 'int EntryPoint.Buggy.s' cannot have initializer.",
-        "Line 11: Native JsType field 'int EntryPoint.Buggy.f' cannot have initializer.",
-        "Line 12: Native JsType member 'EntryPoint.Buggy.EntryPoint$Buggy()' "
+        "Line 10: Native JsType field 'int EntryPoint.Buggy.s' cannot be final.",
+        "Line 11: Native JsType field 'int EntryPoint.Buggy.t' cannot have initializer.",
+        "Line 12: Native JsType field 'int EntryPoint.Buggy.f' cannot be final.",
+        "Line 13: Native JsType field 'int EntryPoint.Buggy.g' cannot have initializer.",
+        "Line 14: Native JsType member 'EntryPoint.Buggy.EntryPoint$Buggy()' "
             + "cannot have @JsIgnore.",
-        "Line 13: Native JsType member 'int EntryPoint.Buggy.x' cannot have @JsIgnore.",
-        "Line 14: Native JsType member 'void EntryPoint.Buggy.n()' cannot have @JsIgnore.",
-        "Line 15: Native JsType method 'void EntryPoint.Buggy.o()' should be native or abstract.",
-        "Line 16: JSNI method 'void EntryPoint.Buggy.p()' is not allowed in a native JsType.",
-        "Line 21: 'int EntryPoint.SomeClass.hashCode()' cannot be assigned a different JavaScript"
+        "Line 15: Native JsType member 'int EntryPoint.Buggy.x' cannot have @JsIgnore.",
+        "Line 16: Native JsType member 'void EntryPoint.Buggy.n()' cannot have @JsIgnore.",
+        "Line 17: Native JsType method 'void EntryPoint.Buggy.o()' should be native or abstract.",
+        "Line 18: JSNI method 'void EntryPoint.Buggy.p()' is not allowed in a native JsType.",
+        "Line 23: 'int EntryPoint.SomeClass.hashCode()' cannot be assigned a different JavaScript"
             + " name than the method it overrides.",
-        "Line 24: Native JsType subclass 'EntryPoint.SomeClass2' can not implement interface "
+        "Line 26: Native JsType subclass 'EntryPoint.SomeClass2' can not implement interface "
             + "'EntryPoint.B' that declares method 'hashCode' inherited from java.lang.Object.",
-        "Line 27: 'int EntryPoint.NativeTypeWithHashCode.hashCode()' "
+        "Line 29: 'int EntryPoint.NativeTypeWithHashCode.hashCode()' "
             + "(exposed by 'EntryPoint.SomeClass3') cannot be assigned a different JavaScript name"
             + " than the method it overrides.");
   }
