@@ -122,6 +122,14 @@ public class EditSession extends JavaScriptObject
    public native final int getScreenLength() /*-{
       return this.getScreenLength();
    }-*/;
+   
+   public native final void setScrollTop(int top) /*-{
+      this.setScrollTop(top);
+   }-*/;
+
+   public native final int getScrollTop() /*-{
+      return this.getScrollTop();
+   }-*/;
 
    public native final UndoManager getUndoManager() /*-{
       return this.getUndoManager();

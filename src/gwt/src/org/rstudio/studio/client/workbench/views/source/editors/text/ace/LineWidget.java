@@ -84,6 +84,15 @@ public class LineWidget extends JavaScriptObject
    public native final void setPixelHeight(int pixelHeight) /*-{
       this.pixelHeight = pixelHeight;
    }-*/;
+   
+   public native final int getRenderedHeight() /*-{
+      return this.renderedHeight || 0;
+   }-*/;
+
+   public native final void setRenderedHeight(int height) /*-{
+      this.renderedHeight = height;
+   }-*/;
+
 
    public native final int getRowCount()  /*-{
       return this.rowCount;
