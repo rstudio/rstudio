@@ -60,4 +60,8 @@ public class LineWidgetManager extends JavaScriptObject
       else
          return null;
    }-*/;
+   
+   public native final boolean hasLineWidgets() /*-{
+      return this.session.lineWidgets && this.session.lineWidgets.length > 0;
+   }-*/;
 }

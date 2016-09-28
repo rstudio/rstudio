@@ -997,6 +997,12 @@ public class TextEditingTarget implements
    public SourcePosition currentPosition()
    {
       Position cursor = docDisplay_.getCursorPosition();
+      if (docDisplay_.hasLineWidgets())
+      {
+         // if we have line widgets, they create an non-reproducible scroll
+         // position, so use the cursor position only
+         return SourcePosition.create(cursor.getRow(), cursor.getColumn());
+      }
       return SourcePosition.create(getContext(), cursor.getRow(), 
             cursor.getColumn(), docDisplay_.getScrollTop());
    }

@@ -821,20 +821,30 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            EditingTarget editor = addTab(doc, true, OPEN_REPLAY);
+            final EditingTarget editor = addTab(doc, true, OPEN_REPLAY);
             
             // if this is a source window, check to see if it was opened to
             // pop out a particular doc, and restore that doc's position if so
             if (!SourceWindowManager.isMainSourceWindow())
             {
-               SourceWindow sourceWindow = 
+               final SourceWindow sourceWindow = 
                      RStudioGinjector.INSTANCE.getSourceWindow();
                if (sourceWindow.getInitialDocId() == doc.getId() &&
                    sourceWindow.getInitialSourcePosition() != null)
                {
-                  editor.restorePosition(
-                        sourceWindow.getInitialSourcePosition());
-                  editor.ensureCursorVisible();
+                  // restore position deferred; restoring it immediately after
+                  // instantiating the editor causes inaccurate scroll position
+                  // reads elsewhere
+                  Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        editor.restorePosition(
+                              sourceWindow.getInitialSourcePosition());
+                        editor.ensureCursorVisible();
+                     }
+                  });
                }
             }
          }
@@ -1856,19 +1866,28 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               EditingTarget target = addTab(doc, e.getPos());
+               final EditingTarget target = addTab(doc, e.getPos());
                
-               // if we know the source position, restore it
-               if (e.getParams() != null &&
-                   e.getParams().getSourcePosition() != null)
+               // restore position deferred; restoring it immediately after
+               // instantiating the editor causes inaccurate scroll position
+               // reads elsewhere
+               Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
                {
-                  target.restorePosition(e.getParams().getSourcePosition());
-                  target.ensureCursorVisible();
-               }
-               
-               // if there was a collab session, resume it
-               if (collabParams != null)
-                  target.beginCollabSession(e.getCollabParams());
+                  @Override
+                  public void execute()
+                  {
+                     // if we know the source position, restore it
+                     if (e.getParams() != null &&
+                         e.getParams().getSourcePosition() != null)
+                     {
+                        target.restorePosition(e.getParams().getSourcePosition());
+                        target.ensureCursorVisible();
+                     }
+                     // if there was a collab session, resume it
+                     if (collabParams != null)
+                        target.beginCollabSession(e.getCollabParams());
+                  }
+               });
             }
 
             @Override
