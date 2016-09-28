@@ -323,7 +323,7 @@ private:
 # elif defined(__MAC_10_11) && __MAC_OS_X_VERSION_MAX_ALLOWED == __MAC_10_11
    typedef WkWebView RSWebView;
 # else
-   typedef WebView RSWebView;
+   typedef WKWebView RSWebView;
 # endif
 #else
    typedef WebView RSWebView;
