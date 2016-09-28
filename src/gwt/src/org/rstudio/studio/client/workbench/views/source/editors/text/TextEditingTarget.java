@@ -997,6 +997,12 @@ public class TextEditingTarget implements
    public SourcePosition currentPosition()
    {
       Position cursor = docDisplay_.getCursorPosition();
+      if (docDisplay_.hasLineWidgets())
+      {
+         // if we have line widgets, they create an non-reproducible scroll
+         // position, so use the cursor position only
+         return SourcePosition.create(cursor.getRow(), cursor.getColumn());
+      }
       return SourcePosition.create(getContext(), cursor.getRow(), 
             cursor.getColumn(), docDisplay_.getScrollTop());
    }
@@ -1259,16 +1265,6 @@ public class TextEditingTarget implements
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
       docDisplay_.setCode(contents, false);
-      
-      // show outline view (deferred so that widget itself can be sized first)
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            view_.initWidgetSize();
-         }
-      });
       
       // Load and apply folds.
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
@@ -2055,6 +2051,20 @@ public class TextEditingTarget implements
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+
+      // show outline if not yet rendered (deferred so that widget itself can 
+      // be sized first)
+      if (!docDisplay_.isRendered())
+      {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               view_.initWidgetSize();
+            }
+         });
+      }
 
       Scheduler.get().scheduleFinally(new ScheduledCommand()
       {

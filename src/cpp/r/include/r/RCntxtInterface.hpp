@@ -40,6 +40,8 @@ public:
    // computed properties
    virtual bool isNull() const        = 0;
    virtual RCntxt nextcontext() const = 0;
+   
+   virtual ~RCntxtInterface() {}
 };
 
 } // namespace context

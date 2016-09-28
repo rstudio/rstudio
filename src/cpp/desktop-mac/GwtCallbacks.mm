@@ -316,33 +316,22 @@ private:
 
 - (void) performClipboardAction: (SEL) selector
 {
-
-#ifdef __MAC_OS_X_VERSION_MAX_ALLOWED
-# if defined(__MAC_10_10) && __MAC_OS_X_VERSION_MAX_ALLOWED == __MAC_10_10
-   typedef WKWebView RSWebView;
-# elif defined(__MAC_10_11) && __MAC_OS_X_VERSION_MAX_ALLOWED == __MAC_10_11
-   typedef WkWebView RSWebView;
-# else
-   typedef WebView RSWebView;
-# endif
-#else
-   typedef WebView RSWebView;
-#endif
-   
-   RSWebView* view = [[[NSApp mainWindow] windowController] webView];
-   if (view == nil) {
+   // we use a macro just to avoid having to name the return type here
+#define RS_WEB_VIEW ([[[NSApp mainWindow] windowController] webView])
+   if (RS_WEB_VIEW == nil) {
       NSString* errorMsg = [NSString stringWithFormat: @"nil webView on clipboard action %@", NSStringFromSelector(selector)];
       LOG_ERROR_MESSAGE([errorMsg UTF8String]);
       return;
    }
 
-   if ([view respondsToSelector: selector]) {
-      [view performSelector: selector withObject: view];
+   if ([RS_WEB_VIEW respondsToSelector: selector]) {
+      [RS_WEB_VIEW performSelector: selector withObject: RS_WEB_VIEW];
    } else {
       NSString* errorMsg = [NSString stringWithFormat: @"@webView does not respond to selector %@", NSStringFromSelector(selector)];
       LOG_ERROR_MESSAGE([errorMsg UTF8String]);
       return;
    }
+#undef RS_WEB_VIEW
 }
 
 - (void) clipboardCut

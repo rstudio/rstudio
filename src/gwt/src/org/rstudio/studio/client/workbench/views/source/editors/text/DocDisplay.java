@@ -404,6 +404,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllLineWidgets();
    void onLineWidgetChanged(LineWidget widget); 
    
+   boolean hasLineWidgets();
    JsArray<LineWidget> getLineWidgets();
    LineWidget getLineWidgetForRow(int row);
    

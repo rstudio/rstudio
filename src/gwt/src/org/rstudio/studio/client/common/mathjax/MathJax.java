@@ -129,13 +129,18 @@ public class MathJax
                   return;
                }
                
-               // re-render latex in a line widget
+               // re-render latex in a line widget if we already have one
                Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
                if (token != null && token.hasType("latex"))
                {
                   Range range = MathJaxUtil.getLatexRange(docDisplay_);
                   if (range != null)
-                     renderLatex(range, false);
+                  {
+                     int endRow = range.getEnd().getRow();
+                     LineWidget lineWidget = docDisplay_.getLineWidgetForRow(endRow);
+                     if (lineWidget != null)
+                        renderLatex(range, false);
+                  }
                }
             }
          };

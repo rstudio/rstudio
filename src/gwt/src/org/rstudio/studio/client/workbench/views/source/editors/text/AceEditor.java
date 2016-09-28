@@ -3466,7 +3466,7 @@ public class AceEditor implements DocDisplay,
    }-*/;
 
    @Override
-   public void addLineWidget(LineWidget widget)
+   public void addLineWidget(final LineWidget widget)
    {
       // position the element far offscreen if it's above the currently
       // visible row; Ace does not position line widgets above the viewport
@@ -3475,6 +3475,7 @@ public class AceEditor implements DocDisplay,
          widget.getElement().getStyle().setTop(-10000, Unit.PX);
       
       widget_.getLineWidgetManager().addLineWidget(widget);
+      adjustScrollForLineWidget(widget);
       fireLineWidgetsChanged();
    }
    
@@ -3495,7 +3496,13 @@ public class AceEditor implements DocDisplay,
    @Override
    public void onLineWidgetChanged(LineWidget widget)
    {
+      // if the widget is above the viewport, this size change might push it
+      // into visibility, so push it offscreen first
+      if (widget.getRow() + 1 < getFirstVisibleRow())
+         widget.getElement().getStyle().setTop(-10000, Unit.PX);
+
       widget_.getLineWidgetManager().onWidgetChanged(widget);
+      adjustScrollForLineWidget(widget);
       fireLineWidgetsChanged();
    }
    
@@ -3509,6 +3516,36 @@ public class AceEditor implements DocDisplay,
    public LineWidget getLineWidgetForRow(int row)
    {
       return widget_.getLineWidgetManager().getLineWidgetForRow(row);
+   }
+   
+
+   @Override
+   public boolean hasLineWidgets()
+   {
+      return widget_.getLineWidgetManager().hasLineWidgets();
+   }
+
+   private void adjustScrollForLineWidget(LineWidget w)
+   {
+      // the cursor is above the line widget, so the line widget is going
+      // to change the cursor position; adjust the scroll position to hold 
+      // the cursor in place
+      if (getCursorPosition().getRow() > w.getRow())
+      {
+         int delta = w.getElement().getOffsetHeight() - w.getRenderedHeight();
+         
+         // skip if no change to report
+         if (delta == 0)
+            return;
+
+         // we adjust the scrolltop on the session since it knows the
+         // currently queued scroll position; the renderer only knows the 
+         // actual scroll position, which may not reflect unrendered changes
+         getSession().setScrollTop(getSession().getScrollTop() + delta);
+      }
+      
+      // mark the current height as rendered
+      w.setRenderedHeight(w.getElement().getOffsetHeight());
    }
    
    @Override
@@ -3686,6 +3723,8 @@ public class AceEditor implements DocDisplay,
    private BackgroundTokenizer backgroundTokenizer_;
    private final Vim vim_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
+   private int scrollTarget_ = 0;
+   private HandlerRegistration scrollCompleteReg_;
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
