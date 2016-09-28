@@ -1266,16 +1266,6 @@ public class TextEditingTarget implements
       String contents = document.getContents();
       docDisplay_.setCode(contents, false);
       
-      // show outline view (deferred so that widget itself can be sized first)
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            view_.initWidgetSize();
-         }
-      });
-      
       // Load and apply folds.
       final ArrayList<Fold> folds = Fold.decode(document.getFoldSpec());
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -2061,6 +2051,20 @@ public class TextEditingTarget implements
          commandHandlerReg_ = null;
       }
       commandHandlerReg_ = commandBinder.bind(commands_, this);
+
+      // show outline if not yet rendered (deferred so that widget itself can 
+      // be sized first)
+      if (!docDisplay_.isRendered())
+      {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               view_.initWidgetSize();
+            }
+         });
+      }
 
       Scheduler.get().scheduleFinally(new ScheduledCommand()
       {
