@@ -44,6 +44,8 @@
     
     optionRowNames <- options[["rownames.print"]]
     options[["rownames.print"]] <- if (is.null(optionRowNames)) (.row_names_info(x, type = 1) > 0) else optionRowNames
+    options[["rows.total"]] <- nrow(x)
+    options[["cols.total"]] <- ncol(x)
 
     output <- tempfile(pattern = "_rs_rdf_", tmpdir = outputFolder, 
                        fileext = ".rdf")
@@ -200,11 +202,13 @@
   pagedTableOptions <- list(
     columns = list(
       min = options[["cols.min.print"]],
-      max = if (is.null(options[["cols.print"]])) 10 else options[["cols.print"]]
+      max = if (is.null(options[["cols.print"]])) 10 else options[["cols.print"]],
+      total = options[["cols.total"]]
     ),
     rows = list(
       min = if (is.null(options[["rows.print"]])) 10 else options[["rows.print"]],
-      max = if (is.null(options[["rows.print"]])) 10 else options[["rows.print"]]
+      max = if (is.null(options[["rows.print"]])) 10 else options[["rows.print"]],
+      total = options[["rows.total"]]
     ),
     pages = options[["pages.print"]]
   )
