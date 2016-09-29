@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.mathjax;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
@@ -375,8 +374,6 @@ public class MathJax
       final FlowPanel panel = new FlowPanel();
       panel.addStyleName(MATHJAX_ROOT_CLASSNAME);
       panel.addStyleName(RES.styles().mathjaxRoot());
-      if (BrowseCap.isWindowsDesktop())
-         panel.addStyleName(RES.styles().mathjaxRootWindows());
       return panel;
    }
    
@@ -565,10 +562,31 @@ public class MathJax
          callback.onMathJaxTypesetComplete(error);
       }
       
+      // update the last successfully rendered text
+      // NOTE: this should probably be made local to each rendered MathJax entity,
+      // rather than as a single field in this class
       if (!error)
-      {
          lastRenderedText_ = text;
-      }
+      
+      // hack around some font sizing settings used by pandoc
+      updateMathJaxElementStyles(mathjaxEl);
+   }
+   
+   private final void updateMathJaxElementStyles(Element mathjaxEl)
+   {
+      Element previewEl = DomUtils.getFirstElementWithClassName(mathjaxEl, "MathJax_Preview");
+      if (previewEl == null)
+         return;
+      
+      Element frameEl = previewEl.getNextSiblingElement();
+      if (frameEl == null)
+         return;
+      
+      String id = frameEl.getId();
+      if (!id.startsWith("MathJax-Element"))
+         return;
+      
+      frameEl.getStyle().setFontSize(120, Unit.PCT);
    }
    
    private final void mathjaxTypeset(Element el, String currentText)
