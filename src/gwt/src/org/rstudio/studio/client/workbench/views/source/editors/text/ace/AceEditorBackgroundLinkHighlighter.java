@@ -150,7 +150,6 @@ public class AceEditorBackgroundLinkHighlighter
             highlighters_.add(webLinkHighlighter());
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
-            
             nextHighlightStart_ = 0;
             timer_.schedule(700);
          }
@@ -464,7 +463,7 @@ public class AceEditorBackgroundLinkHighlighter
    
    private static String reWebLink()
    {
-      return "(?:\\w+://|www.)\\S+";
+      return "(?:\\w+://|www\\.)\\S+";
    }
    
    private static Pattern createWebLinkPattern()
