@@ -1,5 +1,10 @@
 ## v1.0b - Release Notes
 
+### R Notebooks
+
+* Improved sizing of htmlwidgets in R Notebooks
+* Allow changing to R Notebook mode without closing and reopening the file
+
 ### Data Import
 
 * Prompt for a comma-separated list of factors instead of a collection
@@ -7,7 +12,6 @@
 ### Miscellaneous
 
 * Add Ctrl+Tab / Ctrl+Shift+Tab shortcuts to navigate tabs (Desktop only)
-* Improved sizing of htmlwidgets in R Notebooks
 
 ### Bug Fixes
 
