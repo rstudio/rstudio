@@ -2533,6 +2533,9 @@ public class TextEditingTarget implements
 
       if (notebook_ != null)
          notebook_.onDismiss();
+      
+      if (inlinePreviewer_ != null)
+         inlinePreviewer_.onDismiss();
    }
 
    public ReadOnlyValue<Boolean> dirtyState()
