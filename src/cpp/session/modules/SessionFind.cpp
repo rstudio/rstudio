@@ -264,19 +264,21 @@ private:
                         json::Array* pMatchOn,
                         json::Array* pMatchOff)
    {
-      using namespace boost;
-
+      // initialize some state
       std::string decodedLine;
-
-      std::string::iterator inputPos = pContent->begin();
-
       std::size_t nUtf8CharactersProcessed = 0;
-      smatch match;
-      while (regex_search(std::string(inputPos, pContent->end()), match,
-                          regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
+      
+      const char* inputPos = pContent->c_str();
+      const char* end = inputPos + pContent->size();
+      
+      boost::cmatch match;
+      while (boost::regex_search(inputPos, match, boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
       {
          // decode the current match, and append it
-         std::string decoded = decode(std::string(inputPos, inputPos + match.position()));
+         std::string matchedString(inputPos, inputPos + match.position());
+         std::string decoded = decode(matchedString);
+         
+         // append and update
          decodedLine.append(decoded);
          inputPos += match.position() + match.length();
          
@@ -296,8 +298,8 @@ private:
             pMatchOff->push_back(static_cast<int>(nUtf8CharactersProcessed));
       }
       
-      if (inputPos != pContent->end())
-         decodedLine.append(decode(std::string(inputPos, pContent->end())));
+      if (inputPos != end)
+         decodedLine.append(decode(std::string(inputPos, end)));
 
       if (decodedLine.size() > 300)
       {
