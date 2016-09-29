@@ -79,7 +79,8 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    BOOST_FOREACH(const FilePath& child, children)
    {
       boost::smatch match;
-      if (boost::regex_match(child.filename(), match, re))
+      std::string filename = child.filename();
+      if (boost::regex_match(filename, match, re))
       {
          EmbeddedPackage pkg;
          pkg.name = name;
