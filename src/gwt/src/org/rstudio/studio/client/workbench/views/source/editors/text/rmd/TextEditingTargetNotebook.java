@@ -146,10 +146,6 @@ public class TextEditingTargetNotebook
       dependencyManager_ = dependencyManager;
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      // initialize the display's default output mode based on 
-      // global and per-document preferences
-      syncOutputMode();
-      
       releaseOnDismiss.add(docDisplay_.addEditorFocusHandler(new FocusHandler()
       {
          @Override
@@ -1253,6 +1249,38 @@ public class TextEditingTargetNotebook
       closeAllSatelliteChunks();
    }
    
+   // set the output mode based on the global pref (or our local 
+   // override of it, if any)
+   public void syncOutputMode()
+   {
+      String outputType = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
+      if (!StringUtil.isNullOrEmpty(outputType) && outputType != "undefined")
+      {
+         // if the document property is set, apply it directly
+         docDisplay_.setShowChunkOutputInline(
+               outputType == CHUNK_OUTPUT_INLINE);
+      }
+      else
+      {
+         // otherwise, use the global preference to set the value
+         docDisplay_.setShowChunkOutputInline(
+            docDisplay_.getModeId() == "mode/rmarkdown" &&
+            RStudioGinjector.INSTANCE.getUIPrefs()
+                                     .showRmdChunkOutputInline().getValue());
+      }
+
+      // watch for scope tree changes if showing output inline
+      if (docDisplay_.showChunkOutputInline() && scopeTreeReg_ == null)
+      {
+         scopeTreeReg_ = docDisplay_.addScopeTreeReadyHandler(this);
+      }
+      else if (!docDisplay_.showChunkOutputInline() && scopeTreeReg_ != null)
+      {
+         scopeTreeReg_.removeHandler();
+         scopeTreeReg_ = null;
+      }
+   }
+   
    // Private methods --------------------------------------------------------
 
    private void closeAllSatelliteChunks()
@@ -1433,38 +1461,6 @@ public class TextEditingTargetNotebook
             "Remove Output", 
             "Keep Output", 
             false);
-   }
-   
-   // set the output mode based on the global pref (or our local 
-   // override of it, if any)
-   private void syncOutputMode()
-   {
-      String outputType = docUpdateSentinel_.getProperty(CHUNK_OUTPUT_TYPE);
-      if (!StringUtil.isNullOrEmpty(outputType) && outputType != "undefined")
-      {
-         // if the document property is set, apply it directly
-         docDisplay_.setShowChunkOutputInline(
-               outputType == CHUNK_OUTPUT_INLINE);
-      }
-      else
-      {
-         // otherwise, use the global preference to set the value
-         docDisplay_.setShowChunkOutputInline(
-            docDisplay_.getModeId() == "mode/rmarkdown" &&
-            RStudioGinjector.INSTANCE.getUIPrefs()
-                                     .showRmdChunkOutputInline().getValue());
-      }
-
-      // watch for scope tree changes if showing output inline
-      if (docDisplay_.showChunkOutputInline() && scopeTreeReg_ == null)
-      {
-         scopeTreeReg_ = docDisplay_.addScopeTreeReadyHandler(this);
-      }
-      else if (!docDisplay_.showChunkOutputInline() && scopeTreeReg_ != null)
-      {
-         scopeTreeReg_.removeHandler();
-         scopeTreeReg_ = null;
-      }
    }
    
    private void populateChunkDefs(JsArray<ChunkDefinition> defs)

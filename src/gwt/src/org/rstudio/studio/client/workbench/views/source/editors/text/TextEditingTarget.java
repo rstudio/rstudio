@@ -302,6 +302,11 @@ public class TextEditingTarget implements
             name_.fireChangeEvent();
             updateStatusBarLanguage();
             view_.adaptToFileType(newFileType_);
+            
+            // turn R Markdown behavior (inline execution, previews, etc.)
+            // based on whether we just became an R Markdown type
+            setRMarkdownBehaviorEnabled(newFileType_.isRmd());
+
             events_.fireEvent(new FileTypeChangedEvent());
             if (!fileType_.canSourceOnSave() && docUpdateSentinel_.sourceOnSave())
             {
@@ -779,6 +784,7 @@ public class TextEditingTarget implements
                   {
                      String message = getIncrementalSearchMessage();
                      if (StringUtil.isNullOrEmpty(message))
+                        
                      {
                         view_.getStatusBar().hideMessage();
                      }
@@ -1519,18 +1525,7 @@ public class TextEditingTarget implements
       {
          // populate the popup menu with a list of available formats
          updateRmdFormatList();
-
-         // register idle monitor; automatically creates/refreshes previews
-         // of images and LaTeX equations
-         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(this, 
-               docUpdateSentinel_);
-         
-         // set up mathjax
-         mathjax_ = new MathJax(docDisplay_, docUpdateSentinel_, prefs_);
-
-         // auto preview images and equations
-         new ImagePreviewer(docDisplay_, docUpdateSentinel_, prefs_);
-         new MathJaxPreviewer(this, docUpdateSentinel_, prefs_);
+         setRMarkdownBehaviorEnabled(true);
       }
       
       view_.addRmdFormatChangedHandler(new RmdOutputFormatChangedEvent.Handler()
@@ -6301,6 +6296,44 @@ public class TextEditingTarget implements
    public TextEditingTargetNotebook getNotebook()
    {
       return notebook_;
+   }
+   
+   private void setRMarkdownBehaviorEnabled(boolean enabled)
+   {
+      // register idle monitor; automatically creates/refreshes previews
+      // of images and LaTeX equations during idle
+      if (bgIdleMonitor_ == null && enabled)
+         bgIdleMonitor_ = new TextEditingTargetIdleMonitor(this, 
+               docUpdateSentinel_);
+      else if (bgIdleMonitor_ != null)
+      {
+         if (enabled)
+            bgIdleMonitor_.beginMonitoring();
+         else
+            bgIdleMonitor_.endMonitoring();
+      }
+      
+      // set up mathjax
+      if (mathjax_ == null && enabled)
+         mathjax_ = new MathJax(docDisplay_, docUpdateSentinel_, prefs_);
+
+      if (enabled)
+      {
+         // auto preview images and equations
+         new ImagePreviewer(docDisplay_, docUpdateSentinel_, prefs_);
+         new MathJaxPreviewer(this, docUpdateSentinel_, prefs_);
+      
+         // sync the notebook's output mode (enable/disable inline output)
+         if (notebook_ != null)
+            notebook_.syncOutputMode();
+      }
+      else
+      {
+         // clean up line widgets
+         if (notebook_ != null)
+            notebook_.onNotebookClearAllOutput();
+         docDisplay_.removeAllLineWidgets();
+      }
    }
    
    private StatusBar statusBar_;
