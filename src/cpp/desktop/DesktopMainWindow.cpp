@@ -18,9 +18,9 @@
 #include <algorithm>
 
 #include <QtGui>
-#include <QtWebKit>
+#include <QtWebEngine>
 #include <QToolBar>
-#include <QWebFrame>
+#include <QWebEnginePage>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -109,10 +109,9 @@ MainWindow::MainWindow(QUrl url) :
 
 QString MainWindow::getSumatraPdfExePath()
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   QString sumatraPath = pMainFrame->evaluateJavaScript(QString::fromUtf8(
-                    "window.desktopHooks.getSumatraPdfExePath()")).toString();
-   return sumatraPath;
+   // TODO: need to handle asynchronous JavaScript execution here;
+   // maybe we can avoid JavaScript altogether?
+   return QString::fromUtf8("");
 }
 
 void MainWindow::launchSession(bool reload)
@@ -131,18 +130,61 @@ void MainWindow::launchSession(bool reload)
    }
 }
 
+namespace {
+
+class OnCloseWindowShortcutJSCallback
+{
+public:
+
+   OnCloseWindowShortcutJSCallback(MainWindow* pWindow)
+      : pWindow_(pWindow)
+   {
+   }
+
+   void operator()(const QVariant& result)
+   {
+      bool closeSourceDocEnabled = result.toBool();
+      if (!closeSourceDocEnabled)
+         pWindow_->close();
+   }
+private:
+   MainWindow* pWindow_;
+};
+
+} // end anonymous namespace
+
 void MainWindow::onCloseWindowShortcut()
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
-
-   bool closeSourceDocEnabled = pMainFrame->evaluateJavaScript(
-      QString::fromUtf8(
-         "window.desktopHooks.isCommandEnabled('closeSourceDoc')")).toBool();
-
-   if (!closeSourceDocEnabled)
-      close();
+   QWebEnginePage* pPage = webView()->page();
+   QString js = QString::fromUtf8("window.desktopHooks.isCommandEnabled('closeSourceDoc')");
+   pPage->runJavaScript(js, OnCloseWindowShortcutJSCallback(this));
 }
 
+namespace {
+
+class OnWorkbenchInitializedJSCallback
+{
+public:
+   OnWorkbenchInitializedJSCallback(MainWindow* pWindow)
+      : pWindow_(pWindow)
+   {
+   }
+
+   void operator()(const QVariant& result)
+   {
+      QString projectDir = result.toString();
+      if (projectDir.length() > 0)
+         pWindow_->setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
+      else
+         pWindow_->setWindowTitle(QString::fromUtf8("RStudio"));
+      pWindow_->avoidMoveCursorIfNecessary();
+   }
+
+private:
+   MainWindow* pWindow_;
+};
+
+} // end anonymous namespace
 
 void MainWindow::onWorkbenchInitialized()
 {
@@ -154,15 +196,8 @@ void MainWindow::onWorkbenchInitialized()
 
    // see if there is a project dir to display in the titlebar
    // if there are unsaved changes then resolve them before exiting
-   QVariant vProjectDir = webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.getActiveProjectDir()"));
-   QString projectDir = vProjectDir.toString();
-   if (projectDir.length() > 0)
-      setWindowTitle(projectDir + QString::fromUtf8(" - RStudio"));
-   else
-      setWindowTitle(QString::fromUtf8("RStudio"));
-
-   avoidMoveCursorIfNecessary();
+   QString js = QString::fromUtf8("window.desktopHooks.getActiveProjectDir()");
+   webView()->page()->runJavaScript(js, OnWorkbenchInitializedJSCallback(this));
 }
 
 void MainWindow::resetMargins()
@@ -199,76 +234,82 @@ void MainWindow::onJavaScriptWindowObjectCleared()
 {
    GwtWindow::onJavaScriptWindowObjectCleared();
 
-   webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         QString::fromUtf8("desktop"),
-         &gwtCallback_,
-         QWebFrame::QtOwnership);
-   webView()->page()->mainFrame()->addToJavaScriptWindowObject(
-         QString::fromUtf8("desktopMenuCallback"),
-         &menuCallback_,
-         QWebFrame::QtOwnership);
+   // TODO: QWebChannel
+   // webView()->page()->mainFrame()->addToJavaScriptWindowObject(
+   //       QString::fromUtf8("desktop"),
+   //       &gwtCallback_,
+   //       QWebEnginePage::QtOwnership);
+   // webView()->page()->mainFrame()->addToJavaScriptWindowObject(
+   //       QString::fromUtf8("desktopMenuCallback"),
+   //       &menuCallback_,
+   //       QWebEnginePage::QtOwnership);
 }
 
 void MainWindow::invokeCommand(QString commandId)
 {
-   webView()->page()->mainFrame()->evaluateJavaScript(
+   webView()->page()->runJavaScript(
          QString::fromUtf8("window.desktopHooks.invokeCommand('") + commandId + QString::fromUtf8("');"));
 }
 
 void MainWindow::manageCommand(QString cmdId, QAction* action)
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   action->setVisible(pMainFrame->evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
-   action->setEnabled(pMainFrame->evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromUtf8("')")).toBool());
-   action->setText(pMainFrame->evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromUtf8("')")).toString());
-   if (action->isCheckable())
-   {
-      action->setChecked(pMainFrame->evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromUtf8("')")).toBool());
-   }
+   // TODO: can we avoid making so many JavaScript callbacks?
+   //
+   // QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
+   // action->setVisible(pMainFrame->evaluateJavaScript(
+   //       QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
+   // action->setEnabled(pMainFrame->evaluateJavaScript(
+   //       QString::fromUtf8("window.desktopHooks.isCommandEnabled('") + cmdId + QString::fromUtf8("')")).toBool());
+   // action->setText(pMainFrame->evaluateJavaScript(
+   //       QString::fromUtf8("window.desktopHooks.getCommandLabel('") + cmdId + QString::fromUtf8("')")).toString());
+   // if (action->isCheckable())
+   // {
+   //    action->setChecked(pMainFrame->evaluateJavaScript(
+   //       QString::fromUtf8("window.desktopHooks.isCommandChecked('") + cmdId + QString::fromUtf8("')")).toBool());
+   // }
 }
 
 // a faster version of the above that just checks and sets the command's
 // visibility state (to trigger visibility of menus containing the command)
 void MainWindow::manageCommandVisibility(QString cmdId, QAction* action)
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   action->setVisible(pMainFrame->evaluateJavaScript(
-         QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
+   // TODO
+   // QWebEnginePage* pMainFrame = webView()->page()->mainFrame();
+   // action->setVisible(pMainFrame->evaluateJavaScript(
+   //       QString::fromUtf8("window.desktopHooks.isCommandVisible('") + cmdId + QString::fromUtf8("')")).toBool());
 }
 
 void MainWindow::evaluateJavaScript(QString jsCode)
 {
-   QWebFrame* pMainFrame = webView()->page()->mainFrame();
-   pMainFrame->evaluateJavaScript(jsCode);
+   QWebEnginePage* pPage = webView()->page();
+   pPage->runJavaScript(jsCode);
 }
 
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
-   QWebFrame* pFrame = webView()->page()->mainFrame();
-   if (!pFrame)
-   {
-       pEvent->accept();
-       return;
-   }
+   // TODO
+   //
+   // QWebEnginePage* pFrame = webView()->page()->mainFrame();
+   // if (!pFrame)
+   // {
+   //     pEvent->accept();
+   //     return;
+   // }
 
-   QVariant hasQuitR = pFrame->evaluateJavaScript(QString::fromUtf8("!!window.desktopHooks"));
+   // QVariant hasQuitR = pFrame->evaluateJavaScript(QString::fromUtf8("!!window.desktopHooks"));
 
-   if (quitConfirmed_
-       || !hasQuitR.toBool()
-       || pCurrentSessionProcess_ == NULL
-       || pCurrentSessionProcess_->state() != QProcess::Running)
-   {
-      pEvent->accept();
-   }
-   else
-   {
-      pFrame->evaluateJavaScript(QString::fromUtf8("window.desktopHooks.quitR()"));
-      pEvent->ignore();
-   }
+   // if (quitConfirmed_
+   //     || !hasQuitR.toBool()
+   //     || pCurrentSessionProcess_ == NULL
+   //     || pCurrentSessionProcess_->state() != QProcess::Running)
+   // {
+   //    pEvent->accept();
+   // }
+   // else
+   // {
+   //    pFrame->evaluateJavaScript(QString::fromUtf8("window.desktopHooks.quitR()"));
+   //    pEvent->ignore();
+   // }
 }
 
 double MainWindow::getZoomLevel()
@@ -297,13 +338,13 @@ void MainWindow::openFileInRStudio(QString path)
           .replace(QString::fromUtf8("\""), QString::fromUtf8("\\\""))
           .replace(QString::fromUtf8("\n"), QString::fromUtf8("\\n"));
 
-   webView()->page()->mainFrame()->evaluateJavaScript(
+   webView()->page()->runJavaScript(
          QString::fromUtf8("window.desktopHooks.openFile(\"") + path + QString::fromUtf8("\")"));
 }
 
 void MainWindow::onPdfViewerClosed(QString pdfPath)
 {
-   webView()->page()->mainFrame()->evaluateJavaScript(
+   webView()->page()->runJavaScript(
             QString::fromUtf8("window.synctexNotifyPdfViewerClosed(\"") +
                                          pdfPath + QString::fromUtf8("\")"));
 }
@@ -313,8 +354,7 @@ void MainWindow::onPdfViewerSyncSource(QString srcFile, int line, int column)
    boost::format fmt("window.desktopSynctexInverseSearch(\"%1%\", %2%, %3%)");
    std::string js = boost::str(fmt % srcFile.toStdString() % line % column);
 
-   webView()->page()->mainFrame()->evaluateJavaScript(
-                                                   QString::fromStdString(js));
+   webView()->page()->runJavaScript(QString::fromStdString(js));
 }
 
 // private interface for SessionLauncher
@@ -337,8 +377,11 @@ int MainWindow::collectPendingQuitRequest()
 
 bool MainWindow::desktopHooksAvailable()
 {
-   return webView()->page()->mainFrame()->evaluateJavaScript(
-                        QString::fromUtf8("!!window.desktopHooks")).toBool();
+   // TODO: make synchronous?
+   //
+   // return webView()->page()->mainFrame()->evaluateJavaScript(
+   //                      QString::fromUtf8("!!window.desktopHooks")).toBool();
+   return true;
 }
 
 void MainWindow::onActivated()

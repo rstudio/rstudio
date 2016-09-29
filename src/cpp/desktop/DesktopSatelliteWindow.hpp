@@ -17,7 +17,7 @@
 #define DESKTOP_SATELLITE_WINDOW_HPP
 
 #include <QMainWindow>
-#include <QtWebKit>
+#include <QtWebEngine>
 #include "DesktopGwtWindow.hpp"
 
 #include "DesktopGwtCallback.hpp"

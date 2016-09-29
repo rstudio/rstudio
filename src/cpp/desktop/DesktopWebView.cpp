@@ -16,6 +16,7 @@
 #include "DesktopWebView.hpp"
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QWebEngineHistory>
 #include <QTemporaryFile>
 #include <QStyleFactory>
 
@@ -35,9 +36,8 @@ namespace rstudio {
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
-    QWebView(parent),
+    QWebEngineView(parent),
     baseUrl_(baseUrl),
-    pWebInspector_(NULL),
     dpiZoomScaling_(getDpiZoomScaling())
 {
 #ifdef Q_OS_LINUX
@@ -51,16 +51,8 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
    pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
    setPage(pWebPage_);
 
-   // QWebView can create its own QWebInspector instance, but it doesn't always
-   // destroy it correctly if the inspector is open when the associated browser
-   // window is closed (see case 3889), leading to a crash. To work around this,
-   // we create our own unbound web inspector, and clean it up manually when the
-   // WebView closes.
-   pWebInspector_ = new QWebInspector();
-   pWebInspector_->setVisible(false);
-   pWebInspector_->setPage(pWebPage_);
-
-   page()->setForwardUnsupportedContent(true);
+   // TODO: no longer available?
+   // page()->setForwardUnsupportedContent(true);
 
    connect(page(), SIGNAL(downloadRequested(QNetworkRequest)),
            this, SLOT(downloadRequested(QNetworkRequest)));
@@ -137,7 +129,7 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
    }
 #endif
 
-   // Work around bugs in QtWebKit that result in numpad key
+   // Work around bugs in QtWebEngine that result in numpad key
    // presses resulting in keyCode=0 in the DOM's keydown events.
    // This is due to some missing switch cases in the case
    // where the keypad modifier bit is on, so we turn it off.
@@ -149,7 +141,7 @@ void WebView::keyPressEvent(QKeyEvent* pEv)
                    pEv->count());
   
    // delegate to base
-   this->QWebView::keyPressEvent(&newEv);
+   this->QWebEngineView::keyPressEvent(&newEv);
 }
 
 void WebView::downloadRequested(const QNetworkRequest& request)
@@ -161,12 +153,14 @@ void WebView::downloadRequested(const QNetworkRequest& request)
    // Ask the network manager to download
    // the file and connect to the progress
    // and finished signals.
-   QNetworkRequest newRequest = request;
 
-   QNetworkAccessManager* pNetworkManager = page()->networkAccessManager();
-   QNetworkReply* pReply = pNetworkManager->get(newRequest);
-   // DownloadHelper frees itself when downloading is done
-   new DownloadHelper(pReply, fileName);
+   // TODO: Qt WebEngine does not interact with QNetworkAccessManager
+   // QNetworkRequest newRequest = request;
+
+   // QNetworkAccessManager* pNetworkManager = page()->networkAccessManager();
+   // QNetworkReply* pReply = pNetworkManager->get(newRequest);
+   // // DownloadHelper frees itself when downloading is done
+   // new DownloadHelper(pReply, fileName);
 }
 
 void WebView::unsupportedContent(QNetworkReply* pReply)
@@ -250,7 +244,7 @@ void WebView::openFile(QString fileName)
    QDesktopServices::openUrl(QUrl::fromLocalFile(fileName));
 }
 
-// QWebView doesn't respect the system DPI and always renders as though
+// QWebEngineView doesn't respect the system DPI and always renders as though
 // it were at 96dpi. To work around this, we take the user-specified zoom level
 // and scale it by a DPI-determined constant before applying it to the view.
 // See: https://bugreports.qt-project.org/browse/QTBUG-29571
@@ -266,15 +260,6 @@ qreal WebView::dpiAwareZoomFactor()
 
 void WebView::closeEvent(QCloseEvent*)
 {
-   // When the webview closes, preemptively destroy the associated web
-   // inspector, if we have one.
-   if (pWebInspector_ != NULL)
-   {
-      pWebInspector_->setVisible(false);
-      pWebInspector_->disconnect();
-      pWebInspector_->deleteLater();
-      pWebInspector_ = NULL;
-   }
 }
 
 } // namespace desktop

@@ -17,14 +17,14 @@
 
 PLUGIN_PREFIX=""
 
-if [[ -e ~/Qt5.4.0/5.4/gcc_64/plugins ]] 
+if [[ -e ~/Qt5.6.1/5.6/gcc_64/plugins ]] 
 then
   # 64 bit systems
-  PLUGIN_PREFIX=~/Qt5.4.0/5.4/gcc_64/plugins
-elif [[ -e ~/Qt5.40/5.4/gcc/plugins ]]
+  PLUGIN_PREFIX=~/Qt5.6.1/5.6/gcc_64/plugins
+elif [[ -e ~/Qt5.6.1/5.6/gcc/plugins ]]
 then
   # 32 bit systems
-  PLUGIN_PREFIX=~/Qt5.4.0/5.4/gcc/plugins
+  PLUGIN_PREFIX=~/Qt5.6.1/5.6/gcc/plugins
 fi
 
 if [[ $PLUGIN_PREFIX ==  "" ]]

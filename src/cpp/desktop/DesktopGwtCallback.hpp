@@ -17,7 +17,7 @@
 #define DESKTOP_GWT_CALLBACK_HPP
 
 #include <QObject>
-#include <QtWebKit>
+#include <QtWebEngine>
 
 #include "DesktopGwtCallbackOwner.hpp"
 

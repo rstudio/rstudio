@@ -27,7 +27,7 @@
 #include <QMessageBox>
 #include <QApplication>
 #include <QAbstractButton>
-#include <QWebFrame>
+#include <QWebEnginePage>
 
 #include <core/FilePath.hpp>
 #include <core/DateTime.hpp>
@@ -495,9 +495,10 @@ void GwtCallback::activateSatelliteWindow(QString name)
 
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)
 {
-   pOwner_->webPage()->updatePositionDependentActions(
-         QPoint(left + (width/2), top + (height/2)));
-   pOwner_->triggerPageAction(QWebPage::CopyImageToClipboard);
+   // TODO: no longer availble?
+   // pOwner_->webPage()->updatePositionDependentActions(
+   //       QPoint(left + (width/2), top + (height/2)));
+   pOwner_->triggerPageAction(QWebEnginePage::CopyImageToClipboard);
 }
 
 void GwtCallback::copyPageRegionToClipboard(int left, int top, int width, int height)
@@ -1051,7 +1052,7 @@ void GwtCallback::launchSession(bool reload)
 void GwtCallback::activateAndFocusOwner()
 {
    desktop::raiseAndActivateWindow(pOwner_->asWidget());
-   pOwner_->webPage()->mainFrame()->setFocus();
+   pOwner_->webView()->setFocus();
 }
 
 void GwtCallback::reloadZoomWindow()

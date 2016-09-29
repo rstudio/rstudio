@@ -205,7 +205,7 @@ QString Options::fixedWidthFont() const
 #endif
            ;
 
-   // The fallback font is Courier, not monospace, because QtWebKit doesn't
+   // The fallback font is Courier, not monospace, because QtWebEngine doesn't
    // actually provide a monospace font (appears to use Helvetica)
 
    return detectedFont = QString::fromUtf8("\"") +

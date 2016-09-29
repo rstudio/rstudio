@@ -14,7 +14,7 @@
  */
 
 #include "DesktopBrowserWindow.hpp"
-#include <QWebFrame>
+#include <QWebEnginePage>
 #include <QToolBar>
 #include <QShortcut>
 
@@ -44,14 +44,13 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    progress_ = 0;
 
    pView_ = new WebView(baseUrl, this, allowExternalNavigate);
-   QWebFrame* mainFrame = pView_->page()->mainFrame();
-   connect(mainFrame, SIGNAL(javaScriptWindowObjectCleared()),
+   connect(pView_->page(), SIGNAL(javaScriptWindowObjectCleared()),
            this, SLOT(onJavaScriptWindowObjectCleared()));
    connect(pView_, SIGNAL(titleChanged(QString)), SLOT(adjustTitle()));
    connect(pView_, SIGNAL(loadProgress(int)), SLOT(setProgress(int)));
    connect(pView_, SIGNAL(loadFinished(bool)), SLOT(finishLoading(bool)));
-   connect(pView_->page(), SIGNAL(printRequested(QWebFrame*)),
-           this, SLOT(printRequested(QWebFrame*)));
+   connect(pView_->page(), SIGNAL(printRequested(QWebEnginePage*)),
+           this, SLOT(printRequested(QWebEnginePage*)));
 
    // set zoom factor
    double zoomLevel = options().zoomLevel();
@@ -70,7 +69,7 @@ BrowserWindow::BrowserWindow(bool showToolbar,
    desktop::enableFullscreenMode(this, false);
 }
 
-void BrowserWindow::printRequested(QWebFrame* frame)
+void BrowserWindow::printRequested(QWebEnginePage* frame)
 {
    QPrinter printer;
    printer.setOutputFormat(QPrinter::NativeFormat);
@@ -84,6 +83,8 @@ void BrowserWindow::printRequested(QWebFrame* frame)
    dialog.exec();
 }
 
+// TODO QTWE: should we only forward the event after the associated
+// JavaScript has been executed?
 void BrowserWindow::closeEvent(QCloseEvent *event)
 {
    if (pOpener_ == NULL)
@@ -95,9 +96,9 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
          "   window.opener.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+      webView()->page()->runJavaScript(cmd);
    }
-   else if (pOpener_->mainFrame())
+   else
    {
       // if we do know where we were opened from and it has the appropriate
       // handlers, let it know we're closing
@@ -106,11 +107,11 @@ void BrowserWindow::closeEvent(QCloseEvent *event)
                   "   window.unregisterDesktopChildWindow('");
       cmd.append(name_);
       cmd.append(QString::fromUtf8("');"));
-      pOpener_->mainFrame()->evaluateJavaScript(cmd);
+      pOpener_->runJavaScript(cmd);
    }
 
-   // forward the close event to the web view
-   webView()->event(event);
+   // forward the close event to the web page
+   webPage()->event(event);
 }
 
 void BrowserWindow::adjustTitle()
@@ -159,7 +160,7 @@ void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
    QCoreApplication::postEvent(webView(), keyEvent);
 }
 
-void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
+void BrowserWindow::triggerPageAction(QWebEnginePage::WebAction action)
 {
    webView()->triggerPageAction(action);
 }
@@ -172,7 +173,7 @@ void BrowserWindow::onJavaScriptWindowObjectCleared()
    cmd.append(name_);
    cmd.append(QString::fromUtf8("', window);"));
 
-   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+   webView()->page()->runJavaScript(cmd);
 }
 
 QString BrowserWindow::getName()
