@@ -15,76 +15,24 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.common.mathjax.MathJax;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
-import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 
 public class MathJaxPreviewer
-             implements ScopeTreeReadyEvent.Handler,
-                        ValueChangeHandler<String>
 {
-   public MathJaxPreviewer(TextEditingTarget target, DocUpdateSentinel sentinel, 
-         UIPrefs prefs)
+   public MathJaxPreviewer(TextEditingTarget target)
    {
       target_ = target;
       display_= target.getDocDisplay();
-      sentinel_ = sentinel;
-      String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
-      
-      sentinel.addPropertyValueChangeHandler(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, this);
-      sentinel.addPropertyValueChangeHandler(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, this);
-      
-      if (sentinel.getBoolProperty(
-                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS) &&
-          sentinel.getBoolProperty(
-                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
-                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
-      {
-         reg_ = display_.addScopeTreeReadyHandler(this);
-      }
    }
    
-   @Override
-   public void onScopeTreeReady(ScopeTreeReadyEvent event)
-   {
-      reg_.removeHandler();
-
-      renderAllLatex();
-   }
-
-   @Override
-   public void onValueChange(ValueChangeEvent<String> arg0)
-   {
-      if (sentinel_.getBoolProperty(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, true) &&
-          sentinel_.getBoolProperty(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, true))
-      {
-         renderAllLatex();
-      }
-      else
-      {
-         removeAllLatex();
-      }
-   }
-  
-   private void renderAllLatex()
+   public void renderAllLatex()
    {
       target_.renderLatex();
    }
    
-   private void removeAllLatex()
+   public void removeAllLatex()
    {
       JsArray<LineWidget> widgets = display_.getLineWidgets();
       for (int i = 0; i < widgets.length(); i++)
@@ -97,6 +45,4 @@ public class MathJaxPreviewer
    
    private final DocDisplay display_;
    private final TextEditingTarget target_;
-   private final DocUpdateSentinel sentinel_;
-   private HandlerRegistration reg_;
 }

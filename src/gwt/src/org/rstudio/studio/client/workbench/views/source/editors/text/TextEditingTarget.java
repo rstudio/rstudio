@@ -6320,15 +6320,21 @@ public class TextEditingTarget implements
       if (enabled)
       {
          // auto preview images and equations
-         new ImagePreviewer(docDisplay_, docUpdateSentinel_, prefs_);
-         new MathJaxPreviewer(this, docUpdateSentinel_, prefs_);
-      
+         if (inlinePreviewer_ == null)
+            inlinePreviewer_ = new InlinePreviewer(
+                  this, docUpdateSentinel_, prefs_);
+         inlinePreviewer_.preview();
+
          // sync the notebook's output mode (enable/disable inline output)
          if (notebook_ != null)
             notebook_.syncOutputMode();
       }
       else
       {
+         // clean up previewers
+         if (inlinePreviewer_ != null)
+            inlinePreviewer_.onDismiss();
+
          // clean up line widgets
          if (notebook_ != null)
             notebook_.onNotebookClearAllOutput();
@@ -6383,6 +6389,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetRenameHelper renameHelper_;
    private CollabEditStartParams queuedCollabParams_;
    private MathJax mathjax_;
+   private InlinePreviewer inlinePreviewer_;
    
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =
