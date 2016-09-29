@@ -197,9 +197,10 @@ bool handleLocalHttpUrl(const std::string& url)
 // displaying the manual. Redirect these to the appropriate help event
 bool handleRShowDocFile(const core::FilePath& filePath)
 {
+   std::string absPath = filePath.absolutePath();
    boost::regex manualRegx(".*/lib/R/(doc/manual/[A-Za-z0-9_\\-]*\\.html)");
    boost::smatch match;
-   if (regex_match(filePath.absolutePath(), match, manualRegx))
+   if (regex_match(absPath, match, manualRegx))
    {
       ClientEvent helpEvent(client_events::kShowHelp, match[1]);
       module_context::enqueClientEvent(helpEvent);
