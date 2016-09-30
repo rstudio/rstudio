@@ -66,6 +66,9 @@
          else
            return (.rs.valueFromStr(val))
       }
+      else if (is(val, "tensorflow.builtin.object")) {
+         return (.rs.valueFromStr(val))
+      }
       else
          return ("NO_VALUE")
    },
