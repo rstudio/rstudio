@@ -23,12 +23,13 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a member to be ignored for JsInterop purposes.
- * <p>
- * This is particularly useful when {@link JsType} applied to a class and some members are needed to
- * be ignored as they don't comply with restrictions (e.g. overloading) or shouldn't be exported.
+ *
+ * <p>This is particularly useful when {@link JsType} is applied to a class and some members need
+ * to be ignored as they don't comply with restrictions (e.g. overloading) or shouldn't be exported
+ * for other reasons.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.FIELD})
 @Documented
 public @interface JsIgnore {
 }

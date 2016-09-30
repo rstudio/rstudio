@@ -22,13 +22,34 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * JsOverlay is used to add new helper APIs to existing JavaScript types. This is achieved by adding
- * the new method/field to a @JsType(isNative=true) and marking it with this annotation.
- * <p>
- * Note that the JsOverlay methods cannot be called from JavaScript, cannot override any existing
- * methods and needs to be marked as final. This is because underneath, the original type is not
- * modified and the method is simply turned into a static dispatch. Similarly, JsOverlay fields can
- * only be compile time constants.
+ * JsOverlay is used to enhance Java API of the native JsTypes and JsFunctions so richer and more
+ * Java friendly abstractions could be provided.
+ *
+ * <pre>
+ * {@literal @}JsType(isNative=true)
+ * class Person {
+ *   {@literal @}JsOverlay
+ *   private static final Person NO_BODY = new Person();
+ *
+ *   private String name;
+ *   private String lastName;
+ *
+ *   {@literal @}JsOverlay
+ *   public String getFullName() {
+ *     return (name + " " + lastName).trim();
+ *   }
+ * }</pre>
+ *
+ * <p>Note that:
+ *
+ * <ul>
+ * <li> JsOverlay methods cannot override any existing methods.
+ * <li> JsOverlay methods should be effectively final.
+ * <li> JsOverlay methods cannot be called from JavaScript
+ * </ul>
+ *
+ * These restrictions are in place to avoid polymorphism because underneath the original type is not
+ * modified and the overlay fields/methods are simply turned into static dispatches.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})

@@ -24,22 +24,23 @@ import java.lang.annotation.Target;
 /**
  * JsProperty marks a field or method that is translated directly into a JavaScript property
  * preserving its name.
- * <p>
- * If it is applied to a method, it will be treated as a property accessor. As a result, instead of
- * translating method calls to JsProperty methods as method calls in JS, they will be translated as
- * property lookups. When a JsProperty method implemented by a Java class, such methods will be
- * generated as custom property setter and getter in JavaScript, hence the property access will
- * trigger the execution of the matching getter or setter methods.
- * <p>
- * JsProperty follows JavaBean style naming convention to extract the default property name. If the
- * JavaBean convention is not followed, the name should be set explicitly. For example:
+ *
+ * <p>If it is applied to a method, it will be treated as a property accessor. As a result, instead
+ * of translating method calls to JsProperty methods as method calls in JS, they will be translated
+ * as property lookups. When a JsProperty method implemented by a Java class, such methods will be
+ * generated as property accessor in JavaScript, hence the property access will trigger the
+ * execution of the matching getter or setter methods.
+ *
+ * <p>JsProperty follows JavaBean style naming convention to extract the default property name. If
+ * the JavaBean convention is not followed, the name should be set explicitly. For example:
+ *
  * <ul>
  * <li> {@code @JsProperty getX()} or {@code @JsProperty isX()} translates as <tt>this.x</tt>
  * <li> {@code @JsProperty setX(int y)} translates as <tt>this.x=y</tt>
  * </ul>
- * <p>
- * Note: In JavaScript, instance members are defined on the prototype and class members are defined
- * on the constructor function of the type.
+ *
+ * <p>Note: In JavaScript, instance members are defined on the prototype and class members are
+ * defined on the constructor function of the type which mimics ES6 class style.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
@@ -48,9 +49,11 @@ public @interface JsProperty {
 
   /**
    * Customizes the name of the member in generated JavaScript. If none is provided;
-   * <p>
+   *
+   * <ul>
    * <li>if it is field, the simple Java name will be used.
    * <li>if it is a method, the name will be generated based on JavaBean conventions.
+   * </ul>
    */
   String name() default "<auto>";
 

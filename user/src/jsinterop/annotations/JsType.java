@@ -25,31 +25,37 @@ import java.lang.annotation.Target;
  * JsType is used to describe the JavaScript API of an object, either one that already exists from
  * the external JavaScript environment, or one that will be accessible from the external JavaScript
  * environment.
- * <p>
- * Marking an object with JsType is similar to marking each public member of the class with
+ *
+ * <p>Marking an object with JsType is similar to marking each public member of the class with
  * {@link JsProperty}/{@link JsMethod}/{@link JsConstructor} respectively. In order for this to work
  * correctly the JavaScript name needs to be unique for each member. Some unobvious ways to cause
- * name collisions are;
- * <p>
- * <li>Having method or constructor overloads.
- * <li>Using the same name for a method and a field.
- * <li>Shadowing a field from parent.
- * <p>
- * A name collision needs to be avoided by providing a custom name (e.g. {@link JsProperty#name}) or
- * by completely ignoring the member using {@link JsIgnore}.
- * <p>
- * If the JsType is marked as "native", then the type is considered as stub for an existing class
- * that is available in native JavaScript. If it is concrete type, the subclass will use the
- * designated type as super type opposed to the ordinary one (e.g. java.lang.Object).
- * <p>
- * Instanceof and Castability:
- * <p>
- * If the JsTypes is native then the generated code will try to mimic Javascript semantics.
- * <li>If it is concrete native JsType then cast checks and instanceof checks will be delegated to
- * the native JavaScript instanceof operator.
- * <li>If it is an interface and marked as native, no checks will be performed.
- * <p>
- * All non-native JsTypes will follow regular Java semantics in terms of castability.
+ * name collisions are:
+ *
+ * <ul>
+ * <li>having method or constructor overloads
+ * <li>using the same name for a method and a field
+ * <li>shadowing a field from parent
+ * </ul>
+ *
+ * <p>Name collisions must be avoided by providing custom names (e.g. {@link JsProperty#name}) or by
+ * ignoring members using {@link JsIgnore}.
+ *
+ * <p>If the JsType is marked as "native" via {@link #isNative}, then the type is considered a stub
+ * for an existing class that is available in native JavaScript. Unlike non-native JsTypes, all
+ * members are considered {@link JsProperty}/{@link JsMethod}/{@link JsConstructor} unless they are
+ * explicitly marked with {@link JsOverlay}.
+ *
+ * <p><b>Instanceof and Castability:</b>
+ *
+ * <p>If the JsType is native, the generated code will try to mimic Javascript semantics.
+ *
+ * <p>All non-native JsTypes will follow regular Java semantics in terms of castability.
+ *
+ * <ul>
+ * <li>For concrete native JsTypes, cast checks and instanceof checks will be delegated to the
+ *     native JavaScript instanceof operator.
+ * <li>For interface native JsTypes, instanceof is forbidden and casts to them always succeed.
+ * </ul>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

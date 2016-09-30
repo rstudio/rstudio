@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
 @Documented
 public @interface JsPackage {
   /**
-   * Namespace for the global JavaScript object.
+   * Namespace of the global JavaScript object.
    */
   String GLOBAL = "<global>";
 
