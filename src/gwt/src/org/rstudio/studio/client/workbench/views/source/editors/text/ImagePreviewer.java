@@ -33,7 +33,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -45,8 +44,6 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -58,59 +55,16 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 
 public class ImagePreviewer
-             implements ScopeTreeReadyEvent.Handler,
-                        ValueChangeHandler<String>
 {
    public ImagePreviewer(DocDisplay display, DocUpdateSentinel sentinel, 
          UIPrefs prefs)
    {
       display_ = display;
-      sentinel_ = sentinel;
       prefs_ = prefs;
-      String pref = prefs.showLatexPreviewOnCursorIdle().getValue();
-      
-      sentinel.addPropertyValueChangeHandler(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, this);
-      sentinel.addPropertyValueChangeHandler(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, this);
-      
-      if (sentinel.getBoolProperty(
-                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS) &&
-          sentinel.getBoolProperty(
-                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
-                pref == UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
-      { 
-         reg_ = display.addScopeTreeReadyHandler(this);
-      }
-   }
-
-   @Override
-   public void onScopeTreeReady(ScopeTreeReadyEvent event)
-   {
-      // remove single-shot handler
-      reg_.removeHandler();
-      
-      previewAllLinks();
+      sentinel_ = sentinel;
    }
    
-   @Override
-   public void onValueChange(ValueChangeEvent<String> val)
-   {
-      if (sentinel_.getBoolProperty(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, true) &&
-          sentinel_.getBoolProperty(
-            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, true))
-      {
-         previewAllLinks();
-      }
-      else
-      {
-         removeAllPreviews();
-      }
-   }
-   
-   private void previewAllLinks()
+   public void previewAllLinks()
    {
       for (int i = 0, n = display_.getRowCount(); i < n; i++)
       {
@@ -125,7 +79,7 @@ public class ImagePreviewer
       }
    }
    
-   private void removeAllPreviews()
+   public void removeAllPreviews()
    {
       JsArray<LineWidget> widgets = display_.getLineWidgets();
       for (int i = 0; i < widgets.length(); i++)
@@ -526,7 +480,6 @@ public class ImagePreviewer
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
    private final UIPrefs prefs_;
-   private HandlerRegistration reg_;
 
    private static final String LINE_WIDGET_TYPE = "image-preview" ;
    private static int IMAGE_ID = 0;

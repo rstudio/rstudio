@@ -113,7 +113,7 @@ public class TextEditingTargetIdleMonitor
       }
    }
    
-   private void beginMonitoring()
+   public void beginMonitoring()
    {
       endMonitoring();
       monitors_.add(display_.addEditorModeChangedHandler(
@@ -154,7 +154,7 @@ public class TextEditingTargetIdleMonitor
       }));
    }
    
-   private void endMonitoring()
+   public void endMonitoring()
    {
       for (HandlerRegistration monitor : monitors_)
          monitor.removeHandler();
