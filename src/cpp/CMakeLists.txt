@@ -69,12 +69,23 @@ if(UNIX)
 
       # Figure out what version of Mac OS X this is. Unfortunately 
       # CMAKE_SYSTEM_VERSION does not match uname -r, so get the Mac OS
-      # version number another way. 
+      # version number another way.
       EXECUTE_PROCESS(COMMAND /usr/bin/sw_vers -productVersion OUTPUT_VARIABLE MACOSX_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
       message(STATUS "Mac OS X version: ${MACOSX_VERSION}")
-      if(NOT(${MACOSX_VERSION} VERSION_LESS "10.9"))
+      if(RSTUDIO_USE_LIBCXX)
+         message(STATUS "C++ Standard Library: libc++")
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+         set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libc++")
+      elseif(RSTUDIO_USE_LIBSTDCXX)
+         message(STATUS "C++ Standard Library: libstdc++")
          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
          set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
+      else()
+         if(NOT(${MACOSX_VERSION} VERSION_LESS "10.9"))
+            message(STATUS "C++ Standard Library: libstdc++")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+            set(CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -stdlib=libstdc++")
+         endif()
       endif()
    endif()
 
@@ -122,8 +133,13 @@ if(APPLE OR WIN32 OR RSTUDIO_PACKAGE_BUILD)
    set(Boost_USE_STATIC_LIBS ON)
 endif()
 
-# require boost 1.50
+# default to boost 1.50.0
 set(BOOST_VERSION 1.50.0)
+
+# override if necessary
+if (RSTUDIO_BOOST_VERSION)
+   set(BOOST_VERSION "${RSTUDIO_BOOST_VERSION}")
+endif()
 
 list(APPEND BOOST_LIBS
    date_time
@@ -141,7 +157,7 @@ list(APPEND BOOST_LIBS
 if(UNIX)
    # prefer static link to our custom built version
    set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_50_0)
-   if(EXISTS ${RSTUDIO_TOOLS_BOOST})
+   if(RSTUDIO_USE_PRECOMPILED_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
