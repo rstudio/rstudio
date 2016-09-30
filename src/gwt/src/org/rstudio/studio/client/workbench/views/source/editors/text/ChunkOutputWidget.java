@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.rstudio.core.client.ColorUtil;
@@ -385,8 +387,16 @@ public class ChunkOutputWidget extends Composite
       // clean error state
       hasErrors_ = false;
 
+      // if we already had output, clear it
+      if (state_ == CHUNK_READY)
+      {
+         presenter_.clearOutput();
+         attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
+      }
+
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
+
       execScope_ = scope;
       showBusyState();
    }
@@ -806,13 +816,6 @@ public class ChunkOutputWidget extends Composite
    {
       if (state_ == CHUNK_PRE_OUTPUT)
       {
-         // if no output has been emitted yet, clean up all existing output
-         presenter_.clearOutput();
-
-         // start with the stream presenter (we'll switch to gallery later if
-         // circumstances demand)
-         attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
-
          hasErrors_ = false;
          state_ = CHUNK_POST_OUTPUT;
       }
@@ -832,11 +835,23 @@ public class ChunkOutputWidget extends Composite
          
          // extract all the pages from the stream and populate the gallery
          List<ChunkOutputPage> pages = stream.extractPages();
-         if (stream.hasContent())
+         int ordinal = stream.getContentOrdinal();
+         if (ordinal > 0)
          {
             // add the stream itself if there's still anything left in it
-            gallery.addPage(new ChunkConsolePage(stream, chunkOutputSize_));
+            pages.add(new ChunkConsolePage(ordinal, stream, chunkOutputSize_));
          }
+         
+         // ensure page ordering is correct
+         Collections.sort(pages, new Comparator<ChunkOutputPage>()
+         {
+            @Override
+            public int compare(ChunkOutputPage o1, ChunkOutputPage o2)
+            {
+               return o1.ordinal() - o2.ordinal();
+            }
+         });
+         
          for (ChunkOutputPage page: pages)
          {
             gallery.addPage(page);

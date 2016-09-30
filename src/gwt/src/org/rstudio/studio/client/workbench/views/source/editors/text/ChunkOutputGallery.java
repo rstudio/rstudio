@@ -147,9 +147,7 @@ public class ChunkOutputGallery extends Composite
    @Override
    public void showOrdinalOutput(int ordinal)
    {
-      // ordinals are used as placeholders to ensure plots are shown in the
-      // correct place relative to other types of output, which isn't a
-      // consideration in gallery view
+      addPage(new ChunkOrdinalPage(ordinal));
    }
 
    @Override
@@ -241,82 +239,37 @@ public class ChunkOutputGallery extends Composite
             ((EditorThemeListener)page).onEditorThemeChanged(colors);
       }
    }
-
+   
    public void addPage(ChunkOutputPage page)
    {
       int idx = pages_.size();
 
-      // look for out of place inserts
-      if (page.ordinal() < maxOrdinal_)
+      // look for ordinal replacements
+      for (int i = 0; i < pages_.size(); i++)
       {
-         for (int i = 0; i < pages_.size() - 1; i++)
+         if (page.ordinal() == pages_.get(i).ordinal())
          {
-            if (page.ordinal() > pages_.get(i).ordinal() &&
-                page.ordinal() < pages_.get(i+1).ordinal())
-            {
-               idx = i+1;
+            // replace at this index
+            idx = i;
+            
+            // assert that we're actually removing an ordinal page
+            assert(pages_.get(i) instanceof ChunkOrdinalPage);
 
-               // if we picked the currently active page, move it out of the
-               // way
-               if (activePage_ == idx)
-                  activePage_++;
-               break;
-            }
+            // remove the existing placeholder
+            pages_.remove(i);
+            filmstrip_.remove(i);
+            break;
          }
       }
-      maxOrdinal_ = Math.max(maxOrdinal_, page.ordinal());
       
       pages_.add(idx, page);
-      Widget thumbnail = page.thumbnailWidget();
-      thumbnail.getElement().setTabIndex(0);
-      thumbnail.addStyleName(style.thumbnail());
-
-      // apply editor color to thumbnail before 
-      syncThumbnailColor(thumbnail, ChunkOutputWidget.getEditorColors());
-      filmstrip_.insert(thumbnail, idx);
-      
-      // lock to this console if we don't have one already
-      if (page instanceof ChunkConsolePage && console_ == null)
-         console_ = (ChunkConsolePage)page;
-
-      final int ordinal = page.ordinal();
-      DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK | Event.ONKEYDOWN);
-      DOM.setEventListener(thumbnail.getElement(), new EventListener()
-      {
-         @Override
-         public void onBrowserEvent(Event evt)
-         {
-            switch(DOM.eventGetType(evt))
-            {
-            case Event.ONCLICK:
-               // convert ordinal back to index (index can change with
-               // out-of-order insertions)
-               for (int i = 0; i < pages_.size(); i++)
-               {
-                  if (pages_.get(i).ordinal() == ordinal)
-                  {
-                     setActivePage(i);
-                     break;
-                  }
-               }
-               break;
-            case Event.ONKEYDOWN:
-               int dir = 0;
-               if (evt.getKeyCode() == KeyCodes.KEY_LEFT)
-                  dir = -1;
-               if (evt.getKeyCode() == KeyCodes.KEY_RIGHT)
-                  dir = 1;
-               if (dir != 0)
-                  navigateActivePage(dir);
-               break;
-            };
-         }
-      });
+      addThumbnail(idx, page);
       
       // show this page if it's the first one, or if we don't have any errors
       // and we're adding a last page
-      if (idx == 0 || 
-          ((idx == pages_.size() - 1) && !hasErrors()))
+      if (!(page instanceof ChunkOrdinalPage) &&
+          (idx == 0 || ((idx == pages_.size() - 1) && 
+                !hasErrors())))
          setActivePage(idx);
 
       host_.notifyHeightChanged();
@@ -381,7 +334,7 @@ public class ChunkOutputGallery extends Composite
    {
       if (console_ == null)
       {
-         console_ = new ChunkConsolePage(chunkOutputSize_);
+         console_ = new ChunkConsolePage(0, chunkOutputSize_);
          addPage(console_);
       }
    }
@@ -406,6 +359,57 @@ public class ChunkOutputGallery extends Composite
          ((EditorThemeListener)thumbnail).onEditorThemeChanged(colors);
       }
    }
+
+   private void addThumbnail(int idx, ChunkOutputPage page)
+   {
+      final Widget thumbnail = page.thumbnailWidget();
+      
+      thumbnail.getElement().setTabIndex(0);
+      thumbnail.addStyleName(style.thumbnail());
+
+      // apply editor color to thumbnail before 
+      syncThumbnailColor(thumbnail, ChunkOutputWidget.getEditorColors());
+      filmstrip_.insert(thumbnail, idx);
+      
+      // lock to this console if we don't have one already
+      if (page instanceof ChunkConsolePage && console_ == null)
+         console_ = (ChunkConsolePage)page;
+
+      final int ordinal = page.ordinal();
+      DOM.sinkEvents(thumbnail.getElement(), Event.ONCLICK | Event.ONKEYDOWN);
+      DOM.setEventListener(thumbnail.getElement(), new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               // convert ordinal back to index (index can change with
+               // out-of-order insertions)
+               for (int i = 0; i < pages_.size(); i++)
+               {
+                  if (pages_.get(i).ordinal() == ordinal)
+                  {
+                     setActivePage(i);
+                     break;
+                  }
+               }
+               break;
+            case Event.ONKEYDOWN:
+               int dir = 0;
+               if (evt.getKeyCode() == KeyCodes.KEY_LEFT)
+                  dir = -1;
+               if (evt.getKeyCode() == KeyCodes.KEY_RIGHT)
+                  dir = 1;
+               if (dir != 0)
+                  navigateActivePage(dir);
+               break;
+            };
+         }
+      });
+   }
+   
    
    private final ArrayList<ChunkOutputPage> pages_;
    private final ChunkOutputPresenter.Host host_;
@@ -414,7 +418,6 @@ public class ChunkOutputGallery extends Composite
    private ChunkConsolePage console_;
    private SimplePanel content_;
    private int activePage_ = -1;
-   private int maxOrdinal_ = 0;
    
    @UiField GalleryStyle style;
    @UiField FlowPanel filmstrip_;

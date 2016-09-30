@@ -27,17 +27,18 @@ import com.google.gwt.user.client.ui.Widget;
 public class ChunkConsolePage extends ChunkOutputPage
                               implements ChunkOutputPresenter.Host
 {
-   public ChunkConsolePage(ChunkOutputSize chunkOutputSize)
+   public ChunkConsolePage(int ordinal, ChunkOutputSize chunkOutputSize)
    {
-      super(0);
+      super(ordinal);
       
       chunkOutputSize_ = chunkOutputSize;
       init(new ChunkOutputStream(this));
    }
 
-   public ChunkConsolePage(ChunkOutputStream stream, ChunkOutputSize chunkOutputSize)
+   public ChunkConsolePage(int ordinal, ChunkOutputStream stream, 
+         ChunkOutputSize chunkOutputSize)
    {
-      super(0);
+      super(ordinal);
 
       chunkOutputSize_ = chunkOutputSize;
       init(stream);
