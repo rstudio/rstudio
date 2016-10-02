@@ -31,11 +31,13 @@ public class LineWidgetManager extends JavaScriptObject
    
    public native final void removeAllLineWidgets() /*-{
       var lineWidgetsByRow = this.session.lineWidgets;
-      var self = this;
-      lineWidgetsByRow.forEach(function(w, i) {
-         if (w) 
-            self.removeLineWidget(w);
-      });
+      if (lineWidgetsByRow) {
+         var self = this;
+         lineWidgetsByRow.forEach(function(w, i) {
+            if (w) 
+               self.removeLineWidget(w);
+         });
+      }
    }-*/;
    
    public native final void onWidgetChanged(LineWidget widget) /*-{
