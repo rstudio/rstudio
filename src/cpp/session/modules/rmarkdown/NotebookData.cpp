@@ -60,21 +60,12 @@ void handleNotebookDataResReq(const http::Request& request,
 {
    std::string resourceName = http::util::pathAfterPrefix(request, kNotebookDataResourceLocation);
 
-   std::string resource;
+   std::string resourcePath("pagedtable/");
+   resourcePath.append(http::util::pathAfterPrefix(request, kNotebookDataResourceLocation));
 
-   if (resourceName == "pagedtable.css") {
-      std::string resourcePath("pagedtable/");
-      resourcePath.append(http::util::pathAfterPrefix(request, kNotebookDataResourceLocation));
+   core::FilePath pagedTableResource = options().rResourcesPath().childPath(resourcePath);
 
-      core::FilePath pagedTableResource = options().rResourcesPath().childPath(resourcePath);
-
-      pResponse->setCacheableFile(pagedTableResource, request);
-   }
-   else if (resourceName == "pagedtable.js") {
-      r::exec::RFunction("rmarkdown:::pagedtable_script").call(&resource);
-
-      pResponse->setBody(resource);
-   }
+   pResponse->setCacheableFile(pagedTableResource, request);
 }
 
 } // anonymous namespace
