@@ -598,6 +598,8 @@ private:
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
 
+      resultJson["runtime"] = getRuntime(targetFile_);
+
       json::Value websiteDir;
       if (outputFile_.extensionLowerCase() == ".html")
       {

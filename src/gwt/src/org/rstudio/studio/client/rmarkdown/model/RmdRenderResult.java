@@ -102,6 +102,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
       return this.has_shiny_content;
    }-*/;
    
+   public final native String getRuntime() /*-{
+      return this.runtime;
+   }-*/;
+   
    public final native String getWebsiteDir() /*-{
       return this.website_dir;
    }-*/;

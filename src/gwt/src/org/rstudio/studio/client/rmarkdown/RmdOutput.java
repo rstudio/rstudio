@@ -282,7 +282,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (shinyDoc_ != null &&
           event.getSourceFile().equals(shinyDoc_.getFile()) &&
           !shinyDoc_.getFormat().getFormatName().endsWith(
-                RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
+                RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX) &&
+          (result_ == null || "shiny".equals(result_.getRuntime())))
       {
          final RmdRenderResult result = 
                RmdRenderResult.createFromShinyDoc(shinyDoc_);
