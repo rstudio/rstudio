@@ -274,6 +274,18 @@ public:
       }
    }
 
+   std::string getRuntime(const FilePath& targetFile)
+   {
+      std::string runtime;
+      Error error = r::exec::RFunction(
+         ".rs.getRmdRuntime",
+         string_utils::utf8ToSystem(targetFile.absolutePath())).call(
+                                                               &runtime);
+      if (error)
+         LOG_ERROR(error);
+      return runtime;
+   }
+
 private:
    RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
              bool asShiny) :
@@ -499,7 +511,11 @@ private:
 
                getPresentationDetails(sourceLine_, &startedJson);
 
-               startedJson["url"] = url + targetFile_.filename();
+               std::string runtime = getRuntime(targetFile_);
+               if (runtime == "shiny/tutorial")
+                  startedJson["url"] = url;
+               else
+                  startedJson["url"] = url + targetFile_.filename();
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));

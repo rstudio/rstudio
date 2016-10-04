@@ -521,7 +521,7 @@ public class TextEditingTargetRMarkdownHelper
             return false;
          
          return tree.getKeyValue(
-             RmdFrontMatter.RUNTIME_KEY).equals(RmdFrontMatter.SHINY_RUNTIME);
+             RmdFrontMatter.RUNTIME_KEY).startsWith(RmdFrontMatter.SHINY_RUNTIME);
       }
       catch (Exception e)
       {
