@@ -26,6 +26,8 @@ import java.util.List;
 
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
+import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
@@ -1672,10 +1674,34 @@ public class Java8Test extends GWTTestCase {
       return null;
     }
   }
-   // Regression test for bug: #9426.
+
+  // Regression test for bug: #9426.
   public void testCorrectNaming() {
     Function<String> f = ClassWithAVeryLoooooooooooooooooooooooooooooooooooongName::m;
     assertNotNull(f);
+  }
+
+  @JsType(isNative = true)
+  interface InterfaceWithOverlay {
+
+    @JsProperty
+    int getLength();
+
+    @JsOverlay
+    default int len() {
+      return this.getLength();
+    }
+  }
+
+  @JsType(isNative = true, name = "Object", namespace = JsPackage.GLOBAL)
+  static abstract class SubclassImplementingInterfaceWithOverlay implements InterfaceWithOverlay {
+  }
+
+  // Regression test for bug: #9440
+  public void testInterfaceWithOverlayAndNativeSubclass() {
+    SubclassImplementingInterfaceWithOverlay object =
+        (SubclassImplementingInterfaceWithOverlay) (Object) new int[]{1, 2, 3};
+    assertEquals(3, object.len());
   }
 }
 

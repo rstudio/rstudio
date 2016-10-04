@@ -285,7 +285,7 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   }
 
   private void checkJsOverlay(JMember member) {
-    if (member.getEnclosingType().isJsoType()) {
+    if (member.getEnclosingType().isJsoType() || member.isSynthetic()) {
       return;
     }
 
