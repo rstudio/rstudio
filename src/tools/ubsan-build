@@ -14,7 +14,7 @@ cmake ../cpp                                   \
     -DCMAKE_CXX_COMPILER="${CXX}"              \
     -DCMAKE_CXX_FLAGS="${ASANFLAGS}"           \
     -DRSTUDIO_USE_LIBCXX="Yes"                 \
-    -DRSTUDIO_USE_PRECOMPILED_BOOST="No"       \
+    -DRSTUDIO_DONT_USE_PRECOMPILED_BOOST="Yes" \
     -DRSTUDIO_BOOST_VERSION="1.56.0"           \
     "$@"
 cd ..

@@ -157,7 +157,7 @@ list(APPEND BOOST_LIBS
 if(UNIX)
    # prefer static link to our custom built version
    set(RSTUDIO_TOOLS_BOOST /opt/rstudio-tools/boost/boost_1_50_0)
-   if(RSTUDIO_USE_PRECOMPILED_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
+   if(NOT RSTUDIO_DONT_USE_PRECOMPILED_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
