@@ -683,7 +683,7 @@ public class ChunkOutputWidget extends Composite
 
    private void showReadyState()
    {
-      if (getElement() != null && getElement().getStyle() != null)
+      if (getElement() != null && getElement().getStyle() != null && s_colors != null)
       {
          getElement().getStyle().setBackgroundColor(s_colors.background);
       }
