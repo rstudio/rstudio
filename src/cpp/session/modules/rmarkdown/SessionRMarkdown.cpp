@@ -396,7 +396,7 @@ private:
                      "name = 'rstudio-iframe', "
                      "version = '0.1', "
                      "src = '" +
-                         session::options().rResourcesPath().absolutePath() +
+                         session::options().rResourcesPath().childPath("rsiframe").absolutePath() +
                      "', "
                      "script = '" + rsIFramePath + "')");
 
