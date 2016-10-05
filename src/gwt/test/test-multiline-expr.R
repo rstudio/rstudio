@@ -77,5 +77,12 @@ x <- f(a = 1,
        # d = 4
 )
 
+# 12 -- data.table style
+dt[ , sequence := seq_len( nrow( dt ) )
+
+    ][ , normal := rnorm( nrow( dt ) )
+       
+       ][ , uniform := runif( nrow( dt ) ) ]
+
 # cursor should end here after executing all lines
 EOF

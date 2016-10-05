@@ -3167,28 +3167,6 @@ public class AceEditor implements DocDisplay,
          
       } while (false);
       
-      // discover end of current statement
-      while (endRow <= endRowLimit)
-      {
-         // if the row ends with an open bracket, expand to its match
-         if (rowEndsWithOpenBracket(endRow))
-         {
-            c.moveToEndOfRow(endRow);
-            if (c.fwdToMatchingToken())
-            {
-               endRow = c.getRow();
-               continue;
-            }
-         }
-         else if (rowEndsInBinaryOp(endRow) || rowIsEmptyOrComment(endRow))
-         {
-            endRow++;
-            continue;
-         }
-         
-         break;
-      }
-      
       // discover start of current statement
       while (startRow >= startRowLimit)
       {
@@ -3210,6 +3188,56 @@ public class AceEditor implements DocDisplay,
          
          break;
       }
+      
+      // discover end of current statement -- we search from the inferred statement
+      // start, so that we can perform counting of matching pairs of brackets
+      endRow = startRow;
+      
+      // NOTE: '[[' is not tokenized as a single token in our Ace tokenizer,
+      // so it is not included here (this shouldn't cause issues in practice
+      // since balanced pairs of '[' and '[[' would still imply a correct count
+      // of matched pairs of '[' anyhow)
+      int parenCount = 0;   // '(', ')'
+      int braceCount = 0;   // '{', '}'
+      int bracketCount = 0; // '[', ']'
+      
+      while (endRow <= endRowLimit)
+      {
+         // update bracket token counts
+         JsArray<Token> tokens = getTokens(endRow);
+         for (Token token : JsUtil.asIterable(tokens))
+         {
+            String value = token.getValue();
+            
+            parenCount += value.equals("(") ? 1 : 0;
+            parenCount -= value.equals(")") ? 1 : 0;
+            
+            braceCount += value.equals("{") ? 1 : 0;
+            braceCount -= value.equals("}") ? 1 : 0;
+            
+            bracketCount += value.equals("[") ? 1 : 0;
+            bracketCount -= value.equals("]") ? 1 : 0;
+         }
+         
+         // continue search if line ends with binary operator
+         if (rowEndsInBinaryOp(endRow) || rowIsEmptyOrComment(endRow))
+         {
+            endRow++;
+            continue;
+         }
+         
+         // continue search if we have unbalanced brackets
+         if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
+         {
+            endRow++;
+            continue;
+         }
+         
+         // we had balanced brackets and no trailing binary operator; bail
+         break;
+      }
+      
+      
       
       // shrink selection for empty lines at borders
       while (startRow < endRow && rowIsEmptyOrComment(startRow))
