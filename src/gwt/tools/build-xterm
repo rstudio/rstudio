@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd xterm.js
+
+# Copy xterm to RStudio
+cp src/xterm.js ../../src/org/rstudio/studio/client/workbench/views/terminal/xterm/xterm-uncompressed.js
+
+# Copy the xterm CSS
+cp dist/xterm.css ../../src/org/rstudio/studio/client/workbench/views/terminal/xterm/xterm.css
+
