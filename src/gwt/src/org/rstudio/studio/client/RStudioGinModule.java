@@ -200,6 +200,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalTab;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -326,6 +327,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Source Cpp", SourceCppOutputTab.class);
       bindTab("Deploy", RSConnectDeployOutputTab.class);
       bindTab("Markers", MarkersOutputTab.class);
+      bindTab("Terminal", TerminalTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            

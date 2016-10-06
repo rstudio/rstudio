@@ -42,6 +42,11 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ConsolePromptEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers
 {
+   public enum TerminalType {
+      DUMB, // simple canonical (line-by-line) terminal
+      XTERM; // xterm-compatible non-canonical terminal
+   }
+   
    @Singleton
    public static class ConsoleProcessFactory
    {
@@ -79,7 +84,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                   // isDialog == false exits when no client is connected (in
                   // that case it will never be reaped). 
                   
-                  // TODO: clean this up and/or eliminate isDialog flag (since
+                  // TODO: (gary) clean this up and/or eliminate isDialog flag (since
                   // all known instances currently use isDialog == true)
                   
                   connectToProcess(
@@ -326,6 +331,11 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       server_.processWriteStdin(procInfo_.getHandle(), input, requestCallback);
    }
 
+   public void resizeTerminal(int cols, int rows, ServerRequestCallback<Void> requestCallback)
+   {
+      server_.processSetShellSize(procInfo_.getHandle(), cols, rows, requestCallback);
+   }
+   
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       server_.processInterrupt(procInfo_.getHandle(), requestCallback);

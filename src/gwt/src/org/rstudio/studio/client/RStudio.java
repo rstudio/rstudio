@@ -90,6 +90,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
+import org.rstudio.studio.client.workbench.views.terminal.XTermWidget;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.DiffFrame;
@@ -164,57 +165,67 @@ public class RStudio implements EntryPoint
 
          public void onSuccess()
          {
-            AceEditor.load(new Command()
+            // TODO (gary) This early loading of XTermWidget dependencies needs to be
+            // removed once I figure out why XTermWidget.load in 
+            // TerminalPane:createMainWidget) isn't sufficient. Suspect due to xterm.js
+            // loading its add-ons (fit.js) but need to investigate. 
+            XTermWidget.load(new Command()
             {
                public void execute()
                {
-                  ensureStylesInjected();
-                  
-                  String view = Window.Location.getParameter("view");
-                  if (VCSApplication.NAME.equals(view))
+                  AceEditor.load(new Command()
                   {
-                     RStudioGinjector.INSTANCE.getVCSApplication().go(
-                           RootLayoutPanel.get(),
-                           dismissProgressAnimation);
-                  }
-                  else if (HTMLPreviewApplication.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
-                           RootLayoutPanel.get(),
-                           dismissProgressAnimation);
-                  }
-                  else if (ShinyApplicationSatellite.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
-                           RootLayoutPanel.get(),
-                           dismissProgressAnimation);
-                  }
-                  else if (RmdOutputSatellite.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
-                           RootLayoutPanel.get(), 
-                           dismissProgressAnimation);
-                  }
-                  else if (view != null && 
-                           view.startsWith(SourceSatellite.NAME_PREFIX))
-                  {
-                     SourceSatellite satellite = new SourceSatellite(view);
-                     satellite.go(RootLayoutPanel.get(), 
-                           dismissProgressAnimation);
-                  }
-                  else if (view != null && 
-                           view.startsWith(ChunkSatellite.NAME_PREFIX))
-                  {
-                     ChunkSatellite satellite = new ChunkSatellite(view);
-                     satellite.go(RootLayoutPanel.get(), 
-                           dismissProgressAnimation);
-                  }
-                  else
-                  {
-                     RStudioGinjector.INSTANCE.getApplication().go(
-                        RootLayoutPanel.get(),
-                        dismissProgressAnimation);
-                  }
+                     public void execute()
+                     {
+                        ensureStylesInjected();
+
+                        String view = Window.Location.getParameter("view");
+                        if (VCSApplication.NAME.equals(view))
+                        {
+                           RStudioGinjector.INSTANCE.getVCSApplication().go(
+                                 RootLayoutPanel.get(),
+                                 dismissProgressAnimation);
+                        }
+                        else if (HTMLPreviewApplication.NAME.equals(view))
+                        {
+                           RStudioGinjector.INSTANCE.getHTMLPreviewApplication().go(
+                                 RootLayoutPanel.get(),
+                                 dismissProgressAnimation);
+                        }
+                        else if (ShinyApplicationSatellite.NAME.equals(view))
+                        {
+                           RStudioGinjector.INSTANCE.getShinyApplicationSatellite().go(
+                                 RootLayoutPanel.get(),
+                                 dismissProgressAnimation);
+                        }
+                        else if (RmdOutputSatellite.NAME.equals(view))
+                        {
+                           RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
+                                 RootLayoutPanel.get(), 
+                                 dismissProgressAnimation);
+                        }
+                        else if (view != null && 
+                              view.startsWith(SourceSatellite.NAME_PREFIX))
+                        {
+                           SourceSatellite satellite = new SourceSatellite(view);
+                           satellite.go(RootLayoutPanel.get(), 
+                                 dismissProgressAnimation);
+                        }
+                        else if (view != null && 
+                              view.startsWith(ChunkSatellite.NAME_PREFIX))
+                        {
+                           ChunkSatellite satellite = new ChunkSatellite(view);
+                           satellite.go(RootLayoutPanel.get(), 
+                                 dismissProgressAnimation);
+                        }
+                        else
+                        {
+                           RStudioGinjector.INSTANCE.getApplication().go(
+                                 RootLayoutPanel.get(),
+                                 dismissProgressAnimation);
+                        }
+                     }
+                  });
                }
             });
          }

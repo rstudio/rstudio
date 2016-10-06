@@ -11,6 +11,7 @@ src/gwt/src/org/rstudio/core/client/jsonrpc/json2.min.js
 src/gwt/www/js/json2.min.js
 src/gwt/tools/ace/
 src/gwt/tools/pdfjs/
+src/gwt/tools/xterm.js/
 src/gwt/.ant-targets-build.xml
 /src/gwt/.gwt/.gwt-log
 .Rproj.user

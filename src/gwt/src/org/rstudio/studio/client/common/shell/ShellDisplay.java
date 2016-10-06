@@ -40,6 +40,7 @@ public interface ShellDisplay extends ShellOutputWriter,
    String getPromptText();
    
    void setReadOnly(boolean readOnly);
+   void setSuppressPendingInput(boolean suppressPendingInput);
 
    void playbackActions(RpcObjectList<ConsoleAction> actions);
 

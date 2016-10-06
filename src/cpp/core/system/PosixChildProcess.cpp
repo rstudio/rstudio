@@ -491,6 +491,13 @@ Error ChildProcess::run()
             ::cfmakeraw(&termp);
             termp.c_lflag |= ISIG;
 
+            // for smart terminals we need to echo back the user input
+            if (options_.smartTerminal)
+            {
+               termp.c_lflag |= ECHO;
+               termp.c_oflag |= OPOST|ONLCR;
+            }
+
             // set attribs
             safePosixCall<int>(
                   boost::bind(::tcsetattr, STDIN_FILENO, TCSANOW, &termp),
