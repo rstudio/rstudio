@@ -3500,7 +3500,15 @@ public class AceEditor implements DocDisplay,
       // visible row; Ace does not position line widgets above the viewport
       // until the document is scrolled there
       if (widget.getRow() < getFirstVisibleRow())
+      {
          widget.getElement().getStyle().setTop(-10000, Unit.PX);
+         
+         // set left/right values so that the widget consumes space; necessary
+         // to get layout offsets inside the widget while rendering but before
+         // it comes onscreen
+         widget.getElement().getStyle().setLeft(48, Unit.PX);
+         widget.getElement().getStyle().setRight(15, Unit.PX);
+      }
       
       widget_.getLineWidgetManager().addLineWidget(widget);
       adjustScrollForLineWidget(widget);
