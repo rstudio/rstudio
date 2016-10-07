@@ -67,6 +67,4 @@ public class XTermTerminal
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), XTermResources.INSTANCE.xtermjs() /*TODO uncompressed flavor */);
    
-   private static final ExternalJavaScriptLoader xtermSupportLoader_ =
-         getLoader(XTermResources.INSTANCE.xtermsupportjs()); 
 }

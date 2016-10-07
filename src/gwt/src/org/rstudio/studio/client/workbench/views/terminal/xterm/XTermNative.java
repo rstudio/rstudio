@@ -20,6 +20,10 @@ import com.google.gwt.dom.client.Element;
 
 public class XTermNative extends JavaScriptObject
 {
+   protected XTermNative()
+   {
+   }
+   
    public static native XTermNative createTerminal(Element container) /*-{
       term = new Terminal({cursorBlink: false});
       term.open(container);
