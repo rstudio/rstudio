@@ -137,6 +137,9 @@
       params <- list()
       for (param in knitParams)
          params[[param$name]] <- param$value
+      
+      # mark as knit_params_list (so other routines know we generated it)
+      class(params) <- "knit_param_list"
 
       # inject into global environment
       assign("params", params, envir = globalenv())
