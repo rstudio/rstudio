@@ -47,7 +47,8 @@ public class XTermWidget extends Widget implements ShellDisplay
       setElement(Document.get().createDivElement());
       getElement().setTabIndex(0);
       terminal_ = XTermNative.createTerminal();
-      terminal_.open(getElement());;
+      terminal_.open(getElement());
+      terminal_.fit();
       attachToWidget(getElement(), terminal_);
      /* 
       terminalEventListeners_ = new ArrayList<HandlerRegistration>();
@@ -83,8 +84,14 @@ public class XTermWidget extends Widget implements ShellDisplay
       {
          public void onLoaded()
          {
-            if (command != null)
-               command.execute();
+            xtermFitLoader_.addCallback(new Callback()
+            {
+               public void onLoaded()
+               {
+                  if (command != null)
+                     command.execute();
+               }
+            });
          }
      });
    }
@@ -273,6 +280,9 @@ public class XTermWidget extends Widget implements ShellDisplay
    
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), XTermResources.INSTANCE.xtermjs() /*TODO uncompressed flavor */);
+
+   private static final ExternalJavaScriptLoader xtermFitLoader_ =
+         getLoader(XTermResources.INSTANCE.xtermfitjs());
 
    //private final List<HandlerRegistration> terminalEventListeners_;
 }

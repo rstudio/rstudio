@@ -27,6 +27,10 @@ public class XTermNative extends JavaScriptObject
    public final native void open(Element container) /*-{
       this.open(container);
    }-*/;
+
+   public final native void fit() /*-{
+      this.fit();
+   }-*/;
    
    public static native XTermNative createTerminal() /*-{
       return new $wnd.Terminal({cursorBlink: false});

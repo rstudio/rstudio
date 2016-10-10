@@ -8,3 +8,5 @@ cp src/xterm.js ../../src/org/rstudio/studio/client/workbench/views/terminal/xte
 # Copy the xterm CSS
 cp dist/xterm.css ../../src/org/rstudio/studio/client/workbench/views/terminal/xterm/xterm.css
 
+# Copy the xterm addons
+cp addons/fit/fit.js ../../src/org/rstudio/studio/client/workbench/views/terminal/xterm/fit.js
