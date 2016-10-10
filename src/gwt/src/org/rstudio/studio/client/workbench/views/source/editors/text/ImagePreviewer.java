@@ -153,12 +153,33 @@ public class ImagePreviewer
             
       String href = token.getValue();
       if (ImagePreviewer.isImageHref(href))
-         onPreviewImage(display, sentinel, prefs, href, position, tokenRange);
+      {
+         // extract HTML attributes from line for markdown links, e.g.
+         //
+         //    ![](plot.png){width=400 height=400}
+         //
+         String attributes = null;
+         String line = display.getLine(position.getRow());
+         if (isStandaloneMarkdownLink(line))
+         {
+            int startBraceIdx = line.indexOf("){");
+            int endBraceIdx   = line.lastIndexOf("}");
+            if (startBraceIdx != -1 &&
+                endBraceIdx != -1 &&
+                endBraceIdx > startBraceIdx)
+            {
+               attributes = line.substring(startBraceIdx + 2, endBraceIdx).trim();
+            }
+         }
+         
+         onPreviewImage(display, sentinel, prefs, href, attributes, position, tokenRange);
+      }
    }
    
    private static void onPreviewImageLineWidget(final DocDisplay display,
                                                 final DocUpdateSentinel sentinel,
                                                 final String href, 
+                                                final String attributes,
                                                 final Position position,
                                                 final Range tokenRange)
    {
@@ -258,10 +279,12 @@ public class ImagePreviewer
       };
       
       // construct our image
-      final Image image = new Image(imgSrcPathFromHref(sentinel, href));
+      String srcPath = imgSrcPathFromHref(sentinel, href);
+      final Image image = new Image(srcPath);
+      injectAttributes(image.getElement(), attributes);
+      final Element imgEl = image.getElement();
       
       // add load handlers to image
-      final Element imgEl = image.getElement();
       DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
       DOM.setEventListener(imgEl, new EventListener()
       {
@@ -270,16 +293,23 @@ public class ImagePreviewer
          {
             if (DOM.eventGetType(event) == Event.ONLOAD)
             {
-               // set styles
-               ImageElementEx imgEl = image.getElement().cast();
+               final ImageElementEx imgEl = image.getElement().cast();
                
                int minWidth = Math.min(imgEl.naturalWidth(), 100);
                int maxWidth = Math.min(imgEl.naturalWidth(), 650);
                
                Style style = imgEl.getStyle();
-               style.setProperty("width", "100%");
-               style.setProperty("minWidth", minWidth + "px");
-               style.setProperty("maxWidth", maxWidth + "px"); 
+               
+               boolean hasWidth =
+                     imgEl.hasAttribute("width") ||
+                     style.getProperty("width") != null;
+               
+               if (!hasWidth)
+               {
+                  style.setProperty("width", "100%");
+                  style.setProperty("minWidth", minWidth + "px");
+                  style.setProperty("maxWidth", maxWidth + "px");
+               }
                
                // attach to container
                container.setWidget(image);
@@ -481,6 +511,7 @@ public class ImagePreviewer
                                       DocUpdateSentinel sentinel,
                                       UIPrefs prefs,
                                       String href,
+                                      String attributes,
                                       Position position,
                                       Range tokenRange)
    {
@@ -508,7 +539,7 @@ public class ImagePreviewer
                 UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       {
          onPreviewImageLineWidget(display, sentinel,
-               href, position, tokenRange);
+               href, attributes, position, tokenRange);
          return;
       }
       
@@ -522,6 +553,29 @@ public class ImagePreviewer
       panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
       panel.show();
    }
+   
+   private static final native void injectAttributes(Element el, String attributes)
+   /*-{
+      // create an element, inject inner HTML, and then extract attributes
+      var ctr = $doc.createElement("div");
+      ctr.innerHTML = "<div " + attributes + ">";
+      var div = ctr.firstChild;
+      
+      // loop over attributes and apply to our element
+      for (var i = 0; i < div.attributes.length; i++) {
+         var attr = div.attributes[i];
+         if (attr && attr.specified) {
+            el.setAttribute(attr.name, attr.value);
+         }
+      }
+   }-*/;
+   
+   private static final native Element createImageElement(String srcPath, String attributes)
+   /*-{
+      var div = $doc.createElement("div");
+      div.innerHTML = "<img src=\"" + srcPath + "\" " + (attributes || "") + ">";
+      return div.firstChild;
+   }-*/;
 
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
