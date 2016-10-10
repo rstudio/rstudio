@@ -1,5 +1,5 @@
 /*
- * XTermResources.java
+ * XTermThemeResources.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,19 +12,17 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import org.rstudio.core.client.resources.StaticDataResource;
 
-public interface XTermResources extends ClientBundle
+public interface XTermThemeResources extends ClientBundle
 {
-   public static final XTermResources INSTANCE = GWT.create(XTermResources.class);
+   public static final XTermThemeResources INSTANCE = GWT.create(XTermThemeResources.class);
   
-   @Source("xterm.js")
-   StaticDataResource xtermjs();
-   
-   @Source("fit.js")
-   StaticDataResource xtermfitjs();
+   @Source("xterm.css")
+   StaticDataResource xtermcss();   
 }

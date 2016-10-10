@@ -15,9 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -29,12 +26,13 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermThemeResources;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
@@ -44,33 +42,25 @@ public class XTermWidget extends Widget implements ShellDisplay
 {
    public XTermWidget()
    {
+      attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       setElement(Document.get().createDivElement());
       getElement().setTabIndex(0);
       terminal_ = XTermNative.createTerminal();
       terminal_.open(getElement());
       terminal_.fit();
       attachToWidget(getElement(), terminal_);
-     /* 
-      terminalEventListeners_ = new ArrayList<HandlerRegistration>();
-      addAttachHandler(new AttachEvent.Handler()
-      {
-         @Override
-         public void onAttachOrDetach(AttachEvent event)
-         {
-            if (event.isAttached())
-               attachToWidget(getElement(), terminal_);
-            else
-               detachFromWidget(getElement());
-            
-            if (!event.isAttached())
-            {
-               for (HandlerRegistration handler : terminalEventListeners_)
-                  handler.removeHandler();
-               terminalEventListeners_.clear();
-            }
-         }
-      });
-      */
+   }
+
+   private void attachTheme(StaticDataResource cssResource)
+   {
+      if (currentStyleEl_ != null)
+         currentStyleEl_.removeFromParent();
+
+      currentStyleEl_ = Document.get().createLinkElement();
+      currentStyleEl_.setType("text/css");
+      currentStyleEl_.setRel("stylesheet");
+      currentStyleEl_.setHref(cssResource.getSafeUri().asString());
+      Document.get().getBody().appendChild(currentStyleEl_);
    }
    
    public static void preload()
@@ -268,6 +258,7 @@ public class XTermWidget extends Widget implements ShellDisplay
    }
    
    private final XTermNative terminal_;
+   private LinkElement currentStyleEl_;
                                                            
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
@@ -279,10 +270,9 @@ public class XTermWidget extends Widget implements ShellDisplay
    }
    
    private static final ExternalJavaScriptLoader xtermLoader_ =
-         getLoader(XTermResources.INSTANCE.xtermjs(), XTermResources.INSTANCE.xtermjs() /*TODO uncompressed flavor */);
+         getLoader(XTermResources.INSTANCE.xtermjs(), 
+               XTermResources.INSTANCE.xtermjs() /*TODO uncompressed flavor */);
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          getLoader(XTermResources.INSTANCE.xtermfitjs());
-
-   //private final List<HandlerRegistration> terminalEventListeners_;
 }
