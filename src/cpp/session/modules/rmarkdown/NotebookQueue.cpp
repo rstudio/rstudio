@@ -390,9 +390,17 @@ private:
          // establish execution context unless we're an inline chunk
          if (unit->execScope() != ExecScopeInline)
          {
+            // look up the working directory of the document as long as we
+            // aren't in the setup chunk, which always computes paths relative
+            // to the document so that relative paths in the setup chunk, such
+            // as those used in root.dir, have a reliable origin
+            core::FilePath workingDir;
+            if (label != "setup")
+               workingDir = docQueue->workingDir();
+
             execContext_ = boost::make_shared<ChunkExecContext>(
                unit->docId(), unit->chunkId(), ctx, unit->execScope(), 
-               docQueue->workingDir(), options, docQueue->pixelWidth(), 
+               workingDir, options, docQueue->pixelWidth(), 
                docQueue->charWidth());
             execContext_->connect();
          }
