@@ -20,12 +20,13 @@
     "print.tbl_df" = function(x, options)     list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
     "print.grouped_df" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
     "print.data.table" = function(x, options) {
-      shouldPrintTable <- TRUE
-      if (exists(x = "shouldPrint", envir = as.environment("package:data.table"))) {
-        shouldPrintTable <- data.table::shouldPrint(x)
-      } else {
-        shouldPrintTable <- data.table:::.global$print == "" || data.table::address(x) != data.table:::.global$print
-      }
+      shouldPrintTable <- tryCatch({
+        if (packageVersion("data.table") >= package_version("1.9.7")) {
+          data.table::shouldPrint(x)
+        } else {
+          data.table:::.global$print == "" || data.table::address(x) != data.table:::.global$print
+        }
+      }, error = function(e) TRUE)
 
       if (!shouldPrintTable) {
         return(NULL)
