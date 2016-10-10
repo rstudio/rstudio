@@ -44,7 +44,6 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -241,25 +240,15 @@ public class ChunkOutputStream extends FlowPanel
          bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
       }
 
-      final String fullUrl = url;
-      Timer frameLoadTimer = new Timer()
+      frame.loadUrlDelayed(url, 250, new Command() 
       {
          @Override
-         public void run()
+         public void execute()
          {
-            frame.loadUrl(fullUrl , new Command() 
-            {
-               @Override
-               public void execute()
-               {
-                  onRenderComplete.execute();
-                  onHeightChanged();
-               };
-            });
-         }
-      };
-
-      frameLoadTimer.schedule(250);
+            onRenderComplete.execute();
+            onHeightChanged();
+         };
+      });
    }
 
    @Override
@@ -488,6 +477,10 @@ public class ChunkOutputStream extends FlowPanel
             ChunkOutputFrame frame = (ChunkOutputFrame)inner;
             ChunkHtmlPage html = new ChunkHtmlPage(frame.getUrl(), 
                   (NotebookHtmlMetadata)metadata.cast(), ordinal, null, chunkOutputSize_);
+
+            // cancel any pending page load
+            frame.cancelPendingLoad();
+
             pages.add(html);
             remove(w);
          }
