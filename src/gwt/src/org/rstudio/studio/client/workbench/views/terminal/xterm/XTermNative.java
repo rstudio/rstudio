@@ -24,10 +24,11 @@ public class XTermNative extends JavaScriptObject
    {
    }
    
-   public static native XTermNative createTerminal(Element container) /*-{
-      term = new Terminal({cursorBlink: false});
-      term.open(container);
-      return term;
+   public final native void open(Element container) /*-{
+      this.open(container);
    }-*/;
    
-}
+   public static native XTermNative createTerminal() /*-{
+      return new $wnd.Terminal({cursorBlink: false});
+   }-*/;
+} 
