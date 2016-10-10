@@ -16,7 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.Size;
@@ -46,6 +48,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.IFrameElement;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
@@ -114,6 +118,8 @@ public class ChunkOutputWidget extends Composite
          RmdChunkOptions options, int expansionState, boolean canClose, 
          ChunkOutputHost host, ChunkOutputSize chunkOutputSize)
    {
+      initializeGvisHandlers();
+      
       documentId_ = documentId;
       chunkId_ = chunkId;
       host_ = host;
@@ -158,6 +164,7 @@ public class ChunkOutputWidget extends Composite
             {
             case Event.ONCLICK:
                host_.onOutputRemoved(ChunkOutputWidget.this);
+               REGISTRY.remove(ChunkOutputWidget.this);
                break;
             };
          }
@@ -205,6 +212,8 @@ public class ChunkOutputWidget extends Composite
       events.addHandler(InterruptStatusEvent.TYPE, this);
 
       chunkWindowManager_ = RStudioGinjector.INSTANCE.getChunkWindowManager();
+      
+      REGISTRY.add(this);
    }
    
    // Public methods ----------------------------------------------------------
@@ -302,21 +311,15 @@ public class ChunkOutputWidget extends Composite
       // don't sync if not visible and no output yet
       if (!isVisible() && (state_ == CHUNK_EMPTY || state_ == CHUNK_PRE_OUTPUT))
          return;
-
-      setVisible(true);
       
-      // clamp chunk height to min/max (the +19 is the sum of the vertical
-      // padding on the element)
-      int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
-      if (expansionState_.getValue() == EXPANDED)
-      {
-         int contentHeight = root_.getElement().getOffsetHeight() + 19;
-         height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight);
+      setVisible(true);
 
-         // if we have renders pending, don't shrink until they're loaded 
-         if (pendingRenders_ > 0 && height < renderedHeight_)
-            return;
-      }
+      // infer an appropriate widget height
+      int height = inferWidgetHeight(40);
+      
+      // if we have renders pending, don't shrink until they're loaded 
+      if (pendingRenders_ > 0 && height < renderedHeight_)
+         return;
 
       // don't report height if it hasn't changed (unless we also need to ensure
       // visibility)
@@ -879,6 +882,49 @@ public class ChunkOutputWidget extends Composite
       return true;
    }
    
+   private static final native void initializeGvisHandlers() /*-{
+      $wnd.$onGvisChartReady = $entry(function(data) {
+         @org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget::onGvisChartReady()();
+      });
+   }-*/;
+   
+   private int inferWidgetHeight(int verticalPadding)
+   {
+      // determine height
+      Element rootEl = root_.getElement();
+      NodeList<Element> iFrameEls = rootEl.getElementsByTagName("iframe");
+      
+      // if we failed to find an iFrame, use pre-existing logic
+      if (iFrameEls == null || iFrameEls.getLength() != 1)
+         return defaultWidgetHeight(verticalPadding);
+
+      // form height from iFrame inner body
+      IFrameElement iFrameEl = iFrameEls.getItem(0).cast();
+      Element bodyEl = iFrameEl.getContentDocument().getBody();
+
+      // some padding for the border
+      return bodyEl.getOffsetHeight() + verticalPadding;
+   }
+   
+   private int defaultWidgetHeight(int verticalPadding)
+   {
+      int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
+      if (expansionState_.getValue() == EXPANDED)
+      {
+         int contentHeight = root_.getElement().getOffsetHeight() + 19;
+         height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight);
+      }
+
+      return height;
+   }
+   
+   private static void onGvisChartReady()
+   {
+      // TODO: modify this method so we can figure out what gVis chart was just resized?
+      for (ChunkOutputWidget cow : REGISTRY)
+         cow.syncHeight(true, false);
+   }
+   
    @UiField Image clear_;
    @UiField Image expand_;
    @UiField Image popout_;
@@ -918,4 +964,7 @@ public class ChunkOutputWidget extends Composite
    public final static int CHUNK_READY       = 2;
    public final static int CHUNK_PRE_OUTPUT  = 3;
    public final static int CHUNK_POST_OUTPUT = 4;
+   
+   private static final Set<ChunkOutputWidget> REGISTRY = new HashSet<ChunkOutputWidget>();
+   
 }

@@ -38,6 +38,27 @@
    htmlfile <- tempfile("_rs_gvis_", tmpdir = ctx$outputFolder, fileext = ".html")
    depfile  <- tempfile("_rs_gvis_deps_", tmpdir = ctx$outputFolder, fileext = ".json")
    
+   # inject some of our own JavaScript event handlers in the gvis object
+   # mutates 'x' on success
+   try(silent = TRUE, {
+      jsDrawChart <- strsplit(x$html$chart[["jsDrawChart"]], "\n", fixed = TRUE)[[1]]
+      injectionLoc <- grep("chart.draw", jsDrawChart)[[1]]
+      
+      jsDrawChart[[injectionLoc]] <- paste(
+         paste(
+            "google.visualization.events.addListener(chart, 'ready', function() {",
+            "    parent.$onGvisChartReady(data);",
+            "})",
+            sep = "\n"
+         ),
+         jsDrawChart[[injectionLoc]],
+         sep = "\n"
+      )
+      
+      x$html$chart[["jsDrawChart"]] <- paste(jsDrawChart, collapse = "\n")
+   })
+   
+   # write HTML out to file
    html <- capture.output(googleVis:::print.gvis(x))
    cat(html, file = htmlfile, sep = "\n")
    .rs.recordHtmlWidget(x, htmlfile, depfile)
