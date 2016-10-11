@@ -51,6 +51,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab renderRmdTab, 
                           WorkbenchTab deployContentTab,
                           MarkersOutputTab markersTab,
+                          WorkbenchTab terminalTab,
                           EventBus events,
                           ToolbarButton goToWorkingDirButton)
    {
