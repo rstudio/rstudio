@@ -52,7 +52,7 @@
 
     max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else options$max.print
 
-    x <- head(x, max.print)
+    x <- .rs.toDataFrame(head(x, max.print), "x", flatten = FALSE, force = TRUE)
 
     save(
       x,

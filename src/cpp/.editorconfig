@@ -1,0 +1,21 @@
+# EditorConfig settings for RStudio. Some editors will read these automatically;
+# for those that don't, see here:
+# http://editorconfig.org/
+
+# for most language files, use Unix line endings, 3-space tabs, and wrap at 80
+# characters
+[*.{cpp,hpp,js,R,mm}]
+indent_style = space
+indent_size = 3
+end_of_file = lf
+max_line_length = 80
+
+# R files should end with a newline
+[*.R]
+insert_final_newline = true
+
+# Settings for CMake files 
+[CMakeLists.txt]
+indent_style = space
+indent_size = 3
+
