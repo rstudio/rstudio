@@ -64,41 +64,31 @@ public class ChunkHtmlPage extends ChunkOutputPage
          content_ = frame_;
       }
 
-      final String fullUrl = url;
-      Timer frameLoadTimer = new Timer()
+      frame_.loadUrlDelayed(url, 400, new Command() 
       {
          @Override
-         public void run()
+         public void execute()
          {
-            frame_.loadUrl(fullUrl , new Command() 
+            Element body = frame_.getDocument().getBody();
+            Style bodyStyle = body.getStyle();
+      
+            bodyStyle.setPadding(0, Unit.PX);
+            bodyStyle.setMargin(0, Unit.PX);
+
+            onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
+
+            Timer frameFinishLoadTimer = new Timer()
             {
                @Override
-               public void execute()
+               public void run()
                {
-                  Element body = frame_.getDocument().getBody();
-                  Style bodyStyle = body.getStyle();
-            
-                  bodyStyle.setPadding(0, Unit.PX);
-                  bodyStyle.setMargin(0, Unit.PX);
+                  onRenderComplete.execute();
+               }
+            };
 
-                  onEditorThemeChanged(ChunkOutputWidget.getEditorColors());
-
-                  Timer frameFinishLoadTimer = new Timer()
-                  {
-                     @Override
-                     public void run()
-                     {
-                        onRenderComplete.execute();
-                     }
-                  };
-
-                  frameFinishLoadTimer.schedule(100);
-               };
-            });
-         }
-      };
-
-      frameLoadTimer.schedule(400);
+            frameFinishLoadTimer.schedule(100);
+         };
+      });
    }
       
    @Override
