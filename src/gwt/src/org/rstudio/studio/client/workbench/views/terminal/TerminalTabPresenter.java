@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
@@ -28,11 +29,18 @@ public class TerminalTabPresenter extends BusyPresenter
    public TerminalTabPresenter(GlobalDisplay globalDisplay)
    {
       super(new TerminalPane("Terminal"));
+      pane_ = (TerminalPane) getView();
       globalDisplay_ = globalDisplay;
    }
    
    public void initialize()
    {
+   }
+   
+   public void onCreateTerminal(CreateTerminalEvent event)
+   {
+      pane_.ensureVisible();
+      pane_.bringToFront();
    }
 
    public void confirmClose(final Command onConfirmed)
@@ -59,5 +67,6 @@ public class TerminalTabPresenter extends BusyPresenter
       }
    }
 
+   private final TerminalPane pane_;
    private final GlobalDisplay globalDisplay_;
 }

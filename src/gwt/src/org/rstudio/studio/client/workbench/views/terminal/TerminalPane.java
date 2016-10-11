@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TerminalPane extends WorkbenchPane
@@ -24,14 +26,25 @@ public class TerminalPane extends WorkbenchPane
    protected TerminalPane(String title)
    {
       super(title);
-      xterm_ = new XTermWidget();
+      host_ = new SimplePanel();
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      return xterm_;
+      XTermWidget.load(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            xterm_ = new XTermWidget();
+            xterm_.setHeight("100%");
+            host_.add(xterm_);
+         }
+      });
+      return host_;
    }
    
-   private final XTermWidget xterm_;
+   private final SimplePanel host_;
+   private XTermWidget xterm_;
 }

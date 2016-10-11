@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
 public class TerminalTab 
    extends DelayLoadWorkbenchTab<TerminalTabPresenter> 
@@ -31,7 +32,8 @@ public class TerminalTab
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
-      implements ProvidesBusy
+      implements ProvidesBusy,
+                 CreateTerminalEvent.Handler
    {
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
@@ -43,7 +45,7 @@ public class TerminalTab
       super("Terminal", shim);
       shim_ = shim;
 
-      // TODO: add event handlers to the shim to forward terminal events
+      events.addHandler(CreateTerminalEvent.TYPE, shim);
    }
 
    @Override
