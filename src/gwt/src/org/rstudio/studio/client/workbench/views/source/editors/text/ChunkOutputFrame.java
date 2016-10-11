@@ -21,6 +21,18 @@ import com.google.gwt.user.client.Timer;
 
 public class ChunkOutputFrame extends DynamicIFrame
 {
+   public ChunkOutputFrame()
+   {
+      timer_ = new Timer() 
+      {
+         @Override
+         public void run()
+         {
+            loadUrl(url_, onCompleted_);
+         }
+      };
+   }
+
    void loadUrl(String url, Command onCompleted)
    {
       onCompleted_ = onCompleted;
@@ -39,19 +51,18 @@ public class ChunkOutputFrame extends DynamicIFrame
          Command onCompleted)
    {
       // prevent stacking timers
-      if (timer_ != null && timer_.isRunning())
+      if (timer_.isRunning())
          timer_.cancel();
       
       onCompleted_ = onCompleted;
       url_ = url;
 
-      timer_ = new FrameLoadTimer();
       timer_.schedule(delayMs);
    }
    
    public void cancelPendingLoad()
    {
-      if (timer_ != null && timer_.isRunning())
+      if (timer_.isRunning())
          timer_.cancel();
    }
 
@@ -59,7 +70,7 @@ public class ChunkOutputFrame extends DynamicIFrame
    public String getUrl()
    {
       // return the pending URL if we haven't loaded one yet
-      if (timer_ != null && timer_.isRunning())
+      if (timer_.isRunning())
          return url_;
       else
          return super.getUrl();
@@ -72,16 +83,7 @@ public class ChunkOutputFrame extends DynamicIFrame
          onCompleted_.execute();
    }
    
-   private class FrameLoadTimer extends Timer
-   {
-      @Override
-      public void run()
-      {
-         loadUrl(url_, onCompleted_);
-      }
-   }
-   
-   private FrameLoadTimer timer_;
+   private final Timer timer_;
    private String url_;
    private Command onCompleted_;
 }
