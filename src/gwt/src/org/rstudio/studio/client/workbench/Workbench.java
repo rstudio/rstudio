@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -377,6 +378,14 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
+      // temporary feature flag for terminal: if set, create the terminal tab
+      // instead of showing a modal shell
+      if (pPrefs_.get().enableXTerm().getValue())
+      {
+         eventBus_.fireEvent(new CreateTerminalEvent());
+         return;
+      }
+
       if (Desktop.isDesktop())
       {
          server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
