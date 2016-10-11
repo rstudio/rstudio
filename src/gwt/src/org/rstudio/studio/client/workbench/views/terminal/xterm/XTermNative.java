@@ -28,12 +28,24 @@ public class XTermNative extends JavaScriptObject
       this.open(container);
    }-*/;
 
+   public final native void destroy() /*-{
+      this.destroy();
+   }-*/;
+   
    public final native void fit() /*-{
       this.fit();
    }-*/;
 
    public final native void writeln(String data) /*-{
       this.writeln(data);
+   }-*/;
+   
+   public final native void write(String data) /*-{
+      this.write(data);
+   }-*/;
+  
+   public final native void bell() /*-{
+      this.bell();
    }-*/;
    
    public final native XTermDimensions proposeGeometry() /*-{
@@ -43,8 +55,24 @@ public class XTermNative extends JavaScriptObject
    public final native void focus() /*-{
       this.focus(); 
    }-*/; 
+  
+   public final native void scrollDisp(int lineCount) /*-{
+      this.scrollDisp(lineCount, false);
+   }-*/;
+  
+   public final native void scrollPages(int pageCount) /*-{
+      this.scrollPages(pageCount);
+   }-*/;
    
-   public static native XTermNative createTerminal() /*-{
-      return new $wnd.Terminal({cursorBlink: false});
+   public final native void scrollToTop() /*-{
+      this.scrollToTop();
+   }-*/;
+   
+   public final native void scrollToBottom() /*-{
+      this.scrollToBottom();
+   }-*/;
+   
+   public static native XTermNative createTerminal(boolean blink) /*-{
+      return new $wnd.Terminal({cursorBlink: blink});
    }-*/;
 } 

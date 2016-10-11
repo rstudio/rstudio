@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -52,15 +53,15 @@ public class XTermWidget extends Widget implements ShellDisplay,
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       createContainerElement();
-      terminal_ = XTermNative.createTerminal();
+      terminal_ = XTermNative.createTerminal(true);
       terminal_.open(getElement());
 
    }
 
-   private void showFakePrompt()
+   private void showBanner()
    {
-      terminal_.writeln("Welcome to XTerm.js!");
-      terminal_.writeln("We hope you enjoy your stay.");
+      terminal_.writeln("Welcome to RStudio shell.");
+      terminal_.writeln("Now brought to you by XTerm.");
    }
    
    private void createContainerElement()
@@ -68,7 +69,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       setElement(Document.get().createDivElement());
       getElement().setTabIndex(0);
-      getElement().getStyle().setMargin(0,  Unit.PX);
+      getElement().getStyle().setMargin(0, Unit.PX);
       getElement().getStyle().setBackgroundColor("#111");
       getElement().getStyle().setColor("#fafafa");
    }
@@ -110,8 +111,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
       terminal_.fit();
       attachToWidget(getElement(), terminal_);
       terminal_.focus();
-      XTermDimensions size = terminal_.proposeGeometry();
-      showFakePrompt(); 
+      showBanner(); 
    }
    
    public static void preload()
@@ -150,8 +150,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public void consoleWriteError(String string)
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.write(string);
    }
 
    @Override
@@ -159,15 +158,13 @@ public class XTermWidget extends Widget implements ShellDisplay,
                                          UnhandledError traceInfo,
                                          boolean expand, String command)
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.write(string);
    }
 
    @Override
    public void consoleWriteOutput(String output)
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.write(output);;
    }
 
    @Override
@@ -193,22 +190,19 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public void consoleWriteInput(String input, String console)
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.write(input);
    }
 
    @Override
    public void consoleWritePrompt(String prompt)
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.write(prompt);
    }
 
    @Override
    public void consolePrompt(String prompt, boolean showInput)
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.write(prompt);
    }
 
    @Override
@@ -242,8 +236,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public int getCharacterWidth()
    {
-      // TODO Auto-generated method stub
-      return 0;
+      return DomUtils.getCharacterWidth(getElement(), styles_.console());
    }
 
    @Override
