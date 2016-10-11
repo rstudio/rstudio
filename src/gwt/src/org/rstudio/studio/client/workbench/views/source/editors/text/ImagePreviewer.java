@@ -15,10 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 
+import java.util.Map;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.html.HTMLAttributesParser;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
@@ -281,8 +284,18 @@ public class ImagePreviewer
       // construct our image
       String srcPath = imgSrcPathFromHref(sentinel, href);
       final Image image = new Image(srcPath);
-      injectAttributes(image.getElement(), attributes);
+      
+      // parse and inject attributes
+      Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
       final Element imgEl = image.getElement();
+      for (Map.Entry<String, String> entry : parsedAttributes.entrySet())
+      {
+         String key = entry.getKey();
+         String val = entry.getValue();
+         if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
+            continue;
+         imgEl.setAttribute(key, val);
+      }
       
       // add load handlers to image
       DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
@@ -554,29 +567,6 @@ public class ImagePreviewer
       panel.show();
    }
    
-   private static final native void injectAttributes(Element el, String attributes)
-   /*-{
-      // create an element, inject inner HTML, and then extract attributes
-      var ctr = $doc.createElement("div");
-      ctr.innerHTML = "<div " + attributes + ">";
-      var div = ctr.firstChild;
-      
-      // loop over attributes and apply to our element
-      for (var i = 0; i < div.attributes.length; i++) {
-         var attr = div.attributes[i];
-         if (attr && attr.specified) {
-            el.setAttribute(attr.name, attr.value);
-         }
-      }
-   }-*/;
-   
-   private static final native Element createImageElement(String srcPath, String attributes)
-   /*-{
-      var div = $doc.createElement("div");
-      div.innerHTML = "<img src=\"" + srcPath + "\" " + (attributes || "") + ">";
-      return div.firstChild;
-   }-*/;
-
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
    private final UIPrefs prefs_;
