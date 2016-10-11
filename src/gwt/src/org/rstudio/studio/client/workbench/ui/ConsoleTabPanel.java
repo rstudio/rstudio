@@ -65,6 +65,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       renderRmdTab_ = renderRmdTab;
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
+      terminalTab_ = terminalTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -207,6 +208,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                selectTab(0);
          }
       });
+      
+      terminalTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            terminalTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(terminalTab_);
+         }
+      });
+      terminalTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            terminalTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
 
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
@@ -232,7 +256,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !sourceCppTabVisible_ &&
                             !renderRmdTabVisible_ &&
                             !deployContentTabVisible_ &&
-                            !markersTabVisible_;
+                            !markersTabVisible_ &&
+                            !terminalTabVisible_;
 
       if (!consoleOnly)
       {
@@ -250,6 +275,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(deployContentTab_);
          if (markersTabVisible_)
             tabs.add(markersTab_);
+         if (terminalTabVisible_)
+            tabs.add(terminalTab_);
 
          setTabs(tabs);
       }
@@ -298,6 +325,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean deployContentTabVisible_;
    private final MarkersOutputTab markersTab_;
    private boolean markersTabVisible_;
+   private final WorkbenchTab terminalTab_;
+   private boolean terminalTabVisible_;
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private final ToolbarButton goToWorkingDirButton_;
