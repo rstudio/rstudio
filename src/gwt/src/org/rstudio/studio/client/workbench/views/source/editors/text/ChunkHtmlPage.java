@@ -40,8 +40,13 @@ public class ChunkHtmlPage extends ChunkOutputPage
          classes = metadata.getClasses();
 
       String clazz = classes.length() > 0 ? classes.get(0) : "html";
-      thumbnail_ = new ChunkOutputThumbnail(clazz, 
-            classes.length() > 1 ? classes.get(1) : "",
+      String secondClazz = classes.length() > 1 ? classes.get(1) : "";
+      
+      // don't report 'list' class for 'gvis' objects
+      if (clazz.equals("gvis"))
+         secondClazz = "";
+      
+      thumbnail_ = new ChunkOutputThumbnail(clazz, secondClazz,
             new ChunkHtmlPreview(), ChunkOutputWidget.getEditorColors());
 
       // amend the URL to cause any contained widget to use the RStudio viewer
