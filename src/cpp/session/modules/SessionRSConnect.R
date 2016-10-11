@@ -255,7 +255,7 @@
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
   yaml <- rmarkdown::yaml_front_matter(target)
-  if (is.list(yaml) && identical(yaml$runtime, "shiny/prerendered")) {
+  if (is.list(yaml) && identical(yaml$runtime, "shiny_prerendered")) {
     return(rsconnect::listBundleFiles(dirname(target)))
   }
 
@@ -347,9 +347,9 @@
   lines <- readLines(target, encoding = encoding, warn = FALSE)
   frontMatter <- rmarkdown:::parse_yaml_front_matter(lines)
 
-  # if this is runtime: shiny/prerendered then is_multi_rmd is FALSE
+  # if this is runtime: shiny_prerendered then is_multi_rmd is FALSE
   if (is.list(frontMatter) &&
-      identical(frontMatter$runtime, "shiny/prerendered")) {
+      identical(frontMatter$runtime, "shiny_prerendered")) {
     is_multi_rmd <- FALSE
   } else {
     # check for multiple R Markdown documents in the directory
