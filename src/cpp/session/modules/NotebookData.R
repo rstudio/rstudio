@@ -20,13 +20,17 @@
     "print.tbl_df" = function(x, options)     list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
     "print.grouped_df" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
     "print.data.table" = function(x, options) {
-      shouldPrintTable <- tryCatch({
-        if (packageVersion("data.table") >= package_version("1.9.7")) {
-          data.table::shouldPrint(x)
-        } else {
-          data.table:::.global$print == "" || data.table::address(x) != data.table:::.global$print
-        }
-      }, error = function(e) TRUE)
+      shouldPrintTable <- TRUE
+
+      if ("data.table" %in% loadedNamespaces() &&
+          exists("shouldPrint", envir = asNamespace("data.table")))
+      {
+        shouldPrint <- get("shouldPrint", envir = asNamespace("data.table"))
+        shouldPrintTable <- tryCatch(
+          shouldPrint(x) || !inherits(x, "data.table"),
+          error = function(e) TRUE
+        )
+      }
 
       if (!shouldPrintTable) {
         return(NULL)
