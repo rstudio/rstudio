@@ -31,6 +31,18 @@ public class XTermNative extends JavaScriptObject
    public final native void fit() /*-{
       this.fit();
    }-*/;
+
+   public final native void writeln(String data) /*-{
+      this.writeln(data);
+   }-*/;
+   
+   public final native XTermDimensions proposeGeometry() /*-{
+      return this.proposeGeometry();
+   }-*/;
+   
+   public final native void focus() /*-{
+      this.focus(); 
+   }-*/; 
    
    public static native XTermNative createTerminal() /*-{
       return new $wnd.Terminal({cursorBlink: false});

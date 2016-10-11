@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -23,34 +24,55 @@ import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermThemeResources;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
-public class XTermWidget extends Widget implements ShellDisplay
+public class XTermWidget extends Widget implements ShellDisplay,
+                                                   RequiresResize
 {
    public XTermWidget()
+   {
+      styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      createContainerElement();
+      terminal_ = XTermNative.createTerminal();
+      terminal_.open(getElement());
+
+   }
+
+   private void showFakePrompt()
+   {
+      terminal_.writeln("Welcome to XTerm.js!");
+      terminal_.writeln("We hope you enjoy your stay.");
+   }
+   
+   private void createContainerElement()
    {
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       setElement(Document.get().createDivElement());
       getElement().setTabIndex(0);
-      terminal_ = XTermNative.createTerminal();
-      terminal_.open(getElement());
-      terminal_.fit();
-      attachToWidget(getElement(), terminal_);
+      getElement().getStyle().setMargin(0,  Unit.PX);
+      getElement().getStyle().setBackgroundColor("#111");
+      getElement().getStyle().setColor("#fafafa");
    }
-
+   
    private void attachTheme(StaticDataResource cssResource)
    {
       if (currentStyleEl_ != null)
@@ -61,6 +83,35 @@ public class XTermWidget extends Widget implements ShellDisplay
       currentStyleEl_.setRel("stylesheet");
       currentStyleEl_.setHref(cssResource.getSafeUri().asString());
       Document.get().getBody().appendChild(currentStyleEl_);
+   }
+  
+   private boolean initialized_ = false;
+   @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      if (!initialized_)
+      {
+         initialized_ = true;
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            public void execute()
+            {
+               doOnLoad();
+            }
+         });
+      }
+
+      ElementIds.assignElementId(this.getElement(), ElementIds.XTERM_WIDGET);
+   }
+   
+   protected void doOnLoad()
+   {
+      terminal_.fit();
+      attachToWidget(getElement(), terminal_);
+      terminal_.focus();
+      XTermDimensions size = terminal_.proposeGeometry();
+      showFakePrompt(); 
    }
    
    public static void preload()
@@ -122,8 +173,7 @@ public class XTermWidget extends Widget implements ShellDisplay
    @Override
    public void focus()
    {
-      // TODO Auto-generated method stub
-      
+      terminal_.focus();
    }
 
    @Override
@@ -251,6 +301,13 @@ public class XTermWidget extends Widget implements ShellDisplay
       // TODO Auto-generated method stub
       return null;
    }
+   @Override
+   public void onResize()
+   {
+      // TODO Auto-generated method stub
+      
+   }
+   
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
@@ -259,6 +316,7 @@ public class XTermWidget extends Widget implements ShellDisplay
    
    private final XTermNative terminal_;
    private LinkElement currentStyleEl_;
+   private ConsoleResources.ConsoleStyles styles_;
                                                            
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
@@ -275,4 +333,5 @@ public class XTermWidget extends Widget implements ShellDisplay
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          getLoader(XTermResources.INSTANCE.xtermfitjs());
+
 }
