@@ -64,7 +64,9 @@
    # write HTML out to file
    html <- capture.output(googleVis:::print.gvis(x))
    cat(html, file = htmlfile, sep = "\n")
-   .rs.recordHtmlWidget(x, htmlfile, depfile)
+   
+   # record the generated artefacts
+   invisible(.rs.recordHtmlWidget(x, htmlfile, depfile))
 })
 
 .rs.addFunction("rnb.saveHtmlToCache", function(x, ...)
@@ -90,7 +92,7 @@
    }
    
    # record the generated artefacts
-   .rs.recordHtmlWidget(x, htmlfile, depfile)
+   invisible(.rs.recordHtmlWidget(x, htmlfile, depfile))
 })
 
 .rs.addFunction("rnbHooks.print.html",           .rs.rnb.saveHtmlToCache)
@@ -98,6 +100,7 @@
 .rs.addFunction("rnbHooks.print.shiny.tag.list", .rs.rnb.saveHtmlToCache)
 
 .rs.addFunction("rnbHooks.print.gvis",           .rs.rnb.saveGoogleVisToCache)
+.rs.addFunction("rnbHooks.plot.gvis",            .rs.rnb.saveGoogleVisToCache)
 
 .rs.addFunction("rnbHooks.print.knit_asis", function(x, ...) 
 {
@@ -304,7 +307,8 @@
       "print.shiny.tag.list"   = .rs.rnbHooks.print.shiny.tag.list,
       "print.gvis"             = .rs.rnbHooks.print.gvis,
       "print.knit_asis"        = .rs.rnbHooks.print.knit_asis,
-      "print.knit_image_paths" = .rs.rnbHooks.print.knit_image_paths
+      "print.knit_image_paths" = .rs.rnbHooks.print.knit_image_paths,
+      "plot.gvis"              = .rs.rnbHooks.plot.gvis
    )
 })
 

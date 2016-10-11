@@ -920,9 +920,15 @@ public class ChunkOutputWidget extends Composite
    
    private static void onGvisChartReady()
    {
-      // TODO: modify this method so we can figure out what gVis chart was just resized?
-      for (ChunkOutputWidget cow : REGISTRY)
-         cow.syncHeight(true, false);
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            for (ChunkOutputWidget cow : REGISTRY)
+               cow.syncHeight(true, false);
+         }
+      }.schedule(100);
    }
    
    @UiField Image clear_;
