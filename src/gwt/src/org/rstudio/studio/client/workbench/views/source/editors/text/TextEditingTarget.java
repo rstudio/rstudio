@@ -220,7 +220,10 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
+      void setIsShinyFormat(boolean showOutputOptions, 
+                            boolean isPresentation,
+                            boolean isShinyPrerendered);
+      void setIsNotShinyFormat();
       void setIsNotebookFormat();
       void setFormatOptions(TextFileType fileType,
                             boolean showRmdFormatMenu,
@@ -3646,16 +3649,19 @@ public class TextEditingTarget implements
          view_.setIsShinyFormat(selTemplate.format != null,
                                 selTemplate.format != null &&
                                 selTemplate.format.endsWith(
-                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
+                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX),
+                                isShinyPrerenderedDoc());
       }
       // could be runtime: shiny with a custom format
       else if (isShinyDoc())
       {
          view_.setIsShinyFormat(false,  // no output options b/c no template
-                                false); // not a presentation (unknown format)
+                                false,  // not a presentation (unknown format)
+                                isShinyPrerenderedDoc()); 
       }
       else
       {
+         view_.setIsNotShinyFormat();
          if (selTemplate != null)
          {
             JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
@@ -5031,6 +5037,22 @@ public class TextEditingTarget implements
       }
    }
    
+   private boolean isShinyPrerenderedDoc()
+   {
+      try
+      {
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return false;
+         return rmarkdownHelper_.isRuntimeShinyPrerendered(yaml); 
+      }
+      catch(Exception e)
+      {
+         Debug.log(e.getMessage());
+         return false;
+      }
+   }
+   
    private String getCustomKnit()
    {
       try
@@ -5345,6 +5367,46 @@ public class TextEditingTarget implements
      
    }
    
+   
+   @Handler
+   void onClearPrerenderedOutput()
+   {
+      withSavedDoc(new Command() {
+         @Override
+         public void execute()
+         {
+            // determine the output path (use relative path if possible)
+            String path = docUpdateSentinel_.getPath();
+            FileSystemItem fsi = FileSystemItem.createFile(path);
+            path = fsi.getParentPath().completePath(fsi.getStem() + ".html");
+            String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
+                workbenchContext_.getCurrentWorkingDir());
+            if (relativePath != null)
+               path = relativePath;
+            final String docPath = path;
+            
+            globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION, 
+               "Clear Prerendered Output", 
+               "Clearing the prerendered output will delete the html " +
+               "output file for this document ('" + docPath + "'). " +
+               "\n\nAre you sure you want to clear the output now?",
+               false,
+               new Operation() {
+                  @Override
+                  public void execute()
+                  {
+                     String code = "file.remove(" + 
+                                   ConsoleDispatcher.escapedPath(docPath) + 
+                                   ")";
+                     events_.fireEvent(new SendToConsoleEvent(code, true));
+                  }
+               },
+               null,
+               true);  
+         }
+      });
+   }
    
    
    @Handler
