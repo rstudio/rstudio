@@ -262,7 +262,7 @@ var MarkdownHighlightRules = function() {
             next: "allowBlock"
         }, { // list
             token : "text",
-            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
+            regex : "^\\s*(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock"
         },
             strongStars,
