@@ -511,14 +511,7 @@ private:
 
                getPresentationDetails(sourceLine_, &startedJson);
 
-               startedJson["url"] = url;
-
-               // runtime: shiny needs to distinguish between differnet
-               // Rmd files within the same website so we need to also
-               // pass the target filename
-               std::string runtime = getRuntime(targetFile_);
-               if (runtime == "shiny")
-                  startedJson["url"] = url + targetFile_.filename();
+               startedJson["url"] = url + targetFile_.filename();
 
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
