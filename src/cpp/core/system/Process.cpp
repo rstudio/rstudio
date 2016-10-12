@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
+#include <core/SafeConvert.hpp>
 #include <core/Scope.hpp>
 #include <core/Error.hpp>
 #include <core/Log.hpp>
@@ -33,6 +34,33 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+std::string processExitStatusMessage(const ProcessResult& result,
+                                     const std::string& command)
+{
+   // build prefix for message
+   std::string message = (result.exitStatus == 0)
+         ? "'" + command + "':"
+         : "Error executing '" + command + "': ";
+   
+   switch (result.exitStatus)
+   {
+   case -1:
+      message += "process had unknown exit status";
+      break;
+   case 0:
+      message += "process executed successfully";
+      break;
+   case 15:
+      message += "process was terminated";
+      break;
+   default:
+      message += "process had exit status " +
+            core::safe_convert::numberToString(result.exitStatus);
+      break;
+   }
+   
+   return message;
+}
 
 Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,

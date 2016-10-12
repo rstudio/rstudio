@@ -140,6 +140,9 @@ struct ProcessResult
    int exitStatus;
 };
 
+// Return a user-friendly error message for process results.
+std::string processExitStatusMessage(const ProcessResult& result,
+                                     const std::string& command);
 
 // Run a program synchronously. Note that if executable is not an absolute
 // path then runProgram will duplicate the actions of the shell in searching

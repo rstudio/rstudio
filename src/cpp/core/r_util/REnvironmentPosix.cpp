@@ -195,6 +195,10 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
    Error error = runCommand(command, core::system::ProcessOptions(), &result);
    if (error)
       LOG_ERROR(error);
+   
+   if (result.exitStatus)
+      LOG_ERROR_MESSAGE(system::processExitStatusMessage(result, command));
+   
    std::string libraryPaths = result.stdOut;
    boost::algorithm::trim(libraryPaths);
    return libraryPaths;
@@ -203,18 +207,23 @@ std::string extraLibraryPaths(const FilePath& ldPathsScript,
 FilePath systemDefaultRScript(std::string* pErrMsg)
 {
    // ask system which R to use
+   std::string command = "which R";
    system::ProcessResult result;
-   Error error = core::system::runCommand("which R",
+   Error error = core::system::runCommand(command,
                                           core::system::ProcessOptions(),
                                           &result);
    std::string whichR = result.stdOut;
    boost::algorithm::trim(whichR);
-   if (error || whichR.empty())
+   if (error || result.exitStatus || whichR.empty())
    {
       // log error or failure to return output
       if (error)
       {
-         *pErrMsg = "Error calling which R: " + error.summary();
+         *pErrMsg = "Error executing 'which R': " + error.summary();
+      }
+      else if (result.exitStatus)
+      {
+         *pErrMsg = system::processExitStatusMessage(result, command);
       }
       else
       {
@@ -259,10 +268,12 @@ bool getRHomeAndLibPath(const FilePath& rScriptPath,
    std::string command = rScriptPath.absolutePath() + " RHOME";
    system::ProcessResult result;
    Error error = runCommand(command, core::system::ProcessOptions(), &result);
-   if (error)
+   if (error || result.exitStatus)
    {
-      *pErrMsg = "Error running R (" + rScriptPath.absolutePath() + "): " +
-                 error.summary();
+      *pErrMsg = error
+            ? "Error executing 'R RHOME' (" + rScriptPath.absolutePath() + "): " + error.summary()
+            : system::processExitStatusMessage(result, command);
+      
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -470,11 +481,18 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
             "R.home('doc'),sep=':'))\"";
    system::ProcessResult result;
    Error error = runCommand(command, system::ProcessOptions(), &result);
-   if (error)
+   if (error || result.exitStatus)
    {
       LOG_ERROR(error);
-      *pErrMsg = "Error calling R script (" + rScriptPath +
-                 "), " + error.summary();
+      if (result.exitStatus)
+      {
+         *pErrMsg = core::system::processExitStatusMessage(result, rScriptPath);
+      }
+      else
+      {
+         *pErrMsg = "Error calling (" + rScriptPath +
+               "), " + error.summary();
+      }
       LOG_ERROR_MESSAGE(*pErrMsg);
       return false;
    }
@@ -746,12 +764,13 @@ Error rVersion(const FilePath& rHomePath,
    core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
    options.environment = env;
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(
-      rScriptPath.absolutePath() +
-      " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'",
-      options,
-      &result);
-   if (error)
+   
+   std::string command =
+         rScriptPath.absolutePath() +
+         " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'";
+         
+   Error error = core::system::runCommand(command, options, &result);
+   if (error || result.exitStatus)
    {
       error.addProperty("r-script", rScriptPath);
       return error;
