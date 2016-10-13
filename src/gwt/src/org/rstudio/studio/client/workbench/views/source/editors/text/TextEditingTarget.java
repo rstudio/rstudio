@@ -5377,8 +5377,6 @@ public class TextEditingTarget implements
          {
             // determine the output path (use relative path if possible)
             String path = docUpdateSentinel_.getPath();
-            FileSystemItem fsi = FileSystemItem.createFile(path);
-            path = fsi.getParentPath().completePath(fsi.getStem() + ".html");
             String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
                 workbenchContext_.getCurrentWorkingDir());
             if (relativePath != null)
@@ -5388,15 +5386,15 @@ public class TextEditingTarget implements
             globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION, 
                "Clear Prerendered Output", 
-               "Clearing the prerendered output will delete the html " +
-               "output file for this document ('" + docPath + "'). " +
+               "Clearing the prerendered output will delete the generated html " +
+               "output for " + docPath + "." +
                "\n\nAre you sure you want to clear the output now?",
                false,
                new Operation() {
                   @Override
                   public void execute()
                   {
-                     String code = "file.remove(" + 
+                     String code = "rmarkdown::shiny_prerendered_clean(" + 
                                    ConsoleDispatcher.escapedPath(docPath) + 
                                    ")";
                      events_.fireEvent(new SendToConsoleEvent(code, true));
