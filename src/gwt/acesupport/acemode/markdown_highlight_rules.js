@@ -145,7 +145,7 @@ var MarkdownHighlightRules = function() {
             strongStars,
             strongUnderscore,
             emphasisStars,
-            emphasisUnderscore,
+            emphasisUnderscore
         ],
        
         start: [{
