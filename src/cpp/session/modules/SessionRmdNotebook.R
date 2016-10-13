@@ -600,7 +600,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkInfo <- .rs.extractRmdChunkInformation(nbData$rmd)
    
    outputPath <- function(cachePath, chunkId, index, ext) {
-      file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
+      file.path(cachePath, chunkId, sprintf("%06i.%s", as.integer(index), ext))
    }
    
    # Text ----
