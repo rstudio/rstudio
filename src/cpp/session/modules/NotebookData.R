@@ -19,7 +19,25 @@
     "print.data.frame" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
     "print.tbl_df" = function(x, options)     list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
     "print.grouped_df" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
-    "print.data.table" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
+    "print.data.table" = function(x, options) {
+      shouldPrintTable <- TRUE
+
+      if ("data.table" %in% loadedNamespaces() &&
+          exists("shouldPrint", envir = asNamespace("data.table")))
+      {
+        shouldPrint <- get("shouldPrint", envir = asNamespace("data.table"))
+        shouldPrintTable <- tryCatch(
+          shouldPrint(x) || !inherits(x, "data.table"),
+          error = function(e) TRUE
+        )
+      }
+
+      if (!shouldPrintTable) {
+        return(NULL)
+      }
+
+      list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x)))
+    },
     "print.tbl_lazy" = function(x, options) {
       tblLazyData <- lapply(dplyr::tbl_vars(x), function(e) character(0))
       names(tblLazyData) <- dplyr::tbl_vars(x)
@@ -72,7 +90,9 @@
       overrideName,
       function(x, ...) {
         o <- overrideMap(x, options)
-        overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
+        if (!is.null(o)) {
+          overridePrint(o$x, o$options, o$className, o$nRow, o$nCol)
+        }
       },
       envir = as.environment("tools:rstudio")
     )
@@ -171,15 +191,15 @@
 
   is_list <- vapply(data, is.list, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
-    summary <- tibble::obj_sum(x)
-    paste0("<", summary, ">")
-  })
+        summary <- tibble::obj_sum(x)
+        paste0("<", summary, ">")
+      })
 
   if (length(columns) > 0) {
     first_column = data[[1]]
     if (is.numeric(first_column) && isTRUE(all(diff(first_column) == 1)))
       columns[[1]]$align <- "left"
-  }
+    }
 
   data <- as.data.frame(
     lapply(
