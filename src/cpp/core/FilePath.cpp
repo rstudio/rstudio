@@ -24,10 +24,13 @@
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
+#define BOOST_NO_CXX11_SCOPED_ENUMS
+#include <boost/filesystem.hpp>
+#undef BOOST_NO_CXX11_SCOPED_ENUMS
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
