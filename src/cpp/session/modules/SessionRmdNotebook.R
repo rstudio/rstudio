@@ -377,7 +377,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # in the system encoding
    if (!identical(properties$encoding, "UTF-8")) {
       contents <- readLines(inputFile)
-      utf8 <- iconv(contents, from = properties$encoding, to = "UTF-8")
+      utf8 <- tryCatch(
+         iconv(contents, from = properties$encoding, to = "UTF-8"),
+         error = function(e) contents
+      )
       inputFile <- tempfile(fileext = ".Rmd")
       writeLines(utf8, con = inputFile, sep = "\n", useBytes = TRUE)
    }
