@@ -376,27 +376,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # is normally called when attempting to preview / create a notebook on
    # save we generally expect the document to be available)
    properties <- .rs.getSourceDocumentProperties(inputFile, FALSE)
-   
-   # attempt to read and re-encode the file to UTF-8 if it's specified
-   # in the system encoding
-   if (!identical(properties$encoding, "UTF-8")) {
-      
-      # updates 'inputFile' on success to a UTF-8 encoded document
-      tryCatch(
-         expr = {
-            contents <- readLines(inputFile)
-            iconv(contents, from = properties$encoding, to = "UTF-8")
-            newInputFile <- tempfile(fileext = ".Rmd")
-            on.exit(unlink(newInputFile), add = TRUE)
-            writeLines(utf8, con = newInputFile, sep = "\n", useBytes = TRUE)
-            
-            # if we got here, then we'll use the newly written file
-            inputFile <- inputFile
-            encoding <- "UTF-8"
-         },
-         error = identity
-      )
-   }
+   if (!is.null(properties$encoding))
+      encoding <- properties$encoding
    
    # reset the knitr chunk counter (it can be modified as a side effect of
    # parse_params, which is called during notebook execution)
