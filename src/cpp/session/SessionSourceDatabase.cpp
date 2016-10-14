@@ -452,7 +452,7 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
    }
 }
    
-void SourceDocument::writeToJson(json::Object* pDocJson) const
+void SourceDocument::writeToJson(json::Object* pDocJson, bool includeContents) const
 {
    json::Object& jsonDoc = *pDocJson;
    jsonDoc["id"] = id();
@@ -460,7 +460,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["project_path"] = pathToProjectPath(path_);
    jsonDoc["type"] = !type().empty() ? type_ : json::Value();
    jsonDoc["hash"] = hash();
-   jsonDoc["contents"] = contents();
+   if (includeContents) jsonDoc["contents"] = contents();
    jsonDoc["dirty"] = dirty();
    jsonDoc["created"] = created();
    jsonDoc["source_on_save"] = sourceOnSave();
@@ -476,10 +476,10 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
          static_cast<boost::int64_t>(lastContentUpdate_));
 }
 
-SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect) const
+SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect, bool includeContents) const
 {
    json::Object object;
-   writeToJson(&object);
+   writeToJson(&object, includeContents);
    return r::sexp::create(object, pProtect);
 }
 
@@ -807,11 +807,11 @@ void onRemoveAll()
    s_idToPath.clear();
 }
 
-SEXP rs_getDocumentProperties(SEXP pathSEXP)
+SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
 {
    Error error;
-   FilePath path = module_context::resolveAliasedPath(
-            r::sexp::safeAsString(pathSEXP));
+   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
+   bool includeContents = r::sexp::asLogical(includeContentsSEXP);
 
    std::string id;
    error = source_database::getId(path, &id);
@@ -830,7 +830,7 @@ SEXP rs_getDocumentProperties(SEXP pathSEXP)
    }
 
    r::sexp::Protect protect;
-   SEXP object = pDoc->toRObject(&protect);
+   SEXP object = pDoc->toRObject(&protect, includeContents);
    return object;
 }
 
@@ -849,7 +849,7 @@ Error initialize()
    if (error)
       return error;
 
-   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 1);
+   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 2);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);

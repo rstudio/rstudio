@@ -350,13 +350,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 })
 
 # SessionSourceDatabase.cpp
-.rs.addFunction("getSourceDocumentProperties", function(path)
+.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
 {
    if (!file.exists(path))
       return(NULL)
    
    path <- normalizePath(path, winslash = "/", mustWork = TRUE)
-   .Call("rs_getDocumentProperties", path)
+   .Call("rs_getDocumentProperties", path, includeContents)
 })
    
 .rs.addFunction("createNotebookFromCacheData", function(rnbData,
@@ -367,22 +367,35 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
 
+   # specify default encoding (we'll try to infer + convert to UTF-8
+   # if necessary)
+   encoding <- getOption("encoding")
+   
    # attempt to get encoding from source database (note: this will only
    # succeed for files already open in the IDE, but since this operation
    # is normally called when attempting to preview / create a notebook on
    # save we generally expect the document to be available)
-   properties <- .rs.getSourceDocumentProperties(inputFile)
+   properties <- .rs.getSourceDocumentProperties(inputFile, FALSE)
    
    # attempt to read and re-encode the file to UTF-8 if it's specified
    # in the system encoding
    if (!identical(properties$encoding, "UTF-8")) {
-      contents <- readLines(inputFile)
-      utf8 <- tryCatch(
-         iconv(contents, from = properties$encoding, to = "UTF-8"),
-         error = function(e) contents
+      
+      # updates 'inputFile' on success to a UTF-8 encoded document
+      tryCatch(
+         expr = {
+            contents <- readLines(inputFile)
+            iconv(contents, from = properties$encoding, to = "UTF-8")
+            newInputFile <- tempfile(fileext = ".Rmd")
+            on.exit(unlink(newInputFile), add = TRUE)
+            writeLines(utf8, con = newInputFile, sep = "\n", useBytes = TRUE)
+            
+            # if we got here, then we'll use the newly written file
+            inputFile <- inputFile
+            encoding <- "UTF-8"
+         },
+         error = identity
       )
-      inputFile <- tempfile(fileext = ".Rmd")
-      writeLines(utf8, con = inputFile, sep = "\n", useBytes = TRUE)
    }
    
    # reset the knitr chunk counter (it can be modified as a side effect of
@@ -399,7 +412,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                      output_file = outputFile,
                      quiet = TRUE,
                      envir = envir,
-                     encoding = "UTF-8")
+                     encoding = encoding)
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)

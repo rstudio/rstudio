@@ -142,11 +142,11 @@ public:
    }
 
    core::Error readFromJson(core::json::Object* pDocJson);
-   void writeToJson(core::json::Object* pDocJson) const;
+   void writeToJson(core::json::Object* pDocJson, bool includeContents = true) const;
 
    core::Error writeToFile(const core::FilePath& filePath) const;
 
-   SEXP toRObject(r::sexp::Protect* pProtect) const;
+   SEXP toRObject(r::sexp::Protect* pProtect, bool includeContents = true) const;
 
 private:
    void editProperty(const core::json::Object::value_type& property);
