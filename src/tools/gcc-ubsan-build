@@ -3,6 +3,7 @@
 read -r -d '' DEFAULT_ASANFLAGS <<- EOF
 -fsanitize=address,undefined
 -fsanitize-recover=address,undefined
+-fno-sanitize=vptr
 -fno-omit-frame-pointer
 -fuse-ld=gold
 EOF
