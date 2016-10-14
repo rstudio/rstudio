@@ -26,6 +26,8 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+#include <r/RSexp.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -143,6 +145,8 @@ public:
    void writeToJson(core::json::Object* pDocJson) const;
 
    core::Error writeToFile(const core::FilePath& filePath) const;
+
+   SEXP toRObject(r::sexp::Protect* pProtect) const;
 
 private:
    void editProperty(const core::json::Object::value_type& property);

@@ -348,6 +348,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
    }
 })
+
+# SessionSourceDatabase.cpp
+.rs.addFunction("getSourceDocumentProperties", function(path)
+{
+   if (!file.exists(path))
+      return(NULL)
+   
+   path <- normalizePath(path, winslash = "/", mustWork = TRUE)
+   .Call("rs_getDocumentProperties", path)
+})
    
 .rs.addFunction("createNotebookFromCacheData", function(rnbData,
                                                         inputFile,
@@ -357,14 +367,26 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
 
-   # TODO: pass encoding from frontend
-   encoding <- "UTF-8"
+   # attempt to get encoding from source database (note: this will only
+   # succeed for files already open in the IDE, but since this operation
+   # is normally called when attempting to preview / create a notebook on
+   # save we generally expect the document to be available)
+   properties <- .rs.getSourceDocumentProperties(inputFile)
+   
+   # attempt to read and re-encode the file to UTF-8 if it's specified
+   # in the system encoding
+   if (!identical(properties$encoding, "UTF-8")) {
+      contents <- readLines(inputFile)
+      utf8 <- iconv(contents, from = properties$encoding, to = "UTF-8")
+      inputFile <- tempfile(fileext = ".Rmd")
+      writeLines(utf8, con = inputFile, sep = "\n", useBytes = TRUE)
+   }
    
    # reset the knitr chunk counter (it can be modified as a side effect of
    # parse_params, which is called during notebook execution)
    knitr:::chunk_counter(reset = TRUE)
 
-   # implement output_source
+   # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
    
    # call render with special format hooks
@@ -374,7 +396,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                      output_file = outputFile,
                      quiet = TRUE,
                      envir = envir,
-                     encoding = encoding)
+                     encoding = "UTF-8")
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)

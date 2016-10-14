@@ -38,6 +38,8 @@
 #include <core/http/Util.hpp>
 
 #include <r/RUtil.hpp>
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -472,7 +474,13 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["source_window"] = sourceWindow_;
    jsonDoc["last_content_update"] = json::Value(
          static_cast<boost::int64_t>(lastContentUpdate_));
+}
 
+SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect) const
+{
+   json::Object object;
+   writeToJson(&object);
+   return r::sexp::create(object, pProtect);
 }
 
 Error SourceDocument::writeToFile(const FilePath& filePath) const
@@ -799,6 +807,33 @@ void onRemoveAll()
    s_idToPath.clear();
 }
 
+SEXP rs_getDocumentProperties(SEXP pathSEXP)
+{
+   Error error;
+   FilePath path = module_context::resolveAliasedPath(
+            r::sexp::safeAsString(pathSEXP));
+
+   std::string id;
+   error = source_database::getId(path, &id);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   r::sexp::Protect protect;
+   SEXP object = pDoc->toRObject(&protect);
+   return object;
+}
+
 } // anonymous namespace
 
 Events& events()
@@ -813,6 +848,8 @@ Error initialize()
    Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
    if (error)
       return error;
+
+   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 1);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);
