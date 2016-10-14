@@ -58,6 +58,7 @@
 .rs.addFunction("initDataCapture", function(outputFolder, options)
 {
   overridePrint <- function(x, options, className, nRow, nCol) {
+    original <- x
     options <- if (is.null(options)) list() else options
     
     optionRowNames <- options[["rownames.print"]]
@@ -80,7 +81,7 @@
     .Call("rs_recordData", output, list(classes = className,
                                         nrow = nRow, 
                                         ncol = nCol))
-    invisible(x)
+    invisible(original)
   }
 
   overrides <- .rs.dataCaptureOverrides()
