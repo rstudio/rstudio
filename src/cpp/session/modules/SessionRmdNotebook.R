@@ -357,9 +357,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
 
-   # TODO: pass encoding from frontend
-   encoding <- "UTF-8"
-   
    # reset the knitr chunk counter (it can be modified as a side effect of
    # parse_params, which is called during notebook execution)
    knitr:::chunk_counter(reset = TRUE)
@@ -373,8 +370,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                      output_options = outputOptions,
                      output_file = outputFile,
                      quiet = TRUE,
-                     envir = envir,
-                     encoding = encoding)
+                     envir = envir)
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)
