@@ -270,6 +270,10 @@ public class TextEditingTargetWidget
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       
+      runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
+      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
+      toolbar.addLeftWidget(runDocumentMenuButton_);
+      
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
       
@@ -896,7 +900,9 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation)
+   public void setIsShinyFormat(boolean showOutputOptions, 
+                                boolean isPresentation,
+                                boolean isShinyPrerendered)
    {
       setRmdFormatButtonVisible(false);
       
@@ -913,9 +919,18 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
       
+      runDocumentMenuButton_.setVisible(isShinyPrerendered);
+      setKnitDocumentMenuVisible(isShinyPrerendered);
+      
       isShiny_ = true;
       if (publishButton_ != null)
          publishButton_.setIsStatic(false);
+   }
+   
+   @Override
+   public void setIsNotShinyFormat()
+   {
+      runDocumentMenuButton_.setVisible(false);
    }
    
    @Override
@@ -935,6 +950,11 @@ public class TextEditingTargetWidget
    private void setRmdFormatButtonVisible(boolean visible)
    {
       rmdFormatButton_.setVisible(visible);
+      setKnitDocumentMenuVisible(visible);
+   }
+   
+   private void setKnitDocumentMenuVisible(boolean visible)
+   {
       knitDocumentButton_.getElement().getStyle().setMarginRight(
             visible ? 0 : 8, Unit.PX);
    }
@@ -1198,6 +1218,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
+   private ToolbarPopupMenuButton runDocumentMenuButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;

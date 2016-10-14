@@ -509,7 +509,17 @@ public class TextEditingTargetRMarkdownHelper
       return null;
    }
    
+   public boolean isRuntimeShinyPrerendered(String yaml)
+   {
+      return getRuntime(yaml).equals(RmdFrontMatter.SHINY_PRERENDERED_RUNTIME);
+   }
+   
    public boolean isRuntimeShiny(String yaml)
+   {
+      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME);
+   }
+   
+   private String getRuntime(String yaml)
    {
       // This is in the editor load path, so guard against exceptions and log
       // any we find without bringing down the editor. 
@@ -518,16 +528,15 @@ public class TextEditingTargetRMarkdownHelper
          YamlTree tree = new YamlTree(yaml);
          
          if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
-            return false;
+            return "";
          
-         return tree.getKeyValue(
-             RmdFrontMatter.RUNTIME_KEY).equals(RmdFrontMatter.SHINY_RUNTIME);
+         return tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY);
       }
       catch (Exception e)
       {
          Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
       }
-      return false;
+      return "";
    }
    
    public String getCustomKnit(String yaml)
