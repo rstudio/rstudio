@@ -40,6 +40,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         is_shiny_document: true,
         preview_slide: doc.preview_slide,
         slide_navigation: doc.slide_navigation,
+        runtime: doc.runtime,
         viewed: false
      };
    }-*/;
