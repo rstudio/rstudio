@@ -65,7 +65,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 }
 
 install rsconnect master
-install rmarkdown master
+install rmarkdown v1.0-patch
 
 # back to install-dir
 cd $INSTALL_DIR
