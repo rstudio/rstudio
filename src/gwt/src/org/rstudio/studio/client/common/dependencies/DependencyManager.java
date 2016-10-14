@@ -738,7 +738,9 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             if (!unsatisfiedVersions.isEmpty())
             {
                // error if we can't satisfy requirements
-               globalDisplay_.showErrorMessage(req.userAction, 
+               globalDisplay_.showErrorMessage(
+                     StringUtil.isNullOrEmpty(req.userAction) ?
+                           "Packages Not Found" : req.userAction, 
                      "Required package versions could not be found:\n\n" +
                      unsatisfiedVersions + "\n" +
                      "Check that getOption(\"repos\") refers to a CRAN " + 
