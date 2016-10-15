@@ -513,6 +513,8 @@ private:
 
                startedJson["url"] = url + targetFile_.filename();
 
+               startedJson["runtime"] = getRuntime(targetFile_);
+
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));

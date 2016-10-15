@@ -31,4 +31,8 @@ public class RmdShinyDocInfo extends RmdSlideNavigationInfo
    public native final RmdOutputFormat getFormat() /*-{
       return this.output_format;
    }-*/;
+   
+   public native final String getRuntime() /*-{
+      return this.runtime;
+   }-*/;
 }
