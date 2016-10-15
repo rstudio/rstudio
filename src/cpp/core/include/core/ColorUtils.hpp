@@ -1,7 +1,7 @@
 /*
  * ColorUtils.hpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,8 +36,8 @@ typedef struct
    double v; // percent
 } hsv;
 
-rgb hsv2rgb(const hsv& in);
-std::string rgb2html(const rgb& in);
+rgb hsvToRGB(const hsv& in);
+std::string rgbToHTML(const rgb& in);
 
 } // namespace color_utils
 } // namespace core 
