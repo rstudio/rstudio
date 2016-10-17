@@ -162,12 +162,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
    FilePath defFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(), 
          notebookCtxId());
 
-   // if there are no old chunk definitions and we aren't adding any new ones,
-   // no work to do
-   if (!defFile.exists() && newDefs.size() < 1) 
-      return Success();
-
-   // we're going to write something; make sure the parent folder exists
+   // make sure the parent folder exists
    Error error = defFile.parent().ensureDirectory();
    if (error)
       return error;
