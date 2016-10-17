@@ -38,6 +38,8 @@
 #include <core/http/Util.hpp>
 
 #include <r/RUtil.hpp>
+#include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -450,7 +452,7 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
    }
 }
    
-void SourceDocument::writeToJson(json::Object* pDocJson) const
+void SourceDocument::writeToJson(json::Object* pDocJson, bool includeContents) const
 {
    json::Object& jsonDoc = *pDocJson;
    jsonDoc["id"] = id();
@@ -458,7 +460,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["project_path"] = pathToProjectPath(path_);
    jsonDoc["type"] = !type().empty() ? type_ : json::Value();
    jsonDoc["hash"] = hash();
-   jsonDoc["contents"] = contents();
+   if (includeContents) jsonDoc["contents"] = contents();
    jsonDoc["dirty"] = dirty();
    jsonDoc["created"] = created();
    jsonDoc["source_on_save"] = sourceOnSave();
@@ -472,7 +474,13 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["source_window"] = sourceWindow_;
    jsonDoc["last_content_update"] = json::Value(
          static_cast<boost::int64_t>(lastContentUpdate_));
+}
 
+SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect, bool includeContents) const
+{
+   json::Object object;
+   writeToJson(&object, includeContents);
+   return r::sexp::create(object, pProtect);
 }
 
 Error SourceDocument::writeToFile(const FilePath& filePath) const
@@ -799,6 +807,33 @@ void onRemoveAll()
    s_idToPath.clear();
 }
 
+SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
+{
+   Error error;
+   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
+   bool includeContents = r::sexp::asLogical(includeContentsSEXP);
+
+   std::string id;
+   error = source_database::getId(path, &id);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   error = source_database::get(id, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+
+   r::sexp::Protect protect;
+   SEXP object = pDoc->toRObject(&protect, includeContents);
+   return object;
+}
+
 } // anonymous namespace
 
 Events& events()
@@ -813,6 +848,8 @@ Error initialize()
    Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
    if (error)
       return error;
+
+   RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 2);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);
