@@ -21,7 +21,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     return("")
    }
 
-   return(paste(parsed$rmd, collapse = "\n"))
+   # as this string will be eventually written to (and compared with) files
+   # on disk, use native line endings
+   return(paste(parsed$rmd,
+                collapse = ifelse(identical(.Platform$OS.type, "windows"),
+                                  "\r\n", "\n")))
 })
 
 .rs.addFunction("reRmdChunkBegin", function()
