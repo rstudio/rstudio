@@ -46,6 +46,22 @@ public class ShellInteractionManager implements ShellOutputWriter
       historyManager_ = new CommandLineHistory(input_);
       inputHandler_ = inputHandler;
       
+      display_.addDataEventHandler(new CommandWithArg<String>()
+      {
+         public void execute(String data) 
+         {
+            // encrypt the input and return it
+            encryptInput(data, new CommandWithArg<String>() {
+
+               @Override
+               public void execute(String arg)
+               {
+                  inputHandler_.execute(ShellInput.create(arg, true /*echoInput*/));
+               }
+            }); 
+         }
+      });
+      
       display_.addCapturingKeyDownHandler(new InputKeyDownHandler());
    }
    

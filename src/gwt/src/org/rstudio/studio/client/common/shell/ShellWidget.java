@@ -30,6 +30,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -747,4 +748,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
+   @Override
+   public void addDataEventHandler(CommandWithArg<String> handler)
+   {
+      // TODO Auto-generated method stub
+      
+   }
 }

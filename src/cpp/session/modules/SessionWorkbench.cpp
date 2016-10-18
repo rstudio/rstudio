@@ -862,8 +862,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
-   // set dumb terminal
-   core::system::setenv(&shellEnv, "TERM", "dumb");
+   // set xterm terminal
+   core::system::setenv(&shellEnv, "TERM", "xterm");
 
    // set prompt
    std::string path = module_context::createAliasedPath(

@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -38,30 +40,42 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 public class XTermWidget extends Widget implements ShellDisplay,
                                                    RequiresResize
+                                                   
 {
    public XTermWidget()
    {
+      input_ = new XTermInputEditor(this);
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       createContainerElement();
       terminal_ = XTermNative.createTerminal(true);
       terminal_.open(getElement());
-
    }
 
    private void showBanner()
    {
       terminal_.writeln("Welcome to RStudio shell.");
       terminal_.writeln("Now brought to you by XTerm.");
+      
+      XTermDimensions screenSize = terminal_.proposeGeometry();
+      String msg = new String("Screen size=");
+      msg += screenSize.getCols();
+      msg += "x";
+      msg += screenSize.getRows();
+      terminal_.writeln(msg);
    }
    
    private void createContainerElement()
@@ -101,9 +115,9 @@ public class XTermWidget extends Widget implements ShellDisplay,
                doOnLoad();
             }
          });
-      }
 
-      ElementIds.assignElementId(this.getElement(), ElementIds.XTERM_WIDGET);
+         ElementIds.assignElementId(this.getElement(), ElementIds.XTERM_WIDGET);
+      }
    }
    
    protected void doOnLoad()
@@ -114,11 +128,6 @@ public class XTermWidget extends Widget implements ShellDisplay,
       showBanner(); 
    }
    
-   public static void preload()
-   {
-      load(null);
-   }
-
    public static void load(final Command command)
    {
       xtermLoader_.addCallback(new Callback()
@@ -170,21 +179,19 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public void focus()
    {
-      terminal_.focus();
+      input_.setFocus(true);
    }
 
    @Override
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
-      // TODO Auto-generated method stub
-      return null;
+      return addHandler(handler, KeyPressEvent.getType());
    }
 
    @Override
    public void fireEvent(GwtEvent<?> event)
    {
       // TODO Auto-generated method stub
-      
    }
 
    @Override
@@ -215,8 +222,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public InputEditorDisplay getInputEditorDisplay()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return input_;
    }
 
    @Override
@@ -229,8 +235,35 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public String processCommandEntry()
    {
-      // TODO Auto-generated method stub
-      return null;
+      // parse out the command text
+      // String promptText = prompt_.getElement().getInnerText();
+      String commandText = "ls";// input_.getCode();
+      input_.setText("");
+      /*
+      // Force render to avoid subtle command movement in the console, caused
+      // by the prompt disappearing before the input line does
+      input_.forceImmediateRender();
+      prompt_.setHTML("");
+
+      SpanElement pendingPrompt = Document.get().createSpanElement();
+      pendingPrompt.setInnerText(promptText);
+      pendingPrompt.setClassName(styles_.prompt() + " " + KEYWORD_CLASS_NAME);
+
+      if (!suppressPendingInput_ && !input_.isPasswordMode())
+      {
+         SpanElement pendingInput = Document.get().createSpanElement();
+         String[] lines = StringUtil.notNull(commandText).split("\n");
+         String firstLine = lines.length > 0 ? lines[0] : "";
+         pendingInput.setInnerText(firstLine + "\n");
+         pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
+         pendingInput_.getElement().appendChild(pendingPrompt);
+         pendingInput_.getElement().appendChild(pendingInput);
+         pendingInput_.setVisible(true);
+      }
+
+      ensureInputVisible();
+*/
+      return commandText ;
    }
 
    @Override
@@ -249,8 +282,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public String getPromptText()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return "";
    }
 
    @Override
@@ -284,15 +316,14 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
-      // TODO Auto-generated method stub
       return null;
+      //return capturingHandlers_.addHandler(KeyDownEvent.getType(), handler);
    }
 
    @Override
    public Widget getShellWidget()
    {
-      // TODO Auto-generated method stub
-      return null;
+      return this;
    }
    @Override
    public void onResize()
@@ -301,16 +332,48 @@ public class XTermWidget extends Widget implements ShellDisplay,
       
    }
    
+   @Override
+   public void addDataEventHandler(CommandWithArg<String> handler)
+   {
+      terminal_.onData(handler);
+   }
+   
+   @Override
+   public void setSuppressPendingInput(boolean suppressPendingInput)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
+   public void setFocus(boolean focused)
+   {
+      if (focused)
+         terminal_.focus();
+      else
+         terminal_.blur(); 
+   }
+   
+   private static native void addEventListener(Element element,
+                                        String event,
+                                        HasHandlers handlers) /*-{
+      var listener = $entry(function(e) {
+         @com.google.gwt.event.dom.client.DomEvent::fireNativeEvent(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;Lcom/google/gwt/dom/client/Element;)(e, handlers, element);
+      });
+      element.addEventListener(event, listener, true);
+
+   }-*/;
+   
+   private XTermNative terminal_;
+   private XTermInputEditor input_;
+   private LinkElement currentStyleEl_;
+   private ConsoleResources.ConsoleStyles styles_;
+   //private final HandlerManager capturingHandlers_;                                                           
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
       return getLoader(release, null);
    }
    
-   private final XTermNative terminal_;
-   private LinkElement currentStyleEl_;
-   private ConsoleResources.ConsoleStyles styles_;
-                                                           
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
    {

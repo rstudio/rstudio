@@ -136,9 +136,9 @@ void ConsoleProcess::commonInit()
       }
 #else
       // request a pseudoterminal if this is an interactive console process
-      options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
+      options_.pseudoterminal = core::system::Pseudoterminal(110, 56);
 
-      // define TERM to dumb (but first make sure we have an environment
+      // define TERM to xterm (but first make sure we have an environment
       // block to modify)
       if (!options_.environment)
       {
@@ -146,7 +146,7 @@ void ConsoleProcess::commonInit()
          core::system::environment(&childEnv);
          options_.environment = childEnv;
       }
-      core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
+      core::system::setenv(&(options_.environment.get()), "TERM", "xterm");
 #endif
    }
 

@@ -15,6 +15,9 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 
@@ -56,6 +59,10 @@ public class XTermNative extends JavaScriptObject
       this.focus(); 
    }-*/; 
   
+   public final native void blur() /*-{
+      this.blur(); 
+   }-*/; 
+  
    public final native void scrollDisp(int lineCount) /*-{
       this.scrollDisp(lineCount, false);
    }-*/;
@@ -70,6 +77,13 @@ public class XTermNative extends JavaScriptObject
    
    public final native void scrollToBottom() /*-{
       this.scrollToBottom();
+   }-*/;
+
+   public final native void onData(CommandWithArg<String> command) /*-{
+      this.handler = 
+         $entry(function(data) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
+         });
    }-*/;
    
    public static native XTermNative createTerminal(boolean blink) /*-{

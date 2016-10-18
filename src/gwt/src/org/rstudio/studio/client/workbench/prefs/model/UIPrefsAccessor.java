@@ -586,6 +586,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_xterm", false);
    }
    
+   public PrefValue<Boolean> enableXTermConsoleProgressDialog()
+   {
+      return bool("enable_xterm_dialog", false);
+   }
+   
    public static final String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "show_sections_only";
    public static final String DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS = "show_sections_and_chunks";
    public static final String DOC_OUTLINE_SHOW_ALL = "show_all";
