@@ -259,7 +259,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
           userPrompt,
           shinyDependenciesArray(
               "0.11.0", // shiny version
-              "0.2.6"), // htmltools version
+              "0.3.5"), // htmltools version
           true,
           new CommandWithArg<Boolean>()
           {
@@ -278,7 +278,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       // define dependencies
       ArrayList<Dependency> deps = shinyDependencies(
                                     "0.13", // shiny version
-                                    "0.3"); // htmltools version
+                                    "0.3.5"); // htmltools version
       deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
       deps.add(Dependency.cranPackage("rstudioapi", "0.5", true));
       
@@ -318,6 +318,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("xtable", "1.7"));
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
+      deps.add(Dependency.cranPackage("sourcetools", "0.1.5"));
       deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion));
       deps.add(Dependency.cranPackage("shiny", shinyVersion, true));
       return deps;
