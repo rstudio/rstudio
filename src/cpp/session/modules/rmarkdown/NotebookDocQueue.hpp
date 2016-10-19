@@ -53,6 +53,7 @@ public:
    core::json::Object defaultChunkOptions() const;
    void setDefaultChunkOptions(const core::json::Object& options);
    void setWorkingDir (const core::FilePath& workingDir);
+   void setExternalChunks(const core::json::Object& chunks);
 
    // accessors
    std::string docId() const;
@@ -63,6 +64,7 @@ public:
    int maxUnits() const;
    int remainingUnits() const;
    core::FilePath workingDir() const;
+   std::string externalChunk(const std::string& label) const;
 
 private:
    std::string docId_;
@@ -75,6 +77,9 @@ private:
    // the document path and its default knit chunk options
    std::string docPath_;
    core::json::Object defaultOptions_;
+
+   // external code chunks
+   core::json::Object externalChunks_;
 
    // the working directory in which to execute chunks (note that this will be
    // empty unless manually specified)

@@ -69,6 +69,7 @@ public:
    core::Error innerCode(std::string* pCode);
    void updateFrom(const NotebookQueueUnit& other);
    bool hasPendingRanges();
+   void replaceCode(const std::string& code);
 
    // accessors
    std::string docId() const;

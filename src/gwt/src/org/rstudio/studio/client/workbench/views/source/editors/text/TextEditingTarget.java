@@ -4517,18 +4517,20 @@ public class TextEditingTarget implements
             if (!range.isEmpty())
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
-               if (fileType_.isRmd() && 
-                   docDisplay_.showChunkOutputInline())
-               {
-                  notebook_.executeChunk(chunk);
-               }
-               else
-               {
-                  String code = scopeHelper_.getSweaveChunkText(chunk);
-                  events_.fireEvent(new SendToConsoleEvent(code, true));
-               }
-               docDisplay_.collapseSelection(true);   
             }
+            if (fileType_.isRmd() && 
+                docDisplay_.showChunkOutputInline())
+            {
+               // in notebook mode, an empty chunk can refer to external code,
+               // so always execute it 
+               notebook_.executeChunk(chunk);
+            }
+            else if (!range.isEmpty())
+            {
+               String code = scopeHelper_.getSweaveChunkText(chunk);
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+            docDisplay_.collapseSelection(true);
          }
       };
       
