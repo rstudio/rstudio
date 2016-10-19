@@ -493,6 +493,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       if (shinyDoc_ != null)
       {
+         // if we already have this up in the viewer pane, cache the scroll
+         // position (we don't need to do this for the satellite since it
+         // caches scroll position when it closes)
+         if (result_ != null && 
+             outputFrame_.getViewerType() == RMD_VIEWER_TYPE_PANE)
+         {
+            cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
+                  outputFrame_.getAnchor());
+         }
+
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
          outputFrame_.closeOutputFrame(false);
