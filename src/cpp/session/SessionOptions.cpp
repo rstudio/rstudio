@@ -200,7 +200,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "default directory for new projects")
       ("show-help-home",
        value<bool>(&showHelpHome_)->default_value(false),
-         "show help home page at startup");
+         "show help home page at startup")
+      ("session-user-home-path",
+       value<std::string>(&userHomePath_)->default_value(""),
+       "default user home path")
+      ("session-user-scratch-path",
+       value<std::string>(&userScratchPath_)->default_value(""),
+       "default user scratch path");
 
    // allow options
    options_description allow("allow");
@@ -448,8 +454,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
                                     r_util::SessionTypeServer;
 
    r_util::UserDirectories userDirs = r_util::userDirectories(sessionType);
-   userHomePath_ = userDirs.homePath;
-   userScratchPath_ = userDirs.scratchPath;
+   
+   // use user paths (unless specified by option)
+   if (userHomePath_.empty())
+      userHomePath_ = userDirs.homePath;
+   
+   if (userScratchPath_.empty())
+      userScratchPath_ = userDirs.scratchPath;
 
    // set HOME if we are in standalone mode (this enables us to reflect
    // R_USER back into HOME on Linux)
