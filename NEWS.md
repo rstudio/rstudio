@@ -12,6 +12,8 @@
 ### Miscellaneous
 
 * Add Ctrl+Tab / Ctrl+Shift+Tab shortcuts to navigate tabs (Desktop only)
+* Include .scala files in fuzzy file finder (Ctrl + .)
+* Add support for pre-rendered Shiny documents (shiny_prerendered)
 
 ### Bug Fixes
 
@@ -20,4 +22,6 @@
 * Fix encoding of R_HOME, R_USER, and R_LIBS_USER on Windows
 * Respect loaded packages in R help topic completion
 * Fix positioning of editor toolbar buttons in Safari and Mac OS client
+* Fix incorrect height of R Notebook outputs when run above viewport
+* Detect multi-line data.table chains properly  
 
