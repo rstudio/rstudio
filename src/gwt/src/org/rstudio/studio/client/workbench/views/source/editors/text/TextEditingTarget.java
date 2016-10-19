@@ -5342,7 +5342,7 @@ public class TextEditingTarget implements
                MessageDialog.QUESTION, 
                "Clear Knitr Cache", 
                "Clearing the Knitr cache will delete the cache " +
-               "directory for this document (\"" + docPath + "\"). " +
+               "directory for " + docPath + ". " +
                "\n\nAre you sure you want to clear the cache now?",
                false,
                new Operation() {
@@ -5384,8 +5384,8 @@ public class TextEditingTarget implements
             globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION, 
                "Clear Prerendered Output", 
-               "Clearing the prerendered output will delete the generated html " +
-               "output for " + docPath + "." +
+               "This will remove all previously generated output " +
+               "for " + docPath + " (html, prerendered data, knitr cache, etc.)." +
                "\n\nAre you sure you want to clear the output now?",
                false,
                new Operation() {

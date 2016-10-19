@@ -271,6 +271,8 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(rmdFormatButton_);
       
       runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
+      addClearKnitrCacheMenu(runDocumentMenuButton_);
+      runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
       toolbar.addLeftWidget(runDocumentMenuButton_);
       
@@ -875,8 +877,20 @@ public class TextEditingTargetWidget
       
       }
       
+      addClearKnitrCacheMenu(rmdFormatButton_);
+          
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
+            RmdOutput.TYPE_STATIC);
+     
+      if (publishButton_ != null)
+         publishButton_.setIsStatic(true);
+      isShiny_ = false;
+   }
+   
+   private void addClearKnitrCacheMenu(ToolbarPopupMenuButton menuButton)
+   {
       final AppCommand clearKnitrCache = commands_.clearKnitrCache();
-      rmdFormatButton_.addSeparator();
+      menuButton.addSeparator();
       ScheduledCommand cmd = new ScheduledCommand()
       {
          @Override
@@ -888,15 +902,7 @@ public class TextEditingTargetWidget
       MenuItem item = new MenuItem(clearKnitrCache.getMenuHTML(false),
                                    true,
                                    cmd); 
-      rmdFormatButton_.addMenuItem(item, clearKnitrCache.getMenuLabel(false));
-      
-      
-      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
-            RmdOutput.TYPE_STATIC);
-     
-      if (publishButton_ != null)
-         publishButton_.setIsStatic(true);
-      isShiny_ = false;
+      menuButton.addMenuItem(item, clearKnitrCache.getMenuLabel(false));
    }
    
    @Override
