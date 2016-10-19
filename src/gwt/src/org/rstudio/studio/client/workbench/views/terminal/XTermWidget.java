@@ -235,35 +235,7 @@ public class XTermWidget extends Widget implements ShellDisplay,
    @Override
    public String processCommandEntry()
    {
-      // parse out the command text
-      // String promptText = prompt_.getElement().getInnerText();
-      String commandText = "ls";// input_.getCode();
-      input_.setText("");
-      /*
-      // Force render to avoid subtle command movement in the console, caused
-      // by the prompt disappearing before the input line does
-      input_.forceImmediateRender();
-      prompt_.setHTML("");
-
-      SpanElement pendingPrompt = Document.get().createSpanElement();
-      pendingPrompt.setInnerText(promptText);
-      pendingPrompt.setClassName(styles_.prompt() + " " + KEYWORD_CLASS_NAME);
-
-      if (!suppressPendingInput_ && !input_.isPasswordMode())
-      {
-         SpanElement pendingInput = Document.get().createSpanElement();
-         String[] lines = StringUtil.notNull(commandText).split("\n");
-         String firstLine = lines.length > 0 ? lines[0] : "";
-         pendingInput.setInnerText(firstLine + "\n");
-         pendingInput.setClassName(styles_.command() + " " + KEYWORD_CLASS_NAME);
-         pendingInput_.getElement().appendChild(pendingPrompt);
-         pendingInput_.getElement().appendChild(pendingInput);
-         pendingInput_.setVisible(true);
-      }
-
-      ensureInputVisible();
-*/
-      return commandText ;
+      return null;
    }
 
    @Override
