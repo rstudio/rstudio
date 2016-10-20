@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common.shell;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
@@ -49,7 +48,6 @@ public interface ShellDisplay extends ShellOutputWriter,
    void setMaxOutputLines(int maxLines);
 
    HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler);
-   void addDataEventHandler(CommandWithArg<String> handler);
    
    Widget getShellWidget();
 }

@@ -117,7 +117,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.r.Signature
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
@@ -202,7 +201,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetIdleMonitor monitor);
    void injectMembers(AceEditorIdleCommands commands);
    void injectMembers(EditingTargetInlineChunkExecution executor);
-   void injectMembers(ConsoleProgressDialog dialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

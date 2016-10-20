@@ -862,19 +862,14 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
-   // set xterm terminal
-   core::system::setenv(&shellEnv, "TERM", "xterm");
+   // set dumb terminal
+   core::system::setenv(&shellEnv, "TERM", "dumb");
 
    // set prompt
    std::string path = module_context::createAliasedPath(
                                  module_context::safeCurrentPath());
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
    core::system::setenv(&shellEnv, "PS1", prompt);
-
-   // disable screen oriented facillites (non-xterm only)
-   //core::system::unsetenv(&shellEnv, "EDITOR");
-   //core::system::unsetenv(&shellEnv, "VISUAL");
-   //core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
 
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);

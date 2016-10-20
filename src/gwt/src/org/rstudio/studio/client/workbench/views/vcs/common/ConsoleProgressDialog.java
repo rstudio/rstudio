@@ -22,12 +22,9 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.*;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsolePromptEvent;
@@ -42,8 +39,6 @@ import org.rstudio.studio.client.common.shell.ShellOutputWriter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.terminal.XTermWidget;
 
 public class ConsoleProgressDialog extends ProgressDialog
                                    implements ConsoleOutputEvent.Handler, 
@@ -160,28 +155,10 @@ public class ConsoleProgressDialog extends ProgressDialog
 
    }
    
-   @Inject
-   private void initialize(UIPrefs prefs)
-   {
-      pPrefs_ = prefs;
-   }
-   
    @Override
    protected Widget createDisplayWidget(Object param)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      // Feature flag controlling which terminal style is used in this dialog.
-      // If set, show XTerm mode, otherwise show dumb terminal.
-      if (pPrefs_.enableXTermConsoleProgressDialog().getValue())
-      {
-         display_ = new XTermWidget();
-      }
-      else
-      {
-         display_ = new ConsoleProgressWidget();
-      }
-      
+      display_ = new ConsoleProgressWidget();
       display_.setMaxOutputLines(getMaxOutputLines());
       display_.setSuppressPendingInput(true);
       return display_.getShellWidget();
@@ -349,7 +326,4 @@ public class ConsoleProgressDialog extends ProgressDialog
    private final ShellOutputWriter outputWriter_;
   
    private ShellDisplay display_;
-   
-   // Injected ----
-   private UIPrefs pPrefs_;
 }

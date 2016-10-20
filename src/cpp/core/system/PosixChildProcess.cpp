@@ -491,11 +491,6 @@ Error ChildProcess::run()
             ::cfmakeraw(&termp);
             termp.c_lflag |= ISIG;
             
-            // for xterm
-            termp.c_lflag |= ECHO;
-            termp.c_oflag |= OPOST;
-            termp.c_oflag |= ONLCR;
-
             // set attribs
             safePosixCall<int>(
                   boost::bind(::tcsetattr, STDIN_FILENO, TCSANOW, &termp),

@@ -19,16 +19,9 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
-import org.rstudio.studio.client.common.shell.ShellDisplay;
-import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -40,25 +33,14 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
-public class XTermWidget extends Widget implements ShellDisplay,
-                                                   RequiresResize
-                                                   
+public class XTermWidget extends Widget implements RequiresResize
 {
    public XTermWidget()
    {
-      input_ = new XTermInputEditor(this);
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       createContainerElement();
       terminal_ = XTermNative.createTerminal(true);
@@ -157,166 +139,15 @@ public class XTermWidget extends Widget implements ShellDisplay,
    }-*/; 
 
    @Override
-   public void consoleWriteError(String string)
-   {
-      terminal_.write(string);
-   }
-
-   @Override
-   public void consoleWriteExtendedError(String string,
-                                         UnhandledError traceInfo,
-                                         boolean expand, String command)
-   {
-      terminal_.write(string);
-   }
-
-   @Override
-   public void consoleWriteOutput(String output)
-   {
-      terminal_.write(output);;
-   }
-
-   @Override
-   public void focus()
-   {
-      input_.setFocus(true);
-   }
-
-   @Override
-   public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
-   {
-      return addHandler(handler, KeyPressEvent.getType());
-   }
-
-   @Override
-   public void fireEvent(GwtEvent<?> event)
-   {
-      // TODO Auto-generated method stub
-   }
-
-   @Override
-   public void consoleWriteInput(String input, String console)
-   {
-      terminal_.write(input);
-   }
-
-   @Override
-   public void consoleWritePrompt(String prompt)
-   {
-      terminal_.write(prompt);
-   }
-
-   @Override
-   public void consolePrompt(String prompt, boolean showInput)
-   {
-      terminal_.write(prompt);
-   }
-
-   @Override
-   public void ensureInputVisible()
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public InputEditorDisplay getInputEditorDisplay()
-   {
-      return input_;
-   }
-
-   @Override
-   public void clearOutput()
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public String processCommandEntry()
-   {
-      return null;
-   }
-
-   @Override
-   public int getCharacterWidth()
-   {
-      return DomUtils.getCharacterWidth(getElement(), styles_.console());
-   }
-
-   @Override
-   public boolean isPromptEmpty()
-   {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public String getPromptText()
-   {
-      return "";
-   }
-
-   @Override
-   public void setReadOnly(boolean readOnly)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public void playbackActions(RpcObjectList<ConsoleAction> actions)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public int getMaxOutputLines()
-   {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setMaxOutputLines(int maxLines)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
-   {
-      return null;
-      //return capturingHandlers_.addHandler(KeyDownEvent.getType(), handler);
-   }
-
-   @Override
-   public Widget getShellWidget()
-   {
-      return this;
-   }
-   @Override
    public void onResize()
    {
-      // TODO Auto-generated method stub
-      
    }
    
-   @Override
    public void addDataEventHandler(CommandWithArg<String> handler)
    {
       terminal_.onData(handler);
    }
    
-   @Override
-   public void setSuppressPendingInput(boolean suppressPendingInput)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
    public void setFocus(boolean focused)
    {
       if (focused)
@@ -325,21 +156,9 @@ public class XTermWidget extends Widget implements ShellDisplay,
          terminal_.blur(); 
    }
    
-   private static native void addEventListener(Element element,
-                                        String event,
-                                        HasHandlers handlers) /*-{
-      var listener = $entry(function(e) {
-         @com.google.gwt.event.dom.client.DomEvent::fireNativeEvent(Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/event/shared/HasHandlers;Lcom/google/gwt/dom/client/Element;)(e, handlers, element);
-      });
-      element.addEventListener(event, listener, true);
-
-   }-*/;
-   
    private XTermNative terminal_;
-   private XTermInputEditor input_;
    private LinkElement currentStyleEl_;
    private ConsoleResources.ConsoleStyles styles_;
-   //private final HandlerManager capturingHandlers_;                                                           
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
@@ -361,5 +180,4 @@ public class XTermWidget extends Widget implements ShellDisplay,
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          getLoader(XTermResources.INSTANCE.xtermfitjs());
-
 }

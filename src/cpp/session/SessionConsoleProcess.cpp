@@ -136,9 +136,9 @@ void ConsoleProcess::commonInit()
       }
 #else
       // request a pseudoterminal if this is an interactive console process
-      options_.pseudoterminal = core::system::Pseudoterminal(110, 56);
+      options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
 
-      // define TERM to xterm (but first make sure we have an environment
+      // define TERM to dumb (but first make sure we have an environment
       // block to modify)
       if (!options_.environment)
       {
@@ -146,7 +146,7 @@ void ConsoleProcess::commonInit()
          core::system::environment(&childEnv);
          options_.environment = childEnv;
       }
-      core::system::setenv(&(options_.environment.get()), "TERM", "xterm");
+      core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
 #endif
    }
 
@@ -281,8 +281,8 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    // convert line endings to posix
    std::string posixOutput = output;
-//   string_utils::convertLineEndings(&posixOutput,
-//                                    string_utils::LineEndingPosix);
+   string_utils::convertLineEndings(&posixOutput,
+                                    string_utils::LineEndingPosix);
 
    // process as normal output or detect a prompt if there is one
    if (boost::algorithm::ends_with(posixOutput, "\n"))
