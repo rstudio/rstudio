@@ -490,7 +490,7 @@ Error ChildProcess::run()
             // so we can send Ctrl-C for interrupts)
             ::cfmakeraw(&termp);
             termp.c_lflag |= ISIG;
-            
+
             // set attribs
             safePosixCall<int>(
                   boost::bind(::tcsetattr, STDIN_FILENO, TCSANOW, &termp),

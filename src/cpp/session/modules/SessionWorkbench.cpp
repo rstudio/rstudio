@@ -871,6 +871,11 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
    core::system::setenv(&shellEnv, "PS1", prompt);
 
+   // disable screen oriented facillites		
+   core::system::unsetenv(&shellEnv, "EDITOR");		
+   core::system::unsetenv(&shellEnv, "VISUAL");		
+   core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
+
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
