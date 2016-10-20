@@ -23,9 +23,8 @@ namespace shell_utils {
 
 std::string escape(const std::string& arg)
 {
-   using namespace boost;
-   regex pattern("[\\\\$`!\\n\"]", regex_constants::normal);
-   return "\"" + regex_replace(arg, pattern, "\\$1") + "\"";
+   boost::regex pattern("(\\\\|\\$|`|!|\n|\")");
+   return "\"" + boost::regex_replace(arg, pattern, "\\\\$1") + "\"";
 }
 
 std::string escape(const core::FilePath &path)

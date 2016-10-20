@@ -104,7 +104,6 @@ set (CORE_SOURCE_FILES
    r_util/RSessionContext.cpp
    r_util/RTokenizer.cpp
    r_util/RSourceIndex.cpp
-   r_util/RTokenizerTests.cpp
    r_util/RUserData.cpp
    spelling/HunspellCustomDictionaries.cpp
    spelling/HunspellDictionaryManager.cpp
