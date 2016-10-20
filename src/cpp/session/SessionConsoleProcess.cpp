@@ -281,8 +281,8 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    // convert line endings to posix
    std::string posixOutput = output;
-   string_utils::convertLineEndings(&posixOutput,
-                                    string_utils::LineEndingPosix);
+//   string_utils::convertLineEndings(&posixOutput,
+//                                    string_utils::LineEndingPosix);
 
    // process as normal output or detect a prompt if there is one
    if (boost::algorithm::ends_with(posixOutput, "\n"))

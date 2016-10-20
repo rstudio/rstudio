@@ -490,6 +490,11 @@ Error ChildProcess::run()
             // so we can send Ctrl-C for interrupts)
             ::cfmakeraw(&termp);
             termp.c_lflag |= ISIG;
+            
+            // for xterm
+            termp.c_lflag |= ECHO;
+            termp.c_oflag |= OPOST;
+            termp.c_oflag |= ONLCR;
 
             // set attribs
             safePosixCall<int>(
