@@ -4,6 +4,7 @@
 
 * Improved sizing of htmlwidgets in R Notebooks
 * Allow changing to R Notebook mode without closing and reopening the file
+* Add support for knitr code chunks defined in external .R files
 
 ### Data Import
 
