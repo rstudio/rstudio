@@ -420,7 +420,10 @@ public:
          // when encountered
          std::string::size_type n = filePath.size();
          if (n >= 2 && filePath[0] == '"' && filePath[n - 1] == '"')
+         {
             filePath = filePath.substr(1, n - 2);
+            boost::algorithm::replace_all(filePath, "\\\"", "\"");
+         }
 
          // remove trailing slashes
          if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
