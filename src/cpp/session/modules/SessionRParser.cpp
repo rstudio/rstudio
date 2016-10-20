@@ -1459,6 +1459,7 @@ void checkBinaryOperatorWhitespace(RTokenCursor& cursor,
    if (cursor.contentEquals(L'/') ||
        cursor.contentEquals(L'*') ||
        cursor.contentEquals(L'^') ||
+       cursor.contentEquals(L'?') ||
        cursor.contentEquals(L"**"))
    {
       bool lhsWhitespace = isWhitespace(cursor.previousToken());

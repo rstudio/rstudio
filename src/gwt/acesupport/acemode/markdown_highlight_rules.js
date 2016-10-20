@@ -134,19 +134,19 @@ var MarkdownHighlightRules = function() {
                 '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
                 '(\\s*"' +  escaped('"') + '"\\s*)?' +            // "title"
                 "(\\))"                                           // )
-        },
-            strongStars,
-            strongUnderscore,
-            emphasisStars,
-            emphasisUnderscore,
-        {
+        }, {
             token : ["text", "keyword", "text"],
             regex : "(<)("+
                 "(?:https?|ftp|dict):[^'\">\\s]+"+
                 "|"+
                 "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
                 ")(>)"
-        }],
+        },
+            strongStars,
+            strongUnderscore,
+            emphasisStars,
+            emphasisUnderscore
+        ],
        
         start: [{
            token : "empty_line",
@@ -231,12 +231,7 @@ var MarkdownHighlightRules = function() {
         }, { // MathJax $...$ (org-mode style)
             token : ["latex.markup.list.string.begin","latex.support.function","latex.markup.list.string.end"],
             regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
-        },
-            strongStars,
-            strongUnderscore,
-            emphasisStars,
-            emphasisUnderscore,
-        { // simple links <url>
+        }, { // simple links <url>
             token : ["text", "keyword", "text"],
             regex : "(<)("+
                 "(?:https?|ftp|dict):[^'\">\\s]+"+
@@ -267,9 +262,14 @@ var MarkdownHighlightRules = function() {
             next: "allowBlock"
         }, { // list
             token : "text",
-            regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
+            regex : "^\\s*(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock"
-        }, { // html comment
+        },
+            strongStars,
+            strongUnderscore,
+            emphasisStars,
+            emphasisUnderscore,
+        { // html comment
             token : "comment",
             regex : "<\\!--",
             next  : "html-comment"

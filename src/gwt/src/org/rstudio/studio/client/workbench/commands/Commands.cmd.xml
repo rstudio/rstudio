@@ -1773,6 +1773,10 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Clear Knitr Cache..."
         desc="Clear the knitr cache for the current document"/>
         
+   <cmd id="clearPrerenderedOutput"
+        menuLabel="Clear Prerendered Output..."
+        desc="Clear the prerendered output for the current document"/>
+        
    <cmd id="notebookExpandAllOutput"
         buttonLabel=""
         menuLabel="Expand All Output"

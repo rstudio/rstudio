@@ -21,7 +21,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     return("")
    }
 
-   return(paste(parsed$rmd, collapse = "\n"))
+   # as this string will be eventually written to (and compared with) files
+   # on disk, use native line endings
+   return(paste(parsed$rmd,
+                collapse = ifelse(identical(.Platform$OS.type, "windows"),
+                                  "\r\n", "\n")))
 })
 
 .rs.addFunction("reRmdChunkBegin", function()
@@ -92,6 +96,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    names(chunkInfo$chunk_definitions) <-
       unlist(lapply(chunkInfo$chunk_definitions, `[[`, "chunk_id"))
    rnbData[["chunk_info"]] <- chunkInfo
+
+   # Read external chunks (code chunks defined in other files)
+   rnbData[["external_chunks"]] <- chunkInfo$external_chunks
    
    # Read the chunk data
    chunkDirs <- file.path(cachePath, names(chunkInfo$chunk_definitions))
@@ -348,6 +355,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
    }
 })
+
+# SessionSourceDatabase.cpp
+.rs.addFunction("getSourceDocumentProperties", function(path, includeContents = FALSE)
+{
+   if (!file.exists(path))
+      return(NULL)
+   
+   path <- normalizePath(path, winslash = "/", mustWork = TRUE)
+   .Call("rs_getDocumentProperties", path, includeContents)
+})
    
 .rs.addFunction("createNotebookFromCacheData", function(rnbData,
                                                         inputFile,
@@ -357,14 +374,27 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
 
-   # TODO: pass encoding from frontend
-   encoding <- "UTF-8"
+   # specify default encoding (we'll try to infer + convert to UTF-8
+   # if necessary)
+   encoding <- getOption("encoding")
+   
+   # attempt to get encoding from source database (note: this will only
+   # succeed for files already open in the IDE, but since this operation
+   # is normally called when attempting to preview / create a notebook on
+   # save we generally expect the document to be available)
+   properties <- .rs.getSourceDocumentProperties(inputFile, FALSE)
+   if (!is.null(properties$encoding))
+      encoding <- properties$encoding
    
    # reset the knitr chunk counter (it can be modified as a side effect of
    # parse_params, which is called during notebook execution)
    knitr:::chunk_counter(reset = TRUE)
 
-   # implement output_source
+   # restore external chunks into the knit environment
+   if (!is.null(rnbData$external_chunks)) 
+      knitr:::knit_code$restore(rnbData$external_chunks)
+
+   # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
    
    # call render with special format hooks
@@ -600,7 +630,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkInfo <- .rs.extractRmdChunkInformation(nbData$rmd)
    
    outputPath <- function(cachePath, chunkId, index, ext) {
-      file.path(cachePath, chunkId, sprintf("%06s.%s", index, ext))
+      file.path(cachePath, chunkId, sprintf("%06i.%s", as.integer(index), ext))
    }
    
    # Text ----
@@ -924,11 +954,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # cache the current set of chunk options
    chunkOptions <- knitr::opts_chunk$get()
    assign(".rs.knitr.chunkOptions", chunkOptions, envir = .rs.toolsEnv())
+
+   # cache the set of external code
+   knitrCode <- knitr:::knit_code$get()
+   assign(".rs.knitr.code", knitrCode, envir = .rs.toolsEnv())
    
-   # unset the chunk options (so we know what options
+   # unset the chunk options and code (so we know what options/code
    # were actually specified in setup chunk later)
    defaults <- list(error = FALSE)
    knitr::opts_chunk$restore(defaults)
+   knitr:::knit_code$restore(list())
 })
 
 .rs.addFunction("defaultChunkOptions", function()
@@ -936,9 +971,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # get current set of options
    defaultOptions <- knitr::opts_chunk$get()
    
-   # restore the previously cached knitr options
+   # restore the previously cached knitr options and code
    chunkOptions <- get(".rs.knitr.chunkOptions", envir = .rs.toolsEnv())
    knitr::opts_chunk$restore(chunkOptions)
+   knitrCode <- get(".rs.knitr.code", envir = .rs.toolsEnv())
+   knitr:::knit_code$restore(knitrCode)
    
    # return current set
    .rs.scalarListFromList(defaultOptions)

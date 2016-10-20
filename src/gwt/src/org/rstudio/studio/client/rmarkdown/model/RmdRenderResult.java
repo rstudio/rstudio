@@ -40,6 +40,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         is_shiny_document: true,
         preview_slide: doc.preview_slide,
         slide_navigation: doc.slide_navigation,
+        runtime: doc.runtime,
         viewed: false
      };
    }-*/;
@@ -100,6 +101,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    
    public final native boolean hasShinyContent() /*-{
       return this.has_shiny_content;
+   }-*/;
+   
+   public final native String getRuntime() /*-{
+      return this.runtime;
    }-*/;
    
    public final native String getWebsiteDir() /*-{

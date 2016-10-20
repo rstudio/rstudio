@@ -323,6 +323,16 @@ std::string NotebookQueueUnit::executingCode() const
             executing_.start, executing_.stop - executing_.start));
 }
 
+void NotebookQueueUnit::replaceCode(const std::string& code)
+{
+   // replace the entire body of the code
+   code_ = string_utils::utf8ToWide(code);
+
+   // replace the pending queue with one that executes exactly the code given
+   pending_.clear();
+   pending_.push_back(ExecRange(0, code_.length()));
+}
+
 } // namespace notebook
 } // namespace rmarkdown
 } // namespace modules

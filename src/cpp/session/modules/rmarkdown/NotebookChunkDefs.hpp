@@ -37,7 +37,7 @@
 #define kChunkId             "chunk_id"
 #define kChunkDefaultOptions "default_chunk_options"
 #define kChunkWorkingDir     "working_dir"
-
+#define kChunkExternals      "external_chunks"
 
 namespace rstudio {
 namespace session {

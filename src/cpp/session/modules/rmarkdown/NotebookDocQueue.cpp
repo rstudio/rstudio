@@ -74,6 +74,9 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       if (dir.exists())
          workingDir_ = dir;
    }
+
+   // read external code chunk contents
+   json::readObject(vals, kChunkExternals, &externalChunks_);
 }
 
 boost::shared_ptr<NotebookQueueUnit> NotebookDocQueue::firstUnit()
@@ -240,6 +243,41 @@ void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
 void NotebookDocQueue::setWorkingDir(const FilePath& workingDir)
 {
    workingDir_ = workingDir;
+}
+
+void NotebookDocQueue::setExternalChunks(const json::Object& chunks)
+{
+   externalChunks_ = chunks;
+}
+
+std::string NotebookDocQueue::externalChunk(const std::string& label) const
+{
+   json::Object::const_iterator it = externalChunks_.find(label);
+   std::string code;
+   if (it == externalChunks_.end())
+   {
+      // no chunk with this label 
+      return code;
+   }
+   else if (it->second.type() != json::ArrayType)
+   {
+      // the JSON object representing the external chunks should contain an
+      // array of strings representing the lines of code in the chunk
+      return code;
+   }
+   else
+   {
+      // extract each line of code
+      json::Array lines = it->second.get_array();
+      for (size_t i = 0; i < lines.size(); i++) 
+      {
+         if (lines.at(i).type() == json::StringType)
+            code.append(lines.at(i).get_str());
+         if (i < lines.size() - 1)
+            code.append("\n");
+      }
+   }
+   return code;
 }
 
 } // namespace notebook

@@ -360,12 +360,6 @@ private:
          return skipUnit();
       }
 
-      // skip unit if it has no code to execute
-      if (!unit->hasPendingRanges())
-      {
-         return skipUnit();
-      }
-
       // compute context
       std::string ctx = docQueue->commitMode() == ModeCommitted ?
          kSavedCtx : notebookCtxId();
@@ -376,6 +370,22 @@ private:
       json::readObject(chunkOptions, "label", &label);
       if (label == "setup")
          prepareSetupContext();
+
+      // is there external code for this chunk? if so, replace the chunk's
+      // code with the code from the external file; see:
+      // http://yihui.name/knitr/demo/externalization/
+      if (unit->execScope() == ExecScopeChunk)
+      {
+         std::string external = docQueue->externalChunk(label);
+         if (!external.empty())
+            unit->replaceCode(external);
+      }
+
+      // skip unit if it has no code to execute
+      if (!unit->hasPendingRanges())
+      {
+         return skipUnit();
+      }
 
       // compute engine
       std::string engine = options.getOverlayOption("engine", std::string("r"));
@@ -542,7 +552,29 @@ private:
 
       r::sexp::Protect protect;
       SEXP resultSEXP = R_NilValue;
-      Error error = r::exec::RFunction(".rs.defaultChunkOptions")
+
+      // record the contents of external code chunks
+      Error error = r::exec::evaluateString(
+            "knitr:::knit_code$get()", &resultSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+      else if (r::sexp::isList(resultSEXP))
+      {
+         json::Value externals;
+         r::json::jsonValueFromList(resultSEXP, &externals);
+         if (externals.type() == json::ObjectType)
+         {
+            error = setChunkValue(docPath, execContext_->docId(), 
+                  kChunkExternals, externals.get_obj());
+            if (error)
+               LOG_ERROR(error);
+
+            if (!queue_.empty())
+               queue_.front()->setExternalChunks(externals.get_obj());
+         }
+      }
+
+      error = r::exec::RFunction(".rs.defaultChunkOptions")
                                       .call(&resultSEXP, &protect);
       if (error)
          LOG_ERROR(error);

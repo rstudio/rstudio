@@ -220,7 +220,10 @@ public class TextEditingTarget implements
       void debug_dumpContents();
       void debug_importDump();
       
-      void setIsShinyFormat(boolean showOutputOptions, boolean isPresentation);
+      void setIsShinyFormat(boolean showOutputOptions, 
+                            boolean isPresentation,
+                            boolean isShinyPrerendered);
+      void setIsNotShinyFormat();
       void setIsNotebookFormat();
       void setFormatOptions(TextFileType fileType,
                             boolean showRmdFormatMenu,
@@ -3644,16 +3647,19 @@ public class TextEditingTarget implements
          view_.setIsShinyFormat(selTemplate.format != null,
                                 selTemplate.format != null &&
                                 selTemplate.format.endsWith(
-                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX));
+                                      RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX),
+                                isShinyPrerenderedDoc());
       }
       // could be runtime: shiny with a custom format
       else if (isShinyDoc())
       {
          view_.setIsShinyFormat(false,  // no output options b/c no template
-                                false); // not a presentation (unknown format)
+                                false,  // not a presentation (unknown format)
+                                isShinyPrerenderedDoc()); 
       }
       else
       {
+         view_.setIsNotShinyFormat();
          if (selTemplate != null)
          {
             JsArray<RmdTemplateFormat> formats = selTemplate.template.getFormats();
@@ -4511,18 +4517,20 @@ public class TextEditingTarget implements
             if (!range.isEmpty())
             {
                codeExecution_.setLastExecuted(range.getStart(), range.getEnd());
-               if (fileType_.isRmd() && 
-                   docDisplay_.showChunkOutputInline())
-               {
-                  notebook_.executeChunk(chunk);
-               }
-               else
-               {
-                  String code = scopeHelper_.getSweaveChunkText(chunk);
-                  events_.fireEvent(new SendToConsoleEvent(code, true));
-               }
-               docDisplay_.collapseSelection(true);   
             }
+            if (fileType_.isRmd() && 
+                docDisplay_.showChunkOutputInline())
+            {
+               // in notebook mode, an empty chunk can refer to external code,
+               // so always execute it 
+               notebook_.executeChunk(chunk);
+            }
+            else if (!range.isEmpty())
+            {
+               String code = scopeHelper_.getSweaveChunkText(chunk);
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            }
+            docDisplay_.collapseSelection(true);
          }
       };
       
@@ -5029,6 +5037,22 @@ public class TextEditingTarget implements
       }
    }
    
+   private boolean isShinyPrerenderedDoc()
+   {
+      try
+      {
+         String yaml = getRmdFrontMatter();
+         if (yaml == null)
+            return false;
+         return rmarkdownHelper_.isRuntimeShinyPrerendered(yaml); 
+      }
+      catch(Exception e)
+      {
+         Debug.log(e.getMessage());
+         return false;
+      }
+   }
+   
    private String getCustomKnit()
    {
       try
@@ -5320,7 +5344,7 @@ public class TextEditingTarget implements
                MessageDialog.QUESTION, 
                "Clear Knitr Cache", 
                "Clearing the Knitr cache will delete the cache " +
-               "directory for this document (\"" + docPath + "\"). " +
+               "directory for " + docPath + ". " +
                "\n\nAre you sure you want to clear the cache now?",
                false,
                new Operation() {
@@ -5343,6 +5367,44 @@ public class TextEditingTarget implements
      
    }
    
+   
+   @Handler
+   void onClearPrerenderedOutput()
+   {
+      withSavedDoc(new Command() {
+         @Override
+         public void execute()
+         {
+            // determine the output path (use relative path if possible)
+            String path = docUpdateSentinel_.getPath();
+            String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
+                workbenchContext_.getCurrentWorkingDir());
+            if (relativePath != null)
+               path = relativePath;
+            final String docPath = path;
+            
+            globalDisplay_.showYesNoMessage(
+               MessageDialog.QUESTION, 
+               "Clear Prerendered Output", 
+               "This will remove all previously generated output " +
+               "for " + docPath + " (html, prerendered data, knitr cache, etc.)." +
+               "\n\nAre you sure you want to clear the output now?",
+               false,
+               new Operation() {
+                  @Override
+                  public void execute()
+                  {
+                     String code = "rmarkdown::shiny_prerendered_clean(" + 
+                                   ConsoleDispatcher.escapedPath(docPath) + 
+                                   ")";
+                     events_.fireEvent(new SendToConsoleEvent(code, true));
+                  }
+               },
+               null,
+               true);  
+         }
+      });
+   }
    
    
    @Handler

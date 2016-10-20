@@ -274,6 +274,18 @@ public:
       }
    }
 
+   std::string getRuntime(const FilePath& targetFile)
+   {
+      std::string runtime;
+      Error error = r::exec::RFunction(
+         ".rs.getRmdRuntime",
+         string_utils::utf8ToSystem(targetFile.absolutePath())).call(
+                                                               &runtime);
+      if (error)
+         LOG_ERROR(error);
+      return runtime;
+   }
+
 private:
    RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
              bool asShiny) :
@@ -384,7 +396,7 @@ private:
                      "name = 'rstudio-iframe', "
                      "version = '0.1', "
                      "src = '" +
-                         session::options().rResourcesPath().absolutePath() +
+                         session::options().rResourcesPath().childPath("rsiframe").absolutePath() +
                      "', "
                      "script = '" + rsIFramePath + "')");
 
@@ -500,6 +512,9 @@ private:
                getPresentationDetails(sourceLine_, &startedJson);
 
                startedJson["url"] = url + targetFile_.filename();
+
+               startedJson["runtime"] = getRuntime(targetFile_);
+
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
@@ -577,6 +592,8 @@ private:
 
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
+
+      resultJson["runtime"] = getRuntime(targetFile_);
 
       json::Value websiteDir;
       if (outputFile_.extensionLowerCase() == ".html")

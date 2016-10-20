@@ -41,6 +41,21 @@
   .Call("rs_installPackage",  archive, dirname(pkgDir))
 })
 
+.rs.addFunction("getRmdRuntime", function(file) {
+   lines <- readLines(file, warn = FALSE)
+
+   yamlFrontMatter <- tryCatch(
+     rmarkdown:::parse_yaml_front_matter(lines),
+     error=function(e) {
+        list()
+     })
+
+   if (!is.null(yamlFrontMatter$runtime))
+      yamlFrontMatter$runtime
+    else
+      ""
+})
+
 .rs.addFunction("getCustomRenderFunction", function(file) {
   lines <- readLines(file, warn = FALSE)
 
@@ -52,8 +67,8 @@
 
   if (is.character(yamlFrontMatter$knit))
     yamlFrontMatter$knit[[1]]
-  else if (!is.null(yamlFrontMatter$runtime) && 
-           identical(yamlFrontMatter$runtime, "shiny")) {
+  else if (!is.null(yamlFrontMatter$runtime) &&
+           grepl('^shiny', yamlFrontMatter$runtime)) {
     # use run as a wrapper for render when the doc requires the Shiny runtime,
     # and outputs HTML. 
     tryCatch({

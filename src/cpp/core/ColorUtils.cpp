@@ -1,7 +1,7 @@
 /*
  * ColorUtils.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ namespace color_utils {
 // http://stackoverflow.com/a/6930407/347549; modified to remove C-style casts,
 // fix formatting, etc.
 
-rgb hsv2rgb(const hsv& in)
+rgb hsvToRGB(const hsv& in)
 {
    double hh, p, q, t, ff;
    long   i;
@@ -87,7 +87,7 @@ rgb hsv2rgb(const hsv& in)
 }
 
 // given RGB values, convert to an HTML color string
-std::string rgb2html(const rgb& in)
+std::string rgbToHTML(const rgb& in)
 {
    return (boost::format("#%02X%02X%02X") %
       static_cast<int>(in.r * 255.0) %

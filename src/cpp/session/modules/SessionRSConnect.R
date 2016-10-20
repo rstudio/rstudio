@@ -252,6 +252,13 @@
     targets <- target
   }
 
+  # check to see if the target has "runtime: shiny/prerendred", if so then
+  # return a full directory deploy list
+  yaml <- rmarkdown::yaml_front_matter(target)
+  if (is.list(yaml) && identical(yaml$runtime, "shiny_prerendered")) {
+    return(rsconnect::listBundleFiles(dirname(target)))
+  }
+
   # find the resources used by each document
   for (t in targets) {
     deploy_frame <- NULL
@@ -335,15 +342,26 @@
 
 
 .rs.addFunction("getRmdPublishDetails", function(target, encoding) {
-  # check for multiple R Markdown documents in the directory 
-  rmds <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"),
-                     all.files = FALSE, recursive = FALSE, ignore.case = TRUE,
-                     include.dirs = FALSE)
+
+  # read yaml
+  lines <- readLines(target, encoding = encoding, warn = FALSE)
+  frontMatter <- rmarkdown:::parse_yaml_front_matter(lines)
+
+  # if this is runtime: shiny_prerendered then is_multi_rmd is FALSE
+  if (is.list(frontMatter) &&
+      identical(frontMatter$runtime, "shiny_prerendered")) {
+    is_multi_rmd <- FALSE
+  } else {
+    # check for multiple R Markdown documents in the directory
+    rmds <- list.files(path = dirname(target), pattern = glob2rx("*.Rmd"),
+                       all.files = FALSE, recursive = FALSE, ignore.case = TRUE,
+                       include.dirs = FALSE)
+    is_multi_rmd <- length(rmds) > 1
+  }
 
   # see if this format is self-contained (defaults to true for HTML-based 
   # formats)
   selfContained <- TRUE
-  lines <- readLines(target, encoding = encoding, warn = FALSE)
   outputFormat <- rmarkdown:::output_format_from_yaml_front_matter(lines)
   if (is.list(outputFormat$options) &&
       identical(outputFormat$options$self_contained, FALSE)) {
@@ -352,7 +370,6 @@
 
   # extract the document's title
   title <- ""
-  frontMatter <- rmarkdown:::parse_yaml_front_matter(lines) 
   if (is.list(frontMatter) && is.character(frontMatter$title)) {
     title <- frontMatter$title
   }
@@ -362,7 +379,7 @@
   renderFunction <- .rs.getCustomRenderFunction(target)
 
   list(
-    is_multi_rmd        = .rs.scalar(length(rmds) > 1), 
+    is_multi_rmd        = .rs.scalar(is_multi_rmd),
     is_shiny_rmd        = .rs.scalar(renderFunction == "rmarkdown::run"),
     is_self_contained   = .rs.scalar(selfContained),
     title               = .rs.scalar(title),

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+: ${ASANFLAGS="-fsanitize=address,undefined -fsanitize-recover=address,undefined -fno-omit-frame-pointer -fno-sanitize=float-divide-by-zero"}
+: ${CC="clang-4.0"}
+: ${CXX="clang++-4.0"}
+: ${LDFLAGS=""}
+: ${BUILD_DIR="clang-ubsan-build"}
+: ${MAKEFLAGS="-j8"}
+: ${R_HOME="$(R RHOME)"}
+
+: ${RSTUDIO_USE_LIBCXX="Yes"}
+: ${RSTUDIO_USE_SYSTEM_BOOST="Yes"}
+: ${RSTUDIO_BOOST_VERSION="1.56.0"}
+
+mkdir -p "${BUILD_DIR}"
+cd "${BUILD_DIR}"
+cmake ../cpp                                                 \
+    -DLIBR_HOME="${R_HOME}"                                  \
+    -DCMAKE_C_COMPILER="${CC}"                               \
+    -DCMAKE_C_FLAGS="${ASANFLAGS} ${LDFLAGS}"                \
+    -DCMAKE_CXX_COMPILER="${CXX}"                            \
+    -DCMAKE_CXX_FLAGS="${ASANFLAGS} ${LDFLAGS}"              \
+    -DRSTUDIO_USE_LIBCXX="${RSTUDIO_USE_LIBCXX}"             \
+    -DRSTUDIO_USE_SYSTEM_BOOST="${RSTUDIO_USE_SYSTEM_BOOST}" \
+    -DRSTUDIO_BOOST_VERSION="${RSTUDIO_BOOST_VERSION}"       \
+    "$@"
+cd ..
+
+cmake --build "${BUILD_DIR}" -- "${MAKEFLAGS}"
