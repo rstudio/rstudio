@@ -96,6 +96,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    names(chunkInfo$chunk_definitions) <-
       unlist(lapply(chunkInfo$chunk_definitions, `[[`, "chunk_id"))
    rnbData[["chunk_info"]] <- chunkInfo
+
+   # Read external chunks (code chunks defined in other files)
+   rnbData[["external_chunks"]] <- chunkInfo$external_chunks
    
    # Read the chunk data
    chunkDirs <- file.path(cachePath, names(chunkInfo$chunk_definitions))
@@ -386,6 +389,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # reset the knitr chunk counter (it can be modified as a side effect of
    # parse_params, which is called during notebook execution)
    knitr:::chunk_counter(reset = TRUE)
+
+   # restore external chunks into the knit environment
+   if (!is.null(rnbData$external_chunks)) 
+      knitr:::knit_code$restore(rnbData$external_chunks)
 
    # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
