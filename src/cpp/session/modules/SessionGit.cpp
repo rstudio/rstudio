@@ -414,8 +414,21 @@ public:
          file.status = line.substr(0, 2);
 
          std::string filePath = line.substr(3);
+
+         // git status --porcelain will quote paths that contain special
+         // characters (e.g. spaces on Windows). strip those characters
+         // when encountered
+         std::string::size_type n = filePath.size();
+         if (n >= 2 && filePath[0] == '"' && filePath[n - 1] == '"')
+         {
+            filePath = filePath.substr(1, n - 2);
+            boost::algorithm::replace_all(filePath, "\\\"", "\"");
+         }
+
+         // remove trailing slashes
          if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
             filePath = filePath.substr(0, filePath.size() - 1);
+
          file.path = root_.childPath(string_utils::systemToUtf8(filePath));
 
          files.push_back(file);
