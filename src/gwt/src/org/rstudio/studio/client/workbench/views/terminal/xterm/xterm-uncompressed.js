@@ -642,7 +642,7 @@ Terminal.prototype.open = function(parent) {
 Terminal.loadAddon = function(addon, callback) {
   if (typeof exports === 'object' && typeof module === 'object') {
     // CommonJS
-    return require(__dirname + '/../addons/' + addon);
+    return require('../addons/' + addon);
   } else if (typeof define == 'function') {
     // RequireJS
     return require(['../addons/' + addon + '/' + addon], callback);
@@ -1306,6 +1306,28 @@ Terminal.prototype.scrollDisp = function(disp, suppressScrollEvent) {
 
   this.refresh(0, this.rows - 1);
 };
+
+/**
+ * Scroll the display of the terminal by a number of pages.
+ * @param {number} pageCount The number of pages to scroll (negative scrolls up).
+ */
+Terminal.prototype.scrollPages = function(pageCount) {
+  this.scrollDisp(pageCount * (this.rows - 1));
+}
+
+/**
+ * Scrolls the display of the terminal to the top.
+ */
+Terminal.prototype.scrollToTop = function() {
+  this.scrollDisp(-this.ydisp);
+}
+
+/**
+ * Scrolls the display of the terminal to the bottom.
+ */
+Terminal.prototype.scrollToBottom = function() {
+  this.scrollDisp(this.ybase - this.ydisp);
+}
 
 /**
  * Writes text to the terminal.
@@ -3099,9 +3121,9 @@ Terminal.prototype.is = function(term) {
 
 
 /**
-     * Emit the 'data' event and populate the given data.
-     * @param {string} data The data to populate in the event.
-     */
+ * Emit the 'data' event and populate the given data.
+ * @param {string} data The data to populate in the event.
+ */
 Terminal.prototype.handler = function(data) {
   this.emit('data', data);
 };
@@ -4344,8 +4366,8 @@ Terminal.prototype.scrollUp = function(params) {
 
 
 /**
-     * CSI Ps T  Scroll down Ps lines (default = 1) (SD).
-     */
+ * CSI Ps T  Scroll down Ps lines (default = 1) (SD).
+ */
 Terminal.prototype.scrollDown = function(params) {
   var param = params[0] || 1;
   while (param--) {
