@@ -190,22 +190,38 @@ public class ChunkOutputStream extends FlowPanel
       // persist metadata
       metadata_.put(ordinal, metadata);
       
+      final boolean knitrFigure = metadata.getSizingPolicyKnitrFigure();
+      
       // amend the URL to cause any contained widget to use the RStudio viewer
       // sizing policy
       if (url.indexOf('?') > 0)
          url += "&";
       else
          url += "?";
-      url += "viewer_pane=1";
+
+      if (knitrFigure) {
+         url += "viewer_pane=1";
+      }
 
       final ChunkOutputFrame frame = new ChunkOutputFrame();
 
       if (chunkOutputSize_ == ChunkOutputSize.Default) {
-         final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
-                     ChunkOutputUi.OUTPUT_ASPECT, 
-                     ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
+         if (knitrFigure) {
+            final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
+                        ChunkOutputUi.OUTPUT_ASPECT, 
+                        ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
 
-         addWithOrdinal(fixedFrame, ordinal);
+            addWithOrdinal(fixedFrame, ordinal);
+         }
+         else {
+            // reduce size of html widget as much as possible and add scroll,
+            // once it loads, we will adjust the height appropriately.
+            frame.getElement().getStyle().setHeight(25, Unit.PX);
+            frame.getElement().getStyle().setOverflow(Overflow.SCROLL);
+
+            frame.getElement().getStyle().setWidth(100, Unit.PCT);
+            addWithOrdinal(frame, ordinal);
+         }
       }
       else if (chunkOutputSize_ == ChunkOutputSize.Full) {
          frame.getElement().getStyle().setPosition(Position.ABSOLUTE);
@@ -232,6 +248,14 @@ public class ChunkOutputStream extends FlowPanel
          public void execute()
          {
             onRenderComplete.execute();
+            
+            if (!knitrFigure) {
+               frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.SCROLL);
+               
+               int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
+               frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+            }
+            
             onHeightChanged();
          };
       });
