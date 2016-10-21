@@ -26,4 +26,5 @@
 * Fix positioning of editor toolbar buttons in Safari and Mac OS client
 * Fix incorrect height of R Notebook outputs when run above viewport
 * Detect multi-line data.table chains properly  
+* Allow git staging for filenames containing a space on Windows
 
