@@ -1278,10 +1278,10 @@ public class TextEditingTarget implements
          }
       });
       
-      // Load and apply Vim marks (if they exist).
-      if (document.getProperties().hasKey("marks"))
+      // Load and apply Vim Marks.
+      final String marksSpec = document.getMarksSpec();
+      if (StringUtil.isNullOrEmpty(marksSpec))
       {
-         final String marksSpec = document.getProperties().getString("marks");
          final JsMap<Position> marks = VimMarks.decode(marksSpec);
          
          // Time out the marks setting just to avoid conflict with other
@@ -1293,7 +1293,34 @@ public class TextEditingTarget implements
             {
                 docDisplay_.setMarks(marks);
             }
-         }.schedule(100);
+         }.schedule(200);
+      }
+      
+      // Load and apply a saved selection.
+      final String selectionSpec = document.getSelectionSpec();
+      if (!StringUtil.isNullOrEmpty(selectionSpec))
+      {
+         final Range range = Range.decode(selectionSpec);
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+               // bail on updating the selection if the cursor
+               // position has already changed
+               Position oldStart = docDisplay_.getSelectionStart();
+               Position oldEnd   = docDisplay_.getSelectionEnd();
+               if (oldStart.getRow() != 0    ||
+                   oldStart.getColumn() != 0 ||
+                   oldEnd.getRow() != 0      ||
+                   oldEnd.getColumn() != 0)
+               {
+                  return;
+               }
+               
+               docDisplay_.setSelectionRange(range);
+            }
+         }.schedule(200);
       }
 
       registerPrefs(releaseOnDismiss_, prefs_, docDisplay_, document);

@@ -1599,6 +1599,8 @@ public class RemoteServer implements Server
                             String fileType,
                             String encoding,
                             String foldSpec,
+                            String marksSpec,
+                            String selectionSpec,
                             JsArray<ChunkDefinition> chunkDefs,
                             String contents,
                             ServerRequestCallback<String> requestCallback)
@@ -1609,8 +1611,10 @@ public class RemoteServer implements Server
       params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
       params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
       params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
-      params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
-      params.set(6, new JSONString(contents));
+      params.set(5, new JSONString(StringUtil.notNull(marksSpec)));
+      params.set(6, new JSONString(StringUtil.notNull(selectionSpec)));
+      params.set(7, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
+      params.set(8, new JSONString(contents));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT, params, requestCallback);
    }
 
@@ -1619,6 +1623,8 @@ public class RemoteServer implements Server
                                 String fileType,
                                 String encoding,
                                 String foldSpec,
+                                String marksSpec,
+                                String selectionSpec,
                                 JsArray<ChunkDefinition> chunkDefs,
                                 String replacement,
                                 int offset,
@@ -1627,16 +1633,18 @@ public class RemoteServer implements Server
                                 ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(id));
-      params.set(1, path == null ? JSONNull.getInstance() : new JSONString(path));
-      params.set(2, fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
-      params.set(3, encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
-      params.set(4, new JSONString(StringUtil.notNull(foldSpec)));
-      params.set(5, chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
-      params.set(6, new JSONString(replacement));
-      params.set(7, new JSONNumber(offset));
-      params.set(8, new JSONNumber(length));
-      params.set(9, new JSONString(hash));
+      params.set(0,  new JSONString(id));
+      params.set(1,  path == null ? JSONNull.getInstance() : new JSONString(path));
+      params.set(2,  fileType == null ? JSONNull.getInstance() : new JSONString(fileType));
+      params.set(3,  encoding == null ? JSONNull.getInstance() : new JSONString(encoding));
+      params.set(4,  new JSONString(StringUtil.notNull(foldSpec)));
+      params.set(5,  new JSONString(StringUtil.notNull(marksSpec)));
+      params.set(6,  new JSONString(StringUtil.notNull(selectionSpec)));
+      params.set(7,  chunkDefs == null ? JSONNull.getInstance() : new JSONObject(chunkDefs));
+      params.set(8,  new JSONString(replacement));
+      params.set(9,  new JSONNumber(offset));
+      params.set(10, new JSONNumber(length));
+      params.set(11, new JSONString(hash));
       sendRequest(RPC_SCOPE, SAVE_DOCUMENT_DIFF, params, requestCallback);
    }
 

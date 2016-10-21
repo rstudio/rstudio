@@ -425,6 +425,12 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value folds = docJson["folds"];
       folds_ = !folds.is_null() ? folds.get_str() : std::string();
 
+      json::Value marks = docJson["marks"];
+      marks_ = !marks.is_null() ? marks.get_str() : std::string();
+
+      json::Value selection = docJson["selection"];
+      selection_ = !selection.is_null() ? selection.get_str() : std::string();
+
       json::Value order = docJson["relative_order"];
       relativeOrder_ = !order.is_null() ? order.get_int() : 0;
 
@@ -465,6 +471,8 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["relative_order"] = relativeOrder();
    jsonDoc["properties"] = properties();
    jsonDoc["folds"] = folds();
+   jsonDoc["marks"] = marks();
+   jsonDoc["selection"] = selection();
    jsonDoc["lastKnownWriteTime"] = json::Value(
          static_cast<boost::int64_t>(lastKnownWriteTime_));
    jsonDoc["encoding"] = encoding_;

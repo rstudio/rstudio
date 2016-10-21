@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class Range extends JavaScriptObject
@@ -28,6 +31,43 @@ public class Range extends JavaScriptObject
       var Range = $wnd.require('ace/range').Range;
       return new Range(startRow, startColumn, endRow, endColumn);
    }-*/;
+   
+   public static final Range create()
+   {
+      return Range.create(0, 0, 0, 0);
+   }
+   
+   public static final String encode(Range range)
+   {
+      return
+            range.getStart().getRow() + "|" +
+            range.getStart().getColumn() + "|" +
+            range.getEnd().getRow() + "|" +
+            range.getEnd().getColumn();
+   }
+   
+   public static final Range decode(String encoded)
+   {
+      String[] parts = encoded.split("\\|");
+      if (parts.length != 4)
+         return Range.create();
+      
+      Range decoded = Range.create();
+      try
+      {
+         decoded = Range.create(
+               Integer.parseInt(parts[0]),
+               Integer.parseInt(parts[1]),
+               Integer.parseInt(parts[2]),
+               Integer.parseInt(parts[3]));
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
+      
+      return decoded;
+   }
 
    public static native Range fromPoints(Position start, Position end) /*-{
       var Range = $wnd.require('ace/range').Range;

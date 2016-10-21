@@ -57,6 +57,8 @@ public:
    int relativeOrder() const { return relativeOrder_; } 
    const core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
+   const std::string& marks() const { return marks_; }
+   const std::string& selection() const { return selection_; }
    const std::string& collabServer() const { return collabServer_; }
    std::string getProperty(const std::string& name) const;
    const std::time_t lastContentUpdate() const { return lastContentUpdate_; }
@@ -95,6 +97,16 @@ public:
    void setFolds(const std::string& folds)
    {
       folds_ = folds;
+   }
+
+   void setMarks(const std::string& marks)
+   {
+      marks_ = marks;
+   }
+
+   void setSelection(const std::string& selection)
+   {
+      selection_ = selection;
    }
 
    void setRelativeOrder(int order) 
@@ -155,6 +167,8 @@ private:
    std::string hash_;
    std::string encoding_;
    std::string folds_;
+   std::string marks_;
+   std::string selection_;
    std::time_t lastKnownWriteTime_;
    std::time_t lastContentUpdate_;
    bool dirty_;
