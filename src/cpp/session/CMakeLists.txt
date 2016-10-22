@@ -402,9 +402,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-   # rsiframe
-   install(DIRECTORY "resources/rsiframe"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
