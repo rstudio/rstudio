@@ -1,0 +1,13 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style type="org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsvLocale.DataImportOptionsUiCsvLocaleStyle">
+      .dialog {
+         width: 350px;
+      }
+   </ui:style>
+
+   <g:HTMLPanel styleName="{style.dialog}">
+   </g:HTMLPanel>
+
+</ui:UiBinder>

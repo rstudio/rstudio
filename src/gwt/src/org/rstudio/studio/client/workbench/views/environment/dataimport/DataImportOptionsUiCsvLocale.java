@@ -1,0 +1,97 @@
+/*
+ * DataImportOptionsUiCsvLocale.java
+ *
+ * Copyright (C) 2009-16 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+package org.rstudio.studio.client.workbench.views.environment.dataimport;
+
+import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+
+public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsCsvLocale>
+{
+   interface Binder extends UiBinder<Widget, DataImportOptionsUiCsvLocale> {}
+   
+   public interface DataImportOptionsUiCsvLocaleStyle extends CssResource
+   {
+      String dialog();
+   }
+
+   @Inject
+   private void initialize()
+   {
+   }
+   
+   public DataImportOptionsUiCsvLocale(OperationWithInput<DataImportOptionsCsvLocale> operation)
+   {
+      super("Select Data Import Locale", operation);
+      widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
+   }
+   
+   @Override
+   protected void onDialogShown()
+   {
+      super.onDialogShown();
+
+      initializeDefaults();
+
+      setOkButtonCaption("Select");
+   }
+   
+   @Override
+   protected Widget createMainWidget()
+   {
+      return widget_;
+   }
+   
+   @Override
+   protected DataImportOptionsCsvLocale collectInput()
+   {
+      return null;
+   }
+   
+   @Inject
+   void initialize(FileTypeCommands fileTypeCommands)
+   {
+      initializeDefaults();
+   }
+
+   private void initializeDefaults()
+   {
+      encoding_.addItem("Default", "");
+      encoding_.addItem("ASCII", "ASCII");
+      encoding_.addItem("UTF-16", "UTF-16");
+      encoding_.addItem("UTF-16BE", "UTF-16BE");
+      encoding_.addItem("UTF-16LE", "UTF-16LE");
+      encoding_.addItem("UTF-32", "UTF-32");
+      encoding_.addItem("UTF-32BE", "UTF-32BE");
+      encoding_.addItem("UTF-32LE", "UTF-32LE");
+      encoding_.addItem("UTF-7", "UTF-7");
+      encoding_.addItem("UTF-8", "UTF-8");
+      encoding_.addItem("UTF-8-MAC", "UTF-8-MAC");
+      encoding_.addItem("UTF8", "UTF8");
+      encoding_.addItem("UTF8-MAC", "UTF8-MAC");
+   }
+
+   private ListBox encoding_;
+   
+   private Widget widget_;
+}

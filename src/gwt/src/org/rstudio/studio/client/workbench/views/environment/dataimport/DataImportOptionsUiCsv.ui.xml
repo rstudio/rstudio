@@ -85,6 +85,12 @@
         input:disabled+label {
             color: #999;
         }
+        .localeListBox {
+            width: 50px;
+            text-align: right;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
         <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
@@ -134,9 +140,11 @@
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
-                    <td>Encoding:</td>
+                    <td>Locale:</td>
                     <td>
-                        <g:ListBox ui:field="localeListBox_" styleName="{style.optionsListBox}" />
+                        <g:Button ui:field="localeButton_" styleName="{style.optionsListBox}">
+                            Select
+                        </g:Button>
                     </td>
                 </tr>
             </table>
