@@ -379,24 +379,8 @@ private:
          extraParams += "dir = '" + string_utils::utf8ToSystem(
                      targetFile_.parent().absolutePath()) + "', ";
 
-         std::string outputOptions;
-#ifndef __APPLE__
-         // on Qt platforms, use local MathJax: it contains a patch that allows
-         // math to render immediately (otherwise it fails to load due to 
-         // timeouts waiting for font variants to load)
-         if (session::options().programMode() == kSessionProgramModeDesktop) 
-         {
-            outputOptions = "mathjax = 'local'";
-         }
-#else
-         // no custom output options
-#endif
-
-         // inject the RStudio IFrame helper script (for syncing scroll position
-         // and anchor information cross-domain), and wrap the other render
-         // options discovered so far in the render_args parameter
-         renderOptions = "render_args = list(" + renderOptions + ", "
-               "output_options = list(" + outputOptions + "))";
+         // provide render_args in render_args parameter
+         renderOptions = "render_args = list(" + renderOptions + ")";
       }
 
       // render command
