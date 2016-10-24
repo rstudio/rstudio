@@ -234,7 +234,12 @@ void NotebookDocQueue::setDefaultChunkOptions(const json::Object& options)
 void NotebookDocQueue::setWorkingDir(const std::string& workingDir)
 {
    core::FilePath dir;
-   if (workingDir.at(0) == '~')
+   if (workingDir.empty())
+   {
+      // no directory specified, use an empty path
+      dir = FilePath();
+   }
+   else if (workingDir.at(0) == '~')
    {
       // resolve home directory if necessary
       dir = module_context::resolveAliasedPath(workingDir);
@@ -255,7 +260,7 @@ void NotebookDocQueue::setWorkingDir(const std::string& workingDir)
    }
 
    // remove any trailing / or .
-   if (dir.stem().empty() || dir.stem() == ".")
+   if (!dir.empty() && (dir.stem().empty() || dir.stem() == "."))
       dir = dir.parent();
 
    // if this is a real directory, use it; otherwise, use an empty path, which
