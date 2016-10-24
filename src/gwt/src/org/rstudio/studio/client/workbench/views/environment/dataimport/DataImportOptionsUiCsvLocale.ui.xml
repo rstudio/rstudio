@@ -1,0 +1,86 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+
+   <ui:style type="org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsvLocale.DataImportOptionsUiCsvLocaleStyle">
+      .dialog {
+         width: 420px;
+      }
+      .textBox {
+         width: 90px;
+      }
+      table.localeTable {
+        width: 100%;
+
+        padding-left: 5px;
+        padding-right: 5px;
+      }
+      td.checkbocCell {
+        text-align: right;
+        padding-right: 8px;
+      }
+      td.spacedCell {
+        padding-left: 10px;
+      }
+   </ui:style>
+
+   <g:HTMLPanel styleName="{style.dialog}">
+      <table class="{style.localeTable}">
+         <tr>
+            <td>
+                <g:Label text="Date Name:" />
+            </td>
+            <td>
+                <g:TextBox ui:field="dateName_" styleName="{style.textBox}" text="en" />
+            </td>
+            <td class="{style.spacedCell}">
+                <g:Label text="Encoding:" />
+            </td>
+            <td>
+                <g:ListBox ui:field="encoding_" />
+            </td>
+         </tr>
+         <tr>
+            <td>
+                <g:Label text="Date Format:" />
+            </td>
+            <td>
+                <g:TextBox ui:field="dateFormat_" styleName="{style.textBox}" text="%AD" />
+            </td>
+            <td class="{style.spacedCell}">
+                <g:Label text="Time Format:" />
+            </td>
+            <td>
+                <g:TextBox ui:field="timeFormat_" styleName="{style.textBox}" text="%AT" />
+            </td>
+         </tr>
+         <tr>
+            <td>
+                <g:Label text="Decimal Mark:" />
+            </td>
+            <td>
+                <g:TextBox ui:field="decimalMark_" styleName="{style.textBox}" text="." />
+            </td>
+            <td class="{style.spacedCell}">
+                <g:Label text="Grouping Mark:" />
+            </td>
+            <td>
+                <g:TextBox ui:field="groupingMark_" styleName="{style.textBox}" text="," />
+            </td>
+         </tr>
+         <tr>
+            <td>
+                <g:Label text="Time Zone:" />
+            </td>
+            <td>
+                <g:TextBox ui:field="timeZone_" styleName="{style.textBox}" text="UTC" />
+            </td>
+            <td class="{style.spacedCell}">
+            </td>
+            <td class="{style.checkbocCell}">
+                <g:CheckBox ui:field="asciify_" text="Asciify"/>
+            </td>
+         </tr>
+      </table>
+   </g:HTMLPanel>
+
+</ui:UiBinder>
