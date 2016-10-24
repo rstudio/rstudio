@@ -23,7 +23,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -92,8 +94,30 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       encoding_.addItem("UTF8-MAC", "UTF8-MAC");
    }
 
+   
+   @UiField
+   TextBox dateName_;
+
    @UiField
    ListBox encoding_;
+   
+   @UiField
+   TextBox dateFormat_;
+   
+   @UiField
+   TextBox timeFormat_;
+   
+   @UiField
+   TextBox decimalMark_;
+   
+   @UiField
+   TextBox groupingMark_;
+   
+   @UiField
+   TextBox timeZone_;
+   
+   @UiField
+   CheckBox columnNamesCheckBox_;
    
    private Widget widget_;
 }
