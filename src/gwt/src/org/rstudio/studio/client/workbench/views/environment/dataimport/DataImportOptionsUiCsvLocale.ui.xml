@@ -8,6 +8,32 @@
    </ui:style>
 
    <g:HTMLPanel styleName="{style.dialog}">
+      <table>
+         <tr>
+            <td><g:Label text="Date Name:" /></td>
+            <td></td>
+            <td><g:Label text="Encoding:" /></td>
+            <td><g:ListBox ui:field="encoding_" /></td>
+         </tr>
+         <tr>
+            <td><g:Label text="Date Format:" /></td>
+            <td></td>
+            <td><g:Label text="Time Format:" /></td>
+            <td></td>
+         </tr>
+         <tr>
+            <td><g:Label text="Decimal Mark:" /></td>
+            <td></td>
+            <td><g:Label text="Grouping Mark:" /></td>
+            <td></td>
+         </tr>
+         <tr>
+            <td><g:Label text="Time Zone:" /></td>
+            <td></td>
+            <td><g:Label text="Asciify:" /></td>
+            <td></td>
+         </tr>
+      </table>
    </g:HTMLPanel>
 
 </ui:UiBinder>

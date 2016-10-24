@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -91,7 +92,8 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       encoding_.addItem("UTF8-MAC", "UTF8-MAC");
    }
 
-   private ListBox encoding_;
+   @UiField
+   ListBox encoding_;
    
    private Widget widget_;
 }
