@@ -47,7 +47,7 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       OperationWithInput<DataImportOptionsCsvLocale> operation,
       DataImportOptionsCsvLocale locale)
    {
-      super("Select Locale", operation);
+      super("Configure Locale", operation);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       initialLocale_ = locale;
    }
