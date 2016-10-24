@@ -64,7 +64,34 @@
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
-            return (paste(ns, "locale(encoding=\"", optionValue, "\")", sep = ""))
+            localeDefaults <- formals(readr::locale)
+
+            localeOrNull <- function(paramName, jsonName) {
+               if (!identical(localeDefaults[[paramName]], optionValue[[jsonName]])) {
+                  if (typeof(localeDefaults[[paramName]]) == "logical") {
+                     paste(paramName, " = ", optionValue[[jsonName]])
+                  }
+                  else {
+                     paste(paramName, " = \"", optionValue[[jsonName]], "\"", sep = "")
+                  }
+               }
+               else NULL
+            }
+
+            return (paste(
+               ns, 
+               "locale(",
+               paste(c(
+                  localeOrNull("date_names", "dateName"),
+                  localeOrNull("date_format", "dateFormat"),
+                  localeOrNull("time_format", "timeFormat"),
+                  localeOrNull("decimal_mark", "decimalMark"),
+                  localeOrNull("grouping_mark", "groupingMark"),
+                  localeOrNull("tz", "tz"),
+                  localeOrNull("encoding", "encoding"),
+                  localeOrNull("asciify", "asciify")
+               ), collapse = ", "),
+               ")", sep = ""))
          },
          "columnDefinitionsReadR" = {
             colParams <- c()

@@ -22,25 +22,46 @@ public class DataImportOptionsCsvLocale extends JavaScriptObject
    protected DataImportOptionsCsvLocale()
    {
    }
+   
+   public static native DataImportOptionsCsvLocale createLocaleNative(
+      String dateName,
+      String dateFormat,
+      String timeFormat,
+      String decimalMark,
+      String groupingMark,
+      String tz,
+      String encoding,
+      boolean asciify) /*-{
+      return {
+         dateName: dateName,
+         dateFormat: dateFormat,
+         timeFormat: timeFormat,
+         decimalMark: decimalMark,
+         groupingMark: groupingMark,
+         tz: tz,
+         encoding: encoding,
+         asciify: asciify
+      }
+   }-*/;
   
-   public final native String getDateNames() /*-{
-      return this.dateNames;
+   public final native String getDateName() /*-{
+      return this.dateName;
    }-*/;
    
    public final native String getDateFormat() /*-{
-      return this.dateFormat_;
+      return this.dateFormat;
    }-*/;
 
    public final native String getTimeFormat() /*-{
-      return this.timeFormat_;
+      return this.timeFormat;
    }-*/;
 
    public final native String getDecimalMark() /*-{
-      return this.decimalMark_;
+      return this.decimalMark;
    }-*/;
 
    public final native String getGroupingMark() /*-{
-      return this.groupingMark_;
+      return this.groupingMark;
    }-*/;
    
    public final native String getTZ() /*-{
@@ -51,7 +72,28 @@ public class DataImportOptionsCsvLocale extends JavaScriptObject
       return this.encoding;
    }-*/;
 
-   public final native String getAsciify() /*-{
+   public final native boolean getAsciify() /*-{
       return this.asciify;
    }-*/;
+
+   public static DataImportOptionsCsvLocale createLocale(
+      String dateName,
+      String dateFormat,
+      String timeFormat,
+      String decimalMark,
+      String groupingMark,
+      String tz,
+      String encoding,
+      boolean asciify)
+   {
+      return createLocaleNative(
+         dateName,
+         dateFormat,
+         timeFormat,
+         decimalMark,
+         groupingMark,
+         tz,
+         encoding,
+         asciify);
+   }
 }

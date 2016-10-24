@@ -43,10 +43,32 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    {
    }
    
-   public DataImportOptionsUiCsvLocale(OperationWithInput<DataImportOptionsCsvLocale> operation)
+   public DataImportOptionsUiCsvLocale(
+      OperationWithInput<DataImportOptionsCsvLocale> operation,
+      DataImportOptionsCsvLocale locale)
    {
-      super("Select Data Import Locale", operation);
+      super("Select Locale", operation);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
+      initialLocale_ = locale;
+   }
+   
+   private void assignLocale(DataImportOptionsCsvLocale locale)
+   {
+      if (locale == null) return;
+      
+      for (int idxEncoding = 0; idxEncoding < encoding_.getItemCount(); idxEncoding ++) {
+         if (encoding_.getValue(idxEncoding) == locale.getEncoding()) {
+            encoding_.setSelectedIndex(idxEncoding);
+         }
+      }
+      
+      dateName_.setText(locale.getDateName());
+      dateFormat_.setText(locale.getDateFormat());
+      timeFormat_.setText(locale.getTimeFormat());
+      decimalMark_.setText(locale.getDecimalMark());
+      groupingMark_.setText(locale.getGroupingMark());
+      timeZone_.setText(locale.getTZ());
+      asciify_.setValue(locale.getAsciify());
    }
    
    @Override
@@ -55,8 +77,9 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       super.onDialogShown();
 
       initializeDefaults();
+      assignLocale(initialLocale_);
 
-      setOkButtonCaption("Select");
+      setOkButtonCaption("Configure");
    }
    
    @Override
@@ -68,7 +91,16 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    @Override
    protected DataImportOptionsCsvLocale collectInput()
    {
-      return null;
+      return DataImportOptionsCsvLocale.createLocale(
+        dateName_.getText(),
+        dateFormat_.getText(),
+        timeFormat_.getText(),
+        decimalMark_.getText(),
+        groupingMark_.getText(),
+        timeZone_.getText(),
+        encoding_.getSelectedValue(),
+        asciify_.getValue()
+      );
    }
    
    @Inject
@@ -79,7 +111,6 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
 
    private void initializeDefaults()
    {
-      encoding_.addItem("Default", "");
       encoding_.addItem("ASCII", "ASCII");
       encoding_.addItem("UTF-16", "UTF-16");
       encoding_.addItem("UTF-16BE", "UTF-16BE");
@@ -92,6 +123,8 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       encoding_.addItem("UTF-8-MAC", "UTF-8-MAC");
       encoding_.addItem("UTF8", "UTF8");
       encoding_.addItem("UTF8-MAC", "UTF8-MAC");
+      
+      encoding_.setSelectedIndex(8);
    }
 
    
@@ -117,7 +150,8 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    TextBox timeZone_;
    
    @UiField
-   CheckBox columnNamesCheckBox_;
+   CheckBox asciify_;
    
    private Widget widget_;
+   private DataImportOptionsCsvLocale initialLocale_;
 }

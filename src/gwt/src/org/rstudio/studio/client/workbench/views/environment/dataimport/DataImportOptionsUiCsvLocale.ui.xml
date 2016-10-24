@@ -72,12 +72,12 @@
                 <g:Label text="Time Zone:" />
             </td>
             <td>
-                <g:TextBox ui:field="timeZone_" styleName="{style.textBox}" text="UTF-8" />
+                <g:TextBox ui:field="timeZone_" styleName="{style.textBox}" text="UTC" />
             </td>
             <td class="{style.spacedCell}">
             </td>
             <td class="{style.checkbocCell}">
-                <g:CheckBox ui:field="columnNamesCheckBox_" text="Asciify"/>
+                <g:CheckBox ui:field="asciify_" text="Asciify"/>
             </td>
          </tr>
       </table>

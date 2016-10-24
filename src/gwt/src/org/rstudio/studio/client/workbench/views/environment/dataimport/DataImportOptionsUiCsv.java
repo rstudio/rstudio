@@ -213,9 +213,13 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                   @Override
                   public void execute(final DataImportOptionsCsvLocale result)
                   {
-                     //localeInfo_ = result;
+                     localeInfo_ = result;
+                     
+                     updateEnabled();
+                     triggerChange();
                   }
-               }
+               },
+               localeInfo_
             ).showModal();
          }
       });
