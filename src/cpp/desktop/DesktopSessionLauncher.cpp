@@ -111,14 +111,6 @@ Error SessionLauncher::launchFirstSession(const QString& filename,
                            + port.toStdString() +
                            "...");
 
-   // jcheng 03/16/2011: Due to crashing caused by authenticating
-   // proxies, bypass all proxies from Qt until we can get the problem
-   // completely solved. This is only expected to affect CRAN mirror
-   // selection (which falls back to local mirror list) and update
-   // checking.
-   //NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
-   //QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
-
    pMainWindow_ = new MainWindow(url);
    pMainWindow_->setSessionLauncher(this);
    pMainWindow_->setSessionProcess(pRSessionProcess_);

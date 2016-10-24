@@ -41,6 +41,7 @@
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 #include "DesktopProgressActivator.hpp"
+#include "DesktopNetworkProxyFactory.hpp"
 
 QProcess* pRSessionProcess;
 QString sharedSecret;
@@ -339,6 +340,9 @@ int main(int argc, char* argv[])
 #endif
       }
       core::system::fixupExecutablePath(&sessionPath);
+
+      NetworkProxyFactory* pProxyFactory = new NetworkProxyFactory();
+      QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
       // set the scripts path in options
       desktop::options().setScriptsPath(scriptsPath);

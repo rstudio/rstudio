@@ -29,8 +29,6 @@ using namespace rstudio::desktop;
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
     QNetworkAccessManager(parent), secret_(secret)
 {
-   setProxy(QNetworkProxy::NoProxy);
-
    QTimer* pTimer = new QTimer(this);
    connect(pTimer, SIGNAL(timeout()), SLOT(pollForIO()));
    pTimer->start(25);
