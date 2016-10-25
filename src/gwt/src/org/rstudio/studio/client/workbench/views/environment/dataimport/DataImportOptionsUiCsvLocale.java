@@ -17,9 +17,13 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,8 +43,9 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    }
 
    @Inject
-   private void initialize()
+   private void initialize(GlobalDisplay globalDisplay)
    {
+      globalDisplay_ = globalDisplay;
    }
    
    public DataImportOptionsUiCsvLocale(
@@ -50,6 +55,8 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       super("Configure Locale", operation);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       initialLocale_ = locale;
+
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
    private void assignLocale(DataImportOptionsCsvLocale locale)
@@ -59,6 +66,11 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       for (int idxEncoding = 0; idxEncoding < encoding_.getItemCount(); idxEncoding ++) {
          if (encoding_.getValue(idxEncoding) == locale.getEncoding()) {
             encoding_.setSelectedIndex(idxEncoding);
+            break;
+         }
+         
+         if (encoding_.getItemText(idxEncoding) == "Other") {
+            replaceOtherEncodingItem(idxEncoding, locale.getEncoding());
          }
       }
       
@@ -77,6 +89,8 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       super.onDialogShown();
 
       initializeDefaults();
+      initializeEvents();
+      
       assignLocale(initialLocale_);
 
       setOkButtonCaption("Configure");
@@ -102,12 +116,6 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
         asciify_.getValue()
       );
    }
-   
-   @Inject
-   void initialize(FileTypeCommands fileTypeCommands)
-   {
-      initializeDefaults();
-   }
 
    private void initializeDefaults()
    {
@@ -123,10 +131,46 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       encoding_.addItem("UTF-8-MAC", "UTF-8-MAC");
       encoding_.addItem("UTF8", "UTF8");
       encoding_.addItem("UTF8-MAC", "UTF8-MAC");
+      encoding_.addItem("Other", "");
       
       encoding_.setSelectedIndex(8);
    }
+   
+   private void replaceOtherEncodingItem(int selectedIndex, String otherEncoding) {
+      encoding_.removeItem(selectedIndex);
+      encoding_.insertItem("Other", otherEncoding, selectedIndex);
+      encoding_.setSelectedIndex(selectedIndex);
+   }
 
+   private void initializeEvents()
+   {
+      ChangeHandler encodingChangeHandler = new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            if (encoding_.getSelectedItemText() == "Other")
+            {
+               globalDisplay_.promptForText(
+                  "Encoding Identifier",
+                  "Please enter an encoding identifier. For a list of valid encodings run iconvlist().",
+                  encoding_.getSelectedValue(),
+                  new OperationWithInput<String>()
+                  {
+                     @Override
+                     public void execute(final String otherEncoding)
+                     {
+                        int selectedIndex = encoding_.getSelectedIndex();
+                        replaceOtherEncodingItem(selectedIndex, otherEncoding);
+                     }
+                  }
+               );
+            }
+         }
+      };
+
+      encoding_.addChangeHandler(encodingChangeHandler);
+   }
    
    @UiField
    TextBox dateName_;
@@ -154,4 +198,5 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    
    private Widget widget_;
    private DataImportOptionsCsvLocale initialLocale_;
+   private GlobalDisplay globalDisplay_;
 }
