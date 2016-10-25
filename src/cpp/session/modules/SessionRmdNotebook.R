@@ -350,9 +350,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                  includeSource = includeSource)
       })
       
-      # remove nulls and return
-      Filter(Negate(is.null), outputList)
-      
+      # remove nulls
+      filtered <- Filter(Negate(is.null), outputList)
+      lapply(filtered, function(x) {
+         if (!is.list(x)) list(x) else x
+      })
    }
 })
 
