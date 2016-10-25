@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 
 import com.google.gwt.core.client.GWT;
@@ -80,6 +81,12 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       assignLocale(initialLocale_);
 
       setOkButtonCaption("Configure");
+
+      HelpLink helpLink = new HelpLink(
+         "Locales in readr",
+         "readr_locales",
+         false);
+      addLeftWidget(helpLink);   
    }
    
    @Override
