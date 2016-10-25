@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,6 +72,7 @@
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/PosixGroup.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
 
@@ -1454,63 +1455,23 @@ Error userBelongsToGroup(const user::User& user,
                          const std::string& groupName,
                          bool* pBelongs)
 {
-   struct group grp;
-   struct group* ptrGrp = &grp;
-   struct group* tempPtrGrp ;
-
-   // get the estimated size of the groups data
-   int buffSize = ::sysconf(_SC_GETGR_R_SIZE_MAX);
-   if (buffSize == -1)
-      buffSize = 4096; // some systems return -1, be conservative!
-
-   // call until we pass a buffer large enough for the data
-   std::vector<char> buffer;
-   int result = 0;
-   do
-   {
-      // double the size of the suggested/previous buffer
-      buffSize *= 2;
-      buffer.reserve(buffSize);
-
-      // attempt the read
-      result = ::getgrnam_r(groupName.c_str(),
-                            ptrGrp,
-                            &(buffer[0]),
-                            buffSize,
-                            &tempPtrGrp);
-
-   } while (result == ERANGE);
-
-   // check for no group data
-   if (tempPtrGrp == NULL)
-   {
-      if (result == 0) // will happen if group is simply not found
-         result = EACCES;
-      Error error = systemError(result, ERROR_LOCATION);
-      error.addProperty("group-name", groupName);
-      return error;
-   }
-
    *pBelongs = false; // default to not found
+   group::Group group;
+   Error error = group::groupFromName(groupName, &group);
+   if (error)
+      return error;
 
    // see if the group id matches the user's group id
-   if (user.groupId == grp.gr_gid)
+   if (user.groupId == group.groupId)
    {
       *pBelongs = true;
    }
    // else scan the list of member names for this user
    else
    {
-      char** pUsers = grp.gr_mem;
-      while (*pUsers)
-      {
-         const char* pUser = *(pUsers++);
-         if (user.username.compare(pUser) == 0)
-         {
-            *pBelongs = true;
-            break;
-         }
-      }
+      *pBelongs = std::find(group.members.begin(),
+                            group.members.end(),
+                            user.username) != group.members.end();
    }
 
    return Success();
