@@ -460,10 +460,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "resources/help_resources"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
-   # notebook resources
-   install(DIRECTORY "resources/notebook"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-
    # install pagedtable
    install(DIRECTORY "resources/pagedtable"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
