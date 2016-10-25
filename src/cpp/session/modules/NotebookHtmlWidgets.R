@@ -50,6 +50,8 @@
       jsDrawChart[[injectionLoc]] <- paste(
          paste(
             "google.visualization.events.addListener(chart, 'ready', function() {",
+            "    if (typeof parent === 'undefined') return;",
+            "    if (typeof parent.$onGvisChartReady === 'undefined') return;",
             "    parent.$onGvisChartReady(data);",
             "})",
             sep = "\n"
