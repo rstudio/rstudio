@@ -6,6 +6,10 @@ window.addEventListener("mousewheel", function(evt) {
    if (!window.frameElement)
       return;
 
+   // ignore if default event action was suppressed
+   if (evt.defaultPrevented)
+      return;
+
    // in an iframe, clone the event and treat it as a scroll on the frame's host
    // element
    window.frameElement.parentElement.dispatchEvent(
