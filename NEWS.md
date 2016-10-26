@@ -7,6 +7,8 @@
 * Add support for knitr code chunks defined in external .R files
 * Add support for raw relative paths such as ".." in knitr root.dir option
 * Improve scrolling past htmlwidgets in the editor
+* Always show chunk output preferences (inline or console)
+* Add support for variable height HTML widgets (non-knitr figures)
 
 ### Data Import
 
@@ -32,4 +34,5 @@
 * Allow git staging for filenames containing a space on Windows
 * Allow git staging for filenames containing a dollar sign ($)
 * Use Windows proxy settings to serve requests made by htmlwidgets
+* Server Pro: Allow server user to have group name differing from user name
 
