@@ -373,6 +373,8 @@ public class ImagePreviewer
             new DocumentChangedEvent.Handler()
       {
          private String href_ = href;
+         private String attributes_ = StringUtil.notNull(attributes);
+         
          private final Timer refreshImageTimer = new Timer()
          {
             @Override
@@ -387,6 +389,18 @@ public class ImagePreviewer
                noImageLabel.setText("(No image at path " + href_ + ")");
                image.getElement().setAttribute("src", imgSrcPathFromHref(
                      sentinel, href_));
+               
+               // parse and inject attributes
+               Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes_);
+               final Element imgEl = image.getElement();
+               for (Map.Entry<String, String> entry : parsedAttributes.entrySet())
+               {
+                  String key = entry.getKey();
+                  String val = entry.getValue();
+                  if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
+                     continue;
+                  imgEl.setAttribute(key, val);
+               }
             }
          };
          
@@ -414,13 +428,25 @@ public class ImagePreviewer
                   if (hrefToken == null)
                      return;
                   
+                  String attributes = "";
+                  int startBraceIdx = line.indexOf("){");
+                  int endBraceIdx   = line.lastIndexOf("}");
+                  if (startBraceIdx != -1 &&
+                        endBraceIdx != -1 &&
+                        endBraceIdx > startBraceIdx)
+                  {
+                     attributes = line.substring(startBraceIdx + 2, endBraceIdx).trim();
+                  }
+                  
                   // if we have the same href as before, don't update
                   // (avoid flickering + re-requests of same URL)
-                  if (hrefToken.getValue().equals(href_))
+                  if (hrefToken.getValue().equals(href_) && attributes.equals(attributes_))
                      return;
                   
                   // cache href and schedule refresh of image
                   href_ = hrefToken.getValue();
+                  attributes_ = attributes;
+                  
                   refreshImageTimer.schedule(700);
                }
                else

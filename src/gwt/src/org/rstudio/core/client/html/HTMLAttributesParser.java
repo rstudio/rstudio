@@ -17,6 +17,7 @@ package org.rstudio.core.client.html;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -28,7 +29,7 @@ public class HTMLAttributesParser
    {
       public Parser(String attributes)
       {
-         attributes_ = attributes.trim();
+         attributes_ = StringUtil.notNull(attributes).trim();
          map_ = new HashMap<String, String>();
          
          index_ = 0;
