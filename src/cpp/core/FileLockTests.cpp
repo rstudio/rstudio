@@ -48,6 +48,32 @@ void acquireLock(std::size_t threadNumber)
       s_mutex.unlock();
    }
 }
+
+void forkAndCheckLock()
+{
+   // fork process
+   pid_t child = ::fork();
+   if (child == 0)
+   {
+      // the child process should see that the file is locked
+      AdvisoryFileLock childLock;
+      CHECK(childLock.isLocked(s_lockFilePath));
+
+      // if locked, the child process should not be able to acquire the lock
+      Error error = childLock.acquire(s_lockFilePath);
+      CHECK_FALSE(error == Success());
+
+      // the lock should remain after this attempt to lock
+      CHECK(childLock.isLocked(s_lockFilePath));
+
+      // exit successfully
+      ::exit(EXIT_SUCCESS);
+   }
+   
+   // parent waits for child process to exit
+   int status;
+   ::waitpid(child, &status, 0);
+}
    
 TEST_CASE("File Locking")
 {
@@ -129,7 +155,44 @@ TEST_CASE("File Locking")
       // clean up
       s_lockFilePath.removeIfExists();
    }
+   
+   SECTION("basic advisory file lock assumptions hold true")
+   {
+      Error error;
+      
+      // create lock file
+      error = s_lockFilePath.ensureFile();
+      CHECK(error == Success());
+      
+      // ensure file is not locked
+      AdvisoryFileLock lock;
+      CHECK(s_lockFilePath.exists());
+      CHECK_FALSE(lock.isLocked(s_lockFilePath));
+      
+      // attempt to acquire that lock
+      error = lock.acquire(s_lockFilePath);
+      CHECK(error == Success());
+      
+      // check lock in child process
+      forkAndCheckLock();
 
+      // ensure lockfile still exists
+      CHECK(s_lockFilePath.exists());
+      
+      // check whether other locks kill existing locks
+      {
+         AdvisoryFileLock transientLock;
+         error = transientLock.acquire(s_lockFilePath);
+         CHECK(error == Success());
+         forkAndCheckLock();
+      }
+      
+      // TODO: this fails (the destructor above kills lock)
+      // forkAndCheckLock();
+
+      // clean up lockfile
+      s_lockFilePath.removeIfExists();
+   }
 }
 
 } // end namespace tests
