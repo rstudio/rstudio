@@ -1159,20 +1159,16 @@ public class TextEditingTargetWidget
       if (uiPrefs_.showRmdChunkOutputInline().getValue() &&
           type != RmdOutput.TYPE_SHINY)
       {
-         if (type != RmdOutput.TYPE_NOTEBOOK)
-         {
-            menu.addItem(new DocPropMenuItem(
-                  "Chunk Output Inline", docUpdateSentinel_, 
-                  true, 
-                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
-                  TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-            menu.addItem(new DocPropMenuItem(
-                  "Chunk Output in Console", docUpdateSentinel_, 
-                  false, 
-                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, 
-                  TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
-            menu.addSeparator();
-         }
+        menu.addItem(new DocPropMenuItem(
+              "Chunk Output Inline", docUpdateSentinel_,
+              true,
+              TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+              TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+        menu.addItem(new DocPropMenuItem(
+              "Chunk Output in Console", docUpdateSentinel_,
+              false,
+              TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+              TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
          
          menu.addSeparator();
 

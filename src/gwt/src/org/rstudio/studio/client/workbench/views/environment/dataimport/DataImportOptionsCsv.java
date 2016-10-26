@@ -28,7 +28,7 @@ public class DataImportOptionsCsv extends DataImportOptions
                                                           boolean escapeDouble,
                                                           boolean columnNames,
                                                           boolean trimSpaces,
-                                                          String locale,
+                                                          DataImportOptionsCsvLocale locale,
                                                           String na,
                                                           String comments,
                                                           int skip,

@@ -67,7 +67,7 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libgstreamer0.10-0 | libgstreamer1.0-0, libgstreamer-plugins-base0.10-0 | libgstreamer-plugins-base1.0-0, libssl1.0.0 | libssl1.0.2, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libjpeg62, libedit2, libgstreamer0.10-0, libgstreamer-plugins-base0.10-0, libssl1.0.0, ")
   
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "gstreamer, gstreamer-plugins-base, ")

@@ -207,6 +207,7 @@ Error fillOutputObject(const std::string& docId, const std::string& chunkId,
 #define kReHtmlWidgetContainerBegin     "<!-- htmlwidget-container-begin -->"
 #define kReHtmlWidgetContainerEnd       "<!-- htmlwidget-container-end -->"
 #define kReHtmlWidgetSizingPolicyBase64 "<!-- htmlwidget-sizing-policy-base64 (\\S+) -->"
+#define kReHeadEnd                      "</head>"
 
 class HtmlWidgetFilter : public boost::iostreams::regex_filter
 {
@@ -216,7 +217,8 @@ public:
            boost::regex(
               kReHtmlWidgetContainerBegin "|"
               kReHtmlWidgetContainerEnd "|"
-              kReHtmlWidgetSizingPolicyBase64
+              kReHtmlWidgetSizingPolicyBase64 "|"
+              kReHeadEnd 
            ),
            boost::bind(&HtmlWidgetFilter::substitute, this, _1))
    {
@@ -235,6 +237,9 @@ private:
          return "<div id=\"htmlwidget_container\">";
       else if (matchString == kReHtmlWidgetContainerEnd)
          return "</div>";
+      else if (matchString == kReHeadEnd)
+         return "<script type=\"text/javascript\">" + scrollScript() + 
+                "</script>" + matchString;
       
       if (n < 2)
          return match[1].str();
@@ -245,6 +250,11 @@ private:
       if (error)
          LOG_ERROR(error);
       return decoded;
+   }
+
+   std::string scrollScript()
+   {
+      return module_context::resourceFileAsString("propagate_scroll.js");
    }
 };
 

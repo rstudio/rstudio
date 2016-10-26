@@ -402,9 +402,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-   # rsiframe
-   install(DIRECTORY "resources/rsiframe"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # presentation
    install(DIRECTORY "resources/presentation"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
@@ -461,10 +458,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
 
    # help resources
    install(DIRECTORY "resources/help_resources"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
-
-   # notebook resources
-   install(DIRECTORY "resources/notebook"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pagedtable

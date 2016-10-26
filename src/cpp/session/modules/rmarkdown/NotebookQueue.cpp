@@ -604,21 +604,17 @@ private:
       if (TYPEOF(resultSEXP) != NILSXP)
       {
          std::string workingDir = r::sexp::safeAsString(resultSEXP, "");
-         FilePath dir;
-         if (!workingDir.empty())
-            dir = module_context::resolveAliasedPath(workingDir);
-         if (dir.exists())
-         {
-            // write working dir to the cache
-            Error error = setChunkValue(docPath, execContext_->docId(), 
-                  kChunkWorkingDir, workingDir);
-            if (error)
-               LOG_ERROR(error);
 
-            // update running queue if present
-            if (!queue_.empty())
-               queue_.front()->setWorkingDir(dir);
-         }
+         // write working dir to the cache (just use unresolved string; the
+         // string will be resolved to a path in setWorkingDir)
+         Error error = setChunkValue(docPath, execContext_->docId(), 
+               kChunkWorkingDir, workingDir);
+         if (error)
+            LOG_ERROR(error);
+
+         // update running queue if present
+         if (!queue_.empty() && !workingDir.empty())
+            queue_.front()->setWorkingDir(workingDir);
       }
       else if (!error)
       {
@@ -629,7 +625,7 @@ private:
          if (error)
             LOG_ERROR(error);
          if (!queue_.empty())
-            queue_.front()->setWorkingDir(FilePath());
+            queue_.front()->setWorkingDir("");
       }
    }
 

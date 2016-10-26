@@ -4,9 +4,13 @@
 
 * Improved sizing of htmlwidgets in R Notebooks
 * Allow changing to R Notebook mode without closing and reopening the file
+* Add support for knitr code chunks defined in external .R files
+* Add support for raw relative paths such as ".." in knitr root.dir option
+* Improve scrolling past htmlwidgets in the editor
 
 ### Data Import
 
+* Add support for all readr locale settings (date/time format, decimal, etc.)
 * Prompt for a comma-separated list of factors instead of a collection
 
 ### Miscellaneous
@@ -14,6 +18,7 @@
 * Add Ctrl+Tab / Ctrl+Shift+Tab shortcuts to navigate tabs (Desktop only)
 * Include .scala files in fuzzy file finder (Ctrl + .)
 * Add support for pre-rendered Shiny documents (shiny_prerendered)
+* Update Stan editor mode to support Stan 2.12.0
 
 ### Bug Fixes
 
@@ -24,4 +29,7 @@
 * Fix positioning of editor toolbar buttons in Safari and Mac OS client
 * Fix incorrect height of R Notebook outputs when run above viewport
 * Detect multi-line data.table chains properly  
+* Allow git staging for filenames containing a space on Windows
+* Allow git staging for filenames containing a dollar sign ($)
+* Use Windows proxy settings to serve requests made by htmlwidgets
 

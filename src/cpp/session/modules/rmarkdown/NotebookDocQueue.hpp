@@ -52,7 +52,7 @@ public:
 
    core::json::Object defaultChunkOptions() const;
    void setDefaultChunkOptions(const core::json::Object& options);
-   void setWorkingDir (const core::FilePath& workingDir);
+   void setWorkingDir (const std::string& workingDir);
    void setExternalChunks(const core::json::Object& chunks);
 
    // accessors

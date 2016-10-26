@@ -211,13 +211,14 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("stringr", "0.6"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
-      deps.add(Dependency.cranPackage("htmltools", "0.2.4"));
+      deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
       deps.add(Dependency.cranPackage("knitr", "1.14", true));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
       deps.add(Dependency.cranPackage("tibble", "1.1"));
+      deps.add(Dependency.cranPackage("rprojroot", "1.0"));
       deps.add(Dependency.embeddedPackage("rmarkdown"));
       return deps;
    }
@@ -257,9 +258,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
        withDependencies(
           "Checking installed packages",
           userPrompt,
-          shinyDependenciesArray(
-              "0.11.0", // shiny version
-              "0.3.5"), // htmltools version
+          shinyDependenciesArray(),
           true,
           new CommandWithArg<Boolean>()
           {
@@ -276,9 +275,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withShinyAddins(final Command command)
    {
       // define dependencies
-      ArrayList<Dependency> deps = shinyDependencies(
-                                    "0.13", // shiny version
-                                    "0.3.5"); // htmltools version
+      ArrayList<Dependency> deps = shinyDependencies(); // htmltools version
       deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
       deps.add(Dependency.cranPackage("rstudioapi", "0.5", true));
       
@@ -299,16 +296,13 @@ public class DependencyManager implements InstallShinyEvent.Handler,
      );
    }
    
-   private Dependency[] shinyDependenciesArray(String shinyVersion,
-                                               String htmltoolsVersion)
+   private Dependency[] shinyDependenciesArray()
    {
-      ArrayList<Dependency> deps = shinyDependencies(shinyVersion,
-                                                     htmltoolsVersion);
+      ArrayList<Dependency> deps = shinyDependencies();
       return deps.toArray(new Dependency[deps.size()]);
    }
 
-   private ArrayList<Dependency> shinyDependencies(String shinyVersion,
-         String htmltoolsVersion)
+   private ArrayList<Dependency> shinyDependencies()
          {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
@@ -319,8 +313,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
       deps.add(Dependency.cranPackage("sourcetools", "0.1.5"));
-      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion));
-      deps.add(Dependency.cranPackage("shiny", shinyVersion, true));
+      deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
+      deps.add(Dependency.cranPackage("shiny", "0.13", true));
       return deps;
          }
    
