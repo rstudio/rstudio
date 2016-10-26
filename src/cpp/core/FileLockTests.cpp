@@ -189,6 +189,14 @@ TEST_CASE("File Locking")
       
       // TODO: this fails (the destructor above kills lock)
       // forkAndCheckLock();
+      
+      // ensure lock acquired
+      error = lock.acquire(s_lockFilePath);
+      CHECK(error == Success());
+      
+      // TODO: checking if a file is locked from same process will release lock
+      // lock.isLocked(s_lockFilePath);
+      // forkAndCheckLock();
 
       // clean up lockfile
       s_lockFilePath.removeIfExists();
