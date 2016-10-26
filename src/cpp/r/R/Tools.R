@@ -417,9 +417,11 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
       if (namespace && package %in% loadedNamespaces()) {
          ns <- asNamespace(package)
-         unlockBinding(name, ns)
-         assign(name, new, envir = ns)
-         lockBinding(name, ns)
+         if (exists(name, envir = ns, mode="function")) {
+            unlockBinding(name, ns)
+            assign(name, new, envir = ns)
+            lockBinding(name, ns)
+         }
       }
    }
    else
