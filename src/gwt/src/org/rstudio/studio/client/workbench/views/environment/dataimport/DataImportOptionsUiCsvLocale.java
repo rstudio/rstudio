@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -63,14 +64,15 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    {
       if (locale == null) return;
       
-      for (int idxEncoding = 0; idxEncoding < encoding_.getItemCount(); idxEncoding ++) {
+      int fixedEncodings = encoding_.getItemCount();
+      for (int idxEncoding = 0; idxEncoding < fixedEncodings; idxEncoding ++) {
          if (encoding_.getValue(idxEncoding) == locale.getEncoding()) {
             encoding_.setSelectedIndex(idxEncoding);
             break;
          }
          
-         if (encoding_.getItemText(idxEncoding) == "Other") {
-            replaceOtherEncodingItem(idxEncoding, locale.getEncoding());
+         if (idxEncoding == fixedEncodings - 1) {
+            addOtherEncodingItem(idxEncoding, locale.getEncoding());
          }
       }
       
@@ -119,26 +121,27 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
 
    private void initializeDefaults()
    {
+      // load .rs.iconvcommon()
       encoding_.addItem("ASCII", "ASCII");
-      encoding_.addItem("UTF-16", "UTF-16");
-      encoding_.addItem("UTF-16BE", "UTF-16BE");
-      encoding_.addItem("UTF-16LE", "UTF-16LE");
-      encoding_.addItem("UTF-32", "UTF-32");
-      encoding_.addItem("UTF-32BE", "UTF-32BE");
-      encoding_.addItem("UTF-32LE", "UTF-32LE");
-      encoding_.addItem("UTF-7", "UTF-7");
       encoding_.addItem("UTF-8", "UTF-8");
-      encoding_.addItem("UTF-8-MAC", "UTF-8-MAC");
-      encoding_.addItem("UTF8", "UTF8");
-      encoding_.addItem("UTF8-MAC", "UTF8-MAC");
-      encoding_.addItem("Other", "");
-      
-      encoding_.setSelectedIndex(8);
+      encoding_.addItem("ISO-8859-1", "ISO-8859-1");
+      encoding_.addItem("WINDOWS-1252", "WINDOWS-1252");
+      encoding_.addItem("SHIFT-JIS", "SHIFT-JIS");
+      encoding_.addItem("ISO-2022-JP", "ISO-2022-JP");
+      encoding_.addItem("BIG5", "BIG5");
+      encoding_.addItem("ISO-2022-KR", "ISO-2022-KR");
+      encoding_.addItem("ISO-8859-7", "ISO-8859-7");
+      encoding_.addItem("GB2312", "GB2312");
+      encoding_.addItem("GB18030", "GB18030");
+      encoding_.addItem("ISO-8859-2", "ISO-8859-2");
+
+      encoding_.addItem(otherLabel, "");
+
+      encoding_.setSelectedIndex(1);
    }
    
-   private void replaceOtherEncodingItem(int selectedIndex, String otherEncoding) {
-      encoding_.removeItem(selectedIndex);
-      encoding_.insertItem("Other", otherEncoding, selectedIndex);
+   private void addOtherEncodingItem(int selectedIndex, String otherEncoding) {
+      encoding_.insertItem(otherEncoding, otherEncoding, selectedIndex);
       encoding_.setSelectedIndex(selectedIndex);
    }
 
@@ -149,7 +152,7 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
          @Override
          public void onChange(ChangeEvent arg0)
          {
-            if (encoding_.getSelectedItemText() == "Other")
+            if (encoding_.getSelectedItemText() == otherLabel)
             {
                globalDisplay_.promptForText(
                   "Encoding Identifier",
@@ -160,8 +163,15 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
                      @Override
                      public void execute(final String otherEncoding)
                      {
+                        for (int idxEncoding = 0; idxEncoding < encoding_.getItemCount(); idxEncoding++) {
+                           if (encoding_.getValue(idxEncoding) == otherEncoding) {
+                              encoding_.setSelectedIndex(idxEncoding);
+                              return;
+                           }
+                        }
+
                         int selectedIndex = encoding_.getSelectedIndex();
-                        replaceOtherEncodingItem(selectedIndex, otherEncoding);
+                        addOtherEncodingItem(selectedIndex - 1, otherEncoding);
                      }
                   }
                );
@@ -199,4 +209,6 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    private Widget widget_;
    private DataImportOptionsCsvLocale initialLocale_;
    private GlobalDisplay globalDisplay_;
+
+   private final String otherLabel = "Other...";
 }
