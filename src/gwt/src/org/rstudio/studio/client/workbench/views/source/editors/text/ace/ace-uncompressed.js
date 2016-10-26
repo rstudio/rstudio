@@ -30089,7 +30089,7 @@ function DefaultHandlers(mouseHandler) {
         pos = pos || this.editor.renderer.screenToTextCoordinates(this.x, this.y);
         var editor = this.editor;
         editor.$blockScrolling++;
-        if (this.mousedownEvent.getShiftKey())
+        if (this.mousedownEvent && this.mousedownEvent.getShiftKey())
             editor.selection.selectToPosition(pos);
         else if (!waitForClickSelection)
             editor.selection.moveToPosition(pos);

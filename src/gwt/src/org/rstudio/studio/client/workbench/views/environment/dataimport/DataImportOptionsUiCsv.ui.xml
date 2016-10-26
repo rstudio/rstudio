@@ -143,7 +143,7 @@
                     <td>Locale:</td>
                     <td>
                         <g:Button ui:field="localeButton_" styleName="{style.optionsListBox}">
-                            Configure
+                            Configure...
                         </g:Button>
                     </td>
                 </tr>

@@ -1,5 +1,5 @@
 /*
- * PosixShellUtilsTests.cpp
+ * PosixGroup.hpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -13,35 +13,39 @@
  *
  */
 
-#ifndef _WIN32
+#ifndef CORE_SYSTEM_POSIX_GROUP_HPP
+#define CORE_SYSTEM_POSIX_GROUP_HPP
 
-#include <tests/TestThat.hpp>
-
-#include <iostream>
-
-#include <core/Error.hpp>
-
-#include <core/system/ShellUtils.hpp>
+#include <string>
+#include <vector>
+#include <unistd.h>
+#include "PosixUser.hpp"
 
 namespace rstudio {
 namespace core {
-namespace shell_utils {
-namespace tests {
-
-context("Shell Escaping")
-{
-   test_that("Commands with special characters are escaped")
-   {
-      std::string dollars = "$$$";
-      std::string escaped  = escape(dollars);
-      std::string expected = "\"\\$\\$\\$\"";
-      expect_true(escaped == expected);
-   }
+   class Error;
+}
 }
 
-} // end namespace tests
-} // end namespace shell_utils
-} // end namespace core
-} // end namespace rstudio
+namespace rstudio {
+namespace core {
+namespace system {
+namespace group {
 
-#endif // _WIN32
+struct Group
+{
+   GidType groupId;
+   std::string name;
+   std::vector<std::string> members;
+};
+
+Error groupFromName(const std::string& name, Group* pGroup);
+Error groupFromId(gid_t gid, Group* pGroup);
+
+} // namespace group
+} // namespace system
+} // namespace core
+} // namespace rstudio
+
+#endif // CORE_SYSTEM_POSIX_GROUP_HPP
+

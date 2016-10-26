@@ -133,6 +133,11 @@
    # force a responsive viewer sizing policy
    x$sizingPolicy$viewer.padding <- 0
    x$sizingPolicy$viewer.fill <- TRUE
+
+   # make width dinamic to size correctly non-figured
+   if (!is.null(x$sizingPolicy$knitr) && identical(x$sizingPolicy$knitr$figure, FALSE)) {
+      x$sizingPolicy$defaultWidth <- "auto"
+   }
    
    # collect knitr options
    knitrOptions <- knitr::opts_current$get()

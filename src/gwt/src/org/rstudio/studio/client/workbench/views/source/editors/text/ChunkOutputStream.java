@@ -250,10 +250,11 @@ public class ChunkOutputStream extends FlowPanel
             onRenderComplete.execute();
             
             if (!knitrFigure) {
-               frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.SCROLL);
-               
                int contentHeight = frame.getWindow().getDocument().getBody().getOffsetHeight();
                frame.getElement().getStyle().setHeight(contentHeight, Unit.PX);
+
+               frame.getElement().getStyle().setOverflow(Overflow.HIDDEN);
+               frame.getWindow().getDocument().getBody().getStyle().setOverflow(Overflow.HIDDEN);
             }
             
             onHeightChanged();

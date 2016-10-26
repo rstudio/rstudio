@@ -68,11 +68,11 @@
 
             localeOrNull <- function(paramName, jsonName) {
                if (!identical(localeDefaults[[paramName]], optionValue[[jsonName]])) {
-                  if (typeof(localeDefaults[[paramName]]) == "logical") {
-                     paste(paramName, " = ", optionValue[[jsonName]])
+                  if (typeof(localeDefaults[[paramName]]) == "character") {
+                     paste(paramName, " = \"", optionValue[[jsonName]], "\"", sep = "")
                   }
                   else {
-                     paste(paramName, " = \"", optionValue[[jsonName]], "\"", sep = "")
+                     paste(paramName, " = ", optionValue[[jsonName]])
                   }
                }
                else NULL
