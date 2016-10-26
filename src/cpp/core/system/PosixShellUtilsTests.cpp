@@ -13,6 +13,8 @@
  *
  */
 
+#ifndef _WIN32
+
 #include <tests/TestThat.hpp>
 
 #include <iostream>
@@ -41,3 +43,5 @@ context("Shell Escaping")
 } // end namespace shell_utils
 } // end namespace core
 } // end namespace rstudio
+
+#endif // _WIN32
