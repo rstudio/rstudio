@@ -234,9 +234,8 @@ assign(x = ".rs.acCompletionTypes",
       if (!identical(tokenSlashIndices, -1L))
       {
          maxIndex <- max(tokenSlashIndices)
-         directory <- suppressWarnings(
-            .rs.normalizePath(file.path(path, substring(token, 1, maxIndex - 1)))
-         )
+         fullPath <- file.path(path, substring(token, 1, maxIndex - 1))
+         directory <- suppressWarnings(.rs.normalizePath(fullPath, winslash = "/"))
       }
       else
       {
