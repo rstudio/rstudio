@@ -916,7 +916,7 @@
 
 .rs.addFunction("doListIndex", function(routine, term, inDirectory, maxCount)
 {
-   if (!.rs.hasFileMonitor())
+   if (!.rs.hasFileMonitor() || is.null(inDirectory))
       return(NULL)
    
    inDirectory <- suppressWarnings(.rs.normalizePath(inDirectory))
