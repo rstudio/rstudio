@@ -140,6 +140,11 @@ a.pagedtable-index-current {
   text-overflow: ellipsis;
 }
 
+.pagedtable-header-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pagedtable-header-type {
   opacity: 0.5;
   font-weight: 400;
