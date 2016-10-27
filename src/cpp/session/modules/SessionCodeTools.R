@@ -914,37 +914,36 @@
    .Call("rs_hasFileMonitor")
 })
 
+.rs.addFunction("doListIndex", function(routine, term, inDirectory, maxCount)
+{
+   if (!.rs.hasFileMonitor())
+      return(NULL)
+   
+   inDirectory <- suppressWarnings(.rs.normalizePath(inDirectory))
+   inDirectory <- gsub("[/\\\\]+$", "", inDirectory)
+   
+   .Call(routine, term, inDirectory, as.integer(maxCount))
+})
+
 .rs.addFunction("listIndexedFiles", function(term = "",
                                              inDirectory = .rs.getProjectDirectory(),
                                              maxCount = 200L)
 {
-   if (is.null(.rs.getProjectDirectory()))
-      return(NULL)
-   
-   .Call("rs_listIndexedFiles",
-         term,
-         suppressWarnings(.rs.normalizePath(inDirectory)),
-         as.integer(maxCount))
+   .rs.doListIndex("rs_listIndexedFiles", term, inDirectory, as.integer(maxCount))
 })
 
 .rs.addFunction("listIndexedFolders", function(term = "",
                                                inDirectory = .rs.getProjectDirectory(),
                                                maxCount = 200L)
 {
-   if (is.null(inDirectory))
-      return(character())
-   
-   .Call("rs_listIndexedFolders", term, inDirectory, maxCount)
+   .rs.doListIndex("rs_listIndexedFolders", term, inDirectory, maxCount)
 })
 
 .rs.addFunction("listIndexedFilesAndFolders", function(term = "",
                                                        inDirectory = .rs.getProjectDirectory(),
                                                        maxCount = 200L)
 {
-   if (is.null(inDirectory))
-      return(character())
-   
-   .Call("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
+   .rs.doListIndex("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
 })
 
 .rs.addFunction("doGetIndex", function(term = "",
@@ -969,7 +968,7 @@
       ))
    }
    
-   paths <- suppressWarnings(.rs.normalizePath(index$paths))
+   paths <- suppressWarnings(.rs.normalizePath(index$paths, winslash = "/"))
    scores <- .rs.scoreMatches(basename(paths), term)
    index$paths <- paths[order(scores)]
    index
