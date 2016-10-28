@@ -29,6 +29,7 @@
 
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileUtils.hpp>
 
 #include "Message.hpp"
 #include "Request.hpp"
@@ -273,8 +274,24 @@ public:
       if (request.acceptsEncoding(kGzipEncoding))
          setContentEncoding(kGzipEncoding);
       
-      // set body from file
-      Error error = setBody(filePath, filter);
+      Error error;
+
+      // Apply padding to fix QT short response issues
+      if (filePath.mimeContentType() == "text/html")
+      {
+          std::string body = file_utils::readFile(filePath);
+          if (body.length() <= 1024) {
+             body = body + std::string(1024 - body.length(), ' ');
+          }
+
+          error = setBody(body, filter);
+      }
+      else
+      {
+          // set body from file
+          error = setBody(filePath, filter);
+      }
+
       if (error)
          setError(status::InternalServerError, error.code().message());
    }
