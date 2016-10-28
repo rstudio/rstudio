@@ -465,6 +465,11 @@ public:
       return standalone_;
    }
 
+   std::string launcherToken() const
+   {
+      return launcherToken_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -589,6 +594,7 @@ private:
    bool projectSharingEnabled_;
    std::string userHomePath_;
    std::string userScratchPath_;   
+   std::string launcherToken_;
 
    // overrides
    std::string initialWorkingDirOverride_;

@@ -1,7 +1,8 @@
 /*
+ *
  * SessionSourceDatabaseSupervisor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -155,8 +156,8 @@ Error removeSessionDir(const FilePath& sessionDir)
 
 FilePath generateSessionDirPath()
 {
-   return file_utils::uniqueFilePath(sourceDatabaseRoot(),
-                                     kSessionDirPrefix);
+   return sourceDatabaseRoot().complete(kSessionDirPrefix +
+         module_context::activeSession().id());
 }
 
 bool isNotSessionDir(const FilePath& filePath)
@@ -412,6 +413,17 @@ Error removeAndRecreate(const FilePath& dir)
 
 Error attachToSourceDatabase(FilePath* pSessionDir)
 {  
+   // this session may already have a source database; if it does, acquire a
+   // lock and then use it
+   FilePath existingSdb = generateSessionDirPath();
+   if (existingSdb.exists())
+   {
+      *pSessionDir = existingSdb;
+      Error error = sessionDirLock().acquire(sessionLockFilePath(*pSessionDir));
+      if (error)
+         return(error);
+   }
+
    // check whether we will need to migrate -- ensure we do this only
    // one time so that if for whatever reason we can't migrate the
    // old source database we don't get stuck trying to do it every
@@ -537,7 +549,6 @@ Error detachFromSourceDatabase()
    // remove the session directory
    return removeSessionDir(sessionDir);
 }
-
 
 } // namespace supervisor
 } // namespace source_database

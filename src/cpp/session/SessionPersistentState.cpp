@@ -32,7 +32,6 @@ namespace session {
 namespace {
 const char * const kActiveClientId = "active-client-id";
 const char * const kAbend = "abend";
-const char * const kVirtualSessionId = "virtual-session-id";
 }
    
 PersistentState& persistentState()
@@ -91,21 +90,6 @@ std::string PersistentState::newActiveClientId()
    {
       return desktopClientId_;
    }
-}
-
-std::string PersistentState::virtualSessionId()
-{
-   std::string sessionId = sessionSettings_.get(kVirtualSessionId);
-   if (!sessionId.empty())
-      return sessionId;
-   return newVirtualSessionId();
-}
-
-std::string PersistentState::newVirtualSessionId()
-{
-   std::string sessionId = core::system::generateShortenedUuid();
-   sessionSettings_.set(kVirtualSessionId, sessionId); 
-   return sessionId;
 }
 
 // abend tracking only applies to server mode

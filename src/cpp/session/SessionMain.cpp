@@ -709,16 +709,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["connection_list"] = modules::connections::connectionsAsJson();
    sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
 
-   std::string sessionId = module_context::activeSession().id();
-   if (sessionId.empty())
-   {
-      // create virtual session ID if we don't have an explicitly assigned ID
-      sessionId = resumed ?
-         rsession::persistentState().virtualSessionId() :
-         rsession::persistentState().newVirtualSessionId();
-
-   }
-   sessionInfo["session_id"] = sessionId;
+   sessionInfo["session_id"] = module_context::activeSession().id();
 
    module_context::events().onSessionInfo(&sessionInfo);
 

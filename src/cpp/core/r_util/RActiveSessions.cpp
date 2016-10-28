@@ -197,13 +197,14 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
                                                                 scratchPath));
    else
-      return emptySession();
+      return emptySession(id);
 }
 
 
-boost::shared_ptr<ActiveSession> ActiveSessions::emptySession()
+boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(
+      const std::string& id)
 {
-   return boost::shared_ptr<ActiveSession>(new ActiveSession());
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
 

@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -775,11 +775,8 @@ void onQuit()
    Error error = supervisor::saveMostRecentDocuments();
    if (error)
       LOG_ERROR(error);
-}
 
-void onShutdown(bool)
-{
-   Error error = supervisor::detachFromSourceDatabase();
+   error = supervisor::detachFromSourceDatabase();
    if (error)
       LOG_ERROR(error);
 }
@@ -858,7 +855,6 @@ Error initialize()
 
    // signup for the quit and shutdown events
    module_context::events().onQuit.connect(onQuit);
-   module_context::events().onShutdown.connect(onShutdown);
 
    return Success();
 }

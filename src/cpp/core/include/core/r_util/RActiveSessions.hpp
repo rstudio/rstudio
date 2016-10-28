@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,11 @@ class ActiveSession : boost::noncopyable
 private:
    friend class ActiveSessions;
    ActiveSession() {}
+
+   explicit ActiveSession(const std::string& id) : id_(id) 
+   {
+   }
+
    explicit ActiveSession(const std::string& id, const FilePath& scratchPath)
       : id_(id), scratchPath_(scratchPath)
    {
@@ -337,7 +342,7 @@ public:
 
    FilePath storagePath() const { return storagePath_; }
 
-   static boost::shared_ptr<ActiveSession> emptySession();
+   static boost::shared_ptr<ActiveSession> emptySession(const std::string& id);
 
 private:
    core::FilePath storagePath_;

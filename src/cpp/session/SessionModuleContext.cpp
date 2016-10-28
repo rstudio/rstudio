@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,7 @@
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionOptions.hpp>
+#include <session/SessionPersistentState.hpp>
 #include "SessionClientEventQueue.hpp"
 
 #include <session/projects/SessionProjects.hpp>
@@ -1417,7 +1418,12 @@ r_util::ActiveSession& activeSession()
       if (!id.empty())
          pSession = activeSessions().get(id);
       else
-         pSession = activeSessions().emptySession();
+      {
+         // if no active session, create one and use the launcher token as a
+         // synthetic session ID
+         pSession = activeSessions().emptySession(
+               options().launcherToken());
+      }
    }
    return *pSession;
 }
