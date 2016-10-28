@@ -50,7 +50,11 @@ else
    then
       cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
    else
-      ARCH=`uname -m`
+      BITNESS=`getconf LONG_BIT`
+      case "$BITNESS" in
+          32) ARCH='i686' ;;
+          64) ARCH='x86_64' ;;
+      esac
       # copy binaries for appropriate distro/arch. 
       if grep -q -i -s "release 5" /etc/redhat-release
       then
