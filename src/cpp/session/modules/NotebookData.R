@@ -73,6 +73,10 @@
 
     x <- .rs.toDataFrame(head(x, max.print), "x", flatten = FALSE, force = TRUE)
 
+    if (NCOL(x) > max.print) {
+      x <- x[,c(1:max.print)]
+    }
+
     save(
       x,
       options,
