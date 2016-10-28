@@ -42,6 +42,7 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -258,6 +259,8 @@ public class ChunkOutputStream extends FlowPanel
             }
             
             onHeightChanged();
+
+            updateHtmlChunkTheme(frame, ChunkOutputWidget.getEditorColors());
          };
       });
    }
@@ -381,6 +384,33 @@ public class ChunkOutputStream extends FlowPanel
          }
       }
    }
+
+   private void updateHtmlChunkTheme(
+      final ChunkOutputFrame frame,
+      final EditorThemeListener.Colors colors)
+   {
+      if (colors == null) return;
+
+      Timer updateThemeTimer = new Timer() {
+         private int retryCount_ = 0;
+
+         @Override
+         public void run()
+         {
+            Element body = frame.getDocument().getBody();
+
+            if (body.getChildCount() > 0) {
+               Style bodyStyle = body.getStyle();
+               bodyStyle.setColor(colors.foreground);
+            } else if (retryCount_ < 50) {
+               retryCount_++;
+               schedule(100);
+            }
+         }
+      };
+      
+      updateThemeTimer.schedule(100);
+   }
    
    @Override
    public void onEditorThemeChanged(EditorThemeListener.Colors colors)
@@ -391,8 +421,7 @@ public class ChunkOutputStream extends FlowPanel
          if (w instanceof ChunkOutputFrame)
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)w;
-            Style bodyStyle = frame.getDocument().getBody().getStyle();
-            bodyStyle.setColor(colors.foreground);
+            updateHtmlChunkTheme(frame, colors);
          }
          else if (w instanceof EditorThemeListener)
          {

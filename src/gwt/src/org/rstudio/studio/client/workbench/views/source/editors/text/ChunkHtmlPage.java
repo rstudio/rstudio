@@ -107,17 +107,43 @@ public class ChunkHtmlPage extends ChunkOutputPage
    public void onSelected()
    {
       // no action necessary for HTML widgets
+      updateHtmlPageTheme();
    }
 
    @Override
    public void onEditorThemeChanged(Colors colors)
    {
-      Element body = frame_.getDocument().getBody();
-      Style bodyStyle = body.getStyle();
-      bodyStyle.setColor(colors.foreground);
+      themeColors_ = colors;
+      updateHtmlPageTheme();
+   }
+
+   private void updateHtmlPageTheme()
+   {
+      if (themeColors_ == null) return;
+
+      Timer updateThemeTimer = new Timer() {
+         private int retryCount_ = 0;
+
+         @Override
+         public void run()
+         {
+            Element body = frame_.getDocument().getBody();
+
+            if (body.getChildCount() > 0) {
+               Style bodyStyle = body.getStyle();
+               bodyStyle.setColor(themeColors_.foreground);
+            } else if (retryCount_ < 50) {
+               retryCount_++;
+               schedule(100);
+            }
+         }
+      };
+      
+      updateThemeTimer.schedule(100);
    }
 
    private ChunkOutputFrame frame_;
    final private Widget thumbnail_;
    final private Widget content_;
+   private Colors themeColors_ = null;
 }
