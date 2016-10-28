@@ -378,14 +378,6 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
-      // temporary feature flag for terminal: if set, create the terminal tab
-      // instead of showing a modal shell
-      if (pPrefs_.get().enableXTerm().getValue())
-      {
-         eventBus_.fireEvent(new CreateTerminalEvent());
-         return;
-      }
-
       if (Desktop.isDesktop())
       {
          server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
@@ -422,6 +414,12 @@ public class Workbench implements BusyHandler,
       }
    }
    
+   @Handler
+   public void onNewTerminal()
+   {
+         eventBus_.fireEvent(new CreateTerminalEvent());
+   }
+      
    @Handler
    public void onBrowseAddins()
    {
