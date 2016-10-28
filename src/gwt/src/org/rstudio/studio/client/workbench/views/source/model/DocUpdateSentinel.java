@@ -27,6 +27,7 @@ import com.google.gwt.user.client.Window.ClosingHandler;
 
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.js.JsObject;
@@ -117,12 +118,11 @@ public class DocUpdateSentinel
       propertyChangeHandlers_ = 
             new HashMap<String, ValueChangeHandlerManager<String>>();
 
-      bufferedCommand_ = new TimeBufferedCommand(2000)
+      autosaver_ = new DebouncedCommand(2000)
       {
          @Override
-         protected void performAction(boolean shouldSchedulePassive)
+         protected void execute()
          {
-            assert !shouldSchedulePassive;
             maybeAutoSave();
          }
       };
@@ -265,7 +265,7 @@ public class DocUpdateSentinel
                                           String encoding,
                                           final ProgressIndicator progress)
    {
-      bufferedCommand_.suspend();
+      autosaver_.suspend();
       doSave(path, fileType, encoding, new ProgressIndicator()
       {
          public void onProgress(String message)
@@ -281,21 +281,21 @@ public class DocUpdateSentinel
          
          public void clearProgress()
          {
-            bufferedCommand_.resume();
+            autosaver_.resume();
             if (progress != null)
                progress.clearProgress();
          }
 
          public void onCompleted()
          {
-            bufferedCommand_.resume();
+            autosaver_.resume();
             if (progress != null)
                progress.onCompleted();
          }
 
          public void onError(String message)
          {
-            bufferedCommand_.resume();
+            autosaver_.resume();
             if (progress != null)
                progress.onError(message);
          }
@@ -675,14 +675,14 @@ public class DocUpdateSentinel
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
       changesPending_ = true;
-      bufferedCommand_.nudge();
+      autosaver_.nudge();
    }
 
    @Override
    public void onFoldChange(FoldChangeEvent event)
    {
       changesPending_ = true;
-      bufferedCommand_.nudge();
+      autosaver_.nudge();
    }
    
    public String getPath()
@@ -702,7 +702,7 @@ public class DocUpdateSentinel
 
    public void stop()
    {
-      bufferedCommand_.suspend();
+      autosaver_.suspend();
       closeHandlerReg_.removeHandler();
       lastChanceSaveHandlerReg_.removeHandler();
    }
@@ -763,7 +763,7 @@ public class DocUpdateSentinel
    private final ProgressIndicator progress_;
    private final DirtyState dirtyState_;
    private final EventBus eventBus_;
-   private final TimeBufferedCommand bufferedCommand_;
+   private final DebouncedCommand autosaver_;
    private final HandlerRegistration closeHandlerReg_;
    private HandlerRegistration lastChanceSaveHandlerReg_;
    private final HashMap<String, ValueChangeHandlerManager<String>> 
