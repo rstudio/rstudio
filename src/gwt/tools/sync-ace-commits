@@ -103,6 +103,7 @@ git merge --strategy-option theirs \
 git merge \
     origin/patch/isearch-cursor-position \
     origin/patch/line-widget-shift-click-exception \
+    origin/patch/line-widget-performance \
     -m "merge once more"
 
 ## git merge \
