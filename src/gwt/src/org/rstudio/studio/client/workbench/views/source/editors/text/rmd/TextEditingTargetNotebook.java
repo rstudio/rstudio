@@ -28,9 +28,9 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
-import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
@@ -113,7 +113,7 @@ public class TextEditingTargetNotebook
                           ChunkContextChangeEvent.Handler,
                           ResizeHandler,
                           InterruptStatusEvent.Handler,
-                          RestartStatusEvent.Handler,
+                          DeferredInitCompletedEvent.Handler,
                           ScopeTreeReadyEvent.Handler,
                           PinnedLineWidget.Host,
                           SourceDocAddedEvent.Handler,
@@ -287,7 +287,7 @@ public class TextEditingTargetNotebook
       releaseOnDismiss_.add(
             events_.addHandler(InterruptStatusEvent.TYPE, this));
       releaseOnDismiss_.add(
-            events_.addHandler(RestartStatusEvent.TYPE, this));
+            events_.addHandler(DeferredInitCompletedEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(SourceDocAddedEvent.TYPE, this));
       releaseOnDismiss_.add(
@@ -911,27 +911,24 @@ public class TextEditingTargetNotebook
    }
 
    @Override
-   public void onRestartStatus(RestartStatusEvent event)
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent event)
    {
-      if (event.getStatus() == RestartStatusEvent.RESTART_COMPLETED)
+      // if we had recorded a run of the setup chunk prior to restart, clear
+      // it
+      if (!StringUtil.isNullOrEmpty(setupCrc32_))
+         writeSetupCrc32("");
+
+      // clean execution state
+      clearChunkExecQueue();
+      cleanCurrentExecChunk();
+
+      // run any queued command
+      if (postRestartCommand_ != null)
       {
-         // if we had recorded a run of the setup chunk prior to restart, clear
-         // it
-         if (!StringUtil.isNullOrEmpty(setupCrc32_))
-            writeSetupCrc32("");
-         
-         // clean execution state
-         clearChunkExecQueue();
-         cleanCurrentExecChunk();
-         
-         // run any queued command
-         if (postRestartCommand_ != null)
-         {
-            if (postRestartCommand_.isEnabled())
-               postRestartCommand_.execute();
-            postRestartCommand_ = null;
-            return;
-         }
+         if (postRestartCommand_.isEnabled())
+            postRestartCommand_.execute();
+         postRestartCommand_ = null;
+         return;
       }
    }
    
