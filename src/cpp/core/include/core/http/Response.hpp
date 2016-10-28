@@ -27,6 +27,7 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #endif
 
+#include <core/BrowserUtils.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileUtils.hpp>
@@ -168,7 +169,8 @@ public:
    template <typename Filter>
    Error setBody(std::istream& is, 
                  const Filter& filter, 
-                 std::streamsize buffSize = 128) 
+                 std::streamsize buffSize = 128,
+                 bool padding = false)
    {
       try
       {
@@ -201,6 +203,12 @@ public:
          
          // set body 
          body_ = bodyStream.str();
+
+         if (padding && body_.length() < 1024)
+         {
+            body_ = body_ + std::string(1024 - body_.length(), ' ');
+         }
+
          setContentLength(body_.length());
          
          // return success
@@ -224,7 +232,8 @@ public:
    template <typename Filter>
    Error setBody(const FilePath& filePath, 
                  const Filter& filter,
-                 std::streamsize buffSize = 128)
+                 std::streamsize buffSize = 128,
+                 bool padding = false)
    {
       // open the file
       boost::shared_ptr<std::istream> pIfs;
@@ -235,7 +244,7 @@ public:
       // send the file from its stream
       try
       {
-         return setBody(*pIfs, filter, buffSize);
+         return setBody(*pIfs, filter, buffSize, padding);
       }
       catch(const std::exception& e)
       {
@@ -273,25 +282,12 @@ public:
       // gzip if possible
       if (request.acceptsEncoding(kGzipEncoding))
          setContentEncoding(kGzipEncoding);
-      
-      Error error;
 
-      // Apply padding to fix QT short response issues
-      if (filePath.mimeContentType() == "text/html")
-      {
-          std::string body = file_utils::readFile(filePath);
-          if (body.length() <= 1024) {
-             body = body + std::string(1024 - body.length(), ' ');
-          }
+      bool padding =
+          browser_utils::isQt(request.headerValue("User-Agent")) &&
+          filePath.mimeContentType() == "text/html";
 
-          error = setBody(body, filter);
-      }
-      else
-      {
-          // set body from file
-          error = setBody(filePath, filter);
-      }
-
+      Error error = setBody(filePath, filter, 128, padding);
       if (error)
          setError(status::InternalServerError, error.code().message());
    }
