@@ -397,7 +397,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 
 
 # hook an internal R function
-.rs.addFunction( "registerHook", function(name, package, hookFactory)
+.rs.addFunction( "registerHook", function(name, package, hookFactory, namespace = FALSE)
 {
    # get the original function  
    packageName = paste("package:", package, sep="")
@@ -414,6 +414,15 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       unlockBinding(name, packageEnv)
       assign(name, new, packageName)
       lockBinding(name, packageEnv)
+
+      if (namespace && package %in% loadedNamespaces()) {
+         ns <- asNamespace(package)
+         if (exists(name, envir = ns, mode="function")) {
+            unlockBinding(name, ns)
+            assign(name, new, envir = ns)
+            lockBinding(name, ns)
+         }
+      }
    }
    else
    {
@@ -453,7 +462,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 # notification that an internal R function was called
-.rs.addFunction( "registerNotifyHook", function(name, package, hook)
+.rs.addFunction( "registerNotifyHook", function(name, package, hook, namespace = FALSE)
 {
    hookFactory <- function(original) function(...) 
    { 
@@ -463,7 +472,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       # call original
       .rs.callAs(name, original, ...)
    }
-   .rs.registerHook(name, package, hookFactory);
+   .rs.registerHook(name, package, hookFactory, namespace);
 })
 
 # marking functions in R packages as unsupported

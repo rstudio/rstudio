@@ -92,6 +92,12 @@ bool isSafari(const std::string& userAgent)
           !contains(userAgent, "Chrome");
 }
 
+bool isQt(const std::string& userAgent)
+{
+   return (contains(userAgent, "AppleWebKit")) &&
+           contains(userAgent, "Qt");
+}
+
 bool isSafariOlderThan(const std::string& userAgent, double version)
 {
    if (isSafari(userAgent))

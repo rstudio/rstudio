@@ -350,9 +350,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                  includeSource = includeSource)
       })
       
-      # remove nulls and return
-      Filter(Negate(is.null), outputList)
-      
+      # remove nulls
+      filtered <- Filter(Negate(is.null), outputList)
+      lapply(filtered, function(x) {
+         if (!is.list(x)) list(x) else x
+      })
    }
 })
 
@@ -396,15 +398,38 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
    # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
-   
-   # call render with special format hooks
-   rmarkdown::render(input = inputFile,
-                     output_format = "html_notebook",
-                     output_options = outputOptions,
-                     output_file = outputFile,
-                     quiet = TRUE,
-                     envir = envir,
-                     encoding = encoding)
+
+   # knitr outputs relevant information in the form of messages that we attach to the error
+   renderMessages <- list()
+   tryCatch({
+      withCallingHandlers({
+         # call render with special format hooks
+         rmarkdown::render(input = inputFile,
+                           output_format = "html_notebook",
+                           output_options = outputOptions,
+                           output_file = outputFile,
+                           quiet = TRUE,
+                           envir = envir,
+                           encoding = encoding)
+      }, message = function(...) {
+         args <- list(...)
+         renderMessages <<- c(renderMessages, args[[1]])
+      })
+   }, error = function(e) {
+      messages <- list(e$message)
+
+      lapply(renderMessages, function(m) {
+        if (typeof(m) != "character") return();
+
+        result <- regexec("Quitting from lines ([0-9]+)-([0-9]+) ", text = m)
+        if (result[[1]][[1]] < 0) return();
+
+        groups <- regmatches(m, result)[[1]]
+        messages <<- c(messages, paste("See line ", (strtoi(groups[[2]]) - 1), sep = ""))
+      })
+
+      stop(paste(messages, collpase = ". ", sep = ""))
+   })
 })
 
 .rs.addFunction("createNotebookFromCache", function(rmdPath, outputPath = NULL)

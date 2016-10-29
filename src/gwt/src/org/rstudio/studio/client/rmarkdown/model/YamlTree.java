@@ -123,7 +123,7 @@ public class YamlTree
          if (result == null)
             return "";
           else
-            return result.getGroup(1);
+            return result.getGroup(1).trim();
       }
 
       private int getIndentLevel()

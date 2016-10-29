@@ -539,6 +539,7 @@ var PagedTable = function (pagedTable) {
       }
 
       var columnName = document.createElement("div");
+      columnName.setAttribute("class", "pagedtable-header-name");
       if (columnData.label === "") {
         columnName.innerHTML = "&nbsp;";
       }

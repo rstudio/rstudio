@@ -31,6 +31,7 @@ bool isChrome(const std::string& userAgent);
 bool isFirefox(const std::string& userAgent);
 bool isSafari(const std::string& userAgent);
 bool isTrident(const std::string& userAgent);
+bool isQt(const std::string& userAgent);
 
 bool isChromeOlderThan(const std::string& userAgent, double version);
 bool isFirefoxOlderThan(const std::string& userAgent, double version);

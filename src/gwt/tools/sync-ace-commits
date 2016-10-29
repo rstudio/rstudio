@@ -49,7 +49,7 @@ git fetch upstream
 # Point this to the upstream commit that we've tested
 # NOTE: This is a SHA1 for a commit after v1.1.8 release;
 # we take this to get better Vim support (e.g. block selection)
-git fetch && git reset --hard ed5c38b7c87cece4de1acc17912aa3043dd0b11a
+git fetch && git checkout ed5c38b7c87cece4de1acc17912aa3043dd0b11a
 
 # Make sure node packages are up to date
 npm install
@@ -100,7 +100,11 @@ git merge --strategy-option theirs \
 	origin/patch/vim-paragraph-object \
 	-m "merge again"
 
-git merge origin/patch/isearch-cursor-position -m "merge once more"
+git merge \
+    origin/patch/isearch-cursor-position \
+    origin/patch/line-widget-shift-click-exception \
+    origin/patch/line-widget-performance \
+    -m "merge once more"
 
 ## git merge \
 ##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)

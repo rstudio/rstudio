@@ -205,7 +205,7 @@
           y[y == "NA"] <- "__NA__"
         }
 
-        y <- encodeString(format(y, digits = getOption("digits")))
+        y <- encodeString(format(y))
 
         # trim spaces
         gsub("^\\s+|\\s+$", "", y)

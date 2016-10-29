@@ -30089,7 +30089,7 @@ function DefaultHandlers(mouseHandler) {
         pos = pos || this.editor.renderer.screenToTextCoordinates(this.x, this.y);
         var editor = this.editor;
         editor.$blockScrolling++;
-        if (this.mousedownEvent.getShiftKey())
+        if (this.mousedownEvent && this.mousedownEvent.getShiftKey())
             editor.selection.selectToPosition(pos);
         else if (!waitForClickSelection)
             editor.selection.moveToPosition(pos);
@@ -52056,10 +52056,15 @@ function LineWidgets(session) {
 
     this.$getWidgetScreenLength = function() {
         var screenRows = 0;
-        this.lineWidgets.forEach(function(w){
-            if (w && w.rowCount)
-                screenRows +=w.rowCount;
-        });
+
+        var widgets = this.lineWidgets || [];
+        var n = widgets.length;
+        for (var i = 0; i < n; i++) {
+            var widget = widgets[i];
+            if (widget)
+                screenRows += widget.rowCount;
+        }
+
         return screenRows;
     };    
     
@@ -52093,13 +52098,16 @@ function LineWidgets(session) {
         
         editor.renderer.off("beforeRender", this.measureWidgets);
         editor.renderer.off("afterRender", this.renderWidgets);
-        var lineWidgets = this.session.lineWidgets;
-        lineWidgets && lineWidgets.forEach(function(w) {
-            if (w && w.el && w.el.parentNode) {
-                w._inDocument = false;
-                w.el.parentNode.removeChild(w.el);
+
+        var widgets = this.session.lineWidgets || [];
+        var n = widgets.length;
+        for (var i = 0; i < n; i++) {
+            var widget = widgets[i];
+            if (widget && widget.el && widget.el.parentNode) {
+                widget._inDocument = false;
+                widget.el.parentNode.removeChild(widget.el);
             }
-        });
+        }
     };
 
     this.updateOnChange = function(e) {
@@ -52113,10 +52121,14 @@ function LineWidgets(session) {
 
         if (len === 0) {
         } else if (delta.action == "removeText" || delta.action == "removeLines") {
-            var removed = lineWidgets.splice(startRow + 1, len);
-            removed.forEach(function(w) {
+
+            var removed = lineWidgets.splice(startRow + 1, len) || [];
+            var n = removed.length;
+            for (var i = 0; i < n; i++) {
+                var w = removed[i];
                 w && this.removeLineWidget(w);
-            }, this);
+            }
+
             this.$updateRows();
         } else {
             var args = new Array(len);
@@ -52127,16 +52139,23 @@ function LineWidgets(session) {
     };
     
     this.$updateRows = function() {
-        var lineWidgets = this.session.lineWidgets;
-        if (!lineWidgets) return;
-        var noWidgets = true;
-        lineWidgets.forEach(function(w, i) {
-            if (w) {
-                noWidgets = false;
-                w.row = i;
+
+        var widgets = this.session.lineWidgets || [];
+        var n = widgets.length;
+
+        if (n == 0)
+            return;
+
+        var empty = true;
+        for (var i = 0; i < n; i++) {
+            var widget = widgets[i];
+            if (widget) {
+                empty = false;
+                widget.row = i;
             }
-        });
-        if (noWidgets)
+        }
+
+        if (empty)
             this.session.lineWidgets = null;
     };
 

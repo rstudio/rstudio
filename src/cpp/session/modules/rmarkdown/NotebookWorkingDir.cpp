@@ -99,7 +99,7 @@ void DirCapture::onExprComplete()
       // raise a warning when changing a working directory inside the notebook
       // (this leads to unexpected behavior)
       FilePath currentDir = FilePath::safeCurrentPath(workingDir_);
-      if (currentDir != workingDir_)
+      if (!currentDir.isEquivalentTo(workingDir_))
       {
          r::exec::warning("The working directory was changed to " + 
                currentDir.absolutePath() + " inside a notebook chunk. The "
