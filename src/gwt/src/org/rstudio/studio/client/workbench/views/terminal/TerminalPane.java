@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -76,7 +77,9 @@ public class TerminalPane extends WorkbenchPane
   
    private void connectToTerminalProcess()
    {
-      server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, new ServerRequestCallback<ConsoleProcess>()
+      server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, 
+                               80, 25,
+                               new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(ConsoleProcess consoleProcess)

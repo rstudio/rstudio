@@ -68,7 +68,10 @@ struct ProcessOptions
       : terminateChildren(false),
         smartTerminal(false),
         detachSession(false),
+        cols(80),
+        rows(25),
         redirectStdErrToStdOut(false)
+   
 #endif
    {
    }
@@ -98,6 +101,11 @@ struct ProcessOptions
 
    // attach the child process to pseudoterminal pipes
    boost::optional<Pseudoterminal> pseudoterminal;
+   
+   // pseudoterminal size
+   int cols;
+   int rows;
+   
 #endif
 
 #ifdef _WIN32

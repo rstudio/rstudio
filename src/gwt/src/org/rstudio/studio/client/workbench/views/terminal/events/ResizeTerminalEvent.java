@@ -22,10 +22,10 @@ public class ResizeTerminalEvent
       void onResizeTerminal(ResizeTerminalEvent event);
    }
 
-   public ResizeTerminalEvent(int rows, int cols)
+   public ResizeTerminalEvent(int cols, int rows)
    {
-      rows_ = rows;
       cols_ = cols;
+      rows_ = rows;
    }
     
    protected void dispatch(Handler handler)

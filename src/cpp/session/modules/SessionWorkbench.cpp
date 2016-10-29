@@ -862,9 +862,17 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // client-side enum TerminalType. For now we treat XTERM as a
    // "smart terminal" and anything else as DUMB (RStudio 1.0 behavior).
    std::string term;
-   Error error = json::readParam(request.params, 0, &term);
+   
+   // initial size of the pseudo-terminal
+   int cols, rows;
+   
+   Error error = json::readParams(request.params,
+                                  &term,
+                                  &cols,
+                                  &rows);
    if (error)
       return error;
+   
    bool smartTerm = !term.compare("XTERM");
    
    // configure environment for shell
@@ -898,6 +906,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
    options.smartTerminal = smartTerm;
+   options.cols = cols;
+   options.rows = rows;
 
    // configure bash command
    core::shell_utils::ShellCommand bashCommand("/bin/bash");

@@ -171,7 +171,7 @@ public class XTermWidget extends Widget implements RequiresResize
       {
          XTermDimensions size = getTerminalSize();
          terminalResizeHandler_.onResizeTerminal(
-               new ResizeTerminalEvent(size.getRows(), size.getCols()));
+               new ResizeTerminalEvent(size.getCols(), size.getRows()));
       }
    }
 

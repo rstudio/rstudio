@@ -53,7 +53,8 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     interrupt_(false), resize_(false), newCols_(-1), newRows_(-1),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -71,7 +72,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false),
+     started_(false), interrupt_(false), resize_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -87,7 +88,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false),
+     started_(false),  interrupt_(false), resize_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -136,8 +137,8 @@ void ConsoleProcess::commonInit()
       }
 #else
       // request a pseudoterminal if this is an interactive console process
-      options_.pseudoterminal = core::system::Pseudoterminal(80,
-                                                             options_.smartTerminal ? 25 : 1);
+      options_.pseudoterminal = core::system::Pseudoterminal(options_.cols,
+                                                             options_.rows);
 
       // define TERM (but first make sure we have an environment
       // block to modify)
@@ -209,6 +210,13 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
+void ConsoleProcess::resize(int cols, int rows)
+{
+   newCols_ = cols;
+   newRows_ = rows;
+   resize_ = true;
+}
+
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
    // full stop interrupt if requested
@@ -251,6 +259,12 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       }
    }
 
+   if (resize_)
+   {
+      resize_ = false;
+      ops.ptySetSize(newCols_, newRows_);
+   }
+   
    // continue
    return true;
 }
@@ -551,11 +565,28 @@ Error procSetSize(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    std::string handle;
-   Error error = json::readParam(request.params, 0, &handle);
+   int cols, rows;
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &cols,
+                                  &rows);
    if (error)
       return error;
    
-   return Success();
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
+   {
+      pos->second->resize(cols, rows);
+      return Success();
+
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+   
+
 }
    
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
