@@ -136,9 +136,10 @@ void ConsoleProcess::commonInit()
       }
 #else
       // request a pseudoterminal if this is an interactive console process
-      options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
+      options_.pseudoterminal = core::system::Pseudoterminal(80,
+                                                             options_.smartTerminal ? 25 : 1);
 
-      // define TERM to dumb (but first make sure we have an environment
+      // define TERM (but first make sure we have an environment
       // block to modify)
       if (!options_.environment)
       {
@@ -146,7 +147,9 @@ void ConsoleProcess::commonInit()
          core::system::environment(&childEnv);
          options_.environment = childEnv;
       }
-      core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
+      
+      core::system::setenv(&(options_.environment.get()), "TERM",
+                           options_.smartTerminal ? "xterm" : "dumb");
 #endif
    }
 
@@ -279,6 +282,14 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                               const std::string& output)
 {
+   if (options_.smartTerminal)
+   {
+      // TODO: consider extracting out behaviors that vary between smart
+      // and dumb terminal handlers
+      enqueOutputEvent(output, false);
+      return;
+   }
+   
    // convert line endings to posix
    std::string posixOutput = output;
    string_utils::convertLineEndings(&posixOutput,
@@ -536,6 +547,17 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    }
 }
 
+Error procSetSize(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   Error error = json::readParam(request.params, 0, &handle);
+   if (error)
+      return error;
+   
+   return Success();
+}
+   
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
@@ -756,7 +778,8 @@ Error initialize()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
-      (bind(registerRpcMethod, "process_write_stdin", procWriteStdin));
+      (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
+      (bind(registerRpcMethod, "process_set_size", procSetSize));
 
    return initBlock.execute();
 }

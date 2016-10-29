@@ -18,10 +18,12 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -30,15 +32,46 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermThemeResour
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 public class XTermWidget extends Widget implements RequiresResize
 {
+   public enum AnsiColor
+   {
+      DEFAULT     ("0;0"),
+      BLACK       ("0;30"),
+      BLUE        ("0;34"),
+      GREEN       ("0;32"),
+      CYAN        ("0;36"),
+      RED         ("0;31"),
+      PURPLE      ("0;35"),
+      BROWN       ("0;33"),
+      LIGHTGRAY   ("0;37"),
+      DARKGRAY    ("1;30"),
+      LIGHTBLUE   ("1;34"),
+      LIGHTCYAN   ("1;32"),
+      LIGHTRED    ("1;31"),
+      LIGHTPURPLE ("1;35"), 
+      YELLOW      ("1;33"),
+      WHITE       ("1;37");
+      
+      private final String color;
+      AnsiColor(String color)
+      {
+         this.color = color;
+      }
+      
+      public String toString()
+      {
+         return "\33[" + color + "m";
+      }
+   }      
+   
    public XTermWidget()
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
@@ -46,18 +79,21 @@ public class XTermWidget extends Widget implements RequiresResize
       terminal_ = XTermNative.createTerminal(true);
       terminal_.open(getElement());
    }
-
+   
    private void showBanner()
    {
-      terminal_.writeln("Welcome to RStudio shell.");
-      terminal_.writeln("Now brought to you by XTerm.");
-      
-      XTermDimensions screenSize = terminal_.proposeGeometry();
-      String msg = new String("Screen size=");
-      msg += screenSize.getCols();
-      msg += "x";
-      msg += screenSize.getRows();
-      terminal_.writeln(msg);
+      writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
+            AnsiColor.DEFAULT + " shell.");
+   }
+  
+   public void writeln(String str)
+   {
+      terminal_.writeln(str);
+   }
+   
+   public void write(String str)
+   {
+      terminal_.write(str);
    }
    
    private void createContainerElement()
@@ -105,7 +141,6 @@ public class XTermWidget extends Widget implements RequiresResize
    protected void doOnLoad()
    {
       terminal_.fit();
-      attachToWidget(getElement(), terminal_);
       terminal_.focus();
       showBanner(); 
    }
@@ -128,24 +163,26 @@ public class XTermWidget extends Widget implements RequiresResize
      });
    }
    
-   private static final native void attachToWidget(Element el, XTermNative terminal)
-   /*-{
-      el.$RStudioXTermTerminal= terminal;
-   }-*/;
-
-   private static final native void detachFromWidget(Element el)
-   /*-{
-      el.$RStudioXTermTerminal = null;
-   }-*/; 
-
    @Override
    public void onResize()
    {
+      terminal_.fit();
+      if (terminalResizeHandler_ != null)
+      {
+         XTermDimensions size = getTerminalSize();
+         terminalResizeHandler_.onResizeTerminal(
+               new ResizeTerminalEvent(size.getRows(), size.getCols()));
+      }
    }
-   
+
    public void addDataEventHandler(CommandWithArg<String> handler)
    {
       terminal_.onData(handler);
+   }
+   
+   public XTermDimensions getTerminalSize()
+   {
+      return terminal_.proposeGeometry(); 
    }
    
    public void setFocus(boolean focused)
@@ -156,9 +193,21 @@ public class XTermWidget extends Widget implements RequiresResize
          terminal_.blur(); 
    }
    
-   private XTermNative terminal_;
-   private LinkElement currentStyleEl_;
-   private ConsoleResources.ConsoleStyles styles_;
+   protected void addHandlerRegistration(HandlerRegistration reg)
+   {
+      registrations_.add(reg);
+   }
+   
+   protected void unregisterHandlers()
+   {
+      // TODO: does this need to be called, and from where?
+      registrations_.removeHandler();
+   }
+   
+   public void addResizeTerminalHandler(ResizeTerminalEvent.Handler handler)
+   {
+      terminalResizeHandler_ = handler;
+   }
    
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
@@ -180,4 +229,10 @@ public class XTermWidget extends Widget implements RequiresResize
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          getLoader(XTermResources.INSTANCE.xtermfitjs());
+
+   private XTermNative terminal_;
+   private LinkElement currentStyleEl_;
+   private ConsoleResources.ConsoleStyles styles_; // TODO: do we need this?
+   private HandlerRegistrations registrations_ = new HandlerRegistrations();
+   private ResizeTerminalEvent.Handler terminalResizeHandler_;
 }

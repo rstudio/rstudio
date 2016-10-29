@@ -20,17 +20,19 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
    @Inject
-   public TerminalTabPresenter(GlobalDisplay globalDisplay)
+   public TerminalTabPresenter(GlobalDisplay globalDisplay, WorkbenchServerOperations server)
    {
-      super(new TerminalPane("Terminal"));
+      super(new TerminalPane("Terminal", server));
       pane_ = (TerminalPane) getView();
       globalDisplay_ = globalDisplay;
+      server_ = server;
    }
    
    public void initialize()
@@ -69,4 +71,5 @@ public class TerminalTabPresenter extends BusyPresenter
 
    private final TerminalPane pane_;
    private final GlobalDisplay globalDisplay_;
+   private final WorkbenchServerOperations server_;
 }

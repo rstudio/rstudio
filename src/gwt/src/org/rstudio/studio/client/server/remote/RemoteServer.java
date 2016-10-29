@@ -471,11 +471,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
    
-   public void startShellDialog(
-                    ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void startShellDialog(ConsoleProcess.TerminalType terminalType,
+                                ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  START_SHELL_DIALOG,  
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(terminalType.toString()));
+      sendRequest(RPC_SCOPE,
+                  START_SHELL_DIALOG,
+                  params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    
@@ -607,7 +610,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_WRITE_STDIN, params, requestCallback);
    }
 
-
+   @Override
+   public void processSetShellSize(String handle,
+                                   int width,
+                                   int height,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONNumber(width));
+      params.set(2,  new JSONNumber(height));
+      sendRequest(RPC_SCOPE, PROCESS_SET_SIZE, params, requestCallback);
+   }
+   
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
@@ -4916,6 +4931,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_INTERRUPT = "process_interrupt";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
+   private static final String PROCESS_SET_SIZE = "process_set_size";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

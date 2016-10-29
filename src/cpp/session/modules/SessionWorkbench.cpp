@@ -858,12 +858,21 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    using namespace session::module_context;
    using namespace session::console_process;
 
+   // TERM setting, must correspond to one of the values in the
+   // client-side enum TerminalType. For now we treat XTERM as a
+   // "smart terminal" and anything else as DUMB (RStudio 1.0 behavior).
+   std::string term;
+   Error error = json::readParam(request.params, 0, &term);
+   if (error)
+      return error;
+   bool smartTerm = !term.compare("XTERM");
+   
    // configure environment for shell
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
-   // set dumb terminal
-   core::system::setenv(&shellEnv, "TERM", "dumb");
+   // set terminal
+   core::system::setenv(&shellEnv, "TERM", smartTerm ? "xterm" : "dumb");
 
    // set prompt
    std::string path = module_context::createAliasedPath(
@@ -872,10 +881,12 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::setenv(&shellEnv, "PS1", prompt);
 
    // disable screen oriented facillites		
-   core::system::unsetenv(&shellEnv, "EDITOR");		
-   core::system::unsetenv(&shellEnv, "VISUAL");		
-   core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
-
+   if (!smartTerm)
+   {
+      core::system::unsetenv(&shellEnv, "EDITOR");
+      core::system::unsetenv(&shellEnv, "VISUAL");
+      core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
+   }
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
@@ -886,6 +897,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::ProcessOptions options;
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
+   options.smartTerminal = smartTerm;
 
    // configure bash command
    core::shell_utils::ShellCommand bashCommand("/bin/bash");

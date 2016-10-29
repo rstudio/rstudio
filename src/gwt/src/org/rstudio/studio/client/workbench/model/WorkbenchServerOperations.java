@@ -119,7 +119,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                      ServerRequestCallback<TerminalOptions> requestCallback);
    
    
-   void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback);
+   void startShellDialog(ConsoleProcess.TerminalType terminalType,
+                         ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

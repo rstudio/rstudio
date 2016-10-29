@@ -45,4 +45,9 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processWriteStdin(String handle,
                           ShellInput input,
                           ServerRequestCallback<Void> requestCallback);
+   
+   void processSetShellSize(String handle,
+                            int width,
+                            int height,
+                            ServerRequestCallback<Void> requestCallback);
 }

@@ -26,9 +26,8 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
-public class TerminalTab 
-   extends DelayLoadWorkbenchTab<TerminalTabPresenter> 
-   implements ProvidesBusy
+public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter> 
+                         implements ProvidesBusy
 {
    public abstract static class Shim extends
                 DelayLoadTabShim<TerminalTabPresenter, TerminalTab>

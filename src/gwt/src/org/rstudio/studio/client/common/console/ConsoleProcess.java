@@ -42,6 +42,11 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ConsolePromptEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers
 {
+   public enum TerminalType {
+      DUMB, // simple canonical (line-by-line) terminal
+      XTERM; // xterm-compatible non-canonical terminal
+   }
+   
    @Singleton
    public static class ConsoleProcessFactory
    {
@@ -326,6 +331,11 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       server_.processWriteStdin(procInfo_.getHandle(), input, requestCallback);
    }
 
+   public void resizeTerminal(int cols, int rows, ServerRequestCallback<Void> requestCallback)
+   {
+      server_.processSetShellSize(procInfo_.getHandle(), cols, rows, requestCallback);
+   }
+   
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       server_.processInterrupt(procInfo_.getHandle(), requestCallback);
