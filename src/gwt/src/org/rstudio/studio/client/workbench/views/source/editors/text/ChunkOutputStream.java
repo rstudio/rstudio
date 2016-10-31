@@ -238,11 +238,6 @@ public class ChunkOutputStream extends FlowPanel
       bodyStyle.setPadding(0, Unit.PX);
       bodyStyle.setMargin(0, Unit.PX);
 
-      if (ChunkOutputWidget.getEditorColors() != null)
-      {
-         bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
-      }
-
       frame.loadUrlDelayed(url, 250, new Command() 
       {
          @Override
@@ -259,10 +254,25 @@ public class ChunkOutputStream extends FlowPanel
             }
             
             onHeightChanged();
-
-            updateHtmlChunkTheme(frame, ChunkOutputWidget.getEditorColors());
          };
       });
+
+      themeColors_ = ChunkOutputWidget.getEditorColors();
+      afterRender_ = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (themeColors_ != null) {
+               Element body = frame.getDocument().getBody();
+               
+               Style bodyStyle = body.getStyle();
+               bodyStyle.setColor(themeColors_.foreground);
+            }
+         }
+      };
+
+      frame.runAfterRender(afterRender_);
    }
 
    @Override
@@ -384,44 +394,29 @@ public class ChunkOutputStream extends FlowPanel
          }
       }
    }
-
-   private void updateHtmlChunkTheme(
-      final ChunkOutputFrame frame,
-      final EditorThemeListener.Colors colors)
-   {
-      if (colors == null) return;
-
-      Timer updateThemeTimer = new Timer() {
-         private int retryCount_ = 0;
-
-         @Override
-         public void run()
-         {
-            Element body = frame.getDocument().getBody();
-
-            if (body.getChildCount() > 0) {
-               Style bodyStyle = body.getStyle();
-               bodyStyle.setColor(colors.foreground);
-            } else if (retryCount_ < 50) {
-               retryCount_++;
-               schedule(100);
-            }
-         }
-      };
-      
-      updateThemeTimer.schedule(100);
-   }
    
    @Override
    public void onEditorThemeChanged(EditorThemeListener.Colors colors)
    {
+      themeColors_ = colors;
+      
       // apply the style to any frames in the output
       for (Widget w: this)
       {
          if (w instanceof ChunkOutputFrame)
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)w;
-            updateHtmlChunkTheme(frame, colors);
+            frame.runAfterRender(afterRender_);
+         }
+         if (w instanceof FixedRatioWidget)
+         {
+            FixedRatioWidget fixedRatioWidget = (FixedRatioWidget)w;
+            Widget innerWidget = fixedRatioWidget.getWidget();
+            if (innerWidget instanceof ChunkOutputFrame)
+            {
+               ChunkOutputFrame frame = (ChunkOutputFrame)innerWidget;
+               frame.runAfterRender(afterRender_);
+            }
          }
          else if (w instanceof EditorThemeListener)
          {
@@ -690,4 +685,7 @@ public class ChunkOutputStream extends FlowPanel
    private int maxOrdinal_ = 0;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
+
+   private Command afterRender_;
+   private Colors themeColors_;
 }

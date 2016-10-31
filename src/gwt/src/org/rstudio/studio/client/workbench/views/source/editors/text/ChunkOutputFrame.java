@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.widget.DynamicIFrame;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 
@@ -81,6 +82,30 @@ public class ChunkOutputFrame extends DynamicIFrame
    {
       if (onCompleted_ != null)
          onCompleted_.execute();
+   }
+
+   public void runAfterRender(final Command command)
+   {
+      if (command == null) return;
+
+      Timer onRenderedTimer = new Timer() {
+         private int retryCount_ = 0;
+
+         @Override
+         public void run()
+         {
+            Element body = getDocument().getBody();
+
+            if (body.getChildCount() > 0) {
+               command.execute();
+            } else if (retryCount_ < 50) {
+               retryCount_++;
+               schedule(100);
+            }
+         }
+      };
+      
+      onRenderedTimer.schedule(100);
    }
    
    private final Timer timer_;

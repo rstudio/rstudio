@@ -89,6 +89,26 @@ public class ChunkHtmlPage extends ChunkOutputPage
             frameFinishLoadTimer.schedule(100);
          };
       });
+
+      afterRender_ = new Command() {
+         @Override
+         public void execute()
+         {
+            Element body = frame_.getDocument().getBody();
+
+            Style bodyStyle = body.getStyle();
+      
+            bodyStyle.setPadding(0, Unit.PX);
+            bodyStyle.setMargin(0, Unit.PX);
+
+            if (themeColors_ != null)
+            {
+               bodyStyle.setColor(themeColors_.foreground);
+            }
+         }
+      };
+
+      frame_.runAfterRender(afterRender_);
    }
       
    @Override
@@ -106,44 +126,19 @@ public class ChunkHtmlPage extends ChunkOutputPage
    @Override
    public void onSelected()
    {
-      // no action necessary for HTML widgets
-      updateHtmlPageTheme();
+      frame_.runAfterRender(afterRender_);
    }
 
    @Override
    public void onEditorThemeChanged(Colors colors)
    {
       themeColors_ = colors;
-      updateHtmlPageTheme();
-   }
-
-   private void updateHtmlPageTheme()
-   {
-      if (themeColors_ == null) return;
-
-      Timer updateThemeTimer = new Timer() {
-         private int retryCount_ = 0;
-
-         @Override
-         public void run()
-         {
-            Element body = frame_.getDocument().getBody();
-
-            if (body.getChildCount() > 0) {
-               Style bodyStyle = body.getStyle();
-               bodyStyle.setColor(themeColors_.foreground);
-            } else if (retryCount_ < 50) {
-               retryCount_++;
-               schedule(100);
-            }
-         }
-      };
-      
-      updateThemeTimer.schedule(100);
+      afterRender_.execute();
    }
 
    private ChunkOutputFrame frame_;
    final private Widget thumbnail_;
    final private Widget content_;
    private Colors themeColors_ = null;
+   private Command afterRender_;
 }
