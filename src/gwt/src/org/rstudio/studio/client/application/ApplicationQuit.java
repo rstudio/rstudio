@@ -464,6 +464,10 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Override
    public void onSuspendAndRestart(final SuspendAndRestartEvent event)
    {
+      // Ignore nested restarts once restart starts
+      if (suspendingAndRestarting_) return;
+      suspendingAndRestarting_ = true;
+
       // set restart pending for desktop
       setPendinqQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
@@ -485,6 +489,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                @Override
                public void execute()
                {
+                  suspendingAndRestarting_ = false;
+
                   eventBus_.fireEvent(new RestartStatusEvent(
                                     RestartStatusEvent.RESTART_COMPLETED));
                   
@@ -495,6 +501,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          @Override
          protected void onFailure()
          {
+            suspendingAndRestarting_ = false;
+
             eventBus_.fireEvent(
                new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
             
@@ -773,4 +781,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
+
+   private boolean suspendingAndRestarting_ = false;
 }
