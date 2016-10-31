@@ -118,7 +118,7 @@ public class DocUpdateSentinel
       propertyChangeHandlers_ = 
             new HashMap<String, ValueChangeHandlerManager<String>>();
 
-      autosaver_ = new DebouncedCommand(2000)
+      autosaver_ = new DebouncedCommand(1000)
       {
          @Override
          protected void execute()
