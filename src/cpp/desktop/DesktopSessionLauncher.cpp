@@ -23,6 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/System.hpp>
 #include <core/r_util/RUserData.hpp>
 
 #include <QProcess>
@@ -396,10 +397,8 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
    // create launch token if we haven't already
    if (s_launcherToken.empty())
       s_launcherToken = core::system::generateShortenedUuid();
-
-   // synthesize an ID for the session
-   *pArgList << QString::fromUtf8("--session-id") <<
-                QString::fromUtf8(s_launcherToken));
+   *pArgList << QString::fromUtf8("--launcher-token") <<
+                QString::fromUtf8(s_launcherToken.c_str());
    
    if (options().runDiagnostics())
       *pArgList << QString::fromUtf8("--verify-installation") <<
