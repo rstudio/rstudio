@@ -341,7 +341,7 @@ void SessionLauncher::buildLaunchContext(std::string* pHost,
    pArgList->push_back("--www-port");
    pArgList->push_back(*pPort);
    
-   // synthesize an ID for this session if we haven't already
+   // create launch token if we haven't already
    pArgList->push_back("--launcher-token");
    if (s_launcherToken.empty())
       s_launcherToken = core::system::generateShortenedUuid();

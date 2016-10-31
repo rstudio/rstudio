@@ -529,15 +529,9 @@ bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
    return pDoc1->relativeOrder() < pDoc2->relativeOrder();
 }
 
-namespace {
-
-FilePath s_sourceDBPath;
-
-} // anonymous namespace
-
 FilePath path()
 {
-   return s_sourceDBPath;
+   return supervisor::sessionDirPath();
 }
    
 Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
@@ -583,6 +577,8 @@ bool isSourceDocument(const FilePath& filePath)
    else if (filePath.filename() == ".DS_Store")
       return false;
    else if (filePath.filename() == "lock_file")
+      return false;
+   else if (filePath.filename() == "suspend_file")
       return false;
    else
       return true;
@@ -781,6 +777,16 @@ void onQuit()
       LOG_ERROR(error);
 }
 
+void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+{
+   supervisor::suspendSourceDatabase();
+}
+
+void onResume(const Settings&)
+{
+   supervisor::resumeSourceDatabase();
+}
+
 void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
 {
    s_idToPath[pDoc->id()] = pDoc->path();
@@ -842,7 +848,7 @@ Events& events()
 Error initialize()
 {
    // provision a source database directory
-   Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
+   Error error = supervisor::attachToSourceDatabase();
    if (error)
       return error;
 
@@ -853,8 +859,10 @@ Error initialize()
    events().onDocRenamed.connect(onDocRenamed);
    events().onRemoveAll.connect(onRemoveAll);
 
-   // signup for the quit and shutdown events
+   // signup for session end/suspend events
    module_context::events().onQuit.connect(onQuit);
+   module_context::addSuspendHandler(
+         module_context::SuspendHandler(onSuspend, onResume));
 
    return Success();
 }

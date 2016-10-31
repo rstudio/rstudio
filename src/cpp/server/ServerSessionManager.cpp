@@ -47,7 +47,7 @@ namespace server {
 
 namespace {
 
-static std::map<std::string, std::string> s_launcherTokens;
+static std::string s_launcherToken;
 
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
@@ -81,21 +81,10 @@ core::system::ProcessConfig sessionProcessConfig(
                                     context.scope.id()));
    }
 
-   // generate user-specific launcher token (if we haven't already for this
-   // user)
-   std::string token;
-   std::map<std::string, std::string>::iterator it = s_launcherTokens.find(
-         context.username);
-   if (it == s_launcherTokens.end())
-   {
-      token = core::system::generateShortenedUuid();
-      s_launcherTokens[context.username] = token;
-   }
-   else
-   {
-      token = it->second;
-   }
-   args.push_back(std::make_pair("--launcher-token", token));
+   // create launch token if we haven't already
+   if (s_launcherToken.empty())
+      s_launcherToken = core::system::generateShortenedUuid();
+   args.push_back(std::make_pair("--launcher-token", s_launcherToken));
 
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
