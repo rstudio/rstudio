@@ -23,6 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/System.hpp>
 #include <core/r_util/RUserData.hpp>
 
 #include <QProcess>
@@ -43,6 +44,8 @@ namespace desktop {
 
 namespace {
 
+static std::string s_launcherToken;
+         
 void launchProcess(std::string absPath,
                    QStringList argList,
                    QProcess** ppProc)
@@ -391,6 +394,12 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
 
    *pArgList << QString::fromUtf8("--www-port") << *pPort;
 
+   // create launch token if we haven't already
+   if (s_launcherToken.empty())
+      s_launcherToken = core::system::generateShortenedUuid();
+   *pArgList << QString::fromUtf8("--launcher-token") <<
+                QString::fromUtf8(s_launcherToken.c_str());
+   
    if (options().runDiagnostics())
       *pArgList << QString::fromUtf8("--verify-installation") <<
                    QString::fromUtf8("1");

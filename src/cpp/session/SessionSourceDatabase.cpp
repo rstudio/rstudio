@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@
 #include <r/RUtil.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -529,15 +530,9 @@ bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
    return pDoc1->relativeOrder() < pDoc2->relativeOrder();
 }
 
-namespace {
-
-FilePath s_sourceDBPath;
-
-} // anonymous namespace
-
 FilePath path()
 {
-   return s_sourceDBPath;
+   return supervisor::sessionDirPath();
 }
    
 Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
@@ -583,6 +578,10 @@ bool isSourceDocument(const FilePath& filePath)
    else if (filePath.filename() == ".DS_Store")
       return false;
    else if (filePath.filename() == "lock_file")
+      return false;
+   else if (filePath.filename() == "suspend_file")
+      return false;
+   else if (filePath.filename() == "restart_file")
       return false;
    else
       return true;
@@ -775,13 +774,20 @@ void onQuit()
    Error error = supervisor::saveMostRecentDocuments();
    if (error)
       LOG_ERROR(error);
-}
 
-void onShutdown(bool)
-{
-   Error error = supervisor::detachFromSourceDatabase();
+   error = supervisor::detachFromSourceDatabase();
    if (error)
       LOG_ERROR(error);
+}
+
+void onSuspend(const r::session::RSuspendOptions& options, core::Settings*)
+{
+   supervisor::suspendSourceDatabase(options.status);
+}
+
+void onResume(const Settings&)
+{
+   supervisor::resumeSourceDatabase();
 }
 
 void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
@@ -845,7 +851,7 @@ Events& events()
 Error initialize()
 {
    // provision a source database directory
-   Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
+   Error error = supervisor::attachToSourceDatabase();
    if (error)
       return error;
 
@@ -856,9 +862,10 @@ Error initialize()
    events().onDocRenamed.connect(onDocRenamed);
    events().onRemoveAll.connect(onRemoveAll);
 
-   // signup for the quit and shutdown events
+   // signup for session end/suspend events
    module_context::events().onQuit.connect(onQuit);
-   module_context::events().onShutdown.connect(onShutdown);
+   module_context::addSuspendHandler(
+         module_context::SuspendHandler(onSuspend, onResume));
 
    return Success();
 }
