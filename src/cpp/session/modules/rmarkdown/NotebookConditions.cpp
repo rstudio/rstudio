@@ -67,7 +67,7 @@ void ConditionCapture::connect()
          "          m$message); "
          "   invokeRestart(\"muffleMessage\") "
          " } "
-         "), .GlobalEnv, NULL, TRUE))", &retSEXP, &protect);
+         "), .GlobalEnv, NULL, TRUE))", R_BaseNamespace, &retSEXP, &protect);
    if (error)
    {
       LOG_ERROR(error);
@@ -101,7 +101,7 @@ void ConditionCapture::disconnect()
       Error error = r::exec::executeStringUnsafe(
             ".Internal(.resetCondHands(get(\"_rs_handlerStack\", "
             "   envir = as.environment(\"tools:rstudio\")))) ",
-            &retSEXP, &protect);
+            R_BaseNamespace, &retSEXP, &protect);
       if (error)
          LOG_ERROR(error);
 
@@ -109,7 +109,7 @@ void ConditionCapture::disconnect()
       error = r::exec::executeStringUnsafe(
             "rm(\"_rs_handlerStack\", "
             "   envir = as.environment(\"tools:rstudio\"))",
-            &retSEXP, &protect);
+            R_BaseNamespace, &retSEXP, &protect);
       if (error)
          LOG_ERROR(error);
    }
