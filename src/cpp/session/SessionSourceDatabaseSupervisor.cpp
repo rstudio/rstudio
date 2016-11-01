@@ -56,17 +56,17 @@ FilePath oldSourceDatabaseRoot()
 
 FilePath sourceDatabaseRoot()
 {
-   return module_context::scopedScratchPath().complete("sdb");
+   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix);
 }
 
 FilePath mostRecentTitledDir()
 {
-   return module_context::scopedScratchPath().complete("sdb/mt");
+   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mt");
 }
 
 FilePath mostRecentUntitledDir()
 {
-   return module_context::scopedScratchPath().complete("sdb/mu");
+   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mu");
 }
 
 

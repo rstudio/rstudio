@@ -87,7 +87,7 @@ struct PropertiesDatabase
 
 Error getPropertiesDatabase(PropertiesDatabase* pDatabase)
 {
-   pDatabase->path = module_context::scopedScratchPath().complete("sdb/prop");
+   pDatabase->path = module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/prop");
    Error error = pDatabase->path.ensureDirectory();
    if (error)
       return error;
