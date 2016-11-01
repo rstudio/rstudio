@@ -17,7 +17,7 @@
 {
    .Call("rs_recordHtmlWidget", htmlfile, depfile, list(
       classes = class(x),
-      sizingPolicy = x$sizingPolicy
+      sizingPolicy = if (is.list(x)) x$sizingPolicy else list()
    ))
 })
 

@@ -163,6 +163,7 @@ public class FindReplace
                         boolean inSelection)
    {
       defaultForward_ = defaultForward;
+      incrementalSearchPosition_ = null;
       display_.activate(searchText, defaultForward, inSelection);
    }
    

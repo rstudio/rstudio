@@ -27,6 +27,7 @@
 * Improve resilience against malformed YAML header in R Markdown documents
 * Avoid triggering active bindings in environments from the Environment pane
 * Fix encoding of R_HOME, R_USER, and R_LIBS_USER on Windows
+* Fix project-based file completion on Windows
 * Respect loaded packages in R help topic completion
 * Fix positioning of editor toolbar buttons in Safari and Mac OS client
 * Fix incorrect height of R Notebook outputs when run above viewport
@@ -35,4 +36,5 @@
 * Allow git staging for filenames containing a dollar sign ($)
 * Use Windows proxy settings to serve requests made by htmlwidgets
 * Server Pro: Allow server user to have group name differing from user name
+* Server Pro: Don't require LDAP to support user enumeration when `auth-required-user-group` is set
 

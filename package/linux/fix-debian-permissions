@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # create directory to host uncompressed dpkg
 mkdir tmp_deb
