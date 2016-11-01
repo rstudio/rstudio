@@ -67,6 +67,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -466,20 +467,29 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    {
       // Ignore nested restarts once restart starts
       if (suspendingAndRestarting_) return;
-      suspendingAndRestarting_ = true;
-
+      
       // set restart pending for desktop
       setPendinqQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
-      TimedProgressIndicator progress = new TimedProgressIndicator(
+      final TimedProgressIndicator progress = new TimedProgressIndicator(
             globalDisplay_.getProgressIndicator("Error"));
       progress.onTimedProgress("Restarting R", 1000);
+      
+      final Operation onRestartComplete = new Operation() {
+         @Override
+         public void execute()
+         {
+            suspendingAndRestarting_ = false;
+            progress.onCompleted();
+         }
+      };
 
       // perform the suspend and restart
+      suspendingAndRestarting_ = true;
       eventBus_.fireEvent(
                   new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
       server_.suspendForRestart(event.getSuspendOptions(),
-                                new VoidServerRequestCallback(progress) {
+                                new VoidServerRequestCallback() {
          @Override 
          protected void onSuccess()
          { 
@@ -489,8 +499,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                @Override
                public void execute()
                {
-                  suspendingAndRestarting_ = false;
-
+                  onRestartComplete.execute();
+                  
                   eventBus_.fireEvent(new RestartStatusEvent(
                                     RestartStatusEvent.RESTART_COMPLETED));
                   
@@ -501,8 +511,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          @Override
          protected void onFailure()
          {
-            suspendingAndRestarting_ = false;
-
+            onRestartComplete.execute();
+            
             eventBus_.fireEvent(
                new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
             
