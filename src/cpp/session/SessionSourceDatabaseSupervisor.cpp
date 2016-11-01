@@ -48,10 +48,14 @@ namespace {
 
 const char * const kSessionDirPrefix = "s-";
 
+FilePath sdbSourceDatabaseRoot()
+{
+   return module_context::scopedScratchPath().complete("sdb");
+}
+
 FilePath oldSourceDatabaseRoot()
 {
-   return
-      module_context::scopedScratchPath().complete("source_database");
+   return module_context::scopedScratchPath().complete("source_database");
 }
 
 FilePath sourceDatabaseRoot()
@@ -68,7 +72,6 @@ FilePath mostRecentUntitledDir()
 {
    return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mu");
 }
-
 
 FilePath persistentTitledDir(bool multiSession = true)
 {
@@ -452,6 +455,20 @@ Error attachToSourceDatabase()
    FilePath existingSdb = sessionDirPath();
    if (existingSdb.exists())
       return sessionDirLock().acquire(sessionLockFilePath(existingSdb));
+   
+   // migrate from 'sdb' to current folder layout if needed
+   bool needsSdbMigration =
+         !sourceDatabaseRoot().exists() &&
+         sdbSourceDatabaseRoot().exists();
+   
+   if (needsSdbMigration)
+   {
+      Error error =
+            sdbSourceDatabaseRoot().copyDirectoryRecursive(sourceDatabaseRoot());
+      
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // check whether we will need to migrate -- ensure we do this only
    // one time so that if for whatever reason we can't migrate the
