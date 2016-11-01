@@ -96,7 +96,7 @@ public class ChunkOutputFrame extends DynamicIFrame
          {
             Element body = getDocument().getBody();
 
-            if (body.getChildCount() > 0) {
+            if (body != null && body.getChildCount() > 0) {
                command.execute();
             } else if (retryCount_ < 50) {
                retryCount_++;
