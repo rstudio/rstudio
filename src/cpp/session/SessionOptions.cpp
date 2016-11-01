@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -352,7 +352,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "active project" )
       (kScopeSessionOption "," kScopeSessionOptionShort,
         value<std::string>(&scopeId)->default_value(""),
-       "session scope id");
+       "session scope id")
+      ("launcher-token",
+       value<std::string>(&launcherToken_)->default_value(""),
+       "token identifying session launcher");
 
    // overlay options
    options_description overlay("overlay");
