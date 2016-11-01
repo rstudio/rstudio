@@ -1076,21 +1076,29 @@ public class Source implements InsertSourceHandler,
    public void onNewRNotebook()
    {
       dependencyManager_.withRMarkdown("R Notebook",
-         "Create R Notebook", new Command() {
-         @Override
-         public void execute()
+         "Create R Notebook", new CommandWithArg<Boolean>()
          {
-            String basename = "r_markdown_notebook";
-            if (BrowseCap.isMacintosh())
-               basename += "_osx";
+            @Override
+            public void execute(Boolean succeeded)
+            {
+               if (!succeeded)
+               {
+                  globalDisplay_.showErrorMessage("Notebook Creation Failed", 
+                        "One or more packages required for R Notebook " +
+                        "creation were not installed.");
+                  return;
+               }
+               String basename = "r_markdown_notebook";
+               if (BrowseCap.isMacintosh())
+                  basename += "_osx";
 
-            newSourceDocWithTemplate(
-                  FileTypeRegistry.RMARKDOWN,
-                  "",
-                  basename + ".Rmd",
-                  Position.create(3, 0));
-         }
-      });
+               newSourceDocWithTemplate(
+                     FileTypeRegistry.RMARKDOWN,
+                     "",
+                     basename + ".Rmd",
+                     Position.create(3, 0));
+            }
+         });
    }
    
    @Handler
