@@ -42,6 +42,7 @@ import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -237,11 +238,6 @@ public class ChunkOutputStream extends FlowPanel
       bodyStyle.setPadding(0, Unit.PX);
       bodyStyle.setMargin(0, Unit.PX);
 
-      if (ChunkOutputWidget.getEditorColors() != null)
-      {
-         bodyStyle.setColor(ChunkOutputWidget.getEditorColors().foreground);
-      }
-
       frame.loadUrlDelayed(url, 250, new Command() 
       {
          @Override
@@ -260,6 +256,23 @@ public class ChunkOutputStream extends FlowPanel
             onHeightChanged();
          };
       });
+
+      themeColors_ = ChunkOutputWidget.getEditorColors();
+      afterRender_ = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            if (themeColors_ != null) {
+               Element body = frame.getDocument().getBody();
+               
+               Style bodyStyle = body.getStyle();
+               bodyStyle.setColor(themeColors_.foreground);
+            }
+         }
+      };
+
+      frame.runAfterRender(afterRender_);
    }
 
    @Override
@@ -385,14 +398,25 @@ public class ChunkOutputStream extends FlowPanel
    @Override
    public void onEditorThemeChanged(EditorThemeListener.Colors colors)
    {
+      themeColors_ = colors;
+      
       // apply the style to any frames in the output
       for (Widget w: this)
       {
          if (w instanceof ChunkOutputFrame)
          {
             ChunkOutputFrame frame = (ChunkOutputFrame)w;
-            Style bodyStyle = frame.getDocument().getBody().getStyle();
-            bodyStyle.setColor(colors.foreground);
+            frame.runAfterRender(afterRender_);
+         }
+         if (w instanceof FixedRatioWidget)
+         {
+            FixedRatioWidget fixedRatioWidget = (FixedRatioWidget)w;
+            Widget innerWidget = fixedRatioWidget.getWidget();
+            if (innerWidget instanceof ChunkOutputFrame)
+            {
+               ChunkOutputFrame frame = (ChunkOutputFrame)innerWidget;
+               frame.runAfterRender(afterRender_);
+            }
          }
          else if (w instanceof EditorThemeListener)
          {
@@ -661,4 +685,7 @@ public class ChunkOutputStream extends FlowPanel
    private int maxOrdinal_ = 0;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
+
+   private Command afterRender_;
+   private Colors themeColors_;
 }

@@ -237,16 +237,24 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
    }
 }
 
-Error executeStringUnsafe(const std::string& str, SEXP* pSEXP, 
-      sexp::Protect* pProtect)
+Error executeStringUnsafe(const std::string& str,
+                          SEXP envirSEXP,
+                          SEXP* pSEXP, 
+                          sexp::Protect* pProtect)
 {
    SEXP parsedSEXP = R_NilValue;
    Error error = r::exec::parseString(str, &parsedSEXP, pProtect);
    if (error)
       return error;
    
-   return evaluateExpressionsUnsafe(parsedSEXP, R_GlobalEnv, 
-         pSEXP, pProtect, EvalDirect);
+   return evaluateExpressionsUnsafe(parsedSEXP, envirSEXP, pSEXP, pProtect, EvalDirect);
+}
+
+Error executeStringUnsafe(const std::string& str,
+                          SEXP* pSEXP, 
+                          sexp::Protect* pProtect)
+{
+   return executeStringUnsafe(str, R_GlobalEnv, pSEXP, pProtect);
 }
   
 Error executeString(const std::string& str)

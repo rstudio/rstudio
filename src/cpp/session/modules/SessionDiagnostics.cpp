@@ -108,6 +108,8 @@ void doCheckDefinedButNotUsed(ParseNode* pNode, ParseResults& results)
         ++it)
    {
       const std::string& symbolName = it->first;
+      if (results.globals().count(symbolName))
+         continue;
       
       if (pNode->isSymbolDefinedButNotUsed(symbolName, true, true))
       {
