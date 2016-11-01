@@ -40,6 +40,7 @@
 #include <r/RUtil.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -580,6 +581,8 @@ bool isSourceDocument(const FilePath& filePath)
       return false;
    else if (filePath.filename() == "suspend_file")
       return false;
+   else if (filePath.filename() == "restart_file")
+      return false;
    else
       return true;
 }
@@ -777,9 +780,9 @@ void onQuit()
       LOG_ERROR(error);
 }
 
-void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+void onSuspend(const r::session::RSuspendOptions& options, core::Settings*)
 {
-   supervisor::suspendSourceDatabase();
+   supervisor::suspendSourceDatabase(options.status);
 }
 
 void onResume(const Settings&)

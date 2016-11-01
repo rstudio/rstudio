@@ -34,7 +34,7 @@ core::Error saveMostRecentDocuments();
 
 core::Error detachFromSourceDatabase();
 
-void suspendSourceDatabase();
+void suspendSourceDatabase(int status);
 
 void resumeSourceDatabase();
 

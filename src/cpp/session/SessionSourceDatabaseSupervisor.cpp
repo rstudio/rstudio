@@ -29,6 +29,7 @@
 #include <core/FileUtils.hpp>
 #include <core/BoostErrors.hpp>
 
+#include <r/session/RSession.hpp>
 
 #include <core/system/System.hpp>
 
@@ -121,6 +122,11 @@ FilePath sessionLockFilePath(const FilePath& sessionDir)
 FilePath sessionSuspendFilePath(const FilePath& sessionDir)
 {
    return sessionDir.complete("suspend_file");
+}
+
+FilePath sessionRestartFilePath(const FilePath& sessionDir)
+{
+   return sessionDir.complete("restart_file");
 }
 
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
@@ -355,6 +361,27 @@ bool reclaimOrphanedSession()
       if (sessionSuspendFilePath(sessionDir).exists())
          continue;
 
+      FilePath restartFile = sessionRestartFilePath(sessionDir);
+      if (restartFile.exists())
+      {
+         if (std::time(NULL) - restartFile.lastWriteTime() > 
+              (1000 * 60 * 5))
+         {
+            // the file exists, but it's more than five minutes old, so 
+            // something went wrong 
+            Error error = restartFile.remove();
+            if (error)
+               LOG_ERROR(error);
+         }
+         else
+         {
+            // the restart file exists and is new, so it represents a 
+            // session currently undergoing a suspend for restart -- leave
+            // it alone
+            continue;
+         }
+      }
+
       FilePath lockFilePath = sessionLockFilePath(sessionDir);
       if (!sessionDirLock().isLocked(lockFilePath))
       {
@@ -564,11 +591,13 @@ FilePath sessionDirPath()
          module_context::activeSession().id());
 }
 
-void suspendSourceDatabase()
+void suspendSourceDatabase(int status)
 {
    // write a sentinel so we can differentiate between a sdb that's orphaned
    // from a crash, and an sdb that represents a suspended session
-   Error error = sessionSuspendFilePath(sessionDirPath()).ensureFile();
+   Error error = status == EX_CONTINUE ? 
+      sessionRestartFilePath(sessionDirPath()).ensureFile() : 
+      sessionSuspendFilePath(sessionDirPath()).ensureFile();
    if (error)
       LOG_ERROR(error);
 }
@@ -576,6 +605,9 @@ void suspendSourceDatabase()
 void resumeSourceDatabase()
 {
    Error error = sessionSuspendFilePath(sessionDirPath()).removeIfExists();
+   if (error)
+      LOG_ERROR(error);
+   error = sessionRestartFilePath(sessionDirPath()).removeIfExists();
    if (error)
       LOG_ERROR(error);
 }
