@@ -59,12 +59,12 @@ void ConditionCapture::connect()
          " list(warning = function(m) { "
          "   .Call(\"rs_signalNotebookCondition\", " + 
                       safe_convert::numberToString(ConditionWarning) + "L, "
-         "          m$message); "
+         "          m$message, PACKAGE = '(embedding)'); "
          "   invokeRestart(\"muffleWarning\") "
          " }, message = function(m) { "
          "   .Call(\"rs_signalNotebookCondition\", " + 
                       safe_convert::numberToString(ConditionMessage) + "L, "
-         "          m$message); "
+         "          m$message, PACKAGE = '(embedding)'); "
          "   invokeRestart(\"muffleMessage\") "
          " } "
          "), .GlobalEnv, NULL, TRUE))", R_BaseNamespace, &retSEXP, &protect);
