@@ -484,7 +484,7 @@ SEXP SourceDocument::toRObject(r::sexp::Protect* pProtect, bool includeContents)
    return r::sexp::create(object, pProtect);
 }
 
-Error SourceDocument::writeToFile(const FilePath& filePath) const
+Error SourceDocument::writeToFile(const FilePath& filePath, bool writeContents) const
 {
    // NOTE: in a previous implementation, the document properties and
    // document contents were encoded together in the same file -- we
@@ -494,10 +494,13 @@ Error SourceDocument::writeToFile(const FilePath& filePath) const
    // with older formats for the source database
    
    // write contents to file
-   FilePath contentsPath(filePath.absolutePath() + "-contents");
-   Error error = writeStringToFile(contentsPath, contents_);
-   if (error)
-      return error;
+   if (writeContents)
+   {
+      FilePath contentsPath(filePath.absolutePath() + kContentsSuffix);
+      Error error = writeStringToFile(contentsPath, contents_);
+      if (error)
+         return error;
+   }
    
    // get document properties as json
    json::Object jsonProperties;
@@ -506,7 +509,7 @@ Error SourceDocument::writeToFile(const FilePath& filePath) const
    // write properties to file
    std::ostringstream oss;
    json::writeFormatted(jsonProperties, oss);
-   error = writeStringToFile(filePath, oss.str());
+   Error error = writeStringToFile(filePath, oss.str());
    return error;
 }
 
@@ -554,21 +557,30 @@ FilePath path()
 {
    return s_sourceDBPath;
 }
-   
+
 Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
+{
+   return get(id, true, pDoc);
+}
+   
+Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceDocument> pDoc)
 {
    FilePath propertiesPath = source_database::path().complete(id);
    
    // attempt to read file contents from sidecar file if available
-   FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
    std::string contents;
-   if (contentsPath.exists())
+   
+   if (includeContents)
    {
-      Error error = readStringFromFile(contentsPath,
-                                       &contents,
-                                       options().sourceLineEnding());
-      if (error)
-         LOG_ERROR(error);
+      FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
+      if (contentsPath.exists())
+      {
+         Error error = readStringFromFile(contentsPath,
+                                          &contents,
+                                          options().sourceLineEnding());
+         if (error)
+            LOG_ERROR(error);
+      }
    }
    
    if (propertiesPath.exists())
@@ -592,7 +604,8 @@ Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc)
       // initialize doc from json
       json::Object jsonDoc = value.get_obj();
       
-      // embed 'contents' in properties file
+      // embed 'contents' in properties file (we always write this when not
+      // available just to ensure unchecked access to 'contents' succeeds)
       if (!jsonDoc.count("contents"))
          jsonDoc["contents"] = contents;
       
@@ -722,11 +735,11 @@ Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
    return Success();
 }
    
-Error put(boost::shared_ptr<SourceDocument> pDoc)
+Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents)
 {   
    // write to file
    FilePath filePath = source_database::path().complete(pDoc->id());
-   Error error = pDoc->writeToFile(filePath);
+   Error error = pDoc->writeToFile(filePath, writeContents);
    if (error)
       return error ;
 
