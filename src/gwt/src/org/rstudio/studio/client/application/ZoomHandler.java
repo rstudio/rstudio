@@ -1,7 +1,7 @@
 /*
- * MacZoomHandler.java
+ * ZoomHandler.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,19 +17,30 @@ package org.rstudio.studio.client.application;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.ZoomLevelChangedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 
-public class MacZoomHandler
+public class ZoomHandler
+             implements ResizeHandler
 {
-   public interface Binder extends CommandBinder<Commands, MacZoomHandler> {}
+   public interface Binder extends CommandBinder<Commands, ZoomHandler> {}
    
    @Inject
-   public MacZoomHandler(Binder binder,
-                         Commands commands)
+   public ZoomHandler(Binder binder,
+                      Commands commands,
+                      EventBus events)
    {
       binder.bind(commands, this);
+      level_ = calcZoomLevel();
+      events_ = events;
+      Window.addResizeHandler(this);
    }
    
    @Handler
@@ -55,4 +66,27 @@ public class MacZoomHandler
       if (BrowseCap.isCocoaDesktop())
          Desktop.getFrame().macZoomOut();
    }
+
+   @Override
+   public void onResize(ResizeEvent event)
+   {
+      // check to see if the zoom level has changed
+      int newLevel = calcZoomLevel();
+      if (level_ != newLevel)
+      {
+         events_.fireEvent(new ZoomLevelChangedEvent(
+               newLevel > level_ ? 
+                     ZoomLevelChangedEvent.ZOOM_IN :
+                     ZoomLevelChangedEvent.ZOOM_OUT));
+         level_ = newLevel;
+      }
+   }
+   
+   private int calcZoomLevel()
+   {
+      return Math.round(WindowEx.get().getDevicePixelRatio() * 100);
+   }
+   
+   private int level_;
+   private final EventBus events_;
 }

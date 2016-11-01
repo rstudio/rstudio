@@ -22,15 +22,19 @@ import java.util.List;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
+import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
+import org.rstudio.studio.client.application.events.ZoomLevelChangedEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
@@ -118,7 +122,8 @@ public class TextEditingTargetNotebook
                           PinnedLineWidget.Host,
                           SourceDocAddedEvent.Handler,
                           RenderFinishedEvent.Handler,
-                          ChunkSatelliteWindowOpenedEvent.Handler
+                          ChunkSatelliteWindowOpenedEvent.Handler,
+                          ChangeFontSizeHandler
 {
    public TextEditingTargetNotebook(final TextEditingTarget editingTarget,
                                     TextEditingTargetChunks chunks,
@@ -292,6 +297,8 @@ public class TextEditingTargetNotebook
             events_.addHandler(SourceDocAddedEvent.TYPE, this));
       releaseOnDismiss_.add(
             events_.addHandler(ChunkSatelliteWindowOpenedEvent.TYPE, this));
+      releaseOnDismiss_.add(
+            events_.addHandler(ChangeFontSizeEvent.TYPE, this));
       
       // subscribe to global rmd output inline preference and sync
       // again when it changes
@@ -794,6 +801,11 @@ public class TextEditingTargetNotebook
       }
    }
    
+   @Override
+   public void onChangeFontSize(ChangeFontSizeEvent event)
+   {
+      syncAllHeights();
+   }
 
    @Override
    public void onResize(ResizeEvent event)
@@ -1749,6 +1761,30 @@ public class TextEditingTargetNotebook
       if (chunk == null)
          return null;
       return getRowChunkId(chunk.getPreamble().getRow());
+   }
+   
+   private void syncAllHeights()
+   {
+      final Mutable<HandlerRegistration> reg = 
+            new Mutable<HandlerRegistration>();
+      reg.set(docDisplay_.addRenderFinishedHandler(
+            new RenderFinishedEvent.Handler()
+      {
+         @Override
+         public void onRenderFinished(RenderFinishedEvent event)
+         {
+            // single shot handler
+            reg.get().removeHandler();
+            
+            // sync all chunk heights after re-render
+            for (ChunkOutputUi output: outputs_.values())
+            {
+               int before = output.getOutputWidget().getOffsetHeight();
+               output.getOutputWidget().syncHeight(false, false);
+               Debug.devlog("sync height of chunk " + output.getChunkId() + " " + before + " => " + output.getOutputWidget().getOffsetHeight());
+            }
+         }
+      }));
    }
    
    private JsArray<ChunkDefinition> initialChunkDefs_;

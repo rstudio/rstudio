@@ -178,6 +178,10 @@ public class WindowEx extends JavaScriptObject
    public final native int getScreenY() /*-{
       return this.screenY;
    }-*/;
+   
+   public final native float getDevicePixelRatio() /*-{
+      return this.devicePixelRatio;
+   }-*/;
 
    public final native void postMessage(JavaScriptObject data, 
                                         String origin) /*-{

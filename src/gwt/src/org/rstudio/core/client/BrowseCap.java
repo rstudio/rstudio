@@ -79,6 +79,11 @@ public class BrowseCap
       return false;
    }
    
+   public static boolean isQtWebKit()
+   {
+      return isUserAgent("qt/") && isUserAgent("applewebkit");
+   }
+   
    public static boolean hasMetaKey()
    {
       return isMacintosh();
