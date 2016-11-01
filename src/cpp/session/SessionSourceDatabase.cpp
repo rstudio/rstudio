@@ -461,7 +461,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson, bool includeContents) c
    jsonDoc["project_path"] = pathToProjectPath(path_);
    jsonDoc["type"] = !type().empty() ? type_ : json::Value();
    jsonDoc["hash"] = hash();
-   if (includeContents) jsonDoc["contents"] = contents();
+   jsonDoc["contents"] = includeContents ? contents() : std::string();
    jsonDoc["dirty"] = dirty();
    jsonDoc["created"] = created();
    jsonDoc["source_on_save"] = sourceOnSave();
@@ -606,7 +606,7 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       
       // embed 'contents' in properties file (we always write this when not
       // available just to ensure unchecked access to 'contents' succeeds)
-      if (!jsonDoc.count("contents"))
+      if (includeContents || !jsonDoc.count("contents"))
          jsonDoc["contents"] = contents;
       
       return pDoc->readFromJson(&jsonDoc);
