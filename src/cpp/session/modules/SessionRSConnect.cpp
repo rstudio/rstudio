@@ -93,6 +93,7 @@ public:
          const json::Array& ignoredFilesList,
          bool asMultiple,
          bool asStatic,
+         bool diagnostics,
          boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
@@ -166,7 +167,9 @@ public:
                     additionalFiles + "'") + 
                  (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
                     ignoredFiles + "'") + 
-             "))}";
+             ")" + 
+             (diagnostics ? ", logLevel = 'verbose'" : "") + 
+             ")}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       *pDeployOut = pDeploy;
@@ -249,15 +252,32 @@ boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
 Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   json::Array sourceFiles, additionalFiles, ignoredFiles;
-   std::string sourceDir, sourceFile, sourceDoc, account, server, appName,
-               appTitle, contentCategory;
-   bool asMultiple = false, asStatic = false;
-   Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
-                                   &sourceFile, &sourceDoc, &account, &server, 
-                                   &appName, &appTitle, &contentCategory, 
-                                   &additionalFiles, &ignoredFiles, 
-                                   &asMultiple, &asStatic);
+   json::Object source, settings;
+   std::string account, server, appName, appTitle;
+   Error error = json::readParams(request.params, &source, &settings,
+                                   &account, &server, 
+                                   &appName, &appTitle);
+   if (error)
+      return error;
+
+   // read publish source information
+   std::string sourceDir, sourceDoc, sourceFile, contentCategory;
+   error = json::readObject(source, "deploy_dir",       &sourceDir,
+                                    "deploy_file",      &sourceFile,
+                                    "source_file",      &sourceDoc,
+                                    "content_category", &contentCategory);
+   if (error)
+      return error;
+
+   // read publish settings
+   bool asMultiple = false, asStatic = false, diagnostics = false;
+   json::Array deployFiles, additionalFiles, ignoredFiles;
+   error = json::readObject(settings, "deploy_files",     &deployFiles,
+                                      "additional_files", &additionalFiles,
+                                      "ignored_files",    &ignoredFiles,
+                                      "as_multiple",      &asMultiple, 
+                                      "as_static",        &asStatic,
+                                      "show_diagnostics", &diagnostics);
    if (error)
       return error;
 
@@ -268,13 +288,13 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    }
    else
    {
-      error = RSConnectPublish::create(sourceDir, sourceFiles, 
+      error = RSConnectPublish::create(sourceDir, deployFiles, 
                                        sourceFile, sourceDoc, 
                                        account, server, appName, appTitle,
                                        contentCategory,
                                        additionalFiles,
                                        ignoredFiles, asMultiple,
-                                       asStatic,
+                                       asStatic, diagnostics,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;
