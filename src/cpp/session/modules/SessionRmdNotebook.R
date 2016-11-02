@@ -960,12 +960,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # cache the set of external code
    knitrCode <- knitr:::knit_code$get()
    assign(".rs.knitr.code", knitrCode, envir = .rs.toolsEnv())
+
+   # cache default working dir
+   knitrDir <- knitr::opts_knit$get("root.dir")
+   assign(".rs.knitr.root.dir", knitrDir, envir = .rs.toolsEnv())
    
    # unset the chunk options and code (so we know what options/code
    # were actually specified in setup chunk later)
    defaults <- list(error = FALSE)
    knitr::opts_chunk$restore(defaults)
    knitr:::knit_code$restore(list())
+   knitr::opts_knit$set(root.dir = NULL)
 })
 
 .rs.addFunction("defaultChunkOptions", function()
@@ -978,6 +983,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    knitr::opts_chunk$restore(chunkOptions)
    knitrCode <- get(".rs.knitr.code", envir = .rs.toolsEnv())
    knitr:::knit_code$restore(knitrCode)
+   knitrDir <- get(".rs.knitr.root.dir", envir = .rs.toolsEnv())
+   knitr::opts_knit$set(root.dir = knitrDir)
    
    # return current set
    .rs.scalarListFromList(defaultOptions)
