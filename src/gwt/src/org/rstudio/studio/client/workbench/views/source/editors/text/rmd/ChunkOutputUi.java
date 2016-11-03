@@ -228,7 +228,7 @@ public class ChunkOutputUi
    public void onOutputRemoved(ChunkOutputWidget widget)
    {
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-              new ChunkChangeEvent(docId_, chunkId_, 0, 
+              new ChunkChangeEvent(docId_, chunkId_, "", 0, 
                                    ChunkChangeEvent.CHANGE_REMOVE));
    }
 
