@@ -41,6 +41,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionProxy.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
+   auth/ServerCSRFToken.cpp
    auth/ServerSecureCookie.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
