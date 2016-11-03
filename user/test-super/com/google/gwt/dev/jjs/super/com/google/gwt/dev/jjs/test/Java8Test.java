@@ -1703,5 +1703,19 @@ public class Java8Test extends GWTTestCase {
         (SubclassImplementingInterfaceWithOverlay) (Object) new int[]{1, 2, 3};
     assertEquals(3, object.len());
   }
+
+  interface Producer<T> {
+    T get();
+  }
+
+  private static Producer<Object> createInnerClassProducer() {
+    class InnerClass {
+    }
+    return (Producer) InnerClass::new;
+  }
+
+  public void testLocalClassConstructorReferenceInStaticMethod() {
+    assertTrue(createInnerClassProducer().get() != null);
+  }
 }
 

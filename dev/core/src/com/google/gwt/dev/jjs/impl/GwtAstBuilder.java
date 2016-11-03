@@ -1820,7 +1820,7 @@ public class GwtAstBuilder {
         // it's constructor invoked with an enclosing instance, Inner::new
         // Java8 doesn't allow the qualifified case, e.g. x.new Foo() -> x.Foo::new
         ReferenceBinding targetBinding = referredMethodBinding.declaringClass;
-        if (JdtUtil.isInnerClass(targetBinding)) {
+        if (targetBinding.syntheticEnclosingInstanceTypes() != null) {
           for (ReferenceBinding argType : targetBinding.syntheticEnclosingInstanceTypes()) {
             argType = (ReferenceBinding) argType.erasure();
             JExpression enclosingThisRef = resolveThisReference(info, argType, false, blockScope);
