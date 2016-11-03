@@ -143,74 +143,46 @@ RToolsInfo::RToolsInfo(const std::string& name,
       versionMax = "3.2.0";
       gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
    }
-   else if (name == "3.3" || name == "3.4")
+   else if (name == "3.3")
    {
-      // are we using R 3.3 built with gcc49 or Rtools 3.4?
-      if (usingMingwGcc49 || (name == "3.4"))
-      {
-         // is the gcc49 toolchain available in Rtools?
-         if (installPath_.childPath("mingw_32").exists())
-         {
-            // distinct supported version ranges for Rtools 3.3 vs. 3.4
+      versionMin = "3.2.0";
+      versionMax = "3.2.99";
+      gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
+   }
+   else if (name == "3.4")
+   {
+      versionMin = "3.3.0";
+      versionMax = "3.4.99";
 
-            if (name == "3.3")
-            {
-               versionMin = "3.2.0";
-               versionMax = "3.3.99";
-            }
-            else // name == "3.4
-            {
-               versionMin = "3.3.0";
-               versionMax = "3.4.99";
-            }
-            relativePathEntries.push_back("bin");
+      relativePathEntries.push_back("bin");
 
-            // set environment variables
-            FilePath gccPath = installPath_.childPath("mingw_$(WIN)/bin");
-            environmentVars.push_back(
-                  std::make_pair("BINPREF", asRBuildPath(gccPath)));
+      // set environment variables
+      FilePath gccPath = installPath_.childPath("mingw_$(WIN)/bin");
+      environmentVars.push_back(
+            std::make_pair("BINPREF", asRBuildPath(gccPath)));
 
-            // set clang args
+      // set clang args
 #ifdef _WIN64
-            std::string baseDir = "mingw_64";
-            std::string arch = "x86_64";
+      std::string baseDir = "mingw_64";
+      std::string arch = "x86_64";
 #else
-            std::string baseDir = "mingw_32";
-            std::string arch = "i686";
+      std::string baseDir = "mingw_32";
+      std::string arch = "i686";
 #endif
 
-            boost::format mgwIncFmt("%1%/%2%-w64-mingw32/include");
-            std::string mgwInc = boost::str(mgwIncFmt % baseDir % arch);
-            clangArgs.push_back(
-                  "-I" + installPath.childPath(mgwInc).absolutePath());
+      boost::format mgwIncFmt("%1%/%2%-w64-mingw32/include");
+      std::string mgwInc = boost::str(mgwIncFmt % baseDir % arch);
+      clangArgs.push_back(
+            "-I" + installPath.childPath(mgwInc).absolutePath());
 
-            std::string cppInc = mgwInc + "/c++";
-            clangArgs.push_back(
-                  "-I" + installPath.childPath(cppInc).absolutePath());
+      std::string cppInc = mgwInc + "/c++";
+      clangArgs.push_back(
+            "-I" + installPath.childPath(cppInc).absolutePath());
 
-            boost::format bitsIncFmt("%1%/%2%-w64-mingw32");
-            std::string bitsInc = boost::str(bitsIncFmt % cppInc % arch);
-            clangArgs.push_back(
-                  "-I" + installPath.childPath(bitsInc).absolutePath());
-         }
-         // no gcc49 toolchain so this version of Rtools can't be
-         // used with R 3.3 built with gcc49 (however qualify it
-         // for R 3.2 so it isn't empty)
-         else
-         {
-            versionMin = "3.2.0";
-            versionMax = "3.2.99";
-            gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
-
-         }
-      }
-      // since this version of R isn't built with gcc49 bind to gcc46
-      else
-      {
-         versionMin = "3.2.0";
-         versionMax = "3.3.0";
-         gcc463Configuration(installPath, &relativePathEntries, &clangArgs);
-      }
+      boost::format bitsIncFmt("%1%/%2%-w64-mingw32");
+      std::string bitsInc = boost::str(bitsIncFmt % cppInc % arch);
+      clangArgs.push_back(
+            "-I" + installPath.childPath(bitsInc).absolutePath());
    }
 
    // build version predicate and path list if we can
