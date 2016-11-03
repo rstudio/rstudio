@@ -3964,25 +3964,12 @@ public class RemoteServer implements Server
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(source.getDeployDir()));
-      params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
-      params.set(2, new JSONString(source.isDocument() ||
-            source.isSingleFileShiny() ? source.getDeployFileName() : ""));
-      params.set(3, new JSONString(
-            source.isDocument() && 
-            source.getSourceFile() != null && 
-            source.getContentCategory() != RSConnect.CONTENT_CATEGORY_SITE ?
-               source.getSourceFile() : ""));
-      params.set(4, new JSONString(account));
-      params.set(5, new JSONString(server));
-      params.set(6, new JSONString(appName));
-      params.set(7, new JSONString(appTitle == null ? "": appTitle));
-      params.set(8, new JSONString(source.getContentCategory() == null ? "" :
-            source.getContentCategory()));
-      params.set(9, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
-      params.set(10, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
-      params.set(11, JSONBoolean.getInstance(settings.getAsMultiple()));
-      params.set(12, JSONBoolean.getInstance(settings.getAsStatic()));
+      params.set(0, new JSONObject(source.toJso()));
+      params.set(1, new JSONObject(settings.toJso()));
+      params.set(2, new JSONString(account));
+      params.set(3, new JSONString(server));
+      params.set(4, new JSONString(appName));
+      params.set(5, new JSONString(StringUtil.notNull(appTitle)));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,

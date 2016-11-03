@@ -204,6 +204,9 @@ public class PublishingPreferencesPane extends PreferencesPane
       if (RSConnect.showRSConnectUI())
          add(rsconnectPanel);
       
+      add(checkboxPref("Show diagnostic information when publishing",
+            uiPrefs_.showPublishDiagnostics()));
+      
       server_.hasOrphanedAccounts(new ServerRequestCallback<Int>()
       {
          @Override

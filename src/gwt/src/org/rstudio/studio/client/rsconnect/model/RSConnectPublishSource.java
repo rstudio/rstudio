@@ -16,7 +16,10 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 public class RSConnectPublishSource
 {
@@ -188,6 +191,23 @@ public class RSConnectPublishSource
    public boolean isStatic()
    {
       return isStatic_;
+   }
+   
+   public JavaScriptObject toJso()
+   {
+      // create summary of publish source for server
+      JsObject obj = JsObject.createJsObject();
+      obj.setString("deploy_dir", getDeployDir());
+      obj.setString("deploy_file", isDocument() ||
+            isSingleFileShiny() ? getDeployFileName() : "");
+      obj.setString("source_file", 
+            isDocument() && 
+            getSourceFile() != null && 
+            getContentCategory() != RSConnect.CONTENT_CATEGORY_SITE ?
+               getSourceFile() : "");
+      obj.setString("content_category", StringUtil.notNull(
+            getContentCategory()));
+      return obj.cast();
    }
    
    private final String deployFile_;
