@@ -545,6 +545,11 @@ public class UIPrefsAccessor extends Prefs
       return object("preferred_publish_account");
    }
    
+   public PrefValue<Boolean> showPublishDiagnostics()
+   {
+      return bool("show_publish_diagnostics", false);
+   }
+   
    public PrefValue<String> connectionsDbInterface()
    {
       return string("connections_db_interface", 

@@ -449,7 +449,7 @@ public class TextEditingTargetNotebook
       }
 
       events_.fireEvent(new ChunkChangeEvent(docUpdateSentinel_.getId(), 
-            chunkId, 0, ChunkChangeEvent.CHANGE_REMOVE));
+            chunkId, "", 0, ChunkChangeEvent.CHANGE_REMOVE));
    }
    
    public void onNotebookClearAllOutput()
@@ -597,7 +597,8 @@ public class TextEditingTargetNotebook
       if (event.getOutput().isEmpty() && !queue_.isExecuting())
       {
          events_.fireEvent(new ChunkChangeEvent(
-               docUpdateSentinel_.getId(), event.getOutput().getChunkId(), 0, 
+               docUpdateSentinel_.getId(), event.getOutput().getChunkId(), 
+               event.getOutput().getRequestId(), 0, 
                ChunkChangeEvent.CHANGE_REMOVE));
          return;
       }
@@ -772,7 +773,7 @@ public class TextEditingTargetNotebook
                         new ScopeList(docDisplay_))));
             break;
          case ChunkChangeEvent.CHANGE_REMOVE:
-            removeChunk(event.getChunkId());
+            removeChunk(event.getChunkId(), event.getRequestId());
             break;
       }
    }
@@ -1054,7 +1055,7 @@ public class TextEditingTargetNotebook
              scope.getEnd().getRow() - output.getCurrentRow() > 1)
          {
             events_.fireEvent(new ChunkChangeEvent(
-                  docUpdateSentinel_.getId(), output.getChunkId(), 0, 
+                  docUpdateSentinel_.getId(), output.getChunkId(), "", 0, 
                   ChunkChangeEvent.CHANGE_REMOVE));
          }
       }
@@ -1362,7 +1363,7 @@ public class TextEditingTargetNotebook
    // NOTE: this implements chunk removal locally; prefer firing a
    // ChunkChangeEvent if you're removing a chunk so appropriate hooks are
    // invoked elsewhere
-   private void removeChunk(final String chunkId)
+   private void removeChunk(final String chunkId, final String requestId)
    {
       // ignore if this chunk is currently executing
       if (queue_.isChunkExecuting(chunkId))
@@ -1401,8 +1402,9 @@ public class TextEditingTargetNotebook
             output.remove();
             outputs_.remove(chunkId);
 
-            // mark doc dirty if necessary (this is not undoable)
-            setDirtyState();
+            // mark doc dirty if interactive (this is not undoable)
+            if (StringUtil.isNullOrEmpty(requestId))
+               setDirtyState();
          }
       });
       anim.run(400);

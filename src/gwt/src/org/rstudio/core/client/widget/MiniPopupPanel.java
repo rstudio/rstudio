@@ -75,6 +75,10 @@ public class MiniPopupPanel extends DecoratedPopupPanel
          pageY = bounds.getTop() - 10 - getOffsetHeight();
       }
       
+      // avoid leaking off left side of page
+      pageX = Math.max(20, pageX);
+      pageY = Math.max(20, pageY);
+      
       setPopupPosition(pageX, pageY);
    }
    

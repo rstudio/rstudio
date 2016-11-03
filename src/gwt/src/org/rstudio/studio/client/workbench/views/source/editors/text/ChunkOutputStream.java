@@ -408,7 +408,7 @@ public class ChunkOutputStream extends FlowPanel
             ChunkOutputFrame frame = (ChunkOutputFrame)w;
             frame.runAfterRender(afterRender_);
          }
-         if (w instanceof FixedRatioWidget)
+         else if (w instanceof FixedRatioWidget)
          {
             FixedRatioWidget fixedRatioWidget = (FixedRatioWidget)w;
             Widget innerWidget = fixedRatioWidget.getWidget();

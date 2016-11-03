@@ -56,6 +56,7 @@ public class ChunkOutputFrame extends DynamicIFrame
          timer_.cancel();
       
       onCompleted_ = onCompleted;
+      loaded_ = false;
       url_ = url;
 
       timer_.schedule(delayMs);
@@ -80,6 +81,7 @@ public class ChunkOutputFrame extends DynamicIFrame
    @Override
    protected void onFrameLoaded()
    {
+      loaded_ = true;
       if (onCompleted_ != null)
          onCompleted_.execute();
    }
@@ -94,13 +96,15 @@ public class ChunkOutputFrame extends DynamicIFrame
          @Override
          public void run()
          {
-            Element body = getDocument().getBody();
+            if (loaded_) {
+               Element body = getDocument().getBody();
 
-            if (body.getChildCount() > 0) {
-               command.execute();
-            } else if (retryCount_ < 50) {
-               retryCount_++;
-               schedule(100);
+               if (body != null && body.getChildCount() > 0) {
+                  command.execute();
+               } else if (retryCount_ < 50) {
+                  retryCount_++;
+                  schedule(100);
+               }
             }
          }
       };
@@ -111,4 +115,5 @@ public class ChunkOutputFrame extends DynamicIFrame
    private final Timer timer_;
    private String url_;
    private Command onCompleted_;
+   private boolean loaded_ = false;
 }

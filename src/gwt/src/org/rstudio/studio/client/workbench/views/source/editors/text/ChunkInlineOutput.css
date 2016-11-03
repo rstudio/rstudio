@@ -10,6 +10,9 @@
 
 .panel {
   background-color: #ffffff;
+  max-width: 600px;
+  max-height: 400px;
+  overflow: auto !important;
 }
 
 .panel pre {

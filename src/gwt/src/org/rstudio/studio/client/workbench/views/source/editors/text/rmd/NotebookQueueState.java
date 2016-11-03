@@ -520,7 +520,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             chunkDef.getOptions().setInclude(false);
          
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ChunkChangeEvent(
-               sentinel_.getId(), chunkDef.getChunkId(), row, 
+               sentinel_.getId(), chunkDef.getChunkId(), "", row, 
                ChunkChangeEvent.CHANGE_CREATE));
       }
       return chunkDef;
