@@ -125,7 +125,7 @@ public class ChunkDataWidget extends SimplePanel
    private final native JavaScriptObject showDataOutputNative(JavaScriptObject data, 
          Element parent, boolean fullSize) /*-{
       var pagedTable = $doc.createElement("div");
-      pagedTable.setAttribute("data-pagedtable", "");
+      pagedTable.setAttribute("data-pagedtable", "false");
 
       if (fullSize) {
          pagedTable.setAttribute("class", "pagedtable-expand");
