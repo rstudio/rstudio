@@ -88,6 +88,13 @@
      })
   }
   else {
+     
+    # don't render when attempting to preview README files
+    filename <- tolower(basename(file))
+    if (identical(filename, "readme.md") ||
+        identical(filename, "readme.rmd"))
+      return("")
+     
     # return render_site if we are in a website
     siteGenerator <- tryCatch(rmarkdown::site_generator(file),
                               error = function(e) NULL)
