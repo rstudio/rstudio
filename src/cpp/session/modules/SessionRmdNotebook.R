@@ -185,6 +185,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                                     includeSource,
                                                     ...)
 {
+   Encoding(fileContents) <- "UTF-8"
    parsed <- .rs.rnb.readConsoleData(fileContents)
    
    # exclude source code if requested
