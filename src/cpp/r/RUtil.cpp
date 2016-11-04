@@ -75,6 +75,12 @@ bool hasCapability(const std::string& capability)
 
 std::string rconsole2utf8(const std::string& encoded)
 {
+   int codepage = 0;
+#ifdef _WIN32
+   Error error = r::exec::evaluateString("base::l10n_info()$codepage", &codepage);
+   if (error)
+      LOG_ERROR(error);
+#endif
    boost::regex utf8("\x02\xFF\xFE(.*?)(\x03\xFF\xFE|\\')");
 
    std::string output;
@@ -83,12 +89,12 @@ std::string rconsole2utf8(const std::string& encoded)
    while (pos != encoded.end() && boost::regex_search(pos, encoded.end(), m, utf8))
    {
       if (pos < m[0].first)
-         output.append(string_utils::systemToUtf8(std::string(pos, m[0].first)));
+         output.append(string_utils::systemToUtf8(std::string(pos, m[0].first), codepage));
       output.append(m[1].first, m[1].second);
       pos = m[0].second;
    }
    if (pos != encoded.end())
-      output.append(string_utils::systemToUtf8(std::string(pos, encoded.end())));
+      output.append(string_utils::systemToUtf8(std::string(pos, encoded.end()), codepage));
 
    return output;
 }
