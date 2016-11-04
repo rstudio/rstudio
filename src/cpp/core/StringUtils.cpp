@@ -272,14 +272,14 @@ std::string utf8ToSystem(const std::string& str,
 #endif
 }
 
-std::string systemToUtf8(const std::string& str)
+std::string systemToUtf8(const std::string& str, unsigned int codepage)
 {
    if (str.empty())
       return std::string();
 
 #ifdef _WIN32
    wchar_t wide[str.length() + 1];
-   int chars = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), wide, sizeof(wide));
+   int chars = ::MultiByteToWideChar(codepage, 0, str.c_str(), str.length(), wide, sizeof(wide));
    if (chars < 0)
    {
       LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
