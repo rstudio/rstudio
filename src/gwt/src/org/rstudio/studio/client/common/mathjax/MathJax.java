@@ -82,6 +82,7 @@ public class MathJax
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
+      lwToPlwMap_ = new SafeMap<LineWidget, ChunkOutputWidget>();
       pendingLineWidgets_ = new HashSet<Integer>();
 
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
@@ -260,7 +261,13 @@ public class MathJax
             // don't render if chunk contents empty
             if (isEmptyLatexChunk(text))
                return;
-
+            
+            // don't render if this is a background render request and
+            // the line widget is collapsed
+            final int row = range.getEnd().getRow();
+            if (isLineWidgetCollapsed(row))
+               return;
+            
             renderLatexLineWidget(range, text, callback);
             return;
          }
@@ -327,7 +334,6 @@ public class MathJax
                                      final String text,
                                      final MathJaxTypesetCallback callback)
    {
-      
       final Element el = DomUtils.getFirstElementWithClassName(
             widget.getElement(),
             MATHJAX_ROOT_CLASSNAME);
@@ -363,6 +369,19 @@ public class MathJax
       });
    }
    
+   private boolean isLineWidgetCollapsed(int row)
+   {
+      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+      if (widget == null)
+         return false;
+      
+      ChunkOutputWidget cow = lwToPlwMap_.get(widget);
+      if (cow == null)
+         return false;
+      
+      return cow.getExpansionState() == ChunkOutputWidget.COLLAPSED;
+   }
+   
    private void removeChunkOutputWidget(final ChunkOutputWidget widget)
    {
       final PinnedLineWidget plw = cowToPlwMap_.get(widget);
@@ -375,6 +394,7 @@ public class MathJax
          public void execute()
          {
             cowToPlwMap_.remove(widget);
+            lwToPlwMap_.remove(plw.getLineWidget());
             plw.detach();
          }
       });
@@ -465,6 +485,7 @@ public class MathJax
             });
 
       cowToPlwMap_.put(outputWidget, plWidget);
+      lwToPlwMap_.put(plWidget.getLineWidget(), outputWidget);
    }
    
    private void resetRenderState()
@@ -685,6 +706,7 @@ public class MathJax
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
+   private final SafeMap<LineWidget, ChunkOutputWidget> lwToPlwMap_;
    private final Set<Integer> pendingLineWidgets_;
    
    private AnchoredSelection anchor_;
