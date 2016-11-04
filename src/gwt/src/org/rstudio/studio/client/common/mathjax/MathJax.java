@@ -392,7 +392,10 @@ public class MathJax
    {
       ChunkOutputWidget cow = lwToPlwMap_.get(widget);
       if (cow == null)
+      {
+         onExpansionCompleted.execute(false);
          return;
+      }
       
       cow.setExpansionState(ChunkOutputWidget.EXPANDED, onExpansionCompleted);
    }
