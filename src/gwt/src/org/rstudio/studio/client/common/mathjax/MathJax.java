@@ -15,9 +15,8 @@
 package org.rstudio.studio.client.common.mathjax;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
@@ -83,7 +82,6 @@ public class MathJax
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
       lwToPlwMap_ = new SafeMap<LineWidget, ChunkOutputWidget>();
-      pendingLineWidgets_ = new HashSet<Integer>();
 
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
@@ -295,17 +293,18 @@ public class MathJax
       // end a previous render session if necessary (e.g. if a popup is showing)
       endRender();
       
+      // bail if we already have a pinned line widget here
       final int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       
       if (widget == null)
       {
-         // if someone is already attempting to generate a line widget for this row, bail
-         if (pendingLineWidgets_.contains(row))
-            return;
-         
-         // mark this row as waiting for a line widget
-         pendingLineWidgets_.add(row);
+         // if the line widget has not been attached to the document,
+         // it's possible that we will already have a pinned line widget
+         // (ie a previous render is pending here)
+         for (Map.Entry<ChunkOutputWidget, PinnedLineWidget> entry : cowToPlwMap_.entrySet())
+            if (entry.getValue().getRow() == row)
+               return;
          
          // if we don't have a widget, create one and render the LaTeX once
          // the widget is attached to the editor
@@ -317,14 +316,12 @@ public class MathJax
             @Override
             public void execute(LineWidget w)
             {
-               pendingLineWidgets_.remove(row);
                renderLatexLineWidget(w, range, text, callback);
             }
          });
       }
       else
       {
-         pendingLineWidgets_.remove(row);
          renderLatexLineWidget(widget, range, text, callback);
       }
    }
@@ -725,7 +722,6 @@ public class MathJax
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
    private final SafeMap<LineWidget, ChunkOutputWidget> lwToPlwMap_;
-   private final Set<Integer> pendingLineWidgets_;
    
    private AnchoredSelection anchor_;
    private Range range_;
