@@ -319,6 +319,11 @@ public class UIPrefsAccessor extends Prefs
    {
       return dbl("font_size_points", 10.0);
    }
+   
+   public PrefValue<Double> lineHeight()
+   {
+      return dbl("line_height", 1.4);
+   }
 
    public PrefValue<String> theme()
    {

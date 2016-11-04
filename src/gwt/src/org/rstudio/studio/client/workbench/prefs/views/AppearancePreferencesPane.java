@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -137,6 +139,26 @@ public class AppearancePreferencesPane extends PreferencesPane
       });
 
       leftPanel.add(fontSize_);
+      
+      lineHeight_ = new SelectWidget(
+            "Line height:",
+            new String[] { "Smaller", "Small", "Normal", "Large", "Larger" },
+            new String[] { "1.0", "1.25", "1.45", "1.6", "1.8" },
+            false);
+      
+      if (!lineHeight_.setValue(uiPrefs.lineHeight().getGlobalValue() + ""))
+         lineHeight_.getListBox().setSelectedIndex(3);
+      
+      lineHeight_.getListBox().addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            preview_.setLineHeight(Double.parseDouble(lineHeight_.getValue()));
+         }
+      });
+      
+      leftPanel.add(lineHeight_);
 
       theme_ = new SelectWidget("Editor theme:",
                                 themes.getThemeNames(),
@@ -170,6 +192,15 @@ public class AppearancePreferencesPane extends PreferencesPane
       hpanel.add(leftPanel);
       hpanel.setCellWidth(leftPanel, "160px");
       hpanel.add(previewPanel);
+      
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            preview_.setLineHeight(Double.parseDouble(lineHeight_.getValue()));
+         }
+      });
 
       add(hpanel);
    }
@@ -203,6 +234,10 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       double fontSize = Double.parseDouble(fontSize_.getValue());
       uiPrefs_.fontSize().setGlobalValue(fontSize);
+      
+      double lineHeight = Double.parseDouble(lineHeight_.getValue());
+      uiPrefs_.lineHeight().setGlobalValue(lineHeight);
+      
       uiPrefs_.theme().setGlobalValue(theme_.getValue());
       if (Desktop.isDesktop())
       {
@@ -235,6 +270,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    private final UIPrefs uiPrefs_;
    private SelectWidget fontSize_;
+   private SelectWidget lineHeight_;
    private SelectWidget theme_;
    private AceEditorPreview preview_;
    private SelectWidget fontFace_;

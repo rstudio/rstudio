@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
-
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -104,6 +103,7 @@ public class AceEditorPreview extends DynamicIFrame
 
                         FontSizer.injectStylesIntoDocument(doc);
                         FontSizer.applyNormalFontSize(div);
+                        setLineHeight(lineHeight_);
                         
                         body.appendChild(doc.createScriptElement(
                               "var event = require('ace/lib/event');\n" +
@@ -161,6 +161,19 @@ public class AceEditorPreview extends DynamicIFrame
       else
          FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
    }
+   
+   public void setLineHeight(final double lineHeight)
+   {
+      lineHeight_ = lineHeight;
+      if (!isFrameLoaded_)
+         return;
+      
+      Element editorEl = getDocument().getElementById("editor");
+      if (editorEl == null)
+         return;
+      
+      editorEl.getStyle().setLineHeight(lineHeight_ * 100, Unit.PCT);
+   }
 
    public void setFont(String font)
    {
@@ -197,6 +210,7 @@ public class AceEditorPreview extends DynamicIFrame
    private boolean isFrameLoaded_;
    private String themeUrl_;
    private Double fontSize_;
+   private Double lineHeight_;
    private Double zoomLevel_;
    private final String code_;
 }

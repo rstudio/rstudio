@@ -165,6 +165,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    void setReadOnly(boolean readOnly);
    void setFontSize(double size);
+   void setLineHeight(double lineHeight);
 
    void onVisibilityChanged(boolean visible);
    void onResize();

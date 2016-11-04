@@ -299,6 +299,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // font size
          fontSize().setGlobalValue(
                              newUiPrefs.fontSize().getGlobalValue());
+         
+         // line height
+         lineHeight().setGlobalValue(
+                             newUiPrefs.lineHeight().getGlobalValue());
       
          // theme
          theme().setGlobalValue(newUiPrefs.theme().getGlobalValue());

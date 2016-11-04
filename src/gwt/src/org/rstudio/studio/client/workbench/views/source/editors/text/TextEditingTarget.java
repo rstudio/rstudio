@@ -1469,6 +1469,15 @@ public class TextEditingTarget implements
                }
             }
       ));
+      
+      releaseOnDismiss_.add(prefs_.lineHeight().addValueChangeHandler(new ValueChangeHandler<Double>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Double> lineHeight)
+         {
+            docDisplay_.setLineHeight(lineHeight.getValue());
+         }
+      }));
 
       releaseOnDismiss_.add(events_.addHandler(FileChangeEvent.TYPE,
                                                new FileChangeHandler() {

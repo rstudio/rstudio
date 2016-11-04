@@ -2642,6 +2642,13 @@ public class AceEditor implements DocDisplay,
       widget_.forceResize();
       widget_.getLineWidgetManager().syncLineWidgetHeights();
    }
+   
+   public void setLineHeight(double lineHeight)
+   {
+      widget_.setLineHeight(lineHeight);
+      widget_.forceResize();
+      widget_.getLineWidgetManager().syncLineWidgetHeights();
+   }
 
    public HandlerRegistration addValueChangeHandler(
          ValueChangeHandler<Void> handler)

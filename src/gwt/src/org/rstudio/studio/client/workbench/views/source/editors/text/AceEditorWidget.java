@@ -22,6 +22,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -50,6 +51,7 @@ import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -96,6 +98,7 @@ public class AceEditorWidget extends Composite
       addStyleName("loading");
 
       editor_ = AceEditorNative.createEditor(getElement());
+      setLineHeight(uiPrefs_.lineHeight().getGlobalValue());
       editor_.manageDefaultKeybindings();
       editor_.getRenderer().setHScrollBarAlwaysVisible(false);
       editor_.setShowPrintMargin(false);
@@ -302,6 +305,11 @@ public class AceEditorWidget extends Composite
             });
    }
    
+   public void setLineHeight(double lineHeight)
+   {
+      getElement().getStyle().setLineHeight(lineHeight * 100, Unit.PCT);
+   }
+   
    // When the 'keyBinding' field is initialized (the field holding all keyboard
    // handlers for an Ace editor), an associated '$data' element is used to store
    // information on keys (to allow for keyboard chaining, and so on). We refresh
@@ -385,9 +393,10 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events, UIPrefs uiPrefs)
    {
       events_ = events;
+      uiPrefs_ = uiPrefs;
    }
    
    public HandlerRegistration addCursorChangedHandler(
@@ -1162,6 +1171,7 @@ public class AceEditorWidget extends Composite
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
    
    private EventBus events_;
+   private UIPrefs uiPrefs_;
    private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
    
    private static boolean hasEditHandlers_ = false;
