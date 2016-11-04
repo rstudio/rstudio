@@ -90,7 +90,7 @@ public class EditingTargetCodeExecution
          boolean onlyUseConsole)
    {
       // when executing LaTeX in R Markdown, show a popup preview
-      if (executeLatex())
+      if (executeLatex(false))
          return;
       
       // when executing inline R code, show a popup preview
@@ -343,7 +343,7 @@ public class EditingTargetCodeExecution
       return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
    }
    
-   private boolean executeLatex()
+   private boolean executeLatex(boolean background)
    {
       // need a suitable editing target to render LaTeX chunks
       if (target_ == null)
@@ -352,7 +352,7 @@ public class EditingTargetCodeExecution
       Range range = MathJaxUtil.getLatexRange(docDisplay_);
       if (range == null)
          return false;
-      target_.renderLatex(range);
+      target_.renderLatex(range, background);
       return true;
    }
    

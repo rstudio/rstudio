@@ -143,7 +143,7 @@ public class MathJax
                      int endRow = range.getEnd().getRow();
                      LineWidget lineWidget = docDisplay_.getLineWidgetForRow(endRow);
                      if (lineWidget != null)
-                        renderLatex(range, false);
+                        renderLatex(range, true);
                   }
                }
             }
@@ -265,7 +265,7 @@ public class MathJax
             // don't render if this is a background render request and
             // the line widget is collapsed
             final int row = range.getEnd().getRow();
-            if (isLineWidgetCollapsed(row))
+            if (background && isLineWidgetCollapsed(row))
                return;
             
             renderLatexLineWidget(range, text, callback);
@@ -352,17 +352,25 @@ public class MathJax
             mathjaxTypeset(el, text, new MathJaxTypesetCallback()
             {
                @Override
-               public void onMathJaxTypesetComplete(boolean error)
+               public void onMathJaxTypesetComplete(final boolean error)
                {
-                  // re-position the element
-                  int height = el.getOffsetHeight() + 30;
-                  Element ppElement = el.getParentElement().getParentElement();
-                  ppElement.getStyle().setHeight(height, Unit.PX);
-                  docDisplay_.onLineWidgetChanged(lineWidget);
-                  
-                  // invoke supplied callback
-                  if (callback != null)
-                     callback.onMathJaxTypesetComplete(error);
+                  // force expansion
+                  withExpandedLineWidget(lineWidget, new CommandWithArg<Boolean>()
+                  {
+                     @Override
+                     public void execute(Boolean stateChanged)
+                     {
+                        // re-position the element
+                        int height = el.getOffsetHeight() + 30;
+                        Element ppElement = el.getParentElement().getParentElement();
+                        ppElement.getStyle().setHeight(height, Unit.PX);
+                        docDisplay_.onLineWidgetChanged(lineWidget);
+
+                        // invoke supplied callback
+                        if (callback != null)
+                           callback.onMathJaxTypesetComplete(error);
+                     }
+                  });
                }
             });
          }
@@ -380,6 +388,16 @@ public class MathJax
          return false;
       
       return cow.getExpansionState() == ChunkOutputWidget.COLLAPSED;
+   }
+   
+   private void withExpandedLineWidget(LineWidget widget,
+                                       final CommandWithArg<Boolean> onExpansionCompleted)
+   {
+      ChunkOutputWidget cow = lwToPlwMap_.get(widget);
+      if (cow == null)
+         return;
+      
+      cow.setExpansionState(ChunkOutputWidget.EXPANDED, onExpansionCompleted);
    }
    
    private void removeChunkOutputWidget(final ChunkOutputWidget widget)

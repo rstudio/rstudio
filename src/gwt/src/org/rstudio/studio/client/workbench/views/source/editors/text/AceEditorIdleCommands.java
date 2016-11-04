@@ -73,7 +73,7 @@ public class AceEditorIdleCommands
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
             pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
       {
-         target.renderLatex(range);
+         target.renderLatex(range, true);
       }
    }
    

@@ -4453,10 +4453,10 @@ public class TextEditingTarget implements
          mathjax_.renderLatex();
    }
    
-   public void renderLatex(Range range)
+   public void renderLatex(Range range, boolean background)
    {
       if (mathjax_ != null)
-         mathjax_.renderLatex(range);
+         mathjax_.renderLatex(range, background);
    }
 
    public String getDefaultNamePrefix()
