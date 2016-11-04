@@ -57,6 +57,11 @@
 
 .rs.addFunction("initDataCapture", function(outputFolder, options)
 {
+  pagedOption <- if (!is.null(options[["paged.print"]])) options[["paged.print"]] else getOption("paged.print")
+  if (identical(pagedOption, FALSE)) {
+    return()
+  }
+
   overridePrint <- function(x, options, className, nRow, nCol) {
     original <- x
     options <- if (is.null(options)) list() else options
@@ -127,18 +132,25 @@
 
 .rs.addFunction("releaseDataCapture", function()
 {
-  options(
-    "dplyr.tibble.print" = get(
-      "dplyr_tibble_print_original",
-      envir = as.environment("tools:rstudio")
+  if (!is.null(getOption("dplyr_tibble_print_original"))) {
+    options(
+      "dplyr.tibble.print" = get(
+        "dplyr_tibble_print_original",
+        envir = as.environment("tools:rstudio")
+      )
     )
-  )
+  }
 
-  overrides <- names(.rs.dataCaptureOverrides())
-  rm(
-    list = overrides,
-    envir = as.environment("tools:rstudio")
-  )
+  overrides <- .rs.dataCaptureOverrides()
+  lapply(names(overrides), function(override) {
+    if (exists(override, envir = as.environment("tools:rstudio"), inherits = FALSE)) {
+      rm(
+        list = override,
+        envir = as.environment("tools:rstudio"),
+        inherits = FALSE
+      )
+    }
+  })
 })
 
 .rs.addFunction("readDataCapture", function(path)
