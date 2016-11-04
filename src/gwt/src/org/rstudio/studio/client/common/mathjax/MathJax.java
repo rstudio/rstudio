@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.common.mathjax;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
@@ -80,6 +82,7 @@ public class MathJax
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
+      pendingLineWidgets_ = new HashSet<Integer>();
 
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
@@ -285,11 +288,18 @@ public class MathJax
       // end a previous render session if necessary (e.g. if a popup is showing)
       endRender();
       
-      int row = range.getEnd().getRow();
+      final int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       
       if (widget == null)
       {
+         // if someone is already attempting to generate a line widget for this row, bail
+         if (pendingLineWidgets_.contains(row))
+            return;
+         
+         // mark this row as waiting for a line widget
+         pendingLineWidgets_.add(row);
+         
          // if we don't have a widget, create one and render the LaTeX once
          // the widget is attached to the editor
          createMathJaxLineWidget(row, 
@@ -300,12 +310,14 @@ public class MathJax
             @Override
             public void execute(LineWidget w)
             {
+               pendingLineWidgets_.remove(row);
                renderLatexLineWidget(w, range, text, callback);
             }
          });
       }
       else
       {
+         pendingLineWidgets_.remove(row);
          renderLatexLineWidget(widget, range, text, callback);
       }
    }
@@ -673,6 +685,7 @@ public class MathJax
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
+   private final Set<Integer> pendingLineWidgets_;
    
    private AnchoredSelection anchor_;
    private Range range_;
