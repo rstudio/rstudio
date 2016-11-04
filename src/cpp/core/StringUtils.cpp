@@ -35,6 +35,10 @@
 #include <winnls.h>
 #endif
 
+#ifndef CP_ACP
+# define CP_ACP 0
+#endif
+
 namespace rstudio {
 namespace core {
 namespace string_utils {
@@ -302,6 +306,11 @@ std::string systemToUtf8(const std::string& str, int codepage)
 #else
    return str;
 #endif
+}
+
+std::string systemToUtf8(const std::string& str)
+{
+   return systemToUtf8(str, CP_ACP);
 }
 
 std::string toLower(const std::string& str)

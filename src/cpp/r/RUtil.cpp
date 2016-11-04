@@ -29,6 +29,10 @@
 
 #include <R_ext/Riconv.h>
 
+#ifndef CP_ACP
+# define CP_ACP 0
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -75,7 +79,7 @@ bool hasCapability(const std::string& capability)
 
 std::string rconsole2utf8(const std::string& encoded)
 {
-   int codepage = 0;
+   int codepage = CP_ACP;
 #ifdef _WIN32
    Error error = r::exec::evaluateString("base::l10n_info()$codepage", &codepage);
    if (error)
