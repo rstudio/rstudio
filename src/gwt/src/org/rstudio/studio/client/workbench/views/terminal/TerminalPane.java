@@ -22,7 +22,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.console.ConsolePromptEvent;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
@@ -35,8 +34,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
-
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -46,7 +43,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class TerminalPane extends WorkbenchPane
                           implements ConsoleOutputEvent.Handler, 
-                                     ConsolePromptEvent.Handler,
                                      ProcessExitEvent.Handler,
                                      ClickHandler,
                                      ResizeTerminalEvent.Handler
@@ -75,6 +71,9 @@ public class TerminalPane extends WorkbenchPane
       return host_;
    }
   
+   /**
+    * Create a terminal process and connect to it.
+    */
    private void connectToTerminalProcess()
    {
       server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, 
@@ -94,17 +93,16 @@ public class TerminalPane extends WorkbenchPane
 
             if (consoleProcess_ != null)
             {
-               addHandlerRegistration(consoleProcess_.addConsolePromptHandler(TerminalPane.this));
                addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalPane.this));
                addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalPane.this));
                xterm_.addResizeTerminalHandler(TerminalPane.this);
-               
+
                xterm_.addDataEventHandler(new CommandWithArg<String>()
                {
                   public void execute(String data)
                   {
                      encryptInput(data, new CommandWithArg<String>() {
-                        
+
                         @Override
                         public void execute(String arg)
                         {
@@ -113,7 +111,7 @@ public class TerminalPane extends WorkbenchPane
                      });
                   }
                });
-               
+
                consoleProcess.start(new SimpleRequestCallback<Void>()
                {
                   @Override
@@ -121,7 +119,7 @@ public class TerminalPane extends WorkbenchPane
                   {
                      // Show error and stop
                      super.onError(error);
-                     
+
                      // TODO closeDialog();
                   }
                });
@@ -150,13 +148,6 @@ public class TerminalPane extends WorkbenchPane
    {
       // TODO implement
       
-   }
-
-   @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
-   {
-      // TODO: this should never be used once we're done with server-side changes
-      xterm_.write(event.getPrompt());
    }
 
    @Override
@@ -243,7 +234,8 @@ public class TerminalPane extends WorkbenchPane
    {
       consoleProcess_.resizeTerminal(
             event.getCols(), event.getRows(),
-            new VoidServerRequestCallback() {
+            new VoidServerRequestCallback() 
+            {
                @Override
                public void onError(ServerError error)
                {
@@ -259,5 +251,4 @@ public class TerminalPane extends WorkbenchPane
    private ConsoleProcess consoleProcess_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private PublicKeyInfo publicKeyInfo_ = null;
- 
 }

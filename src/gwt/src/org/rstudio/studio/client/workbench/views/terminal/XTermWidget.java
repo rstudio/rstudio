@@ -22,7 +22,6 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
@@ -39,6 +38,9 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
+/**
+ * Xterm-compatible terminal emulator
+ */
 public class XTermWidget extends Widget implements RequiresResize
 {
    public enum AnsiColor
@@ -72,40 +74,54 @@ public class XTermWidget extends Widget implements RequiresResize
       }
    }      
    
+   /**
+    *  Creates an XTermWidget.
+    */
    public XTermWidget()
    {
-      styles_ = ConsoleResources.INSTANCE.consoleStyles();
-      createContainerElement();
-      terminal_ = XTermNative.createTerminal(true);
-      terminal_.open(getElement());
+      // Create an element to hold the terminal widget
+      setElement(Document.get().createDivElement());
+      getElement().setTabIndex(0);
+      getElement().getStyle().setMargin(0, Unit.PX);
+      getElement().getStyle().setBackgroundColor("#111");
+      getElement().getStyle().setColor("#fafafa");
+      
+      // Create and attach the native terminal object to this Widget
+      attachTheme(XTermThemeResources.INSTANCE.xtermcss());
+      terminal_ = XTermNative.createTerminal(getElement(), true);
    }
    
+   /**
+    * Show a greeting in the terminal
+    */
    private void showBanner()
    {
       writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
             AnsiColor.DEFAULT + " shell.");
    }
   
+   /**
+    * One one line of text to the terminal.
+    * @param str Text to write (CRLF will be appended)
+    */
    public void writeln(String str)
    {
       terminal_.writeln(str);
    }
    
+   /**
+    * Write text to the terminal.
+    * @param str Text to write
+    */
    public void write(String str)
    {
       terminal_.write(str);
    }
    
-   private void createContainerElement()
-   {
-      attachTheme(XTermThemeResources.INSTANCE.xtermcss());
-      setElement(Document.get().createDivElement());
-      getElement().setTabIndex(0);
-      getElement().getStyle().setMargin(0, Unit.PX);
-      getElement().getStyle().setBackgroundColor("#111");
-      getElement().getStyle().setColor("#fafafa");
-   }
-   
+   /**
+    * Inject the xterm.js styles into the page.
+    * @param cssResource
+    */
    private void attachTheme(StaticDataResource cssResource)
    {
       if (currentStyleEl_ != null)
@@ -118,7 +134,6 @@ public class XTermWidget extends Widget implements RequiresResize
       Document.get().getBody().appendChild(currentStyleEl_);
    }
   
-   private boolean initialized_ = false;
    @Override
    protected void onLoad()
    {
@@ -128,9 +143,12 @@ public class XTermWidget extends Widget implements RequiresResize
          initialized_ = true;
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
+            @Override
             public void execute()
             {
-               doOnLoad();
+               terminal_.fit();
+               terminal_.focus();
+               showBanner();
             }
          });
 
@@ -138,29 +156,22 @@ public class XTermWidget extends Widget implements RequiresResize
       }
    }
    
-   protected void doOnLoad()
+   @Override
+   protected void onUnload()
    {
-      terminal_.fit();
-      terminal_.focus();
-      showBanner(); 
-   }
-   
-   public static void load(final Command command)
-   {
-      xtermLoader_.addCallback(new Callback()
+      super.onUnload();
+      if (initialized_)
       {
-         public void onLoaded()
+         initialized_ = false;
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
-            xtermFitLoader_.addCallback(new Callback()
+            public void execute()
             {
-               public void onLoaded()
-               {
-                  if (command != null)
-                     command.execute();
-               }
-            });
-         }
-     });
+               terminal_.blur();
+               terminal_.destroy();
+            }
+         });
+      }
    }
    
    @Override
@@ -192,7 +203,7 @@ public class XTermWidget extends Widget implements RequiresResize
       else
          terminal_.blur(); 
    }
-   
+  
    protected void addHandlerRegistration(HandlerRegistration reg)
    {
       registrations_.add(reg);
@@ -223,6 +234,31 @@ public class XTermWidget extends Widget implements RequiresResize
          return new ExternalJavaScriptLoader(debug.getSafeUri().asString());
    }
    
+   /**
+    * Load resources for XTermWidget.
+    * 
+    * @param command Command to execute after resources are loaded
+    */
+   public static void load(final Command command)
+   {
+      xtermLoader_.addCallback(new Callback()
+      {
+         @Override
+         public void onLoaded()
+         {
+            xtermFitLoader_.addCallback(new Callback()
+            {
+               @Override
+               public void onLoaded()
+               {
+                  if (command != null)
+                     command.execute();
+               }
+            });
+         }
+     });
+   }
+   
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), 
                XTermResources.INSTANCE.xtermjs() /*TODO uncompressed flavor */);
@@ -232,7 +268,7 @@ public class XTermWidget extends Widget implements RequiresResize
 
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
-   private ConsoleResources.ConsoleStyles styles_; // TODO: do we need this?
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private ResizeTerminalEvent.Handler terminalResizeHandler_;
+   private boolean initialized_ = false;
 }

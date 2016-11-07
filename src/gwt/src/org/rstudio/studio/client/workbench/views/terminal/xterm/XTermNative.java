@@ -16,41 +16,54 @@
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 
+/**
+ * JavaScriptObject wrapper for xterm.js
+ */
 public class XTermNative extends JavaScriptObject
 {
+   // Required by JavaScriptObject subclasses
    protected XTermNative()
    {
    }
    
-   public final native void open(Element container) /*-{
-      this.open(container);
-   }-*/;
-
+   /**
+    * Remove event handlers and detach from parent node.
+    */
+   // TODO: should be calling this
    public final native void destroy() /*-{
       this.destroy();
    }-*/;
    
+   /**
+    * Fit the terminal to available space.
+    */
    public final native void fit() /*-{
       this.fit();
    }-*/;
 
+   /**
+    * Write a line of output to the terminal, appending CR/LF.
+    * @param data String to write
+    */
    public final native void writeln(String data) /*-{
       this.writeln(data);
    }-*/;
    
+   /**
+    * Write text to the terminal.
+    * @param data String to write
+    */
    public final native void write(String data) /*-{
       this.write(data);
    }-*/;
   
-   public final native void bell() /*-{
-      this.bell();
-   }-*/;
-   
+   /**
+    * Compute and return available dimensions for terminal.
+    * @return Visible number of columns and rows
+    */
    public final native XTermDimensions proposeGeometry() /*-{
       return this.proposeGeometry();
    }-*/;
@@ -86,7 +99,17 @@ public class XTermNative extends JavaScriptObject
          });
    }-*/;
    
-   public static native XTermNative createTerminal(boolean blink) /*-{
-      return new $wnd.Terminal({cursorBlink: blink});
+   /**
+    * Factory to create a native Javascript terminal object.
+    *  
+    * @param container HTML element to attach to
+    * @param blink <code>true</code> for a blinking cursor, otherwise solid cursor
+    * 
+    * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
+    */
+   public static native XTermNative createTerminal(Element container, boolean blink) /*-{
+      var nativeTerm_ = new $wnd.Terminal({cursorBlink: blink});
+      nativeTerm_.open(container);
+      return nativeTerm_;
    }-*/;
 } 
