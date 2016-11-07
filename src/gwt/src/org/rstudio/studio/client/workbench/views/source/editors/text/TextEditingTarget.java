@@ -3291,7 +3291,7 @@ public class TextEditingTarget implements
                isCommentAction = true;
          }
          
-         if (docDisplay_.getFileType().isRmd())
+         if (docDisplay_.getFileType().isR())
          {
             if (!looksLikeRoxygen)
             {
