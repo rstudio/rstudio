@@ -1598,8 +1598,7 @@ bool isSuspendable(const std::string& currentPrompt)
 bool suspend(const RSuspendOptions& options,
              const FilePath& suspendedSessionPath,
              bool disableSaveCompression,
-             bool force,
-             int status = EXIT_SUCCESS)
+             bool force)
 {
    // validate that force == true if disableSaveCompression is specified
    // this is because save compression is disabled and the previous options
@@ -1642,7 +1641,7 @@ bool suspend(const RSuspendOptions& options,
    
       // clean up but don't save workspace or runLast because we have
       // been suspended
-      RCleanUp(SA_NOSAVE, status, FALSE);
+      RCleanUp(SA_NOSAVE, options.status, FALSE);
       
       // keep compiler happy (this line will never execute)
       return true;
@@ -1655,11 +1654,10 @@ bool suspend(const RSuspendOptions& options,
 
 bool suspend(bool force, int status)
 {
-   return suspend(RSuspendOptions(),
+   return suspend(RSuspendOptions(status),
                   s_suspendedSessionPath,
                   false,
-                  force,
-                  status);
+                  force);
 }
 
 void suspendForRestart(const RSuspendOptions& options)
@@ -1668,8 +1666,7 @@ void suspendForRestart(const RSuspendOptions& options)
            RestartContext::createSessionStatePath(s_options.scopedScratchPath,
                                                   s_options.sessionPort),
            true,  // disable save compression
-           true,  // force suspend
-           EX_CONTINUE);
+           true);  // force suspend
 }
 
 // set save action

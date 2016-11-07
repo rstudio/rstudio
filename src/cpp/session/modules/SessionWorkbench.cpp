@@ -910,7 +910,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.rows = rows;
 
    // configure bash command
-   core::shell_utils::ShellCommand bashCommand("/bin/bash");
+   core::shell_utils::ShellCommand bashCommand("/usr/bin/env");
+   bashCommand << "bash";
    bashCommand << "--norc";
 
    // run process

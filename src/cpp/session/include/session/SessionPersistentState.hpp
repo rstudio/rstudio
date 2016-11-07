@@ -48,10 +48,6 @@ public:
    bool hadAbend();
    void setAbend(bool abend);
 
-   // virtual session ID (identifies a session to the client until quit)
-   std::string virtualSessionId();
-   std::string newVirtualSessionId();
-
    // active environment
    std::string activeEnvironmentName() const;
    void setActiveEnvironmentName(std::string environmentName);

@@ -2640,6 +2640,7 @@ public class AceEditor implements DocDisplay,
       // However, we do need to resize the gutter
       widget_.getEditor().getRenderer().updateFontSize();
       widget_.forceResize();
+      widget_.getLineWidgetManager().syncLineWidgetHeights();
    }
 
    public HandlerRegistration addValueChangeHandler(

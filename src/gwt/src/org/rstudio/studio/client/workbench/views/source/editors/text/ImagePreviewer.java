@@ -15,10 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 
+import java.util.Map;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.ImageElementEx;
+import org.rstudio.core.client.html.HTMLAttributesParser;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.layout.FadeOutAnimation;
 import org.rstudio.core.client.regex.Pattern;
@@ -107,12 +110,33 @@ public class ImagePreviewer
             
       String href = token.getValue();
       if (ImagePreviewer.isImageHref(href))
-         onPreviewImage(display, sentinel, prefs, href, position, tokenRange);
+      {
+         // extract HTML attributes from line for markdown links, e.g.
+         //
+         //    ![](plot.png){width=400 height=400}
+         //
+         String attributes = null;
+         String line = display.getLine(position.getRow());
+         if (isStandaloneMarkdownLink(line))
+         {
+            int startBraceIdx = line.indexOf("){");
+            int endBraceIdx   = line.lastIndexOf("}");
+            if (startBraceIdx != -1 &&
+                endBraceIdx != -1 &&
+                endBraceIdx > startBraceIdx)
+            {
+               attributes = line.substring(startBraceIdx + 2, endBraceIdx).trim();
+            }
+         }
+         
+         onPreviewImage(display, sentinel, prefs, href, attributes, position, tokenRange);
+      }
    }
    
    private static void onPreviewImageLineWidget(final DocDisplay display,
                                                 final DocUpdateSentinel sentinel,
                                                 final String href, 
+                                                final String attributes,
                                                 final Position position,
                                                 final Range tokenRange)
    {
@@ -212,10 +236,22 @@ public class ImagePreviewer
       };
       
       // construct our image
-      final Image image = new Image(imgSrcPathFromHref(sentinel, href));
+      String srcPath = imgSrcPathFromHref(sentinel, href);
+      final Image image = new Image(srcPath);
+      
+      // parse and inject attributes
+      Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
+      final Element imgEl = image.getElement();
+      for (Map.Entry<String, String> entry : parsedAttributes.entrySet())
+      {
+         String key = entry.getKey();
+         String val = entry.getValue();
+         if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
+            continue;
+         imgEl.setAttribute(key, val);
+      }
       
       // add load handlers to image
-      final Element imgEl = image.getElement();
       DOM.sinkEvents(imgEl, Event.ONLOAD | Event.ONERROR);
       DOM.setEventListener(imgEl, new EventListener()
       {
@@ -224,16 +260,23 @@ public class ImagePreviewer
          {
             if (DOM.eventGetType(event) == Event.ONLOAD)
             {
-               // set styles
-               ImageElementEx imgEl = image.getElement().cast();
+               final ImageElementEx imgEl = image.getElement().cast();
                
                int minWidth = Math.min(imgEl.naturalWidth(), 100);
                int maxWidth = Math.min(imgEl.naturalWidth(), 650);
                
                Style style = imgEl.getStyle();
-               style.setProperty("width", "100%");
-               style.setProperty("minWidth", minWidth + "px");
-               style.setProperty("maxWidth", maxWidth + "px"); 
+               
+               boolean hasWidth =
+                     imgEl.hasAttribute("width") ||
+                     style.getProperty("width") != null;
+               
+               if (!hasWidth)
+               {
+                  style.setProperty("width", "100%");
+                  style.setProperty("minWidth", minWidth + "px");
+                  style.setProperty("maxWidth", maxWidth + "px");
+               }
                
                // attach to container
                container.setWidget(image);
@@ -284,6 +327,8 @@ public class ImagePreviewer
             new DocumentChangedEvent.Handler()
       {
          private String href_ = href;
+         private String attributes_ = StringUtil.notNull(attributes);
+         
          private final Timer refreshImageTimer = new Timer()
          {
             @Override
@@ -298,6 +343,18 @@ public class ImagePreviewer
                noImageLabel.setText("(No image at path " + href_ + ")");
                image.getElement().setAttribute("src", imgSrcPathFromHref(
                      sentinel, href_));
+               
+               // parse and inject attributes
+               Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes_);
+               final Element imgEl = image.getElement();
+               for (Map.Entry<String, String> entry : parsedAttributes.entrySet())
+               {
+                  String key = entry.getKey();
+                  String val = entry.getValue();
+                  if (StringUtil.isNullOrEmpty(key) || StringUtil.isNullOrEmpty(val))
+                     continue;
+                  imgEl.setAttribute(key, val);
+               }
             }
          };
          
@@ -325,13 +382,25 @@ public class ImagePreviewer
                   if (hrefToken == null)
                      return;
                   
+                  String attributes = "";
+                  int startBraceIdx = line.indexOf("){");
+                  int endBraceIdx   = line.lastIndexOf("}");
+                  if (startBraceIdx != -1 &&
+                        endBraceIdx != -1 &&
+                        endBraceIdx > startBraceIdx)
+                  {
+                     attributes = line.substring(startBraceIdx + 2, endBraceIdx).trim();
+                  }
+                  
                   // if we have the same href as before, don't update
                   // (avoid flickering + re-requests of same URL)
-                  if (hrefToken.getValue().equals(href_))
+                  if (hrefToken.getValue().equals(href_) && attributes.equals(attributes_))
                      return;
                   
                   // cache href and schedule refresh of image
                   href_ = hrefToken.getValue();
+                  attributes_ = attributes;
+                  
                   refreshImageTimer.schedule(700);
                }
                else
@@ -435,6 +504,7 @@ public class ImagePreviewer
                                       DocUpdateSentinel sentinel,
                                       UIPrefs prefs,
                                       String href,
+                                      String attributes,
                                       Position position,
                                       Range tokenRange)
    {
@@ -462,7 +532,7 @@ public class ImagePreviewer
                 UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS))
       {
          onPreviewImageLineWidget(display, sentinel,
-               href, position, tokenRange);
+               href, attributes, position, tokenRange);
          return;
       }
       
@@ -476,7 +546,7 @@ public class ImagePreviewer
       panel.setPopupPosition(coordinates.getPageX(), coordinates.getPageY() + 20);
       panel.show();
    }
-
+   
    private final DocDisplay display_;
    private final DocUpdateSentinel sentinel_;
    private final UIPrefs prefs_;

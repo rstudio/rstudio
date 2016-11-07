@@ -47,6 +47,8 @@ namespace server {
 
 namespace {
 
+static std::string s_launcherToken;
+
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
          const core::system::Options& extraArgs = core::system::Options())
@@ -78,6 +80,11 @@ core::system::ProcessConfig sessionProcessConfig(
       args.push_back(std::make_pair("-" kScopeSessionOptionShort,
                                     context.scope.id()));
    }
+
+   // create launch token if we haven't already
+   if (s_launcherToken.empty())
+      s_launcherToken = core::system::generateShortenedUuid();
+   args.push_back(std::make_pair("--launcher-token", s_launcherToken));
 
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");

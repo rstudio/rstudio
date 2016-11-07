@@ -574,28 +574,6 @@ private:
          }
       }
 
-      error = r::exec::RFunction(".rs.defaultChunkOptions")
-                                      .call(&resultSEXP, &protect);
-      if (error)
-         LOG_ERROR(error);
-      else
-      {
-         json::Value defaults;
-         r::json::jsonValueFromList(resultSEXP, &defaults);
-         if (defaults.type() == json::ObjectType)
-         {
-            // write default chunk options to cache
-            Error error = setChunkValue(docPath, execContext_->docId(), 
-                  kChunkDefaultOptions, defaults.get_obj());
-            if (error)
-               LOG_ERROR(error);
-
-            // update running queue if present
-            if (!queue_.empty())
-               queue_.front()->setDefaultChunkOptions(defaults.get_obj());
-         }
-      }
-
       // record the root directory
       error = r::exec::evaluateString(
             "knitr::opts_knit$get(\"root.dir\")", &resultSEXP, &protect);
@@ -626,6 +604,28 @@ private:
             LOG_ERROR(error);
          if (!queue_.empty())
             queue_.front()->setWorkingDir("");
+      }
+
+      error = r::exec::RFunction(".rs.defaultChunkOptions")
+                                      .call(&resultSEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         json::Value defaults;
+         r::json::jsonValueFromList(resultSEXP, &defaults);
+         if (defaults.type() == json::ObjectType)
+         {
+            // write default chunk options to cache
+            Error error = setChunkValue(docPath, execContext_->docId(), 
+                  kChunkDefaultOptions, defaults.get_obj());
+            if (error)
+               LOG_ERROR(error);
+
+            // update running queue if present
+            if (!queue_.empty())
+               queue_.front()->setDefaultChunkOptions(defaults.get_obj());
+         }
       }
    }
 

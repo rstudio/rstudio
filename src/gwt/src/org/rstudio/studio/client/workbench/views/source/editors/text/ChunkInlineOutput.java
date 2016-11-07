@@ -52,6 +52,7 @@ public class ChunkInlineOutput extends MiniPopupPanel
       chunkId_ = chunkId;
       selection_ = selection;
       state_ = State.Queued;
+      
       addStyleName(RES.styles().panel());
       
       // detach anchored selection when closing so we don't accumulate 

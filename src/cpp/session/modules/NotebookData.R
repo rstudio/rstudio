@@ -70,8 +70,12 @@
                        fileext = ".rdf")
 
     max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else options$max.print
-
     x <- .rs.toDataFrame(head(x, max.print), "x", flatten = FALSE, force = TRUE)
+
+    cols.max.print <- if (is.null(options$cols.max.print)) getOption("cols.max.print", 1000) else options$cols.max.print
+    if (NCOL(x) > cols.max.print) {
+      x <- x[,c(1:cols.max.print)]
+    }
 
     save(
       x,

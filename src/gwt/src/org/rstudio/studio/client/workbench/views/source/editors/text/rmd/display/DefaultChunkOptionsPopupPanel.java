@@ -57,12 +57,10 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (!chunkOptions_.isEmpty())
       {
          Map<String, String> sorted = sortedOptions(chunkOptions_);
-         if (!(StringUtil.isNullOrEmpty(chunkPreamble_) &&
-             label.isEmpty()))
-         {
+         if (label.isEmpty())
+            newLine += " ";
+         else
             newLine += ", ";
-         }
-         
          newLine += StringUtil.collapse(sorted, "=", ", ");
       }
       
@@ -127,17 +125,35 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    
    private String extractChunkLabel(String extractedChunkHeader)
    {
+      // if there are no spaces within the chunk header,
+      // there cannot be a label
       int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
       if (firstSpaceIdx == -1)
          return "";
       
-      int firstCommaIdx = extractedChunkHeader.indexOf(',');
-      if (firstCommaIdx == -1)
-         firstCommaIdx = extractedChunkHeader.length();
+      // find the indices of the first '=' and ',' characters
+      int firstEqualsIdx = extractedChunkHeader.indexOf('=');
+      int firstCommaIdx  = extractedChunkHeader.indexOf(',');
       
-      return firstCommaIdx <= firstSpaceIdx ?
-            "" :
-            extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
+      // if we found neither an '=' nor a ',', then the label
+      // must be all the text following the first space
+      if (firstEqualsIdx == -1 && firstCommaIdx == -1)
+         return extractedChunkHeader.substring(firstSpaceIdx + 1).trim();
+      
+      // if we found an '=' before we found a ',' (or we didn't find
+      // a ',' at all), that implies a chunk header like:
+      //
+      //    ```{r message=TRUE, echo=FALSE}
+      //
+      // and so there is no label.
+      if (firstCommaIdx == -1)
+         return "";
+         
+      if (firstEqualsIdx != -1 && firstEqualsIdx < firstCommaIdx)
+         return "";
+      
+      // otherwise, the text from the first space to that comma gives the label
+      return extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
    }
    
    private void parseChunkHeader(String line, HashMap<String, String> chunkOptions)
@@ -164,9 +180,22 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       if (!StringUtil.isNullOrEmpty(chunkLabel))
          tbChunkLabel_.setText(extractChunkLabel(extracted));
       
-      int firstCommaIndex = extracted.indexOf(',');
-      String arguments = extracted.substring(firstCommaIndex + 1);
+      // if we had a chunk label, then we want to navigate our cursor to
+      // the first comma in the chunk header; otherwise, we start at the
+      // first space. this is done to accept chunk headers of the form
+      //
+      //    ```{r message=FALSE}
+      //
+      // ie, those with no comma after the engine used
+      int argsStartIdx = StringUtil.isNullOrEmpty(chunkLabel)
+            ? extracted.indexOf(' ')
+            : extracted.indexOf(',');
+      
+      String arguments = extracted.substring(argsStartIdx + 1);
       TextCursor cursor = new TextCursor(arguments);
+      
+      // consume commas and whitespace if needed
+      cursor.consumeUntilRegex("[^\\s,]");
       
       int startIndex = 0;
       do
@@ -176,8 +205,11 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
          
          int equalsIndex = cursor.getIndex();
          int endIndex = arguments.length();
-         if (cursor.fwdToCharacter(',', true))
+         if (cursor.fwdToCharacter(',', true) ||
+             cursor.fwdToCharacter(' ', true))
+         {
             endIndex = cursor.getIndex();
+         }
          
          chunkOptions.put(
                arguments.substring(startIndex, equalsIndex).trim(),

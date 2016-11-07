@@ -167,10 +167,12 @@ bool suspend(bool force, int status = EXIT_SUCCESS);
 
 struct RSuspendOptions
 {
-   RSuspendOptions()
-      : saveMinimal(false), saveWorkspace(false), excludePackages(false)
+   RSuspendOptions(int exitStatus)
+      : status(exitStatus), saveMinimal(false), saveWorkspace(false), 
+        excludePackages(false)
    {
    }
+   int status;
    bool saveMinimal;
    bool saveWorkspace;
    bool excludePackages;

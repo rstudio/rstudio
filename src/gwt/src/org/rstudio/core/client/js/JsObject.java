@@ -144,6 +144,10 @@ public class JsObject extends JavaScriptObject
    public final native void _setBoolean(String key, boolean value) /*-{
       this[key] = value;
    }-*/;
+   
+   public final native void setJsArrayString(String key, JsArrayString value) /*-{
+      this[key] = value;
+   }-*/;
 
    public final native JsArrayString keys() /*-{
       return Object.keys(this);
