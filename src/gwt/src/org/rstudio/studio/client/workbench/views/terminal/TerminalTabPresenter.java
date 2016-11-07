@@ -58,7 +58,7 @@ public class TerminalTabPresenter extends BusyPresenter
                  @Override
                  public void execute()
                  {
-                    // TODO: close PTY on server end
+                    // TODO: (gary) close PTY on server end
                     onConfirmed.execute();
                  }
               }, null, null, "Exit", "Cancel", true);

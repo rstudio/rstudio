@@ -109,7 +109,7 @@ public class TerminalPane extends WorkbenchPane
                      // Show error and stop
                      super.onError(error);
 
-                     // TODO closeDialog();
+                     // TODO (gary) closeDialog();
                   }
                });
             }
@@ -135,7 +135,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onClick(ClickEvent event)
    {
-      // TODO implement
+      // TODO (gary) implement
       
    }
 
@@ -148,7 +148,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onProcessExit(ProcessExitEvent event)
    {
-      // TODO: implement
+      // TODO: (gary) implement
       
    }
 
@@ -159,11 +159,11 @@ public class TerminalPane extends WorkbenchPane
    
    protected void unregisterHandlers()
    {
-      // TODO: does this need to be called, and from where?
+      // TODO: (gary) does this need to be called, and from where?
       registrations_.removeHandler();
    }
    
-   // TODO: this is duplicated from ShellInteractionManager, pull out common behavior between
+   // TODO: (gary) this is duplicated from ShellInteractionManager, pull out common behavior between
    // ConsoleProgressDialog and TerminalPane
    private void encryptInput(final String input, 
                              final CommandWithArg<String> onInputReady)
@@ -199,7 +199,7 @@ public class TerminalPane extends WorkbenchPane
       } 
    }
   
-   // TODO: duplicated from ShellInteractionManager along with encryptInput; consolidate shared code
+   // TODO: (gary) duplicated from ShellInteractionManager along with encryptInput; consolidate shared code
    private CommandWithArg<ShellInput> inputHandler_ = 
          new CommandWithArg<ShellInput>() 
    {

@@ -274,7 +274,7 @@ public class XTermWidget extends Widget implements RequiresResize,
    
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), 
-               XTermResources.INSTANCE.xtermjs() /*TODO uncompressed flavor */);
+               XTermResources.INSTANCE.xtermjs() /*TODO (gary) uncompressed flavor */);
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
          getLoader(XTermResources.INSTANCE.xtermfitjs());

@@ -84,7 +84,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                   // isDialog == false exits when no client is connected (in
                   // that case it will never be reaped). 
                   
-                  // TODO: clean this up and/or eliminate isDialog flag (since
+                  // TODO: (gary) clean this up and/or eliminate isDialog flag (since
                   // all known instances currently use isDialog == true)
                   
                   connectToProcess(
