@@ -20,6 +20,9 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent.Handler;
 
+/**
+ * Event sent when a terminal is resized.
+ */
 public class ResizeTerminalEvent extends GwtEvent<Handler>
 {  
    public interface Handler extends EventHandler
@@ -32,6 +35,11 @@ public class ResizeTerminalEvent extends GwtEvent<Handler>
       HandlerRegistration addResizeTerminalHandler(Handler handler);
    }
    
+   /**
+    * Create a new terminal resize event 
+    * @param cols new number of columns
+    * @param rows new number of rows
+    */
    public ResizeTerminalEvent(int cols, int rows)
    {
       cols_ = cols;
@@ -50,11 +58,18 @@ public class ResizeTerminalEvent extends GwtEvent<Handler>
       handler.onResizeTerminal(this);
    } 
    
+   
+   /**
+    * @return number of rows in resized terminal
+    */
    public int getRows()
    {
       return rows_;
    }
 
+   /**
+    * @return number of columns in resized terminal
+    */
    public int getCols()
    {
       return cols_;

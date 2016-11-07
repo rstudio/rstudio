@@ -1,8 +1,7 @@
-
 /*
- * CreateTerminalEvent.java
+ * TerminalDataEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,25 +15,31 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent.Handler;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 
-/**
- * Event to trigger creation of a terminal session.
- */
-public class CreateTerminalEvent extends GwtEvent<CreateTerminalEvent.Handler>
-{  
+public class TerminalDataInputEvent extends GwtEvent<Handler>
+{
    public interface Handler extends EventHandler
    {
-      void onCreateTerminal(CreateTerminalEvent event);
+      void onTerminalDataInput(TerminalDataInputEvent event);
+   }
+   
+   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
+   {
+      HandlerRegistration addTerminalDataInputHandler(Handler handler);
+   }
+   
+   public TerminalDataInputEvent(String data)
+   {
+      data_ = data;
    }
 
-   public CreateTerminalEvent()
-   {
-   }
-    
    @Override
-   public Type<Handler> getAssociatedType()
+   public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
@@ -42,9 +47,15 @@ public class CreateTerminalEvent extends GwtEvent<CreateTerminalEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCreateTerminal(this);
+      handler.onTerminalDataInput(this);
    }
    
-
+   public String getData()
+   {
+      return data_;
+   }
+  
+   private String data_;
+   
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

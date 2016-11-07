@@ -16,11 +16,12 @@
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import org.rstudio.core.client.CommandWithArg;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 
 /**
- * JavaScriptObject wrapper for xterm.js
+ * <code>JavaScriptObject</code> wrapper for xterm.js
  */
 public class XTermNative extends JavaScriptObject
 {
@@ -93,6 +94,13 @@ public class XTermNative extends JavaScriptObject
    }-*/;
 
    public final native void onData(CommandWithArg<String> command) /*-{
+      this.handler = 
+         $entry(function(data) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
+         });
+   }-*/;
+   
+   public final native void onTerminalData(CommandWithArg<String> command) /*-{
       this.handler = 
          $entry(function(data) {
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);

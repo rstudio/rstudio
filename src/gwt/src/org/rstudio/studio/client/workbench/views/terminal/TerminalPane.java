@@ -34,6 +34,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -45,7 +47,8 @@ public class TerminalPane extends WorkbenchPane
                           implements ConsoleOutputEvent.Handler, 
                                      ProcessExitEvent.Handler,
                                      ClickHandler,
-                                     ResizeTerminalEvent.Handler
+                                     ResizeTerminalEvent.Handler,
+                                     TerminalDataInputEvent.Handler
 {
    protected TerminalPane(String title, WorkbenchServerOperations server)
    {
@@ -96,21 +99,7 @@ public class TerminalPane extends WorkbenchPane
                addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalPane.this));
                addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalPane.this));
                addHandlerRegistration(xterm_.addResizeTerminalHandler(TerminalPane.this));
-
-               xterm_.addDataEventHandler(new CommandWithArg<String>()
-               {
-                  public void execute(String data)
-                  {
-                     encryptInput(data, new CommandWithArg<String>() {
-
-                        @Override
-                        public void execute(String arg)
-                        {
-                           inputHandler_.execute(ShellInput.create(arg,  true /*echo input*/));
-                        }
-                     });
-                  }
-               });
+               addHandlerRegistration(xterm_.addTerminalDataInputHandler(TerminalPane.this));
 
                consoleProcess.start(new SimpleRequestCallback<Void>()
                {
@@ -243,6 +232,19 @@ public class TerminalPane extends WorkbenchPane
                }
             });
    }
+   
+   @Override
+   public void onTerminalDataInput(TerminalDataInputEvent event)
+   {
+       encryptInput(event.getData(), new CommandWithArg<String>()
+       {
+          @Override
+          public void execute(String arg)
+          {
+             inputHandler_.execute(ShellInput.create(arg,  true /*echo input*/));
+          }
+       });
+   } 
    
    private final ResizeLayoutPanel host_;
    private XTermWidget xterm_;

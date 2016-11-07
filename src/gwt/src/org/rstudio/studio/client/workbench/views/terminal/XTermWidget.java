@@ -18,12 +18,11 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -45,7 +44,8 @@ import com.google.gwt.user.client.ui.Widget;
  * Xterm-compatible terminal emulator
  */
 public class XTermWidget extends Widget implements RequiresResize,
-                                                   ResizeTerminalEvent.HasHandlers
+                                                   ResizeTerminalEvent.HasHandlers,
+                                                   TerminalDataInputEvent.HasHandlers
 {
    public enum AnsiColor
    {
@@ -189,7 +189,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       fireEvent(new ResizeTerminalEvent(size.getCols(), size.getRows()));
    }
 
-   public void addDataEventHandler(CommandWithArg<String> handler)
+   private void addDataEventHandler(CommandWithArg<String> handler)
    {
       terminal_.onData(handler);
    }
@@ -207,17 +207,6 @@ public class XTermWidget extends Widget implements RequiresResize,
          terminal_.blur(); 
    }
   
-   protected void addHandlerRegistration(HandlerRegistration reg)
-   {
-      registrations_.add(reg);
-   }
-   
-   protected void unregisterHandlers()
-   {
-      // TODO: does this need to be called, and from where?
-      registrations_.removeHandler();
-   }
-   
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
       return getLoader(release, null);
@@ -233,11 +222,25 @@ public class XTermWidget extends Widget implements RequiresResize,
    }
    
    @Override
-   public HandlerRegistration addResizeTerminalHandler(Handler handler)
+   public HandlerRegistration addResizeTerminalHandler(ResizeTerminalEvent.Handler handler)
    {
       return handlers_.addHandler(ResizeTerminalEvent.TYPE, handler);
-   }   
+   }
    
+   @Override
+   public HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler)
+   {
+      addDataEventHandler(new CommandWithArg<String>()
+      {
+         public void execute(String data)
+         {
+            fireEvent(new TerminalDataInputEvent(data));
+         }
+      });
+            
+      return handlers_.addHandler(TerminalDataInputEvent.TYPE, handler);
+   }
+
    @Override
    public void fireEvent(GwtEvent<?> event)
    {
@@ -278,7 +281,6 @@ public class XTermWidget extends Widget implements RequiresResize,
 
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
-   private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private boolean initialized_ = false;
    private final HandlerManager handlers_ = new HandlerManager(this);
 }
