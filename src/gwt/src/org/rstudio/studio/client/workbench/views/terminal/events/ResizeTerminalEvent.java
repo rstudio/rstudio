@@ -15,23 +15,40 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
-public class ResizeTerminalEvent
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
+import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent.Handler;
+
+public class ResizeTerminalEvent extends GwtEvent<Handler>
 {  
-   public interface Handler
+   public interface Handler extends EventHandler
    {
       void onResizeTerminal(ResizeTerminalEvent event);
    }
-
+   
+   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
+   {
+      HandlerRegistration addResizeTerminalHandler(Handler handler);
+   }
+   
    public ResizeTerminalEvent(int cols, int rows)
    {
       cols_ = cols;
       rows_ = rows;
    }
-    
+   
+   @Override
+   public Type<Handler> getAssociatedType()
+   {
+      return TYPE;
+   }
+
+   @Override
    protected void dispatch(Handler handler)
    {
       handler.onResizeTerminal(this);
-   }
+   } 
    
    public int getRows()
    {
@@ -45,4 +62,6 @@ public class ResizeTerminalEvent
    
    private final int rows_;
    private final int cols_;
+   
+   public static final Type<Handler> TYPE = new Type<Handler>();
 }

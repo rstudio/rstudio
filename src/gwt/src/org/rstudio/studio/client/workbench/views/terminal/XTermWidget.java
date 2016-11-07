@@ -23,6 +23,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent.Handler;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -33,6 +34,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -41,7 +44,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Xterm-compatible terminal emulator
  */
-public class XTermWidget extends Widget implements RequiresResize
+public class XTermWidget extends Widget implements RequiresResize,
+                                                   ResizeTerminalEvent.HasHandlers
 {
    public enum AnsiColor
    {
@@ -177,13 +181,12 @@ public class XTermWidget extends Widget implements RequiresResize
    @Override
    public void onResize()
    {
+      // Notify the local terminal UI that it has resized so it computes new
+      // dimensions
       terminal_.fit();
-      if (terminalResizeHandler_ != null)
-      {
-         XTermDimensions size = getTerminalSize();
-         terminalResizeHandler_.onResizeTerminal(
-               new ResizeTerminalEvent(size.getCols(), size.getRows()));
-      }
+      XTermDimensions size = getTerminalSize();
+     
+      fireEvent(new ResizeTerminalEvent(size.getCols(), size.getRows()));
    }
 
    public void addDataEventHandler(CommandWithArg<String> handler)
@@ -215,11 +218,6 @@ public class XTermWidget extends Widget implements RequiresResize
       registrations_.removeHandler();
    }
    
-   public void addResizeTerminalHandler(ResizeTerminalEvent.Handler handler)
-   {
-      terminalResizeHandler_ = handler;
-   }
-   
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
    {
       return getLoader(release, null);
@@ -232,6 +230,18 @@ public class XTermWidget extends Widget implements RequiresResize
          return new ExternalJavaScriptLoader(release.getSafeUri().asString());
       else
          return new ExternalJavaScriptLoader(debug.getSafeUri().asString());
+   }
+   
+   @Override
+   public HandlerRegistration addResizeTerminalHandler(Handler handler)
+   {
+      return handlers_.addHandler(ResizeTerminalEvent.TYPE, handler);
+   }   
+   
+   @Override
+   public void fireEvent(GwtEvent<?> event)
+   {
+      handlers_.fireEvent(event);
    }
    
    /**
@@ -269,6 +279,6 @@ public class XTermWidget extends Widget implements RequiresResize
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private ResizeTerminalEvent.Handler terminalResizeHandler_;
    private boolean initialized_ = false;
+   private final HandlerManager handlers_ = new HandlerManager(this);
 }
