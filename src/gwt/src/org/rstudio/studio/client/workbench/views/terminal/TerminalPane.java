@@ -95,7 +95,7 @@ public class TerminalPane extends WorkbenchPane
             {
                addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalPane.this));
                addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalPane.this));
-               xterm_.addResizeTerminalHandler(TerminalPane.this);
+               addHandlerRegistration(xterm_.addResizeTerminalHandler(TerminalPane.this));
 
                xterm_.addDataEventHandler(new CommandWithArg<String>()
                {
