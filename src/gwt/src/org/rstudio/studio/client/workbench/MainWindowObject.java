@@ -79,7 +79,7 @@ public class MainWindowObject<T>
       for (var wnd = $wnd; wnd != null; wnd = wnd.opener)
          if (!!wnd.$RStudio)
             return wnd;
-      throw "Failed to discover RStudio main window";
+      return $wnd;
    }-*/;
    
    private static final native JavaScriptObject getRStudioObject(Window wnd) /*-{
