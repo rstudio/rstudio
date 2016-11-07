@@ -31,12 +31,18 @@ namespace auth {
 namespace csrf {
 
 void setCSRFTokenCookie(const http::Request& request, 
-                        http::Response* pResponse)
+                        http::Response* pResponse,
+                        const std::string& token)
 {
+   // generate UUID for token if unspecified
+   std::string csrfToken(token);
+   if (csrfToken.empty())
+      csrfToken = core::system::generateUuid();
+
    pResponse->addCookie(http::Cookie(
             request, 
             kCSRFTokenName, 
-            core::system::generateUuid(), 
+            csrfToken, 
             "/",  // cookie for root path
             false // can't be HTTP only since it's read by client script
             ));
