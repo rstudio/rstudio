@@ -34,6 +34,10 @@
    })
 })
 
+.rs.addFunction("isREADME", function(file) {
+  identical(tools::file_path_sans_ext(basename(file)), "README")
+})
+
 .rs.addFunction("updateRMarkdownPackage", function(archive) 
 {
   pkgDir <- find.package("rmarkdown")
@@ -88,13 +92,18 @@
      })
   }
   else {
-    # return render_site if we are in a website
-    siteGenerator <- tryCatch(rmarkdown::site_generator(file),
-                              error = function(e) NULL)
-    if (!is.null(siteGenerator))
-      "rmarkdown::render_site"
-    else
-      ""
+    # return render_site if we are in a website and this isn't a README
+    if (!.rs.isREADME(file)) {
+       siteGenerator <- tryCatch(rmarkdown::site_generator(file),
+                                 error = function(e) NULL)
+       if (!is.null(siteGenerator))
+         "rmarkdown::render_site"
+       else
+         ""
+    }
+    else {
+       ""
+    }
   }
 })
 
