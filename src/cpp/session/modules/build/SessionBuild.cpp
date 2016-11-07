@@ -956,7 +956,7 @@ private:
 
       boost::format fmt(
          "setwd('%1%'); "
-         "invisible(lapply(list.files(pattern = '\\\\.[rR]$'), function(x) { "
+         "invisible(lapply(list.files(pattern = '\\\\\\\\.[rR]$'), function(x) { "
          "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x))) "
          "}))"
       );
