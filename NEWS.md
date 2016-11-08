@@ -32,6 +32,7 @@
 * Fix positioning of editor toolbar buttons in Safari and Mac OS client
 * Fix incorrect height of R Notebook outputs when run above viewport
 * Detect multi-line data.table chains properly  
+* Allow git staging for filenames containing a space on Windows
 * Use Windows proxy settings to serve requests made by htmlwidgets
 * Server Pro: Allow server user to have group name differing from user name
 * Server Pro: Don't require LDAP to support user enumeration when `auth-required-user-group` is set
