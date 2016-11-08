@@ -110,15 +110,14 @@ void Response::setNoCacheHeaders()
 void Response::setFrameOptionHeaders(frame_options::XFrameOptions options)
 {
    std::string option;
-   if (options == frame_options::Deny)
-      option = "DENY";
-   else if (options == frame_options::SameOrigin)
-      option = "SAMEORIGIN";
-   else 
+   switch(options)
    {
-      LOG_WARNING_MESSAGE("Unknown X-Frame-Options value " +
-            safe_convert::numberToString(options));
-      return;
+      case frame_options::Deny:
+         option = "DENY";
+         break;
+      case frame_options::SameOrigin:
+         option = "SAMEORIGIN";
+         break;
    }
    
    setHeader("X-Frame-Options", option);
