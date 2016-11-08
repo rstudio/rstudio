@@ -53,7 +53,7 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), resize_(false), newCols_(-1), newRows_(-1),
+     interrupt_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
@@ -72,7 +72,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), resize_(false), newCols_(-1), newRows_(-1),
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -88,7 +88,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false), resize_(false), newCols_(-1), newRows_(-1),
+     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -214,7 +214,6 @@ void ConsoleProcess::resize(int cols, int rows)
 {
    newCols_ = cols;
    newRows_ = rows;
-   resize_ = true;
 }
 
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
@@ -259,10 +258,11 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       }
    }
 
-   if (resize_)
+   if (newCols_ != -1 && newRows_ != -1)
    {
-      resize_ = false;
       ops.ptySetSize(newCols_, newRows_);
+      newCols_ = -1;
+      newRows_ = -1;
    }
    
    // continue

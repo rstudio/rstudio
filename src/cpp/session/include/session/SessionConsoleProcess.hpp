@@ -176,9 +176,8 @@ private:
    bool interrupt_;
    
    // Whether the tty should be notified of a resize
-   bool resize_;
-   int newCols_;
-   int newRows_;
+   int newCols_; // -1 = no change
+   int newRows_; // -1 = no change
 
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
