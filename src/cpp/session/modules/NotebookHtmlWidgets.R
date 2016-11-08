@@ -137,6 +137,7 @@
    # make width dinamic to size correctly non-figured
    if (!is.null(x$sizingPolicy$knitr) && identical(x$sizingPolicy$knitr$figure, FALSE)) {
       x$sizingPolicy$defaultWidth <- "auto"
+      x$sizingPolicy$browser$fill <- FALSE
    }
    
    # collect knitr options

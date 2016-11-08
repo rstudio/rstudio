@@ -3291,7 +3291,7 @@ public class TextEditingTarget implements
                isCommentAction = true;
          }
          
-         if (docDisplay_.getFileType().isRmd())
+         if (docDisplay_.getFileType().isR())
          {
             if (!looksLikeRoxygen)
             {
@@ -4453,10 +4453,10 @@ public class TextEditingTarget implements
          mathjax_.renderLatex();
    }
    
-   public void renderLatex(Range range)
+   public void renderLatex(Range range, boolean background)
    {
       if (mathjax_ != null)
-         mathjax_.renderLatex(range);
+         mathjax_.renderLatex(range, background);
    }
 
    public String getDefaultNamePrefix()

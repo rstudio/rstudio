@@ -217,9 +217,9 @@
     cols
 })
 
-.rs.addFunction("toDataFrame", function(x, name, flatten, force = FALSE) {
+.rs.addFunction("toDataFrame", function(x, name, flatten) {
   # if it's not already a frame, coerce it to a frame
-  if (!is.data.frame(x) || force) {
+  if (!is.data.frame(x)) {
     frame <- NULL
     # attempt to coerce to a data frame--this can throw errors in the case
     # where we're watching a named object in an environment and the user

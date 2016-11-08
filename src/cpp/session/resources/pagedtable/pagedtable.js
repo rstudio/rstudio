@@ -1122,8 +1122,9 @@ var PagedTableDoc;
   PagedTableDoc.initAll = function() {
     allPagedTables = [];
 
-    var pagedTables = [].slice.call(document.querySelectorAll('[data-pagedtable]'));
+    var pagedTables = [].slice.call(document.querySelectorAll('[data-pagedtable="false"]'));
     pagedTables.forEach(function(pagedTable, idx) {
+      pagedTable.setAttribute("data-pagedtable", "true");
       pagedTable.setAttribute("pagedtable-page", 0);
       pagedTable.setAttribute("class", "pagedtable-wrapper");
 

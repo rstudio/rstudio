@@ -185,6 +185,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                                                     includeSource,
                                                     ...)
 {
+   Encoding(fileContents) <- "UTF-8"
    parsed <- .rs.rnb.readConsoleData(fileContents)
    
    # exclude source code if requested
@@ -253,7 +254,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    data <- .rs.readDataCapture(rdfPath)
    
    paste(
-      "<div data-pagedtable>",
+      "<div data-pagedtable=\"false\">",
       "  <script data-pagedtable-source type=\"application/json\">",
       jsonlite::toJSON(data),
       "  </script>",
