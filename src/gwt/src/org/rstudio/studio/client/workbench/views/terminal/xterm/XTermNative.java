@@ -93,13 +93,6 @@ public class XTermNative extends JavaScriptObject
       this.scrollToBottom();
    }-*/;
 
-   public final native void onData(CommandWithArg<String> command) /*-{
-      this.handler = 
-         $entry(function(data) {
-            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
-         });
-   }-*/;
-   
    public final native void onTerminalData(CommandWithArg<String> command) /*-{
       this.handler = 
          $entry(function(data) {

@@ -32,7 +32,6 @@ public class TerminalTabPresenter extends BusyPresenter
       super(new TerminalPane("Terminal", server));
       pane_ = (TerminalPane) getView();
       globalDisplay_ = globalDisplay;
-      server_ = server;
    }
    
    public void initialize()
@@ -71,5 +70,4 @@ public class TerminalTabPresenter extends BusyPresenter
 
    private final TerminalPane pane_;
    private final GlobalDisplay globalDisplay_;
-   private final WorkbenchServerOperations server_;
 }

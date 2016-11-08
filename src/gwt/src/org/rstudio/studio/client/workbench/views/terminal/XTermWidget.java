@@ -191,7 +191,7 @@ public class XTermWidget extends Widget implements RequiresResize,
 
    private void addDataEventHandler(CommandWithArg<String> handler)
    {
-      terminal_.onData(handler);
+      terminal_.onTerminalData(handler);
    }
    
    public XTermDimensions getTerminalSize()

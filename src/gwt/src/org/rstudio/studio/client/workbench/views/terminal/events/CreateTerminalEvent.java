@@ -16,13 +16,14 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 
 /**
  * Event to trigger creation of a terminal session.
  */
-public class CreateTerminalEvent extends GwtEvent<CreateTerminalEvent.Handler>
+public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Handler>
 {  
    public interface Handler extends EventHandler
    {
@@ -44,7 +45,6 @@ public class CreateTerminalEvent extends GwtEvent<CreateTerminalEvent.Handler>
    {
       handler.onCreateTerminal(this);
    }
-   
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
