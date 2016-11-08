@@ -771,13 +771,17 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
    saveRDS(file = outputLocation, object = result)
 })
 
-.rs.addFunction("readFile", function(file, binary = FALSE)
+.rs.addFunction("readFile", function(file,
+                                     binary = FALSE,
+                                     encoding = NULL)
 {
    size <- file.info(file)$size
    if (binary)
-      readBin(file, "raw", size)
-   else
-      readChar(file, size, TRUE)
+      return(readBin(file, "raw", size))
+   contents <- readChar(file, size, TRUE)
+   if (is.character(encoding))
+      Encoding(contents) <- encoding
+   contents
 })
 
 .rs.addFunction("fromJSON", function(string)
