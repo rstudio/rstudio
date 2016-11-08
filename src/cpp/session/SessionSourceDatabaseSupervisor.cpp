@@ -258,37 +258,6 @@ Error createSessionDir()
    return Success();
 }
 
-Error createSessionDirFromOldSourceDatabase()
-{
-   // move properties (if any) into new source database root
-   FilePath propsPath = oldSourceDatabaseRoot().complete("properties");
-   if (propsPath.exists())
-   {
-      FilePath newPropsPath = sourceDatabaseRoot().complete("prop");
-      Error error = propsPath.move(newPropsPath);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // move the old source database into a new dir
-   Error error = oldSourceDatabaseRoot().move(sessionDirPath());
-   if (error)
-      LOG_ERROR(error);
-
-   // if that failed we might still need to call ensureDirectory
-   error = sessionDirPath().ensureDirectory();
-   if (error)
-      return error;
-
-   // attempt to acquire the lock. if we can't then we still continue
-   // so we can support filesystems that don't have file locks.
-   error = sessionDirLock().acquire(sessionLockFilePath(sessionDirPath()));
-   if (error)
-      LOG_ERROR(error);
-
-   return Success();
-}
-
 Error createSessionDirFromPersistent()
 {
    // note whether we are in multi-session mode
@@ -470,26 +439,13 @@ Error attachToSourceDatabase()
          LOG_ERROR(error);
    }
 
-   // check whether we will need to migrate -- ensure we do this only
-   // one time so that if for whatever reason we can't migrate the
-   // old source database we don't get stuck trying to do it every
-   // time we start up
-   bool needToMigrate = !sourceDatabaseRoot().exists() &&
-                        oldSourceDatabaseRoot().exists();
-
    // ensure the root path exists
    Error error = sourceDatabaseRoot().ensureDirectory();
    if (error)
       return error;
 
-   // attempt to migrate if necessary
-   if (needToMigrate)
-   {
-      return createSessionDirFromOldSourceDatabase();
-   }
-
    // if there is an orphan (crash) then reclaim it.
-   else if (reclaimOrphanedSession())
+   if (reclaimOrphanedSession())
    {
       return Success();
    }
