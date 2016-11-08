@@ -107,6 +107,23 @@ void Response::setNoCacheHeaders()
              "no-cache, no-store, max-age=0, must-revalidate");
 }
 
+void Response::setFrameOptionHeaders(frame_options::XFrameOptions options)
+{
+   std::string option;
+   if (options == frame_options::Deny)
+      option = "DENY";
+   else if (options == frame_options::SameOrigin)
+      option = "SAMEORIGIN";
+   else 
+   {
+      LOG_WARNING_MESSAGE("Unknown X-Frame-Options value " +
+            safe_convert::numberToString(options));
+      return;
+   }
+   
+   setHeader("X-Frame-Options", option);
+}
+
 // mark this request's user agent compatibility
 void Response::setBrowserCompatible(const Request& request)
 {
