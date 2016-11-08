@@ -91,6 +91,9 @@ public class TerminalPane extends WorkbenchPane
             
             if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
+               // TODO (gary) add capability to display error messages in the terminal tab to
+               // show fatal errors such as this one, and possibly async "loading..." style
+               // message.
                throw new IllegalArgumentException("Unsupport ConsoleProcess interaction mode");
             } 
 
@@ -109,7 +112,7 @@ public class TerminalPane extends WorkbenchPane
                      // Show error and stop
                      super.onError(error);
 
-                     // TODO (gary) closeDialog();
+                     // TODO (gary) show fatal errors in the terminal tab UI
                   }
                });
             }
