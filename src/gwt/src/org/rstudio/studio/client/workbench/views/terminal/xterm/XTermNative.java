@@ -93,6 +93,11 @@ public class XTermNative extends JavaScriptObject
       this.scrollToBottom();
    }-*/;
 
+   /**
+    * Install a handler for user input (typing). Only one handler at a 
+    * time may be installed. Previous handler will be overwritten.
+    * @param command handler for data typed by the user
+    */
    public final native void onTerminalData(CommandWithArg<String> command) /*-{
       this.handler = 
          $entry(function(data) {

@@ -230,6 +230,10 @@ public class XTermWidget extends Widget implements RequiresResize,
    @Override
    public HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler)
    {
+      assert !hasTerminalDataInputHandler_ : "Cannot install multiple terminalDataInput handlers";
+      if (hasTerminalDataInputHandler_)
+         return null;
+
       addDataEventHandler(new CommandWithArg<String>()
       {
          public void execute(String data)
@@ -238,6 +242,7 @@ public class XTermWidget extends Widget implements RequiresResize,
          }
       });
             
+      hasTerminalDataInputHandler_ = true;
       return handlers_.addHandler(TerminalDataInputEvent.TYPE, handler);
    }
 
@@ -283,4 +288,5 @@ public class XTermWidget extends Widget implements RequiresResize,
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
    private final HandlerManager handlers_ = new HandlerManager(this);
+   private boolean hasTerminalDataInputHandler_ = false;
 }
