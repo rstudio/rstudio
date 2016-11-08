@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 /**
  * See <a
- * href="http://docs.oracle.com/javase/7/docs/api/java/util/Objects.html">the
+ * href="http://docs.oracle.com/javase/8/docs/api/java/util/Objects.html">the
  * official Java API doc</a> for details.
  */
 public final class Objects {
@@ -84,6 +84,11 @@ public final class Objects {
 
   public static boolean equals(Object a, Object b) {
     return (a == b) || (a != null && a.equals(b));
+  }
+
+  @SuppressWarnings("StringEquality")
+  public static boolean equals(String a, String b) {
+    return a == b;
   }
 
   public static int hashCode(Object o) {
