@@ -37,6 +37,14 @@ context("Shell Escaping")
       std::string expected = "\"\\$\\$\\$\"";
       expect_true(escaped == expected);
    }
+   
+   test_that("Commands with backslashes are escaped")
+   {
+      std::string backslashes = "\\\\\\";
+      std::string escaped = escape(backslashes);
+      std::string expected = "\"\\\\\\\\\\\\\"";
+      expect_true(escaped == expected);
+   }
 }
 
 } // end namespace tests

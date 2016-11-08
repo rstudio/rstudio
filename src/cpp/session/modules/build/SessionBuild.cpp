@@ -953,11 +953,18 @@ private:
       cmd << "--vanilla";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
-
+      
+#ifdef _WIN32
+# define kBuildCommandBackslashes "\\\\"
+#else
+# define kBuildCommandBackslashes "\\\\\\\\"
+#endif
+      
       boost::format fmt(
-         "setwd('%1%'); "
-         "invisible(lapply(list.files(pattern = '\\\\.[rR]$'), function(x) { "
-         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x))) "
+         "setwd('%1%');"
+         "files <- list.files(pattern = '" kBuildCommandBackslashes ".[rR]$');"
+         "invisible(lapply(files, function(x) {"
+         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x)))"
          "}))"
       );
 
