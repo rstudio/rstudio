@@ -15,11 +15,14 @@
 
 .rs.addFunction("dataCaptureOverrides", function(outputFolder, libraryFolder)
 {
+  defaultOverride <- function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x)))
   c(
-    "print.data.frame" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
-    "print.tbl_df" = function(x, options)     list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
-    "print.paged_df" = function(x, options)   list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
-    "print.grouped_df" = function(x, options) list(x = x, options = options, className = class(x), nRow = .rs.scalar(nrow(x)), nCol = .rs.scalar(ncol(x))),
+    "print.data.frame" = defaultOverride,
+    "print.tbl_df"     = defaultOverride,
+    "print.paged_df"   = defaultOverride,
+    "print.grouped_df" = defaultOverride,
+    "print.rowwise_df" = defaultOverride,
+    "print.tbl_sql"    = defaultOverride,
     "print.data.table" = function(x, options) {
       shouldPrintTable <- TRUE
 
