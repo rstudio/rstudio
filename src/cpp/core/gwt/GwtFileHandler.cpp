@@ -123,6 +123,10 @@ void handleFileRequest(const std::string& wwwLocalPath,
       // gwt prefix
       vars["gwt_prefix"] = gwtPrefix;
 
+      // don't allow main page to be framed by other domains (clickjacking
+      // defense)
+      pResponse->setFrameOptionHeaders(http::frame_options::SameOrigin);
+
       // return the page
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request, text::TemplateFilter(vars));

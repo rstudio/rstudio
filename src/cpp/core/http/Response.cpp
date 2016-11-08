@@ -107,6 +107,22 @@ void Response::setNoCacheHeaders()
              "no-cache, no-store, max-age=0, must-revalidate");
 }
 
+void Response::setFrameOptionHeaders(frame_options::XFrameOptions options)
+{
+   std::string option;
+   switch(options)
+   {
+      case frame_options::Deny:
+         option = "DENY";
+         break;
+      case frame_options::SameOrigin:
+         option = "SAMEORIGIN";
+         break;
+   }
+   
+   setHeader("X-Frame-Options", option);
+}
+
 // mark this request's user agent compatibility
 void Response::setBrowserCompatible(const Request& request)
 {

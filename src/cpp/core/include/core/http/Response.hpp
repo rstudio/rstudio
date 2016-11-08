@@ -67,6 +67,13 @@ enum Code {
    GatewayTimeout = 504 
 };
 } 
+
+namespace frame_options {
+enum XFrameOptions {
+   Deny,
+   SameOrigin
+};
+}
     
 class NullOutputFilter : public boost::iostreams::multichar_output_filter 
 {   
@@ -112,6 +119,8 @@ public:
    void setCacheForeverHeaders();
    void setPrivateCacheForeverHeaders();
    void setNoCacheHeaders();
+
+   void setFrameOptionHeaders(frame_options::XFrameOptions options);
    
    void setBrowserCompatible(const Request& request);
 
