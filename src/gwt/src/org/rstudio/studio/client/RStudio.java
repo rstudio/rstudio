@@ -165,6 +165,10 @@ public class RStudio implements EntryPoint
 
          public void onSuccess()
          {
+            // TODO (gary) This early loading of XTermWidget dependencies needs to be
+            // removed once I figure out why XTermWidget.load in 
+            // TerminalPane:createMainWidget) isn't sufficient. Suspect due to xterm.js
+            // loading its add-ons (fit.js) but need to investigate. 
             XTermWidget.load(new Command()
             {
                public void execute()

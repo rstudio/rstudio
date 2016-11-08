@@ -585,8 +585,6 @@ Error procSetSize(const json::JsonRpcRequest& request,
       return systemError(boost::system::errc::invalid_argument,
                          ERROR_LOCATION);
    }
-   
-
 }
    
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
