@@ -529,6 +529,9 @@ public class SatelliteManager implements CloseHandler<Window>
    // export the global function required for satellites to register
    private native void exportSatelliteRegistrationCallback() /*-{
       var manager = this;     
+      
+      $wnd.$RStudio = {};
+      
       $wnd.registerAsRStudioSatellite = $entry(
          function(name, satelliteWnd) {
             manager.@org.rstudio.studio.client.common.satellite.SatelliteManager::registerAsSatellite(Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;)(name, satelliteWnd);

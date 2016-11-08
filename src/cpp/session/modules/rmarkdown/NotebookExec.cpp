@@ -229,7 +229,7 @@ void ChunkExecContext::connect()
 
    error = pDataCapture->connectDataCapture(
             outputPath_,
-            options_.chunkOptions());
+            options_.mergedOptions());
    if (error)
       LOG_ERROR(error);
 

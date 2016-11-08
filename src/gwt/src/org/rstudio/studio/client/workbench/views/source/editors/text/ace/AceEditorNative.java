@@ -562,6 +562,10 @@ public class AceEditorNative extends JavaScriptObject {
       return this.$emacsModeHandler != null;
    }-*/;
    
+   public final native void clearEmacsMark() /*-{
+      this.pushEmacsMark(null);
+   }-*/;
+   
    // Get the underlying Ace instance associated with a DOM element.
    // This element may either be a child of the parent Ace container,
    // or the element itself.

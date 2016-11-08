@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.mathjax;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
@@ -80,6 +81,7 @@ public class MathJax
       renderQueue_ = new MathJaxRenderQueue(this);
       handlers_ = new ArrayList<HandlerRegistration>();
       cowToPlwMap_ = new SafeMap<ChunkOutputWidget, PinnedLineWidget>();
+      lwToPlwMap_ = new SafeMap<LineWidget, ChunkOutputWidget>();
 
       handlers_.add(popup_.addAttachHandler(new AttachEvent.Handler()
       {
@@ -139,7 +141,7 @@ public class MathJax
                      int endRow = range.getEnd().getRow();
                      LineWidget lineWidget = docDisplay_.getLineWidgetForRow(endRow);
                      if (lineWidget != null)
-                        renderLatex(range, false);
+                        renderLatex(range, true);
                   }
                }
             }
@@ -257,7 +259,13 @@ public class MathJax
             // don't render if chunk contents empty
             if (isEmptyLatexChunk(text))
                return;
-
+            
+            // don't render if this is a background render request and
+            // the line widget is collapsed
+            final int row = range.getEnd().getRow();
+            if (background && isLineWidgetCollapsed(row))
+               return;
+            
             renderLatexLineWidget(range, text, callback);
             return;
          }
@@ -285,11 +293,19 @@ public class MathJax
       // end a previous render session if necessary (e.g. if a popup is showing)
       endRender();
       
-      int row = range.getEnd().getRow();
+      // bail if we already have a pinned line widget here
+      final int row = range.getEnd().getRow();
       LineWidget widget = docDisplay_.getLineWidgetForRow(row);
       
       if (widget == null)
       {
+         // if the line widget has not been attached to the document,
+         // it's possible that we will already have a pinned line widget
+         // (ie a previous render is pending here)
+         for (Map.Entry<ChunkOutputWidget, PinnedLineWidget> entry : cowToPlwMap_.entrySet())
+            if (entry.getValue().getRow() == row)
+               return;
+         
          // if we don't have a widget, create one and render the LaTeX once
          // the widget is attached to the editor
          createMathJaxLineWidget(row, 
@@ -315,7 +331,6 @@ public class MathJax
                                      final String text,
                                      final MathJaxTypesetCallback callback)
    {
-      
       final Element el = DomUtils.getFirstElementWithClassName(
             widget.getElement(),
             MATHJAX_ROOT_CLASSNAME);
@@ -334,21 +349,55 @@ public class MathJax
             mathjaxTypeset(el, text, new MathJaxTypesetCallback()
             {
                @Override
-               public void onMathJaxTypesetComplete(boolean error)
+               public void onMathJaxTypesetComplete(final boolean error)
                {
-                  // re-position the element
-                  int height = el.getOffsetHeight() + 30;
-                  Element ppElement = el.getParentElement().getParentElement();
-                  ppElement.getStyle().setHeight(height, Unit.PX);
-                  docDisplay_.onLineWidgetChanged(lineWidget);
-                  
-                  // invoke supplied callback
-                  if (callback != null)
-                     callback.onMathJaxTypesetComplete(error);
+                  // force expansion
+                  withExpandedLineWidget(lineWidget, new CommandWithArg<Boolean>()
+                  {
+                     @Override
+                     public void execute(Boolean stateChanged)
+                     {
+                        // re-position the element
+                        int height = el.getOffsetHeight() + 30;
+                        Element ppElement = el.getParentElement().getParentElement();
+                        ppElement.getStyle().setHeight(height, Unit.PX);
+                        docDisplay_.onLineWidgetChanged(lineWidget);
+
+                        // invoke supplied callback
+                        if (callback != null)
+                           callback.onMathJaxTypesetComplete(error);
+                     }
+                  });
                }
             });
          }
       });
+   }
+   
+   private boolean isLineWidgetCollapsed(int row)
+   {
+      LineWidget widget = docDisplay_.getLineWidgetForRow(row);
+      if (widget == null)
+         return false;
+      
+      ChunkOutputWidget cow = lwToPlwMap_.get(widget);
+      if (cow == null)
+         return false;
+      
+      return cow.getExpansionState() == ChunkOutputWidget.COLLAPSED;
+   }
+   
+   private void withExpandedLineWidget(LineWidget widget,
+                                       final CommandWithArg<Boolean> onExpansionCompleted)
+   {
+      ChunkOutputWidget cow = lwToPlwMap_.get(widget);
+      if (cow == null)
+      {
+         onExpansionCompleted.execute(false);
+         return;
+      }
+      
+      cow.setExpansionState(ChunkOutputWidget.EXPANDED, onExpansionCompleted);
    }
    
    private void removeChunkOutputWidget(final ChunkOutputWidget widget)
@@ -363,6 +412,7 @@ public class MathJax
          public void execute()
          {
             cowToPlwMap_.remove(widget);
+            lwToPlwMap_.remove(plw.getLineWidget());
             plw.detach();
          }
       });
@@ -453,6 +503,7 @@ public class MathJax
             });
 
       cowToPlwMap_.put(outputWidget, plWidget);
+      lwToPlwMap_.put(plWidget.getLineWidget(), outputWidget);
    }
    
    private void resetRenderState()
@@ -673,6 +724,7 @@ public class MathJax
    private final MathJaxRenderQueue renderQueue_;
    private final List<HandlerRegistration> handlers_;
    private final SafeMap<ChunkOutputWidget, PinnedLineWidget> cowToPlwMap_;
+   private final SafeMap<LineWidget, ChunkOutputWidget> lwToPlwMap_;
    
    private AnchoredSelection anchor_;
    private Range range_;

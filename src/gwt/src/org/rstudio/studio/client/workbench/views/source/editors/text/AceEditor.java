@@ -461,7 +461,10 @@ public class AceEditor implements DocDisplay,
          return;
       
       if (Desktop.isDesktop())
+      {
          commands_.cutDummy().execute();
+         if (isEmacsModeOn()) clearEmacsMark();
+      }
       else
       {
          yankedText_ = getSelectionValue();
@@ -480,7 +483,10 @@ public class AceEditor implements DocDisplay,
             cursorPos));
       
       if (Desktop.isDesktop())
+      {
          commands_.cutDummy().execute();
+         if (isEmacsModeOn()) clearEmacsMark();
+      }
       else
       {
          yankedText_ = getSelectionValue();
@@ -515,7 +521,10 @@ public class AceEditor implements DocDisplay,
       }
       
       if (Desktop.isDesktop())
+      {
          commands_.cutDummy().execute();
+         if (isEmacsModeOn()) clearEmacsMark();
+      }
       else
       {
          yankedText_ = getSelectionValue();
@@ -1621,6 +1630,7 @@ public class AceEditor implements DocDisplay,
       Position position = getSession().replace(selRange, code);
       Range range = Range.fromPoints(selRange.getStart(), position);
       getSession().getSelection().setSelectionRange(range);
+      if (isEmacsModeOn()) clearEmacsMark();
    }
 
    public boolean moveSelectionToNextLine(boolean skipBlankLines)
@@ -1994,6 +2004,12 @@ public class AceEditor implements DocDisplay,
    public boolean isEmacsModeOn()
    {
       return useEmacsKeybindings_;
+   }
+   
+   @Override
+   public void clearEmacsMark()
+   {
+      widget_.getEditor().clearEmacsMark();
    }
    
    @Override

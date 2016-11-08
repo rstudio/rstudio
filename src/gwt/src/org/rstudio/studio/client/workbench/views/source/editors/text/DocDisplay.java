@@ -188,6 +188,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void setUseEmacsKeybindings(boolean use);
    boolean isEmacsModeOn();
+   void clearEmacsMark();
    
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
