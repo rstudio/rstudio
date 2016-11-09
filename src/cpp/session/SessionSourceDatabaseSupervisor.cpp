@@ -48,27 +48,30 @@ namespace {
 
 const char * const kSessionDirPrefix = "s-";
 
-FilePath oldSourceDatabaseRoot()
-{
-   return
-      module_context::scopedScratchPath().complete("source_database");
-}
-
-FilePath sourceDatabaseRoot()
+FilePath sdbSourceDatabaseRoot()
 {
    return module_context::scopedScratchPath().complete("sdb");
 }
 
+FilePath oldSourceDatabaseRoot()
+{
+   return module_context::scopedScratchPath().complete("source_database");
+}
+
+FilePath sourceDatabaseRoot()
+{
+   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix);
+}
+
 FilePath mostRecentTitledDir()
 {
-   return module_context::scopedScratchPath().complete("sdb/mt");
+   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mt");
 }
 
 FilePath mostRecentUntitledDir()
 {
-   return module_context::scopedScratchPath().complete("sdb/mu");
+   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mu");
 }
-
 
 FilePath persistentTitledDir(bool multiSession = true)
 {
@@ -255,37 +258,6 @@ Error createSessionDir()
    return Success();
 }
 
-Error createSessionDirFromOldSourceDatabase()
-{
-   // move properties (if any) into new source database root
-   FilePath propsPath = oldSourceDatabaseRoot().complete("properties");
-   if (propsPath.exists())
-   {
-      FilePath newPropsPath = sourceDatabaseRoot().complete("prop");
-      Error error = propsPath.move(newPropsPath);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // move the old source database into a new dir
-   Error error = oldSourceDatabaseRoot().move(sessionDirPath());
-   if (error)
-      LOG_ERROR(error);
-
-   // if that failed we might still need to call ensureDirectory
-   error = sessionDirPath().ensureDirectory();
-   if (error)
-      return error;
-
-   // attempt to acquire the lock. if we can't then we still continue
-   // so we can support filesystems that don't have file locks.
-   error = sessionDirLock().acquire(sessionLockFilePath(sessionDirPath()));
-   if (error)
-      LOG_ERROR(error);
-
-   return Success();
-}
-
 Error createSessionDirFromPersistent()
 {
    // note whether we are in multi-session mode
@@ -452,27 +424,28 @@ Error attachToSourceDatabase()
    FilePath existingSdb = sessionDirPath();
    if (existingSdb.exists())
       return sessionDirLock().acquire(sessionLockFilePath(existingSdb));
-
-   // check whether we will need to migrate -- ensure we do this only
-   // one time so that if for whatever reason we can't migrate the
-   // old source database we don't get stuck trying to do it every
-   // time we start up
-   bool needToMigrate = !sourceDatabaseRoot().exists() &&
-                        oldSourceDatabaseRoot().exists();
+   
+   // migrate from 'sdb' to current folder layout if needed
+   bool needsSdbMigration =
+         !sourceDatabaseRoot().exists() &&
+         sdbSourceDatabaseRoot().exists();
+   
+   if (needsSdbMigration)
+   {
+      Error error =
+            sdbSourceDatabaseRoot().copyDirectoryRecursive(sourceDatabaseRoot());
+      
+      if (error)
+         LOG_ERROR(error);
+   }
 
    // ensure the root path exists
    Error error = sourceDatabaseRoot().ensureDirectory();
    if (error)
       return error;
 
-   // attempt to migrate if necessary
-   if (needToMigrate)
-   {
-      return createSessionDirFromOldSourceDatabase();
-   }
-
    // if there is an orphan (crash) then reclaim it.
-   else if (reclaimOrphanedSession())
+   if (reclaimOrphanedSession())
    {
       return Success();
    }

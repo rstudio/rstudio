@@ -16,6 +16,8 @@
 #ifndef SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 #define SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 
+#define kSessionSourceDatabasePrefix "sources"
+
 namespace rstudio {
 namespace core {
    class Error;
