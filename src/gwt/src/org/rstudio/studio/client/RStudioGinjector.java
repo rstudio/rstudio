@@ -121,6 +121,7 @@ import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportFileChooser;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsv;
 
 @GinModules(RStudioGinModuleOverlay.class)
@@ -201,6 +202,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetIdleMonitor monitor);
    void injectMembers(AceEditorIdleCommands commands);
    void injectMembers(EditingTargetInlineChunkExecution executor);
+   void injectMembers(DataImportFileChooser dataImportFileChooser);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
