@@ -107,20 +107,30 @@ void Response::setNoCacheHeaders()
              "no-cache, no-store, max-age=0, must-revalidate");
 }
 
-void Response::setFrameOptionHeaders(frame_options::XFrameOptions options)
+void Response::setFrameOptionHeaders(const std::string& options)
 {
    std::string option;
-   switch(options)
+
+   if (options.empty() || options == "none")
    {
-      case frame_options::Deny:
-         option = "DENY";
-         break;
-      case frame_options::SameOrigin:
-         option = "SAMEORIGIN";
-         break;
+      // the default is to deny all framing
+      option = "DENY";
    }
-   
-   setHeader("X-Frame-Options", option);
+   else if (options == "same")
+   {
+      // this special string indicates that framing is permissible on the same
+      // domain
+      option = "SAMEORIGIN";
+   }
+   else
+   {
+      // the special string "any" means any origin
+      if (options != "any")
+         option = "ALLOW-FROM " + options;
+   }
+
+   if (!option.empty())
+      setHeader("X-Frame-Options", option);
 }
 
 // mark this request's user agent compatibility

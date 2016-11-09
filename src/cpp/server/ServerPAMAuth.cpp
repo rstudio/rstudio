@@ -260,7 +260,7 @@ void signIn(const http::Request& request,
 
    // don't allow sign-in page to be framed by other domains (clickjacking
    // defense)
-   pResponse->setFrameOptionHeaders(http::frame_options::SameOrigin);
+   pResponse->setFrameOptionHeaders(options.wwwFrameOrigin());
 
    pResponse->setFile(signInPath, request, filter);
    pResponse->setContentType("text/html");

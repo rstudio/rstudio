@@ -68,13 +68,6 @@ enum Code {
 };
 } 
 
-namespace frame_options {
-enum XFrameOptions {
-   Deny,
-   SameOrigin
-};
-}
-    
 class NullOutputFilter : public boost::iostreams::multichar_output_filter 
 {   
 public:
@@ -120,7 +113,7 @@ public:
    void setPrivateCacheForeverHeaders();
    void setNoCacheHeaders();
 
-   void setFrameOptionHeaders(frame_options::XFrameOptions options);
+   void setFrameOptionHeaders(const std::string& options);
    
    void setBrowserCompatible(const Request& request);
 

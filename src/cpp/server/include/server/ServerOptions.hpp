@@ -1,7 +1,7 @@
 /*
  * ServerOptions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -102,6 +102,11 @@ public:
    std::string wwwLocalPath() const
    {
       return std::string(wwwLocalPath_.c_str()); 
+   }
+
+   std::string wwwFrameOrigin() const
+   {
+      return std::string(wwwFrameOrigin_.c_str());
    }
 
    core::FilePath wwwSymbolMapsPath() const
@@ -257,6 +262,7 @@ private:
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;
    std::string wwwSymbolMapsPath_;
+   std::string wwwFrameOrigin_;
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
