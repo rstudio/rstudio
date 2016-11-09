@@ -1,7 +1,7 @@
 /*
  * Cookie.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,7 +32,8 @@ public:
           const std::string& name,
           const std::string& value, 
           const std::string& path,
-          bool httpOnly = false) ;
+          bool httpOnly = false,
+          bool secure = false);
    virtual ~Cookie();
 
    // COPYING: via compiler (copyable members)
@@ -55,6 +56,7 @@ public:
    const boost::gregorian::date& expires() const { return expires_; }
    
    void setHttpOnly();
+   void setSecure();
 
    std::string cookieHeaderValue() const ;
 
@@ -65,6 +67,7 @@ private:
    std::string path_ ;
    boost::gregorian::date expires_ ;
    bool httpOnly_;
+   bool secure_;
 };
 
 
