@@ -40,7 +40,6 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerSecureKeyFile.hpp>
-#include <server/ServerOptionsOverlay.hpp>
 
 namespace rstudio {
 namespace server {
