@@ -683,7 +683,7 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   public String substring(int beginIndex) {
-    return asNativeString().substr(beginIndex, length() - beginIndex);
+    return asNativeString().substr(beginIndex);
   }
 
   public String substring(int beginIndex, int endIndex) {
@@ -763,6 +763,7 @@ public final class String implements Comparable<String>, CharSequence,
     public native int lastIndexOf(String str);
     public native int lastIndexOf(String str, int start);
     public native String replace(NativeRegExp regex, String replace);
+    public native String substr(int beginIndex);
     public native String substr(int beginIndex, int len);
     public native String toLocaleLowerCase();
     public native String toLocaleUpperCase();
