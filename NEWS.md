@@ -9,6 +9,7 @@
 * Improve scrolling past htmlwidgets in the editor
 * Always show chunk output preferences (inline or console)
 * Add support for variable height HTML widgets (non-knitr figures)
+* Improve support for non-ASCII characters in chunk metadata and output
 
 ### Data Import
 
@@ -21,6 +22,7 @@
 * Include .scala files in fuzzy file finder (Ctrl + .)
 * Add support for pre-rendered Shiny documents (shiny_prerendered)
 * Update Stan editor mode to support Stan 2.12.0
+* Server Pro: Add new `www-frame-origin` option for specifying framing permissions
 
 ### Bug Fixes
 
@@ -34,6 +36,8 @@
 * Detect multi-line data.table chains properly  
 * Allow git staging for filenames containing a space on Windows
 * Use Windows proxy settings to serve requests made by htmlwidgets
+* Fix cross-domain error when opening a link to RStudio Server in a new window
+* Fix comment toggling for ROxygen comments
 * Server Pro: Allow server user to have group name differing from user name
 * Server Pro: Don't require LDAP to support user enumeration when `auth-required-user-group` is set
 
