@@ -41,7 +41,7 @@ namespace system {
 //
 //
 
-// Struct for speicfying pseudoterminal options
+// Struct for specifying pseudoterminal options
 struct Pseudoterminal
 {
    Pseudoterminal(int cols, int rows)
@@ -59,14 +59,19 @@ struct ProcessOptions
    ProcessOptions()
 #ifdef _WIN32
       : terminateChildren(false),
+        smartTerminal(false)
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
         redirectStdErrToStdOut(false)
 #else
       : terminateChildren(false),
+        smartTerminal(false),
         detachSession(false),
+        cols(80),
+        rows(25),
         redirectStdErrToStdOut(false)
+   
 #endif
    {
    }
@@ -86,12 +91,21 @@ struct ProcessOptions
    // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
    bool terminateChildren;
 
+   // Use xterm as terminal type and disable canonical line-by-line
+   // I/O processing
+   bool smartTerminal;
+   
 #ifndef _WIN32
    // Calls ::setsid after fork for POSIX (no effect on Windows)
    bool detachSession;
 
    // attach the child process to pseudoterminal pipes
    boost::optional<Pseudoterminal> pseudoterminal;
+   
+   // pseudoterminal size
+   int cols;
+   int rows;
+   
 #endif
 
 #ifdef _WIN32

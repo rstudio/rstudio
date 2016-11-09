@@ -130,6 +130,7 @@ public:
    core::Error start();
    void enqueInput(const Input& input);
    void interrupt();
+   void resize(int cols, int rows);
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
@@ -173,6 +174,10 @@ private:
 
    // Whether the process should be stopped
    bool interrupt_;
+   
+   // Whether the tty should be notified of a resize
+   int newCols_; // -1 = no change
+   int newRows_; // -1 = no change
 
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;

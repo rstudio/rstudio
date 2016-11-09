@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -395,8 +396,9 @@ public class Workbench implements BusyHandler,
          final ProgressIndicator indicator = new GlobalProgressDelayer(
                globalDisplay_, 500, "Starting shell...").getIndicator();
          
-         server_.startShellDialog(new ServerRequestCallback<ConsoleProcess>() {
-
+         server_.startShellDialog(ConsoleProcess.TerminalType.DUMB, 80, 1, 
+                                  new ServerRequestCallback<ConsoleProcess>() 
+         {
             @Override
             public void onResponseReceived(ConsoleProcess proc)
             {
@@ -413,6 +415,12 @@ public class Workbench implements BusyHandler,
       }
    }
    
+   @Handler
+   public void onNewTerminal()
+   {
+         eventBus_.fireEvent(new CreateTerminalEvent());
+   }
+      
    @Handler
    public void onBrowseAddins()
    {

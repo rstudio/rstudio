@@ -219,6 +219,7 @@ public class PaneManager
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       @Named("R Markdown") final WorkbenchTab renderRmdTab,
                       @Named("Deploy") final WorkbenchTab deployContentTab,
+                      @Named("Terminal") final WorkbenchTab terminalTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader)
@@ -246,6 +247,7 @@ public class PaneManager
       renderRmdTab_ = renderRmdTab;
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
+      terminalTab_ = terminalTab;
       optionsLoader_ = optionsLoader;
       
       binder.bind(commands, this);
@@ -891,6 +893,7 @@ public class PaneManager
                                                             renderRmdTab_,
                                                             deployContentTab_,
                                                             markersTab_,
+                                                            terminalTab_,
                                                             eventBus_,
                                                             goToWorkingDirButton);
       
@@ -1137,6 +1140,7 @@ public class PaneManager
    private final WorkbenchTab renderRmdTab_;
    private final WorkbenchTab deployContentTab_;
    private final MarkersOutputTab markersTab_;
+   private final WorkbenchTab terminalTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;

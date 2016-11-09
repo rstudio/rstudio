@@ -22,7 +22,6 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.*;
@@ -33,6 +32,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.shell.ShellDisplay;
 import org.rstudio.studio.client.common.shell.ShellInput;
 import org.rstudio.studio.client.common.shell.ShellInteractionManager;
 import org.rstudio.studio.client.common.shell.ShellOutputWriter;
@@ -148,7 +148,7 @@ public class ConsoleProgressDialog extends ProgressDialog
          
          int height = Window.getClientHeight() - 150;
          int width = Math.min(800, Window.getClientWidth() - 150);
-         Style style = display_.getElement().getStyle();
+         Style style = display_.getShellWidget().getElement().getStyle();
          style.setHeight(height, Unit.PX);
          style.setWidth(width, Unit.PX);
       }
@@ -158,10 +158,10 @@ public class ConsoleProgressDialog extends ProgressDialog
    @Override
    protected Widget createDisplayWidget(Object param)
    {
-      display_ = new ConsoleProgressWidget(); 
+      display_ = new ConsoleProgressWidget();
       display_.setMaxOutputLines(getMaxOutputLines());
       display_.setSuppressPendingInput(true);
-      return display_;
+      return display_.getShellWidget();
    }
 
    public ConsoleProcess getConsoleProcess()
@@ -324,6 +324,6 @@ public class ConsoleProgressDialog extends ProgressDialog
    private final ConsoleProcess consoleProcess_;
  
    private final ShellOutputWriter outputWriter_;
-   
-   private ConsoleProgressWidget display_;
+  
+   private ShellDisplay display_;
 }

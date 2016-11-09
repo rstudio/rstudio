@@ -53,7 +53,8 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     interrupt_(false), newCols_(-1), newRows_(-1),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -71,7 +72,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false),
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -87,7 +88,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false),
+     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -136,9 +137,10 @@ void ConsoleProcess::commonInit()
       }
 #else
       // request a pseudoterminal if this is an interactive console process
-      options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
+      options_.pseudoterminal = core::system::Pseudoterminal(options_.cols,
+                                                             options_.rows);
 
-      // define TERM to dumb (but first make sure we have an environment
+      // define TERM (but first make sure we have an environment
       // block to modify)
       if (!options_.environment)
       {
@@ -146,7 +148,9 @@ void ConsoleProcess::commonInit()
          core::system::environment(&childEnv);
          options_.environment = childEnv;
       }
-      core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
+      
+      core::system::setenv(&(options_.environment.get()), "TERM",
+                           options_.smartTerminal ? "xterm" : "dumb");
 #endif
    }
 
@@ -206,6 +210,12 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
+void ConsoleProcess::resize(int cols, int rows)
+{
+   newCols_ = cols;
+   newRows_ = rows;
+}
+
 bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 {
    // full stop interrupt if requested
@@ -248,6 +258,13 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
       }
    }
 
+   if (newCols_ != -1 && newRows_ != -1)
+   {
+      ops.ptySetSize(newCols_, newRows_);
+      newCols_ = -1;
+      newRows_ = -1;
+   }
+   
    // continue
    return true;
 }
@@ -279,6 +296,14 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
                               const std::string& output)
 {
+   if (options_.smartTerminal)
+   {
+      // TODO: consider extracting out behaviors that vary between smart
+      // and dumb terminal handlers
+      enqueOutputEvent(output, false);
+      return;
+   }
+   
    // convert line endings to posix
    std::string posixOutput = output;
    string_utils::convertLineEndings(&posixOutput,
@@ -536,6 +561,32 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    }
 }
 
+Error procSetSize(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   int cols, rows;
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &cols,
+                                  &rows);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
+   {
+      pos->second->resize(cols, rows);
+      return Success();
+
+   }
+   else
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         ERROR_LOCATION);
+   }
+}
+   
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
@@ -756,7 +807,8 @@ Error initialize()
       (bind(registerRpcMethod, "process_start", procStart))
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
-      (bind(registerRpcMethod, "process_write_stdin", procWriteStdin));
+      (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
+      (bind(registerRpcMethod, "process_set_size", procSetSize));
 
    return initBlock.execute();
 }

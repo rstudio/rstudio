@@ -364,6 +364,7 @@ public abstract class
    
    // Tools
    public abstract AppCommand showShellDialog();
+   public abstract AppCommand newTerminal();
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
    public abstract AppCommand modifyKeyboardShortcuts();

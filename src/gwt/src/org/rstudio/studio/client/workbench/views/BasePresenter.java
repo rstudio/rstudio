@@ -30,6 +30,7 @@ public abstract class BasePresenter implements IsWidget
       return view_;
    }
 
+   @Override
    public Widget asWidget()
    {
       return (Widget) view_;
