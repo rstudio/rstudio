@@ -102,7 +102,8 @@ http::UriHandlerFunction blockingFileHandler()
                                    mainPageFilter,
                                    initJs,
                                    options.gwtPrefix(),
-                                   options.wwwUseEmulatedStack());
+                                   options.wwwUseEmulatedStack(),
+                                   options.wwwFrameOrigin());
 }
 
 //

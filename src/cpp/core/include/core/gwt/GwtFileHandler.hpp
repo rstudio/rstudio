@@ -28,7 +28,8 @@ http::UriHandlerFunction fileHandlerFunction(
       http::UriFilterFunction mainPageFilter = http::UriFilterFunction(),
       const std::string& initJs = std::string(),
       const std::string& gwtPrefix = std::string(),
-      bool useEmulatedStack = false);
+      bool useEmulatedStack = false,
+      const std::string& frameOptions = std::string());
    
 } // namespace gwt
 } // namespace core
