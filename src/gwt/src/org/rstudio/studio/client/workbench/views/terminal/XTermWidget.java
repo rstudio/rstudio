@@ -207,11 +207,6 @@ public class XTermWidget extends Widget implements RequiresResize,
          terminal_.blur(); 
    }
   
-   private static final ExternalJavaScriptLoader getLoader(StaticDataResource release)
-   {
-      return getLoader(release, null);
-   }
-   
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
    {
@@ -276,13 +271,14 @@ public class XTermWidget extends Widget implements RequiresResize,
          }
      });
    }
-   
+
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), 
-               XTermResources.INSTANCE.xtermjs() /*TODO (gary) uncompressed flavor */);
+                   XTermResources.INSTANCE.xtermjsUncompressed());
 
    private static final ExternalJavaScriptLoader xtermFitLoader_ =
-         getLoader(XTermResources.INSTANCE.xtermfitjs());
+         getLoader(XTermResources.INSTANCE.xtermfitjs(),
+                   XTermResources.INSTANCE.xtermfitjsUncompressed());
 
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
