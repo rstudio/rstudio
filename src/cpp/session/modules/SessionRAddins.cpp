@@ -1,7 +1,7 @@
 /*
- * SessionRAddins.cpp.in
+ * SessionRAddins.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,8 +31,9 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 
-#include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
 using namespace rstudio::core;
 
@@ -42,6 +43,25 @@ namespace modules {
 namespace r_addins {
 
 namespace {
+
+std::map<std::string, std::string> parseAddinDcf(const std::string& contents)
+{
+   std::map<std::string, std::string> fields;
+   std::string errMsg;
+   Error error = text::parseDcfFile(contents, true, &fields, &errMsg);
+   if (error)
+      LOG_ERROR(error);
+
+   return fields;
+}
+
+bool isTruthy(const std::string& string)
+{
+   std::string lower = string_utils::trimWhitespace(
+            boost::algorithm::to_lower_copy(string));
+
+   return lower == "true";
+}
 
 bool isDevtoolsLoadAllActive()
 {
@@ -90,6 +110,46 @@ public:
       object["binding"] = binding_;
       
       return object;
+   }
+   
+   static AddinSpecification fromMap(const std::string& pkgName,
+                                     std::map<std::string, std::string>& fields)
+   {
+      // if the 'interactive' field is not specified, default to 'true'
+      bool interactive = true;
+      if (fields.count("Interactive"))
+         interactive = isTruthy(fields["Interactive"]);
+      
+      return AddinSpecification(
+            fields["Name"],
+            pkgName,
+            fields["Title"],
+            fields["Description"],
+            interactive,
+            fields["Binding"]);
+      
+   }
+   
+   static Error fromPackageResource(const std::string& pkgName,
+                                    const core::FilePath& filePath,
+                                    std::vector<AddinSpecification>* pAddins)
+   {
+      std::string contents;
+      Error error = core::readStringFromFile(filePath, &contents);
+      if (error)
+         return error;
+
+      boost::regex reSeparator("\\n{2,}");
+      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+      boost::sregex_token_iterator end;
+
+      for (; it != end; ++it)
+      {
+         std::map<std::string, std::string> fields = parseAddinDcf(*it);
+         pAddins->push_back(fromMap(pkgName, fields));
+      }
+      
+      return Success();
    }
    
 private:
@@ -179,8 +239,7 @@ public:
       addins_[constructKey(package, spec.getBinding())] = spec;
    }
 
-   void add(const std::string& pkgName,
-            std::map<std::string, std::string>& fields)
+   void add(const std::string& pkgName, std::map<std::string, std::string>& fields)
    {
       // if the 'interactive' field is not specified, default to 'true'
       bool interactive = true;
@@ -244,33 +303,11 @@ public:
    
 private:
    
-   static std::map<std::string, std::string> parseAddinDcf(
-                                          const std::string& contents)
-   {
-      // read and parse the DCF file
-      std::map<std::string, std::string> fields;
-      std::string errMsg;
-      Error error = text::parseDcfFile(contents, true, &fields, &errMsg);
-      if (error)
-         LOG_ERROR(error);
-
-      return fields;
-   }
-
-
    static std::string constructKey(const std::string& package, const std::string& name)
    {
       return package + "::" + name;
    }
    
-   static bool isTruthy(const std::string& string)
-   {
-      std::string lower = string_utils::trimWhitespace(
-               boost::algorithm::to_lower_copy(string));
-      
-      return lower == "true";
-   }
-
    std::map<std::string, AddinSpecification> addins_;
 };
 
@@ -307,38 +344,54 @@ AddinRegistry& addinRegistry()
    return *s_pCurrentRegistry;
 }
 
-class AddinIndexer : public boost::noncopyable
+class AddinIndexer : public ppe::Indexer<AddinSpecification>
 {
 public:
    
-   AddinIndexer()
+   AddinIndexer(const std::string& resourcePath)
+      : ppe::Indexer<AddinSpecification>(resourcePath)
    {
-      clear();
    }
-
-   void start(const std::vector<FilePath>& libPaths)
+   
+   void onIndexingStarted()
    {
-      // reset instance data
-      clear();
-
-      // prime work list
-      std::vector<FilePath> pkgPaths;
-      BOOST_FOREACH(const FilePath& libPath, libPaths)
+      
+   }
+   
+   void onIndexingCompleted()
+   {
+      // finalize by indexing current package
+      if (isDevtoolsLoadAllActive())
       {
-         if (!libPath.exists())
-            continue;
-         
-         pkgPaths.clear();
-         Error error = libPath.children(&pkgPaths);
-         if (error)
-            LOG_ERROR(error);
-         children_.insert(
-                  children_.end(),
-                  pkgPaths.begin(),
-                  pkgPaths.end());
+         FilePath pkgPath = projects::projectContext().buildTargetPath();
+         FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
+         if (addinPath.exists())
+         {
+            std::string pkgName = projects::projectContext().packageInfo().name();
+            pRegistry_->add(pkgName, addinPath);
+         }
+      }
+
+      // update the addin registry
+      updateAddinRegistry(pRegistry_);
+
+      // handle pending continuations
+      json::Object registryJson = addinRegistry().toJson();
+      BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
+      {
+         json::JsonRpcResponse response;
+         response.setResult(registryJson);
+         continuation(Success(), &response);
       }
       
-      n_ = children_.size();
+      // reset instance data
+      pRegistry_ = boost::make_shared<AddinRegistry>();
+      continuations_.clear();
+   }
+   
+   void initialize()
+   {
+      
    }
 
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
@@ -346,121 +399,29 @@ public:
       continuations_.push_back(continuation);
    }
 
-   bool running()
-   {
-      return index_ != n_;
-   }
-   
-   bool work()
-   {
-      const FilePath& pkgPath = children_[index_];
-      
-      // std::cout << "Job " << index_ + 1 << " of " << n_ << "\n";
-      // std::cout << "Package: '" << pkgPath.absolutePath() << "'\n";
-      // ::usleep(10000);
-      
-      FilePath addinPath = pkgPath.childPath("rstudio/addins.dcf");
-      if (!addinPath.exists())
-      {
-         ++index_;
-         return maybeFinishRunning();
-      }
-      
-      std::string pkgName = pkgPath.filename();
-      pRegistry_->add(pkgName, addinPath);
-      
-      ++index_;
-      return maybeFinishRunning();
-   }
-
 private:
-
-   // reset all instance data
-   void clear()
-   {
-      children_.clear();
-      n_ = 0;
-      index_ = 0;
-      pRegistry_ = boost::make_shared<AddinRegistry>();
-      continuations_.clear();
-   }
-
-   // check for still running, if we aren't still running then complete
-   // our work and return false, otherwise return true
-   bool maybeFinishRunning()
-   {
-      if (!running())
-      {
-         // finalize by indexing current package
-         if (isDevtoolsLoadAllActive())
-         {
-            FilePath pkgPath = projects::projectContext().buildTargetPath();
-            FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
-            if (addinPath.exists())
-            {
-               std::string pkgName = projects::projectContext().packageInfo().name();
-               pRegistry_->add(pkgName, addinPath);
-            }
-         }
-         
-         // update the addin registry
-         updateAddinRegistry(pRegistry_);
-
-         // handle pending continuations
-         json::Object registryJson = addinRegistry().toJson();
-         BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
-         {
-            json::JsonRpcResponse response;
-            response.setResult(registryJson);
-            continuation(Success(), &response);
-         }
-
-         // clear instance data and return false
-         clear();
-         return false;
-      }
-      else
-      {
-         return true;
-      }
-   }
-   
-private:
-   std::vector<FilePath> children_;
-   std::size_t n_;
-   std::size_t index_;
    boost::shared_ptr<AddinRegistry> pRegistry_;
    std::vector<json::JsonRpcFunctionContinuation> continuations_;
 };
 
 AddinIndexer& addinIndexer()
 {
-   static AddinIndexer instance;
+   static AddinIndexer instance("rstudio/addins.dcf");
    return instance;
 }
 
 void indexLibraryPathsWithContinuation(
                         json::JsonRpcFunctionContinuation continuation)
 {
-   // get the libpaths
-   std::vector<FilePath> libPaths = module_context::getLibPaths();
-
-   // start if we arent' already running
+   // start if we aren't already running
    if (!addinIndexer().running())
    {
-      // start indexer
-      addinIndexer().start(libPaths);
-
       // register continuation if provided
       if (continuation)
          addinIndexer().addContinuation(continuation);
 
-      // schedule work
-      module_context::scheduleIncrementalWork(
-               boost::posix_time::milliseconds(300),
-               boost::posix_time::milliseconds(20),
-               boost::bind(&AddinIndexer::work, &addinIndexer()),
-               false);
+      // start indexer
+      addinIndexer().start();
    }
    else
    {
