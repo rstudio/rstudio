@@ -292,8 +292,8 @@ public class JMethod extends JNode implements JMember, CanBeAbstract {
     this.hasSideEffects = hasSideEffects;
   }
 
-  public void setDefaultMethod() {
-    this.defaultMethod = true;
+  public void setDefaultMethod(boolean defaultMethod) {
+    this.defaultMethod = defaultMethod;
   }
 
   @Override

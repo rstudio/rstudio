@@ -1187,7 +1187,7 @@ public class Java8AstTest extends FullCompileTestBase {
     JMethod defaultMethod = findMethod(clazz, "method2");
     assertNotNull(defaultMethod);
     assertNotNull(defaultMethod.getBody());
-    assertEquals("{return super.method2();}",
+    assertEquals("{return this.DefaultInterface.method2();}",
         formatSource(defaultMethod.getBody().toSource()));
   }
 

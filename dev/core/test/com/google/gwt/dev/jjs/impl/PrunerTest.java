@@ -181,7 +181,7 @@ public class PrunerTest extends OptimizerTestBase {
     // Neither super ctor call, nor super call's param is pruned
     assertEquals(
         "public EntryPoint$JsProtoImpl(){\n" +
-            "  super(10);\n" +
+            "  this.EntryPoint$JsProto.EntryPoint$JsProto(10);\n" +
             "  this.$init();\n" +
             "}",
         findMethod(result.findClass("EntryPoint$JsProtoImpl"), "EntryPoint$JsProtoImpl").toSource());

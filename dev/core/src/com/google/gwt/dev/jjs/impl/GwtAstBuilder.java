@@ -2796,7 +2796,7 @@ public class GwtAstBuilder {
       if (enclosingType instanceof JInterfaceType) {
         // Mark bridges created in interfaces as default methods so they are processed correctly
         // by the rest of the pipeline.
-        bridgeMethod.setDefaultMethod();
+        bridgeMethod.setDefaultMethod(true);
       }
       bridgeMethod.setSynthetic();
 
@@ -4136,7 +4136,7 @@ public class GwtAstBuilder {
     }
 
     if (b.isDefaultMethod()) {
-      method.setDefaultMethod();
+      method.setDefaultMethod(true);
     }
 
     enclosingType.addMethod(method);

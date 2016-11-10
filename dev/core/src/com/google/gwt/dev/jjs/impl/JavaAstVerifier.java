@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -128,6 +129,15 @@ public class JavaAstVerifier extends JVisitor {
     assertNotSeenBefore(x);
   }
 
+  JMethod currentMethod;
+
+  @Override
+  public boolean visit(JMethod x, Context ctx) {
+    assert currentMethod == null;
+    currentMethod = x;
+    return true;
+  }
+
   @Override
   public void endVisit(JMethod x, Context ctx) {
     JDeclaredType enclosingType = x.getEnclosingType();
@@ -137,11 +147,18 @@ public class JavaAstVerifier extends JVisitor {
     seenMethodsByType.put(enclosingType, methodSignature);
     assertCorrectOverriddenOrder(program, x);
     assertCorrectOverridingOrder(program, x);
+    assert currentMethod == x;
+    currentMethod = null;
   }
 
   @Override
   public void endVisit(JMethodCall x, Context ctx) {
     assertCalledMethodIsInAst(x);
+  }
+
+  public void endVisit(JThisRef x, Context ctx) {
+    assert !currentMethod.isStatic() || currentMethod.isConstructor()
+        : "JThisRef found in static method " + currentMethod;
   }
 
   @Override
@@ -160,6 +177,12 @@ public class JavaAstVerifier extends JVisitor {
     }
     assert membersByType.containsEntry(x.getTarget().getEnclosingType(), x.getTarget()) :
       "Method " + x.getTarget() + " is called but is not part of the AST";
+
+    JMethod staticImpl = program.getStaticImpl(x.getTarget());
+    assert  staticImpl == null
+        || membersByType.containsEntry(staticImpl.getEnclosingType(), staticImpl) :
+        "Method " + staticImpl + " is the static implementation of " + x.getTarget()
+            + " but is not part of the AST";
   }
 
   private void assertReferencedFieldIsInAst(JFieldRef x) {

@@ -50,7 +50,6 @@ import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -629,29 +628,16 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       printTypeName(target.getEnclosingType());
       print('.');
       printName(target);
-    } else if (x.isStaticDispatchOnly()) {
-      // super(), this() or super.m() call.
-      JReferenceType thisType = (JReferenceType) x.getInstance().getType().getUnderlyingType();
-      if (thisType == target.getEnclosingType() && !(thisType instanceof JInterfaceType)) {
-        print(CHARS_THIS);
-      } else {
-        if (thisType instanceof JInterfaceType) {
-          // This is a static default method dispatch.
-          printTypeName(target.getEnclosingType());
-          print('.');
-        }
-        print(CHARS_SUPER);
-      }
-      if (!x.getTarget().isConstructor()) {
-        print('.');
-        printName(target);
-      }
     } else {
       // Instance call.
       parenPush(x, instance);
       accept(instance);
       parenPop(x, instance);
       print('.');
+      if (x.isStaticDispatchOnly()) {
+        printTypeName(target.getEnclosingType());
+        print('.');
+      }
       printName(target);
     }
     lparen();

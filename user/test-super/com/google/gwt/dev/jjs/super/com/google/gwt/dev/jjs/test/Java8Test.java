@@ -1717,5 +1717,34 @@ public class Java8Test extends GWTTestCase {
   public void testLocalClassConstructorReferenceInStaticMethod() {
     assertTrue(createInnerClassProducer().get() != null);
   }
+
+  // NOTE: DO NOT reorder the following classes, bug  #9453 is only reproducible in certain
+  // orderings.
+  interface SubSub_SuperDefaultMethodDevirtualizationOrder
+      extends Sub_SuperDefaultMethodDevirtualizationOrder {
+    default String m() {
+      return Sub_SuperDefaultMethodDevirtualizationOrder.super.m();
+    }
+  }
+
+  interface Sub_SuperDefaultMethodDevirtualizationOrder
+      extends Super_SuperDefaultMethodDevirtualizationOrder {
+    @Override
+    default String m() {
+      return Super_SuperDefaultMethodDevirtualizationOrder.super.m();
+    }
+  }
+
+  interface Super_SuperDefaultMethodDevirtualizationOrder {
+    default String m() {
+      return "Hi";
+    }
+  }
+
+  // Regression test for bug #9453.
+  public void testDefaultMethodDevirtualizationOrder() {
+    assertEquals("Hi", new SubSub_SuperDefaultMethodDevirtualizationOrder() {
+    }.m());
+  }
 }
 
