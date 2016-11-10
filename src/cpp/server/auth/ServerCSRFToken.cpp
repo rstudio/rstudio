@@ -14,6 +14,7 @@
  */
 
 #include <server/auth/ServerCSRFToken.hpp>
+#include <server/ServerOptions.hpp>
 
 #include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
@@ -44,8 +45,9 @@ void setCSRFTokenCookie(const http::Request& request,
             kCSRFTokenName, 
             csrfToken, 
             "/",  // cookie for root path
-            false // can't be HTTP only since it's read by client script
-            ));
+            false, // can't be HTTP only since it's read by client script
+            // secure if delivered via SSL
+            options().getOverlayOption("ssl-enabled") == "1"));
 }
 
 bool validateCSRFForm(const http::Request& request, 
