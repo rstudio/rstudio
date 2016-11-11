@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
@@ -507,6 +508,10 @@ public class RCompletionManager implements CompletionManager
          case KeyCodes.KEY_WIN_KEY_LEFT_META:
             return false ; // bare modifiers should do nothing
          }
+         
+         // ignore right meta key on macOS
+         if (BrowseCap.isMacintosh() && keycode == 93)
+            return false;
          
          if (modifier == KeyboardShortcut.CTRL)
          {

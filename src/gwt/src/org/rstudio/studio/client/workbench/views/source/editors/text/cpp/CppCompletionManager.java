@@ -253,6 +253,10 @@ public class CppCompletionManager implements CompletionManager
             return false ; 
          }
          
+         // ignore right meta key on macOS
+         if (BrowseCap.isMacintosh() && keycode == 93)
+            return false;
+         
          // if there is no popup then bail
          CppCompletionPopupMenu popup = getCompletionPopup();
          if ((popup == null) || !popup.isVisible())
