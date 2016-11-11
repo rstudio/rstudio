@@ -73,7 +73,7 @@
                         fileext = ".html")
 
    # save contents to temporary file
-   cat(as.character(x), file = mdfile, sep = "\n")
+   writeLines(enc2utf8(x), con = mdfile, useBytes = TRUE)
    
    # render to HTML with pandoc
    rmarkdown::pandoc_convert(input = rmarkdown::pandoc_path_arg(mdfile), 

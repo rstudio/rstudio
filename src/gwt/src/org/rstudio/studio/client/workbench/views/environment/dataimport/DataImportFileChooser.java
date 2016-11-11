@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
@@ -34,6 +35,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class DataImportFileChooser extends Composite
 {
@@ -55,6 +57,8 @@ public class DataImportFileChooser extends Composite
    public DataImportFileChooser(Operation updateOperation,
                                 boolean growTextbox)
    {  
+      RStudioGinjector.INSTANCE.injectMembers(this);
+
       initWidget(uiBinder.createAndBindUi(this));
       
       updateOperation_ = updateOperation;
@@ -83,10 +87,15 @@ public class DataImportFileChooser extends Composite
             }
             else
             {
+               FileSystemItem fileSystemItemPath = FileSystemItem.createFile(getText());
+               if (getText() == "") {
+                  fileSystemItemPath = workbenchContext_.getDefaultFileDialogDir();
+               }
+               
                RStudioGinjector.INSTANCE.getFileDialogs().openFile(
                      "Choose File",
                      RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
-                     FileSystemItem.createFile(getText()),
+                     fileSystemItemPath,
                      new ProgressOperationWithInput<FileSystemItem>()
                      {
                         public void execute(FileSystemItem input,
@@ -108,6 +117,12 @@ public class DataImportFileChooser extends Composite
       });
       
       checkForTextBoxChange();
+   }
+
+   @Inject
+   private void initialize(WorkbenchContext workbenchContext)
+   {
+      workbenchContext_ = workbenchContext;
    }
    
    public void setEnabled(boolean enabled)
@@ -180,4 +195,6 @@ public class DataImportFileChooser extends Composite
          }
       }
    }
+
+   private WorkbenchContext workbenchContext_;
 }

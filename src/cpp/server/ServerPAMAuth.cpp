@@ -258,6 +258,10 @@ void signIn(const http::Request& request,
 
    text::TemplateFilter filter(variables);
 
+   // don't allow sign-in page to be framed by other domains (clickjacking
+   // defense)
+   pResponse->setFrameOptionHeaders(options.wwwFrameOrigin());
+
    pResponse->setFile(signInPath, request, filter);
    pResponse->setContentType("text/html");
 }
