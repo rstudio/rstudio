@@ -598,10 +598,11 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       // initialize doc from json
       json::Object jsonDoc = value.get_obj();
       
-      // embed 'contents' in properties file (we always write this when not
-      // available just to ensure unchecked access to 'contents' succeeds)
-      if ((includeContents && contents.size()) || !jsonDoc.count("contents"))
+      if (includeContents && !contents.empty())
          jsonDoc["contents"] = contents;
+      
+      if (!jsonDoc.count("contents"))
+         jsonDoc["contents"] = std::string();
       
       return pDoc->readFromJson(&jsonDoc);
    }
