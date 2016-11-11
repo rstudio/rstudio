@@ -29,6 +29,7 @@ core::Error initAlternateEngines();
 core::Error executeAlternateEngineChunk(const std::string& docId,
                                   const std::string& chunkId,
                                   const std::string& nbCtxId,
+                                  const core::FilePath& workingDir,
                                   const std::string& engine,
                                   const std::string& code,
                                   const core::json::Object& jsonChunkOptions);
