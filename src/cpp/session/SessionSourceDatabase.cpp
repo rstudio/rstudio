@@ -564,7 +564,6 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
    
    // attempt to read file contents from sidecar file if available
    std::string contents;
-   
    if (includeContents)
    {
       FilePath contentsPath(propertiesPath.absolutePath() + kContentsSuffix);
@@ -601,7 +600,7 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       
       // embed 'contents' in properties file (we always write this when not
       // available just to ensure unchecked access to 'contents' succeeds)
-      if (includeContents || !jsonDoc.count("contents"))
+      if ((includeContents && contents.size()) || !jsonDoc.count("contents"))
          jsonDoc["contents"] = contents;
       
       return pDoc->readFromJson(&jsonDoc);

@@ -53,11 +53,6 @@ FilePath sdbSourceDatabaseRoot()
    return module_context::scopedScratchPath().complete("sdb");
 }
 
-FilePath oldSourceDatabaseRoot()
-{
-   return module_context::scopedScratchPath().complete("source_database");
-}
-
 FilePath sourceDatabaseRoot()
 {
    return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix);
