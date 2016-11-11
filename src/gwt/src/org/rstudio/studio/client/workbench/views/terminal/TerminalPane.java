@@ -17,16 +17,13 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
-import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
-import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
-import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -53,6 +50,7 @@ public class TerminalPane extends WorkbenchPane
    protected TerminalPane(String title, WorkbenchServerOperations server)
    {
       super(title);
+      secureInput_ = new ShellSecureInput(server);
       server_ = server;
       host_ = new ResizeLayoutPanel();
    }
@@ -87,7 +85,6 @@ public class TerminalPane extends WorkbenchPane
          public void onResponseReceived(ConsoleProcess consoleProcess)
          {
             consoleProcess_ = consoleProcess;
-            cryptoServer_ = server_;
             
             if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
@@ -166,61 +163,6 @@ public class TerminalPane extends WorkbenchPane
       registrations_.removeHandler();
    }
    
-   // TODO: (gary) this is duplicated from ShellInteractionManager, pull out common behavior between
-   // ConsoleProgressDialog and TerminalPane
-   private void encryptInput(final String input, 
-                             final CommandWithArg<String> onInputReady)
-   {
-      if (Desktop.isDesktop())
-      {
-         onInputReady.execute(input);
-      }
-      else if (publicKeyInfo_ != null)
-      {
-         RSAEncrypt.encrypt_ServerOnly(publicKeyInfo_, input, onInputReady);
-      }
-      else
-      {
-         cryptoServer_.getPublicKey(new ServerRequestCallback<PublicKeyInfo>() {
-
-            @Override
-            public void onResponseReceived(PublicKeyInfo publicKeyInfo)
-            {
-               publicKeyInfo_ = publicKeyInfo;
-               RSAEncrypt.encrypt_ServerOnly(publicKeyInfo_, 
-                                             input, 
-                                             onInputReady);
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               xterm_.writeln(error.getUserMessage());
-            }
-            
-         });
-      } 
-   }
-  
-   // TODO: (gary) duplicated from ShellInteractionManager along with encryptInput; consolidate shared code
-   private CommandWithArg<ShellInput> inputHandler_ = 
-         new CommandWithArg<ShellInput>() 
-   {
-      @Override
-      public void execute(ShellInput input)
-      {         
-         consoleProcess_.writeStandardInput(
-               input, 
-               new VoidServerRequestCallback() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     xterm_.writeln(error.getUserMessage());
-                  }
-               });
-      }
-   };
-   
    @Override
    public void onResizeTerminal(ResizeTerminalEvent event)
    {
@@ -239,21 +181,36 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
-       encryptInput(event.getData(), new CommandWithArg<String>()
-       {
-          @Override
-          public void execute(String arg)
-          {
-             inputHandler_.execute(ShellInput.create(arg,  true /*echo input*/));
+      secureInput_.secureString(event.getData(), new CommandWithArg<String>() 
+      {
+         @Override
+         public void execute(String arg) // success
+         {
+            consoleProcess_.writeStandardInput(
+               ShellInput.create(arg,  true /* echo input*/), 
+               new VoidServerRequestCallback() {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     xterm_.writeln(error.getUserMessage());
+                  }
+               });
           }
-       });
+      },
+      new CommandWithArg<String>()
+      {
+         @Override
+         public void execute(String errorMessage) // failure
+         {
+            xterm_.writeln(errorMessage); 
+         }
+      });
    } 
    
    private final ResizeLayoutPanel host_;
    private XTermWidget xterm_;
    private WorkbenchServerOperations server_;
-   private CryptoServerOperations cryptoServer_;
+   private final ShellSecureInput secureInput_;
    private ConsoleProcess consoleProcess_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private PublicKeyInfo publicKeyInfo_ = null;
 }

@@ -22,11 +22,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
-import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
-import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -41,7 +37,7 @@ public class ShellInteractionManager implements ShellOutputWriter
                                   CommandWithArg<ShellInput> inputHandler)
    {
       display_ = display;
-      server_ = server;
+      secureInput_ = new ShellSecureInput(server); 
       input_ = display_.getInputEditorDisplay();
       historyManager_ = new CommandLineHistory(input_);
       inputHandler_ = inputHandler;
@@ -129,14 +125,21 @@ public class ShellInteractionManager implements ShellOutputWriter
       }
 
       // encrypt the input and return it
-      encryptInput(input, new CommandWithArg<String>() {
-
-         @Override
-         public void execute(String arg)
-         {
-            onInputReady.execute(ShellInput.create(arg, echoInput));
-         }
-      });
+      secureInput_.secureString(input, 
+         new CommandWithArg<String>() {
+            @Override
+            public void execute(String arg) // success
+            {
+               onInputReady.execute(ShellInput.create(arg, echoInput));
+            }
+         },
+         new CommandWithArg<String>() {
+            @Override
+            public void execute(String errorMessage) // failure
+            {
+               consoleWriteError(errorMessage);
+            }
+         });
    }
  
    private void navigateHistory(int offset)
@@ -268,42 +271,6 @@ public class ShellInteractionManager implements ShellOutputWriter
       }
    }
     
-   private void encryptInput(final String input, 
-                             final CommandWithArg<String> onInputReady)
-   {
-      if (Desktop.isDesktop())
-      {
-         onInputReady.execute(input);
-      }
-      else if (publicKeyInfo_ != null)
-      {
-         RSAEncrypt.encrypt_ServerOnly(publicKeyInfo_, input, onInputReady);
-      }
-      else
-      {
-         server_.getPublicKey(new ServerRequestCallback<PublicKeyInfo>() {
-
-            @Override
-            public void onResponseReceived(PublicKeyInfo publicKeyInfo)
-            {
-               publicKeyInfo_ = publicKeyInfo;
-               RSAEncrypt.encrypt_ServerOnly(publicKeyInfo_, 
-                                             input, 
-                                             onInputReady);
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               consoleWriteError(error.getUserMessage());
-            }
-            
-         });
-      }
-        
-   }
-   
-   
    private final ShellDisplay display_;
    
    private boolean addToHistory_ ;
@@ -317,10 +284,8 @@ public class ShellInteractionManager implements ShellOutputWriter
    private final CommandLineHistory historyManager_;
    
    private final CommandWithArg<ShellInput> inputHandler_;
+   private final ShellSecureInput secureInput_;
    
-   private final CryptoServerOperations server_;
-   private PublicKeyInfo publicKeyInfo_ = null;
-
    /* Hack to fix echoing problems on Windows.
     * For echoed input like username, Windows always echoes input back to the
     * client. We don't have a good way to avoid this happening on the server,
