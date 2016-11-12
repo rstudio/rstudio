@@ -235,7 +235,7 @@
       # perform the actual coercion in the global environment; this is 
       # necessary because we want to honor as.data.frame overrides of packages
       # which are loaded after tools:rstudio in the search path
-      frame <- eval(substitute(as.data.frame(coerced)), 
+      frame <- eval(substitute(as.data.frame(coerced, optional = TRUE)), 
                     envir = globalenv())
     },
     error = function(e)
@@ -528,12 +528,10 @@
    FALSE
 })
 
-
-.rs.registerReplaceHook("View", "utils", function(original, x, title) 
-{
+.rs.addFunction("viewHook", function(original, x, title) {
    # generate title if necessary
    if (missing(title))
-      title <- deparse(substitute(x))[1]
+      title <- paste(deparse(substitute(x))[1])
 
    name <- ""
    env <- emptyenv()
@@ -550,7 +548,7 @@
    {
      # if the argument is the name of a variable, we can monitor it in its
      # environment, and don't need to make a copy for viewing
-     name <- deparse(substitute(x))
+     name <- paste(deparse(substitute(x)))
      env <- .rs.findViewingEnv(name)
    }
 
@@ -589,9 +587,11 @@
    }
 
    # test for coercion to data frame--the goal of this expression is just to
-   # raise an error early if the object can't be made into a frame
+   # raise an error early if the object can't be made into a frame; don't
+   # require that we can generate row/col names
    coerced <- x
-   eval(substitute(as.data.frame(coerced)), envir = globalenv())
+   eval(substitute(as.data.frame(coerced, optional = TRUE)), 
+        envir = globalenv())
 
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x), name)
@@ -599,6 +599,8 @@
    # call viewData 
    invisible(.Call("rs_viewData", x, title, name, env, cacheKey, FALSE))
 })
+
+.rs.registerReplaceHook("View", "utils", .rs.viewHook)
 
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")
