@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.model.ProvidesBusy;
@@ -35,7 +34,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                  CreateTerminalEvent.Handler
    {
       abstract void initialize();
-      abstract void confirmClose(Command onConfirmed);
    }
 
    @Inject
@@ -47,18 +45,6 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       events.addHandler(CreateTerminalEvent.TYPE, shim);
    }
 
-   @Override
-   public boolean closeable()
-   {
-      return true;
-   }
-   
-   @Override
-   public void confirmClose(Command onConfirmed)
-   {
-      shim_.confirmClose(onConfirmed);
-   }
-   
    @Override
    public void addBusyHandler(BusyHandler handler)
    {

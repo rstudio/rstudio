@@ -15,11 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
@@ -27,11 +24,10 @@ import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalE
 public class TerminalTabPresenter extends BusyPresenter
 {
    @Inject
-   public TerminalTabPresenter(GlobalDisplay globalDisplay, WorkbenchServerOperations server)
+   public TerminalTabPresenter(WorkbenchServerOperations server)
    {
       super(new TerminalPane("Terminal", server));
       pane_ = (TerminalPane) getView();
-      globalDisplay_ = globalDisplay;
    }
    
    public void initialize()
@@ -44,30 +40,5 @@ public class TerminalTabPresenter extends BusyPresenter
       pane_.bringToFront();
    }
 
-   public void confirmClose(final Command onConfirmed)
-   {
-      if (isBusy())
-      {
-        globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-              "Close Terminal", 
-              "Are you sure you want to exit the shell? Any running jobs " +
-              "will be terminated.", false, 
-              new Operation()
-              {
-                 @Override
-                 public void execute()
-                 {
-                    // TODO: (gary) close PTY on server end
-                    onConfirmed.execute();
-                 }
-              }, null, null, "Exit", "Cancel", true);
-      }
-      else
-      {
-        onConfirmed.execute();
-      }
-   }
-
    private final TerminalPane pane_;
-   private final GlobalDisplay globalDisplay_;
 }

@@ -883,6 +883,14 @@ public class PaneManager
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
 
+      boolean enableTerminalTab = session_.getSessionInfo().getAllowShell();
+      
+      // TODO (gary): this is a temporary feature gate
+      if (enableTerminalTab && !uiPrefs_.enableXTerm().getValue())
+      {
+         enableTerminalTab = false;
+      }
+      
       @SuppressWarnings("unused")
       ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
                                                             logicalWindow,
@@ -894,6 +902,7 @@ public class PaneManager
                                                             deployContentTab_,
                                                             markersTab_,
                                                             terminalTab_,
+                                                            enableTerminalTab,
                                                             eventBus_,
                                                             goToWorkingDirButton);
       
