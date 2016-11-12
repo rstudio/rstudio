@@ -71,7 +71,7 @@
             padding-right: 5px;
         }
         .skipTextBox {
-            width: 50px;
+            max-width: 50px;
             text-align: right;
             padding-left: 5px;
             padding-right: 5px;

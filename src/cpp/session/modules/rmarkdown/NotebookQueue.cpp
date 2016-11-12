@@ -429,10 +429,11 @@ private:
          else
          {
             execUnit_ = unit;
+
             enqueueExecStateChanged(ChunkExecStarted, options.chunkOptions());
             error = executeAlternateEngineChunk(
-               unit->docId(), unit->chunkId(), ctx, engine, innerCode, 
-               options.mergedOptions());
+               unit->docId(), unit->chunkId(), ctx, docQueue->workingDir(),
+               engine, innerCode, options.mergedOptions());
             if (error)
                LOG_ERROR(error);
          }

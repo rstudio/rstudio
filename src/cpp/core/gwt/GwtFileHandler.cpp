@@ -38,6 +38,7 @@ void handleFileRequest(const std::string& wwwLocalPath,
                        const std::string& initJs,
                        const std::string& gwtPrefix,
                        bool useEmulatedStack,
+                       const std::string& frameOptions,
                        const http::Request& request, 
                        http::Response* pResponse)
 {
@@ -123,6 +124,10 @@ void handleFileRequest(const std::string& wwwLocalPath,
       // gwt prefix
       vars["gwt_prefix"] = gwtPrefix;
 
+      // don't allow main page to be framed by other domains (clickjacking
+      // defense)
+      pResponse->setFrameOptionHeaders(frameOptions);
+
       // return the page
       pResponse->setNoCacheHeaders();
       pResponse->setFile(filePath, request, text::TemplateFilter(vars));
@@ -146,7 +151,8 @@ http::UriHandlerFunction fileHandlerFunction(
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
                                        const std::string& gwtPrefix,
-                                       bool useEmulatedStack)
+                                       bool useEmulatedStack,
+                                       const std::string& frameOptions)
 {
    return boost::bind(handleFileRequest,
                       wwwLocalPath,
@@ -155,6 +161,7 @@ http::UriHandlerFunction fileHandlerFunction(
                       initJs,
                       gwtPrefix,
                       useEmulatedStack,
+                      frameOptions,
                       _1,
                       _2);
 }  

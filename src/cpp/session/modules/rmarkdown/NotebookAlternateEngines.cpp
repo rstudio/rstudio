@@ -18,6 +18,7 @@
 #include "SessionExecuteChunkOperation.hpp"
 #include "NotebookCache.hpp"
 #include "NotebookAlternateEngines.hpp"
+#include "NotebookWorkingDir.hpp"
 
 #include <boost/algorithm/string.hpp>
 
@@ -446,6 +447,7 @@ Error interruptEngineChunk(const json::JsonRpcRequest& request,
 Error executeAlternateEngineChunk(const std::string& docId,
                                   const std::string& chunkId,
                                   const std::string& nbCtxId,
+                                  const core::FilePath& workingDir,
                                   const std::string& engine,
                                   const std::string& code,
                                   const json::Object& jsonChunkOptions)
@@ -459,17 +461,26 @@ Error executeAlternateEngineChunk(const std::string& docId,
       if (it->second.type() == json::StringType)
          options[it->first] = it->second.get_str();
    }
+
+   // set working directory
+   DirCapture dir;
+   dir.connectDir(docId, workingDir);
    
    // handle some engines with their own custom routines
+   Error error = Success();
    if (engine == "Rcpp")
-      return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
+      error = executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "stan")
-      return executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
+      error = executeStanEngineChunk(docId, chunkId, nbCtxId, code, options);
    else if (engine == "sql")
-      return executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
+      error = executeSqlEngineChunk(docId, chunkId, nbCtxId, code, jsonChunkOptions);
+   else
+      runChunk(docId, chunkId, nbCtxId, engine, code, options);
 
-   runChunk(docId, chunkId, nbCtxId, engine, code, options);
-   return Success();
+   // release working directory
+   dir.disconnect();
+
+   return error;
 }
 
 Error initAlternateEngines()

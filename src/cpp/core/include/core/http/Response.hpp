@@ -69,7 +69,7 @@ enum Code {
    GatewayTimeout = 504 
 };
 } 
-    
+
 class NullOutputFilter : public boost::iostreams::multichar_output_filter 
 {   
 public:
@@ -114,6 +114,8 @@ public:
    void setCacheForeverHeaders();
    void setPrivateCacheForeverHeaders();
    void setNoCacheHeaders();
+
+   void setFrameOptionHeaders(const std::string& options);
    
    void setBrowserCompatible(const Request& request);
 

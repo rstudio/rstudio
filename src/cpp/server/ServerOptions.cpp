@@ -231,7 +231,10 @@ ProgramStatus Options::read(int argc,
          "proxy requests to localhost ports over main server port")
       ("www-verify-user-agent",
          value<bool>(&wwwVerifyUserAgent_)->default_value(true),
-         "verify that the user agent is compatible");
+         "verify that the user agent is compatible")
+      ("www-frame-origin",
+         value<std::string>(&wwwFrameOrigin_)->default_value("none"),
+         "allowed origin for hosting frame");
 
    // rsession
    Deprecated dep;

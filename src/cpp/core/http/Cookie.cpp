@@ -29,12 +29,14 @@ Cookie::Cookie(const Request& request,
                const std::string& name,
                const std::string& value, 
                const std::string& path,
-               bool httpOnly) 
+               bool httpOnly, 
+               bool secure) 
    :  name_(name), 
       value_(value), 
       path_(path), 
       expires_(not_a_date_time),
-      httpOnly_(httpOnly)
+      httpOnly_(httpOnly),
+      secure_(secure)
 {
    if (path.empty() && URL::complete(request.uri(), "") != "/")
    {
@@ -67,6 +69,11 @@ void Cookie::setHttpOnly()
 {
    httpOnly_ = true;
 }
+
+void Cookie::setSecure()
+{
+   secure_ = true;
+}
    
 std::string Cookie::cookieHeaderValue() const
 {
@@ -97,6 +104,10 @@ std::string Cookie::cookieHeaderValue() const
    // http only if specified
    if (httpOnly_)
       headerValue << "; HttpOnly";
+
+   // secure if specified
+   if (secure_)
+      headerValue << "; secure";
 
    // return the header value 
    return headerValue.str() ;
