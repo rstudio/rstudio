@@ -148,8 +148,10 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onProcessExit(ProcessExitEvent event)
    {
-      // TODO: (gary) implement
-      
+      unregisterHandlers();
+
+      if (consoleProcess_ != null)
+         consoleProcess_.reap(new VoidServerRequestCallback());
    }
 
    protected void addHandlerRegistration(HandlerRegistration reg)
@@ -159,7 +161,6 @@ public class TerminalPane extends WorkbenchPane
    
    protected void unregisterHandlers()
    {
-      // TODO: (gary) does this need to be called, and from where?
       registrations_.removeHandler();
    }
    
