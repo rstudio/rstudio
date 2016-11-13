@@ -54,6 +54,7 @@ private:
 
 bool isGitInstalled();
 bool isGitEnabled();
+bool isWithinGitRoot(const core::FilePath& filePath);
 
 bool isGitDirectory(const core::FilePath& workingDir);
 

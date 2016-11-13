@@ -137,7 +137,7 @@ class NullFileDecorationContext : public FileDecorationContext
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
                                             const core::FilePath& rootDir)
 {
-   if (git::isGitEnabled())
+   if (git::isWithinGitRoot(rootDir))
    {
       return boost::shared_ptr<FileDecorationContext>(
                            new git::GitFileDecorationContext(rootDir));
