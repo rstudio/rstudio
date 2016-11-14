@@ -39,6 +39,7 @@ class Indexer : public boost::noncopyable
    virtual void onIndexingStarted() = 0;
    virtual void onWork(const std::string& pkgName, const core::FilePath& resourcePath) = 0;
    virtual void onIndexingCompleted() = 0;
+   virtual void ~Indexer() {}
    
 public:
    explicit Indexer(const std::string& resourcePath)
