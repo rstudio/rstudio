@@ -6,6 +6,7 @@
 * Allow changing to R Notebook mode without closing and reopening the file
 * Add support for knitr code chunks defined in external .R files
 * Add support for raw relative paths such as ".." in knitr root.dir option
+* Add support for 'output.var' chunk option for Stan chunks
 * Improve scrolling past htmlwidgets in the editor
 * Always show chunk output preferences (inline or console)
 * Add support for variable height HTML widgets (non-knitr figures)
