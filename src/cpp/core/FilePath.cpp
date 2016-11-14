@@ -708,9 +708,14 @@ Error FilePath::move(const FilePath& targetPath, MoveType type) const
 
 Error FilePath::moveIndirect(const FilePath& targetPath) const 
 {
+   // when target is a directory, moving has the effect of moving *into* the
+   // directory (rather than *replacing* it); simulate that behavior here
+   FilePath target = targetPath.isDirectory() ?
+      targetPath.complete(filename()) : targetPath;
+
    // copy the file or directory to the new location
    Error error = isDirectory() ? 
-      copyDirectoryRecursive(targetPath) : copy(targetPath);
+      copyDirectoryRecursive(target) : copy(target);
    if (error)
       return error;
 
