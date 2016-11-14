@@ -132,9 +132,21 @@ public:
    Error remove() const ;
    Error removeIfExists() const;
    
-   // move to path
-   Error move(const FilePath& targetPath) const ;
+   // move to path; optionally with resiliency for cross-device 
+   enum MoveType 
+   {
+      // attempt to perform an ordinary move
+      MoveDirect,
+
+      // perform an ordinary move, but fallback to copy/delete on cross-device
+      // errors 
+      MoveCrossDevice
+   };
+   Error move(const FilePath& targetPath, MoveType type = MoveDirect) const;
    
+   // explicitly perform a two-stage move (copy/delete)
+   Error moveIndirect(const FilePath& target) const;
+
    // copy to path
    Error copy(const FilePath& targetPath) const;
 
@@ -195,6 +207,7 @@ public:
    bool operator < (const FilePath& other) const ;
 
 private:
+
    friend class RecursiveDirectoryIterator;
 
 private:
