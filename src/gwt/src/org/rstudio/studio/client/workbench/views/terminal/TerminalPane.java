@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -28,6 +30,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
@@ -47,11 +51,15 @@ public class TerminalPane extends WorkbenchPane
                                      ResizeTerminalEvent.Handler,
                                      TerminalDataInputEvent.Handler
 {
-   protected TerminalPane(String title, WorkbenchServerOperations server)
+    protected TerminalPane(Commands commands,
+                           WorkbenchServerOperations server,
+                           SessionInfo sessionInfo)
    {
-      super(title);
+      super("Terminal");
+      commands_ = commands;
       secureInput_ = new ShellSecureInput(server);
       server_ = server;
+      sessionInfo_ = sessionInfo;
       host_ = new ResizeLayoutPanel();
    }
 
@@ -71,7 +79,7 @@ public class TerminalPane extends WorkbenchPane
       });
       return host_;
    }
-  
+
    /**
     * Create a terminal process and connect to it.
     */
@@ -206,7 +214,20 @@ public class TerminalPane extends WorkbenchPane
             xterm_.writeln(errorMessage); 
          }
       });
-   } 
+   }
+   
+   @Override
+   protected Toolbar createMainToolbar()
+   {
+      Toolbar toolbar = new Toolbar();
+
+      activeTerminalToolbarButton_ = new TerminalPopupMenu(sessionInfo_,
+                                                           commands_);
+      
+      toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
+
+      return toolbar;
+   }
    
    private final ResizeLayoutPanel host_;
    private XTermWidget xterm_;
@@ -214,4 +235,7 @@ public class TerminalPane extends WorkbenchPane
    private final ShellSecureInput secureInput_;
    private ConsoleProcess consoleProcess_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
+   private Commands commands_;
+   private SessionInfo sessionInfo_;
+   private TerminalPopupMenu activeTerminalToolbarButton_;
 }
