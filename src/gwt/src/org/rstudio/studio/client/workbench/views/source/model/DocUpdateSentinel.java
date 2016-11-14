@@ -29,7 +29,6 @@ import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
