@@ -155,6 +155,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
+#include "modules/SessionProjectTemplate.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
 
 #include "modules/SessionGit.hpp"
@@ -1851,6 +1852,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::snippets::initialize)
       (modules::user_commands::initialize)
       (modules::r_addins::initialize)
+      (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
 
       // workers

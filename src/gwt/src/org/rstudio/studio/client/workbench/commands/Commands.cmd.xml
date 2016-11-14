@@ -53,7 +53,10 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="newRPresentationDoc"/>
             <cmd refid="newRDocumentationDoc"/>
          </menu>
-         <cmd refid="newProject"/>
+         <menu label="New _Project">
+            <cmd refid="newProject"/>
+            <cmd refid="newProjectFromTemplate"/>
+         </menu>
          <separator/>
          <cmd refid="openSourceDoc"/>
          <cmd refid="reopenSourceDocWithEncoding"/>
@@ -986,6 +989,13 @@ well as menu structures (for main menu and popup menus).
         menuLabel="New _Project..."
         buttonLabel=""
         desc="Create a project"
+        windowMode="main"/>
+        
+   <cmd id="newProjectFromTemplate"
+        label="Create a New Project from Template..."
+        menuLabel="New _Project From Template..."
+        buttonLabel=""
+        desc="Create a project from template"
         windowMode="main"/>
         
    <cmd id="openProject"

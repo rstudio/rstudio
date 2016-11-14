@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.synctex.model.SynctexServerOperations;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
+import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -73,6 +74,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SVNServerOperations,
                                                    PrefsServerOperations,
                                                    ProjectsServerOperations,
+                                                   ProjectTemplateServerOperations,
                                                    CodeSearchServerOperations,
                                                    CryptoServerOperations,
                                                    WorkbenchListsServerOperations,
