@@ -521,6 +521,22 @@ public class ElementTest extends GWTTestCase {
     JavaScriptObject jso = createTrivialJSO();
     div.setPropertyJSO("tintin", jso);
     assertEquals(jso, div.getPropertyJSO("tintin"));
+
+    assertNull(div.getPropertyObject("inexistant_property_at_least_we_hope_so"));
+    div.setPropertyObject("baz", Boolean.TRUE);
+    assertEquals(Boolean.TRUE, div.getPropertyObject("baz"));
+    div.setPropertyObject("baz", Boolean.FALSE);
+    assertEquals(Boolean.FALSE, div.getPropertyObject("baz"));
+    div.setPropertyObject("baz", 42.0);
+    assertEquals(42.0, div.getPropertyObject("baz"));
+    div.setPropertyObject("baz", 0.0);
+    assertEquals(0.0, div.getPropertyObject("baz"));
+    div.setPropertyObject("baz", Double.NaN);
+    assertTrue(Double.isNaN((Double) div.getPropertyObject("baz")));
+    div.setPropertyObject("baz", "tintin");
+    assertEquals("tintin", div.getPropertyObject("baz"));
+    div.setPropertyObject("baz", "");
+    assertEquals("", div.getPropertyObject("baz"));
   }
 
   /**

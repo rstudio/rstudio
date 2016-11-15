@@ -401,7 +401,7 @@ public class Element extends Node {
    * @return the property value
    */
   public final native Object getPropertyObject(String name) /*-{
-    return this[name] || null;
+    return this[name];
   }-*/;
 
   /**
