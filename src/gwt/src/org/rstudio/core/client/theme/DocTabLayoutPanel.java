@@ -129,6 +129,7 @@ public class DocTabLayoutPanel
             DOM.sinkBitlessEvent(tabBar, "dragend");
             DOM.sinkBitlessEvent(tabBar, "dragleave");
             DOM.sinkBitlessEvent(tabBar, "drop");
+            DOM.sinkBitlessEvent(tabBar, "wheel");
             Event.setEventListener(tabBar, dragManager_);
          }
       });
@@ -491,6 +492,20 @@ public class DocTabLayoutPanel
                // if this wasn't our element, we can cancel the drag entirely
                endDrag(event, ACTION_CANCEL);
             }
+         }
+         else if (event.getType() == "wheel")
+         {
+            // extract the delta from the wheel event (note that this could be
+            // zero)
+            JsObject evt = event.cast();
+            double delta = evt.getDouble("deltaY");
+            
+            // translate wheel scroll into tab selection; don't wrap
+            int idx = getSelectedIndex();
+            if (delta > 0 && idx < (getWidgetCount() - 1))
+               selectTab(idx + 1);
+            else if (delta < 0 && idx > 0)
+               selectTab(idx - 1);
          }
       }
 
