@@ -117,7 +117,7 @@ public class MathJaxUtil
          if (token == null)
             continue;
          
-         if (token.hasAllTypes("latex", "begin"))
+         if (token.hasAllTypes("latex", "begin") && token.getValue().equals("$$"))
          {
             startPos = pos;
             
@@ -140,7 +140,7 @@ public class MathJaxUtil
             continue;
          }
          
-         if (token.hasAllTypes("latex", "end"))
+         if (token.hasAllTypes("latex", "end") && token.getValue().equals("$$"))
          {
             ranges.add(Range.fromPoints(startPos, Position.create(i, 2)));
             continue;

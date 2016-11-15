@@ -293,7 +293,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    // have a canonical extension
    target = target.parent().complete(target.stem() + file.extension());
 
-   Error error = file.move(target);
+   Error error = file.move(target, FilePath::MoveCrossDevice);
    if (error)
    {
       LOG_ERROR(error);
@@ -320,7 +320,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    if (!sidecar.empty())
    {
       sidecar.move(target.parent().complete(
-               target.stem() + sidecar.extension()));
+               target.stem() + sidecar.extension()), FilePath::MoveCrossDevice);
    }
 
    // serialize metadata if provided

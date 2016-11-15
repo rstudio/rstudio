@@ -6,6 +6,7 @@
 * Allow changing to R Notebook mode without closing and reopening the file
 * Add support for knitr code chunks defined in external .R files
 * Add support for raw relative paths such as ".." in knitr root.dir option
+* Add support for 'output.var' chunk option for Stan chunks
 * Improve scrolling past htmlwidgets in the editor
 * Always show chunk output preferences (inline or console)
 * Add support for variable height HTML widgets (non-knitr figures)
@@ -38,6 +39,7 @@
 * Use Windows proxy settings to serve requests made by htmlwidgets
 * Fix cross-domain error when opening a link to RStudio Server in a new window
 * Fix comment toggling for ROxygen comments
+* Fix notebook resource problems occurring in projects on mounted filesystems
 * Server Pro: Allow server user to have group name differing from user name
 * Server Pro: Don't require LDAP to support user enumeration when `auth-required-user-group` is set
 
