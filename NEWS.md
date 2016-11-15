@@ -39,6 +39,7 @@
 * Use Windows proxy settings to serve requests made by htmlwidgets
 * Fix cross-domain error when opening a link to RStudio Server in a new window
 * Fix comment toggling for ROxygen comments
+* Fix notebook resource problems occurring in projects on mounted filesystems
 * Server Pro: Allow server user to have group name differing from user name
 * Server Pro: Don't require LDAP to support user enumeration when `auth-required-user-group` is set
 
