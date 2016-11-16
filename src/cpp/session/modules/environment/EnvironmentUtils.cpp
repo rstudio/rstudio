@@ -91,15 +91,10 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
    // a few cases in which attempting to inspect the object will lead to
    // undesirable behavior. For these special value types, construct the
    // object definition manually.
-   bool isActiveBinding = r::sexp::isActiveBinding(var.first, env);
-   bool hasActiveBinding = isActiveBinding
-         ? true
-         : r::sexp::hasActiveBinding(var.first, env);
-   
    if ((varSEXP == R_UnboundValue) ||
        (varSEXP == R_MissingArg) ||
        isUnevaluatedPromise(varSEXP) ||
-       hasActiveBinding)
+       r::sexp::isActiveBinding(var.first, env))
    {
       varJson["name"] = var.first;
       if (isUnevaluatedPromise(varSEXP))
@@ -107,15 +102,10 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
          varJson["type"] = std::string("promise");
          varJson["value"] = descriptionOfVar(varSEXP);
       }
-      else if (isActiveBinding)
+      else if (r::sexp::isActiveBinding(var.first, env))
       {
          varJson["type"] = std::string("active binding");
          varJson["value"] = std::string("<Active binding>");
-      }
-      else if (hasActiveBinding)
-      {
-         varJson["type"] = std::string("object containing active binding");
-         varJson["value"] = std::string("<Object containing active binding>");
       }
       else
       {
