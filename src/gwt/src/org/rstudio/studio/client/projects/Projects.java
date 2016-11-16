@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.projects;
 
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
@@ -25,7 +24,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationQuit;
