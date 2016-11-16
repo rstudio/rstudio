@@ -306,12 +306,57 @@ void listEnvironment(SEXP env,
 
 namespace {
 
+Error asPrimitiveEnvironment(SEXP envirSEXP,
+                             SEXP* pTargetSEXP,
+                             Protect* pProtect)
+{
+   // fast-case: no need to call back into R
+   if (TYPEOF(envirSEXP) == ENVSXP)
+   {
+      pProtect->add(*pTargetSEXP = envirSEXP);
+      return Success();
+   }
+   
+   // for non-S4 objects, we can just return an error (false) early
+   if (TYPEOF(envirSEXP) != S4SXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   // use R function to convert
+   Error error = RFunction("base:::as.environment")
+         .addParam(envirSEXP)
+         .call(pTargetSEXP, pProtect);
+   
+   if (error)
+      return error;
+   
+   // ensure that we actually succeeded in producing a primitive environment
+   if (pTargetSEXP == NULL  ||
+       *pTargetSEXP == NULL ||
+       !isPrimitiveEnvironment(*pTargetSEXP))
+   {
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   }
+   
+   // we have a primitive environment; all is well
+   return Success();
+}
+
 bool hasActiveBindingImpl(const std::string& name,
-                          const SEXP envirSEXP,
+                          SEXP envirSEXP,
                           std::set<SEXP>* pVisitedObjects)
 {
-   // sanity check that we have an environment
+   Error error;
+   Protect protect;
+   
+   // ensure we have an environment
    if (!isEnvironment(envirSEXP))
+      return false;
+   
+   // sanity check that we are working with a primitive environment
+   // (required to convert S4 objects that subclass 'environment' into
+   // a 'raw' R environment object)
+   error = asPrimitiveEnvironment(envirSEXP, &envirSEXP, &protect);
+   if (error)
       return false;
    
    // check for active binding
@@ -326,35 +371,26 @@ bool hasActiveBindingImpl(const std::string& name,
    if (varSEXP == R_UnboundValue || varSEXP == R_MissingArg)
       return false;
    
+   // ensure we're working with a primitive R environment
+   if (!isEnvironment(varSEXP))
+      return false;
+   
+   error = asPrimitiveEnvironment(varSEXP, &varSEXP, &protect);
+   if (error)
+      return false;
+   
    // avoid cycles
    if (pVisitedObjects->count(varSEXP)) return false;
    pVisitedObjects->insert(varSEXP);
    
-   // bail if the discovered object is not an environment
-   // NOTE: we permit both primitive R environments (ENVSXPs)
-   // as well as S4 objects subclassing environment (e.g. refclasses)
-   if (!isEnvironment(varSEXP))
-      return false;
-   
    // list the bindings in this object
-   // NOTE: can't use lsInternal as we may receive S4 objects subclassing
-   // environment (ie, objects that 'behave' like environments but aren't
-   // actually the primitive ENVSXP that routine accepts)
-   std::vector<std::string> bindings;
-   Error error = RFunction("base:::ls")
-         .addParam("envir", varSEXP)
-         .call(&bindings);
+   SEXP bindingsSEXP;
+   protect.add(bindingsSEXP = R_lsInternal(varSEXP, TRUE));
    
-   if (error)
+   // iterate over items and search for active bindings
+   for (int i = 0, n = Rf_length(bindingsSEXP); i < n; ++i)
    {
-      LOG_ERROR(error);
-      return false;
-   }
-   
-   // loop through the associated bindings and see if any of them
-   // are active bindings
-   BOOST_FOREACH(const std::string& binding, bindings)
-   {
+      const char* binding = CHAR(STRING_ELT(bindingsSEXP, i));
       if (hasActiveBindingImpl(binding, varSEXP, pVisitedObjects))
          return true;
    }
@@ -525,13 +561,18 @@ bool isNull(SEXP object)
    return Rf_isNull(object) == TRUE;
 }
 
+bool isPrimitiveEnvironment(SEXP object)
+{
+   return TYPEOF(object) == ENVSXP;
+}
+
 bool isEnvironment(SEXP object)
 {
    // detect primitive environments (fast path)
-   if (TYPEOF(object) == ENVSXP)
+   if (isPrimitiveEnvironment(object))
       return true;
    
-   // call back to R to detect S4 objects subclassing environment
+   // call back to R to detect objects subclassing environment
    if (TYPEOF(object) == S4SXP)
    {
       bool result = false;
