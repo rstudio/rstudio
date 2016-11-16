@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.events.LastChanceSaveHandler;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
@@ -326,24 +327,6 @@ public class DocUpdateSentinel
          }
       }
       
-      // Update marks after document save
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            if (docDisplay_.isVimModeOn())
-            {
-               String oldMarksSpec = "";
-               if (hasProperty("marks"))
-                  oldMarksSpec = getProperty("marks");
-
-               String newMarksSpec = VimMarks.encode(docDisplay_.getMarks());
-               if (!oldMarksSpec.equals(newMarksSpec))
-                  setProperty("marks", newMarksSpec);
-            }
-         }
-      });
       return didSave;
    }
 
@@ -359,12 +342,22 @@ public class DocUpdateSentinel
          actually sent to the server. */
       final ChangeTracker thisChangeTracker = changeTracker_.fork();
 
+      // TODO: we should have a more structured way of handling various
+      // document properties that we check + save here
       final String newContents = docDisplay_.getCode();
       String oldContents = sourceDoc_.getContents();
       final String hash = sourceDoc_.getHash();
 
-      final String foldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
-      String oldFoldSpec = sourceDoc_.getFoldSpec();
+      final String newFoldSpec = Fold.encode(Fold.flatten(docDisplay_.getFolds()));
+      final String oldFoldSpec = sourceDoc_.getFoldSpec();
+      
+      final String newSelectionSpec = Range.encode(docDisplay_.getSelectionRange());
+      final String oldSelectionSpec = sourceDoc_.getSelectionSpec();
+      
+      final String newMarksSpec = docDisplay_.isVimModeOn()
+            ? VimMarks.encode(docDisplay_.getMarks())
+            : "";
+      final String oldMarksSpec = sourceDoc_.getMarksSpec();
       
       final JsArray<ChunkDefinition> newChunkDefs = docDisplay_.getChunkDefs();
       JsArray<ChunkDefinition> oldChunkDefs = 
@@ -376,7 +369,9 @@ public class DocUpdateSentinel
       // Don't auto-save when there are no changes. In addition to being
       // wasteful, it causes the server to think the document is dirty.
       if (path == null && fileType == null && diff.isEmpty()
-          && foldSpec.equals(oldFoldSpec) 
+          && newFoldSpec.equals(oldFoldSpec)
+          && newSelectionSpec.equals(oldSelectionSpec)
+          && newMarksSpec.equals(oldMarksSpec)
           && (newChunkDefs == null || 
               ChunkDefinition.equalTo(newChunkDefs, oldChunkDefs)))
       {
@@ -415,7 +410,9 @@ public class DocUpdateSentinel
             path,
             fileType,
             encoding,
-            foldSpec,
+            newFoldSpec,
+            newMarksSpec,
+            newSelectionSpec,
             newChunkDefs,
             diff.getReplacement(),
             diff.getOffset(),
@@ -455,10 +452,10 @@ public class DocUpdateSentinel
                         if (!thisChangeTracker.hasChanged())
                            changeTracker_.reset();
                         
-                        // update the foldSpec and newChunkDefs so we 
-                        // can use them for change detection the next
-                        // time around
-                        sourceDoc_.setFoldSpec(foldSpec);
+                        // update client-side document state
+                        sourceDoc_.setFoldSpec(newFoldSpec);
+                        sourceDoc_.setMarksSpec(newMarksSpec);
+                        sourceDoc_.setSelectionSpec(newSelectionSpec);
                         sourceDoc_.getNotebookDoc().setChunkDefs(newChunkDefs);
                         
                         onSuccessfulUpdate(newContents,
@@ -497,7 +494,9 @@ public class DocUpdateSentinel
                            path,
                            fileType,
                            encoding,
-                           foldSpec,
+                           newFoldSpec,
+                           newMarksSpec,
+                           newSelectionSpec,
                            newChunkDefs,
                            newContents,
                            this);

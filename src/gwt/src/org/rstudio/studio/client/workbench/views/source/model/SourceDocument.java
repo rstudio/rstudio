@@ -119,6 +119,22 @@ public class SourceDocument extends JavaScriptObject
       return this.properties;
    }-*/;
    
+   public native final String getSelectionSpec() /*-{
+      return this.selection || "";
+   }-*/;
+   
+   public native final void setSelectionSpec(String selectionSpec) /*-{
+      this.selection = selectionSpec;
+   }-*/;
+   
+   public native final String getMarksSpec() /*-{
+      return this.marks || "";
+   }-*/;
+   
+   public native final void setMarksSpec(String marksSpec) /*-{
+      this.marks = marksSpec;
+   }-*/;
+   
    public native final String getFoldSpec() /*-{
       return this.folds || "";
    }-*/;
