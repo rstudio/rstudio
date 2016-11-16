@@ -48,6 +48,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       // ensure the menu doesn't get too narrow
       addSeparator(225);
 
+      // TODO (gary) dynamically create
       // add as many entries to match open terminals
       AppCommand[] terminalSessionCmds = new AppCommand[] {
          commands_.terminalSession1(),
