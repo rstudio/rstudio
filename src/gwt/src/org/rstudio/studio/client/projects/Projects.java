@@ -57,9 +57,7 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.OpenProjectParams;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
-import org.rstudio.studio.client.projects.ui.newproject.NewProjectFromTemplateDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
-import org.rstudio.studio.client.projects.ui.newproject.NewProjectFromTemplateDialog.Result;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -215,60 +213,6 @@ public class Projects implements OpenProjectFileHandler,
       handleNewProject(false, true);
    }
    
-   @Handler
-   public void onNewProjectFromTemplate()
-   {
-      final CommandWithArg<NewProjectContext> newProject = new CommandWithArg<NewProjectContext>()
-      {
-         @Override
-         public void execute(NewProjectContext context)
-         {
-            OperationWithInput<NewProjectFromTemplateDialog.Result> operation =
-                  new OperationWithInput<NewProjectFromTemplateDialog.Result>()
-            {
-               @Override
-               public void execute(Result input)
-               {
-                  Debug.logToRConsole("New project from template");
-               }
-            };
-                  
-            NewProjectFromTemplateDialog dialog =
-                  new NewProjectFromTemplateDialog(context, operation);
-            
-            dialog.showModal();
-         }
-      };
-      
-      final Command readyToQuit = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            projServer_.getNewProjectContext(new SimpleRequestCallback<NewProjectContext>() {
-               
-               @Override
-               public void onResponseReceived(NewProjectContext context)
-               {
-                  newProject.execute(context);
-               }
-            });
-         }
-      };
-      
-      applicationQuit_.prepareForQuit(
-            "Save Current Worksace",
-            false,
-            new ApplicationQuit.QuitContext()
-            {
-               @Override
-               public void onReadyToQuit(boolean saveChanges)
-               {
-                  readyToQuit.execute();
-               }
-            });
-   }
-
    private void handleNewProject(boolean forceSaveAll, 
                                  final boolean allowOpenInNewWindow)
    {

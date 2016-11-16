@@ -11,11 +11,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.widget.DirectoryChooserTextBox;
-import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescription;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
@@ -27,69 +23,41 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
-public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemplateDialog.Result>
+public class NewProjectFromTemplateWidget
+      extends DataGrid<ProjectTemplateDescription>
 {
-   public static class Result
-   {
-      public Result(ProjectTemplateDescription description)
-      {
-         description_ = description;
-      }
-      
-      public ProjectTemplateDescription getProjectTemplateDescription()
-      {
-         return description_;
-      }
-      
-      private final ProjectTemplateDescription description_;
-   }
-   
    public interface ValueGetter
    {
       String getValue(ProjectTemplateDescription description);
    }
    
-   public NewProjectFromTemplateDialog(final NewProjectContext context,
-                                       final OperationWithInput<Result> operation)
+   public NewProjectFromTemplateWidget()
    {
-      super("New Project from Template", operation);
+      super(1000, RES, new ProvidesKey<ProjectTemplateDescription>()
+      {
+         @Override
+         public Object getKey(ProjectTemplateDescription description)
+         {
+            return description.hashCode();
+         }
+      });
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      setOkButtonCaption("Create Project");
-      
-      context_ = context;
       columns_ = new HashMap<String, TextColumn<ProjectTemplateDescription>>();
+      setEmptyTableWidget(new Label("Loading templates..."));
       
-      table_ = new DataGrid<ProjectTemplateDescription>(
-            1000,
-            RES,
-            new ProvidesKey<ProjectTemplateDescription>()
-            {
-               @Override
-               public Object getKey(ProjectTemplateDescription description)
-               {
-                  return description.hashCode();
-               }
-            });
-      
-      table_.setEmptyTableWidget(new Label("Loading templates..."));
-      
-      table_.setWidth("500px");
-      table_.setHeight("200px");
+      setWidth("500px");
+      setHeight("200px");
       
       dataProvider_ = new ListDataProvider<ProjectTemplateDescription>();
-      dataProvider_.addDataDisplay(table_);
+      dataProvider_.addDataDisplay(this);
       
       selectionModel_ = new SingleSelectionModel<ProjectTemplateDescription>();
       selectionModel_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
@@ -100,7 +68,7 @@ public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemp
             selection_ = selectionModel_.getSelectedObject();
          }
       });
-      table_.setSelectionModel(selectionModel_);
+      setSelectionModel(selectionModel_);
       
       addColumn("Package", "100px", new ValueGetter()
       {
@@ -129,22 +97,6 @@ public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemp
          }
       });
       
-      container_ = new VerticalPanel();
-      
-      Grid grid = new Grid(1, 2);
-      grid.setWidth("100%");
-      
-      VerticalPanel lhsPanel = new VerticalPanel();
-      lhsPanel.add(new Label("Directory name:"));
-      lhsPanel.add(new TextBox());
-      grid.setWidget(0, 0, lhsPanel);
-      
-      grid.setWidget(0, 1, new DirectoryChooserTextBox("Create project in directory:", null));
-      
-      container_.add(grid);
-      
-      container_.add(table_);
-      
       server_.getProjectTemplateRegistry(new ServerRequestCallback<ProjectTemplateRegistry>()
       {
          @Override
@@ -152,7 +104,7 @@ public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemp
          {
             if (registry.isEmpty())
             {
-               table_.setEmptyTableWidget(new Label("No project templates available."));
+               setEmptyTableWidget(new Label("No project templates available."));
                return;
             }
             
@@ -180,18 +132,6 @@ public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemp
       server_ = server;
    }
    
-   @Override
-   protected Result collectInput()
-   {
-      return new Result(selection_);
-   }
-
-   @Override
-   protected Widget createMainWidget()
-   {
-      return container_;
-   }
-   
    private void addColumn(String columnName,
                           String columnWidth,
                           final ValueGetter getter)
@@ -205,18 +145,14 @@ public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemp
             return StringUtil.truncate(value, 120, "...");
          }
       };
-      table_.addColumn(column, new TextHeader(columnName));
+      addColumn(column, new TextHeader(columnName));
       
       if (columnWidth != null)
-         table_.setColumnWidth(column, columnWidth);
+         setColumnWidth(column, columnWidth);
       
       columns_.put(columnName, column);
    }
  
-   private final NewProjectContext context_;
-   
-   private final VerticalPanel container_;
-   private final DataGrid<ProjectTemplateDescription> table_;
    private final Map<String, TextColumn<ProjectTemplateDescription>> columns_;
    private final ListDataProvider<ProjectTemplateDescription> dataProvider_;
    private final SingleSelectionModel<ProjectTemplateDescription> selectionModel_;
@@ -242,5 +178,4 @@ public class NewProjectFromTemplateDialog extends ModalDialog<NewProjectFromTemp
    static {
       RES.dataGridStyle().ensureInjected();
    }
-   
 }
