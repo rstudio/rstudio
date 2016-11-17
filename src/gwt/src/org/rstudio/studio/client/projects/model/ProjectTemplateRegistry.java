@@ -21,4 +21,9 @@ import com.google.gwt.core.client.JsArray;
 public class ProjectTemplateRegistry extends JsMap<JsArray<ProjectTemplateDescription>>
 {
    protected ProjectTemplateRegistry() {}
+   
+   public static final native ProjectTemplateRegistry createProjectTemplateRegistry()
+   /*-{
+      return {};
+   }-*/;
 }

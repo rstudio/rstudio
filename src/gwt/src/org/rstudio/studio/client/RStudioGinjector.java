@@ -241,4 +241,5 @@ public interface RStudioGinjector extends Ginjector
    SourceWindow getSourceWindow();
    Server getServer();
    ChunkWindowManager getChunkWindowManager();
+   ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
 }

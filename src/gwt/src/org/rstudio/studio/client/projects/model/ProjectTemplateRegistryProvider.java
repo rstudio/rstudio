@@ -66,6 +66,13 @@ public class ProjectTemplateRegistryProvider
       events_ = events;
    }
    
+   public ProjectTemplateRegistry getProjectTemplateRegistry()
+   {
+      return registry_ == null
+            ? ProjectTemplateRegistry.createProjectTemplateRegistry()
+            : registry_;
+   }
+   
    public void withProjectTemplateRegistry(Callback callback)
    {
       if (registry_ == null)
