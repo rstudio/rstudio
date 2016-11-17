@@ -33,6 +33,44 @@
 
 # Hooks ----
 
+.rs.addFunction("rnb.saveGoogleVisToCache", function(x, ...)
+{
+   ctx <- .rs.rnb.getHtmlCaptureContext()
+   
+   # tempfile paths for html resources
+   htmlfile <- tempfile("_rs_gvis_", tmpdir = ctx$outputFolder, fileext = ".html")
+   depfile  <- tempfile("_rs_gvis_deps_", tmpdir = ctx$outputFolder, fileext = ".json")
+   
+   # inject some of our own JavaScript event handlers in the gvis object
+   # mutates 'x' on success
+   try(silent = TRUE, {
+      jsDrawChart <- strsplit(x$html$chart[["jsDrawChart"]], "\n", fixed = TRUE)[[1]]
+      injectionLoc <- grep("chart.draw", jsDrawChart)[[1]]
+      
+      jsDrawChart[[injectionLoc]] <- paste(
+         paste(
+            "google.visualization.events.addListener(chart, 'ready', function() {",
+            "    if (typeof parent === 'undefined') return;",
+            "    if (typeof parent.$onGvisChartReady === 'undefined') return;",
+            "    parent.$onGvisChartReady(data);",
+            "})",
+            sep = "\n"
+         ),
+         jsDrawChart[[injectionLoc]],
+         sep = "\n"
+      )
+      
+      x$html$chart[["jsDrawChart"]] <- paste(jsDrawChart, collapse = "\n")
+   })
+   
+   # write HTML out to file
+   html <- capture.output(googleVis:::print.gvis(x))
+   cat(html, file = htmlfile, sep = "\n")
+   
+   # record the generated artefacts
+   invisible(.rs.recordHtmlWidget(x, htmlfile, depfile))
+})
+
 .rs.addFunction("rnb.saveHtmlToCache", function(x, ...)
 {
    ctx <- .rs.rnb.getHtmlCaptureContext()
@@ -56,12 +94,15 @@
    }
    
    # record the generated artefacts
-   .rs.recordHtmlWidget(x, htmlfile, depfile)
+   invisible(.rs.recordHtmlWidget(x, htmlfile, depfile))
 })
 
 .rs.addFunction("rnbHooks.print.html",           .rs.rnb.saveHtmlToCache)
 .rs.addFunction("rnbHooks.print.shiny.tag",      .rs.rnb.saveHtmlToCache)
 .rs.addFunction("rnbHooks.print.shiny.tag.list", .rs.rnb.saveHtmlToCache)
+
+.rs.addFunction("rnbHooks.print.gvis",           .rs.rnb.saveGoogleVisToCache)
+.rs.addFunction("rnbHooks.plot.gvis",            .rs.rnb.saveGoogleVisToCache)
 
 .rs.addFunction("rnbHooks.print.knit_asis", function(x, ...) 
 {
@@ -272,8 +313,10 @@
       "print.html"             = .rs.rnbHooks.print.html,
       "print.shiny.tag"        = .rs.rnbHooks.print.shiny.tag,
       "print.shiny.tag.list"   = .rs.rnbHooks.print.shiny.tag.list,
+      "print.gvis"             = .rs.rnbHooks.print.gvis,
       "print.knit_asis"        = .rs.rnbHooks.print.knit_asis,
-      "print.knit_image_paths" = .rs.rnbHooks.print.knit_image_paths
+      "print.knit_image_paths" = .rs.rnbHooks.print.knit_image_paths,
+      "plot.gvis"              = .rs.rnbHooks.plot.gvis
    )
 })
 
