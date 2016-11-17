@@ -472,12 +472,14 @@ public class RemoteServer implements Server
    
    public void startShellDialog(ConsoleProcess.TerminalType terminalType,
                                 int cols, int rows,
+                                boolean isModalDialog,
                                 ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(terminalType.toString()));
       params.set(1, new JSONNumber(cols));
-      params.set(2,  new JSONNumber(rows));
+      params.set(2, new JSONNumber(rows));
+      params.set(3, JSONBoolean.getInstance(isModalDialog));
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,
                   params,

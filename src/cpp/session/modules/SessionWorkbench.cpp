@@ -866,10 +866,14 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // initial size of the pseudo-terminal
    int cols, rows;
    
+   // is terminal hosted in a modal dialog? (false means modeless, e.g. a tab)
+   bool isModalDialog;
+   
    Error error = json::readParams(request.params,
                                   &term,
                                   &cols,
-                                  &rows);
+                                  &rows,
+                                  &isModalDialog);
    if (error)
       return error;
    
@@ -919,7 +923,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                ConsoleProcess::create(bashCommand,
                                       options,
                                       "Shell",
-                                      true,
+                                      isModalDialog,
                                       InteractionAlways,
                                       console_process::kDefaultMaxOutputLines);
 

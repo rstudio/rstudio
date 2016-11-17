@@ -15,23 +15,30 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
+   // TODO (gary) bind commands
+   // public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
+   // TODO (gary) provide a view to hold the TerminalPanes
+   // public interface Display extends WorkbenchView {}
+   
    @Inject
-   public TerminalTabPresenter(GlobalDisplay globalDisplay, WorkbenchServerOperations server)
+   public TerminalTabPresenter( //Display view,
+                               Commands commands,
+                               WorkbenchServerOperations server,
+                               final Session session)
    {
-      super(new TerminalPane("Terminal", server));
+      super(new TerminalPane(commands, server, session.getSessionInfo()));
       pane_ = (TerminalPane) getView();
-      globalDisplay_ = globalDisplay;
+      // view_ = view;
    }
    
    public void initialize()
@@ -44,30 +51,6 @@ public class TerminalTabPresenter extends BusyPresenter
       pane_.bringToFront();
    }
 
-   public void confirmClose(final Command onConfirmed)
-   {
-      if (isBusy())
-      {
-        globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-              "Close Terminal", 
-              "Are you sure you want to exit the shell? Any running jobs " +
-              "will be terminated.", false, 
-              new Operation()
-              {
-                 @Override
-                 public void execute()
-                 {
-                    // TODO: (gary) close PTY on server end
-                    onConfirmed.execute();
-                 }
-              }, null, null, "Exit", "Cancel", true);
-      }
-      else
-      {
-        onConfirmed.execute();
-      }
-   }
-
    private final TerminalPane pane_;
-   private final GlobalDisplay globalDisplay_;
+   // private final Display view_;
 }
