@@ -290,6 +290,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
+      // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
       insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
       insertChunksMenu.addSeparator();
@@ -303,12 +304,16 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkStan().createMenuItem(false));
 
-      insertChunkButton_ = new ToolbarButton(
+      insertChunkMenu_ = new ToolbarButton(
                        "Insert",
                        commands_.insertChunk().getImageResource(),
                        insertChunksMenu,
                        true);
 
+      toolbar.addRightWidget(insertChunkMenu_);
+
+      // create button that just runs default chunk insertion
+      insertChunkButton_ = commands_.insertChunk().createToolbarButton(false);
       toolbar.addRightWidget(insertChunkButton_);
 
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
@@ -548,8 +553,12 @@ public class TextEditingTargetWidget
             !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
       
-      // chunk oriented buttons     
-      insertChunkButton_.setVisible(canExecuteChunks);
+      // show insertion options for various knitr engines in rmarkdown v2
+      insertChunkMenu_.setVisible(isRMarkdown2);
+      
+      // otherwise just show the regular insert chunk button
+      insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
+
       goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
       goToNextButton_.setVisible(fileType.canGoNextPrevSection());
       
@@ -1207,6 +1216,7 @@ public class TextEditingTargetWidget
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
+   private ToolbarButton insertChunkMenu_;
    private ToolbarButton insertChunkButton_;
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
