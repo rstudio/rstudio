@@ -69,8 +69,8 @@
        list()
     })
 
-  if (is.character(yamlFrontMatter$knit))
-    yamlFrontMatter$knit[[1]]
+  if (is.character(yamlFrontMatter[["knit"]]))
+    yamlFrontMatter[["knit"]][[1]]
   else if (!is.null(yamlFrontMatter$runtime) &&
            grepl('^shiny', yamlFrontMatter$runtime)) {
     # use run as a wrapper for render when the doc requires the Shiny runtime,
