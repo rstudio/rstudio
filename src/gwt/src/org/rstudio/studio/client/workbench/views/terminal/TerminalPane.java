@@ -86,6 +86,7 @@ public class TerminalPane extends WorkbenchPane
    {
       server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, 
                                80, 25,
+                               false, /* not a modal dialog */
                                new ServerRequestCallback<ConsoleProcess>()
       {
          @Override

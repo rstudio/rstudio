@@ -24,6 +24,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -74,19 +75,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                {
                   final ConsoleProcessInfo proc = procs.get(i);
 
-                  // Note on reaping of console processes -- when isDialog
-                  // is false it is the responsibility of the calling code
-                  // to reap the console process (no automatic reaping is
-                  // done). the isDialog == false codepath below handles 
-                  // the case where a client_init happens and the original
-                  // calling code is no longer hooked up. There is still
-                  // some leakiness here though if a console process with
-                  // isDialog == false exits when no client is connected (in
-                  // that case it will never be reaped). 
-                  
-                  // TODO: (gary) clean this up and/or eliminate isDialog flag (since
-                  // all known instances currently use isDialog == true)
-                  
                   connectToProcess(
                         proc,
                         new ServerRequestCallback<ConsoleProcess>()
@@ -155,13 +143,20 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                               }
                               else
                               {
-                                 cproc.addProcessExitHandler(new ProcessExitEvent.Handler()
+                                 // TODO (gary) reassociate modeless process(es)
+                                 // to the Terminal tab's selection dropdown
+                                 // dropdown.
+                                 // Until then, just stop and reap the processes
+                                 // so they don't prevent session suspend and 
+                                 // linger as zombies.
+                                 cproc.interrupt(new SimpleRequestCallback<Void>()
                                  {
                                     @Override
-                                    public void onProcessExit(ProcessExitEvent event)
+                                    public void onResponseReceived(Void response)
                                     {
                                        cproc.reap(new VoidServerRequestCallback());
                                     }
+                                    
                                  });
                               }
                            }
