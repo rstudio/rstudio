@@ -73,6 +73,7 @@ import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
@@ -271,6 +272,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(AceEditorCommandDispatcher.class).asEagerSingleton();
       bind(DataImportPresenter.class).in(Singleton.class);
       bind(MathJaxLoader.class).asEagerSingleton();
+      bind(ProjectTemplateRegistryProvider.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

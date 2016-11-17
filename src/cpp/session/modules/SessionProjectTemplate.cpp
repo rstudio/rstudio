@@ -287,14 +287,6 @@ ProjectTemplateIndexer& projectTemplateIndexer()
    return instance;
 }
 
-void withProjectTemplateRegistry(boost::function<void()> callback)
-{
-   if (projectTemplateIndexer().running())
-      projectTemplateIndexer().addIndexingFinishedCallback(callback);
-   else
-      callback();
-}
-
 void onDeferredInit(bool)
 {
    if (module_context::disablePackages())
@@ -303,18 +295,26 @@ void onDeferredInit(bool)
    projectTemplateIndexer().start();
 }
 
-void respondWithProjectTemplates(const json::JsonRpcFunctionContinuation& continuation)
+void respondWithProjectTemplateRegistry(const json::JsonRpcFunctionContinuation& continuation)
 {
    json::JsonRpcResponse response;
    response.setResult(projectTemplateRegistry().toJson());
    continuation(Success(), &response);
 }
 
+void withProjectTemplateRegistry(boost::function<void()> callback)
+{
+   if (projectTemplateIndexer().running())
+      projectTemplateIndexer().addIndexingFinishedCallback(callback);
+   else
+      callback();
+}
+
 void getProjectTemplateRegistry(const json::JsonRpcRequest& request,
                                 const json::JsonRpcFunctionContinuation& continuation)
 {
    withProjectTemplateRegistry(
-            boost::bind(respondWithProjectTemplates, boost::cref(continuation)));
+            boost::bind(respondWithProjectTemplateRegistry, boost::cref(continuation)));
 }
 
 } // end anonymous namespace

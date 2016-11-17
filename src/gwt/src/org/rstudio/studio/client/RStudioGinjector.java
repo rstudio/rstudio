@@ -56,6 +56,7 @@ import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectFromTemplateWidget;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
@@ -207,6 +208,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(EditingTargetInlineChunkExecution executor);
    void injectMembers(DataImportFileChooser dataImportFileChooser);
    void injectMembers(NewProjectFromTemplateWidget widget);
+   void injectMembers(ProjectTemplateRegistryProvider provider);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

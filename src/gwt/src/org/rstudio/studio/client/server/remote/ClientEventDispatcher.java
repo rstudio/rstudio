@@ -58,8 +58,10 @@ import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
+import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
@@ -845,6 +847,11 @@ public class ClientEventDispatcher
          {
             ChunkExecStateChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new ChunkExecStateChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ProjectTemplateRegistryUpdated))
+         {
+            ProjectTemplateRegistry data = event.getData();
+            eventBus_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(data));
          }
          else
          {
