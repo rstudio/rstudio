@@ -17,9 +17,8 @@ package org.rstudio.studio.client.rsconnect.ui;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -54,12 +53,6 @@ public class RSConnectDeployDialog
       addCancelButton();
       connect_ = connect;
       
-      // create a default app name
-      String defaultName = source.isDocument() && !source.isWebsiteRmd() ? 
-               FileSystemItem.createFile(source.getSourceFile()).getStem() :
-               FilePathUtils.friendlyFileName(source.getDeployDir());
-      contents_.setUnsanitizedAppName(defaultName);
-
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
       launchCheck_.setStyleName(contents_.getStyle().launchCheck());
@@ -145,9 +138,19 @@ public class RSConnectDeployDialog
    
    private void onDeploy()
    {
-      connect_.fireRSConnectPublishEvent(
-            contents_.getResult(), launchCheck_.getValue());
-      closeDialog();
+      contents_.validateResult(new OperationWithInput<Boolean>()
+      {
+         @Override
+         public void execute(Boolean valid)
+         {
+            if (valid)
+            {
+               connect_.fireRSConnectPublishEvent(
+                     contents_.getResult(), launchCheck_.getValue());
+               closeDialog();
+            }
+         }
+      });
    }
    
    // Create a lookup from app URL to deployments made of this directory
