@@ -219,7 +219,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
                                      chkPackratInit_.getValue(), 
                                      newDefaultLocation,
                                      null,
-                                     getNewPackageOptions(), getNewShinyAppOptions());
+                                     getNewPackageOptions(),
+                                     getNewShinyAppOptions(),
+                                     null);
       }
       else
       {
