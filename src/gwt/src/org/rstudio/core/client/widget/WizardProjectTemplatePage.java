@@ -14,50 +14,17 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.studio.client.projects.model.NewProjectInput;
-import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescription;
+import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
-
-public class WizardProjectTemplatePage
-      extends WizardPage<NewProjectInput, NewProjectResult>
+public class WizardProjectTemplatePage extends NewDirectoryPage
 {
    public WizardProjectTemplatePage(ProjectTemplateDescription description)
    {
       super(description.getTitle(),
-            description.getDescription(),
-            description.getBinding(),
-            null,
-            null);
+            description.getSubTitle(),
+            description.getPageCaption(),
+            description.getIcon(),
+            description.getIconLarge());
    }
-
-   @Override
-   public void focus()
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   protected Widget createWidget()
-   {
-      return new Label("Hello Friend!");
-   }
-
-   @Override
-   protected void initialize(NewProjectInput initData)
-   {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   protected NewProjectResult collectInput()
-   {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
 }

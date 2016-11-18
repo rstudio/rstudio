@@ -46,16 +46,18 @@ struct ProjectTemplateDescription
    std::string package;
    std::string binding;
    std::string title;
-   std::string description;
+   std::string subtitle;
+   std::string caption;
    
    json::Value toJson() const
    {
       json::Object object;
       
-      object["package"]     = package;
-      object["binding"]     = binding;
-      object["title"]       = title;
-      object["description"] = description;
+      object["package"]  = package;
+      object["binding"]  = binding;
+      object["title"]    = title;
+      object["subtitle"] = subtitle;
+      object["caption"]  = caption;
       
       return object;
    }
@@ -166,10 +168,11 @@ private:
          
          // update registry
          ProjectTemplateDescription ptd;
-         ptd.package     = pkgName;
-         ptd.binding     = fields["binding"];
-         ptd.title       = fields["title"];
-         ptd.description = fields["description"];
+         ptd.package  = pkgName;
+         ptd.binding  = fields["binding"];
+         ptd.title    = fields["title"];
+         ptd.subtitle = fields["subtitle"];
+         ptd.caption  = fields["caption"];
          pRegistry_->add(pkgName, ptd);
       }
    }
@@ -198,7 +201,7 @@ private:
                         const ErrorLocation& location)
    {
       std::vector<std::string> missingFields;
-      const char* expected[] = {"binding", "title", "description"};
+      const char* expected[] = {"binding", "title", "subtitle", "caption"};
       for (std::size_t i = 0; i < sizeof(expected); ++i)
       {
          const char* field = expected[i];
@@ -223,32 +226,37 @@ private:
       addProjectTemplate(
                "devtools",
                "create",
-               "Create an R Package using devtools",
-               "Create a new R package following the devtools development conventions.");
+               "R Package using devtools",
+               "New R Package using devtools",
+               "Create R Package using devtools");
       
       addProjectTemplate(
                "Rcpp",
                "Rcpp.package.skeleton",
-               "Create an R Package using Rcpp",
-               "Create a new R package using Rcpp.");
+               "R Package using Rcpp",
+               "New R Package using Rcpp",
+               "Create R package using Rcpp");
       
       addProjectTemplate(
                "RcppArmadillo",
                "RcppArmadillo.package.skeleton",
-               "Create an R Package using RcppArmadillo",
-               "Create a new R package using RcppArmadillo.");
+               "R Package using RcppArmadillo",
+               "New R Package using RcppArmadillo",
+               "Create R package using RcppArmadillo");
       
       addProjectTemplate(
                "RcppEigen",
                "RcppEigen.package.skeleton",
-               "Create an R Package using RcppEigen",
-               "Create a new R package using RcppEigen.");
+               "R Package using RcppEigen",
+               "New R Package using RcppEigen",
+               "Create R package using RcppEigen");
    }
    
    void addProjectTemplate(const std::string& package,
                            const std::string& binding,
                            const std::string& title,
-                           const std::string& description)
+                           const std::string& subtitle,
+                           const std::string& caption)
    {
       // if we already have a project template registered for this
       // package with this binding, bail (this allows R packages to
@@ -262,10 +270,11 @@ private:
       
       // add a new project template
       ProjectTemplateDescription ptd;
-      ptd.package     = package;
-      ptd.binding     = binding;
-      ptd.title       = title;
-      ptd.description = description;
+      ptd.package  = package;
+      ptd.binding  = binding;
+      ptd.title    = title;
+      ptd.subtitle = subtitle;
+      ptd.caption  = caption;
       projectTemplateRegistry().add(package, ptd);
    }
    
