@@ -274,7 +274,18 @@ public class TextEditingTargetRMarkdownHelper
                                              null,
                                              false,
                                              RmdOutput.TYPE_STATIC,
-                                             null));
+                                             null,
+                                             getKnitWorkingDir(sourceDoc)));
+   }
+   
+   public String getKnitWorkingDir(DocUpdateSentinel sourceDoc)
+   {
+      if (sourceDoc.getBoolProperty(RenderRmdEvent.WORKING_DIR_PROP, 
+                                    prefs_.knitInWorkingDir().getValue()))
+      {
+         return workbenchContext_.getCurrentWorkingDir().getPath();
+      }
+      return null;
    }
    
    public void renderRMarkdown(final String sourceFile, 
@@ -284,7 +295,8 @@ public class TextEditingTargetRMarkdownHelper
                                final String paramsFile,
                                final boolean asTempfile,
                                final int type,
-                               final boolean asShiny)
+                               final boolean asShiny,
+                               final String workingDir)
    {
       withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
                               "R Notebook" :
@@ -302,7 +314,8 @@ public class TextEditingTargetRMarkdownHelper
                                                    paramsFile,
                                                    asTempfile,
                                                    type,
-                                                   null));
+                                                   null,
+                                                   workingDir));
          }
       });
    }

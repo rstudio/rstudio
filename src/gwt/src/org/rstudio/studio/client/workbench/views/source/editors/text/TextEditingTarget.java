@@ -4988,7 +4988,8 @@ public class TextEditingTarget implements
                         paramsFile,
                         asTempfile,
                         type,
-                        false);
+                        false,
+                        rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_));
                }
             });  
          }

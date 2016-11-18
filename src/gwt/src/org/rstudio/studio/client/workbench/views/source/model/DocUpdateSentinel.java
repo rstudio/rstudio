@@ -753,7 +753,7 @@ public class DocUpdateSentinel
    {
       return sourceDoc_.getId();
    }
-
+   
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
    private final SourceServerOperations server_;

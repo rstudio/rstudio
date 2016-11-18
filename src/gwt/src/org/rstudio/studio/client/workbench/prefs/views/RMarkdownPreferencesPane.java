@@ -98,6 +98,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       add(latexPreviewWidget_);
       
+      add(checkboxPref("Knit in current working directory", 
+            prefs_.knitInWorkingDir()));
+      
       add(spacedBefore(headerLabel("R Notebooks")));
 
       // auto-execute the setup chunk

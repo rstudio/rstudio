@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -885,6 +886,17 @@ public class TextEditingTargetWidget
          rmdFormatButton_.addMenuItem(item, knitWithParams.getMenuLabel(false));
       
       }
+      
+      DocPropMenuItem knitInWorkingDir = new DocPropMenuItem(
+            "Knit in Working Directory", 
+            docUpdateSentinel_, 
+            docUpdateSentinel_.getBoolProperty(
+                  RenderRmdEvent.WORKING_DIR_PROP, 
+                  uiPrefs_.knitInWorkingDir().getValue()), 
+            RenderRmdEvent.WORKING_DIR_PROP, 
+            DocUpdateSentinel.PROPERTY_TRUE);
+      rmdFormatButton_.addMenuItem(knitInWorkingDir, 
+            knitInWorkingDir.getLabel());
       
       addClearKnitrCacheMenu(rmdFormatButton_);
           
