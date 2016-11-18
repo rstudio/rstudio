@@ -268,7 +268,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
+      rmdFormatButton_ = new ToolbarPopupMenuButton(false, false);
       toolbar.addLeftWidget(rmdFormatButton_);
       
       runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
