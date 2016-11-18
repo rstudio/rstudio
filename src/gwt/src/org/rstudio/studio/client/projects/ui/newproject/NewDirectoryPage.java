@@ -40,7 +40,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    public NewDirectoryPage()
    {
       this("Empty Project", 
-           "Create a new project in an empty directory",
+           "New Project",
            "Create New Project",
            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
            NewProjectResources.INSTANCE.newProjectDirectoryIconLarge());
