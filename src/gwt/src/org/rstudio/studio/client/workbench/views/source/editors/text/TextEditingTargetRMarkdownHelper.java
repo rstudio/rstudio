@@ -72,6 +72,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
@@ -280,12 +281,25 @@ public class TextEditingTargetRMarkdownHelper
    
    public String getKnitWorkingDir(DocUpdateSentinel sourceDoc)
    {
-      if (sourceDoc.getBoolProperty(RenderRmdEvent.WORKING_DIR_PROP, 
-                                    prefs_.knitInWorkingDir().getValue()))
+      // compute desired working directory type
+      String workingDirType = sourceDoc.getProperty(
+            RenderRmdEvent.WORKING_DIR_PROP,
+            prefs_.knitWorkingDir().getValue());
+
+      String workingDir = null;
+      if (workingDirType == UIPrefsAccessor.KNIT_DIR_PROJECT)
       {
-         return workbenchContext_.getCurrentWorkingDir().getPath();
+         // get the project directory, but if we don't have one (e.g. no
+         // project) use the default working directory for the session
+         workingDir = session_.getSessionInfo().getActiveProjectDir().getPath();
+         if (StringUtil.isNullOrEmpty(workingDir))
+            workingDir = session_.getSessionInfo().getDefaultWorkingDir();
       }
-      return null;
+      else if (workingDirType == UIPrefsAccessor.KNIT_DIR_CURRENT)
+      {
+         workingDir = workbenchContext_.getCurrentWorkingDir().getPath();
+      }
+      return workingDir;
    }
    
    public void renderRMarkdown(final String sourceFile, 

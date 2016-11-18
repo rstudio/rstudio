@@ -578,6 +578,13 @@ public class DocUpdateSentinel
       return properties.getString(propertyName);
    }
    
+   public String getProperty(String propertyName, String defaultValue)
+   {
+      if (hasProperty(propertyName))
+         return getProperty(propertyName);
+      return defaultValue;
+   }
+   
    public boolean getBoolProperty(String propertyName, boolean defaultValue)
    {
       if (hasProperty(propertyName))

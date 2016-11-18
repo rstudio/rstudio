@@ -98,8 +98,22 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       add(latexPreviewWidget_);
       
-      add(checkboxPref("Knit in current working directory", 
-            prefs_.knitInWorkingDir()));
+      knitWorkingDir_ = new SelectWidget(
+            "Evaluate chunks in directory: ",
+            new String[] {
+                  "Document",
+                  "Current",
+                  "Project"
+            },
+            new String[] {
+                  UIPrefsAccessor.KNIT_DIR_DEFAULT,
+                  UIPrefsAccessor.KNIT_DIR_CURRENT,
+                  UIPrefsAccessor.KNIT_DIR_PROJECT
+            },
+            false,
+            true,
+            false);
+      add(knitWorkingDir_);
       
       add(spacedBefore(headerLabel("R Notebooks")));
 
@@ -158,6 +172,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       prefs_.showLatexPreviewOnCursorIdle().setGlobalValue(
             latexPreviewWidget_.getValue());
+      
+      prefs_.knitWorkingDir().setGlobalValue(
+            knitWorkingDir_.getValue());
+      
                  
       return requiresRestart;
    }
@@ -169,4 +187,5 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget docOutlineDisplay_;
    private final SelectWidget latexPreviewWidget_;
+   private final SelectWidget knitWorkingDir_;
 }

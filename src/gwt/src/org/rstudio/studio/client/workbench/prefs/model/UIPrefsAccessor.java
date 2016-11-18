@@ -591,9 +591,13 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_xterm", false);
    }
    
-   public PrefValue<Boolean> knitInWorkingDir()
+   public static final String KNIT_DIR_DEFAULT = "default";
+   public static final String KNIT_DIR_CURRENT = "current";
+   public static final String KNIT_DIR_PROJECT = "project";
+   
+   public PrefValue<String> knitWorkingDir()
    {
-      return bool("knit_in_working_dir", false);
+      return string("knit_working_dir", KNIT_DIR_DEFAULT);
    }
    
    public static final String DOC_OUTLINE_SHOW_SECTIONS_ONLY = "show_sections_only";

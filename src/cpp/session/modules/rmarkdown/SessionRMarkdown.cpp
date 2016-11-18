@@ -417,7 +417,6 @@ private:
       allOutput_.clear();
       if (existingOutputFile.empty())
       {
-         std::cerr << cmd << std::endl;
          async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
                                        async_r::R_PROCESS_NO_RDATA);
       }
