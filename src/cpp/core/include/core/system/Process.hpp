@@ -59,7 +59,7 @@ struct ProcessOptions
    ProcessOptions()
 #ifdef _WIN32
       : terminateChildren(false),
-        smartTerminal(false)
+        smartTerminal(false),
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
