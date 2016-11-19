@@ -406,6 +406,10 @@ public class SessionInfo extends JavaScriptObject
       return this.knit_params_available;
    }-*/;
    
+   public final native boolean getKnitWorkingDirAvailable() /*-{
+      return this.knit_working_dir_available;
+   }-*/;
+   
    public final native boolean getClangAvailable() /*-{
       return this.clang_available;
    }-*/;

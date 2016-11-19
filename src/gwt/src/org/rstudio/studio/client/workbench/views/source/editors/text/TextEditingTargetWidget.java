@@ -884,34 +884,36 @@ public class TextEditingTargetWidget
                                       true,
                                       cmd); 
          rmdFormatButton_.addMenuItem(item, knitWithParams.getMenuLabel(false));
-      
       }
       
-      rmdFormatButton_.addSeparator();
-      DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
-            "Knit in Document Directory", 
-            docUpdateSentinel_, 
-            uiPrefs_.knitWorkingDir(), 
-            RenderRmdEvent.WORKING_DIR_PROP,
-            UIPrefsAccessor.KNIT_DIR_DEFAULT);
-      rmdFormatButton_.addMenuItem(knitInDocDir, 
-            knitInDocDir.getLabel());
-      DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
-            "Knit in Current Directory", 
-            docUpdateSentinel_, 
-            uiPrefs_.knitWorkingDir(), 
-            RenderRmdEvent.WORKING_DIR_PROP,
-            UIPrefsAccessor.KNIT_DIR_CURRENT);
-      rmdFormatButton_.addMenuItem(knitInCurrentDir, 
-            knitInCurrentDir.getLabel());
-      DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
-            "Knit in Project Directory", 
-            docUpdateSentinel_, 
-            uiPrefs_.knitWorkingDir(), 
-            RenderRmdEvent.WORKING_DIR_PROP,
-            UIPrefsAccessor.KNIT_DIR_PROJECT);
-      rmdFormatButton_.addMenuItem(knitInProjectDir, 
-            knitInProjectDir.getLabel());
+      if (session_.getSessionInfo().getKnitWorkingDirAvailable())
+      {
+         rmdFormatButton_.addSeparator();
+         DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
+               "Knit in Document Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_DEFAULT);
+         rmdFormatButton_.addMenuItem(knitInDocDir, 
+               knitInDocDir.getLabel());
+         DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
+               "Knit in Current Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_CURRENT);
+         rmdFormatButton_.addMenuItem(knitInCurrentDir, 
+               knitInCurrentDir.getLabel());
+         DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
+               "Knit in Project Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_PROJECT);
+         rmdFormatButton_.addMenuItem(knitInProjectDir, 
+               knitInProjectDir.getLabel());
+      }
       
       addClearKnitrCacheMenu(rmdFormatButton_);
           

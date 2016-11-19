@@ -1370,6 +1370,10 @@ bool knitParamsAvailable()
           module_context::isPackageVersionInstalled("knitr", "1.10.18");
 }
 
+bool knitWorkingDirAvailable()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "1.1.9017");
+}
 
 bool rmarkdownPackageAvailable()
 {

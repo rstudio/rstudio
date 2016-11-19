@@ -281,6 +281,10 @@ public class TextEditingTargetRMarkdownHelper
    
    public String getKnitWorkingDir(DocUpdateSentinel sourceDoc)
    {
+      // shortcut if we don't support manually specified working directories
+      if (!session_.getSessionInfo().getKnitWorkingDirAvailable())
+         return null;
+      
       // compute desired working directory type
       String workingDirType = sourceDoc.getProperty(
             RenderRmdEvent.WORKING_DIR_PROP,
