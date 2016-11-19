@@ -22,8 +22,10 @@ public class ProjectTemplateOptions extends JavaScriptObject
    {
    }
    
-   public static final native ProjectTemplateOptions create()
+   public static final native ProjectTemplateOptions create(ProjectTemplateDescription description)
    /*-{
-      return {};
+      return {
+         description: description
+      };
    }-*/;
 }

@@ -23,6 +23,7 @@ import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -167,6 +168,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return null;
    }
    
+   protected ProjectTemplateOptions getProjectTemplateOptions()
+   {
+      return null;
+   }
+   
    @Override 
    protected void initialize(NewProjectInput input)
    {
@@ -221,7 +227,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
                                      null,
                                      getNewPackageOptions(),
                                      getNewShinyAppOptions(),
-                                     null);
+                                     getProjectTemplateOptions());
       }
       else
       {

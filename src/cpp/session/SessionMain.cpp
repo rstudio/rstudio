@@ -155,8 +155,9 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
-#include "modules/SessionProjectTemplate.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
+
+#include <session/SessionProjectTemplate.hpp>
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"

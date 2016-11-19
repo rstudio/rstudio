@@ -12,6 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+#include <session/SessionProjectTemplate.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -40,28 +41,6 @@ namespace projects {
 namespace templates {
 
 namespace {
-
-struct ProjectTemplateDescription
-{
-   std::string package;
-   std::string binding;
-   std::string title;
-   std::string subtitle;
-   std::string caption;
-   
-   json::Value toJson() const
-   {
-      json::Object object;
-      
-      object["package"]  = package;
-      object["binding"]  = binding;
-      object["title"]    = title;
-      object["subtitle"] = subtitle;
-      object["caption"]  = caption;
-      
-      return object;
-   }
-};
 
 class ProjectTemplateRegistry
 {
@@ -227,28 +206,28 @@ private:
                "devtools",
                "create",
                "R Package using devtools",
-               "New R Package using devtools",
+               "Create a new R Package using devtools",
                "Create R Package using devtools");
       
       addProjectTemplate(
                "Rcpp",
                "Rcpp.package.skeleton",
                "R Package using Rcpp",
-               "New R Package using Rcpp",
+               "Create a new R Package using Rcpp",
                "Create R package using Rcpp");
       
       addProjectTemplate(
                "RcppArmadillo",
                "RcppArmadillo.package.skeleton",
                "R Package using RcppArmadillo",
-               "New R Package using RcppArmadillo",
+               "Create a new R Package using RcppArmadillo",
                "Create R package using RcppArmadillo");
       
       addProjectTemplate(
                "RcppEigen",
                "RcppEigen.package.skeleton",
                "R Package using RcppEigen",
-               "New R Package using RcppEigen",
+               "Create a new R Package using RcppEigen",
                "Create R package using RcppEigen");
    }
    

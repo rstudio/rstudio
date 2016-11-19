@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescription;
+import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 
 public class WizardProjectTemplatePage extends NewDirectoryPage
@@ -26,5 +27,28 @@ public class WizardProjectTemplatePage extends NewDirectoryPage
             description.getPageCaption(),
             description.getIcon(),
             description.getIconLarge());
+      
+      description_ = description;
    }
+   
+   public final ProjectTemplateDescription getProjectTemplateDescription()
+   {
+      return description_;
+   }
+   
+   @Override
+   protected void onAddWidgets()
+   {
+      super.onAddWidgets();
+      
+      // TODO: add custom widgets specified by project template?
+   }
+   
+   @Override
+   protected ProjectTemplateOptions getProjectTemplateOptions()
+   {
+      return ProjectTemplateOptions.create(description_);
+   }
+   
+   private final ProjectTemplateDescription description_;
 }

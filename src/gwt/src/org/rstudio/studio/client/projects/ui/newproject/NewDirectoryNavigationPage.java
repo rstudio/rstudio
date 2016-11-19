@@ -167,8 +167,9 @@ public class NewDirectoryNavigationPage
             panel.addWest(icon, 28);
          }
          
-         Label mainLabel = new Label(page.getSubTitle());
+         Label mainLabel = new Label(page.getTitle());
          mainLabel.addStyleName(RES.styles().label());
+         mainLabel.getElement().setAttribute("title", page.getSubTitle());
          panel.add(mainLabel);
          
          panel.addDomHandler(handler, ClickEvent.getType());
