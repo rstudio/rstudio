@@ -22,6 +22,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -43,6 +44,7 @@ public class AppNameTextbox extends Composite
    
    interface Host
    {
+      boolean supportsTitle();
       void generateAppName(String title, 
                            CommandWithArg<RSConnectAppName> result);
    }
@@ -98,6 +100,20 @@ public class AppNameTextbox extends Composite
    
    public void validateAppName()
    {
+      if (!host_.supportsTitle())
+      {
+         String app = appTitle_.getText();
+         RegExp validReg = RegExp.compile("^[A-Za-z0-9_-]{4,63}$");
+         validTitle_ = validReg.test(app);
+         setAppNameValid(validTitle_);
+         if (validTitle_)
+            name_ = app;
+         else
+            error_.setText("The title must contain 3 - 64 alphanumeric " + 
+                           "characters.");
+         return;
+      }
+
       // if we don't have enough characters, bail out early 
       final String title = appTitle_.getText().trim();
       if (title.length() < 3)

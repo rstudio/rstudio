@@ -1144,6 +1144,12 @@
 # extraction implementation there as well.
 .rs.addFunction("getPackageInformation", function(...)
 {
+   # force 'rgl' to use the NULL graphics device (avoid inadvertently
+   # opening a graphics device / XQuartz window when retrieving completions)
+   rgl.useNULL <- getOption("rgl.useNULL")
+   options(rgl.useNULL = TRUE)
+   on.exit(options(rgl.useNULL = rgl.useNULL), add = TRUE)
+   
    invisible(lapply(list(...), function(x) {
       tryCatch({
          

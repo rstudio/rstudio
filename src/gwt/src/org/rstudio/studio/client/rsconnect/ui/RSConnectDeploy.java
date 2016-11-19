@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -294,6 +294,9 @@ public class RSConnectDeploy extends Composite
                {
                   accountList_.selectAccount(preferred);
                }
+               
+               // validate the app name now that we have an account selected
+               appName_.validateAppName();
             }
          }
       });
@@ -316,6 +319,12 @@ public class RSConnectDeploy extends Composite
                   onDeployEnabled_.execute();
                else if (!existing)
                   appName_.validateAppName();
+            }
+            else
+            {
+               // re-validate app name as different accounts have different 
+               // name restrictions
+               appName_.validateAppName();
             }
          }
       });
@@ -500,6 +509,15 @@ public class RSConnectDeploy extends Composite
    {
       appName_.setTitle(name);
       appName_.validateAppName();
+   }
+
+   @Override
+   public boolean supportsTitle()
+   {
+      if (getSelectedAccount() == null)
+         return true;
+      else
+         return !getSelectedAccount().isCloudAccount();
    }
 
    @Override
@@ -957,33 +975,32 @@ public class RSConnectDeploy extends Composite
       
       // if the app name textbox isn't populated, derive from the filename
       // (for apps and documents--other content types use temporary filenames)
-      if (appName_.getTitle().isEmpty() && 
-            (contentType_ == RSConnect.CONTENT_TYPE_APP || 
+      if (appName_.getTitle().isEmpty())
+      {
+         if (contentType_ == RSConnect.CONTENT_TYPE_APP || 
              contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
-             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT))
-      {
-         // set the app name to the filename
-         String appTitle = 
-               FilePathUtils.fileNameSansExtension(source_.getSourceFile());
-
-         // if this is a document with the name "index", guess the directory
-         // as the content name rather than the file
-         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
-             appTitle.toLowerCase().equals("index"))
+             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
          {
-            appTitle = FilePathUtils.fileNameSansExtension(
-                  source_.getDeployDir());
-         }
+            // set the app name to the filename
+            String appTitle = 
+                  FilePathUtils.fileNameSansExtension(source_.getSourceFile());
 
-         setUnsanitizedAppName(appTitle);
-      }
-      
-      // for websites, use the directory name
-      if (appName_.getTitle().isEmpty() && 
-          contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
-      {
-         setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
-               source_.getWebsiteDir()));
+            // if this is a document with the name "index", guess the directory
+            // as the content name rather than the file
+            if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+                appTitle.toLowerCase().equals("index"))
+            {
+               appTitle = FilePathUtils.fileNameSansExtension(
+                     source_.getDeployDir());
+            }
+
+            setUnsanitizedAppName(appTitle);
+         }
+         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+         {
+            setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
+                  source_.getWebsiteDir()));
+         }
       }
       
       ImageResource illustration = null;
