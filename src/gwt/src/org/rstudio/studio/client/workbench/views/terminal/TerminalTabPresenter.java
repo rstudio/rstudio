@@ -17,16 +17,18 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.views.BusyPresenter;
+import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
-public class TerminalTabPresenter extends BusyPresenter
+public class TerminalTabPresenter extends BasePresenter
 {
-   // TODO (gary) bind commands
-   // public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
+   public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
+
    // TODO (gary) provide a view to hold the TerminalPanes
    // public interface Display extends WorkbenchView {}
    
@@ -40,6 +42,13 @@ public class TerminalTabPresenter extends BusyPresenter
       pane_ = (TerminalPane) getView();
       // view_ = view;
    }
+  
+   @Handler
+   public void onActivateTerminal()
+   {
+      pane_.ensureVisible();
+      pane_.bringToFront();
+   }
    
    public void initialize()
    {
@@ -47,8 +56,7 @@ public class TerminalTabPresenter extends BusyPresenter
    
    public void onCreateTerminal(CreateTerminalEvent event)
    {
-      pane_.ensureVisible();
-      pane_.bringToFront();
+      onActivateTerminal();
    }
 
    private final TerminalPane pane_;

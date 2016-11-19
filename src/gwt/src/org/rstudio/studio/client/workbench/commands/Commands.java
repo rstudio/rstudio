@@ -370,6 +370,7 @@ public abstract class
    
    // Terminal
    public abstract AppCommand newTerminal();
+   public abstract AppCommand activateTerminal();
    public abstract AppCommand renameTerminal();
    public abstract AppCommand closeTerminal();
    public abstract AppCommand clearTerminalScrollbackBuffer();
