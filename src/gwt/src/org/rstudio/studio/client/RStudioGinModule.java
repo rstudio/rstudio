@@ -200,7 +200,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalPane;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalTab;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalTabPresenter;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -291,6 +293,7 @@ public class RStudioGinModule extends AbstractGinModule
       // Bind workbench views
       bindPane("Console", ConsolePane.class); // eager loaded
       bind(Source.Display.class).to(SourcePane.class);
+      bind(TerminalTabPresenter.Display.class).to(TerminalPane.class);
       bind(History.Display.class).to(HistoryPane.class);
       bind(Data.Display.class).to(DataPane.class);
       bind(Files.Display.class).to(FilesPane.class);

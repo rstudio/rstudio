@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -38,8 +39,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 
 /**
- * A collection of zero or more Terminal sessions; only one is visible at a
- * time.
+ * A collection of zero or more Terminal sessions; one is visible at a time.
  */
 public class TerminalSessionsPanel extends DeckLayoutPanel
                                    implements ConsoleOutputEvent.Handler, 

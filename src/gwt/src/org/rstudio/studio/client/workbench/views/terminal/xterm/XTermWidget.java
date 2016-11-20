@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.terminal;
+package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;

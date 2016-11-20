@@ -429,7 +429,6 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
-         <cmd refid="newTerminal"/>
          <menu label="Addins">
             <cmd refid="addinsMru0"/>
             <cmd refid="addinsMru1"/>
