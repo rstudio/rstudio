@@ -15,13 +15,12 @@
  */
 package javaemul.internal;
 
-import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 
 /**
  * Simple class to work with native js regular expressions.
  */
-@JsType(isNative = true, name = "RegExp", namespace = JsPackage.GLOBAL)
+@JsType(isNative = true, name = "RegExp", namespace = "<window>")
 public class NativeRegExp {
   public int lastIndex;
   public NativeRegExp(String regex) { }
