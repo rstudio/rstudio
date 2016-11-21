@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
 
 public class ProjectTemplateDescription extends JavaScriptObject
@@ -29,6 +30,11 @@ public class ProjectTemplateDescription extends JavaScriptObject
    
    public final ImageResource getIcon()      { return getIconImpl("icon"); }
    public final ImageResource getIconLarge() { return getIconImpl("icon_large"); }
+   
+   public native final JsArray<ProjectTemplateWidgetDescription> getWidgetDescription()
+   /*-{
+      return this["widgets"] || [];
+   }-*/;
    
    public final ImageResource getIconImpl(String field)
    {

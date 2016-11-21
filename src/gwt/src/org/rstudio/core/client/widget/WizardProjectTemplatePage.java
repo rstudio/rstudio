@@ -14,8 +14,10 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescription;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateWidget;
 import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 
 public class WizardProjectTemplatePage extends NewDirectoryPage
@@ -37,18 +39,21 @@ public class WizardProjectTemplatePage extends NewDirectoryPage
    }
    
    @Override
-   protected void onAddWidgets()
+   protected void initialize(NewProjectInput input)
    {
-      super.onAddWidgets();
-      
-      // TODO: add custom widgets specified by project template?
+      super.initialize(input);
+      ptw_ = new ProjectTemplateWidget(description_);
+      addWidget(ptw_);
    }
    
    @Override
    protected ProjectTemplateOptions getProjectTemplateOptions()
    {
-      return ProjectTemplateOptions.create(description_);
+      return ProjectTemplateOptions.create(
+            description_,
+            ptw_.collectInput());
    }
    
+   private ProjectTemplateWidget ptw_;
    private final ProjectTemplateDescription description_;
 }

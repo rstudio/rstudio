@@ -1,5 +1,5 @@
 /*
- * ProjectTemplateOptions.java
+ * ProjectTemplateWidgetDescription.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -14,22 +14,17 @@
  */
 package org.rstudio.studio.client.projects.model;
 
-import org.rstudio.core.client.js.JsObject;
-
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-public class ProjectTemplateOptions extends JavaScriptObject
+public class ProjectTemplateWidgetDescription extends JavaScriptObject
 {
-   protected ProjectTemplateOptions()
+   protected ProjectTemplateWidgetDescription()
    {
    }
    
-   public static final native ProjectTemplateOptions create(ProjectTemplateDescription description,
-                                                            JsObject inputs)
-   /*-{
-      return {
-         description: description,
-         inputs: inputs
-      };
-   }-*/;
+   public final native String getParameter()     /*-{ return this["parameter"]; }-*/;
+   public final native String getType()          /*-{ return this["type"]; }-*/;
+   public final native String getLabel()         /*-{ return this["label"]; }-*/;
+   public final native JsArrayString getFields() /*-{ return this["fields"]; }-*/;
 }

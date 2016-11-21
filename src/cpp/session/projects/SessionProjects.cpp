@@ -134,8 +134,10 @@ Error initializeProjectFromTemplate(const FilePath& projectPath,
    Error error;
    
    json::Object descriptionJson;
+   json::Object inputsJson;
    error = json::readObject(projectTemplateOptions.get_obj(),
-                            "description", &descriptionJson);
+                            "description", &descriptionJson,
+                            "inputs", &inputsJson);
    if (error)
       return error;
    
@@ -155,14 +157,33 @@ Error initializeProjectFromTemplate(const FilePath& projectPath,
     if (error)
        return error;
     
+    // construct call to package skeleton
     std::string name = projectPath.filename();
-    error = r::exec::RFunction(description.package + ":::" + description.binding)
-          .addParam(name)
-          .call();
-    if (error)
-       return error;
+    r::exec::RFunction skeleton(description.package + ":::" + description.binding);
     
-    return error;
+    // use path as first parameter always (?)
+    skeleton.addParam(name);
+    
+    // add other parameters as key-value pairs
+    for (json::Object::const_iterator it = inputsJson.begin();
+         it != inputsJson.end();
+         ++it)
+    {
+       const std::string& key = it->first;
+       const json::Value& val = it->second;
+       
+       if (json::isType<std::string>(val))
+          skeleton.addParam(key, val.get_str());
+       else if (json::isType<int>(val))
+          skeleton.addParam(key, val.get_int());
+       else if (json::isType<double>(val))
+          skeleton.addParam(key, val.get_real());
+       else if (json::isType<bool>(val))
+          skeleton.addParam(key, val.get_bool());
+    }
+    
+    // call skeleton function
+    return skeleton.call();
 }
 
 Error createProject(const json::JsonRpcRequest& request,

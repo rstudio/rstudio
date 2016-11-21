@@ -31,6 +31,7 @@
 #include <session/SessionPackageProvidedExtension.hpp>
 
 #define kProjectTemplateLocal "(local)"
+#define kRStudioProjectTemplatesPath "rstudio/templates"
 
 using namespace rstudio::core;
 
@@ -181,7 +182,7 @@ private:
    {
       // index a project template file in the RStudio options folder
       FilePath localTemplatesPath =
-            module_context::resolveAliasedPath("~/.R/rstudio/project_templates.dcf");
+            module_context::resolveAliasedPath("~/.R/" kRStudioProjectTemplatesPath);
       
       if (localTemplatesPath.exists())
          onWork(kProjectTemplateLocal, localTemplatesPath);
@@ -292,7 +293,7 @@ private:
 
 ProjectTemplateIndexer& projectTemplateIndexer()
 {
-   static ProjectTemplateIndexer instance("rstudio/templates");
+   static ProjectTemplateIndexer instance(kRStudioProjectTemplatesPath);
    return instance;
 }
 
