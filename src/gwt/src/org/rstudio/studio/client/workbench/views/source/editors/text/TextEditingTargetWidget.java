@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -268,7 +268,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton(false, false);
+      rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       
       runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
@@ -888,31 +888,31 @@ public class TextEditingTargetWidget
       
       if (session_.getSessionInfo().getKnitWorkingDirAvailable())
       {
-         rmdFormatButton_.addSeparator();
+         MenuBar knitDirMenu = new MenuBar(true);
          DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
-               "Knit in Document Directory", 
+               "Document Directory", 
                docUpdateSentinel_, 
                uiPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_DEFAULT);
-         rmdFormatButton_.addMenuItem(knitInDocDir, 
-               knitInDocDir.getLabel());
+         knitDirMenu.addItem(knitInDocDir);
          DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
-               "Knit in Current Directory", 
+               "Current Directory", 
                docUpdateSentinel_, 
                uiPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_CURRENT);
-         rmdFormatButton_.addMenuItem(knitInCurrentDir, 
-               knitInCurrentDir.getLabel());
+         knitDirMenu.addItem(knitInCurrentDir);
          DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
-               "Knit in Project Directory", 
+               "Project Directory", 
                docUpdateSentinel_, 
                uiPrefs_.knitWorkingDir(), 
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_PROJECT);
-         rmdFormatButton_.addMenuItem(knitInProjectDir, 
-               knitInProjectDir.getLabel());
+         knitDirMenu.addItem(knitInProjectDir);
+
+         rmdFormatButton_.addSeparator();
+         rmdFormatButton_.addMenuItem(knitDirMenu, "Knit Directory");
       }
       
       addClearKnitrCacheMenu(rmdFormatButton_);
