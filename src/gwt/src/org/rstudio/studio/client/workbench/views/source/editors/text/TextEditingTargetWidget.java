@@ -896,13 +896,6 @@ public class TextEditingTargetWidget
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_DEFAULT);
          knitDirMenu.addItem(knitInDocDir);
-         DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
-               "Current Directory", 
-               docUpdateSentinel_, 
-               uiPrefs_.knitWorkingDir(), 
-               RenderRmdEvent.WORKING_DIR_PROP,
-               UIPrefsAccessor.KNIT_DIR_CURRENT);
-         knitDirMenu.addItem(knitInCurrentDir);
          DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
                "Project Directory", 
                docUpdateSentinel_, 
@@ -910,6 +903,13 @@ public class TextEditingTargetWidget
                RenderRmdEvent.WORKING_DIR_PROP,
                UIPrefsAccessor.KNIT_DIR_PROJECT);
          knitDirMenu.addItem(knitInProjectDir);
+         DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
+               "Current Working Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_CURRENT);
+         knitDirMenu.addItem(knitInCurrentDir);
 
          rmdFormatButton_.addSeparator();
          rmdFormatButton_.addMenuItem(knitDirMenu, "Knit Directory");
