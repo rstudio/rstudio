@@ -152,7 +152,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
       deps.add(Dependency.cranPackage("packrat", "0.4.8-1", true));
-      deps.add(Dependency.embeddedPackage("rsconnect"));
+      deps.add(Dependency.cranPackage("rsconnect", "0.6", true));
       
       withDependencies(
         "Publishing",
@@ -218,7 +218,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
       deps.add(Dependency.cranPackage("rprojroot", "1.0"));
-      deps.add(Dependency.embeddedPackage("rmarkdown"));
+      deps.add(Dependency.cranPackage("rmarkdown", "1.2", true));
       return deps;
    }
    
