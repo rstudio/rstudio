@@ -18,6 +18,8 @@
 
 #include <core/json/Json.hpp>
 
+#include <boost/foreach.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -30,6 +32,47 @@ namespace modules {
 namespace projects {
 namespace templates {
 
+#define kProjectTemplateWidgetTypeCheckBox  "checkbox"
+#define kProjectTemplateWidgetTypeSelectBox "selectbox"
+#define kProjectTemplateWidgetTypeTextInput "textinput"
+#define kProjectTemplateWidgetTypeFileInput "fileinput"
+
+struct ProjectTemplateWidgetDescription
+{
+   std::string parameter;
+   std::string type;
+   std::string label;
+   std::vector<std::string> fields;
+
+   core::json::Value toJson() const
+   {
+      core::json::Object object;
+
+      object["parameter"] = parameter;
+      object["type"]      = type;
+      object["label"]     = label;
+
+      object["fields"]    = core::json::toJsonArray(fields);
+
+      return object;
+   }
+
+   static ProjectTemplateWidgetDescription fromJson(core::json::Object& object)
+   {
+      ProjectTemplateWidgetDescription ptwd;
+
+      ptwd.parameter = object["parameter"].get_str();
+      ptwd.type      = object["type"].get_str();
+      ptwd.label     = object["label"].get_str();
+      
+      core::json::fillVectorString(
+            object["fields"].get_array(),
+            &(ptwd.fields));
+
+      return ptwd;
+   }
+};
+
 struct ProjectTemplateDescription
 {
    std::string package;
@@ -37,6 +80,7 @@ struct ProjectTemplateDescription
    std::string title;
    std::string subtitle;
    std::string caption;
+   std::vector<ProjectTemplateWidgetDescription> widgets;
    
    core::json::Value toJson() const
    {
@@ -47,6 +91,13 @@ struct ProjectTemplateDescription
       object["title"]    = title;
       object["subtitle"] = subtitle;
       object["caption"]  = caption;
+      
+      core::json::Array widgetsJson;
+      BOOST_FOREACH(const ProjectTemplateWidgetDescription& widgetDescription, widgets)
+      {
+         widgetsJson.push_back(widgetDescription.toJson());
+      }
+      object["widgets"] = widgetsJson;
       
       return object;
    }
@@ -60,6 +111,14 @@ struct ProjectTemplateDescription
       ptd.title    = object["title"].get_str();
       ptd.subtitle = object["subtitle"].get_str();
       ptd.caption  = object["caption"].get_str();
+      
+      core::json::Array widgetsJson = object["widgets"].get_array();
+      BOOST_FOREACH(core::json::Value& widgetJson, widgetsJson)
+      {
+         ProjectTemplateWidgetDescription description =
+               ProjectTemplateWidgetDescription::fromJson(widgetJson.get_obj());
+         ptd.widgets.push_back(description);
+      }
       
       return ptd;
    }
