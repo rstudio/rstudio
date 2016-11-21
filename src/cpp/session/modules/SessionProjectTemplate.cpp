@@ -104,6 +104,49 @@ public:
       callbacks_.push_back(callback);
    }
    
+   Error parseResourceFile(const std::string& pkgName,
+                           const FilePath& resourcePath,
+                           ProjectTemplateDescription* pDescription)
+   {
+      Error error;
+      
+      // read dcf contents
+      std::string contents;
+      error = core::readStringFromFile(resourcePath, &contents, string_utils::LineEndingPosix);
+      if (error)
+         return error;
+      
+      return parseResourceContents(pkgName, contents, pDescription);
+   }
+   
+   Error parseResourceContents(const std::string& pkgName,
+                               const std::string& contents,
+                               ProjectTemplateDescription* pDescription)
+   {
+      Error error;
+      
+      // attempt to parse as DCF -- multiple newlines used to separate records
+      boost::regex reSeparator("\\n{2,}");
+      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+      boost::sregex_token_iterator end;
+      
+      for (; it != end; ++it) {
+         // invoke parser on current record
+         std::map<std::string, std::string> fields;
+         std::string errorMessage;
+         error = text::parseDcfFile(*it, true, &fields, &errorMessage);
+         if (error)
+            continue;
+         
+         // populate project template description based on fields
+         error = ProjectTemplateDescription::populate(fields, pDescription);
+         if (error)
+            continue;
+      }
+      
+      return error;
+   }
+   
 private:
    void onIndexingStarted()
    {
@@ -114,45 +157,23 @@ private:
    {
       Error error;
       
-      // read contents of resource file
-      std::string contents;
-      error = core::readStringFromFile(resourcePath, &contents, string_utils::LineEndingPosix);
+      // loop over discovered files and attempt to read template descriptions
+      std::vector<FilePath> children;
+      error = resourcePath.children(&children);
       if (error)
          LOG_ERROR(error);
       
-      // attempt to parse as dcf
-      boost::regex reSeparator("\\n{2,}");
-      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
-      boost::sregex_token_iterator end;
-      
-      for (; it != end; ++it)
+      BOOST_FOREACH(const FilePath& childPath, children)
       {
-         // invoke parser on current field
-         std::map<std::string, std::string> fields;
-         std::string errorMessage;
-         error = text::parseDcfFile(*it, true, &fields, &errorMessage);
+         ProjectTemplateDescription description;
+         Error error = parseResourceFile(pkgName, childPath, &description);
          if (error)
          {
             LOG_ERROR(error);
             continue;
          }
          
-         // validate fields of DCF file
-         error = validateFields(fields, ERROR_LOCATION);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
-         
-         // update registry
-         ProjectTemplateDescription ptd;
-         ptd.package  = pkgName;
-         ptd.binding  = fields["binding"];
-         ptd.title    = fields["title"];
-         ptd.subtitle = fields["subtitle"];
-         ptd.caption  = fields["caption"];
-         pRegistry_->add(pkgName, ptd);
+         pRegistry_->add(pkgName, description);
       }
    }
 
@@ -271,7 +292,7 @@ private:
 
 ProjectTemplateIndexer& projectTemplateIndexer()
 {
-   static ProjectTemplateIndexer instance("rstudio/project_templates.dcf");
+   static ProjectTemplateIndexer instance("rstudio/templates");
    return instance;
 }
 

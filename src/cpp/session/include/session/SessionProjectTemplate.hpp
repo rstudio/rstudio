@@ -16,8 +16,11 @@
 #ifndef SESSION_PROJECT_TEMPLATE_HPP
 #define SESSION_PROJECT_TEMPLATE_HPP
 
+#include <core/StringUtils.hpp>
 #include <core/json/Json.hpp>
+#include <core/text/CsvParser.hpp>
 
+#include <boost/system/error_code.hpp>
 #include <boost/foreach.hpp>
 
 namespace rstudio {
@@ -36,6 +39,13 @@ namespace templates {
 #define kProjectTemplateWidgetTypeSelectBox "selectbox"
 #define kProjectTemplateWidgetTypeTextInput "textinput"
 #define kProjectTemplateWidgetTypeFileInput "fileinput"
+
+static const char* const kWidgetTypes[] = {
+   kProjectTemplateWidgetTypeCheckBox,
+   kProjectTemplateWidgetTypeSelectBox,
+   kProjectTemplateWidgetTypeTextInput,
+   kProjectTemplateWidgetTypeFileInput
+};
 
 struct ProjectTemplateWidgetDescription
 {
@@ -81,6 +91,90 @@ struct ProjectTemplateDescription
    std::string subtitle;
    std::string caption;
    std::vector<ProjectTemplateWidgetDescription> widgets;
+   
+   static core::Error parseWidget(const std::string& widget, std::string* pWidgetType)
+   {
+      std::string widgetLower = core::string_utils::toLower(widget);
+      for (std::size_t i = 0, n = sizeof(kWidgetTypes); i < n; ++i)
+      {
+         const char* widgetType = kWidgetTypes[i];
+         if (widgetLower == widgetType)
+         {
+            pWidgetType->assign(widgetType);
+            return core::Success();
+         }
+      }
+      
+      return core::systemError(
+               boost::system::errc::protocol_error,
+               ERROR_LOCATION);
+   }
+   
+   static core::Error parseFields(const std::string& fields, std::vector<std::string>* pFields)
+   {
+      std::vector<std::string> parsedFields;
+      core::text::parseCsvLine(
+               fields.begin(),
+               fields.end(),
+               true,
+               &parsedFields);
+      
+      if (parsedFields.empty())
+         return core::systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+      
+      for (std::size_t i = 0, n = parsedFields.size(); i < n; ++i)
+         parsedFields[i] = core::string_utils::trimWhitespace(parsedFields[i]);
+      
+      *pFields = parsedFields;
+      return core::Success();
+   }
+   
+   template <typename T>
+   static core::Error populate(const T& map, ProjectTemplateDescription* pDescription)
+   {
+      ProjectTemplateWidgetDescription widget;
+      for (typename T::const_iterator it = map.begin();
+           it != map.end();
+           ++it)
+      {
+         const std::string& key   = it->first;
+         const std::string& value = it->second;
+         
+         // populate primary keys
+         if (key == "Binding")
+            pDescription->binding = value;
+         else if (key == "Title")
+            pDescription->title = value;
+         else if (key == "Subtitle")
+            pDescription->subtitle = value;
+         else if (key == "Caption")
+            pDescription->caption = value;
+         
+         // populate widget
+         else if (key == "Parameter")
+            widget.parameter = value;
+         else if (key == "Label")
+            widget.label = value;
+         else if (key == "Widget")
+         {
+            core::Error error = parseWidget(value, &widget.type);
+            if (error)
+               return error;
+         }
+         else if (key == "Fields")
+         {
+            core::Error error = parseFields(value, &widget.fields);
+            if (error)
+               return error;
+         }
+      }
+      
+      // if we discovered a widget here, add it to the description
+      if (!widget.parameter.empty())
+         pDescription->widgets.push_back(widget);
+      
+      return core::Success();
+   }
    
    core::json::Value toJson() const
    {
