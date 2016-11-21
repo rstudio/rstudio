@@ -174,6 +174,8 @@ private:
             continue;
          }
          
+         normalize(&description);
+         
          pRegistry_->add(pkgName, description);
       }
    }
@@ -227,40 +229,15 @@ private:
    
    void addKnownProjectTemplates()
    {
-      addProjectTemplate(
-               "devtools",
-               "create",
-               "R Package using devtools",
-               "Create a new R Package using devtools",
-               "Create R Package using devtools");
-      
-      addProjectTemplate(
-               "Rcpp",
-               "Rcpp.package.skeleton",
-               "R Package using Rcpp",
-               "Create a new R Package using Rcpp",
-               "Create R package using Rcpp");
-      
-      addProjectTemplate(
-               "RcppArmadillo",
-               "RcppArmadillo.package.skeleton",
-               "R Package using RcppArmadillo",
-               "Create a new R Package using RcppArmadillo",
-               "Create R package using RcppArmadillo");
-      
-      addProjectTemplate(
-               "RcppEigen",
-               "RcppEigen.package.skeleton",
-               "R Package using RcppEigen",
-               "Create a new R Package using RcppEigen",
-               "Create R package using RcppEigen");
+      addProjectTemplate("devtools", "create", "R Package using devtools");
+      addProjectTemplate("Rcpp", "Rcpp.package.skeleton", "R Package using Rcpp");
+      addProjectTemplate("RcppArmadillo", "RcppArmadillo.package.skeleton", "R Package using RcppArmadillo");
+      addProjectTemplate("RcppEigen", "RcppEigen.package.skeleton", "R Package using RcppEigen");
    }
    
    void addProjectTemplate(const std::string& package,
                            const std::string& binding,
-                           const std::string& title,
-                           const std::string& subtitle,
-                           const std::string& caption)
+                           const std::string& title)
    {
       // if we already have a project template registered for this
       // package with this binding, bail (this allows R packages to
@@ -272,6 +249,10 @@ private:
          if (templates[i].binding == binding)
             return;
       
+      // generate appropriate subtitle, caption from title
+      std::string subtitle = "Create a new " + title;
+      std::string caption  = "Create " + title;
+      
       // add a new project template
       ProjectTemplateDescription ptd;
       ptd.package  = package;
@@ -280,6 +261,17 @@ private:
       ptd.subtitle = subtitle;
       ptd.caption  = caption;
       projectTemplateRegistry().add(package, ptd);
+   }
+   
+   void normalize(ProjectTemplateDescription* pDescription)
+   {
+      std::string title = pDescription->title;
+      
+      if (pDescription->subtitle.empty())
+         pDescription->subtitle = "Create a new " + title;
+      
+      if (pDescription->subtitle.empty())
+         pDescription->caption = "Create " + title;
    }
    
    void executeCallbacks()

@@ -40,10 +40,8 @@ public class ProjectTemplateRegistryProvider
    }
    
    @Inject
-   private void initialize(ProjectTemplateServerOperations server,
-                           EventBus events)
+   private void initialize(EventBus events)
    {
-      server_ = server;
       events_ = events;
       
       events_.addHandler(ProjectTemplateRegistryUpdatedEvent.TYPE, this);
@@ -82,6 +80,5 @@ public class ProjectTemplateRegistryProvider
    private final List<Callback> pendingCallbacks_;
    
    // Injected ----
-   private ProjectTemplateServerOperations server_;
    private EventBus events_;
 }

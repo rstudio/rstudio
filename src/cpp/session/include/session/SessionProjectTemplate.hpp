@@ -18,6 +18,7 @@
 
 #include <core/StringUtils.hpp>
 #include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/text/CsvParser.hpp>
 
 #include <boost/system/error_code.hpp>
@@ -70,11 +71,16 @@ struct ProjectTemplateWidgetDescription
    static ProjectTemplateWidgetDescription fromJson(core::json::Object& object)
    {
       ProjectTemplateWidgetDescription ptwd;
-
-      ptwd.parameter = object["parameter"].get_str();
-      ptwd.type      = object["type"].get_str();
-      ptwd.label     = object["label"].get_str();
       
+      core::Error error = core::json::readObject(
+               object,
+               "parameter", &ptwd.parameter,
+               "type",      &ptwd.type,
+               "label",     &ptwd.label);
+      
+      if (error)
+         LOG_ERROR(error);
+
       core::json::fillVectorString(
             object["fields"].get_array(),
             &(ptwd.fields));
@@ -90,6 +96,7 @@ struct ProjectTemplateDescription
    std::string title;
    std::string subtitle;
    std::string caption;
+   std::string icon;
    std::vector<ProjectTemplateWidgetDescription> widgets;
    
    static core::Error parseWidget(const std::string& widget, std::string* pWidgetType)
@@ -149,6 +156,8 @@ struct ProjectTemplateDescription
             pDescription->subtitle = value;
          else if (key == "Caption")
             pDescription->caption = value;
+         else if (key == "Icon")
+            pDescription->icon = value;
          
          // populate widget
          else if (key == "Parameter")
@@ -185,6 +194,7 @@ struct ProjectTemplateDescription
       object["title"]    = title;
       object["subtitle"] = subtitle;
       object["caption"]  = caption;
+      object["icon"]     = icon;
       
       core::json::Array widgetsJson;
       BOOST_FOREACH(const ProjectTemplateWidgetDescription& widgetDescription, widgets)
@@ -200,11 +210,17 @@ struct ProjectTemplateDescription
    {
       ProjectTemplateDescription ptd;
       
-      ptd.package  = object["package"].get_str();
-      ptd.binding  = object["binding"].get_str();
-      ptd.title    = object["title"].get_str();
-      ptd.subtitle = object["subtitle"].get_str();
-      ptd.caption  = object["caption"].get_str();
+      core::Error error = core::json::readObject(
+               object,
+               "package",  &ptd.package,
+               "binding",  &ptd.binding,
+               "title",    &ptd.title,
+               "subtitle", &ptd.subtitle,
+               "caption",  &ptd.caption,
+               "icon",     &ptd.icon);
+      
+      if (error)
+         LOG_ERROR(error);
       
       core::json::Array widgetsJson = object["widgets"].get_array();
       BOOST_FOREACH(core::json::Value& widgetJson, widgetsJson)
