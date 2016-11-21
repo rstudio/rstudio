@@ -18,12 +18,10 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -37,23 +35,19 @@ public class TerminalPane extends WorkbenchPane
 {
    @Inject
     protected TerminalPane(Commands commands,
-                           WorkbenchServerOperations server,
                            Session session)
    {
       super("Terminal");
       commands_ = commands;
-      server_ = server;
       session_ = session;
-      host_ = new ResizeLayoutPanel();
       ensureWidget();
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      terminalSessionsPanel_ = new TerminalSessionsPanel(server_);
-      host_.add(terminalSessionsPanel_);
-      return host_;
+      terminalSessionsPanel_ = new TerminalSessionsPanel();
+      return terminalSessionsPanel_;
    }
 
    @Override
@@ -80,6 +74,7 @@ public class TerminalPane extends WorkbenchPane
    public void onSelected()
    {
       super.onSelected();
+      activateTerminal();
    }
    
    @Override
@@ -90,20 +85,21 @@ public class TerminalPane extends WorkbenchPane
    }
    
    @Override
-   public void ensureInitialSession()
+   public void ensureTerminal()
    {
-      activateTerminal();
-      createTerminalSession(); // TODO (gary) only if zero sessions
+      if (terminalSessionsPanel_.getTerminalCount() == 0)
+      {
+         terminalSessionsPanel_.createTerminal();
+      }
    }
    
    @Override
-   public void createTerminalSession()
+   public void createTerminal()
    {
+      terminalSessionsPanel_.createTerminal();
    }
-   
-   private final ResizeLayoutPanel host_;
+ 
    private TerminalSessionsPanel terminalSessionsPanel_;
-   private WorkbenchServerOperations server_;
    private Commands commands_;
    private Session session_;
    private TerminalPopupMenu activeTerminalToolbarButton_;

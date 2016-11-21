@@ -82,7 +82,7 @@ public class ConsoleProgressDialog extends ProgressDialog
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
          ShellInteractionManager shellInteractionManager = 
-               new ShellInteractionManager(display_, server, inputHandler_);
+               new ShellInteractionManager(display_, inputHandler_);
          
          if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             shellInteractionManager.setHistoryEnabled(false);

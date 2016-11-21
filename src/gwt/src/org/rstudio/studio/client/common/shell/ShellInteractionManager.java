@@ -21,7 +21,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.CommandLineHistory;
-import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
@@ -33,11 +32,10 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 public class ShellInteractionManager implements ShellOutputWriter
 {
    public ShellInteractionManager(ShellDisplay display,
-                                  CryptoServerOperations server,
                                   CommandWithArg<ShellInput> inputHandler)
    {
       display_ = display;
-      secureInput_ = new ShellSecureInput(server); 
+      secureInput_ = new ShellSecureInput(); 
       input_ = display_.getInputEditorDisplay();
       historyManager_ = new CommandLineHistory(input_);
       inputHandler_ = inputHandler;

@@ -39,12 +39,12 @@ public class TerminalTabPresenter extends BasePresenter
       /**
        *  Ensure terminal pane has at least one session loaded.
        */
-      void ensureInitialSession();
+      void ensureTerminal();
       
       /**
        * Create a new terminal session.
        */
-      void createTerminalSession();
+      void createTerminal();
    }
 
    @Inject
@@ -60,7 +60,6 @@ public class TerminalTabPresenter extends BasePresenter
    public void onActivateTerminal()
    {
       view_.activateTerminal();
-      view_.ensureInitialSession();
    }
    
    public void initialize()
@@ -70,7 +69,7 @@ public class TerminalTabPresenter extends BasePresenter
    public void onCreateTerminal(CreateTerminalEvent event)
    {
       onActivateTerminal();
-      view_.createTerminalSession();
+      view_.createTerminal();
    }
 
    private final Display view_;
