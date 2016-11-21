@@ -54,7 +54,6 @@ public class ProjectTemplateWidget extends Composite
    
    public ProjectTemplateWidget(ProjectTemplateDescription description)
    {
-      description_ = description;
       widgets_ = new ArrayList<ProjectTemplateWidgetItem>();
       
       // initialize widgets
@@ -110,8 +109,15 @@ public class ProjectTemplateWidget extends Composite
    
    private ProjectTemplateWidgetItem selectBoxInput(final ProjectTemplateWidgetDescription description)
    {
+      // read fields
       String[] fields = readSelectBoxFields(description);
-      final SelectWidget widget = new SelectWidget(description.getLabel(), fields);
+      
+      // normalize label
+      String label = description.getLabel();
+      if (!label.endsWith(":")) label = label + ":";
+      
+      // return widget
+      final SelectWidget widget = new SelectWidget(label, fields);
       return new ProjectTemplateWidgetItem(widget, new Collector()
       {
          @Override
@@ -162,6 +168,5 @@ public class ProjectTemplateWidget extends Composite
       return fields;
    }
    
-   private final ProjectTemplateDescription description_;
    private final List<ProjectTemplateWidgetItem> widgets_;
 }

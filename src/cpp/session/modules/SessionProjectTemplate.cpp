@@ -195,6 +195,9 @@ private:
       
       // execute any callbacks waiting for indexing to complete
       executeCallbacks();
+      
+      // notify client
+      notifyClient();
    }
    
 private:
@@ -286,6 +289,13 @@ private:
       callbacks_.clear();
    }
    
+   void notifyClient()
+   {
+      json::Value data = projectTemplateRegistry().toJson();
+      ClientEvent event(client_events::kProjectTemplateRegistryUpdated, data);
+      module_context::enqueClientEvent(event);
+   }
+   
 private:
    std::vector< boost::function<void()> > callbacks_;
    boost::shared_ptr<ProjectTemplateRegistry> pRegistry_;
@@ -297,12 +307,48 @@ ProjectTemplateIndexer& projectTemplateIndexer()
    return instance;
 }
 
+void reindex()
+{
+   projectTemplateIndexer().start();
+}
+
 void onDeferredInit(bool)
 {
    if (module_context::disablePackages())
       return;
    
    projectTemplateIndexer().start();
+}
+
+void onConsoleInput(const std::string& input)
+{
+   if (module_context::disablePackages())
+      return;
+   
+   const char* const commands[] = {
+      "install.packages",
+      "remove.packages",
+      "devtools::install_github",
+      "install_github",
+      "devtools::load_all",
+      "load_all"
+   };
+   
+   std::string inputTrimmed = boost::algorithm::trim_copy(input);
+   BOOST_FOREACH(const char* command, commands)
+   {
+      if (boost::algorithm::starts_with(inputTrimmed, command))
+      {
+         // we need to give R a chance to actually process the package library
+         // mutating command before we update the index. schedule delayed work
+         // with idleOnly = true so that it waits until the user has returned
+         // to the R prompt
+         module_context::scheduleDelayedWork(
+                  boost::posix_time::seconds(1),
+                  reindex,
+                  true);
+      }
+   }
 }
 
 void respondWithProjectTemplateRegistry(const json::JsonRpcFunctionContinuation& continuation)
@@ -335,6 +381,7 @@ Error initialize()
    using boost::bind;
    
    events().onDeferredInit.connect(onDeferredInit);
+   events().onConsoleInput.connect(onConsoleInput);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
