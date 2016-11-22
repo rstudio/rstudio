@@ -391,6 +391,7 @@ private:
             continue;
          }
          
+         description.package = pkgName;
          normalize(&description);
          
          pRegistry_->add(pkgName, description);

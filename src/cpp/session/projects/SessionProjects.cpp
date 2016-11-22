@@ -140,69 +140,16 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
                             "inputs", &inputsJson);
    if (error)
       return error;
-
-   ProjectTemplateDescription description;
-   error = fromJson(descriptionJson, &description);
-   if (error)
-      return error;
-
-   // move to directory containing the new project, and then initialize
+   
    FilePath projectPath = projectFilePath.parent();
-   FilePath parentPath = projectPath.parent();
-   error = parentPath.ensureDirectory();
-   if (error)
-      return error;
-
-   std::string parentPathString =
-         string_utils::utf8ToSystem(parentPath.absolutePath());
-
-   error = RFunction("base:::setwd")
-         .addParam(parentPathString)
-         .call();
-
-   if (error)
-      return error;
-
-   // construct call to package skeleton
-   std::string name = projectPath.filename();
-   r::exec::RFunction skeleton(description.package + ":::" + description.binding);
-
-   // use path as first parameter always (?)
-   skeleton.addParam(name);
-
-   // add other parameters as key-value pairs
-   for (json::Object::const_iterator it = inputsJson.begin();
-        it != inputsJson.end();
-        ++it)
-   {
-      const std::string& key = it->first;
-      const json::Value& val = it->second;
-
-      if (json::isType<std::string>(val))
-         skeleton.addParam(key, val.get_str());
-      else if (json::isType<int>(val))
-         skeleton.addParam(key, val.get_int());
-      else if (json::isType<double>(val))
-         skeleton.addParam(key, val.get_real());
-      else if (json::isType<bool>(val))
-         skeleton.addParam(key, val.get_bool());
-   }
-
-   // call skeleton function
-   error = skeleton.call();
-   if (error)
-      return error;
-
-   // add first run documents for template
-   error = r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
+   
+   return r::exec::RFunction(".rs.initializeProjectFromTemplate")
          .addParam(string_utils::utf8ToSystem(projectFilePath.absolutePath()))
          .addParam(string_utils::utf8ToSystem(projectPath.absolutePath()))
-         .addParam(description.openFiles)
+         .addParam(descriptionJson)
+         .addParam(inputsJson)
          .call();
-   if (error)
-      return error;
 
-   return Success();
 }
 
 Error createProject(const json::JsonRpcRequest& request,

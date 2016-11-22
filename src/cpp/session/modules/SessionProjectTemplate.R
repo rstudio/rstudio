@@ -18,6 +18,37 @@
    .Call("rs_getProjectTemplateRegistry")
 })
 
+.rs.addFunction("initializeProjectFromTemplate", function(projectFilePath,
+                                                          projectPath,
+                                                          description,
+                                                          inputs)
+{
+   # move to parent path for project directory
+   parentPath <- dirname(projectPath)
+   .rs.ensureDirectory(parentPath)
+   owd <- setwd(parentPath)
+   on.exit(setwd(owd), add = TRUE)
+   
+   # begin constructing call to skeleton function
+   skeleton <- c(
+      call("::", as.name(description$package), as.name(description$binding)),
+      basename(projectPath),
+      inputs
+   )
+   
+   # evaluate skeleton function in global environment
+   eval(as.call(skeleton), envir = .GlobalEnv)
+   
+   # add first run documents
+   .rs.addFirstRunDocumentsForTemplate(
+      projectFilePath,
+      projectPath,
+      description$open_files
+   )
+   
+   TRUE
+})
+
 .rs.addFunction("addFirstRunDocumentsForTemplate", function(projectFilePath,
                                                             projectPath,
                                                             openFiles)
