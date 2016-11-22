@@ -20,18 +20,21 @@
 #include <boost/range/adaptors.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Debug.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/text/DcfParser.hpp>
 
+#include <r/RRoutines.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 #include <session/SessionPackageProvidedExtension.hpp>
 
 #define kProjectTemplateLocal "(local)"
-#define kRStudioProjectTemplatesPath "rstudio/templates/projects"
+#define kRStudioProjectTemplatesPath "rstudio/templates/project"
 
 using namespace rstudio::core;
 
@@ -82,12 +85,13 @@ Error fromJson(
 
    error = json::readObject(
             object,
-            "package",  &description.package,
-            "binding",  &description.binding,
-            "title",    &description.title,
-            "subtitle", &description.subtitle,
-            "caption",  &description.caption,
-            "icon",     &description.icon);
+            "package",    &description.package,
+            "binding",    &description.binding,
+            "title",      &description.title,
+            "subtitle",   &description.subtitle,
+            "caption",    &description.caption,
+            "icon",       &description.icon,
+            "open_files", &description.openFiles);
    
    if (error)
       return error;
@@ -121,12 +125,13 @@ json::Value ProjectTemplateDescription::toJson() const
 {
    core::json::Object object;
 
-   object["package"]  = package;
-   object["binding"]  = binding;
-   object["title"]    = title;
-   object["subtitle"] = subtitle;
-   object["caption"]  = caption;
-   object["icon"]     = icon;
+   object["package"]    = package;
+   object["binding"]    = binding;
+   object["title"]      = title;
+   object["subtitle"]   = subtitle;
+   object["caption"]    = caption;
+   object["icon"]       = icon;
+   object["open_files"] = json::toJsonArray(openFiles);
 
    core::json::Array widgetsJson;
    BOOST_FOREACH(const ProjectTemplateWidgetDescription& widgetDescription, widgets)
@@ -140,26 +145,27 @@ json::Value ProjectTemplateDescription::toJson() const
 
 namespace {
 
-Error parseFields(const std::string& fields, std::vector<std::string>* pFields)
+Error parseCsvField(const std::string& field,
+                    std::vector<std::string>* pEntries)
 {
-   std::vector<std::string> parsedFields;
+   std::vector<std::string> entries;
    text::parseCsvLine(
-            fields.begin(),
-            fields.end(),
+            field.begin(),
+            field.end(),
             true,
-            &parsedFields);
+            &entries);
 
-   if (parsedFields.empty())
+   if (entries.empty())
       return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
 
-   for (std::size_t i = 0, n = parsedFields.size(); i < n; ++i)
-      parsedFields[i] = string_utils::trimWhitespace(parsedFields[i]);
+   for (std::size_t i = 0, n = entries.size(); i < n; ++i)
+      entries[i] = string_utils::trimWhitespace(entries[i]);
 
-   *pFields = parsedFields;
+   *pEntries = entries;
    return Success();
 }
 
-Error parseWidget(const std::string& widget, std::string* pWidgetType)
+Error parseWidgetType(const std::string& widget, std::string* pWidgetType)
 {
    std::string widgetLower = string_utils::toLower(widget);
    for (std::size_t i = 0, n = sizeof(kWidgetTypes); i < n; ++i)
@@ -190,7 +196,7 @@ core::Error populate(
    {
       const std::string& key   = it->first;
       const std::string& value = it->second;
-
+      
       // populate primary keys
       if (key == "Binding")
          pDescription->binding = value;
@@ -203,16 +209,31 @@ core::Error populate(
       else if (key == "Icon")
       {
          // read icon file from disk
-         core::FilePath iconPath = resourcePath.parent().complete(value);
+         FilePath iconPath = resourcePath.parent().complete(value);
+         
+         // skip if the file is too large
+         uintmax_t fileSize = iconPath.size();
+         if (fileSize > 1024 * 1024)
+         {
+            return systemError(
+                     boost::system::errc::file_too_large,
+                     ERROR_LOCATION);
+         }
 
          // encode file contents as base64
          std::string encoded;
-         core::Error error = core::base64::encode(iconPath, &encoded);
+         Error error = base64::encode(iconPath, &encoded);
          if (error)
-            LOG_ERROR(error);
+            return error;
 
          // send up to client as base64-encoded blob
          pDescription->icon = encoded;
+      }
+      else if (key == "OpenFiles")
+      {
+         Error error = parseCsvField(value, &pDescription->openFiles);
+         if (error)
+            return error;
       }
 
       // populate widget
@@ -222,13 +243,13 @@ core::Error populate(
          widget.label = value;
       else if (key == "Widget")
       {
-         core::Error error = parseWidget(value, &widget.type);
+         Error error = parseWidgetType(value, &widget.type);
          if (error)
             return error;
       }
       else if (key == "Fields")
       {
-         core::Error error = parseFields(value, &widget.fields);
+         Error error = parseCsvField(value, &widget.fields);
          if (error)
             return error;
       }
@@ -238,10 +259,8 @@ core::Error populate(
    if (!widget.parameter.empty())
       pDescription->widgets.push_back(widget);
 
-   return core::Success();
+   return Success();
 }
-
-
 
 class ProjectTemplateRegistry : boost::noncopyable
 {
@@ -324,18 +343,19 @@ public:
       boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
       boost::sregex_token_iterator end;
       
-      for (; it != end; ++it) {
+      for (; it != end; ++it)
+      {
          // invoke parser on current record
          std::map<std::string, std::string> fields;
          std::string errorMessage;
          error = text::parseDcfFile(*it, true, &fields, &errorMessage);
          if (error)
-            continue;
+            return error;
          
          // populate project template description based on fields
          error = populate(resourcePath, fields, pDescription);
          if (error)
-            continue;
+            return error;
       }
       
       return error;
@@ -539,6 +559,13 @@ void getProjectTemplateRegistry(const json::JsonRpcRequest& request,
             boost::bind(respondWithProjectTemplateRegistry, boost::cref(continuation)));
 }
 
+SEXP rs_getProjectTemplateRegistry()
+{
+   json::Value registryJson = projectTemplateRegistry()->toJson();
+   r::sexp::Protect protect;
+   return r::sexp::create(registryJson, &protect);
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -548,6 +575,8 @@ Error initialize()
    
    events().onDeferredInit.connect(onDeferredInit);
    events().onConsoleInput.connect(onConsoleInput);
+   
+   RS_REGISTER_CALL_METHOD(rs_getProjectTemplateRegistry, 0);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

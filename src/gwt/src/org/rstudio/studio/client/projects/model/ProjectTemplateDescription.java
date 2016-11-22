@@ -18,17 +18,19 @@ import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
 
 public class ProjectTemplateDescription extends JavaScriptObject
 {
    protected ProjectTemplateDescription() {}
    
-   public native final String getPackage()     /*-{ return this["package"]; }-*/;
-   public native final String getBinding()     /*-{ return this["binding"]; }-*/;
-   public native final String getTitle()       /*-{ return this["title"]; }-*/;
-   public native final String getSubTitle()    /*-{ return this["subtitle"]; }-*/;
-   public native final String getPageCaption() /*-{ return this["caption"]; }-*/;
+   public native final String getPackage()          /*-{ return this["package"]; }-*/;
+   public native final String getBinding()          /*-{ return this["binding"]; }-*/;
+   public native final String getTitle()            /*-{ return this["title"]; }-*/;
+   public native final String getSubTitle()         /*-{ return this["subtitle"]; }-*/;
+   public native final String getPageCaption()      /*-{ return this["caption"]; }-*/;
+   public native final JsArrayString getOpenFiles() /*-{ return this["open_files"]; }-*/;
    
    public final ImageResource getIcon()      { return getIconImpl("icon"); }
    public final ImageResource getIconLarge() { return getIconImpl("icon_large"); }

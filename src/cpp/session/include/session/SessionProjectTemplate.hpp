@@ -52,6 +52,8 @@ static const char* const kWidgetTypes[] = {
 
 struct ProjectTemplateWidgetDescription
 {
+   // COPYING: copyable members
+   
    std::string parameter;
    std::string type;
    std::string label;
@@ -66,12 +68,15 @@ core::Error fromJson(
 
 struct ProjectTemplateDescription
 {
+   // COPYING: copyable members
+   
    std::string package;
    std::string binding;
    std::string title;
    std::string subtitle;
    std::string caption;
    std::string icon;
+   std::vector<std::string> openFiles;
    std::vector<ProjectTemplateWidgetDescription> widgets;
    
    core::json::Value toJson() const;

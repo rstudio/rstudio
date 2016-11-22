@@ -13,17 +13,48 @@
 #
 #
 
-.rs.addJsonRpcHandler("project_template", function(package, binding, target)
+.rs.addFunction("getProjectTemplateRegistry", function()
 {
-   # discover project template function
-   ns <- requireNamespace(package)
-   fn <- get(binding, envir = ns, inherits = FALSE)
+   .Call("rs_getProjectTemplateRegistry")
+})
+
+.rs.addFunction("addFirstRunDocumentsForTemplate", function(projectFilePath,
+                                                            projectPath,
+                                                            openFiles)
+{
+   # list all files in project directory
+   projectFiles <- list.files(projectPath, recursive = TRUE)
    
-   # move to parent directory of target package
-   parentDir <- dirname(target)
-   .rs.ensureDirectory(parentDir)
-   setwd(parentDir)
+   # expand environment variables within 'openFiles' specification
+   openFiles <- .rs.expandEnvironmentVariables(openFiles)
    
-   # attempt to call skeleton function with target path
-   fn(target)
+   # convert from glob to regular expression
+   reOpenFiles <- glob2rx(openFiles)
+   
+   # keep all files that match one of the regular expressions
+   files <- Reduce(union, lapply(reOpenFiles, function(regex) {
+      grep(regex, projectFiles, value = TRUE)
+   }))
+   
+   # add these as first-run documents
+   .Call("rs_addFirstRunDoc", projectFilePath, files)
+})
+
+.rs.addFunction("expandEnvironmentVariables", function(fields)
+{
+   transformed <- fields
+   .rs.enumerate(Sys.getenv(), function(key, val) {
+      # handle patterns of form '$FOO'
+      pattern <- paste("\\$", key, "\\b", sep = "")
+      transformed <<- gsub(pattern, val, transformed, perl = TRUE)
+      
+      # handle patterns of form '${FOO}'
+      pattern <- paste("\\$\\{", key, "\\}\\b", sep = "")
+      transformed <<- gsub(pattern, val, transformed)
+      
+      # handle patterns of the form '%FOO%'
+      pattern <- paste("%", key, "%\\b", sep = "")
+      transformed <<- gsub(pattern, val, transformed)
+   })
+   transformed
 })

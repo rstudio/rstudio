@@ -126,13 +126,13 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error initializeProjectFromTemplate(const FilePath& projectPath,
+Error initializeProjectFromTemplate(const FilePath& projectFilePath,
                                     const json::Value& projectTemplateOptions)
 {
    using namespace modules::projects::templates;
    using namespace r::exec;
    Error error;
-   
+
    json::Object descriptionJson;
    json::Object inputsJson;
    error = json::readObject(projectTemplateOptions.get_obj(),
@@ -140,58 +140,69 @@ Error initializeProjectFromTemplate(const FilePath& projectPath,
                             "inputs", &inputsJson);
    if (error)
       return error;
-   
+
    ProjectTemplateDescription description;
-   error = fromJson(
-            descriptionJson,
-            &description);
-   
+   error = fromJson(descriptionJson, &description);
    if (error)
       return error;
-    
-    // move to directory containing the new project, and then initialize
-    FilePath parentPath = projectPath.parent();
-    error = parentPath.ensureDirectory();
-    if (error)
-       return error;
-    
-    std::string parentPathString =
-          string_utils::utf8ToSystem(parentPath.absolutePath());
-    
-    error = RFunction("base:::setwd")
-          .addParam(parentPathString)
-          .call();
-    
-    if (error)
-       return error;
-    
-    // construct call to package skeleton
-    std::string name = projectPath.filename();
-    r::exec::RFunction skeleton(description.package + ":::" + description.binding);
-    
-    // use path as first parameter always (?)
-    skeleton.addParam(name);
-    
-    // add other parameters as key-value pairs
-    for (json::Object::const_iterator it = inputsJson.begin();
-         it != inputsJson.end();
-         ++it)
-    {
-       const std::string& key = it->first;
-       const json::Value& val = it->second;
-       
-       if (json::isType<std::string>(val))
-          skeleton.addParam(key, val.get_str());
-       else if (json::isType<int>(val))
-          skeleton.addParam(key, val.get_int());
-       else if (json::isType<double>(val))
-          skeleton.addParam(key, val.get_real());
-       else if (json::isType<bool>(val))
-          skeleton.addParam(key, val.get_bool());
-    }
-    
-    // call skeleton function
-    return skeleton.call();
+
+   // move to directory containing the new project, and then initialize
+   FilePath projectPath = projectFilePath.parent();
+   FilePath parentPath = projectPath.parent();
+   error = parentPath.ensureDirectory();
+   if (error)
+      return error;
+
+   std::string parentPathString =
+         string_utils::utf8ToSystem(parentPath.absolutePath());
+
+   error = RFunction("base:::setwd")
+         .addParam(parentPathString)
+         .call();
+
+   if (error)
+      return error;
+
+   // construct call to package skeleton
+   std::string name = projectPath.filename();
+   r::exec::RFunction skeleton(description.package + ":::" + description.binding);
+
+   // use path as first parameter always (?)
+   skeleton.addParam(name);
+
+   // add other parameters as key-value pairs
+   for (json::Object::const_iterator it = inputsJson.begin();
+        it != inputsJson.end();
+        ++it)
+   {
+      const std::string& key = it->first;
+      const json::Value& val = it->second;
+
+      if (json::isType<std::string>(val))
+         skeleton.addParam(key, val.get_str());
+      else if (json::isType<int>(val))
+         skeleton.addParam(key, val.get_int());
+      else if (json::isType<double>(val))
+         skeleton.addParam(key, val.get_real());
+      else if (json::isType<bool>(val))
+         skeleton.addParam(key, val.get_bool());
+   }
+
+   // call skeleton function
+   error = skeleton.call();
+   if (error)
+      return error;
+
+   // add first run documents for template
+   error = r::exec::RFunction(".rs.addFirstRunDocumentsForTemplate")
+         .addParam(string_utils::utf8ToSystem(projectFilePath.absolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectPath.absolutePath()))
+         .addParam(description.openFiles)
+         .call();
+   if (error)
+      return error;
+
+   return Success();
 }
 
 Error createProject(const json::JsonRpcRequest& request,
@@ -254,7 +265,7 @@ Error createProject(const json::JsonRpcRequest& request,
    // if we have a custom project template, call that first
    if (!projectTemplateOptions.is_null())
    {
-      Error error = initializeProjectFromTemplate(projectFilePath.parent(), projectTemplateOptions);
+      Error error = initializeProjectFromTemplate(projectFilePath, projectTemplateOptions);
       if (error)
          return error;
    }
@@ -765,14 +776,21 @@ SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
             r::sexp::create(true, &protect);
 }
 
-SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathSEXP)
+SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSEXP)
 {
    std::string projectFileAbsolutePath = r::sexp::asString(projectFileAbsolutePathSEXP);
    const FilePath projectFilePath(projectFileAbsolutePath);
    
-   std::string docRelativePath = r::sexp::asString(docRelativePathSEXP);
+   std::vector<std::string> docRelativePaths;
+   bool success = r::sexp::fillVectorString(docRelativePathsSEXP, &docRelativePaths);
+   if (!success)
+      return R_NilValue;
    
-   addFirstRunDoc(projectFilePath, docRelativePath);
+   BOOST_FOREACH(const std::string& path, docRelativePaths)
+   {
+      addFirstRunDoc(projectFilePath, path);
+   }
+   
    return R_NilValue;
 }
 
