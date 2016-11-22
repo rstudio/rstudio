@@ -121,7 +121,6 @@ public class TerminalPane extends WorkbenchPane
    {
       terminalSessionsPanel_.add(event.getTerminalWidget());
       terminalSessionsPanel_.showWidget(event.getTerminalWidget());
-      terminalSessionsPanel_.forceLayout();
       
       // TODO (gary) update dropdown
    } 
