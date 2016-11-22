@@ -16,6 +16,8 @@
 #ifndef SESSION_PROJECT_TEMPLATE_HPP
 #define SESSION_PROJECT_TEMPLATE_HPP
 
+#include <core/Base64.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 #include <core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -137,7 +139,9 @@ struct ProjectTemplateDescription
    }
    
    template <typename T>
-   static core::Error populate(const T& map, ProjectTemplateDescription* pDescription)
+   static core::Error populate(const core::FilePath& resourcePath,
+                               const T& map,
+                               ProjectTemplateDescription* pDescription)
    {
       ProjectTemplateWidgetDescription widget;
       for (typename T::const_iterator it = map.begin();
@@ -157,7 +161,19 @@ struct ProjectTemplateDescription
          else if (key == "Caption")
             pDescription->caption = value;
          else if (key == "Icon")
-            pDescription->icon = value;
+         {
+            // read icon file from disk
+            core::FilePath iconPath = resourcePath.parent().complete(value);
+            
+            // encode file contents as base64
+            std::string encoded;
+            core::Error error = core::base64::encode(iconPath, &encoded);
+            if (error)
+               LOG_ERROR(error);
+            
+            // send up to client as base64-encoded blob
+            pDescription->icon = encoded;
+         }
          
          // populate widget
          else if (key == "Parameter")

@@ -117,15 +117,6 @@ public:
       if (error)
          return error;
       
-      return parseResourceContents(pkgName, contents, pDescription);
-   }
-   
-   Error parseResourceContents(const std::string& pkgName,
-                               const std::string& contents,
-                               ProjectTemplateDescription* pDescription)
-   {
-      Error error;
-      
       // attempt to parse as DCF -- multiple newlines used to separate records
       boost::regex reSeparator("\\n{2,}");
       boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
@@ -140,7 +131,7 @@ public:
             continue;
          
          // populate project template description based on fields
-         error = ProjectTemplateDescription::populate(fields, pDescription);
+         error = ProjectTemplateDescription::populate(resourcePath, fields, pDescription);
          if (error)
             continue;
       }
@@ -166,6 +157,10 @@ private:
       
       BOOST_FOREACH(const FilePath& childPath, children)
       {
+         // skip files that don't have a dcf extension
+         if (childPath.extension() != ".dcf")
+            continue;
+         
          ProjectTemplateDescription description;
          Error error = parseResourceFile(pkgName, childPath, &description);
          if (error)

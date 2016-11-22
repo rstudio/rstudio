@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.projects.model;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
@@ -39,7 +41,7 @@ public class ProjectTemplateDescription extends JavaScriptObject
    public final ImageResource getIconImpl(String field)
    {
       String data = getIconData(field);
-      if (data == null)
+      if (StringUtil.isNullOrEmpty(data))
          return null;
       
       return new ProjectTemplateIconImageResource(field, data);
