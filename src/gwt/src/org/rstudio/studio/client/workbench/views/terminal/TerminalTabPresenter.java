@@ -60,6 +60,7 @@ public class TerminalTabPresenter extends BasePresenter
    public void onActivateTerminal()
    {
       view_.activateTerminal();
+      view_.ensureTerminal();
    }
    
    public void initialize()
@@ -68,7 +69,7 @@ public class TerminalTabPresenter extends BasePresenter
    
    public void onCreateTerminal(CreateTerminalEvent event)
    {
-      onActivateTerminal();
+      view_.activateTerminal();
       view_.createTerminal();
    }
 

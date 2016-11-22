@@ -26,7 +26,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    public TerminalPopupMenu(SessionInfo sessionInfo, Commands commands)
    {
       commands_ = commands;
-      sessionInfo_ = sessionInfo;
+      //sessionInfo_ = sessionInfo;
       
       // TODO (gary) Read active terminal from session, or always revert to
       // first terminal in list?
@@ -77,6 +77,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    
    private ToolbarButton toolbarButton_;
    private final Commands commands_;
-   private final SessionInfo sessionInfo_;
+   //private final SessionInfo sessionInfo_;
    private String activeTerminal_;
 }

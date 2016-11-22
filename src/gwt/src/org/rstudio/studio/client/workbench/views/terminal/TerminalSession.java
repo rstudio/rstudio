@@ -204,6 +204,13 @@ public class TerminalSession extends XTermWidget
       write(AnsiColor.RED +"Fatal Error: " + msg);
    }
 
+   @Override
+   public void onUnload()
+   {
+      super.onUnload();
+      unregisterHandlers();
+   }
+   
    public String getTerminalTitle()
    {
       return terminalTitle_;
