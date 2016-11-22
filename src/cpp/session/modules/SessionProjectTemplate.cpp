@@ -198,7 +198,8 @@ private:
    }
    
 private:
-   Error validateFields(std::map<std::string, std::string>& fields,
+   Error validateFields(const core::FilePath& resourcePath,
+                        std::map<std::string, std::string>& fields,
                         const ErrorLocation& location)
    {
       std::vector<std::string> missingFields;
@@ -217,8 +218,13 @@ private:
             "invalid project template description: missing or empty fields "
             "[" + core::algorithm::join(missingFields, ",") + "]";
       
+      Error error = systemError(
+               boost::system::errc::protocol_error,
+               location);
       
-      Error error = systemError(boost::system::errc::protocol_error, reason, location);
+      error.addProperty("reason", reason);
+      error.addProperty("file", resourcePath);
+      
       return error;
    }
    
@@ -265,7 +271,7 @@ private:
       if (pDescription->subtitle.empty())
          pDescription->subtitle = "Create a new " + title;
       
-      if (pDescription->subtitle.empty())
+      if (pDescription->caption.empty())
          pDescription->caption = "Create " + title;
    }
    

@@ -150,10 +150,13 @@ Error initializeProjectFromTemplate(const FilePath& projectPath,
     if (error)
        return error;
     
-    std::string parentPathString = string_utils::utf8ToSystem(parentPath.absolutePath());
+    std::string parentPathString =
+          string_utils::utf8ToSystem(parentPath.absolutePath());
+    
     error = RFunction("base:::setwd")
           .addParam(parentPathString)
           .call();
+    
     if (error)
        return error;
     
