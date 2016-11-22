@@ -16,12 +16,14 @@
 package org.rstudio.studio.client.common.shell;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import com.google.inject.Inject;
 
 /**
  * Prepare a string for secure transmission.
@@ -30,11 +32,17 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
  */
 public class ShellSecureInput
 {
-   public ShellSecureInput(CryptoServerOperations server)
+   public ShellSecureInput()
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   @Inject
+   private void initialize(CryptoServerOperations server)
    {
       server_ = server;
    }
-  
+   
    /**
     * Secure a string for transmission.
     *  
@@ -76,6 +84,8 @@ public class ShellSecureInput
       }
    }
    
-   private final CryptoServerOperations server_;
    private PublicKeyInfo publicKeyInfo_ = null;
+   
+   // Injected ----
+   private CryptoServerOperations server_;
 }

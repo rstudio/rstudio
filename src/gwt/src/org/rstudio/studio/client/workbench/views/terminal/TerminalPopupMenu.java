@@ -15,22 +15,18 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 
 public class TerminalPopupMenu extends ToolbarPopupMenu
 {
    public TerminalPopupMenu(SessionInfo sessionInfo, Commands commands)
    {
       commands_ = commands;
-      sessionInfo_ = sessionInfo;
+      //sessionInfo_ = sessionInfo;
       
       // TODO (gary) Read active terminal from session, or always revert to
       // first terminal in list?
@@ -48,27 +44,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       // ensure the menu doesn't get too narrow
       addSeparator(225);
 
-      // TODO (gary) dynamically create
-      // add as many entries to match open terminals
-      AppCommand[] terminalSessionCmds = new AppCommand[] {
-         commands_.terminalSession1(),
-         commands_.terminalSession2(),
-         commands_.terminalSession3(),
-         commands_.terminalSession4(),
-         commands_.terminalSession5()
-      }; 
-      
-      // TODO (gary) show all possible entries until we start tracking and
-      // persisting open terminal sessions
-      int tmpOpenSessions = MAX_TERMINAL_SESSIONS;
-      for (int i = 0; i < Math.min(MAX_TERMINAL_SESSIONS, tmpOpenSessions); i++)
-      {
-         addItem(terminalSessionCmds[i].createMenuItem(false));
-      }
-      if (tmpOpenSessions > 0)
-      {
-         addSeparator();
-      }
+      // TODO (gary) dynamically create based on open terminals
        
       addItem(commands_.renameTerminal().createMenuItem(false));
       addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
@@ -77,21 +53,16 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       callback.onPopupMenu(this);
    }
    
-   interface Resources extends ClientBundle
-   {
-      ImageResource terminalMenu();
-   }
-   
    public ToolbarButton getToolbarButton()
    {
       if (toolbarButton_ == null)
       {
          // TODO (gary) flesh this out
-         String buttonText = "Terminal: (None)";
+         String buttonText = "Terminal";
           
          toolbarButton_ = new ToolbarButton(
                 buttonText, 
-                RESOURCES.terminalMenu(),
+                StandardIcons.INSTANCE.empty_command(),
                 this, 
                 false);
           
@@ -104,12 +75,8 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
        return toolbarButton_;
    }
    
-   private static final Resources RESOURCES =  
-                              (Resources) GWT.create(Resources.class);
    private ToolbarButton toolbarButton_;
    private final Commands commands_;
-   @SuppressWarnings("unused")
-   private final SessionInfo sessionInfo_;
+   //private final SessionInfo sessionInfo_;
    private String activeTerminal_;
-   private static final int MAX_TERMINAL_SESSIONS = 5;
 }

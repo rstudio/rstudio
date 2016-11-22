@@ -15,130 +15,50 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
-import org.rstudio.studio.client.common.shell.ShellInput;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
+/**
+ * Holds the contents of the Terminal pane, including the toolbar and
+ * zero or more Terminal instances.
+ */
 public class TerminalPane extends WorkbenchPane
-                          implements ConsoleOutputEvent.Handler, 
-                                     ProcessExitEvent.Handler,
-                                     ClickHandler,
-                                     ResizeTerminalEvent.Handler,
-                                     TerminalDataInputEvent.Handler
+                          implements ClickHandler,
+                                     TerminalTabPresenter.Display,
+                                     TerminalSessionStartedEvent.Handler,
+                                     TerminalSessionStoppedEvent.Handler
 {
+   @Inject
     protected TerminalPane(Commands commands,
-                           WorkbenchServerOperations server,
-                           SessionInfo sessionInfo)
+                           Session session,
+                           EventBus events)
    {
       super("Terminal");
       commands_ = commands;
-      secureInput_ = new ShellSecureInput(server);
-      server_ = server;
-      sessionInfo_ = sessionInfo;
-      host_ = new ResizeLayoutPanel();
+      session_ = session;
+      events.addHandler(TerminalSessionStartedEvent.TYPE, this);
+      events.addHandler(TerminalSessionStoppedEvent.TYPE, this);
+      ensureWidget();
    }
 
    @Override
    protected Widget createMainWidget()
    {
-      XTermWidget.load(new Command()
-      {
-         @Override
-         public void execute()
-         {
-            xterm_ = new XTermWidget();
-            xterm_.setHeight("100%");
-            host_.add(xterm_);
-            connectToTerminalProcess();
-         }
-      });
-      return host_;
+      terminalSessionsPanel_ = new DeckLayoutPanel();
+      return terminalSessionsPanel_;
    }
-
-   /**
-    * Create a terminal process and connect to it.
-    */
-   private void connectToTerminalProcess()
-   {
-      server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, 
-                               80, 25,
-                               false, /* not a modal dialog */
-                               new ServerRequestCallback<ConsoleProcess>()
-      {
-         @Override
-         public void onResponseReceived(ConsoleProcess consoleProcess)
-         {
-            consoleProcess_ = consoleProcess;
-            
-            if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
-            {
-               // TODO (gary) add capability to display error messages in the terminal tab to
-               // show fatal errors such as this one, and possibly async "loading..." style
-               // message.
-               throw new IllegalArgumentException("Unsupport ConsoleProcess interaction mode");
-            } 
-
-            if (consoleProcess_ != null)
-            {
-               addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalPane.this));
-               addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalPane.this));
-               addHandlerRegistration(xterm_.addResizeTerminalHandler(TerminalPane.this));
-               addHandlerRegistration(xterm_.addTerminalDataInputHandler(TerminalPane.this));
-
-               consoleProcess.start(new SimpleRequestCallback<Void>()
-               {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // Show error and stop
-                     super.onError(error);
-
-                     // TODO (gary) show fatal errors in the terminal tab UI
-                  }
-               });
-            }
-         }
-      
-         @Override
-         public void onError(ServerError error)
-         {
-            xterm_.writeln(error.getUserMessage());
-         }
-         
-      });
-   }
-
-   private int getInteractionMode()
-   {
-      if (consoleProcess_ != null)
-         return consoleProcess_.getProcessInfo().getInteractionMode();
-      else
-         return ConsoleProcessInfo.INTERACTION_NEVER;
-   } 
 
    @Override
    public void onClick(ClickEvent event)
@@ -146,96 +66,88 @@ public class TerminalPane extends WorkbenchPane
       // TODO (gary) implement
       
    }
-
-   @Override
-   public void onConsoleOutput(ConsoleOutputEvent event)
-   {
-      xterm_.write(event.getOutput());
-   }
-   
-   @Override
-   public void onProcessExit(ProcessExitEvent event)
-   {
-      unregisterHandlers();
-
-      if (consoleProcess_ != null)
-         consoleProcess_.reap(new VoidServerRequestCallback());
-   }
-
-   protected void addHandlerRegistration(HandlerRegistration reg)
-   {
-      registrations_.add(reg);
-   }
-   
-   protected void unregisterHandlers()
-   {
-      registrations_.removeHandler();
-   }
-   
-   @Override
-   public void onResizeTerminal(ResizeTerminalEvent event)
-   {
-      consoleProcess_.resizeTerminal(
-            event.getCols(), event.getRows(),
-            new VoidServerRequestCallback() 
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-                  xterm_.writeln(error.getUserMessage());
-               }
-            });
-   }
-   
-   @Override
-   public void onTerminalDataInput(TerminalDataInputEvent event)
-   {
-      secureInput_.secureString(event.getData(), new CommandWithArg<String>() 
-      {
-         @Override
-         public void execute(String arg) // success
-         {
-            consoleProcess_.writeStandardInput(
-               ShellInput.create(arg,  true /* echo input*/), 
-               new VoidServerRequestCallback() {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     xterm_.writeln(error.getUserMessage());
-                  }
-               });
-          }
-      },
-      new CommandWithArg<String>()
-      {
-         @Override
-         public void execute(String errorMessage) // failure
-         {
-            xterm_.writeln(errorMessage); 
-         }
-      });
-   }
    
    @Override
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
 
-      activeTerminalToolbarButton_ = new TerminalPopupMenu(sessionInfo_,
+      activeTerminalToolbarButton_ = new TerminalPopupMenu(session_.getSessionInfo(),
                                                            commands_);
       
       toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
 
       return toolbar;
    }
+  
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      activateTerminal();
+      ensureTerminal();
+   }
    
-   private final ResizeLayoutPanel host_;
-   private XTermWidget xterm_;
-   private WorkbenchServerOperations server_;
-   private final ShellSecureInput secureInput_;
-   private ConsoleProcess consoleProcess_;
-   private HandlerRegistrations registrations_ = new HandlerRegistrations();
+   @Override
+   public void activateTerminal()
+   {
+      ensureVisible();
+      bringToFront();
+   }
+   
+   @Override
+   public void ensureTerminal()
+   {
+      if (getTerminalCount() == 0)
+      {
+         createTerminal();
+      }
+   }
+   
+   @Override
+   public void createTerminal()
+   {
+      if (secureInput_ == null)
+      {
+         secureInput_ = new ShellSecureInput();  
+      }
+      
+      TerminalSession newSession = new TerminalSession(secureInput_);
+      newSession.connect();
+   }
+
+   @Override
+   public void onTerminalSessionStarted(TerminalSessionStartedEvent event)
+   {
+      terminalSessionsPanel_.add(event.getTerminalWidget());
+      terminalSessionsPanel_.showWidget(event.getTerminalWidget());
+      
+      // TODO (gary) update dropdown
+   } 
+   
+   @Override
+   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
+   {
+      Widget currentTerminal = event.getTerminalWidget();
+      int currentIndex = terminalSessionsPanel_.getWidgetIndex(currentTerminal);
+      if (currentIndex > 0)
+      {
+         terminalSessionsPanel_.showWidget(currentIndex - 1);
+         // TODO (gary) set focus on the widget
+      }
+      terminalSessionsPanel_.remove(currentTerminal);
+      
+      // TODO (gary) update dropdown
+   }
+
+   public int getTerminalCount()
+   {
+      return terminalSessionsPanel_.getWidgetCount();
+   }
+
+   private DeckLayoutPanel terminalSessionsPanel_;
    private Commands commands_;
-   private SessionInfo sessionInfo_;
+   private Session session_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
+   private ShellSecureInput secureInput_;
 }

@@ -724,6 +724,8 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.showShellDialog().remove();
       }
+      
+      // TODO (gary) temporary feature gate, switch to getAllowShell
       if (!uiPrefs_.get().enableXTerm().getValue())
       {
          commands_.newTerminal().remove();

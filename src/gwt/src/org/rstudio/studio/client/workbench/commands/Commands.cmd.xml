@@ -288,6 +288,7 @@ well as menu structures (for main menu and popup menus).
          
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
+         <cmd refid="activateTerminal"/>
          <cmd refid="activateHelp"/>
          <separator/>
          <cmd refid="activateHistory"/>
@@ -2373,54 +2374,29 @@ well as menu structures (for main menu and popup menus).
         desc="Execute shell commands(s)"
         windowMode="main"/>
 
- <cmd id="renameTerminal"
+   <cmd id="activateTerminal"
+        label="Move Focus to Terminal"
+        menuLabel="Move Focus to Terminal"
+        windowMode="main"/>
+        
+   <cmd id="renameTerminal"
         label="Rename Terminal"
         menuLabel="Rename Terminal Session"
         desc="Change terminal session name"
         windowMode="main"/>
 
- <cmd id="closeTerminal"
+   <cmd id="closeTerminal"
         label="Close Terminal Session"
         menuLabel="Close Terminal Session"
         desc="Close terminal session"
         windowMode="main"/>
 
- <cmd id="clearTerminalScrollbackBuffer"
+   <cmd id="clearTerminalScrollbackBuffer"
         label="Clear Terminal Buffer"
         menuLabel="Clear Terminal"
         desc="Clear terminal scrollback buffer"
         windowMode="main"/>
 
- <cmd id="terminalSession1"
-        label="Terminal 1"
-        menuLabel="Terminal 1"
-        desc="Terminal 1"
-        windowMode="main"/>
-           
- <cmd id="terminalSession2"
-        label="Terminal 2"
-        menuLabel="Terminal 2"
-        desc="Terminal 2"
-        windowMode="main"/>
-           
- <cmd id="terminalSession3"
-        label="Terminal 3"
-        menuLabel="Terminal 3"
-        desc="Terminal 3"
-        windowMode="main"/>
-           
- <cmd id="terminalSession4"
-        label="Terminal 4"
-        menuLabel="Terminal 4"
-        desc="Terminal 4"
-        windowMode="main"/>
-           
- <cmd id="terminalSession5"
-        label="Terminal 5"
-        menuLabel="Terminal 5"
-        desc="Terminal 5"
-        windowMode="main"/>
-           
    <cmd id="addinsMru0" visible="false" rebindable="false"/>
    <cmd id="addinsMru1" visible="false" rebindable="false"/>
    <cmd id="addinsMru2" visible="false" rebindable="false"/>

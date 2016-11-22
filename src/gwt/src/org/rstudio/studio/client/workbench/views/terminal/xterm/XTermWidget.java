@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.terminal;
+package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
@@ -283,6 +283,6 @@ public class XTermWidget extends Widget implements RequiresResize,
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
-   private final HandlerManager handlers_ = new HandlerManager(this);
+   protected final HandlerManager handlers_ = new HandlerManager(this);
    private boolean hasTerminalDataInputHandler_ = false;
 }
