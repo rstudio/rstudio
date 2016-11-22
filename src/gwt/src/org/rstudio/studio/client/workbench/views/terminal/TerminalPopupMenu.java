@@ -108,6 +108,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                               (Resources) GWT.create(Resources.class);
    private ToolbarButton toolbarButton_;
    private final Commands commands_;
+   @SuppressWarnings("unused")
    private final SessionInfo sessionInfo_;
    private String activeTerminal_;
    private static final int MAX_TERMINAL_SESSIONS = 5;
