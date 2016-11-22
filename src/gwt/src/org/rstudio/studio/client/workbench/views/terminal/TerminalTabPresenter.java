@@ -22,10 +22,10 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
-import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
-public class TerminalTabPresenter extends BasePresenter
+public class TerminalTabPresenter extends BusyPresenter
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 
