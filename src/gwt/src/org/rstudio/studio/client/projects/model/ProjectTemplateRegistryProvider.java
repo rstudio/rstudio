@@ -17,9 +17,13 @@ package org.rstudio.studio.client.projects.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -37,14 +41,31 @@ public class ProjectTemplateRegistryProvider
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       pendingCallbacks_ = new ArrayList<Callback>();
+      
+      events_.addHandler(ProjectTemplateRegistryUpdatedEvent.TYPE, this);
+      
+      server_.getProjectTemplateRegistry(new ServerRequestCallback<ProjectTemplateRegistry>()
+      {
+         @Override
+         public void onResponseReceived(ProjectTemplateRegistry registry)
+         {
+            registry_ = registry;
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+      
    }
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(ProjectTemplateServerOperations server, EventBus events)
    {
+      server_ = server;
       events_ = events;
-      
-      events_.addHandler(ProjectTemplateRegistryUpdatedEvent.TYPE, this);
    }
    
    public ProjectTemplateRegistry getProjectTemplateRegistry()
@@ -80,5 +101,6 @@ public class ProjectTemplateRegistryProvider
    private final List<Callback> pendingCallbacks_;
    
    // Injected ----
+   private ProjectTemplateServerOperations server_;
    private EventBus events_;
 }

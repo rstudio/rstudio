@@ -414,9 +414,6 @@ private:
       
       // execute any callbacks waiting for indexing to complete
       executeCallbacks();
-      
-      // notify client
-      notifyClient();
    }
    
 private:
@@ -475,13 +472,6 @@ private:
       callbacks_.clear();
    }
    
-   void notifyClient()
-   {
-      json::Value data = projectTemplateRegistry()->toJson();
-      ClientEvent event(client_events::kProjectTemplateRegistryUpdated, data);
-      module_context::enqueClientEvent(event);
-   }
-   
 private:
    std::vector< boost::function<void()> > callbacks_;
    boost::shared_ptr<ProjectTemplateRegistry> pRegistry_;
@@ -493,17 +483,30 @@ ProjectTemplateIndexer& projectTemplateIndexer()
    return instance;
 }
 
-void reindex()
+void notifyClientProjectTemplateRegistryUpdated()
 {
+   json::Value data = projectTemplateRegistry()->toJson();
+   ClientEvent event(client_events::kProjectTemplateRegistryUpdated, data);
+   module_context::enqueClientEvent(event);
+}
+
+void reindex(bool notifyClient)
+{
+   if (module_context::disablePackages())
+      return;
+   
+   if (notifyClient)
+   {
+      projectTemplateIndexer().addIndexingFinishedCallback(
+               boost::bind(notifyClientProjectTemplateRegistryUpdated));
+   }
+   
    projectTemplateIndexer().start();
 }
 
 void onDeferredInit(bool)
 {
-   if (module_context::disablePackages())
-      return;
-   
-   projectTemplateIndexer().start();
+   reindex(false);
 }
 
 void onConsoleInput(const std::string& input)
@@ -531,7 +534,7 @@ void onConsoleInput(const std::string& input)
          // to the R prompt
          module_context::scheduleDelayedWork(
                   boost::posix_time::seconds(1),
-                  reindex,
+                  boost::bind(reindex, true),
                   true);
       }
    }
