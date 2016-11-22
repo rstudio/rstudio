@@ -44,17 +44,15 @@
 {
    transformed <- fields
    .rs.enumerate(Sys.getenv(), function(key, val) {
-      # handle patterns of form '$FOO'
-      pattern <- paste("\\$", key, "\\b", sep = "")
-      transformed <<- gsub(pattern, val, transformed, perl = TRUE)
       
-      # handle patterns of form '${FOO}'
-      pattern <- paste("\\$\\{", key, "\\}\\b", sep = "")
-      transformed <<- gsub(pattern, val, transformed)
+      patterns <- c(
+         paste("\\$", key, "\\b", sep = ""),       # $FOO
+         paste("\\$\\{", key, "\\}\\b", sep = ""), # ${FOO}
+         paste("%", key, "%\\b", sep = "")         # %FOO%
+      )
       
-      # handle patterns of the form '%FOO%'
-      pattern <- paste("%", key, "%\\b", sep = "")
-      transformed <<- gsub(pattern, val, transformed)
+      for (pattern in patterns)
+         transformed <<- gsub(pattern, val, transformed, ignore.case = TRUE)
    })
    transformed
 })
