@@ -61,7 +61,7 @@ struct ProjectTemplateWidgetDescription
 };
 
 core::Error fromJson(
-      core::json::Object& object,
+      const core::json::Object& object,
       ProjectTemplateWidgetDescription* pDescription);
 
 struct ProjectTemplateDescription
@@ -78,7 +78,7 @@ struct ProjectTemplateDescription
 };
 
 core::Error fromJson(
-      core::json::Object&,
+      const core::json::Object&,
       ProjectTemplateDescription* pDescription);
 
 core::Error initialize();

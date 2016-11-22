@@ -42,25 +42,22 @@ namespace projects {
 namespace templates {
 
 Error fromJson(
-      json::Object& object,
+      const json::Object& object,
       ProjectTemplateWidgetDescription* pDescription)
 {
-   ProjectTemplateWidgetDescription ptwd;
+   ProjectTemplateWidgetDescription description;
 
    core::Error error = core::json::readObject(
             object,
-            "parameter", &ptwd.parameter,
-            "type",      &ptwd.type,
-            "label",     &ptwd.label);
+            "parameter", &description.parameter,
+            "type",      &description.type,
+            "label",     &description.label,
+            "fields",    &description.fields);
 
    if (error)
       return error;
-
-   core::json::fillVectorString(
-            object["fields"].get_array(),
-         &(ptwd.fields));
-
-   *pDescription = ptwd;
+   
+   *pDescription = description;
    return Success();
 }
 
@@ -77,39 +74,46 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
 }
 
 Error fromJson(
-      json::Object& object,
+      const json::Object& object,
       ProjectTemplateDescription* pDescription)
 {
-   ProjectTemplateDescription ptd;
+   Error error;
+   ProjectTemplateDescription description;
 
-   Error error = json::readObject(
+   error = json::readObject(
             object,
-            "package",  &ptd.package,
-            "binding",  &ptd.binding,
-            "title",    &ptd.title,
-            "subtitle", &ptd.subtitle,
-            "caption",  &ptd.caption,
-            "icon",     &ptd.icon);
-
+            "package",  &description.package,
+            "binding",  &description.binding,
+            "title",    &description.title,
+            "subtitle", &description.subtitle,
+            "caption",  &description.caption,
+            "icon",     &description.icon);
+   
    if (error)
-      LOG_ERROR(error);
-
-   json::Array widgetsJson = object["widgets"].get_array();
-   BOOST_FOREACH(json::Value& widgetJson, widgetsJson)
+      return error;
+   
+   json::Array array;
+   error = json::readObject(object, "widgets", &array);
+   if (error)
+      return error;
+   
+   BOOST_FOREACH(const json::Value& value, array)
    {
-      ProjectTemplateWidgetDescription description;
+      if (!json::isType<json::Object>(value))
+         return json::errors::typeMismatch(
+                  value,
+                  json::ObjectType,
+                  ERROR_LOCATION);
       
-      Error error = fromJson(
-               widgetJson.get_obj(),
-               &description);
-      
+      ProjectTemplateWidgetDescription widget;
+      error = fromJson(value.get_obj(), &widget);
       if (error)
-         LOG_ERROR(error);
+         return error;
       
-      ptd.widgets.push_back(description);
+      description.widgets.push_back(widget);
    }
-
-   *pDescription = ptd;
+   
+   *pDescription = description;
    return Success();
 }
 
