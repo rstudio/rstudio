@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -32,6 +31,8 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -45,7 +46,9 @@ public class TerminalSession extends XTermWidget
                              implements ConsoleOutputEvent.Handler, 
                                         ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
-                                        TerminalDataInputEvent.Handler
+                                        TerminalDataInputEvent.Handler,
+                                        TerminalSessionStartedEvent.HasHandlers,
+                                        TerminalSessionStoppedEvent.HasHandlers
 {
    public TerminalSession(final ShellSecureInput secureInput)
    {
@@ -77,10 +80,8 @@ public class TerminalSession extends XTermWidget
             
             if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
-               // TODO (gary) add capability to display error messages in the terminal tab to
-               // show fatal errors such as this one, and possibly async "loading..." style
-               // message.
-               throw new IllegalArgumentException("Unsupport ConsoleProcess interaction mode");
+               writeError("Unsupported ConsoleProcess interaction mode");
+               return;
             } 
 
             if (consoleProcess_ != null)
@@ -90,15 +91,18 @@ public class TerminalSession extends XTermWidget
                addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
                addHandlerRegistration(addTerminalDataInputHandler(TerminalSession.this));
 
-               consoleProcess.start(new SimpleRequestCallback<Void>()
+               consoleProcess.start(new ServerRequestCallback<Void>()
                {
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     fireEvent(new TerminalSessionStartedEvent(terminalTitle_, TerminalSession.this));
+                  }
+                  
                   @Override
                   public void onError(ServerError error)
                   {
-                     // Show error and stop
-                     super.onError(error);
-
-                     // TODO (gary) show fatal errors in the terminal tab UI
+                     writeError(error.getUserMessage());
                   }
                });
             }
@@ -107,7 +111,7 @@ public class TerminalSession extends XTermWidget
          @Override
          public void onError(ServerError error)
          {
-            writeln(error.getUserMessage());
+            writeError(error.getUserMessage());
          }
          
       });
@@ -129,8 +133,7 @@ public class TerminalSession extends XTermWidget
       }
      
       consoleProcess_ = null;
-      
-      // TODO (gary) notify parent that TerminalSession has died
+      fireEvent(new TerminalSessionStoppedEvent(terminalTitle_, this));
    }
 
    
@@ -195,10 +198,33 @@ public class TerminalSession extends XTermWidget
    {
       registrations_.removeHandler();
    }
+
+   protected void writeError(String msg)
+   {
+      write(AnsiColor.RED +"Fatal Error: " + msg);
+   }
+
+   public String getTerminalTitle()
+   {
+      return terminalTitle_;
+   }
+
+   @Override
+   public HandlerRegistration addTerminalSessionStartedHandler(TerminalSessionStartedEvent.Handler handler)
+   {
+      return handlers_.addHandler(TerminalSessionStartedEvent.TYPE, handler);
+   }
+
+   @Override
+   public HandlerRegistration addTerminalSessionStoppedHandler(TerminalSessionStoppedEvent.Handler handler)
+   {
+      return handlers_.addHandler(TerminalSessionStoppedEvent.TYPE,  handler);
+   }
    
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private ConsoleProcess consoleProcess_;
+   private String terminalTitle_ = "(Not Connected)"; 
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 

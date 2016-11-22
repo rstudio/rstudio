@@ -15,13 +15,19 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -31,7 +37,9 @@ import com.google.inject.Inject;
  */
 public class TerminalPane extends WorkbenchPane
                           implements ClickHandler,
-                                     TerminalTabPresenter.Display
+                                     TerminalTabPresenter.Display,
+                                     TerminalSessionStartedEvent.Handler,
+                                     TerminalSessionStoppedEvent.Handler
 {
    @Inject
     protected TerminalPane(Commands commands,
@@ -46,7 +54,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      terminalSessionsPanel_ = new TerminalSessionsPanel();
+      terminalSessionsPanel_ = new DeckLayoutPanel();
       return terminalSessionsPanel_;
    }
 
@@ -82,25 +90,75 @@ public class TerminalPane extends WorkbenchPane
    {
       ensureVisible();
       bringToFront();
+      ensureTerminal();
    }
    
    @Override
    public void ensureTerminal()
    {
-      if (terminalSessionsPanel_.getTerminalCount() == 0)
+      if (getTerminalCount() == 0)
       {
-         terminalSessionsPanel_.createTerminal();
+         createTerminal();
       }
    }
    
    @Override
    public void createTerminal()
    {
-      terminalSessionsPanel_.createTerminal();
+      if (secureInput_ == null)
+      {
+         secureInput_ = new ShellSecureInput();  
+      }
+      
+      TerminalSession newSession = new TerminalSession(secureInput_);
+      addHandlerRegistration(newSession.addTerminalSessionStartedHandler(this));
+      addHandlerRegistration(newSession.addTerminalSessionStoppedHandler(this));
+      newSession.connect();
    }
- 
-   private TerminalSessionsPanel terminalSessionsPanel_;
+
+   @Override
+   public void onTerminalSessionStarted(TerminalSessionStartedEvent event)
+   {
+      terminalSessionsPanel_.add(event.getTerminalWidget());
+      terminalSessionsPanel_.showWidget(event.getTerminalWidget());
+      
+      // TODO (gary) update dropdown
+   } 
+   
+   @Override
+   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
+   {
+      Widget currentTerminal = event.getTerminalWidget();
+      int currentIndex = terminalSessionsPanel_.getWidgetIndex(currentTerminal);
+      if (currentIndex > 0)
+      {
+         terminalSessionsPanel_.showWidget(currentIndex - 1);
+         // TODO (gary) set focus on the widget
+      }
+      terminalSessionsPanel_.remove(currentTerminal);
+      
+      // TODO (gary) update dropdown
+   }
+
+   public int getTerminalCount()
+   {
+      return terminalSessionsPanel_.getWidgetCount();
+   }
+   
+   protected void addHandlerRegistration(HandlerRegistration reg)
+   {
+      registrations_.add(reg);
+   }
+   
+   protected void unregisterHandlers()
+   {
+      registrations_.removeHandler();
+   }
+   
+   private DeckLayoutPanel terminalSessionsPanel_;
    private Commands commands_;
    private Session session_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
+   private ShellSecureInput secureInput_;
+   private HandlerRegistrations registrations_ = new HandlerRegistrations();
 }
