@@ -7,4 +7,5 @@
 ### Miscellaneous
 
 * Implement support for changing editor tabs with the mouse wheel
+* Add option to knit in current working directory or project directory
 

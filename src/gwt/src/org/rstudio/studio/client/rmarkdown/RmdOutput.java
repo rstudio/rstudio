@@ -241,7 +241,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
            null,
            false,
            RmdOutput.TYPE_STATIC,
-           event.getOutputFile());
+           event.getOutputFile(),
+           null);
       events_.fireEvent(renderEvent);
    }
    
@@ -263,6 +264,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.asTempfile(),
                               event.getType(),
                               event.getExistingOutputFile(),
+                              event.getWorkingDir(),
                   new SimpleRequestCallback<Boolean>() {
                        @Override 
                        public void onError(ServerError error)
@@ -407,6 +409,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             null,
             false,
             RmdOutput.TYPE_STATIC,
+            null,
             null);
        events_.fireEvent(renderEvent);
    }
@@ -535,7 +538,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
             null, result.getTargetEncoding(), null, false, 
-            RmdOutput.TYPE_SHINY, null));
+            RmdOutput.TYPE_SHINY, null, null));
    }
    
    private void displayRenderResult(final RmdRenderResult result)

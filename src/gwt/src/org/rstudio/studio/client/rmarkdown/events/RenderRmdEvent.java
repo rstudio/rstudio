@@ -39,7 +39,8 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
                          String paramsFile,
                          boolean asTempfile,
                          int type,
-                         String existingOutputFile)
+                         String existingOutputFile,
+                         String workingDirectory)
    {
       sourceFile_ = sourceFile;
       sourceLine_ = sourceLine;
@@ -49,6 +50,7 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
       asTempfile_ = asTempfile;
       type_ = type;
       existingOutputFile_ = existingOutputFile;
+      workingDirectory_ = workingDirectory;
    }
 
    public String getSourceFile()
@@ -90,6 +92,11 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
    {
       return existingOutputFile_;
    }
+   
+   public String getWorkingDir()
+   {
+      return workingDirectory_;
+   }
     
    @Override
    public Type<Handler> getAssociatedType()
@@ -111,6 +118,9 @@ public class RenderRmdEvent extends CrossWindowEvent<RenderRmdEvent.Handler>
    private boolean asTempfile_;
    private int type_;
    private String existingOutputFile_;
+   private String workingDirectory_;
+   
+   public final static String WORKING_DIR_PROP = "working_dir";
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

@@ -31,6 +31,7 @@ using namespace rstudio::core;
 #define kDocQueueMaxUnits       "max_units"
 #define kDocQueueCommitMode     "commit_mode"
 #define kDocQueueCompletedUnits "completed_units"
+#define kDocQueueWorkingDir     "working_dir"
 
 namespace rstudio {
 namespace session {
@@ -39,8 +40,8 @@ namespace rmarkdown {
 namespace notebook {
 
 NotebookDocQueue::NotebookDocQueue(const std::string& docId, 
-      const std::string& jobDesc, CommitMode commitMode,
-      int pixelWidth, int charWidth, int maxUnits) :
+      const std::string& jobDesc, const std::string& workingDir, 
+      CommitMode commitMode, int pixelWidth, int charWidth, int maxUnits) :
       docId_(docId),
       jobDesc_(jobDesc),
       commitMode_(commitMode),
@@ -61,10 +62,19 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
    
    // read the default working dir; if it specifies a valid directory, use it
    // as the working directory for executing chunks in this document
-   std::string workingDir;
-   json::readObject(vals, kChunkWorkingDir, &workingDir);
-   if (!workingDir.empty())
+   std::string docWorkingDir;
+   json::readObject(vals, kChunkWorkingDir, &docWorkingDir);
+   if (!docWorkingDir.empty())
+   {
+      // working directory set in setup chunk (i.e. knitr root.dir) takes
+      // precedence
+      setWorkingDir(docWorkingDir);
+   }
+   else if (!workingDir.empty())
+   {
+      // working directory given by IDE (current dir or project dir)
       setWorkingDir(workingDir);
+   }
 
    // read external code chunk contents
    json::readObject(vals, kChunkExternals, &externalChunks_);
@@ -90,6 +100,7 @@ json::Object NotebookDocQueue::toJson() const
    json::Object queue;
    queue[kDocQueueId]             = docId_;
    queue[kDocQueueJobDesc]        = jobDesc_;
+   queue[kDocQueueWorkingDir]     = workingDir_.absolutePath();
    queue[kDocQueueCommitMode]     = commitMode_;
    queue[kDocQueuePixelWidth]     = pixelWidth_;
    queue[kDocQueueCharWidth]      = charWidth_;
@@ -106,10 +117,11 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    // extract contained unit for manipulation
    json::Array units; 
    int commitMode = 0, pixelWidth = 0, charWidth = 0, maxUnits = 0;
-   std::string docId, jobDesc;
+   std::string docId, jobDesc, workingDir;
    Error error = json::readObject(source, 
          kDocQueueId,         &docId,
          kDocQueueJobDesc,    &jobDesc,
+         kDocQueueWorkingDir, &workingDir,
          kDocQueueCommitMode, &commitMode,
          kDocQueuePixelWidth, &pixelWidth,
          kDocQueueCharWidth,  &charWidth,
@@ -118,7 +130,7 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    if (error)
       return error;
 
-   *pQueue = boost::make_shared<NotebookDocQueue>(docId, jobDesc,
+   *pQueue = boost::make_shared<NotebookDocQueue>(docId, jobDesc, workingDir,
          static_cast<CommitMode>(commitMode), pixelWidth, charWidth,
          maxUnits);
 

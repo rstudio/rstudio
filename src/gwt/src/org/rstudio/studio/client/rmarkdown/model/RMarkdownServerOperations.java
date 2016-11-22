@@ -29,7 +29,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
        
    void renderRmd(String file, int line, String format, String encoding,
                   String paramsFile, boolean asTempfile, int type,
-                  String existingOutputFile,
+                  String existingOutputFile, String workingDir,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,
