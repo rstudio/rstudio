@@ -134,8 +134,8 @@ public class TerminalSession extends XTermWidget
      
       consoleProcess_ = null;
       fireEvent(new TerminalSessionStoppedEvent(terminalTitle_, this));
-   }
 
+   }
    
    @Override
    public void onResizeTerminal(ResizeTerminalEvent event)
@@ -205,10 +205,12 @@ public class TerminalSession extends XTermWidget
    }
 
    @Override
-   public void onUnload()
+   protected void onDetach()
    {
-      super.onUnload();
+      super.onDetach();
       unregisterHandlers();
+      terminalStartedRegistration_.removeHandler();
+      terminalStoppedRegistration_.removeHandler(); 
    }
    
    public String getTerminalTitle()
@@ -217,19 +219,22 @@ public class TerminalSession extends XTermWidget
    }
 
    @Override
-   public HandlerRegistration addTerminalSessionStartedHandler(TerminalSessionStartedEvent.Handler handler)
+   public void addTerminalSessionStartedHandler(TerminalSessionStartedEvent.Handler handler)
    {
-      return handlers_.addHandler(TerminalSessionStartedEvent.TYPE, handler);
+      terminalStartedRegistration_.add(handlers_.addHandler(TerminalSessionStartedEvent.TYPE, handler));
    }
 
    @Override
-   public HandlerRegistration addTerminalSessionStoppedHandler(TerminalSessionStoppedEvent.Handler handler)
+   public void addTerminalSessionStoppedHandler(TerminalSessionStoppedEvent.Handler handler)
    {
-      return handlers_.addHandler(TerminalSessionStoppedEvent.TYPE,  handler);
+      terminalStoppedRegistration_.add(handlers_.addHandler(TerminalSessionStoppedEvent.TYPE,  handler));
    }
    
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
+   private HandlerRegistrations terminalStartedRegistration_ = new HandlerRegistrations();
+   private HandlerRegistrations terminalStoppedRegistration_ = new HandlerRegistrations();
+   
    private ConsoleProcess consoleProcess_;
    private String terminalTitle_ = "(Not Connected)"; 
    

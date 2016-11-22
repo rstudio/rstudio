@@ -19,7 +19,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TerminalSessionStartedEvent extends GwtEvent<Handler>
@@ -31,7 +30,7 @@ public class TerminalSessionStartedEvent extends GwtEvent<Handler>
    
    public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
    {
-      HandlerRegistration addTerminalSessionStartedHandler(Handler handler);
+      void addTerminalSessionStartedHandler(Handler handler);
    }
    
    public TerminalSessionStartedEvent(String terminalName, Widget terminalWidget)

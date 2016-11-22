@@ -15,9 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import java.util.HashMap;
-
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -28,7 +25,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -50,7 +46,6 @@ public class TerminalPane extends WorkbenchPane
       super("Terminal");
       commands_ = commands;
       session_ = session;
-      widgetToRegistrations_ = new HashMap<Widget, HandlerRegistrations>();
       ensureWidget();
    }
 
@@ -114,10 +109,8 @@ public class TerminalPane extends WorkbenchPane
       }
       
       TerminalSession newSession = new TerminalSession(secureInput_);
-      
-      addHandlerRegistration(newSession, newSession.addTerminalSessionStartedHandler(this));
-      addHandlerRegistration(newSession, newSession.addTerminalSessionStoppedHandler(this));
-      
+      newSession.addTerminalSessionStartedHandler(this);
+      newSession.addTerminalSessionStoppedHandler(this);
       newSession.connect();
    }
 
@@ -134,7 +127,6 @@ public class TerminalPane extends WorkbenchPane
    public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
    {
       Widget currentTerminal = event.getTerminalWidget();
-      unregisterHandlers(currentTerminal);
       int currentIndex = terminalSessionsPanel_.getWidgetIndex(currentTerminal);
       if (currentIndex > 0)
       {
@@ -151,65 +143,9 @@ public class TerminalPane extends WorkbenchPane
       return terminalSessionsPanel_.getWidgetCount();
    }
 
-   @Override
-   public void onUnload()
-   {
-      super.onUnload();
-      unregisterAllHandlers();
-   }
-
-   /**
-    * Track a handler registration with a specific widget, so we can remove
-    * handlers for that specific widget when it is removed.
-    * @param widget Widget we are registering with
-    * @param reg Handler we are tracking
-    */
-   protected void addHandlerRegistration(Widget widget, HandlerRegistration reg)
-   {
-      HandlerRegistrations registrations = widgetToRegistrations_.get(widget);
-      if (registrations == null)
-      {
-         registrations = new HandlerRegistrations();
-         widgetToRegistrations_.put(widget, registrations);
-      }
-      registrations.add(reg);
-   }
-   
-   /**
-    * Unregister handlers for a specific widget.
-    * @param widget Widget to unregister.
-    */
-   protected void unregisterHandlers(Widget widget)
-   {
-      HandlerRegistrations registrations = widgetToRegistrations_.get(widget);
-      if (registrations != null)
-      {
-         registrations.removeHandler();
-         widgetToRegistrations_.remove(widget);
-      }
-   }
-   
-   /**
-    * Unregister handlers for all widgets.
-    */
-   protected void unregisterAllHandlers()
-   {
-      for (HandlerRegistrations registrations : widgetToRegistrations_.values())
-      {
-         registrations.removeHandler();
-      }
-      widgetToRegistrations_.clear();
-   }
-   
    private DeckLayoutPanel terminalSessionsPanel_;
    private Commands commands_;
    private Session session_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private ShellSecureInput secureInput_;
-   
-   /**
-    * Due to dynamic child Widgets, we track registrations by Widget so we 
-    * can remove them when the Widget is being closed. 
-    */
-   private final HashMap<Widget, HandlerRegistrations> widgetToRegistrations_;
 }
