@@ -400,35 +400,6 @@ private:
    }
    
 private:
-   Error validateFields(const core::FilePath& resourcePath,
-                        std::map<std::string, std::string>& fields,
-                        const ErrorLocation& location)
-   {
-      std::vector<std::string> missingFields;
-      const char* expected[] = {"binding", "title", "subtitle", "caption"};
-      for (std::size_t i = 0; i < sizeof(expected); ++i)
-      {
-         const char* field = expected[i];
-         if (!fields.count(field) || fields[field].empty())
-            missingFields.push_back(field);
-      }
-      
-      if (missingFields.empty())
-         return Success();
-      
-      std::string reason =
-            "invalid project template description: missing or empty fields "
-            "[" + core::algorithm::join(missingFields, ",") + "]";
-      
-      Error error = systemError(
-               boost::system::errc::protocol_error,
-               location);
-      
-      error.addProperty("reason", reason);
-      error.addProperty("file", resourcePath);
-      
-      return error;
-   }
    
    void addKnownProjectTemplates()
    {
