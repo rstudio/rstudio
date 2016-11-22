@@ -243,7 +243,7 @@ core::Error populate(
 
 
 
-class ProjectTemplateRegistry
+class ProjectTemplateRegistry : boost::noncopyable
 {
 public:
    
@@ -285,9 +285,11 @@ public:
    > registry_;
 };
 
-ProjectTemplateRegistry& projectTemplateRegistry()
+boost::shared_ptr<ProjectTemplateRegistry>& projectTemplateRegistry()
 {
-   static ProjectTemplateRegistry instance;
+   static boost::shared_ptr<ProjectTemplateRegistry> instance =
+         boost::make_shared<ProjectTemplateRegistry>();
+   
    return instance;
 }
 
@@ -385,7 +387,7 @@ private:
          onWork(kProjectTemplateLocal, localTemplatesPath);
       
       // update global registry
-      projectTemplateRegistry() = *pRegistry_;
+      projectTemplateRegistry() = pRegistry_;
       
       // add known project templates
       addKnownProjectTemplates();
@@ -444,7 +446,7 @@ private:
       // package with this binding, bail (this allows R packages to
       // override the default settings provided by RStudio if desired)
       std::vector<ProjectTemplateDescription>& templates =
-            projectTemplateRegistry().get(package);
+            projectTemplateRegistry()->get(package);
       
       for (std::size_t i = 0, n = templates.size(); i < n; ++i)
          if (templates[i].binding == binding)
@@ -461,7 +463,7 @@ private:
       ptd.title    = title;
       ptd.subtitle = subtitle;
       ptd.caption  = caption;
-      projectTemplateRegistry().add(package, ptd);
+      projectTemplateRegistry()->add(package, ptd);
    }
    
    void normalize(ProjectTemplateDescription* pDescription)
@@ -484,7 +486,7 @@ private:
    
    void notifyClient()
    {
-      json::Value data = projectTemplateRegistry().toJson();
+      json::Value data = projectTemplateRegistry()->toJson();
       ClientEvent event(client_events::kProjectTemplateRegistryUpdated, data);
       module_context::enqueClientEvent(event);
    }
@@ -547,7 +549,7 @@ void onConsoleInput(const std::string& input)
 void respondWithProjectTemplateRegistry(const json::JsonRpcFunctionContinuation& continuation)
 {
    json::JsonRpcResponse response;
-   response.setResult(projectTemplateRegistry().toJson());
+   response.setResult(projectTemplateRegistry()->toJson());
    continuation(Success(), &response);
 }
 
