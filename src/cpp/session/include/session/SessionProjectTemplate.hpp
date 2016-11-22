@@ -57,39 +57,12 @@ struct ProjectTemplateWidgetDescription
    std::string label;
    std::vector<std::string> fields;
 
-   core::json::Value toJson() const
-   {
-      core::json::Object object;
-
-      object["parameter"] = parameter;
-      object["type"]      = type;
-      object["label"]     = label;
-
-      object["fields"]    = core::json::toJsonArray(fields);
-
-      return object;
-   }
-
-   static ProjectTemplateWidgetDescription fromJson(core::json::Object& object)
-   {
-      ProjectTemplateWidgetDescription ptwd;
-      
-      core::Error error = core::json::readObject(
-               object,
-               "parameter", &ptwd.parameter,
-               "type",      &ptwd.type,
-               "label",     &ptwd.label);
-      
-      if (error)
-         LOG_ERROR(error);
-
-      core::json::fillVectorString(
-            object["fields"].get_array(),
-            &(ptwd.fields));
-
-      return ptwd;
-   }
+   core::json::Value toJson() const;
 };
+
+core::Error fromJson(
+      core::json::Object& object,
+      ProjectTemplateWidgetDescription* pDescription);
 
 struct ProjectTemplateDescription
 {
@@ -201,54 +174,12 @@ struct ProjectTemplateDescription
       return core::Success();
    }
    
-   core::json::Value toJson() const
-   {
-      core::json::Object object;
-      
-      object["package"]  = package;
-      object["binding"]  = binding;
-      object["title"]    = title;
-      object["subtitle"] = subtitle;
-      object["caption"]  = caption;
-      object["icon"]     = icon;
-      
-      core::json::Array widgetsJson;
-      BOOST_FOREACH(const ProjectTemplateWidgetDescription& widgetDescription, widgets)
-      {
-         widgetsJson.push_back(widgetDescription.toJson());
-      }
-      object["widgets"] = widgetsJson;
-      
-      return object;
-   }
-   
-   static ProjectTemplateDescription fromJson(core::json::Object& object)
-   {
-      ProjectTemplateDescription ptd;
-      
-      core::Error error = core::json::readObject(
-               object,
-               "package",  &ptd.package,
-               "binding",  &ptd.binding,
-               "title",    &ptd.title,
-               "subtitle", &ptd.subtitle,
-               "caption",  &ptd.caption,
-               "icon",     &ptd.icon);
-      
-      if (error)
-         LOG_ERROR(error);
-      
-      core::json::Array widgetsJson = object["widgets"].get_array();
-      BOOST_FOREACH(core::json::Value& widgetJson, widgetsJson)
-      {
-         ProjectTemplateWidgetDescription description =
-               ProjectTemplateWidgetDescription::fromJson(widgetJson.get_obj());
-         ptd.widgets.push_back(description);
-      }
-      
-      return ptd;
-   }
+   core::json::Value toJson() const;
 };
+
+core::Error fromJson(
+      core::json::Object&,
+      ProjectTemplateDescription* pDescription);
 
 core::Error initialize();
 

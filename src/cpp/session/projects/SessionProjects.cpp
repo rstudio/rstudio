@@ -141,8 +141,13 @@ Error initializeProjectFromTemplate(const FilePath& projectPath,
    if (error)
       return error;
    
-    ProjectTemplateDescription description =
-          ProjectTemplateDescription::fromJson(descriptionJson);
+   ProjectTemplateDescription description;
+   error = fromJson(
+            descriptionJson,
+            &description);
+   
+   if (error)
+      return error;
     
     // move to directory containing the new project, and then initialize
     FilePath parentPath = projectPath.parent();

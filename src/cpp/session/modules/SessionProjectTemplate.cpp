@@ -41,6 +41,99 @@ namespace modules {
 namespace projects {
 namespace templates {
 
+Error fromJson(
+      json::Object& object,
+      ProjectTemplateWidgetDescription* pDescription)
+{
+   ProjectTemplateWidgetDescription ptwd;
+
+   core::Error error = core::json::readObject(
+            object,
+            "parameter", &ptwd.parameter,
+            "type",      &ptwd.type,
+            "label",     &ptwd.label);
+
+   if (error)
+      return error;
+
+   core::json::fillVectorString(
+            object["fields"].get_array(),
+         &(ptwd.fields));
+
+   *pDescription = ptwd;
+   return Success();
+}
+
+json::Value ProjectTemplateWidgetDescription::toJson() const
+{
+   core::json::Object object;
+
+   object["parameter"] = parameter;
+   object["type"]      = type;
+   object["label"]     = label;
+   object["fields"]    = core::json::toJsonArray(fields);
+
+   return object;
+}
+
+Error fromJson(
+      json::Object& object,
+      ProjectTemplateDescription* pDescription)
+{
+   ProjectTemplateDescription ptd;
+
+   Error error = json::readObject(
+            object,
+            "package",  &ptd.package,
+            "binding",  &ptd.binding,
+            "title",    &ptd.title,
+            "subtitle", &ptd.subtitle,
+            "caption",  &ptd.caption,
+            "icon",     &ptd.icon);
+
+   if (error)
+      LOG_ERROR(error);
+
+   json::Array widgetsJson = object["widgets"].get_array();
+   BOOST_FOREACH(json::Value& widgetJson, widgetsJson)
+   {
+      ProjectTemplateWidgetDescription description;
+      
+      Error error = fromJson(
+               widgetJson.get_obj(),
+               &description);
+      
+      if (error)
+         LOG_ERROR(error);
+      
+      ptd.widgets.push_back(description);
+   }
+
+   *pDescription = ptd;
+   return Success();
+}
+
+json::Value ProjectTemplateDescription::toJson() const
+{
+   core::json::Object object;
+
+   object["package"]  = package;
+   object["binding"]  = binding;
+   object["title"]    = title;
+   object["subtitle"] = subtitle;
+   object["caption"]  = caption;
+   object["icon"]     = icon;
+
+   core::json::Array widgetsJson;
+   BOOST_FOREACH(const ProjectTemplateWidgetDescription& widgetDescription, widgets)
+   {
+      widgetsJson.push_back(widgetDescription.toJson());
+   }
+   object["widgets"] = widgetsJson;
+
+   return object;
+}
+
 namespace {
 
 class ProjectTemplateRegistry
