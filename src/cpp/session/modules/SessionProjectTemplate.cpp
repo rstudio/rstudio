@@ -31,7 +31,7 @@
 #include <session/SessionPackageProvidedExtension.hpp>
 
 #define kProjectTemplateLocal "(local)"
-#define kRStudioProjectTemplatesPath "rstudio/projects/templates"
+#define kRStudioProjectTemplatesPath "rstudio/templates/projects"
 
 using namespace rstudio::core;
 
