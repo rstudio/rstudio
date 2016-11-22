@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -883,7 +884,35 @@ public class TextEditingTargetWidget
                                       true,
                                       cmd); 
          rmdFormatButton_.addMenuItem(item, knitWithParams.getMenuLabel(false));
+      }
       
+      if (session_.getSessionInfo().getKnitWorkingDirAvailable())
+      {
+         MenuBar knitDirMenu = new MenuBar(true);
+         DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
+               "Document Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_DEFAULT);
+         knitDirMenu.addItem(knitInDocDir);
+         DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
+               "Project Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_PROJECT);
+         knitDirMenu.addItem(knitInProjectDir);
+         DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
+               "Current Working Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_CURRENT);
+         knitDirMenu.addItem(knitInCurrentDir);
+
+         rmdFormatButton_.addSeparator();
+         rmdFormatButton_.addMenuItem(knitDirMenu, "Knit Directory");
       }
       
       addClearKnitrCacheMenu(rmdFormatButton_);

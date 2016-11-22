@@ -37,6 +37,8 @@ bool rmarkdownPackageAvailable();
 
 bool knitParamsAvailable();
 
+bool knitWorkingDirAvailable();
+
 core::Error evaluateRmdParams(const std::string& docId);
 
 core::Error initialize();

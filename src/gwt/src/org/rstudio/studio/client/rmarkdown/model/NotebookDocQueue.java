@@ -24,11 +24,12 @@ public class NotebookDocQueue extends JavaScriptObject
    }
    
    public static final native NotebookDocQueue create(
-         String docId, String jobDesc, int commitMode, 
+         String docId, String jobDesc, String workingDir, int commitMode, 
          int pixelWidth, int charWidth) /*-{
       return {
          doc_id:          docId,
          job_desc:        jobDesc,
+         working_dir:     workingDir,
          commit_mode:     commitMode,
          pixel_width:     pixelWidth,
          char_width:      charWidth,
