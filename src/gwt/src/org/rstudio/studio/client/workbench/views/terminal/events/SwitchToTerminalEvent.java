@@ -15,22 +15,22 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 
-public class SwitchToTerminalEvent extends GwtEvent<Handler>
+@JavaScriptSerializable
+public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
       void onSwitchToTerminal(SwitchToTerminalEvent event);
    }
    
-   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
+   public SwitchToTerminalEvent()
    {
-      HandlerRegistration addSwitchToTerminalHandler(Handler handler);
    }
    
    public SwitchToTerminalEvent(String terminalName)

@@ -15,22 +15,23 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.Widget;
 
-public class TerminalSessionStartedEvent extends GwtEvent<Handler>
+@JavaScriptSerializable
+public class TerminalSessionStartedEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
       void onTerminalSessionStarted(TerminalSessionStartedEvent event);
    }
    
-   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
+   public TerminalSessionStartedEvent()
    {
-      void addTerminalSessionStartedHandler(Handler handler);
    }
    
    public TerminalSessionStartedEvent(String terminalName, Widget terminalWidget)
@@ -40,7 +41,7 @@ public class TerminalSessionStartedEvent extends GwtEvent<Handler>
    }
 
    @Override
-   public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

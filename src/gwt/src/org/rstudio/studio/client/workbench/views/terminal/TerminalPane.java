@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -41,11 +42,14 @@ public class TerminalPane extends WorkbenchPane
 {
    @Inject
     protected TerminalPane(Commands commands,
-                           Session session)
+                           Session session,
+                           EventBus events)
    {
       super("Terminal");
       commands_ = commands;
       session_ = session;
+      events.addHandler(TerminalSessionStartedEvent.TYPE, this);
+      events.addHandler(TerminalSessionStoppedEvent.TYPE, this);
       ensureWidget();
    }
 
@@ -109,8 +113,6 @@ public class TerminalPane extends WorkbenchPane
       }
       
       TerminalSession newSession = new TerminalSession(secureInput_);
-      newSession.addTerminalSessionStartedHandler(this);
-      newSession.addTerminalSessionStoppedHandler(this);
       newSession.connect();
    }
 

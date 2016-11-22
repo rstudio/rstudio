@@ -15,13 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.Widget;
 
-public class TerminalSessionStoppedEvent extends GwtEvent<Handler>
+@JavaScriptSerializable
+public class TerminalSessionStoppedEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
@@ -31,6 +33,10 @@ public class TerminalSessionStoppedEvent extends GwtEvent<Handler>
    public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
    {
       void addTerminalSessionStoppedHandler(Handler handler);
+   }
+  
+   public TerminalSessionStoppedEvent()
+   {
    }
    
    public TerminalSessionStoppedEvent(String terminalName, Widget terminalWidget)

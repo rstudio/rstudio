@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -46,9 +47,7 @@ public class TerminalSession extends XTermWidget
                              implements ConsoleOutputEvent.Handler, 
                                         ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
-                                        TerminalDataInputEvent.Handler,
-                                        TerminalSessionStartedEvent.HasHandlers,
-                                        TerminalSessionStoppedEvent.HasHandlers
+                                        TerminalDataInputEvent.Handler
 {
    public TerminalSession(final ShellSecureInput secureInput)
    {
@@ -58,10 +57,12 @@ public class TerminalSession extends XTermWidget
    }
    
    @Inject
-   private void initialize(WorkbenchServerOperations server)
+   private void initialize(WorkbenchServerOperations server,
+                           EventBus events)
    {
       server_ = server;
-   }
+      eventBus_ = events; 
+      }
    
    /**
     * Create a terminal process and connect to it.
@@ -96,7 +97,7 @@ public class TerminalSession extends XTermWidget
                   @Override
                   public void onResponseReceived(Void response)
                   {
-                     fireEvent(new TerminalSessionStartedEvent(terminalTitle_, TerminalSession.this));
+                     eventBus_.fireEvent(new TerminalSessionStartedEvent(terminalTitle_, TerminalSession.this));
                   }
                   
                   @Override
@@ -133,7 +134,7 @@ public class TerminalSession extends XTermWidget
       }
      
       consoleProcess_ = null;
-      fireEvent(new TerminalSessionStoppedEvent(terminalTitle_, this));
+      eventBus_.fireEvent(new TerminalSessionStoppedEvent(terminalTitle_, this));
 
    }
    
@@ -209,8 +210,6 @@ public class TerminalSession extends XTermWidget
    {
       super.onDetach();
       unregisterHandlers();
-      terminalStartedRegistration_.removeHandler();
-      terminalStoppedRegistration_.removeHandler(); 
    }
    
    public String getTerminalTitle()
@@ -218,26 +217,13 @@ public class TerminalSession extends XTermWidget
       return terminalTitle_;
    }
 
-   @Override
-   public void addTerminalSessionStartedHandler(TerminalSessionStartedEvent.Handler handler)
-   {
-      terminalStartedRegistration_.add(handlers_.addHandler(TerminalSessionStartedEvent.TYPE, handler));
-   }
-
-   @Override
-   public void addTerminalSessionStoppedHandler(TerminalSessionStoppedEvent.Handler handler)
-   {
-      terminalStoppedRegistration_.add(handlers_.addHandler(TerminalSessionStoppedEvent.TYPE,  handler));
-   }
-   
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private HandlerRegistrations terminalStartedRegistration_ = new HandlerRegistrations();
-   private HandlerRegistrations terminalStoppedRegistration_ = new HandlerRegistrations();
    
    private ConsoleProcess consoleProcess_;
    private String terminalTitle_ = "(Not Connected)"; 
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 
+   private EventBus eventBus_;
 }
