@@ -1,7 +1,7 @@
 /*
  * gridstyles.css
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -282,6 +282,11 @@ th:focus {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
+}
+
+.cell {
+    position: relative;
 }
 
 .searchMatch {
@@ -330,7 +335,6 @@ table.dataTable thead th.columnClickable {
 
 table.dataTable thead th.columnClickable div {
     padding-right: 15px;
-
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -355,3 +359,14 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
 .disabledColumn {
     background-color: #f7f8f9;
 }
+
+.resizer {
+    position: absolute;
+    height: 23px;   
+    top: -4px;
+    right: -7px;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 5;
+}
+

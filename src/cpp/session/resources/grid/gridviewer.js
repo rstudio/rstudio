@@ -3,7 +3,7 @@
 /*
  * gridviewer.js
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -189,16 +189,18 @@ var renderCellContents = function(data, type, row, meta) {
 
 // render a number cell
 var renderNumberCell = function(data, type, row, meta) {
-  return '<div class="numberCell">' + 
-         renderCellContents(data, type, row, meta) + 
-         '</div>';
+  return '<div class="cell">' + 
+         '<div class="numberCell">' + 
+         renderCellContents(data, type, row, meta) + '</div>' +
+         '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
 
 // render a text cell
 var renderTextCell = function(data, type, row, meta) {
-  return '<div class="textCell" title="' + escapeHtml(data) + '">' + 
-         renderCellContents(data, type, row, meta) + 
-         '</div>';
+  return '<div class="cell">' +
+         '<div class="textCell" title="' + escapeHtml(data) + '">' + 
+         renderCellContents(data, type, row, meta) + '</div>' +
+         '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
 
 // restores scroll information lost on tab switch
@@ -305,7 +307,7 @@ var preDrawCallback = function() {
 
 var postDrawCallback = function() {
   var indicator = $(".DTS_Loading");
-  if (indicator)  {
+  if (indicator) {
       indicator.removeClass("showLoading");
   }
 
@@ -936,7 +938,14 @@ var loadDataFromUrl = function(callback) {
         }
       }
     }); 
-}
+};
+
+var addResizeHandlers = function(ele) {
+   $(ele).on("dragstart", function(evt) {
+      // TODO: catch drag events, find target element, look up column (present
+      // as data attribute, manually change its size, sync with header
+   });
+}; 
 
 // bootstrapping: 
 // 1. clean up state (we re-bootstrap whenever table structure changes)
@@ -983,6 +992,7 @@ var bootstrap = function(data) {
                      "    <tr id='data_cols'>" +
                      "    </tr>" +
                      "</thead>";  
+  addResizeHandlers(newEle);
 
   if (!data) {
     loadDataFromUrl(function(result) {
@@ -1071,12 +1081,12 @@ window.setFilterUIVisible = function(visible) {
     }
 
     return null;
-  }
+  };
 
   var hideFilterUI = function() {
     // clear all the filter data
     table.columns().search("");
-  }
+  };
 
   return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn, hideFilterUI);
 };
@@ -1085,11 +1095,11 @@ window.setFilterUIVisible = function(visible) {
 window.setColumnDefinitionsUIVisible = function(visible, onColOpen, onColDismiss) {
   var setColumnDefinitionsUIVisiblePerColumn = function(th, col, i) {
     return createColumnTypesUI(th, i, col);
-  }
+  };
 
   var hideColumnTypeUI = function(thead) {
     $(".columnTypeWrapper").remove();
-  }
+  };
 
   onColumnOpen = onColOpen ? onColOpen : onColumnOpen;
   onColumnDismiss = onColDismiss ? onColDismiss : onColumnDismiss;
@@ -1161,7 +1171,7 @@ window.onDeactivate = function() {
 
 window.setData = function(data) {
   bootstrap(data);
-}
+};
 
 window.setOption = function(option, value) {
   switch (option)
@@ -1179,11 +1189,11 @@ window.setOption = function(option, value) {
       rowNumbers = value === "true" ? true : false;
       break;
   }
-}
+};
 
 window.getActiveColumn = function() {
   return activeColumnInfo;
-}
+};
 
 var parsedLocation = parseLocationUrl();
 var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";
