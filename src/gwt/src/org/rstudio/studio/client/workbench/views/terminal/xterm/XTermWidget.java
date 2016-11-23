@@ -221,13 +221,13 @@ public class XTermWidget extends Widget implements RequiresResize,
          }
 
          // don't send same size multiple times
-         if (cols == previousCols && rows == previousRows)
+         if (cols == previousCols_ && rows == previousRows_)
          {
             return;
          }
          
-         previousCols = cols;
-         previousRows = rows;
+         previousCols_ = cols;
+         previousRows_ = rows;
          
          fireEvent(new ResizeTerminalEvent(cols, rows)); 
       }
@@ -323,6 +323,6 @@ public class XTermWidget extends Widget implements RequiresResize,
    private boolean initialized_ = false;
    private boolean hasTerminalDataInputHandler_ = false;
    
-   private int previousRows = -1;
-   private int previousCols = -1;
+   private int previousRows_ = -1;
+   private int previousCols_ = -1;
 }

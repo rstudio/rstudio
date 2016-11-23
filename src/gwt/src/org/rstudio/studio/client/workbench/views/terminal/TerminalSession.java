@@ -36,8 +36,9 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 
@@ -230,18 +231,16 @@ public class TerminalSession extends XTermWidget
          // there are issues with xterm.js losing its mind when it is resized
          // after re-emerging from behind other terminals. Why? Is this delay
          // the best solution?
-         sendOnResizeLocal_.schedule(5);
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               onResize();
+            }
+         });
       }
    }
-   
-   private Timer sendOnResizeLocal_ = new Timer()
-   {
-      @Override
-      public void run()
-      {
-         onResize();
-      }
-   };
    
    public String getTerminalTitle()
    {
