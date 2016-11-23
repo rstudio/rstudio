@@ -167,15 +167,24 @@ Error parseCsvField(const std::string& field,
 
 Error parseWidgetType(const std::string& widget, std::string* pWidgetType)
 {
-   std::string widgetLower = string_utils::toLower(widget);
-   for (std::size_t i = 0, n = sizeof(kWidgetTypes); i < n; ++i)
+   static std::vector<std::string> kWidgetTypes;
+   if (kWidgetTypes.empty())
    {
-      const char* widgetType = kWidgetTypes[i];
-      if (widgetLower == widgetType)
-      {
-         pWidgetType->assign(widgetType);
-         return Success();
-      }
+      kWidgetTypes.push_back(kProjectTemplateWidgetTypeCheckBox);
+      kWidgetTypes.push_back(kProjectTemplateWidgetTypeFileInput);
+      kWidgetTypes.push_back(kProjectTemplateWidgetTypeSelectBox);
+      kWidgetTypes.push_back(kProjectTemplateWidgetTypeTextInput);
+   }
+   
+   std::vector<std::string>::const_iterator it =
+         std::find(kWidgetTypes.begin(),
+                   kWidgetTypes.end(),
+                   string_utils::toLower(widget));
+   
+   if (it != kWidgetTypes.end())
+   {
+      pWidgetType->assign(*it);
+      return Success();
    }
 
    return systemError(

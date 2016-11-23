@@ -43,13 +43,6 @@ namespace templates {
 #define kProjectTemplateWidgetTypeTextInput "textinput"
 #define kProjectTemplateWidgetTypeFileInput "fileinput"
 
-static const char* const kWidgetTypes[] = {
-   kProjectTemplateWidgetTypeCheckBox,
-   kProjectTemplateWidgetTypeSelectBox,
-   kProjectTemplateWidgetTypeTextInput,
-   kProjectTemplateWidgetTypeFileInput
-};
-
 struct ProjectTemplateWidgetDescription
 {
    // COPYING: copyable members
