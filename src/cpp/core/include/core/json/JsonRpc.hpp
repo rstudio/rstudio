@@ -557,7 +557,7 @@ core::Error readObject(
       if (!isType<T>(el))
          return errors::typeMismatch(
                   el,
-                  StringType,
+                  json::asJsonType(T()),
                   ERROR_LOCATION);
       
       pVector->push_back(el.get_value<T>());
