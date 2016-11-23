@@ -15,23 +15,52 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
-   @Inject
-   public TerminalTabPresenter(GlobalDisplay globalDisplay, WorkbenchServerOperations server)
+   public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
+
+   public interface Display extends WorkbenchView
    {
-      super(new TerminalPane("Terminal", server));
-      pane_ = (TerminalPane) getView();
-      globalDisplay_ = globalDisplay;
+      /**
+       * Ensure terminal pane is visible.
+       */
+      void activateTerminal();
+      
+      /**
+       *  Ensure terminal pane has at least one session loaded.
+       */
+      void ensureTerminal();
+      
+      /**
+       * Create a new terminal session.
+       */
+      void createTerminal();
+   }
+
+   @Inject
+   public TerminalTabPresenter(Display view,
+                               Commands commands,
+                               WorkbenchServerOperations server)
+   {
+      super(view);
+      view_ = view;
+   }
+  
+   @Handler
+   public void onActivateTerminal()
+   {
+      view_.activateTerminal();
+      view_.ensureTerminal();
    }
    
    public void initialize()
@@ -40,34 +69,9 @@ public class TerminalTabPresenter extends BusyPresenter
    
    public void onCreateTerminal(CreateTerminalEvent event)
    {
-      pane_.ensureVisible();
-      pane_.bringToFront();
+      view_.activateTerminal();
+      view_.createTerminal();
    }
 
-   public void confirmClose(final Command onConfirmed)
-   {
-      if (isBusy())
-      {
-        globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-              "Close Terminal", 
-              "Are you sure you want to exit the shell? Any running jobs " +
-              "will be terminated.", false, 
-              new Operation()
-              {
-                 @Override
-                 public void execute()
-                 {
-                    // TODO: (gary) close PTY on server end
-                    onConfirmed.execute();
-                 }
-              }, null, null, "Exit", "Cancel", true);
-      }
-      else
-      {
-        onConfirmed.execute();
-      }
-   }
-
-   private final TerminalPane pane_;
-   private final GlobalDisplay globalDisplay_;
+   private final Display view_;
 }

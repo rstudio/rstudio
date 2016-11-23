@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -64,6 +65,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       notebook_ = notebook;
       editingTarget_ = editingTarget;
       scopeHelper_ = new TextEditingTargetScopeHelper(display);
+      rmdHelper_ = new TextEditingTargetRMarkdownHelper();
       
       events_.addHandler(NotebookRangeExecutedEvent.TYPE, this);
       events_.addHandler(ChunkExecStateChangedEvent.TYPE, this);
@@ -548,6 +550,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       
       // create new queue
       queue_ = NotebookDocQueue.create(sentinel_.getId(), jobDesc, 
+            StringUtil.notNull(rmdHelper_.getKnitWorkingDir(sentinel_)),
             notebook_.getCommitMode(), notebook_.getPlotWidth(), charWidth_);
    }
    
@@ -624,6 +627,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private final EventBus events_;
    private final TextEditingTargetScopeHelper scopeHelper_;
    private final TextEditingTarget editingTarget_;
+   private final TextEditingTargetRMarkdownHelper rmdHelper_;
    
    private int pixelWidth_;
    private int charWidth_;

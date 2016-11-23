@@ -398,7 +398,9 @@ public class Workbench implements BusyHandler,
          final ProgressIndicator indicator = new GlobalProgressDelayer(
                globalDisplay_, 500, "Starting shell...").getIndicator();
          
-         server_.startShellDialog(ConsoleProcess.TerminalType.DUMB, 80, 1, 
+         server_.startShellDialog(ConsoleProcess.TerminalType.DUMB, 
+                                  80, 1, 
+                                  true, /* modal dialog */
                                   new ServerRequestCallback<ConsoleProcess>() 
          {
             @Override

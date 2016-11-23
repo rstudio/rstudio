@@ -578,6 +578,13 @@ public class DocUpdateSentinel
       return properties.getString(propertyName);
    }
    
+   public String getProperty(String propertyName, String defaultValue)
+   {
+      if (hasProperty(propertyName))
+         return getProperty(propertyName);
+      return defaultValue;
+   }
+   
    public boolean getBoolProperty(String propertyName, boolean defaultValue)
    {
       if (hasProperty(propertyName))
@@ -753,7 +760,7 @@ public class DocUpdateSentinel
    {
       return sourceDoc_.getId();
    }
-
+   
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
    private final SourceServerOperations server_;

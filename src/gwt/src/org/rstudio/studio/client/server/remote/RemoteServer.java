@@ -474,12 +474,14 @@ public class RemoteServer implements Server
    
    public void startShellDialog(ConsoleProcess.TerminalType terminalType,
                                 int cols, int rows,
+                                boolean isModalDialog,
                                 ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(terminalType.toString()));
       params.set(1, new JSONNumber(cols));
-      params.set(2,  new JSONNumber(rows));
+      params.set(2, new JSONNumber(rows));
+      params.set(3, JSONBoolean.getInstance(isModalDialog));
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,
                   params,
@@ -4161,7 +4163,7 @@ public class RemoteServer implements Server
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
                          String paramsFile, boolean asTempfile, int type,
-                         String existingOutputFile,
+                         String existingOutputFile, String workingDir,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4173,6 +4175,7 @@ public class RemoteServer implements Server
       params.set(5, JSONBoolean.getInstance(asTempfile));
       params.set(6, new JSONNumber(type));
       params.set(7, new JSONString(StringUtil.notNull(existingOutputFile)));
+      params.set(8, new JSONString(StringUtil.notNull(workingDir)));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,

@@ -233,6 +233,12 @@ elseif(APPLE)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${RSERVER_LAUNCHD_PLIST}
           DESTINATION ${RSERVER_LAUNCHD_DIR})
 
+   # install pam profile
+   set(RSERVER_PAM_DIR "extras/pam")
+   set(RSERVER_PAM_PROFILE "${RSERVER_PAM_DIR}/mac/rstudio")
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_PAM_PROFILE}
+           DESTINATION ${RSERVER_PAM_DIR})
+
 endif()
 
 # add overlay if it exists

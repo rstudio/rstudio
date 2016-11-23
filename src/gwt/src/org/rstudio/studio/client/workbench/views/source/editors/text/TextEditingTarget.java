@@ -4108,10 +4108,8 @@ public class TextEditingTarget implements
       InsertChunkInfo insertChunkInfo = docDisplay_.getInsertChunkInfo();
       if (insertChunkInfo != null)
       {
-         insertChunkInfo.setValue(chunkPlaceholder);
-         
          // inject the chunk skeleton
-         docDisplay_.insertCode(insertChunkInfo.getValue(), false);
+         docDisplay_.insertCode(chunkPlaceholder, false);
 
          // if we had text selected, inject it into the chunk
          if (!StringUtil.isNullOrEmpty(sel))
@@ -4990,7 +4988,8 @@ public class TextEditingTarget implements
                         paramsFile,
                         asTempfile,
                         type,
-                        false);
+                        false,
+                        rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_));
                }
             });  
          }

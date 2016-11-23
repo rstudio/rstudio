@@ -1,7 +1,7 @@
 /*
  * FilePath.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -142,7 +142,7 @@ public:
       // errors 
       MoveCrossDevice
    };
-   Error move(const FilePath& targetPath, MoveType type = MoveDirect) const;
+   Error move(const FilePath& targetPath, MoveType type = MoveCrossDevice) const;
    
    // explicitly perform a two-stage move (copy/delete)
    Error moveIndirect(const FilePath& target) const;

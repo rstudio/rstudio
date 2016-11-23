@@ -234,13 +234,15 @@ public:
                                               bool sourceNavigation,
                                               bool asTempfile,
                                               bool asShiny,
-                                              std::string existingOutputFile)
+                                              const std::string& existingOutputFile,
+                                              const std::string& workingDir)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
-      pRender->start(format, encoding, paramsFile, asTempfile, existingOutputFile);
+      pRender->start(format, encoding, paramsFile, asTempfile, 
+                     existingOutputFile, workingDir);
       return pRender;
    }
 
@@ -301,7 +303,8 @@ private:
               const std::string& encoding,
               const std::string& paramsFile,
               bool asTempfile,
-              std::string existingOutputFile)
+              const std::string& existingOutputFile,
+              const std::string& workingDir)
    {
       Error error;
       json::Object dataJson;
@@ -353,6 +356,13 @@ private:
       if (!paramsFile.empty())
       {
          renderOptions += ", params = readRDS('" + paramsFile + "')";
+      }
+
+      // use the stated working directory if specified
+      if (!workingDir.empty())
+      {
+         renderOptions += ", knit_root_dir = '" + 
+                          string_utils::utf8ToSystem(workingDir) + "'";
       }
 
       // output to a temporary directory if specified (no need to do this
@@ -897,7 +907,8 @@ void doRenderRmd(const std::string& file,
                  bool sourceNavigation,
                  bool asTempfile,
                  bool asShiny,
-                 std::string existingOutputFile,
+                 const std::string& existingOutputFile,
+                 const std::string& workingDir,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -916,7 +927,8 @@ void doRenderRmd(const std::string& file,
                sourceNavigation,
                asTempfile,
                asShiny,
-               existingOutputFile);
+               existingOutputFile,
+               workingDir);
       pResponse->setResult(true);
    }
 }
@@ -925,7 +937,8 @@ Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    int line = -1, type = kRenderTypeStatic;
-   std::string file, format, encoding, paramsFile, existingOutputFile;
+   std::string file, format, encoding, paramsFile, existingOutputFile,
+               workingDir;
    bool asTempfile = false;
    Error error = json::readParams(request.params,
                                   &file,
@@ -935,7 +948,8 @@ Error renderRmd(const json::JsonRpcRequest& request,
                                   &paramsFile,
                                   &asTempfile,
                                   &type,
-                                  &existingOutputFile);
+                                  &existingOutputFile,
+                                  &workingDir);
    if (error)
       return error;
 
@@ -978,7 +992,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       // not a notebook, do render work
       doRenderRmd(file, line, format, encoding, paramsFile,
                   true, asTempfile, type == kRenderTypeShiny, existingOutputFile, 
-                  pResponse);
+                  workingDir, pResponse);
    }
 
    return Success();
@@ -999,7 +1013,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
       return error;
 
    doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
-               false, false, false, "", pResponse);
+               false, false, false, "", "", pResponse);
 
    return Success();
 }
@@ -1356,6 +1370,10 @@ bool knitParamsAvailable()
           module_context::isPackageVersionInstalled("knitr", "1.10.18");
 }
 
+bool knitWorkingDirAvailable()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "1.1.9017");
+}
 
 bool rmarkdownPackageAvailable()
 {

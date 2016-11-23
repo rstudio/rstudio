@@ -1,7 +1,7 @@
 /*
  * RMarkdownPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -29,7 +30,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 {
    @Inject
    public RMarkdownPreferencesPane(UIPrefs prefs,
-                                   PreferencesDialogResources res)
+                                   PreferencesDialogResources res,
+                                   Session session)
    {
       prefs_ = prefs;
       res_ = res;
@@ -98,6 +100,30 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       add(latexPreviewWidget_);
       
+      if (session.getSessionInfo().getKnitWorkingDirAvailable())
+      {
+         knitWorkingDir_ = new SelectWidget(
+               "Evaluate chunks in directory: ",
+               new String[] {
+                     "Document",
+                     "Current",
+                     "Project"
+               },
+               new String[] {
+                     UIPrefsAccessor.KNIT_DIR_DEFAULT,
+                     UIPrefsAccessor.KNIT_DIR_CURRENT,
+                     UIPrefsAccessor.KNIT_DIR_PROJECT
+               },
+               false,
+               true,
+               false);
+         add(knitWorkingDir_);
+      }
+      else
+      {
+         knitWorkingDir_ = null;
+      }
+      
       add(spacedBefore(headerLabel("R Notebooks")));
 
       // auto-execute the setup chunk
@@ -155,7 +181,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       prefs_.showLatexPreviewOnCursorIdle().setGlobalValue(
             latexPreviewWidget_.getValue());
-                 
+      
+      if (knitWorkingDir_ != null)
+      {
+         prefs_.knitWorkingDir().setGlobalValue(
+               knitWorkingDir_.getValue());
+      }
+      
       return requiresRestart;
    }
 
@@ -166,4 +198,5 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget docOutlineDisplay_;
    private final SelectWidget latexPreviewWidget_;
+   private final SelectWidget knitWorkingDir_;
 }

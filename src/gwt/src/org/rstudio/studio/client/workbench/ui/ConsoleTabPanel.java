@@ -52,6 +52,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab deployContentTab,
                           MarkersOutputTab markersTab,
                           WorkbenchTab terminalTab,
+                          boolean enableTerminalTab,
                           EventBus events,
                           ToolbarButton goToWorkingDirButton)
    {
@@ -66,6 +67,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
       terminalTab_ = terminalTab;
+      enableTerminalTab_ = enableTerminalTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -209,29 +211,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          }
       });
       
-      terminalTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
-      {
-         @Override
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            terminalTabVisible_ = true;
-            managePanels();
-            if (event.getActivate())
-               selectTab(terminalTab_);
-         }
-      });
-      terminalTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
-      {
-         @Override
-         public void onEnsureHidden(EnsureHiddenEvent event)
-         {
-            terminalTabVisible_ = false;
-            managePanels();
-            if (!consoleOnly_)
-               selectTab(0);
-         }
-      });
-
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
          @Override
@@ -245,24 +224,26 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          }
       });
 
-      consoleOnly_ = false;
+      consoleOnly_ = enableTerminalTab_; 
       managePanels();
    }
 
    private void managePanels()
    {
-      boolean consoleOnly = !compilePdfTabVisible_ && 
+      boolean consoleOnly = !enableTerminalTab_ &&
+                            !compilePdfTabVisible_ && 
                             !findResultsTabVisible_ &&
                             !sourceCppTabVisible_ &&
                             !renderRmdTabVisible_ &&
                             !deployContentTabVisible_ &&
-                            !markersTabVisible_ &&
-                            !terminalTabVisible_;
+                            !markersTabVisible_;
 
       if (!consoleOnly)
       {
          ArrayList<WorkbenchTab> tabs = new ArrayList<WorkbenchTab>();
          tabs.add(consolePane_);
+         if (enableTerminalTab_)
+            tabs.add(terminalTab_);
          if (compilePdfTabVisible_)
             tabs.add(compilePdfTab_);
          if (findResultsTabVisible_)
@@ -275,8 +256,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(deployContentTab_);
          if (markersTabVisible_)
             tabs.add(markersTab_);
-         if (terminalTabVisible_)
-            tabs.add(terminalTab_);
 
          setTabs(tabs);
       }
@@ -326,7 +305,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final MarkersOutputTab markersTab_;
    private boolean markersTabVisible_;
    private final WorkbenchTab terminalTab_;
-   private boolean terminalTabVisible_;
+   private boolean enableTerminalTab_;
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private final ToolbarButton goToWorkingDirButton_;

@@ -1,7 +1,7 @@
 /*
  * ToolbarPopupMenuButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,9 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 
 public class ToolbarPopupMenuButton extends ToolbarButton
@@ -72,6 +74,15 @@ public class ToolbarPopupMenuButton extends ToolbarButton
          }
       });
       getMenu().addItem(item);
+   }
+   
+   public void addMenuItem(MenuBar subMenu, String label)
+   {
+      SafeHtmlBuilder html = new SafeHtmlBuilder();
+      html.appendHtmlConstant("<span style=\"margin-left: 25px;\">");
+      html.appendEscaped(label);
+      html.appendHtmlConstant("</span>");
+      getMenu().addItem(html.toSafeHtml(), subMenu);
    }
    
    public void addSeparator()

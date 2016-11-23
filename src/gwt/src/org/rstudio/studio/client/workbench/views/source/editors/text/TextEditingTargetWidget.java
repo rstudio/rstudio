@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
+import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -290,6 +291,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
 
+      // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
       insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
       insertChunksMenu.addSeparator();
@@ -303,12 +305,16 @@ public class TextEditingTargetWidget
       insertChunksMenu.addItem(commands_.insertChunkSQL().createMenuItem(false));
       insertChunksMenu.addItem(commands_.insertChunkStan().createMenuItem(false));
 
-      insertChunkButton_ = new ToolbarButton(
+      insertChunkMenu_ = new ToolbarButton(
                        "Insert",
                        commands_.insertChunk().getImageResource(),
                        insertChunksMenu,
                        true);
 
+      toolbar.addRightWidget(insertChunkMenu_);
+
+      // create button that just runs default chunk insertion
+      insertChunkButton_ = commands_.insertChunk().createToolbarButton(false);
       toolbar.addRightWidget(insertChunkButton_);
 
       toolbar.addRightWidget(runButton_ = commands_.executeCode().createToolbarButton(false));
@@ -548,8 +554,12 @@ public class TextEditingTargetWidget
             !isShinyFile());
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks);
       
-      // chunk oriented buttons     
-      insertChunkButton_.setVisible(canExecuteChunks);
+      // show insertion options for various knitr engines in rmarkdown v2
+      insertChunkMenu_.setVisible(isRMarkdown2);
+      
+      // otherwise just show the regular insert chunk button
+      insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
+
       goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
       goToNextButton_.setVisible(fileType.canGoNextPrevSection());
       
@@ -874,7 +884,35 @@ public class TextEditingTargetWidget
                                       true,
                                       cmd); 
          rmdFormatButton_.addMenuItem(item, knitWithParams.getMenuLabel(false));
+      }
       
+      if (session_.getSessionInfo().getKnitWorkingDirAvailable())
+      {
+         MenuBar knitDirMenu = new MenuBar(true);
+         DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
+               "Document Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_DEFAULT);
+         knitDirMenu.addItem(knitInDocDir);
+         DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
+               "Project Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_PROJECT);
+         knitDirMenu.addItem(knitInProjectDir);
+         DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
+               "Current Working Directory", 
+               docUpdateSentinel_, 
+               uiPrefs_.knitWorkingDir(), 
+               RenderRmdEvent.WORKING_DIR_PROP,
+               UIPrefsAccessor.KNIT_DIR_CURRENT);
+         knitDirMenu.addItem(knitInCurrentDir);
+
+         rmdFormatButton_.addSeparator();
+         rmdFormatButton_.addMenuItem(knitDirMenu, "Knit Directory");
       }
       
       addClearKnitrCacheMenu(rmdFormatButton_);
@@ -1207,6 +1245,7 @@ public class TextEditingTargetWidget
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
    private ToolbarButton knitDocumentButton_;
+   private ToolbarButton insertChunkMenu_;
    private ToolbarButton insertChunkButton_;
    private ToolbarButton goToPrevButton_;
    private ToolbarButton goToNextButton_;
