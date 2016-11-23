@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSession
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 
@@ -211,6 +212,36 @@ public class TerminalSession extends XTermWidget
       super.onDetach();
       unregisterHandlers();
    }
+  
+   @Override
+   public void setVisible(boolean isVisible)
+   {
+      super.setVisible(isVisible);
+      if (isVisible)
+      {
+         // Inform the terminal that there may have been a resize. This could 
+         // happen on first display, or if the terminal was hidden behind other
+         // terminal sessions and there was a resize.
+         // A delay is needed to give the xterm.js implementation an
+         // opportunity to be ready for this.
+         
+         // TODO (gary) I already debounce heavily in XTermWidget.onResize, not
+         // sure why this additional level of delay is needed, but without it
+         // there are issues with xterm.js losing its mind when it is resized
+         // after re-emerging from behind other terminals. Why? Is this delay
+         // the best solution?
+         sendOnResizeLocal_.schedule(5);
+      }
+   }
+   
+   private Timer sendOnResizeLocal_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         onResize();
+      }
+   };
    
    public String getTerminalTitle()
    {

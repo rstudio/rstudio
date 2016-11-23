@@ -17,10 +17,21 @@ package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+/**
+ * Size of xterm in rows and columns of text. A dimension will be returned
+ * as -1 if it could not be computed.
+ */
 public class XTermDimensions extends JavaScriptObject
 {
    protected XTermDimensions() {}
    
-   public final native int getCols() /*-{ return this.cols; }-*/;
-   public final native int getRows() /*-{ return this.rows; }-*/;
+   public final native int getCols() /*-{
+      if (this.cols !== this.cols) { return -1; } // isNaN
+      return this.cols;
+   }-*/;
+
+   public final native int getRows() /*-{
+      if (this.rows !== this.rows) { return -1; } // isNaN
+      return this.rows;
+   }-*/;
 }
