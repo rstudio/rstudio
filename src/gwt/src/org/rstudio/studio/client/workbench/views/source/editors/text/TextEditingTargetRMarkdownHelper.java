@@ -295,7 +295,10 @@ public class TextEditingTargetRMarkdownHelper
       {
          // get the project directory, but if we don't have one (e.g. no
          // project) use the default working directory for the session
-         workingDir = session_.getSessionInfo().getActiveProjectDir().getPath();
+         FileSystemItem projectDir = 
+               session_.getSessionInfo().getActiveProjectDir();
+         if (projectDir != null)
+            workingDir = projectDir.getPath();
          if (StringUtil.isNullOrEmpty(workingDir))
             workingDir = session_.getSessionInfo().getDefaultWorkingDir();
       }
