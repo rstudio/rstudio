@@ -149,12 +149,7 @@ Error parseCsvField(const std::string& field,
                     std::vector<std::string>* pEntries)
 {
    std::vector<std::string> entries;
-   text::parseCsvLine(
-            field.begin(),
-            field.end(),
-            true,
-            &entries);
-
+   text::parseCsvLine(field.begin(), field.end(), true, &entries);
    if (entries.empty())
       return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
 

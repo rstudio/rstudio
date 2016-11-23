@@ -29,9 +29,17 @@
    owd <- setwd(parentPath)
    on.exit(setwd(owd), add = TRUE)
    
-   # begin constructing call to skeleton function
+   # detect whether this is a 'local' template; in such a case
+   # we'll just attempt to discover the function name in the
+   # global environment
+   fn <- if (identical(description$package, "(local)"))
+      as.name(description$binding)
+   else
+      call("::", as.name(description$package), as.name(description$binding))
+   
+   # construct skeleton call
    skeleton <- c(
-      call("::", as.name(description$package), as.name(description$binding)),
+      fn,
       basename(projectPath),
       inputs
    )
