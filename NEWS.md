@@ -11,6 +11,7 @@
 * Always show chunk output preferences (inline or console)
 * Add support for variable height HTML widgets (non-knitr figures)
 * Improve support for non-ASCII characters in chunk metadata and output
+* Add support for JavaScript and CSS chunks
 
 ### Data Import
 
