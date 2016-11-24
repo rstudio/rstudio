@@ -556,7 +556,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       document.body.appendChild(popup);
 
       // compute position
-      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top)
+      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top);
       var left = $(ele).offset().left + (!popupInfo ? -4 : popupInfo.left);
       if (popupInfo && popupInfo.width) {
         $(popup).width(popupInfo.width(ele));
@@ -941,9 +941,33 @@ var loadDataFromUrl = function(callback) {
 };
 
 var addResizeHandlers = function(ele) {
-   $(ele).on("dragstart", function(evt) {
-      // TODO: catch drag events, find target element, look up column (present
-      // as data attribute, manually change its size, sync with header
+   var col = null;        // the column currently being resized
+   var initX = null;      // the initial X position of the resize
+   var initColWidth = null;  // the initial width of the column
+   var initTableWidth = null;
+
+   $(ele).on("mousedown", function(evt) {
+      var original = evt.originalEvent;
+      if (original.target.className === "resizer") {
+         col = parseInt(original.target.getAttribute("data-col"));
+         initX = original.clientX;
+         initColWidth = $("#data_cols th:nth-child(" + (col + 1) + ")").width();
+         initTableWidth = $("#rsGridData").width();
+      }
+   });
+   $(ele).on("mousemove", function(evt) {
+      var original = evt.originalEvent;
+      if (col !== null) {
+         var delta = original.clientX - initX;
+         var colWidth = initColWidth + delta;
+         $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
+         $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
+         $("#rsGridData").width(initTableWidth + delta);
+         $("#rsGridData td:nth-child(" + (col + 1) + ")").width(colWidth);
+      }
+   });
+   $(ele).on("mouseup", function(evt) {
+      col = null;
    });
 }; 
 
