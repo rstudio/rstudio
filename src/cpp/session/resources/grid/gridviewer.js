@@ -941,33 +941,60 @@ var loadDataFromUrl = function(callback) {
 };
 
 var addResizeHandlers = function(ele) {
-   var col = null;        // the column currently being resized
-   var initX = null;      // the initial X position of the resize
-   var initColWidth = null;  // the initial width of the column
-   var initTableWidth = null;
+   var col = null;            // the column currently being resized
+   var initX = null;          // the initial X position of the resize
+   var initColWidth = null;   // the initial width of the column
+   var initTableWidth = null; // the initial width of the table
+
+   var applyDelta = function(delta) {
+      // resize the column in the given direction
+      var colWidth = initColWidth + delta;
+      $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
+      $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
+      $("#rsGridData").width(initTableWidth + delta);
+      $("#rsGridData td:nth-child(" + (col + 1) + ")").first().width(colWidth);
+   };
+
+   var endResize = function() {
+      // end the resize operation
+      $("#rsGridData td:nth-child(" + (col + 1) + ")").css(
+         "border-right-color", "");
+      col = null;
+   };
 
    $(ele).on("mousedown", function(evt) {
       var original = evt.originalEvent;
       if (original.target.className === "resizer") {
+         // when the mouse is clicked on the resizer, enter resize mode; figure
+         // out which column we're targeting and set up the initial sizes
          col = parseInt(original.target.getAttribute("data-col"));
          initX = original.clientX;
          initColWidth = $("#data_cols th:nth-child(" + (col + 1) + ")").width();
          initTableWidth = $("#rsGridData").width();
+         $("#rsGridData td:nth-child(" + (col + 1) + ")").css(
+            "border-right-color", "#A0A0FF");
       }
    });
    $(ele).on("mousemove", function(evt) {
-      var original = evt.originalEvent;
       if (col !== null) {
-         var delta = original.clientX - initX;
-         var colWidth = initColWidth + delta;
-         $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
-         $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
-         $("#rsGridData").width(initTableWidth + delta);
-         $("#rsGridData td:nth-child(" + (col + 1) + ")").width(colWidth);
+         // if we have an active resize column, resize it by the amount given
+         var original = evt.originalEvent;
+         applyDelta(original.clientX - initX);
       }
    });
    $(ele).on("mouseup", function(evt) {
-      col = null;
+      if (col !== null) {
+         // end resizing if active
+         endResize();
+      }
+   });
+   $(ele).on("mouseleave", function(evt) {
+      if (col !== null) {
+         // the mouse left; treat this as a cancel (since leaving means we 
+         // won't get a corresponding mouseup)
+         applyDelta(0);
+         endResize();
+      }
    });
 }; 
 
@@ -1076,7 +1103,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
       dismissActivePopup(true);
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
-    var colIdx = i + (rowNumbers ? 0 : 1)
+    var colIdx = i + (rowNumbers ? 0 : 1);
     var col = cols[colIdx];
     var th = thead.children[i];
     if (visible) {
