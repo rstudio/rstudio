@@ -33,9 +33,9 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    {
    }
    
-   public SwitchToTerminalEvent(String terminalName)
+   public SwitchToTerminalEvent(String handle)
    {
-      terminalName_ = terminalName;
+      terminalHandle_ = handle;
    }
 
    @Override
@@ -50,12 +50,12 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
       handler.onSwitchToTerminal(this);
    }
    
-   public String getTerminalName()
+   public String getTerminalHandle()
    {
-      return terminalName_;
+      return terminalHandle_;
    }
   
-   private String terminalName_;
+   private String terminalHandle_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

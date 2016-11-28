@@ -53,7 +53,7 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), newCols_(-1), newRows_(-1),
+     interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
@@ -72,7 +72,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -88,7 +88,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
+     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -410,6 +410,10 @@ core::json::Object ConsoleProcess::toJson() const
       result["exit_code"] = *exitCode_;
    else
       result["exit_code"] = json::Value();
+
+   // newly added in v1.1
+   result["terminal_handle"] = terminalHandle_;
+   result["terminal_sequence"] = terminalSequence_;
    return result;
 }
 
@@ -448,6 +452,20 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    else
       pProc->exitCode_.reset(exitCode.get_int());
 
+   // Newly added in v1.1; do checked access below here
+   //-------------------------------------------------
+   json::Value terminalHandle = obj["terminal_handle"];
+   if (!terminalHandle.is_null())
+      pProc->terminalHandle_ = obj["terminal_handle"].get_str();
+   else
+      pProc->terminalHandle_.clear();
+   
+   json::Value terminalSequence = obj["terminal_sequence"];
+   if (!terminalSequence.is_null())
+      pProc->terminalSequence_ = static_cast<InteractionMode>(terminalSequence.get_int());
+   else
+      pProc->terminalSequence_ = 0;
+   
    return pProc;
 }
 

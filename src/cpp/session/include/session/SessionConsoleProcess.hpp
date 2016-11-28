@@ -179,6 +179,13 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
+   // The handle of an associated terminal
+   std::string terminalHandle_;
+   
+   // The sequence number of the associated terminal; used to control display
+   // order of terminal tabs
+   int terminalSequence_;
+   
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 

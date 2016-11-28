@@ -51,11 +51,18 @@ public class TerminalSession extends XTermWidget
                                         ResizeTerminalEvent.Handler,
                                         TerminalDataInputEvent.Handler
 {
-   public TerminalSession(final ShellSecureInput secureInput)
+   /**
+    * 
+    * @param secureInput securely send user input to server
+    * @param sequence number used as part of default terminal title
+    */
+   public TerminalSession(final ShellSecureInput secureInput, int sequence)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
+      sequence_ = sequence;
       setHeight("100%");
+      setTitle("Terminal " + sequence_);
    }
    
    @Inject
@@ -64,7 +71,7 @@ public class TerminalSession extends XTermWidget
    {
       server_ = server;
       eventBus_ = events; 
-      }
+   }
    
    /**
     * Create a terminal process and connect to it.
@@ -85,7 +92,7 @@ public class TerminalSession extends XTermWidget
             {
                writeError("Unsupported ConsoleProcess interaction mode");
                return;
-            } 
+            }
 
             if (consoleProcess_ != null)
             {
@@ -99,7 +106,7 @@ public class TerminalSession extends XTermWidget
                   @Override
                   public void onResponseReceived(Void response)
                   {
-                     eventBus_.fireEvent(new TerminalSessionStartedEvent(terminalTitle_, TerminalSession.this));
+                     eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
                   }
                   
                   @Override
@@ -136,8 +143,7 @@ public class TerminalSession extends XTermWidget
       }
      
       consoleProcess_ = null;
-      eventBus_.fireEvent(new TerminalSessionStoppedEvent(terminalTitle_, this));
-
+      eventBus_.fireEvent(new TerminalSessionStoppedEvent(this));
    }
    
    @Override
@@ -242,16 +248,47 @@ public class TerminalSession extends XTermWidget
       }
    }
    
-   public String getTerminalTitle()
+   /**
+    * A unique handle for this terminal instance. Stays the same
+    * until Terminal is closed, even if the underlying process is killed and
+    * Terminal attached to a new one.
+    * @return Opaque string handle for this terminal instance, or null if
+    * terminal has never been attached to a process
+    */
+   public String getHandle()
    {
-      return terminalTitle_;
+      if (handle_ == null)
+      {
+         if (consoleProcess_ == null)
+         {
+            return null; // no terminal handle available
+         }
+         
+         // Though we use the handle of the attached process as the terminal
+         // handle, if the terminal's process is killed and restarted, the
+         // terminal retains the original handle. We just use the process
+         // handle as a convenient way to get a uuid.
+         handle_ = consoleProcess_.getProcessInfo().getHandle();
+      }
+      return handle_;
+   }
+   
+   /**
+    * The sequence number of the terminal, used in creation of the default
+    * title, e.g. "Terminal 3".
+    * @return The sequence number that was passed to the constructor.
+    */
+   public int getSequence()
+   {
+      return sequence_;
    }
 
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    
    private ConsoleProcess consoleProcess_;
-   private String terminalTitle_ = "(Not Connected)"; 
+   private final int sequence_;
+   private String handle_;
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 

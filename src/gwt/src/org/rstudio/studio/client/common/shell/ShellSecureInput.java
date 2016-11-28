@@ -84,6 +84,15 @@ public class ShellSecureInput
       }
    }
    
+   /**
+    * Release public key so next secureString request will establish new 
+    * encryption credentials.
+    */
+   public void releasePublicKey()
+   {
+      publicKeyInfo_ = null;
+   }
+   
    private PublicKeyInfo publicKeyInfo_ = null;
    
    // Injected ----
