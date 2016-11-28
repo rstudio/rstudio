@@ -73,7 +73,7 @@ then
    systemctl start rstudio-server.service
    sleep 1
    systemctl --no-pager status rstudio-server.service
-elif test -d /etc/init/ && test -d /usr/share/upstart/
+elif test -d /etc/init/
 then
    # remove any previously existing init.d based scheme
    service rstudio-server stop 2>/dev/null
