@@ -69,6 +69,9 @@ var columnsPopup = null;
 var activeColumnInfo = {
 };
 
+// manually adjusted widths of each column
+var manualWidths = [];
+
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
   var rs = document.getElementById("rsGridData");
@@ -309,6 +312,22 @@ var postDrawCallback = function() {
   var indicator = $(".DTS_Loading");
   if (indicator) {
       indicator.removeClass("showLoading");
+  }
+
+  // re-apply manual column sizes to the cells in the first row
+  var cols = $("#rsGridData tr:nth-child(1) td");
+  var delta = 0;
+  for (var i = 0; i < cols.length; i++) {
+     if (typeof(manualWidths[i]) === "undefined")
+        continue;
+     var col = cols.eq(i);
+     delta += manualWidths[i] - col.width();
+     col.width(manualWidths[i]);
+  }
+
+  // adjust table if some column sizes differed from their natural size
+  if (delta !== 0) {
+     $("#rsGridData").width($("#rsGridData").width() + delta);
   }
 
   // Check to see whether the header widths are out of sync after drawing --
@@ -753,7 +772,7 @@ var parseLocationUrl = function() {
   }
 
   return parsedLocation;
-}
+};
 
 var initDataTableLoad = function(result) {
   table = $("#rsGridData").DataTable();
@@ -770,12 +789,12 @@ var initDataTableLoad = function(result) {
   });
 
   // trigger post-init actions
-  for (actionName in postInitActions) {
+  for (var actionName in postInitActions) {
     if (postInitActions[actionName]) {
       postInitActions[actionName]();
     }
   }
-}
+};
 
 var initDataTable = function(resCols, data) {
   if (resCols.error) {
@@ -953,6 +972,9 @@ var addResizeHandlers = function(ele) {
       $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
       $("#rsGridData").width(initTableWidth + delta);
       $("#rsGridData td:nth-child(" + (col + 1) + ")").first().width(colWidth);
+
+      // record manual width for re-apply on redraw
+      manualWidths[col] = colWidth;
    };
 
    var endResize = function() {
