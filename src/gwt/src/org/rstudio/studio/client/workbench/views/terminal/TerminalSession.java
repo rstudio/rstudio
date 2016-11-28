@@ -71,7 +71,7 @@ public class TerminalSession extends XTermWidget
    {
       server_ = server;
       eventBus_ = events; 
-   }
+   } 
    
    /**
     * Create a terminal process and connect to it.

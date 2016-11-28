@@ -113,7 +113,7 @@ public class TerminalPane extends WorkbenchPane
                                                        nextTerminalSequence());
       newSession.connect();
    }
-   
+
    @Override
    public void onTerminalSessionStarted(TerminalSessionStartedEvent event)
    {

@@ -50,7 +50,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       commands_ = commands;
       eventBus_ = events;
    }
-
+   
    @Override
    public void getDynamicPopupMenu(final DynamicPopupMenuCallback callback)
    { 
@@ -68,7 +68,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent( item.getKey()));
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getKey()));
                }
             };
 
@@ -97,7 +97,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       if (toolbarButton_ == null)
       {
          String buttonText = "Terminal";
-
+         
          toolbarButton_ = new ToolbarButton(
                 buttonText, 
                 StandardIcons.INSTANCE.empty_command(),

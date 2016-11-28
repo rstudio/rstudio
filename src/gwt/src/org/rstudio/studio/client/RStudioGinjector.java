@@ -211,7 +211,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TerminalSession widget);
    void injectMembers(ShellSecureInput userInputEncryption);
    void injectMembers(TerminalPopupMenu menu);
-
+   
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
    Application getApplication() ;
