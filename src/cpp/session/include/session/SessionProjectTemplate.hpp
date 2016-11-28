@@ -38,10 +38,10 @@ namespace modules {
 namespace projects {
 namespace templates {
 
-#define kProjectTemplateWidgetTypeCheckBox  "checkbox"
-#define kProjectTemplateWidgetTypeSelectBox "selectbox"
-#define kProjectTemplateWidgetTypeTextInput "textinput"
-#define kProjectTemplateWidgetTypeFileInput "fileinput"
+#define kProjectTemplateWidgetTypeCheckBoxInput "checkboxinput"
+#define kProjectTemplateWidgetTypeSelectInput   "selectinput"
+#define kProjectTemplateWidgetTypeTextInput     "textinput"
+#define kProjectTemplateWidgetTypeFileInput     "fileinput"
 
 struct ProjectTemplateWidgetDescription
 {

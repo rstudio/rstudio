@@ -165,9 +165,9 @@ Error parseWidgetType(const std::string& widget, std::string* pWidgetType)
    static std::vector<std::string> kWidgetTypes;
    if (kWidgetTypes.empty())
    {
-      kWidgetTypes.push_back(kProjectTemplateWidgetTypeCheckBox);
+      kWidgetTypes.push_back(kProjectTemplateWidgetTypeCheckBoxInput);
       kWidgetTypes.push_back(kProjectTemplateWidgetTypeFileInput);
-      kWidgetTypes.push_back(kProjectTemplateWidgetTypeSelectBox);
+      kWidgetTypes.push_back(kProjectTemplateWidgetTypeSelectInput);
       kWidgetTypes.push_back(kProjectTemplateWidgetTypeTextInput);
    }
    
