@@ -193,7 +193,7 @@ var renderCellContents = function(data, type, row, meta) {
 // render a number cell
 var renderNumberCell = function(data, type, row, meta) {
   return '<div class="cell">' + 
-         '<div class="numberCell">' + 
+         '<div class="numberCell autoSize">' + 
          renderCellContents(data, type, row, meta) + '</div>' +
          '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
@@ -201,7 +201,7 @@ var renderNumberCell = function(data, type, row, meta) {
 // render a text cell
 var renderTextCell = function(data, type, row, meta) {
   return '<div class="cell">' +
-         '<div class="textCell" title="' + escapeHtml(data) + '">' + 
+         '<div class="textCell autoSize" title="' + escapeHtml(data) + '">' + 
          renderCellContents(data, type, row, meta) + '</div>' +
          '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
@@ -971,7 +971,15 @@ var addResizeHandlers = function(ele) {
       $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
       $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
       $("#rsGridData").width(initTableWidth + delta);
-      $("#rsGridData td:nth-child(" + (col + 1) + ")").first().width(colWidth);
+      var colObj = $("#rsGridData td:nth-child(" + (col + 1) + ")").first();
+      colObj.width(colWidth);
+
+      // switch the cell to manual size mode
+      var cell = colObj.children().first();
+      if (cell.hasClass("autoSize")) {
+         cell.removeClass("autoSize");
+         cell.addClass("manualSize");
+      }
 
       // record manual width for re-apply on redraw
       manualWidths[col] = colWidth;

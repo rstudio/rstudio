@@ -278,11 +278,18 @@ th:focus {
 }
 
 .numberCell, .textCell {
-    max-width: 300px; 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     position: relative;
+}
+
+.numberCell.autoSize, .textCell.autoSize {
+    max-width: 300px; 
+}
+
+.numberCell.manualSize, .textCell.manualSize {
+    width: 100%; 
 }
 
 .cell {
