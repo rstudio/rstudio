@@ -139,8 +139,6 @@ public class TerminalPane extends WorkbenchPane
 
       if (terminalSessionsPanel_.getWidgetCount() < 1)
       {
-         // closed all terminals, establish new secure channel next time we need it
-         secureInput_.releasePublicKey();
          activeTerminalToolbarButton_.setNoActiveTerminal();
       }
    }
