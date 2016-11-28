@@ -92,7 +92,7 @@ public class TerminalSession extends XTermWidget
             {
                writeError("Unsupported ConsoleProcess interaction mode");
                return;
-            }
+            } 
 
             if (consoleProcess_ != null)
             {
