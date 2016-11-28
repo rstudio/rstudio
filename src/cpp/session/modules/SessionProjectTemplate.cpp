@@ -44,6 +44,40 @@ namespace modules {
 namespace projects {
 namespace templates {
 
+namespace errors {
+
+inline Error protocolError(const std::string& description,
+                           const FilePath& resourcePath,
+                           const ErrorLocation& location)
+{
+   Error error = systemError(boost::system::errc::protocol_error, location);
+   error.addProperty("resource", resourcePath);
+   error.addProperty("description", description);
+   return error;
+}
+
+Error unexpectedWidgetType(const std::string& type,
+                           const FilePath& resourcePath,
+                           const ErrorLocation& location)
+{
+   return protocolError(
+            "unexpected widget type '" + type + "'",
+            resourcePath,
+            location);
+}
+
+Error emptyField(const std::string& field, 
+                 const FilePath& resourcePath,
+                 const ErrorLocation& location)
+{
+   return protocolError(
+            "empty field for property '" + field + "'",
+            resourcePath,
+            location);
+}
+
+} // end namespace errors
+
 Error fromJson(
       const json::Object& object,
       ProjectTemplateWidgetDescription* pDescription)
@@ -145,13 +179,15 @@ json::Value ProjectTemplateDescription::toJson() const
 
 namespace {
 
-Error parseCsvField(const std::string& field,
+Error parseCsvField(const std::string& key,
+                    const std::string& value,
+                    const FilePath& resourcePath,
                     std::vector<std::string>* pEntries)
 {
    std::vector<std::string> entries;
-   text::parseCsvLine(field.begin(), field.end(), true, &entries);
+   text::parseCsvLine(value.begin(), value.end(), true, &entries);
    if (entries.empty())
-      return systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+      return errors::emptyField(key, resourcePath, ERROR_LOCATION);
 
    for (std::size_t i = 0, n = entries.size(); i < n; ++i)
       entries[i] = string_utils::trimWhitespace(entries[i]);
@@ -160,7 +196,9 @@ Error parseCsvField(const std::string& field,
    return Success();
 }
 
-Error parseWidgetType(const std::string& widget, std::string* pWidgetType)
+Error parseWidgetType(const std::string& widget,
+                      const FilePath& resourcePath,
+                      std::string* pWidgetType)
 {
    static std::vector<std::string> kWidgetTypes;
    if (kWidgetTypes.empty())
@@ -181,10 +219,8 @@ Error parseWidgetType(const std::string& widget, std::string* pWidgetType)
       pWidgetType->assign(*it);
       return Success();
    }
-
-   return systemError(
-            boost::system::errc::protocol_error,
-            ERROR_LOCATION);
+   
+   return errors::unexpectedWidgetType(widget, resourcePath, ERROR_LOCATION);
 }
 
 template <typename T>
@@ -235,7 +271,7 @@ core::Error populate(
       }
       else if (key == "OpenFiles")
       {
-         Error error = parseCsvField(value, &pDescription->openFiles);
+         Error error = parseCsvField(key, value, resourcePath, &pDescription->openFiles);
          if (error)
             return error;
       }
@@ -247,13 +283,13 @@ core::Error populate(
          widget.label = value;
       else if (key == "Widget")
       {
-         Error error = parseWidgetType(value, &widget.type);
+         Error error = parseWidgetType(value, resourcePath, &widget.type);
          if (error)
             return error;
       }
       else if (key == "Fields")
       {
-         Error error = parseCsvField(value, &widget.fields);
+         Error error = parseCsvField(key, value, resourcePath, &widget.fields);
          if (error)
             return error;
       }
