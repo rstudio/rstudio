@@ -30,6 +30,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionPackageProvidedExtension.hpp>
 
@@ -44,6 +45,54 @@ namespace modules {
 namespace projects {
 namespace templates {
 
+namespace {
+
+void reportErrorsToConsole(const std::vector<Error>& errors,
+                           const FilePath& resourcePath)
+{
+   if (errors.empty())
+      return;
+   
+   // we only want to report errors to the package developer -- only
+   // report errors found in DCF files that exist in the current package's
+   // path
+   using namespace session::projects;
+   if (!projectContext().isPackageProject())
+      return;
+   
+   std::string pkgName = projectContext().packageInfo().name();
+   std::vector<Error> localErrors;
+   BOOST_FOREACH(const Error& error, errors)
+   {
+      std::string resourcePath = error.getProperty("resource");
+      if (resourcePath.find("/" + pkgName + "/"))
+         localErrors.push_back(error);
+   }
+   
+   if (localErrors.empty())
+      return;
+   
+   std::cout
+         << "Error(s) found while parsing '" + resourcePath.filename() + "':"
+         << std::endl;
+   
+   BOOST_FOREACH(const Error& error, localErrors)
+   {
+      std::string description = error.getProperty("description");
+      std::cout << description << std::endl;
+   }
+}
+
+void reportErrorsToConsole(const Error& error,
+                           const FilePath& resourcePath)
+{
+   std::vector<Error> errors;
+   errors.push_back(error);
+   reportErrorsToConsole(errors, resourcePath);
+}
+
+} // end anonymous namespace
+
 namespace errors {
 
 inline Error protocolError(const std::string& description,
@@ -57,11 +106,44 @@ inline Error protocolError(const std::string& description,
 }
 
 Error unexpectedWidgetType(const std::string& type,
+                           const std::vector<std::string>& validTypes,
                            const FilePath& resourcePath,
                            const ErrorLocation& location)
 {
+   std::string description = "Unexpected widget type '" + type + "'";
+   std::string types =
+         "'Widget' field should be one of [" +
+         algorithm::join(validTypes, ", ") + 
+         "]";
+   
    return protocolError(
-            "unexpected widget type '" + type + "'",
+            description + " -- " + types,
+            resourcePath,
+            location);
+}
+
+Error missingField(const std::string& field,
+                   const FilePath& resourcePath,
+                   const ErrorLocation& location)
+{
+   return protocolError(
+            "Missing required field '" + field + "'",
+            resourcePath,
+            location);
+}
+
+
+Error missingWidgetField(const std::string& field,
+                         const std::string& parameter,
+                         const FilePath& resourcePath,
+                         const ErrorLocation& location)
+{
+   std::string description = "Missing required field '" + field + "'";
+   if (!parameter.empty())
+      description += " (Parameter: " + parameter + ")";
+
+   return protocolError(
+            description,
             resourcePath,
             location);
 }
@@ -71,7 +153,7 @@ Error emptyField(const std::string& field,
                  const ErrorLocation& location)
 {
    return protocolError(
-            "empty field for property '" + field + "'",
+            "Empty field for property '" + field + "'",
             resourcePath,
             location);
 }
@@ -224,7 +306,11 @@ Error parseWidgetType(const std::string& widget,
       return Success();
    }
    
-   return errors::unexpectedWidgetType(widget, resourcePath, ERROR_LOCATION);
+   return errors::unexpectedWidgetType(
+            widget,
+            kWidgetTypes,
+            resourcePath,
+            ERROR_LOCATION);
 }
 
 template <typename T>
@@ -308,6 +394,48 @@ core::Error populate(
       pDescription->widgets.push_back(widget);
 
    return Success();
+}
+
+std::vector<Error> validateWidget(const ProjectTemplateWidgetDescription& widget,
+                                  const FilePath& resourcePath,
+                                  const ErrorLocation& location)
+{
+   std::vector<Error> result;
+   
+   std::string parameter = widget.parameter;
+   if (widget.parameter.empty())
+      result.push_back(errors::missingWidgetField("Parameter", std::string(), resourcePath, location));
+   
+   if (widget.type.empty())
+      result.push_back(errors::missingWidgetField("Widget", parameter, resourcePath, location));
+   
+   return result;
+}
+
+std::vector<Error> validate(const ProjectTemplateDescription& description,
+                            const FilePath& resourcePath,
+                            const ErrorLocation& location)
+{
+   std::vector<Error> result;
+   
+   if (description.binding.empty())
+      result.push_back(errors::missingField("Binding", resourcePath, location));
+   
+   if (description.title.empty())
+      result.push_back(errors::missingField("Title", resourcePath, location));
+   
+   BOOST_FOREACH(const ProjectTemplateWidgetDescription widget, description.widgets)
+   {
+      std::vector<Error> widgetErrors =
+            validateWidget(widget, resourcePath, location);
+      
+      result.insert(
+               result.end(),
+               widgetErrors.begin(),
+               widgetErrors.end());
+   }
+   
+   return result;
 }
 
 class ProjectTemplateRegistry : boost::noncopyable
@@ -398,15 +526,29 @@ public:
          std::string errorMessage;
          error = text::parseDcfFile(*it, true, &fields, &errorMessage);
          if (error)
+         {
+            reportErrorsToConsole(error, resourcePath);
             return error;
+         }
          
          // populate project template description based on fields
          error = populate(resourcePath, fields, pDescription);
          if (error)
+         {
+            reportErrorsToConsole(error, resourcePath);
             return error;
+         }
       }
       
-      return error;
+      // validate that all required fields have been added
+      std::vector<Error> problems = validate(*pDescription, resourcePath, ERROR_LOCATION);
+      if (!problems.empty())
+      {
+         reportErrorsToConsole(problems, resourcePath);
+         return problems[0];
+      }
+      
+      return Success();
    }
    
 private:
