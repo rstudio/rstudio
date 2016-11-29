@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -61,16 +62,46 @@ public class ProjectTemplateWidget extends Composite
       widgets_ = new ArrayList<ProjectTemplateWidgetItem>();
       
       // initialize widgets
-      JsArray<ProjectTemplateWidgetDescription> widgets = description.getWidgetDescription();
-      int n = widgets.length();
+      JsArray<ProjectTemplateWidgetDescription> descriptions = description.getWidgetDescription();
+      int n = descriptions.length();
       for (int i = 0; i < n; i++)
-         widgets_.add(createWidget(widgets.get(i)));
+         widgets_.add(createWidget(descriptions.get(i)));
       
       // initialize panel
-      VerticalPanel panel = new VerticalPanel();
+      VerticalPanel leftPanel = new VerticalPanel();
+      VerticalPanel rightPanel = new VerticalPanel();
       for (int i = 0; i < n; i++)
-         panel.add(widgets_.get(i));
-      initWidget(panel);
+      {
+         String position = descriptions.get(i).getPosition();
+         Widget widget = widgets_.get(i);
+         if ("right".equals(position))
+            rightPanel.add(widget);
+         else
+            leftPanel.add(widget);
+      }
+      
+      int nLeft = leftPanel.getWidgetCount();
+      int nRight = rightPanel.getWidgetCount();
+      
+      Widget primaryWidget;
+      
+      if (nLeft == 0 && nRight == 0)
+         primaryWidget = new FlowPanel();
+      else if (nRight == 0)
+         primaryWidget = leftPanel;
+      else if (nLeft == 0)
+         primaryWidget = rightPanel;
+      else
+      {
+         // both sides have widgets -- populate appropriately
+         HorizontalPanel panel = new HorizontalPanel();
+         panel.add(leftPanel);
+         panel.add(rightPanel);
+         primaryWidget = panel;
+      }
+      
+      primaryWidget.setWidth("100%");
+      initWidget(primaryWidget);
    }
    
    public JsObject collectInput()

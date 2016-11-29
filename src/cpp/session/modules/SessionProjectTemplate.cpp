@@ -90,6 +90,7 @@ Error fromJson(
             "type",      &description.type,
             "label",     &description.label,
             "default",   &description.defaultValue,
+            "position",  &description.position,
             "fields",    &description.fields);
 
    if (error)
@@ -107,6 +108,7 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
    object["type"]      = type;
    object["label"]     = label;
    object["default"]   = defaultValue;
+   object["position"]  = position;
    object["fields"]    = core::json::toJsonArray(fields);
 
    return object;
@@ -285,6 +287,8 @@ core::Error populate(
          widget.label = value;
       else if (key == "Default")
          widget.defaultValue = value;
+      else if (key == "Position")
+         widget.position = value;
       else if (key == "Widget")
       {
          Error error = parseWidgetType(value, resourcePath, &widget.type);
