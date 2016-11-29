@@ -17,10 +17,10 @@ package org.rstudio.studio.client.workbench.views.terminal.events;
 
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.user.client.ui.Widget;
 
 @JavaScriptSerializable
 public class TerminalSessionStartedEvent extends CrossWindowEvent<Handler>
@@ -34,9 +34,8 @@ public class TerminalSessionStartedEvent extends CrossWindowEvent<Handler>
    {
    }
    
-   public TerminalSessionStartedEvent(String terminalName, Widget terminalWidget)
+   public TerminalSessionStartedEvent(TerminalSession terminalWidget)
    {
-      terminalName_ = terminalName;
       terminalWidget_ = terminalWidget;
    }
 
@@ -52,18 +51,12 @@ public class TerminalSessionStartedEvent extends CrossWindowEvent<Handler>
       handler.onTerminalSessionStarted(this);
    }
    
-   public String getTerminalName()
-   {
-      return terminalName_;
-   }
-   
-   public Widget getTerminalWidget()
+   public TerminalSession getTerminalWidget()
    {
       return terminalWidget_;
    }
   
-   private String terminalName_;
-   private Widget terminalWidget_;
+   private TerminalSession terminalWidget_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

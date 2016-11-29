@@ -1,5 +1,5 @@
 /*
- * SwitchToTerminalEvent.java
+ * TerminalCaptionEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,27 +15,26 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
-import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
 
-@JavaScriptSerializable
-public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
+/**
+ * Send by an XTermSession that has processed an xterm.js title-change event 
+ * and updated its caption property.
+ */
+public class TerminalCaptionEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onSwitchToTerminal(SwitchToTerminalEvent event);
+      void onTerminalCaption(TerminalCaptionEvent event);
    }
    
-   public SwitchToTerminalEvent()
+   public TerminalCaptionEvent(TerminalSession terminalSession)
    {
-   }
-   
-   public SwitchToTerminalEvent(String handle)
-   {
-      terminalHandle_ = handle;
+      terminalSession_ = terminalSession;
    }
 
    @Override
@@ -47,15 +46,15 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onSwitchToTerminal(this);
+      handler.onTerminalCaption(this);
    }
    
-   public String getTerminalHandle()
+   public TerminalSession getTerminalSession()
    {
-      return terminalHandle_;
+      return terminalSession_;
    }
   
-   private String terminalHandle_;
+   private TerminalSession terminalSession_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

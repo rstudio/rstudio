@@ -58,4 +58,12 @@ public class ConsoleProcessInfo extends JavaScriptObject
       JsObject self = this.cast();
       return self.getInteger("exit_code");
    }
+   
+   public final native String getTerminalHandle() /*-{
+      return this.terminal_handle;
+   }-*/;
+
+   public final native int getTerminalSequence()  /*-{
+      return this.terminal_sequence;
+   }-*/;
 }

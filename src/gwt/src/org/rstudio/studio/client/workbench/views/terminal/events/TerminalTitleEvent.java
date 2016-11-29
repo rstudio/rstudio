@@ -1,5 +1,5 @@
 /*
- * SwitchToTerminalEvent.java
+ * TerminalTitleEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,27 +15,35 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
-import org.rstudio.core.client.js.JavaScriptSerializable;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 
-@JavaScriptSerializable
-public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
+/**
+ * Send when xterm sees a standard title escape sequence. The string value
+ * of the command is sent.
+ * 
+ * ESC]0;stringBEL -- Set window title to string, example:
+ * 
+ * echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"
+ */
+public class TerminalTitleEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onSwitchToTerminal(SwitchToTerminalEvent event);
+      void onTerminalTitle(TerminalTitleEvent event);
    }
    
-   public SwitchToTerminalEvent()
+   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
    {
+      HandlerRegistration addTerminalTitleHandler(Handler handler);
    }
    
-   public SwitchToTerminalEvent(String handle)
+   public TerminalTitleEvent(String title)
    {
-      terminalHandle_ = handle;
+      title_ = title;
    }
 
    @Override
@@ -47,15 +55,15 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onSwitchToTerminal(this);
+      handler.onTerminalTitle(this);
    }
    
-   public String getTerminalHandle()
+   public String getTitle()
    {
-      return terminalHandle_;
+      return title_;
    }
   
-   private String terminalHandle_;
+   private String title_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

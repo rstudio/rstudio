@@ -53,7 +53,7 @@ const int kDefaultMaxOutputLines = 500;
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), newCols_(-1), newRows_(-1),
+     interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
@@ -72,7 +72,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -88,12 +88,30 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
+     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
 
+ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               const std::string& terminalHandle,
+                               int terminalSequence,
+                               bool dialog,
+                               InteractionMode interactionMode,
+                               int maxOutputLines)
+   : command_(command), options_(options), caption_(caption), dialog_(dialog),
+     showOnOutput_(false),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalHandle_(terminalHandle), terminalSequence_(terminalSequence),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
+{
+   commonInit();
+}
+   
 void ConsoleProcess::regexInit()
 {
    controlCharsPattern_ = boost::regex("[\\r\\b]");
@@ -106,6 +124,10 @@ void ConsoleProcess::commonInit()
 
    handle_ = core::system::generateUuid(false);
 
+   // only generate a terminal handle if creating a new terminal
+   if (terminalSequence_ > 0 && terminalHandle_.empty())
+      terminalHandle_ = core::system::generateUuid(false);
+   
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
@@ -271,7 +293,12 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
 void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 {
-   std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+   // TODO (gary) for terminals we won't store output history
+   // in the SessionInfo; this will be stored separately, keyed by
+   // Terminal Handle; as a prelude to that stop storing the old way
+   // if we have the terminal handle
+   if (terminalHandle_.empty())
+      std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
@@ -410,6 +437,10 @@ core::json::Object ConsoleProcess::toJson() const
       result["exit_code"] = *exitCode_;
    else
       result["exit_code"] = json::Value();
+
+   // newly added in v1.1
+   result["terminal_handle"] = terminalHandle_;
+   result["terminal_sequence"] = terminalSequence_;
    return result;
 }
 
@@ -448,6 +479,20 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    else
       pProc->exitCode_.reset(exitCode.get_int());
 
+   // Newly added in v1.1
+   Error error = json::readObject(
+                     obj,
+                     "terminal_handle", &pProc->terminalHandle_,
+                     "terminal_sequence", &pProc->terminalSequence_);
+   if (error)
+   {
+      // Possibly unarchiving a pre 1.1 session; ensure defaults are set
+      // and continue
+      LOG_ERROR(error);
+      pProc->terminalHandle_.clear();
+      pProc->terminalSequence_ = 0;
+   }
+   
    return pProc;
 }
 
@@ -622,6 +667,30 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             args,
                             options,
                             caption,
+                            dialog,
+                            interactionMode,
+                            maxOutputLines));
+   s_procs[ptrProc->handle()] = ptrProc;
+   return ptrProc;
+}
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string& command,
+      core::system::ProcessOptions options,
+      const std::string& caption,
+      const std::string& terminalHandle,
+      const int terminalSequence,
+      bool dialog,
+      InteractionMode interactionMode,
+      int maxOutputLines)
+{
+   options.terminateChildren = true;
+   boost::shared_ptr<ConsoleProcess> ptrProc(
+         new ConsoleProcess(command,
+                            options,
+                            caption,
+                            terminalHandle,
+                            terminalSequence,
                             dialog,
                             interactionMode,
                             maxOutputLines));

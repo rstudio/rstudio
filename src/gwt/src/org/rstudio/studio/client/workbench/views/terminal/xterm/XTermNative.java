@@ -104,7 +104,18 @@ public class XTermNative extends JavaScriptObject
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
          });
    }-*/;
-   
+
+   /**
+    * Install a handler for title events (via escape sequence).
+    * @param command handler for title text
+    */
+   public final native void onTitleData(CommandWithArg<String> command) /*-{
+      this.handleTitle = 
+         $entry(function(title) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(title);
+         });
+   }-*/;
+
    /**
     * Factory to create a native Javascript terminal object.
     *  
