@@ -904,7 +904,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
    core::system::setenv(&shellEnv, "PS1", prompt);
 
-   // set xterm title to show current working direction after each command
+   // set xterm title to show current working directory after each command
    if (smartTerm)
    {
       core::system::setenv(&shellEnv, "PROMPT_COMMAND",

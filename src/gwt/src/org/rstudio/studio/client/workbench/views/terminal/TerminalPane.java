@@ -190,7 +190,7 @@ public class TerminalPane extends WorkbenchPane
    public TerminalSession getTerminalAtIndex(int i)
    {
       Widget widget = terminalSessionsPanel_.getWidget(i);
-      if (widget != null)
+      if (widget instanceof TerminalSession)
       {
          return (TerminalSession)widget;
       }
@@ -208,7 +208,7 @@ public class TerminalPane extends WorkbenchPane
       for (int i = 0; i < total; i++)
       {
          TerminalSession t = getTerminalAtIndex(i);
-         if (t.getHandle().equals(handle))
+         if (t != null && t.getHandle().equals(handle))
          {
             return t;
          }
@@ -222,11 +222,11 @@ public class TerminalPane extends WorkbenchPane
    public TerminalSession getVisibleTerminal()
    {
       Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
-      if (visibleWidget == null)
+      if (visibleWidget instanceof TerminalSession)
       {
-         return null;
+         return (TerminalSession)visibleWidget;
       }
-      return (TerminalSession)visibleWidget;
+      return null;
    }
    
    /**

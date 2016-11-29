@@ -500,8 +500,8 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(cols));
       params.set(2, new JSONNumber(rows));
       params.set(3, JSONBoolean.getInstance(isModalDialog));
-      params.set(4,  new JSONString(terminalHandle == null ? "" : terminalHandle));
-      params.set(5,  new JSONString(terminalTitle == null ? "" : terminalTitle));
+      params.set(4,  new JSONString(StringUtil.notNull(terminalHandle)));
+      params.set(5,  new JSONString(StringUtil.notNull(terminalTitle)));
       params.set(6,  new JSONNumber(sequence));
       
       sendRequest(RPC_SCOPE,

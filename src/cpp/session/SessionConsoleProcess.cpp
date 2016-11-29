@@ -479,19 +479,19 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    else
       pProc->exitCode_.reset(exitCode.get_int());
 
-   // Newly added in v1.1; do checked access below here
-   //-------------------------------------------------
-   json::Value terminalHandle = obj["terminal_handle"];
-   if (!terminalHandle.is_null())
-      pProc->terminalHandle_ = obj["terminal_handle"].get_str();
-   else
+   // Newly added in v1.1
+   Error error = json::readObject(
+                     obj,
+                     "terminal_handle", &pProc->terminalHandle_,
+                     "terminal_sequence", &pProc->terminalSequence_);
+   if (error)
+   {
+      // Possibly unarchiving a pre 1.1 session; ensure defaults are set
+      // and continue
+      LOG_ERROR(error);
       pProc->terminalHandle_.clear();
-   
-   json::Value terminalSequence = obj["terminal_sequence"];
-   if (!terminalSequence.is_null())
-      pProc->terminalSequence_ = static_cast<InteractionMode>(terminalSequence.get_int());
-   else
       pProc->terminalSequence_ = 0;
+   }
    
    return pProc;
 }
