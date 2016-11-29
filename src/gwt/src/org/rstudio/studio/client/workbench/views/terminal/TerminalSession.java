@@ -31,7 +31,9 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
@@ -49,7 +51,8 @@ public class TerminalSession extends XTermWidget
                              implements ConsoleOutputEvent.Handler, 
                                         ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
-                                        TerminalDataInputEvent.Handler
+                                        TerminalDataInputEvent.Handler,
+                                        TerminalTitleEvent.Handler
 {
    /**
     * 
@@ -98,6 +101,7 @@ public class TerminalSession extends XTermWidget
                addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
                addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
                addHandlerRegistration(addTerminalDataInputHandler(TerminalSession.this));
+               addHandlerRegistration(addTerminalTitleHandler(TerminalSession.this));
 
                consoleProcess.start(new ServerRequestCallback<Void>()
                {
@@ -188,6 +192,23 @@ public class TerminalSession extends XTermWidget
       });
    }
    
+   @Override
+   public void onTerminalTitle(TerminalTitleEvent event)
+   {
+      caption_ = event.getTitle();
+      eventBus_.fireEvent(new TerminalCaptionEvent(this));
+   }
+   
+   public String getCaption()
+   {
+      return caption_;
+   }
+   
+   public void setCaption(String caption)
+   {
+      caption_ = caption;
+   }
+
    private int getInteractionMode()
    {
       if (consoleProcess_ != null)
@@ -208,7 +229,7 @@ public class TerminalSession extends XTermWidget
 
    protected void writeError(String msg)
    {
-      write(AnsiColor.RED +"Fatal Error: " + msg);
+      write(AnsiColor.RED +"Fatal Error: " + msg + AnsiColor.DEFAULT);
    }
 
    @Override
@@ -277,9 +298,11 @@ public class TerminalSession extends XTermWidget
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    
    private ConsoleProcess consoleProcess_;
+   private String caption_ = new String();
    private final int sequence_;
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 
    private EventBus eventBus_;
+
 }

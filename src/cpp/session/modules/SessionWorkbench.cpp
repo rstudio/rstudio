@@ -904,7 +904,14 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
    core::system::setenv(&shellEnv, "PS1", prompt);
 
-   // disable screen oriented facillites		
+   // set xterm title to show current working direction after each command
+   if (smartTerm)
+   {
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND",
+                           "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
+   }
+   
+   // disable screen oriented facillites
    if (!smartTerm)
    {
       core::system::unsetenv(&shellEnv, "EDITOR");

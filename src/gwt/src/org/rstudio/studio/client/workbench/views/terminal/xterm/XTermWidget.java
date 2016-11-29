@@ -23,6 +23,8 @@ import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent.Handler;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -44,7 +46,8 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class XTermWidget extends Widget implements RequiresResize,
                                                    ResizeTerminalEvent.HasHandlers,
-                                                   TerminalDataInputEvent.HasHandlers
+                                                   TerminalDataInputEvent.HasHandlers,
+                                                   TerminalTitleEvent.HasHandlers
 {
    public enum AnsiColor
    {
@@ -92,6 +95,24 @@ public class XTermWidget extends Widget implements RequiresResize,
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       terminal_ = XTermNative.createTerminal(getElement(), true);
+
+      // Handle keystrokes from the xterm and dispatch them
+      addDataEventHandler(new CommandWithArg<String>()
+      {
+         public void execute(String data)
+         {
+            fireEvent(new TerminalDataInputEvent(data));
+         }
+      });
+      
+      // Handle title events from the xterm and dispatch them
+      addTitleEventHandler(new CommandWithArg<String>()
+      {
+         public void execute(String title)
+         {
+            fireEvent(new TerminalTitleEvent(title));
+         }
+      });
    }
    
    /**
@@ -100,7 +121,7 @@ public class XTermWidget extends Widget implements RequiresResize,
    private void showBanner()
    {
       writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
-            AnsiColor.DEFAULT + " shell.");
+            AnsiColor.DEFAULT + " terminal.");
    }
   
    /**
@@ -238,6 +259,11 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.onTerminalData(handler);
    }
    
+   private void addTitleEventHandler(CommandWithArg<String> handler)
+   {
+      terminal_.onTitleData(handler);
+   }
+   
    public XTermDimensions getTerminalSize()
    {
       return terminal_.proposeGeometry(); 
@@ -269,20 +295,13 @@ public class XTermWidget extends Widget implements RequiresResize,
    @Override
    public HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler)
    {
-      assert !hasTerminalDataInputHandler_ : "Cannot install multiple terminalDataInput handlers";
-      if (hasTerminalDataInputHandler_)
-         return null;
-
-      addDataEventHandler(new CommandWithArg<String>()
-      {
-         public void execute(String data)
-         {
-            fireEvent(new TerminalDataInputEvent(data));
-         }
-      });
-            
-      hasTerminalDataInputHandler_ = true;
       return addHandler(handler, TerminalDataInputEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addTerminalTitleHandler(Handler handler)
+   {
+      return addHandler(handler, TerminalTitleEvent.TYPE);
    }
 
    /**
@@ -321,8 +340,8 @@ public class XTermWidget extends Widget implements RequiresResize,
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
-   private boolean hasTerminalDataInputHandler_ = false;
-   
+
    private int previousRows_ = -1;
    private int previousCols_ = -1;
+
 }

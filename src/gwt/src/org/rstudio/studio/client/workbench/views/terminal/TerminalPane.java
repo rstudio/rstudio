@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
@@ -22,12 +23,14 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.DeckLayoutPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -40,7 +43,8 @@ public class TerminalPane extends WorkbenchPane
                                      TerminalTabPresenter.Display,
                                      TerminalSessionStartedEvent.Handler,
                                      TerminalSessionStoppedEvent.Handler,
-                                     SwitchToTerminalEvent.Handler
+                                     SwitchToTerminalEvent.Handler,
+                                     TerminalCaptionEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events)
@@ -49,6 +53,7 @@ public class TerminalPane extends WorkbenchPane
       events.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events.addHandler(TerminalSessionStoppedEvent.TYPE, this);
       events.addHandler(SwitchToTerminalEvent.TYPE, this);
+      events.addHandler(TerminalCaptionEvent.TYPE, this);
       ensureWidget();
    }
 
@@ -71,8 +76,11 @@ public class TerminalPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
 
+      terminalCaption_ = new Label();
+      terminalCaption_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar.addLeftWidget(terminalCaption_);
       activeTerminalToolbarButton_ = new TerminalPopupMenu();
-      toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
+      toolbar.addRightWidget(activeTerminalToolbarButton_.getToolbarButton());
       return toolbar;
    }
   
@@ -140,6 +148,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminalSessionsPanel_.getWidgetCount() < 1)
       {
          activeTerminalToolbarButton_.setNoActiveTerminal();
+         setTerminalCaption("");
       }
    }
 
@@ -153,7 +162,19 @@ public class TerminalPane extends WorkbenchPane
          setFocusOnVisible();
       }
    }
-
+   
+   @Override
+   public void onTerminalCaption(TerminalCaptionEvent event)
+   {
+      TerminalSession visibleTerm = getVisibleTerminal();
+      TerminalSession captionTerm = event.getTerminalSession();
+      if (visibleTerm != null && visibleTerm.getHandle().equals(
+            captionTerm.getHandle()))
+      {
+         setTerminalCaption(captionTerm.getCaption());
+      }
+   }
+   
    /**
     * @return number of terminals hosted by the pane
     */
@@ -224,6 +245,7 @@ public class TerminalPane extends WorkbenchPane
                   visibleTerminal.setFocus(true);
                   activeTerminalToolbarButton_.setActiveTerminal(
                         visibleTerminal.getTitle(), visibleTerminal.getHandle());
+                  setTerminalCaption(visibleTerminal.getCaption());
                }
             }
          });
@@ -260,7 +282,14 @@ public class TerminalPane extends WorkbenchPane
          return -1;
    }
    
+   private void setTerminalCaption(String caption)
+   {
+      terminalCaption_.setText(caption);
+   }
+   
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
+   private Label terminalCaption_;
    private ShellSecureInput secureInput_;
+
 }
