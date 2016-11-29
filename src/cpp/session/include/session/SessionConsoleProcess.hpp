@@ -71,6 +71,16 @@ private:
          InteractionMode mode,
          int maxOutputLines);
 
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const std::string& caption,
+         const std::string& terminalHandle,
+         int terminalSequence,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines);
+   
    void regexInit();
    void commonInit();
 
@@ -113,6 +123,16 @@ public:
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
+   static boost::shared_ptr<ConsoleProcess> create(
+         const std::string& command,
+         core::system::ProcessOptions options,
+         const std::string& caption,
+         const std::string& terminalHandle,
+         const int terminalSequence,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines = kDefaultMaxOutputLines);
+   
    virtual ~ConsoleProcess() {}
 
    // set a custom prompt handler -- return true to indicate the prompt
@@ -179,6 +199,13 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
+   // The handle of an associated terminal
+   std::string terminalHandle_;
+   
+   // The sequence number of the associated terminal; used to control display
+   // order of terminal tabs
+   int terminalSequence_;
+   
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 

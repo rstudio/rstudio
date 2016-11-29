@@ -31,7 +31,9 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
@@ -49,13 +51,21 @@ public class TerminalSession extends XTermWidget
                              implements ConsoleOutputEvent.Handler, 
                                         ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
-                                        TerminalDataInputEvent.Handler
+                                        TerminalDataInputEvent.Handler,
+                                        TerminalTitleEvent.Handler
 {
-   public TerminalSession(final ShellSecureInput secureInput)
+   /**
+    * 
+    * @param secureInput securely send user input to server
+    * @param sequence number used as part of default terminal title
+    */
+   public TerminalSession(final ShellSecureInput secureInput, int sequence)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
+      sequence_ = sequence;
       setHeight("100%");
+      setTitle("Terminal " + sequence_);
    }
    
    @Inject
@@ -64,17 +74,15 @@ public class TerminalSession extends XTermWidget
    {
       server_ = server;
       eventBus_ = events; 
-      }
+   } 
    
    /**
     * Create a terminal process and connect to it.
     */
    public void connect()
    {
-      server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, 
-                               80, 25,
-                               false, /* not a modal dialog */
-                               new ServerRequestCallback<ConsoleProcess>()
+      server_.startTerminal(80, 25, getHandle(), getTitle(), getSequence(),
+                            new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(ConsoleProcess consoleProcess)
@@ -93,13 +101,14 @@ public class TerminalSession extends XTermWidget
                addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
                addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
                addHandlerRegistration(addTerminalDataInputHandler(TerminalSession.this));
+               addHandlerRegistration(addTerminalTitleHandler(TerminalSession.this));
 
                consoleProcess.start(new ServerRequestCallback<Void>()
                {
                   @Override
                   public void onResponseReceived(Void response)
                   {
-                     eventBus_.fireEvent(new TerminalSessionStartedEvent(terminalTitle_, TerminalSession.this));
+                     eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
                   }
                   
                   @Override
@@ -136,8 +145,7 @@ public class TerminalSession extends XTermWidget
       }
      
       consoleProcess_ = null;
-      eventBus_.fireEvent(new TerminalSessionStoppedEvent(terminalTitle_, this));
-
+      eventBus_.fireEvent(new TerminalSessionStoppedEvent(this));
    }
    
    @Override
@@ -184,6 +192,23 @@ public class TerminalSession extends XTermWidget
       });
    }
    
+   @Override
+   public void onTerminalTitle(TerminalTitleEvent event)
+   {
+      caption_ = event.getTitle();
+      eventBus_.fireEvent(new TerminalCaptionEvent(this));
+   }
+   
+   public String getCaption()
+   {
+      return caption_;
+   }
+   
+   public void setCaption(String caption)
+   {
+      caption_ = caption;
+   }
+
    private int getInteractionMode()
    {
       if (consoleProcess_ != null)
@@ -204,7 +229,7 @@ public class TerminalSession extends XTermWidget
 
    protected void writeError(String msg)
    {
-      write(AnsiColor.RED +"Fatal Error: " + msg);
+      write(AnsiColor.RED +"Fatal Error: " + msg + AnsiColor.DEFAULT);
    }
 
    @Override
@@ -242,18 +267,42 @@ public class TerminalSession extends XTermWidget
       }
    }
    
-   public String getTerminalTitle()
+   /**
+    * A unique handle for this terminal instance. Stays the same
+    * until Terminal is closed, even if the underlying process is killed and
+    * Terminal attached to a new one.
+    * @return Opaque string handle for this terminal instance, or null if
+    * terminal has never been attached to a process
+    */
+   public String getHandle()
    {
-      return terminalTitle_;
+      if (consoleProcess_ == null)
+      {
+         return null; // no terminal handle available
+      }
+      
+      return consoleProcess_.getProcessInfo().getTerminalHandle();
+   }
+   
+   /**
+    * The sequence number of the terminal, used in creation of the default
+    * title, e.g. "Terminal 3".
+    * @return The sequence number that was passed to the constructor.
+    */
+   public int getSequence()
+   {
+      return sequence_;
    }
 
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    
    private ConsoleProcess consoleProcess_;
-   private String terminalTitle_ = "(Not Connected)"; 
+   private String caption_ = new String();
+   private final int sequence_;
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 
    private EventBus eventBus_;
+
 }

@@ -114,6 +114,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
@@ -209,6 +210,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImportFileChooser dataImportFileChooser);
    void injectMembers(TerminalSession widget);
    void injectMembers(ShellSecureInput userInputEncryption);
+   void injectMembers(TerminalPopupMenu menu);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
