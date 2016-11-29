@@ -144,7 +144,6 @@ public class TerminalSession extends XTermWidget
          consoleProcess_.reap(new VoidServerRequestCallback());
       }
      
-      consoleProcess_ = null;
       eventBus_.fireEvent(new TerminalSessionStoppedEvent(this));
    }
    

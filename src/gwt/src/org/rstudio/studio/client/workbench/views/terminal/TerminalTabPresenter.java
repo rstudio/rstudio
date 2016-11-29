@@ -60,7 +60,6 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onActivateTerminal()
    {
       view_.activateTerminal();
-      view_.ensureTerminal();
    }
    
    public void initialize()
