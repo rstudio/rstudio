@@ -72,9 +72,9 @@ public class ProjectTemplateWidget extends Composite
       VerticalPanel rightPanel = new VerticalPanel();
       for (int i = 0; i < n; i++)
       {
-         String position = descriptions.get(i).getPosition();
+         String position = StringUtil.notNull(descriptions.get(i).getPosition());
          Widget widget = widgets_.get(i);
-         if ("right".equals(position))
+         if ("right".equals(position.toLowerCase()))
             rightPanel.add(widget);
          else
             leftPanel.add(widget);
