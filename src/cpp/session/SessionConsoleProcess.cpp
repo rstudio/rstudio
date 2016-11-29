@@ -293,7 +293,12 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
 void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 {
-   std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+   // TODO (gary) for terminals we won't store output history
+   // in the SessionInfo; this will be stored separately, keyed by
+   // Terminal Handle; as a prelude to that stop storing the old way
+   // if we have the terminal handle
+   if (terminalHandle_.empty())
+      std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
