@@ -249,8 +249,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
    
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
-   private CheckBox chkGitInit_;
-   private CheckBox chkPackratInit_;
+   protected CheckBox chkGitInit_;
+   protected CheckBox chkPackratInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
 
