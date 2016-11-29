@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -99,6 +100,12 @@ public class ProjectTemplateWidget extends Composite
    private ProjectTemplateWidgetItem checkBoxInput(final ProjectTemplateWidgetDescription description)
    {
       final CheckBox widget = new CheckBox(description.getLabel());
+      
+      // set default value
+      String defaultValue = description.getDefault();
+      if (!StringUtil.isNullOrEmpty(defaultValue))
+         widget.setValue(isTruthy(defaultValue));
+      
       return new ProjectTemplateWidgetItem(widget, new Collector()
       {
          @Override
@@ -112,15 +119,14 @@ public class ProjectTemplateWidget extends Composite
    
    private ProjectTemplateWidgetItem selectBoxInput(final ProjectTemplateWidgetDescription description)
    {
-      // read fields
       String[] fields = readSelectBoxFields(description);
-      
-      // normalize label
-      String label = description.getLabel();
-      if (!label.endsWith(":")) label = label + ":";
-      
-      // return widget
+      String label = ensureEndsWithColon(description.getLabel());
       final SelectWidget widget = new SelectWidget(label, fields);
+      
+      String defaultValue = description.getDefault();
+      if (!StringUtil.isNullOrEmpty(defaultValue))
+         widget.setValue(defaultValue);
+      
       return new ProjectTemplateWidgetItem(widget, new Collector()
       {
          @Override
@@ -134,11 +140,17 @@ public class ProjectTemplateWidget extends Composite
    
    private ProjectTemplateWidgetItem textInput(final ProjectTemplateWidgetDescription description)
    {
-      Grid grid = new Grid(1, 2);
       final TextBox primaryWidget = new TextBox();
+      
+      String defaultValue = description.getDefault();
+      if (!StringUtil.isNullOrEmpty(defaultValue))
+         primaryWidget.setText(defaultValue);
+      
+      Grid grid = new Grid(1, 2);
       primaryWidget.getElement().setAttribute("spellcheck", "false");
       grid.setWidget(0, 0, new Label(ensureEndsWithColon(description.getLabel())));
       grid.setWidget(0, 1, primaryWidget);
+      
       return new ProjectTemplateWidgetItem(grid, new Collector()
       {
          @Override
@@ -153,6 +165,11 @@ public class ProjectTemplateWidget extends Composite
    private ProjectTemplateWidgetItem fileInput(final ProjectTemplateWidgetDescription description)
    {
       final FileChooserTextBox widget = new FileChooserTextBox(description.getLabel(), null);
+      
+      String defaultValue = description.getDefault();
+      if (!StringUtil.isNullOrEmpty(defaultValue))
+         widget.setText(defaultValue);
+      
       return new ProjectTemplateWidgetItem(widget, new Collector()
       {
          @Override
@@ -180,6 +197,16 @@ public class ProjectTemplateWidget extends Composite
       return string.endsWith(":")
             ? string
             : string + ":";
+   }
+   
+   private boolean isTruthy(String value)
+   {
+      String lower = value.toLowerCase();
+      return
+            lower.equals("true") ||
+            lower.equals("yes") ||
+            lower.equals("on") ||
+            lower.equals("1");
    }
    
    private final List<ProjectTemplateWidgetItem> widgets_;

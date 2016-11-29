@@ -26,5 +26,6 @@ public class ProjectTemplateWidgetDescription extends JavaScriptObject
    public final native String getParameter()     /*-{ return this["parameter"]; }-*/;
    public final native String getType()          /*-{ return this["type"]; }-*/;
    public final native String getLabel()         /*-{ return this["label"]; }-*/;
+   public final native String getDefault()       /*-{ return this["default"]; }-*/;
    public final native JsArrayString getFields() /*-{ return this["fields"]; }-*/;
 }

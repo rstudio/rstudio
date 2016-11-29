@@ -89,6 +89,7 @@ Error fromJson(
             "parameter", &description.parameter,
             "type",      &description.type,
             "label",     &description.label,
+            "default",   &description.defaultValue,
             "fields",    &description.fields);
 
    if (error)
@@ -105,6 +106,7 @@ json::Value ProjectTemplateWidgetDescription::toJson() const
    object["parameter"] = parameter;
    object["type"]      = type;
    object["label"]     = label;
+   object["default"]   = defaultValue;
    object["fields"]    = core::json::toJsonArray(fields);
 
    return object;
@@ -281,6 +283,8 @@ core::Error populate(
          widget.parameter = value;
       else if (key == "Label")
          widget.label = value;
+      else if (key == "Default")
+         widget.defaultValue = value;
       else if (key == "Widget")
       {
          Error error = parseWidgetType(value, resourcePath, &widget.type);
@@ -547,7 +551,7 @@ void reindex(bool notifyClient)
 
 void onDeferredInit(bool)
 {
-   reindex(false);
+   reindex(true);
 }
 
 void onConsoleInput(const std::string& input)

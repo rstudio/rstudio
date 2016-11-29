@@ -50,6 +50,7 @@ struct ProjectTemplateWidgetDescription
    std::string parameter;
    std::string type;
    std::string label;
+   std::string defaultValue;
    std::vector<std::string> fields;
 
    core::json::Value toJson() const;
