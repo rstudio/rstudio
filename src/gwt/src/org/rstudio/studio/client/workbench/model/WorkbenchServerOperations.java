@@ -119,10 +119,19 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                      ServerRequestCallback<TerminalOptions> requestCallback);
    
    
-   void startShellDialog(ConsoleProcess.TerminalType terminalType,
-                         int cols, int rows,
-                         boolean isModalDialog,
-                         ServerRequestCallback<ConsoleProcess> requestCallback);
+   void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback);
+    
+   /**
+    * Start a terminal session
+    * @param cols initial number of text columns for pseudoterminal
+    * @param rows initial number of text rows for pseudoterminal
+    * @param handle initial terminal handle (pass empty or null string for new terminal)
+    * @param title title associated with the terminal
+    * @param sequence relative order of terminal creation (1-based)
+    * @param requestCallback callback from server upon completion
+    */
+   void startTerminal(int cols, int rows, String handle, String title, int sequence,
+                      ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

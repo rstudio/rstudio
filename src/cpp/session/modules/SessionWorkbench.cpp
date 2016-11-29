@@ -869,11 +869,23 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // is terminal hosted in a modal dialog? (false means modeless, e.g. a tab)
    bool isModalDialog;
    
+   // terminal handle (empty string if starting a new terminal)
+   std::string termHandle;
+   
+   // terminal title
+   std::string termTitle;
+   
+   // terminal sequence
+   int termSequence = 0;
+   
    Error error = json::readParams(request.params,
                                   &term,
                                   &cols,
                                   &rows,
-                                  &isModalDialog);
+                                  &isModalDialog,
+                                  &termHandle,
+                                  &termTitle,
+                                  &termSequence);
    if (error)
       return error;
    
@@ -912,6 +924,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.smartTerminal = smartTerm;
    options.cols = cols;
    options.rows = rows;
+   
+   if (termTitle.empty())
+      termTitle = "Shell";
 
    // configure bash command
    core::shell_utils::ShellCommand bashCommand("/usr/bin/env");
@@ -922,7 +937,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::create(bashCommand,
                                       options,
-                                      "Shell",
+                                      termTitle,
+                                      termHandle,
+                                      termSequence,
                                       isModalDialog,
                                       InteractionAlways,
                                       console_process::kDefaultMaxOutputLines);

@@ -94,6 +94,24 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    commonInit();
 }
 
+ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               const std::string& terminalHandle,
+                               int terminalSequence,
+                               bool dialog,
+                               InteractionMode interactionMode,
+                               int maxOutputLines)
+   : command_(command), options_(options), caption_(caption), dialog_(dialog),
+     showOnOutput_(false),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalHandle_(terminalHandle), terminalSequence_(terminalSequence),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
+{
+   commonInit();
+}
+   
 void ConsoleProcess::regexInit()
 {
    controlCharsPattern_ = boost::regex("[\\r\\b]");
@@ -106,6 +124,10 @@ void ConsoleProcess::commonInit()
 
    handle_ = core::system::generateUuid(false);
 
+   // only generate a terminal handle if creating a new terminal
+   if (terminalSequence_ > 0 && terminalHandle_.empty())
+      terminalHandle_ = core::system::generateUuid(false);
+   
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
@@ -640,6 +662,30 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             args,
                             options,
                             caption,
+                            dialog,
+                            interactionMode,
+                            maxOutputLines));
+   s_procs[ptrProc->handle()] = ptrProc;
+   return ptrProc;
+}
+
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string& command,
+      core::system::ProcessOptions options,
+      const std::string& caption,
+      const std::string& terminalHandle,
+      const int terminalSequence,
+      bool dialog,
+      InteractionMode interactionMode,
+      int maxOutputLines)
+{
+   options.terminateChildren = true;
+   boost::shared_ptr<ConsoleProcess> ptrProc(
+         new ConsoleProcess(command,
+                            options,
+                            caption,
+                            terminalHandle,
+                            terminalSequence,
                             dialog,
                             interactionMode,
                             maxOutputLines));

@@ -78,10 +78,8 @@ public class TerminalSession extends XTermWidget
     */
    public void connect()
    {
-      server_.startShellDialog(ConsoleProcess.TerminalType.XTERM, 
-                               80, 25,
-                               false, /* not a modal dialog */
-                               new ServerRequestCallback<ConsoleProcess>()
+      server_.startTerminal(80, 25, getHandle(), getTitle(), getSequence(),
+                            new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(ConsoleProcess consoleProcess)
@@ -257,20 +255,12 @@ public class TerminalSession extends XTermWidget
     */
    public String getHandle()
    {
-      if (handle_ == null)
+      if (consoleProcess_ == null)
       {
-         if (consoleProcess_ == null)
-         {
-            return null; // no terminal handle available
-         }
-         
-         // Though we use the handle of the attached process as the terminal
-         // handle, if the terminal's process is killed and restarted, the
-         // terminal retains the original handle. We just use the process
-         // handle as a convenient way to get a uuid.
-         handle_ = consoleProcess_.getProcessInfo().getHandle();
+         return null; // no terminal handle available
       }
-      return handle_;
+      
+      return consoleProcess_.getProcessInfo().getTerminalHandle();
    }
    
    /**
@@ -288,7 +278,6 @@ public class TerminalSession extends XTermWidget
    
    private ConsoleProcess consoleProcess_;
    private final int sequence_;
-   private String handle_;
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 

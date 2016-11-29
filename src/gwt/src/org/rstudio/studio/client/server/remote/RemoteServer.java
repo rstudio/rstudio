@@ -469,17 +469,41 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
+
    
-   public void startShellDialog(ConsoleProcess.TerminalType terminalType,
-                                int cols, int rows,
-                                boolean isModalDialog,
-                                ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      invokeStartShellDialog(ConsoleProcess.TerminalType.DUMB, true /*modal*/,
+                             80, 1, null /*handle*/, null /*title*/, 
+                             0 /*sequence*/, requestCallback);
+   }
+   
+   public void startTerminal(int cols, int rows,
+                             String handle, String title, int sequence,
+                             ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM, false /*modal*/,
+                             cols, rows, handle, title, sequence, requestCallback);
+   }
+   
+   private void invokeStartShellDialog(
+                     ConsoleProcess.TerminalType terminalType,
+                     boolean isModalDialog, // TODO (gary) unnecessary?
+                     int cols, int rows,
+                     String terminalHandle,
+                     String terminalTitle,
+                     int sequence,
+                     ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(terminalType.toString()));
       params.set(1, new JSONNumber(cols));
       params.set(2, new JSONNumber(rows));
       params.set(3, JSONBoolean.getInstance(isModalDialog));
+      params.set(4,  new JSONString(terminalHandle == null ? "" : terminalHandle));
+      params.set(5,  new JSONString(terminalTitle == null ? "" : terminalTitle));
+      params.set(6,  new JSONNumber(sequence));
+      
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,
                   params,
