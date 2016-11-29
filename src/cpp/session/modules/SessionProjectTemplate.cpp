@@ -577,7 +577,8 @@ private:
          Error error = parseResourceFile(pkgName, childPath, &description);
          if (error)
          {
-            LOG_ERROR(error);
+            // we don't log errors here as 'parseResourceFile()' will report
+            // user errors to the console as appropriate
             continue;
          }
          
