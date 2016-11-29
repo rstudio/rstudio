@@ -729,6 +729,7 @@ public class Application implements ApplicationEventHandlers
       if (!uiPrefs_.get().enableXTerm().getValue())
       {
          commands_.newTerminal().remove();
+         commands_.activateTerminal().remove();
       }
       if (!sessionInfo.getAllowPackageInstallation())
       {
