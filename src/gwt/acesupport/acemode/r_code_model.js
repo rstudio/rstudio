@@ -1298,7 +1298,7 @@ var RCodeModel = function(session, tokenizer,
              // Walk over matching braces -- this allows us to
              // e.g. skip function definitions (and hence, any
              // sub-sections within those functions).
-             if (it.fwdToMatchingToken())
+             if (token.value === "{" && it.fwdToMatchingToken())
                 continue;
          }
 
