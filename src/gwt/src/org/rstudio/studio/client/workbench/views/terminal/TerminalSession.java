@@ -19,6 +19,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.console.ConsoleOutputEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -292,10 +293,27 @@ public class TerminalSession extends XTermWidget
    {
       return sequence_;
    }
+   
+   /**
+    * Forcibly terminate the process associated with this terminal session.
+    */
+   public void terminate()
+   {
+      if (consoleProcess_ != null)
+      {
+         consoleProcess_.interrupt(new SimpleRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               consoleProcess_.reap(new VoidServerRequestCallback());
+            }
+         });
+      }
+   }
 
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
-   
    private ConsoleProcess consoleProcess_;
    private String caption_ = new String();
    private final int sequence_;
