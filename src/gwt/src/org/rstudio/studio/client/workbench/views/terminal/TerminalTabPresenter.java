@@ -21,7 +21,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
@@ -45,12 +44,15 @@ public class TerminalTabPresenter extends BusyPresenter
        * Create a new terminal session.
        */
       void createTerminal();
+      
+      /**
+       * Terminate current terminal.
+       */
+      void terminateCurrentTerminal();
    }
 
    @Inject
-   public TerminalTabPresenter(Display view,
-                               Commands commands,
-                               WorkbenchServerOperations server)
+   public TerminalTabPresenter(Display view)
    {
       super(view);
       view_ = view;
@@ -60,6 +62,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onActivateTerminal()
    {
       view_.activateTerminal();
+   }
+  
+   @Handler
+   public void onCloseTerminal()
+   {
+      view_.terminateCurrentTerminal();
    }
    
    public void initialize()
@@ -71,6 +79,7 @@ public class TerminalTabPresenter extends BusyPresenter
       view_.activateTerminal();
       view_.createTerminal();
    }
-
+   
+   // Injected ---- 
    private final Display view_;
 }
