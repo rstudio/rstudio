@@ -284,12 +284,8 @@ th:focus {
     position: relative;
 }
 
-.numberCell.autoSize, .textCell.autoSize {
+.autoSize .numberCell, .autoSize .textCell {
     max-width: 300px; 
-}
-
-.numberCell.manualSize, .textCell.manualSize {
-    width: 100%; 
 }
 
 .cell {

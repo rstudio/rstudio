@@ -190,20 +190,30 @@ var renderCellContents = function(data, type, row, meta) {
   return escapeHtml(data);
 };
 
-// render a number cell
-var renderNumberCell = function(data, type, row, meta) {
-  return '<div class="cell">' + 
-         '<div class="numberCell autoSize">' + 
+var renderCellClass = function (data, type, row, meta, clazz) {
+  // divine cell width
+  var width = manualWidths[meta.col];
+  var widthStyle = "";
+  var widthClazz = "";
+  if (typeof(width) === "number")
+     widthStyle = 'style="width: ' + width + 'px;"';
+  else
+     widthClazz = " autoSize";
+
+  return '<div class="cell' + widthClazz + '" ' + widthStyle + '">' + 
+         '<div class="' + clazz + '">' + 
          renderCellContents(data, type, row, meta) + '</div>' +
          '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
 
+// render a number cell
+var renderNumberCell = function(data, type, row, meta) {
+  return renderCellClass(data, type, row, meta, "numberCell");
+};
+
 // render a text cell
 var renderTextCell = function(data, type, row, meta) {
-  return '<div class="cell">' +
-         '<div class="textCell autoSize" title="' + escapeHtml(data) + '">' + 
-         renderCellContents(data, type, row, meta) + '</div>' +
-         '<div class="resizer" data-col="' + meta.col + '" /></div>';
+  return renderCellClass(data, type, row, meta, "textCell");
 };
 
 // restores scroll information lost on tab switch
@@ -971,15 +981,11 @@ var addResizeHandlers = function(ele) {
       $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
       $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
       $("#rsGridData").width(initTableWidth + delta);
-      var colObj = $("#rsGridData td:nth-child(" + (col + 1) + ")").first();
+      var colObj = $("#rsGridData td:nth-child(" + (col + 1) + ") .cell");
       colObj.width(colWidth);
 
       // switch the cell to manual size mode
-      var cell = colObj.children().first();
-      if (cell.hasClass("autoSize")) {
-         cell.removeClass("autoSize");
-         cell.addClass("manualSize");
-      }
+      colObj.removeClass("autoSize");
 
       // record manual width for re-apply on redraw
       manualWidths[col] = colWidth;
