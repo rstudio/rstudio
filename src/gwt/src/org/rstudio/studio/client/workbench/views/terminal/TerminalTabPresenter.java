@@ -23,6 +23,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
@@ -49,6 +50,12 @@ public class TerminalTabPresenter extends BusyPresenter
        * Terminate current terminal.
        */
       void terminateCurrentTerminal();
+      
+      /**
+       * Attach a list of server-side terminals to the pane.
+       * @param event list of terminals on server
+       */
+      void repopulateTerminals(TerminalSessionListEvent event);
    }
 
    @Inject
@@ -78,6 +85,11 @@ public class TerminalTabPresenter extends BusyPresenter
    {
       view_.activateTerminal();
       view_.createTerminal();
+   }
+   
+   public void onTerminalSessionList(TerminalSessionListEvent event)
+   {
+     view_.repopulateTerminals(event);
    }
    
    // Injected ---- 

@@ -14,12 +14,8 @@
  */
 package org.rstudio.studio.client.common.console;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
@@ -37,7 +33,15 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ConsolePromptEvent.HasHandlers,
@@ -70,6 +74,9 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
             {
                JsArray<ConsoleProcessInfo> procs =
                      session.getSessionInfo().getConsoleProcesses();
+
+               final ArrayList<ConsoleProcess> terminalProcs = 
+                     new ArrayList<ConsoleProcess>();
 
                for (int i = 0; i < procs.length(); i++)
                {
@@ -119,7 +126,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                  }
                                  
                                  // showOnOutput dialog with no output that is
-                                 // still running -- crate but don't show yet
+                                 // still running -- create but don't show yet
                                  else
                                  {
                                     createDialog = true;
@@ -143,21 +150,9 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                               }
                               else
                               {
-                                 // TODO (gary) reassociate modeless process(es)
-                                 // to the Terminal tab's selection dropdown
-                                 // dropdown.
-                                 // Until then, just stop and reap the processes
-                                 // so they don't prevent session suspend and 
-                                 // linger as zombies.
-                                 cproc.interrupt(new SimpleRequestCallback<Void>()
-                                 {
-                                    @Override
-                                    public void onResponseReceived(Void response)
-                                    {
-                                       cproc.reap(new VoidServerRequestCallback());
-                                    }
-                                    
-                                 });
+                                 // Build up array of terminal-related processes,
+                                 // in ascending order by terminal sequence.
+                                 addTerminalProc(terminalProcs, cproc);
                               }
                            }
 
@@ -168,9 +163,14 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                            }
                         });
                }
+
+               if (terminalProcs.size() > 0)
+               {
+                  eventBus_.fireEvent(new TerminalSessionListEvent(terminalProcs));
+               }
             }
          });
-         
+
          eventBus_.addHandler(
                ConsoleProcessCreatedEvent.TYPE,
                new ConsoleProcessCreatedEvent.Handler()
@@ -191,7 +191,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                          !satelliteManager.satelliteWindowExists(targetWindow))
                         return true;
                      
-                     // othewise don't handle
+                     // otherwise don't handle
                      else
                         return false;
                   }
@@ -254,7 +254,64 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
          
          return dlg;
       }
+      
+      /**
+       * Add process to list of processes, sorted in ascending order by
+       * terminal sequence number. If duplicate sequence numbers are
+       * encountered, all but the first will have the process killed.
+       * 
+       * @param terminalProcs (in/out) sorted list of terminal processes
+       * @param cproc process to insert in the list
+       */
+      private static void addTerminalProc(ArrayList<ConsoleProcess> terminalProcs,
+                                          ConsoleProcess cproc)
+      {
+         int newSequence = cproc.getProcessInfo().getTerminalSequence();
 
+         if (newSequence < 1)
+         {
+            Debug.log("Invalid terminal sequence, killing unrecognized process");
+            reap(cproc);
+            return;
+         }
+
+         for (int i = 0; i < terminalProcs.size(); i++)
+         {
+            int currentSequence = 
+                  terminalProcs.get(i).getProcessInfo().getTerminalSequence();
+
+            if (newSequence == currentSequence)
+            {
+               Debug.log("Duplicate terminal sequence, killing duplicate process");
+               reap(cproc);
+               return;
+            }
+
+            if (newSequence < currentSequence)
+            {
+               terminalProcs.add(i, cproc);
+               return;
+            }
+         }
+         terminalProcs.add(cproc);
+     }
+
+      /**
+       * Terminate and reap a process.
+       * @param cproc process to terminate and reap
+       */
+      private static void reap(final ConsoleProcess cproc)
+      {
+         cproc.interrupt(new SimpleRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               cproc.reap(new VoidServerRequestCallback());
+            }
+         });
+      }
+      
       private final ConsoleServerOperations server_;
       private final CryptoServerOperations cryptoServer_;
       private final EventBus eventBus_;
@@ -310,6 +367,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       ));
    }
    
+
    public ConsoleProcessInfo getProcessInfo()
    {
       return procInfo_;

@@ -15,17 +15,22 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -39,6 +44,14 @@ import com.google.inject.Inject;
 /**
  * Holds the contents of the Terminal pane, including the toolbar and
  * zero or more Terminal instances.
+ * 
+ * The toolbar has a dropdown menu, which owns the list of terminals and
+ * their handles.
+ * 
+ * As each terminal is selected from the dropdown, a new TerminalSession
+ * widget is created, hooked to a server-side terminal via ConsoleProcess,
+ * and added to the pane via a DeckLayoutPanel. Once loaded the widgets
+ * stay loaded and are shown/hidden by the DeskLayoutPanel.
  */
 public class TerminalPane extends WorkbenchPane
                           implements ClickHandler,
@@ -114,16 +127,44 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void createTerminal()
    {
-      if (secureInput_ == null)
-      {
-         secureInput_ = new ShellSecureInput();  
-      }
-      
-      TerminalSession newSession = new TerminalSession(secureInput_,
-                                                       nextTerminalSequence());
+     startTerminal(activeTerminalToolbarButton_.nextTerminalSequence(), null);
+   }
+
+   /**
+    * Start a terminal
+    * @param sequence sequence number to track relative order of terminal creation
+    * @param terminalHandle handle for terminal, or null if starting a new terminal
+    */
+   public void startTerminal(int sequence, String terminalHandle)
+   {
+      TerminalSession newSession = new TerminalSession(
+            getSecureInput(), sequence, terminalHandle);
       newSession.connect();
    }
    
+   @Override
+   public void repopulateTerminals(TerminalSessionListEvent event)
+   {
+      // Expect to receive this after a browser reset, so if we already have
+      // terminals in the cache, something is, to be technical, busted.
+      if (getTerminalCount() > 0 || getLoadedTerminalCount() > 0 )
+      {
+         Debug.log("Received terminal list from server when terminals already loaded. Ignoring.");
+         return;
+      }
+
+      // add terminal to the dropdown's cache; terminals aren't actually
+      // loaded until selected via the dropdown
+      for (ConsoleProcess proc : event.getTerminalList())
+      {
+         ConsoleProcessInfo procInfo = proc.getProcessInfo();
+         activeTerminalToolbarButton_.addTerminal(
+               procInfo.getTerminalHandle(),
+               procInfo.getTerminalSequence(),
+               procInfo.getCaption());
+      }
+   }
+
    @Override
    public void terminateCurrentTerminal()
    {
@@ -195,12 +236,26 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onSwitchToTerminal(SwitchToTerminalEvent event)
    {
-      TerminalSession terminal = terminalWithHandle(event.getTerminalHandle());
+      String handle = event.getTerminalHandle();
+      // If terminal was already loaded, just make it visible
+      TerminalSession terminal = terminalWithHandle(handle);
       if (terminal != null)
       {
          terminalSessionsPanel_.showWidget(terminal);
          setFocusOnVisible();
+         return;
       }
+      
+      // Reconnect to server?
+      TerminalMetadata existingTerminal = 
+            activeTerminalToolbarButton_.getMetadataForHandle(handle);
+      if (existingTerminal != null)
+      {
+         startTerminal(existingTerminal.getSequence(), handle);
+         return;
+      }
+      
+      Debug.log("Tried to switch to unknown terminal");
    }
    
    @Override
@@ -216,9 +271,17 @@ public class TerminalPane extends WorkbenchPane
    }
    
    /**
-    * @return number of terminals hosted by the pane
+    * @return number of terminals in the dropdown
     */
    public int getTerminalCount()
+   {
+      return activeTerminalToolbarButton_.terminalCount();
+   }
+   
+   /**
+    * @return number of terminals loaded into panes
+    */
+   public int getLoadedTerminalCount()
    {
       return terminalSessionsPanel_.getWidgetCount();
    }
@@ -227,7 +290,7 @@ public class TerminalPane extends WorkbenchPane
     * @param i index of terminal to return
     * @return terminal at index, or null
     */
-   public TerminalSession getTerminalAtIndex(int i)
+   public TerminalSession getLoadedTerminalAtIndex(int i)
    {
       Widget widget = terminalSessionsPanel_.getWidget(i);
       if (widget instanceof TerminalSession)
@@ -238,16 +301,16 @@ public class TerminalPane extends WorkbenchPane
    }
    
    /**
-    * Find terminal session for a given handle
+    * Find loaded terminal session for a given handle
     * @param handle of TerminalSession to return
     * @return TerminalSession with that handle, or null
     */
    public TerminalSession terminalWithHandle(String handle)
    {
-      int total = getTerminalCount();
+      int total = getLoadedTerminalCount();
       for (int i = 0; i < total; i++)
       {
-         TerminalSession t = getTerminalAtIndex(i);
+         TerminalSession t = getLoadedTerminalAtIndex(i);
          if (t != null && t.getHandle().equals(handle))
          {
             return t;
@@ -292,22 +355,6 @@ public class TerminalPane extends WorkbenchPane
    }
    
    /**
-    * Choose a 1-based sequence number one higher than the highest currently opened
-    * terminal number. We don't try to fill gaps if terminals are closed in
-    * the middle of the opened tabs.
-    * @return Highest currently opened terminal plus one
-    */
-   private int nextTerminalSequence()
-   {
-      int maxNum = 0;
-      for (int i = 0; i < terminalSessionsPanel_.getWidgetCount(); i++)
-      {
-         maxNum = Math.max(maxNum, getTerminalAtIndex(i).getSequence());
-      }
-      return maxNum + 1;
-   }
-   
-   /**
     * Index of terminal to show after closing indicated terminal index
     * @param terminalClosing index of terminal being closed
     * @return index of terminal to show next, or -1 if none available
@@ -327,6 +374,15 @@ public class TerminalPane extends WorkbenchPane
       terminalCaption_.setText(caption);
    }
    
+   private ShellSecureInput getSecureInput()
+   {
+      if (secureInput_ == null)
+      {
+         secureInput_ = new ShellSecureInput();  
+      }
+      return secureInput_;
+   }
+   
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private Label terminalCaption_;
@@ -334,5 +390,4 @@ public class TerminalPane extends WorkbenchPane
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;
-
 }

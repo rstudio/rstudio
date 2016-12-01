@@ -1,8 +1,7 @@
-
 /*
- * CreateTerminalEvent.java
+ * TerminalSessionListEvent.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,28 +15,37 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
 
-/**
- * Event to trigger creation of a terminal session.
- */
-public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Handler>
-{  
+@JavaScriptSerializable
+public class TerminalSessionListEvent extends CrossWindowEvent<Handler>
+{
    public interface Handler extends EventHandler
    {
       /**
-       * Event sent to trigger creation of a terminal session
-       * @param event empty event
+       * Sent when a list of terminal processes has been received from the
+       * server.
+       * @param event event containing a list of terminal processes
        */
-      void onCreateTerminal(CreateTerminalEvent event);
+      void onTerminalSessionList(TerminalSessionListEvent event);
    }
-
-   public CreateTerminalEvent()
+   
+   public TerminalSessionListEvent()
    {
    }
-    
+   
+   public TerminalSessionListEvent(ArrayList<ConsoleProcess> terminalList)
+   {
+      terminalList_ = terminalList;
+   }
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -47,8 +55,15 @@ public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Ha
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCreateTerminal(this);
+      handler.onTerminalSessionList(this);
    }
-
+   
+   public ArrayList<ConsoleProcess> getTerminalList()
+   {
+      return terminalList_;
+   }
+  
+   private ArrayList<ConsoleProcess> terminalList_;
+   
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

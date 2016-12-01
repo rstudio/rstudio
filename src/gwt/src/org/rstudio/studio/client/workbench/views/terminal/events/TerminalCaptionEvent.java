@@ -29,6 +29,10 @@ public class TerminalCaptionEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
+      /**
+       * Sent by a terminal session that has changed its caption
+       * @param event terminal session that has a changed caption
+       */
       void onTerminalCaption(TerminalCaptionEvent event);
    }
    
