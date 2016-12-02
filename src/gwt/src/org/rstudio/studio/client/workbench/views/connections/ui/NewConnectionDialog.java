@@ -73,7 +73,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       frame_.getWindow().focus();
 
       // initialize miniUI
-      String code = "runGadget(sparklyr" + "::" + "connections_spark_shinyapp" + ")";
+      String code = "runGadget(sparklyr" + "::" + "connections_spark_shinyapp()" + ")";
       events_.fireEvent(new SendToConsoleEvent(code, 
                                                true, 
                                                false, 
@@ -124,7 +124,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
          @Override
          public void execute()
          {
-            // TODO: codePanel_.setCode(code, null);
+            codePanel_.setCode("", null);
          }
       };
       updateCodeCommand.execute();
