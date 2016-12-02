@@ -266,20 +266,9 @@ public class ConnectionsPresenter extends BasePresenter
                    @Override
                    public void execute(final ConnectionOptions result)
                    {
-                      withRequiredSparkInstallation(
-                            result.getSparkVersion(),
-                            result.getRemote(),
-                            context.getSparkHome() != null,
-                            new Command() {
-                               @Override
-                               public void execute()
-                               {
-                                  eventBus_.fireEvent(new PerformConnectionEvent(
-                                        result.getConnectVia(),
-                                        result.getConnectCode()));
-                               }
-                               
-                            });
+                      eventBus_.fireEvent(new PerformConnectionEvent(
+                            result.getConnectVia(),
+                            result.getConnectCode()));
                    }
                 }).showModal();
             }
