@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -24,23 +22,23 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+/**
+ * Drop-down menu used in terminal pane. Has commands, and a list of 
+ * terminal sessions.
+ */
 public class TerminalPopupMenu extends ToolbarPopupMenu
-                               implements TerminalSessionStartedEvent.Handler,
-                                          TerminalSessionStoppedEvent.Handler
 {
-   public TerminalPopupMenu()
+   public TerminalPopupMenu(TerminalList terminals)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      eventBus_.addHandler(TerminalSessionStartedEvent.TYPE, this);
-      eventBus_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
+      terminals_ = terminals;
    }
 
    @Inject
@@ -59,22 +57,22 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       addItem(commands_.newTerminal().createMenuItem(false));
       addSeparator();
 
-      if (terminals_.size() > 0)
+      if (terminals_.terminalCount() > 0)
       {
-         for (final java.util.Map.Entry<String, String> item : terminals_.entrySet())
+         for (final TerminalMetadata item : terminals_)
          {
             Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getKey()));
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getHandle()));
                }
             };
 
             String menuHtml = AppCommand.formatMenuLabel(
                   null,            /*icon*/
-                  item.getValue(), /*label*/
+                  item.getTitle(), /*label*/
                   false,           /*html*/
                   null,            /*shortcut*/
                   null,            /*rightImage*/
@@ -129,29 +127,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       setActiveTerminal("Terminal", null);
    }
 
-   private void addTerminal(String title, String handle)
-   {
-      terminals_.put(handle, title);
-   }
-   
-   private void removeTerminal(String handle)
-   {
-      terminals_.remove(handle);
-   }
-   
-   @Override
-   public void onTerminalSessionStarted(TerminalSessionStartedEvent event)
-   {
-      addTerminal(event.getTerminalWidget().getTitle(),
-            event.getTerminalWidget().getHandle());
-   }
-    
-   @Override
-   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
-   {
-      removeTerminal(event.getTerminalWidget().getHandle());
-   }
-   
    /**
     * @return Handle of active terminal, or null if no active terminal.
     */
@@ -165,9 +140,5 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private EventBus eventBus_;
    private String activeTerminalTitle_;
    private String activeTerminalHandle_;
-   
-   /**
-    * map of terminal handles to titles
-    */
-   private HashMap<String, String> terminals_ = new HashMap<String, String>();
+   private TerminalList terminals_;
 }

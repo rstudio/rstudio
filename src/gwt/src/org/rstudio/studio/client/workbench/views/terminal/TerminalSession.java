@@ -59,12 +59,15 @@ public class TerminalSession extends XTermWidget
     * 
     * @param secureInput securely send user input to server
     * @param sequence number used as part of default terminal title
+    * @param handle terminal handle if reattaching, null if new terminal
     */
-   public TerminalSession(final ShellSecureInput secureInput, int sequence)
+   public TerminalSession(final ShellSecureInput secureInput, 
+                          int sequence, String handle)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
       sequence_ = sequence;
+      terminalHandle_ = handle;
       setHeight("100%");
       setTitle("Terminal " + sequence_);
    }
@@ -82,6 +85,8 @@ public class TerminalSession extends XTermWidget
     */
    public void connect()
    {
+      setNewTerminal(getHandle() == null);
+      
       server_.startTerminal(80, 25, getHandle(), getTitle(), getSequence(),
                             new ServerRequestCallback<ConsoleProcess>()
       {
@@ -278,7 +283,7 @@ public class TerminalSession extends XTermWidget
    {
       if (consoleProcess_ == null)
       {
-         return null; // no terminal handle available
+         return terminalHandle_;
       }
       
       return consoleProcess_.getProcessInfo().getTerminalHandle();
@@ -317,6 +322,7 @@ public class TerminalSession extends XTermWidget
    private ConsoleProcess consoleProcess_;
    private String caption_ = new String();
    private final int sequence_;
+   private final String terminalHandle_;
    
    // Injected ---- 
    private WorkbenchServerOperations server_; 

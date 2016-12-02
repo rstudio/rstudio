@@ -120,8 +120,18 @@ public class XTermWidget extends Widget implements RequiresResize,
     */
    private void showBanner()
    {
-      writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
-            AnsiColor.DEFAULT + " terminal.");
+      if (newTerminal_)
+      {
+         writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
+                 AnsiColor.DEFAULT + " terminal.");
+      }
+      else
+      {
+         // TODO (gary) this is temporary until buffer save and restore is done
+         writeln("\33[30;43m" +
+                 "Reconnected. Restoring buffer is not-yet-implemented.");
+         writeln("Hit <enter> for prompt." + AnsiColor.DEFAULT);
+      }
    }
   
    /**
@@ -328,7 +338,25 @@ public class XTermWidget extends Widget implements RequiresResize,
          }
      });
    }
+   
+   /**
+    * Set if connecting to a new terminal session.
+    * @param isNew true if a new connection, false if a reconnect
+    */
+   public void setNewTerminal(boolean isNew)
+   {
+      newTerminal_ = isNew;
+   }
 
+   /**
+    * Indicates if connecting to a new terminal session.
+    * @return true if a new connection, false if a reconnect
+    */
+   public boolean newTerminal()
+   {
+      return newTerminal_;
+   }
+   
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), 
                    XTermResources.INSTANCE.xtermjsUncompressed());
@@ -340,6 +368,7 @@ public class XTermWidget extends Widget implements RequiresResize,
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
+   private boolean newTerminal_ = true;
 
    private int previousRows_ = -1;
    private int previousCols_ = -1;

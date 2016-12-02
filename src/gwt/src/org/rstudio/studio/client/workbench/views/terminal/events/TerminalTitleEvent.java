@@ -33,6 +33,11 @@ public class TerminalTitleEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
+      /**
+       * Sent by xterm.js when it has detected escape sequence for setting 
+       * terminal title.
+       * @param event title string extracted from escape sequence
+       */
       void onTerminalTitle(TerminalTitleEvent event);
    }
    

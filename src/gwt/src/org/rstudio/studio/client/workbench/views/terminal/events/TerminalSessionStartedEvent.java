@@ -27,6 +27,10 @@ public class TerminalSessionStartedEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
+      /**
+       * Sent when a terminal session has connected to a server process
+       * @param event contains terminal session that has connected
+       */
       void onTerminalSessionStarted(TerminalSessionStartedEvent event);
    }
    

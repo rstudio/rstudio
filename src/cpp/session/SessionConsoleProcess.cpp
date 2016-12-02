@@ -124,9 +124,9 @@ void ConsoleProcess::commonInit()
 
    handle_ = core::system::generateUuid(false);
 
-   // only generate a terminal handle if creating a new terminal
-   if (terminalSequence_ > 0 && terminalHandle_.empty())
-      terminalHandle_ = core::system::generateUuid(false);
+   // TODO (gary) don't think I need a separate terminal handle, the process
+   // handle should do the trick; I won't unwire it all until I'm sure
+   terminalHandle_ = handle_;
    
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
@@ -684,6 +684,13 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       InteractionMode interactionMode,
       int maxOutputLines)
 {
+   // return existing ConsoleProcess
+   ProcTable::const_iterator pos = s_procs.find(terminalHandle);
+   if (pos != s_procs.end())
+   {
+      return pos->second;
+   }
+   
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
          new ConsoleProcess(command,
