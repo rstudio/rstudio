@@ -73,7 +73,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       frame_.getWindow().focus();
 
       // initialize miniUI
-      String code = "runGadget(sparklyr" + "::" + "connections_spark_shinyapp()" + ")";
+      String code = "shiny::runGadget(sparklyr" + "::" + "connections_spark_shinyapp()" + ")";
       events_.fireEvent(new SendToConsoleEvent(code, 
                                                true, 
                                                false, 
