@@ -28,7 +28,7 @@ public class InstallInfoPanel extends Composite
    public InstallInfoPanel()
    {
       HorizontalPanel panel = new HorizontalPanel();
-      panel.addStyleName(NewSparkConnectionDialog.RES.styles().infoPanel());
+      panel.addStyleName(NewConnectionDialog.RES.styles().infoPanel());
       Image infoIcon = new Image(ThemeResources.INSTANCE.infoSmall());
       panel.add(infoIcon);
       infoLabel_ = new Label();

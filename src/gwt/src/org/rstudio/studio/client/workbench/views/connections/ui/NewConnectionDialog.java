@@ -1,5 +1,5 @@
 /*
- * NewSparkConnectionDialog.java
+ * NewConnectionDialog.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -42,7 +42,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
-public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
+public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
 {
    @Inject
    private void initialize(UIPrefs uiPrefs)
@@ -50,10 +50,10 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
       uiPrefs_ = uiPrefs;
    }
    
-   public NewSparkConnectionDialog(NewSparkConnectionContext context,
-                                   OperationWithInput<ConnectionOptions> operation)
+   public NewConnectionDialog(NewSparkConnectionContext context,
+                              OperationWithInput<ConnectionOptions> operation)
    {
-      super("Connect to Spark", operation);
+      super("New Connection", operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       context_ = context;
@@ -433,7 +433,7 @@ public class NewSparkConnectionDialog extends ModalDialog<ConnectionOptions>
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewSparkConnectionDialog.css")
+      @Source("NewConnectionDialog.css")
       Styles styles();
    }
    
