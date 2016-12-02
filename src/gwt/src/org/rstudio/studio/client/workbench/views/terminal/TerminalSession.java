@@ -85,6 +85,8 @@ public class TerminalSession extends XTermWidget
     */
    public void connect()
    {
+      setNewTerminal(getHandle() == null);
+      
       server_.startTerminal(80, 25, getHandle(), getTitle(), getSequence(),
                             new ServerRequestCallback<ConsoleProcess>()
       {
