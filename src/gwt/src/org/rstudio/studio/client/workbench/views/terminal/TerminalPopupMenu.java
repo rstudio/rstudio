@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -24,50 +22,23 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
 /**
- * Drop-down menu used in terminal pane. Has commands, and a list of active
+ * Drop-down menu used in terminal pane. Has commands, and a list of 
  * terminal sessions.
- * 
- * This object has the master list of terminals, keyed by the terminal handle,
- * with a title shown on the dropdown, and a sequence number used for ordering.
  */
 public class TerminalPopupMenu extends ToolbarPopupMenu
-                               implements TerminalSessionStartedEvent.Handler,
-                                          TerminalSessionStoppedEvent.Handler
 {
-   public static class TerminalMetadata
-   {
-      /**
-       * Create a TerminalMetadata object
-       * @param t terminal title
-       * @param s terminal sequence number
-       */
-      public TerminalMetadata(String title, int sequence)
-      {
-         title_ = title;
-         sequence_ = sequence;
-      }
-
-      public String getTitle() { return title_; }
-      public int getSequence() { return sequence_; }
-
-      private String title_;
-      private int sequence_;
-   }
-
-   public TerminalPopupMenu()
+   public TerminalPopupMenu(TerminalList terminals)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      eventBus_.addHandler(TerminalSessionStartedEvent.TYPE, this);
-      eventBus_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
+      terminals_ = terminals;
    }
 
    @Inject
@@ -86,26 +57,26 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       addItem(commands_.newTerminal().createMenuItem(false));
       addSeparator();
 
-      if (terminals_.size() > 0)
+      if (terminals_.terminalCount() > 0)
       {
-         for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+         for (final TerminalMetadata item : terminals_)
          {
             Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getKey()));
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getHandle()));
                }
             };
 
             String menuHtml = AppCommand.formatMenuLabel(
-                  null,                       /*icon*/
-                  item.getValue().getTitle(), /*label*/
-                  false,                      /*html*/
-                  null,                       /*shortcut*/
-                  null,                       /*rightImage*/
-                  null);                      /*rightImageDesc*/
+                  null,            /*icon*/
+                  item.getTitle(), /*label*/
+                  false,           /*html*/
+                  null,            /*shortcut*/
+                  null,            /*rightImage*/
+                  null);           /*rightImageDesc*/
             addItem(new MenuItem(menuHtml, true, cmd));
          }
          addSeparator();
@@ -157,37 +128,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    }
 
    /**
-    * Add terminal entry to backing store for popup menu
-    * @param handle associated terminal handle
-    * @param sequence relative creation order
-    * @param title title shown in menu
-    */
-   public void addTerminal(String handle, int sequence, String title)
-   {
-      terminals_.put(handle, new TerminalMetadata(title, sequence));
-   }
-   
-   private void removeTerminal(String handle)
-   {
-      terminals_.remove(handle);
-   }
-   
-   @Override
-   public void onTerminalSessionStarted(TerminalSessionStartedEvent event)
-   {
-      TerminalSession newSession = event.getTerminalWidget();
-      addTerminal(newSession.getHandle(), 
-                  newSession.getSequence(),
-                  newSession.getTitle());
-   }
-    
-   @Override
-   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
-   {
-      removeTerminal(event.getTerminalWidget().getHandle());
-   }
-   
-   /**
     * @return Handle of active terminal, or null if no active terminal.
     */
    public String getActiveTerminalHandle()
@@ -195,50 +135,10 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       return activeTerminalHandle_;
    }
    
-   /**
-    * Number of terminals in cache.
-    * @return number of terminals tracked by this object
-    */
-   public int terminalCount()
-   {
-      return terminals_.size();
-   }
-
-   /**
-    * Choose a 1-based sequence number one higher than the highest currently 
-    * known terminal number. We don't try to fill gaps if terminals are closed 
-    * in the middle of the opened tabs.
-    * @return Highest currently known terminal plus one
-    */
-   public int nextTerminalSequence()
-   {
-      int maxNum = 0;
-      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
-      {
-         maxNum = Math.max(maxNum, item.getValue().getSequence());
-      }
-      return maxNum + 1;
-   }
-   
-   /**
-    * Get metadata for terminal
-    * @param handle handle of terminal of interest
-    * @return terminal metadata or null if not found
-    */
-   public TerminalMetadata getMetadataForHandle(String handle)
-   {
-      return terminals_.get(handle);
-   }
-   
    private ToolbarButton toolbarButton_;
    private Commands commands_;
    private EventBus eventBus_;
    private String activeTerminalTitle_;
    private String activeTerminalHandle_;
-   
-   /**
-    * map of terminal handles to terminal metadata
-    */
-   private HashMap<String, TerminalMetadata> terminals_ = 
-                new HashMap<String, TerminalMetadata>();
+   private TerminalList terminals_;
 }
