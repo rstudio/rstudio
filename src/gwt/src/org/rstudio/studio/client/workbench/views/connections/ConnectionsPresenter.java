@@ -66,7 +66,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConne
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -276,7 +276,7 @@ public class ConnectionsPresenter extends BasePresenter
                else
                {
                   // show dialog
-                  new NewSparkConnectionDialog(
+                  new NewConnectionDialog(
                    context,
                    new OperationWithInput<ConnectionOptions>() {
                      @Override

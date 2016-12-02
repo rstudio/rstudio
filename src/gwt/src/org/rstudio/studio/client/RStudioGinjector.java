@@ -82,7 +82,7 @@ import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.SparkMasterChooser;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowserModel;
@@ -192,7 +192,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CppCompletion completion);
    void injectMembers(ConsoleTabPanel consoleTabPanel);
    void injectMembers(VirtualConsole console);
-   void injectMembers(NewSparkConnectionDialog newSparkConnectionDialog);
+   void injectMembers(NewConnectionDialog newSparkConnectionDialog);
    void injectMembers(SparkMasterChooser sparkMasterChooser);
    void injectMembers(ConnectionCodePanel connectionCodePanel);
    void injectMembers(ConnectionExplorer connectionExplorer);

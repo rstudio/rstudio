@@ -98,8 +98,8 @@ public class ComponentsNotInstalledDialogs
                                   String message, 
                                   final String url)
    {
-      NewSparkConnectionDialog.Styles styles = 
-            NewSparkConnectionDialog.RES.styles();
+      NewConnectionDialog.Styles styles = 
+            NewConnectionDialog.RES.styles();
       VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.addStyleName(styles.componentNotInstalledWidget());
 
