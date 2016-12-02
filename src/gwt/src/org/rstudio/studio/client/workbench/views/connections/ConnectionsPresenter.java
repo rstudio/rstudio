@@ -259,46 +259,29 @@ public class ConnectionsPresenter extends BasePresenter
             @Override
             protected void onSuccess(final NewSparkConnectionContext context)
             {
-               // prompt for no java installed
-               if (!context.isJavaInstalled())
-               {
-                  ComponentsNotInstalledDialogs.showJavaNotInstalled(context.getJavaInstallUrl());
-               }
-               
-               // prompt for no spark installed
-               else if (!context.getLocalConnectionsSupported() &&
-                        !context.getClusterConnectionsSupported())
-               {
-                  ComponentsNotInstalledDialogs.showSparkHomeNotDefined();
-               }
-               
-               // otherwise proceed with connecting
-               else
-               {
-                  // show dialog
-                  new NewConnectionDialog(
-                   context,
-                   new OperationWithInput<ConnectionOptions>() {
-                     @Override
-                     public void execute(final ConnectionOptions result)
-                     {
-                        withRequiredSparkInstallation(
-                              result.getSparkVersion(),
-                              result.getRemote(),
-                              context.getSparkHome() != null,
-                              new Command() {
-                                 @Override
-                                 public void execute()
-                                 {
-                                    eventBus_.fireEvent(new PerformConnectionEvent(
-                                          result.getConnectVia(),
-                                          result.getConnectCode()));
-                                 }
-                                 
-                              });
-                     }
-                  }).showModal();
-               }
+                // show dialog
+                new NewConnectionDialog(
+                 context,
+                 new OperationWithInput<ConnectionOptions>() {
+                   @Override
+                   public void execute(final ConnectionOptions result)
+                   {
+                      withRequiredSparkInstallation(
+                            result.getSparkVersion(),
+                            result.getRemote(),
+                            context.getSparkHome() != null,
+                            new Command() {
+                               @Override
+                               public void execute()
+                               {
+                                  eventBus_.fireEvent(new PerformConnectionEvent(
+                                        result.getConnectVia(),
+                                        result.getConnectCode()));
+                               }
+                               
+                            });
+                   }
+                }).showModal();
             }
          });      
    }
