@@ -488,7 +488,7 @@ public class RemoteServer implements Server
    
    private void invokeStartShellDialog(
                      ConsoleProcess.TerminalType terminalType,
-                     boolean isModalDialog, // TODO (gary) unnecessary?
+                     boolean isModalDialog,
                      int cols, int rows,
                      String terminalHandle,
                      String terminalTitle,
