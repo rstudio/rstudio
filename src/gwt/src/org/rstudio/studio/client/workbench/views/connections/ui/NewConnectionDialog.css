@@ -4,27 +4,6 @@
 @external gwt-Image;
 @external macintosh;
 
-
-.grid {
-  margin-bottom: 5px;
-}
-
-.versionGrid {
-  margin-top: 7px;
-}
-
-.masterGrid.remote {
-  margin-bottom: 5px;
-}
-
-.label {
-  width: 150px;
-}
-
-.spanningInput {
-  width: 300px;
-}
-
 .infoPanel {
   width: 450px;
   margin-top: 8px;
@@ -63,16 +42,6 @@
 
 .macintosh .codeViewer {
   font-size: 8pt;
-}
-
-.componentNotInstalledWidget {
-   width: 325px;
-   margin-left: 10px;
-}
-
-.componentInstallLink {
-   margin-top: 10px;
-   margin-bottom: 20px;
 }
 
 .codePanelHeader {

@@ -15,10 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import java.util.HashSet;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -31,18 +29,14 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
@@ -164,6 +158,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       String codePanelHeader();
       String dialogCodePanel();
       String infoPanel();
+      String leftLabel();
    }
 
    public interface Resources extends ClientBundle
