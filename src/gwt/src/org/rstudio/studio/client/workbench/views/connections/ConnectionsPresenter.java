@@ -275,68 +275,6 @@ public class ConnectionsPresenter extends BasePresenter
          });      
    }
    
-   
-   private void withRequiredSparkInstallation(final SparkVersion sparkVersion,
-                                              boolean remote,
-                                              boolean hasSparkHome,
-                                              final Command command)
-   {
-      // if there is no spark version then just execute immediately
-      if (sparkVersion == null)
-      {
-         command.execute();
-         return;
-      }
-      
-      if (!sparkVersion.isInstalled() && !hasSparkHome)
-      {
-         globalDisplay_.showYesNoMessage(
-            MessageDialog.QUESTION, 
-            "Install Spark Components",
-            InstallInfoPanel.getInfoText(sparkVersion, remote, true),
-            false,
-            new Operation() {  public void execute() {
-               server_.installSpark(
-                 sparkVersion.getSparkVersionNumber(),
-                 sparkVersion.getHadoopVersionNumber(),
-                 new SimpleRequestCallback<ConsoleProcess>(){
-
-                    @Override
-                    public void onResponseReceived(ConsoleProcess process)
-                    {
-                       final ConsoleProgressDialog dialog = 
-                             new ConsoleProgressDialog(process, server_);
-                       dialog.showModal();
-           
-                       process.addProcessExitHandler(
-                          new ProcessExitEvent.Handler()
-                          {
-                             @Override
-                             public void onProcessExit(ProcessExitEvent event)
-                             {
-                                if (event.getExitCode() == 0)
-                                {
-                                   dialog.hide();
-                                   command.execute();
-                                } 
-                             }
-                          }); 
-                    }
-
-               });   
-            }},
-            null,
-            null,
-            "Install",
-            "Cancel",
-            true);
-      }
-      else
-      {
-         command.execute();
-      }
-   }
-   
    @Override
    public void onPerformConnection(PerformConnectionEvent event)
    {

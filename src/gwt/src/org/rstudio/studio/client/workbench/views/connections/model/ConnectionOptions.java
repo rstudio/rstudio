@@ -9,7 +9,7 @@ public class ConnectionOptions extends JavaScriptObject
    
    public static final ConnectionOptions create()
    {
-      return create(null, false, null, null, null);
+      return create(null, null);
    }
    
    public static final native ConnectionOptions create(

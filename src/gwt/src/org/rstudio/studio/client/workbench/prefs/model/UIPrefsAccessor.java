@@ -549,12 +549,6 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("show_publish_diagnostics", false);
    }
-   
-   public PrefValue<String> connectionsDbInterface()
-   {
-      return string("connections_db_interface", 
-                    ConnectionOptions.DB_INTERFACE_DPLYR);
-   }
      
    public PrefValue<Boolean> showRmdChunkOutputInline()
    {

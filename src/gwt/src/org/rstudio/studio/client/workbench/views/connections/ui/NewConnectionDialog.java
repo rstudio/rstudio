@@ -17,15 +17,18 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import java.util.HashSet;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -45,9 +48,10 @@ import com.google.inject.Inject;
 public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
 {
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UIPrefs uiPrefs, EventBus events)
    {
       uiPrefs_ = uiPrefs;
+      events_ = events;
    }
    
    public NewConnectionDialog(NewConnectionContext context,
@@ -72,7 +76,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    protected void onDialogShown()
    {
       super.onDialogShown();
-      FocusHelper.setFocusDeferred(master_);
+      frame_.getWindow().focus();
 
       // initialize miniUI
       String code = "runGadget(sparklyr" + "::" + "connections_spark_shinyapp" + ")";
@@ -94,8 +98,10 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       VerticalPanel container = new VerticalPanel();    
       
       // create iframe for miniUI
-      final IFrame miniUIFrame = new IFrame();
-      container.add(miniUIFrame);      
+      frame_ = new RStudioFrame();
+      frame_.addStyleName(ThemeStyles.INSTANCE.borderedIFrame());
+
+      container.add(frame_);      
       
       // add the code panel     
       codePanel_ = new ConnectionCodePanel();
@@ -136,6 +142,19 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
      
       return container;
    }
+
+   @Override
+   protected ConnectionOptions collectInput()
+   {
+      // collect the result
+      ConnectionOptions result = ConnectionOptions.create(
+            "",
+            "");
+      
+      // return result
+      return result;
+   }
+
    
    public interface Styles extends CssResource
    {
@@ -144,6 +163,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       String codeGrid();
       String codePanelHeader();
       String dialogCodePanel();
+      String infoPanel();
    }
 
    public interface Resources extends ClientBundle
@@ -163,4 +183,6 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    private ConnectionCodePanel codePanel_;
      
    private UIPrefs uiPrefs_;
+   private EventBus events_;
+   private RStudioFrame frame_;
 }
