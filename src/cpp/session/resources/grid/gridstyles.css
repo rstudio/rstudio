@@ -288,6 +288,13 @@ th:focus {
     max-width: 300px; 
 }
 
+.manualSize .numberCell, .manualSize .textCell {
+    max-width: 100%;
+}
+.manualSize {
+    table-layout: fixed;
+}
+
 .cell {
     position: relative;
 }

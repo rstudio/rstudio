@@ -191,16 +191,7 @@ var renderCellContents = function(data, type, row, meta) {
 };
 
 var renderCellClass = function (data, type, row, meta, clazz) {
-  // divine cell width
-  var width = manualWidths[meta.col];
-  var widthStyle = "";
-  var widthClazz = "";
-  if (typeof(width) === "number")
-     widthStyle = 'style="width: ' + width + 'px;"';
-  else
-     widthClazz = " autoSize";
-
-  return '<div class="cell' + widthClazz + '" ' + widthStyle + '">' + 
+  return '<div class="cell">' + 
          '<div class="' + clazz + '">' + 
          renderCellContents(data, type, row, meta) + '</div>' +
          '<div class="resizer" data-col="' + meta.col + '" /></div>';
@@ -881,7 +872,7 @@ var initDataTable = function(resCols, data) {
       }];
   }
   else {
-    // Create an empty array of data tto be use as a map in the callback
+    // Create an empty array of data to be use as a map in the callback
     dataTableData = [];
     if (data.length > 0) {
       for (i = 0; i < data[0].length; i++) {
@@ -899,7 +890,7 @@ var initDataTable = function(resCols, data) {
         "sClass": className,
         "visible": (!rowNumbers && idx === 0) ? false : true,
         "data": function (row, type, set, meta) {
-          return (meta.col == 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
+          return (meta.col === 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
         },
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
@@ -979,13 +970,31 @@ var addResizeHandlers = function(ele) {
       // resize the column in the given direction
       var colWidth = initColWidth + delta;
       $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
-      $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
-      $("#rsGridData").width(initTableWidth + delta);
-      var colObj = $("#rsGridData td:nth-child(" + (col + 1) + ") .cell");
-      colObj.width(colWidth);
 
-      // switch the cell to manual size mode
-      colObj.removeClass("autoSize");
+      var grid = $("#rsGridData");
+      if (grid.hasClass("autoSize")) {
+         // if the data table is still in auto size mode, we need to switch it 
+         // to fixed layout
+         
+         // observe and manually apply column widths in preparation for 
+         // transition to a fixed layout
+         var head = $("#dataTables_scrollHead #data_cols th");
+         var body = $("#dataTables_scrollBody #data_cols th");
+         for (var i = 0; i < Math.min(head.length, body.length); i++) {
+            var thHead = head.eq(i), thBody = body.eq(i);
+            thHead.width(thHead.width());
+            thBody.width(thBody.width());
+            manualWidths[i] = thBody.width();
+         }
+         
+         // switch table out of auto size mode and into manual size mode
+         grid.addClass("manualSize");
+         grid.removeClass("autoSize");
+      }
+
+      // adjust header width and width of first column
+      $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
+      grid.width(initTableWidth + delta);
 
       // record manual width for re-apply on redraw
       manualWidths[col] = colWidth;
@@ -1073,7 +1082,7 @@ var bootstrap = function(data) {
   // this point)
   var newEle = document.createElement("table");
   newEle.id = "rsGridData";
-  newEle.className = "dataTable";
+  newEle.className = "dataTable autoSize";
   newEle.setAttribute("cellspacing", "0");
   newEle.innerHTML = "<thead>" +
                      "    <tr id='data_cols'>" +
