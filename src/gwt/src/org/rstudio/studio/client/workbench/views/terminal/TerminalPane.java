@@ -120,9 +120,22 @@ public class TerminalPane extends WorkbenchPane
    {
       if (terminals_.terminalCount() == 0)
       {
+         // No terminals at all, create a new one
          createTerminal();
       }
-      setFocusOnVisible();
+      else if (getVisibleTerminal() == null)
+      {
+         // No terminal loaded, load the first terminal in the list
+         String handle = terminals_.terminalHandleAtIndex(0);
+         if (handle != null)
+         {
+            events_.fireEvent(new SwitchToTerminalEvent(handle));
+         }
+      }
+      else
+      {
+         setFocusOnVisible();
+      }
    }
    
    @Override
