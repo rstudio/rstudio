@@ -21,11 +21,12 @@ import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 
 import com.google.inject.Inject;
 
@@ -38,7 +39,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
       implements ProvidesBusy,
                  CreateTerminalEvent.Handler,
-                 TerminalSessionListEvent.Handler
+                 SessionInitHandler
    {
       @Handler
       public abstract void onActivateTerminal();
@@ -61,7 +62,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       
       binder.bind(commands, shim_);
       events.addHandler(CreateTerminalEvent.TYPE, shim_);
-      events.addHandler(TerminalSessionListEvent.TYPE, shim_);
+      events.addHandler(SessionInitEvent.TYPE, shim_);
       
       shim_.initialize();
    }

@@ -688,7 +688,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    ProcTable::const_iterator pos = s_procs.find(terminalHandle);
    if (pos != s_procs.end())
    {
-      return boost::shared_ptr<ConsoleProcess> (pos->second);
+      return pos->second;
    }
    
    options.terminateChildren = true;

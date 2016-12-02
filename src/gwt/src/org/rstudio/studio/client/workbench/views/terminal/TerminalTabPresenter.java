@@ -15,15 +15,23 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
@@ -55,14 +63,18 @@ public class TerminalTabPresenter extends BusyPresenter
        * Attach a list of server-side terminals to the pane.
        * @param event list of terminals on server
        */
-      void repopulateTerminals(TerminalSessionListEvent event);
+      void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
    }
 
    @Inject
-   public TerminalTabPresenter(Display view)
+   public TerminalTabPresenter(final Display view,
+                               final Session session,
+                               Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
       super(view);
       view_ = view;
+      session_ = session;
+      pConsoleProcessFactory_ = pConsoleProcessFactory;
    }
   
    @Handler
@@ -87,11 +99,66 @@ public class TerminalTabPresenter extends BusyPresenter
       view_.createTerminal();
    }
    
-   public void onTerminalSessionList(TerminalSessionListEvent event)
+   public void onSessionInit(SessionInitEvent sie)
    {
-     view_.repopulateTerminals(event);
+      JsArray<ConsoleProcessInfo> procs =
+            session_.getSessionInfo().getConsoleProcesses();
+      final ArrayList<ConsoleProcessInfo> procList = new ArrayList<ConsoleProcessInfo>();
+
+      for (int i = 0; i < procs.length(); i++)
+      {
+         final ConsoleProcessInfo proc = procs.get(i);
+         if (!proc.isDialog())
+         {
+            addTerminalProcInfo(procList, proc);
+         }
+      }
+      view_.repopulateTerminals(procList);
    }
-   
+
+   /**
+    * Add process to list of processes, sorted in ascending order by
+    * terminal sequence number. If duplicate sequence numbers are
+    * encountered, all but the first will have the process killed.
+    * 
+    * @param terminalProcs (in/out) sorted list of terminal processes
+    * @param procInfo process to insert in the list
+    */
+   private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
+                                           ConsoleProcessInfo procInfo)
+   {
+      int newSequence = procInfo.getTerminalSequence();
+      if (newSequence < 1)
+      {
+         Debug.logWarning("Invalid terminal sequence " + newSequence + 
+               ", killing unrecognized process");
+         pConsoleProcessFactory_.get().reap(procInfo);
+         return;
+      }
+
+      for (int i = 0; i < procInfoList.size(); i++)
+      {
+         int currentSequence = procInfoList.get(i).getTerminalSequence();
+
+         if (newSequence == currentSequence)
+         {
+            Debug.logWarning("Duplicate terminal sequence " + newSequence + 
+                  ", killing duplicate process");
+            pConsoleProcessFactory_.get().reap(procInfo);
+            return;
+         }
+
+         if (newSequence < currentSequence)
+         {
+            procInfoList.add(i, procInfo);
+            return;
+         }
+      }
+      procInfoList.add(procInfo);
+   }
+
    // Injected ---- 
+   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private final Display view_;
+   private final Session session_;
 }

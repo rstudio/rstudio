@@ -15,20 +15,20 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 
@@ -157,21 +157,21 @@ public class TerminalPane extends WorkbenchPane
    }
    
    @Override
-   public void repopulateTerminals(TerminalSessionListEvent event)
+   public void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList)
    {
       // Expect to receive this after a browser reset, so if we already have
       // terminals in the cache, something is, to be technical, busted.
       if (terminals_.terminalCount() > 0 || getLoadedTerminalCount() > 0 )
       {
-         Debug.log("Received terminal list from server when terminals already loaded. Ignoring.");
+         Debug.logWarning("Received terminal list from server when terminals " + 
+                          "already loaded. Ignoring.");
          return;
       }
 
       // add terminal to the dropdown's cache; terminals aren't actually
       // loaded until selected via the dropdown
-      for (ConsoleProcess proc : event.getTerminalList())
+      for (ConsoleProcessInfo procInfo : procList)
       {
-         ConsoleProcessInfo procInfo = proc.getProcessInfo();
          terminals_.addTerminal(new TerminalMetadata(procInfo.getTerminalHandle(),
                                           procInfo.getCaption(), 
                                           procInfo.getTerminalSequence()));
@@ -258,6 +258,7 @@ public class TerminalPane extends WorkbenchPane
    public void onSwitchToTerminal(SwitchToTerminalEvent event)
    {
       String handle = event.getTerminalHandle();
+
       // If terminal was already loaded, just make it visible
       TerminalSession terminal = terminalWithHandle(handle);
       if (terminal != null)
@@ -266,7 +267,7 @@ public class TerminalPane extends WorkbenchPane
          setFocusOnVisible();
          return;
       }
-      
+
       // Reconnect to server?
       TerminalMetadata existingTerminal = terminals_.getMetadataForHandle(handle);
       if (existingTerminal != null)
@@ -274,8 +275,8 @@ public class TerminalPane extends WorkbenchPane
          startTerminal(existingTerminal.getSequence(), handle);
          return;
       }
-      
-      Debug.log("Tried to switch to unknown terminal");
+
+      Debug.logWarning("Tried to switch to unknown terminal handle");
    }
    
    @Override

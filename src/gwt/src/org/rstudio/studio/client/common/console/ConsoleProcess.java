@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.common.console;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
@@ -33,7 +31,6 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionListEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
@@ -75,13 +72,16 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                JsArray<ConsoleProcessInfo> procs =
                      session.getSessionInfo().getConsoleProcesses();
 
-               final ArrayList<ConsoleProcess> terminalProcs = 
-                     new ArrayList<ConsoleProcess>();
-
                for (int i = 0; i < procs.length(); i++)
                {
                   final ConsoleProcessInfo proc = procs.get(i);
-
+                  if (!proc.isDialog())
+                  {
+                     // non-modal processes represent terminals and are handled
+                     // by the terminal UI
+                     continue;
+                  }
+                  
                   connectToProcess(
                         proc,
                         new ServerRequestCallback<ConsoleProcess>()
@@ -90,69 +90,61 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                            public void onResponseReceived(
                                  final ConsoleProcess cproc)
                            {
-                              if (proc.isDialog())
+                              assert(proc.isDialog());
+                              // first determine whether to create and/or
+                              // show the dialog immediately
+                              boolean createDialog = false;
+                              boolean showDialog = false;
+
+                              // standard dialog -- always show it
+                              if (!proc.getShowOnOutput())
                               {
-                                 // first determine whether to create and/or
-                                 // show the dialog immediately
-                                 boolean createDialog = false;
-                                 boolean showDialog = false;
-                                 
-                                 // standard dialog -- always show it
-                                 if (!proc.getShowOnOutput())
-                                 {
-                                    createDialog = true;
-                                    showDialog = true;
-                                 }
-                                 
-                                 // showOnOutput dialog that already has 
-                                 // output -- make sure the user sees it
-                                 //
-                                 // NOTE: we have to trim the  buffered output
-                                 // for the comparison because when the password
-                                 // manager provides a password the back-end
-                                 // process sometimes echos a newline back to us
-                                 //
-                                 else if (proc.getBufferedOutput().trim().length() > 0)
-                                 {
-                                    createDialog = true;
-                                    showDialog = true;
-                                 }
-                                 
-                                 // showOnOutput dialog that has exited
-                                 // and has no output -- reap it
-                                 else if (proc.getExitCode() != null)
-                                 {
-                                    cproc.reap(new VoidServerRequestCallback());
-                                 }
-                                 
-                                 // showOnOutput dialog with no output that is
-                                 // still running -- create but don't show yet
-                                 else
-                                 {
-                                    createDialog = true;
-                                 }
-                                  
-                                 // take indicated actions
-                                 if (createDialog)
-                                 {
-                                    ConsoleProgressDialog dlg = new ConsoleProgressDialog(
+                                 createDialog = true;
+                                 showDialog = true;
+                              }
+
+                              // showOnOutput dialog that already has 
+                              // output -- make sure the user sees it
+                              //
+                              // NOTE: we have to trim the  buffered output
+                              // for the comparison because when the password
+                              // manager provides a password the back-end
+                              // process sometimes echos a newline back to us
+                              //
+                              else if (proc.getBufferedOutput().trim().length() > 0)
+                              {
+                                 createDialog = true;
+                                 showDialog = true;
+                              }
+
+                              // showOnOutput dialog that has exited
+                              // and has no output -- reap it
+                              else if (proc.getExitCode() != null)
+                              {
+                                 cproc.reap(new VoidServerRequestCallback());
+                              }
+
+                              // showOnOutput dialog with no output that is
+                              // still running -- create but don't show yet
+                              else
+                              {
+                                 createDialog = true;
+                              }
+
+                              // take indicated actions
+                              if (createDialog)
+                              {
+                                 ConsoleProgressDialog dlg = new ConsoleProgressDialog(
                                        proc.getCaption(),
                                        cproc,
                                        proc.getBufferedOutput(),
                                        proc.getExitCode(),
                                        cryptoServer);
-                                    
-                                    if (showDialog)
-                                       dlg.showModal();
-                                    else
-                                       dlg.showOnOutput();
-                                 }
-                              }
-                              else
-                              {
-                                 // Build up array of terminal-related processes,
-                                 // in ascending order by terminal sequence.
-                                 addTerminalProc(terminalProcs, cproc);
+
+                                 if (showDialog)
+                                    dlg.showModal();
+                                 else
+                                    dlg.showOnOutput();
                               }
                            }
 
@@ -162,11 +154,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                               Debug.logError(error);
                            }
                         });
-               }
-
-               if (terminalProcs.size() > 0)
-               {
-                  eventBus_.fireEvent(new TerminalSessionListEvent(terminalProcs));
                }
             }
          });
@@ -256,62 +243,35 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       }
       
       /**
-       * Add process to list of processes, sorted in ascending order by
-       * terminal sequence number. If duplicate sequence numbers are
-       * encountered, all but the first will have the process killed.
-       * 
-       * @param terminalProcs (in/out) sorted list of terminal processes
-       * @param cproc process to insert in the list
+       * Terminate and reap a process
+       * @param procInfo process to terminate and reap
        */
-      private static void addTerminalProc(ArrayList<ConsoleProcess> terminalProcs,
-                                          ConsoleProcess cproc)
+      public void reap(final ConsoleProcessInfo procInfo)
       {
-         int newSequence = cproc.getProcessInfo().getTerminalSequence();
+         connectToProcess(
+               procInfo,
+               new ServerRequestCallback<ConsoleProcess>()
+               {
+                  public void onResponseReceived( final ConsoleProcess cproc)
+                  {
+                     cproc.interrupt(new SimpleRequestCallback<Void>()
+                     {
+                        @Override
+                        public void onResponseReceived(Void response)
+                        {
+                           cproc.reap(new VoidServerRequestCallback());
+                        }
+                     }); 
+                  }
 
-         if (newSequence < 1)
-         {
-            Debug.log("Invalid terminal sequence, killing unrecognized process");
-            reap(cproc);
-            return;
-         }
-
-         for (int i = 0; i < terminalProcs.size(); i++)
-         {
-            int currentSequence = 
-                  terminalProcs.get(i).getProcessInfo().getTerminalSequence();
-
-            if (newSequence == currentSequence)
-            {
-               Debug.log("Duplicate terminal sequence, killing duplicate process");
-               reap(cproc);
-               return;
-            }
-
-            if (newSequence < currentSequence)
-            {
-               terminalProcs.add(i, cproc);
-               return;
-            }
-         }
-         terminalProcs.add(cproc);
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
      }
 
-      /**
-       * Terminate and reap a process.
-       * @param cproc process to terminate and reap
-       */
-      private static void reap(final ConsoleProcess cproc)
-      {
-         cproc.interrupt(new SimpleRequestCallback<Void>()
-         {
-            @Override
-            public void onResponseReceived(Void response)
-            {
-               cproc.reap(new VoidServerRequestCallback());
-            }
-         });
-      }
-      
       private final ConsoleServerOperations server_;
       private final CryptoServerOperations cryptoServer_;
       private final EventBus eventBus_;
