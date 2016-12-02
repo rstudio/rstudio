@@ -32,3 +32,9 @@ mkdir -p /home/vagrant/rstudio-build
 cd /home/vagrant/rstudio-build
 cmake ~/rstudio/src/cpp -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
+# add compile commands to rdm index 
+rcpath=$(which rc)
+if [ -x "$rcpath" ]; then
+   $rcpath -J /home/vagrant/rstudio-build
+fi
+

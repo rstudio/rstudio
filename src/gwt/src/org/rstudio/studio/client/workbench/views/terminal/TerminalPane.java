@@ -16,8 +16,10 @@
 package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
@@ -47,9 +49,10 @@ public class TerminalPane extends WorkbenchPane
                                      TerminalCaptionEvent.Handler
 {
    @Inject
-   protected TerminalPane(EventBus events)
+   protected TerminalPane(EventBus events, GlobalDisplay globalDisplay)
    {
       super("Terminal");
+      globalDisplay_ = globalDisplay;
       events.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events.addHandler(TerminalSessionStoppedEvent.TYPE, this);
       events.addHandler(SwitchToTerminalEvent.TYPE, this);
@@ -68,7 +71,6 @@ public class TerminalPane extends WorkbenchPane
    public void onClick(ClickEvent event)
    {
       // TODO (gary) implement
-      
    }
    
    @Override
@@ -120,6 +122,44 @@ public class TerminalPane extends WorkbenchPane
       TerminalSession newSession = new TerminalSession(secureInput_,
                                                        nextTerminalSequence());
       newSession.connect();
+   }
+   
+   @Override
+   public void terminateCurrentTerminal()
+   {
+      final TerminalSession visibleTerminal = getVisibleTerminal();
+      if (visibleTerminal != null)
+      {
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+               "Close " + visibleTerminal.getTitle(),
+               "Are you sure you want to exit the terminal named \"" +
+               visibleTerminal.getTitle() + "\"? Any running jobs will be terminated.",
+               false, 
+               new Operation()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     visibleTerminal.terminate();
+                  }
+               },
+               new Operation()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     setFocusOnVisible();
+                  }
+               },
+               new Operation()
+               {
+                  @Override
+                  public void execute()
+                  {
+                     setFocusOnVisible();
+                  }
+               }, "Terminate", "Cancel", true);
+      }
    }
 
    @Override
@@ -291,5 +331,8 @@ public class TerminalPane extends WorkbenchPane
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private Label terminalCaption_;
    private ShellSecureInput secureInput_;
+
+   // Injected ----  
+   private GlobalDisplay globalDisplay_;
 
 }
