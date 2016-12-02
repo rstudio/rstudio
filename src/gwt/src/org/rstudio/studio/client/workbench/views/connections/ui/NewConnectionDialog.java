@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -28,6 +29,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
+import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -41,6 +44,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
+                                 implements ViewerNavigatedEvent.Handler,
+                                            ViewerClearedEvent.Handler
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
@@ -48,6 +53,9 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    {
       uiPrefs_ = uiPrefs;
       events_ = events;
+
+      events.addHandler(ViewerNavigatedEvent.TYPE, this);
+      events.addHandler(ViewerClearedEvent.TYPE, this);
    }
    
    public NewConnectionDialog(NewConnectionContext context,
@@ -151,6 +159,17 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       
       // return result
       return result;
+   }
+
+   @Override
+   public void onViewerNavigated(ViewerNavigatedEvent event)
+   {
+      frame_.setUrl(StringUtil.makeAbsoluteUrl(event.getURL()));
+   }
+   
+   @Override
+   public void onViewerCleared(ViewerClearedEvent event)
+   {
    }
    
    public interface Styles extends CssResource
