@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ModalDialog;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -42,16 +43,18 @@ import com.google.inject.Inject;
 public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
 {
    @Inject
-   private void initialize(UIPrefs uiPrefs, EventBus events)
+   private void initialize(UIPrefs uiPrefs,
+                           EventBus events)
    {
       uiPrefs_ = uiPrefs;
       events_ = events;
    }
    
    public NewConnectionDialog(NewConnectionContext context,
-                              OperationWithInput<ConnectionOptions> operation)
+                              OperationWithInput<ConnectionOptions> operation,
+                              Operation cancelOperation)
    {
-      super("New Connection", operation);
+      super("New Connection", operation, cancelOperation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       context_ = context;
@@ -148,7 +151,6 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       // return result
       return result;
    }
-
    
    public interface Styles extends CssResource
    {

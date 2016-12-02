@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
@@ -248,6 +247,12 @@ public class ConnectionsPresenter extends BasePresenter
    {
       updateActiveConnections(event.getActiveConnections());
    }
+
+   private void terminateShinyApp()
+   {
+      if (commands_.interruptR().isEnabled())
+         commands_.interruptR().execute();
+   }
    
    public void onNewConnection()
    {
@@ -266,11 +271,20 @@ public class ConnectionsPresenter extends BasePresenter
                    @Override
                    public void execute(final ConnectionOptions result)
                    {
+                      terminateShinyApp();
                       eventBus_.fireEvent(new PerformConnectionEvent(
                             result.getConnectVia(),
                             result.getConnectCode()));
                    }
-                }).showModal();
+                 },
+                 new Operation() {
+                   @Override
+                   public void execute()
+                   {
+                      terminateShinyApp();
+                   }
+                 }
+                ).showModal();
             }
          });      
    }
