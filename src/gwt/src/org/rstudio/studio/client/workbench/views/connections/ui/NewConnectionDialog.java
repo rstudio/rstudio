@@ -96,6 +96,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();
+      frame_.setSize("100%", "");
       frame_.addStyleName(ThemeStyles.INSTANCE.borderedIFrame());
 
       container.add(frame_);      
