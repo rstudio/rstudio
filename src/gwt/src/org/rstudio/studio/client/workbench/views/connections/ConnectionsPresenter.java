@@ -62,7 +62,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
@@ -252,12 +252,12 @@ public class ConnectionsPresenter extends BasePresenter
    public void onNewConnection()
    {
       // get the context
-      server_.getNewSparkConnectionContext(
-         new DelayedProgressRequestCallback<NewSparkConnectionContext>(
+      server_.getNewConnectionContext(
+         new DelayedProgressRequestCallback<NewConnectionContext>(
                                                    "New Connection...") {
    
             @Override
-            protected void onSuccess(final NewSparkConnectionContext context)
+            protected void onSuccess(final NewConnectionContext context)
             {
                 // show dialog
                 new NewConnectionDialog(

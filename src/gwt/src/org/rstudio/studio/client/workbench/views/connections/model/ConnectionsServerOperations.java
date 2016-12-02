@@ -46,8 +46,8 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
                                String table,
                                ServerRequestCallback<Void> callback);
    
-   void getNewSparkConnectionContext(
-            ServerRequestCallback<NewSparkConnectionContext> callback);
+   void getNewConnectionContext(
+            ServerRequestCallback<NewConnectionContext> callback);
    
    void installSpark(String sparkVersion,
                      String hadoopVersion,

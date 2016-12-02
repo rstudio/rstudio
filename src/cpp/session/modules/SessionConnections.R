@@ -125,51 +125,8 @@ options(connectionViewer = list(
    NULL
 })
 
-
-.rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
-
+.rs.addJsonRpcHandler("get_new_connection_context", function() {
   context <- list()
-
-  # all previously connected to remote servers
-  context$remote_servers <- .Call("rs_availableRemoteServers")
-
-  # is there a spark home option
-  context$spark_home <- sparklyr:::spark_home()
-
-  # can we install new versions
-  canInstall <- sparklyr:::spark_can_install()
-  context$can_install_spark_versions <- .rs.scalar(canInstall)
-
-  # available spark versions (filter by installed if we can't install
-  # new versions of spark)
-  spark_versions <- sparklyr:::spark_versions()
-  if (!context$can_install_spark_versions)
-    spark_versions <- subset(spark_versions, spark_versions$installed)
-  context$spark_versions <- spark_versions
-
-  # default spark and hadoop version
-  defaultVersion <- sparklyr:::spark_default_version()
-  context$spark_default <- .rs.scalar(defaultVersion$spark);
-  context$hadoop_default <- .rs.scalar(defaultVersion$hadoop);
-
-  # option defining what connections are supported
-  defaultConnections <- c("local", "cluster")
-  context$connections_option <- tryCatch({
-      connections <- getOption("rstudio.spark.connections", defaultConnections)
-      if (is.character(connections))
-         connections
-      else
-         defaultConnections
-    },
-    error = function(e) defaultConnections
-  )
-
-  # default spark cluster url
-  context$default_cluster_url <- .rs.scalar(.Call("rs_defaultSparkClusterUrl"))
-
-  # is java installed?
-  context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
-  context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())
 
   context
 })
