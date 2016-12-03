@@ -234,7 +234,7 @@ public class TerminalSession extends XTermWidget
 
    protected void writeError(String msg)
    {
-      write(AnsiColor.RED +"Fatal Error: " + msg + AnsiColor.DEFAULT);
+      write(AnsiCode.ForeColor.RED + "Error: " + msg + AnsiCode.DEFAULTCOLORS);
    }
 
    @Override

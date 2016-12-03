@@ -21,6 +21,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
@@ -45,42 +46,10 @@ import com.google.gwt.user.client.ui.Widget;
  * Xterm-compatible terminal emulator
  */
 public class XTermWidget extends Widget implements RequiresResize,
-                                                   ResizeTerminalEvent.HasHandlers,
-                                                   TerminalDataInputEvent.HasHandlers,
+                                                   ResizeTerminalEvent.HasHandlers, TerminalDataInputEvent.HasHandlers,
                                                    TerminalTitleEvent.HasHandlers
 {
-   public enum AnsiColor
-   {
-      DEFAULT     ("0;0"),
-      BLACK       ("0;30"),
-      BLUE        ("0;34"),
-      GREEN       ("0;32"),
-      CYAN        ("0;36"),
-      RED         ("0;31"),
-      PURPLE      ("0;35"),
-      BROWN       ("0;33"),
-      LIGHTGRAY   ("0;37"),
-      DARKGRAY    ("1;30"),
-      LIGHTBLUE   ("1;34"),
-      LIGHTCYAN   ("1;32"),
-      LIGHTRED    ("1;31"),
-      LIGHTPURPLE ("1;35"), 
-      YELLOW      ("1;33"),
-      WHITE       ("1;37");
-      
-      private final String color;
-      AnsiColor(String color)
-      {
-         this.color = color;
-      }
-      
-      public String toString()
-      {
-         return "\33[" + color + "m";
-      }
-   }      
-   
-   /**
+  /**
     *  Creates an XTermWidget.
     */
    public XTermWidget()
@@ -122,15 +91,15 @@ public class XTermWidget extends Widget implements RequiresResize,
    {
       if (newTerminal_)
       {
-         writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
-                 AnsiColor.DEFAULT + " terminal.");
+         writeln("Welcome to " + AnsiCode.ForeColor.LIGHTBLUE + "RStudio" +
+                 AnsiCode.DEFAULTCOLORS + " terminal.");
       }
       else
       {
          // TODO (gary) this is temporary until buffer save and restore is done
-         writeln("\33[30;43m" +
+         writeln(AnsiCode.ForeColor.BLACK + AnsiCode.BackColor.BROWN +
                  "Reconnected. Restoring buffer is not-yet-implemented.");
-         writeln("Hit <enter> for prompt." + AnsiColor.DEFAULT);
+         writeln("Hit <enter> for prompt." + AnsiCode.DEFAULTCOLORS);
       }
    }
   
