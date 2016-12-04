@@ -273,11 +273,10 @@ public class TerminalSession extends XTermWidget
    }
    
    /**
-    * A unique handle for this terminal instance. Stays the same
-    * until Terminal is closed, even if the underlying process is killed and
-    * Terminal attached to a new one.
+    * A unique handle for this terminal instance. Corresponds to the 
+    * server-side ConsoleProcess handle.
     * @return Opaque string handle for this terminal instance, or null if
-    * terminal has never been attached to a process
+    * terminal has never been attached to a server ConsoleProcess.
     */
    public String getHandle()
    {
@@ -286,7 +285,7 @@ public class TerminalSession extends XTermWidget
          return terminalHandle_;
       }
       
-      return consoleProcess_.getProcessInfo().getTerminalHandle();
+      return consoleProcess_.getProcessInfo().getHandle();
    }
    
    /**

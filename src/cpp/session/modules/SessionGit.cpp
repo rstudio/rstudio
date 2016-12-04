@@ -324,6 +324,7 @@ protected:
       *ppCP = ConsoleProcess::create(git() << args.args(),
                                      options,
                                      caption,
+                                     kNoTerminal,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);

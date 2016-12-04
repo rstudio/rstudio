@@ -172,7 +172,7 @@ public class TerminalPane extends WorkbenchPane
       // loaded until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
       {
-         terminals_.addTerminal(new TerminalMetadata(procInfo.getTerminalHandle(),
+         terminals_.addTerminal(new TerminalMetadata(procInfo.getHandle(),
                                           procInfo.getCaption(), 
                                           procInfo.getTerminalSequence()));
       }

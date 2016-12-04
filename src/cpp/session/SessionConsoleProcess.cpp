@@ -49,6 +49,7 @@ namespace {
 } // anonymous namespace
 
 const int kDefaultMaxOutputLines = 500;
+const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
@@ -62,22 +63,23 @@ ConsoleProcess::ConsoleProcess()
    // dummy \n so we can tell the first line is a complete line.
    outputBuffer_.push_back('\n');
 }
-
+   
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               int terminalSequence,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
    : command_(command), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
-   commonInit();
+      commonInit();
 }
-
+   
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
@@ -88,30 +90,12 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
    : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(kNoTerminal), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
 
-ConsoleProcess::ConsoleProcess(const std::string& command,
-                               const core::system::ProcessOptions& options,
-                               const std::string& caption,
-                               const std::string& terminalHandle,
-                               int terminalSequence,
-                               bool dialog,
-                               InteractionMode interactionMode,
-                               int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
-     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalHandle_(terminalHandle), terminalSequence_(terminalSequence),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
-{
-   commonInit();
-}
-   
 void ConsoleProcess::regexInit()
 {
    controlCharsPattern_ = boost::regex("[\\r\\b]");
@@ -124,10 +108,6 @@ void ConsoleProcess::commonInit()
 
    handle_ = core::system::generateUuid(false);
 
-   // TODO (gary) don't think I need a separate terminal handle, the process
-   // handle should do the trick; I won't unwire it all until I'm sure
-   terminalHandle_ = handle_;
-   
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
@@ -297,7 +277,7 @@ void ConsoleProcess::appendToOutputBuffer(const std::string &str)
    // in the SessionInfo; this will be stored separately, keyed by
    // Terminal Handle; as a prelude to that stop storing the old way
    // if we have the terminal handle
-   if (terminalHandle_.empty())
+   if (terminalSequence_ == kNoTerminal)
       std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
 }
 
@@ -439,7 +419,6 @@ core::json::Object ConsoleProcess::toJson() const
       result["exit_code"] = json::Value();
 
    // newly added in v1.1
-   result["terminal_handle"] = terminalHandle_;
    result["terminal_sequence"] = terminalSequence_;
    return result;
 }
@@ -482,15 +461,13 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    // Newly added in v1.1
    Error error = json::readObject(
                      obj,
-                     "terminal_handle", &pProc->terminalHandle_,
                      "terminal_sequence", &pProc->terminalSequence_);
    if (error)
    {
       // Possibly unarchiving a pre 1.1 session; ensure defaults are set
       // and continue
       LOG_ERROR(error);
-      pProc->terminalHandle_.clear();
-      pProc->terminalSequence_ = 0;
+      pProc->terminalSequence_ = kNoTerminal;
    }
    
    return pProc;
@@ -636,6 +613,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
+      int terminalSequence,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -645,6 +623,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
          new ConsoleProcess(command,
                             options,
                             caption,
+                            terminalSequence,
                             dialog,
                             interactionMode,
                             maxOutputLines));
@@ -691,18 +670,9 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       return pos->second;
    }
    
-   options.terminateChildren = true;
-   boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command,
-                            options,
-                            caption,
-                            terminalHandle,
-                            terminalSequence,
-                            dialog,
-                            interactionMode,
-                            maxOutputLines));
-   s_procs[ptrProc->handle()] = ptrProc;
-   return ptrProc;
+   // otherwise create a new one
+   return create(command, options, caption, terminalSequence, dialog,
+                 interactionMode, maxOutputLines);
 }
 
 void PasswordManager::attach(

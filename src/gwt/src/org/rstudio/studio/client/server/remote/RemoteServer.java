@@ -475,7 +475,8 @@ public class RemoteServer implements Server
    {
       invokeStartShellDialog(ConsoleProcess.TerminalType.DUMB, true /*modal*/,
                              80, 1, null /*handle*/, null /*title*/, 
-                             0 /*sequence*/, requestCallback);
+                             ConsoleProcessInfo.SEQUENCE_NO_TERMINAL,
+                             requestCallback);
    }
    
    public void startTerminal(int cols, int rows,

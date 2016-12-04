@@ -45,6 +45,7 @@ enum InteractionMode
 };
 
 extern const int kDefaultMaxOutputLines;
+extern const int kNoTerminal;
 
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
@@ -58,10 +59,11 @@ private:
          const std::string& command,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         int terminalSequence,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
-
+   
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
@@ -71,16 +73,6 @@ private:
          InteractionMode mode,
          int maxOutputLines);
 
-   ConsoleProcess(
-         const std::string& command,
-         const core::system::ProcessOptions& options,
-         const std::string& caption,
-         const std::string& terminalHandle,
-         int terminalSequence,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines);
-   
    void regexInit();
    void commonInit();
 
@@ -110,6 +102,7 @@ public:
          const std::string& command,
          core::system::ProcessOptions options,
          const std::string& caption,
+         int terminalSequence,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -199,11 +192,8 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
-   // The handle of an associated terminal
-   std::string terminalHandle_;
-   
    // The sequence number of the associated terminal; used to control display
-   // order of terminal tabs
+   // order of terminal tabs; constant 'kNoTerminal' indicates a non-terminal
    int terminalSequence_;
    
    // Pending input (writes or ptyInterrupts)

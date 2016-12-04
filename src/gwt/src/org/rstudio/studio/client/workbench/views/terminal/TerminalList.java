@@ -18,6 +18,8 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+
 /**
  * List of terminals, with sufficient metadata to display a list of
  * available terminals and reconnect to them.
@@ -128,7 +130,7 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
     */
    public int nextTerminalSequence()
    {
-      int maxNum = 0;
+      int maxNum = ConsoleProcessInfo.SEQUENCE_NO_TERMINAL;
       for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
       {
          maxNum = Math.max(maxNum, item.getValue().getSequence());
