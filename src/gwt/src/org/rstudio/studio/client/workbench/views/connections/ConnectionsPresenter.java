@@ -253,9 +253,22 @@ public class ConnectionsPresenter extends BasePresenter
       if (commands_.interruptR().isEnabled())
          commands_.interruptR().execute();
    }
+
+   private void showError(String errorMessage)
+   {
+      globalDisplay_.showErrorMessage("Error", errorMessage);
+   }
    
    public void onNewConnection()
    {
+      // if r session bussy, fail
+      if (commands_.interruptR().isEnabled()) {
+        showError(
+          "The R session is currently busy. Wait for completion or " +
+          "interrupt the current session and retry.");
+        return;
+      }
+
       // get the context
       server_.getNewConnectionContext(
          new DelayedProgressRequestCallback<NewConnectionContext>(
