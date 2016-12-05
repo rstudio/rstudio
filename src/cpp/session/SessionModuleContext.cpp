@@ -150,6 +150,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kEditorCommand;
       else if (name == "navigate_shiny_frame")
          type = session::client_events::kNavigateShinyFrame;
+      else if (name == "update_new_connection_dialog")
+         type = session::client_events::kUpdateNewConnectionDialog;
 
       if (type != -1)
       {

@@ -27,11 +27,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
-import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -45,7 +44,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
-                                 implements ShinyFrameNavigatedEvent.Handler
+                                 implements ShinyFrameNavigatedEvent.Handler,
+                                            NewConnectionDialogUpdatedEvent.Handler
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
@@ -55,6 +55,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       events_ = events;
 
       events.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
+      events.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
    }
    
    public NewConnectionDialog(NewConnectionContext context,
@@ -164,6 +165,12 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    public void onShinyFrameNavigated(ShinyFrameNavigatedEvent event)
    {
       frame_.setUrl(StringUtil.makeAbsoluteUrl(event.getURL()));
+   }
+   
+   @Override
+   public void onNewConnectionDialogUpdated(NewConnectionDialogUpdatedEvent event)
+   {
+      codePanel_.setCode(event.getCode(), "");
    }
    
    public interface Styles extends CssResource

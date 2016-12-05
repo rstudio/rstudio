@@ -106,6 +106,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionLi
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.*;
@@ -851,6 +852,11 @@ public class ClientEventDispatcher
          {
             ShinyFrameNavigatedEvent.Data data = event.getData();
             eventBus_.fireEvent(new ShinyFrameNavigatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.UpdateNewConnectionDialog))
+         {
+            NewConnectionDialogUpdatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new NewConnectionDialogUpdatedEvent(data));
          }
          else
          {

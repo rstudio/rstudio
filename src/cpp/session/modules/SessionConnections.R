@@ -142,3 +142,12 @@ options(connectionViewer = list(
    NULL
 })
 
+.rs.addFunction("updateNewConnectionDialog", function(code)
+{
+   .rs.enqueClientEvent("update_new_connection_dialog", list(
+      "code" = code
+   ))
+
+   NULL
+})
+

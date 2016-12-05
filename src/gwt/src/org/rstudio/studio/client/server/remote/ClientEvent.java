@@ -153,6 +153,7 @@ class ClientEvent extends JavaScriptObject
    public static final String NotebookRangeExecuted = "notebook_range_executed";
    public static final String ChunkExecStateChanged = "chunk_exec_state_changed";
    public static final String NavigateShinyFrame = "navigate_shiny_frame";
+   public static final String UpdateNewConnectionDialog = "update_new_connection_dialog";
 
    protected ClientEvent()
    {
