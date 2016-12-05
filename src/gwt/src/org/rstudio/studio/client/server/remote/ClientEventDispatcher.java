@@ -87,6 +87,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
@@ -845,6 +846,11 @@ public class ClientEventDispatcher
          {
             ChunkExecStateChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new ChunkExecStateChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.NavigateShinyFrame))
+         {
+            ShinyFrameNavigatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ShinyFrameNavigatedEvent(data));
          }
          else
          {

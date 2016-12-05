@@ -162,6 +162,7 @@ extern const int kActiveConnectionsChanged;
 extern const int kConnectionOpened;
 extern const int kNotebookRangeExecuted;
 extern const int kChunkExecStateChanged;
+extern const int kNavigateShinyFrame;
 }
    
 class ClientEvent

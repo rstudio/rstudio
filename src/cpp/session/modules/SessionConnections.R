@@ -131,4 +131,14 @@ options(connectionViewer = list(
   context
 })
 
+.rs.addFunction("launchEmbeddedShinyConnectionUI", function(package)
+{
+   shiny::runGadget(sparklyr::connections_spark_shinyapp(), viewer = function(url) {
+      .rs.enqueClientEvent("navigate_shiny_frame", list(
+         "url" = url
+      ))
+   });
+
+   NULL
+})
 

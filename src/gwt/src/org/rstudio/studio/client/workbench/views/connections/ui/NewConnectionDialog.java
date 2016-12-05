@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -44,8 +45,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
-                                 implements ViewerNavigatedEvent.Handler,
-                                            ViewerClearedEvent.Handler
+                                 implements ShinyFrameNavigatedEvent.Handler
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
@@ -54,8 +54,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       uiPrefs_ = uiPrefs;
       events_ = events;
 
-      events.addHandler(ViewerNavigatedEvent.TYPE, this);
-      events.addHandler(ViewerClearedEvent.TYPE, this);
+      events.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
    }
    
    public NewConnectionDialog(NewConnectionContext context,
@@ -84,7 +83,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       frame_.getWindow().focus();
 
       // initialize miniUI
-      String code = "shiny::runGadget(sparklyr" + "::" + "connections_spark_shinyapp()" + ")";
+      String code = ".rs.launchEmbeddedShinyConnectionUI(package = \"sparklyr\")";
       events_.fireEvent(new SendToConsoleEvent(code, 
                                                true, 
                                                false, 
@@ -162,14 +161,9 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    }
 
    @Override
-   public void onViewerNavigated(ViewerNavigatedEvent event)
+   public void onShinyFrameNavigated(ShinyFrameNavigatedEvent event)
    {
       frame_.setUrl(StringUtil.makeAbsoluteUrl(event.getURL()));
-   }
-   
-   @Override
-   public void onViewerCleared(ViewerClearedEvent event)
-   {
    }
    
    public interface Styles extends CssResource

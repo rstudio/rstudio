@@ -148,6 +148,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
         type = session::client_events::kRprofCreated;
       else if (name == "editor_command")
          type = session::client_events::kEditorCommand;
+      else if (name == "navigate_shiny_frame")
+         type = session::client_events::kNavigateShinyFrame;
 
       if (type != -1)
       {
