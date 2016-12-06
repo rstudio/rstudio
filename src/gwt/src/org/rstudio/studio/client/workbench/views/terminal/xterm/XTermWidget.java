@@ -85,9 +85,9 @@ public class XTermWidget extends Widget implements RequiresResize,
    }
    
    /**
-    * Show a greeting in the terminal
+    * Perform actions when the terminal is ready.
     */
-   private void showBanner()
+   private void terminalReady()
    {
       if (newTerminal_)
       {
@@ -96,11 +96,16 @@ public class XTermWidget extends Widget implements RequiresResize,
       }
       else
       {
-         // TODO (gary) this is temporary until buffer save and restore is done
-         writeln(AnsiCode.ForeColor.BLACK + AnsiCode.BackColor.BROWN +
-                 "Reconnected. Restoring buffer is not-yet-implemented.");
-         writeln("Hit <enter> for prompt." + AnsiCode.DEFAULTCOLORS);
-      }
+         terminal_.reset();
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               onResize();
+            }
+         });
+       }
    }
   
    /**
@@ -151,7 +156,7 @@ public class XTermWidget extends Widget implements RequiresResize,
             {
                terminal_.fit();
                terminal_.focus();
-               showBanner();
+               terminalReady();
             }
          });
 

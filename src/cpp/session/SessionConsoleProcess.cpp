@@ -730,6 +730,11 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       ProcTable::const_iterator pos = s_procs.find(terminalHandle);
       if (pos != s_procs.end() && pos->second->isStarted())
       {
+         // Jiggle the size of the pseudo-terminal, this will force the app
+         // to refresh itself; this does rely on the host performing a second
+         // resize to the actual available size. Clumsy, but so far this is
+         // the best I've come up with.
+         pos->second->resize(25, 5);
          return pos->second;
       }
       

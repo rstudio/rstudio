@@ -255,12 +255,6 @@ public class TerminalSession extends XTermWidget
          // terminal sessions and there was a resize.
          // A delay is needed to give the xterm.js implementation an
          // opportunity to be ready for this.
-         
-         // TODO (gary) I already debounce heavily in XTermWidget.onResize, not
-         // sure why this additional level of delay is needed, but without it
-         // there are issues with xterm.js losing its mind when it is resized
-         // after re-emerging from behind other terminals. Why? Is this delay
-         // the best solution?
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
