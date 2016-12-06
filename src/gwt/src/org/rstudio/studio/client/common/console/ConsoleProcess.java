@@ -75,7 +75,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                for (int i = 0; i < procs.length(); i++)
                {
                   final ConsoleProcessInfo proc = procs.get(i);
-                  if (!proc.isDialog())
+                  if (proc.isTerminal())
                   {
                      // non-modal processes represent terminals and are handled
                      // by the terminal UI

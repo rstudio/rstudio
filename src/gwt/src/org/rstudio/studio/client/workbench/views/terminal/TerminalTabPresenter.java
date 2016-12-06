@@ -108,7 +108,7 @@ public class TerminalTabPresenter extends BusyPresenter
       for (int i = 0; i < procs.length(); i++)
       {
          final ConsoleProcessInfo proc = procs.get(i);
-         if (!proc.isDialog())
+         if (proc.isTerminal())
          {
             addTerminalProcInfo(procList, proc);
          }
@@ -125,7 +125,7 @@ public class TerminalTabPresenter extends BusyPresenter
     * @param procInfo process to insert in the list
     */
    private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
-                                           ConsoleProcessInfo procInfo)
+                                    ConsoleProcessInfo procInfo)
    {
       int newSequence = procInfo.getTerminalSequence();
       if (newSequence < 1)

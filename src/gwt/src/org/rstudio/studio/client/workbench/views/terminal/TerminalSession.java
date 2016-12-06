@@ -234,7 +234,7 @@ public class TerminalSession extends XTermWidget
 
    protected void writeError(String msg)
    {
-      write(AnsiColor.RED +"Fatal Error: " + msg + AnsiColor.DEFAULT);
+      write(AnsiCode.ForeColor.RED + "Error: " + msg + AnsiCode.DEFAULTCOLORS);
    }
 
    @Override
@@ -255,12 +255,6 @@ public class TerminalSession extends XTermWidget
          // terminal sessions and there was a resize.
          // A delay is needed to give the xterm.js implementation an
          // opportunity to be ready for this.
-         
-         // TODO (gary) I already debounce heavily in XTermWidget.onResize, not
-         // sure why this additional level of delay is needed, but without it
-         // there are issues with xterm.js losing its mind when it is resized
-         // after re-emerging from behind other terminals. Why? Is this delay
-         // the best solution?
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
@@ -273,11 +267,10 @@ public class TerminalSession extends XTermWidget
    }
    
    /**
-    * A unique handle for this terminal instance. Stays the same
-    * until Terminal is closed, even if the underlying process is killed and
-    * Terminal attached to a new one.
+    * A unique handle for this terminal instance. Corresponds to the 
+    * server-side ConsoleProcess handle.
     * @return Opaque string handle for this terminal instance, or null if
-    * terminal has never been attached to a process
+    * terminal has never been attached to a server ConsoleProcess.
     */
    public String getHandle()
    {
@@ -286,7 +279,7 @@ public class TerminalSession extends XTermWidget
          return terminalHandle_;
       }
       
-      return consoleProcess_.getProcessInfo().getTerminalHandle();
+      return consoleProcess_.getProcessInfo().getHandle();
    }
    
    /**

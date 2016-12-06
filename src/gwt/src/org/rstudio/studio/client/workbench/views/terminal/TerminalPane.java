@@ -103,11 +103,42 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onSelected()
    {
+      // terminal tab was selected
       super.onSelected();
       activateTerminal();
       ensureTerminal();
    }
    
+   @Override
+   public void onBeforeUnselected()
+   {
+      // terminal tab being unselected
+      super.onBeforeUnselected();
+      
+      // current terminal needs to know it's not visible so it doesn't
+      // respond to resize requests (which will cause xterm.js to lose its
+      // mind)
+      TerminalSession currentTerminal = getSelectedTerminal();
+      if (currentTerminal != null)
+      {
+         currentTerminal.setVisible(false);
+      }
+   }
+
+   @Override
+   public void onBeforeSelected()
+   {
+      // terminal tab is about to become visible
+      super.onBeforeSelected();
+      
+      // make sure a previously hidden terminal is visible
+      TerminalSession currentTerminal = getSelectedTerminal();
+      if (currentTerminal != null)
+      {
+         currentTerminal.setVisible(true);
+      }
+  }
+
    @Override
    public void activateTerminal()
    {
@@ -123,7 +154,7 @@ public class TerminalPane extends WorkbenchPane
          // No terminals at all, create a new one
          createTerminal();
       }
-      else if (getVisibleTerminal() == null)
+      else if (getSelectedTerminal() == null)
       {
          // No terminal loaded, load the first terminal in the list
          String handle = terminals_.terminalHandleAtIndex(0);
@@ -172,7 +203,7 @@ public class TerminalPane extends WorkbenchPane
       // loaded until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
       {
-         terminals_.addTerminal(new TerminalMetadata(procInfo.getTerminalHandle(),
+         terminals_.addTerminal(new TerminalMetadata(procInfo.getHandle(),
                                           procInfo.getCaption(), 
                                           procInfo.getTerminalSequence()));
       }
@@ -181,7 +212,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void terminateCurrentTerminal()
    {
-      final TerminalSession visibleTerminal = getVisibleTerminal();
+      final TerminalSession visibleTerminal = getSelectedTerminal();
       if (visibleTerminal != null)
       {
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
@@ -260,7 +291,7 @@ public class TerminalPane extends WorkbenchPane
       String handle = event.getTerminalHandle();
 
       // If terminal was already loaded, just make it visible
-      TerminalSession terminal = terminalWithHandle(handle);
+      TerminalSession terminal = loadedTerminalWithHandle(handle);
       if (terminal != null)
       {
          terminalSessionsPanel_.showWidget(terminal);
@@ -282,7 +313,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public void onTerminalCaption(TerminalCaptionEvent event)
    {
-      TerminalSession visibleTerm = getVisibleTerminal();
+      TerminalSession visibleTerm = getSelectedTerminal();
       TerminalSession captionTerm = event.getTerminalSession();
       if (visibleTerm != null && visibleTerm.getHandle().equals(
             captionTerm.getHandle()))
@@ -318,7 +349,7 @@ public class TerminalPane extends WorkbenchPane
     * @param handle of TerminalSession to return
     * @return TerminalSession with that handle, or null
     */
-   public TerminalSession terminalWithHandle(String handle)
+   private TerminalSession loadedTerminalWithHandle(String handle)
    {
       int total = getLoadedTerminalCount();
       for (int i = 0; i < total; i++)
@@ -333,9 +364,9 @@ public class TerminalPane extends WorkbenchPane
    }
 
    /**
-    * @return Visible terminal, or null if there is no visible terminal.
+    * @return Selected terminal, or null if there is no selected terminal.
     */
-   public TerminalSession getVisibleTerminal()
+   public TerminalSession getSelectedTerminal()
    {
       Widget visibleWidget = terminalSessionsPanel_.getVisibleWidget();
       if (visibleWidget instanceof TerminalSession)
@@ -355,7 +386,7 @@ public class TerminalPane extends WorkbenchPane
             @Override
             public void execute()
             {
-               TerminalSession visibleTerminal = getVisibleTerminal();
+               TerminalSession visibleTerminal = getSelectedTerminal();
                if (visibleTerminal != null)
                {
                   visibleTerminal.setFocus(true);
