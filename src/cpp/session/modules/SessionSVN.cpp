@@ -273,6 +273,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                                   options,
                                   caption,
                                   kNoTerminal,
+                                  false /*allowRestart*/,
                                   dialog,
                                   InteractionPossible,
                                   kDefaultMaxOutputLines);

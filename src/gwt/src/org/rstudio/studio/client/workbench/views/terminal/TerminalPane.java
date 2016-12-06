@@ -260,7 +260,7 @@ public class TerminalPane extends WorkbenchPane
       String handle = event.getTerminalHandle();
 
       // If terminal was already loaded, just make it visible
-      TerminalSession terminal = terminalWithHandle(handle);
+      TerminalSession terminal = loadedTerminalWithHandle(handle);
       if (terminal != null)
       {
          terminalSessionsPanel_.showWidget(terminal);
@@ -318,7 +318,7 @@ public class TerminalPane extends WorkbenchPane
     * @param handle of TerminalSession to return
     * @return TerminalSession with that handle, or null
     */
-   public TerminalSession terminalWithHandle(String handle)
+   private TerminalSession loadedTerminalWithHandle(String handle)
    {
       int total = getLoadedTerminalCount();
       for (int i = 0; i < total; i++)

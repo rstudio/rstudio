@@ -60,6 +60,18 @@ private:
          const core::system::ProcessOptions& options,
          const std::string& caption,
          int terminalSequence,
+         bool allowRestart,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines);
+  
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const std::string& caption,
+         int terminalSequence,
+         bool allowRestart,
+         const std::string& handle,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
@@ -69,6 +81,8 @@ private:
          const std::vector<std::string>& args,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
@@ -103,6 +117,7 @@ public:
          core::system::ProcessOptions options,
          const std::string& caption,
          int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -112,6 +127,8 @@ public:
          const std::vector<std::string>& args,
          core::system::ProcessOptions options,
          const std::string& caption,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -122,6 +139,7 @@ public:
          const std::string& caption,
          const std::string& terminalHandle,
          const int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -144,6 +162,8 @@ public:
    void enqueInput(const Input& input);
    void interrupt();
    void resize(int cols, int rows);
+   void onSuspend();
+   bool isStarted() { return started_; }
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
@@ -196,6 +216,10 @@ private:
    // order of terminal tabs; constant 'kNoTerminal' indicates a non-terminal
    int terminalSequence_;
    
+   // Whether a ConsoleProcess object should start a new process on resume after
+   // its process has been killed by a suspend.
+   bool allowRestart_;
+   
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 
@@ -207,7 +231,6 @@ private:
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
-
 
    // regex for prompt detection
    boost::regex controlCharsPattern_;

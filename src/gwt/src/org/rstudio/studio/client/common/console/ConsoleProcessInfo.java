@@ -59,14 +59,21 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return self.getInteger("exit_code");
    }
 
-   public final native int getTerminalSequence()  /*-{
+   public final native int getTerminalSequence() /*-{
       return this.terminal_sequence;
    }-*/;
-   
+
+   public final native boolean getAllowRestart() /*-{
+      return this.allow_restart;
+   }-*/;
+
+   public final native boolean getStarted() /*-{
+      return this.started;
+   }-*/;
+
    public static final int SEQUENCE_NO_TERMINAL = 0;
    
    public final native boolean isTerminal() /*-{
       return this.terminal_sequence > 0;
    }-*/;
-   
 }

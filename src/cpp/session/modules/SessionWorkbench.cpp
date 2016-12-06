@@ -878,6 +878,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // terminal sequence
    int termSequence = kNoTerminal;
    
+   // allow process restart with existing handle
+   bool allowRestart;
+   
    Error error = json::readParams(request.params,
                                   &term,
                                   &cols,
@@ -885,7 +888,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                   &isModalDialog,
                                   &termHandle,
                                   &termTitle,
-                                  &termSequence);
+                                  &termSequence,
+                                  &allowRestart);
    if (error)
       return error;
    
@@ -953,6 +957,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                       termTitle,
                                       termHandle,
                                       termSequence,
+                                      allowRestart,
                                       isModalDialog,
                                       InteractionAlways,
                                       console_process::kDefaultMaxOutputLines);

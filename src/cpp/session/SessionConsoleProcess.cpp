@@ -55,7 +55,7 @@ ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     allowRestart_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -68,6 +68,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
                                int terminalSequence,
+                               bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
@@ -75,15 +76,37 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
-      commonInit();
+   commonInit();
+}
+
+ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               int terminalSequence,
+                               bool allowRestart,
+                               const std::string& handle,
+                               bool dialog,
+                               InteractionMode interactionMode,
+                               int maxOutputLines)
+   : command_(command), options_(options), caption_(caption), dialog_(dialog),
+     showOnOutput_(false),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
+     handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
+{
+   commonInit();
 }
    
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               int terminalSequence,
+                               bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
@@ -91,7 +114,8 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(kNoTerminal), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -106,7 +130,8 @@ void ConsoleProcess::commonInit()
 {
    regexInit();
 
-   handle_ = core::system::generateUuid(false);
+   if (handle_.empty())
+      handle_ = core::system::generateUuid(false);
 
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
@@ -390,6 +415,12 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
          ClientEvent(client_events::kConsoleProcessPrompt, data));
 }
 
+void ConsoleProcess::onSuspend()
+{
+   if (started_ && allowRestart_)
+      started_ = false;
+}
+
 void ConsoleProcess::onExit(int exitCode)
 {
    exitCode_.reset(exitCode);
@@ -420,6 +451,8 @@ core::json::Object ConsoleProcess::toJson() const
 
    // newly added in v1.1
    result["terminal_sequence"] = terminalSequence_;
+   result["allow_restart"] = allowRestart_;
+   result["started"] = started_;
    return result;
 }
 
@@ -468,6 +501,24 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
       // and continue
       LOG_ERROR(error);
       pProc->terminalSequence_ = kNoTerminal;
+      return pProc;
+   }
+
+   // Newly added during work-in-progress on 1.1
+   // TODO (gary) could flatten this to a single readObject before release
+   error = json::readObject(obj,
+                            "allow_restart", &pProc->allowRestart_,
+                            "started", &pProc->started_);
+   if (error)
+   {
+      // Possibly unarchiving 1.1 work-in-progress session; match
+      // previous behavior and continue
+      if (pProc->terminalSequence_ != kNoTerminal)
+      {
+         pProc->allowRestart_ = true;
+         pProc->started_ = false;
+      }
+      LOG_ERROR(error);
    }
    
    return pProc;
@@ -614,6 +665,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       core::system::ProcessOptions options,
       const std::string& caption,
       int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -624,6 +676,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             options,
                             caption,
                             terminalSequence,
+                            allowRestart,
                             dialog,
                             interactionMode,
                             maxOutputLines));
@@ -636,6 +689,8 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::vector<std::string>& args,
       core::system::ProcessOptions options,
       const std::string& caption,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -646,6 +701,8 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             args,
                             options,
                             caption,
+                            terminalSequence,
+                            allowRestart,
                             dialog,
                             interactionMode,
                             maxOutputLines));
@@ -653,26 +710,41 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    return ptrProc;
 }
 
+// supports reattaching to a running process, or creating a new process with
+// previously used handle
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
       const std::string& terminalHandle,
-      const int terminalSequence,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
 {
-   // return existing ConsoleProcess
-   ProcTable::const_iterator pos = s_procs.find(terminalHandle);
-   if (pos != s_procs.end())
+   if (allowRestart && !terminalHandle.empty())
    {
-      return pos->second;
+      // return existing ConsoleProcess if it is still running
+      ProcTable::const_iterator pos = s_procs.find(terminalHandle);
+      if (pos != s_procs.end() && pos->second->isStarted())
+      {
+         return pos->second;
+      }
+      
+      // Create new process with previously used handle
+      options.terminateChildren = true;
+      boost::shared_ptr<ConsoleProcess> ptrProc(
+            new ConsoleProcess(command, options, caption, terminalSequence,
+                               allowRestart, terminalHandle, dialog,
+                               interactionMode, maxOutputLines));
+      s_procs[ptrProc->handle()] = ptrProc;
+      return ptrProc;
    }
    
    // otherwise create a new one
-   return create(command, options, caption, terminalSequence, dialog,
-                 interactionMode, maxOutputLines);
+   return create(command, options, caption, terminalSequence,
+                 allowRestart, dialog, interactionMode, maxOutputLines);
 }
 
 void PasswordManager::attach(
@@ -810,6 +882,7 @@ void onSuspend(core::Settings* pSettings)
         it != s_procs.end();
         it++)
    {
+      it->second->onSuspend();
       array.push_back(it->second->toJson());
    }
 

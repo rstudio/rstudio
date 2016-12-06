@@ -405,7 +405,9 @@ Error installDependencies(const json::JsonRpcRequest& request,
             args,
             options,
             "Installing Packages",
-            true,
+            console_process::kNoTerminal,
+            false /*allowRestart*/,
+            true /*dialog*/,
             console_process::InteractionNever);
 
    // return console process

@@ -317,6 +317,8 @@ protected:
                                      args.args(),
                                      options,
                                      caption,
+                                     kNoTerminal,
+                                     false /*allowRestart*/,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);
@@ -325,6 +327,7 @@ protected:
                                      options,
                                      caption,
                                      kNoTerminal,
+                                     false /*allowRestart*/,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);
