@@ -66,23 +66,23 @@ private:
          int maxOutputLines);
   
    ConsoleProcess(
-         const std::string& command,
-         const core::system::ProcessOptions& options,
-         const std::string& caption,
-         int terminalSequence,
-         bool allowRestart,
-         const std::string& handle,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines);
-   
-   ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
          const core::system::ProcessOptions& options,
          const std::string& caption,
          int terminalSequence,
          bool allowRestart,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines);
+   
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const std::string& caption,
+         int terminalSequence,
+         bool allowRestart,
+         const std::string& handle,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);

@@ -82,24 +82,6 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
    commonInit();
 }
 
-ConsoleProcess::ConsoleProcess(const std::string& command,
-                               const core::system::ProcessOptions& options,
-                               const std::string& caption,
-                               int terminalSequence,
-                               bool allowRestart,
-                               const std::string& handle,
-                               bool dialog,
-                               InteractionMode interactionMode,
-                               int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
-     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
-{
-   commonInit();
-}
    
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
@@ -114,6 +96,25 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
+{
+   commonInit();
+}
+
+ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               int terminalSequence,
+                               bool allowRestart,
+                               const std::string& handle,
+                               bool dialog,
+                               InteractionMode interactionMode,
+                               int maxOutputLines)
+   : command_(command), options_(options), caption_(caption), dialog_(dialog),
+     showOnOutput_(false),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
+     handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
