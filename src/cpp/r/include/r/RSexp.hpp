@@ -224,7 +224,7 @@ core::Error getNamedListElement(SEXP listSEXP,
 template <typename T>
 core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
 {
-   SEXP attrib = getAttrib(object, attrib); 
+   SEXP attrib = getAttrib(object, name); 
    if (attrib == R_NilValue) 
    {
       core::Error error(r::errc::AttributeNotFoundError, ERROR_LOCATION);

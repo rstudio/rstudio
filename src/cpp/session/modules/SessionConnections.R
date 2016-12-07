@@ -14,13 +14,12 @@
 #
 
 
-# install the S4 classes which represent active connections into the tools
-# environment
+# install the S4 classes which represent active connections 
 setClass("rstudioConnectionAction", representation(
   name = "character",
   icon = "character",
   callback = "function"
-), where = .rs.toolsEnv())
+))
 
 setClass("rstudioConnection", representation(
   type = "character",
@@ -33,7 +32,7 @@ setClass("rstudioConnection", representation(
   listColumns = "function",
   previewTable = "function",
   actions = "list"
-), where = .rs.toolsEnv())
+))
 
 .rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
    paramNames <- names(params)
@@ -97,27 +96,17 @@ options(connectionViewer = list(
    finderFunc(globalenv(), host)
 })
 
-.rs.addFunction("getConnectionObject", function(finder, host) {
-   name <- .rs.getConnectionObjectName(finder, host)
+.rs.addFunction("getConnectionObject", function(type, host) {
+   name <- .rs.getConnectionObjectName(type, host)
    get(name, envir = globalenv())
 })
 
-.rs.addFunction("getDisconnectCode", function(finder, host, template) {
+.rs.addFunction("getDisconnectCode", function(type, host) {
    connection <- .rs.findActiveConnection(type, host)
-   if (!is.null(name))
+   if (!is.null(connection))
       connection@disconnectCode()
    else
       ""
-})
-
-.rs.addFunction("getSparkWebUrl", function(finder, host) {
-   sc <- .rs.getConnectionObject(finder, host)
-   sparklyr:::spark_web(sc)
-})
-
-.rs.addFunction("getSparkLogFile", function(finder, host) {
-   sc <- .rs.getConnectionObject(finder, host)
-   sparklyr:::spark_log_file(sc)
 })
 
 .rs.addFunction("connectionListTables", function(type, host) {
@@ -134,24 +123,18 @@ options(connectionViewer = list(
 
    connection <- .rs.findActiveConnection(type, host)
 
-   if (!is.null(name)) {
+   if (!is.null(connection))
       listColumnsCode <- connection@listColumns(table)
-      eval(parse(text = listColumnsCode), envir = globalenv())
-   }
    else
       NULL
 })
 
-.rs.addFunction("connectionPreviewTable", function(type,
-                                                   host,
-                                                   table,
-                                                   limit) {
+.rs.addFunction("connectionPreviewTable", function(type, host, table, limit) {
 
    connection <- .rs.findActiveConnection(type, host)
 
-   if (!is.null(name)) {
-      previewTableCode <- connection@previewTable(table, limit)
-      df <- eval(parse(text = previewTableCode), envir = globalenv())
+   if (!is.null(connection)) {
+      df <- connection@previewTable(table, limit)
       .rs.viewDataFrame(df, table, TRUE)
    }
 

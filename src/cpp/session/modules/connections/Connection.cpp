@@ -1,7 +1,7 @@
 /*
  * Connection.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,12 +45,8 @@ json::Object connectionJson(const Connection& connection)
 {
    json::Object connectionJson;
    connectionJson["id"] = connectionIdJson(connection.id);
-   connectionJson["finder"] = connection.finder;
    connectionJson["connect_code"] = connection.connectCode;
-   connectionJson["disconnect_code"] = connection.disconnectCode;
-   connectionJson["list_tables_code"] = connection.listTablesCode;
-   connectionJson["list_columns_code"] = connection.listColumnsCode;
-   connectionJson["preview_table_code"] = connection.previewTableCode;
+   connectionJson["display_name"] = connection.displayName;
    connectionJson["last_used"] = connection.lastUsed;
    return connectionJson;
 }
@@ -69,15 +65,11 @@ Error connectionFromJson(const json::Object& connectionJson,
    if (error)
       return error;
 
-   // read remanining fields
+   // read remaining fields
    return json::readObject(
             connectionJson,
-            "finder", &(pConnection->finder),
             "connect_code", &(pConnection->connectCode),
-            "disconnect_code", &(pConnection->disconnectCode),
-            "list_tables_code", &(pConnection->listTablesCode),
-            "list_columns_code", &(pConnection->listColumnsCode),
-            "preview_table_code", &(pConnection->previewTableCode),
+            "display_name", &(pConnection->displayName),
             "last_used", &(pConnection->lastUsed));
 }
 

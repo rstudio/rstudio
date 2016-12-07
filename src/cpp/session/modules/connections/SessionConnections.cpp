@@ -54,13 +54,14 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
 {
    // read params -- note that these attributes are already guaranteed to
    // exist as we validate the S4 object on the R side
-   std::string type, host, connectCode;
+   std::string type, host, connectCode, displayName;
    r::sexp::getNamedAttrib(connectionSEXP, "type", &type);
    r::sexp::getNamedAttrib(connectionSEXP, "host", &host);
    r::sexp::getNamedAttrib(connectionSEXP, "connectCode", &connectCode);
+   r::sexp::getNamedAttrib(connectionSEXP, "displayName", &displayName);
 
    // create connection object
-   Connection connection(ConnectionId(type, host), connectCode,
+   Connection connection(ConnectionId(type, host), connectCode, displayName,
                          date_time::millisecondsSinceEpoch());
 
    // update connection history
@@ -200,9 +201,7 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    json::Object idJson;
    std::string finder, disconnectCode;
    Error error = json::readObjectParam(request.params, 0,
-                                       "id", &idJson,
-                                       "finder", &finder,
-                                       "disconnect_code", &disconnectCode);
+                                       "id", &idJson);
    if (error)
       return error;
    std::string type, host;
@@ -212,8 +211,8 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
 
    // call R function to determine disconnect code
    r::exec::RFunction func(".rs.getDisconnectCode");
+   func.addParam(type);
    func.addParam(host);
-   func.addParam(disconnectCode);
    std::string code;
    error = func.call(&code);
    if (error)
@@ -253,10 +252,11 @@ Error readConnectionAndTableParams(const json::JsonRpcRequest& request,
    return json::readParam(request.params, 1, pTable);
 }
 
-void connectionExecuteAction(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
+Error connectionExecuteAction(const json::JsonRpcRequest& request,
+                              json::JsonRpcResponse* pResponse)
 {
    // TODO: dispatch
+   return Success();
 }
 
 void connectionListTables(const json::JsonRpcRequest& request,
@@ -367,9 +367,8 @@ void connectionPreviewTable(const json::JsonRpcRequest& request,
    r::sexp::Protect rProtect;
    SEXP sexpResult;
    error = r::exec::RFunction(".rs.connectionPreviewTable",
-                                 connection.finder,
+                                 connection.id.type,
                                  connection.id.host,
-                                 connection.previewTableCode,
                                  table,
                                  1000).call(&sexpResult, &rProtect);
 
@@ -515,7 +514,7 @@ bool isSuspendable()
 Error initialize()
 {
    // register methods
-   RS_REGISTER_CALL_METHOD(rs_connectionOpened, 8);
+   RS_REGISTER_CALL_METHOD(rs_connectionOpened, 1);
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);

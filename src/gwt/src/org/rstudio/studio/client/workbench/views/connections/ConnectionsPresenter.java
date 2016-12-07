@@ -514,36 +514,6 @@ public class ConnectionsPresenter extends BasePresenter
       display_.updateExploredConnection("");
    }
    
-   
-   @Handler
-   public void onSparkLog()
-   {
-      if (exploredConnection_ == null)
-         return;
-      
-      server_.showSparkLog(exploredConnection_, 
-                           new VoidServerRequestCallback());
-      
-   }
-   
-   @Handler
-   public void onSparkUI()
-   {
-      if (exploredConnection_ == null)
-         return;
-      
-      server_.showSparkUI(exploredConnection_, 
-                          new VoidServerRequestCallback());
-      
-   }
-   
-   @Handler
-   public void onSparkHelp()
-   {
-      globalDisplay_.openRStudioLink("using_spark", false);
-   }
-   
-   
    private void showAllConnections(boolean animate)
    {
       exploredConnection_ = null;
@@ -598,16 +568,14 @@ public class ConnectionsPresenter extends BasePresenter
          boolean connected = isConnected(exploredConnection_.getId());
          commands_.removeConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
-         commands_.sparkLog().setVisible(connected);
-         commands_.sparkUI().setVisible(connected);
+         // TODO: show connection actions
          commands_.refreshConnection().setVisible(connected);
       }
       else
       {
          commands_.removeConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
-         commands_.sparkLog().setVisible(false);
-         commands_.sparkUI().setVisible(false);
+         // TODO: hide connection actions
          commands_.refreshConnection().setVisible(false);
       }
    }
@@ -652,7 +620,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    // client state
    public static final String MODULE_CONNECTIONS = "connections-pane";
-   private static final String KEY_EXPLORED_CONNECTION = "exploredConnection";
+   private static final String KEY_EXPLORED_CONNECTION = "exploredConnections";
    private Connection exploredConnection_;
    private Connection lastExploredConnection_;
    

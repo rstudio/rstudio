@@ -38,6 +38,7 @@ struct ConnectionId
 
    std::string type;
    std::string host;
+   std::string displayName;
 
    bool operator==(const ConnectionId& other) const
    {
@@ -55,9 +56,11 @@ struct Connection
    Connection() {}
    Connection(const ConnectionId& id,
               const std::string& connectCode,
+              const std::string& displayName,
               double lastUsed)
       : id(id),
         connectCode(connectCode),
+        displayName(displayName),
         lastUsed(lastUsed)
    {
    }
@@ -66,6 +69,7 @@ struct Connection
 
    ConnectionId id;
    std::string connectCode;
+   std::string displayName;
    double lastUsed;
 };
 

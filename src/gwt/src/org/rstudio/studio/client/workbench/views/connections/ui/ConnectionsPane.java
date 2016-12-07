@@ -120,7 +120,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          public String getValue(Connection connection)
          {
-            return connection.getHostDisplay();
+            return connection.getDisplayName();
          }
       };      
       connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Connection"));
@@ -516,7 +516,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
       
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.sparkHelp().createToolbarButton());
         
       toolbar_.addRightWidget(searchWidget_);
       
@@ -534,18 +533,16 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       toolbar_.addLeftSeparator();
       
-      toolbar_.addLeftWidget(commands_.sparkUI().createToolbarButton());
+      // TODO: add connection action buttons here
+
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.sparkLog().createToolbarButton());
-      toolbar_.addLeftSeparator();
+
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.sparkHelp().createToolbarButton());
       
       toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
       toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
-      connectionName_.setText(connection.getHostDisplay());
+      connectionName_.setText(connection.getDisplayName());
       setSecondaryToolbarVisible(true);
    }
    

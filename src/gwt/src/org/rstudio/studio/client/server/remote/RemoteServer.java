@@ -4811,16 +4811,14 @@ public class RemoteServer implements Server
    }
    
    
-   public void showSparkLog(Connection connection, 
+   public void connectionExecuteAction(Connection connection, 
+                            String action,
                             ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, SHOW_SPARK_LOG, connection, callback);
-   }
-   
-   public void showSparkUI(Connection connection, 
-                           ServerRequestCallback<Void> callback)
-   {
-      sendRequest(RPC_SCOPE, SHOW_SPARK_UI, connection, callback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connection));
+      params.set(1, new JSONString(action));
+      sendRequest(RPC_SCOPE, CONNECTION_EXECUTE_ACTION, callback);
    }
    
    @Override
@@ -5250,8 +5248,7 @@ public class RemoteServer implements Server
    
    private static final String REMOVE_CONNECTION = "remove_connection";
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
-   private static final String SHOW_SPARK_LOG = "show_spark_log";
-   private static final String SHOW_SPARK_UI = "show_spark_ui";
+   private static final String CONNECTION_EXECUTE_ACTION = "connection_execute_action";
    private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";

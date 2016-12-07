@@ -31,32 +31,12 @@ public class Connection extends JavaScriptObject
       return this.id.host;
    }-*/;
    
-   public final String getHostDisplay() {
-      return getHost().replaceAll(" - sparklyr", "");
-   }
-   
-   public final native String getFinder() /*-{
-      return this.finder;
+   public final native String getDisplayName() /*-{ 
+      return this.display_name;
    }-*/;
    
    public final native String getConnectCode() /*-{
       return this.connect_code;
-   }-*/;
-   
-   public final native String getDisconnectCode() /*-{
-      return this.disconnect_code;
-   }-*/;
-   
-   public final native String getListTablesCode() /*-{
-      return this.list_tables_code;
-   }-*/;
-
-   public final native String getListColumnsCode() /*-{
-      return this.list_columns_code;
-   }-*/;
-   
-   public final native String getPreviewTableCode() /*-{
-      return this.preview_table_code;
    }-*/;
    
    public final native double getLastUsed() /*-{
