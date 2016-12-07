@@ -1,7 +1,7 @@
 /*
  * Connection.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,20 +54,10 @@ struct Connection
 {
    Connection() {}
    Connection(const ConnectionId& id,
-              const std::string& finder,
               const std::string& connectCode,
-              const std::string& disconnectCode,
-              const std::string& listTablesCode,
-              const std::string& listColumnsCode,
-              const std::string& previewTableCode,
               double lastUsed)
       : id(id),
-        finder(finder),
         connectCode(connectCode),
-        disconnectCode(disconnectCode),
-        listTablesCode(listTablesCode),
-        listColumnsCode(listColumnsCode),
-        previewTableCode(previewTableCode),
         lastUsed(lastUsed)
    {
    }
@@ -75,12 +65,7 @@ struct Connection
    bool empty() const { return id.empty(); }
 
    ConnectionId id;
-   std::string finder;
    std::string connectCode;
-   std::string disconnectCode;
-   std::string listTablesCode;
-   std::string listColumnsCode;
-   std::string previewTableCode;
    double lastUsed;
 };
 

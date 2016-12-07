@@ -1,7 +1,7 @@
 /*
  * SessionConnections.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,33 +50,17 @@ namespace connections {
 namespace {
 
 
-SEXP rs_connectionOpened(SEXP typeSEXP,
-                         SEXP hostSEXP,
-                         SEXP finderSEXP,
-                         SEXP connectCodeSEXP,
-                         SEXP disconnectCodeSEXP,
-                         SEXP listTablesCodeSEXP,
-                         SEXP listColumnsCodeSEXP,
-                         SEXP previewTableCodeSEXP)
+SEXP rs_connectionOpened(SEXP connectionSEXP)
 {
-   // read params
-   std::string type = r::sexp::safeAsString(typeSEXP);
-   std::string host = r::sexp::safeAsString(hostSEXP);
-   std::string finder = r::sexp::safeAsString(finderSEXP);
-   std::string connectCode = r::sexp::safeAsString(connectCodeSEXP);
-   std::string disconnectCode = r::sexp::safeAsString(disconnectCodeSEXP);
-   std::string listTablesCode = r::sexp::safeAsString(listTablesCodeSEXP);
-   std::string listColumnsCode = r::sexp::safeAsString(listColumnsCodeSEXP);
-   std::string previewTableCode = r::sexp::safeAsString(previewTableCodeSEXP);
+   // read params -- note that these attributes are already guaranteed to
+   // exist as we validate the S4 object on the R side
+   std::string type, host, connectCode;
+   r::sexp::getNamedAttrib(connectionSEXP, "type", &type);
+   r::sexp::getNamedAttrib(connectionSEXP, "host", &host);
+   r::sexp::getNamedAttrib(connectionSEXP, "connectCode", &connectCode);
 
    // create connection object
-   Connection connection(ConnectionId(type, host),
-                         finder,
-                         connectCode,
-                         disconnectCode,
-                         listTablesCode,
-                         listColumnsCode,
-                         previewTableCode,
+   Connection connection(ConnectionId(type, host), connectCode,
                          date_time::millisecondsSinceEpoch());
 
    // update connection history
@@ -228,7 +212,6 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
 
    // call R function to determine disconnect code
    r::exec::RFunction func(".rs.getDisconnectCode");
-   func.addParam(finder);
    func.addParam(host);
    func.addParam(disconnectCode);
    std::string code;
@@ -270,63 +253,11 @@ Error readConnectionAndTableParams(const json::JsonRpcRequest& request,
    return json::readParam(request.params, 1, pTable);
 }
 
-
-Error showSparkLog(const json::JsonRpcRequest& request,
-                   json::JsonRpcResponse* pResponse)
+void connectionExecuteAction(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
 {
-   // get connection param
-   Connection connection;
-   Error error = readConnectionParam(request, &connection);
-   if (error)
-      return error;
-
-   // get the log file
-   std::string log;
-   error = r::exec::RFunction(".rs.getSparkLogFile",
-                                 connection.finder,
-                                 connection.id.host).call(&log);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // show the file
-   module_context::showFile(FilePath(log));
-
-   return Success();
+   // TODO: dispatch
 }
-
-Error showSparkUI(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
-{
-   // get connection param
-   Connection connection;
-   Error error = readConnectionParam(request, &connection);
-   if (error)
-      return error;
-
-   // get the url
-   std::string url;
-   error = r::exec::RFunction(".rs.getSparkWebUrl",
-                                 connection.finder,
-                                 connection.id.host).call(&url);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   // portmap if necessary
-   url = module_context::mapUrlPorts(url);
-
-   // show the ui
-   ClientEvent event = browseUrlEvent(url);
-   module_context::enqueClientEvent(event);
-
-   return Success();
-}
-
 
 void connectionListTables(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& continuation)
@@ -347,9 +278,8 @@ void connectionListTables(const json::JsonRpcRequest& request,
    // get the list of tables
    std::vector<std::string> tables;
    error = r::exec::RFunction(".rs.connectionListTables",
-                                 connection.finder,
-                                 connection.id.host,
-                                 connection.listTablesCode).call(&tables);
+                                 connection.id.type,
+                                 connection.id.host).call(&tables);
    if (error)
    {
       continuation(error, &response);
@@ -410,9 +340,8 @@ void connectionListFields(const json::JsonRpcRequest& request,
    r::sexp::Protect rProtect;
    SEXP sexpResult;
    error = r::exec::RFunction(".rs.connectionListColumns",
-                                 connection.finder,
+                                 connection.id.type,
                                  connection.id.host,
-                                 connection.listColumnsCode,
                                  table).call(&sexpResult, &rProtect);
 
 
@@ -614,8 +543,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
       (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
-      (bind(registerRpcMethod, "show_spark_log", showSparkLog))
-      (bind(registerRpcMethod, "show_spark_ui", showSparkUI))
+      (bind(registerRpcMethod, "connection_execute_action", connectionExecuteAction))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_tables", connectionListTables))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_preview_table", connectionPreviewTable))

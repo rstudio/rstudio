@@ -1,7 +1,7 @@
 #
 # SessionConnections.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -12,6 +12,28 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+
+# install the S4 classes which represent active connections into the tools
+# environment
+setClass("rstudioConnectionAction", representation(
+  name = "character",
+  icon = "character",
+  callback = "function"
+), where = .rs.toolsEnv())
+
+setClass("rstudioConnection", representation(
+  type = "character",
+  host = "character",
+  displayName = "character",
+  icon = "character",
+  connectCode = "character",
+  disconnectCode = "function",
+  listTables = "function",
+  listColumns = "function",
+  previewTable = "function",
+  actions = "list"
+), where = .rs.toolsEnv())
 
 .rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
    paramNames <- names(params)
@@ -24,26 +46,40 @@
    }
 })
 
+# create an environment which will host the known active connections
+assign(".rs.activeConnections", 
+       value = new.env(parent = emptyenv()), 
+       envir = .rs.toolsEnv())
+
+# given a connection type and host, find a matching active connection, or NULL
+# if no connection was found
+.rs.addFunction("findActiveConnection", function(type, host) {
+   connections <- ls(.rs.activeConnections)
+   for (name in connections) {
+      connection <- get(name, envir = .rs.activeConnections)
+      if (identical(connection@type, type) && 
+          identical(connection@host, host)) {
+         return(connection)
+      }
+   }
+   # indicates no connection was found
+   NULL
+})
+
 options(connectionViewer = list(
-   connectionOpened = function(type, host, finder, connectCode, disconnectCode,
-                               listTablesCode = NULL, listColumnsCode = NULL,
-                               previewTableCode = NULL, ...) {
-      .rs.validateCharacterParams(list(
-         type = type, host = host, connectCode = connectCode,
-         disconnectCode = disconnectCode
-      ))
-      .rs.validateCharacterParams(list(
-         listTablesCode = listTablesCode,
-         listColumnsCode = listColumnsCode,
-         previewTableCode = previewTableCode
-      ), optional = TRUE)
-      if (!is.function(finder))
-         stop("finder must be a function", call. = FALSE)
-      finder <- paste(deparse(finder), collapse = "\n")
-      invisible(.Call("rs_connectionOpened", type, host, finder, 
-                      connectCode, disconnectCode,
-                      listTablesCode, listColumnsCode,
-                      previewTableCode))
+   connectionOpened = function(connection) {
+      # validate connection object
+      if (!inherits(connection, "rstudioConnection"))
+         stop("argument must be an object of class rstudioConnection")
+
+      # generate an internal key for this connection in the local cache 
+      cacheKey <- paste(connection@type, connection@host, 
+                        .Call("rs_generateShortUuid"), 
+                        sep = "_")
+      assign(cacheKey, value = connection, envir = .rs.activeConnections)
+
+      # serialize and generate client events
+      invisible(.Call("rs_connectionOpened", connection))
    },
    connectionClosed = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))
@@ -67,9 +103,9 @@ options(connectionViewer = list(
 })
 
 .rs.addFunction("getDisconnectCode", function(finder, host, template) {
-   name <- .rs.getConnectionObjectName(finder, host)
+   connection <- .rs.findActiveConnection(type, host)
    if (!is.null(name))
-      sprintf(template, name)
+      connection@disconnectCode()
    else
       ""
 })
@@ -84,40 +120,37 @@ options(connectionViewer = list(
    sparklyr:::spark_log_file(sc)
 })
 
-.rs.addFunction("connectionListTables", function(finder, host, listTablesCode) {
+.rs.addFunction("connectionListTables", function(type, host) {
 
-   name <- .rs.getConnectionObjectName(finder, host)
+   connection <- .rs.findActiveConnection(type, host)
 
-   if (!is.null(name)) {
-      listTablesCode <- sprintf(listTablesCode, name)
-      eval(parse(text = listTablesCode), envir = globalenv())
-   }
+   if (!is.null(connection)) 
+      connection@listTables()
    else
       character()
 })
 
-.rs.addFunction("connectionListColumns", function(finder, host, listColumnsCode, table) {
+.rs.addFunction("connectionListColumns", function(type, host, table) {
 
-   name <- .rs.getConnectionObjectName(finder, host)
+   connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(name)) {
-      listColumnsCode <- sprintf(listColumnsCode, name, table)
+      listColumnsCode <- connection@listColumns(table)
       eval(parse(text = listColumnsCode), envir = globalenv())
    }
    else
       NULL
 })
 
-.rs.addFunction("connectionPreviewTable", function(finder,
+.rs.addFunction("connectionPreviewTable", function(type,
                                                    host,
-                                                   previewTableCode,
                                                    table,
                                                    limit) {
 
-   name <- .rs.getConnectionObjectName(finder, host)
+   connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(name)) {
-      previewTableCode <- sprintf(previewTableCode, name, table, limit)
+      previewTableCode <- connection@previewTable(table, limit)
       df <- eval(parse(text = previewTableCode), envir = globalenv())
       .rs.viewDataFrame(df, table, TRUE)
    }

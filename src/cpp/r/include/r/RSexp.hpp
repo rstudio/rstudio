@@ -221,6 +221,19 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
 }
 
+template <typename T>
+core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
+{
+   SEXP attrib = getAttrib(object, attrib); 
+   if (attrib == R_NilValue) 
+   {
+      core::Error error(r::errc::AttributeNotFoundError, ERROR_LOCATION);
+      error.addProperty("attribute", name);
+      return error;
+   }
+
+   return extract(attrib, pValue);
+}
 
 // protect R expressions
 class Protect : boost::noncopyable
