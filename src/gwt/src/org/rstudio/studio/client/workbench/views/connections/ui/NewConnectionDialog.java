@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
@@ -165,7 +166,12 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    @Override
    public void onShinyFrameNavigated(ShinyFrameNavigatedEvent event)
    {
-      frame_.setUrl(StringUtil.makeAbsoluteUrl(event.getURL()));
+      String url = event.getURL();
+      
+      if (Desktop.isDesktop())
+         Desktop.getFrame().setShinyDialogUrl(url);
+
+      frame_.setUrl(StringUtil.makeAbsoluteUrl(url));
    }
    
    @Override
