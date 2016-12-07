@@ -137,6 +137,14 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
       }
       return maxNum + 1;
    }
+   
+   /**
+    * Remove all terminals from the list
+    */
+   public void clear()
+   {
+      terminals_.clear();
+   }
 
    @Override
    public Iterator<TerminalMetadata> iterator()

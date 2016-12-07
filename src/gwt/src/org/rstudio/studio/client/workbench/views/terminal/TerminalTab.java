@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
@@ -43,11 +44,12 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    {
       @Handler
       public abstract void onActivateTerminal();
-      
+
       @Handler
       public abstract void onCloseTerminal();
-      
+
       abstract void initialize();
+      abstract void confirmClose(Command onConfirmed);
    }
 
    @Inject
@@ -59,12 +61,24 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    {
       super("Terminal", shim);
       shim_ = shim;
-      
+
       binder.bind(commands, shim_);
       events.addHandler(CreateTerminalEvent.TYPE, shim_);
       events.addHandler(SessionInitEvent.TYPE, shim_);
-      
+
       shim_.initialize();
+   }
+
+   @Override
+   public boolean closeable()
+   {
+      return true;
+   }
+
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      shim_.confirmClose(onConfirmed);
    }
 
    @Override
