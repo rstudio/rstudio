@@ -177,8 +177,8 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    {
       // collect the result
       ConnectionOptions result = ConnectionOptions.create(
-            "",
-            "");
+         codePanel_.getCode(),
+         codePanel_.getConnectVia());
       
       // return result
       return result;
