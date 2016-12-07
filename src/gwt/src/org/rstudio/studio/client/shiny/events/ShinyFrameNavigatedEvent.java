@@ -27,7 +27,7 @@ public class ShinyFrameNavigatedEvent extends GwtEvent<ShinyFrameNavigatedEvent.
       }
       
       public final native String getUrl() /*-{
-         return this.url[0];
+         return this.url;
       }-*/;
    }
 

@@ -135,7 +135,7 @@ options(connectionViewer = list(
 {
    shiny::runGadget(sparklyr::connection_spark_shinyapp(), viewer = function(url) {
       .rs.enqueClientEvent("navigate_shiny_frame", list(
-         "url" = url
+         "url" = .rs.scalar(url)
       ))
    });
 
@@ -159,7 +159,7 @@ options(connectionViewer = list(
 .rs.addFunction("updateNewConnectionDialog", function(code)
 {
    .rs.enqueClientEvent("update_new_connection_dialog", list(
-      "code" = code
+      "code" = .rs.scalar(code)
    ))
 
    NULL

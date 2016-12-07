@@ -27,7 +27,7 @@ public class NewConnectionDialogUpdatedEvent extends GwtEvent<NewConnectionDialo
       }
       
       public final native String getCode() /*-{
-         return this.code[0];
+         return this.code;
       }-*/;
    }
 
