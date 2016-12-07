@@ -65,7 +65,7 @@ assign(".rs.activeConnections",
    NULL
 })
 
-options(connectionViewer = list(
+options(connectionObserver = list(
    connectionOpened = function(connection) {
       # validate connection object
       if (!inherits(connection, "rstudioConnection"))
