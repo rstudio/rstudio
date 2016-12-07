@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -25,11 +26,17 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -50,10 +57,14 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
-                           EventBus events)
+                           EventBus events,
+                           GlobalDisplay globalDisplay,
+                           ConnectionsServerOperations server)
    {
       uiPrefs_ = uiPrefs;
       events_ = events;
+      globalDisplay_ = globalDisplay;
+      server_ = server;
 
       events.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
       events.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
@@ -77,6 +88,11 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       helpLink.addStyleName(RES.styles().helpLink());
       addLeftWidget(helpLink);   
    }
+
+   private void showError(String errorMessage)
+   {
+      globalDisplay_.showErrorMessage("Error", errorMessage);
+   }
    
    @Override
    protected void onDialogShown()
@@ -85,11 +101,16 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       frame_.getWindow().focus();
 
       // initialize miniUI
-      String code = ".rs.launchEmbeddedShinyConnectionUI(package = \"sparklyr\")";
-      events_.fireEvent(new SendToConsoleEvent(code, 
-                                               true, 
-                                               false, 
-                                               false));
+      server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            showError(error.getUserMessage());
+            closeDialog();
+         }
+      });
    }
    
    @Override
@@ -210,4 +231,6 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    private UIPrefs uiPrefs_;
    private EventBus events_;
    private RStudioFrame frame_;
+   private GlobalDisplay globalDisplay_;
+   private ConnectionsServerOperations server_;
 }

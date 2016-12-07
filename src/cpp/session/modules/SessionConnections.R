@@ -133,11 +133,25 @@ options(connectionViewer = list(
 
 .rs.addFunction("launchEmbeddedShinyConnectionUI", function(package)
 {
-   shiny::runGadget(sparklyr::connections_spark_shinyapp(), viewer = function(url) {
+   shiny::runGadget(sparklyr::connection_spark_shinyapp(), viewer = function(url) {
       .rs.enqueClientEvent("navigate_shiny_frame", list(
          "url" = url
       ))
    });
+
+   NULL
+})
+
+.rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package)
+{
+   consoleCommand <- quote(.rs.launchEmbeddedShinyConnectionUI(package = package))
+
+   .rs.enqueClientEvent("send_to_console", list(
+      "code" = .rs.scalar(deparse(consoleCommand)),
+      "execute" = .rs.scalar(TRUE),
+      "focus" = .rs.scalar(FALSE),
+      "animate" = .rs.scalar(FALSE)
+   ))
 
    NULL
 })
