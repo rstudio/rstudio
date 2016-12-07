@@ -144,6 +144,13 @@ options(connectionViewer = list(
 
 .rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package)
 {
+   if (package == "sparklyr" & packageVersion("sparklyr") < "0.5") {
+      return(.rs.error(
+         "sparklyr ", packageVersion("sparklyr"), " does not support this functionality. ",
+         "Please upgrade to sparklyr 0.5 or newer."
+      ))
+   }
+
    consoleCommand <- quote(.rs.launchEmbeddedShinyConnectionUI(package = package))
 
    .rs.enqueClientEvent("send_to_console", list(
@@ -153,7 +160,7 @@ options(connectionViewer = list(
       "animate" = .rs.scalar(FALSE)
    ))
 
-   NULL
+   .rs.success()
 })
 
 .rs.addFunction("updateNewConnectionDialog", function(code)

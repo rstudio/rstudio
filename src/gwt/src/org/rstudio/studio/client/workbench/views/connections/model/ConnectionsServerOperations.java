@@ -18,6 +18,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.remote.RResult;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -54,5 +55,5 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
                      ServerRequestCallback<ConsoleProcess> callback);
 
    void launchEmbeddedShinyConnectionUI(String packageName,
-                                        ServerRequestCallback<Void> callback);
+                                        ServerRequestCallback<RResult<Void>> serverRequestCallback);
 }

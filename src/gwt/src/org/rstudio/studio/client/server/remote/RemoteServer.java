@@ -4883,7 +4883,7 @@ public class RemoteServer implements Server
 
    @Override
    public void launchEmbeddedShinyConnectionUI(String packageName, 
-                                               ServerRequestCallback<Void> callback)
+                                               ServerRequestCallback<RResult<Void>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));

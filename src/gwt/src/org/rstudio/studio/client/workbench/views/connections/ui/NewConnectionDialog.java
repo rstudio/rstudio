@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
@@ -101,8 +102,17 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       frame_.getWindow().focus();
 
       // initialize miniUI
-      server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<Void>()
+      server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<RResult<Void>>()
       {
+         @Override
+         public void onResponseReceived(RResult<Void> response)
+         {
+            if (response.failed()) {
+               showError(response.errorMessage());
+               closeDialog();
+            }
+         }
+
          @Override
          public void onError(ServerError error)
          {
