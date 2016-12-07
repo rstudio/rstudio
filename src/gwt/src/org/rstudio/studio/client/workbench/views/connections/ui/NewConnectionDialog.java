@@ -104,8 +104,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();
-      frame_.setSize("100%", "");
-      frame_.addStyleName(ThemeStyles.INSTANCE.borderedIFrame());
+      frame_.setSize("100%", "125px");
 
       container.add(frame_);      
       
@@ -143,6 +142,8 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
 
       Grid codeGrid = new Grid(1, 1);
       codeGrid.addStyleName(RES.styles().codeGrid());
+      codeGrid.setCellPadding(0);
+      codeGrid.setCellSpacing(0);
       codeGrid.setWidget(0, 0, codePanel_);
       container.add(codeGrid);
      
