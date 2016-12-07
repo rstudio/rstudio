@@ -147,7 +147,7 @@ options(connectionViewer = list(
    if (package == "sparklyr" & packageVersion("sparklyr") < "0.5") {
       return(.rs.error(
          "sparklyr ", packageVersion("sparklyr"), " does not support this functionality. ",
-         "Please upgrade to sparklyr 0.5 or newer."
+         "Please upgrade to sparklyr 0.5.1 or newer."
       ))
    }
 
