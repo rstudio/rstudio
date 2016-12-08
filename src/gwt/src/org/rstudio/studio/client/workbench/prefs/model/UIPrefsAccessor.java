@@ -591,6 +591,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("enable_xterm", false);
    }
    
+   public PrefValue<Boolean> showTerminalTab()
+   {
+      return bool("show_terminal_tab", true);
+   }
+   
    public static final String KNIT_DIR_DEFAULT = "default";
    public static final String KNIT_DIR_CURRENT = "current";
    public static final String KNIT_DIR_PROJECT = "project";

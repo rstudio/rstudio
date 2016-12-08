@@ -417,7 +417,7 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onNewTerminal()
    {
-         eventBus_.fireEvent(new CreateTerminalEvent());
+      eventBus_.fireEvent(new CreateTerminalEvent());
    }
       
    @Handler
