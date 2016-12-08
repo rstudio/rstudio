@@ -96,8 +96,11 @@ public class TerminalTabPresenter extends BusyPresenter
    @Handler
    public void onActivateTerminal()
    {
-      uiPrefs_.showTerminalTab().setGlobalValue(true);
-      uiPrefs_.writeUIPrefs();
+      if (!uiPrefs_.showTerminalTab().getValue())
+      {
+         uiPrefs_.showTerminalTab().setGlobalValue(true);
+         uiPrefs_.writeUIPrefs();
+      }
       view_.activateTerminal();
    }
 
@@ -202,8 +205,11 @@ public class TerminalTabPresenter extends BusyPresenter
 
    private void shutDownTerminals()
    {
-      uiPrefs_.showTerminalTab().setGlobalValue(false);
-      uiPrefs_.writeUIPrefs();
+      if (uiPrefs_.showTerminalTab().getValue())
+      {
+         uiPrefs_.showTerminalTab().setGlobalValue(false);
+         uiPrefs_.writeUIPrefs();
+      }
       view_.terminateAllTerminals();
    }
 
