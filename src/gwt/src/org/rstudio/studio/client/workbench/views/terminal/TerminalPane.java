@@ -22,6 +22,9 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSerializationHandler;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
@@ -61,7 +64,8 @@ public class TerminalPane extends WorkbenchPane
                                      TerminalSessionStartedEvent.Handler,
                                      TerminalSessionStoppedEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
-                                     TerminalCaptionEvent.Handler
+                                     TerminalCaptionEvent.Handler,
+                                     SessionSerializationHandler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -76,6 +80,7 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
       events_.addHandler(SwitchToTerminalEvent.TYPE, this);
       events_.addHandler(TerminalCaptionEvent.TYPE, this);
+      events_.addHandler(SessionSerializationEvent.TYPE, this);
       ensureWidget();
    }
 
@@ -293,9 +298,14 @@ public class TerminalPane extends WorkbenchPane
                   terminal.getTitle(),
                   terminal.getSequence()));
 
-      terminalSessionsPanel_.add(terminal);
-      terminalSessionsPanel_.showWidget(terminal);
-      setFocusOnVisible();
+      // Check if this is a reconnect of an already displayed terminal, such
+      // as after a session suspend/resume.
+      if (terminalSessionsPanel_.getWidgetIndex(terminal) == -1)
+      {
+         terminalSessionsPanel_.add(terminal);
+         terminalSessionsPanel_.showWidget(terminal);
+         setFocusOnVisible();
+      }
       creatingTerminal_ = false;
    }
 
@@ -333,6 +343,7 @@ public class TerminalPane extends WorkbenchPane
       {
          terminalSessionsPanel_.showWidget(terminal);
          setFocusOnVisible();
+         ensureConnected(terminal); // needed after session suspend/resume
          return;
       }
 
@@ -463,6 +474,42 @@ public class TerminalPane extends WorkbenchPane
          secureInput_ = new ShellSecureInput();  
       }
       return secureInput_;
+   }
+
+   @Override
+   public void onSessionSerialization(SessionSerializationEvent event)
+   {
+      switch(event.getAction().getType())
+      {
+      case SessionSerializationAction.RESUME_SESSION:
+         final TerminalSession currentTerminal = getSelectedTerminal();
+         if (currentTerminal != null)
+         {
+            ensureConnected(currentTerminal);
+         }
+         break;
+      }
+   }
+
+   /**
+    * Reconnect an existing terminal, if currently disconnected
+    * @param terminal terminal to reconnect
+    */
+   private void ensureConnected(final TerminalSession terminal)
+   {
+      if (terminal.isConnected())
+      {
+         return;
+      }
+
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            terminal.connect();
+         }
+      });
    }
 
    private DeckLayoutPanel terminalSessionsPanel_;
