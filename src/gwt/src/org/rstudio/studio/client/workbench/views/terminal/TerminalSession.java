@@ -101,6 +101,12 @@ public class TerminalSession extends XTermWidget
          public void onResponseReceived(ConsoleProcess consoleProcess)
          {
             consoleProcess_ = consoleProcess;
+            if (consoleProcess_ == null)
+            {
+               writeError("No ConsoleProcess received from server");
+               disconnect();
+               return;
+            }
 
             if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_ALWAYS)
             {
@@ -109,38 +115,35 @@ public class TerminalSession extends XTermWidget
                return;
             } 
 
-            if (consoleProcess_ != null)
+            addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalSession.this));
+            addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
+            addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
+            addHandlerRegistration(addTerminalTitleHandler(TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
+
+            // We keep this handler connected after a terminal disconnect so
+            // user input can wake up a suspended session
+            if (terminalInputHandler_ == null)
+               terminalInputHandler_ = addTerminalDataInputHandler(TerminalSession.this);
+
+            consoleProcess.start(new ServerRequestCallback<Void>()
             {
-               addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalSession.this));
-               addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
-               addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
-               addHandlerRegistration(addTerminalTitleHandler(TerminalSession.this));
-               addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
-               
-               // We keep this handler connected after a terminal disconnect so
-               // user input can wake up a suspended session
-               if (terminalInputHandler_ == null)
-                  terminalInputHandler_ = addTerminalDataInputHandler(TerminalSession.this);
-
-               consoleProcess.start(new ServerRequestCallback<Void>()
+               @Override
+               public void onResponseReceived(Void response)
                {
-                  @Override
-                  public void onResponseReceived(Void response)
-                  {
-                     connected_ = true;
-                     connecting_ = false;
-                     flushQueuedInput();
-                     eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
-                  }
+                  connected_ = true;
+                  connecting_ = false;
+                  flushQueuedInput();
+                  eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
+               }
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     disconnect();
-                     writeError(error.getUserMessage());
-                  }
-               });
-            }
+               @Override
+               public void onError(ServerError error)
+               {
+                  disconnect();
+                  writeError(error.getUserMessage());
+               }
+            });
          }
 
          @Override
