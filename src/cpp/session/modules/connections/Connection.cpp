@@ -15,6 +15,7 @@
 
 #include "Connection.hpp"
 
+#include <boost/foreach.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -41,14 +42,38 @@ json::Object connectionIdJson(const ConnectionId& id)
    return idJson;
 }
 
+json::Object connectionActionJson(const ConnectionAction& action) 
+{
+   json::Object actionJson;
+   actionJson["name"] = action.name;
+   actionJson["icon"] = action.icon;
+   return actionJson;
+}
+
 json::Object connectionJson(const Connection& connection)
 {
+   // form the action array
+   json::Array actions;
+   BOOST_FOREACH(const ConnectionAction& action, connection.actions)
+   {
+      actions.push_back(connectionActionJson(action));
+   }
+
    json::Object connectionJson;
    connectionJson["id"] = connectionIdJson(connection.id);
    connectionJson["connect_code"] = connection.connectCode;
    connectionJson["display_name"] = connection.displayName;
    connectionJson["last_used"] = connection.lastUsed;
+   connectionJson["actions"] = actions;
    return connectionJson;
+}
+
+Error actionFromJson(const json::Object& actionJson,
+                     ConnectionAction* pAction)
+{
+   return json::readObject(actionJson,
+         "name", &(pAction->name),
+         "icon", &(pAction->icon));
 }
 
 Error connectionFromJson(const json::Object& connectionJson,
@@ -66,11 +91,32 @@ Error connectionFromJson(const json::Object& connectionJson,
       return error;
 
    // read remaining fields
-   return json::readObject(
+   json::Array actions;
+   error = json::readObject(
             connectionJson,
             "connect_code", &(pConnection->connectCode),
             "display_name", &(pConnection->displayName),
+            "actions", &actions,
             "last_used", &(pConnection->lastUsed));
+
+   // read each action
+   BOOST_FOREACH(const json::Value& action, actions) 
+   {
+      if (action.type() != json::ObjectType)
+         continue;
+      ConnectionAction act;
+      error = actionFromJson(action.get_obj(), &act);
+      if (error)
+      {
+         // be fault-tolerant here (we can still use the connection even if the
+         // actions aren't well-formed)
+         LOG_ERROR(error);
+         continue;
+      }
+      pConnection->actions.push_back(act);
+   }
+
+   return error;
 }
 
 bool hasConnectionId(const ConnectionId& id,

@@ -59,10 +59,44 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    r::sexp::getNamedAttrib(connectionSEXP, "host", &host);
    r::sexp::getNamedAttrib(connectionSEXP, "connectCode", &connectCode);
    r::sexp::getNamedAttrib(connectionSEXP, "displayName", &displayName);
+   r::sexp::getNamedAttrib(connectionSEXP, "displayName", &displayName);
+
+   // extract actions -- marshal R list into internal representation
+   SEXP actionList = r::sexp::getAttrib(connectionSEXP, "actions");
+   std::vector<std::string> actionNames;
+   std::vector<ConnectionAction> actions;
+   Error error = r::sexp::getNames(actionList, &actionNames);
+   if (error)
+      LOG_ERROR(error);
+   else
+   {
+      BOOST_FOREACH(const std::string& actionName, actionNames)
+      {
+         std::string icon;
+         SEXP action;
+
+         // extract the action object from the list
+         error = r::sexp::getNamedListSEXP(actionList, actionName, &action);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+
+         // extract the icon
+         error = r::sexp::getNamedListElement(action, "icon", &icon);
+         if (error)
+         {
+            LOG_ERROR(error);
+            continue;
+         }
+         actions.push_back(ConnectionAction(actionName, icon));
+      }
+   }
 
    // create connection object
    Connection connection(ConnectionId(type, host), connectCode, displayName,
-                         date_time::millisecondsSinceEpoch());
+                         actions, date_time::millisecondsSinceEpoch());
 
    // update connection history
    connectionHistory().update(connection);

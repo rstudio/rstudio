@@ -16,7 +16,6 @@
 
 # install the S4 classes which represent active connections 
 setClass("rstudioConnectionAction", representation(
-  name = "character",
   icon = "character",
   callback = "function"
 ))

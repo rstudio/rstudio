@@ -38,7 +38,6 @@ struct ConnectionId
 
    std::string type;
    std::string host;
-   std::string displayName;
 
    bool operator==(const ConnectionId& other) const
    {
@@ -51,16 +50,30 @@ struct ConnectionId
    }
 };
 
+struct ConnectionAction
+{
+   ConnectionAction() {}
+   ConnectionAction(const std::string& name, const std::string& icon)
+      : name(name), icon(icon)
+   {
+   }
+
+   std::string name;
+   std::string icon;
+};
+
 struct Connection
 {
    Connection() {}
    Connection(const ConnectionId& id,
               const std::string& connectCode,
               const std::string& displayName,
+              const std::vector<ConnectionAction>& actions,
               double lastUsed)
       : id(id),
         connectCode(connectCode),
         displayName(displayName),
+        actions(actions),
         lastUsed(lastUsed)
    {
    }
@@ -70,6 +83,7 @@ struct Connection
    ConnectionId id;
    std::string connectCode;
    std::string displayName;
+   std::vector<ConnectionAction> actions;
    double lastUsed;
 };
 
