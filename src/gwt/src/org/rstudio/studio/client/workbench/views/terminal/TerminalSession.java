@@ -313,21 +313,7 @@ public class TerminalSession extends XTermWidget
       if (StringUtil.isNullOrEmpty(caption))
          return;
 
-      if (caption.equals(caption_))
-      {
-         return;
-      }
-
       caption_ = caption;
-      server_.processSetCaption(getHandle(), caption_,
-            new VoidServerRequestCallback() 
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-                  writeln(error.getUserMessage());
-               }
-            });
    }
 
    private int getInteractionMode()

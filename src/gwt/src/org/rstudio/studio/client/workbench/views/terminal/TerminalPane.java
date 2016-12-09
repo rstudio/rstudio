@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -28,6 +30,9 @@ import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
@@ -70,12 +75,14 @@ public class TerminalPane extends WorkbenchPane
    @Inject
    protected TerminalPane(EventBus events,
                           GlobalDisplay globalDisplay,
-                          Provider<ConsoleProcessFactory> pConsoleProcessFactory)
+                          Provider<ConsoleProcessFactory> pConsoleProcessFactory,
+                          WorkbenchServerOperations server)
    {
       super("Terminal");
       events_ = events;
       globalDisplay_ = globalDisplay;
       pConsoleProcessFactory_ = pConsoleProcessFactory;
+      server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
       events_.addHandler(SwitchToTerminalEvent.TYPE, this);
@@ -102,11 +109,13 @@ public class TerminalPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
 
+
+      activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
+      toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
+      toolbar.addLeftSeparator();
       terminalTitle_ = new Label();
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
-      activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
-      toolbar.addRightWidget(activeTerminalToolbarButton_.getToolbarButton());
       return toolbar;
    }
 
@@ -290,6 +299,75 @@ public class TerminalPane extends WorkbenchPane
       creatingTerminal_ = false;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
+   }
+
+   @Override
+   public void renameTerminal()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+      final String origCaption = visibleTerminal.getCaption();
+
+      globalDisplay_.promptForText("Rename Terminal",
+            "Please enter the new terminal name:",
+            origCaption,
+            0,
+            origCaption.length(),
+            null,
+            new ProgressOperationWithInput<String>()
+            {
+               @Override
+               public void execute(final String newCaption,
+                                   final ProgressIndicator progress)
+               {
+                  progress.onProgress("Renaming terminal...");
+
+                  // rename in the UI
+                  renameVisibleTerminalInClient(newCaption);
+
+                  // rename on the server
+                  server_.processSetCaption(visibleTerminal.getHandle(), 
+                        newCaption,
+                        new VoidServerRequestCallback(progress)
+                        {
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              // failed, put back original caption on client
+                              renameVisibleTerminalInClient(origCaption);
+                           }
+                        });
+               }
+            });
+   }
+
+   /**
+    * Rename the currently visible terminal (client-side only).
+    * 
+    */
+   private void renameVisibleTerminalInClient(String newCaption)
+   {
+      TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+
+      // Rather ugly that the caption lives in so many places:
+      // (1) the TerminalSession for connected terminals
+      // (2) the dropdown menu label
+      // (3) the TerminalMetadata held in terminals_
+      visibleTerminal.setCaption(newCaption);
+      activeTerminalToolbarButton_.setActiveTerminal(
+            newCaption, visibleTerminal.getHandle());
+      terminals_.addTerminal(
+            new TerminalMetadata(
+                  visibleTerminal.getHandle(),
+                  visibleTerminal.getCaption(),
+                  visibleTerminal.getSequence()));
    }
 
    @Override
@@ -531,4 +609,5 @@ public class TerminalPane extends WorkbenchPane
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
+   private WorkbenchServerOperations server_; 
 }
