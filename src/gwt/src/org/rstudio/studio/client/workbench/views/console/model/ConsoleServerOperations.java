@@ -50,4 +50,8 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                             int width,
                             int height,
                             ServerRequestCallback<Void> requestCallback);
+   
+   void processSetCaption(String handle,
+                          String caption,
+                          ServerRequestCallback<Void> requestCallback);
 }

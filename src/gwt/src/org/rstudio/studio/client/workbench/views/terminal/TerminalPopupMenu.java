@@ -71,12 +71,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             };
 
             String menuHtml = AppCommand.formatMenuLabel(
-                  null,            /*icon*/
-                  item.getTitle(), /*label*/
-                  false,           /*html*/
-                  null,            /*shortcut*/
-                  null,            /*rightImage*/
-                  null);           /*rightImageDesc*/
+                  null,              /*icon*/
+                  item.getCaption(), /*label*/
+                  false,             /*html*/
+                  null,              /*shortcut*/
+                  null,              /*rightImage*/
+                  null);             /*rightImageDesc*/
             addItem(new MenuItem(menuHtml, true, cmd));
          }
          addSeparator();
@@ -109,14 +109,14 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    
    /**
     *       
-    * @param title title of the active terminal
+    * @param caption caption of the active terminal
     * @param handle handle of the active terminal
     */
-   public void setActiveTerminal(String title, String handle)
+   public void setActiveTerminal(String caption, String handle)
    {
-      activeTerminalTitle_ = title;
+      activeTerminalCaption_ = caption;
       activeTerminalHandle_ = handle;
-      toolbarButton_.setText(activeTerminalTitle_);
+      toolbarButton_.setText(activeTerminalCaption_);
    }
    
    /**
@@ -138,7 +138,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private ToolbarButton toolbarButton_;
    private Commands commands_;
    private EventBus eventBus_;
-   private String activeTerminalTitle_;
+   private String activeTerminalCaption_;
    private String activeTerminalHandle_;
    private TerminalList terminals_;
 }

@@ -31,22 +31,22 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
       /**
        * Create a TerminalMetadata object
        * @param handle terminal handle, unique key
-       * @param title terminal title
+       * @param caption terminal caption
        * @param sequence terminal sequence number
        */
-      public TerminalMetadata(String handle, String title, int sequence)
+      public TerminalMetadata(String handle, String caption, int sequence)
       {
          handle_ = handle;
-         title_ = title;
+         caption_ = caption;
          sequence_ = sequence;
       }
 
       public String getHandle() { return handle_; }
-      public String getTitle() { return title_; }
+      public String getCaption() { return caption_; }
       public int getSequence() { return sequence_; }
 
       private String handle_;
-      private String title_;
+      private String caption_;
       private int sequence_;
    }
 

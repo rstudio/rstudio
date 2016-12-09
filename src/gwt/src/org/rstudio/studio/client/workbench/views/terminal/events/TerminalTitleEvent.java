@@ -15,40 +15,30 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
- * Send when xterm sees a standard title escape sequence. The string value
- * of the command is sent.
- * 
- * ESC]0;stringBEL -- Set window title to string, example:
- * 
- * echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"
+ * Send by an XTermSession that has processed an xterm.js title-change event 
+ * and updated its caption property.
  */
 public class TerminalTitleEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
       /**
-       * Sent by xterm.js when it has detected escape sequence for setting 
-       * terminal title.
-       * @param event title string extracted from escape sequence
+       * Sent by a terminal session that has changed its caption
+       * @param event terminal session that has a changed caption
        */
-      void onTerminalTitle(TerminalTitleEvent event);
+      void onTerminalCaption(TerminalTitleEvent event);
    }
    
-   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
+   public TerminalTitleEvent(TerminalSession terminalSession)
    {
-      HandlerRegistration addTerminalTitleHandler(Handler handler);
-   }
-   
-   public TerminalTitleEvent(String title)
-   {
-      title_ = title;
+      terminalSession_ = terminalSession;
    }
 
    @Override
@@ -60,15 +50,15 @@ public class TerminalTitleEvent extends GwtEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalTitle(this);
+      handler.onTerminalCaption(this);
    }
    
-   public String getTitle()
+   public TerminalSession getTerminalSession()
    {
-      return title_;
+      return terminalSession_;
    }
   
-   private String title_;
+   private TerminalSession terminalSession_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

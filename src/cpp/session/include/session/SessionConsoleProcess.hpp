@@ -164,6 +164,7 @@ public:
    void resize(int cols, int rows);
    void onSuspend();
    bool isStarted() { return started_; }
+   void setCaption(std::string caption) { caption_ = caption; }
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 

@@ -31,7 +31,7 @@ import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
@@ -64,7 +64,7 @@ public class TerminalPane extends WorkbenchPane
                                      TerminalSessionStartedEvent.Handler,
                                      TerminalSessionStoppedEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
-                                     TerminalCaptionEvent.Handler,
+                                     TerminalTitleEvent.Handler,
                                      SessionSerializationHandler
 {
    @Inject
@@ -79,7 +79,7 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
       events_.addHandler(SwitchToTerminalEvent.TYPE, this);
-      events_.addHandler(TerminalCaptionEvent.TYPE, this);
+      events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
       ensureWidget();
    }
@@ -102,9 +102,9 @@ public class TerminalPane extends WorkbenchPane
    {
       Toolbar toolbar = new Toolbar();
 
-      terminalCaption_ = new Label();
-      terminalCaption_.setStyleName(ThemeStyles.INSTANCE.subtitle());
-      toolbar.addLeftWidget(terminalCaption_);
+      terminalTitle_ = new Label();
+      terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
+      toolbar.addLeftWidget(terminalTitle_);
       activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
       toolbar.addRightWidget(activeTerminalToolbarButton_.getToolbarButton());
       return toolbar;
@@ -184,18 +184,23 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
-      startTerminal(terminals_.nextTerminalSequence(), null);
+      startTerminal(terminals_.nextTerminalSequence(), null, null, null);
    }
 
    /**
     * Start a terminal
     * @param sequence sequence number to track relative order of terminal creation
     * @param terminalHandle handle for terminal, or null if starting a new terminal
+    * @param caption terminal caption, or null if starting a new terminal
+    * @param title optional title shown above the terminal pane
     */
-   public void startTerminal(int sequence, String terminalHandle)
+   public void startTerminal(int sequence,
+                             String terminalHandle,
+                             String caption,
+                             String title)
    {
       TerminalSession newSession = new TerminalSession(
-            getSecureInput(), sequence, terminalHandle);
+            getSecureInput(), sequence, terminalHandle, caption, title);
       newSession.connect();
    }
 
@@ -284,7 +289,7 @@ public class TerminalPane extends WorkbenchPane
       terminals_.clear();
       creatingTerminal_ = false;
       activeTerminalToolbarButton_.setNoActiveTerminal();
-      setTerminalCaption("");
+      setTerminalTitle("");
    }
 
    @Override
@@ -295,7 +300,7 @@ public class TerminalPane extends WorkbenchPane
       terminals_.addTerminal(
             new TerminalMetadata(
                   terminal.getHandle(),
-                  terminal.getTitle(),
+                  terminal.getCaption(),
                   terminal.getSequence()));
 
       // Check if this is a reconnect of an already displayed terminal, such
@@ -328,7 +333,7 @@ public class TerminalPane extends WorkbenchPane
       if (newTerminalHandle == null)
       {
          activeTerminalToolbarButton_.setNoActiveTerminal();
-         setTerminalCaption("");
+         setTerminalTitle("");
       }
    }
 
@@ -351,7 +356,10 @@ public class TerminalPane extends WorkbenchPane
       TerminalMetadata existingTerminal = terminals_.getMetadataForHandle(handle);
       if (existingTerminal != null)
       {
-         startTerminal(existingTerminal.getSequence(), handle);
+         startTerminal(existingTerminal.getSequence(),
+                       handle,
+                       existingTerminal.getCaption(),
+                       null /*title*/);
          return;
       }
 
@@ -359,14 +367,14 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void onTerminalCaption(TerminalCaptionEvent event)
+   public void onTerminalCaption(TerminalTitleEvent event)
    {
       TerminalSession visibleTerm = getSelectedTerminal();
-      TerminalSession captionTerm = event.getTerminalSession();
+      TerminalSession retitledTerm = event.getTerminalSession();
       if (visibleTerm != null && visibleTerm.getHandle().equals(
-            captionTerm.getHandle()))
+            retitledTerm.getHandle()))
       {
-         setTerminalCaption(captionTerm.getCaption());
+         setTerminalTitle(retitledTerm.getTitle());
       }
    }
 
@@ -439,8 +447,8 @@ public class TerminalPane extends WorkbenchPane
             {
                visibleTerminal.setFocus(true);
                activeTerminalToolbarButton_.setActiveTerminal(
-                     visibleTerminal.getTitle(), visibleTerminal.getHandle());
-               setTerminalCaption(visibleTerminal.getCaption());
+                     visibleTerminal.getCaption(), visibleTerminal.getHandle());
+               setTerminalTitle(visibleTerminal.getTitle());
             }
          }
       });
@@ -462,9 +470,9 @@ public class TerminalPane extends WorkbenchPane
          return null;
    }
 
-   private void setTerminalCaption(String caption)
+   private void setTerminalTitle(String title)
    {
-      terminalCaption_.setText(caption);
+      terminalTitle_.setText(title);
    }
 
    private ShellSecureInput getSecureInput()
@@ -515,7 +523,7 @@ public class TerminalPane extends WorkbenchPane
    private DeckLayoutPanel terminalSessionsPanel_;
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
-   private Label terminalCaption_;
+   private Label terminalTitle_;
    private ShellSecureInput secureInput_;
    private boolean creatingTerminal_;
 

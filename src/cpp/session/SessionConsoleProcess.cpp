@@ -660,6 +660,28 @@ Error procSetSize(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 }
+
+Error procSetCaption(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string caption;
+   
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &caption);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setCaption(caption);
+   return Success();
+}
    
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
@@ -933,7 +955,8 @@ Error initialize()
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
-      (bind(registerRpcMethod, "process_set_size", procSetSize));
+      (bind(registerRpcMethod, "process_set_size", procSetSize))
+      (bind(registerRpcMethod, "process_set_caption", procSetCaption));
 
    return initBlock.execute();
 }

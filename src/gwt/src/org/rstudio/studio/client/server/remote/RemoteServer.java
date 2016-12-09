@@ -655,6 +655,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_SET_SIZE, params, requestCallback);
    }
    
+   @Override
+   public void processSetCaption(String handle,
+                                 String caption,
+                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(caption));
+      sendRequest(RPC_SCOPE, PROCESS_SET_CAPTION, params, requestCallback);
+   }
+   
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
@@ -4952,6 +4963,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
    private static final String PROCESS_SET_SIZE = "process_set_size";
+   private static final String PROCESS_SET_CAPTION = "process_set_caption";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";
