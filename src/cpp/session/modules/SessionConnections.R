@@ -13,35 +13,29 @@
 #
 #
 
-
-# install the S4 classes which represent active connections 
-setClass("rstudioConnectionAction", representation(
-  icon = "character",
-  callback = "function"
-))
-
-setClass("rstudioConnection", representation(
-  type = "character",
-  host = "character",
-  displayName = "character",
-  icon = "character",
-  connectCode = "character",
-  disconnectCode = "function",
-  listTables = "function",
-  listColumns = "function",
-  previewTable = "function",
-  actions = "list"
-))
-
-.rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
-   paramNames <- names(params)
-   for (param in paramNames) {
-      value <- params[[param]]
+.rs.addFunction("validateParams", function(obj, params, type, optional = FALSE) {
+   for (param in params) {
+      value <- obj[[param]]
       if (optional && is.null(value))
          next
-      if (!is.character(value) || length(value) != 1)
-         stop(param, " must be a single element character vector", call. = FALSE)
+      if (!inherits(value, type) || length(value) != 1)
+         stop(param, " must be a single element of type '", type, "'", 
+              call. = FALSE)
    }
+})
+
+.rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
+   .rs.validateParams(params, names(params), "character", optional)
+})
+
+.rs.addFunction("validateConnection", function(connection) {
+   .rs.validateParams(connection, 
+       c("type", "host", "displayName", "connectCode"),
+       "character")
+   .rs.validateParams(connection, "icon", "character", optional = TRUE)
+   .rs.validateParams(connection, 
+       c("disconnectCode", "listTables", "listColumns", "previewTable"),
+       "function")
 })
 
 # create an environment which will host the known active connections
@@ -55,8 +49,8 @@ assign(".rs.activeConnections",
    connections <- ls(.rs.activeConnections)
    for (name in connections) {
       connection <- get(name, envir = .rs.activeConnections)
-      if (identical(connection@type, type) && 
-          identical(connection@host, host)) {
+      if (identical(connection$type, type) && 
+          identical(connection$host, host)) {
          return(connection)
       }
    }
@@ -65,13 +59,28 @@ assign(".rs.activeConnections",
 })
 
 options(connectionObserver = list(
-   connectionOpened = function(connection) {
-      # validate connection object
-      if (!inherits(connection, "rstudioConnection"))
-         stop("argument must be an object of class rstudioConnection")
+   connectionOpened = function(type, host, displayName, icon = NULL, 
+                               connectCode, disconnectCode, listTables, 
+                               listColumns, previewTable, actions = NULL) {
+
+      # manufacture and validate object representing this connection
+      connection <- list(
+         type           = type,
+         host           = host,
+         displayName    = displayName,
+         icon           = icon,
+         connectCode    = connectCode,
+         disconnectCode = disconnectCode,
+         listTables     = listTables,
+         listColumns    = listColumns,
+         previewTable   = previewTable,
+         actions        = actions
+      )
+      class(connection) <- "rstudioConnection"
+      .rs.validateConnection(connection)
 
       # generate an internal key for this connection in the local cache 
-      cacheKey <- paste(connection@type, connection@host, 
+      cacheKey <- paste(connection$type, connection$host, 
                         .Call("rs_generateShortUuid"), 
                         sep = "_")
       assign(cacheKey, value = connection, envir = .rs.activeConnections)
@@ -103,7 +112,7 @@ options(connectionObserver = list(
 .rs.addFunction("getDisconnectCode", function(type, host) {
    connection <- .rs.findActiveConnection(type, host)
    if (!is.null(connection))
-      connection@disconnectCode()
+      connection$disconnectCode()
    else
       ""
 })
@@ -113,7 +122,7 @@ options(connectionObserver = list(
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection)) 
-      connection@listTables()
+      connection$listTables()
    else
       character()
 })
@@ -123,7 +132,7 @@ options(connectionObserver = list(
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection))
-      listColumnsCode <- connection@listColumns(table)
+      listColumnsCode <- connection$listColumns(table)
    else
       NULL
 })
@@ -133,7 +142,7 @@ options(connectionObserver = list(
    connection <- .rs.findActiveConnection(type, host)
 
    if (!is.null(connection)) {
-      df <- connection@previewTable(table, limit)
+      df <- connection$previewTable(table, limit)
       .rs.viewDataFrame(df, table, TRUE)
    }
 

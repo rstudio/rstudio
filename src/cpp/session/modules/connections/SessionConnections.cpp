@@ -53,44 +53,51 @@ namespace {
 SEXP rs_connectionOpened(SEXP connectionSEXP)
 {
    // read params -- note that these attributes are already guaranteed to
-   // exist as we validate the S4 object on the R side
+   // exist as we validate the S3 object on the R side
    std::string type, host, connectCode, displayName;
-   r::sexp::getNamedAttrib(connectionSEXP, "type", &type);
-   r::sexp::getNamedAttrib(connectionSEXP, "host", &host);
-   r::sexp::getNamedAttrib(connectionSEXP, "connectCode", &connectCode);
-   r::sexp::getNamedAttrib(connectionSEXP, "displayName", &displayName);
-   r::sexp::getNamedAttrib(connectionSEXP, "displayName", &displayName);
+   r::sexp::getNamedListElement(connectionSEXP, "type", &type);
+   r::sexp::getNamedListElement(connectionSEXP, "host", &host);
+   r::sexp::getNamedListElement(connectionSEXP, "connectCode", &connectCode);
+   r::sexp::getNamedListElement(connectionSEXP, "displayName", &displayName);
 
-   // extract actions -- marshal R list into internal representation
-   SEXP actionList = r::sexp::getAttrib(connectionSEXP, "actions");
-   std::vector<std::string> actionNames;
-   std::vector<ConnectionAction> actions;
-   Error error = r::sexp::getNames(actionList, &actionNames);
+   // extract actions -- marshal R list (presuming we have one, as some
+   // connections won't) into internal representation
+   SEXP actionList = R_NilValue;
+   Error error = r::sexp::getNamedListSEXP(connectionSEXP, "actions",
+         &actionList);
    if (error)
       LOG_ERROR(error);
-   else
+   std::vector<ConnectionAction> actions;
+   if (TYPEOF(actionList) == LISTSXP) 
    {
-      BOOST_FOREACH(const std::string& actionName, actionNames)
+      std::vector<std::string> actionNames;
+      error = r::sexp::getNames(actionList, &actionNames);
+      if (error)
+         LOG_ERROR(error);
+      else
       {
-         std::string icon;
-         SEXP action;
-
-         // extract the action object from the list
-         error = r::sexp::getNamedListSEXP(actionList, actionName, &action);
-         if (error)
+         BOOST_FOREACH(const std::string& actionName, actionNames)
          {
-            LOG_ERROR(error);
-            continue;
-         }
+            std::string icon;
+            SEXP action;
 
-         // extract the icon
-         error = r::sexp::getNamedListElement(action, "icon", &icon);
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
+            // extract the action object from the list
+            error = r::sexp::getNamedListSEXP(actionList, actionName, &action);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            // extract the icon
+            error = r::sexp::getNamedListElement(action, "icon", &icon);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            actions.push_back(ConnectionAction(actionName, icon));
          }
-         actions.push_back(ConnectionAction(actionName, icon));
       }
    }
 
