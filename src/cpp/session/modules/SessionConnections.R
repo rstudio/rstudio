@@ -152,7 +152,12 @@ options(connectionViewer = list(
    )
 
    .rs.enqueClientEvent("send_to_console", list(
-      "code" = .rs.scalar(deparse(consoleCommand)),
+      "code" = .rs.scalar(
+         paste(
+            deparse(consoleCommand),
+            collapse = " "
+         )
+      ),
       "execute" = .rs.scalar(TRUE),
       "focus" = .rs.scalar(FALSE),
       "animate" = .rs.scalar(FALSE)
