@@ -62,8 +62,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
@@ -248,121 +247,59 @@ public class ConnectionsPresenter extends BasePresenter
    {
       updateActiveConnections(event.getActiveConnections());
    }
+
+   private void terminateShinyApp()
+   {
+      if (commands_.interruptR().isEnabled())
+         commands_.interruptR().execute();
+   }
+
+   private void showError(String errorMessage)
+   {
+      globalDisplay_.showErrorMessage("Error", errorMessage);
+   }
    
    public void onNewConnection()
    {
+      // if r session bussy, fail
+      if (commands_.interruptR().isEnabled()) {
+        showError(
+          "The R session is currently busy. Wait for completion or " +
+          "interrupt the current session and retry.");
+        return;
+      }
+
       // get the context
-      server_.getNewSparkConnectionContext(
-         new DelayedProgressRequestCallback<NewSparkConnectionContext>(
+      server_.getNewConnectionContext(
+         new DelayedProgressRequestCallback<NewConnectionContext>(
                                                    "New Connection...") {
    
             @Override
-            protected void onSuccess(final NewSparkConnectionContext context)
+            protected void onSuccess(final NewConnectionContext context)
             {
-               // prompt for no java installed
-               if (!context.isJavaInstalled())
-               {
-                  ComponentsNotInstalledDialogs.showJavaNotInstalled(context.getJavaInstallUrl());
-               }
-               
-               // prompt for no spark installed
-               else if (!context.getLocalConnectionsSupported() &&
-                        !context.getClusterConnectionsSupported())
-               {
-                  ComponentsNotInstalledDialogs.showSparkHomeNotDefined();
-               }
-               
-               // otherwise proceed with connecting
-               else
-               {
-                  // show dialog
-                  new NewConnectionDialog(
-                   context,
-                   new OperationWithInput<ConnectionOptions>() {
-                     @Override
-                     public void execute(final ConnectionOptions result)
-                     {
-                        withRequiredSparkInstallation(
-                              result.getSparkVersion(),
-                              result.getRemote(),
-                              context.getSparkHome() != null,
-                              new Command() {
-                                 @Override
-                                 public void execute()
-                                 {
-                                    eventBus_.fireEvent(new PerformConnectionEvent(
-                                          result.getConnectVia(),
-                                          result.getConnectCode()));
-                                 }
-                                 
-                              });
-                     }
-                  }).showModal();
-               }
+                // show dialog
+                new NewConnectionDialog(
+                 context,
+                 new OperationWithInput<ConnectionOptions>() {
+                   @Override
+                   public void execute(final ConnectionOptions result)
+                   {
+                      terminateShinyApp();
+                      eventBus_.fireEvent(new PerformConnectionEvent(
+                            result.getConnectVia(),
+                            result.getConnectCode()));
+                   }
+                 },
+                 new Operation() {
+                   @Override
+                   public void execute()
+                   {
+                      terminateShinyApp();
+                   }
+                 }
+                ).showModal();
             }
          });      
-   }
-   
-   
-   private void withRequiredSparkInstallation(final SparkVersion sparkVersion,
-                                              boolean remote,
-                                              boolean hasSparkHome,
-                                              final Command command)
-   {
-      // if there is no spark version then just execute immediately
-      if (sparkVersion == null)
-      {
-         command.execute();
-         return;
-      }
-      
-      if (!sparkVersion.isInstalled() && !hasSparkHome)
-      {
-         globalDisplay_.showYesNoMessage(
-            MessageDialog.QUESTION, 
-            "Install Spark Components",
-            InstallInfoPanel.getInfoText(sparkVersion, remote, true),
-            false,
-            new Operation() {  public void execute() {
-               server_.installSpark(
-                 sparkVersion.getSparkVersionNumber(),
-                 sparkVersion.getHadoopVersionNumber(),
-                 new SimpleRequestCallback<ConsoleProcess>(){
-
-                    @Override
-                    public void onResponseReceived(ConsoleProcess process)
-                    {
-                       final ConsoleProgressDialog dialog = 
-                             new ConsoleProgressDialog(process, server_);
-                       dialog.showModal();
-           
-                       process.addProcessExitHandler(
-                          new ProcessExitEvent.Handler()
-                          {
-                             @Override
-                             public void onProcessExit(ProcessExitEvent event)
-                             {
-                                if (event.getExitCode() == 0)
-                                {
-                                   dialog.hide();
-                                   command.execute();
-                                } 
-                             }
-                          }); 
-                    }
-
-               });   
-            }},
-            null,
-            null,
-            "Install",
-            "Cancel",
-            true);
-      }
-      else
-      {
-         command.execute();
-      }
    }
    
    @Override

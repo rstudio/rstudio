@@ -106,34 +106,6 @@ SEXP rs_connectionUpdated(SEXP typeSEXP, SEXP hostSEXP, SEXP hintSEXP)
    return R_NilValue;
 }
 
-SEXP rs_defaultSparkClusterUrl()
-{
-   std::string clusterUrl = "spark://local:7077";
-
-   // for rstudio server do some extra detection
-   if (options().programMode() == kSessionProgramModeServer)
-   {
-      FilePath clusterUrlPath("/root/spark-ec2/cluster-url");
-      if (clusterUrlPath.exists())
-      {
-         std::string ec2ClusterUrl;
-         Error error = core::readStringFromFile(clusterUrlPath, &ec2ClusterUrl);
-         if (!error)
-         {
-            boost::algorithm::trim(ec2ClusterUrl);
-            if (!ec2ClusterUrl.empty())
-               clusterUrl = ec2ClusterUrl;
-         }
-         else if (error.code() != boost::system::errc::permission_denied)
-         {
-            LOG_ERROR(error);
-         }
-      }
-   }
-   r::sexp::Protect rProtect;
-   return r::sexp::create(clusterUrl, &rProtect);
-}
-
 SEXP rs_availableRemoteServers()
 {
    // get list of previous connections and extract unique remote servers
@@ -436,7 +408,8 @@ Error installSpark(const json::JsonRpcRequest& request,
             args,
             options,
             "Installing Spark " + sparkVersion,
-            true,
+            console_process::kNoTerminal, false /*allowRestart*/,
+            true /*isDialog*/,
             console_process::InteractionNever);
 
    // return console process
@@ -518,7 +491,6 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
-   RS_REGISTER_CALL_METHOD(rs_defaultSparkClusterUrl, 0);
 
    // initialize environment
    initEnvironment();

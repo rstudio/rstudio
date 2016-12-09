@@ -876,7 +876,10 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    std::string termTitle;
    
    // terminal sequence
-   int termSequence = 0;
+   int termSequence = kNoTerminal;
+   
+   // allow process restart with existing handle
+   bool allowRestart;
    
    Error error = json::readParams(request.params,
                                   &term,
@@ -885,7 +888,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                   &isModalDialog,
                                   &termHandle,
                                   &termTitle,
-                                  &termSequence);
+                                  &termSequence,
+                                  &allowRestart);
    if (error)
       return error;
    
@@ -921,6 +925,12 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
+   if (termSequence != kNoTerminal)
+   {
+      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
+                           boost::lexical_cast<std::string>(termSequence));
+   }
+   
    // ammend shell paths as appropriate
    ammendShellPaths(&shellEnv);
 
@@ -947,6 +957,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                       termTitle,
                                       termHandle,
                                       termSequence,
+                                      allowRestart,
                                       isModalDialog,
                                       InteractionAlways,
                                       console_process::kDefaultMaxOutputLines);

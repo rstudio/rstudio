@@ -75,7 +75,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                for (int i = 0; i < procs.length(); i++)
                {
                   final ConsoleProcessInfo proc = procs.get(i);
-                  if (!proc.isDialog())
+                  if (proc.isTerminal())
                   {
                      // non-modal processes represent terminals and are handled
                      // by the terminal UI
@@ -244,24 +244,17 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       
       /**
        * Terminate and reap a process
-       * @param procInfo process to terminate and reap
+       * @param handle process to kill and reap
        */
-      public void reap(final ConsoleProcessInfo procInfo)
+      public void interruptAndReap(final String handle)
       {
-         connectToProcess(
-               procInfo,
-               new ServerRequestCallback<ConsoleProcess>()
+         interrupt(handle,
+               new SimpleRequestCallback<Void>()
                {
-                  public void onResponseReceived( final ConsoleProcess cproc)
+                  @Override
+                  public void onResponseReceived(Void response)
                   {
-                     cproc.interrupt(new SimpleRequestCallback<Void>()
-                     {
-                        @Override
-                        public void onResponseReceived(Void response)
-                        {
-                           cproc.reap(new VoidServerRequestCallback());
-                        }
-                     }); 
+                    reap(handle, new VoidServerRequestCallback());
                   }
 
                   @Override
@@ -270,8 +263,28 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                      Debug.logError(error);
                   }
                });
-     }
+      }
 
+      /**
+       * Interrupt process with given handle.
+       * @param handle process to interrupt
+       * @param requestCallback callback to invoke when done
+       */
+      public void interrupt(final String handle, ServerRequestCallback<Void> requestCallback)
+      {
+         server_.processInterrupt(handle, requestCallback);
+      }
+      
+      /**
+       * Reap process with given handle
+       * @param handle process to reap
+       * @param requestCallback callback to invoke when done
+       */
+      public void reap(final String handle, ServerRequestCallback<Void> requestCallback)
+      {
+         server_.processReap(handle, requestCallback);
+      }
+      
       private final ConsoleServerOperations server_;
       private final CryptoServerOperations cryptoServer_;
       private final EventBus eventBus_;

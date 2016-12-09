@@ -15,23 +15,27 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class TerminalTabPresenter extends BusyPresenter
 {
@@ -43,62 +47,79 @@ public class TerminalTabPresenter extends BusyPresenter
        * Ensure terminal pane is visible.
        */
       void activateTerminal();
-      
-      /**
-       *  Ensure terminal pane has at least one session loaded.
-       */
-      void ensureTerminal();
-      
+
       /**
        * Create a new terminal session.
        */
       void createTerminal();
-      
+
       /**
        * Terminate current terminal.
        */
       void terminateCurrentTerminal();
-      
+
       /**
        * Attach a list of server-side terminals to the pane.
        * @param event list of terminals on server
        */
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
+
+      /**
+       * @return Number of busy terminals (a terminal where the shell has
+       * child processes is considered busy).
+       */
+      int busyTerminalCount();
+
+      /**
+       * Terminate all terminals, whether busy or not. This kills any server-side
+       * process and removes it from the list of known processes. This should
+       * only be invoked when the terminal tab itself is being unloaded.
+       */
+      void terminateAllTerminals();
    }
 
    @Inject
    public TerminalTabPresenter(final Display view,
                                final Session session,
+                               GlobalDisplay globalDisplay,
+                               UIPrefs uiPrefs,
                                Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
       super(view);
       view_ = view;
       session_ = session;
+      globalDisplay_ = globalDisplay;
+      uiPrefs_ = uiPrefs;
       pConsoleProcessFactory_ = pConsoleProcessFactory;
    }
-  
+
    @Handler
    public void onActivateTerminal()
    {
+      if (!uiPrefs_.showTerminalTab().getValue())
+      {
+         uiPrefs_.showTerminalTab().setGlobalValue(true);
+         uiPrefs_.writeUIPrefs();
+      }
       view_.activateTerminal();
    }
-  
+
    @Handler
    public void onCloseTerminal()
    {
       view_.terminateCurrentTerminal();
    }
-   
+
    public void initialize()
    {
    }
-   
+
    public void onCreateTerminal(CreateTerminalEvent event)
    {
-      view_.activateTerminal();
+      onActivateTerminal();
       view_.createTerminal();
    }
-   
+
    public void onSessionInit(SessionInitEvent sie)
    {
       JsArray<ConsoleProcessInfo> procs =
@@ -108,7 +129,7 @@ public class TerminalTabPresenter extends BusyPresenter
       for (int i = 0; i < procs.length(); i++)
       {
          final ConsoleProcessInfo proc = procs.get(i);
-         if (!proc.isDialog())
+         if (proc.isTerminal())
          {
             addTerminalProcInfo(procList, proc);
          }
@@ -125,14 +146,14 @@ public class TerminalTabPresenter extends BusyPresenter
     * @param procInfo process to insert in the list
     */
    private void addTerminalProcInfo(ArrayList<ConsoleProcessInfo> procInfoList,
-                                           ConsoleProcessInfo procInfo)
+                                    ConsoleProcessInfo procInfo)
    {
       int newSequence = procInfo.getTerminalSequence();
       if (newSequence < 1)
       {
          Debug.logWarning("Invalid terminal sequence " + newSequence + 
                ", killing unrecognized process");
-         pConsoleProcessFactory_.get().reap(procInfo);
+         pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
          return;
       }
 
@@ -144,7 +165,7 @@ public class TerminalTabPresenter extends BusyPresenter
          {
             Debug.logWarning("Duplicate terminal sequence " + newSequence + 
                   ", killing duplicate process");
-            pConsoleProcessFactory_.get().reap(procInfo);
+            pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
             return;
          }
 
@@ -157,8 +178,45 @@ public class TerminalTabPresenter extends BusyPresenter
       procInfoList.add(procInfo);
    }
 
+   public void confirmClose(final Command onConfirmed)
+   {
+      if (view_.busyTerminalCount() > 0)
+      {
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
+               "Close Terminal(s) ", 
+               "Are you sure you want to close all terminals? Any running jobs " +
+                     "will be stopped.", false, 
+                     new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               shutDownTerminals();
+               onConfirmed.execute();
+            }
+         }, null, null, "Close Terminals", "Cancel", true);
+      }
+      else
+      {
+         shutDownTerminals();
+         onConfirmed.execute(); 
+      }
+   }
+
+   private void shutDownTerminals()
+   {
+      if (uiPrefs_.showTerminalTab().getValue())
+      {
+         uiPrefs_.showTerminalTab().setGlobalValue(false);
+         uiPrefs_.writeUIPrefs();
+      }
+      view_.terminateAllTerminals();
+   }
+
    // Injected ---- 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private final Display view_;
    private final Session session_;
+   private final GlobalDisplay globalDisplay_;
+   private final UIPrefs uiPrefs_;
 }

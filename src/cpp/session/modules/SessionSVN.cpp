@@ -272,6 +272,8 @@ core::Error createConsoleProc(const ShellArgs& args,
    *ppCP = ConsoleProcess::create(command,
                                   options,
                                   caption,
+                                  kNoTerminal,
+                                  false /*allowRestart*/,
                                   dialog,
                                   InteractionPossible,
                                   kDefaultMaxOutputLines);
