@@ -147,7 +147,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormat
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
-import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -4870,8 +4870,8 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONNECTION_PREVIEW_TABLE, params, callback);
    }
    
-   public void getNewSparkConnectionContext(
-         ServerRequestCallback<NewSparkConnectionContext> callback)
+   public void getNewConnectionContext(
+         ServerRequestCallback<NewConnectionContext> callback)
    {
       sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
    }
@@ -4894,6 +4894,15 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       sendRequest(RPC_SCOPE, SQL_CHUNK_DEFAULT_CONNECTION, params, requestCallback);
+   }
+
+   @Override
+   public void launchEmbeddedShinyConnectionUI(String packageName, 
+                                               ServerRequestCallback<RResult<Void>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      sendRequest(RPC_SCOPE, LAUNCH_EMBEDDED_SHINY_CONNECTION_UI, params, callback);
    }
 
    private String clientId_;
@@ -5271,8 +5280,10 @@ public class RemoteServer implements Server
    private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";
-   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
+   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
 
    private static final String SQL_CHUNK_DEFAULT_CONNECTION = "default_sql_connection_name";
+
+   private static final String LAUNCH_EMBEDDED_SHINY_CONNECTION_UI = "launch_embedded_shiny_connection_ui";
 }
