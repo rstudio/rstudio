@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 
 /**
@@ -31,22 +32,42 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
       /**
        * Create a TerminalMetadata object
        * @param handle terminal handle, unique key
-       * @param caption terminal caption
+       * @param caption terminal caption, shown in terminal picker
+       * @param title terminal title, shown in toolbar above active terminal
        * @param sequence terminal sequence number
        */
-      public TerminalMetadata(String handle, String caption, int sequence)
+      public TerminalMetadata(String handle, String caption, String title, int sequence)
       {
-         handle_ = handle;
-         caption_ = caption;
+         handle_ = StringUtil.notNull(handle);
+         caption_ = StringUtil.notNull(caption);
+         title_ = StringUtil.notNull(title);
          sequence_ = sequence;
       }
 
+      /**
+       * @return unique identifier for terminal
+       */
       public String getHandle() { return handle_; }
+
+      /**
+       * @return caption for terminal, shown in terminal picker
+       */
       public String getCaption() { return caption_; }
+
+      /**
+       * @return title for terminal, shown above the terminal pane
+       */
+      public String getTitle() { return title_; }
+
+      /**
+       * @return relative order of terminal creation, used to pick number for
+       * unique default terminal caption, e.g. "Terminal 3"
+       */
       public int getSequence() { return sequence_; }
 
       private String handle_;
       private String caption_;
+      private String title_;
       private int sequence_;
    }
 

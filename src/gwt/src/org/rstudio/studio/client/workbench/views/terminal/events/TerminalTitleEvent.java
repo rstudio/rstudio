@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.GwtEvent;
 
 /**
  * Send by an XTermSession that has processed an xterm.js title-change event 
- * and updated its caption property.
+ * and updated its title property.
  */
 public class TerminalTitleEvent extends GwtEvent<Handler>
 {
@@ -33,7 +33,7 @@ public class TerminalTitleEvent extends GwtEvent<Handler>
        * Sent by a terminal session that has changed its caption
        * @param event terminal session that has a changed caption
        */
-      void onTerminalCaption(TerminalTitleEvent event);
+      void onTerminalTitle(TerminalTitleEvent event);
    }
    
    public TerminalTitleEvent(TerminalSession terminalSession)
@@ -50,7 +50,7 @@ public class TerminalTitleEvent extends GwtEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalCaption(this);
+      handler.onTerminalTitle(this);
    }
    
    public TerminalSession getTerminalSession()

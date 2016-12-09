@@ -106,7 +106,7 @@ public class TerminalSession extends XTermWidget
       connecting_ = true;
       setNewTerminal(getHandle() == null);
 
-      server_.startTerminal(80, 25, getHandle(), getCaption(), getSequence(),
+      server_.startTerminal(80, 25, getHandle(), getCaption(), getTitle(), getSequence(),
                             new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -296,6 +296,20 @@ public class TerminalSession extends XTermWidget
       eventBus_.fireEvent(new TerminalTitleEvent(this));
    }
 
+   @Override
+   public void setTitle(String title)
+   {
+      // don't call superclass, don't want this acting as default tool-tip
+      // for the widget
+      title_ = title;
+   }
+
+   @Override
+   public String getTitle()
+   {
+      return title_;
+   }
+
    /**
     * @return terminal caption, such as "Terminal 1"
     */
@@ -441,6 +455,7 @@ public class TerminalSession extends XTermWidget
    private HandlerRegistration terminalInputHandler_;
    private ConsoleProcess consoleProcess_;
    private String caption_;
+   private String title_;
    private final int sequence_;
    private String terminalHandle_;
    private boolean connected_;

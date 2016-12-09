@@ -233,6 +233,7 @@ public class TerminalPane extends WorkbenchPane
                new TerminalMetadata(
                      procInfo.getHandle(),
                      procInfo.getCaption(), 
+                     procInfo.getTitle(),
                      procInfo.getTerminalSequence()));
       }
    }
@@ -356,7 +357,8 @@ public class TerminalPane extends WorkbenchPane
          return;
       }
 
-      // Rather ugly that the caption lives in so many places:
+      // The caption lives in multiple places:
+      // TODO (gary) consolidate ownership or update with event
       // (1) the TerminalSession for connected terminals
       // (2) the dropdown menu label
       // (3) the TerminalMetadata held in terminals_
@@ -367,6 +369,7 @@ public class TerminalPane extends WorkbenchPane
             new TerminalMetadata(
                   visibleTerminal.getHandle(),
                   visibleTerminal.getCaption(),
+                  visibleTerminal.getTitle(),
                   visibleTerminal.getSequence()));
    }
 
@@ -379,6 +382,7 @@ public class TerminalPane extends WorkbenchPane
             new TerminalMetadata(
                   terminal.getHandle(),
                   terminal.getCaption(),
+                  terminal.getTitle(),
                   terminal.getSequence()));
 
       // Check if this is a reconnect of an already displayed terminal, such
@@ -437,7 +441,7 @@ public class TerminalPane extends WorkbenchPane
          startTerminal(existingTerminal.getSequence(),
                        handle,
                        existingTerminal.getCaption(),
-                       null /*title*/);
+                       existingTerminal.getTitle());
          return;
       }
 
@@ -445,14 +449,45 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public void onTerminalCaption(TerminalTitleEvent event)
+   public void onTerminalTitle(TerminalTitleEvent event)
    {
+      // Notification from a TerminalSession that it changed its title
       TerminalSession visibleTerm = getSelectedTerminal();
       TerminalSession retitledTerm = event.getTerminalSession();
       if (visibleTerm != null && visibleTerm.getHandle().equals(
             retitledTerm.getHandle()))
       {
+         // update the toolbar label if currently displayed terminal has changed
+         // its title
          setTerminalTitle(retitledTerm.getTitle());
+      }
+
+      TerminalMetadata currentData = terminals_.getMetadataForHandle(retitledTerm.getHandle());
+      if (currentData == null)
+         return;
+
+      if (!currentData.getTitle().equals(retitledTerm.getTitle()))
+      {
+         // Update local metadata
+         terminals_.addTerminal(
+               new TerminalMetadata(
+                     currentData.getHandle(),
+                     currentData.getCaption(),
+                     retitledTerm.getTitle(),
+                     currentData.getSequence()));
+
+         // update server
+         server_.processSetTitle(currentData.getHandle(), 
+               retitledTerm.getTitle(),
+               new VoidServerRequestCallback()
+               {
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // failed; this might mean we show the wrong title after
+                     // a reset, but it will update itself fairly quickly
+                  }
+               });
       }
    }
 

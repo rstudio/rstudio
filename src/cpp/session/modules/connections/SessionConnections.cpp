@@ -480,6 +480,7 @@ Error installSpark(const json::JsonRpcRequest& request,
             args,
             options,
             "Installing Spark " + sparkVersion,
+            "" /*title*/,
             console_process::kNoTerminal, false /*allowRestart*/,
             true /*isDialog*/,
             console_process::InteractionNever);
