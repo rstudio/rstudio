@@ -15,6 +15,8 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.groups.groupsequenceisolation;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import org.hibernate.jsr303.tck.util.client.NonTckTest;
@@ -30,11 +32,13 @@ public class GroupSequenceIsolationGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.groups.groupsequenceisolation.TckTest";
   }
 
+  @DoNotRunWith(Platform.Devel) // Objects.equals(String, String)
   public void testCorrectDefaultSequenceContainedCaseWithGroupRedefinitionOnContainedEntity() {
     delegate
         .testCorrectDefaultSequenceContainedCaseWithGroupRedefinitionOnContainedEntity();
   }
 
+  @DoNotRunWith(Platform.Devel) // Objects.equals(String, String)
   public void testCorrectDefaultSequenceContainedCaseWithoutGroupRedefinitionOnContainedEntity() {
     delegate
         .testCorrectDefaultSequenceContainedCaseWithoutGroupRedefinitionOnContainedEntity();

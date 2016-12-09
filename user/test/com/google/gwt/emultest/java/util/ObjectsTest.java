@@ -15,6 +15,8 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Comparator;
@@ -75,19 +77,18 @@ public class ObjectsTest extends GWTTestCase {
     assertTrue(Objects.deepEquals(intArray1, intArray3));
   }
 
+  @DoNotRunWith(Platform.Devel) // Objects.equals(String, String)
   public void testEquals() {
     assertTrue(Objects.equals(null, null));
+    assertFalse(Objects.equals(null, "not null"));
+    assertFalse(Objects.equals("not null", null));
+    assertTrue(Objects.equals("a", "a"));
+    assertFalse(Objects.equals("a", "b"));
+
     assertFalse(Objects.equals(new Object(), new Object()));
 
     Object obj = new Object();
     assertTrue(Objects.equals(obj, obj));
-  }
-
-  public void testStringEquality() {
-    assertTrue(Objects.equals("a", "a"));
-    assertFalse(Objects.equals("a", "b"));
-    assertFalse(Objects.equals(null, "not null"));
-    assertFalse(Objects.equals("not null", null));
   }
 
   public void testHashCode() {

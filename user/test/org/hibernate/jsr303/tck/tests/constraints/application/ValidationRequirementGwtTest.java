@@ -15,6 +15,8 @@
  */
 package org.hibernate.jsr303.tck.tests.constraints.application;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -35,6 +37,7 @@ public class ValidationRequirementGwtTest extends GWTTestCase {
     return "org.hibernate.jsr303.tck.tests.constraints.application.TckTest";
   }
 
+  @DoNotRunWith(Platform.Devel) // Objects.equals(String, String)
   public void testClassLevelConstraints() {
     delegate.testClassLevelConstraints();
   }
