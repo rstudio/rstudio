@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.terminal;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
@@ -35,11 +36,11 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
@@ -55,7 +56,7 @@ public class TerminalSession extends XTermWidget
                                         ProcessExitEvent.Handler,
                                         ResizeTerminalEvent.Handler,
                                         TerminalDataInputEvent.Handler,
-                                        TerminalTitleEvent.Handler,
+                                        XTermTitleEvent.Handler,
                                         SessionSerializationHandler
 {
    /**
@@ -63,16 +64,27 @@ public class TerminalSession extends XTermWidget
     * @param secureInput securely send user input to server
     * @param sequence number used as part of default terminal title
     * @param handle terminal handle if reattaching, null if new terminal
+    * @param caption terminal caption if reattaching, null if new terminal
+    * @param title widget title
     */
    public TerminalSession(final ShellSecureInput secureInput, 
-                          int sequence, String handle)
+                          int sequence,
+                          String handle,
+                          String caption,
+                          String title)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
       sequence_ = sequence;
       terminalHandle_ = handle;
+      setTitle(title);
+
+      if (StringUtil.isNullOrEmpty(caption))
+         caption_ = "Terminal " + sequence_;
+      else
+         caption_ = caption;
+
       setHeight("100%");
-      setTitle("Terminal " + sequence_);
    }
 
    @Inject
@@ -94,7 +106,7 @@ public class TerminalSession extends XTermWidget
       connecting_ = true;
       setNewTerminal(getHandle() == null);
 
-      server_.startTerminal(80, 25, getHandle(), getTitle(), getSequence(),
+      server_.startTerminal(80, 25, getHandle(), getCaption(), getTitle(), getSequence(),
                             new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
@@ -118,7 +130,7 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(consoleProcess_.addConsoleOutputHandler(TerminalSession.this));
             addHandlerRegistration(consoleProcess_.addProcessExitHandler(TerminalSession.this));
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
-            addHandlerRegistration(addTerminalTitleHandler(TerminalSession.this));
+            addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
 
             // We keep this handler connected after a terminal disconnect so
@@ -278,19 +290,43 @@ public class TerminalSession extends XTermWidget
    }
 
    @Override
-   public void onTerminalTitle(TerminalTitleEvent event)
+   public void onXTermTitle(XTermTitleEvent event)
    {
-      caption_ = event.getTitle();
-      eventBus_.fireEvent(new TerminalCaptionEvent(this));
+      setTitle(event.getTitle());
+      eventBus_.fireEvent(new TerminalTitleEvent(this));
    }
 
+   @Override
+   public void setTitle(String title)
+   {
+      // don't call superclass, don't want this acting as default tool-tip
+      // for the widget
+      title_ = title;
+   }
+
+   @Override
+   public String getTitle()
+   {
+      return title_;
+   }
+
+   /**
+    * @return terminal caption, such as "Terminal 1"
+    */
    public String getCaption()
    {
       return caption_;
    }
 
+   /**
+    * Set caption, user customizable identifier for this terminal session.
+    * @param caption new caption
+    */
    public void setCaption(String caption)
    {
+      if (StringUtil.isNullOrEmpty(caption))
+         return;
+
       caption_ = caption;
    }
 
@@ -310,8 +346,11 @@ public class TerminalSession extends XTermWidget
    protected void unregisterHandlers()
    {
       registrations_.removeHandler();
-      terminalInputHandler_.removeHandler();
-      terminalInputHandler_ = null;
+      if (terminalInputHandler_ != null)
+      {
+         terminalInputHandler_.removeHandler();
+         terminalInputHandler_ = null;
+      }
    }
 
    protected void writeError(String msg)
@@ -415,7 +454,8 @@ public class TerminalSession extends XTermWidget
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private HandlerRegistration terminalInputHandler_;
    private ConsoleProcess consoleProcess_;
-   private String caption_ = new String();
+   private String caption_;
+   private String title_;
    private final int sequence_;
    private String terminalHandle_;
    private boolean connected_;

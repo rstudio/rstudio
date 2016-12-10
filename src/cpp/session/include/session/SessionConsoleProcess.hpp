@@ -59,6 +59,7 @@ private:
          const std::string& command,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         const std::string& title,
          int terminalSequence,
          bool allowRestart,
          bool dialog,
@@ -70,6 +71,7 @@ private:
          const std::vector<std::string>& args,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         const std::string& title,
          int terminalSequence,
          bool allowRestart,
          bool dialog,
@@ -80,6 +82,7 @@ private:
          const std::string& command,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         const std::string& title,
          int terminalSequence,
          bool allowRestart,
          const std::string& handle,
@@ -116,6 +119,7 @@ public:
          const std::string& command,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
          int terminalSequence,
          bool allowRestart,
          bool dialog,
@@ -127,6 +131,7 @@ public:
          const std::vector<std::string>& args,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
          int terminalSequence,
          bool allowRestart,
          bool dialog,
@@ -137,6 +142,7 @@ public:
          const std::string& command,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
          const std::string& terminalHandle,
          const int terminalSequence,
          bool allowRestart,
@@ -164,6 +170,8 @@ public:
    void resize(int cols, int rows);
    void onSuspend();
    bool isStarted() { return started_; }
+   void setCaption(std::string& caption) { caption_ = caption; }
+   void setTitle(std::string& title) { title_ = title; }
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
@@ -194,6 +202,7 @@ private:
    core::system::ProcessOptions options_;
 
    std::string caption_;
+   std::string title_;
    bool dialog_;
    bool showOnOutput_;
    InteractionMode interactionMode_;

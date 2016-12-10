@@ -76,6 +76,11 @@ public class TerminalTabPresenter extends BusyPresenter
        * only be invoked when the terminal tab itself is being unloaded.
        */
       void terminateAllTerminals();
+
+      /**
+       * Rename (change caption) of current terminal.
+       */
+      void renameTerminal();
    }
 
    @Inject
@@ -108,6 +113,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onCloseTerminal()
    {
       view_.terminateCurrentTerminal();
+   }
+
+   @Handler
+   public void onRenameTerminal()
+   {
+      view_.renameTerminal();
    }
 
    public void initialize()

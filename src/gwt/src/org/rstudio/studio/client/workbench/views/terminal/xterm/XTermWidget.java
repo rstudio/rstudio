@@ -24,8 +24,8 @@ import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -47,7 +47,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class XTermWidget extends Widget implements RequiresResize,
                                                    ResizeTerminalEvent.HasHandlers, TerminalDataInputEvent.HasHandlers,
-                                                   TerminalTitleEvent.HasHandlers
+                                                   XTermTitleEvent.HasHandlers
 {
   /**
     *  Creates an XTermWidget.
@@ -79,7 +79,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       {
          public void execute(String title)
          {
-            fireEvent(new TerminalTitleEvent(title));
+            fireEvent(new XTermTitleEvent(title));
          }
       });
    }
@@ -194,7 +194,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       // dimensions; debounce this slightly as it is somewhat expensive
       resizeTerminalLocal_.schedule(50);
       
-      // Notify the remove pseudo-terminal that it has resized; this is quite
+      // Notify the remote pseudo-terminal that it has resized; this is quite
       // expensive so debounce more heavily; e.g. dragging the pane
       // splitters or resizing the entire window
       resizeTerminalRemote_.schedule(150);
@@ -283,9 +283,9 @@ public class XTermWidget extends Widget implements RequiresResize,
    }
 
    @Override
-   public HandlerRegistration addTerminalTitleHandler(Handler handler)
+   public HandlerRegistration addXTermTitleHandler(Handler handler)
    {
-      return addHandler(handler, TerminalTitleEvent.TYPE);
+      return addHandler(handler, XTermTitleEvent.TYPE);
    }
 
    /**

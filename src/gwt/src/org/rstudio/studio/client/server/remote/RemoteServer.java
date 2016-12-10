@@ -474,17 +474,17 @@ public class RemoteServer implements Server
    public void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       invokeStartShellDialog(ConsoleProcess.TerminalType.DUMB, true /*modal*/,
-                             80, 1, null /*handle*/, null /*title*/, 
+                             80, 1, null /*handle*/, null /*caption*/, null /*title*/, 
                              ConsoleProcessInfo.SEQUENCE_NO_TERMINAL,
                              false /*allowProcessRestart*/, requestCallback);
    }
    
    public void startTerminal(int cols, int rows,
-                             String handle, String title, int sequence,
+                             String handle, String caption, String title, int sequence,
                              ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM, false /*modal*/,
-                             cols, rows, handle, title, sequence,
+                             cols, rows, handle, caption, title, sequence,
                              true /*allowProcessRestart*/, requestCallback);
    }
    
@@ -493,7 +493,8 @@ public class RemoteServer implements Server
                      boolean isModalDialog,
                      int cols, int rows,
                      String terminalHandle,
-                     String terminalTitle,
+                     String caption,
+                     String title,
                      int sequence,
                      boolean allowProcessRestart,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
@@ -504,9 +505,10 @@ public class RemoteServer implements Server
       params.set(2, new JSONNumber(rows));
       params.set(3, JSONBoolean.getInstance(isModalDialog));
       params.set(4, new JSONString(StringUtil.notNull(terminalHandle)));
-      params.set(5, new JSONString(StringUtil.notNull(terminalTitle)));
-      params.set(6, new JSONNumber(sequence));
-      params.set(7, JSONBoolean.getInstance(allowProcessRestart));
+      params.set(5, new JSONString(StringUtil.notNull(caption)));
+      params.set(6, new JSONString(StringUtil.notNull(title)));
+      params.set(7, new JSONNumber(sequence));
+      params.set(8, JSONBoolean.getInstance(allowProcessRestart));
       
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,
@@ -653,6 +655,28 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(width));
       params.set(2,  new JSONNumber(height));
       sendRequest(RPC_SCOPE, PROCESS_SET_SIZE, params, requestCallback);
+   }
+   
+   @Override
+   public void processSetCaption(String handle,
+                                 String caption,
+                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(caption));
+      sendRequest(RPC_SCOPE, PROCESS_SET_CAPTION, params, requestCallback);
+   }
+
+   @Override
+   public void processSetTitle(String handle,
+                               String title,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(title));
+      sendRequest(RPC_SCOPE, PROCESS_SET_TITLE, params, requestCallback);
    }
    
    public void interrupt(ServerRequestCallback<Void> requestCallback)
@@ -4961,6 +4985,8 @@ public class RemoteServer implements Server
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
    private static final String PROCESS_SET_SIZE = "process_set_size";
+   private static final String PROCESS_SET_CAPTION = "process_set_caption";
+   private static final String PROCESS_SET_TITLE = "process_set_title";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

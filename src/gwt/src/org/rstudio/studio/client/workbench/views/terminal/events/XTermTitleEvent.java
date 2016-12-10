@@ -1,5 +1,5 @@
 /*
- * TerminalCaptionEvent.java
+ * XTermTitleEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -15,30 +15,40 @@
 
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
-import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
- * Send by an XTermSession that has processed an xterm.js title-change event 
- * and updated its caption property.
+ * Send when xterm sees a standard title escape sequence. The string value
+ * of the command is sent.
+ * 
+ * ESC]0;stringBEL -- Set window title to string, example:
+ * 
+ * echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"
  */
-public class TerminalCaptionEvent extends GwtEvent<Handler>
+public class XTermTitleEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
       /**
-       * Sent by a terminal session that has changed its caption
-       * @param event terminal session that has a changed caption
+       * Sent by xterm.js when it has detected escape sequence for setting 
+       * terminal title.
+       * @param event title string extracted from escape sequence
        */
-      void onTerminalCaption(TerminalCaptionEvent event);
+      void onXTermTitle(XTermTitleEvent event);
    }
    
-   public TerminalCaptionEvent(TerminalSession terminalSession)
+   public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers
    {
-      terminalSession_ = terminalSession;
+      HandlerRegistration addXTermTitleHandler(Handler handler);
+   }
+   
+   public XTermTitleEvent(String title)
+   {
+      title_ = title;
    }
 
    @Override
@@ -50,15 +60,15 @@ public class TerminalCaptionEvent extends GwtEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalCaption(this);
+      handler.onXTermTitle(this);
    }
    
-   public TerminalSession getTerminalSession()
+   public String getTitle()
    {
-      return terminalSession_;
+      return title_;
    }
   
-   private TerminalSession terminalSession_;
+   private String title_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
