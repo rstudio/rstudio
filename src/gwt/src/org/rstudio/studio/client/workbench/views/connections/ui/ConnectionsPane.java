@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -21,6 +21,7 @@ import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -34,6 +35,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -45,6 +47,7 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
@@ -61,13 +64,17 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent.Handler;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionAction;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 
-public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
+public class ConnectionsPane extends WorkbenchPane 
+                             implements ConnectionsPresenter.Display
 {
    @Inject
    public ConnectionsPane(Commands commands, EventBus eventBus)
@@ -237,6 +244,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                               ExploreConnectionEvent.Handler handler)
    {
       return addHandler(handler, ExploreConnectionEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addExecuteConnectionActionHandler(Handler handler)
+   {
+      return addHandler(handler, ExecuteConnectionActionEvent.TYPE);
    }
    
    @Override
@@ -522,7 +535,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       setSecondaryToolbarVisible(false);
    }
    
-   private void installConnectionExplorerToolbar(Connection connection)
+   private void installConnectionExplorerToolbar(final Connection connection)
    {
       toolbar_.removeAllWidgets();
      
@@ -533,7 +546,26 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       toolbar_.addLeftSeparator();
       
-      // TODO: add connection action buttons here
+      if (connection.getActions() != null)
+      {
+         // if we have any actions, create a toolbar button for each one
+         for (int i = 0; i < connection.getActions().length(); i++)
+         {
+            final ConnectionAction action = connection.getActions().get(i);
+            ToolbarButton button = new ToolbarButton(action.getName(), 
+                  (ImageResource)null, 
+                  new ClickHandler()
+                  {
+                     @Override
+                     public void onClick(ClickEvent arg0)
+                     {
+                        fireEvent(new ExecuteConnectionActionEvent(
+                              connection.getId(), action.getName()));
+                     }
+                  });
+            toolbar_.addLeftWidget(button);
+         }
+      }
 
       toolbar_.addLeftSeparator();
 

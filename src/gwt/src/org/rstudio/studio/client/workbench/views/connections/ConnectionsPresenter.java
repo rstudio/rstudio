@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnec
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
@@ -63,8 +64,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
-import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
@@ -89,6 +88,9 @@ public class ConnectionsPresenter extends BasePresenter
       
       HandlerRegistration addExploreConnectionHandler(
                                        ExploreConnectionEvent.Handler handler); 
+      
+      HandlerRegistration addExecuteConnectionActionHandler(
+            ExecuteConnectionActionEvent.Handler handler);
       
       void showConnectionExplorer(Connection connection, String connectVia);
       void setExploredConnection(Connection connection);
@@ -151,7 +153,20 @@ public class ConnectionsPresenter extends BasePresenter
          {
             showAllConnections(true);
          }
+      });
+      
+      
+      display_.addExecuteConnectionActionHandler(
+            new ExecuteConnectionActionEvent.Handler()
+      {
          
+         @Override
+         public void onExecuteConnectionAction(
+               ExecuteConnectionActionEvent event)
+         {
+            server_.connectionExecuteAction(event.getConnectionId(), 
+                  event.getAction(), new VoidServerRequestCallback());
+         }
       });
       
       // events
@@ -367,7 +382,7 @@ public class ConnectionsPresenter extends BasePresenter
                               globalDisplay_, 100, "Previewing table...");
       
       server_.connectionPreviewTable(
-         exploredConnection_, 
+         exploredConnection_.getId(), 
          event.getDataset(),
          new VoidServerRequestCallback(progress.getIndicator())); 
    }
@@ -413,7 +428,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.getDisconnectCode(exploredConnection_, 
+            server_.getDisconnectCode(exploredConnection_.getId(), 
                   new SimpleRequestCallback<String>() {
                @Override
                public void onResponseReceived(String disconnectCode)

@@ -1,5 +1,5 @@
 /*
- * ConnectionId.java
+ * ConnectionAction.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -17,35 +17,17 @@ package org.rstudio.studio.client.workbench.views.connections.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ConnectionId extends JavaScriptObject
-{ 
-   protected ConnectionId()
+public class ConnectionAction extends JavaScriptObject
+{
+   protected ConnectionAction()
    {
    }
    
-   public static native final ConnectionId create(String type, String host) /*-{ 
-      return {
-         type: type,
-         host: host
-      }; 
-    }-*/;
-   
-   public final native String getType() /*-{
-      return this.type;
-   }-*/;
-  
-   public final native String getHost() /*-{
-      return this.host;
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
    
-   public final String asString()
-   {
-      return getType() + " - " + getHost();
-   }
-   
-   public final boolean equalTo(ConnectionId other)
-   {
-      return getType().equals(other.getType()) && 
-                       getHost().equals(other.getHost());
-   }
+   public final native String getIcon() /*-{
+      return this.icon;
+   }-*/;
 }

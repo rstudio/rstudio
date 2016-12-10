@@ -68,7 +68,7 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    if (error)
       LOG_ERROR(error);
    std::vector<ConnectionAction> actions;
-   if (TYPEOF(actionList) == LISTSXP) 
+   if (!r::sexp::isNull(actionList))
    {
       std::vector<std::string> actionNames;
       error = r::sexp::getNames(actionList, &actionNames);
@@ -211,14 +211,10 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    // read params
-   json::Object idJson;
    std::string finder, disconnectCode;
-   Error error = json::readObjectParam(request.params, 0,
-                                       "id", &idJson);
-   if (error)
-      return error;
    std::string type, host;
-   error = json::readObject(idJson, "type", &type, "host", &host);
+   Error error = json::readObjectParam(request.params, 0, 
+         "type", &type, "host", &host);
    if (error)
       return error;
 
@@ -239,24 +235,24 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error readConnectionParam(const json::JsonRpcRequest& request,
-                          Connection* pConnection)
+Error readConnectionIdParam(const json::JsonRpcRequest& request,
+                            ConnectionId* pConnectionId)
 {
    // read param
-   json::Object connectionJson;
-   Error error = json::readParam(request.params, 0, &connectionJson);
+   json::Object connectionIdJson;
+   Error error = json::readParam(request.params, 0, &connectionIdJson);
    if (error)
       return error;
 
-   return connectionFromJson(connectionJson, pConnection);
+   return connectionIdFromJson(connectionIdJson, pConnectionId);
 }
 
-Error readConnectionAndTableParams(const json::JsonRpcRequest& request,
-                                   Connection* pConnection,
-                                   std::string* pTable)
+Error readConnectionIdAndTableParams(const json::JsonRpcRequest& request,
+                                     ConnectionId* pConnectionId,
+                                     std::string* pTable)
 {
    // get connection param
-   Error error = readConnectionParam(request, pConnection);
+   Error error = readConnectionIdParam(request, pConnectionId);
    if (error)
       return error;
 
@@ -276,8 +272,8 @@ void connectionListTables(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection param
-   Connection connection;
-   Error error = readConnectionParam(request, &connection);
+   ConnectionId connectionId;
+   Error error = readConnectionIdParam(request, &connectionId);
    if (error)
    {
       json::JsonRpcResponse response;
@@ -291,8 +287,8 @@ void connectionListTables(const json::JsonRpcRequest& request,
    // get the list of tables
    std::vector<std::string> tables;
    error = r::exec::RFunction(".rs.connectionListTables",
-                                 connection.id.type,
-                                 connection.id.host).call(&tables);
+                                 connectionId.type,
+                                 connectionId.host).call(&tables);
    if (error)
    {
       continuation(error, &response);
@@ -339,9 +335,9 @@ void connectionListFields(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection and table params
-   Connection connection;
+   ConnectionId connectionId;
    std::string table;
-   Error error = readConnectionAndTableParams(request, &connection, &table);
+   Error error = readConnectionIdAndTableParams(request, &connectionId, &table);
    if (error)
    {
       json::JsonRpcResponse response;
@@ -353,8 +349,8 @@ void connectionListFields(const json::JsonRpcRequest& request,
    r::sexp::Protect rProtect;
    SEXP sexpResult;
    error = r::exec::RFunction(".rs.connectionListColumns",
-                                 connection.id.type,
-                                 connection.id.host,
+                                 connectionId.type,
+                                 connectionId.host,
                                  table).call(&sexpResult, &rProtect);
 
 
@@ -366,9 +362,9 @@ void connectionPreviewTable(const json::JsonRpcRequest& request,
                           const json::JsonRpcFunctionContinuation& continuation)
 {
    // get connection and table params
-   Connection connection;
+   ConnectionId connectionId;
    std::string table;
-   Error error = readConnectionAndTableParams(request, &connection, &table);
+   Error error = readConnectionIdAndTableParams(request, &connectionId, &table);
    if (error)
    {
       json::JsonRpcResponse response;
@@ -380,8 +376,8 @@ void connectionPreviewTable(const json::JsonRpcRequest& request,
    r::sexp::Protect rProtect;
    SEXP sexpResult;
    error = r::exec::RFunction(".rs.connectionPreviewTable",
-                                 connection.id.type,
-                                 connection.id.host,
+                                 connectionId.type,
+                                 connectionId.host,
                                  table,
                                  1000).call(&sexpResult, &rProtect);
 

@@ -92,6 +92,8 @@ core::json::Object connectionJson(const Connection& connection);
 
 core::Error connectionFromJson(const core::json::Object& connectionJson,
                                Connection* pConnection);
+core::Error connectionIdFromJson(const core::json::Object& connectionIdJson,
+                               ConnectionId* pConnectionId);
 
 bool hasConnectionId(const ConnectionId& id,
                      const core::json::Object& connectionJson);

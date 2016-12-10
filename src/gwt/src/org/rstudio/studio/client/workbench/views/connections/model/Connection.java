@@ -1,7 +1,7 @@
 /*
  * Connection.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.connections.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public class Connection extends JavaScriptObject
 { 
@@ -37,6 +38,10 @@ public class Connection extends JavaScriptObject
    
    public final native String getConnectCode() /*-{
       return this.connect_code;
+   }-*/;
+   
+   public final native JsArray<ConnectionAction> getActions() /*-{
+      return this.actions;
    }-*/;
    
    public final native double getLastUsed() /*-{

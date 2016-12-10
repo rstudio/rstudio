@@ -76,6 +76,14 @@ Error actionFromJson(const json::Object& actionJson,
          "icon", &(pAction->icon));
 }
 
+Error connectionIdFromJson(const json::Object& connectionIdJson,
+                           ConnectionId* pConnectionId)
+{
+   return json::readObject(connectionIdJson,
+         "type", &(pConnectionId->type),
+         "host", &(pConnectionId->host));
+}
+
 Error connectionFromJson(const json::Object& connectionJson,
                          Connection* pConnection)
 {
@@ -84,11 +92,7 @@ Error connectionFromJson(const json::Object& connectionJson,
    Error error = json::readObject(connectionJson, "id", &idJson);
    if (error)
       return error;
-   error = json::readObject(idJson,
-                            "type", &(pConnection->id.type),
-                            "host", &(pConnection->id.host));
-   if (error)
-      return error;
+   error = connectionIdFromJson(idJson, &(pConnection->id));
 
    // read remaining fields
    json::Array actions;
