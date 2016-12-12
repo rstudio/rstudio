@@ -339,6 +339,7 @@ public class TerminalPane extends WorkbenchPane
                            {
                               // failed, put back original caption on client
                               renameVisibleTerminalInClient(origCaption);
+                              Debug.logError(error);
                            }
                         });
                }
@@ -486,6 +487,7 @@ public class TerminalPane extends WorkbenchPane
                   {
                      // failed; this might mean we show the wrong title after
                      // a reset, but it will update itself fairly quickly
+                     Debug.logError(error);
                   }
                });
       }
