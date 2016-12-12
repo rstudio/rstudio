@@ -264,8 +264,19 @@ Error readConnectionIdAndTableParams(const json::JsonRpcRequest& request,
 Error connectionExecuteAction(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
 {
-   // TODO: dispatch
-   return Success();
+   ConnectionId connectionId;
+   std::string action;
+   Error error = readConnectionIdParam(request, &connectionId);
+   if (error)
+      return error;
+   error = json::readParam(request.params, 1, &action);
+   if (error)
+      return error;
+   
+   return r::exec::RFunction(".rs.connectionExecuteAction",
+                                 connectionId.type,
+                                 connectionId.host,
+                                 action).call();
 }
 
 void connectionListTables(const json::JsonRpcRequest& request,

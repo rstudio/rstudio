@@ -149,6 +149,17 @@ options(connectionObserver = list(
    NULL
 })
 
+.rs.addFunction("connectionExecuteAction", function(type, host, action) {
+
+   connection <- .rs.findActiveConnection(type, host)
+
+   if (!is.null(connection) && action %in% names(connection$actions)) {
+      connection$actions[[action]]$callback()
+   }
+
+   NULL
+})
+
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
   context <- list()
 

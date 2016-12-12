@@ -546,7 +546,7 @@ public class ConnectionsPane extends WorkbenchPane
       
       toolbar_.addLeftSeparator();
       
-      if (connection.getActions() != null)
+      if (isConnected(connection.getId()) && connection.getActions() != null)
       {
          // if we have any actions, create a toolbar button for each one
          for (int i = 0; i < connection.getActions().length(); i++)
@@ -563,11 +563,11 @@ public class ConnectionsPane extends WorkbenchPane
                               connection.getId(), action.getName()));
                      }
                   });
+            button.getElement().getStyle().setMarginTop(-5, Unit.PX);
             toolbar_.addLeftWidget(button);
+            toolbar_.addLeftSeparator();
          }
       }
-
-      toolbar_.addLeftSeparator();
 
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
       

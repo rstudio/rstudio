@@ -4846,7 +4846,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONObject(connection));
       params.set(1, new JSONString(action));
-      sendRequest(RPC_SCOPE, CONNECTION_EXECUTE_ACTION, callback);
+      sendRequest(RPC_SCOPE, CONNECTION_EXECUTE_ACTION, params, callback);
    }
    
    @Override
