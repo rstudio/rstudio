@@ -71,6 +71,10 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.started;
    }-*/;
 
+   public final native String getTitle() /*-{
+      return this.title;
+   }-*/;
+
    public static final int SEQUENCE_NO_TERMINAL = 0;
    
    public final native boolean isTerminal() /*-{

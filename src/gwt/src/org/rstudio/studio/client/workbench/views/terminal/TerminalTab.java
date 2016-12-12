@@ -48,6 +48,9 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       @Handler
       public abstract void onCloseTerminal();
 
+      @Handler 
+      public abstract void onRenameTerminal();
+
       abstract void initialize();
       abstract void confirmClose(Command onConfirmed);
    }

@@ -123,15 +123,27 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
     
    /**
     * Start a terminal session
+    * 
+    * <p> Supports both a "caption" and a "title", and both are persisted on the
+    * server.</p>
+    * 
+    * <p>On the client, the "caption" is displayed in the terminal tab, and
+    * defaults to something like "Terminal 1", and can be changed by the user.</p>
+    * 
+    * <p>The "title" is set in response to xterm escape sequences, and is shown 
+    * above the terminal pane (e.g. show current working directory via bash's
+    * PROMPT_COMMAND feature.</p>
+    * 
     * @param cols initial number of text columns for pseudoterminal
     * @param rows initial number of text rows for pseudoterminal
     * @param handle initial terminal handle (pass empty or null string for new terminal)
+    * @param caption caption associated with the terminal
     * @param title title associated with the terminal
     * @param sequence relative order of terminal creation (1-based)
     * @param requestCallback callback from server upon completion
     */
-   void startTerminal(int cols, int rows, String handle, String title, int sequence,
-                      ServerRequestCallback<ConsoleProcess> requestCallback);
+   void startTerminal(int cols, int rows, String handle, String caption, String title,
+                      int sequence, ServerRequestCallback<ConsoleProcess> requestCallback);
    
    void executeCode(String code, ServerRequestCallback<Void> requestCallback);
 }

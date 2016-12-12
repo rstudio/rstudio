@@ -67,13 +67,14 @@ ConsoleProcess::ConsoleProcess()
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
                                int terminalSequence,
                                bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : command_(command), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
@@ -87,13 +88,14 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
                                int terminalSequence,
                                bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : program_(program), args_(args), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
@@ -105,14 +107,15 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
                                int terminalSequence,
                                bool allowRestart,
                                const std::string& handle,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : command_(command), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
@@ -454,6 +457,7 @@ core::json::Object ConsoleProcess::toJson() const
    result["terminal_sequence"] = terminalSequence_;
    result["allow_restart"] = allowRestart_;
    result["started"] = started_;
+   result["title"] = title_;
    return result;
 }
 
@@ -519,6 +523,16 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
          pProc->allowRestart_ = true;
          pProc->started_ = false;
       }
+      LOG_ERROR(error);
+      return pProc;
+   }
+   
+   // More work-in-progress on 1.1
+   // TODO (gary) could flatten this to a single readObject before release
+   error = json::readObject(obj, "title", &pProc->title_);
+   if (error)
+   {
+      pProc->title_.clear();
       LOG_ERROR(error);
    }
    
@@ -660,11 +674,56 @@ Error procSetSize(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 }
+
+Error procSetCaption(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string caption;
    
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &caption);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setCaption(caption);
+   return Success();
+}
+
+Error procSetTitle(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string title;
+   
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &title);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setTitle(title);
+   return Success();
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
       int terminalSequence,
       bool allowRestart,
       bool dialog,
@@ -676,6 +735,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
          new ConsoleProcess(command,
                             options,
                             caption,
+                            title,
                             terminalSequence,
                             allowRestart,
                             dialog,
@@ -690,6 +750,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::vector<std::string>& args,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
       int terminalSequence,
       bool allowRestart,
       bool dialog,
@@ -702,6 +763,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             args,
                             options,
                             caption,
+                            title,
                             terminalSequence,
                             allowRestart,
                             dialog,
@@ -717,6 +779,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
       const std::string& terminalHandle,
       int terminalSequence,
       bool allowRestart,
@@ -741,7 +804,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       // Create new process with previously used handle
       options.terminateChildren = true;
       boost::shared_ptr<ConsoleProcess> ptrProc(
-            new ConsoleProcess(command, options, caption, terminalSequence,
+            new ConsoleProcess(command, options, caption, title, terminalSequence,
                                allowRestart, terminalHandle, dialog,
                                interactionMode, maxOutputLines));
       s_procs[ptrProc->handle()] = ptrProc;
@@ -749,7 +812,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
    }
    
    // otherwise create a new one
-   return create(command, options, caption, terminalSequence,
+   return create(command, options, caption, title, terminalSequence,
                  allowRestart, dialog, interactionMode, maxOutputLines);
 }
 
@@ -933,7 +996,9 @@ Error initialize()
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
-      (bind(registerRpcMethod, "process_set_size", procSetSize));
+      (bind(registerRpcMethod, "process_set_size", procSetSize))
+      (bind(registerRpcMethod, "process_set_caption", procSetCaption))
+      (bind(registerRpcMethod, "process_set_title", procSetTitle));
 
    return initBlock.execute();
 }

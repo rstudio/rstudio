@@ -872,6 +872,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // terminal handle (empty string if starting a new terminal)
    std::string termHandle;
    
+   // terminal caption
+   std::string termCaption;
+   
    // terminal title
    std::string termTitle;
    
@@ -887,6 +890,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                   &rows,
                                   &isModalDialog,
                                   &termHandle,
+                                  &termCaption,
                                   &termTitle,
                                   &termSequence,
                                   &allowRestart);
@@ -942,9 +946,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.cols = cols;
    options.rows = rows;
    
-   if (termTitle.empty())
-      termTitle = "Shell";
-
+   if (termCaption.empty())
+      termCaption = "Shell";
+   
    // configure bash command
    core::shell_utils::ShellCommand bashCommand("/usr/bin/env");
    bashCommand << "bash";
@@ -954,6 +958,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::create(bashCommand,
                                       options,
+                                      termCaption,
                                       termTitle,
                                       termHandle,
                                       termSequence,

@@ -22,7 +22,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
@@ -34,13 +33,12 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -68,7 +66,6 @@ import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDia
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter  
                                   implements PerformConnectionEvent.Handler,
@@ -116,7 +113,8 @@ public class ConnectionsPresenter extends BasePresenter
                                Binder binder,
                                final Commands commands,
                                WorkbenchListManager listManager,
-                               Session session)
+                               Session session,
+                               ApplicationInterrupt applicationInterrupt)
    {
       super(display);
       binder.bind(commands, this);
@@ -126,6 +124,7 @@ public class ConnectionsPresenter extends BasePresenter
       uiPrefs_ = uiPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      applicationInterrupt_ = applicationInterrupt;
          
       // search filter
       display_.addSearchFilterChangeHandler(new ValueChangeHandler<String>() {
@@ -263,10 +262,17 @@ public class ConnectionsPresenter extends BasePresenter
       updateActiveConnections(event.getActiveConnections());
    }
 
-   private void terminateShinyApp()
+   private void terminateShinyApp(final Operation operation)
    {
       if (commands_.interruptR().isEnabled())
-         commands_.interruptR().execute();
+         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
+         {
+            @Override
+            public void onInterruptFinished()
+            {
+               operation.execute();
+            }
+         });
    }
 
    private void showError(String errorMessage)
@@ -299,17 +305,23 @@ public class ConnectionsPresenter extends BasePresenter
                    @Override
                    public void execute(final ConnectionOptions result)
                    {
-                      terminateShinyApp();
-                      eventBus_.fireEvent(new PerformConnectionEvent(
-                            result.getConnectVia(),
-                            result.getConnectCode()));
+                      terminateShinyApp(new Operation() {
+                         public void execute() {
+                            eventBus_.fireEvent(new PerformConnectionEvent(
+                                  result.getConnectVia(),
+                                  result.getConnectCode()));
+                         }
+                      });
                    }
                  },
                  new Operation() {
                    @Override
                    public void execute()
                    {
-                      terminateShinyApp();
+                      terminateShinyApp(new Operation() {
+                         public void execute() {
+                         }
+                      });
                    }
                  }
                 ).showModal();
@@ -569,6 +581,7 @@ public class ConnectionsPresenter extends BasePresenter
    private final Commands commands_;
    private UIPrefs uiPrefs_;
    private final ConnectionsServerOperations server_ ;
+   private final ApplicationInterrupt applicationInterrupt_;
    
    // client state
    public static final String MODULE_CONNECTIONS = "connections-pane";
