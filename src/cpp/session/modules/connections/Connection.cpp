@@ -71,8 +71,8 @@ json::Object connectionJson(const Connection& connection)
          LOG_ERROR(error);
       else
       {
-         iconData = "data:" + iconPath.mimeContentType("image/png") + "," +
-                    iconData;
+         iconData = "data:" + iconPath.mimeContentType("image/png") + 
+                    ";base64," + iconData;
       }
    }
 

@@ -52,6 +52,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.Base64ImageCell;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -110,7 +111,7 @@ public class ConnectionsPane extends WorkbenchPane
       });
        
       // add type column
-      typeColumn_ = new Column<Connection, String>(new ImageCell())
+      typeColumn_ = new Column<Connection, String>(new Base64ImageCell())
       {
          @Override
          public String getValue(Connection connection)
