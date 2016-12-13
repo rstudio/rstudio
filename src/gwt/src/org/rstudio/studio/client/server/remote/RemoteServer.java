@@ -4832,53 +4832,51 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_CONNECTION, id, callback);
    }
    
-   public void getDisconnectCode(Connection connection, 
+   public void getDisconnectCode(ConnectionId connectionId, 
                                  ServerRequestCallback<String> callback)
    {
-      sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connection, callback);
+      sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connectionId, callback);
    }
    
-   
-   public void showSparkLog(Connection connection, 
+   @Override
+   public void connectionExecuteAction(ConnectionId connection, 
+                            String action,
                             ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, SHOW_SPARK_LOG, connection, callback);
-   }
-   
-   public void showSparkUI(Connection connection, 
-                           ServerRequestCallback<Void> callback)
-   {
-      sendRequest(RPC_SCOPE, SHOW_SPARK_UI, connection, callback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connection));
+      params.set(1, new JSONString(action));
+      sendRequest(RPC_SCOPE, CONNECTION_EXECUTE_ACTION, params, callback);
    }
    
    @Override
    public void connectionListTables(
-                              Connection connection,
+                              ConnectionId connectionId,
                               ServerRequestCallback<JsArrayString> callback)
    {
-      sendRequest(RPC_SCOPE, CONNECTION_LIST_TABLES, connection, callback);
+      sendRequest(RPC_SCOPE, CONNECTION_LIST_TABLES, connectionId, callback);
       
    }
 
    @Override
    public void connectionListFields(
-                              Connection connection, 
+                              ConnectionId connectionId, 
                               String table,
                               ServerRequestCallback<JsArray<Field>> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONObject(connection));
+      params.set(0, new JSONObject(connectionId));
       params.set(1, new JSONString(table));
       sendRequest(RPC_SCOPE, CONNECTION_LIST_FIELDS, params, callback);
    }
    
    @Override
-   public void connectionPreviewTable(Connection connection,
+   public void connectionPreviewTable(ConnectionId connectionId,
                                       String table,
                                       ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONObject(connection));
+      params.set(0, new JSONObject(connectionId));
       params.set(1, new JSONString(table));
       sendRequest(RPC_SCOPE, CONNECTION_PREVIEW_TABLE, params, callback);
    }
@@ -5289,8 +5287,7 @@ public class RemoteServer implements Server
    
    private static final String REMOVE_CONNECTION = "remove_connection";
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
-   private static final String SHOW_SPARK_LOG = "show_spark_log";
-   private static final String SHOW_SPARK_UI = "show_spark_ui";
+   private static final String CONNECTION_EXECUTE_ACTION = "connection_execute_action";
    private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
    private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
    private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";

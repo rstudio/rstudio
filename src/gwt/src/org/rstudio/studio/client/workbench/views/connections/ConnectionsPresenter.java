@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnec
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
@@ -84,6 +85,9 @@ public class ConnectionsPresenter extends BasePresenter
       
       HandlerRegistration addExploreConnectionHandler(
                                        ExploreConnectionEvent.Handler handler); 
+      
+      HandlerRegistration addExecuteConnectionActionHandler(
+            ExecuteConnectionActionEvent.Handler handler);
       
       void showConnectionExplorer(Connection connection, String connectVia);
       void setExploredConnection(Connection connection);
@@ -148,7 +152,20 @@ public class ConnectionsPresenter extends BasePresenter
          {
             showAllConnections(true);
          }
+      });
+      
+      
+      display_.addExecuteConnectionActionHandler(
+            new ExecuteConnectionActionEvent.Handler()
+      {
          
+         @Override
+         public void onExecuteConnectionAction(
+               ExecuteConnectionActionEvent event)
+         {
+            server_.connectionExecuteAction(event.getConnectionId(), 
+                  event.getAction(), new VoidServerRequestCallback());
+         }
       });
       
       // events
@@ -377,7 +394,7 @@ public class ConnectionsPresenter extends BasePresenter
                               globalDisplay_, 100, "Previewing table...");
       
       server_.connectionPreviewTable(
-         exploredConnection_, 
+         exploredConnection_.getId(), 
          event.getDataset(),
          new VoidServerRequestCallback(progress.getIndicator())); 
    }
@@ -423,7 +440,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.getDisconnectCode(exploredConnection_, 
+            server_.getDisconnectCode(exploredConnection_.getId(), 
                   new SimpleRequestCallback<String>() {
                @Override
                public void onResponseReceived(String disconnectCode)
@@ -460,36 +477,6 @@ public class ConnectionsPresenter extends BasePresenter
       
       display_.updateExploredConnection("");
    }
-   
-   
-   @Handler
-   public void onSparkLog()
-   {
-      if (exploredConnection_ == null)
-         return;
-      
-      server_.showSparkLog(exploredConnection_, 
-                           new VoidServerRequestCallback());
-      
-   }
-   
-   @Handler
-   public void onSparkUI()
-   {
-      if (exploredConnection_ == null)
-         return;
-      
-      server_.showSparkUI(exploredConnection_, 
-                          new VoidServerRequestCallback());
-      
-   }
-   
-   @Handler
-   public void onSparkHelp()
-   {
-      globalDisplay_.openRStudioLink("using_spark", false);
-   }
-   
    
    private void showAllConnections(boolean animate)
    {
@@ -545,16 +532,14 @@ public class ConnectionsPresenter extends BasePresenter
          boolean connected = isConnected(exploredConnection_.getId());
          commands_.removeConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
-         commands_.sparkLog().setVisible(connected);
-         commands_.sparkUI().setVisible(connected);
+         // TODO: show connection actions
          commands_.refreshConnection().setVisible(connected);
       }
       else
       {
          commands_.removeConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
-         commands_.sparkLog().setVisible(false);
-         commands_.sparkUI().setVisible(false);
+         // TODO: hide connection actions
          commands_.refreshConnection().setVisible(false);
       }
    }
@@ -600,7 +585,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    // client state
    public static final String MODULE_CONNECTIONS = "connections-pane";
-   private static final String KEY_EXPLORED_CONNECTION = "exploredConnection";
+   private static final String KEY_EXPLORED_CONNECTION = "exploredConnections";
    private Connection exploredConnection_;
    private Connection lastExploredConnection_;
    

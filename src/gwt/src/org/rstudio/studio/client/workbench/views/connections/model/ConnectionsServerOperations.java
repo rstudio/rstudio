@@ -27,23 +27,21 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
  
-   void getDisconnectCode(Connection connection, 
+   void getDisconnectCode(ConnectionId connectionId, 
                           ServerRequestCallback<String> callback);
    
-   void showSparkLog(Connection connection, 
-                     ServerRequestCallback<Void> callback);
+   void connectionExecuteAction(ConnectionId connectionId, 
+                                String action,
+                                ServerRequestCallback<Void> callback);
    
-   void showSparkUI(Connection connection, 
-                    ServerRequestCallback<Void> callback);
-   
-   void connectionListTables(Connection connection,
+   void connectionListTables(ConnectionId connectionId,
                              ServerRequestCallback<JsArrayString> callback);
    
-   void connectionListFields(Connection connection,
+   void connectionListFields(ConnectionId connectionId,
                              String table,
                              ServerRequestCallback<JsArray<Field>> callback);
    
-   void connectionPreviewTable(Connection connection,
+   void connectionPreviewTable(ConnectionId connectionId,
                                String table,
                                ServerRequestCallback<Void> callback);
    
