@@ -26,7 +26,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog.Resources;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -67,11 +66,5 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    protected ConnectionOptions collectInput()
    {
       return null;
-   }
-   
-   public static Resources RES = GWT.create(Resources.class);
-   public static void ensureStylesInjected() 
-   {
-      RES.styles().ensureInjected();
    }
 }

@@ -32,7 +32,6 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
