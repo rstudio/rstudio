@@ -47,4 +47,8 @@ public class Connection extends JavaScriptObject
    public final native double getLastUsed() /*-{
       return this.last_used;
    }-*/;
+   
+   public final native String getIconData() /*-{
+      return this.icon_data;
+   }-*/;
 }

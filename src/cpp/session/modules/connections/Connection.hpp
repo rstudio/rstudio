@@ -68,11 +68,13 @@ struct Connection
    Connection(const ConnectionId& id,
               const std::string& connectCode,
               const std::string& displayName,
+              const std::string& icon,
               const std::vector<ConnectionAction>& actions,
               double lastUsed)
       : id(id),
         connectCode(connectCode),
         displayName(displayName),
+        icon(icon),
         actions(actions),
         lastUsed(lastUsed)
    {
@@ -83,6 +85,7 @@ struct Connection
    ConnectionId id;
    std::string connectCode;
    std::string displayName;
+   std::string icon;
    std::vector<ConnectionAction> actions;
    double lastUsed;
 };

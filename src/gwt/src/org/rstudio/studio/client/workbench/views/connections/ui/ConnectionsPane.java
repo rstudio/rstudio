@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.google.gwt.cell.client.ImageResourceCell;
+import com.google.gwt.cell.client.ImageCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -35,7 +35,6 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -47,7 +46,7 @@ import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
@@ -111,11 +110,14 @@ public class ConnectionsPane extends WorkbenchPane
       });
        
       // add type column
-      typeColumn_ = new Column<Connection, ImageResource>(new ImageResourceCell()) {
+      typeColumn_ = new Column<Connection, String>(new ImageCell())
+      {
          @Override
-         public ImageResource getValue(Connection object)
+         public String getValue(Connection connection)
          {
-            return RES.spark();
+            if (StringUtil.isNullOrEmpty(connection.getIconData()))
+               return null;
+            return connection.getIconData();
          }
       };
          
@@ -609,7 +611,7 @@ public class ConnectionsPane extends WorkbenchPane
    
    private Connection exploredConnection_ = null;
    
-   private final Column<Connection, ImageResource> typeColumn_;
+   private final Column<Connection, String> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
    private final TextColumn<Connection> statusColumn_;
   
@@ -634,8 +636,6 @@ public class ConnectionsPane extends WorkbenchPane
       Styles dataGridStyle();
         
       ImageResource connectionExploreButton();
-      
-      ImageResource spark();
    }
    
    public interface Styles extends RStudioDataGridStyle

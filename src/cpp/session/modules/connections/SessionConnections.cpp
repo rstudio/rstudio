@@ -54,11 +54,12 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
 {
    // read params -- note that these attributes are already guaranteed to
    // exist as we validate the S3 object on the R side
-   std::string type, host, connectCode, displayName;
+   std::string type, host, connectCode, displayName, icon;
    r::sexp::getNamedListElement(connectionSEXP, "type", &type);
    r::sexp::getNamedListElement(connectionSEXP, "host", &host);
    r::sexp::getNamedListElement(connectionSEXP, "connectCode", &connectCode);
    r::sexp::getNamedListElement(connectionSEXP, "displayName", &displayName);
+   r::sexp::getNamedListElement(connectionSEXP, "icon", &icon);
 
    // extract actions -- marshal R list (presuming we have one, as some
    // connections won't) into internal representation
@@ -103,7 +104,7 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
 
    // create connection object
    Connection connection(ConnectionId(type, host), connectCode, displayName,
-                         actions, date_time::millisecondsSinceEpoch());
+                         icon, actions, date_time::millisecondsSinceEpoch());
 
    // update connection history
    connectionHistory().update(connection);
@@ -111,7 +112,7 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
    // update active connections
    activeConnections().add(connection.id);
 
-   // fire connection opended event
+   // fire connection opened event
    ClientEvent event(client_events::kConnectionOpened,
                      connectionJson(connection));
    module_context::enqueClientEvent(event);

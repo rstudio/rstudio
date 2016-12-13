@@ -17,6 +17,8 @@
 
 #include <boost/foreach.hpp>
 
+#include <core/Base64.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -59,12 +61,30 @@ json::Object connectionJson(const Connection& connection)
       actions.push_back(connectionActionJson(action));
    }
 
+   // read the icon file if present for in-place serialization
+   FilePath iconPath = module_context::resolveAliasedPath(connection.icon);
+   std::string iconData;
+   if (iconPath.exists()) 
+   {
+      Error error = base64::encode(iconPath, &iconData);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         iconData = "data:" + iconPath.mimeContentType("image/png") + "," +
+                    iconData;
+      }
+   }
+
    json::Object connectionJson;
-   connectionJson["id"] = connectionIdJson(connection.id);
+   connectionJson["id"]           = connectionIdJson(connection.id);
    connectionJson["connect_code"] = connection.connectCode;
    connectionJson["display_name"] = connection.displayName;
-   connectionJson["last_used"] = connection.lastUsed;
-   connectionJson["actions"] = actions;
+   connectionJson["last_used"]    = connection.lastUsed;
+   connectionJson["actions"]      = actions;
+   connectionJson["icon_path"]    = connection.icon;
+   connectionJson["icon_data"]    = iconData;
+
    return connectionJson;
 }
 
@@ -101,6 +121,7 @@ Error connectionFromJson(const json::Object& connectionJson,
             "connect_code", &(pConnection->connectCode),
             "display_name", &(pConnection->displayName),
             "actions", &actions,
+            "icon_path", &(pConnection->icon),
             "last_used", &(pConnection->lastUsed));
 
    // read each action
