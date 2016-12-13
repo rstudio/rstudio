@@ -21,6 +21,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
+// the maximum size, in bytes, of package-provided icons 
+#define kMaxIconSize 10240
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -64,7 +67,7 @@ json::Object connectionJson(const Connection& connection)
    // read the icon file if present for in-place serialization
    FilePath iconPath = module_context::resolveAliasedPath(connection.icon);
    std::string iconData;
-   if (iconPath.exists()) 
+   if (iconPath.exists() && iconData.size() < kMaxIconSize) 
    {
       Error error = base64::encode(iconPath, &iconData);
       if (error)

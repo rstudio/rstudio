@@ -20,12 +20,34 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class Base64ImageCell extends AbstractCell<String>
 {
+   public Base64ImageCell()
+   {
+      width_ = 0;
+      height_ = 0;
+   }
+   
+   public Base64ImageCell(int width, int height)
+   {
+      width_  = width;
+      height_ = height;
+   }
+
    @Override
    public void render(com.google.gwt.cell.client.Cell.Context ctx, String value,
          SafeHtmlBuilder builder)
    {
       if (value != null)
-         builder.appendHtmlConstant("<img src=\"" + value + "\" />");
+      {
+         builder.appendHtmlConstant("<img src=\"" + value + "\"");
+         // apply width and height if specified
+         if (width_ > 0)
+            builder.appendHtmlConstant(" width=\"" + width_ + "\"");
+         if (height_ > 0)
+            builder.appendHtmlConstant(" height=\"" + height_ + "\"");
+         builder.appendHtmlConstant("/>");
+      }
    }
    
+   private final int width_;
+   private final int height_;
 }

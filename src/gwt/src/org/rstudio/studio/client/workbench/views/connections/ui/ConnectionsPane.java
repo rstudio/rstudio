@@ -110,8 +110,8 @@ public class ConnectionsPane extends WorkbenchPane
          }
       });
        
-      // add type column
-      typeColumn_ = new Column<Connection, String>(new Base64ImageCell())
+      // add type column; this is a package-provided image we scale to 16x16 
+      typeColumn_ = new Column<Connection, String>(new Base64ImageCell(16, 16))
       {
          @Override
          public String getValue(Connection connection)
