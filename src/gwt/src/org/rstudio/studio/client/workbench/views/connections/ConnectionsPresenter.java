@@ -62,7 +62,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -299,7 +299,7 @@ public class ConnectionsPresenter extends BasePresenter
             protected void onSuccess(final NewConnectionContext context)
             {
                 // show dialog
-                new NewConnectionDialog(
+                new NewConnectionWizard(
                  context,
                  new OperationWithInput<ConnectionOptions>() {
                    @Override
