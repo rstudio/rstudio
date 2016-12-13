@@ -27,7 +27,11 @@ public class ConnectionAction extends JavaScriptObject
       return this.name;
    }-*/;
    
-   public final native String getIcon() /*-{
-      return this.icon;
+   public final native String getIconPath() /*-{
+      return this.icon_path;
+   }-*/;
+
+   public final native String getIconData() /*-{
+      return this.icon_data;
    }-*/;
 }

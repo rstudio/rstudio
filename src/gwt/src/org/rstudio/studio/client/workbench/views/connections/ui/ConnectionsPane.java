@@ -29,6 +29,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
@@ -53,6 +54,7 @@ import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.Base64ImageCell;
+import org.rstudio.core.client.widget.Base64ImageResource;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -555,8 +557,17 @@ public class ConnectionsPane extends WorkbenchPane
          for (int i = 0; i < connection.getActions().length(); i++)
          {
             final ConnectionAction action = connection.getActions().get(i);
+            
             ToolbarButton button = new ToolbarButton(action.getName(), 
-                  (ImageResource)null, 
+                  // use the supplied base64 icon data if it was provided
+                  StringUtil.isNullOrEmpty(action.getIconData()) ?
+                        null :
+                        new Base64ImageResource(
+                              action.getName(), 
+                              action.getIconData(), 
+                              20, 18),
+                        
+                  // invoke the action when the button is clicked
                   new ClickHandler()
                   {
                      @Override
@@ -566,7 +577,11 @@ public class ConnectionsPane extends WorkbenchPane
                               connection.getId(), action.getName()));
                      }
                   });
-            button.getElement().getStyle().setMarginTop(-5, Unit.PX);
+            
+            // move the toolbar button up 5px to account for missing icon if
+            // none was supplied
+            if (StringUtil.isNullOrEmpty(action.getIconData()))
+               button.getElement().getStyle().setMarginTop(-5, Unit.PX);
             toolbar_.addLeftWidget(button);
             toolbar_.addLeftSeparator();
          }

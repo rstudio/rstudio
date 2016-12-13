@@ -21,8 +21,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-// the maximum size, in bytes, of package-provided icons 
-#define kMaxIconSize 10240
+// max icon size is 5k; this prevents packages that haven't saved/scaled
+// their icons properly from causing performance trouble downstream
+#define kMaxIconSize 5 * 1048
 
 using namespace rstudio::core;
 
@@ -33,11 +34,38 @@ namespace connections {
 
 namespace {
 
+// given a path to an icon on disk, return the icon's contents as a
+// base64-encoded image if an eligible image exists at the path
+std::string base64IconData(const std::string& iconPath)
+{
+   // shortcut to empty string if no icon path specified
+   if (iconPath.empty())
+      return std::string();
 
+   // expand the path 
+   FilePath icon = module_context::resolveAliasedPath(iconPath);
+   std::string iconData;
 
+   // ensure that the icon file exists and is a small GIF, JPG, or PNG image
+   if (icon.exists() && icon.size() < kMaxIconSize &&
+       (icon.hasExtensionLowerCase(".gif") ||
+        icon.hasExtensionLowerCase(".png") ||
+        icon.hasExtensionLowerCase(".jpg") ||
+        icon.hasExtensionLowerCase(".jpeg")))
+   {
+      Error error = base64::encode(icon, &iconData);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         iconData = "data:" + icon.mimeContentType("image/png") + 
+                    ";base64," + iconData;
+      }
+   }
+   return iconData;
+}
 
 } // anonymous namespace
-
 
 json::Object connectionIdJson(const ConnectionId& id)
 {
@@ -51,7 +79,8 @@ json::Object connectionActionJson(const ConnectionAction& action)
 {
    json::Object actionJson;
    actionJson["name"] = action.name;
-   actionJson["icon"] = action.icon;
+   actionJson["icon_path"] = action.icon;
+   actionJson["icon_data"] = base64IconData(action.icon);
    return actionJson;
 }
 
@@ -64,21 +93,6 @@ json::Object connectionJson(const Connection& connection)
       actions.push_back(connectionActionJson(action));
    }
 
-   // read the icon file if present for in-place serialization
-   FilePath iconPath = module_context::resolveAliasedPath(connection.icon);
-   std::string iconData;
-   if (iconPath.exists() && iconData.size() < kMaxIconSize) 
-   {
-      Error error = base64::encode(iconPath, &iconData);
-      if (error)
-         LOG_ERROR(error);
-      else
-      {
-         iconData = "data:" + iconPath.mimeContentType("image/png") + 
-                    ";base64," + iconData;
-      }
-   }
-
    json::Object connectionJson;
    connectionJson["id"]           = connectionIdJson(connection.id);
    connectionJson["connect_code"] = connection.connectCode;
@@ -86,7 +100,7 @@ json::Object connectionJson(const Connection& connection)
    connectionJson["last_used"]    = connection.lastUsed;
    connectionJson["actions"]      = actions;
    connectionJson["icon_path"]    = connection.icon;
-   connectionJson["icon_data"]    = iconData;
+   connectionJson["icon_data"]    = base64IconData(connection.icon);
 
    return connectionJson;
 }
@@ -96,7 +110,7 @@ Error actionFromJson(const json::Object& actionJson,
 {
    return json::readObject(actionJson,
          "name", &(pAction->name),
-         "icon", &(pAction->icon));
+         "icon_path", &(pAction->icon));
 }
 
 Error connectionIdFromJson(const json::Object& connectionIdJson,
