@@ -33,6 +33,8 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
@@ -299,32 +301,37 @@ public class ConnectionsPresenter extends BasePresenter
             protected void onSuccess(final NewConnectionContext context)
             {
                 // show dialog
-                new NewConnectionWizard(
+               NewConnectionWizard newConnectionWizard = new NewConnectionWizard(
                  context,
-                 new OperationWithInput<ConnectionOptions>() {
-                   @Override
-                   public void execute(final ConnectionOptions result)
-                   {
-                      terminateShinyApp(new Operation() {
-                         public void execute() {
-                            eventBus_.fireEvent(new PerformConnectionEvent(
-                                  result.getConnectVia(),
-                                  result.getConnectCode()));
-                         }
-                      });
-                   }
+                 new ProgressOperationWithInput<ConnectionOptions>() {
+                    @Override
+                    public void execute(ConnectionOptions input,
+                                        ProgressIndicator indicator)
+                    {
+                       terminateShinyApp(new Operation() {
+                          public void execute() {
+                             /*
+                             eventBus_.fireEvent(new PerformConnectionEvent(
+                             result.getConnectVia(),
+                             result.getConnectCode()));
+                             */
+                          }
+                       });
+                    }
                  },
                  new Operation() {
-                   @Override
-                   public void execute()
-                   {
-                      terminateShinyApp(new Operation() {
-                         public void execute() {
-                         }
-                      });
-                   }
+                    @Override
+                    public void execute()
+                    {
+                       terminateShinyApp(new Operation() {
+                          public void execute() {
+                          }
+                       });
+                    }
                  }
-                ).showModal();
+               );
+               
+               newConnectionWizard.showModal();
             }
          });      
    }

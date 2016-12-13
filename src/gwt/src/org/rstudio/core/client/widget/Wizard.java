@@ -45,7 +45,17 @@ public class Wizard<I,T> extends ModalDialog<T>
                  WizardPage<I, T> firstPage,
                  final ProgressOperationWithInput<T> operation)
    {
-      super(caption, operation);
+      this(caption, okCaption, initialData, firstPage, operation, null);
+   }
+
+   public Wizard(String caption, 
+                 String okCaption,
+                 I initialData,
+                 WizardPage<I, T> firstPage,
+                 final ProgressOperationWithInput<T> operation,
+                 Operation cancelOperation)
+   {
+      super(caption, operation, cancelOperation);
       initialData_ = initialData;
       okCaption_ = okCaption;
       firstPage_ = firstPage;

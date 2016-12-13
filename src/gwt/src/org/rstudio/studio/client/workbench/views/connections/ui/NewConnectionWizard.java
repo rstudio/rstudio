@@ -15,13 +15,13 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.Wizard;
+import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -29,11 +29,9 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog.Resources;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class NewConnectionWizard extends ModalDialog<ConnectionOptions>
+public class NewConnectionWizard extends Wizard<NewConnectionContext, ConnectionOptions>
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
@@ -42,40 +40,27 @@ public class NewConnectionWizard extends ModalDialog<ConnectionOptions>
                            ConnectionsServerOperations server)
    {
    }
-   
+
    public NewConnectionWizard(NewConnectionContext context,
-                              OperationWithInput<ConnectionOptions> operation,
+                              ProgressOperationWithInput<ConnectionOptions> operation,
                               Operation cancelOperation)
    {
-      super("New Connection", operation, cancelOperation);
-      RStudioGinjector.INSTANCE.injectMembers(this);
-           
-      HelpLink helpLink = new HelpLink(
-            "Creating New Connections",
-            "new_connections",
-            false);
-      helpLink.addStyleName(RES.styles().helpLink());
-      addLeftWidget(helpLink);   
+      super(
+         "New Connection",
+         "OK",
+         context,
+         createFirstPage(context),
+         operation,
+         cancelOperation
+      );
+
+      RStudioGinjector.INSTANCE.injectMembers(this); 
    }
    
-   @Override
-   protected void onDialogShown()
+   private static WizardPage<NewConnectionContext, ConnectionOptions>
+      createFirstPage(NewConnectionContext input)
    {
-      super.onDialogShown();
-   }
-   
-   @Override
-   protected boolean validate(ConnectionOptions result)
-   {
-      return true;
-   }
-   
-   @Override
-   protected Widget createMainWidget()
-   {
-      VerticalPanel container = new VerticalPanel();    
-     
-      return container;
+      return new NewConnectionNavigationPage("New Connection", "OK", null, input);
    }
 
    @Override
