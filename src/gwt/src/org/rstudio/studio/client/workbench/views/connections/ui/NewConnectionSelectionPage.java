@@ -27,9 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 public class NewConnectionSelectionPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionSelectionPage()
+   public NewConnectionSelectionPage(String connectionName)
    {
-      super("New Connection", "Select Connection", "OK", null, null);
+      super(connectionName, "", connectionName + " Connection", null, null);
    }
 
    @Override

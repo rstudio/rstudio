@@ -31,7 +31,7 @@ public class NewConnectionNavigationPage
                                       ImageResource icon,
                                       NewConnectionContext input)
    {
-      super(title, subTitle, "New Connection", 
+      super(title, subTitle, "Create Connection", 
             icon, null, createPages(input));
    }
    
@@ -44,7 +44,7 @@ public class NewConnectionNavigationPage
                            new ArrayList<WizardPage<NewConnectionContext, 
                                                     ConnectionOptions>>();
 
-      pages.add(new NewConnectionSelectionPage());
+      pages.add(new NewConnectionSelectionPage("Spark"));
 
       return pages;
    }
