@@ -1,7 +1,7 @@
 /*
- * NewConnectionPage.java
+ * NewConnectionShinyHost.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -44,14 +45,16 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class NewConnectionPage extends WizardPage<NewConnectionContext, ConnectionOptions>
-                                implements ShinyFrameNavigatedEvent.Handler,
-                                           NewConnectionDialogUpdatedEvent.Handler
+public class NewConnectionShinyHost extends Composite
+                                    implements ShinyFrameNavigatedEvent.Handler,
+                                               NewConnectionDialogUpdatedEvent.Handler
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
@@ -63,19 +66,23 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
-
-      events.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
-      events.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
    }
    
-   public NewConnectionPage(NewConnectionContext context,
-                            OperationWithInput<ConnectionOptions> operation,
-                            Operation cancelOperation)
+   public void onActivate(ProgressIndicator indicator)
    {
-      super("New Connection", "", "", null, null);
+      events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
+      events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
+      
+      initialize();
+   }
+   
+   public NewConnectionShinyHost(NewConnectionContext context)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       context_ = context;
+      
+      initWidget(createWidget());
       
       // setOkButtonCaption("Connect");
            
@@ -84,7 +91,7 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
             "using_spark",
             false);
       helpLink.addStyleName(RES.styles().helpLink());
-      // addLeftWidget(helpLink);   
+      // addLeftWidget(helpLink);
    }
 
    private void showError(String errorMessage)
@@ -92,8 +99,7 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
       globalDisplay_.showErrorMessage("Error", errorMessage);
    }
    
-   @Override
-   protected void initialize(NewConnectionContext initData)
+   private void initialize()
    {
       // initialize miniUI
       server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<RResult<Void>>()
@@ -117,14 +123,7 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
       });
    }
    
-   @Override
-   protected boolean validate(ConnectionOptions result)
-   {
-      return true;
-   }
-   
-   @Override
-   protected Widget createWidget()
+   private Widget createWidget()
    {
       VerticalPanel container = new VerticalPanel();    
       
@@ -176,7 +175,6 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
       return container;
    }
 
-   @Override
    protected ConnectionOptions collectInput()
    {
       // collect the result
@@ -205,11 +203,6 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
       codePanel_.setCode(event.getCode(), "");
    }
    
-   @Override
-   public void focus()
-   {
-   }
-   
    public interface Styles extends CssResource
    {
       String helpLink();
@@ -223,7 +216,7 @@ public class NewConnectionPage extends WizardPage<NewConnectionContext, Connecti
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionPage.css")
+      @Source("NewConnectionShinyHost.css")
       Styles styles();
    }
    

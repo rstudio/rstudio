@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.rsconnect.RSConnect;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 
@@ -35,7 +33,6 @@ public class NewConnectionSelectionPage
    @Override
    public void focus()
    {
-      contents_.focus();
    }
    
    @Override
@@ -47,8 +44,7 @@ public class NewConnectionSelectionPage
    @Override
    protected Widget createWidget()
    {
-      contents_ = new RSConnectDeploy(null, RSConnect.CONTENT_TYPE_NONE, 
-            null, true);
+      contents_ = new NewConnectionShinyHost(context_);
       
       return contents_;
    }
@@ -56,6 +52,7 @@ public class NewConnectionSelectionPage
    @Override
    protected void initialize(NewConnectionContext initData)
    {
+      context_ = initData;
    }
 
    @Override
@@ -70,5 +67,6 @@ public class NewConnectionSelectionPage
    {
    }
    
-   private RSConnectDeploy contents_;
+   private NewConnectionShinyHost contents_;
+   private NewConnectionContext context_;
 }
