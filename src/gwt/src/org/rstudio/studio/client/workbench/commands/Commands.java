@@ -446,9 +446,6 @@ public abstract class
    public abstract AppCommand removeConnection();
    public abstract AppCommand disconnectConnection();
    public abstract AppCommand refreshConnection();
-   public abstract AppCommand sparkLog();
-   public abstract AppCommand sparkUI();
-   public abstract AppCommand sparkHelp();
    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();
