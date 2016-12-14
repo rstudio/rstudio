@@ -83,7 +83,8 @@ import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowserModel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
@@ -195,7 +196,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CppCompletion completion);
    void injectMembers(ConsoleTabPanel consoleTabPanel);
    void injectMembers(VirtualConsole console);
-   void injectMembers(NewConnectionDialog newConnectionDialog);
+   void injectMembers(NewConnectionShinyHost newConnectionShinyHost);
    void injectMembers(ConnectionCodePanel connectionCodePanel);
    void injectMembers(ConnectionExplorer connectionExplorer);
    void injectMembers(TableBrowser tableBrowser);
@@ -211,6 +212,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ShellSecureInput userInputEncryption);
    void injectMembers(TerminalPopupMenu menu);
    void injectMembers(TerminalList terminalList);
+   void injectMembers(NewConnectionWizard newConnectionWizard);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

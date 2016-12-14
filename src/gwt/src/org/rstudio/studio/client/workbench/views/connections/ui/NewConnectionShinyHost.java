@@ -1,7 +1,7 @@
 /*
- * NewConnectionDialog.java
+ * NewConnectionShinyHost.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,15 +18,13 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
@@ -34,12 +32,12 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -47,47 +45,78 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
-                                 implements ShinyFrameNavigatedEvent.Handler,
-                                            NewConnectionDialogUpdatedEvent.Handler
+public class NewConnectionShinyHost extends Composite
+                                    implements ShinyFrameNavigatedEvent.Handler,
+                                               NewConnectionDialogUpdatedEvent.Handler
 {
    @Inject
    private void initialize(UIPrefs uiPrefs,
                            EventBus events,
                            GlobalDisplay globalDisplay,
-                           ConnectionsServerOperations server)
+                           ConnectionsServerOperations server,
+                           Commands commands,
+                           ApplicationInterrupt applicationInterrupt)
    {
       uiPrefs_ = uiPrefs;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      commands_ = commands;
+      applicationInterrupt_ = applicationInterrupt;
+   }
 
-      events.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
-      events.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
+   public void onBeforeActivate(Operation operation)
+   {
+      events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
+      events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
+      
+      initialize(operation);
    }
    
-   public NewConnectionDialog(NewConnectionContext context,
-                              OperationWithInput<ConnectionOptions> operation,
-                              Operation cancelOperation)
+   public void onActivate(ProgressIndicator indicator)
    {
-      super("New Connection", operation, cancelOperation);
+   }
+
+   private void terminateShinyApp(final Operation operation)
+   {
+      if (commands_.interruptR().isEnabled())
+         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
+         {
+            @Override
+            public void onInterruptFinished()
+            {
+               operation.execute();
+            }
+         });
+   }
+
+   public void onDeactivate(Operation operation)
+   {
+      terminateShinyApp(operation);
+   }
+   
+   public NewConnectionShinyHost(NewConnectionContext context)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       context_ = context;
       
-      setOkButtonCaption("Connect");
+      initWidget(createWidget());
+      
+      // setOkButtonCaption("Connect");
            
       HelpLink helpLink = new HelpLink(
             "Using Spark with RStudio",
             "using_spark",
             false);
       helpLink.addStyleName(RES.styles().helpLink());
-      addLeftWidget(helpLink);   
+      // addLeftWidget(helpLink);
    }
 
    private void showError(String errorMessage)
@@ -95,12 +124,8 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       globalDisplay_.showErrorMessage("Error", errorMessage);
    }
    
-   @Override
-   protected void onDialogShown()
+   private void initialize(final Operation operation)
    {
-      super.onDialogShown();
-      frame_.getWindow().focus();
-
       // initialize miniUI
       server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<RResult<Void>>()
       {
@@ -109,7 +134,9 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
          {
             if (response.failed()) {
                showError(response.errorMessage());
-               closeDialog();
+            }
+            else {
+               operation.execute();
             }
          }
 
@@ -117,20 +144,11 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            showError(error.getUserMessage());
-            closeDialog();
          }
       });
    }
    
-   @Override
-   protected boolean validate(ConnectionOptions result)
-   {
-      return true;
-   }
-   
-   @Override
-   protected Widget createMainWidget()
+   private Widget createWidget()
    {
       VerticalPanel container = new VerticalPanel();    
       
@@ -147,10 +165,10 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
          @Override
          public void execute()
          {
-            if (codePanel_.getConnectVia().equals(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
-               setOkButtonCaption("Copy");
-            else
-               setOkButtonCaption("Connect");
+            // if (codePanel_.getConnectVia().equals(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
+            //   setOkButtonCaption("Copy");
+            //else
+            //   setOkButtonCaption("Connect");
          }
       };
 
@@ -182,8 +200,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
       return container;
    }
 
-   @Override
-   protected ConnectionOptions collectInput()
+   public ConnectionOptions collectInput()
    {
       // collect the result
       ConnectionOptions result = ConnectionOptions.create(
@@ -224,7 +241,7 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionDialog.css")
+      @Source("NewConnectionShinyHost.css")
       Styles styles();
    }
    
@@ -243,4 +260,6 @@ public class NewConnectionDialog extends ModalDialog<ConnectionOptions>
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;
+   private Commands commands_;
+   private ApplicationInterrupt applicationInterrupt_;
 }
