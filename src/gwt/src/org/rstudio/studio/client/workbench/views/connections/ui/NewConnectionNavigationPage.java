@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 
@@ -29,22 +30,28 @@ public class NewConnectionNavigationPage
    public NewConnectionNavigationPage(String title,
                                       String subTitle,
                                       ImageResource icon,
-                                      NewConnectionContext input)
+                                      NewConnectionContext context)
    {
       super(title, subTitle, "Create Connection", 
-            icon, null, createPages(input));
+            icon, null, createPages(context));
    }
    
    private static ArrayList<WizardPage<NewConnectionContext, 
                                        ConnectionOptions>> 
-           createPages(NewConnectionContext input)
+           createPages(NewConnectionContext context)
    {
       ArrayList<WizardPage<NewConnectionContext, 
                            ConnectionOptions>> pages =
                            new ArrayList<WizardPage<NewConnectionContext, 
                                                     ConnectionOptions>>();
 
-      pages.add(new NewConnectionShinyPage("Spark"));
+      for(NewConnectionInfo connectionInfo: context.getConnectionsList()) {
+         switch(connectionInfo.getType()) {
+            case "Shiny":
+              pages.add(new NewConnectionShinyPage(connectionInfo.getName()));
+              break;
+         }
+      }
 
       return pages;
    }

@@ -161,9 +161,16 @@ options(connectionObserver = list(
 })
 
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
-  context <- list()
+   context <- list(
+      connectionsList = list(
+         list(
+            name = .rs.scalar("Spark"),
+            type = .rs.scalar("Shiny")
+         )
+      )
+   )
 
-  context
+   context
 })
 
 .rs.addFunction("embeddedViewer", function(url)
