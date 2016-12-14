@@ -62,6 +62,7 @@ public class CastOptimizationTest extends OptimizationTestBase {
   }
 
   private static Object field;
+  private static double doubleField = new Random().nextDouble();
 
   private static int randomNumber = new Random().nextInt(42);
 
@@ -123,6 +124,10 @@ public class CastOptimizationTest extends OptimizationTestBase {
     return ((NativeNumber) field);
   }
 
+  public static void castInt() {
+    int num = ((int) doubleField);
+  }
+
   private static native String getGeneratedCastFunctionDefinition() /*-{
     return function() {
       @CastOptimizationTest::castOp()();
@@ -134,6 +139,7 @@ public class CastOptimizationTest extends OptimizationTestBase {
       @CastOptimizationTest::castNativeNumber()();
       @CastOptimizationTest::castNativeArray()();
       @CastOptimizationTest::castNativeObject()();
+      @CastOptimizationTest::castInt()();
     }.toString();
   }-*/;
 
