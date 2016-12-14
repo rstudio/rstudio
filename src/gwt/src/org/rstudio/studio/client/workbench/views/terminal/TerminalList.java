@@ -20,14 +20,19 @@ import java.util.LinkedHashMap;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
+import org.rstudio.studio.client.common.shell.ShellSecureInput;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 /**
  * List of terminals, with sufficient metadata to display a list of
  * available terminals and reconnect to them.
  */
-public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
+public class TerminalList implements Iterable<String>
 {
-   public static class TerminalMetadata
+   private static class TerminalMetadata
    {
       /**
        * Create a TerminalMetadata object
@@ -36,12 +41,37 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
        * @param title terminal title, shown in toolbar above active terminal
        * @param sequence terminal sequence number
        */
-      public TerminalMetadata(String handle, String caption, String title, int sequence)
+      private TerminalMetadata(String handle,
+                               String caption,
+                               String title,
+                               int sequence)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
          title_ = StringUtil.notNull(title);
          sequence_ = sequence;
+      }
+
+      private TerminalMetadata(TerminalMetadata original,
+                               String newTitle)
+      {
+         this(original.handle_, original.caption_, newTitle, original.sequence_);
+      }
+
+      private TerminalMetadata(ConsoleProcessInfo procInfo)
+      {
+         this(procInfo.getHandle(),
+              procInfo.getCaption(),
+              procInfo.getTitle(),
+              procInfo.getTerminalSequence());
+      }
+
+      private TerminalMetadata(TerminalSession term)
+      {
+         this(term.getHandle(),
+              term.getCaption(),
+              term.getTitle(),
+              term.getSequence());
       }
 
       /**
@@ -70,22 +100,78 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
       private String title_;
       private int sequence_;
    }
+   
+   protected TerminalList() {}
+
+   @Inject
+   private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory)
+   {
+      pConsoleProcessFactory_ = pConsoleProcessFactory;
+   }
 
    /**
-    * Append new terminal to the list.
-    * @param terminal terminal metadata to add
+    * Add metadata from supplied TerminalSession
+    * @param terminal terminal to add
     */
-   public void addTerminal(TerminalMetadata terminal)
+   public void addTerminal(TerminalSession terminal)
    {
-      terminals_.put(terminal.getHandle(), terminal);
+      addTerminal(new TerminalMetadata(terminal));
    }
-   
+
+   /**
+    * Add metadata from supplied ConsoleProcessInfo
+    * @param procInfo metadata to add
+    */
+   public void addTerminal(ConsoleProcessInfo procInfo)
+   {
+      addTerminal(new TerminalMetadata(procInfo));
+   }
+
+   /**
+    * Change terminal title.
+    * @param handle handle of terminal
+    * @param title new title
+    * @return true if title was changed, false if it was unchanged
+    */
+   public boolean retitleTerminal(String handle, String title)
+   {
+      TerminalMetadata current = getMetadataForHandle(handle);
+      if (current == null)
+      {
+         return false;
+      }
+
+      if (!current.getTitle().equals(title))
+      {
+         addTerminal(new TerminalMetadata(current, title));
+         return true;
+      }
+      return false;
+   }
+
+   /**
+    * Remove given terminal from the list
+    * @param handle terminal handle
+    */
    void removeTerminal(String handle)
    {
       terminals_.remove(handle);
    }
 
- /**
+   /**
+    * Kill all known terminal server processes, remove them from the server-
+    * side list, and from the client-side list.
+    */
+   void terminateAll()
+   {
+      for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
+      {
+         pConsoleProcessFactory_.get().interruptAndReap(item.getValue().getHandle());
+      }
+      terminals_.clear();
+   }
+
+   /**
     * Number of terminals in cache.
     * @return number of terminals tracked by this object
     */
@@ -116,7 +202,7 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
 
    /**
     * Return terminal handle at given 0-based index
-    * @param handle terminal to find
+    * @param i zero-based index
     * @return handle of terminal at index, or null if invalid index
     */
    public String terminalHandleAtIndex(int i)
@@ -138,18 +224,55 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
     * @param handle handle of terminal of interest
     * @return terminal metadata or null if not found
     */
-   public TerminalMetadata getMetadataForHandle(String handle)
+   private TerminalMetadata getMetadataForHandle(String handle)
    {
       return terminals_.get(handle);
    }
 
+   /**
+    * Initiate startup of a new terminal
+    */
+   public void createNewTerminal()
+   {
+      startTerminal(nextTerminalSequence(), null, null, null);
+   }
+
+   /**
+    * Reconnect to a known terminal.
+    * @param handle
+    * @return true if terminal was known and reconnect initiated
+    */
+   public boolean reconnectTerminal(String handle)
+   {
+      TerminalMetadata existing = getMetadataForHandle(handle);
+      if (existing == null)
+      {
+         return false;
+      }
+
+      startTerminal(existing.getSequence(),
+                    handle,
+                    existing.getCaption(),
+                    existing.getTitle());
+      return true;
+   }
+
+   /**
+    * @param handle handle to find
+    * @return caption for that handle
+    */
+   public String getCaption(String handle)
+   {
+      return getMetadataForHandle(handle).caption_;
+   }
+   
    /**
     * Choose a 1-based sequence number one higher than the highest currently 
     * known terminal number. We don't try to fill gaps if terminals are closed 
     * in the middle of the opened tabs.
     * @return Highest currently known terminal plus one
     */
-   public int nextTerminalSequence()
+   private int nextTerminalSequence()
    {
       int maxNum = ConsoleProcessInfo.SEQUENCE_NO_TERMINAL;
       for (final java.util.Map.Entry<String, TerminalMetadata> item : terminals_.entrySet())
@@ -158,41 +281,35 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
       }
       return maxNum + 1;
    }
-   
-   /**
-    * Remove all terminals from the list
-    */
-   public void clear()
+
+   private ShellSecureInput getSecureInput()
    {
-      terminals_.clear();
+      if (secureInput_ == null)
+      {
+         secureInput_ = new ShellSecureInput();  
+      }
+      return secureInput_;
+   }
+
+   private void startTerminal(int sequence,
+                             String terminalHandle,
+                             String caption,
+                             String title)
+   {
+      TerminalSession newSession = new TerminalSession(
+            getSecureInput(), sequence, terminalHandle, caption, title);
+      newSession.connect();
+   }
+
+   private void addTerminal(TerminalMetadata terminal)
+   {
+      terminals_.put(terminal.getHandle(), terminal);
    }
 
    @Override
-   public Iterator<TerminalMetadata> iterator()
+   public Iterator<String> iterator()
    {
-      return new Iterator<TerminalMetadata>()
-      {
-         private Iterator<java.util.Map.Entry<String, TerminalMetadata>> iterator = 
-               terminals_.entrySet().iterator();
-
-         @Override
-         public boolean hasNext()
-         {
-            return iterator.hasNext();
-         }
-
-         @Override
-         public TerminalMetadata next()
-         {
-            return iterator.next().getValue();
-         }
-         
-         @Override
-         public void remove()
-         {
-            throw new UnsupportedOperationException(); 
-         }
-      };
+      return terminals_.keySet().iterator();
    }
 
    /**
@@ -201,4 +318,9 @@ public class TerminalList implements Iterable<TerminalList.TerminalMetadata>
     */
    private LinkedHashMap<String, TerminalMetadata> terminals_ = 
                 new LinkedHashMap<String, TerminalMetadata>();
+   private ShellSecureInput secureInput_;
+
+   // Injected ----  
+   private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
+
 }

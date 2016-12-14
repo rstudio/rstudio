@@ -22,7 +22,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 
 import com.google.gwt.core.client.Scheduler;
@@ -59,20 +58,22 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
       if (terminals_.terminalCount() > 0)
       {
-         for (final TerminalMetadata item : terminals_)
+         for (final String handle : terminals_)
          {
             Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getHandle()));
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
                }
             };
 
+            String caption = terminals_.getCaption(handle);
+
             String menuHtml = AppCommand.formatMenuLabel(
                   null,              /*icon*/
-                  item.getCaption(), /*label*/
+                  caption,           /*label*/
                   false,             /*html*/
                   null,              /*shortcut*/
                   null,              /*rightImage*/

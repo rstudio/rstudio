@@ -29,17 +29,14 @@ import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalList.TerminalMetadata;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -49,7 +46,6 @@ import com.google.gwt.user.client.ui.DeckLayoutPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 /**
  * Holds the contents of the Terminal pane, including the toolbar and
@@ -75,13 +71,11 @@ public class TerminalPane extends WorkbenchPane
    @Inject
    protected TerminalPane(EventBus events,
                           GlobalDisplay globalDisplay,
-                          Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
       events_ = events;
       globalDisplay_ = globalDisplay;
-      pConsoleProcessFactory_ = pConsoleProcessFactory;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -193,24 +187,7 @@ public class TerminalPane extends WorkbenchPane
          return;
 
       creatingTerminal_ = true;
-      startTerminal(terminals_.nextTerminalSequence(), null, null, null);
-   }
-
-   /**
-    * Start a terminal
-    * @param sequence sequence number to track relative order of terminal creation
-    * @param terminalHandle handle for terminal, or null if starting a new terminal
-    * @param caption terminal caption, or null if starting a new terminal
-    * @param title optional title shown above the terminal pane
-    */
-   public void startTerminal(int sequence,
-                             String terminalHandle,
-                             String caption,
-                             String title)
-   {
-      TerminalSession newSession = new TerminalSession(
-            getSecureInput(), sequence, terminalHandle, caption, title);
-      newSession.connect();
+      terminals_.createNewTerminal();
    }
 
    @Override
@@ -226,15 +203,10 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // add terminal to the dropdown's cache; terminals aren't actually
-      // loaded until selected via the dropdown
+      // connected until selected via the dropdown
       for (ConsoleProcessInfo procInfo : procList)
       {
-         terminals_.addTerminal(
-               new TerminalMetadata(
-                     procInfo.getHandle(),
-                     procInfo.getCaption(), 
-                     procInfo.getTitle(),
-                     procInfo.getTerminalSequence()));
+         terminals_.addTerminal(procInfo);
       }
    }
 
@@ -289,14 +261,10 @@ public class TerminalPane extends WorkbenchPane
    public void terminateAllTerminals()
    {
       // kill any terminal server processes, and remove them from the server-
-      // side list of known processes
-      for (final TerminalMetadata item : terminals_)
-      {
-         pConsoleProcessFactory_.get().interruptAndReap(item.getHandle());
-      }
+      // side list of known processes, and client-side list
+      terminals_.terminateAll();
 
       // set client state back to startup values
-      terminals_.clear();
       creatingTerminal_ = false;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
@@ -366,12 +334,7 @@ public class TerminalPane extends WorkbenchPane
       visibleTerminal.setCaption(newCaption);
       activeTerminalToolbarButton_.setActiveTerminal(
             newCaption, visibleTerminal.getHandle());
-      terminals_.addTerminal(
-            new TerminalMetadata(
-                  visibleTerminal.getHandle(),
-                  visibleTerminal.getCaption(),
-                  visibleTerminal.getTitle(),
-                  visibleTerminal.getSequence()));
+      terminals_.addTerminal(visibleTerminal);
    }
 
    @Override
@@ -379,12 +342,7 @@ public class TerminalPane extends WorkbenchPane
    {
       TerminalSession terminal = event.getTerminalWidget();
 
-      terminals_.addTerminal(
-            new TerminalMetadata(
-                  terminal.getHandle(),
-                  terminal.getCaption(),
-                  terminal.getTitle(),
-                  terminal.getSequence()));
+      terminals_.addTerminal(terminal);
 
       // Check if this is a reconnect of an already displayed terminal, such
       // as after a session suspend/resume.
@@ -436,13 +394,8 @@ public class TerminalPane extends WorkbenchPane
       }
 
       // Reconnect to server?
-      TerminalMetadata existingTerminal = terminals_.getMetadataForHandle(handle);
-      if (existingTerminal != null)
+      if (terminals_.reconnectTerminal(handle))
       {
-         startTerminal(existingTerminal.getSequence(),
-                       handle,
-                       existingTerminal.getCaption(),
-                       existingTerminal.getTitle());
          return;
       }
 
@@ -463,34 +416,27 @@ public class TerminalPane extends WorkbenchPane
          setTerminalTitle(retitledTerm.getTitle());
       }
 
-      TerminalMetadata currentData = terminals_.getMetadataForHandle(retitledTerm.getHandle());
-      if (currentData == null)
-         return;
-
-      if (!currentData.getTitle().equals(retitledTerm.getTitle()))
+      // Update local metadata
+      if (!terminals_.retitleTerminal(retitledTerm.getHandle(),
+                                      retitledTerm.getTitle()))
       {
-         // Update local metadata
-         terminals_.addTerminal(
-               new TerminalMetadata(
-                     currentData.getHandle(),
-                     currentData.getCaption(),
-                     retitledTerm.getTitle(),
-                     currentData.getSequence()));
-
-         // update server
-         server_.processSetTitle(currentData.getHandle(), 
-               retitledTerm.getTitle(),
-               new VoidServerRequestCallback()
-               {
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // failed; this might mean we show the wrong title after
-                     // a reset, but it will update itself fairly quickly
-                     Debug.logError(error);
-                  }
-               });
+         return; // title unchanged
       }
+
+      // update server
+      server_.processSetTitle(
+            retitledTerm.getHandle(), 
+            retitledTerm.getTitle(),
+            new VoidServerRequestCallback()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  // failed; this might mean we show the wrong title after
+                  // a reset, but it will update itself fairly quickly
+                  Debug.logError(error);
+               }
+            });
    }
 
    /**
@@ -590,15 +536,6 @@ public class TerminalPane extends WorkbenchPane
       terminalTitle_.setText(title);
    }
 
-   private ShellSecureInput getSecureInput()
-   {
-      if (secureInput_ == null)
-      {
-         secureInput_ = new ShellSecureInput();  
-      }
-      return secureInput_;
-   }
-
    @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
@@ -639,12 +576,10 @@ public class TerminalPane extends WorkbenchPane
    private TerminalPopupMenu activeTerminalToolbarButton_;
    private final TerminalList terminals_ = new TerminalList();
    private Label terminalTitle_;
-   private ShellSecureInput secureInput_;
    private boolean creatingTerminal_;
 
    // Injected ----  
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
-   private WorkbenchServerOperations server_; 
+   private WorkbenchServerOperations server_;
 }
