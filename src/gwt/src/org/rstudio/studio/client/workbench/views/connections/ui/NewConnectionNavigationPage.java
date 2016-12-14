@@ -44,7 +44,7 @@ public class NewConnectionNavigationPage
                            new ArrayList<WizardPage<NewConnectionContext, 
                                                     ConnectionOptions>>();
 
-      pages.add(new NewConnectionSelectionPage("Spark"));
+      pages.add(new NewConnectionShinyPage("Spark"));
 
       return pages;
    }

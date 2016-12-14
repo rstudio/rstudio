@@ -1,5 +1,5 @@
 /*
- * NewConnectionSelectionPage.java
+ * NewConnectionShinyPage.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
@@ -22,10 +23,10 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class NewConnectionSelectionPage 
+public class NewConnectionShinyPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionSelectionPage(String connectionName)
+   public NewConnectionShinyPage(String connectionName)
    {
       super(connectionName, "", connectionName + " Connection", null, null);
    }
@@ -34,18 +35,29 @@ public class NewConnectionSelectionPage
    public void focus()
    {
    }
+
+   @Override
+   public void onBeforeActivate(Operation operation)
+   {
+      contents_.onBeforeActivate(operation);
+   }
    
    @Override
    public void onActivate(ProgressIndicator indicator)
    {
-      contents_.onActivate(indicator);
+   }
+
+   @Override
+   public void onDeactivate(Operation operation)
+   {
+      contents_.onDeactivate(operation);
    }
    
    @Override
    protected Widget createWidget()
    {
       contents_ = new NewConnectionShinyHost(context_);
-      
+
       return contents_;
    }
 
@@ -58,13 +70,7 @@ public class NewConnectionSelectionPage
    @Override
    protected ConnectionOptions collectInput()
    {
-      return null;
-   }
-
-   @Override
-   protected void validateAsync(ConnectionOptions input,
-                                OperationWithInput<Boolean> onValidated)
-   {
+      return contents_.collectInput();
    }
    
    private NewConnectionShinyHost contents_;

@@ -41,16 +41,14 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    }
 
    public NewConnectionWizard(NewConnectionContext context,
-                              ProgressOperationWithInput<ConnectionOptions> operation,
-                              Operation cancelOperation)
+                              ProgressOperationWithInput<ConnectionOptions> operation)
    {
       super(
          "New Connection",
          "OK",
          context,
          createFirstPage(context),
-         operation,
-         cancelOperation
+         operation
       );
 
       RStudioGinjector.INSTANCE.injectMembers(this); 
@@ -60,11 +58,5 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
       createFirstPage(NewConnectionContext input)
    {
       return new NewConnectionNavigationPage("New Connection", "OK", null, input);
-   }
-
-   @Override
-   protected ConnectionOptions collectInput()
-   {
-      return null;
    }
 }

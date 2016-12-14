@@ -19,11 +19,10 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -33,6 +32,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -47,7 +47,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -60,20 +59,46 @@ public class NewConnectionShinyHost extends Composite
    private void initialize(UIPrefs uiPrefs,
                            EventBus events,
                            GlobalDisplay globalDisplay,
-                           ConnectionsServerOperations server)
+                           ConnectionsServerOperations server,
+                           Commands commands,
+                           ApplicationInterrupt applicationInterrupt)
    {
       uiPrefs_ = uiPrefs;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      commands_ = commands;
+      applicationInterrupt_ = applicationInterrupt;
    }
-   
-   public void onActivate(ProgressIndicator indicator)
+
+   public void onBeforeActivate(Operation operation)
    {
       events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
       events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
       
-      initialize();
+      initialize(operation);
+   }
+   
+   public void onActivate(ProgressIndicator indicator)
+   {
+   }
+
+   private void terminateShinyApp(final Operation operation)
+   {
+      if (commands_.interruptR().isEnabled())
+         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
+         {
+            @Override
+            public void onInterruptFinished()
+            {
+               operation.execute();
+            }
+         });
+   }
+
+   public void onDeactivate(Operation operation)
+   {
+      terminateShinyApp(operation);
    }
    
    public NewConnectionShinyHost(NewConnectionContext context)
@@ -99,7 +124,7 @@ public class NewConnectionShinyHost extends Composite
       globalDisplay_.showErrorMessage("Error", errorMessage);
    }
    
-   private void initialize()
+   private void initialize(final Operation operation)
    {
       // initialize miniUI
       server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<RResult<Void>>()
@@ -109,7 +134,9 @@ public class NewConnectionShinyHost extends Composite
          {
             if (response.failed()) {
                showError(response.errorMessage());
-               // closeDialog();
+            }
+            else {
+               operation.execute();
             }
          }
 
@@ -117,8 +144,6 @@ public class NewConnectionShinyHost extends Composite
          public void onError(ServerError error)
          {
             Debug.logError(error);
-            showError(error.getUserMessage());
-            // closeDialog();
          }
       });
    }
@@ -175,7 +200,7 @@ public class NewConnectionShinyHost extends Composite
       return container;
    }
 
-   protected ConnectionOptions collectInput()
+   public ConnectionOptions collectInput()
    {
       // collect the result
       ConnectionOptions result = ConnectionOptions.create(
@@ -235,4 +260,6 @@ public class NewConnectionShinyHost extends Composite
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;
+   private Commands commands_;
+   private ApplicationInterrupt applicationInterrupt_;
 }

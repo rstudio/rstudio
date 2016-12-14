@@ -263,19 +263,6 @@ public class ConnectionsPresenter extends BasePresenter
       updateActiveConnections(event.getActiveConnections());
    }
 
-   private void terminateShinyApp(final Operation operation)
-   {
-      if (commands_.interruptR().isEnabled())
-         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
-         {
-            @Override
-            public void onInterruptFinished()
-            {
-               operation.execute();
-            }
-         });
-   }
-
    private void showError(String errorMessage)
    {
       globalDisplay_.showErrorMessage("Error", errorMessage);
@@ -304,28 +291,15 @@ public class ConnectionsPresenter extends BasePresenter
                  context,
                  new ProgressOperationWithInput<ConnectionOptions>() {
                     @Override
-                    public void execute(ConnectionOptions input,
+                    public void execute(ConnectionOptions result,
                                         ProgressIndicator indicator)
                     {
-                       terminateShinyApp(new Operation() {
-                          public void execute() {
-                             /*
-                             eventBus_.fireEvent(new PerformConnectionEvent(
-                             result.getConnectVia(),
-                             result.getConnectCode()));
-                             */
-                          }
-                       });
-                    }
-                 },
-                 new Operation() {
-                    @Override
-                    public void execute()
-                    {
-                       terminateShinyApp(new Operation() {
-                          public void execute() {
-                          }
-                       });
+                       indicator.onCompleted();
+
+                       eventBus_.fireEvent(new PerformConnectionEvent(
+                          result.getConnectVia(),
+                          result.getConnectCode())
+                       );
                     }
                  }
                );

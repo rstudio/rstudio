@@ -5,7 +5,7 @@
 @external macintosh;
 
 .infoPanel {
-  width: 450px;
+  width: 500px;
   margin-top: 8px;
   margin-bottom: 6px;
   color: #4d4d4d;
@@ -37,7 +37,7 @@
 }
 
 .dialogCodePanel {
-  width: 450px !important;
+  width: 500px !important;
 }
 
 .macintosh .codeViewer {
