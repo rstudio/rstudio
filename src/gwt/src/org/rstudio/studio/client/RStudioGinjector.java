@@ -212,7 +212,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ShellSecureInput userInputEncryption);
    void injectMembers(TerminalPopupMenu menu);
    void injectMembers(TerminalList terminalList);
-   void injectMembers(NewConnectionWizard newConnectionDialog);
    void injectMembers(NewConnectionWizard newConnectionWizard);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
