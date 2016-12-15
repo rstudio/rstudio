@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.google.gwt.cell.client.ImageCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -29,7 +28,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.layout.client.Layout.AnimationCallback;
 import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.TextColumn;
