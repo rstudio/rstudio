@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 
 import com.google.inject.Inject;
@@ -100,8 +101,11 @@ public class TerminalList implements Iterable<String>
       private String title_;
       private int sequence_;
    }
-   
-   protected TerminalList() {}
+
+   protected TerminalList() 
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this); 
+   }
 
    @Inject
    private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory)
