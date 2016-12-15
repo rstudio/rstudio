@@ -20,6 +20,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
@@ -60,6 +61,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().getStyle().setMargin(0, Unit.PX);
       getElement().getStyle().setBackgroundColor("#111");
       getElement().getStyle().setColor("#fafafa");
+      getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
