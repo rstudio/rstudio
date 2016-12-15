@@ -53,6 +53,16 @@ public class NewConnectionContext extends JavaScriptObject
       return this.connectionsList[index];
    }-*/;
 
+   /*
+   public void setCurrentInfo(NewConnectionInfo currentInfo) {
+      currentInfo_ = currentInfo;
+   }
+
+   public NewConnectionInfo setCurrentInfo() {
+      return currentInfo;
+   }
+   */
+
    public final ArrayList<NewConnectionInfo> getConnectionsList()
    {
       ArrayList<NewConnectionInfo> result = new ArrayList<NewConnectionInfo>(getConnectionsLength());
@@ -61,4 +71,6 @@ public class NewConnectionContext extends JavaScriptObject
 
       return result;
    }
+
+   // private NewConnectionInfo currentInfo_;
 }

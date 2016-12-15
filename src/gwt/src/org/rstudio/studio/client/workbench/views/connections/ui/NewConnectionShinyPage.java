@@ -20,15 +20,17 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewConnectionShinyPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionShinyPage(String connectionName)
+   public NewConnectionShinyPage(NewConnectionInfo info)
    {
-      super(connectionName, "", connectionName + " Connection", null, null);
+      super(info.getName(), "", info.getName() + " Connection", null, null);
+      info_ = info;
    }
 
    @Override
@@ -39,7 +41,7 @@ public class NewConnectionShinyPage
    @Override
    public void onBeforeActivate(Operation operation)
    {
-      contents_.onBeforeActivate(operation);
+      contents_.onBeforeActivate(operation, info_);
    }
    
    @Override
@@ -56,7 +58,7 @@ public class NewConnectionShinyPage
    @Override
    protected Widget createWidget()
    {
-      contents_ = new NewConnectionShinyHost(context_);
+      contents_ = new NewConnectionShinyHost();
 
       return contents_;
    }
@@ -64,7 +66,6 @@ public class NewConnectionShinyPage
    @Override
    protected void initialize(NewConnectionContext initData)
    {
-      context_ = initData;
    }
 
    @Override
@@ -74,5 +75,5 @@ public class NewConnectionShinyPage
    }
    
    private NewConnectionShinyHost contents_;
-   private NewConnectionContext context_;
+   private NewConnectionInfo info_;
 }

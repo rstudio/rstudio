@@ -46,10 +46,8 @@ public class NewConnectionNavigationPage
                                                     ConnectionOptions>>();
 
       for(NewConnectionInfo connectionInfo: context.getConnectionsList()) {
-         switch(connectionInfo.getType()) {
-            case "Shiny":
-              pages.add(new NewConnectionShinyPage(connectionInfo.getName()));
-              break;
+         if (connectionInfo.getType() == "Shiny") {
+            pages.add(new NewConnectionShinyPage(connectionInfo));
          }
       }
 

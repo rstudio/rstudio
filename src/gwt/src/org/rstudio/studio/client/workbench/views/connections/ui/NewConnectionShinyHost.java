@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.NewConnectio
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -71,12 +72,12 @@ public class NewConnectionShinyHost extends Composite
       applicationInterrupt_ = applicationInterrupt;
    }
 
-   public void onBeforeActivate(Operation operation)
+   public void onBeforeActivate(Operation operation, NewConnectionInfo info)
    {
       events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
       events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
       
-      initialize(operation);
+      initialize(operation, info);
    }
    
    public void onActivate(ProgressIndicator indicator)
@@ -101,11 +102,9 @@ public class NewConnectionShinyHost extends Composite
       terminateShinyApp(operation);
    }
    
-   public NewConnectionShinyHost(NewConnectionContext context)
+   public NewConnectionShinyHost()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
-      context_ = context;
       
       initWidget(createWidget());
       
@@ -124,10 +123,10 @@ public class NewConnectionShinyHost extends Composite
       globalDisplay_.showErrorMessage("Error", errorMessage);
    }
    
-   private void initialize(final Operation operation)
+   private void initialize(final Operation operation, final NewConnectionInfo info)
    {
       // initialize miniUI
-      server_.launchEmbeddedShinyConnectionUI("sparklyr", "Spark", new ServerRequestCallback<RResult<Void>>()
+      server_.launchEmbeddedShinyConnectionUI(info.getPackage(), info.getName(), new ServerRequestCallback<RResult<Void>>()
       {
          @Override
          public void onResponseReceived(RResult<Void> response)
@@ -250,8 +249,6 @@ public class NewConnectionShinyHost extends Composite
    {
       RES.styles().ensureInjected();
    }
-   
-   private final NewConnectionContext context_;
    
    private ConnectionCodePanel codePanel_;
      
