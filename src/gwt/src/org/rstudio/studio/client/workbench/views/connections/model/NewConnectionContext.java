@@ -32,12 +32,16 @@ public class NewConnectionContext extends JavaScriptObject
       {
       }
 
+      public final native String getPackage() /*-{
+         return this["package"];
+      }-*/;
+
       public final native String getName() /*-{
-         return this.name;
+         return this["name"];
       }-*/;
 
       public final native String getType() /*-{
-      	 return this.type;
+      	 return this["type"];
       }-*/;
    }
 

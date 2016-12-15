@@ -164,8 +164,10 @@ options(connectionObserver = list(
    context <- list(
       connectionsList = list(
          list(
+            package = .rs.scalar("sparklyr"),
             name = .rs.scalar("Spark"),
-            type = .rs.scalar("Shiny")
+            type = .rs.scalar("Shiny"),
+            newConnection = .rs.scalar("sparklyr::connection_spark_shinyapp()")
          )
       )
    )
@@ -180,7 +182,7 @@ options(connectionObserver = list(
    ))
 })
 
-.rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package)
+.rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package, name)
 {
    if (package == "sparklyr" & packageVersion("sparklyr") < "0.5") {
       return(.rs.error(
@@ -189,17 +191,26 @@ options(connectionObserver = list(
       ))
    }
 
-   consoleCommand <- quote(
-      shiny::runGadget(sparklyr::connection_spark_shinyapp(), viewer = .rs.embeddedViewer)
+   connectionContext <- .rs.rpc.get_new_connection_context()$connectionsList
+   connectionInfo <- Filter(function(e) e$package == package & e$name == name, connectionContext)
+
+   if (length(connectionInfo) != 1) {
+      return(.rs.error(
+         "Connection for package ", package, " and name ", name, " is not registered"
+      ))
+   }
+
+   connectionInfo <- connectionInfo[[1]]
+
+   consoleCommand <- paste(
+      "shiny::runGadget(",
+      connectionInfo$newConnection,
+      ", viewer = .rs.embeddedViewer)",
+      sep = ""
    )
 
    .rs.enqueClientEvent("send_to_console", list(
-      "code" = .rs.scalar(
-         paste(
-            deparse(consoleCommand),
-            collapse = " "
-         )
-      ),
+      "code" = .rs.scalar(consoleCommand),
       "execute" = .rs.scalar(TRUE),
       "focus" = .rs.scalar(FALSE),
       "animate" = .rs.scalar(FALSE)

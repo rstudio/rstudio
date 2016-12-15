@@ -127,7 +127,7 @@ public class NewConnectionShinyHost extends Composite
    private void initialize(final Operation operation)
    {
       // initialize miniUI
-      server_.launchEmbeddedShinyConnectionUI("sparklyr", new ServerRequestCallback<RResult<Void>>()
+      server_.launchEmbeddedShinyConnectionUI("sparklyr", "Spark", new ServerRequestCallback<RResult<Void>>()
       {
          @Override
          public void onResponseReceived(RResult<Void> response)

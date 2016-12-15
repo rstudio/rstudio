@@ -4909,10 +4909,12 @@ public class RemoteServer implements Server
 
    @Override
    public void launchEmbeddedShinyConnectionUI(String packageName, 
+                                               String connectionName,
                                                ServerRequestCallback<RResult<Void>> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(packageName));
+      params.set(1, new JSONString(connectionName));
       sendRequest(RPC_SCOPE, LAUNCH_EMBEDDED_SHINY_CONNECTION_UI, params, callback);
    }
 
