@@ -234,10 +234,10 @@ public class ToolbarButton extends FocusWidget
            clickHandler);
    }
    
-   private ToolbarButton(String text, 
-                         ImageResourceProvider leftImage,
-                         ImageResource rightImage,
-                         ClickHandler clickHandler)
+   public ToolbarButton(String text,
+                        Image leftImage,
+                        ImageResource rightImage,
+                        ClickHandler clickHandler)
    {
       super();
 
@@ -248,14 +248,7 @@ public class ToolbarButton extends FocusWidget
 
       setText(text);
       setInfoText(null);
-      if (leftImage != null && 
-          leftImage.getImageResource() != null)
-      {
-         leftImageWidget_ = new Image(leftImage.getImageResource());
-         leftImage.addRenderedImage(leftImageWidget_);
-      }
-      else
-         leftImageWidget_ = new Image();
+      leftImageWidget_ = leftImage == null ? new Image() : leftImage;
       leftImageWidget_.setStylePrimaryName(styles_.toolbarButtonLeftImage());
       leftImageCell_.appendChild(leftImageWidget_.getElement());
       if (rightImage != null)
@@ -267,6 +260,16 @@ public class ToolbarButton extends FocusWidget
 
       if (clickHandler != null)
          addClickHandler(clickHandler);
+   }
+   
+   public ToolbarButton(String text, 
+                        ImageResourceProvider leftImage,
+                        ImageResource rightImage,
+                        ClickHandler clickHandler)
+   {
+      this(text, new Image(leftImage.getImageResource()), rightImage, 
+            clickHandler);
+      leftImage.addRenderedImage(leftImageWidget_);
    }
 
    @Override

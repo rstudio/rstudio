@@ -34,6 +34,7 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -52,7 +53,6 @@ import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.widget.Base64ImageCell;
-import org.rstudio.core.client.widget.Base64ImageResource;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -555,16 +555,22 @@ public class ConnectionsPane extends WorkbenchPane
          for (int i = 0; i < connection.getActions().length(); i++)
          {
             final ConnectionAction action = connection.getActions().get(i);
+
+            // use the supplied base64 icon data if it was provided
+            Image icon = StringUtil.isNullOrEmpty(action.getIconData()) ?
+                  null :
+                  new Image(action.getIconData());
             
+            // force to 20x18
+            if (icon != null)
+            {
+               icon.setWidth("20px");
+               icon.setHeight("18px");
+            }
+             
             ToolbarButton button = new ToolbarButton(action.getName(), 
-                  // use the supplied base64 icon data if it was provided
-                  StringUtil.isNullOrEmpty(action.getIconData()) ?
-                        null :
-                        new Base64ImageResource(
-                              action.getName(), 
-                              action.getIconData(), 
-                              20, 18),
-                        
+                  icon, // left image
+                  null, // right image
                   // invoke the action when the button is clicked
                   new ClickHandler()
                   {
