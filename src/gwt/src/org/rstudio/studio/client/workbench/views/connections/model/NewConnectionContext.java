@@ -17,18 +17,60 @@ package org.rstudio.studio.client.workbench.views.connections.model;
 
 
 import java.util.ArrayList;
-import java.util.List;
-
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 public class NewConnectionContext extends JavaScriptObject
 {
    protected NewConnectionContext()
    {
    }
+
+   public static class NewConnectionInfo extends JavaScriptObject
+   {
+      protected NewConnectionInfo()
+      {
+      }
+
+      public final native String getPackage() /*-{
+         return this["package"];
+      }-*/;
+
+      public final native String getName() /*-{
+         return this["name"];
+      }-*/;
+
+      public final native String getType() /*-{
+      	 return this["type"];
+      }-*/;
+   }
+
+   public final native int getConnectionsLength() /*-{
+      return this.connectionsList.length;
+   }-*/;
+   
+   public final native NewConnectionInfo getConnectionsItem(int index) /*-{
+      return this.connectionsList[index];
+   }-*/;
+
+   /*
+   public void setCurrentInfo(NewConnectionInfo currentInfo) {
+      currentInfo_ = currentInfo;
+   }
+
+   public NewConnectionInfo setCurrentInfo() {
+      return currentInfo;
+   }
+   */
+
+   public final ArrayList<NewConnectionInfo> getConnectionsList()
+   {
+      ArrayList<NewConnectionInfo> result = new ArrayList<NewConnectionInfo>(getConnectionsLength());
+      for (int i = 0; i < getConnectionsLength(); i++)
+         result.add(getConnectionsItem(i));
+
+      return result;
+   }
+
+   // private NewConnectionInfo currentInfo_;
 }
