@@ -1,7 +1,7 @@
 /*
  * SimplePanelWithProgress.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -29,12 +28,12 @@ public class SimplePanelWithProgress extends SimplePanel
       loadProgressPanel_ = new ProgressPanel();
    }
    
-   public SimplePanelWithProgress(Image progressImage)
+   public SimplePanelWithProgress(Widget progressImage)
    { 
       loadProgressPanel_ = new ProgressPanel(progressImage);
    }
    
-   public SimplePanelWithProgress(Image progressImage, int verticalOffset)
+   public SimplePanelWithProgress(Widget progressImage, int verticalOffset)
    {
       loadProgressPanel_ = new ProgressPanel(progressImage, verticalOffset);
    }

@@ -16,8 +16,8 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
-import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -64,8 +64,10 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       tableBrowser_ = new TableBrowser();
       
       // container panel to enable switching between connected/disconnected
-      containerPanel_ = new SimplePanelWithProgress(
-                                    ProgressImages.createLarge(), 50);
+      ProgressSpinner spin = new ProgressSpinner(ProgressSpinner.COLOR_BLACK);
+      spin.getElement().getStyle().setWidth(32, Unit.PX);
+      spin.getElement().getStyle().setHeight(32, Unit.PX);
+      containerPanel_ = new SimplePanelWithProgress(spin, 50);
       
       setConnected(false);
       
