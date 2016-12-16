@@ -267,9 +267,17 @@ public class ToolbarButton extends FocusWidget
                         ImageResource rightImage,
                         ClickHandler clickHandler)
    {
-      this(text, new Image(leftImage.getImageResource()), rightImage, 
-            clickHandler);
-      leftImage.addRenderedImage(leftImageWidget_);
+      this(text, 
+           // extract the supplied left image 
+           leftImage != null && leftImage.getImageResource() != null ?
+               new Image(leftImage.getImageResource()) :
+               new Image(), 
+           rightImage, 
+           clickHandler);
+
+      // let the image provider know it has a rendered copy if we made one
+      if (leftImage != null && leftImageWidget_ != null)
+         leftImage.addRenderedImage(leftImageWidget_);
    }
 
    @Override
