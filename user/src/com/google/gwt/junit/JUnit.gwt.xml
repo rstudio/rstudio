@@ -21,6 +21,8 @@
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.junit.JUnit3"/>
 
+  <set-property name="jre.debugMode" value="ENABLED" />
+
   <set-property name="gwt.logging.developmentModeHandler" value="DISABLED" />
   <set-property name="gwt.logging.simpleRemoteHandler" value="ENABLED" />
 

@@ -14,12 +14,15 @@
 
 <module type="fileset">
   <inherits name="com.google.gwt.core.Core"/>
-  <!-- Make sure junit xml processed prior to this one so stack mode will not be overwritten -->
+  <!-- Make sure junit xml processed prior to this so stack&check mode not overwritten -->
   <inherits name="com.google.gwt.junit.JUnit" />
 
   <!-- stack emulation disabled so that we can check the implementation of functions -->
   <set-property name="compiler.stackMode" value="native" />
+
   <set-property name="jre.checks.checkLevel" value="MINIMAL" />
+  <!-- Disable checks completely so we can assert optimizations - user should never do this -->
+  <set-property name="jre.debugMode" value="DISABLED" />
 
   <source path='optimized' />
 </module>
