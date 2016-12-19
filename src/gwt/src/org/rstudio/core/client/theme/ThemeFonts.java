@@ -57,18 +57,12 @@ public class ThemeFonts
    {
       public String getProportionalFont()
       {
-         String font = BrowseCap.hasUbuntuFonts() ? "Ubuntu, " : "";
-         return font + "\"Lucida Sans\", \"DejaVu Sans\", \"Lucida Grande\", \"Segoe UI\", Verdana, Helvetica, sans-serif"; 
+         return "sans-serif"; 
       }
 
       public String getFixedWidthFont()
       {
-         if (BrowseCap.isMacintosh())
-            return "Monaco, monospace";
-         else if (BrowseCap.isLinux())
-            return "\"Ubuntu Mono\", \"Droid Sans Mono\", \"DejaVu Sans Mono\", monospace";
-         else
-            return "Consolas, \"Lucida Console\", monospace";
+         return "monospace";
       }
    }
 }
