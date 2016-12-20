@@ -51,7 +51,8 @@ public class ProjectTemplateWidget extends Composite
       
       public void collectInput(JsObject receiver)
       {
-         collector_.collectInput(receiver);
+         if (collector_ != null)
+            collector_.collectInput(receiver);
       }
       
       private final Collector collector_;
