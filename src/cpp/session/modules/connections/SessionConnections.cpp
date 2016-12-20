@@ -189,6 +189,15 @@ SEXP rs_availableRemoteServers()
    return r::sexp::create(remoteServers, &rProtect);
 }
 
+SEXP rs_availableConnections()
+{
+   std::vector<std::string> connectionPackages;
+   connectionPackages.push_back("Spark");
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(connectionPackages, &rProtect);
+}
+
 
 Error removeConnection(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
@@ -541,6 +550,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
+   RS_REGISTER_CALL_METHOD(rs_availableConnections, 0);
 
    // initialize environment
    initEnvironment();

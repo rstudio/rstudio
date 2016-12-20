@@ -172,6 +172,8 @@ options(connectionObserver = list(
       )
    )
 
+   # TODO: .Call("rs_availableConnections")
+
    context
 })
 
