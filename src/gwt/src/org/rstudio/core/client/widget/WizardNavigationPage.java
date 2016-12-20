@@ -35,19 +35,19 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
                                ArrayList<WizardPage<I,T>> pages)
    {
       this(title,
-            subTitle,
-            pageCaption,
-            image,
-            largeImage,
-            pages,
-            new WizardNavigationPageProducer<I, T>()
-            {
-               @Override
-               public Widget createMainWidget(ArrayList<WizardPage<I, T>> pages)
-               {
-                  return new WizardPageSelector<I, T>(pages);
-               }
-            });
+           subTitle,
+           pageCaption,
+           image,
+           largeImage,
+           pages,
+           new WizardNavigationPageProducer<I, T>()
+           {
+              @Override
+              public Widget createMainWidget(ArrayList<WizardPage<I, T>> pages)
+              {
+                 return new WizardPageSelector<I, T>(pages);
+              }
+           });
    }
    
    public WizardNavigationPage(String title,
