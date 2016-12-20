@@ -76,6 +76,92 @@ private:
    std::string package_;
 };
 
+class SessionConnectionsIndexRegistry : boost::noncopyable
+{
+public:
+
+   void add(const std::string& package, const SessionConnectionsIndexEntry& spec)
+   {
+      connections_[constructKey(package, spec.getName())] = spec;
+   }
+
+   void add(const std::string& pkgName,
+            std::map<std::string, std::string>& fields)
+   {  
+      add(pkgName, SessionConnectionsIndexEntry(
+            fields["Name"],
+            pkgName));
+   }
+
+   void add(const std::string& pkgName, const FilePath& connectionExtensionPath)
+   {
+      static const boost::regex reSeparator("\\n{2,}");
+
+      std::string contents;
+      Error error = core::readStringFromFile(connectionExtensionPath, &contents, string_utils::LineEndingPosix);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+
+      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+      boost::sregex_token_iterator end;
+
+      for (; it != end; ++it)
+      {
+         std::map<std::string, std::string> fields = parseConnectionsDcf(*it);
+         add(pkgName, fields);
+      }
+   }
+   
+   bool contains(const std::string& package, const std::string& name)
+   {
+      return connections_.count(constructKey(package, name));
+   }
+
+   const SessionConnectionsIndexEntry& get(const std::string& package, const std::string& name)
+   {
+      return connections_[constructKey(package, name)];
+   }
+   
+   json::Object toJson() const
+   {
+      json::Object object;
+      
+      BOOST_FOREACH(const std::string& key, connections_ | boost::adaptors::map_keys)
+      {
+         object[key] = connections_.at(key).toJson();
+      }
+      
+      return object;
+   }
+
+   std::size_t size() const { return connections_.size(); }
+   
+private:
+   
+   static std::map<std::string, std::string> parseConnectionsDcf(
+       const std::string& contents)
+   {
+      // read and parse the DCF file
+      std::map<std::string, std::string> fields;
+      std::string errMsg;
+      Error error = text::parseDcfFile(contents, true, &fields, &errMsg);
+      if (error)
+         LOG_ERROR(error);
+
+      return fields;
+   }
+
+   static std::string constructKey(const std::string& package, const std::string& name)
+   {
+      return package + "::" + name;
+   }
+
+   std::map<std::string, SessionConnectionsIndexEntry> connections_;
+};
+
 }
 
 } // namespace connections
