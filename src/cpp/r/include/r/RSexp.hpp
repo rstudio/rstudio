@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -221,6 +221,19 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
 }
 
+template <typename T>
+core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
+{
+   SEXP attrib = getAttrib(object, name); 
+   if (attrib == R_NilValue) 
+   {
+      core::Error error(r::errc::AttributeNotFoundError, ERROR_LOCATION);
+      error.addProperty("attribute", name);
+      return error;
+   }
+
+   return extract(attrib, pValue);
+}
 
 // protect R expressions
 class Protect : boost::noncopyable

@@ -17,6 +17,7 @@ Plugin 'ctrlpvim/ctrlp.vim'
 Plugin 'rking/ag.vim'
 Plugin 'scrooloose/syntastic'
 Plugin 'flazz/vim-colorschemes'
+Plugin 'lyuts/vim-rtags'
 
 call vundle#end()
 filetype plugin indent on

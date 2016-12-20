@@ -20,9 +20,13 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.workbench.views.terminal.AnsiCode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -33,10 +37,9 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,41 +47,10 @@ import com.google.gwt.user.client.ui.Widget;
  * Xterm-compatible terminal emulator
  */
 public class XTermWidget extends Widget implements RequiresResize,
-                                                   ResizeTerminalEvent.HasHandlers,
-                                                   TerminalDataInputEvent.HasHandlers
+                                                   ResizeTerminalEvent.HasHandlers, TerminalDataInputEvent.HasHandlers,
+                                                   XTermTitleEvent.HasHandlers
 {
-   public enum AnsiColor
-   {
-      DEFAULT     ("0;0"),
-      BLACK       ("0;30"),
-      BLUE        ("0;34"),
-      GREEN       ("0;32"),
-      CYAN        ("0;36"),
-      RED         ("0;31"),
-      PURPLE      ("0;35"),
-      BROWN       ("0;33"),
-      LIGHTGRAY   ("0;37"),
-      DARKGRAY    ("1;30"),
-      LIGHTBLUE   ("1;34"),
-      LIGHTCYAN   ("1;32"),
-      LIGHTRED    ("1;31"),
-      LIGHTPURPLE ("1;35"), 
-      YELLOW      ("1;33"),
-      WHITE       ("1;37");
-      
-      private final String color;
-      AnsiColor(String color)
-      {
-         this.color = color;
-      }
-      
-      public String toString()
-      {
-         return "\33[" + color + "m";
-      }
-   }      
-   
-   /**
+  /**
     *  Creates an XTermWidget.
     */
    public XTermWidget()
@@ -89,19 +61,53 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().getStyle().setMargin(0, Unit.PX);
       getElement().getStyle().setBackgroundColor("#111");
       getElement().getStyle().setColor("#fafafa");
+      getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       terminal_ = XTermNative.createTerminal(getElement(), true);
+
+      // Handle keystrokes from the xterm and dispatch them
+      addDataEventHandler(new CommandWithArg<String>()
+      {
+         public void execute(String data)
+         {
+            fireEvent(new TerminalDataInputEvent(data));
+         }
+      });
+      
+      // Handle title events from the xterm and dispatch them
+      addTitleEventHandler(new CommandWithArg<String>()
+      {
+         public void execute(String title)
+         {
+            fireEvent(new XTermTitleEvent(title));
+         }
+      });
    }
    
    /**
-    * Show a greeting in the terminal
+    * Perform actions when the terminal is ready.
     */
-   private void showBanner()
+   private void terminalReady()
    {
-      writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
-            AnsiColor.DEFAULT + " shell.");
+      if (newTerminal_)
+      {
+         writeln("Welcome to " + AnsiCode.ForeColor.LIGHTBLUE + "RStudio" +
+                 AnsiCode.DEFAULTCOLORS + " terminal.");
+      }
+      else
+      {
+         terminal_.reset();
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               onResize();
+            }
+         });
+       }
    }
   
    /**
@@ -152,7 +158,7 @@ public class XTermWidget extends Widget implements RequiresResize,
             {
                terminal_.fit();
                terminal_.focus();
-               showBanner();
+               terminalReady();
             }
          });
 
@@ -181,17 +187,67 @@ public class XTermWidget extends Widget implements RequiresResize,
    @Override
    public void onResize()
    {
+      if (!isVisible())
+      {
+         return;
+      }
+      
       // Notify the local terminal UI that it has resized so it computes new
-      // dimensions
-      terminal_.fit();
-      XTermDimensions size = getTerminalSize();
-     
-      fireEvent(new ResizeTerminalEvent(size.getCols(), size.getRows()));
+      // dimensions; debounce this slightly as it is somewhat expensive
+      resizeTerminalLocal_.schedule(50);
+      
+      // Notify the remote pseudo-terminal that it has resized; this is quite
+      // expensive so debounce more heavily; e.g. dragging the pane
+      // splitters or resizing the entire window
+      resizeTerminalRemote_.schedule(150);
    }
+   
+   private Timer resizeTerminalLocal_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         terminal_.fit();
+      }
+   };
+   
+   private Timer resizeTerminalRemote_ = new Timer()
+   {
+      @Override
+      public void run()
+      {
+         XTermDimensions size = getTerminalSize();
+         
+         int cols = size.getCols();
+         int rows = size.getRows();
+         
+         // ignore if a reasonable size couldn't be computed
+         if (cols < 1 || rows < 1)
+         {
+            return;
+         }
 
+         // don't send same size multiple times
+         if (cols == previousCols_ && rows == previousRows_)
+         {
+            return;
+         }
+         
+         previousCols_ = cols;
+         previousRows_ = rows;
+         
+         fireEvent(new ResizeTerminalEvent(cols, rows)); 
+      }
+   };
+   
    private void addDataEventHandler(CommandWithArg<String> handler)
    {
       terminal_.onTerminalData(handler);
+   }
+   
+   private void addTitleEventHandler(CommandWithArg<String> handler)
+   {
+      terminal_.onTitleData(handler);
    }
    
    public XTermDimensions getTerminalSize()
@@ -219,34 +275,21 @@ public class XTermWidget extends Widget implements RequiresResize,
    @Override
    public HandlerRegistration addResizeTerminalHandler(ResizeTerminalEvent.Handler handler)
    {
-      return handlers_.addHandler(ResizeTerminalEvent.TYPE, handler);
+      return addHandler(handler, ResizeTerminalEvent.TYPE);
    }
    
    @Override
    public HandlerRegistration addTerminalDataInputHandler(TerminalDataInputEvent.Handler handler)
    {
-      assert !hasTerminalDataInputHandler_ : "Cannot install multiple terminalDataInput handlers";
-      if (hasTerminalDataInputHandler_)
-         return null;
-
-      addDataEventHandler(new CommandWithArg<String>()
-      {
-         public void execute(String data)
-         {
-            fireEvent(new TerminalDataInputEvent(data));
-         }
-      });
-            
-      hasTerminalDataInputHandler_ = true;
-      return handlers_.addHandler(TerminalDataInputEvent.TYPE, handler);
+      return addHandler(handler, TerminalDataInputEvent.TYPE);
    }
 
    @Override
-   public void fireEvent(GwtEvent<?> event)
+   public HandlerRegistration addXTermTitleHandler(Handler handler)
    {
-      handlers_.fireEvent(event);
+      return addHandler(handler, XTermTitleEvent.TYPE);
    }
-   
+
    /**
     * Load resources for XTermWidget.
     * 
@@ -271,7 +314,25 @@ public class XTermWidget extends Widget implements RequiresResize,
          }
      });
    }
+   
+   /**
+    * Set if connecting to a new terminal session.
+    * @param isNew true if a new connection, false if a reconnect
+    */
+   public void setNewTerminal(boolean isNew)
+   {
+      newTerminal_ = isNew;
+   }
 
+   /**
+    * Indicates if connecting to a new terminal session.
+    * @return true if a new connection, false if a reconnect
+    */
+   public boolean newTerminal()
+   {
+      return newTerminal_;
+   }
+   
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), 
                    XTermResources.INSTANCE.xtermjsUncompressed());
@@ -283,6 +344,9 @@ public class XTermWidget extends Widget implements RequiresResize,
    private XTermNative terminal_;
    private LinkElement currentStyleEl_;
    private boolean initialized_ = false;
-   protected final HandlerManager handlers_ = new HandlerManager(this);
-   private boolean hasTerminalDataInputHandler_ = false;
+   private boolean newTerminal_ = true;
+
+   private int previousRows_ = -1;
+   private int previousCols_ = -1;
+
 }

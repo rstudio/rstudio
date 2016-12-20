@@ -149,7 +149,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    chunkDefns <- rnbData$chunk_info$chunk_definitions
    for (defn in chunkDefns) {
-      if (identical(defn$options$label, label))
+      if (identical(defn$chunk_label, label))
          return(defn$chunk_id)
    }
    return(NULL)
@@ -296,9 +296,25 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # determine whether we include source code (respect chunk options)
       includeSource <- isTRUE(context$echo) && isTRUE(context$include)
       
-      # if we have no chunk outputs, just show source code (respecting
-      # chunk options as appropriate)
-      if (is.null(chunkId)) {
+      if (identical(context$engine, "js") || identical(context$engine, "css")) {
+         # these engines never show code; ensure they're marked for evaluation
+         # and then emit contents literally wrapped in the appropriate tags
+         htmlOutput <- ""
+         if (isTRUE(context$eval)) {
+            if (identical(context$engine, "js")) {
+               htmlOutput <- paste(
+                  c('<script type="text/javascript">', code, '</script>'),
+                    collapse = '\n')
+            } else if (identical(context$engine, "css")) {
+               htmlOutput <- paste(
+                  c('<style type="text/css">', code, '</style>'),
+                    collapse = '\n')
+            }
+         }
+         return(knitr::asis_output(htmlOutput))
+      } else if (is.null(chunkId)) {
+         # if we have no chunk outputs, just show source code (respecting
+         # chunk options as appropriate)
          if (includeSource) {
             attributes <- list(class = .rs.rnb.engineToCodeClass(context$engine))
             

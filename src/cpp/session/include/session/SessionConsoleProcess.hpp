@@ -45,6 +45,7 @@ enum InteractionMode
 };
 
 extern const int kDefaultMaxOutputLines;
+extern const int kNoTerminal;
 
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
@@ -58,15 +59,33 @@ private:
          const std::string& command,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
-
+  
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines);
+   
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
+         const std::string& handle,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
@@ -100,6 +119,9 @@ public:
          const std::string& command,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -109,10 +131,25 @@ public:
          const std::vector<std::string>& args,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
+   static boost::shared_ptr<ConsoleProcess> create(
+         const std::string& command,
+         core::system::ProcessOptions options,
+         const std::string& caption,
+         const std::string& title,
+         const std::string& terminalHandle,
+         const int terminalSequence,
+         bool allowRestart,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines = kDefaultMaxOutputLines);
+   
    virtual ~ConsoleProcess() {}
 
    // set a custom prompt handler -- return true to indicate the prompt
@@ -131,6 +168,10 @@ public:
    void enqueInput(const Input& input);
    void interrupt();
    void resize(int cols, int rows);
+   void onSuspend();
+   bool isStarted() { return started_; }
+   void setCaption(std::string& caption) { caption_ = caption; }
+   void setTitle(std::string& title) { title_ = title; }
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
@@ -161,6 +202,7 @@ private:
    core::system::ProcessOptions options_;
 
    std::string caption_;
+   std::string title_;
    bool dialog_;
    bool showOnOutput_;
    InteractionMode interactionMode_;
@@ -179,6 +221,14 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
+   // The sequence number of the associated terminal; used to control display
+   // order of terminal tabs; constant 'kNoTerminal' indicates a non-terminal
+   int terminalSequence_;
+   
+   // Whether a ConsoleProcess object should start a new process on resume after
+   // its process has been killed by a suspend.
+   bool allowRestart_;
+   
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 
@@ -190,7 +240,6 @@ private:
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
-
 
    // regex for prompt detection
    boost::regex controlCharsPattern_;

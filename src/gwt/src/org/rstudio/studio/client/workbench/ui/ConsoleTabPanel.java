@@ -14,12 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import org.rstudio.core.client.events.*;
+import java.util.ArrayList;
+
+import org.rstudio.core.client.events.EnsureHiddenEvent;
+import org.rstudio.core.client.events.EnsureHiddenHandler;
+import org.rstudio.core.client.events.EnsureVisibleEvent;
+import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -30,16 +37,18 @@ import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab
 
 import com.google.inject.Inject;
 
-import java.util.ArrayList;
-
 public class ConsoleTabPanel extends WorkbenchTabPanel
 {
    @Inject
    public void initialize(ConsoleInterruptButton consoleInterrupt,
-                          ConsoleInterruptProfilerButton consoleInterruptProfiler)
+                          ConsoleInterruptProfilerButton consoleInterruptProfiler,
+                          UIPrefs uiPrefs,
+                          Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
       consoleInterruptProfiler_ = consoleInterruptProfiler;
+      uiPrefs_ = uiPrefs;
+      session_ = session;
    }
    
    public ConsoleTabPanel(final PrimaryWindowFrame owner,
@@ -52,7 +61,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab deployContentTab,
                           MarkersOutputTab markersTab,
                           WorkbenchTab terminalTab,
-                          boolean enableTerminalTab,
                           EventBus events,
                           ToolbarButton goToWorkingDirButton)
    {
@@ -67,7 +75,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       deployContentTab_ = deployContentTab;
       markersTab_ = markersTab;
       terminalTab_ = terminalTab;
-      enableTerminalTab_ = enableTerminalTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -210,7 +217,30 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                selectTab(0);
          }
       });
-      
+
+      terminalTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            terminalTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(terminalTab_);
+         }
+      });
+      terminalTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            terminalTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
+
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
          @Override
@@ -224,13 +254,29 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          }
       });
 
-      consoleOnly_ = enableTerminalTab_; 
+      // Determine initial visibility of terminal tab
+      terminalTabVisible_ = uiPrefs_.showTerminalTab().getValue();
+
+      // TODO (gary) this is a temporary feature gate
+      if (terminalTabVisible_ && !uiPrefs_.enableXTerm().getValue())
+      {
+         terminalTabVisible_ = false;
+      }
+
+      if (terminalTabVisible_ && !session_.getSessionInfo().getAllowShell())
+      {
+         terminalTabVisible_ = false;
+      }
+
+      // This ensures the logic in managePanels() works whether starting
+      // up with terminal tab on by default or not.
+      consoleOnly_ = terminalTabVisible_;
       managePanels();
    }
 
    private void managePanels()
    {
-      boolean consoleOnly = !enableTerminalTab_ &&
+      boolean consoleOnly = !terminalTabVisible_ &&
                             !compilePdfTabVisible_ && 
                             !findResultsTabVisible_ &&
                             !sourceCppTabVisible_ &&
@@ -242,7 +288,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       {
          ArrayList<WorkbenchTab> tabs = new ArrayList<WorkbenchTab>();
          tabs.add(consolePane_);
-         if (enableTerminalTab_)
+         if (terminalTabVisible_)
             tabs.add(terminalTab_);
          if (compilePdfTabVisible_)
             tabs.add(compilePdfTab_);
@@ -305,10 +351,12 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private final MarkersOutputTab markersTab_;
    private boolean markersTabVisible_;
    private final WorkbenchTab terminalTab_;
-   private boolean enableTerminalTab_;
+   private boolean terminalTabVisible_;
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
+   private UIPrefs uiPrefs_;
+   private Session session_;
 }

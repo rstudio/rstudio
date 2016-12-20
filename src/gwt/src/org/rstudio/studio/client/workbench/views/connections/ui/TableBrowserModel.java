@@ -200,7 +200,7 @@ public class TableBrowserModel implements TreeViewModel
       private void listTables(final CommandWithArg<JsArrayString> onCompleted)
       {
          server_.connectionListTables(
-            connection_, 
+            connection_.getId(), 
             new SimpleRequestCallback<JsArrayString>() {
                @Override
                public void onResponseReceived(JsArrayString tables)
@@ -263,7 +263,7 @@ public class TableBrowserModel implements TreeViewModel
          }
 
          server_.connectionListFields(
-               connection_,
+               connection_.getId(),
                table_,
                new SimpleRequestCallback<JsArray<Field>>() {
                   @Override

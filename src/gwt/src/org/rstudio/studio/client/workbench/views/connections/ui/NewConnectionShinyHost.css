@@ -4,29 +4,8 @@
 @external gwt-Image;
 @external macintosh;
 
-
-.grid {
-  margin-bottom: 5px;
-}
-
-.versionGrid {
-  margin-top: 7px;
-}
-
-.masterGrid.remote {
-  margin-bottom: 5px;
-}
-
-.label {
-  width: 150px;
-}
-
-.spanningInput {
-  width: 300px;
-}
-
 .infoPanel {
-  width: 450px;
+  width: 500px;
   margin-top: 8px;
   margin-bottom: 6px;
   color: #4d4d4d;
@@ -58,21 +37,11 @@
 }
 
 .dialogCodePanel {
-  width: 450px !important;
+  width: 500px !important;
 }
 
 .macintosh .codeViewer {
   font-size: 8pt;
-}
-
-.componentNotInstalledWidget {
-   width: 325px;
-   margin-left: 10px;
-}
-
-.componentInstallLink {
-   margin-top: 10px;
-   margin-bottom: 20px;
 }
 
 .codePanelHeader {

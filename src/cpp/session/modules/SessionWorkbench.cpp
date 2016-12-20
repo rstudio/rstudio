@@ -854,13 +854,14 @@ void editFilePostback(const std::string& file,
 Error startShellDialog(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-#ifndef _WIN32
    using namespace session::module_context;
    using namespace session::console_process;
 
    // TERM setting, must correspond to one of the values in the
    // client-side enum TerminalType. For now we treat XTERM as a
    // "smart terminal" and anything else as DUMB (RStudio 1.0 behavior).
+   // On Win32, only "smart" is supported at the moment, and the
+   // TerminalType is ignored.
    std::string term;
    
    // initial size of the pseudo-terminal
@@ -869,20 +870,45 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // is terminal hosted in a modal dialog? (false means modeless, e.g. a tab)
    bool isModalDialog;
    
+   // terminal handle (empty string if starting a new terminal)
+   std::string termHandle;
+   
+   // terminal caption
+   std::string termCaption;
+   
+   // terminal title
+   std::string termTitle;
+   
+   // terminal sequence
+   int termSequence = kNoTerminal;
+   
+   // allow process restart with existing handle
+   bool allowRestart;
+   
    Error error = json::readParams(request.params,
                                   &term,
                                   &cols,
                                   &rows,
-                                  &isModalDialog);
+                                  &isModalDialog,
+                                  &termHandle,
+                                  &termCaption,
+                                  &termTitle,
+                                  &termSequence,
+                                  &allowRestart);
    if (error)
       return error;
    
+#ifndef _WIN32
    bool smartTerm = !term.compare("XTERM");
-   
+#else
+   bool smartTerm = true;
+#endif
+
    // configure environment for shell
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);
 
+#ifndef _WIN32
    // set terminal
    core::system::setenv(&shellEnv, "TERM", smartTerm ? "xterm" : "dumb");
 
@@ -892,7 +918,14 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
    core::system::setenv(&shellEnv, "PS1", prompt);
 
-   // disable screen oriented facillites		
+   // set xterm title to show current working directory after each command
+   if (smartTerm)
+   {
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND",
+                           "echo -ne \"\\033]0;${PWD/#${HOME}/~}\\007\"");
+   }
+   
+   // disable screen oriented facillites
    if (!smartTerm)
    {
       core::system::unsetenv(&shellEnv, "EDITOR");
@@ -901,7 +934,14 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    }
    core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
    core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
+#endif
 
+   if (termSequence != kNoTerminal)
+   {
+      core::system::setenv(&shellEnv, "RSTUDIO_TERM",
+                           boost::lexical_cast<std::string>(termSequence));
+   }
+   
    // ammend shell paths as appropriate
    ammendShellPaths(&shellEnv);
 
@@ -910,19 +950,33 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
    options.smartTerminal = smartTerm;
+#ifndef _WIN32
    options.cols = cols;
    options.rows = rows;
+#endif
 
+   if (termCaption.empty())
+      termCaption = "Shell";
+   
    // configure bash command
+#ifndef _WIN32
    core::shell_utils::ShellCommand bashCommand("/usr/bin/env");
    bashCommand << "bash";
    bashCommand << "--norc";
+#else
+   // TODO (gary) use %comspec% to locate cmd.exe
+   core::shell_utils::ShellCommand bashCommand("cmd.exe");
+#endif
 
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =
                ConsoleProcess::create(bashCommand,
                                       options,
-                                      "Shell",
+                                      termCaption,
+                                      termTitle,
+                                      termHandle,
+                                      termSequence,
+                                      allowRestart,
                                       isModalDialog,
                                       InteractionAlways,
                                       console_process::kDefaultMaxOutputLines);
@@ -933,9 +987,6 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    pResponse->setResult(ptrProc->toJson());
 
    return Success();
-#else // not supported on Win32
-   return Error(json::errc::InvalidRequest, ERROR_LOCATION);
-#endif
 }
 
 Error setCRANMirror(const json::JsonRpcRequest& request,

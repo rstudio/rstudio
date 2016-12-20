@@ -375,13 +375,6 @@ public abstract class
    public abstract AppCommand renameTerminal();
    public abstract AppCommand closeTerminal();
    public abstract AppCommand clearTerminalScrollbackBuffer();
-   // TODO (gary) placeholders for what will become a dynamically
-   // generated list of user-created terminal(s)
-   public abstract AppCommand terminalSession1();
-   public abstract AppCommand terminalSession2();
-   public abstract AppCommand terminalSession3();
-   public abstract AppCommand terminalSession4();
-   public abstract AppCommand terminalSession5();
    
    // Help
    public abstract AppCommand helpBack();
@@ -454,9 +447,6 @@ public abstract class
    public abstract AppCommand removeConnection();
    public abstract AppCommand disconnectConnection();
    public abstract AppCommand refreshConnection();
-   public abstract AppCommand sparkLog();
-   public abstract AppCommand sparkUI();
-   public abstract AppCommand sparkHelp();
    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();

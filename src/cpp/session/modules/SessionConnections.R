@@ -1,7 +1,7 @@
 #
 # SessionConnections.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,37 +13,80 @@
 #
 #
 
-.rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
-   paramNames <- names(params)
-   for (param in paramNames) {
-      value <- params[[param]]
+.rs.addFunction("validateParams", function(obj, params, type, optional = FALSE) {
+   for (param in params) {
+      value <- obj[[param]]
       if (optional && is.null(value))
          next
-      if (!is.character(value) || length(value) != 1)
-         stop(param, " must be a single element character vector", call. = FALSE)
+      if (!inherits(value, type) || length(value) != 1)
+         stop(param, " must be a single element of type '", type, "'", 
+              call. = FALSE)
    }
 })
 
-options(connectionViewer = list(
-   connectionOpened = function(type, host, finder, connectCode, disconnectCode,
-                               listTablesCode = NULL, listColumnsCode = NULL,
-                               previewTableCode = NULL, ...) {
-      .rs.validateCharacterParams(list(
-         type = type, host = host, connectCode = connectCode,
-         disconnectCode = disconnectCode
-      ))
-      .rs.validateCharacterParams(list(
-         listTablesCode = listTablesCode,
-         listColumnsCode = listColumnsCode,
-         previewTableCode = previewTableCode
-      ), optional = TRUE)
-      if (!is.function(finder))
-         stop("finder must be a function", call. = FALSE)
-      finder <- paste(deparse(finder), collapse = "\n")
-      invisible(.Call("rs_connectionOpened", type, host, finder, 
-                      connectCode, disconnectCode,
-                      listTablesCode, listColumnsCode,
-                      previewTableCode))
+.rs.addFunction("validateCharacterParams", function(params, optional = FALSE) {
+   .rs.validateParams(params, names(params), "character", optional)
+})
+
+.rs.addFunction("validateConnection", function(connection) {
+   .rs.validateParams(connection, 
+       c("type", "host", "displayName", "connectCode"),
+       "character")
+   .rs.validateParams(connection, "icon", "character", optional = TRUE)
+   .rs.validateParams(connection, 
+       c("disconnectCode", "listTables", "listColumns", "previewTable"),
+       "function")
+})
+
+# create an environment which will host the known active connections
+assign(".rs.activeConnections", 
+       value = new.env(parent = emptyenv()), 
+       envir = .rs.toolsEnv())
+
+# given a connection type and host, find a matching active connection, or NULL
+# if no connection was found
+.rs.addFunction("findActiveConnection", function(type, host) {
+   connections <- ls(.rs.activeConnections)
+   for (name in connections) {
+      connection <- get(name, envir = .rs.activeConnections)
+      if (identical(connection$type, type) && 
+          identical(connection$host, host)) {
+         return(connection)
+      }
+   }
+   # indicates no connection was found
+   NULL
+})
+
+options(connectionObserver = list(
+   connectionOpened = function(type, host, displayName, icon = NULL, 
+                               connectCode, disconnectCode, listTables, 
+                               listColumns, previewTable, actions = NULL) {
+
+      # manufacture and validate object representing this connection
+      connection <- list(
+         type           = type,
+         host           = host,
+         displayName    = displayName,
+         icon           = icon,
+         connectCode    = connectCode,
+         disconnectCode = disconnectCode,
+         listTables     = listTables,
+         listColumns    = listColumns,
+         previewTable   = previewTable,
+         actions        = actions
+      )
+      class(connection) <- "rstudioConnection"
+      .rs.validateConnection(connection)
+
+      # generate an internal key for this connection in the local cache 
+      cacheKey <- paste(connection$type, connection$host, 
+                        .Call("rs_generateShortUuid"), 
+                        sep = "_")
+      assign(cacheKey, value = connection, envir = .rs.activeConnections)
+
+      # serialize and generate client events
+      invisible(.Call("rs_connectionOpened", connection))
    },
    connectionClosed = function(type, host, ...) {
       .rs.validateCharacterParams(list(type = type, host = host))
@@ -61,117 +104,127 @@ options(connectionViewer = list(
    finderFunc(globalenv(), host)
 })
 
-.rs.addFunction("getConnectionObject", function(finder, host) {
-   name <- .rs.getConnectionObjectName(finder, host)
+.rs.addFunction("getConnectionObject", function(type, host) {
+   name <- .rs.getConnectionObjectName(type, host)
    get(name, envir = globalenv())
 })
 
-.rs.addFunction("getDisconnectCode", function(finder, host, template) {
-   name <- .rs.getConnectionObjectName(finder, host)
-   if (!is.null(name))
-      sprintf(template, name)
+.rs.addFunction("getDisconnectCode", function(type, host) {
+   connection <- .rs.findActiveConnection(type, host)
+   if (!is.null(connection))
+      connection$disconnectCode()
    else
       ""
 })
 
-.rs.addFunction("getSparkWebUrl", function(finder, host) {
-   sc <- .rs.getConnectionObject(finder, host)
-   sparklyr:::spark_web(sc)
-})
+.rs.addFunction("connectionListTables", function(type, host) {
 
-.rs.addFunction("getSparkLogFile", function(finder, host) {
-   sc <- .rs.getConnectionObject(finder, host)
-   sparklyr:::spark_log_file(sc)
-})
+   connection <- .rs.findActiveConnection(type, host)
 
-.rs.addFunction("connectionListTables", function(finder, host, listTablesCode) {
-
-   name <- .rs.getConnectionObjectName(finder, host)
-
-   if (!is.null(name)) {
-      listTablesCode <- sprintf(listTablesCode, name)
-      eval(parse(text = listTablesCode), envir = globalenv())
-   }
+   if (!is.null(connection)) 
+      connection$listTables()
    else
       character()
 })
 
-.rs.addFunction("connectionListColumns", function(finder, host, listColumnsCode, table) {
+.rs.addFunction("connectionListColumns", function(type, host, table) {
 
-   name <- .rs.getConnectionObjectName(finder, host)
+   connection <- .rs.findActiveConnection(type, host)
 
-   if (!is.null(name)) {
-      listColumnsCode <- sprintf(listColumnsCode, name, table)
-      eval(parse(text = listColumnsCode), envir = globalenv())
-   }
+   if (!is.null(connection))
+      listColumnsCode <- connection$listColumns(table)
    else
       NULL
 })
 
-.rs.addFunction("connectionPreviewTable", function(finder,
-                                                   host,
-                                                   previewTableCode,
-                                                   table,
-                                                   limit) {
+.rs.addFunction("connectionPreviewTable", function(type, host, table, limit) {
 
-   name <- .rs.getConnectionObjectName(finder, host)
+   connection <- .rs.findActiveConnection(type, host)
 
-   if (!is.null(name)) {
-      previewTableCode <- sprintf(previewTableCode, name, table, limit)
-      df <- eval(parse(text = previewTableCode), envir = globalenv())
+   if (!is.null(connection)) {
+      df <- connection$previewTable(table, limit)
       .rs.viewDataFrame(df, table, TRUE)
    }
 
    NULL
 })
 
+.rs.addFunction("connectionExecuteAction", function(type, host, action) {
 
-.rs.addJsonRpcHandler("get_new_spark_connection_context", function() {
+   connection <- .rs.findActiveConnection(type, host)
 
-  context <- list()
+   if (!is.null(connection) && action %in% names(connection$actions)) {
+      connection$actions[[action]]$callback()
+   }
 
-  # all previously connected to remote servers
-  context$remote_servers <- .Call("rs_availableRemoteServers")
-
-  # is there a spark home option
-  context$spark_home <- sparklyr:::spark_home()
-
-  # can we install new versions
-  canInstall <- sparklyr:::spark_can_install()
-  context$can_install_spark_versions <- .rs.scalar(canInstall)
-
-  # available spark versions (filter by installed if we can't install
-  # new versions of spark)
-  spark_versions <- sparklyr:::spark_versions()
-  if (!context$can_install_spark_versions)
-    spark_versions <- subset(spark_versions, spark_versions$installed)
-  context$spark_versions <- spark_versions
-
-  # default spark and hadoop version
-  defaultVersion <- sparklyr:::spark_default_version()
-  context$spark_default <- .rs.scalar(defaultVersion$spark);
-  context$hadoop_default <- .rs.scalar(defaultVersion$hadoop);
-
-  # option defining what connections are supported
-  defaultConnections <- c("local", "cluster")
-  context$connections_option <- tryCatch({
-      connections <- getOption("rstudio.spark.connections", defaultConnections)
-      if (is.character(connections))
-         connections
-      else
-         defaultConnections
-    },
-    error = function(e) defaultConnections
-  )
-
-  # default spark cluster url
-  context$default_cluster_url <- .rs.scalar(.Call("rs_defaultSparkClusterUrl"))
-
-  # is java installed?
-  context$java_installed <- .rs.scalar(sparklyr:::is_java_available())
-  context$java_install_url <- .rs.scalar(sparklyr:::java_install_url())
-
-  context
+   NULL
 })
 
+.rs.addJsonRpcHandler("get_new_connection_context", function() {
+   context <- list(
+      connectionsList = list(
+         list(
+            package = .rs.scalar("sparklyr"),
+            name = .rs.scalar("Spark"),
+            type = .rs.scalar("Shiny"),
+            newConnection = .rs.scalar("sparklyr::connection_spark_shinyapp()")
+         )
+      )
+   )
+
+   context
+})
+
+.rs.addFunction("embeddedViewer", function(url)
+{
+   .rs.enqueClientEvent("navigate_shiny_frame", list(
+      "url" = .rs.scalar(url)
+   ))
+})
+
+.rs.addJsonRpcHandler("launch_embedded_shiny_connection_ui", function(package, name)
+{
+   if (package == "sparklyr" & packageVersion("sparklyr") <= "0.5.1") {
+      return(.rs.error(
+         "sparklyr ", packageVersion("sparklyr"), " does not support this functionality. ",
+         "Please upgrade to sparklyr 0.5.2 or newer."
+      ))
+   }
+
+   connectionContext <- .rs.rpc.get_new_connection_context()$connectionsList
+   connectionInfo <- Filter(function(e) e$package == package & e$name == name, connectionContext)
+
+   if (length(connectionInfo) != 1) {
+      return(.rs.error(
+         "Connection for package ", package, " and name ", name, " is not registered"
+      ))
+   }
+
+   connectionInfo <- connectionInfo[[1]]
+
+   consoleCommand <- paste(
+      "shiny::runGadget(",
+      connectionInfo$newConnection,
+      ", viewer = .rs.embeddedViewer)",
+      sep = ""
+   )
+
+   .rs.enqueClientEvent("send_to_console", list(
+      "code" = .rs.scalar(consoleCommand),
+      "execute" = .rs.scalar(TRUE),
+      "focus" = .rs.scalar(FALSE),
+      "animate" = .rs.scalar(FALSE)
+   ))
+
+   .rs.success()
+})
+
+.rs.addFunction("updateNewConnectionDialog", function(code)
+{
+   .rs.enqueClientEvent("update_new_connection_dialog", list(
+      "code" = .rs.scalar(code)
+   ))
+
+   NULL
+})
 

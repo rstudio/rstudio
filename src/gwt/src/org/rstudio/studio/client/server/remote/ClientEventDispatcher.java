@@ -89,6 +89,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
@@ -107,6 +108,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ConnectionLi
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.*;
@@ -159,6 +161,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -848,10 +851,25 @@ public class ClientEventDispatcher
             ChunkExecStateChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new ChunkExecStateChangedEvent(data));
          }
+         else if (type.equals(ClientEvent.NavigateShinyFrame))
+         {
+            ShinyFrameNavigatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ShinyFrameNavigatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.UpdateNewConnectionDialog))
+         {
+            NewConnectionDialogUpdatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new NewConnectionDialogUpdatedEvent(data));
+         }
          else if (type.equals(ClientEvent.ProjectTemplateRegistryUpdated))
          {
             ProjectTemplateRegistry data = event.getData();
             eventBus_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.TerminalBusy))
+         {
+            TerminalBusyEvent.Data data = event.getData();
+            eventBus_.fireEvent(new TerminalBusyEvent(data));
          }
          else
          {

@@ -49,12 +49,13 @@ namespace {
 } // anonymous namespace
 
 const int kDefaultMaxOutputLines = 500;
+const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), newCols_(-1), newRows_(-1),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
+     allowRestart_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -62,33 +63,62 @@ ConsoleProcess::ConsoleProcess()
    // dummy \n so we can tell the first line is a complete line.
    outputBuffer_.push_back('\n');
 }
-
+   
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
+                               int terminalSequence,
+                               bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : command_(command), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
 
+   
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
+                               int terminalSequence,
+                               bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : program_(program), args_(args), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
+{
+   commonInit();
+}
+
+ConsoleProcess::ConsoleProcess(const std::string& command,
+                               const core::system::ProcessOptions& options,
+                               const std::string& caption,
+                               const std::string& title,
+                               int terminalSequence,
+                               bool allowRestart,
+                               const std::string& handle,
+                               bool dialog,
+                               InteractionMode interactionMode,
+                               int maxOutputLines)
+   : command_(command), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
+     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
+     handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -104,7 +134,8 @@ void ConsoleProcess::commonInit()
 {
    regexInit();
 
-   handle_ = core::system::generateUuid(false);
+   if (handle_.empty())
+      handle_ = core::system::generateUuid(false);
 
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
@@ -271,7 +302,12 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
 
 void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 {
-   std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+   // TODO (gary) for terminals we won't store output history
+   // in the SessionInfo; this will be stored separately, keyed by
+   // Terminal Handle; as a prelude to that stop storing the old way
+   // if we have the terminal handle
+   if (terminalSequence_ == kNoTerminal)
+      std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
@@ -383,6 +419,12 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
          ClientEvent(client_events::kConsoleProcessPrompt, data));
 }
 
+void ConsoleProcess::onSuspend()
+{
+   if (started_ && allowRestart_)
+      started_ = false;
+}
+
 void ConsoleProcess::onExit(int exitCode)
 {
    exitCode_.reset(exitCode);
@@ -410,6 +452,12 @@ core::json::Object ConsoleProcess::toJson() const
       result["exit_code"] = *exitCode_;
    else
       result["exit_code"] = json::Value();
+
+   // newly added in v1.1
+   result["terminal_sequence"] = terminalSequence_;
+   result["allow_restart"] = allowRestart_;
+   result["started"] = started_;
+   result["title"] = title_;
    return result;
 }
 
@@ -448,6 +496,46 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    else
       pProc->exitCode_.reset(exitCode.get_int());
 
+   // Newly added in v1.1
+   Error error = json::readObject(
+                     obj,
+                     "terminal_sequence", &pProc->terminalSequence_);
+   if (error)
+   {
+      // Possibly unarchiving a pre 1.1 session; ensure defaults are set
+      // and continue
+      LOG_ERROR(error);
+      pProc->terminalSequence_ = kNoTerminal;
+      return pProc;
+   }
+
+   // Newly added during work-in-progress on 1.1
+   // TODO (gary) could flatten this to a single readObject before release
+   error = json::readObject(obj,
+                            "allow_restart", &pProc->allowRestart_,
+                            "started", &pProc->started_);
+   if (error)
+   {
+      // Possibly unarchiving 1.1 work-in-progress session; match
+      // previous behavior and continue
+      if (pProc->terminalSequence_ != kNoTerminal)
+      {
+         pProc->allowRestart_ = true;
+         pProc->started_ = false;
+      }
+      LOG_ERROR(error);
+      return pProc;
+   }
+   
+   // More work-in-progress on 1.1
+   // TODO (gary) could flatten this to a single readObject before release
+   error = json::readObject(obj, "title", &pProc->title_);
+   if (error)
+   {
+      pProc->title_.clear();
+      LOG_ERROR(error);
+   }
+   
    return pProc;
 }
 
@@ -586,11 +674,58 @@ Error procSetSize(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 }
+
+Error procSetCaption(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string caption;
    
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &caption);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setCaption(caption);
+   return Success();
+}
+
+Error procSetTitle(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string title;
+   
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &title);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setTitle(title);
+   return Success();
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -600,6 +735,9 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
          new ConsoleProcess(command,
                             options,
                             caption,
+                            title,
+                            terminalSequence,
+                            allowRestart,
                             dialog,
                             interactionMode,
                             maxOutputLines));
@@ -612,6 +750,9 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::vector<std::string>& args,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -622,11 +763,57 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             args,
                             options,
                             caption,
+                            title,
+                            terminalSequence,
+                            allowRestart,
                             dialog,
                             interactionMode,
                             maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
    return ptrProc;
+}
+
+// supports reattaching to a running process, or creating a new process with
+// previously used handle
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
+      const std::string& command,
+      core::system::ProcessOptions options,
+      const std::string& caption,
+      const std::string& title,
+      const std::string& terminalHandle,
+      int terminalSequence,
+      bool allowRestart,
+      bool dialog,
+      InteractionMode interactionMode,
+      int maxOutputLines)
+{
+   if (allowRestart && !terminalHandle.empty())
+   {
+      // return existing ConsoleProcess if it is still running
+      ProcTable::const_iterator pos = s_procs.find(terminalHandle);
+      if (pos != s_procs.end() && pos->second->isStarted())
+      {
+         // Jiggle the size of the pseudo-terminal, this will force the app
+         // to refresh itself; this does rely on the host performing a second
+         // resize to the actual available size. Clumsy, but so far this is
+         // the best I've come up with.
+         pos->second->resize(25, 5);
+         return pos->second;
+      }
+      
+      // Create new process with previously used handle
+      options.terminateChildren = true;
+      boost::shared_ptr<ConsoleProcess> ptrProc(
+            new ConsoleProcess(command, options, caption, title, terminalSequence,
+                               allowRestart, terminalHandle, dialog,
+                               interactionMode, maxOutputLines));
+      s_procs[ptrProc->handle()] = ptrProc;
+      return ptrProc;
+   }
+   
+   // otherwise create a new one
+   return create(command, options, caption, title, terminalSequence,
+                 allowRestart, dialog, interactionMode, maxOutputLines);
 }
 
 void PasswordManager::attach(
@@ -764,6 +951,7 @@ void onSuspend(core::Settings* pSettings)
         it != s_procs.end();
         it++)
    {
+      it->second->onSuspend();
       array.push_back(it->second->toJson());
    }
 
@@ -808,7 +996,9 @@ Error initialize()
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
-      (bind(registerRpcMethod, "process_set_size", procSetSize));
+      (bind(registerRpcMethod, "process_set_size", procSetSize))
+      (bind(registerRpcMethod, "process_set_caption", procSetCaption))
+      (bind(registerRpcMethod, "process_set_title", procSetTitle));
 
    return initBlock.execute();
 }

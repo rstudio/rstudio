@@ -1,7 +1,7 @@
 /*
  * Connection.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,15 @@
 
 #include "Connection.hpp"
 
+#include <boost/foreach.hpp>
+
+#include <core/Base64.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+// max icon size is 5k; this prevents packages that haven't saved/scaled
+// their icons properly from causing performance trouble downstream
+#define kMaxIconSize 5 * 1048
 
 using namespace rstudio::core;
 
@@ -27,11 +34,38 @@ namespace connections {
 
 namespace {
 
+// given a path to an icon on disk, return the icon's contents as a
+// base64-encoded image if an eligible image exists at the path
+std::string base64IconData(const std::string& iconPath)
+{
+   // shortcut to empty string if no icon path specified
+   if (iconPath.empty())
+      return std::string();
 
+   // expand the path 
+   FilePath icon = module_context::resolveAliasedPath(iconPath);
+   std::string iconData;
 
+   // ensure that the icon file exists and is a small GIF, JPG, or PNG image
+   if (icon.exists() && icon.size() < kMaxIconSize &&
+       (icon.hasExtensionLowerCase(".gif") ||
+        icon.hasExtensionLowerCase(".png") ||
+        icon.hasExtensionLowerCase(".jpg") ||
+        icon.hasExtensionLowerCase(".jpeg")))
+   {
+      Error error = base64::encode(icon, &iconData);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         iconData = "data:" + icon.mimeContentType("image/png") + 
+                    ";base64," + iconData;
+      }
+   }
+   return iconData;
+}
 
 } // anonymous namespace
-
 
 json::Object connectionIdJson(const ConnectionId& id)
 {
@@ -41,18 +75,50 @@ json::Object connectionIdJson(const ConnectionId& id)
    return idJson;
 }
 
+json::Object connectionActionJson(const ConnectionAction& action) 
+{
+   json::Object actionJson;
+   actionJson["name"] = action.name;
+   actionJson["icon_path"] = action.icon;
+   actionJson["icon_data"] = base64IconData(action.icon);
+   return actionJson;
+}
+
 json::Object connectionJson(const Connection& connection)
 {
+   // form the action array
+   json::Array actions;
+   BOOST_FOREACH(const ConnectionAction& action, connection.actions)
+   {
+      actions.push_back(connectionActionJson(action));
+   }
+
    json::Object connectionJson;
-   connectionJson["id"] = connectionIdJson(connection.id);
-   connectionJson["finder"] = connection.finder;
+   connectionJson["id"]           = connectionIdJson(connection.id);
    connectionJson["connect_code"] = connection.connectCode;
-   connectionJson["disconnect_code"] = connection.disconnectCode;
-   connectionJson["list_tables_code"] = connection.listTablesCode;
-   connectionJson["list_columns_code"] = connection.listColumnsCode;
-   connectionJson["preview_table_code"] = connection.previewTableCode;
-   connectionJson["last_used"] = connection.lastUsed;
+   connectionJson["display_name"] = connection.displayName;
+   connectionJson["last_used"]    = connection.lastUsed;
+   connectionJson["actions"]      = actions;
+   connectionJson["icon_path"]    = connection.icon;
+   connectionJson["icon_data"]    = base64IconData(connection.icon);
+
    return connectionJson;
+}
+
+Error actionFromJson(const json::Object& actionJson,
+                     ConnectionAction* pAction)
+{
+   return json::readObject(actionJson,
+         "name", &(pAction->name),
+         "icon_path", &(pAction->icon));
+}
+
+Error connectionIdFromJson(const json::Object& connectionIdJson,
+                           ConnectionId* pConnectionId)
+{
+   return json::readObject(connectionIdJson,
+         "type", &(pConnectionId->type),
+         "host", &(pConnectionId->host));
 }
 
 Error connectionFromJson(const json::Object& connectionJson,
@@ -63,22 +129,36 @@ Error connectionFromJson(const json::Object& connectionJson,
    Error error = json::readObject(connectionJson, "id", &idJson);
    if (error)
       return error;
-   error = json::readObject(idJson,
-                            "type", &(pConnection->id.type),
-                            "host", &(pConnection->id.host));
-   if (error)
-      return error;
+   error = connectionIdFromJson(idJson, &(pConnection->id));
 
-   // read remanining fields
-   return json::readObject(
+   // read remaining fields
+   json::Array actions;
+   error = json::readObject(
             connectionJson,
-            "finder", &(pConnection->finder),
             "connect_code", &(pConnection->connectCode),
-            "disconnect_code", &(pConnection->disconnectCode),
-            "list_tables_code", &(pConnection->listTablesCode),
-            "list_columns_code", &(pConnection->listColumnsCode),
-            "preview_table_code", &(pConnection->previewTableCode),
+            "display_name", &(pConnection->displayName),
+            "actions", &actions,
+            "icon_path", &(pConnection->icon),
             "last_used", &(pConnection->lastUsed));
+
+   // read each action
+   BOOST_FOREACH(const json::Value& action, actions) 
+   {
+      if (action.type() != json::ObjectType)
+         continue;
+      ConnectionAction act;
+      error = actionFromJson(action.get_obj(), &act);
+      if (error)
+      {
+         // be fault-tolerant here (we can still use the connection even if the
+         // actions aren't well-formed)
+         LOG_ERROR(error);
+         continue;
+      }
+      pConnection->actions.push_back(act);
+   }
+
+   return error;
 }
 
 bool hasConnectionId(const ConnectionId& id,

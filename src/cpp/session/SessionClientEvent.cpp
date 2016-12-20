@@ -161,7 +161,9 @@ const int kActiveConnectionsChanged = 142;
 const int kConnectionOpened = 143;
 const int kNotebookRangeExecuted = 144;
 const int kChunkExecStateChanged = 145;
-const int kProjectTemplateRegistryUpdated = 146;
+const int kNavigateShinyFrame = 146;
+const int kUpdateNewConnectionDialog = 147;
+const int kProjectTemplateRegistryUpdated = 148;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -443,6 +445,10 @@ std::string ClientEvent::typeName() const
          return "notebook_range_executed";
       case client_events::kChunkExecStateChanged:
          return "chunk_exec_state_changed";
+      case client_events::kNavigateShinyFrame:
+         return "navigate_shiny_frame";
+      case client_events::kUpdateNewConnectionDialog:
+         return "update_new_connection_dialog";
       case client_events::kProjectTemplateRegistryUpdated:
          return "project_template_registry_updated";
       default:

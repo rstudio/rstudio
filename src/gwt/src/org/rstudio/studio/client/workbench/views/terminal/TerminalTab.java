@@ -15,18 +15,21 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
 
 public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                          implements ProvidesBusy
@@ -36,12 +39,20 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    public abstract static class Shim 
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
       implements ProvidesBusy,
-                 CreateTerminalEvent.Handler
+                 CreateTerminalEvent.Handler,
+                 SessionInitHandler
    {
       @Handler
       public abstract void onActivateTerminal();
-      
+
+      @Handler
+      public abstract void onCloseTerminal();
+
+      @Handler 
+      public abstract void onRenameTerminal();
+
       abstract void initialize();
+      abstract void confirmClose(Command onConfirmed);
    }
 
    @Inject
@@ -53,11 +64,24 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    {
       super("Terminal", shim);
       shim_ = shim;
-      
+
       binder.bind(commands, shim_);
       events.addHandler(CreateTerminalEvent.TYPE, shim_);
-      
+      events.addHandler(SessionInitEvent.TYPE, shim_);
+
       shim_.initialize();
+   }
+
+   @Override
+   public boolean closeable()
+   {
+      return true;
+   }
+
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      shim_.confirmClose(onConfirmed);
    }
 
    @Override

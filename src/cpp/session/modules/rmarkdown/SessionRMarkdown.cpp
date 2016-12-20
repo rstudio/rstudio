@@ -417,7 +417,13 @@ private:
       allOutput_.clear();
       if (existingOutputFile.empty())
       {
-         async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
+         // launch the R session in the document's directory by default, unless
+         // a working directory was supplied
+         FilePath working = targetFile_.parent();
+         if (!workingDir.empty())
+            working = module_context::resolveAliasedPath(workingDir);
+
+         async_r::AsyncRProcess::start(cmd.c_str(), environment, working,
                                        async_r::R_PROCESS_NO_RDATA);
       }
       else

@@ -25,6 +25,10 @@ public class TerminalDataInputEvent extends GwtEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
+      /**
+       * Sent when user has typed in the terminal
+       * @param event contains string data typed by the user
+       */
       void onTerminalDataInput(TerminalDataInputEvent event);
    }
    

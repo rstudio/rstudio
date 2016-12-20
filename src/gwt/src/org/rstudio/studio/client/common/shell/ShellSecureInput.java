@@ -18,6 +18,10 @@ package org.rstudio.studio.client.common.shell;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSerializationHandler;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.crypto.RSAEncrypt;
@@ -30,17 +34,20 @@ import com.google.inject.Inject;
  * On desktop, this is a no-op.
  * For client/server, the string will be encrypted.
  */
-public class ShellSecureInput
+public class ShellSecureInput implements SessionSerializationHandler
 {
    public ShellSecureInput()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      eventBus_.addHandler(SessionSerializationEvent.TYPE, this);
    }
    
    @Inject
-   private void initialize(CryptoServerOperations server)
+   private void initialize(CryptoServerOperations server,
+                           EventBus events)
    {
       server_ = server;
+      eventBus_ = events;
    }
    
    /**
@@ -84,8 +91,30 @@ public class ShellSecureInput
       }
    }
    
+   /**
+    * Release public key so next secureString request will establish new 
+    * encryption credentials.
+    */
+   public void releasePublicKey()
+   {
+      publicKeyInfo_ = null;
+   }
+   
+   @Override
+   public void onSessionSerialization(SessionSerializationEvent event)
+   {
+      switch(event.getAction().getType())
+      {
+      case SessionSerializationAction.SUSPEND_SESSION:
+         releasePublicKey();
+         break;
+      }
+   }
+   
    private PublicKeyInfo publicKeyInfo_ = null;
    
    // Injected ----
    private CryptoServerOperations server_;
+   private EventBus eventBus_;
+
 }

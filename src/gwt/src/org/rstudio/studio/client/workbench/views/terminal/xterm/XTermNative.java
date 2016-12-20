@@ -33,7 +33,6 @@ public class XTermNative extends JavaScriptObject
    /**
     * Remove event handlers and detach from parent node.
     */
-   // TODO: (gary) should be calling this
    public final native void destroy() /*-{
       this.destroy();
    }-*/;
@@ -93,6 +92,10 @@ public class XTermNative extends JavaScriptObject
       this.scrollToBottom();
    }-*/;
 
+   public final native void reset() /*-{
+      this.reset();
+   }-*/;
+   
    /**
     * Install a handler for user input (typing). Only one handler at a 
     * time may be installed. Previous handler will be overwritten.
@@ -104,7 +107,18 @@ public class XTermNative extends JavaScriptObject
             command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(data);
          });
    }-*/;
-   
+
+   /**
+    * Install a handler for title events (via escape sequence).
+    * @param command handler for title text
+    */
+   public final native void onTitleData(CommandWithArg<String> command) /*-{
+      this.handleTitle = 
+         $entry(function(title) {
+            command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(title);
+         });
+   }-*/;
+
    /**
     * Factory to create a native Javascript terminal object.
     *  

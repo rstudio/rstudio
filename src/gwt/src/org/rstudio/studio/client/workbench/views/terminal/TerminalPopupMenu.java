@@ -15,22 +15,37 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.inject.Inject;
+
+/**
+ * Drop-down menu used in terminal pane. Has commands, and a list of 
+ * terminal sessions.
+ */
 public class TerminalPopupMenu extends ToolbarPopupMenu
 {
-   public TerminalPopupMenu(SessionInfo sessionInfo, Commands commands)
+   public TerminalPopupMenu(TerminalList terminals)
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      terminals_ = terminals;
+   }
+
+   @Inject
+   private void initialize(Commands commands,
+                           EventBus events)
    {
       commands_ = commands;
-      //sessionInfo_ = sessionInfo;
-      
-      // TODO (gary) Read active terminal from session, or always revert to
-      // first terminal in list?
-      activeTerminal_ = null;
+      eventBus_ = events;
    }
    
    @Override
@@ -38,18 +53,41 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    { 
       // clean out existing entries
       clearItems(); 
-      
       addItem(commands_.newTerminal().createMenuItem(false));
-
-      // ensure the menu doesn't get too narrow
-      addSeparator(225);
-
-      // TODO (gary) dynamically create based on open terminals
-       
-      addItem(commands_.renameTerminal().createMenuItem(false));
-      addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
       addSeparator();
-      addItem(commands_.closeTerminal().createMenuItem(false));
+
+      if (terminals_.terminalCount() > 0)
+      {
+         for (final String handle : terminals_)
+         {
+            Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+               }
+            };
+
+            String caption = terminals_.getCaption(handle);
+
+            String menuHtml = AppCommand.formatMenuLabel(
+                  null,              /*icon*/
+                  caption,           /*label*/
+                  false,             /*html*/
+                  null,              /*shortcut*/
+                  null,              /*rightImage*/
+                  null);             /*rightImageDesc*/
+            addItem(new MenuItem(menuHtml, true, cmd));
+         }
+         addSeparator();
+         addItem(commands_.renameTerminal().createMenuItem(false));
+         addItem(commands_.closeTerminal().createMenuItem(false));
+      }
+
+      // TODO (gary) put these back once implemented
+      // addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
+
       callback.onPopupMenu(this);
    }
    
@@ -57,26 +95,51 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       if (toolbarButton_ == null)
       {
-         // TODO (gary) flesh this out
          String buttonText = "Terminal";
-          
+         
          toolbarButton_ = new ToolbarButton(
                 buttonText, 
                 StandardIcons.INSTANCE.empty_command(),
                 this, 
                 false);
-          
-         if (activeTerminal_ != null)
-         {
-            toolbarButton_.setTitle(activeTerminal_);
-         }
+
+         setNoActiveTerminal();
       }
-       
-       return toolbarButton_;
+      return toolbarButton_;
+   }
+   
+   /**
+    *       
+    * @param caption caption of the active terminal
+    * @param handle handle of the active terminal
+    */
+   public void setActiveTerminal(String caption, String handle)
+   {
+      activeTerminalCaption_ = caption;
+      activeTerminalHandle_ = handle;
+      toolbarButton_.setText(activeTerminalCaption_);
+   }
+   
+   /**
+    * set state to indicate no active terminals
+    */
+   public void setNoActiveTerminal()
+   {
+      setActiveTerminal("Terminal", null);
+   }
+
+   /**
+    * @return Handle of active terminal, or null if no active terminal.
+    */
+   public String getActiveTerminalHandle()
+   {
+      return activeTerminalHandle_;
    }
    
    private ToolbarButton toolbarButton_;
-   private final Commands commands_;
-   //private final SessionInfo sessionInfo_;
-   private String activeTerminal_;
+   private Commands commands_;
+   private EventBus eventBus_;
+   private String activeTerminalCaption_;
+   private String activeTerminalHandle_;
+   private TerminalList terminals_;
 }

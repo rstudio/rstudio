@@ -317,6 +317,9 @@ protected:
                                      args.args(),
                                      options,
                                      caption,
+                                     "" /*title*/,
+                                     kNoTerminal,
+                                     false /*allowRestart*/,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);
@@ -324,6 +327,9 @@ protected:
       *ppCP = ConsoleProcess::create(git() << args.args(),
                                      options,
                                      caption,
+                                     "" /*title*/,
+                                     kNoTerminal,
+                                     false /*allowRestart*/,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);
