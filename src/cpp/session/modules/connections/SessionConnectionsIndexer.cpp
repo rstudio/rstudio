@@ -45,15 +45,24 @@ namespace connections {
 
 namespace {
 
+bool isDevtoolsLoadAllActive()
+{
+   std::vector<std::string> search;
+   Error error = r::exec::RFunction("search").call(&search);
+   if (error)
+      return false;
+   
+   return std::find(search.begin(), search.end(), "devtools_shims") != search.end();
+}
 
-class SessionConnectionsIndexEntry
+class ConnectionsIndexEntry
 {
 public:
    
-   SessionConnectionsIndexEntry() {}
+   ConnectionsIndexEntry() {}
    
-   SessionConnectionsIndexEntry(const std::string& name,
-                                const std::string& package)
+   ConnectionsIndexEntry(const std::string& name,
+                         const std::string& package)
       : name_(name), package_(package)
    {
    }
@@ -76,11 +85,11 @@ private:
    std::string package_;
 };
 
-class SessionConnectionsIndexRegistry : boost::noncopyable
+class ConnectionsRegistry : boost::noncopyable
 {
 public:
 
-   void add(const std::string& package, const SessionConnectionsIndexEntry& spec)
+   void add(const std::string& package, const ConnectionsIndexEntry& spec)
    {
       connections_[constructKey(package, spec.getName())] = spec;
    }
@@ -88,7 +97,7 @@ public:
    void add(const std::string& pkgName,
             std::map<std::string, std::string>& fields)
    {  
-      add(pkgName, SessionConnectionsIndexEntry(
+      add(pkgName, ConnectionsIndexEntry(
             fields["Name"],
             pkgName));
    }
@@ -120,7 +129,7 @@ public:
       return connections_.count(constructKey(package, name));
    }
 
-   const SessionConnectionsIndexEntry& get(const std::string& package, const std::string& name)
+   const ConnectionsIndexEntry& get(const std::string& package, const std::string& name)
    {
       return connections_[constructKey(package, name)];
    }
@@ -159,8 +168,83 @@ private:
       return package + "::" + name;
    }
 
-   std::map<std::string, SessionConnectionsIndexEntry> connections_;
+   std::map<std::string, ConnectionsIndexEntry> connections_;
 };
+
+boost::shared_ptr<ConnectionsRegistry> s_pCurrentConnectionsRegistry =
+    boost::make_shared<ConnectionsRegistry>();
+
+ConnectionsRegistry& connectionsRegistry()
+{
+   return *s_pCurrentConnectionsRegistry;
+}
+
+void updateConnectionsRegistry(boost::shared_ptr<ConnectionsRegistry> pRegistry)
+{
+   s_pCurrentConnectionsRegistry = pRegistry;
+}
+
+class ConnectionsIndexer : public ppe::Indexer
+{
+   void onIndexingStarted()
+   {
+      pRegistry_ = boost::make_shared<ConnectionsRegistry>();
+   }
+   
+   void onWork(const std::string& pkgName, const FilePath& connectionExtensionPath)
+   {
+      pRegistry_->add(pkgName, connectionExtensionPath);
+   }
+   
+   void onIndexingCompleted()
+   {
+      // finalize by indexing current package
+      if (isDevtoolsLoadAllActive())
+      {
+         FilePath pkgPath = projects::projectContext().buildTargetPath();
+         FilePath extensionPath = pkgPath.childPath("inst/rstudio/connections.dcf");
+         if (extensionPath.exists())
+         {
+            std::string pkgName = projects::projectContext().packageInfo().name();
+            pRegistry_->add(pkgName, extensionPath);
+         }
+      }
+
+      // update the connections registry
+      updateConnectionsRegistry(pRegistry_);
+
+      // handle pending continuations
+      json::Object registryJson = connectionsRegistry().toJson();
+      BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
+      {
+         json::JsonRpcResponse response;
+         response.setResult(registryJson);
+         continuation(Success(), &response);
+      }
+   }
+
+public:
+   
+   ConnectionsIndexer(const std::string& resourcePath)
+      : ppe::Indexer(resourcePath)
+   {
+   }
+   
+   void addContinuation(json::JsonRpcFunctionContinuation continuation)
+   {
+      continuations_.push_back(continuation);
+   }
+
+private:
+   boost::shared_ptr<ConnectionsRegistry> pRegistry_;
+   std::vector<json::JsonRpcFunctionContinuation> continuations_;
+};
+
+ConnectionsIndexer& connectionsIndexer()
+{
+   static ConnectionsIndexer instance("rstudio/connections.dcf");
+   return instance;
+}
 
 }
 
