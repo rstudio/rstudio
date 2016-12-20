@@ -139,6 +139,7 @@ set (SESSION_SOURCE_FILES
    modules/connections/Connection.cpp
    modules/connections/ConnectionHistory.cpp
    modules/connections/SessionConnections.cpp
+   modules/connections/SessionConnectionsIndexer.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp
