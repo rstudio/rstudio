@@ -210,7 +210,7 @@ public class TerminalPane extends WorkbenchPane
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
                "Close " + visibleTerminal.getTitle(),
                "Are you sure you want to exit the terminal named \"" +
-               visibleTerminal.getTitle() + "\"? Any running jobs will be terminated.",
+               visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
                false,
                new Operation()
                {
