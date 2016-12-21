@@ -40,4 +40,12 @@ public class JsMap<T extends JavaScriptObject> extends JavaScriptObject
    public native final JsArrayString keys() /*-{
       return Object.keys(this);
    }-*/;
+   
+   public native final int size() /*-{
+      return this.size;
+   }-*/;
+   
+   public native final boolean isEmpty() /*-{
+      return this.size === 0;
+   }-*/;
 }

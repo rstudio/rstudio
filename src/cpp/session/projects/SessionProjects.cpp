@@ -26,6 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
@@ -125,6 +126,32 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error initializeProjectFromTemplate(const FilePath& projectFilePath,
+                                    const json::Value& projectTemplateOptions)
+{
+   using namespace modules::projects::templates;
+   using namespace r::exec;
+   Error error;
+
+   json::Object descriptionJson;
+   json::Object inputsJson;
+   error = json::readObject(projectTemplateOptions.get_obj(),
+                            "description", &descriptionJson,
+                            "inputs", &inputsJson);
+   if (error)
+      return error;
+   
+   FilePath projectPath = projectFilePath.parent();
+   
+   return r::exec::RFunction(".rs.initializeProjectFromTemplate")
+         .addParam(string_utils::utf8ToSystem(projectFilePath.absolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectPath.absolutePath()))
+         .addParam(descriptionJson)
+         .addParam(inputsJson)
+         .call();
+
+}
+
 Error createProject(const json::JsonRpcRequest& request,
                     json::JsonRpcResponse* pResponse)
 {
@@ -132,14 +159,17 @@ Error createProject(const json::JsonRpcRequest& request,
    std::string projectFile;
    json::Value newPackageJson;
    json::Value newShinyAppJson;
+   json::Value projectTemplateOptions;
    Error error = json::readParams(request.params,
                                   &projectFile,
                                   &newPackageJson,
-                                  &newShinyAppJson);
+                                  &newShinyAppJson,
+                                  &projectTemplateOptions);
    if (error)
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
+   // Shiny application
    if (!newShinyAppJson.is_null())
    {
       // error if the shiny app dir already exists
@@ -178,27 +208,32 @@ Error createProject(const json::JsonRpcRequest& request,
                                       ProjectContext::buildDefaults(),
                                       ProjectContext::defaultConfig());
    }
-
-   // default project
-   else
+   
+   // if we have a custom project template, call that first
+   if (!projectTemplateOptions.is_null() &&
+       json::isType<json::Object>(projectTemplateOptions))
    {
-      // create the project directory if necessary
-      error = projectFilePath.parent().ensureDirectory();
+      Error error = initializeProjectFromTemplate(projectFilePath, projectTemplateOptions);
       if (error)
          return error;
-
-      // create the project file
-      if (!projectFilePath.exists())
-      {
-         return r_util::writeProjectFile(projectFilePath,
-                                         ProjectContext::buildDefaults(),
-                                         ProjectContext::defaultConfig());
-      }
-      else
-      {
-         return Success();
-      }
    }
+   
+   // default project scaffolding
+   error = projectFilePath.parent().ensureDirectory();
+   if (error)
+      return error;
+
+   // create the project file
+   if (!projectFilePath.exists())
+   {
+      error = r_util::writeProjectFile(projectFilePath,
+                                       ProjectContext::buildDefaults(),
+                                       ProjectContext::defaultConfig());
+      if (error)
+         return error;
+   }
+   
+   return Success();
 }
 
 json::Object projectConfigJson(const r_util::RProjectConfig& config)
@@ -689,14 +724,21 @@ SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
             r::sexp::create(true, &protect);
 }
 
-SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathSEXP)
+SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSEXP)
 {
    std::string projectFileAbsolutePath = r::sexp::asString(projectFileAbsolutePathSEXP);
    const FilePath projectFilePath(projectFileAbsolutePath);
    
-   std::string docRelativePath = r::sexp::asString(docRelativePathSEXP);
+   std::vector<std::string> docRelativePaths;
+   bool success = r::sexp::fillVectorString(docRelativePathsSEXP, &docRelativePaths);
+   if (!success)
+      return R_NilValue;
    
-   addFirstRunDoc(projectFilePath, docRelativePath);
+   BOOST_FOREACH(const std::string& path, docRelativePaths)
+   {
+      addFirstRunDoc(projectFilePath, path);
+   }
+   
    return R_NilValue;
 }
 

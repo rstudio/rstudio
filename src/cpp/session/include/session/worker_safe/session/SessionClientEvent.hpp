@@ -164,6 +164,7 @@ extern const int kNotebookRangeExecuted;
 extern const int kChunkExecStateChanged;
 extern const int kNavigateShinyFrame;
 extern const int kUpdateNewConnectionDialog;
+extern const int kProjectTemplateRegistryUpdated;
 extern const int kTerminalBusy;
 extern const int kTerminalRunningProgram;
 }

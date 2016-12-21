@@ -88,6 +88,8 @@ import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.ProjectUserRole;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -1606,6 +1608,7 @@ public class RemoteServer implements Server
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              NewShinyAppOptions newShinyAppOptions,
+                             ProjectTemplateOptions projectTemplateOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -1614,7 +1617,25 @@ public class RemoteServer implements Server
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
       params.set(2, newShinyAppOptions != null ?
             new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
+      params.set(3, projectTemplateOptions != null ?
+            new JSONObject(projectTemplateOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
+   }
+   
+   public void getProjectTemplateRegistry(
+         ServerRequestCallback<ProjectTemplateRegistry> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PROJECT_TEMPLATE_REGISTRY, requestCallback);
+   }
+   
+   public void executeProjectTemplate(String pkgName,
+                                      String pkgBinding,
+                                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(pkgName));
+      params.set(1, new JSONString(pkgBinding));
+      sendRequest(RPC_SCOPE, EXECUTE_PROJECT_TEMPLATE, params, requestCallback);
    }
    
    public void packageSkeleton(String packageName,
@@ -5059,6 +5080,8 @@ public class RemoteServer implements Server
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
    private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
+   private static final String GET_PROJECT_TEMPLATE_REGISTRY = "get_project_template_registry";
+   private static final String EXECUTE_PROJECT_TEMPLATE = "execute_project_template";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
    private static final String WRITE_PROJECT_VCS_OPTIONS = "write_project_vcs_options";
