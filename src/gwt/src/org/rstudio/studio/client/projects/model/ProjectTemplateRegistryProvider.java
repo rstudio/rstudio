@@ -91,7 +91,16 @@ public class ProjectTemplateRegistryProvider
       
       // execute pending callbacks
       for (Callback callback : pendingCallbacks_)
-         callback.execute(registry_);
+      {
+         try
+         {
+            callback.execute(registry_);
+         }
+         catch (Exception e)
+         {
+            Debug.logException(e);
+         }
+      }
       
       // clear pending callbacks
       pendingCallbacks_.clear();
