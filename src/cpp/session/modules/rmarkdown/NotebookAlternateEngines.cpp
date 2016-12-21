@@ -356,7 +356,7 @@ Error executeSqlEngineChunk(const std::string& docId,
    // ensure we always emit an execution complete event on exit
    ChunkExecCompletedScope execScope(docId, chunkId);
 
-      // prepare console output file -- use tempfile on failure
+   // prepare console output file -- use tempfile on failure
    FilePath consolePath = module_context::tempFile("data-console-", "");
    error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &consolePath);
    if (error)
@@ -406,6 +406,14 @@ Error executeSqlEngineChunk(const std::string& docId,
 
       return Success();
    }
+   
+   // write input code to cache
+   error = appendConsoleOutput(
+            kChunkConsoleInput,
+            code,
+            consolePath);
+   if (error)
+      LOG_ERROR(error);
 
    if (dataPath.exists()) {
       // forward success / failure to chunk
