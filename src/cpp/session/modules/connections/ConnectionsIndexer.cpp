@@ -229,6 +229,8 @@ class ConnectionsIndexer : public ppe::Indexer
          response.setResult(registryJson);
          continuation(Success(), &response);
       }
+
+      pRegistry_.reset();
    }
 
 public:

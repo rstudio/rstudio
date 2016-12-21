@@ -164,6 +164,13 @@ options(connectionObserver = list(
    rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
 
    connectionList <- lapply(rawConnections, function(con) {
+      ns <- asNamespace(con$package)
+      if (nchar(con$shinyapp) == 0 || !exists(con$shinyapp, envir = ns, mode="function")) {
+         warning(
+            "The function \"", con$shinyapp, "\" does not exist. ",
+            "Check the ShinyApp DCF field in the ", con$package, " package.")
+      }
+
       list(
          package = .rs.scalar(con$package),
          name = .rs.scalar(con$name),
