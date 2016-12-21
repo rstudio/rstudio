@@ -531,6 +531,41 @@ core::Error readObject(const json::Object& object,
    return Success() ;
 }
 
+inline core::Error readObject(const json::Object& object,
+                              const std::string& name,
+                              json::Array* pArray)
+{
+   return readObject<json::Array>(object, name, pArray);
+}
+
+template <typename T>
+core::Error readObject(
+      const json::Object& object,
+      const std::string& name,
+      std::vector<T>* pVector)
+{
+   core::Error error;
+   
+   json::Array array;
+   error = readObject(object, name, &array);
+   if (error)
+      return error;
+   
+   for (std::size_t i = 0, n = array.size(); i < n; ++i)
+   {
+      const json::Value& el = array[i];
+      if (!isType<T>(el))
+         return errors::typeMismatch(
+                  el,
+                  json::asJsonType(T()),
+                  ERROR_LOCATION);
+      
+      pVector->push_back(el.get_value<T>());
+   }
+   
+   return Success();
+}
+
 template <typename T>
 core::Error readObject(const json::Object& object,
                        const std::string& name,

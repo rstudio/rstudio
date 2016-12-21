@@ -33,7 +33,7 @@ public class NewPackagePage extends NewDirectoryPage
 {
    public NewPackagePage()
    {
-      super("R Package", 
+      super("R Package",
             "Create a new R package",
             "Create R Package",
             NewProjectResources.INSTANCE.packageIcon(),

@@ -57,6 +57,7 @@ import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
@@ -208,6 +209,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditorIdleCommands commands);
    void injectMembers(EditingTargetInlineChunkExecution executor);
    void injectMembers(DataImportFileChooser dataImportFileChooser);
+   void injectMembers(ProjectTemplateRegistryProvider provider);
    void injectMembers(TerminalSession widget);
    void injectMembers(ShellSecureInput userInputEncryption);
    void injectMembers(TerminalPopupMenu menu);
@@ -245,4 +247,5 @@ public interface RStudioGinjector extends Ginjector
    SourceWindow getSourceWindow();
    Server getServer();
    ChunkWindowManager getChunkWindowManager();
+   ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
 }

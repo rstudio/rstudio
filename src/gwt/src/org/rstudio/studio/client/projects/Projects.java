@@ -210,7 +210,7 @@ public class Projects implements OpenProjectFileHandler,
    {
       handleNewProject(false, true);
    }
-
+   
    private void handleNewProject(boolean forceSaveAll, 
                                  final boolean allowOpenInNewWindow)
    {
@@ -409,7 +409,6 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onExecute(final Command continuation)
          {
-            
             // Validate the package name if we're creating a package
             if (newProject.getNewPackageOptions() != null)
             {
@@ -435,6 +434,7 @@ public class Projects implements OpenProjectFileHandler,
                      newProject.getProjectFile(),
                      newProject.getNewPackageOptions(),
                      newProject.getNewShinyAppOptions(),
+                     newProject.getProjectTemplateOptions(),
                      new VoidServerRequestCallback(indicator)
                      {
                         @Override

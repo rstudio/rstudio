@@ -53,19 +53,14 @@ public:
    
    void start()
    {
-      start(300, 20);
-   }
-   
-   void start(int initialDurationMs, int incrementalDurationMs)
-   {
       if (running_)
          return;
       
       running_ = true;
       beginIndexing();
       module_context::scheduleIncrementalWork(
-               boost::posix_time::milliseconds(initialDurationMs),
-               boost::posix_time::milliseconds(incrementalDurationMs),
+               boost::posix_time::milliseconds(300),
+               boost::posix_time::milliseconds(20),
                boost::bind(&Indexer::work, this),
                false);
    }

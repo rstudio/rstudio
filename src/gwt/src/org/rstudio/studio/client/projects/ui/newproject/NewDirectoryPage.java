@@ -23,6 +23,7 @@ import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -39,7 +40,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
 
    public NewDirectoryPage()
    {
-      this("Empty Project", 
+      this("New Project", 
            "Create a new project in an empty directory",
            "Create New Project",
            NewProjectResources.INSTANCE.newProjectDirectoryIcon(),
@@ -167,6 +168,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return null;
    }
    
+   protected ProjectTemplateOptions getProjectTemplateOptions()
+   {
+      return null;
+   }
+   
    @Override 
    protected void initialize(NewProjectInput input)
    {
@@ -219,7 +225,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
                                      chkPackratInit_.getValue(), 
                                      newDefaultLocation,
                                      null,
-                                     getNewPackageOptions(), getNewShinyAppOptions());
+                                     getNewPackageOptions(),
+                                     getNewShinyAppOptions(),
+                                     getProjectTemplateOptions());
       }
       else
       {
@@ -241,8 +249,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
    
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
-   private CheckBox chkGitInit_;
-   private CheckBox chkPackratInit_;
+   protected CheckBox chkGitInit_;
+   protected CheckBox chkPackratInit_;
    
    private DirectoryChooserTextBox newProjectParent_;
 

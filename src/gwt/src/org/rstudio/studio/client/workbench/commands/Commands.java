@@ -162,6 +162,7 @@ public abstract class
  
    // Projects
    public abstract AppCommand newProject();
+   public abstract AppCommand newProjectFromTemplate();
    public abstract AppCommand openProject();
    public abstract AppCommand openProjectInNewWindow();
    public abstract AppCommand shareProject();
