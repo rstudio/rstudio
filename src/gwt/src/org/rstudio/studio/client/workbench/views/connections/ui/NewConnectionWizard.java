@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
@@ -27,7 +26,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 public class NewConnectionWizard extends Wizard<NewConnectionContext, ConnectionOptions>

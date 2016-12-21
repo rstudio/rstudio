@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
