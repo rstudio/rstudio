@@ -65,13 +65,15 @@ public:
    ConnectionsIndexEntry() {}
    
    ConnectionsIndexEntry(const std::string& name,
-                         const std::string& package)
-      : name_(name), package_(package)
+                         const std::string& package,
+                         const std::string& shinyapp)
+      : name_(name), package_(package), shinyapp_(shinyapp)
    {
    }
    
    const std::string& getName() const { return name_; }
    const std::string& getPackage() const { return package_; }
+   const std::string& getShinyApp() const { return shinyapp_; }
 
    json::Object toJson() const
    {
@@ -79,6 +81,7 @@ public:
       
       object["name"] = name_;
       object["package"] = package_;
+      object["shinyapp"] = shinyapp_;
       
       return object;
    }
@@ -86,6 +89,7 @@ public:
 private:
    std::string name_;
    std::string package_;
+   std::string shinyapp_;
 };
 
 class ConnectionsRegistry : boost::noncopyable
@@ -101,8 +105,9 @@ public:
             std::map<std::string, std::string>& fields)
    {  
       add(pkgName, ConnectionsIndexEntry(
-            fields["Name"],
-            pkgName));
+         fields["Name"],
+         pkgName,
+         fields["ShinyApp"]));
    }
 
    void add(const std::string& pkgName, const FilePath& connectionExtensionPath)
