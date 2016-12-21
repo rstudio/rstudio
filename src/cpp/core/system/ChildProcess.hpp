@@ -61,6 +61,10 @@ public:
    // terminate the process
    virtual Error terminate();
 
+   // how many subprocesses of this process; returns -1 if not tracking
+   // subprocesses or count is currently unknown
+   virtual int subProcessCount() const;
+
 protected:
    Error run();
 

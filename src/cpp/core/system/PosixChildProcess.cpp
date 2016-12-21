@@ -356,6 +356,13 @@ Error ChildProcess::terminate()
    }
 }
 
+// how many subprocesses of this process; returns -1 if not tracking
+// subprocesses or count is currently unknown
+int ChildProcess::subProcessCount() const
+{
+   // TODO (gary)
+   return -1;
+}
 
 Error ChildProcess::run()
 {  
@@ -660,14 +667,84 @@ struct AsyncChildProcess::AsyncImpl
       : calledOnStarted_(false),
         finishedStdout_(false),
         finishedStderr_(false),
-        exited_(false)
+        exited_(false),
+        checkSubProc_(boost::posix_time::not_a_date_time),
+        checkTermMode_(boost::posix_time::not_a_date_time)
    {
    }
-
    bool calledOnStarted_;
    bool finishedStdout_;
    bool finishedStderr_;
    bool exited_;
+
+   // when we next check subprocess count
+   boost::posix_time::ptime checkSubProc_;
+
+   // when we next check terminal mode (canonical or not)
+   boost::posix_time::ptime checkTermMode_;
+
+   void initTimers(bool reportChildCount, bool reportTermMode)
+   {
+      if (exited_)
+      {
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+         checkTermMode_ = boost::posix_time::not_a_date_time;
+         return;
+      }
+
+      if (reportChildCount && checkSubProc_.is_not_a_date_time())
+      {
+         checkSubProc_ = now() + boost::posix_time::seconds(1);
+      }
+      if (reportTermMode && checkTermMode_.is_not_a_date_time())
+      {
+         checkTermMode_ = now() + boost::posix_time::seconds(5);
+      }
+   }
+
+   bool checkChildCount()
+   {
+      if (checkSubProc_.is_not_a_date_time())
+         return false;
+
+      bool fCheck = now() > checkSubProc_;
+
+      if (fCheck)
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+      return fCheck;
+   }
+
+   bool checkTermMode()
+   {
+      if (checkTermMode_.is_not_a_date_time())
+         return false;
+
+      bool fCheck = now() > checkTermMode_;
+
+      if (fCheck)
+         checkTermMode_ = boost::posix_time::not_a_date_time;
+      return fCheck;
+   }
+
+   int computeSubProcessCount()
+   {
+      // TODO (gary) NYI
+      // On Linux we can do this via /proc/PID/task/PID/children; on Mac
+      // dev environment we'll invoke shell commands
+      return -1;
+   }
+
+   bool computeTerminalCanonicalMode()
+   {
+      // TODO (gary) NYI
+      // Get the terminal ID, then query stty
+      return true;
+   }
+
+   static boost::posix_time::ptime now()
+   {
+      return boost::posix_time::microsec_clock::universal_time();
+   }
 };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
@@ -727,7 +804,6 @@ void AsyncChildProcess::poll()
          callbacks_.onStarted(*this);
       pAsyncImpl_->calledOnStarted_ = true;
    }
-
    // call onContinue
    if (callbacks_.onContinue)
    {
@@ -820,6 +896,20 @@ void AsyncChildProcess::poll()
       // EINTR and ECHILD, and EINTR is handled internally by posixCall)
       if (result == -1 && errno != ECHILD && errno != ENOENT)
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   }
+
+   // Perform periodic operations
+   pAsyncImpl_->initTimers(options().reportChildCount, options().reportChildTermMode);
+   if (pAsyncImpl_->checkChildCount())
+   {
+      int newCount = pAsyncImpl_->computeSubProcessCount();
+      // TODO (gary) report this to callback
+   }
+
+   if (pAsyncImpl_->checkTermMode())
+   {
+      bool canonical = pAsyncImpl_->computeTerminalCanonicalMode();
+      // TODO (gary) report this to callback
    }
 }
 

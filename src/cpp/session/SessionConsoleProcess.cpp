@@ -438,6 +438,18 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
+void ConsoleProcess::onSubprocCount(core::system::ProcessOperations& ops,
+                                   int subprocCount)
+{
+   // TODO (gary) notify client if subprocess count has changed
+}
+
+void ConsoleProcess::onChildTermMode(core::system::ProcessOperations& ops,
+                                     bool canonical)
+{
+   // TODO (gary) notify client if terminal mode has changed
+}
+
 core::json::Object ConsoleProcess::toJson() const
 {
    json::Object result;
@@ -545,6 +557,14 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
+   if (options_.reportChildCount)
+   {
+      cb.onSubprocCount = boost::bind(&ConsoleProcess::onSubprocCount, ConsoleProcess::shared_from_this(), _1, _2);
+   }
+   if (options_.reportChildTermMode)
+   {
+      cb.onChildTermMode = boost::bind(&ConsoleProcess::onChildTermMode, ConsoleProcess::shared_from_this(), _1, _2);
+   }
    return cb;
 }
 

@@ -1311,7 +1311,8 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
 
 bool haveRunningChildren()
 {
-   return module_context::processSupervisor().hasRunningChildren() ||
+   return module_context::processSupervisor().hasRunningSubprocesses() ||
+          module_context::processSupervisor().hasRunningChildren() ||
           modules::authoring::hasRunningChildren();
 }
 
@@ -1321,7 +1322,6 @@ bool canSuspend(const std::string& prompt)
           modules::connections::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
-
 
 bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 {

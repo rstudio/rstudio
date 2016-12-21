@@ -63,15 +63,18 @@ struct ProcessOptions
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
-        redirectStdErrToStdOut(false)
+        redirectStdErrToStdOut(false),
+        reportChildCount(false),
+        reportChildTermMode(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
         detachSession(false),
         cols(80),
         rows(25),
-        redirectStdErrToStdOut(false)
-   
+        redirectStdErrToStdOut(false),
+        reportChildCount(false),
+        reportChildTermMode(false)
 #endif
    {
    }
@@ -120,6 +123,12 @@ struct ProcessOptions
 #endif
 
    bool redirectStdErrToStdOut;
+
+   // Periodically report number of child processes of the initial process
+   bool reportChildCount;
+
+   // Periodically report if Terminal is in canonical mode
+   bool reportChildTermMode;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
@@ -254,6 +263,12 @@ struct ProcessCallbacks
    // Called after the process has exited. Passes exitStatus (see ProcessResult
    // comment above for potential values)
    boost::function<void(int)> onExit;
+
+   // Called periodically to report number of subprocesses of this process
+   boost::function<void(ProcessOperations&, int)> onSubprocCount;
+
+   // Called periodically to report if terminal is in canonical mode
+   boost::function<void(ProcessOperations&, bool)> onChildTermMode;
 };
 
 ProcessCallbacks createProcessCallbacks(
@@ -318,6 +333,9 @@ public:
    // Check whether any children are currently active
    bool hasRunningChildren();
 
+   // Check whether any children have active subprocesses
+   bool hasRunningSubprocesses();
+
    // Poll for child (output and exit) events. returns true if there
    // are still children being supervised after the poll
    bool poll();
@@ -325,7 +343,7 @@ public:
    // Terminate all running children
    void terminateAll();
 
-   // Wait for all children to exit. Returns false if the operaiton timed out
+   // Wait for all children to exit. Returns false if the operation timed out
    bool wait(
       const boost::posix_time::time_duration& pollingInterval =
          boost::posix_time::milliseconds(100),

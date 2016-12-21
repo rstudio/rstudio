@@ -185,6 +185,8 @@ private:
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
+   void onSubprocCount(core::system::ProcessOperations& ops, int subprocCount);
+   void onChildTermMode(core::system::ProcessOperations& ops, bool canonical);
 
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
