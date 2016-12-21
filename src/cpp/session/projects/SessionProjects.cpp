@@ -210,7 +210,8 @@ Error createProject(const json::JsonRpcRequest& request,
    }
    
    // if we have a custom project template, call that first
-   if (!projectTemplateOptions.is_null())
+   if (!projectTemplateOptions.is_null() &&
+       json::isType<json::Object>(projectTemplateOptions))
    {
       Error error = initializeProjectFromTemplate(projectFilePath, projectTemplateOptions);
       if (error)
