@@ -568,6 +568,9 @@ Error initialize()
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
 
+   // initialize console events for package indexer
+   module_context::events().onConsoleInput.connect(onConsoleInput);
+
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

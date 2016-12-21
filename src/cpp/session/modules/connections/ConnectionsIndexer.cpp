@@ -29,7 +29,10 @@
 #include <boost/system/error_code.hpp>
 
 #include <r/RSexp.hpp>
+#include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
+#include <r/RJson.hpp>
+#include <r/session/RSessionUtils.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -251,6 +254,65 @@ ConnectionsIndexer& connectionsIndexer()
 core::json::Value connectionsRegistryAsJson()
 {
    return connectionsRegistry().toJson();
+}
+
+void indexLibraryPathsWithContinuation(
+                        json::JsonRpcFunctionContinuation continuation)
+{
+   if (continuation) {
+      connectionsIndexer().addContinuation(continuation);
+   }
+
+   if (!connectionsIndexer().running()) {
+      connectionsIndexer().start();
+   }
+}
+
+void indexLibraryPaths()
+{
+   indexLibraryPathsWithContinuation(json::JsonRpcFunctionContinuation());
+}
+
+void onDeferredInit(bool)
+{
+   // re-index
+   indexLibraryPaths();
+}
+
+void onConsoleInput(const std::string& input)
+{
+   // check for packages pane disabled
+   if (module_context::disablePackages())
+      return;
+
+   // initialize commands if necessary
+   static std::vector<std::string> commands;
+   if (commands.empty())
+   {
+      commands.push_back("install.packages");
+      commands.push_back("remove.packages");
+      commands.push_back("devtools::install_github");
+      commands.push_back("install_github");
+      commands.push_back("devtools::load_all");
+      commands.push_back("load_all");
+   }
+
+   // check for package library mutating command
+   std::string trimmedInput = boost::algorithm::trim_copy(input);
+   BOOST_FOREACH(const std::string& command, commands)
+   {
+      if (boost::algorithm::starts_with(trimmedInput, command))
+      {
+         // we need to give R a chance to actually process the package library
+         // mutating command before we update the index. schedule delayed work
+         // with idleOnly = true so that it waits until the user has returned
+         // to the R prompt
+         module_context::scheduleDelayedWork(boost::posix_time::seconds(1),
+                                             indexLibraryPaths,
+                                             true); // idle only
+         return;
+      }
+   }
 }
 
 } // namespace connections
