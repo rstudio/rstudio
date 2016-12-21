@@ -1,5 +1,5 @@
 /*
- * TerminalBusyEvent.java
+ * TerminalAtPromptEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -18,33 +18,31 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 /**
- * Sent if terminal is busy and showing a progress indicator would be
- * appropriate. For example, possibly running a batch job where knowing when
- * it becomes "not busy" would be helpful. This is different than, for example,
- * running a full-screen text editor, where showing a busy indicator would be
- * more annoying than helpful.
+ * Sent when terminal is, or isn't, at the command-prompt. The purpose: allow
+ * terminals to be killed via session suspend when they are all at the
+ * command-prompt, but not if any are running programs.
  */
-public class TerminalBusyEvent extends GwtEvent<TerminalBusyEvent.Handler>
+public class TerminalAtPromptEvent extends GwtEvent<TerminalAtPromptEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onTerminalBusy(TerminalBusyEvent event);
+      void onTerminalAtPrompt(TerminalAtPromptEvent event);
    }
 
-   public TerminalBusyEvent(boolean isBusy)
+   public TerminalAtPromptEvent(boolean atPrompt)
    {
-      isBusy_ = isBusy;
+      atPrompt_ = atPrompt;
    }
 
-   public boolean isBusy()
+   public boolean atPrompt()
    {
-      return isBusy_;
+      return atPrompt_;
    }
-   
+
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalBusy(this);
+      handler.onTerminalAtPrompt(this);
    }
 
    @Override
@@ -53,7 +51,7 @@ public class TerminalBusyEvent extends GwtEvent<TerminalBusyEvent.Handler>
       return TYPE;
    }
 
-   private final boolean isBusy_;
+   private final boolean atPrompt_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

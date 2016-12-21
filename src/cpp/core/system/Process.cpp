@@ -182,8 +182,8 @@ struct ChildCallbacks
       onCompleted(result);
    }
 
-   void onSubprocCount(ProcessOperations& ops, int subprocCount) {}
-   void onChildTermMode(ProcessOperations& ops, bool canonical) {}
+   void onHasSubprocs(bool hasSubprocs) {}
+   void onTermMode(bool canonical) {}
 
    std::string input;
    std::string stdOut;
@@ -219,8 +219,8 @@ ProcessCallbacks createProcessCallbacks(
    cb.onError = bind(&ChildCallbacks::onError, pCC, _1, _2);
 
    // Not implemented for generic processes
-   cb.onSubprocCount = NULL;
-   cb.onChildTermMode = NULL;
+   cb.onHasSubprocs = NULL;
+   cb.onTermMode = NULL;
 
    // return it
    return cb;

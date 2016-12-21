@@ -159,6 +159,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalAtPromptEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -861,8 +862,13 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.TerminalBusy))
          {
-            TerminalBusyEvent.Data data = event.getData();
-            eventBus_.fireEvent(new TerminalBusyEvent(data));
+            boolean busy = event.<Bool>getData().getValue();
+            eventBus_.fireEvent(new TerminalBusyEvent(busy));
+         }
+         else if (type.equals(ClientEvent.TerminalRunningProgram))
+         {
+            boolean atPrompt = !(event.<Bool>getData().getValue());
+            eventBus_.fireEvent(new TerminalAtPromptEvent(atPrompt));
          }
          else
          {

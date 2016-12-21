@@ -64,8 +64,8 @@ struct ProcessOptions
         createNewConsole(false),
         breakawayFromJob(false),
         redirectStdErrToStdOut(false),
-        reportChildCount(false),
-        reportChildTermMode(false)
+        reportHasSubprocs(false),
+        reportTermMode(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
@@ -73,8 +73,8 @@ struct ProcessOptions
         cols(80),
         rows(25),
         redirectStdErrToStdOut(false),
-        reportChildCount(false),
-        reportChildTermMode(false)
+        reportHasSubprocs(false),
+        reportTermMode(false)
 #endif
    {
    }
@@ -124,11 +124,11 @@ struct ProcessOptions
 
    bool redirectStdErrToStdOut;
 
-   // Periodically report number of child processes of the initial process
-   bool reportChildCount;
+   // Periodically report if process has any child processes
+   bool reportHasSubprocs;
 
    // Periodically report if Terminal is in canonical mode
-   bool reportChildTermMode;
+   bool reportTermMode;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
@@ -264,11 +264,11 @@ struct ProcessCallbacks
    // comment above for potential values)
    boost::function<void(int)> onExit;
 
-   // Called periodically to report number of subprocesses of this process
-   boost::function<void(ProcessOperations&, int)> onSubprocCount;
+   // Called periodically to report if this process has subprocesses
+   boost::function<void(bool)> onHasSubprocs;
 
    // Called periodically to report if terminal is in canonical mode
-   boost::function<void(ProcessOperations&, bool)> onChildTermMode;
+   boost::function<void(bool)> onTermMode;
 };
 
 ProcessCallbacks createProcessCallbacks(

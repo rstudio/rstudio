@@ -154,6 +154,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kUpdateNewConnectionDialog;
       else if (name == "terminal_busy")
          type = session::client_events::kTerminalBusy;
+      else if (name == "terminal_running_prog")
+         type = session::client_events::kTerminalRunningProgram;
 
       if (type != -1)
       {

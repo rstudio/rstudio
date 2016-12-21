@@ -164,6 +164,7 @@ const int kChunkExecStateChanged = 145;
 const int kNavigateShinyFrame = 146;
 const int kUpdateNewConnectionDialog = 147;
 const int kTerminalBusy = 148;
+const int kTerminalRunningProgram = 149;
 }
 
 void ClientEvent::init(int type, const json::Value& data)

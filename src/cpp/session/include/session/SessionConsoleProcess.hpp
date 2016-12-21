@@ -185,8 +185,8 @@ private:
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
-   void onSubprocCount(core::system::ProcessOperations& ops, int subprocCount);
-   void onChildTermMode(core::system::ProcessOperations& ops, bool canonical);
+   void onHasSubprocs(bool hasSubProcs);
+   void onTermMode(bool canonical);
 
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
@@ -230,7 +230,13 @@ private:
    // Whether a ConsoleProcess object should start a new process on resume after
    // its process has been killed by a suspend.
    bool allowRestart_;
-   
+
+   // Does this process have child processes?
+   bool childProcs_;
+
+   // Is this process's terminal in canonical mode?
+   bool terminalCanonical_;
+
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 

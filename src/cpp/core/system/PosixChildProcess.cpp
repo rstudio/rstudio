@@ -683,7 +683,7 @@ struct AsyncChildProcess::AsyncImpl
    // when we next check terminal mode (canonical or not)
    boost::posix_time::ptime checkTermMode_;
 
-   void initTimers(bool reportChildCount, bool reportTermMode)
+   void initTimers(bool reportHasSubprocs, bool reportTermMode)
    {
       if (exited_)
       {
@@ -692,7 +692,7 @@ struct AsyncChildProcess::AsyncImpl
          return;
       }
 
-      if (reportChildCount && checkSubProc_.is_not_a_date_time())
+      if (reportHasSubprocs && checkSubProc_.is_not_a_date_time())
       {
          checkSubProc_ = now() + boost::posix_time::seconds(1);
       }
@@ -726,15 +726,15 @@ struct AsyncChildProcess::AsyncImpl
       return fCheck;
    }
 
-   int computeSubProcessCount()
+   bool computeHasSubProcess()
    {
       // TODO (gary) NYI
       // On Linux we can do this via /proc/PID/task/PID/children; on Mac
       // dev environment we'll invoke shell commands
-      return -1;
+      return false;
    }
 
-   bool computeTerminalCanonicalMode()
+   bool computeTerminalMode()
    {
       // TODO (gary) NYI
       // Get the terminal ID, then query stty
@@ -857,7 +857,6 @@ void AsyncChildProcess::poll()
       }
    }
 
-
    // Check for exited. Note that this method specifies WNOHANG
    // so we don't block forever waiting for a process the exit. We may
    // not be able to reap the child due to an error (typically ECHILD,
@@ -898,18 +897,24 @@ void AsyncChildProcess::poll()
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 
-   // Perform periodic operations
-   pAsyncImpl_->initTimers(options().reportChildCount, options().reportChildTermMode);
+   // Perform optional periodic operations
+   pAsyncImpl_->initTimers(options().reportHasSubprocs, options().reportTermMode);
    if (pAsyncImpl_->checkChildCount())
    {
-      int newCount = pAsyncImpl_->computeSubProcessCount();
-      // TODO (gary) report this to callback
+      bool hasSubprocess = pAsyncImpl_->computeHasSubProcess();
+      if (callbacks_.onHasSubprocs)
+      {
+         callbacks_.onHasSubprocs(hasSubprocess);
+      }
    }
 
    if (pAsyncImpl_->checkTermMode())
    {
-      bool canonical = pAsyncImpl_->computeTerminalCanonicalMode();
-      // TODO (gary) report this to callback
+      bool canonical = pAsyncImpl_->computeTerminalMode();
+      if (callbacks_.onTermMode)
+      {
+         callbacks_.onTermMode(canonical);
+      }
    }
 }
 

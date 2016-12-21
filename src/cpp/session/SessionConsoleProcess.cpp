@@ -55,7 +55,8 @@ ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     allowRestart_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     allowRestart_(false), childProcs_(false), terminalCanonical_(false),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -78,6 +79,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     childProcs_(false), terminalCanonical_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -99,6 +101,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     childProcs_(false), terminalCanonical_(false),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -118,8 +121,8 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     terminalSequence_(terminalSequence),  childProcs_(false), terminalCanonical_(false),
+     allowRestart_(allowRestart), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -438,16 +441,27 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
-void ConsoleProcess::onSubprocCount(core::system::ProcessOperations& ops,
-                                   int subprocCount)
+void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
 {
-   // TODO (gary) notify client if subprocess count has changed
+   if (hasSubprocs != childProcs_)
+   {
+      childProcs_ = hasSubprocs;
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kTerminalRunningProgram, hasSubprocs));
+   }
 }
 
-void ConsoleProcess::onChildTermMode(core::system::ProcessOperations& ops,
-                                     bool canonical)
+void ConsoleProcess::onTermMode(bool canonical)
 {
-   // TODO (gary) notify client if terminal mode has changed
+   if (terminalCanonical_ != canonical)
+   {
+      terminalCanonical_ = canonical;
+
+      // If terminal is in canonical (line-by-line) mode, then we assume it is
+      // currently running a non-full-screen program, such as a batch job.
+      module_context::enqueClientEvent(
+               ClientEvent(client_events::kTerminalBusy, canonical));
+   }
 }
 
 core::json::Object ConsoleProcess::toJson() const
@@ -557,13 +571,13 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
-   if (options_.reportChildCount)
+   if (options_.reportHasSubprocs)
    {
-      cb.onSubprocCount = boost::bind(&ConsoleProcess::onSubprocCount, ConsoleProcess::shared_from_this(), _1, _2);
+      cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1);
    }
-   if (options_.reportChildTermMode)
+   if (options_.reportTermMode)
    {
-      cb.onChildTermMode = boost::bind(&ConsoleProcess::onChildTermMode, ConsoleProcess::shared_from_this(), _1, _2);
+      cb.onTermMode = boost::bind(&ConsoleProcess::onTermMode, ConsoleProcess::shared_from_this(), _1);
    }
    return cb;
 }

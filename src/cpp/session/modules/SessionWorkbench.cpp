@@ -885,11 +885,11 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // allow process restart with existing handle
    bool allowRestart;
 
-   // monitor number of child processes
-   bool reportChildCount;
+   // monitor if there are child processes
+   bool reportHasSubprocs;
 
    // monitor terminal mode of the tty (canonical/non-canonical)
-   bool reportChildTermMode;
+   bool reportTermMode;
    
    Error error = json::readParams(request.params,
                                   &term,
@@ -901,8 +901,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                   &termTitle,
                                   &termSequence,
                                   &allowRestart,
-                                  &reportChildCount,
-                                  &reportChildTermMode);
+                                  &reportHasSubprocs,
+                                  &reportTermMode);
    if (error)
       return error;
    
@@ -915,8 +915,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // don't do subprocess checking in desktop mode
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      reportChildCount = false;
-      reportChildTermMode = false;
+      reportHasSubprocs = false;
+      reportTermMode = false;
    }
 
    // configure environment for shell
@@ -965,8 +965,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
    options.smartTerminal = smartTerm;
-   options.reportChildCount = reportChildCount;
-   options.reportChildTermMode = reportChildTermMode;
+   options.reportHasSubprocs = reportHasSubprocs;
+   options.reportTermMode = reportTermMode;
 #ifndef _WIN32
    options.cols = cols;
    options.rows = rows;
