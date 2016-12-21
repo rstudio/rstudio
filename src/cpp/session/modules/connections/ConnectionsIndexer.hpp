@@ -26,6 +26,7 @@ namespace connections {
 core::json::Value connectionsRegistryAsJson();
 
 void onConsoleInput(const std::string& input);
+void indexLibraryPaths();
                        
 } // namespace connections
 } // namespace modules

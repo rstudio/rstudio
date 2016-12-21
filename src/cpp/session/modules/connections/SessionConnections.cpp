@@ -496,6 +496,8 @@ void onDeferredInit(bool newSession)
    {
       activeConnections().broadcastToClient();
    }
+
+   indexLibraryPaths();
 }
 
 void initEnvironment()
@@ -568,8 +570,9 @@ Error initialize()
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
 
-   // initialize console events for package indexer
+   // initialize events for package indexer
    module_context::events().onConsoleInput.connect(onConsoleInput);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    using boost::bind;
    using namespace module_context;

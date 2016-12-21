@@ -273,12 +273,6 @@ void indexLibraryPaths()
    indexLibraryPathsWithContinuation(json::JsonRpcFunctionContinuation());
 }
 
-void onDeferredInit(bool)
-{
-   // re-index
-   indexLibraryPaths();
-}
-
 void onConsoleInput(const std::string& input)
 {
    // check for packages pane disabled
