@@ -38,6 +38,7 @@
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
+#include "ConnectionsIndexer.hpp"
 
 using namespace rstudio::core;
 
@@ -191,11 +192,10 @@ SEXP rs_availableRemoteServers()
 
 SEXP rs_availableConnections()
 {
-   std::vector<std::string> connectionPackages;
-   connectionPackages.push_back("Spark");
+   std::string data = json::write(connectionsRegistryAsJson());
 
    r::sexp::Protect rProtect;
-   return r::sexp::create(connectionPackages, &rProtect);
+   return r::sexp::create(data, &rProtect);
 }
 
 

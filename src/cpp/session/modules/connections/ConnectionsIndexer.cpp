@@ -248,6 +248,11 @@ ConnectionsIndexer& connectionsIndexer()
 
 }
 
+core::json::Value connectionsRegistryAsJson()
+{
+   return connectionsRegistry().toJson();
+}
+
 } // namespace connections
 } // namespace modules
 } // namesapce session

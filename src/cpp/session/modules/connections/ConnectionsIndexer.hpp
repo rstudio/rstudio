@@ -16,11 +16,14 @@
 #ifndef SESSION_CONNECTIONS_INDEXER_HPP
 #define SESSION_CONNECTIONS_INDEXER_HPP
 
+#include <core/json/Json.hpp>
 
 namespace rstudio {
 namespace session {
 namespace modules { 
 namespace connections {
+
+core::json::Value connectionsRegistryAsJson();
                        
 } // namespace connections
 } // namespace modules
