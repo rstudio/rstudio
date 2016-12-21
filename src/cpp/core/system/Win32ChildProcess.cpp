@@ -268,6 +268,11 @@ Error ChildProcess::terminate()
       return Success();
 }
 
+int ChildProcess::subProcessCount() const
+{
+    return -1;
+}
+
 namespace {
 
 Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
