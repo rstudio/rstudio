@@ -38,6 +38,7 @@
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
+#include "ConnectionsIndexer.hpp"
 
 using namespace rstudio::core;
 
@@ -187,6 +188,14 @@ SEXP rs_availableRemoteServers()
 
    r::sexp::Protect rProtect;
    return r::sexp::create(remoteServers, &rProtect);
+}
+
+SEXP rs_availableConnections()
+{
+   std::string data = json::write(connectionsRegistryAsJson());
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(data, &rProtect);
 }
 
 
@@ -487,6 +496,8 @@ void onDeferredInit(bool newSession)
    {
       activeConnections().broadcastToClient();
    }
+
+   indexLibraryPaths();
 }
 
 void initEnvironment()
@@ -541,6 +552,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_connectionClosed, 2);
    RS_REGISTER_CALL_METHOD(rs_connectionUpdated, 3);
    RS_REGISTER_CALL_METHOD(rs_availableRemoteServers, 0);
+   RS_REGISTER_CALL_METHOD(rs_availableConnections, 0);
 
    // initialize environment
    initEnvironment();
@@ -557,6 +569,10 @@ Error initialize()
    s_connectionsInitiallyEnabled = connectionsEnabled();
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
+
+   // initialize events for package indexer
+   module_context::events().onConsoleInput.connect(onConsoleInput);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    using boost::bind;
    using namespace module_context;

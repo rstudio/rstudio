@@ -161,15 +161,26 @@ options(connectionObserver = list(
 })
 
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
-   context <- list(
-      connectionsList = list(
-         list(
-            package = .rs.scalar("sparklyr"),
-            name = .rs.scalar("Spark"),
-            type = .rs.scalar("Shiny"),
-            newConnection = .rs.scalar("sparklyr::connection_spark_shinyapp()")
-         )
+   rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
+
+   connectionList <- lapply(rawConnections, function(con) {
+      ns <- asNamespace(con$package)
+      if (nchar(con$shinyapp) == 0 || !exists(con$shinyapp, envir = ns, mode="function")) {
+         warning(
+            "The function \"", con$shinyapp, "\" does not exist. ",
+            "Check the ShinyApp DCF field in the ", con$package, " package.")
+      }
+
+      list(
+         package = .rs.scalar(con$package),
+         name = .rs.scalar(con$name),
+         type = .rs.scalar("Shiny"),
+         newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = "")
       )
+   })
+
+   context <- list(
+      connectionsList = unname(connectionList)
    )
 
    context
