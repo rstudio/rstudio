@@ -158,6 +158,7 @@ class ClientEvent extends JavaScriptObject
    public static final String TerminalBusy = "terminal_busy";
    public static final String PackageExtensionIndexingCompleted = "package_extension_indexing_completed";
    public static final String TerminalSubProcs = "terminal_subprocs";
+   public static final String RStudioAPIShowDialog = "rstudioapi_show_dialog";
 
    protected ClientEvent()
    {
