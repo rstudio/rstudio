@@ -65,10 +65,10 @@ public class TerminalTabPresenter extends BusyPresenter
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
       /**
-       * @return Number of busy terminals (a terminal where the shell has
+       * @return Are any terminals busy (a terminal where the shell has
        * child processes is considered busy).
        */
-      int busyTerminalCount();
+      boolean busyTerminals();
 
       /**
        * Terminate all terminals, whether busy or not. This kills any server-side
@@ -191,7 +191,7 @@ public class TerminalTabPresenter extends BusyPresenter
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (view_.busyTerminalCount() > 0)
+      if (view_.busyTerminals())
       {
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
                "Close Terminal(s) ", 

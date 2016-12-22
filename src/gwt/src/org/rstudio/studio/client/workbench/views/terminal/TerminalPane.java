@@ -240,12 +240,12 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public int busyTerminalCount()
+   public boolean busyTerminals()
    {
-      // TODO (gary) this should only count terminals where the
-      // shell (bash) has child processes; this requires more server-side
-      // work so for the moment all terminals are considered busy
-      return terminals_.terminalCount();
+      // We treat shells that have child processes as busy. If a shell is
+      // not running anything, it is fair game for being killed via a
+      // session suspend.
+      return terminals_.haveSubprocs();
    }
 
    @Override

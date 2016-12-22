@@ -1,5 +1,5 @@
 /*
- * TerminalAtPromptEvent.java
+ * TerminalSubprocEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,35 +14,57 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 /**
- * Sent when terminal is, or isn't, at the command-prompt. The purpose: allow
- * terminals to be killed via session suspend when they are all at the
+ * Sent when terminal shell program has (or doesn't have) subprocesses.
+ * Terminals can be killed via session suspend when they are all at the
  * command-prompt, but not if any are running programs.
  */
-public class TerminalAtPromptEvent extends GwtEvent<TerminalAtPromptEvent.Handler>
+public class TerminalSubprocEvent extends GwtEvent<TerminalSubprocEvent.Handler>
 {
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+
+      /**
+       * @return Terminal handle
+       */
+      public final native String getHandle() /*-{
+            return this.handle;
+      }-*/;
+
+      /**
+       * @return true if terminal has sub-processes.
+       */
+      public final native boolean hasSubprocs() /*-{
+            return this.subprocs;
+      }-*/;
+   }
+
    public interface Handler extends EventHandler
    {
-      void onTerminalAtPrompt(TerminalAtPromptEvent event);
+      void onTerminalSubprocs(TerminalSubprocEvent event);
    }
 
-   public TerminalAtPromptEvent(boolean atPrompt)
+   public TerminalSubprocEvent(Data data)
    {
-      atPrompt_ = atPrompt;
+      data_ = data;
    }
 
-   public boolean atPrompt()
+   public boolean hasSubprocs()
    {
-      return atPrompt_;
+      return data_.hasSubprocs();
    }
 
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalAtPrompt(this);
+      handler.onTerminalSubprocs(this);
    }
 
    @Override
@@ -51,7 +73,7 @@ public class TerminalAtPromptEvent extends GwtEvent<TerminalAtPromptEvent.Handle
       return TYPE;
    }
 
-   private final boolean atPrompt_;
+   private final Data data_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

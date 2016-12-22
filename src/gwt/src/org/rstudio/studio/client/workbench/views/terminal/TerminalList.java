@@ -45,18 +45,27 @@ public class TerminalList implements Iterable<String>
       private TerminalMetadata(String handle,
                                String caption,
                                String title,
-                               int sequence)
+                               int sequence,
+                               boolean childProcs,
+                               boolean canonical)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
          title_ = StringUtil.notNull(title);
          sequence_ = sequence;
+         childProcs_ = childProcs;
+         canonical_ = canonical;
       }
 
       private TerminalMetadata(TerminalMetadata original,
                                String newTitle)
       {
-         this(original.handle_, original.caption_, newTitle, original.sequence_);
+         this(original.handle_,
+              original.caption_,
+              newTitle,
+              original.sequence_,
+              original.childProcs_,
+              original.canonical_);
       }
 
       private TerminalMetadata(ConsoleProcessInfo procInfo)
@@ -64,7 +73,9 @@ public class TerminalList implements Iterable<String>
          this(procInfo.getHandle(),
               procInfo.getCaption(),
               procInfo.getTitle(),
-              procInfo.getTerminalSequence());
+              procInfo.getTerminalSequence(),
+              procInfo.getHasChildProcs(),
+              procInfo.getTerminalCanonical());
       }
 
       private TerminalMetadata(TerminalSession term)
@@ -72,7 +83,9 @@ public class TerminalList implements Iterable<String>
          this(term.getHandle(),
               term.getCaption(),
               term.getTitle(),
-              term.getSequence());
+              term.getSequence(),
+              term.getHasChildProcs(),
+              term.getTerminalCanonical());
       }
 
       /**
@@ -96,10 +109,22 @@ public class TerminalList implements Iterable<String>
        */
       public int getSequence() { return sequence_; }
 
+      /**
+       * @return true if terminal shell has child processes
+       */
+      public boolean getChildProcs() { return childProcs_; }
+
+      /**
+       * @return true if terminal is in canonical (line-by-line) mode
+       */
+      public boolean getCanonical() { return canonical_; }
+
       private String handle_;
       private String caption_;
       private String title_;
       private int sequence_;
+      private boolean childProcs_;
+      private boolean canonical_;
    }
 
    protected TerminalList() 
@@ -153,6 +178,62 @@ public class TerminalList implements Iterable<String>
       return false;
    }
 
+   /**
+    * update has subprocesses flag
+    * @param handle terminal handle
+    * @param childProcs new subprocesses flag value
+    * @return true if changed, false if unchanged
+    */
+   public boolean setChildProcs(String handle, boolean childProcs)
+   {
+      TerminalMetadata current = getMetadataForHandle(handle);
+      if (current == null)
+      {
+         return false;
+      }
+
+      if (current.getChildProcs() != childProcs)
+      {
+         addTerminal(new TerminalMetadata(
+               current.handle_,
+               current.caption_,
+               current.title_,
+               current.sequence_,
+               childProcs,
+               current.canonical_));
+         return true;
+      }
+      return false;
+   }
+
+   /**
+    * update canonical flag
+    * @param handle handle of terminal
+    * @param canonical new canonical setting
+    * @return true if changed, false if unchanged or terminal not found
+    */
+   public boolean setCanonical(String handle, boolean canonical)
+   {
+      TerminalMetadata current = getMetadataForHandle(handle);
+      if (current == null)
+      {
+         return false;
+      }
+
+      if (current.getCanonical() != canonical)
+      {
+         addTerminal(new TerminalMetadata(
+               current.handle_,
+               current.caption_,
+               current.title_,
+               current.sequence_,
+               current.childProcs_,
+               canonical));
+         return true;
+      }
+      return false;
+   }
+   
    /**
     * Remove given terminal from the list
     * @param handle terminal handle
@@ -238,7 +319,7 @@ public class TerminalList implements Iterable<String>
     */
    public void createNewTerminal()
    {
-      startTerminal(nextTerminalSequence(), null, null, null);
+      startTerminal(nextTerminalSequence(), null, null, null, true, true);
    }
 
    /**
@@ -257,7 +338,9 @@ public class TerminalList implements Iterable<String>
       startTerminal(existing.getSequence(),
                     handle,
                     existing.getCaption(),
-                    existing.getTitle());
+                    existing.getTitle(),
+                    existing.getChildProcs(),
+                    existing.getCanonical());
       return true;
    }
 
@@ -269,7 +352,22 @@ public class TerminalList implements Iterable<String>
    {
       return getMetadataForHandle(handle).caption_;
    }
-   
+
+   /**
+    * @return true if any of the terminal shells have subprocesses
+    */
+   public boolean haveSubprocs()
+   {
+      for (final TerminalMetadata item : terminals_.values())
+      {
+         if (item.childProcs_)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
    /**
     * Choose a 1-based sequence number one higher than the highest currently 
     * known terminal number. We don't try to fill gaps if terminals are closed 
@@ -298,10 +396,13 @@ public class TerminalList implements Iterable<String>
    private void startTerminal(int sequence,
                              String terminalHandle,
                              String caption,
-                             String title)
+                             String title,
+                             boolean hasChildProcs,
+                             boolean terminalCanonical)
    {
       TerminalSession newSession = new TerminalSession(
-            getSecureInput(), sequence, terminalHandle, caption, title);
+            getSecureInput(), sequence, terminalHandle, caption, title,
+            hasChildProcs, terminalCanonical);
       newSession.connect();
    }
 

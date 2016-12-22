@@ -55,7 +55,7 @@ ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     allowRestart_(false), childProcs_(false), terminalCanonical_(false),
+     allowRestart_(false), childProcs_(true), terminalCanonical_(true),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
@@ -79,7 +79,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(false), terminalCanonical_(false),
+     childProcs_(true), terminalCanonical_(true),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -101,7 +101,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(false), terminalCanonical_(false),
+     childProcs_(true), terminalCanonical_(true),
      outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
@@ -121,8 +121,8 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence),  childProcs_(false), terminalCanonical_(false),
-     allowRestart_(allowRestart), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     childProcs_(true), terminalCanonical_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -446,8 +446,12 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
    if (hasSubprocs != childProcs_)
    {
       childProcs_ = hasSubprocs;
+
+      json::Object subProcs;
+      subProcs["handle"]   = handle_;
+      subProcs["subprocs"] = childProcs_;
       module_context::enqueClientEvent(
-            ClientEvent(client_events::kTerminalRunningProgram, hasSubprocs));
+            ClientEvent(client_events::kTerminalSubprocs, subProcs));
    }
 }
 
@@ -459,8 +463,11 @@ void ConsoleProcess::onTermMode(bool canonical)
 
       // If terminal is in canonical (line-by-line) mode, then we assume it is
       // currently running a non-full-screen program, such as a batch job.
+      json::Object termMode;
+      termMode["handle"]    = handle_;
+      termMode["canonical"] = terminalCanonical_;
       module_context::enqueClientEvent(
-               ClientEvent(client_events::kTerminalBusy, canonical));
+               ClientEvent(client_events::kTerminalCanonical, termMode));
    }
 }
 
@@ -484,6 +491,9 @@ core::json::Object ConsoleProcess::toJson() const
    result["allow_restart"] = allowRestart_;
    result["started"] = started_;
    result["title"] = title_;
+   result["childProcs"] = childProcs_;
+   result["canonical"] = terminalCanonical_;
+
    return result;
 }
 
@@ -530,7 +540,6 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    {
       // Possibly unarchiving a pre 1.1 session; ensure defaults are set
       // and continue
-      LOG_ERROR(error);
       pProc->terminalSequence_ = kNoTerminal;
       return pProc;
    }
@@ -549,7 +558,6 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
          pProc->allowRestart_ = true;
          pProc->started_ = false;
       }
-      LOG_ERROR(error);
       return pProc;
    }
    
@@ -559,9 +567,18 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    if (error)
    {
       pProc->title_.clear();
-      LOG_ERROR(error);
    }
-   
+
+   // Yet-more work-in-progress on 1.1
+   error = json::readObject(obj,
+                            "childProcs", &pProc->childProcs_,
+                            "canonical", &pProc->terminalCanonical_);
+   if (error)
+   {
+      pProc->childProcs_ = true;
+      pProc->terminalCanonical_ = true;
+   }
+
    return pProc;
 }
 

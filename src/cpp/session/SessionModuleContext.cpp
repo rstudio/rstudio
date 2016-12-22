@@ -152,10 +152,10 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kNavigateShinyFrame;
       else if (name == "update_new_connection_dialog")
          type = session::client_events::kUpdateNewConnectionDialog;
-      else if (name == "terminal_busy")
-         type = session::client_events::kTerminalBusy;
-      else if (name == "terminal_running_prog")
-         type = session::client_events::kTerminalRunningProgram;
+      else if (name == "terminal_subprocs")
+         type = session::client_events::kTerminalSubprocs;
+      else if (name == "terminal_canonical")
+         type = session::client_events::kTerminalCanonical;
 
       if (type != -1)
       {

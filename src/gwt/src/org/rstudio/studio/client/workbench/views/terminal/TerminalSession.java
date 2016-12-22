@@ -71,12 +71,16 @@ public class TerminalSession extends XTermWidget
                           int sequence,
                           String handle,
                           String caption,
-                          String title)
+                          String title,
+                          boolean hasChildProcs,
+                          boolean terminalCanonical)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
       sequence_ = sequence;
       terminalHandle_ = handle;
+      hasChildProcs_ = hasChildProcs;
+      terminalCanonical_ = terminalCanonical;
       setTitle(title);
 
       if (StringUtil.isNullOrEmpty(caption))
@@ -404,6 +408,24 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
+    * Does this terminal's shell program (i.e. bash) have any child processes?
+    * @return true if it has child processes, or it hasn't been determined yet
+    */
+   public boolean getHasChildProcs()
+   {
+      return hasChildProcs_;
+   }
+
+   /**
+    * Is terminal in canonical mode?
+    * @return true if canonical or hasn't been determined yet
+    */
+   public boolean getTerminalCanonical()
+   {
+      return terminalCanonical_;
+   }
+
+   /**
     * The sequence number of the terminal, used in creation of the default
     * title, e.g. "Terminal 3".
     * @return The sequence number that was passed to the constructor.
@@ -458,6 +480,8 @@ public class TerminalSession extends XTermWidget
    private String title_;
    private final int sequence_;
    private String terminalHandle_;
+   private boolean hasChildProcs_;
+   private boolean terminalCanonical_;
    private boolean connected_;
    private boolean connecting_;
    private StringBuilder inputQueue_;
