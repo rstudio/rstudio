@@ -561,7 +561,7 @@ public class ConnectionsPresenter extends BasePresenter
    private final Commands commands_;
    private UIPrefs uiPrefs_;
    private final ConnectionsServerOperations server_ ;
-   private final ApplicationInterrupt applicationInterrupt_;
+   @SuppressWarnings("unused") private final ApplicationInterrupt applicationInterrupt_;
    
    // client state
    public static final String MODULE_CONNECTIONS = "connections-pane";
