@@ -154,6 +154,9 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kUpdateNewConnectionDialog;
       else if (name == "terminal_subprocs")
          type = session::client_events::kTerminalSubprocs;
+      else if (name == "rstudioapi_show_dialog") {
+         type = session::client_events::kRStudioAPIShowDialog;
+      }
 
       if (type != -1)
       {

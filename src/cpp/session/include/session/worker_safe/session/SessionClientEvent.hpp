@@ -167,6 +167,7 @@ extern const int kUpdateNewConnectionDialog;
 extern const int kProjectTemplateRegistryUpdated;
 extern const int kTerminalSubprocs;
 extern const int kPackageExtensionIndexingCompleted;
+extern const int kRStudioAPIShowDialog;
 }
    
 class ClientEvent
