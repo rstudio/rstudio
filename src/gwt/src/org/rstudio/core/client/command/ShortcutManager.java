@@ -418,7 +418,15 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       }
       
-      KeyCombination keyCombination = new KeyCombination(event);
+      int keyCode = event.getKeyCode();
+      int modifier = KeyboardShortcut.getModifierValue(event);
+      
+      // Convert Firefox hyphen key code to 'normal' hyphen keycode
+      // since we have code wired to that expectation
+      if (keyCode == 173)
+         keyCode = 189;
+      
+      KeyCombination keyCombination = new KeyCombination(keyCode, modifier);
       
       // Disable 'Ctrl+F' keybinding when Ace editor in Vim mode
       // is focused.
