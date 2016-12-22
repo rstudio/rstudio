@@ -356,12 +356,10 @@ Error ChildProcess::terminate()
    }
 }
 
-// how many subprocesses of this process; returns -1 if not tracking
-// subprocesses or count is currently unknown
-int ChildProcess::subProcessCount() const
+bool ChildProcess::hasSubprocess() const
 {
-   // TODO (gary)
-   return -1;
+   // base class doesn't support subprocess-checking; override to implement
+   return true;
 }
 
 Error ChildProcess::run()
@@ -669,7 +667,8 @@ struct AsyncChildProcess::AsyncImpl
         finishedStderr_(false),
         exited_(false),
         checkSubProc_(boost::posix_time::not_a_date_time),
-        checkTermMode_(boost::posix_time::not_a_date_time)
+        checkTermMode_(boost::posix_time::not_a_date_time),
+        hasSubprocess_(true)
    {
    }
    bool calledOnStarted_;
@@ -682,6 +681,9 @@ struct AsyncChildProcess::AsyncImpl
 
    // when we next check terminal mode (canonical or not)
    boost::posix_time::ptime checkTermMode_;
+
+   // result of last subprocess check
+   bool hasSubprocess_;
 
    void initTimers(bool reportHasSubprocs, bool reportTermMode)
    {
@@ -731,7 +733,8 @@ struct AsyncChildProcess::AsyncImpl
       // TODO (gary) NYI
       // On Linux we can do this via /proc/PID/task/PID/children; on Mac
       // dev environment we'll invoke shell commands
-      return false;
+      hasSubprocess_ = false;
+      return hasSubprocess_;
    }
 
    bool computeTerminalMode()
@@ -784,6 +787,10 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
+bool AsyncChildProcess::hasSubprocess() const
+{
+   return pAsyncImpl_->hasSubprocess_;
+}
 
 void AsyncChildProcess::poll()
 {

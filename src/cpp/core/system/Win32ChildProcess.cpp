@@ -268,9 +268,9 @@ Error ChildProcess::terminate()
       return Success();
 }
 
-int ChildProcess::subProcessCount() const
+bool ChildProcess::hasSubprocess() const
 {
-    return -1;
+   return true;
 }
 
 namespace {

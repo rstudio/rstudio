@@ -61,9 +61,10 @@ public:
    // terminate the process
    virtual Error terminate();
 
-   // how many subprocesses of this process; returns -1 if not tracking
-   // subprocesses or count is currently unknown
-   virtual int subProcessCount() const;
+   // Does this process have any subprocesses? True if there are
+   // subprocesses, if it hasn't been checked yet, or if the process
+   // isn't configured to check for subprocesses.
+   virtual bool hasSubprocess() const;
 
 protected:
    Error run();
@@ -204,6 +205,8 @@ public:
 
    // override of terminate (allow special handling for unix pty termination)
    virtual Error terminate();
+
+   virtual bool hasSubprocess() const;
 
 private:
 

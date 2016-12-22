@@ -17,6 +17,7 @@
 
 #include <iostream>
 
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
@@ -270,30 +271,18 @@ bool ProcessSupervisor::hasRunningChildren()
    return !pImpl_->children.empty();
 }
 
-bool ProcessSupervisor::hasRunningSubprocesses()
+namespace {
+
+bool has_childProcess(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   // We can have a mixture of process states here; we err on the side of
-   // returning true; as soon as we see cases 1, 2, 3 below we can stop
-   // checking and return true.
-   //
-   // (1) process that isn't tracking subprocesses; treat the top level process
-   //     as being equivalent to a subprocess (i.e. return true)
-   // (2) process that is tracking subprocesses but doesn't know if it has any,
-   //     perhaps hasn't been updated yet; treat that as equivalent to (1)
-   // (3) process that is tracking subprocesses and has one or more of them
-   // (4) process that is tracking subprocesses and doesn't have any (this is
-   //     the only case where we return false)
-   for (std::vector<boost::shared_ptr<AsyncChildProcess> >::const_iterator it =
-        pImpl_->children.begin();
-        it != pImpl_->children.end();
-        ++it)
-   {
-      if ((*it)->subProcessCount() != 0)
-      {
-         return true; // cases (1), (2) and (4) above
-      }
-   }
-   return false; // case (3)
+   return childProc->hasSubprocess();
+}
+
+} // anonymous namespace
+
+bool ProcessSupervisor::hasActiveChildren()
+{
+   return boost::algorithm::any_of(pImpl_->children, has_childProcess);
 }
 
 bool ProcessSupervisor::poll()

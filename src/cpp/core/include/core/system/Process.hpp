@@ -330,11 +330,12 @@ public:
             const boost::function<void(const ProcessResult&)>& onCompleted);
 
 
-   // Check whether any children are currently active
+   // Check whether any children are currently running
    bool hasRunningChildren();
 
-   // Check whether any children have active subprocesses
-   bool hasRunningSubprocesses();
+   // Check whether any children consider themselves active; non-active
+   // processes may be terminated without warning.
+   bool hasActiveChildren();
 
    // Poll for child (output and exit) events. returns true if there
    // are still children being supervised after the poll
