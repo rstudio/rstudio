@@ -22,12 +22,14 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
 {
    public RStudioAPI()
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
+      // RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
    @Inject
@@ -45,11 +47,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
    {
       globalDisplay_.showMessage(
                MessageDialog.INFO, 
-               "No Active Project", 
-               "Version control features can only be accessed from within an " +
-               "RStudio project. Note that if you have an existing directory " +
-               "under version control you can associate an RStudio project " +
-               "with that directory using the New Project dialog.");
+               event.getMessage());
    }
 
    private EventBus events_;
