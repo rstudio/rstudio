@@ -53,6 +53,7 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
+import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerListResources;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
@@ -290,6 +291,7 @@ public class RStudio implements EntryPoint
       CppCompletionResources.INSTANCE.styles().ensureInjected();
       RSConnectDeploy.RESOURCES.style().ensureInjected();
       NewConnectionShinyHost.ensureStylesInjected();
+      RStudioAPI.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
