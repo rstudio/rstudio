@@ -29,7 +29,6 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
 {
    public RStudioAPI()
    {
-      // RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
    @Inject
@@ -47,6 +46,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
    {
       globalDisplay_.showMessage(
                MessageDialog.INFO, 
+               event.getTitle(), 
                event.getMessage());
    }
 

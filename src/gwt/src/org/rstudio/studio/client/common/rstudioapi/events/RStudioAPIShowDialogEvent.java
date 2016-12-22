@@ -30,6 +30,10 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
       public final native String getMessage() /*-{
          return this.message;
       }-*/;
+
+      public final native String getTitle() /*-{
+         return this.title;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -45,6 +49,11 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public String getMessage()
    {
       return data_.getMessage();
+   }
+
+   public String getTitle()
+   {
+      return data_.getTitle();
    }
    
    @Override
