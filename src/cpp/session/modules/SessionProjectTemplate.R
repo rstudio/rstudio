@@ -35,7 +35,7 @@
    fn <- if (identical(description$package, "(local)"))
       as.name(description$binding)
    else
-      call("::", as.name(description$package), as.name(description$binding))
+      call(":::", as.name(description$package), as.name(description$binding))
    
    # construct skeleton call
    skeleton <- c(
