@@ -56,6 +56,11 @@ public class TerminalSubprocEvent extends GwtEvent<TerminalSubprocEvent.Handler>
       data_ = data;
    }
 
+   public String getHandle()
+   {
+      return data_.getHandle();
+   }
+
    public boolean hasSubprocs()
    {
       return data_.hasSubprocs();

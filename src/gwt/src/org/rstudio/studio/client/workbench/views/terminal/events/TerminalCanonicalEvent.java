@@ -56,6 +56,11 @@ public class TerminalCanonicalEvent extends GwtEvent<TerminalCanonicalEvent.Hand
       data_ = data;
    }
 
+   public String getHandle()
+   {
+      return data_.getHandle();
+   }
+
    public boolean isCanonical()
    {
       return data_.getCanonical();

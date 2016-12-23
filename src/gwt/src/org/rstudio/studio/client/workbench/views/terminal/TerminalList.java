@@ -19,10 +19,13 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCanonicalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -31,7 +34,10 @@ import com.google.inject.Provider;
  * List of terminals, with sufficient metadata to display a list of
  * available terminals and reconnect to them.
  */
-public class TerminalList implements Iterable<String>
+public class TerminalList implements Iterable<String>,
+                                     TerminalCanonicalEvent.Handler,
+                                     TerminalSubprocEvent.Handler
+
 {
    private static class TerminalMetadata
    {
@@ -130,12 +136,16 @@ public class TerminalList implements Iterable<String>
    protected TerminalList() 
    {
       RStudioGinjector.INSTANCE.injectMembers(this); 
+      eventBus_.addHandler(TerminalSubprocEvent.TYPE, this);
+      eventBus_.addHandler(TerminalCanonicalEvent.TYPE, this);
    }
 
    @Inject
-   private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory)
+   private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory,
+                           EventBus events)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
+      eventBus_ = events;
    }
 
    /**
@@ -184,7 +194,7 @@ public class TerminalList implements Iterable<String>
     * @param childProcs new subprocesses flag value
     * @return true if changed, false if unchanged
     */
-   public boolean setChildProcs(String handle, boolean childProcs)
+   private boolean setChildProcs(String handle, boolean childProcs)
    {
       TerminalMetadata current = getMetadataForHandle(handle);
       if (current == null)
@@ -212,7 +222,7 @@ public class TerminalList implements Iterable<String>
     * @param canonical new canonical setting
     * @return true if changed, false if unchanged or terminal not found
     */
-   public boolean setCanonical(String handle, boolean canonical)
+   private boolean setCanonical(String handle, boolean canonical)
    {
       TerminalMetadata current = getMetadataForHandle(handle);
       if (current == null)
@@ -233,7 +243,7 @@ public class TerminalList implements Iterable<String>
       }
       return false;
    }
-   
+
    /**
     * Remove given terminal from the list
     * @param handle terminal handle
@@ -367,6 +377,22 @@ public class TerminalList implements Iterable<String>
       }
       return false;
    }
+   
+   /**
+    * @return true if any of the terminal shells are in canonical (line-by-line)
+    * mode
+    */
+   public boolean haveCanonical()
+   {
+      for (final TerminalMetadata item : terminals_.values())
+      {
+         if (item.canonical_)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
 
    /**
     * Choose a 1-based sequence number one higher than the highest currently 
@@ -417,6 +443,18 @@ public class TerminalList implements Iterable<String>
       return terminals_.keySet().iterator();
    }
 
+   @Override
+   public void onTerminalSubprocs(TerminalSubprocEvent event)
+   {
+      setChildProcs(event.getHandle(), event.hasSubprocs());
+   }
+
+   @Override
+   public void onTerminalCanonical(TerminalCanonicalEvent event)
+   {
+      setCanonical(event.getHandle(), event.isCanonical());
+   }
+
    /**
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
@@ -427,5 +465,5 @@ public class TerminalList implements Iterable<String>
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
-
+   private EventBus eventBus_;
 }

@@ -36,9 +36,11 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCanonicalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
@@ -57,7 +59,9 @@ public class TerminalSession extends XTermWidget
                                         ResizeTerminalEvent.Handler,
                                         TerminalDataInputEvent.Handler,
                                         XTermTitleEvent.Handler,
-                                        SessionSerializationHandler
+                                        SessionSerializationHandler,
+                                        TerminalCanonicalEvent.Handler,
+                                        TerminalSubprocEvent.Handler
 {
    /**
     * 
@@ -136,6 +140,8 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(TerminalSubprocEvent.TYPE, TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(TerminalCanonicalEvent.TYPE, TerminalSession.this));
 
             // We keep this handler connected after a terminal disconnect so
             // user input can wake up a suspended session
@@ -462,6 +468,18 @@ public class TerminalSession extends XTermWidget
          disconnect();
          break;
       }
+   }
+
+   @Override
+   public void onTerminalSubprocs(TerminalSubprocEvent event)
+   {
+      hasChildProcs_ = event.hasSubprocs();
+   }
+
+   @Override
+   public void onTerminalCanonical(TerminalCanonicalEvent event)
+   {
+      terminalCanonical_ = event.isCanonical();
    }
 
    /**
