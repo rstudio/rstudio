@@ -908,12 +908,6 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    bool smartTerm = true;
 #endif
 
-   // don't do subprocess checking in desktop mode
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      reportHasSubprocs = false;
-   }
-
    // configure environment for shell
    core::system::Options shellEnv;
    core::system::environment(&shellEnv);

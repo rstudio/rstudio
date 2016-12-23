@@ -31,7 +31,6 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
