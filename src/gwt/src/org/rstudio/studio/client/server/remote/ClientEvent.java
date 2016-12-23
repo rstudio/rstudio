@@ -156,7 +156,6 @@ class ClientEvent extends JavaScriptObject
    public static final String UpdateNewConnectionDialog = "update_new_connection_dialog";
    public static final String ProjectTemplateRegistryUpdated = "project_template_registry_updated";
    public static final String TerminalSubProcs = "terminal_subprocs";
-   public static final String TerminalCanonical = "terminal_canonical";
 
    protected ClientEvent()
    {

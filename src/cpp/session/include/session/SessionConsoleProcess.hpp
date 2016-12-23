@@ -186,7 +186,6 @@ private:
                  const std::string& output);
    void onExit(int exitCode);
    void onHasSubprocs(bool hasSubProcs);
-   void onTermMode(bool canonical);
 
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
@@ -233,9 +232,6 @@ private:
 
    // Does this process have child processes?
    bool childProcs_;
-
-   // Is this process's terminal in canonical mode?
-   bool terminalCanonical_;
 
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;

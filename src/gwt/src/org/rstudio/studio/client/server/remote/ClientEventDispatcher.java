@@ -162,7 +162,6 @@ import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTyp
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCanonicalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -871,11 +870,6 @@ public class ClientEventDispatcher
          {
             TerminalSubprocEvent.Data data = event.getData();
             eventBus_.fireEvent(new TerminalSubprocEvent(data));
-         }
-         else if (type.equals(ClientEvent.TerminalCanonical))
-         {
-            TerminalCanonicalEvent.Data data = event.getData();
-            eventBus_.fireEvent(new TerminalCanonicalEvent(data));
          }
          else
          {

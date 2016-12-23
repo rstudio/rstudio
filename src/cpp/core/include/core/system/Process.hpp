@@ -64,8 +64,7 @@ struct ProcessOptions
         createNewConsole(false),
         breakawayFromJob(false),
         redirectStdErrToStdOut(false),
-        reportHasSubprocs(false),
-        reportTermMode(false)
+        reportHasSubprocs(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
@@ -73,8 +72,7 @@ struct ProcessOptions
         cols(80),
         rows(25),
         redirectStdErrToStdOut(false),
-        reportHasSubprocs(false),
-        reportTermMode(false)
+        reportHasSubprocs(false)
 #endif
    {
    }
@@ -126,9 +124,6 @@ struct ProcessOptions
 
    // Periodically report if process has any child processes
    bool reportHasSubprocs;
-
-   // Periodically report if Terminal is in canonical mode
-   bool reportTermMode;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
@@ -266,9 +261,6 @@ struct ProcessCallbacks
 
    // Called periodically to report if this process has subprocesses
    boost::function<void(bool)> onHasSubprocs;
-
-   // Called periodically to report if terminal is in canonical mode
-   boost::function<void(bool)> onTermMode;
 };
 
 ProcessCallbacks createProcessCallbacks(

@@ -154,8 +154,6 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kUpdateNewConnectionDialog;
       else if (name == "terminal_subprocs")
          type = session::client_events::kTerminalSubprocs;
-      else if (name == "terminal_canonical")
-         type = session::client_events::kTerminalCanonical;
 
       if (type != -1)
       {

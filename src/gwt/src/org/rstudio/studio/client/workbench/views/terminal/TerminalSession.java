@@ -36,7 +36,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCanonicalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
@@ -60,7 +59,6 @@ public class TerminalSession extends XTermWidget
                                         TerminalDataInputEvent.Handler,
                                         XTermTitleEvent.Handler,
                                         SessionSerializationHandler,
-                                        TerminalCanonicalEvent.Handler,
                                         TerminalSubprocEvent.Handler
 {
    /**
@@ -76,15 +74,13 @@ public class TerminalSession extends XTermWidget
                           String handle,
                           String caption,
                           String title,
-                          boolean hasChildProcs,
-                          boolean terminalCanonical)
+                          boolean hasChildProcs)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
       sequence_ = sequence;
       terminalHandle_ = handle;
       hasChildProcs_ = hasChildProcs;
-      terminalCanonical_ = terminalCanonical;
       setTitle(title);
 
       if (StringUtil.isNullOrEmpty(caption))
@@ -141,7 +137,6 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(TerminalSubprocEvent.TYPE, TerminalSession.this));
-            addHandlerRegistration(eventBus_.addHandler(TerminalCanonicalEvent.TYPE, TerminalSession.this));
 
             // We keep this handler connected after a terminal disconnect so
             // user input can wake up a suspended session
@@ -423,15 +418,6 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Is terminal in canonical mode?
-    * @return true if canonical or hasn't been determined yet
-    */
-   public boolean getTerminalCanonical()
-   {
-      return terminalCanonical_;
-   }
-
-   /**
     * The sequence number of the terminal, used in creation of the default
     * title, e.g. "Terminal 3".
     * @return The sequence number that was passed to the constructor.
@@ -476,12 +462,6 @@ public class TerminalSession extends XTermWidget
       hasChildProcs_ = event.hasSubprocs();
    }
 
-   @Override
-   public void onTerminalCanonical(TerminalCanonicalEvent event)
-   {
-      terminalCanonical_ = event.isCanonical();
-   }
-
    /**
     * @return true if terminal is connected to server, false if not
     */
@@ -499,7 +479,6 @@ public class TerminalSession extends XTermWidget
    private final int sequence_;
    private String terminalHandle_;
    private boolean hasChildProcs_;
-   private boolean terminalCanonical_;
    private boolean connected_;
    private boolean connecting_;
    private StringBuilder inputQueue_;

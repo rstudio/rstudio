@@ -479,7 +479,6 @@ public class RemoteServer implements Server
                              ConsoleProcessInfo.SEQUENCE_NO_TERMINAL,
                              false /*allowProcessRestart*/,
                              false /*reportChildCount*/,
-                             false /*reportChildTermMode*/,
                              requestCallback);
    }
    
@@ -491,7 +490,6 @@ public class RemoteServer implements Server
                              cols, rows, handle, caption, title, sequence,
                              true /*allowProcessRestart*/,
                              true /*reportChildCount*/,
-                             true /*reportChildTermMode*/,
                              requestCallback);
    }
    
@@ -505,7 +503,6 @@ public class RemoteServer implements Server
                      int sequence,
                      boolean allowProcessRestart,
                      boolean reportChildCount,
-                     boolean reportChildTermMode,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -519,7 +516,6 @@ public class RemoteServer implements Server
       params.set(7, new JSONNumber(sequence));
       params.set(8, JSONBoolean.getInstance(allowProcessRestart));
       params.set(9, JSONBoolean.getInstance(reportChildCount));
-      params.set(10,  JSONBoolean.getInstance(reportChildTermMode));
 
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,

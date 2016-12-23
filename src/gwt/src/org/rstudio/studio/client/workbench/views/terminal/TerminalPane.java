@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTermina
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalStatusEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -127,7 +126,6 @@ public class TerminalPane extends WorkbenchPane
       {
          currentTerminal.setVisible(false);
       }
-      events_.fireEvent(new TerminalStatusEvent());
    }
 
    @Override
@@ -149,7 +147,6 @@ public class TerminalPane extends WorkbenchPane
    {
       ensureVisible();
       bringToFront();
-      events_.fireEvent(new TerminalStatusEvent());
    }
 
    private void ensureTerminal()
@@ -254,10 +251,10 @@ public class TerminalPane extends WorkbenchPane
    @Override
    public boolean busyTerminals()
    {
-      // We treat shells in canonical mode (line-by-line) as busy, as they
-      // are likely running a batch process or other long-running non-full-screen
-      // program.
-      return terminals_.haveCanonical();
+      // TODO (gary) implement busy detection, ideally treating long-running
+      // non-interactive programs as "busy" but not full-screen programs like
+      // text editors, tmux, etc.
+      return false;
    }
 
    @Override
@@ -356,7 +353,6 @@ public class TerminalPane extends WorkbenchPane
          setFocusOnVisible();
       }
       creatingTerminal_ = false;
-      events_.fireEvent(new TerminalStatusEvent());
    }
 
    @Override
@@ -380,8 +376,6 @@ public class TerminalPane extends WorkbenchPane
          activeTerminalToolbarButton_.setNoActiveTerminal();
          setTerminalTitle("");
       }
-
-      events_.fireEvent(new TerminalStatusEvent());
    }
 
    @Override

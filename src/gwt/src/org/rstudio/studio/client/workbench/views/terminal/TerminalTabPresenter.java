@@ -21,7 +21,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
@@ -32,18 +31,13 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalStatusEvent;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 public class TerminalTabPresenter extends BusyPresenter
-                                  implements TerminalStatusEvent.Handler
-
 {
    public interface Binder extends CommandBinder<Commands, TerminalTabPresenter> {}
 
@@ -71,10 +65,8 @@ public class TerminalTabPresenter extends BusyPresenter
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
       /**
-       * @return Are any terminals busy (a terminal in canonical mode is 
-       * considered busy, but a full-screen app such as vim, which is not in 
-       * canonical mode, is not). All "busy" terminals will also be "active"
-       * terminals.
+       * @return Are any terminals busy such that showing a progress 
+       * indicator makes sense.
        */
       boolean busyTerminals();
 
@@ -102,8 +94,7 @@ public class TerminalTabPresenter extends BusyPresenter
                                final Session session,
                                GlobalDisplay globalDisplay,
                                UIPrefs uiPrefs,
-                               Provider<ConsoleProcessFactory> pConsoleProcessFactory,
-                               EventBus events)
+                               Provider<ConsoleProcessFactory> pConsoleProcessFactory)
    {
       super(view);
       view_ = view;
@@ -111,7 +102,6 @@ public class TerminalTabPresenter extends BusyPresenter
       globalDisplay_ = globalDisplay;
       uiPrefs_ = uiPrefs;
       pConsoleProcessFactory_ = pConsoleProcessFactory;
-      events.addHandler(TerminalStatusEvent.TYPE, this);
    }
 
    @Handler
@@ -137,12 +127,6 @@ public class TerminalTabPresenter extends BusyPresenter
       view_.renameTerminal();
    }
 
-   @Override
-   public void onTerminalStatus(TerminalStatusEvent event)
-   {
-      setIsBusy(view_.busyTerminals());
-   }
-
    public void initialize()
    {
    }
@@ -151,7 +135,6 @@ public class TerminalTabPresenter extends BusyPresenter
    {
       onActivateTerminal();
       view_.createTerminal();
-      setIsBusy(true);
    }
 
    public void onSessionInit(SessionInitEvent sie)
@@ -169,14 +152,6 @@ public class TerminalTabPresenter extends BusyPresenter
          }
       }
       view_.repopulateTerminals(procList);
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         @Override
-         public void execute()
-         {
-            setIsBusy(view_.busyTerminals());
-         }
-      });
    }
 
    /**
@@ -222,7 +197,7 @@ public class TerminalTabPresenter extends BusyPresenter
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (view_.busyTerminals())
+      if (view_.activeTerminals())
       {
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
                "Close Terminal(s) ", 
@@ -253,7 +228,6 @@ public class TerminalTabPresenter extends BusyPresenter
          uiPrefs_.writeUIPrefs();
       }
       view_.terminateAllTerminals();
-      setIsBusy(false);
    }
 
    // Injected ---- 

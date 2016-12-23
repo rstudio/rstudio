@@ -55,8 +55,7 @@ ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     allowRestart_(false), childProcs_(true), terminalCanonical_(true),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     allowRestart_(false), childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -79,8 +78,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), terminalCanonical_(true),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -101,8 +99,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), terminalCanonical_(true),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -122,7 +119,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), terminalCanonical_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -455,22 +452,6 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
    }
 }
 
-void ConsoleProcess::onTermMode(bool canonical)
-{
-   if (terminalCanonical_ != canonical)
-   {
-      terminalCanonical_ = canonical;
-
-      // If terminal is in canonical (line-by-line) mode, then we assume it is
-      // currently running a non-full-screen program, such as a batch job.
-      json::Object termMode;
-      termMode["handle"]    = handle_;
-      termMode["canonical"] = terminalCanonical_;
-      module_context::enqueClientEvent(
-               ClientEvent(client_events::kTerminalCanonical, termMode));
-   }
-}
-
 core::json::Object ConsoleProcess::toJson() const
 {
    json::Object result;
@@ -492,7 +473,6 @@ core::json::Object ConsoleProcess::toJson() const
    result["started"] = started_;
    result["title"] = title_;
    result["childProcs"] = childProcs_;
-   result["canonical"] = terminalCanonical_;
 
    return result;
 }
@@ -570,13 +550,10 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    }
 
    // Yet-more work-in-progress on 1.1
-   error = json::readObject(obj,
-                            "childProcs", &pProc->childProcs_,
-                            "canonical", &pProc->terminalCanonical_);
+   error = json::readObject(obj, "childProcs", &pProc->childProcs_);
    if (error)
    {
       pProc->childProcs_ = true;
-      pProc->terminalCanonical_ = true;
    }
 
    return pProc;
@@ -591,10 +568,6 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    if (options_.reportHasSubprocs)
    {
       cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1);
-   }
-   if (options_.reportTermMode)
-   {
-      cb.onTermMode = boost::bind(&ConsoleProcess::onTermMode, ConsoleProcess::shared_from_this(), _1);
    }
    return cb;
 }

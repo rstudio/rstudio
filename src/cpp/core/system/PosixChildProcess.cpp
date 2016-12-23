@@ -31,6 +31,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/bind.hpp>
 
 #include <core/Error.hpp>
@@ -667,7 +668,6 @@ struct AsyncChildProcess::AsyncImpl
         finishedStderr_(false),
         exited_(false),
         checkSubProc_(boost::posix_time::not_a_date_time),
-        checkTermMode_(boost::posix_time::not_a_date_time),
         hasSubprocess_(true)
    {
    }
@@ -679,28 +679,20 @@ struct AsyncChildProcess::AsyncImpl
    // when we next check subprocess count
    boost::posix_time::ptime checkSubProc_;
 
-   // when we next check terminal mode (canonical or not)
-   boost::posix_time::ptime checkTermMode_;
-
    // result of last subprocess check
    bool hasSubprocess_;
 
-   void initTimers(bool reportHasSubprocs, bool reportTermMode)
+   void initTimers(bool reportHasSubprocs)
    {
       if (exited_)
       {
          checkSubProc_ = boost::posix_time::not_a_date_time;
-         checkTermMode_ = boost::posix_time::not_a_date_time;
          return;
       }
 
       if (reportHasSubprocs && checkSubProc_.is_not_a_date_time())
       {
          checkSubProc_ = now() + boost::posix_time::seconds(1);
-      }
-      if (reportTermMode && checkTermMode_.is_not_a_date_time())
-      {
-         checkTermMode_ = now() + boost::posix_time::seconds(5);
       }
    }
 
@@ -716,32 +708,33 @@ struct AsyncChildProcess::AsyncImpl
       return fCheck;
    }
 
-   bool checkTermMode()
+   bool computeHasSubProcess(pid_t pid)
    {
-      if (checkTermMode_.is_not_a_date_time())
-         return false;
-
-      bool fCheck = now() > checkTermMode_;
-
-      if (fCheck)
-         checkTermMode_ = boost::posix_time::not_a_date_time;
-      return fCheck;
-   }
-
-   bool computeHasSubProcess()
-   {
-      // TODO (gary) NYI
-      // On Linux we can do this via /proc/PID/task/PID/children; on Mac
-      // dev environment we'll invoke shell commands
-      hasSubprocess_ = false;
-      return hasSubprocess_;
-   }
-
-   bool computeTerminalMode()
-   {
-      // TODO (gary) NYI
-      // Get the terminal ID, then query stty
+#ifdef _WIN32
       return true;
+#else
+      // pgrep -P ppid returns 0 if there are matches, non-zero
+      // otherwise
+      shell_utils::ShellCommand cmd("pgrep");
+      cmd << "-P" << pid;
+
+      core::system::ProcessOptions options;
+      options.detachSession = true;
+
+      core::system::ProcessResult result;
+      Error error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
+                         options,
+                         &result);
+      if (error)
+      {
+         // err on the side of assuming child processes, so we don't kill
+         // a job unintentionally
+         LOG_ERROR(error);
+         return true;
+      }
+
+      return result.exitStatus == 0;
+#endif // !_WIN32
    }
 
    static boost::posix_time::ptime now()
@@ -905,22 +898,13 @@ void AsyncChildProcess::poll()
    }
 
    // Perform optional periodic operations
-   pAsyncImpl_->initTimers(options().reportHasSubprocs, options().reportTermMode);
+   pAsyncImpl_->initTimers(options().reportHasSubprocs);
    if (pAsyncImpl_->checkChildCount())
    {
-      bool hasSubprocess = pAsyncImpl_->computeHasSubProcess();
+      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->pid);
       if (callbacks_.onHasSubprocs)
       {
-         callbacks_.onHasSubprocs(hasSubprocess);
-      }
-   }
-
-   if (pAsyncImpl_->checkTermMode())
-   {
-      bool canonical = pAsyncImpl_->computeTerminalMode();
-      if (callbacks_.onTermMode)
-      {
-         callbacks_.onTermMode(canonical);
+         callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);
       }
    }
 }

@@ -184,7 +184,6 @@ struct ChildCallbacks
    }
 
    void onHasSubprocs(bool hasSubprocs) {}
-   void onTermMode(bool canonical) {}
 
    std::string input;
    std::string stdOut;
@@ -221,7 +220,6 @@ ProcessCallbacks createProcessCallbacks(
 
    // Not implemented for generic processes
    cb.onHasSubprocs = NULL;
-   cb.onTermMode = NULL;
 
    // return it
    return cb;
