@@ -556,6 +556,10 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
+bool AsyncChildProcess::hasSubprocess() const
+{
+   return true;
+}
 
 void AsyncChildProcess::poll()
 {
