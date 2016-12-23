@@ -655,12 +655,13 @@ public class JettyLauncher extends ServletContainerLauncher {
           keyStorePassword = value;
         } else if ("pwfile".equals(tag)) {
           useSsl = true;
-          keyStorePassword = Util.readFileAsString(new File(value)).trim();
+          keyStorePassword = Util.readFileAsString(new File(value));
           if (keyStorePassword == null) {
             logger.log(TreeLogger.ERROR,
                 "Unable to read keystore password from '" + value + "'");
             return false;
           }
+          keyStorePassword = keyStorePassword.trim();
         } else if ("clientAuth".equals(tag)) {
           useSsl = true;
           try {
