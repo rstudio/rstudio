@@ -316,11 +316,30 @@ public class TerminalList implements Iterable<String>,
 
    /**
     * @param handle handle to find
-    * @return caption for that handle
+    * @return caption for that handle or null if no such handle
     */
    public String getCaption(String handle)
    {
-      return getMetadataForHandle(handle).caption_;
+      TerminalMetadata data = getMetadataForHandle(handle);
+      if (data == null)
+      {
+         return null;
+      }
+      return data.caption_;
+   }
+
+   /**
+    * @param handle handle to find
+    * @return does terminal have subprocesses
+    */
+   public boolean getHasSubprocs(String handle)
+   {
+      TerminalMetadata data = getMetadataForHandle(handle);
+      if (data == null)
+      {
+         return true;
+      }
+      return data.childProcs_;
    }
 
    /**

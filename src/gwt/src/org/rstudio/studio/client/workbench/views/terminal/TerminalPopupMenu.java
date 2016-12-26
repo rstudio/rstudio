@@ -70,6 +70,16 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             };
 
             String caption = terminals_.getCaption(handle);
+            if (caption == null)
+            {
+               continue;
+            }
+
+            // visual indicator that terminal has processes running
+            if (terminals_.getHasSubprocs(handle))
+            {
+               caption = caption + "*";
+            }
 
             String menuHtml = AppCommand.formatMenuLabel(
                   null,              /*icon*/
