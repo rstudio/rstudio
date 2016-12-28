@@ -69,7 +69,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                }
             };
 
-            String caption = terminals_.getCaption(handle);
+            String caption = trimCaption(terminals_.getCaption(handle));
             if (caption == null)
             {
                continue;
@@ -127,7 +127,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       activeTerminalCaption_ = caption;
       activeTerminalHandle_ = handle;
-      toolbarButton_.setText(activeTerminalCaption_);
+      toolbarButton_.setText(trimCaption(activeTerminalCaption_));
    }
    
    /**
@@ -145,7 +145,17 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       return activeTerminalHandle_;
    }
-   
+
+   private String trimCaption(String caption)
+   {
+      // Enforce a sane visual limit on terminal captions
+      if (caption.length() > 32)
+      {
+         caption = caption.substring(0, 31) + "...";
+      }
+      return caption;
+   }
+
    private ToolbarButton toolbarButton_;
    private Commands commands_;
    private EventBus eventBus_;
