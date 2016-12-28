@@ -64,7 +64,7 @@ public final class Collectors {
 
   public static <T, A, R, RR> Collector<T, A, RR> collectingAndThen(
       Collector<T, A, R> downstream, Function<R, RR> finisher) {
-    return new Collector.CollectorImpl<>(
+    return new CollectorImpl<>(
         downstream.supplier(),
         downstream.accumulator(),
         downstream.combiner(),
@@ -163,15 +163,15 @@ public final class Collectors {
 
   public static <T, U, A, R> Collector<T, ?, R> mapping(
       final Function<? super T, ? extends U> mapper, final Collector<? super U, A, R> downstream) {
-    return new Collector.CollectorImpl<>(
+    return new CollectorImpl<>(
         downstream.supplier(),
-        (BiConsumer<A, T>) (A a, T t) -> {
-          downstream.accumulator().accept(a, mapper.apply(t));
-        },
+        (BiConsumer<A, T>)
+            (A a, T t) -> {
+              downstream.accumulator().accept(a, mapper.apply(t));
+            },
         downstream.combiner(),
         downstream.finisher(),
-        downstream.characteristics()
-    );
+        downstream.characteristics());
   }
 
   public static <T> Collector<T,?,Optional<T>> maxBy(Comparator<? super T> comparator) {

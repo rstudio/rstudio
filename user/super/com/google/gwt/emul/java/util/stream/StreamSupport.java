@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package java.util.stream;
 
 import java.util.Spliterator;
@@ -26,7 +25,7 @@ import java.util.function.Supplier;
 public final class StreamSupport {
 
   public static DoubleStream doubleStream(Spliterator.OfDouble spliterator, boolean parallel) {
-    return new DoubleStream.DoubleStreamSource(null, spliterator);
+    return new DoubleStreamImpl(null, spliterator);
   }
 
   public static DoubleStream doubleStream(
@@ -41,7 +40,7 @@ public final class StreamSupport {
   }
 
   public static IntStream intStream(Spliterator.OfInt spliterator, boolean parallel) {
-    return new IntStream.IntStreamSource(null, spliterator);
+    return new IntStreamImpl(null, spliterator);
   }
 
   public static IntStream intStream(
@@ -56,7 +55,7 @@ public final class StreamSupport {
   }
 
   public static LongStream longStream(Spliterator.OfLong spliterator, boolean parallel) {
-    return new LongStream.LongStreamSource(null, spliterator);
+    return new LongStreamImpl(null, spliterator);
   }
 
   public static LongStream longStream(
@@ -73,7 +72,7 @@ public final class StreamSupport {
   }
 
   public static <T> Stream<T> stream(Spliterator<T> spliterator, boolean parallel) {
-    return new Stream.StreamSource<T>(null, spliterator);
+    return new StreamImpl<T>(null, spliterator);
   }
 
   public static <T> Stream<T> stream(

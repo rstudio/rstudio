@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package java.util.stream;
 
 import static javaemul.internal.InternalPreconditions.checkNotNull;
@@ -90,73 +89,4 @@ public interface Collector<T,A,R> {
   BinaryOperator<A> combiner();
 
   Function<A,R> finisher();
-
-  /**
-   * Simple internal implementation of a collector, holding each of the functions in a field.
-   */
-  final class CollectorImpl<T, A, R> implements Collector<T, A, R> {
-    private final Supplier<A> supplier;
-    private final BiConsumer<A, T> accumulator;
-    private final Set<Characteristics> characteristics;
-    private final BinaryOperator<A> combiner;
-    private final Function<A, R> finisher;
-
-    public CollectorImpl(
-        Supplier<A> supplier,
-        BiConsumer<A, T> accumulator,
-        BinaryOperator<A> combiner,
-        Function<A, R> finisher,
-        Characteristics... characteristics) {
-      this.supplier = supplier;
-      this.accumulator = accumulator;
-      if (characteristics.length == 0) {
-        this.characteristics = Collections.emptySet();
-      } else if (characteristics.length == 1) {
-        this.characteristics = Collections.singleton(characteristics[0]);
-      } else {
-        this.characteristics =
-            Collections.unmodifiableSet(EnumSet.of(characteristics[0], characteristics));
-      }
-      this.combiner = combiner;
-      this.finisher = finisher;
-    }
-
-    public CollectorImpl(
-        Supplier<A> supplier,
-        BiConsumer<A, T> accumulator,
-        BinaryOperator<A> combiner,
-        Function<A, R> finisher,
-        Set<Characteristics> characteristics) {
-      this.supplier = supplier;
-      this.accumulator = accumulator;
-      this.combiner = combiner;
-      this.finisher = finisher;
-      this.characteristics = characteristics;
-    }
-
-    @Override
-    public Supplier<A> supplier() {
-      return supplier;
-    }
-
-    @Override
-    public BiConsumer<A, T> accumulator() {
-      return accumulator;
-    }
-
-    @Override
-    public BinaryOperator<A> combiner() {
-      return combiner;
-    }
-
-    @Override
-    public Function<A, R> finisher() {
-      return finisher;
-    }
-
-    @Override
-    public Set<Characteristics> characteristics() {
-      return characteristics;
-    }
-  }
 }
