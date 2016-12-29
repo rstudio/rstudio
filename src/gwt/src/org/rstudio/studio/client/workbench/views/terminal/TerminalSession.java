@@ -150,7 +150,7 @@ public class TerminalSession extends XTermWidget
                {
                   connected_ = true;
                   connecting_ = false;
-                  flushQueuedInput();
+                  sendUserInput();
                   eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
                }
 
@@ -178,7 +178,7 @@ public class TerminalSession extends XTermWidget
     */
    private void disconnect()
    {
-      inputQueue_ = null;
+      inputQueue_.setLength(0);
       registrations_.removeHandler();
       consoleProcess_ = null;
       connected_ = false;
@@ -221,40 +221,46 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
+      if (event.getData() != null)
+      {
+         inputQueue_.append(event.getData());
+      }
+
       if (!connected_)
       {
-         if (inputQueue_ == null)
-         {
-            inputQueue_ = new StringBuilder();
-         }
-
          // accumulate user input until we are connected, then play it back
-         inputQueue_.append(event.getData());
          connect();
          return;
       }
 
-      String userInput;
-      if (inputQueue_ != null)
-      {
-         inputQueue_.append(event.getData());
-         userInput = inputQueue_.toString();
-         inputQueue_ = null;
-      }
-      else
-      {
-         userInput = event.getData();
-      }
-
-      sendUserInput(userInput);
+      sendUserInput();
    }
 
    /**
-    * Send user input to the server.
+    * Send user input to the server, breaking down into chunks small
+    * enough for the encryption.
     * @param userInput string to send
     */
-   private void sendUserInput(String userInput)
+   private void sendUserInput()
    {
+      final int MAXENCRYPT = 117;
+      String userInput;
+
+      if (inputQueue_.length() == 0)
+      {
+         return;
+      }
+      if (inputQueue_.length() > MAXENCRYPT)
+      {
+         userInput = inputQueue_.substring(0, MAXENCRYPT);
+         inputQueue_.delete(0,  MAXENCRYPT);
+      }
+      else
+      {
+         userInput = inputQueue_.toString();
+         inputQueue_.setLength(0);
+      }
+
       secureInput_.secureString(userInput, new CommandWithArg<String>() 
       {
          @Override
@@ -263,6 +269,13 @@ public class TerminalSession extends XTermWidget
             consoleProcess_.writeStandardInput(
                   ShellInput.create(arg,  true /* echo input*/), 
                   new VoidServerRequestCallback() {
+
+                     @Override
+                     public void onResponseReceived(Void response)
+                     {
+                        sendUserInput();
+                     }
+
                      @Override
                      public void onError(ServerError error)
                      {
@@ -279,19 +292,6 @@ public class TerminalSession extends XTermWidget
             writeln(errorMessage); 
          }
       });
-   }
-   
-   /**
-    * Send queued user input to the server.
-    */
-   private void flushQueuedInput()
-   {
-      if (inputQueue_ != null)
-      {
-         String userInput = inputQueue_.toString();
-         inputQueue_ = null;
-         sendUserInput(userInput);
-      }
    }
 
    @Override
@@ -481,7 +481,7 @@ public class TerminalSession extends XTermWidget
    private boolean hasChildProcs_;
    private boolean connected_;
    private boolean connecting_;
-   private StringBuilder inputQueue_;
+   private StringBuilder inputQueue_ = new StringBuilder();
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 
