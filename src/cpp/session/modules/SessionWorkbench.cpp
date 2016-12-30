@@ -914,7 +914,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
 
 #ifndef _WIN32
    // set terminal
-   core::system::setenv(&shellEnv, "TERM", smartTerm ? "xterm" : "dumb");
+   core::system::setenv(&shellEnv, "TERM", smartTerm ? core::system::kSmartTerm :
+                                                       core::system::kDumbTerm);
 
    // set prompt
    std::string path = module_context::createAliasedPath(

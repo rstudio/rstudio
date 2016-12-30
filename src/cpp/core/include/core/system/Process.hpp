@@ -35,6 +35,9 @@ class Error;
 
 namespace system {
 
+extern const char* const kSmartTerm;
+extern const char* const kDumbTerm;
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Run child process synchronously
@@ -92,7 +95,7 @@ struct ProcessOptions
    // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
    bool terminateChildren;
 
-   // Use xterm as terminal type and disable canonical line-by-line
+   // Use kSmartTerm as terminal type and disable canonical line-by-line
    // I/O processing
    bool smartTerminal;
    

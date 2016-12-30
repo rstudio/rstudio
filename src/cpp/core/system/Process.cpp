@@ -34,6 +34,8 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+const char* const kSmartTerm = "xterm-256color";
+const char* const kDumbTerm = "dumb";
 
 Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,

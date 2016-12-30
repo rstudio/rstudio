@@ -491,17 +491,23 @@ Error ChildProcess::run()
             ERROR_LOCATION);
          if (!error)
          {
-            // specify raw mode (but don't ignore signals -- this is done
-            // so we can send Ctrl-C for interrupts)
-            ::cfmakeraw(&termp);
-            termp.c_lflag |= ISIG;
-
-            // for smart terminals we need to echo back the user input
-            if (options_.smartTerminal)
+            if (!options_.smartTerminal)
             {
+               // Specify raw mode; not doing this for terminal (versus dumb
+               // shell) because on Linux, it broke things like "passwd"
+               // command's ability to collect passwords).
+               ::cfmakeraw(&termp);
+            }
+            else
+            {
+               // for smart terminals we need to echo back the user input
                termp.c_lflag |= ECHO;
                termp.c_oflag |= OPOST|ONLCR;
             }
+
+            // Don't ignore signals -- this is done
+            // so we can send Ctrl-C for interrupts
+            termp.c_lflag |= ISIG;
 
             // set attribs
             safePosixCall<int>(

@@ -181,7 +181,8 @@ void ConsoleProcess::commonInit()
       }
       
       core::system::setenv(&(options_.environment.get()), "TERM",
-                           options_.smartTerminal ? "xterm" : "dumb");
+                           options_.smartTerminal ? core::system::kSmartTerm :
+                                                    core::system::kDumbTerm);
 #endif
    }
 
