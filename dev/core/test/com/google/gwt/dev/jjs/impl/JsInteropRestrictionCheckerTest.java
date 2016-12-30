@@ -1659,6 +1659,24 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
     assertBuggySucceeds();
   }
 
+  public void testJsOptionalOverrideSucceeds() throws Exception {
+    addSnippetImport("jsinterop.annotations.JsMethod");
+    addSnippetImport("jsinterop.annotations.JsOptional");
+    addSnippetClassDecl(
+        "public static class Parent {",
+        "  @JsMethod public void foo(@JsOptional String c) {}",
+        "  @JsMethod public Object bar(@JsOptional String c) { return null; }",
+        "}",
+        "public static class Buggy extends Parent {",
+        "  @Override",
+        "  @JsMethod public void foo(@JsOptional String c) {}",
+        "  @Override",
+        "  @JsMethod public String bar(@JsOptional String c) { return null; }",
+        "}");
+
+    assertBuggySucceeds();
+  }
+
   public void testJsOptionalWithVarargsSucceeds() throws Exception {
     addSnippetImport("jsinterop.annotations.JsMethod");
     addSnippetImport("jsinterop.annotations.JsOptional");

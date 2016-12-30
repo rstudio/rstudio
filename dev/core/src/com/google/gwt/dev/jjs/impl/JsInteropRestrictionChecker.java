@@ -443,6 +443,10 @@ public class JsInteropRestrictionChecker extends AbstractRestrictionChecker {
   }
 
   private void checkMethodParameters(JMethod method) {
+    if (method.isSynthetic()) {
+      return;
+    }
+
     boolean hasOptionalParameters = false;
     for (JParameter parameter : method.getParams()) {
       if (parameter.isOptional()) {
