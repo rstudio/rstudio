@@ -718,6 +718,8 @@ struct AsyncChildProcess::AsyncImpl
 #ifdef _WIN32
       return true;
 #else
+
+#ifdef __APPLE__
       // pgrep -P ppid returns 0 if there are matches, non-zero
       // otherwise
       shell_utils::ShellCommand cmd("pgrep");
@@ -739,6 +741,11 @@ struct AsyncChildProcess::AsyncImpl
       }
 
       return result.exitStatus == 0;
+#else // !__APPLE__
+      // TODO (gary) Linux subprocess detection using procfs
+      return true;
+#endif
+
 #endif // !_WIN32
    }
 
