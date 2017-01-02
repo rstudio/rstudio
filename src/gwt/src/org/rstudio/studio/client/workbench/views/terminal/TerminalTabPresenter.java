@@ -87,6 +87,11 @@ public class TerminalTabPresenter extends BusyPresenter
        * Rename (change caption) of current terminal.
        */
       void renameTerminal();
+
+      /**
+       * Clear terminal buffer.
+       */
+      void clearTerminalScrollbackBuffer();
    }
 
    @Inject
@@ -125,6 +130,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onRenameTerminal()
    {
       view_.renameTerminal();
+   }
+
+   @Handler
+   public void onClearTerminalScrollbackBuffer()
+   {
+      view_.clearTerminalScrollbackBuffer();
    }
 
    public void initialize()

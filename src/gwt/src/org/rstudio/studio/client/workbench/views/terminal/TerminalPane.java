@@ -314,6 +314,18 @@ public class TerminalPane extends WorkbenchPane
             });
    }
 
+   @Override
+   public void clearTerminalScrollbackBuffer()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+
+      visibleTerminal.clear();
+   }
+
    /**
     * Rename the currently visible terminal (client-side only).
     * 

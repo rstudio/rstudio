@@ -95,7 +95,11 @@ public class XTermNative extends JavaScriptObject
    public final native void reset() /*-{
       this.reset();
    }-*/;
-   
+
+   public final native void clear() /*-{
+      this.clear();
+   }-*/;
+
    /**
     * Install a handler for user input (typing). Only one handler at a 
     * time may be installed. Previous handler will be overwritten.

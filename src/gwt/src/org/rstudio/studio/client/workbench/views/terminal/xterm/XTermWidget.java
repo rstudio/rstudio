@@ -129,7 +129,13 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.scrollToBottom();
       terminal_.write(str);
    }
-   
+
+   public void clear()
+   {
+      terminal_.clear();
+      setFocus(true);
+   }
+
    /**
     * Inject the xterm.js styles into the page.
     * @param cssResource
