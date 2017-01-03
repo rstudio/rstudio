@@ -65,10 +65,16 @@ public class TerminalTabPresenter extends BusyPresenter
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
       /**
-       * @return Number of busy terminals (a terminal where the shell has
-       * child processes is considered busy).
+       * @return Are any terminals busy such that showing a progress 
+       * indicator makes sense.
        */
-      int busyTerminalCount();
+      boolean busyTerminals();
+
+      /**
+       * @return Are any terminals active (a terminal whose shell has any
+       * subprocesses is considered active and should not silently killed).
+       */
+      boolean activeTerminals();
 
       /**
        * Terminate all terminals, whether busy or not. This kills any server-side
@@ -81,6 +87,11 @@ public class TerminalTabPresenter extends BusyPresenter
        * Rename (change caption) of current terminal.
        */
       void renameTerminal();
+
+      /**
+       * Clear terminal buffer.
+       */
+      void clearTerminalScrollbackBuffer();
    }
 
    @Inject
@@ -119,6 +130,12 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onRenameTerminal()
    {
       view_.renameTerminal();
+   }
+
+   @Handler
+   public void onClearTerminalScrollbackBuffer()
+   {
+      view_.clearTerminalScrollbackBuffer();
    }
 
    public void initialize()
@@ -191,7 +208,7 @@ public class TerminalTabPresenter extends BusyPresenter
 
    public void confirmClose(final Command onConfirmed)
    {
-      if (view_.busyTerminalCount() > 0)
+      if (view_.activeTerminals())
       {
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
                "Close Terminal(s) ", 

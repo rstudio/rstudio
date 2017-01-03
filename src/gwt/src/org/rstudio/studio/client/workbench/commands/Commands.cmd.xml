@@ -2392,8 +2392,8 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
-        label="Clear Terminal Buffer"
-        menuLabel="Clear Terminal"
+        label="Clear Current Terminal"
+        menuLabel="Clear Current Terminal"
         desc="Clear terminal scrollback buffer"
         windowMode="main"/>
 

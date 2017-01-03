@@ -268,6 +268,11 @@ Error ChildProcess::terminate()
       return Success();
 }
 
+bool ChildProcess::hasSubprocess() const
+{
+   return true;
+}
+
 namespace {
 
 Error openFile(const FilePath& file, bool inheritable, HANDLE* phFile)
@@ -551,6 +556,10 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
+bool AsyncChildProcess::hasSubprocess() const
+{
+   return true;
+}
 
 void AsyncChildProcess::poll()
 {

@@ -69,7 +69,17 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                }
             };
 
-            String caption = terminals_.getCaption(handle);
+            String caption = trimCaption(terminals_.getCaption(handle));
+            if (caption == null)
+            {
+               continue;
+            }
+
+            // visual indicator that terminal has processes running
+            if (terminals_.getHasSubprocs(handle))
+            {
+               caption = caption + "*";
+            }
 
             String menuHtml = AppCommand.formatMenuLabel(
                   null,              /*icon*/
@@ -82,11 +92,10 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          }
          addSeparator();
          addItem(commands_.renameTerminal().createMenuItem(false));
+         addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
          addItem(commands_.closeTerminal().createMenuItem(false));
       }
 
-      // TODO (gary) put these back once implemented
-      // addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
 
       callback.onPopupMenu(this);
    }
@@ -117,7 +126,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       activeTerminalCaption_ = caption;
       activeTerminalHandle_ = handle;
-      toolbarButton_.setText(activeTerminalCaption_);
+      toolbarButton_.setText(trimCaption(activeTerminalCaption_));
    }
    
    /**
@@ -135,7 +144,17 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       return activeTerminalHandle_;
    }
-   
+
+   private String trimCaption(String caption)
+   {
+      // Enforce a sane visual limit on terminal captions
+      if (caption.length() > 32)
+      {
+         caption = caption.substring(0, 31) + "...";
+      }
+      return caption;
+   }
+
    private ToolbarButton toolbarButton_;
    private Commands commands_;
    private EventBus eventBus_;

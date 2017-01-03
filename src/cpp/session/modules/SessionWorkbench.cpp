@@ -884,7 +884,10 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    
    // allow process restart with existing handle
    bool allowRestart;
-   
+
+   // monitor if there are child processes
+   bool reportHasSubprocs;
+
    Error error = json::readParams(request.params,
                                   &term,
                                   &cols,
@@ -894,7 +897,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                   &termCaption,
                                   &termTitle,
                                   &termSequence,
-                                  &allowRestart);
+                                  &allowRestart,
+                                  &reportHasSubprocs);
    if (error)
       return error;
    
@@ -910,7 +914,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
 
 #ifndef _WIN32
    // set terminal
-   core::system::setenv(&shellEnv, "TERM", smartTerm ? "xterm" : "dumb");
+   core::system::setenv(&shellEnv, "TERM", smartTerm ? core::system::kSmartTerm :
+                                                       core::system::kDumbTerm);
 
    // set prompt
    std::string path = module_context::createAliasedPath(
@@ -950,6 +955,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
    options.smartTerminal = smartTerm;
+   options.reportHasSubprocs = reportHasSubprocs;
 #ifndef _WIN32
    options.cols = cols;
    options.rows = rows;

@@ -166,6 +166,7 @@ extern const int kNavigateShinyFrame;
 extern const int kUpdateNewConnectionDialog;
 extern const int kProjectTemplateRegistryUpdated;
 extern const int kPackageExtensionIndexingCompleted;
+extern const int kTerminalSubprocs;
 }
    
 class ClientEvent

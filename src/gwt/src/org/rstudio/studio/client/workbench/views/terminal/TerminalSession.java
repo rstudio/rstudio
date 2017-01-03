@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
@@ -57,7 +58,8 @@ public class TerminalSession extends XTermWidget
                                         ResizeTerminalEvent.Handler,
                                         TerminalDataInputEvent.Handler,
                                         XTermTitleEvent.Handler,
-                                        SessionSerializationHandler
+                                        SessionSerializationHandler,
+                                        TerminalSubprocEvent.Handler
 {
    /**
     * 
@@ -71,12 +73,14 @@ public class TerminalSession extends XTermWidget
                           int sequence,
                           String handle,
                           String caption,
-                          String title)
+                          String title,
+                          boolean hasChildProcs)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       secureInput_ = secureInput;
       sequence_ = sequence;
       terminalHandle_ = handle;
+      hasChildProcs_ = hasChildProcs;
       setTitle(title);
 
       if (StringUtil.isNullOrEmpty(caption))
@@ -132,6 +136,7 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
+            addHandlerRegistration(eventBus_.addHandler(TerminalSubprocEvent.TYPE, TerminalSession.this));
 
             // We keep this handler connected after a terminal disconnect so
             // user input can wake up a suspended session
@@ -145,7 +150,7 @@ public class TerminalSession extends XTermWidget
                {
                   connected_ = true;
                   connecting_ = false;
-                  flushQueuedInput();
+                  sendUserInput();
                   eventBus_.fireEvent(new TerminalSessionStartedEvent(TerminalSession.this));
                }
 
@@ -173,7 +178,7 @@ public class TerminalSession extends XTermWidget
     */
    private void disconnect()
    {
-      inputQueue_ = null;
+      inputQueue_.setLength(0);
       registrations_.removeHandler();
       consoleProcess_ = null;
       connected_ = false;
@@ -216,40 +221,46 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onTerminalDataInput(TerminalDataInputEvent event)
    {
+      if (event.getData() != null)
+      {
+         inputQueue_.append(event.getData());
+      }
+
       if (!connected_)
       {
-         if (inputQueue_ == null)
-         {
-            inputQueue_ = new StringBuilder();
-         }
-
          // accumulate user input until we are connected, then play it back
-         inputQueue_.append(event.getData());
          connect();
          return;
       }
 
-      String userInput;
-      if (inputQueue_ != null)
-      {
-         inputQueue_.append(event.getData());
-         userInput = inputQueue_.toString();
-         inputQueue_ = null;
-      }
-      else
-      {
-         userInput = event.getData();
-      }
-
-      sendUserInput(userInput);
+      sendUserInput();
    }
 
    /**
-    * Send user input to the server.
+    * Send user input to the server, breaking down into chunks small
+    * enough for the encryption.
     * @param userInput string to send
     */
-   private void sendUserInput(String userInput)
+   private void sendUserInput()
    {
+      final int MAXENCRYPT = 117;
+      String userInput;
+
+      if (inputQueue_.length() == 0)
+      {
+         return;
+      }
+      if (inputQueue_.length() > MAXENCRYPT)
+      {
+         userInput = inputQueue_.substring(0, MAXENCRYPT);
+         inputQueue_.delete(0,  MAXENCRYPT);
+      }
+      else
+      {
+         userInput = inputQueue_.toString();
+         inputQueue_.setLength(0);
+      }
+
       secureInput_.secureString(userInput, new CommandWithArg<String>() 
       {
          @Override
@@ -258,6 +269,13 @@ public class TerminalSession extends XTermWidget
             consoleProcess_.writeStandardInput(
                   ShellInput.create(arg,  true /* echo input*/), 
                   new VoidServerRequestCallback() {
+
+                     @Override
+                     public void onResponseReceived(Void response)
+                     {
+                        sendUserInput();
+                     }
+
                      @Override
                      public void onError(ServerError error)
                      {
@@ -274,19 +292,6 @@ public class TerminalSession extends XTermWidget
             writeln(errorMessage); 
          }
       });
-   }
-   
-   /**
-    * Send queued user input to the server.
-    */
-   private void flushQueuedInput()
-   {
-      if (inputQueue_ != null)
-      {
-         String userInput = inputQueue_.toString();
-         inputQueue_ = null;
-         sendUserInput(userInput);
-      }
    }
 
    @Override
@@ -404,6 +409,15 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
+    * Does this terminal's shell program (i.e. bash) have any child processes?
+    * @return true if it has child processes, or it hasn't been determined yet
+    */
+   public boolean getHasChildProcs()
+   {
+      return hasChildProcs_;
+   }
+
+   /**
     * The sequence number of the terminal, used in creation of the default
     * title, e.g. "Terminal 3".
     * @return The sequence number that was passed to the constructor.
@@ -442,6 +456,12 @@ public class TerminalSession extends XTermWidget
       }
    }
 
+   @Override
+   public void onTerminalSubprocs(TerminalSubprocEvent event)
+   {
+      hasChildProcs_ = event.hasSubprocs();
+   }
+
    /**
     * @return true if terminal is connected to server, false if not
     */
@@ -458,9 +478,10 @@ public class TerminalSession extends XTermWidget
    private String title_;
    private final int sequence_;
    private String terminalHandle_;
+   private boolean hasChildProcs_;
    private boolean connected_;
    private boolean connecting_;
-   private StringBuilder inputQueue_;
+   private StringBuilder inputQueue_ = new StringBuilder();
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

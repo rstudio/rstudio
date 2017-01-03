@@ -55,7 +55,7 @@ ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     allowRestart_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     allowRestart_(false), childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -78,7 +78,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -99,7 +99,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -119,7 +119,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -181,7 +181,8 @@ void ConsoleProcess::commonInit()
       }
       
       core::system::setenv(&(options_.environment.get()), "TERM",
-                           options_.smartTerminal ? "xterm" : "dumb");
+                           options_.smartTerminal ? core::system::kSmartTerm :
+                                                    core::system::kDumbTerm);
 #endif
    }
 
@@ -438,6 +439,20 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
+void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
+{
+   if (hasSubprocs != childProcs_)
+   {
+      childProcs_ = hasSubprocs;
+
+      json::Object subProcs;
+      subProcs["handle"]   = handle_;
+      subProcs["subprocs"] = childProcs_;
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kTerminalSubprocs, subProcs));
+   }
+}
+
 core::json::Object ConsoleProcess::toJson() const
 {
    json::Object result;
@@ -458,6 +473,8 @@ core::json::Object ConsoleProcess::toJson() const
    result["allow_restart"] = allowRestart_;
    result["started"] = started_;
    result["title"] = title_;
+   result["childProcs"] = childProcs_;
+
    return result;
 }
 
@@ -504,7 +521,6 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    {
       // Possibly unarchiving a pre 1.1 session; ensure defaults are set
       // and continue
-      LOG_ERROR(error);
       pProc->terminalSequence_ = kNoTerminal;
       return pProc;
    }
@@ -523,7 +539,6 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
          pProc->allowRestart_ = true;
          pProc->started_ = false;
       }
-      LOG_ERROR(error);
       return pProc;
    }
    
@@ -533,9 +548,15 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    if (error)
    {
       pProc->title_.clear();
-      LOG_ERROR(error);
    }
-   
+
+   // Yet-more work-in-progress on 1.1
+   error = json::readObject(obj, "childProcs", &pProc->childProcs_);
+   if (error)
+   {
+      pProc->childProcs_ = true;
+   }
+
    return pProc;
 }
 
@@ -545,6 +566,10 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
+   if (options_.reportHasSubprocs)
+   {
+      cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1);
+   }
    return cb;
 }
 

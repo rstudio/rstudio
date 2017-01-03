@@ -19,10 +19,12 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -31,7 +33,9 @@ import com.google.inject.Provider;
  * List of terminals, with sufficient metadata to display a list of
  * available terminals and reconnect to them.
  */
-public class TerminalList implements Iterable<String>
+public class TerminalList implements Iterable<String>,
+                                     TerminalSubprocEvent.Handler
+
 {
    private static class TerminalMetadata
    {
@@ -45,18 +49,24 @@ public class TerminalList implements Iterable<String>
       private TerminalMetadata(String handle,
                                String caption,
                                String title,
-                               int sequence)
+                               int sequence,
+                               boolean childProcs)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
          title_ = StringUtil.notNull(title);
          sequence_ = sequence;
+         childProcs_ = childProcs;
       }
 
       private TerminalMetadata(TerminalMetadata original,
                                String newTitle)
       {
-         this(original.handle_, original.caption_, newTitle, original.sequence_);
+         this(original.handle_,
+              original.caption_,
+              newTitle,
+              original.sequence_,
+              original.childProcs_);
       }
 
       private TerminalMetadata(ConsoleProcessInfo procInfo)
@@ -64,7 +74,8 @@ public class TerminalList implements Iterable<String>
          this(procInfo.getHandle(),
               procInfo.getCaption(),
               procInfo.getTitle(),
-              procInfo.getTerminalSequence());
+              procInfo.getTerminalSequence(),
+              procInfo.getHasChildProcs());
       }
 
       private TerminalMetadata(TerminalSession term)
@@ -72,7 +83,8 @@ public class TerminalList implements Iterable<String>
          this(term.getHandle(),
               term.getCaption(),
               term.getTitle(),
-              term.getSequence());
+              term.getSequence(),
+              term.getHasChildProcs());
       }
 
       /**
@@ -96,21 +108,30 @@ public class TerminalList implements Iterable<String>
        */
       public int getSequence() { return sequence_; }
 
+      /**
+       * @return true if terminal shell has child processes
+       */
+      public boolean getChildProcs() { return childProcs_; }
+
       private String handle_;
       private String caption_;
       private String title_;
       private int sequence_;
+      private boolean childProcs_;
    }
 
    protected TerminalList() 
    {
       RStudioGinjector.INSTANCE.injectMembers(this); 
+      eventBus_.addHandler(TerminalSubprocEvent.TYPE, this);
    }
 
    @Inject
-   private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory)
+   private void initialize(Provider<ConsoleProcessFactory> pConsoleProcessFactory,
+                           EventBus events)
    {
       pConsoleProcessFactory_ = pConsoleProcessFactory;
+      eventBus_ = events;
    }
 
    /**
@@ -148,6 +169,33 @@ public class TerminalList implements Iterable<String>
       if (!current.getTitle().equals(title))
       {
          addTerminal(new TerminalMetadata(current, title));
+         return true;
+      }
+      return false;
+   }
+
+   /**
+    * update has subprocesses flag
+    * @param handle terminal handle
+    * @param childProcs new subprocesses flag value
+    * @return true if changed, false if unchanged
+    */
+   private boolean setChildProcs(String handle, boolean childProcs)
+   {
+      TerminalMetadata current = getMetadataForHandle(handle);
+      if (current == null)
+      {
+         return false;
+      }
+
+      if (current.getChildProcs() != childProcs)
+      {
+         addTerminal(new TerminalMetadata(
+               current.handle_,
+               current.caption_,
+               current.title_,
+               current.sequence_,
+               childProcs));
          return true;
       }
       return false;
@@ -238,7 +286,11 @@ public class TerminalList implements Iterable<String>
     */
    public void createNewTerminal()
    {
-      startTerminal(nextTerminalSequence(), null, null, null);
+      startTerminal(nextTerminalSequence(),
+                    null,  // handle
+                    null,  // caption
+                    null,  // title
+                    true); // childProcs
    }
 
    /**
@@ -257,19 +309,54 @@ public class TerminalList implements Iterable<String>
       startTerminal(existing.getSequence(),
                     handle,
                     existing.getCaption(),
-                    existing.getTitle());
+                    existing.getTitle(),
+                    existing.getChildProcs());
       return true;
    }
 
    /**
     * @param handle handle to find
-    * @return caption for that handle
+    * @return caption for that handle or null if no such handle
     */
    public String getCaption(String handle)
    {
-      return getMetadataForHandle(handle).caption_;
+      TerminalMetadata data = getMetadataForHandle(handle);
+      if (data == null)
+      {
+         return null;
+      }
+      return data.caption_;
    }
-   
+
+   /**
+    * @param handle handle to find
+    * @return does terminal have subprocesses
+    */
+   public boolean getHasSubprocs(String handle)
+   {
+      TerminalMetadata data = getMetadataForHandle(handle);
+      if (data == null)
+      {
+         return true;
+      }
+      return data.childProcs_;
+   }
+
+   /**
+    * @return true if any of the terminal shells have subprocesses
+    */
+   public boolean haveSubprocs()
+   {
+      for (final TerminalMetadata item : terminals_.values())
+      {
+         if (item.childProcs_)
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
    /**
     * Choose a 1-based sequence number one higher than the highest currently 
     * known terminal number. We don't try to fill gaps if terminals are closed 
@@ -298,10 +385,12 @@ public class TerminalList implements Iterable<String>
    private void startTerminal(int sequence,
                              String terminalHandle,
                              String caption,
-                             String title)
+                             String title,
+                             boolean hasChildProcs)
    {
       TerminalSession newSession = new TerminalSession(
-            getSecureInput(), sequence, terminalHandle, caption, title);
+            getSecureInput(), sequence, terminalHandle, caption, title,
+            hasChildProcs);
       newSession.connect();
    }
 
@@ -316,6 +405,12 @@ public class TerminalList implements Iterable<String>
       return terminals_.keySet().iterator();
    }
 
+   @Override
+   public void onTerminalSubprocs(TerminalSubprocEvent event)
+   {
+      setChildProcs(event.getHandle(), event.hasSubprocs());
+   }
+
    /**
     * Map of terminal handles to terminal metadata; order they are added
     * is the order they will be iterated.
@@ -326,5 +421,5 @@ public class TerminalList implements Iterable<String>
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
-
+   private EventBus eventBus_;
 }
