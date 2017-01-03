@@ -15,10 +15,13 @@
 
 #include <session/SessionPackageProvidedExtension.hpp>
 
+#include <boost/regex.hpp>
 #include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/text/DcfParser.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -28,6 +31,39 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace ppe {
+
+Error parseResourceFile(
+      const FilePath& resourcePath,
+      std::vector<std::map<std::string, std::string> > *pOutput)
+{
+   Error error;
+
+   // read dcf contents
+   std::string contents;
+   error = core::readStringFromFile(resourcePath, &contents, string_utils::LineEndingPosix);
+   if (error)
+      return error;
+
+   // attempt to parse as DCF -- multiple newlines used to separate records
+   boost::regex reSeparator("\\n{2,}");
+   boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
+   boost::sregex_token_iterator end;
+
+   for (; it != end; ++it)
+   {
+      // invoke parser on current record
+      std::map<std::string, std::string> fields;
+      std::string errorMessage;
+      error = text::parseDcfFile(*it, true, &fields, &errorMessage);
+      if (error)
+         return error;
+      
+      // add to output vector
+      pOutput->push_back(fields);
+   }
+   
+   return Success();
+}
 
 Indexer::Indexer() : index_(0), n_(0), running_(false) {}
 
@@ -71,9 +107,12 @@ bool Indexer::work()
    std::string pkgName = pkgPath.filename();
    BOOST_FOREACH(boost::shared_ptr<Worker> pWorker, workers_)
    {
+      FilePath resourcePath = pkgPath.childPath(pWorker->resourcePath());
+      if (!resourcePath.exists())
+         continue;
+      
       try
       {
-         FilePath resourcePath = pkgPath.childPath(pWorker->resourcePath());
          pWorker->onWork(pkgName, resourcePath);
       }
       CATCH_UNEXPECTED_EXCEPTION

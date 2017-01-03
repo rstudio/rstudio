@@ -38,6 +38,10 @@ namespace session {
 namespace modules {
 namespace ppe {
 
+core::Error parseResourceFile(
+      const core::FilePath& resourcePath,
+      std::vector<std::map<std::string, std::string> >* pOutput);
+
 class Worker : boost::noncopyable
 {
 public:
@@ -85,7 +89,7 @@ private:
    bool running_;
 };
 
-Indexer& indexer();
+void registerWorker(boost::shared_ptr<Worker> pWorker);
 core::Error initialize();
 
 } // end namespace ppe
