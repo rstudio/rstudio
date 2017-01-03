@@ -258,23 +258,16 @@ boost::shared_ptr<ConnectionsWorker>& connectionsWorker()
    return instance;
 }
 
-}
+} // end anonymous namespace
 
 core::json::Value connectionsRegistryAsJson()
 {
    return connectionsRegistry().toJson();
 }
 
-void indexLibraryPathsWithContinuation(
-                        json::JsonRpcFunctionContinuation continuation)
+void registerConnectionsWorker()
 {
-   if (continuation)
-      connectionsWorker()->addContinuation(continuation);
-}
-
-void indexLibraryPaths()
-{
-   indexLibraryPathsWithContinuation(json::JsonRpcFunctionContinuation());
+   ppe::indexer().addWorker(connectionsWorker());
 }
 
 } // namespace connections

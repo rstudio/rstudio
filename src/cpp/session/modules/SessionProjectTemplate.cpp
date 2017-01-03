@@ -713,6 +713,7 @@ Error initialize()
    
    RS_REGISTER_CALL_METHOD(rs_getProjectTemplateRegistry, 0);
    
+   // register worker
    ppe::indexer().addWorker(projectTemplateWorker());
    
    ExecBlock initBlock;

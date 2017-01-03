@@ -35,6 +35,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
@@ -496,8 +497,6 @@ void onDeferredInit(bool newSession)
    {
       activeConnections().broadcastToClient();
    }
-
-   indexLibraryPaths();
 }
 
 void initEnvironment()
@@ -569,6 +568,9 @@ Error initialize()
 
    // initialize events for package indexer
    module_context::events().onDeferredInit.connect(onDeferredInit);
+   
+   // initialize connections index worker
+   registerConnectionsWorker();
 
    using boost::bind;
    using namespace module_context;
