@@ -164,8 +164,8 @@ const int kChunkExecStateChanged = 145;
 const int kNavigateShinyFrame = 146;
 const int kUpdateNewConnectionDialog = 147;
 const int kProjectTemplateRegistryUpdated = 148;
-const int kPackageExtensionIndexingCompleted = 149;
 const int kTerminalSubprocs = 149;
+const int kPackageExtensionIndexingCompleted = 150;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -453,10 +453,10 @@ std::string ClientEvent::typeName() const
          return "update_new_connection_dialog";
       case client_events::kProjectTemplateRegistryUpdated:
          return "project_template_registry_updated";
-      case client_events::kPackageExtensionIndexingCompleted:
-         return "package_extension_indexing_completed";
       case client_events::kTerminalSubprocs:
          return "terminal_subprocs";
+      case client_events::kPackageExtensionIndexingCompleted:
+         return "package_extension_indexing_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));
