@@ -562,16 +562,12 @@ Error initialize()
    if (error)
       return error;
 
-   // deferrred init for updating active connections
-   module_context::events().onDeferredInit.connect(onDeferredInit);
-
    // connect to events to track whether we should enable connections
    s_connectionsInitiallyEnabled = connectionsEnabled();
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
 
    // initialize events for package indexer
-   module_context::events().onConsoleInput.connect(onConsoleInput);
    module_context::events().onDeferredInit.connect(onDeferredInit);
 
    using boost::bind;

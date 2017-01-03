@@ -175,13 +175,13 @@ void Indexer::endIndexing()
    module_context::enqueClientEvent(event);
 }
 
-namespace {
-
 Indexer& indexer()
 {
    static Indexer instance;
    return instance;
 }
+
+namespace {
 
 void reindex()
 {

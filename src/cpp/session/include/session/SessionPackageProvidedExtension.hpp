@@ -89,7 +89,7 @@ private:
    bool running_;
 };
 
-void registerWorker(boost::shared_ptr<Worker> pWorker);
+Indexer& indexer();
 core::Error initialize();
 
 } // end namespace ppe

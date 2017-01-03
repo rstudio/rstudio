@@ -1,5 +1,5 @@
 /*
- * SessionConnectionsIndexer.cpp
+ * SessionConnectionsWorker.cpp
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -192,7 +192,7 @@ void updateConnectionsRegistry(boost::shared_ptr<ConnectionsRegistry> pRegistry)
    s_pCurrentConnectionsRegistry = pRegistry;
 }
 
-class ConnectionsIndexer : public ppe::Indexer
+class ConnectionsWorker : public ppe::Worker
 {
    void onIndexingStarted()
    {
@@ -204,7 +204,7 @@ class ConnectionsIndexer : public ppe::Indexer
       pRegistry_->add(pkgName, connectionExtensionPath);
    }
    
-   void onIndexingCompleted()
+   void onIndexingCompleted(json::Object* pPayload)
    {
       // finalize by indexing current package
       if (isDevtoolsLoadAllActive())
@@ -229,16 +229,18 @@ class ConnectionsIndexer : public ppe::Indexer
          response.setResult(registryJson);
          continuation(Success(), &response);
       }
+      
+      // provide registry as json
+      (*pPayload)["connections_registry"] = registryJson;
 
+      // reset
+      continuations_.clear();
       pRegistry_.reset();
    }
 
 public:
    
-   ConnectionsIndexer(const std::string& resourcePath)
-      : ppe::Indexer(resourcePath)
-   {
-   }
+   ConnectionsWorker() : ppe::Worker("rstudio/connections.dcf") {}
    
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
    {
@@ -250,9 +252,9 @@ private:
    std::vector<json::JsonRpcFunctionContinuation> continuations_;
 };
 
-ConnectionsIndexer& connectionsIndexer()
+boost::shared_ptr<ConnectionsWorker>& connectionsWorker()
 {
-   static ConnectionsIndexer instance("rstudio/connections.dcf");
+   static boost::shared_ptr<ConnectionsWorker> instance(new ConnectionsWorker);
    return instance;
 }
 
@@ -266,13 +268,8 @@ core::json::Value connectionsRegistryAsJson()
 void indexLibraryPathsWithContinuation(
                         json::JsonRpcFunctionContinuation continuation)
 {
-   if (continuation) {
-      connectionsIndexer().addContinuation(continuation);
-   }
-
-   if (!connectionsIndexer().running()) {
-      connectionsIndexer().start();
-   }
+   if (continuation)
+      connectionsWorker()->addContinuation(continuation);
 }
 
 void indexLibraryPaths()
@@ -280,44 +277,8 @@ void indexLibraryPaths()
    indexLibraryPathsWithContinuation(json::JsonRpcFunctionContinuation());
 }
 
-void onConsoleInput(const std::string& input)
-{
-   // check for packages pane disabled
-   if (module_context::disablePackages())
-      return;
-
-   // initialize commands if necessary
-   static std::vector<std::string> commands;
-   if (commands.empty())
-   {
-      commands.push_back("install.packages");
-      commands.push_back("remove.packages");
-      commands.push_back("devtools::install_github");
-      commands.push_back("install_github");
-      commands.push_back("devtools::load_all");
-      commands.push_back("load_all");
-   }
-
-   // check for package library mutating command
-   std::string trimmedInput = boost::algorithm::trim_copy(input);
-   BOOST_FOREACH(const std::string& command, commands)
-   {
-      if (boost::algorithm::starts_with(trimmedInput, command))
-      {
-         // we need to give R a chance to actually process the package library
-         // mutating command before we update the index. schedule delayed work
-         // with idleOnly = true so that it waits until the user has returned
-         // to the R prompt
-         module_context::scheduleDelayedWork(boost::posix_time::seconds(1),
-                                             indexLibraryPaths,
-                                             true); // idle only
-         return;
-      }
-   }
-}
-
 } // namespace connections
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
