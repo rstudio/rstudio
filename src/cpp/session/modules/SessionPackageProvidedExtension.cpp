@@ -201,7 +201,7 @@ void onConsoleInput(const std::string& input)
    if (module_context::disablePackages())
       return;
    
-   const char* const commands[] = {
+   static const char* const commands[] = {
       "install.packages",
       "utils::install.packages",
       "remove.packages",
