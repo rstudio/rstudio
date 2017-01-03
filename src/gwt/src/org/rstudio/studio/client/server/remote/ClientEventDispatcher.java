@@ -57,6 +57,7 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.PackageExtensionIndexingCompletedEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
@@ -870,6 +871,11 @@ public class ClientEventDispatcher
          {
             TerminalBusyEvent.Data data = event.getData();
             eventBus_.fireEvent(new TerminalBusyEvent(data));
+         }
+         else if (type.equals(ClientEvent.PackageExtensionIndexingCompleted))
+         {
+            PackageExtensionIndexingCompletedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new PackageExtensionIndexingCompletedEvent(data));
          }
          else
          {

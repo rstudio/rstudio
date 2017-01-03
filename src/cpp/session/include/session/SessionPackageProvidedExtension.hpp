@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <core/json/Json.hpp>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -40,7 +42,7 @@ class Worker : boost::noncopyable
 {
 public:
    virtual void onIndexingStarted() = 0;
-   virtual void onIndexingCompleted() = 0;
+   virtual void onIndexingCompleted(core::json::Object* pPayload) = 0;
    virtual void onWork(const std::string& pkgName, const core::FilePath& resourcePath) = 0;
    virtual ~Worker() {}
    
