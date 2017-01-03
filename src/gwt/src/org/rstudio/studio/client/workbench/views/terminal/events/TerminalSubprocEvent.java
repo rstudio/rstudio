@@ -1,5 +1,5 @@
 /*
- * TerminalBusyEvent.java
+ * TerminalSubprocEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -19,9 +19,11 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 /**
- * Sent to indicate change in state of a terminal's child processes.
+ * Sent when terminal shell program has (or doesn't have) subprocesses.
+ * Terminals can be killed via session suspend when they are all at the
+ * command-prompt, but not if any are running programs.
  */
-public class TerminalBusyEvent extends GwtEvent<TerminalBusyEvent.Handler>
+public class TerminalSubprocEvent extends GwtEvent<TerminalSubprocEvent.Handler>
 {
    public static class Data extends JavaScriptObject
    {
@@ -33,53 +35,41 @@ public class TerminalBusyEvent extends GwtEvent<TerminalBusyEvent.Handler>
        * @return Terminal handle
        */
       public final native String getHandle() /*-{
-         return this.handle;
+            return this.handle;
       }-*/;
 
       /**
-       * @return true if terminal shell has a child process
+       * @return true if terminal has sub-processes.
        */
-      public final native boolean getHasChildren() /*-{
-         return this.children;
-      }-*/;
-
-      /**
-       * @return true if a full screen (ncurses-style) process is running
-       */
-      public final native boolean getHasFullScreen() /*-{
-         return this.fullscreen;
+      public final native boolean hasSubprocs() /*-{
+            return this.subprocs;
       }-*/;
    }
 
    public interface Handler extends EventHandler
    {
-      void onTerminalBusy(TerminalBusyEvent event);
+      void onTerminalSubprocs(TerminalSubprocEvent event);
    }
 
-   public TerminalBusyEvent(Data data)
+   public TerminalSubprocEvent(Data data)
    {
       data_ = data;
    }
-   
+
    public String getHandle()
    {
       return data_.getHandle();
    }
 
-   public boolean getHasChildren()
+   public boolean hasSubprocs()
    {
-      return data_.getHasChildren();
-   }
-
-   public boolean getFullScreen()
-   {
-      return getFullScreen();
+      return data_.hasSubprocs();
    }
 
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalBusy(this);
+      handler.onTerminalSubprocs(this);
    }
 
    @Override

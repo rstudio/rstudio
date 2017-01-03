@@ -165,6 +165,7 @@ extern const int kChunkExecStateChanged;
 extern const int kNavigateShinyFrame;
 extern const int kUpdateNewConnectionDialog;
 extern const int kProjectTemplateRegistryUpdated;
+extern const int kTerminalSubprocs;
 }
    
 class ClientEvent

@@ -210,7 +210,7 @@ public class TerminalPane extends WorkbenchPane
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
                "Close " + visibleTerminal.getTitle(),
                "Are you sure you want to exit the terminal named \"" +
-               visibleTerminal.getTitle() + "\"? Any running jobs will be terminated.",
+               visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
                false,
                new Operation()
                {
@@ -240,12 +240,21 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public int busyTerminalCount()
+   public boolean activeTerminals()
    {
-      // TODO (gary) this should only count terminals where the
-      // shell (bash) has child processes; this requires more server-side
-      // work so for the moment all terminals are considered busy
-      return terminals_.terminalCount();
+      // We treat shells that have child processes as active. If a shell is
+      // not running anything, it is fair game for being killed via a
+      // session suspend.
+      return terminals_.haveSubprocs();
+   }
+
+   @Override
+   public boolean busyTerminals()
+   {
+      // TODO (gary) implement busy detection, ideally treating long-running
+      // non-interactive programs as "busy" but not full-screen programs like
+      // text editors, tmux, etc.
+      return false;
    }
 
    @Override
@@ -303,6 +312,18 @@ public class TerminalPane extends WorkbenchPane
                         });
                }
             });
+   }
+
+   @Override
+   public void clearTerminalScrollbackBuffer()
+   {
+      final TerminalSession visibleTerminal = getSelectedTerminal();
+      if (visibleTerminal == null)
+      {
+         return;
+      }
+
+      visibleTerminal.clear();
    }
 
    /**

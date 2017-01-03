@@ -35,6 +35,9 @@ class Error;
 
 namespace system {
 
+extern const char* const kSmartTerm;
+extern const char* const kDumbTerm;
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Run child process synchronously
@@ -63,15 +66,16 @@ struct ProcessOptions
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
-        redirectStdErrToStdOut(false)
+        redirectStdErrToStdOut(false),
+        reportHasSubprocs(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
         detachSession(false),
         cols(80),
         rows(25),
-        redirectStdErrToStdOut(false)
-   
+        redirectStdErrToStdOut(false),
+        reportHasSubprocs(false)
 #endif
    {
    }
@@ -91,7 +95,7 @@ struct ProcessOptions
    // CreateJobObject/CREATE_BREAKAWAY_FROM_JOB to get the same effect
    bool terminateChildren;
 
-   // Use xterm as terminal type and disable canonical line-by-line
+   // Use kSmartTerm as terminal type and disable canonical line-by-line
    // I/O processing
    bool smartTerminal;
    
@@ -120,6 +124,9 @@ struct ProcessOptions
 #endif
 
    bool redirectStdErrToStdOut;
+
+   // Periodically report if process has any child processes
+   bool reportHasSubprocs;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
@@ -254,6 +261,9 @@ struct ProcessCallbacks
    // Called after the process has exited. Passes exitStatus (see ProcessResult
    // comment above for potential values)
    boost::function<void(int)> onExit;
+
+   // Called periodically to report if this process has subprocesses
+   boost::function<void(bool)> onHasSubprocs;
 };
 
 ProcessCallbacks createProcessCallbacks(
@@ -315,8 +325,12 @@ public:
             const boost::function<void(const ProcessResult&)>& onCompleted);
 
 
-   // Check whether any children are currently active
+   // Check whether any children are currently running
    bool hasRunningChildren();
+
+   // Check whether any children consider themselves active; non-active
+   // processes may be terminated without warning.
+   bool hasActiveChildren();
 
    // Poll for child (output and exit) events. returns true if there
    // are still children being supervised after the poll
@@ -325,7 +339,7 @@ public:
    // Terminate all running children
    void terminateAll();
 
-   // Wait for all children to exit. Returns false if the operaiton timed out
+   // Wait for all children to exit. Returns false if the operation timed out
    bool wait(
       const boost::posix_time::time_duration& pollingInterval =
          boost::posix_time::milliseconds(100),

@@ -477,7 +477,9 @@ public class RemoteServer implements Server
       invokeStartShellDialog(ConsoleProcess.TerminalType.DUMB, true /*modal*/,
                              80, 1, null /*handle*/, null /*caption*/, null /*title*/, 
                              ConsoleProcessInfo.SEQUENCE_NO_TERMINAL,
-                             false /*allowProcessRestart*/, requestCallback);
+                             false /*allowProcessRestart*/,
+                             false /*reportChildCount*/,
+                             requestCallback);
    }
    
    public void startTerminal(int cols, int rows,
@@ -486,7 +488,9 @@ public class RemoteServer implements Server
    {
       invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM, false /*modal*/,
                              cols, rows, handle, caption, title, sequence,
-                             true /*allowProcessRestart*/, requestCallback);
+                             true /*allowProcessRestart*/,
+                             true /*reportChildCount*/,
+                             requestCallback);
    }
    
    private void invokeStartShellDialog(
@@ -498,6 +502,7 @@ public class RemoteServer implements Server
                      String title,
                      int sequence,
                      boolean allowProcessRestart,
+                     boolean reportChildCount,
                      ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -510,7 +515,8 @@ public class RemoteServer implements Server
       params.set(6, new JSONString(StringUtil.notNull(title)));
       params.set(7, new JSONNumber(sequence));
       params.set(8, JSONBoolean.getInstance(allowProcessRestart));
-      
+      params.set(9, JSONBoolean.getInstance(reportChildCount));
+
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,
                   params,

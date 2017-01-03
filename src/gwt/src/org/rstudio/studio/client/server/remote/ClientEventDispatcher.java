@@ -161,7 +161,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -866,10 +866,10 @@ public class ClientEventDispatcher
             ProjectTemplateRegistry data = event.getData();
             eventBus_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(data));
          }
-         else if (type.equals(ClientEvent.TerminalBusy))
+         else if (type.equals(ClientEvent.TerminalSubProcs))
          {
-            TerminalBusyEvent.Data data = event.getData();
-            eventBus_.fireEvent(new TerminalBusyEvent(data));
+            TerminalSubprocEvent.Data data = event.getData();
+            eventBus_.fireEvent(new TerminalSubprocEvent(data));
          }
          else
          {
