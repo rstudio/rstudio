@@ -309,3 +309,10 @@
 .rs.addApiFunction("askForPassword", function(prompt) {
    .rs.askForPassword(prompt)
 })
+
+.rs.addFunction("showDialog", function(title, message) {
+   .rs.enqueClientEvent("rstudioapi_show_dialog", list(
+      title = .rs.scalar(title),
+      message = .rs.scalar(message)
+   ))
+})

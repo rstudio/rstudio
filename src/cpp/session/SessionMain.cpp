@@ -106,7 +106,6 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionRUtil.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 
-#include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
@@ -1860,7 +1859,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::r_addins::initialize)
       (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
-      (modules::rstudioapi::initialize)
 
       // workers
       (workers::web_request::initialize)
