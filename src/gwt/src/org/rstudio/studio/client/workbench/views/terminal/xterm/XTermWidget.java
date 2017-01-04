@@ -95,10 +95,10 @@ public class XTermWidget extends Widget implements RequiresResize,
       {
          writeln("Welcome to " + AnsiCode.ForeColor.LIGHTBLUE + "RStudio" +
                  AnsiCode.DEFAULTCOLORS + " terminal.");
+         setNewTerminal(false);
       }
       else
       {
-         terminal_.reset();
          Scheduler.get().scheduleDeferred(new ScheduledCommand()
          {
             @Override
@@ -130,6 +130,9 @@ public class XTermWidget extends Widget implements RequiresResize,
       terminal_.write(str);
    }
 
+   /**
+    * Clear terminal buffer.
+    */
    public void clear()
    {
       terminal_.clear();
@@ -186,7 +189,6 @@ public class XTermWidget extends Widget implements RequiresResize,
             public void execute()
             {
                terminal_.blur();
-               terminal_.destroy();
             }
          });
       }
@@ -332,15 +334,6 @@ public class XTermWidget extends Widget implements RequiresResize,
       newTerminal_ = isNew;
    }
 
-   /**
-    * Indicates if connecting to a new terminal session.
-    * @return true if a new connection, false if a reconnect
-    */
-   public boolean newTerminal()
-   {
-      return newTerminal_;
-   }
-   
    private static final ExternalJavaScriptLoader xtermLoader_ =
          getLoader(XTermResources.INSTANCE.xtermjs(), 
                    XTermResources.INSTANCE.xtermjsUncompressed());

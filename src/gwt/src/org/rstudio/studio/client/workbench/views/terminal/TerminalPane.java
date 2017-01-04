@@ -268,6 +268,12 @@ public class TerminalPane extends WorkbenchPane
       creatingTerminal_ = false;
       activeTerminalToolbarButton_.setNoActiveTerminal();
       setTerminalTitle("");
+
+      // remove all widgets
+      while (terminalSessionsPanel_.getWidgetCount() > 0)
+      {
+         terminalSessionsPanel_.remove(0);
+      }
    }
 
    @Override

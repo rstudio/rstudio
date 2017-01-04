@@ -93,6 +93,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          addSeparator();
          addItem(commands_.renameTerminal().createMenuItem(false));
          addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
+         addSeparator();
          addItem(commands_.closeTerminal().createMenuItem(false));
       }
 
@@ -147,6 +148,9 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
 
    private String trimCaption(String caption)
    {
+      // TODO (gary) look at doing this via css text-overflow
+      // when I do the theming work
+
       // Enforce a sane visual limit on terminal captions
       if (caption.length() > 32)
       {
