@@ -463,7 +463,6 @@ public class CompletionRequester
             result.remove(o1);
       }
       
-      Collections.reverse(result);
       return result;
    }
    
