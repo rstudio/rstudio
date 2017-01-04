@@ -38,6 +38,9 @@ namespace {
 }
 
 const char * const kRStudioAPIShowDialog = "rstudioapi_show_dialog";
+const char * const kRStudioAPIShowDialogCompleted = "rstudioapi_show_dialog_completed";
+
+module_context::WaitForMethodFunction s_waitForShowDialog;
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message)
@@ -50,30 +53,32 @@ ClientEvent showDialogEvent(const std::string& title,
 
 SEXP rsShowDialog(SEXP titleSEXP, SEXP messageSEXP)
 {  
-   std::string title = r::sexp::asString(titleSEXP);
-   std::string message = r::sexp::asLogical(messageSEXP);
-   
-   // fire edit event
-   ClientEvent editEvent = rsession::showDialogEvent(title, message);
-   rsession::clientEventQueue().add(editEvent);
+   try
+   {
+      std::string title = r::sexp::asString(titleSEXP);
+      std::string message = r::sexp::asString(messageSEXP);
+      
+      ClientEvent event = showDialogEvent(title, message);
 
-   // wait for edit_completed 
-   json::JsonRpcRequest request ;
-   bool succeeded = waitForMethod(kRStudioAPIShowDialogCompleted,
-                                  editEvent,
-                                  FALSE,
-                                  &request);
-
-   if (!succeeded)
-      return false;
+      // wait for rstudioapi_show_dialog_completed 
+      json::JsonRpcRequest request;
+      if (!s_waitForShowDialog(&request, event))
+      {
+         return R_NilValue;
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
    
-   return 0p;
+   return R_NilValue;
 }
 
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   // register waitForMethod handler
+   s_waitForShowDialog = module_context::registerWaitForMethod("rstudioapi_show_dialog_completed");
 
    // regsiter rs_rstudioCitation
    r::routines::registerCallMethod(
