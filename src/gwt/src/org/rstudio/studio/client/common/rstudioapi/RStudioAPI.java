@@ -28,6 +28,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
@@ -75,7 +76,8 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.addStyleName(RES.styles().textInfoWidget());
 
-      HTML msg = new HTML(message);
+      SafeHtml safeMsg = DialogHtmlSanitizer.sanitizeHtml(message);
+      HTML msg = new HTML(safeMsg.asString());
       msg.setWidth("100%");
       verticalPanel.add(msg);
       
