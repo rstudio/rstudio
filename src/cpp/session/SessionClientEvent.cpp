@@ -163,13 +163,10 @@ const int kNotebookRangeExecuted = 144;
 const int kChunkExecStateChanged = 145;
 const int kNavigateShinyFrame = 146;
 const int kUpdateNewConnectionDialog = 147;
-<<<<<<< d4e7a40b3ee2ce7733cb04c31c8480ce4226cd71
 const int kProjectTemplateRegistryUpdated = 148;
 const int kTerminalSubprocs = 149;
 const int kPackageExtensionIndexingCompleted = 150;
-=======
-const int kRStudioAPIShowDialog = 148;
->>>>>>> server support for rstudioapi_show_dialog
+const int kRStudioAPIShowDialog = 151;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
