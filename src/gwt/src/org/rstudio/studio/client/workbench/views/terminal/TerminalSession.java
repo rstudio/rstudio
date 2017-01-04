@@ -364,9 +364,17 @@ public class TerminalSession extends XTermWidget
    }
 
    @Override
+   protected void onLoad()
+   {
+      super.onLoad();
+      connect();
+   }
+
+   @Override
    protected void onDetach()
    {
       super.onDetach();
+      disconnect();
       unregisterHandlers();
    }
 
@@ -376,6 +384,8 @@ public class TerminalSession extends XTermWidget
       super.setVisible(isVisible);
       if (isVisible)
       {
+         connect();
+
          // Inform the terminal that there may have been a resize. This could 
          // happen on first display, or if the terminal was hidden behind other
          // terminal sessions and there was a resize.
