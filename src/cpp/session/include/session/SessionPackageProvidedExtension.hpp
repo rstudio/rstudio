@@ -21,6 +21,7 @@
 
 #include <core/json/Json.hpp>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -38,9 +39,9 @@ namespace session {
 namespace modules {
 namespace ppe {
 
-core::Error parseResourceFile(
+core::Error parseDcfResourceFile(
       const core::FilePath& resourcePath,
-      std::vector<std::map<std::string, std::string> >* pOutput);
+      boost::function<core::Error(const std::map<std::string, std::string>&)> callback);
 
 class Worker : boost::noncopyable
 {

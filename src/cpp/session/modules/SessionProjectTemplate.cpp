@@ -313,14 +313,13 @@ Error parseWidgetType(const std::string& widget,
             ERROR_LOCATION);
 }
 
-template <typename T>
 core::Error populate(
       const core::FilePath& resourcePath,
-      const T& map,
+      const std::map<std::string, std::string>& map,
       ProjectTemplateDescription* pDescription)
 {
    ProjectTemplateWidgetDescription widget;
-   for (typename T::const_iterator it = map.begin();
+   for (std::map<std::string, std::string>::const_iterator it = map.begin();
         it != map.end();
         ++it)
    {
@@ -505,39 +504,11 @@ public:
                            const FilePath& resourcePath,
                            ProjectTemplateDescription* pDescription)
    {
-      Error error;
-      
-      // read dcf contents
-      std::string contents;
-      error = core::readStringFromFile(resourcePath, &contents, string_utils::LineEndingPosix);
+      Error error = ppe::parseDcfResourceFile(
+               resourcePath,
+               boost::bind<Error>(populate, boost::cref(resourcePath), _1, pDescription));
       if (error)
          return error;
-      
-      // attempt to parse as DCF -- multiple newlines used to separate records
-      boost::regex reSeparator("\\n{2,}");
-      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
-      boost::sregex_token_iterator end;
-      
-      for (; it != end; ++it)
-      {
-         // invoke parser on current record
-         std::map<std::string, std::string> fields;
-         std::string errorMessage;
-         error = text::parseDcfFile(*it, true, &fields, &errorMessage);
-         if (error)
-         {
-            reportErrorsToConsole(error, resourcePath);
-            return error;
-         }
-         
-         // populate project template description based on fields
-         error = populate(resourcePath, fields, pDescription);
-         if (error)
-         {
-            reportErrorsToConsole(error, resourcePath);
-            return error;
-         }
-      }
       
       // validate that all required fields have been added
       std::vector<Error> problems = validate(*pDescription, resourcePath, ERROR_LOCATION);

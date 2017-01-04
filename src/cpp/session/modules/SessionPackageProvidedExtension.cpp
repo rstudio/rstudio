@@ -32,9 +32,9 @@ namespace session {
 namespace modules {
 namespace ppe {
 
-Error parseResourceFile(
+Error parseDcfResourceFile(
       const FilePath& resourcePath,
-      std::vector<std::map<std::string, std::string> > *pOutput)
+      boost::function<Error(const std::map<std::string, std::string>&)> callback)
 {
    Error error;
 
@@ -58,8 +58,10 @@ Error parseResourceFile(
       if (error)
          return error;
       
-      // add to output vector
-      pOutput->push_back(fields);
+      // invoke callback on parsed dcf fields
+      error = callback(fields);
+      if (error)
+         return error;
    }
    
    return Success();
