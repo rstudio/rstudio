@@ -313,14 +313,13 @@ Error parseWidgetType(const std::string& widget,
             ERROR_LOCATION);
 }
 
-template <typename T>
 core::Error populate(
       const core::FilePath& resourcePath,
-      const T& map,
+      const std::map<std::string, std::string>& map,
       ProjectTemplateDescription* pDescription)
 {
    ProjectTemplateWidgetDescription widget;
-   for (typename T::const_iterator it = map.begin();
+   for (std::map<std::string, std::string>::const_iterator it = map.begin();
         it != map.end();
         ++it)
    {
@@ -488,12 +487,11 @@ boost::shared_ptr<ProjectTemplateRegistry>& projectTemplateRegistry()
    return instance;
 }
 
-class ProjectTemplateIndexer : public ppe::Indexer
+class ProjectTemplateWorker : public ppe::Worker
 {
 public:
    
-   explicit ProjectTemplateIndexer(const std::string& resourcePath)
-      : ppe::Indexer(resourcePath)
+   explicit ProjectTemplateWorker() : ppe::Worker(kRStudioProjectTemplatesPath)
    {
    }
    
@@ -506,39 +504,11 @@ public:
                            const FilePath& resourcePath,
                            ProjectTemplateDescription* pDescription)
    {
-      Error error;
-      
-      // read dcf contents
-      std::string contents;
-      error = core::readStringFromFile(resourcePath, &contents, string_utils::LineEndingPosix);
+      Error error = ppe::parseDcfResourceFile(
+               resourcePath,
+               boost::bind<Error>(populate, boost::cref(resourcePath), _1, pDescription));
       if (error)
          return error;
-      
-      // attempt to parse as DCF -- multiple newlines used to separate records
-      boost::regex reSeparator("\\n{2,}");
-      boost::sregex_token_iterator it(contents.begin(), contents.end(), reSeparator, -1);
-      boost::sregex_token_iterator end;
-      
-      for (; it != end; ++it)
-      {
-         // invoke parser on current record
-         std::map<std::string, std::string> fields;
-         std::string errorMessage;
-         error = text::parseDcfFile(*it, true, &fields, &errorMessage);
-         if (error)
-         {
-            reportErrorsToConsole(error, resourcePath);
-            return error;
-         }
-         
-         // populate project template description based on fields
-         error = populate(resourcePath, fields, pDescription);
-         if (error)
-         {
-            reportErrorsToConsole(error, resourcePath);
-            return error;
-         }
-      }
       
       // validate that all required fields have been added
       std::vector<Error> problems = validate(*pDescription, resourcePath, ERROR_LOCATION);
@@ -589,7 +559,7 @@ private:
       }
    }
 
-   void onIndexingCompleted()
+   void onIndexingCompleted(json::Object* pPayload)
    {
       // index a project template file in the RStudio options folder
       FilePath localTemplatesPath =
@@ -600,6 +570,7 @@ private:
       
       // update global registry
       projectTemplateRegistry() = pRegistry_;
+      (*pPayload)["project_templates_registry"] = pRegistry_->toJson();
       
       // add known project templates
       addKnownProjectTemplates();
@@ -669,67 +640,10 @@ private:
    boost::shared_ptr<ProjectTemplateRegistry> pRegistry_;
 };
 
-ProjectTemplateIndexer& projectTemplateIndexer()
+boost::shared_ptr<ProjectTemplateWorker>& projectTemplateWorker()
 {
-   static ProjectTemplateIndexer instance(kRStudioProjectTemplatesPath);
+   static boost::shared_ptr<ProjectTemplateWorker> instance(new ProjectTemplateWorker);
    return instance;
-}
-
-void notifyClientProjectTemplateRegistryUpdated()
-{
-   json::Value data = projectTemplateRegistry()->toJson();
-   ClientEvent event(client_events::kProjectTemplateRegistryUpdated, data);
-   module_context::enqueClientEvent(event);
-}
-
-void reindex(bool notifyClient)
-{
-   if (module_context::disablePackages())
-      return;
-   
-   if (notifyClient)
-   {
-      projectTemplateIndexer().addIndexingFinishedCallback(
-               boost::bind(notifyClientProjectTemplateRegistryUpdated));
-   }
-   
-   projectTemplateIndexer().start();
-}
-
-void onDeferredInit(bool)
-{
-   reindex(true);
-}
-
-void onConsoleInput(const std::string& input)
-{
-   if (module_context::disablePackages())
-      return;
-   
-   const char* const commands[] = {
-      "install.packages",
-      "remove.packages",
-      "devtools::install_github",
-      "install_github",
-      "devtools::load_all",
-      "load_all"
-   };
-   
-   std::string inputTrimmed = boost::algorithm::trim_copy(input);
-   BOOST_FOREACH(const char* command, commands)
-   {
-      if (boost::algorithm::starts_with(inputTrimmed, command))
-      {
-         // we need to give R a chance to actually process the package library
-         // mutating command before we update the index. schedule delayed work
-         // with idleOnly = true so that it waits until the user has returned
-         // to the R prompt
-         module_context::scheduleDelayedWork(
-                  boost::posix_time::seconds(1),
-                  boost::bind(reindex, true),
-                  true);
-      }
-   }
 }
 
 void respondWithProjectTemplateRegistry(const json::JsonRpcFunctionContinuation& continuation)
@@ -741,8 +655,8 @@ void respondWithProjectTemplateRegistry(const json::JsonRpcFunctionContinuation&
 
 void withProjectTemplateRegistry(boost::function<void()> callback)
 {
-   if (projectTemplateIndexer().running())
-      projectTemplateIndexer().addIndexingFinishedCallback(callback);
+   if (ppe::indexer().running())
+      projectTemplateWorker()->addIndexingFinishedCallback(callback);
    else
       callback();
 }
@@ -768,10 +682,10 @@ Error initialize()
    using namespace module_context;
    using boost::bind;
    
-   events().onDeferredInit.connect(onDeferredInit);
-   events().onConsoleInput.connect(onConsoleInput);
-   
    RS_REGISTER_CALL_METHOD(rs_getProjectTemplateRegistry, 0);
+   
+   // register worker
+   ppe::indexer().addWorker(projectTemplateWorker());
    
    ExecBlock initBlock;
    initBlock.addFunctions()

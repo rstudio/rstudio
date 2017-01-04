@@ -104,6 +104,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionMarkers.cpp
+   modules/SessionPackageProvidedExtension.cpp
    modules/SessionPackages.cpp
    modules/SessionPackrat.cpp
    modules/SessionPath.cpp

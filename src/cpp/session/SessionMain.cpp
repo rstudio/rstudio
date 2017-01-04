@@ -104,6 +104,7 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionClientEventQueue.hpp"
 
 #include <session/SessionRUtil.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
 #include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
@@ -1808,6 +1809,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lists::initialize)
       (modules::path::initialize)
       (modules::limits::initialize)
+      (modules::ppe::initialize)
       (modules::ask_pass::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)

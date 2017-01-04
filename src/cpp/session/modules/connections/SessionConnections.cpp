@@ -35,6 +35,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
 #include "ActiveConnections.hpp"
 #include "ConnectionHistory.hpp"
@@ -496,8 +497,6 @@ void onDeferredInit(bool newSession)
    {
       activeConnections().broadcastToClient();
    }
-
-   indexLibraryPaths();
 }
 
 void initEnvironment()
@@ -562,17 +561,16 @@ Error initialize()
    if (error)
       return error;
 
-   // deferrred init for updating active connections
-   module_context::events().onDeferredInit.connect(onDeferredInit);
-
    // connect to events to track whether we should enable connections
    s_connectionsInitiallyEnabled = connectionsEnabled();
    module_context::events().onPackageLibraryMutated.connect(
                                              onInstalledPackagesChanged);
 
    // initialize events for package indexer
-   module_context::events().onConsoleInput.connect(onConsoleInput);
    module_context::events().onDeferredInit.connect(onDeferredInit);
+   
+   // initialize connections index worker
+   registerConnectionsWorker();
 
    using boost::bind;
    using namespace module_context;
