@@ -108,11 +108,7 @@ private:
 
 - (void) browseUrl: (NSString*) url
 {
-   // escape the string prior to passing it to NSURL; otherwise URLs which
-   // contain e.g. spaces won't be valid
-   NSURL* nsurl = [NSURL URLWithString:
-                   [url stringByAddingPercentEncodingWithAllowedCharacters:
-                        [NSCharacterSet URLQueryAllowedCharacterSet]]];
+   NSURL* nsurl = [NSURL URLWithString: url];
    desktop::utils::browseURL(nsurl);
 }
 
