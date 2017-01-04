@@ -213,9 +213,14 @@ std::string detectBuildType(const FilePath& projectFilePath,
                             RProjectConfig* pConfig)
 {
    FilePath projectDir = projectFilePath.parent();
-   if (r_util::isPackageDirectory(projectDir))
+   if (isWebsiteDirectory(projectDir))
    {
-      setBuildPackageDefaults("", buildDefaults ,pConfig);
+      pConfig->buildType = kBuildTypeWebsite;
+      pConfig->websitePath = "";
+   }
+   else if (r_util::isPackageDirectory(projectDir))
+   {
+      setBuildPackageDefaults("", buildDefaults, pConfig);
    }
    else if (projectDir.childPath("pkg/DESCRIPTION").exists())
    {
@@ -225,11 +230,6 @@ std::string detectBuildType(const FilePath& projectFilePath,
    {
       pConfig->buildType = kBuildTypeMakefile;
       pConfig->makefilePath = "";
-   }
-   else if (isWebsiteDirectory(projectDir))
-   {
-      pConfig->buildType = kBuildTypeWebsite;
-      pConfig->websitePath = "";
    }
    else
    {
