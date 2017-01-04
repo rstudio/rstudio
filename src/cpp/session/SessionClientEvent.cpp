@@ -167,6 +167,7 @@ const int kProjectTemplateRegistryUpdated = 148;
 const int kTerminalSubprocs = 149;
 const int kPackageExtensionIndexingCompleted = 150;
 const int kRStudioAPIShowDialog = 151;
+const int kRStudioAPIShowDialogCompleted = 152;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -460,6 +461,8 @@ std::string ClientEvent::typeName() const
          return "package_extension_indexing_completed";
       case client_events::kRStudioAPIShowDialog:
          return "rstudioapi_show_dialog";
+      case client_events::kRStudioAPIShowDialogCompleted:
+         return "rstudioapi_show_dialog_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

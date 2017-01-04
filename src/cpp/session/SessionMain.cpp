@@ -249,6 +249,7 @@ const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_comp
 const char * const kQuitSession = "quit_session" ;   
 const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
+const char * const kRStudioAPIShowDialog = "rstudioapi_show_dialog";
 
 // convenience function for disallowing suspend (note still doesn't override
 // the presence of s_forceSuspend = 1)
@@ -1760,6 +1761,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kChooseFileCompleted);
    s_waitForMethodNames.push_back(kUserPromptCompleted);
    s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
+   s_waitForMethodNames.push_back(kRStudioAPIShowDialog);
 
    // execute core initialization functions
    using boost::bind;
