@@ -37,9 +37,6 @@ namespace rstudioapi {
 namespace {
 }
 
-const char * const kRStudioAPIShowDialog = "rstudioapi_show_dialog";
-const char * const kRStudioAPIShowDialogCompleted = "rstudioapi_show_dialog_completed";
-
 module_context::WaitForMethodFunction s_waitForShowDialog;
 
 ClientEvent showDialogEvent(const std::string& title,
