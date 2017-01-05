@@ -173,6 +173,7 @@ public class ProjectTemplateWidget extends Composite
    private ProjectTemplateWidgetItem textInput(final ProjectTemplateWidgetDescription description)
    {
       final TextBox primaryWidget = new TextBox();
+      primaryWidget.setWidth("180px");
       
       String defaultValue = description.getDefault();
       if (!StringUtil.isNullOrEmpty(defaultValue))
