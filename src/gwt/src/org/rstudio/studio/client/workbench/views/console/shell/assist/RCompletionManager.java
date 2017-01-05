@@ -492,22 +492,11 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         switch (keycode)
-         {
-         // chrome on ubuntu now sends this before every keydown
-         // so we need to explicitly ignore it. see:
-         // https://github.com/ivaynberg/select2/issues/2482
-         case KeyCodes.KEY_WIN_IME: 
-            return false ;
-            
-         case KeyCodes.KEY_SHIFT:
-         case KeyCodes.KEY_CTRL:
-         case KeyCodes.KEY_ALT:
-         case KeyCodes.KEY_MAC_FF_META:
-         case KeyCodes.KEY_WIN_KEY_LEFT_META:
-            return false ; // bare modifiers should do nothing
-         }
+         // bail on modifier keys
+         if (KeyboardHelper.isModifierKey(keycode))
+            return false;
          
+         // allow emacs-style navigation of popup entries
          if (modifier == KeyboardShortcut.CTRL)
          {
             switch (keycode)
