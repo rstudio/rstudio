@@ -70,7 +70,7 @@ public class KeyboardHelper
       case KeyCodes.KEY_WIN_KEY_RIGHT:
       case KeyCodes.KEY_WIN_KEY_LEFT_META:
          return true;
-      case KeyCodes.KEY_CONTEXT_MENU:
+      case KeyCodes.KEY_CONTEXT_MENU: // right meta on macOS
          return !BrowseCap.isWindows();
       default:
          return false;
