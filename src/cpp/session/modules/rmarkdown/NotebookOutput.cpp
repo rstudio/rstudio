@@ -344,6 +344,8 @@ OutputPair lastChunkOutput(const std::string& docId,
    }
    
    FilePath outputPath = chunkOutputPath(docId, chunkId, nbCtxId, ContextExact);
+   if (!outputPath.exists())
+      return OutputPair();
 
    // scan the directory for output
    std::vector<FilePath> outputPaths;
@@ -566,12 +568,18 @@ core::Error appendConsoleOutput(int chunkConsoleType,
                                 const std::string& output,
                                 const core::FilePath& targetPath)
 {
+   Error error;
+   
+   error = targetPath.parent().ensureDirectory();
+   if (error)
+      return error;
+   
    std::vector<std::string> data;
    data.push_back(safe_convert::numberToString(chunkConsoleType));
    data.push_back(output);
    
    std::string encoded = text::encodeCsvLine(data) + "\n";
-   Error error = writeStringToFile(
+   error = writeStringToFile(
             targetPath,
             encoded,
             string_utils::LineEndingPassthrough,
