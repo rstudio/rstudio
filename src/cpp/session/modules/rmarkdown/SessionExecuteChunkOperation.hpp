@@ -195,11 +195,19 @@ private:
       FilePath target = chunkOutputFile(docId_, chunkId_, nbCtxId_,
             ChunkOutputText);
       
-      // append console data
+      // append console data (for notebook cache)
       notebook::appendConsoleOutput(
                outputType == OUTPUT_STDOUT ? kChunkConsoleOutput : kChunkConsoleError,
                output,
                target);
+      
+      // write to temporary file (for streaming output)
+      FilePath tempFile = module_context::tempFile("chunk-output-", "");
+      RemoveOnExitScope scope(tempFile, ERROR_LOCATION);
+      notebook::appendConsoleOutput(
+               outputType == OUTPUT_STDOUT ? kChunkConsoleOutput : kChunkConsoleError,
+               output,
+               tempFile);
       
       // emit client event
       enqueueChunkOutput(
@@ -208,7 +216,7 @@ private:
                nbCtxId_,
                0,  // no ordinals needed for alternate engines
                ChunkOutputText,
-               target);
+               tempFile);
    }
    
 public:
