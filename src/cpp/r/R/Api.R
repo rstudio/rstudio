@@ -311,8 +311,5 @@
 })
 
 .rs.addFunction("showDialog", function(title, message) {
-   .rs.enqueClientEvent("rstudioapi_show_dialog", list(
-      title = .rs.scalar(title),
-      message = .rs.scalar(message)
-   ))
+   .Call("rs_showDialog", title, message)
 })
