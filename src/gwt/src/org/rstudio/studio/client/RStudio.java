@@ -291,7 +291,6 @@ public class RStudio implements EntryPoint
       CppCompletionResources.INSTANCE.styles().ensureInjected();
       RSConnectDeploy.RESOURCES.style().ensureInjected();
       NewConnectionShinyHost.ensureStylesInjected();
-      RStudioAPI.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

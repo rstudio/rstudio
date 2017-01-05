@@ -74,8 +74,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
    }
    
    public static Resources RES = GWT.create(Resources.class);
-   public static void ensureStylesInjected() 
-   {
+   static {
       RES.styles().ensureInjected();
    }
 

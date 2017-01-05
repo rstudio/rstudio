@@ -55,10 +55,10 @@ ClientEvent showDialogEvent(const std::string& title,
    return ClientEvent(client_events::kRStudioAPIShowDialog, data);
 }
 
-SEXP rsShowDialog(SEXP titleSEXP,
-                  SEXP messageSEXP,
-                  SEXP promptSEXP,
-                  SEXP promptDefaultSEXP)
+SEXP rs_showDialog(SEXP titleSEXP,
+                   SEXP messageSEXP,
+                   SEXP promptSEXP,
+                   SEXP promptDefaultSEXP)
 {  
    try
    {
@@ -103,14 +103,9 @@ Error initialize()
    // register waitForMethod handler
    s_waitForShowDialog = module_context::registerWaitForMethod("rstudioapi_show_dialog_completed");
 
-   // regsiter rs_rstudioCitation
-   r::routines::registerCallMethod(
-            "rs_showDialog",
-            (DL_FUNC) rsShowDialog,
-            4);
+   RS_REGISTER_CALL_METHOD(rs_showDialog, 4);
 
-   ExecBlock initBlock ;
-   return initBlock.execute();
+   return Success();
 }
 
 } // namespace connections

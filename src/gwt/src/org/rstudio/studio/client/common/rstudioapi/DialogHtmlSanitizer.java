@@ -19,25 +19,21 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.StringUtil;
+
 import com.google.gwt.safehtml.shared.HtmlSanitizer;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public final class DialogHtmlSanitizer implements HtmlSanitizer {
-   private static final DialogHtmlSanitizer INSTANCE = new DialogHtmlSanitizer();
-
    private static final Set<String> TAG_WHITELIST = new HashSet<String>(
       Arrays.asList(
          "p", "em", "strong", "b", "i"
       )
    );
 
-   public static DialogHtmlSanitizer getInstance() {
-      return INSTANCE;
-   }
-
    public static SafeHtml sanitizeHtml(String html) {
-      if (html == null) {
+      if (StringUtil.isNullOrEmpty(html)) {
          html = "";
       }
       
@@ -63,7 +59,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
             if (segment.charAt(0) == '/') {
                tagStart = 1;
             }
-            tag = segment.substring(tagStart, tagEnd);
+            tag = segment.substring(tagStart, tagEnd).toLowerCase();
             if (TAG_WHITELIST.contains(tag)) {
                isValidTag = true;
             }
