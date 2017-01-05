@@ -159,7 +159,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          showPrompt(
             event.getTitle(), 
             event.getMessage(),
-            "");
+            event.getPromptDefault());
       } else {
          showDialog(
             event.getTitle(), 

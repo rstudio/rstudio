@@ -38,6 +38,10 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
       public final native boolean getPrompt() /*-{
          return this.prompt || false;
       }-*/;
+
+      public final native String getPromptDefault() /*-{
+         return this["default"];
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -63,6 +67,11 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public boolean getPrompt()
    {
       return data_.getPrompt();
+   }
+
+   public String getPromptDefault()
+   {
+      return data_.getPromptDefault();
    }
    
    @Override

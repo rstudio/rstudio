@@ -44,24 +44,30 @@ module_context::WaitForMethodFunction s_waitForShowDialog;
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
-                            bool prompt)
+                            bool prompt,
+                            const std::string& promptDefault)
 {
    json::Object data;
    data["title"] = title;
    data["message"] = message;
    data["prompt"] = prompt;
+   data["default"] = promptDefault;
    return ClientEvent(client_events::kRStudioAPIShowDialog, data);
 }
 
-SEXP rsShowDialog(SEXP titleSEXP, SEXP messageSEXP, SEXP promptSEXP)
+SEXP rsShowDialog(SEXP titleSEXP,
+                  SEXP messageSEXP,
+                  SEXP promptSEXP,
+                  SEXP promptDefaultSEXP)
 {  
    try
    {
       std::string title = r::sexp::asString(titleSEXP);
       std::string message = r::sexp::asString(messageSEXP);
       bool prompt = r::sexp::asLogical(promptSEXP);
+      std::string promptDefault = r::sexp::asString(promptDefaultSEXP);
       
-      ClientEvent event = showDialogEvent(title, message, prompt);
+      ClientEvent event = showDialogEvent(title, message, prompt, promptDefault);
 
       // wait for rstudioapi_show_dialog_completed 
       json::JsonRpcRequest request;
@@ -101,7 +107,7 @@ Error initialize()
    r::routines::registerCallMethod(
             "rs_showDialog",
             (DL_FUNC) rsShowDialog,
-            3);
+            4);
 
    ExecBlock initBlock ;
    return initBlock.execute();
