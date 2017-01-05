@@ -1,7 +1,7 @@
 /*
- * RStudioAPI.hpp
+ * ConnectionsServerOperations.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,26 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.common.rstudioapi.model;
 
-#ifndef SESSION_RSTUDIOAPI_HPP
-#define SESSION_RSTUDIOAPI_HPP
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
-namespace rstudio {
-namespace core {
-   class Error;
+public interface RStudioAPIServerOperations
+{
+   void showDialogCompleted(String prompt, ServerRequestCallback<Void> callback);
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace rstudioapi {
-
-core::Error initialize();
-   
-} // namespace about
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif

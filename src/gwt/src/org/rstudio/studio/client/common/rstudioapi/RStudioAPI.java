@@ -21,7 +21,10 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
+import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -34,6 +37,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.rstudio.studio.client.server.Void;
+
 @Singleton
 public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
 {
@@ -43,10 +48,12 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
 
    @Inject
    private void initialize(EventBus events,
-                           GlobalDisplay globalDisplay)
+                           GlobalDisplay globalDisplay,
+                           RStudioAPIServerOperations server)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
+      server_ = server;
 
       events_.addHandler(RStudioAPIShowDialogEvent.TYPE, this);
    }
@@ -69,9 +76,9 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       RES.styles().ensureInjected();
    }
 
-   private static void showDialog(String caption, 
-                                  String message, 
-                                  final String url)
+   private void showDialog(String caption, 
+                           String message, 
+                           final String url)
    {
       VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.addStyleName(RES.styles().textInfoWidget());
@@ -99,9 +106,16 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       
       MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
             caption,
-            verticalPanel);
+            verticalPanel
+            );
 
-      dlg.addButton("OK", (Operation)null, true, false);
+      dlg.addButton("OK", new Operation() {
+         @Override
+         public void execute()
+         {
+            server_.showDialogCompleted(null, new SimpleRequestCallback<Void>());
+         }
+      }, true, false);
       dlg.showModal();
    }
 
@@ -116,4 +130,5 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
 
    private EventBus events_;
    private GlobalDisplay globalDisplay_;
+   private RStudioAPIServerOperations server_;
 }

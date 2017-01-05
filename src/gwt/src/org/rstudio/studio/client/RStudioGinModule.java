@@ -53,6 +53,7 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenServerOperations;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
+import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
@@ -415,6 +416,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChunkWindowManager.class).in(Singleton.class);
       bind(ChunkSatelliteView.class).to(ChunkSatelliteWindow.class);
       bind(RStudioAPI.class).asEagerSingleton();
+      bind(RStudioAPIServerOperations.class).to(RemoteServer.class);
    }
 
    private <T extends WorkbenchTab> void bindTab(String name, Class<T> clazz)

@@ -84,7 +84,7 @@ Error initialize()
    r::routines::registerCallMethod(
             "rs_showDialog",
             (DL_FUNC) rsShowDialog,
-            0);
+            2);
 
    ExecBlock initBlock ;
    return initBlock.execute();
