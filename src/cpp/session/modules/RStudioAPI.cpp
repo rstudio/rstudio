@@ -43,28 +43,45 @@ const char * const kRStudioAPIShowDialogCompleted = "rstudioapi_show_dialog_comp
 module_context::WaitForMethodFunction s_waitForShowDialog;
 
 ClientEvent showDialogEvent(const std::string& title,
-                            const std::string& message)
+                            const std::string& message,
+                            bool prompt)
 {
    json::Object data;
    data["title"] = title;
    data["message"] = message;
+   data["prompt"] = prompt;
    return ClientEvent(client_events::kRStudioAPIShowDialog, data);
 }
 
-SEXP rsShowDialog(SEXP titleSEXP, SEXP messageSEXP)
+SEXP rsShowDialog(SEXP titleSEXP, SEXP messageSEXP, SEXP promptSEXP)
 {  
    try
    {
       std::string title = r::sexp::asString(titleSEXP);
       std::string message = r::sexp::asString(messageSEXP);
+      bool prompt = r::sexp::asLogical(promptSEXP);
       
-      ClientEvent event = showDialogEvent(title, message);
+      ClientEvent event = showDialogEvent(title, message, prompt);
 
       // wait for rstudioapi_show_dialog_completed 
       json::JsonRpcRequest request;
       if (!s_waitForShowDialog(&request, event))
       {
          return R_NilValue;
+      }
+
+      if (!request.params[0].is_null())
+      {
+         std::string promptValue;
+         Error error = json::readParam(request.params, 0, &promptValue);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return R_NilValue;
+         }
+
+         r::sexp::Protect rProtect;
+         return r::sexp::create(promptValue, &rProtect);
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -84,7 +101,7 @@ Error initialize()
    r::routines::registerCallMethod(
             "rs_showDialog",
             (DL_FUNC) rsShowDialog,
-            2);
+            3);
 
    ExecBlock initBlock ;
    return initBlock.execute();

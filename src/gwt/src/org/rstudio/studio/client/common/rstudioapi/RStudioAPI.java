@@ -15,9 +15,12 @@
 
 package org.rstudio.studio.client.common.rstudioapi;
 
+import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -77,7 +80,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
    }
 
    private void showDialog(String caption, 
-                           String message, 
+                           String message,
                            final String url)
    {
       VerticalPanel verticalPanel = new VerticalPanel();
@@ -96,7 +99,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
             public void onClick(ClickEvent event)
             {
                RStudioGinjector.INSTANCE.getGlobalDisplay()
-               .openWindow(url);
+                  .openWindow(url);
             }
 
          });
@@ -119,13 +122,50 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       dlg.showModal();
    }
 
+   private void showPrompt(String title, 
+                           String message,
+                           String prompt)
+   {
+      globalDisplay_.promptForTextWithOption(
+         title, 
+         message, 
+         prompt, 
+         false, 
+         null, 
+         false, 
+         new ProgressOperationWithInput<PromptWithOptionResult>() {
+            @Override
+            public void execute(PromptWithOptionResult input,
+                                ProgressIndicator indicator)
+            {
+               indicator.onCompleted();
+               
+               server_.showDialogCompleted(input.input, new SimpleRequestCallback<Void>());
+            }        
+         }, 
+         new Operation() {
+            @Override
+            public void execute()
+            {
+               server_.showDialogCompleted(null, new SimpleRequestCallback<Void>());
+            }
+         });
+   }
+
    @Override
    public void onRStudioAPIShowDialogEvent(RStudioAPIShowDialogEvent event)
    {
-      showDialog(
-         event.getTitle(), 
-         event.getMessage(),
-         null);
+      if (event.getPrompt()) {
+         showPrompt(
+            event.getTitle(), 
+            event.getMessage(),
+            "");
+      } else {
+         showDialog(
+            event.getTitle(), 
+            event.getMessage(),
+            null);
+      }
    }
 
    private EventBus events_;

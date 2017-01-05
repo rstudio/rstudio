@@ -34,6 +34,10 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
       public final native String getTitle() /*-{
          return this.title;
       }-*/;
+
+      public final native boolean getPrompt() /*-{
+         return this.prompt || false;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -54,6 +58,11 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public String getTitle()
    {
       return data_.getTitle();
+   }
+
+   public boolean getPrompt()
+   {
+      return data_.getPrompt();
    }
    
    @Override

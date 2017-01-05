@@ -283,9 +283,6 @@
    .rs.getProjectDirectory()
 })
 
-
-
-
 .rs.addApiFunction("sendToConsole", function(code,
                                              echo = TRUE,
                                              execute = TRUE,
@@ -311,5 +308,9 @@
 })
 
 .rs.addFunction("showDialog", function(title, message) {
-   .Call("rs_showDialog", title, message)
+   .Call("rs_showDialog", title, message, prompt = FALSE)
+})
+
+.rs.addFunction("showPrompt", function(title, message) {
+   .Call("rs_showDialog", title, message, prompt = TRUE)
 })
