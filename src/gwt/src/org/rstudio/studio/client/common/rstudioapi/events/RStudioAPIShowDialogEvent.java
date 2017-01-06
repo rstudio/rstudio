@@ -54,6 +54,10 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
       public final native String getCancel() /*-{
          return this.cancel;
       }-*/;
+
+      public final native String getUrl() /*-{
+         return this.url;
+      }-*/;
    }
 
    public interface Handler extends EventHandler
@@ -99,6 +103,11 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public String getCancel()
    {
       return data_.getCancel();
+   }
+
+   public String getUrl()
+   {
+      return data_.getUrl();
    }
    
    @Override

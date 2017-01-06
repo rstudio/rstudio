@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.rstudioapi;
 
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -90,7 +91,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
       msg.setWidth("100%");
       verticalPanel.add(msg);
       
-      if (url != null)
+      if (!StringUtil.isNullOrEmpty(url))
       {
          HyperlinkLabel link = new HyperlinkLabel(url, 
                new ClickHandler() {
@@ -125,6 +126,8 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
                            String message,
                            String prompt)
    {
+      if (StringUtil.isNullOrEmpty(prompt)) prompt = null;
+
       globalDisplay_.promptForTextWithOption(
          title, 
          message, 
@@ -156,6 +159,9 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
                              String ok,
                              String cancel)
    {
+      if (StringUtil.isNullOrEmpty(ok)) ok = null;
+      if (StringUtil.isNullOrEmpty(cancel)) cancel = null;
+
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION, 
          title,
@@ -199,7 +205,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          showDialog(
             event.getTitle(), 
             event.getMessage(),
-            null);
+            event.getUrl());
       }
    }
 

@@ -307,7 +307,7 @@
    .rs.askForPassword(prompt)
 })
 
-.rs.addFunction("showDialog", function(title, message) {
+.rs.addFunction("showDialog", function(title, message, url = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
@@ -315,10 +315,11 @@
       promptDefault = NULL,
       question = FALSE,
       ok = NULL,
-      cancel = NULL)
+      cancel = NULL,
+      url = url)
 })
 
-.rs.addFunction("showPrompt", function(title, message, default) {
+.rs.addFunction("showPrompt", function(title, message, default = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
@@ -326,10 +327,11 @@
       promptDefault = default,
       question = FALSE,
       ok = NULL,
-      cancel = NULL)
+      cancel = NULL,
+      url = NULL)
 })
 
-.rs.addFunction("showQuestion", function(title, message, ok, cancel) {
+.rs.addFunction("showQuestion", function(title, message, ok = "", cancel = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
@@ -337,5 +339,6 @@
       promptDefault = NULL,
       question = TRUE,
       ok = ok,
-      cancel = cancel)
+      cancel = cancel,
+      url = NULL)
 })
