@@ -115,7 +115,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
          @Override
          public void execute()
          {
-            server_.showDialogCompleted(null, new SimpleRequestCallback<Void>());
+            server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
          }
       }, true, false);
       dlg.showModal();
@@ -139,16 +139,46 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
             {
                indicator.onCompleted();
                
-               server_.showDialogCompleted(input.input, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(input.input, false, new SimpleRequestCallback<Void>());
             }        
          }, 
          new Operation() {
             @Override
             public void execute()
             {
-               server_.showDialogCompleted(null, new SimpleRequestCallback<Void>());
+               server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
             }
          });
+   }
+
+   private void showQuestion(String title,
+                             String message,
+                             String ok,
+                             String cancel)
+   {
+      globalDisplay_.showYesNoMessage(
+         MessageDialog.QUESTION, 
+         title,
+         message,
+         false,
+         new Operation() {
+            public void execute() {
+               server_.showDialogCompleted(null, true, new SimpleRequestCallback<Void>());
+            }
+         },
+         new Operation() {
+            public void execute() {
+               server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
+            }
+         },
+         new Operation() {
+            public void execute() {
+               server_.showDialogCompleted(null, false, new SimpleRequestCallback<Void>());
+            }
+         },
+         ok,
+         cancel,
+         true);
    }
 
    @Override
@@ -159,6 +189,12 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
             event.getTitle(), 
             event.getMessage(),
             event.getPromptDefault());
+      } else if (event.getQuestion()) {
+         showQuestion(
+            event.getTitle(), 
+            event.getMessage(),
+            event.getOK(),
+            event.getCancel());
       } else {
          showDialog(
             event.getTitle(), 

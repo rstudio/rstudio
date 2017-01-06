@@ -42,20 +42,29 @@ module_context::WaitForMethodFunction s_waitForShowDialog;
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
                             bool prompt,
-                            const std::string& promptDefault)
+                            const std::string& promptDefault,
+                            bool question,
+                            const std::string& ok,
+                            const std::string& cancel)
 {
    json::Object data;
    data["title"] = title;
    data["message"] = message;
    data["prompt"] = prompt;
    data["default"] = promptDefault;
+   data["question"] = question;
+   data["ok"] = ok;
+   data["cancel"] = cancel;
    return ClientEvent(client_events::kRStudioAPIShowDialog, data);
 }
 
 SEXP rs_showDialog(SEXP titleSEXP,
                    SEXP messageSEXP,
                    SEXP promptSEXP,
-                   SEXP promptDefaultSEXP)
+                   SEXP promptDefaultSEXP,
+                   SEXP questionSEXP,
+                   SEXP okSEXP,
+                   SEXP cancelSEXP)
 {  
    try
    {
@@ -63,8 +72,18 @@ SEXP rs_showDialog(SEXP titleSEXP,
       std::string message = r::sexp::asString(messageSEXP);
       bool prompt = r::sexp::asLogical(promptSEXP);
       std::string promptDefault = r::sexp::asString(promptDefaultSEXP);
+      bool question = r::sexp::asLogical(questionSEXP);
+      std::string ok = r::sexp::asString(okSEXP);
+      std::string cancel = r::sexp::asString(cancelSEXP);
       
-      ClientEvent event = showDialogEvent(title, message, prompt, promptDefault);
+      ClientEvent event = showDialogEvent(
+         title,
+         message,
+         prompt,
+         promptDefault,
+         question,
+         ok,
+         cancel);
 
       // wait for rstudioapi_show_dialog_completed 
       json::JsonRpcRequest request;
@@ -73,7 +92,19 @@ SEXP rs_showDialog(SEXP titleSEXP,
          return R_NilValue;
       }
 
-      if (!request.params[0].is_null())
+      if (question && !request.params[1].is_null()) {
+         bool result;
+         Error error = json::readParam(request.params, 1, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return R_NilValue;
+         }
+
+         r::sexp::Protect rProtect;
+         return r::sexp::create(result, &rProtect);
+      }
+      else if (!request.params[0].is_null())
       {
          std::string promptValue;
          Error error = json::readParam(request.params, 0, &promptValue);
@@ -100,7 +131,7 @@ Error initialize()
    // register waitForMethod handler
    s_waitForShowDialog = module_context::registerWaitForMethod("rstudioapi_show_dialog_completed");
 
-   RS_REGISTER_CALL_METHOD(rs_showDialog, 4);
+   RS_REGISTER_CALL_METHOD(rs_showDialog, 7);
 
    return Success();
 }

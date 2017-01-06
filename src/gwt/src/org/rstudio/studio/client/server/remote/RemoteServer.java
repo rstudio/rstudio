@@ -4944,12 +4944,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, LAUNCH_EMBEDDED_SHINY_CONNECTION_UI, params, callback);
    }
 
-   // @Override
+   @Override
    public void showDialogCompleted(String prompt,
+                                   boolean ok,
                                    ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
       params.set(0, prompt == null ? JSONNull.getInstance() : new JSONString(prompt));
+      params.set(1, JSONBoolean.getInstance(ok));
       sendRequest(RPC_SCOPE, RSTUDIOAPI_SHOW_DIALOG_COMPLETED, params, true, callback);
    }
 

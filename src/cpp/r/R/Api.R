@@ -308,9 +308,34 @@
 })
 
 .rs.addFunction("showDialog", function(title, message) {
-   .Call("rs_showDialog", title, message, prompt = FALSE, promptDefault = NULL)
+   .Call("rs_showDialog",
+      title = title,
+      message = message,
+      prompt = FALSE,
+      promptDefault = NULL,
+      question = FALSE,
+      ok = NULL,
+      cancel = NULL)
 })
 
 .rs.addFunction("showPrompt", function(title, message, default) {
-   .Call("rs_showDialog", title, message, prompt = TRUE, promptDefault = default)
+   .Call("rs_showDialog",
+      title = title,
+      message = message,
+      prompt = TRUE,
+      promptDefault = default,
+      question = FALSE,
+      ok = NULL,
+      cancel = NULL)
+})
+
+.rs.addFunction("showQuestion", function(title, message, ok, cancel) {
+   .Call("rs_showDialog",
+      title = title,
+      message = message,
+      prompt = FALSE,
+      promptDefault = NULL,
+      question = TRUE,
+      ok = ok,
+      cancel = cancel)
 })
