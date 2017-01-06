@@ -1,0 +1,15 @@
+@CHARSET "UTF-8";
+
+@external gwt-Label;
+@external gwt-Image;
+@external macintosh;
+
+.textInfoWidget {
+   width: 325px;
+   margin-left: 10px;
+}
+
+.installLink {
+   margin-top: 10px;
+   margin-bottom: 20px;
+}

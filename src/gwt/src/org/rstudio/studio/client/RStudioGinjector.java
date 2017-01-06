@@ -50,6 +50,7 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
+import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
@@ -215,6 +216,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TerminalPopupMenu menu);
    void injectMembers(TerminalList terminalList);
    void injectMembers(NewConnectionWizard newConnectionWizard);
+   void injectMembers(RStudioAPI rstudioAPI);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

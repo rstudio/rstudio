@@ -283,9 +283,6 @@
    .rs.getProjectDirectory()
 })
 
-
-
-
 .rs.addApiFunction("sendToConsole", function(code,
                                              echo = TRUE,
                                              execute = TRUE,
@@ -308,4 +305,12 @@
 
 .rs.addApiFunction("askForPassword", function(prompt) {
    .rs.askForPassword(prompt)
+})
+
+.rs.addFunction("showDialog", function(title, message) {
+   .Call("rs_showDialog", title, message, prompt = FALSE, promptDefault = NULL)
+})
+
+.rs.addFunction("showPrompt", function(title, message, default) {
+   .Call("rs_showDialog", title, message, prompt = TRUE, promptDefault = default)
 })

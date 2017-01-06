@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.server;
 
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -25,7 +26,8 @@ public interface Server extends ApplicationServerOperations,
                                 WorkbenchServerOperations,
                                 HTMLPreviewServerOperations,
                                 ShinyServerOperations,
-                                RSConnectServerOperations
+                                RSConnectServerOperations,
+                                RStudioAPIServerOperations
                                 
                                
 {     

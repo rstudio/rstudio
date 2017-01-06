@@ -4944,6 +4944,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, LAUNCH_EMBEDDED_SHINY_CONNECTION_UI, params, callback);
    }
 
+   // @Override
+   public void showDialogCompleted(String prompt,
+                                   ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, prompt == null ? JSONNull.getInstance() : new JSONString(prompt));
+      sendRequest(RPC_SCOPE, RSTUDIOAPI_SHOW_DIALOG_COMPLETED, params, true, callback);
+   }
+
    private String clientId_;
    private String clientVersion_ = "";
    private boolean listeningForEvents_;
@@ -5327,4 +5336,5 @@ public class RemoteServer implements Server
    private static final String SQL_CHUNK_DEFAULT_CONNECTION = "default_sql_connection_name";
 
    private static final String LAUNCH_EMBEDDED_SHINY_CONNECTION_UI = "launch_embedded_shiny_connection_ui";
+   private static final String RSTUDIOAPI_SHOW_DIALOG_COMPLETED = "rstudioapi_show_dialog_completed";
 }
