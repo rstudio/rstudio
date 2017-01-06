@@ -49,6 +49,7 @@ Options::Options()
                              @"Monaco", @"font.fixedwidth",
                              @"0", @"view.maczoomlevel",
                              [NSArray array], @"updates.ignored",
+                             [NSNumber numberWithBool:NO], @"NSFunctionBarAPIEnabled",
                              nil];
    
    [prefs registerDefaults:defs];
