@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
 import com.google.inject.Inject;
@@ -208,6 +209,7 @@ public class TerminalList implements Iterable<String>,
    void removeTerminal(String handle)
    {
       terminals_.remove(handle);
+      updateTerminalBusyStatus();
    }
 
    /**
@@ -221,6 +223,7 @@ public class TerminalList implements Iterable<String>,
          pConsoleProcessFactory_.get().interruptAndReap(item.getValue().getHandle());
       }
       terminals_.clear();
+      updateTerminalBusyStatus();
    }
 
    /**
@@ -392,11 +395,18 @@ public class TerminalList implements Iterable<String>,
             getSecureInput(), sequence, terminalHandle, caption, title,
             hasChildProcs);
       newSession.connect();
+      updateTerminalBusyStatus();
    }
 
    private void addTerminal(TerminalMetadata terminal)
    {
       terminals_.put(terminal.getHandle(), terminal);
+      updateTerminalBusyStatus();
+   }
+
+   private void updateTerminalBusyStatus()
+   {
+      eventBus_.fireEvent(new TerminalBusyEvent(haveSubprocs()));
    }
 
    @Override
@@ -409,6 +419,7 @@ public class TerminalList implements Iterable<String>,
    public void onTerminalSubprocs(TerminalSubprocEvent event)
    {
       setChildProcs(event.getHandle(), event.hasSubprocs());
+      updateTerminalBusyStatus();
    }
 
    /**
