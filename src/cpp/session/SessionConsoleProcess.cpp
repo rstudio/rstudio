@@ -306,7 +306,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
-Error ConsoleProcess::getLogFile(FilePath* file) const
+Error ConsoleProcess::getLogFile(FilePath* pFile) const
 {
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
@@ -314,7 +314,7 @@ Error ConsoleProcess::getLogFile(FilePath* file) const
       return error;
    }
 
-   *file = s_consoleProcPath.complete(handle_);
+   *pFile = s_consoleProcPath.complete(handle_);
    return Success();
 }
 
