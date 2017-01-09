@@ -329,7 +329,7 @@ public class TerminalPane extends WorkbenchPane
          return;
       }
 
-      visibleTerminal.clear();
+      visibleTerminal.clearBuffer();
    }
 
    /**

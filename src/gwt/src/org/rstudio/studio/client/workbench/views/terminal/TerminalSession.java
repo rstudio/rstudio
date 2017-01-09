@@ -334,6 +334,18 @@ public class TerminalSession extends XTermWidget
 
       caption_ = caption;
    }
+   
+   /**
+    * Erase the scrollback buffer on the client and server.
+    */
+   public void clearBuffer()
+   {
+      clear();
+      if (consoleProcess_ != null)
+      {
+         consoleProcess_.eraseTerminalBuffer(new SimpleRequestCallback<Void>());
+      }
+   }
 
    private int getInteractionMode()
    {
@@ -480,6 +492,57 @@ public class TerminalSession extends XTermWidget
       return connected_;
    }
 
+   /**
+    * Perform actions when the terminal is ready.
+    */
+   @Override
+   protected void terminalReady()
+   {
+      if (newTerminal_)
+      {
+         writeln("Welcome to " + AnsiCode.ForeColor.LIGHTBLUE + "RStudio" +
+                 AnsiCode.DEFAULTCOLORS + " terminal.");
+         setNewTerminal(false);
+      }
+      else
+      {
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               onResize();
+               if (consoleProcess_ != null)
+               {
+                  consoleProcess_.getTerminalBuffer(new ServerRequestCallback<String>()
+                  {
+                     @Override
+                     public void onResponseReceived(String buffer)
+                     {
+                        write(buffer);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        writeError(error.getUserMessage());
+                     }
+                   });
+               }
+            }
+         });
+       }
+   }
+
+   /**
+    * Set if connecting to a new terminal session.
+    * @param isNew true if a new connection, false if a reconnect
+    */
+   private void setNewTerminal(boolean isNew)
+   {
+      newTerminal_ = isNew;
+   }
+
    private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private HandlerRegistration terminalInputHandler_;
@@ -492,6 +555,7 @@ public class TerminalSession extends XTermWidget
    private boolean connected_;
    private boolean connecting_;
    private StringBuilder inputQueue_ = new StringBuilder();
+   private boolean newTerminal_ = true;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

@@ -25,6 +25,7 @@
 #include <core/system/Process.hpp>
 #include <core/Log.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/json/Json.hpp>
 
 namespace rstudio {
@@ -172,6 +173,8 @@ public:
    bool isStarted() { return started_; }
    void setCaption(std::string& caption) { caption_ = caption; }
    void setTitle(std::string& title) { title_ = title; }
+   void deleteLogFile() const;
+   std::string getSavedBuffer() const;
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
@@ -194,6 +197,7 @@ private:
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,
                            const std::string& output);
+   core::Error getLogFile(core::FilePath& file) const;
 
 private:
    // Command and options that will be used when start() is called

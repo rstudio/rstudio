@@ -685,7 +685,25 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(title));
       sendRequest(RPC_SCOPE, PROCESS_SET_TITLE, params, requestCallback);
    }
-   
+
+   @Override
+   public void processEraseBuffer(String handle,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_ERASE_BUFFER, params, requestCallback);   
+   }
+
+   @Override
+   public void processGetBuffer(String handle,
+                                  ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER, params, requestCallback);   
+   }
+
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, INTERRUPT, requestCallback);
@@ -5022,6 +5040,8 @@ public class RemoteServer implements Server
    private static final String PROCESS_SET_SIZE = "process_set_size";
    private static final String PROCESS_SET_CAPTION = "process_set_caption";
    private static final String PROCESS_SET_TITLE = "process_set_title";
+   private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
+   private static final String PROCESS_GET_BUFFER = "process_get_buffer";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";

@@ -46,6 +46,8 @@ namespace {
    const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
+   FilePath s_consoleProcPath;
+   FilePath s_consoleProcIndexPath;
 } // anonymous namespace
 
 const int kDefaultMaxOutputLines = 500;
@@ -283,10 +285,13 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
          if (error)
             LOG_ERROR(error);
 
-         if (input.echoInput)
-            appendToOutputBuffer(inputText);
-         else
-            appendToOutputBuffer("\n");
+         if (!options_.smartTerminal) // smart terminal does echo via pty
+         {
+            if (input.echoInput)
+               appendToOutputBuffer(inputText);
+            else
+               appendToOutputBuffer("\n");
+         }
       }
    }
 
@@ -301,14 +306,79 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
+Error ConsoleProcess::getLogFile(FilePath& file) const
+{
+   Error error = s_consoleProcPath.ensureDirectory();
+   if (error)
+   {
+      return error;
+   }
+
+   file = s_consoleProcPath.complete(handle_);
+   return Success();
+}
+
+void ConsoleProcess::deleteLogFile() const
+{
+   FilePath log;
+   Error error = getLogFile(log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   error = log.removeIfExists();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+}
+
+std::string ConsoleProcess::getSavedBuffer() const
+{
+   std::string content;
+   FilePath log;
+   Error error = getLogFile(log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return content;
+   }
+
+   error = core::readStringFromFile(log, &content);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return content;
+   }
+   return content;
+}
+
 void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 {
-   // TODO (gary) for terminals we won't store output history
-   // in the SessionInfo; this will be stored separately, keyed by
-   // Terminal Handle; as a prelude to that stop storing the old way
-   // if we have the terminal handle
+   // For modal console procs, store terminal output directly in the
+   // ConsoleProcInfo INDEX
    if (terminalSequence_ == kNoTerminal)
+   {
       std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+      return;
+   }
+
+   // For terminal tabs, store in a separate file.
+   FilePath log;
+   Error error = getLogFile(log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   error = rstudio::core::appendToFile(log, str);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
@@ -335,8 +405,6 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    if (options_.smartTerminal)
    {
-      // TODO: consider extracting out behaviors that vary between smart
-      // and dumb terminal handlers
       enqueOutputEvent(output, false);
       return;
    }
@@ -428,6 +496,7 @@ void ConsoleProcess::onSuspend()
 
 void ConsoleProcess::onExit(int exitCode)
 {
+   deleteLogFile();
    exitCode_.reset(exitCode);
 
    json::Object data;
@@ -744,6 +813,47 @@ Error procSetTitle(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error procEraseBuffer(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   pos->second->deleteLogFile();
+   return Success();
+}
+
+Error procGetBuffer(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   pResponse->setResult(pos->second->getSavedBuffer());
+
+   return Success();
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
@@ -969,7 +1079,7 @@ core::json::Array processesAsJson()
    return procInfos;
 }
 
-void onSuspend(core::Settings* pSettings)
+std::string serializeConsoleProcs()
 {
    json::Array array;
    for (ProcTable::const_iterator it = s_procs.begin();
@@ -982,18 +1092,19 @@ void onSuspend(core::Settings* pSettings)
 
    std::ostringstream ostr;
    json::write(array, ostr);
-   pSettings->set("console_procs", ostr.str());
+   return ostr.str();
 }
 
-void onResume(const core::Settings& settings)
+void deserializeConsoleProcs(std::string& jsonStr)
 {
-   std::string strVal = settings.get("console_procs");
-   if (strVal.empty())
+   if (jsonStr.empty())
       return;
-
    json::Value value;
-   if (!json::parse(strVal, &value))
+   if (!json::parse(jsonStr, &value))
+   {
+      LOG_WARNING_MESSAGE("invalid console process json");
       return;
+   }
 
    json::Array procs = value.get_array();
    for (json::Array::iterator it = procs.begin();
@@ -1006,13 +1117,46 @@ void onResume(const core::Settings& settings)
    }
 }
 
+void loadConsoleProcesses()
+{
+   if (!s_consoleProcIndexPath.exists())
+      return;
+
+   std::string contents;
+   Error error = rstudio::core::readStringFromFile(s_consoleProcIndexPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   deserializeConsoleProcs(contents);
+}
+
+void saveConsoleProcesses(bool terminatedNormally)
+{
+   if (!terminatedNormally)
+      return;
+   Error error = rstudio::core::writeStringToFile(s_consoleProcIndexPath,
+                                                  serializeConsoleProcs());
+   if (error)
+      LOG_ERROR(error);
+}
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
-   // add suspend/resume handler
-   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+   // storage for session-scoped console/terminal metadata
+   s_consoleProcPath = module_context::scopedScratchPath().complete("console");
+   Error error = s_consoleProcPath.ensureDirectory();
+   if (error)
+      return error;
+   s_consoleProcIndexPath = s_consoleProcPath.complete("INDEX");
+
+   events().onShutdown.connect(saveConsoleProcesses);
+   loadConsoleProcesses();
 
    // install rpc methods
    ExecBlock initBlock ;
@@ -1023,7 +1167,9 @@ Error initialize()
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
       (bind(registerRpcMethod, "process_set_size", procSetSize))
       (bind(registerRpcMethod, "process_set_caption", procSetCaption))
-      (bind(registerRpcMethod, "process_set_title", procSetTitle));
+      (bind(registerRpcMethod, "process_set_title", procSetTitle))
+      (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
+      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer));
 
    return initBlock.execute();
 }
