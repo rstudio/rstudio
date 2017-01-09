@@ -306,7 +306,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
-Error ConsoleProcess::getLogFile(FilePath& file) const
+Error ConsoleProcess::getLogFile(FilePath* file) const
 {
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
@@ -314,14 +314,14 @@ Error ConsoleProcess::getLogFile(FilePath& file) const
       return error;
    }
 
-   file = s_consoleProcPath.complete(handle_);
+   *file = s_consoleProcPath.complete(handle_);
    return Success();
 }
 
 void ConsoleProcess::deleteLogFile() const
 {
    FilePath log;
-   Error error = getLogFile(log);
+   Error error = getLogFile(&log);
    if (error)
    {
       LOG_ERROR(error);
@@ -339,7 +339,7 @@ std::string ConsoleProcess::getSavedBuffer() const
 {
    std::string content;
    FilePath log;
-   Error error = getLogFile(log);
+   Error error = getLogFile(&log);
    if (error)
    {
       LOG_ERROR(error);
@@ -367,7 +367,7 @@ void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 
    // For terminal tabs, store in a separate file.
    FilePath log;
-   Error error = getLogFile(log);
+   Error error = getLogFile(&log);
    if (error)
    {
       LOG_ERROR(error);
@@ -849,6 +849,9 @@ Error procGetBuffer(const json::JsonRpcRequest& request,
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
    }
 
+   // TODO (gary) throttle (or chunk) output to avoid overwhelming the
+   // client; e.g. we might return a flag/handle to allow client to know to make
+   // more of these calls until buffer has been completely fetched
    pResponse->setResult(pos->second->getSavedBuffer());
 
    return Success();
@@ -1095,14 +1098,14 @@ std::string serializeConsoleProcs()
    return ostr.str();
 }
 
-void deserializeConsoleProcs(std::string& jsonStr)
+void deserializeConsoleProcs(const std::string& jsonStr)
 {
    if (jsonStr.empty())
       return;
    json::Value value;
    if (!json::parse(jsonStr, &value))
    {
-      LOG_WARNING_MESSAGE("invalid console process json");
+      LOG_WARNING_MESSAGE("invalid console process json: " + jsonStr);
       return;
    }
 

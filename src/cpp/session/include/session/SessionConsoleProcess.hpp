@@ -197,7 +197,7 @@ private:
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,
                            const std::string& output);
-   core::Error getLogFile(core::FilePath& file) const;
+   core::Error getLogFile(core::FilePath* file) const;
 
 private:
    // Command and options that will be used when start() is called
