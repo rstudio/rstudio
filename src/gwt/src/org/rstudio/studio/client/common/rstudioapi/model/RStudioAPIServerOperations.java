@@ -19,5 +19,7 @@ import org.rstudio.studio.client.server.Void;
 
 public interface RStudioAPIServerOperations
 {
-   void showDialogCompleted(String prompt, ServerRequestCallback<Void> callback);
+   void showDialogCompleted(String prompt,
+                            boolean ok,
+                            ServerRequestCallback<Void> callback);
 }

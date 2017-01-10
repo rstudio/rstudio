@@ -35,12 +35,28 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
          return this.title;
       }-*/;
 
+      public final native int getDialogIcon() /*-{
+         return this.dialogIcon;
+      }-*/;
+
       public final native boolean getPrompt() /*-{
          return this.prompt || false;
       }-*/;
 
       public final native String getPromptDefault() /*-{
          return this["default"];
+      }-*/;
+
+      public final native String getOK() /*-{
+         return this.ok;
+      }-*/;
+
+      public final native String getCancel() /*-{
+         return this.cancel;
+      }-*/;
+
+      public final native String getUrl() /*-{
+         return this.url;
       }-*/;
    }
 
@@ -64,6 +80,11 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
       return data_.getTitle();
    }
 
+   public int getDialogIcon()
+   {
+      return data_.getDialogIcon();
+   }
+
    public boolean getPrompt()
    {
       return data_.getPrompt();
@@ -72,6 +93,21 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public String getPromptDefault()
    {
       return data_.getPromptDefault();
+   }
+
+   public String getOK()
+   {
+      return data_.getOK();
+   }
+
+   public String getCancel()
+   {
+      return data_.getCancel();
+   }
+
+   public String getUrl()
+   {
+      return data_.getUrl();
    }
    
    @Override
