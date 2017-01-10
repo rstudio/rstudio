@@ -139,8 +139,7 @@ public:
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
-   static boost::shared_ptr<ConsoleProcess> create(
-         const std::string& command,
+   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
          core::system::ProcessOptions options,
          const std::string& caption,
          const std::string& title,
@@ -197,7 +196,7 @@ private:
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,
                            const std::string& output);
-   core::Error getLogFile(core::FilePath* file) const;
+   core::Error getLogFilePath(core::FilePath* file) const;
 
 private:
    // Command and options that will be used when start() is called

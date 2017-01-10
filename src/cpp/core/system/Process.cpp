@@ -127,6 +127,17 @@ Error ProcessSupervisor::runCommand(const std::string& command,
    return runChild(pChild, &(pImpl_->children), callbacks);
 }
 
+Error ProcessSupervisor::runTerminal(const ProcessOptions& options,
+                                     const ProcessCallbacks& callbacks)
+{
+   // create the child
+   boost::shared_ptr<AsyncChildProcess> pChild(
+                                 new AsyncChildProcess(options));
+
+   // run the child
+   return runChild(pChild, &(pImpl_->children), callbacks);
+}
+
 namespace {
 
 // class which implements all of the callbacks

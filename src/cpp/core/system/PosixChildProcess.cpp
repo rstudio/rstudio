@@ -239,6 +239,24 @@ void ChildProcess::init(const std::string& command,
    init("/bin/sh", args, options);
 }
 
+// Initialize for an interactive terminal; directly launches via
+// "env" instead of launching "env" via "bin/sh". On Linux,
+// the latter left two processes running; "sh" as the parent
+// of "bash", which messed up counting child processes of the shell.
+void ChildProcess::init(const ProcessOptions& options)
+{
+   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   {
+      LOG_ERROR_MESSAGE(
+               "stdOutFile/stdErrFile options cannot be used with interactive terminal");
+   }
+
+   std::vector<std::string> args;
+   args.push_back("bash");
+   args.push_back("--norc");
+   init("/usr/bin/env", args, options);
+}
+
 ChildProcess::~ChildProcess()
 {
 }
@@ -715,11 +733,12 @@ struct AsyncChildProcess::AsyncImpl
 
    bool computeHasSubProcess(pid_t pid)
    {
-#ifdef _WIN32
-      return true;
-#else
+      // TODO (gary) the 'pgrep' approach should be Mac-only; for Linux we
+      // should be using /proc to compute child process counts. See
+      // PosixChildProcessTracker.cpp.
 
-#ifdef __APPLE__
+// #ifdef __APPLE__
+
       // pgrep -P ppid returns 0 if there are matches, non-zero
       // otherwise
       shell_utils::ShellCommand cmd("pgrep");
@@ -741,12 +760,9 @@ struct AsyncChildProcess::AsyncImpl
       }
 
       return result.exitStatus == 0;
-#else // !__APPLE__
+// #else // !__APPLE__
       // TODO (gary) Linux subprocess detection using procfs
-      return true;
-#endif
-
-#endif // !_WIN32
+// #endif
    }
 
    static boost::posix_time::ptime now()
@@ -773,6 +789,12 @@ AsyncChildProcess::AsyncChildProcess(const std::string& command,
       : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
    init(command, options);
+}
+
+AsyncChildProcess::AsyncChildProcess(const ProcessOptions& options)
+      : ChildProcess(), pAsyncImpl_(new AsyncImpl())
+{
+   init(options);
 }
 
 AsyncChildProcess::~AsyncChildProcess()

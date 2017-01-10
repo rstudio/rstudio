@@ -297,6 +297,11 @@ public:
                     const ProcessOptions& options,
                     const ProcessCallbacks& callbacks);
 
+   // Run an interactive terminal asynchronously (same as above but uses
+   // platform-specific implementation to determine what to execute).
+   Error runTerminal(const ProcessOptions& options,
+                     const ProcessCallbacks& callbacks);
+
    // Run a child asynchronously, invoking the completed callback when the
    // process exits. Note that if input is provided then then the standard
    // input stream is closed (so EOF is sent) after the input is written.

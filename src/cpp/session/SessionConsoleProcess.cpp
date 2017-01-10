@@ -224,10 +224,15 @@ Error ConsoleProcess::start()
       error = module_context::processSupervisor().runCommand(
                                  command_, options_, createProcessCallbacks());
    }
-   else
+   else if (!program_.empty())
    {
       error = module_context::processSupervisor().runProgram(
                           program_, args_, options_, createProcessCallbacks());
+   }
+   else
+   {
+      error = module_context::processSupervisor().runTerminal(
+                          options_, createProcessCallbacks());
    }
    if (!error)
       started_ = true;
@@ -306,7 +311,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
-Error ConsoleProcess::getLogFile(FilePath* pFile) const
+Error ConsoleProcess::getLogFilePath(FilePath* pFile) const
 {
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
@@ -321,7 +326,7 @@ Error ConsoleProcess::getLogFile(FilePath* pFile) const
 void ConsoleProcess::deleteLogFile() const
 {
    FilePath log;
-   Error error = getLogFile(&log);
+   Error error = getLogFilePath(&log);
    if (error)
    {
       LOG_ERROR(error);
@@ -339,11 +344,16 @@ std::string ConsoleProcess::getSavedBuffer() const
 {
    std::string content;
    FilePath log;
-   Error error = getLogFile(&log);
+   Error error = getLogFilePath(&log);
    if (error)
    {
       LOG_ERROR(error);
       return content;
+   }
+
+   if (!log.exists())
+   {
+      return "";
    }
 
    error = core::readStringFromFile(log, &content);
@@ -367,7 +377,7 @@ void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 
    // For terminal tabs, store in a separate file.
    FilePath log;
-   Error error = getLogFile(&log);
+   Error error = getLogFilePath(&log);
    if (error)
    {
       LOG_ERROR(error);
@@ -913,8 +923,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
 
 // supports reattaching to a running process, or creating a new process with
 // previously used handle
-boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
-      const std::string& command,
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
       const std::string& caption,
       const std::string& title,
@@ -925,6 +934,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       InteractionMode interactionMode,
       int maxOutputLines)
 {
+   std::string command;
    if (allowRestart && !terminalHandle.empty())
    {
       // return existing ConsoleProcess if it is still running
