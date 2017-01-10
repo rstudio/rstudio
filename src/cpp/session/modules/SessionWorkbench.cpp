@@ -964,19 +964,9 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    if (termCaption.empty())
       termCaption = "Shell";
    
-   // configure bash command
-#ifndef _WIN32
-   core::shell_utils::ShellCommand bashCommand("/usr/bin/env");
-   bashCommand << "bash";
-   bashCommand << "--norc";
-#else
-   // TODO (gary) use %comspec% to locate cmd.exe
-   core::shell_utils::ShellCommand bashCommand("cmd.exe");
-#endif
-
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::create(bashCommand,
+               ConsoleProcess::createTerminalProcess(
                                       options,
                                       termCaption,
                                       termTitle,

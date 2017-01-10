@@ -121,6 +121,9 @@ struct ProcessOptions
 
    // create the process with CREATE_BREAKAWAY_FROM_JOB
    bool breakawayFromJob;
+
+   // consoleio command path
+   std::string consoleIoPath;
 #endif
 
    bool redirectStdErrToStdOut;
@@ -296,6 +299,11 @@ public:
    Error runCommand(const std::string& command,
                     const ProcessOptions& options,
                     const ProcessCallbacks& callbacks);
+
+   // Run an interactive terminal asynchronously (same as above but uses
+   // platform-specific implementation to determine what to execute).
+   Error runTerminal(const ProcessOptions& options,
+                     const ProcessCallbacks& callbacks);
 
    // Run a child asynchronously, invoking the completed callback when the
    // process exits. Note that if input is provided then then the standard

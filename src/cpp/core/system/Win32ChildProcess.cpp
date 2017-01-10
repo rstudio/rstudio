@@ -222,6 +222,13 @@ void ChildProcess::init(const std::string& command,
    options_ = options;
 }
 
+// initialize for an interactive terminal
+void ChildProcess::init(const ProcessOptions& options)
+{
+    std::string command = options_.consoleIoPath + " cmd.exe";
+    init(command, options);
+}
+
 ChildProcess::~ChildProcess()
 {
 }
@@ -544,6 +551,12 @@ AsyncChildProcess::AsyncChildProcess(const std::string& command,
    : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
    init(command, options);
+}
+
+AsyncChildProcess::AsyncChildProcess(const ProcessOptions& options)
+      : ChildProcess(), pAsyncImpl_(new AsyncImpl())
+{
+   init(options);
 }
 
 AsyncChildProcess::~AsyncChildProcess()

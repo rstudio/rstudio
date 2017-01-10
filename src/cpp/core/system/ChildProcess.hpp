@@ -45,6 +45,9 @@ protected:
    void init(const std::string& command,
              const ProcessOptions& options);
 
+   // init for an interactive terminal
+   void init(const ProcessOptions& options);
+
 public:
    virtual ~ChildProcess();
 
@@ -180,6 +183,7 @@ public:
                      const ProcessOptions& options);
    AsyncChildProcess(const std::string& command,
                      const ProcessOptions& options);
+   AsyncChildProcess(const ProcessOptions& options);
    virtual ~AsyncChildProcess();
 
    // run process asynchronously
