@@ -104,6 +104,7 @@ git merge \
     origin/patch/isearch-cursor-position \
     origin/patch/line-widget-shift-click-exception \
     origin/patch/line-widget-performance \
+    origin/patch/emacs-click-position \
     -m "merge once more"
 
 ## git merge \
