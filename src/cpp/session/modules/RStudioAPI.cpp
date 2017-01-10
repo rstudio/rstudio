@@ -41,9 +41,9 @@ module_context::WaitForMethodFunction s_waitForShowDialog;
 
 ClientEvent showDialogEvent(const std::string& title,
                             const std::string& message,
+                            int dialogIcon,
                             bool prompt,
                             const std::string& promptDefault,
-                            bool question,
                             const std::string& ok,
                             const std::string& cancel,
                             const std::string& url)
@@ -51,9 +51,9 @@ ClientEvent showDialogEvent(const std::string& title,
    json::Object data;
    data["title"] = title;
    data["message"] = message;
+   data["dialogIcon"] = dialogIcon;
    data["prompt"] = prompt;
    data["default"] = promptDefault;
-   data["question"] = question;
    data["ok"] = ok;
    data["cancel"] = cancel;
    data["url"] = url;
@@ -62,9 +62,9 @@ ClientEvent showDialogEvent(const std::string& title,
 
 SEXP rs_showDialog(SEXP titleSEXP,
                    SEXP messageSEXP,
+                   SEXP dialogIconSEXP,
                    SEXP promptSEXP,
                    SEXP promptDefaultSEXP,
-                   SEXP questionSEXP,
                    SEXP okSEXP,
                    SEXP cancelSEXP,
                    SEXP urlSEXP)
@@ -73,9 +73,9 @@ SEXP rs_showDialog(SEXP titleSEXP,
    {
       std::string title = r::sexp::asString(titleSEXP);
       std::string message = r::sexp::asString(messageSEXP);
+      int dialogIcon = r::sexp::asInteger(dialogIconSEXP);
       bool prompt = r::sexp::asLogical(promptSEXP);
       std::string promptDefault = r::sexp::asString(promptDefaultSEXP);
-      bool question = r::sexp::asLogical(questionSEXP);
       std::string ok = r::sexp::asString(okSEXP);
       std::string cancel = r::sexp::asString(cancelSEXP);
       std::string url = r::sexp::asString(urlSEXP);
@@ -83,9 +83,9 @@ SEXP rs_showDialog(SEXP titleSEXP,
       ClientEvent event = showDialogEvent(
          title,
          message,
+         dialogIcon,
          prompt,
          promptDefault,
-         question,
          ok,
          cancel,
          url);
@@ -97,7 +97,7 @@ SEXP rs_showDialog(SEXP titleSEXP,
          return R_NilValue;
       }
 
-      if (question && !request.params[1].is_null()) {
+      if (dialogIcon == 4 && !request.params[1].is_null()) {
          bool result;
          Error error = json::readParam(request.params, 1, &result);
          if (error)

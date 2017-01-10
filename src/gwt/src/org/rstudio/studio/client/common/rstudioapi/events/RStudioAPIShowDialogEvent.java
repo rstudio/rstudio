@@ -35,16 +35,16 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
          return this.title;
       }-*/;
 
+      public final native int getDialogIcon() /*-{
+         return this.dialogIcon;
+      }-*/;
+
       public final native boolean getPrompt() /*-{
          return this.prompt || false;
       }-*/;
 
       public final native String getPromptDefault() /*-{
          return this["default"];
-      }-*/;
-
-      public final native boolean getQuestion() /*-{
-         return this.question || false;
       }-*/;
 
       public final native String getOK() /*-{
@@ -80,6 +80,11 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
       return data_.getTitle();
    }
 
+   public int getDialogIcon()
+   {
+      return data_.getDialogIcon();
+   }
+
    public boolean getPrompt()
    {
       return data_.getPrompt();
@@ -88,11 +93,6 @@ public class RStudioAPIShowDialogEvent extends GwtEvent<RStudioAPIShowDialogEven
    public String getPromptDefault()
    {
       return data_.getPromptDefault();
-   }
-
-   public boolean getQuestion()
-   {
-      return data_.getQuestion();
    }
 
    public String getOK()

@@ -307,13 +307,22 @@
    .rs.askForPassword(prompt)
 })
 
+.rs.addFunction("dialogIcon", function(name) {
+  list(
+    info = 1,
+    warning = 2,
+    error = 3,
+    question = 4
+  )
+})
+
 .rs.addFunction("showDialog", function(title, message, url = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
+      dialogIcon = .rs.dialogIcon()$info,
       prompt = FALSE,
       promptDefault = NULL,
-      question = FALSE,
       ok = NULL,
       cancel = NULL,
       url = url)
@@ -323,9 +332,9 @@
    .Call("rs_showDialog",
       title = title,
       message = message,
+      dialogIcon = .rs.dialogIcon()$info,
       prompt = TRUE,
       promptDefault = default,
-      question = FALSE,
       ok = NULL,
       cancel = NULL,
       url = NULL)
@@ -335,9 +344,9 @@
    .Call("rs_showDialog",
       title = title,
       message = message,
+      dialogIcon = .rs.dialogIcon()$question,
       prompt = FALSE,
       promptDefault = NULL,
-      question = TRUE,
       ok = ok,
       cancel = cancel,
       url = NULL)

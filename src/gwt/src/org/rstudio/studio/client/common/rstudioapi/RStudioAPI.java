@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.rstudioapi;
 
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -159,8 +160,8 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
                              String ok,
                              String cancel)
    {
-      if (StringUtil.isNullOrEmpty(ok)) ok = null;
-      if (StringUtil.isNullOrEmpty(cancel)) cancel = null;
+      if (StringUtil.isNullOrEmpty(ok)) ok = "OK";
+      if (StringUtil.isNullOrEmpty(cancel)) cancel = "Cancel";
 
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION, 
@@ -195,7 +196,7 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
             event.getTitle(), 
             event.getMessage(),
             event.getPromptDefault());
-      } else if (event.getQuestion()) {
+      } else if (event.getDialogIcon() == MessageDisplay.MSG_QUESTION) {
          showQuestion(
             event.getTitle(), 
             event.getMessage(),
