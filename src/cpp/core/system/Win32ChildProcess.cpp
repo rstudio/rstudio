@@ -225,7 +225,8 @@ void ChildProcess::init(const std::string& command,
 // initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-    init("cmd.exe", options);
+    std::string command = options_.consoleIoPath + " cmd.exe";
+    init(command, options);
 }
 
 ChildProcess::~ChildProcess()
@@ -656,9 +657,6 @@ void AsyncChildProcess::poll()
       if (callbacks_.onExit)
          callbacks_.onExit(exitStatus);
    }
-
-   // Perform optional periodic operations
-   // TODO (gary) - NYI for Win32 (see PosixChildProcess, computeHasSubProcess)
 }
 
 bool AsyncChildProcess::exited()

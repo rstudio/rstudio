@@ -164,9 +164,13 @@ void ConsoleProcess::commonInit()
          args_ = args;
       }
       // if this is a runCommand then prepend consoleio.exe to the command
-      else
+      else if (!command_.empty())
       {
          command_ = shell_utils::escape(consoleIoPath) + " " + command_;
+      }
+      else // terminal
+      {
+         options_.consoleIoPath = shell_utils::escape(consoleIoPath);
       }
 #else
       // request a pseudoterminal if this is an interactive console process
