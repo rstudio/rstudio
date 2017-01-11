@@ -3,7 +3,7 @@
 /*
  * gridviewer.js
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -967,10 +967,33 @@ var addResizeHandlers = function(ele) {
    var initX = null;          // the initial X position of the resize
    var initColWidth = null;   // the initial width of the column
    var initTableWidth = null; // the initial width of the table
+   var boundsExceeded = 0;
+   var minColWidth = 40;
 
    var applyDelta = function(delta) {
-      // resize the column in the given direction
       var colWidth = initColWidth + delta;
+
+      // don't allow resizing beneath minimum size
+      if (delta < 0 && colWidth < minColWidth) {
+         boundsExceeded += delta;
+         return;
+      }
+
+      // if positive delta, consume exceeded bounds before returning to resize
+      // mode
+      if (delta > 0 && boundsExceeded < 0) {
+         boundsExceeded += delta;
+         if (boundsExceeded < 0) {
+            // didn't consume all bounds
+            return;
+         } else {
+            // consumed all bounds; resize remaining portion of motion
+            delta = boundsExceeded;
+            colWidth = initColWidth + delta;
+         }
+      }
+
+      // resize the column in the given direction
       $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
 
       var grid = $("#rsGridData");
@@ -1018,6 +1041,7 @@ var addResizeHandlers = function(ele) {
          initX = original.clientX;
          initColWidth = $("#data_cols th:nth-child(" + (col + 1) + ")").width();
          initTableWidth = $("#rsGridData").width();
+         boundsExceeded = 0;
          $("#rsGridData td:nth-child(" + (col + 1) + ")").css(
             "border-right-color", "#A0A0FF");
       }
