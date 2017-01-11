@@ -221,6 +221,10 @@ table.dataTable thead .sorting_asc {
     background: url("datatables/images/sort_asc.png") no-repeat right top;
 }
 
+table.dataTable thead th div {
+    margin-right: 10px;
+}
+
 th:focus {
     outline: none;
 }
