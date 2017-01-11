@@ -191,8 +191,13 @@ var renderCellContents = function(data, type, row, meta) {
 };
 
 var renderCellClass = function (data, type, row, meta, clazz) {
+  var title = null;
+  if (typeof(data) === "string") 
+     title = data.replace(/\"/g, "&quot;");
   return '<div class="cell">' + 
-         '<div class="' + clazz + '">' + 
+         '<div class="' + clazz + '" ' + 
+         (title !== null ? 'title="' + title + '"' : '') +
+         '>' + 
          renderCellContents(data, type, row, meta) + '</div>' +
          '<div class="resizer" data-col="' + meta.col + '" /></div>';
 };
