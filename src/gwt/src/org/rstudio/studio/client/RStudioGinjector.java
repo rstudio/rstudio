@@ -50,6 +50,7 @@ import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
+import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.shell.ShellSecureInput;
@@ -57,6 +58,7 @@ import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
@@ -83,8 +85,8 @@ import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
-import org.rstudio.studio.client.workbench.views.connections.ui.SparkMasterChooser;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowserModel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
@@ -114,6 +116,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
@@ -195,8 +198,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CppCompletion completion);
    void injectMembers(ConsoleTabPanel consoleTabPanel);
    void injectMembers(VirtualConsole console);
-   void injectMembers(NewSparkConnectionDialog newSparkConnectionDialog);
-   void injectMembers(SparkMasterChooser sparkMasterChooser);
+   void injectMembers(NewConnectionShinyHost newConnectionShinyHost);
    void injectMembers(ConnectionCodePanel connectionCodePanel);
    void injectMembers(ConnectionExplorer connectionExplorer);
    void injectMembers(TableBrowser tableBrowser);
@@ -208,9 +210,13 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(AceEditorIdleCommands commands);
    void injectMembers(EditingTargetInlineChunkExecution executor);
    void injectMembers(DataImportFileChooser dataImportFileChooser);
+   void injectMembers(ProjectTemplateRegistryProvider provider);
    void injectMembers(TerminalSession widget);
    void injectMembers(ShellSecureInput userInputEncryption);
    void injectMembers(TerminalPopupMenu menu);
+   void injectMembers(TerminalList terminalList);
+   void injectMembers(NewConnectionWizard newConnectionWizard);
+   void injectMembers(RStudioAPI rstudioAPI);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -243,4 +249,5 @@ public interface RStudioGinjector extends Ginjector
    SourceWindow getSourceWindow();
    Server getServer();
    ChunkWindowManager getChunkWindowManager();
+   ProjectTemplateRegistryProvider getProjectTemplateRegistryProvider();
 }

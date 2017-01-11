@@ -33,7 +33,6 @@ public class XTermNative extends JavaScriptObject
    /**
     * Remove event handlers and detach from parent node.
     */
-   // TODO: (gary) should be calling this
    public final native void destroy() /*-{
       this.destroy();
    }-*/;
@@ -91,6 +90,14 @@ public class XTermNative extends JavaScriptObject
    
    public final native void scrollToBottom() /*-{
       this.scrollToBottom();
+   }-*/;
+
+   public final native void reset() /*-{
+      this.reset();
+   }-*/;
+
+   public final native void clear() /*-{
+      this.clear();
    }-*/;
 
    /**

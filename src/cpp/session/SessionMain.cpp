@@ -104,7 +104,9 @@ extern "C" const char *locale2charset(const char *);
 #include "SessionClientEventQueue.hpp"
 
 #include <session/SessionRUtil.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
+#include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
@@ -156,6 +158,8 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
+
+#include <session/SessionProjectTemplate.hpp>
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -246,6 +250,7 @@ const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_comp
 const char * const kQuitSession = "quit_session" ;   
 const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
+const char * const kRStudioAPIShowDialog = "rstudioapi_show_dialog";
 
 // convenience function for disallowing suspend (note still doesn't override
 // the presence of s_forceSuspend = 1)
@@ -1309,19 +1314,18 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
    }
 }
 
-bool haveRunningChildren()
+bool haveActiveChildren()
 {
-   return module_context::processSupervisor().hasRunningChildren() ||
+   return module_context::processSupervisor().hasActiveChildren() ||
           modules::authoring::hasRunningChildren();
 }
 
 bool canSuspend(const std::string& prompt)
 {
-   return !haveRunningChildren() &&
+   return !haveActiveChildren() &&
           modules::connections::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
-
 
 bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 {
@@ -1433,7 +1437,7 @@ bool waitForMethod(const std::string& method,
 
       // if we have at least one async process running then this counts
       // as "activity" and resets the timeout timer
-      if(haveRunningChildren())
+      if (haveActiveChildren())
          timeoutTime = timeoutTimeFromNow();
 
       // look for a connection (waiting for the specified interval)
@@ -1758,6 +1762,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    s_waitForMethodNames.push_back(kChooseFileCompleted);
    s_waitForMethodNames.push_back(kUserPromptCompleted);
    s_waitForMethodNames.push_back(kHandleUnsavedChangesCompleted);
+   s_waitForMethodNames.push_back(kRStudioAPIShowDialog);
 
    // execute core initialization functions
    using boost::bind;
@@ -1807,6 +1812,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lists::initialize)
       (modules::path::initialize)
       (modules::limits::initialize)
+      (modules::ppe::initialize)
       (modules::ask_pass::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)
@@ -1854,7 +1860,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::snippets::initialize)
       (modules::user_commands::initialize)
       (modules::r_addins::initialize)
+      (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
+      (modules::rstudioapi::initialize)
 
       // workers
       (workers::web_request::initialize)

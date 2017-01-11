@@ -27,6 +27,10 @@ public class CreateTerminalEvent extends CrossWindowEvent<CreateTerminalEvent.Ha
 {  
    public interface Handler extends EventHandler
    {
+      /**
+       * Event sent to trigger creation of a terminal session
+       * @param event empty event
+       */
       void onCreateTerminal(CreateTerminalEvent event);
    }
 

@@ -549,12 +549,6 @@ public class UIPrefsAccessor extends Prefs
    {
       return bool("show_publish_diagnostics", false);
    }
-   
-   public PrefValue<String> connectionsDbInterface()
-   {
-      return string("connections_db_interface", 
-                    ConnectionOptions.DB_INTERFACE_DPLYR);
-   }
      
    public PrefValue<Boolean> showRmdChunkOutputInline()
    {
@@ -589,6 +583,11 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<Boolean> enableXTerm()
    {
       return bool("enable_xterm", false);
+   }
+   
+   public PrefValue<Boolean> showTerminalTab()
+   {
+      return bool("show_terminal_tab", true);
    }
    
    public static final String KNIT_DIR_DEFAULT = "default";

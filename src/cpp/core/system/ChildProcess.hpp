@@ -45,6 +45,9 @@ protected:
    void init(const std::string& command,
              const ProcessOptions& options);
 
+   // init for an interactive terminal
+   void init(const ProcessOptions& options);
+
 public:
    virtual ~ChildProcess();
 
@@ -60,6 +63,11 @@ public:
 
    // terminate the process
    virtual Error terminate();
+
+   // Does this process have any subprocesses? True if there are
+   // subprocesses, if it hasn't been checked yet, or if the process
+   // isn't configured to check for subprocesses.
+   virtual bool hasSubprocess() const;
 
 protected:
    Error run();
@@ -175,6 +183,7 @@ public:
                      const ProcessOptions& options);
    AsyncChildProcess(const std::string& command,
                      const ProcessOptions& options);
+   AsyncChildProcess(const ProcessOptions& options);
    virtual ~AsyncChildProcess();
 
    // run process asynchronously
@@ -200,6 +209,8 @@ public:
 
    // override of terminate (allow special handling for unix pty termination)
    virtual Error terminate();
+
+   virtual bool hasSubprocess() const;
 
 private:
 

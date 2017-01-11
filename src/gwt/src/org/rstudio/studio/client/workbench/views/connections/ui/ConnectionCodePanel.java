@@ -206,5 +206,5 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    private boolean settingCode_ = false;
    private final Command updateConnectViaUI_;
    
-   private static NewSparkConnectionDialog.Resources RES = NewSparkConnectionDialog.RES;
+   private static NewConnectionShinyHost.Resources RES = NewConnectionShinyHost.RES;
 }

@@ -27,6 +27,10 @@ public class TerminalSessionStoppedEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
+      /**
+       * Sent when a terminal process has been terminated on the server.
+       * @param event contains the TerminalSession that has stopped
+       */
       void onTerminalSessionStopped(TerminalSessionStoppedEvent event);
    }
    

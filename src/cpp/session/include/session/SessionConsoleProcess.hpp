@@ -25,6 +25,7 @@
 #include <core/system/Process.hpp>
 #include <core/Log.hpp>
 
+#include <core/FileSerializer.hpp>
 #include <core/json/Json.hpp>
 
 namespace rstudio {
@@ -45,6 +46,7 @@ enum InteractionMode
 };
 
 extern const int kDefaultMaxOutputLines;
+extern const int kNoTerminal;
 
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
@@ -58,29 +60,37 @@ private:
          const std::string& command,
          const core::system::ProcessOptions& options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
-
+  
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
          const core::system::ProcessOptions& options,
          const std::string& caption,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines);
-
-   ConsoleProcess(
-         const std::string& command,
-         const core::system::ProcessOptions& options,
-         const std::string& caption,
-         const std::string& terminalHandle,
+         const std::string& title,
          int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines);
    
+   ConsoleProcess(
+         const std::string& command,
+         const core::system::ProcessOptions& options,
+         const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
+         const std::string& handle,
+         bool dialog,
+         InteractionMode mode,
+         int maxOutputLines);
+
    void regexInit();
    void commonInit();
 
@@ -110,6 +120,9 @@ public:
          const std::string& command,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -119,16 +132,20 @@ public:
          const std::vector<std::string>& args,
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
+         int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
-   static boost::shared_ptr<ConsoleProcess> create(
-         const std::string& command,
+   static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
          core::system::ProcessOptions options,
          const std::string& caption,
+         const std::string& title,
          const std::string& terminalHandle,
          const int terminalSequence,
+         bool allowRestart,
          bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
@@ -151,6 +168,12 @@ public:
    void enqueInput(const Input& input);
    void interrupt();
    void resize(int cols, int rows);
+   void onSuspend();
+   bool isStarted() { return started_; }
+   void setCaption(std::string& caption) { caption_ = caption; }
+   void setTitle(std::string& title) { title_ = title; }
+   void deleteLogFile() const;
+   std::string getSavedBuffer() const;
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
@@ -164,6 +187,7 @@ private:
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
+   void onHasSubprocs(bool hasSubProcs);
 
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
@@ -172,6 +196,7 @@ private:
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,
                            const std::string& output);
+   core::Error getLogFilePath(core::FilePath* file) const;
 
 private:
    // Command and options that will be used when start() is called
@@ -181,6 +206,7 @@ private:
    core::system::ProcessOptions options_;
 
    std::string caption_;
+   std::string title_;
    bool dialog_;
    bool showOnOutput_;
    InteractionMode interactionMode_;
@@ -199,13 +225,17 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
-   // The handle of an associated terminal
-   std::string terminalHandle_;
-   
    // The sequence number of the associated terminal; used to control display
-   // order of terminal tabs
+   // order of terminal tabs; constant 'kNoTerminal' indicates a non-terminal
    int terminalSequence_;
    
+   // Whether a ConsoleProcess object should start a new process on resume after
+   // its process has been killed by a suspend.
+   bool allowRestart_;
+
+   // Does this process have child processes?
+   bool childProcs_;
+
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 
@@ -217,7 +247,6 @@ private:
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;
-
 
    // regex for prompt detection
    boost::regex controlCharsPattern_;

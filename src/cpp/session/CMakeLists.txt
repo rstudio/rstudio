@@ -78,6 +78,7 @@ set (SESSION_SOURCE_FILES
    SessionWorkerContext.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
+   modules/RStudioAPI.cpp
    modules/SessionAbout.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
@@ -104,11 +105,13 @@ set (SESSION_SOURCE_FILES
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionMarkers.cpp
+   modules/SessionPackageProvidedExtension.cpp
    modules/SessionPackages.cpp
    modules/SessionPackrat.cpp
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
+   modules/SessionProjectTemplate.cpp
    modules/SessionRAddins.cpp
    modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
@@ -138,6 +141,7 @@ set (SESSION_SOURCE_FILES
    modules/connections/ActiveConnections.cpp
    modules/connections/Connection.cpp
    modules/connections/ConnectionHistory.cpp
+   modules/connections/ConnectionsIndexer.cpp
    modules/connections/SessionConnections.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp

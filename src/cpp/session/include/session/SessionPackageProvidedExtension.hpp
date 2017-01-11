@@ -16,140 +16,81 @@
 #ifndef SESSION_MODULES_PACKAGE_PROVIDED_EXTENSION_HPP
 #define SESSION_MODULES_PACKAGE_PROVIDED_EXTENSION_HPP
 
-#include <cstddef>
-
 #include <string>
-#include <map>
+#include <vector>
 
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include <core/json/Json.hpp>
+
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
-#include <core/FilePath.hpp>
+namespace rstudio {
+namespace core {
 
-#include <session/SessionModuleContext.hpp>
+class Error;
+class FilePath;
+
+} // end namespace core
+} // end namespace rstudio
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace ppe {
 
-class Indexer : public boost::noncopyable
+core::Error parseDcfResourceFile(
+      const core::FilePath& resourcePath,
+      boost::function<core::Error(const std::map<std::string, std::string>&)> callback);
+
+class Worker : boost::noncopyable
 {
+public:
    virtual void onIndexingStarted() = 0;
+   virtual void onIndexingCompleted(core::json::Object* pPayload) = 0;
    virtual void onWork(const std::string& pkgName, const core::FilePath& resourcePath) = 0;
-   virtual void onIndexingCompleted() = 0;
+   virtual ~Worker() {}
    
 public:
-   explicit Indexer(const std::string& resourcePath)
-      : resourcePath_(resourcePath),
-        index_(0),
-        n_(0),
-        running_(false)
+   Worker(const std::string& resourcePath)
+      : resourcePath_(resourcePath)
    {
    }
-   
-   virtual ~Indexer() {}
-   
-   void start()
-   {
-      start(300, 20);
-   }
-   
-   void start(int initialDurationMs, int incrementalDurationMs)
-   {
-      if (running_)
-         return;
-      
-      running_ = true;
-      beginIndexing();
-      module_context::scheduleIncrementalWork(
-               boost::posix_time::milliseconds(initialDurationMs),
-               boost::posix_time::milliseconds(incrementalDurationMs),
-               boost::bind(&Indexer::work, this),
-               false);
-   }
-   
-   bool running()
-   {
-      return running_;
-   }
+
+   const std::string& resourcePath() const { return resourcePath_; }
    
 private:
-   
-   bool work()
-   {
-      // check whether we've run out of work items
-      if (index_ == n_)
-      {
-         endIndexing();
-         return false;
-      }
-      
-      std::size_t index = index_++;
-      
-      // discover path to package resource
-      const core::FilePath& pkgPath = pkgDirs_[index];
-      core::FilePath resourcePath = pkgPath.childPath(resourcePath_);
-      std::string pkgName = pkgPath.filename();
-      
-      // bail if the resource doesn't exist
-      if (!resourcePath.exists())
-         return true;
-      
-      // handle work item
-      onWork(pkgName, resourcePath);
-      return true;
-   }
-   
-   void beginIndexing()
-   {
-      // reset indexer state
-      pkgDirs_.clear();
-      index_ = 0;
-      
-      // discover packages available on the current library paths
-      std::vector<core::FilePath> libPaths = module_context::getLibPaths();
-      BOOST_FOREACH(const core::FilePath& libPath, libPaths)
-      {
-         if (!libPath.exists())
-            continue;
-         
-         std::vector<core::FilePath> pkgPaths;
-         core::Error error = libPath.children(&pkgPaths);
-         if (error)
-            LOG_ERROR(error);
-         
-         pkgDirs_.insert(
-                  pkgDirs_.end(),
-                  pkgPaths.begin(),
-                  pkgPaths.end());
-      }
-      
-      // store number of work items
-      n_ = pkgDirs_.size();
-      
-      // call subclass method
-      onIndexingStarted();
-   }
-   
-   void endIndexing()
-   {
-      running_ = false;
-      onIndexingCompleted();
-   }
-   
-   // Private Members ----
-   
    std::string resourcePath_;
+};
+
+class Indexer : boost::noncopyable
+{
+public:
+   explicit Indexer();
+   virtual ~Indexer() {}
    
-   // Indexer state
+public:
+   void addWorker(boost::shared_ptr<Worker> pWorker);
+   void removeWorker(boost::shared_ptr<Worker> pWorker);
+   
+public:
+   void start();
+   bool running() { return running_; }
+   
+private:
+   void beginIndexing();
+   bool work();
+   void endIndexing();
+   
+private:
+   std::vector<boost::shared_ptr<Worker> > workers_;
    std::vector<core::FilePath> pkgDirs_;
    std::size_t index_;
    std::size_t n_;
    bool running_;
 };
 
+Indexer& indexer();
 core::Error initialize();
 
 } // end namespace ppe

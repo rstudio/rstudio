@@ -46,15 +46,20 @@ namespace {
    const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
+   FilePath s_consoleProcPath;
+   FilePath s_consoleProcIndexPath;
 } // anonymous namespace
 
 const int kDefaultMaxOutputLines = 500;
+const int kNoTerminal = 0; // terminal sequence number for a non-terminal
+void saveConsoleProcesses(bool terminatedNormally = true);
+#define kConsoleIndex "INDEX"
 
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     allowRestart_(false), childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -62,34 +67,43 @@ ConsoleProcess::ConsoleProcess()
    // dummy \n so we can tell the first line is a complete line.
    outputBuffer_.push_back('\n');
 }
-
+   
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
+                               int terminalSequence,
+                               bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : command_(command), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
 
+   
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
+                               const std::string& title,
+                               int terminalSequence,
+                               bool allowRestart,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : program_(program), args_(args), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : program_(program), args_(args), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -97,21 +111,23 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                const std::string& caption,
-                               const std::string& terminalHandle,
+                               const std::string& title,
                                int terminalSequence,
+                               bool allowRestart,
+                               const std::string& handle,
                                bool dialog,
                                InteractionMode interactionMode,
                                int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), dialog_(dialog),
-     showOnOutput_(false),
+   : command_(command), options_(options), caption_(caption), title_(title),
+     dialog_(dialog), showOnOutput_(false),
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalHandle_(terminalHandle), terminalSequence_(terminalSequence),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+     handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
-   
+
 void ConsoleProcess::regexInit()
 {
    controlCharsPattern_ = boost::regex("[\\r\\b]");
@@ -122,12 +138,9 @@ void ConsoleProcess::commonInit()
 {
    regexInit();
 
-   handle_ = core::system::generateUuid(false);
+   if (handle_.empty())
+      handle_ = core::system::generateUuid(false);
 
-   // only generate a terminal handle if creating a new terminal
-   if (terminalSequence_ > 0 && terminalHandle_.empty())
-      terminalHandle_ = core::system::generateUuid(false);
-   
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
@@ -153,9 +166,13 @@ void ConsoleProcess::commonInit()
          args_ = args;
       }
       // if this is a runCommand then prepend consoleio.exe to the command
-      else
+      else if (!command_.empty())
       {
          command_ = shell_utils::escape(consoleIoPath) + " " + command_;
+      }
+      else // terminal
+      {
+         options_.consoleIoPath = shell_utils::escape(consoleIoPath);
       }
 #else
       // request a pseudoterminal if this is an interactive console process
@@ -172,7 +189,8 @@ void ConsoleProcess::commonInit()
       }
       
       core::system::setenv(&(options_.environment.get()), "TERM",
-                           options_.smartTerminal ? "xterm" : "dumb");
+                           options_.smartTerminal ? core::system::kSmartTerm :
+                                                    core::system::kDumbTerm);
 #endif
    }
 
@@ -212,10 +230,15 @@ Error ConsoleProcess::start()
       error = module_context::processSupervisor().runCommand(
                                  command_, options_, createProcessCallbacks());
    }
-   else
+   else if (!program_.empty())
    {
       error = module_context::processSupervisor().runProgram(
                           program_, args_, options_, createProcessCallbacks());
+   }
+   else
+   {
+      error = module_context::processSupervisor().runTerminal(
+                          options_, createProcessCallbacks());
    }
    if (!error)
       started_ = true;
@@ -273,10 +296,13 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
          if (error)
             LOG_ERROR(error);
 
-         if (input.echoInput)
-            appendToOutputBuffer(inputText);
-         else
-            appendToOutputBuffer("\n");
+         if (!options_.smartTerminal) // smart terminal does echo via pty
+         {
+            if (input.echoInput)
+               appendToOutputBuffer(inputText);
+            else
+               appendToOutputBuffer("\n");
+         }
       }
    }
 
@@ -291,14 +317,84 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
+Error ConsoleProcess::getLogFilePath(FilePath* pFile) const
+{
+   Error error = s_consoleProcPath.ensureDirectory();
+   if (error)
+   {
+      return error;
+   }
+
+   *pFile = s_consoleProcPath.complete(handle_);
+   return Success();
+}
+
+void ConsoleProcess::deleteLogFile() const
+{
+   FilePath log;
+   Error error = getLogFilePath(&log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   error = log.removeIfExists();
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+}
+
+std::string ConsoleProcess::getSavedBuffer() const
+{
+   std::string content;
+   FilePath log;
+   Error error = getLogFilePath(&log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return content;
+   }
+
+   if (!log.exists())
+   {
+      return "";
+   }
+
+   error = core::readStringFromFile(log, &content);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return content;
+   }
+   return content;
+}
+
 void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 {
-   // TODO (gary) for terminals we won't store output history
-   // in the SessionInfo; this will be stored separately, keyed by
-   // Terminal Handle; as a prelude to that stop storing the old way
-   // if we have the terminal handle
-   if (terminalHandle_.empty())
+   // For modal console procs, store terminal output directly in the
+   // ConsoleProcInfo INDEX
+   if (terminalSequence_ == kNoTerminal)
+   {
       std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+      return;
+   }
+
+   // For terminal tabs, store in a separate file.
+   FilePath log;
+   Error error = getLogFilePath(&log);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   error = rstudio::core::appendToFile(log, str);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
@@ -325,8 +421,6 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
 {
    if (options_.smartTerminal)
    {
-      // TODO: consider extracting out behaviors that vary between smart
-      // and dumb terminal handlers
       enqueOutputEvent(output, false);
       return;
    }
@@ -410,6 +504,12 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
          ClientEvent(client_events::kConsoleProcessPrompt, data));
 }
 
+void ConsoleProcess::onSuspend()
+{
+   if (started_ && allowRestart_)
+      started_ = false;
+}
+
 void ConsoleProcess::onExit(int exitCode)
 {
    exitCode_.reset(exitCode);
@@ -421,6 +521,20 @@ void ConsoleProcess::onExit(int exitCode)
          ClientEvent(client_events::kConsoleProcessExit, data));
 
    onExit_(exitCode);
+}
+
+void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
+{
+   if (hasSubprocs != childProcs_)
+   {
+      childProcs_ = hasSubprocs;
+
+      json::Object subProcs;
+      subProcs["handle"]   = handle_;
+      subProcs["subprocs"] = childProcs_;
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kTerminalSubprocs, subProcs));
+   }
 }
 
 core::json::Object ConsoleProcess::toJson() const
@@ -439,8 +553,12 @@ core::json::Object ConsoleProcess::toJson() const
       result["exit_code"] = json::Value();
 
    // newly added in v1.1
-   result["terminal_handle"] = terminalHandle_;
    result["terminal_sequence"] = terminalSequence_;
+   result["allow_restart"] = allowRestart_;
+   result["started"] = started_;
+   result["title"] = title_;
+   result["childProcs"] = childProcs_;
+
    return result;
 }
 
@@ -482,17 +600,47 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    // Newly added in v1.1
    Error error = json::readObject(
                      obj,
-                     "terminal_handle", &pProc->terminalHandle_,
                      "terminal_sequence", &pProc->terminalSequence_);
    if (error)
    {
       // Possibly unarchiving a pre 1.1 session; ensure defaults are set
       // and continue
-      LOG_ERROR(error);
-      pProc->terminalHandle_.clear();
-      pProc->terminalSequence_ = 0;
+      pProc->terminalSequence_ = kNoTerminal;
+      return pProc;
+   }
+
+   // Newly added during work-in-progress on 1.1
+   // TODO (gary) could flatten this to a single readObject before release
+   error = json::readObject(obj,
+                            "allow_restart", &pProc->allowRestart_,
+                            "started", &pProc->started_);
+   if (error)
+   {
+      // Possibly unarchiving 1.1 work-in-progress session; match
+      // previous behavior and continue
+      if (pProc->terminalSequence_ != kNoTerminal)
+      {
+         pProc->allowRestart_ = true;
+         pProc->started_ = false;
+      }
+      return pProc;
    }
    
+   // More work-in-progress on 1.1
+   // TODO (gary) could flatten this to a single readObject before release
+   error = json::readObject(obj, "title", &pProc->title_);
+   if (error)
+   {
+      pProc->title_.clear();
+   }
+
+   // Yet-more work-in-progress on 1.1
+   error = json::readObject(obj, "childProcs", &pProc->childProcs_);
+   if (error)
+   {
+      pProc->childProcs_ = true;
+   }
+
    return pProc;
 }
 
@@ -502,6 +650,10 @@ core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
+   if (options_.reportHasSubprocs)
+   {
+      cb.onHasSubprocs = boost::bind(&ConsoleProcess::onHasSubprocs, ConsoleProcess::shared_from_this(), _1);
+   }
    return cb;
 }
 
@@ -552,15 +704,19 @@ Error procReap(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   if (!s_procs.erase(handle))
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
    {
-      return systemError(boost::system::errc::invalid_argument,
-                         ERROR_LOCATION);
+      pos->second->deleteLogFile();
+      if (s_procs.erase(handle))
+      {
+         saveConsoleProcesses();
+         return Success();
+      }
    }
-   else
-   {
-      return Success();
-   }
+   
+   return systemError(boost::system::errc::invalid_argument,
+                      ERROR_LOCATION);
 }
 
 Error procWriteStdin(const json::JsonRpcRequest& request,
@@ -631,11 +787,103 @@ Error procSetSize(const json::JsonRpcRequest& request,
                          ERROR_LOCATION);
    }
 }
+
+Error procSetCaption(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string caption;
    
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &caption);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setCaption(caption);
+   saveConsoleProcesses();
+   return Success();
+}
+
+Error procSetTitle(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+   std::string title;
+   
+   Error error = json::readParams(request.params,
+                                  &handle,
+                                  &title);
+   if (error)
+      return error;
+   
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+   
+   pos->second->setTitle(title);
+   return Success();
+}
+
+Error procEraseBuffer(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   pos->second->deleteLogFile();
+   return Success();
+}
+
+Error procGetBuffer(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string handle;
+
+   Error error = json::readParams(request.params,
+                                  &handle);
+   if (error)
+      return error;
+
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos == s_procs.end())
+   {
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   }
+
+   // TODO (gary) throttle (or chunk) output to avoid overwhelming the
+   // client; e.g. we might return a flag/handle to allow client to know to make
+   // more of these calls until buffer has been completely fetched
+   pResponse->setResult(pos->second->getSavedBuffer());
+
+   return Success();
+}
+
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -645,10 +893,14 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
          new ConsoleProcess(command,
                             options,
                             caption,
+                            title,
+                            terminalSequence,
+                            allowRestart,
                             dialog,
                             interactionMode,
                             maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
+   saveConsoleProcesses();
    return ptrProc;
 }
 
@@ -657,6 +909,9 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::vector<std::string>& args,
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
@@ -667,35 +922,59 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             args,
                             options,
                             caption,
+                            title,
+                            terminalSequence,
+                            allowRestart,
                             dialog,
                             interactionMode,
                             maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
+   saveConsoleProcesses();
    return ptrProc;
 }
 
-boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
-      const std::string& command,
+// supports reattaching to a running process, or creating a new process with
+// previously used handle
+boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
       const std::string& caption,
+      const std::string& title,
       const std::string& terminalHandle,
-      const int terminalSequence,
+      int terminalSequence,
+      bool allowRestart,
       bool dialog,
       InteractionMode interactionMode,
       int maxOutputLines)
 {
-   options.terminateChildren = true;
-   boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command,
-                            options,
-                            caption,
-                            terminalHandle,
-                            terminalSequence,
-                            dialog,
-                            interactionMode,
-                            maxOutputLines));
-   s_procs[ptrProc->handle()] = ptrProc;
-   return ptrProc;
+   std::string command;
+   if (allowRestart && !terminalHandle.empty())
+   {
+      // return existing ConsoleProcess if it is still running
+      ProcTable::const_iterator pos = s_procs.find(terminalHandle);
+      if (pos != s_procs.end() && pos->second->isStarted())
+      {
+         // Jiggle the size of the pseudo-terminal, this will force the app
+         // to refresh itself; this does rely on the host performing a second
+         // resize to the actual available size. Clumsy, but so far this is
+         // the best I've come up with.
+         pos->second->resize(25, 5);
+         return pos->second;
+      }
+      
+      // Create new process with previously used handle
+      options.terminateChildren = true;
+      boost::shared_ptr<ConsoleProcess> ptrProc(
+            new ConsoleProcess(command, options, caption, title, terminalSequence,
+                               allowRestart, terminalHandle, dialog,
+                               interactionMode, maxOutputLines));
+      s_procs[ptrProc->handle()] = ptrProc;
+      saveConsoleProcesses();
+      return ptrProc;
+   }
+   
+   // otherwise create a new one
+   return create(command, options, caption, title, terminalSequence,
+                 allowRestart, dialog, interactionMode, maxOutputLines);
 }
 
 void PasswordManager::attach(
@@ -826,30 +1105,32 @@ core::json::Array processesAsJson()
    return procInfos;
 }
 
-void onSuspend(core::Settings* pSettings)
+std::string serializeConsoleProcs()
 {
    json::Array array;
    for (ProcTable::const_iterator it = s_procs.begin();
         it != s_procs.end();
         it++)
    {
+      it->second->onSuspend();
       array.push_back(it->second->toJson());
    }
 
    std::ostringstream ostr;
    json::write(array, ostr);
-   pSettings->set("console_procs", ostr.str());
+   return ostr.str();
 }
 
-void onResume(const core::Settings& settings)
+void deserializeConsoleProcs(const std::string& jsonStr)
 {
-   std::string strVal = settings.get("console_procs");
-   if (strVal.empty())
+   if (jsonStr.empty())
       return;
-
    json::Value value;
-   if (!json::parse(strVal, &value))
+   if (!json::parse(jsonStr, &value))
+   {
+      LOG_WARNING_MESSAGE("invalid console process json: " + jsonStr);
       return;
+   }
 
    json::Array procs = value.get_array();
    for (json::Array::iterator it = procs.begin();
@@ -862,13 +1143,69 @@ void onResume(const core::Settings& settings)
    }
 }
 
+void loadConsoleProcesses()
+{
+   if (!s_consoleProcIndexPath.exists())
+      return;
+
+   std::string contents;
+   Error error = rstudio::core::readStringFromFile(s_consoleProcIndexPath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   deserializeConsoleProcs(contents);
+
+   // Delete orphaned buffer files
+   std::vector<FilePath> children;
+   error = s_consoleProcPath.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      // Don't erase the INDEX or any subfolders
+      if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
+         continue;
+
+      ProcTable::const_iterator pos = s_procs.find(child.filename());
+      if (pos == s_procs.end())
+      {
+         error = child.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+}
+
+void saveConsoleProcesses(bool terminatedNormally)
+{
+   if (!terminatedNormally)
+      return;
+   Error error = rstudio::core::writeStringToFile(s_consoleProcIndexPath,
+                                                  serializeConsoleProcs());
+   if (error)
+      LOG_ERROR(error);
+}
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
-   // add suspend/resume handler
-   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+   // storage for session-scoped console/terminal metadata
+   s_consoleProcPath = module_context::scopedScratchPath().complete("console");
+   Error error = s_consoleProcPath.ensureDirectory();
+   if (error)
+      return error;
+   s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
+
+   events().onShutdown.connect(saveConsoleProcesses);
+   loadConsoleProcesses();
 
    // install rpc methods
    ExecBlock initBlock ;
@@ -877,7 +1214,11 @@ Error initialize()
       (bind(registerRpcMethod, "process_interrupt", procInterrupt))
       (bind(registerRpcMethod, "process_reap", procReap))
       (bind(registerRpcMethod, "process_write_stdin", procWriteStdin))
-      (bind(registerRpcMethod, "process_set_size", procSetSize));
+      (bind(registerRpcMethod, "process_set_size", procSetSize))
+      (bind(registerRpcMethod, "process_set_caption", procSetCaption))
+      (bind(registerRpcMethod, "process_set_title", procSetTitle))
+      (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
+      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer));
 
    return initBlock.execute();
 }

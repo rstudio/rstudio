@@ -20,15 +20,16 @@ fi
 
 cd xterm.js
 git clean -dfx
-# xterm version 2.1.0
-git checkout 521d7db
+
+# xterm version 2.2.0
+git checkout 8a146b5
 
 # install and build via Babel
 npm install --only=dev
 npm run build 
 
 XTERM_BUILD_DIR=./build
-XTERM_ADDONS_DIR=./addons
+XTERM_ADDONS_DIR=./dist/addons
 XTERM_TARGET_DIR=../../src/org/rstudio/studio/client/workbench/views/terminal/xterm
 
 # stylesheet

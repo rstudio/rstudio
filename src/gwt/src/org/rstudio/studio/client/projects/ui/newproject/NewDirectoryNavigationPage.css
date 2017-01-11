@@ -1,0 +1,17 @@
+@CHARSET "UTF-8";
+
+.leftIcon {
+	max-width: 20px;
+	max-height: 20px;
+	margin-left: 4px;
+	margin-top: 3px;
+}
+
+.rightArrow {
+	margin-top: 5px;
+}
+
+.label {
+	margin-top: 5px;
+	white-space: nowrap;
+}

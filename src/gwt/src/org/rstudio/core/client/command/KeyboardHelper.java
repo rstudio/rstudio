@@ -69,8 +69,9 @@ public class KeyboardHelper
       case KeyCodes.KEY_WIN_KEY_FF_LINUX:
       case KeyCodes.KEY_WIN_KEY_RIGHT:
       case KeyCodes.KEY_WIN_KEY_LEFT_META:
-      case 93: // Right meta key
          return true;
+      case KeyCodes.KEY_CONTEXT_MENU: // right meta on macOS
+         return !BrowseCap.isWindows();
       default:
          return false;
       }

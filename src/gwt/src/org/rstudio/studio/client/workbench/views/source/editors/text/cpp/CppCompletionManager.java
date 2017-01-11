@@ -235,28 +235,24 @@ public class CppCompletionManager implements CompletionManager
          // get the key code
          int keyCode = event.getKeyCode();
          
-         // chrome on ubuntu now sends this before every keydown
-         // so we need to explicitly ignore it. see:
-         // https://github.com/ivaynberg/select2/issues/2482
-         if (keyCode == KeyCodes.KEY_WIN_IME)
-         {
-            return false ;
-         }
-         
-         // modifier keys always no-op
-         if (keyCode == KeyCodes.KEY_SHIFT ||
-             keyCode == KeyCodes.KEY_CTRL ||
-             keyCode == KeyCodes.KEY_ALT ||
-             keyCode == KeyCodes.KEY_MAC_FF_META ||
-             keyCode == KeyCodes.KEY_WIN_KEY_LEFT_META)
-         {          
-            return false ; 
-         }
+         // bail on modifier keys
+         if (KeyboardHelper.isModifierKey(keyCode))
+            return false;
          
          // if there is no popup then bail
          CppCompletionPopupMenu popup = getCompletionPopup();
          if ((popup == null) || !popup.isVisible())
             return false;
+         
+         // allow emacs-style navigation of popup entries
+         if (modifier == KeyboardShortcut.CTRL)
+         {
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_P: return popup.selectPrev();
+            case KeyCodes.KEY_N: return popup.selectNext();
+            }
+         }
              
          // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)

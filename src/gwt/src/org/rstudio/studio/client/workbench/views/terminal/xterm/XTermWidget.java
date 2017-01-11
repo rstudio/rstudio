@@ -20,11 +20,12 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent.Handler;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent.Handler;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermDimensions;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermNative;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermResources;
@@ -45,42 +46,10 @@ import com.google.gwt.user.client.ui.Widget;
  * Xterm-compatible terminal emulator
  */
 public class XTermWidget extends Widget implements RequiresResize,
-                                                   ResizeTerminalEvent.HasHandlers,
-                                                   TerminalDataInputEvent.HasHandlers,
-                                                   TerminalTitleEvent.HasHandlers
+                                                   ResizeTerminalEvent.HasHandlers, TerminalDataInputEvent.HasHandlers,
+                                                   XTermTitleEvent.HasHandlers
 {
-   public enum AnsiColor
-   {
-      DEFAULT     ("0;0"),
-      BLACK       ("0;30"),
-      BLUE        ("0;34"),
-      GREEN       ("0;32"),
-      CYAN        ("0;36"),
-      RED         ("0;31"),
-      PURPLE      ("0;35"),
-      BROWN       ("0;33"),
-      LIGHTGRAY   ("0;37"),
-      DARKGRAY    ("1;30"),
-      LIGHTBLUE   ("1;34"),
-      LIGHTCYAN   ("1;32"),
-      LIGHTRED    ("1;31"),
-      LIGHTPURPLE ("1;35"), 
-      YELLOW      ("1;33"),
-      WHITE       ("1;37");
-      
-      private final String color;
-      AnsiColor(String color)
-      {
-         this.color = color;
-      }
-      
-      public String toString()
-      {
-         return "\33[" + color + "m";
-      }
-   }      
-   
-   /**
+  /**
     *  Creates an XTermWidget.
     */
    public XTermWidget()
@@ -91,6 +60,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().getStyle().setMargin(0, Unit.PX);
       getElement().getStyle().setBackgroundColor("#111");
       getElement().getStyle().setColor("#fafafa");
+      getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
@@ -110,26 +80,25 @@ public class XTermWidget extends Widget implements RequiresResize,
       {
          public void execute(String title)
          {
-            fireEvent(new TerminalTitleEvent(title));
+            fireEvent(new XTermTitleEvent(title));
          }
       });
    }
    
    /**
-    * Show a greeting in the terminal
+    * Perform actions when the terminal is ready.
     */
-   private void showBanner()
+   protected void terminalReady()
    {
-      writeln("Welcome to " + AnsiColor.LIGHTBLUE + "RStudio" +
-            AnsiColor.DEFAULT + " terminal.");
    }
-  
+
    /**
     * One one line of text to the terminal.
     * @param str Text to write (CRLF will be appended)
     */
    public void writeln(String str)
    {
+      terminal_.scrollToBottom();
       terminal_.writeln(str);
    }
    
@@ -139,9 +108,19 @@ public class XTermWidget extends Widget implements RequiresResize,
     */
    public void write(String str)
    {
+      terminal_.scrollToBottom();
       terminal_.write(str);
    }
-   
+
+   /**
+    * Clear terminal buffer.
+    */
+   public void clear()
+   {
+      terminal_.clear();
+      setFocus(true);
+   }
+
    /**
     * Inject the xterm.js styles into the page.
     * @param cssResource
@@ -172,7 +151,7 @@ public class XTermWidget extends Widget implements RequiresResize,
             {
                terminal_.fit();
                terminal_.focus();
-               showBanner();
+               terminalReady();
             }
          });
 
@@ -192,7 +171,6 @@ public class XTermWidget extends Widget implements RequiresResize,
             public void execute()
             {
                terminal_.blur();
-               terminal_.destroy();
             }
          });
       }
@@ -210,7 +188,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       // dimensions; debounce this slightly as it is somewhat expensive
       resizeTerminalLocal_.schedule(50);
       
-      // Notify the remove pseudo-terminal that it has resized; this is quite
+      // Notify the remote pseudo-terminal that it has resized; this is quite
       // expensive so debounce more heavily; e.g. dragging the pane
       // splitters or resizing the entire window
       resizeTerminalRemote_.schedule(150);
@@ -299,9 +277,9 @@ public class XTermWidget extends Widget implements RequiresResize,
    }
 
    @Override
-   public HandlerRegistration addTerminalTitleHandler(Handler handler)
+   public HandlerRegistration addXTermTitleHandler(Handler handler)
    {
-      return addHandler(handler, TerminalTitleEvent.TYPE);
+      return addHandler(handler, XTermTitleEvent.TYPE);
    }
 
    /**

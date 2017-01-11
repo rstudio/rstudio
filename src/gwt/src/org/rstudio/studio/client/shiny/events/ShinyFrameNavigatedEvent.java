@@ -1,5 +1,5 @@
 /*
- * TerminalCaptionEvent.java
+ * ShinyFrameNavigatedEvent.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -12,33 +12,42 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.shiny.events;
 
-package org.rstudio.studio.client.workbench.views.terminal.events;
-
-import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCaptionEvent.Handler;
-
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-/**
- * Send by an XTermSession that has processed an xterm.js title-change event 
- * and updated its caption property.
- */
-public class TerminalCaptionEvent extends GwtEvent<Handler>
+public class ShinyFrameNavigatedEvent extends GwtEvent<ShinyFrameNavigatedEvent.Handler>
 {
-   public interface Handler extends EventHandler
+   public static class Data extends JavaScriptObject
    {
-      void onTerminalCaption(TerminalCaptionEvent event);
-   }
-   
-   public TerminalCaptionEvent(TerminalSession terminalSession)
-   {
-      terminalSession_ = terminalSession;
+      protected Data()
+      {  
+      }
+      
+      public final native String getUrl() /*-{
+         return this.url;
+      }-*/;
    }
 
+   public interface Handler extends EventHandler
+   {
+      void onShinyFrameNavigated(ShinyFrameNavigatedEvent event);
+   }
+
+   public ShinyFrameNavigatedEvent(Data data)
+   {
+      data_ = data;
+   }
+   
+   public String getURL()
+   {
+      return data_.getUrl();
+   }
+   
    @Override
-   public com.google.gwt.event.shared.GwtEvent.Type<Handler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
@@ -46,15 +55,10 @@ public class TerminalCaptionEvent extends GwtEvent<Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onTerminalCaption(this);
+      handler.onShinyFrameNavigated(this);
    }
    
-   public TerminalSession getTerminalSession()
-   {
-      return terminalSession_;
-   }
+   private final Data data_;
   
-   private TerminalSession terminalSession_;
-   
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

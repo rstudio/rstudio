@@ -138,6 +138,9 @@ public class TextEditingTargetRenameHelper
                   return renameVariablesInScope(scope, targetValue, targetType);
          }
          
+         if (scope.isChunk())
+            return renameVariablesInScope(scope, targetValue, targetType);
+         
          if (!cursor.moveToPosition(scope.getBodyStart(), true))
             continue;
          

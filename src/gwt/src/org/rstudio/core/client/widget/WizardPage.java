@@ -124,6 +124,16 @@ public abstract class WizardPage<I,T> extends Composite
    public void onActivate(ProgressIndicator indicator)
    {
    }
+
+   public void onBeforeActivate(Operation operation)
+   {
+      operation.execute();
+   }
+
+   public void onDeactivate(Operation operation)
+   {
+      operation.execute();
+   }
    
    public void onWizardClosing()
    {

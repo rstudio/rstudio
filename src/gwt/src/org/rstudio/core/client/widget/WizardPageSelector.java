@@ -17,7 +17,6 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -29,7 +28,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class WizardPageSelector<I,T> extends Composite
-                                     implements CanFocus
+                                     implements CanFocus,
+                                                HasWizardPageSelectionHandler<I,T>
 {
    public WizardPageSelector(ArrayList<WizardPage<I,T>> pages)
    {
@@ -71,6 +71,7 @@ public class WizardPageSelector<I,T> extends Composite
       initWidget(pageSelectorPanel);
    }
    
+   @Override
    public void setSelectionHandler(CommandWithArg<WizardPage<I,T>> onSelected)
    {
       onSelected_ = onSelected;

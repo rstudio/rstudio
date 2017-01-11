@@ -56,10 +56,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 
 public class CompletionRequester
 {
@@ -437,20 +434,35 @@ public class CompletionRequester
    {
       ArrayList<QualifiedName> result =
             new ArrayList<QualifiedName>();
+      result.addAll(completions);
       
-      Set<String> visitedItems = new HashSet<String>();
-      
-      for (int i = 0, n = completions.size(); i < n; i++)
+      // sort the results by name and type for efficient processing
+      Collections.sort(completions, new Comparator<QualifiedName>()
       {
-         QualifiedName name = completions.get(n - i - 1);
-         if (visitedItems.contains(name.name))
-            continue;
+         @Override
+         public int compare(QualifiedName o1, QualifiedName o2)
+         {
+            int name = o1.name.compareTo(o2.name);
+            if (name != 0)
+               return name;
+            return o1.type - o2.type;
+         }
+      });
+      
+      // walk backwards through the list and remove elements which have the 
+      // same name and type
+      for (int i = completions.size() - 1; i > 0; i--)
+      {
+         QualifiedName o1 = completions.get(i);
+         QualifiedName o2 = completions.get(i - 1);
          
-         result.add(name);
-         visitedItems.add(name.name);
+         // remove qualified names which have the same name and type (allow
+         // shadowing of contextual results to reduce confusion)
+         if (o1.name == o2.name && 
+             (o1.type == o2.type || o1.type == RCompletionType.CONTEXT))
+            result.remove(o1);
       }
       
-      Collections.reverse(result);
       return result;
    }
    

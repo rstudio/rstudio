@@ -152,6 +152,14 @@ class ClientEvent extends JavaScriptObject
    public static final String ConnectionOpened = "connection_opened";
    public static final String NotebookRangeExecuted = "notebook_range_executed";
    public static final String ChunkExecStateChanged = "chunk_exec_state_changed";
+   public static final String NavigateShinyFrame = "navigate_shiny_frame";
+   public static final String UpdateNewConnectionDialog = "update_new_connection_dialog";
+   public static final String ProjectTemplateRegistryUpdated = "project_template_registry_updated";
+   public static final String TerminalBusy = "terminal_busy";
+   public static final String PackageExtensionIndexingCompleted = "package_extension_indexing_completed";
+   public static final String TerminalSubProcs = "terminal_subprocs";
+   public static final String RStudioAPIShowDialog = "rstudioapi_show_dialog";
+   public static final String RStudioAPIShowDialogCompleted = "rstudioapi_show_dialog_completed";
 
    protected ClientEvent()
    {

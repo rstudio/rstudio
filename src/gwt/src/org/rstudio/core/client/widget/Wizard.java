@@ -46,6 +46,7 @@ public class Wizard<I,T> extends ModalDialog<T>
                  final ProgressOperationWithInput<T> operation)
    {
       super(caption, operation);
+
       initialData_ = initialData;
       okCaption_ = okCaption;
       firstPage_ = firstPage;
@@ -116,6 +117,17 @@ public class Wizard<I,T> extends ModalDialog<T>
       });
       nextButton_.setVisible(false);
       addActionButton(nextButton_);
+   }
+
+   @Override
+   protected void onUnload()
+   {
+      activePage_.onDeactivate(new Operation() {
+         public void execute() {
+         }
+      });
+
+      super.onUnload();
    }
    
    @Override
@@ -353,7 +365,7 @@ public class Wizard<I,T> extends ModalDialog<T>
          public void onAnimationComplete()
          {
             bodyPanel_.setWidgetVisible(from, false);
-          
+            
             bodyPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
             bodyPanel_.forceLayout();
             
@@ -373,40 +385,48 @@ public class Wizard<I,T> extends ModalDialog<T>
       // ask whether the page will accept the navigation
       if (!page.acceptNavigation())
          return;
-      
-      // give the page the currently accumulated result, if any
-      page.setIntermediateResult(intermediateResult_);
+
+      page.onBeforeActivate(new Operation() {
+         public void execute() {
+            // give the page the currently accumulated result, if any
+            page.setIntermediateResult(intermediateResult_);
+                  
+            // determine behavior based on whether this is standard page or 
+            // a navigation page
+            final boolean okButtonVisible = pageIsFinal(page);
+            activeParentNavigationPage_ = activePage_;
             
-      // determine behavior based on whether this is standard page or 
-      // a navigation page
-      final boolean okButtonVisible = pageIsFinal(page);
-      activeParentNavigationPage_ = activePage_;
-      
-      animate(activePage_, page, true, new Command() {
-         @Override
-         public void execute()
-         {
-            // set active page
-            activePage_ = page;
-            
-            // update header
-            subCaptionLabel_.setVisible(false);
-            backButton_.setVisible(true);
-            pageCaptionLabel_.setText(page.getPageCaption());
-            pageCaptionLabel_.setVisible(true);
-            
-            // make ok button visible
-            setOkButtonVisible(okButtonVisible);
-            
-            // if this is an intermediate page, make Next visible
-            setNextButtonState(page);
-            
-            // let wizard and page know that the new page is active
-            onPageActivated(page, okButtonVisible);
-            page.onActivate(getProgressIndicator());
-            
-            // set focus
-            FocusHelper.setFocusDeferred(page);
+            activePage_.onDeactivate(new Operation() {
+               public void execute() {
+                  animate(activePage_, page, true, new Command() {
+                     @Override
+                     public void execute()
+                     {
+                        // set active page
+                        activePage_ = page;
+                        
+                        // update header
+                        subCaptionLabel_.setVisible(false);
+                        backButton_.setVisible(true);
+                        pageCaptionLabel_.setText(page.getPageCaption());
+                        pageCaptionLabel_.setVisible(true);
+                        
+                        // make ok button visible
+                        setOkButtonVisible(okButtonVisible);
+                        
+                        // if this is an intermediate page, make Next visible
+                        setNextButtonState(page);
+                        
+                        // let wizard and page know that the new page is active
+                        onPageActivated(page, okButtonVisible);
+                        page.onActivate(getProgressIndicator());
+                        
+                        // set focus
+                        FocusHelper.setFocusDeferred(page);
+                     }
+                  });
+               }
+            });
          }
       });
    }
@@ -432,31 +452,35 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       activeParentNavigationPage_ = null;
       
-      animate(activePage_, toWidget, false, new Command() {
-         @Override
-         public void execute()
-         {
-            // update active page
-            activePage_ = newActivePage;
-            
-            // update header
-            subCaptionLabel_.setVisible(newActivePage == firstPage_);
-            pageCaptionLabel_.setVisible(
-                  newActivePage != firstPage_ && isNavigationPage);
-            pageCaptionLabel_.setText(pageCaptionLabel);
-            
-            setNextButtonState(newActivePage);
-            backButton_.setVisible(
-                  newActivePage != firstPage_);
+      activePage_.onDeactivate(new Operation() {
+         public void execute() {
+            animate(activePage_, toWidget, false, new Command() {
+               @Override
+               public void execute()
+               {
+                  // update active page
+                  activePage_ = newActivePage;
+                  
+                  // update header
+                  subCaptionLabel_.setVisible(newActivePage == firstPage_);
+                  pageCaptionLabel_.setVisible(
+                        newActivePage != firstPage_ && isNavigationPage);
+                  pageCaptionLabel_.setText(pageCaptionLabel);
+                  
+                  setNextButtonState(newActivePage);
+                  backButton_.setVisible(
+                        newActivePage != firstPage_);
 
-            // make ok button invisible
-            setOkButtonVisible(false);
-            
-            // call hook
-            onSelectorActivated();
-            
-            // set focus
-            focusWidget.focus();
+                  // make ok button invisible
+                  setOkButtonVisible(false);
+                  
+                  // call hook
+                  onSelectorActivated();
+                  
+                  // set focus
+                  focusWidget.focus();
+               }
+            });
          }
       });
    }

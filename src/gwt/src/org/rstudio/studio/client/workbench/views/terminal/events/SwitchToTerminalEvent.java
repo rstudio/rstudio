@@ -26,6 +26,10 @@ public class SwitchToTerminalEvent extends CrossWindowEvent<Handler>
 {
    public interface Handler extends EventHandler
    {
+      /**
+       * Event sent requesting a switch to the given terminal
+       * @param event contains handle of terminal to show
+       */
       void onSwitchToTerminal(SwitchToTerminalEvent event);
    }
    

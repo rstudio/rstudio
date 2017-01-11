@@ -469,6 +469,7 @@ public class ChunkOutputStream extends FlowPanel
       flushQueuedErrors();
       
       List<ChunkOutputPage> pages = new ArrayList<ChunkOutputPage>();
+      List<Widget> removed = new ArrayList<Widget>();
       for (Widget w: this)
       {
          // extract ordinal and metadata
@@ -486,13 +487,13 @@ public class ChunkOutputStream extends FlowPanel
             ChunkDataPage data = new ChunkDataPage(widget, 
                   (NotebookFrameMetadata)metadata.cast(), ordinal);
             pages.add(data);
-            remove(w);
+            removed.add(w);
             continue;
          }
          else if (w instanceof ChunkOrdinalWidget)
          {
             pages.add(new ChunkOrdinalPage(ordinal));
-            remove(w);
+            removed.add(w);
             continue;
          }
 
@@ -508,7 +509,7 @@ public class ChunkOutputStream extends FlowPanel
             ChunkPlotPage page = new ChunkPlotPage(plot.plotUrl(),
                   plot.getMetadata(), ordinal, null, chunkOutputSize_);
             pages.add(page);
-            remove(w);
+            removed.add(w);
          }
          else if (inner instanceof ChunkOutputFrame)
          {
@@ -520,9 +521,11 @@ public class ChunkOutputStream extends FlowPanel
             frame.cancelPendingLoad();
 
             pages.add(html);
-            remove(w);
+            removed.add(w);
          }
       }
+      for (Widget r: removed)
+         this.remove(r);
       return pages;
    }
    

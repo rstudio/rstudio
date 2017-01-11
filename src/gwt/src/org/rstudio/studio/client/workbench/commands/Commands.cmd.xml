@@ -2369,8 +2369,8 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="newTerminal"
-        label="Create New Terminal Session"
-        menuLabel="New Terminal Session"
+        label="New Terminal"
+        menuLabel="New Terminal"
         desc="Execute shell commands(s)"
         windowMode="main"/>
 
@@ -2380,20 +2380,20 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="renameTerminal"
-        label="Rename Terminal"
-        menuLabel="Rename Terminal Session"
+        label="Rename Current Terminal"
+        menuLabel="Rename Current Terminal"
         desc="Change terminal session name"
         windowMode="main"/>
 
    <cmd id="closeTerminal"
-        label="Close Terminal Session"
-        menuLabel="Close Terminal Session"
+        label="Close Current Terminal"
+        menuLabel="Close Current Terminal"
         desc="Close terminal session"
         windowMode="main"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
-        label="Clear Terminal Buffer"
-        menuLabel="Clear Terminal"
+        label="Clear Current Terminal"
+        menuLabel="Clear Current Terminal"
         desc="Clear terminal scrollback buffer"
         windowMode="main"/>
 

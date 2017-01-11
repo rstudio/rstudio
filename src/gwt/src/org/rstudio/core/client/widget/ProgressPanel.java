@@ -16,7 +16,8 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.widget.images.ProgressImages;
 
 public class ProgressPanel extends Composite
@@ -26,12 +27,12 @@ public class ProgressPanel extends Composite
       this(ProgressImages.createLarge());
    }
    
-   public ProgressPanel(Image progressImage)
+   public ProgressPanel(Widget progressImage)
    {
       this(progressImage, 100);
    }
    
-   public ProgressPanel(Image progressImage, int verticalOffset)
+   public ProgressPanel(Widget progressImage, int verticalOffset)
    { 
       progressImage_ = progressImage;
       HorizontalCenterPanel progressPanel = new HorizontalCenterPanel(
@@ -73,6 +74,6 @@ public class ProgressPanel extends Composite
       }
    }
 
-   private final Image progressImage_ ;
+   private final Widget progressImage_ ;
    private Timer timer_;
 }

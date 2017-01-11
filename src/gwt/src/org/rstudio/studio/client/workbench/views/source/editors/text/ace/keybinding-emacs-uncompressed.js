@@ -638,9 +638,8 @@ var screenToTextBlockCoordinates = function(x, y) {
     var col = Math.floor(
         (x + this.scrollLeft - canvasPos.left - this.$padding) / this.characterWidth
     );
-    var row = Math.floor(
-        (y + this.scrollTop - canvasPos.top) / this.lineHeight
-    );
+
+    var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
 
     return this.session.screenToDocumentPosition(row, col);
 };

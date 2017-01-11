@@ -294,6 +294,18 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       return completionPosition_;
    }
    
+   public boolean selectPrev()
+   {
+      menuBar_.moveSelectionUp();
+      return true;
+   }
+   
+   public boolean selectNext()
+   {
+      menuBar_.moveSelectionDown();
+      return true;
+   }
+   
    private final DocDisplay docDisplay_;
    private final CompletionPosition completionPosition_;
    private JsArray<CppCompletion> completions_;

@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import java.util.HashMap;
-
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -25,22 +23,21 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 
+/**
+ * Drop-down menu used in terminal pane. Has commands, and a list of 
+ * terminal sessions.
+ */
 public class TerminalPopupMenu extends ToolbarPopupMenu
-                               implements TerminalSessionStartedEvent.Handler,
-                                          TerminalSessionStoppedEvent.Handler
 {
-   public TerminalPopupMenu()
+   public TerminalPopupMenu(TerminalList terminals)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      eventBus_.addHandler(TerminalSessionStartedEvent.TYPE, this);
-      eventBus_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
+      terminals_ = terminals;
    }
 
    @Inject
@@ -59,36 +56,48 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       addItem(commands_.newTerminal().createMenuItem(false));
       addSeparator();
 
-      if (terminals_.size() > 0)
+      if (terminals_.terminalCount() > 0)
       {
-         for (final java.util.Map.Entry<String, String> item : terminals_.entrySet())
+         for (final String handle : terminals_)
          {
             Scheduler.ScheduledCommand cmd = new Scheduler.ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(new SwitchToTerminalEvent(item.getKey()));
+                  eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
                }
             };
 
+            String caption = trimCaption(terminals_.getCaption(handle));
+            if (caption == null)
+            {
+               continue;
+            }
+
+            // visual indicator that terminal has processes running
+            if (terminals_.getHasSubprocs(handle))
+            {
+               caption = caption + "*";
+            }
+
             String menuHtml = AppCommand.formatMenuLabel(
-                  null,            /*icon*/
-                  item.getValue(), /*label*/
-                  false,           /*html*/
-                  null,            /*shortcut*/
-                  null,            /*rightImage*/
-                  null);           /*rightImageDesc*/
+                  null,              /*icon*/
+                  caption,           /*label*/
+                  false,             /*html*/
+                  null,              /*shortcut*/
+                  null,              /*rightImage*/
+                  null);             /*rightImageDesc*/
             addItem(new MenuItem(menuHtml, true, cmd));
          }
+         addSeparator();
+         addItem(commands_.renameTerminal().createMenuItem(false));
+         addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
          addSeparator();
          addItem(commands_.closeTerminal().createMenuItem(false));
       }
 
-      // TODO (gary) put these back once implemented
-      // addItem(commands_.renameTerminal().createMenuItem(false));
-      // addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
-      
+
       callback.onPopupMenu(this);
    }
    
@@ -111,14 +120,14 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    
    /**
     *       
-    * @param title title of the active terminal
+    * @param caption caption of the active terminal
     * @param handle handle of the active terminal
     */
-   public void setActiveTerminal(String title, String handle)
+   public void setActiveTerminal(String caption, String handle)
    {
-      activeTerminalTitle_ = title;
+      activeTerminalCaption_ = caption;
       activeTerminalHandle_ = handle;
-      toolbarButton_.setText(activeTerminalTitle_);
+      toolbarButton_.setText(trimCaption(activeTerminalCaption_));
    }
    
    /**
@@ -129,29 +138,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
       setActiveTerminal("Terminal", null);
    }
 
-   private void addTerminal(String title, String handle)
-   {
-      terminals_.put(handle, title);
-   }
-   
-   private void removeTerminal(String handle)
-   {
-      terminals_.remove(handle);
-   }
-   
-   @Override
-   public void onTerminalSessionStarted(TerminalSessionStartedEvent event)
-   {
-      addTerminal(event.getTerminalWidget().getTitle(),
-            event.getTerminalWidget().getHandle());
-   }
-    
-   @Override
-   public void onTerminalSessionStopped(TerminalSessionStoppedEvent event)
-   {
-      removeTerminal(event.getTerminalWidget().getHandle());
-   }
-   
    /**
     * @return Handle of active terminal, or null if no active terminal.
     */
@@ -159,15 +145,24 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       return activeTerminalHandle_;
    }
-   
+
+   private String trimCaption(String caption)
+   {
+      // TODO (gary) look at doing this via css text-overflow
+      // when I do the theming work
+
+      // Enforce a sane visual limit on terminal captions
+      if (caption.length() > 32)
+      {
+         caption = caption.substring(0, 31) + "...";
+      }
+      return caption;
+   }
+
    private ToolbarButton toolbarButton_;
    private Commands commands_;
    private EventBus eventBus_;
-   private String activeTerminalTitle_;
+   private String activeTerminalCaption_;
    private String activeTerminalHandle_;
-   
-   /**
-    * map of terminal handles to titles
-    */
-   private HashMap<String, String> terminals_ = new HashMap<String, String>();
+   private TerminalList terminals_;
 }

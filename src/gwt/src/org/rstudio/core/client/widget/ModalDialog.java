@@ -92,6 +92,12 @@ public abstract class ModalDialog<T> extends ModalDialogBase
       
       commonInit(caption, okButton, cancelOperation);
    }
+
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+   }
    
    private void commonInit(String caption,
                            ThemedButton okButton,

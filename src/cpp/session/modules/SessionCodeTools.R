@@ -1584,10 +1584,11 @@
 .rs.addFunction("getSetRefClassSymbols", function(callString)
 {
    parsed <- .rs.rpc.get_set_ref_class_call(callString)
-   as.character(c(
+   unique(as.character(c(
+      ".self",
       parsed$field.names,
       parsed$method.names
-   ))
+   )))
 })
 
 .rs.addFunction("getR6ClassSymbols", function(callString)

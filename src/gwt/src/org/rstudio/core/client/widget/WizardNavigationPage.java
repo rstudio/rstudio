@@ -17,25 +17,53 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
-
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 
 public class WizardNavigationPage<I,T> extends WizardPage<I,T>
 {
-   public WizardNavigationPage(String title, 
-                               String subTitle, 
-                               String pageCaption, 
+   public interface WizardNavigationPageProducer<I,T>
+   {
+      public Widget createMainWidget(ArrayList<WizardPage<I,T>> pages);
+   }
+   
+   public WizardNavigationPage(String title,
+                               String subTitle,
+                               String pageCaption,
                                ImageResource image,
                                ImageResource largeImage,
                                ArrayList<WizardPage<I,T>> pages)
    {
-      super(title, 
-            subTitle, 
-            pageCaption, 
-            image, 
+      this(title,
+           subTitle,
+           pageCaption,
+           image,
+           largeImage,
+           pages,
+           new WizardNavigationPageProducer<I, T>()
+           {
+              @Override
+              public Widget createMainWidget(ArrayList<WizardPage<I, T>> pages)
+              {
+                 return new WizardPageSelector<I, T>(pages);
+              }
+           });
+   }
+   
+   public WizardNavigationPage(String title,
+                               String subTitle,
+                               String pageCaption,
+                               ImageResource image,
+                               ImageResource largeImage,
+                               ArrayList<WizardPage<I,T>> pages,
+                               WizardNavigationPageProducer<I,T> producer)
+   {
+      super(title,
+            subTitle,
+            pageCaption,
+            image,
             largeImage,
-            new WizardPageSelector<I,T>(pages));
+            producer.createMainWidget(pages));
       
       pages_ = pages;
    }
@@ -43,8 +71,12 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
    @SuppressWarnings("unchecked")
    public void setSelectionHandler(CommandWithArg<WizardPage<I,T>> onSelected)
    {
-      ((WizardPageSelector<I,T>)getWidget()).setSelectionHandler(
-                                                                  onSelected);
+      Widget widget = getWidget();
+      if (widget instanceof HasWizardPageSelectionHandler<?,?>)
+      {
+         HasWizardPageSelectionHandler<I,T> selector = (HasWizardPageSelectionHandler<I,T>) widget;
+         selector.setSelectionHandler(onSelected);
+      }
    }
 
    public ArrayList<WizardPage<I,T>> getSubPages()

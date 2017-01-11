@@ -22,7 +22,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.ListUtil;
@@ -33,14 +32,14 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
-import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchListManager;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -55,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnec
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
@@ -62,15 +62,11 @@ import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
-import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
-import org.rstudio.studio.client.workbench.views.connections.model.SparkVersion;
-import org.rstudio.studio.client.workbench.views.connections.ui.InstallInfoPanel;
-import org.rstudio.studio.client.workbench.views.connections.ui.ComponentsNotInstalledDialogs;
-import org.rstudio.studio.client.workbench.views.connections.ui.NewSparkConnectionDialog;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.events.NewDocumentWithCodeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 public class ConnectionsPresenter extends BasePresenter  
                                   implements PerformConnectionEvent.Handler,
@@ -90,6 +86,9 @@ public class ConnectionsPresenter extends BasePresenter
       
       HandlerRegistration addExploreConnectionHandler(
                                        ExploreConnectionEvent.Handler handler); 
+      
+      HandlerRegistration addExecuteConnectionActionHandler(
+            ExecuteConnectionActionEvent.Handler handler);
       
       void showConnectionExplorer(Connection connection, String connectVia);
       void setExploredConnection(Connection connection);
@@ -115,7 +114,8 @@ public class ConnectionsPresenter extends BasePresenter
                                Binder binder,
                                final Commands commands,
                                WorkbenchListManager listManager,
-                               Session session)
+                               Session session,
+                               ApplicationInterrupt applicationInterrupt)
    {
       super(display);
       binder.bind(commands, this);
@@ -125,6 +125,7 @@ public class ConnectionsPresenter extends BasePresenter
       uiPrefs_ = uiPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
+      applicationInterrupt_ = applicationInterrupt;
          
       // search filter
       display_.addSearchFilterChangeHandler(new ValueChangeHandler<String>() {
@@ -152,7 +153,20 @@ public class ConnectionsPresenter extends BasePresenter
          {
             showAllConnections(true);
          }
+      });
+      
+      
+      display_.addExecuteConnectionActionHandler(
+            new ExecuteConnectionActionEvent.Handler()
+      {
          
+         @Override
+         public void onExecuteConnectionAction(
+               ExecuteConnectionActionEvent event)
+         {
+            server_.connectionExecuteAction(event.getConnectionId(), 
+                  event.getAction(), new VoidServerRequestCallback());
+         }
       });
       
       // events
@@ -248,121 +262,51 @@ public class ConnectionsPresenter extends BasePresenter
    {
       updateActiveConnections(event.getActiveConnections());
    }
+
+   private void showError(String errorMessage)
+   {
+      globalDisplay_.showErrorMessage("Error", errorMessage);
+   }
    
    public void onNewConnection()
    {
+      // if r session bussy, fail
+      if (commands_.interruptR().isEnabled()) {
+        showError(
+          "The R session is currently busy. Wait for completion or " +
+          "interrupt the current session and retry.");
+        return;
+      }
+
       // get the context
-      server_.getNewSparkConnectionContext(
-         new DelayedProgressRequestCallback<NewSparkConnectionContext>(
+      server_.getNewConnectionContext(
+         new DelayedProgressRequestCallback<NewConnectionContext>(
                                                    "New Connection...") {
    
             @Override
-            protected void onSuccess(final NewSparkConnectionContext context)
+            protected void onSuccess(final NewConnectionContext context)
             {
-               // prompt for no java installed
-               if (!context.isJavaInstalled())
-               {
-                  ComponentsNotInstalledDialogs.showJavaNotInstalled(context.getJavaInstallUrl());
-               }
+                // show dialog
+               NewConnectionWizard newConnectionWizard = new NewConnectionWizard(
+                 context,
+                 new ProgressOperationWithInput<ConnectionOptions>() {
+                    @Override
+                    public void execute(ConnectionOptions result,
+                                        ProgressIndicator indicator)
+                    {
+                       indicator.onCompleted();
+
+                       eventBus_.fireEvent(new PerformConnectionEvent(
+                          result.getConnectVia(),
+                          result.getConnectCode())
+                       );
+                    }
+                 }
+               );
                
-               // prompt for no spark installed
-               else if (!context.getLocalConnectionsSupported() &&
-                        !context.getClusterConnectionsSupported())
-               {
-                  ComponentsNotInstalledDialogs.showSparkHomeNotDefined();
-               }
-               
-               // otherwise proceed with connecting
-               else
-               {
-                  // show dialog
-                  new NewSparkConnectionDialog(
-                   context,
-                   new OperationWithInput<ConnectionOptions>() {
-                     @Override
-                     public void execute(final ConnectionOptions result)
-                     {
-                        withRequiredSparkInstallation(
-                              result.getSparkVersion(),
-                              result.getRemote(),
-                              context.getSparkHome() != null,
-                              new Command() {
-                                 @Override
-                                 public void execute()
-                                 {
-                                    eventBus_.fireEvent(new PerformConnectionEvent(
-                                          result.getConnectVia(),
-                                          result.getConnectCode()));
-                                 }
-                                 
-                              });
-                     }
-                  }).showModal();
-               }
+               newConnectionWizard.showModal();
             }
          });      
-   }
-   
-   
-   private void withRequiredSparkInstallation(final SparkVersion sparkVersion,
-                                              boolean remote,
-                                              boolean hasSparkHome,
-                                              final Command command)
-   {
-      // if there is no spark version then just execute immediately
-      if (sparkVersion == null)
-      {
-         command.execute();
-         return;
-      }
-      
-      if (!sparkVersion.isInstalled() && !hasSparkHome)
-      {
-         globalDisplay_.showYesNoMessage(
-            MessageDialog.QUESTION, 
-            "Install Spark Components",
-            InstallInfoPanel.getInfoText(sparkVersion, remote, true),
-            false,
-            new Operation() {  public void execute() {
-               server_.installSpark(
-                 sparkVersion.getSparkVersionNumber(),
-                 sparkVersion.getHadoopVersionNumber(),
-                 new SimpleRequestCallback<ConsoleProcess>(){
-
-                    @Override
-                    public void onResponseReceived(ConsoleProcess process)
-                    {
-                       final ConsoleProgressDialog dialog = 
-                             new ConsoleProgressDialog(process, server_);
-                       dialog.showModal();
-           
-                       process.addProcessExitHandler(
-                          new ProcessExitEvent.Handler()
-                          {
-                             @Override
-                             public void onProcessExit(ProcessExitEvent event)
-                             {
-                                if (event.getExitCode() == 0)
-                                {
-                                   dialog.hide();
-                                   command.execute();
-                                } 
-                             }
-                          }); 
-                    }
-
-               });   
-            }},
-            null,
-            null,
-            "Install",
-            "Cancel",
-            true);
-      }
-      else
-      {
-         command.execute();
-      }
    }
    
    @Override
@@ -430,7 +374,7 @@ public class ConnectionsPresenter extends BasePresenter
                               globalDisplay_, 100, "Previewing table...");
       
       server_.connectionPreviewTable(
-         exploredConnection_, 
+         exploredConnection_.getId(), 
          event.getDataset(),
          new VoidServerRequestCallback(progress.getIndicator())); 
    }
@@ -476,7 +420,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.getDisconnectCode(exploredConnection_, 
+            server_.getDisconnectCode(exploredConnection_.getId(), 
                   new SimpleRequestCallback<String>() {
                @Override
                public void onResponseReceived(String disconnectCode)
@@ -513,36 +457,6 @@ public class ConnectionsPresenter extends BasePresenter
       
       display_.updateExploredConnection("");
    }
-   
-   
-   @Handler
-   public void onSparkLog()
-   {
-      if (exploredConnection_ == null)
-         return;
-      
-      server_.showSparkLog(exploredConnection_, 
-                           new VoidServerRequestCallback());
-      
-   }
-   
-   @Handler
-   public void onSparkUI()
-   {
-      if (exploredConnection_ == null)
-         return;
-      
-      server_.showSparkUI(exploredConnection_, 
-                          new VoidServerRequestCallback());
-      
-   }
-   
-   @Handler
-   public void onSparkHelp()
-   {
-      globalDisplay_.openRStudioLink("using_spark", false);
-   }
-   
    
    private void showAllConnections(boolean animate)
    {
@@ -598,16 +512,14 @@ public class ConnectionsPresenter extends BasePresenter
          boolean connected = isConnected(exploredConnection_.getId());
          commands_.removeConnection().setVisible(!connected);
          commands_.disconnectConnection().setVisible(connected);
-         commands_.sparkLog().setVisible(connected);
-         commands_.sparkUI().setVisible(connected);
+         // TODO: show connection actions
          commands_.refreshConnection().setVisible(connected);
       }
       else
       {
          commands_.removeConnection().setVisible(false);
          commands_.disconnectConnection().setVisible(false);
-         commands_.sparkLog().setVisible(false);
-         commands_.sparkUI().setVisible(false);
+         // TODO: hide connection actions
          commands_.refreshConnection().setVisible(false);
       }
    }
@@ -649,10 +561,11 @@ public class ConnectionsPresenter extends BasePresenter
    private final Commands commands_;
    private UIPrefs uiPrefs_;
    private final ConnectionsServerOperations server_ ;
+   @SuppressWarnings("unused") private final ApplicationInterrupt applicationInterrupt_;
    
    // client state
    public static final String MODULE_CONNECTIONS = "connections-pane";
-   private static final String KEY_EXPLORED_CONNECTION = "exploredConnection";
+   private static final String KEY_EXPLORED_CONNECTION = "exploredConnections";
    private Connection exploredConnection_;
    private Connection lastExploredConnection_;
    

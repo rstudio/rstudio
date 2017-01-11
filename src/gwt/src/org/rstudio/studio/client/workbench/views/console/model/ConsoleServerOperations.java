@@ -50,4 +50,29 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                             int width,
                             int height,
                             ServerRequestCallback<Void> requestCallback);
+
+   void processEraseBuffer(String handle,
+                           ServerRequestCallback<Void> requestCallback);
+
+   void processGetBuffer(String handle,
+                         ServerRequestCallback<String> requestCallback);
+
+   /**
+    * Set/update the caption of given process.
+    * @param handle process handle
+    * @param caption new caption
+    * @param requestCallback response
+    */
+   void processSetCaption(String handle,
+                          String caption,
+                          ServerRequestCallback<Void> requestCallback);
+   /**
+    * Set/update the title of given process.
+    * @param handle process handle
+    * @param title new title
+    * @param requestCallback response
+    */
+   void processSetTitle(String handle,
+                        String title,
+                        ServerRequestCallback<Void> requestCallback);
 }
