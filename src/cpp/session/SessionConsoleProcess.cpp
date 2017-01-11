@@ -52,6 +52,8 @@ namespace {
 
 const int kDefaultMaxOutputLines = 500;
 const int kNoTerminal = 0; // terminal sequence number for a non-terminal
+void saveConsoleProcesses(bool terminatedNormally = true);
+#define kConsoleIndex "INDEX"
 
 ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
@@ -510,7 +512,6 @@ void ConsoleProcess::onSuspend()
 
 void ConsoleProcess::onExit(int exitCode)
 {
-   deleteLogFile();
    exitCode_.reset(exitCode);
 
    json::Object data;
@@ -703,15 +704,19 @@ Error procReap(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   if (!s_procs.erase(handle))
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   if (pos != s_procs.end())
    {
-      return systemError(boost::system::errc::invalid_argument,
-                         ERROR_LOCATION);
+      pos->second->deleteLogFile();
+      if (s_procs.erase(handle))
+      {
+         saveConsoleProcesses();
+         return Success();
+      }
    }
-   else
-   {
-      return Success();
-   }
+   
+   return systemError(boost::system::errc::invalid_argument,
+                      ERROR_LOCATION);
 }
 
 Error procWriteStdin(const json::JsonRpcRequest& request,
@@ -802,6 +807,7 @@ Error procSetCaption(const json::JsonRpcRequest& request,
    }
    
    pos->second->setCaption(caption);
+   saveConsoleProcesses();
    return Success();
 }
 
@@ -894,6 +900,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             interactionMode,
                             maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
+   saveConsoleProcesses();
    return ptrProc;
 }
 
@@ -922,6 +929,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
                             interactionMode,
                             maxOutputLines));
    s_procs[ptrProc->handle()] = ptrProc;
+   saveConsoleProcesses();
    return ptrProc;
 }
 
@@ -960,6 +968,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
                                allowRestart, terminalHandle, dialog,
                                interactionMode, maxOutputLines));
       s_procs[ptrProc->handle()] = ptrProc;
+      saveConsoleProcesses();
       return ptrProc;
    }
    
@@ -1148,6 +1157,29 @@ void loadConsoleProcesses()
    }
 
    deserializeConsoleProcs(contents);
+
+   // Delete orphaned buffer files
+   std::vector<FilePath> children;
+   error = s_consoleProcPath.children(&children);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      // Don't erase the INDEX or any subfolders
+      if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
+         continue;
+
+      ProcTable::const_iterator pos = s_procs.find(child.filename());
+      if (pos == s_procs.end())
+      {
+         error = child.remove();
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
 }
 
 void saveConsoleProcesses(bool terminatedNormally)
@@ -1170,7 +1202,7 @@ Error initialize()
    Error error = s_consoleProcPath.ensureDirectory();
    if (error)
       return error;
-   s_consoleProcIndexPath = s_consoleProcPath.complete("INDEX");
+   s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
 
    events().onShutdown.connect(saveConsoleProcesses);
    loadConsoleProcesses();
