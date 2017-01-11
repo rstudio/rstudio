@@ -1018,16 +1018,16 @@ var addResizeHandlers = function(ele) {
       }
 
       // adjust header width and width of first column
-      $("#data_cols th:nth-child(" + (col + 1) + ")").width(colWidth);
+      $("#data_cols th:nth-child(" + col + ")").width(colWidth);
       grid.width(initTableWidth + delta);
 
       // record manual width for re-apply on redraw
-      manualWidths[col] = colWidth;
+      manualWidths[col - (rowNumbers ? 1 : 0)] = colWidth;
    };
 
    var endResize = function() {
       // end the resize operation
-      $("#rsGridData td:nth-child(" + (col + 1) + ")").css(
+      $("#rsGridData td:nth-child(" + col + ")").css(
          "border-right-color", "");
       col = null;
    };
@@ -1038,11 +1038,16 @@ var addResizeHandlers = function(ele) {
          // when the mouse is clicked on the resizer, enter resize mode; figure
          // out which column we're targeting and set up the initial sizes
          col = parseInt(original.target.getAttribute("data-col"));
+
+         // account for row names column
+         if (rowNumbers)
+            col++;
+
          initX = original.clientX;
-         initColWidth = $("#data_cols th:nth-child(" + (col + 1) + ")").width();
+         initColWidth = $("#data_cols th:nth-child(" + col + ")").width();
          initTableWidth = $("#rsGridData").width();
          boundsExceeded = 0;
-         $("#rsGridData td:nth-child(" + (col + 1) + ")").css(
+         $("#rsGridData td:nth-child(" + col + ")").css(
             "border-right-color", "#A0A0FF");
       }
    });
