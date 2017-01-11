@@ -225,8 +225,6 @@ Error ConsoleProcess::start()
    if (started_)
       return Success();
 
-   // toggle potentially cached (and incorrect) busy state, to ensure we
-   // send one notification to the client
    Error error;
    if (!command_.empty())
    {
