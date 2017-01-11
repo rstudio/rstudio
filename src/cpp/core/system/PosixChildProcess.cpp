@@ -779,7 +779,7 @@ AsyncChildProcess::AsyncChildProcess(const std::string& exe,
    init(exe, args, options);
    if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
    {
-      LOG_ERROR_MESSAGE(
+      LOG_WARNING_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with runProgram");
    }
 }
