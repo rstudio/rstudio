@@ -291,8 +291,13 @@ th:focus {
 .manualSize .numberCell, .manualSize .textCell {
     max-width: 100%;
 }
-.manualSize {
+
+.manualSize, .autoSize {
     table-layout: fixed;
+}
+
+#rsGridData.manualSize {
+    display: table;
 }
 
 .cell {

@@ -316,21 +316,23 @@ var postDrawCallback = function() {
   }
 
   // re-apply manual column sizes to the cells in the first row
-  var cols = $("#rsGridData tr:nth-child(1) td");
+  var bcols = $(".dataTables_scrollBody #data_cols th");
+  var hcols = $(".dataTables_scrollHead #data_cols th");
   var delta = 0;
   for (var i = 0; i < cols.length; i++) {
      if (typeof(manualWidths[i]) === "undefined")
         continue;
-     var col = cols.eq(i);
+     var col = bcols.eq(i);
      delta += manualWidths[i] - col.width();
      col.width(manualWidths[i]);
+     hcols.eq(i).width(manualWidths[i]);
   }
 
   // adjust table if some column sizes differed from their natural size
   if (delta !== 0) {
      $("#rsGridData").width($("#rsGridData").width() + delta);
   }
-
+  
   // Check to see whether the header widths are out of sync after drawing --
   // unfortunately this is a possibility since DataTables doesn't know the
   // width of the table until after the draw is complete. If the widths don't
@@ -978,8 +980,8 @@ var addResizeHandlers = function(ele) {
          
          // observe and manually apply column widths in preparation for 
          // transition to a fixed layout
-         var head = $("#dataTables_scrollHead #data_cols th");
-         var body = $("#dataTables_scrollBody #data_cols th");
+         var head = $(".dataTables_scrollHead #data_cols th");
+         var body = $(".dataTables_scrollBody #data_cols th");
          for (var i = 0; i < Math.min(head.length, body.length); i++) {
             var thHead = head.eq(i), thBody = body.eq(i);
             thHead.width(thHead.width());
