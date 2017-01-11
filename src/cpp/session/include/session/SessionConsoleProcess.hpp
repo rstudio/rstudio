@@ -236,6 +236,9 @@ private:
    // Does this process have child processes?
    bool childProcs_;
 
+   // Has client been notified of state of childProcs_ at least once?
+   bool childProcsSent_;
+
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
 

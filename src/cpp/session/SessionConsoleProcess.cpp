@@ -59,7 +59,8 @@ ConsoleProcess::ConsoleProcess()
    : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines), started_(true),
      interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     allowRestart_(false), childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     allowRestart_(false), childProcs_(true), childProcsSent_(false),
+     outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    regexInit();
 
@@ -82,7 +83,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), childProcsSent_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -103,7 +104,7 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), childProcsSent_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -123,7 +124,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
      interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
      handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), outputBuffer_(OUTPUT_BUFFER_SIZE)
+     childProcs_(true), childProcsSent_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
 {
    commonInit();
 }
@@ -224,6 +225,8 @@ Error ConsoleProcess::start()
    if (started_)
       return Success();
 
+   // toggle potentially cached (and incorrect) busy state, to ensure we
+   // send one notification to the client
    Error error;
    if (!command_.empty())
    {
@@ -525,7 +528,7 @@ void ConsoleProcess::onExit(int exitCode)
 
 void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
 {
-   if (hasSubprocs != childProcs_)
+   if (hasSubprocs != childProcs_ || !childProcsSent_)
    {
       childProcs_ = hasSubprocs;
 
@@ -534,6 +537,7 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
       subProcs["subprocs"] = childProcs_;
       module_context::enqueClientEvent(
             ClientEvent(client_events::kTerminalSubprocs, subProcs));
+      childProcsSent_ = true;
    }
 }
 
