@@ -1,7 +1,7 @@
 /*
  * SessionDirs.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,12 +50,18 @@ FilePath getInitialWorkingDirectory()
    // check for working dir in project none
    else if (options().sessionScope().isProjectNone())
    {
-      FilePath workingDirPath = module_context::resolveAliasedPath(
-                      module_context::activeSession().workingDir());
-      if (workingDirPath.exists())
-         return workingDirPath;
-      else
-         return getDefaultWorkingDirectory();
+		// see if the active session has a working dir
+      using namespace module_context;
+      std::string sessionWorkingDir = activeSession().workingDir();
+      if (!sessionWorkingDir.empty())
+      {
+         FilePath workingDirPath = resolveAliasedPath(sessionWorkingDir);
+         if (workingDirPath.exists())
+            return workingDirPath;
+      }
+
+      // otherwise return default working dir
+      return getDefaultWorkingDirectory();
    }
 
    // see if there is an override from the environment (perhaps based
