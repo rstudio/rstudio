@@ -975,7 +975,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                       allowRestart,
                                       isModalDialog,
                                       InteractionAlways,
-                                      console_process::kDefaultMaxOutputLines);
+                                      console_process::kDefaultTerminalMaxOutputLines);
 
    ptrProc->onExit().connect(boost::bind(
                               &source_control::enqueueRefreshEvent));

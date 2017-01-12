@@ -46,6 +46,7 @@ enum InteractionMode
 };
 
 extern const int kDefaultMaxOutputLines;
+extern const int kDefaultTerminalMaxOutputLines;
 extern const int kNoTerminal;
 
 class ConsoleProcess : boost::noncopyable,
