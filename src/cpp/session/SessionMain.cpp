@@ -345,6 +345,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    module_context::registerWaitForMethod(kChooseFileCompleted);
    module_context::registerWaitForMethod(kUserPromptCompleted);
    module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
+   module_context::registerWaitForMethod(kRStudioAPIShowDialog);
 
    // execute core initialization functions
    using boost::bind;

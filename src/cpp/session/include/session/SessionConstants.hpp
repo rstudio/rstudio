@@ -90,7 +90,8 @@ const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_comp
 const char * const kQuitSession = "quit_session" ;   
 const char * const kSuspendSession = "suspend_session";
 const char * const kInterrupt = "interrupt";
-const char * const kConsoleInput = "console_input" ;
+const char * const kConsoleInput = "console_input";
+const char * const kRStudioAPIShowDialog = "rstudio_api_show_dialog";
 
 #endif // SESSION_CONSTANTS_HPP
 
