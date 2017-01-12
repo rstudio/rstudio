@@ -22,7 +22,7 @@ namespace fork {
 
 void setupForkHandlers();
 bool wasForked();
-bool haveRunningChildren();
+bool haveActiveChildren();
 void initThreadId();
 
 } // namespace fork

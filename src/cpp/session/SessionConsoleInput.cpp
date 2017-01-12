@@ -83,7 +83,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 
 bool canSuspend(const std::string& prompt)
 {
-   return !fork::haveRunningChildren() && 
+   return !fork::haveActiveChildren() && 
           modules::connections::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
