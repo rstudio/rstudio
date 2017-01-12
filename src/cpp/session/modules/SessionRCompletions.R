@@ -2531,7 +2531,7 @@ assign(x = ".rs.acCompletionTypes",
    # remove 'base' element if it's just TRUE
    if (length(importCompletions))
    {
-      if (isTRUE(importCompletions$base))
+      if (isTRUE(importCompletions[["base"]]))
          importCompletions$base <- NULL
    }
    
