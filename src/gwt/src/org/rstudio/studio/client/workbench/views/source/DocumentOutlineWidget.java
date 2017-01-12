@@ -266,6 +266,7 @@ public class DocumentOutlineWidget extends Composite
             if (target_.getDocDisplay().isScopeTreeReady(event.getPosition().getRow()))
             {
                currentScope_ = target_.getDocDisplay().getCurrentScope();
+               currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
                resetTreeStyles();
             }
          }
@@ -325,6 +326,7 @@ public class DocumentOutlineWidget extends Composite
    {
       scopeTree_ = scopeTree;
       currentScope_ = currentScope;
+      currentVisibleScope_ = getCurrentVisibleScope(currentScope_);
       
       if (scopeTree_.length() == 0)
       {
@@ -405,9 +407,9 @@ public class DocumentOutlineWidget extends Composite
       if (node.isNamespace())
          return false;
       
-      // don't show R functions or R sections in non-R files
+      // don't show R functions or R sections in .Rmd unless requested
       TextFileType fileType = target_.getDocDisplay().getFileType();
-      if (!fileType.isR())
+      if (!shownSectionsPref.equals(UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL) && fileType.isRmd())
       {
          if (node.isFunction())
             return false;
@@ -416,7 +418,7 @@ public class DocumentOutlineWidget extends Composite
             return false;
       }
       
-      // Filter out anonymous functions.
+      // filter out anonymous functions
       // TODO: Annotate scope tree in such a way that this isn't necessary
       if (node.getLabel() != null && node.getLabel().startsWith("<function>"))
          return false;
@@ -444,16 +446,22 @@ public class DocumentOutlineWidget extends Composite
    
    private void setTreeItemStyles(DocumentOutlineTreeItem item)
    {
-      item.addStyleName(RES.styles().node());
-
-      // Figure out if this node is active, or the parent of an active node.
       Scope node = item.getEntry().getScopeNode();
+      item.addStyleName(RES.styles().node());
       DomUtils.toggleClass(item.getElement(), RES.styles().activeNode(), isActiveNode(node));
+   }
+   
+   private Scope getCurrentVisibleScope(Scope node)
+   {
+      for (; node != null && !node.isTopLevel(); node = node.getParentScope())
+         if (shouldDisplayNode(node))
+            return node;
+      return null;
    }
    
    private boolean isActiveNode(Scope node)
    {
-      return node.equals(currentScope_);
+      return node != null && node.equals(currentVisibleScope_);
    }
    
    private final DockLayoutPanel container_;
@@ -467,6 +475,7 @@ public class DocumentOutlineWidget extends Composite
    
    private JsArray<Scope> scopeTree_;
    private Scope currentScope_;
+   private Scope currentVisibleScope_;
    
    private UIPrefs uiPrefs_;
    

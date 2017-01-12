@@ -56,10 +56,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
 
 public class CompletionRequester
 {
@@ -187,31 +184,24 @@ public class CompletionRequester
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
          
          @Override
-         public int compare(QualifiedName lhs,
-                            QualifiedName rhs)
+         public int compare(QualifiedName lhs, QualifiedName rhs)
          {
-            int lhsScore;
-            if (RCompletionType.isFileType(lhs.type))
-               lhsScore = CodeSearchOracle.scoreMatch(
-                     basename(lhs.name), tokenSub, true);
-            else
-               lhsScore = CodeSearchOracle.scoreMatch(lhs.name, token, false);
+            int lhsScore = RCompletionType.isFileType(lhs.type)
+                  ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
+                  : CodeSearchOracle.scoreMatch(lhs.name, token, false);
             
-            int rhsScore;
-            if (RCompletionType.isFileType(rhs.type))
-               rhsScore = CodeSearchOracle.scoreMatch(
-                     basename(rhs.name), tokenSub, true);
-            else
-               rhsScore = CodeSearchOracle.scoreMatch(rhs.name, token, false);
+            int rhsScore = RCompletionType.isFileType(rhs.type)
+               ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
+               : CodeSearchOracle.scoreMatch(rhs.name, token, false);
             
             // Place arguments higher (give less penalty)
             if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
             if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
-
+            
             if (lhsScore == rhsScore)
-               return lhs.name.length() - rhs.name.length();
-            else
-               return lhsScore < rhsScore ? -1 : 1;
+               return lhs.compareTo(rhs);
+            
+            return lhsScore < rhsScore ? -1 : 1;
          }
       });
       
@@ -305,7 +295,7 @@ public class CompletionRequester
       ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
       }
 
       CompletionResult result = new CompletionResult(
@@ -392,7 +382,7 @@ public class CompletionRequester
             // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
                if (comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
             
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
@@ -411,7 +401,7 @@ public class CompletionRequester
             // Get other server completions
             for (int i = 0; i < comp.length(); i++)
                if (!comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), response.getHelpHandler()));
             
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
@@ -444,20 +434,35 @@ public class CompletionRequester
    {
       ArrayList<QualifiedName> result =
             new ArrayList<QualifiedName>();
+      result.addAll(completions);
       
-      Set<String> visitedItems = new HashSet<String>();
-      
-      for (int i = 0, n = completions.size(); i < n; i++)
+      // sort the results by name and type for efficient processing
+      Collections.sort(completions, new Comparator<QualifiedName>()
       {
-         QualifiedName name = completions.get(n - i - 1);
-         if (visitedItems.contains(name.name))
-            continue;
+         @Override
+         public int compare(QualifiedName o1, QualifiedName o2)
+         {
+            int name = o1.name.compareTo(o2.name);
+            if (name != 0)
+               return name;
+            return o1.type - o2.type;
+         }
+      });
+      
+      // walk backwards through the list and remove elements which have the 
+      // same name and type
+      for (int i = completions.size() - 1; i > 0; i--)
+      {
+         QualifiedName o1 = completions.get(i);
+         QualifiedName o2 = completions.get(i - 1);
          
-         result.add(name);
-         visitedItems.add(name.name);
+         // remove qualified names which have the same name and type (allow
+         // shadowing of contextual results to reduce confusion)
+         if (o1.name == o2.name && 
+             (o1.type == o2.type || o1.type == RCompletionType.CONTEXT))
+            result.remove(o1);
       }
       
-      Collections.reverse(result);
       return result;
    }
    
@@ -687,7 +692,8 @@ public class CompletionRequester
                   "",
                   false,
                   false,
-                  true);
+                  true,
+                  null);
             
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -740,14 +746,21 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      
       public QualifiedName(
             String name, String source, boolean shouldQuote, int type)
+      {
+         this(name, source, shouldQuote, type, null);
+      }
+      
+      public QualifiedName(
+            String name, String source, boolean shouldQuote, int type, String helpHandler)
       {
          this.name = name;
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
+         this.helpHandler = helpHandler;
+         
       }
       
       public QualifiedName(String name, String source)
@@ -756,6 +769,7 @@ public class CompletionRequester
          this.source = source;
          this.shouldQuote = false;
          this.type = RCompletionType.UNKNOWN;
+         this.helpHandler = null;
       }
       
       public static QualifiedName createSnippet(String name)
@@ -764,7 +778,8 @@ public class CompletionRequester
                name,
                "snippet",
                false,
-               RCompletionType.SNIPPET);
+               RCompletionType.SNIPPET,
+               null);
       }
       
       @Override
@@ -849,9 +864,12 @@ public class CompletionRequester
                RES.styles().completion(),
                name);
 
-         // Display the source for functions and snippets
-         if (RCompletionType.isFunctionType(type) ||
-             type == RCompletionType.SNIPPET)
+         // Display the source for functions and snippets (unless there
+         // is a custom helpHandler provided, indicating that the "source"
+         // isn't a package but rather some custom DollarNames scope)
+         if ((RCompletionType.isFunctionType(type) ||
+             type == RCompletionType.SNIPPET) &&
+             helpHandler == null)
          {
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -969,6 +987,7 @@ public class CompletionRequester
       public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
+      public final String helpHandler;
       private static final FileTypeRegistry FILE_TYPE_REGISTRY =
             RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }

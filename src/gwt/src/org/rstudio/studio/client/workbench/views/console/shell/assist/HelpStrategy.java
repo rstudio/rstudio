@@ -43,16 +43,26 @@ public class HelpStrategy
    
    public void showHelpTopic(final QualifiedName selectedItem)
    {
-      server_.showHelpTopic(
+      if (selectedItem.helpHandler != null)
+      {
+         server_.showCustomHelpTopic(selectedItem.helpHandler, 
+                                     selectedItem.name,
+                                     selectedItem.source);
+         
+      }
+      else
+      {
+         server_.showHelpTopic(
             selectedItem.name,
             selectedItem.source,
             selectedItem.type);
+      }
    }
    
    public void showHelp(final QualifiedName item,
                         final CompletionPopupDisplay display)
    {
-      switch (item.type)
+     switch (item.type)
       {
          case RCompletionType.PACKAGE:
             showPackageHelp(item, display);
@@ -71,7 +81,7 @@ public class HelpStrategy
    {
       cache_.clear();
    }
-   
+    
    private void showDefaultHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
@@ -82,35 +92,71 @@ public class HelpStrategy
          return;
       }
       
-      server_.getHelp(selectedItem.name,
-                      selectedItem.source,
-                      selectedItem.type,
-                      new ServerRequestCallback<HelpInfo>() {
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Error Retrieving Help", error.getUserMessage());
-            display.clearHelp(false) ;
-         }
-
-         public void onResponseReceived(HelpInfo result)
-         {
-            if (result != null)
+      if (selectedItem.helpHandler != null)
+      {
+         // call server
+         server_.getCustomHelp(selectedItem.helpHandler,
+                               selectedItem.name,
+                               selectedItem.source,
+                               new ServerRequestCallback<HelpInfo.Custom>() {
+            @Override
+            public void onError(ServerError error)
             {
-               HelpInfo.ParsedInfo help = result.parse(selectedItem.name) ;
-               if (help.hasInfo())
-               {
-                  cache_.put(selectedItem, help);
-                  display.displayHelp(help) ;
-                  return;
-               }
+               Debug.logError(error);
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                     "Error Retrieving Help", error.getUserMessage());
+               display.clearHelp(false) ;
             }
-            display.setHelpVisible(false);
-            display.clearHelp(false) ;
-         }
-      }) ;
+
+            public void onResponseReceived(HelpInfo.Custom result)
+            {
+               if (result != null)
+               {
+                  HelpInfo.ParsedInfo help = result.toParsedInfo();
+                  if (help.hasInfo())
+                  {
+                     cache_.put(selectedItem, help);
+                     display.displayHelp(help) ;
+                     return;
+                  }
+               }
+               display.setHelpVisible(false);
+               display.clearHelp(false) ;
+            }
+         }) ;
+      }
+      else
+      {
+         server_.getHelp(selectedItem.name,
+                         selectedItem.source,
+                         selectedItem.type,
+                         new ServerRequestCallback<HelpInfo>() {
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                     "Error Retrieving Help", error.getUserMessage());
+               display.clearHelp(false) ;
+            }
+   
+            public void onResponseReceived(HelpInfo result)
+            {
+               if (result != null)
+               {
+                  HelpInfo.ParsedInfo help = result.parse(selectedItem.name) ;
+                  if (help.hasInfo())
+                  {
+                     cache_.put(selectedItem, help);
+                     display.displayHelp(help) ;
+                     return;
+                  }
+               }
+               display.setHelpVisible(false);
+               display.clearHelp(false) ;
+            }
+         }) ;
+      }
 
    }
    
@@ -126,6 +172,36 @@ public class HelpStrategy
          return;
       }
 
+      if (selectedItem.helpHandler != null)
+      {
+         server_.getCustomParameterHelp(
+                               selectedItem.helpHandler,
+                               selectedItem.source,
+               new ServerRequestCallback<HelpInfo.Custom>() {
+            @Override
+            public void onError(ServerError error)
+            {
+               display.clearHelp(false) ;
+            }
+
+            public void onResponseReceived(HelpInfo.Custom response)
+            {
+               if (response != null)
+               {
+                  HelpInfo.ParsedInfo info = response.toParsedInfo();
+                  cache_.put(selectedItem, info);
+                  doShowParameterHelp(info, name, display);
+               }
+               else
+               {
+                  display.setHelpVisible(false);
+                  display.clearHelp(false) ;
+               }
+            }
+         }) ;
+      }
+      else
+      {
          server_.getHelp(selectedItem.source,
                          null,
                          selectedItem.type,
@@ -152,6 +228,7 @@ public class HelpStrategy
                }
             }
          }) ;
+      }
    }
    
    private void doShowParameterHelp(final ParsedInfo info,

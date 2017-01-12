@@ -19,10 +19,12 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarLabel;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -42,7 +44,7 @@ public class DataTable
       host_ = host;
    }
    
-   public void initToolbar(Toolbar toolbar)
+   public void initToolbar(Toolbar toolbar, boolean isPreview)
    {
       filterButton_ = new LatchingToolbarButton(
               "Filter",
@@ -63,6 +65,7 @@ public class DataTable
                  }
               });
       toolbar.addLeftWidget(filterButton_);
+      filterButton_.setVisible(!isPreview);
 
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
@@ -83,6 +86,15 @@ public class DataTable
       });
 
       toolbar.addRightWidget(searchWidget_);
+      searchWidget_.setVisible(!isPreview);
+      
+      if (isPreview)
+      {
+         ToolbarLabel label = 
+            new ToolbarLabel("(Displaying up to 1,000 records)");
+         label.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
+         toolbar.addRightWidget(label);
+      }
    }
    
    private WindowEx getWindow()

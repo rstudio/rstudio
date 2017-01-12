@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
+
 public interface ChunkOutputHost
 {
-   void onOutputHeightChanged(int height, boolean ensureVisible);
-   void onOutputRemoved();
+   void onOutputHeightChanged(ChunkOutputWidget widget, int height, boolean ensureVisible);
+
+   void onOutputRemoved(ChunkOutputWidget widget);
 }

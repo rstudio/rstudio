@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
@@ -53,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasD
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasLineWidgetsChangedHandlers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasRenderFinishedHandlers;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
@@ -65,6 +67,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.HasFocusHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -185,6 +188,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void setUseEmacsKeybindings(boolean use);
    boolean isEmacsModeOn();
+   void clearEmacsMark();
    
    void setUseVimMode(boolean use);
    boolean isVimModeOn();
@@ -209,17 +213,14 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setEditorCommandBinding(String id, List<KeySequence> keys);
    void resetCommands();
 
+   HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    HandlerRegistration addEditorFocusHandler(FocusHandler handler);
-   
    HandlerRegistration addCommandClickHandler(CommandClickEvent.Handler handler);
-   
    HandlerRegistration addFindRequestedHandler(FindRequestedEvent.Handler handler);
-   
    HandlerRegistration addCursorChangedHandler(CursorChangedHandler handler);
-   
    HandlerRegistration addEditorModeChangedHandler(EditorModeChangedEvent.Handler handler);
-   
    HandlerRegistration addSaveCompletedHandler(SaveFileHandler handler);
+   HandlerRegistration addPasteHandler(PasteEvent.Handler handler);
 
    boolean isScopeTreeReady(int row);
    HandlerRegistration addScopeTreeReadyHandler(ScopeTreeReadyEvent.Handler handler);
@@ -323,12 +324,22 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                             Position end);
 
    String getTextForRange(Range range);
-   TokenIterator getTokenIterator(Position pos);
+   
+   void tokenizeDocument();
+   void retokenizeDocument();
+   Token getTokenAt(int row, int column);
+   Token getTokenAt(Position position);
+   JsArray<Token> getTokens(int row);
+   
+   TokenIterator createTokenIterator();
+   TokenIterator createTokenIterator(Position position);
 
    Anchor createAnchor(Position pos);
    
    int getStartOfCurrentStatement();
    int getEndOfCurrentStatement();
+
+   Range getMultiLineExpr(Position pos, int startRow, int endRow);
    
    void highlightDebugLocation(
          SourcePosition startPos,
@@ -371,7 +382,10 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void splitIntoLines();
    
    Rectangle getPositionBounds(Position position);
+   Rectangle getRangeBounds(Range range);
+   
    Position toDocumentPosition(ScreenCoordinates coordinates);
+   ScreenCoordinates documentPositionToScreenCoordinates(Position position);
    Position screenCoordinatesToDocumentPosition(int pageX, int pageY);
    
    void forceImmediateRender();
@@ -391,6 +405,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllLineWidgets();
    void onLineWidgetChanged(LineWidget widget); 
    
+   boolean hasLineWidgets();
    JsArray<LineWidget> getLineWidgets();
    LineWidget getLineWidgetForRow(int row);
    

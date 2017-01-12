@@ -101,6 +101,26 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="shareProject"/>
          <separator/>
+         <menu label="_Import Dataset">
+            <cmd refid="importDatasetFromFile"/>
+            <cmd refid="importDatasetFromURL"/>
+            <cmd refid="importDatasetFromCSV"/>
+            <separator/>
+            <cmd refid="importDatasetFromXLS"/>
+            <separator/>
+            <cmd refid="importDatasetFromSAV"/>
+            <cmd refid="importDatasetFromSAS"/>
+            <cmd refid="importDatasetFromStata"/>
+            <separator/>
+            <cmd refid="importDatasetFromXML"/>
+            <cmd refid="importDatasetFromJSON"/>
+            <separator/>
+            <cmd refid="importDatasetFromJDBC"/>
+            <cmd refid="importDatasetFromODBC"/>
+            <separator/>
+            <cmd refid="importDatasetFromMongo"/>
+         </menu>
+         <separator/>
          <cmd refid="saveSourceDoc"/>
          <cmd refid="saveSourceDocAs"/>
          <cmd refid="saveSourceDocWithEncoding"/>
@@ -148,6 +168,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="notebookExpandAllOutput"/>
          <cmd refid="notebookCollapseAllOutput"/>
          <separator/>
+         <cmd refid="notebookClearOutput"/>
          <cmd refid="notebookClearAllOutput"/>
          <separator/>
          <cmd refid="goToLine"/>
@@ -267,6 +288,7 @@ well as menu structures (for main menu and popup menus).
          
          <cmd refid="activateSource"/>
          <cmd refid="activateConsole"/>
+         <cmd refid="activateTerminal"/>
          <cmd refid="activateHelp"/>
          <separator/>
          <cmd refid="activateHistory"/>
@@ -384,26 +406,6 @@ well as menu structures (for main menu and popup menus).
       <separator/>
 
       <menu label="_Tools">
-         <menu label="_Import Dataset">
-            <cmd refid="importDatasetFromFile"/>
-            <cmd refid="importDatasetFromURL"/>
-            <cmd refid="importDatasetFromCSV"/>
-            <separator/>
-            <cmd refid="importDatasetFromXLS"/>
-            <separator/>
-            <cmd refid="importDatasetFromSAV"/>
-            <cmd refid="importDatasetFromSAS"/>
-            <cmd refid="importDatasetFromStata"/>
-            <separator/>
-            <cmd refid="importDatasetFromXML"/>
-            <cmd refid="importDatasetFromJSON"/>
-            <separator/>
-            <cmd refid="importDatasetFromJDBC"/>
-            <cmd refid="importDatasetFromODBC"/>
-            <separator/>
-            <cmd refid="importDatasetFromMongo"/>
-         </menu>
-         <separator/>
          <cmd refid="installPackage"/>
          <cmd refid="updatePackages"/>
          <separator/>
@@ -427,6 +429,7 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
+         <cmd refid="newTerminal"/>
          <menu label="Addins">
             <cmd refid="addinsMru0"/>
             <cmd refid="addinsMru1"/>
@@ -475,6 +478,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="openPackageDevelopmentCheatSheet"/>
          </menu>
          <separator/>
+         <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="markdownHelp"/>
          <cmd refid="openRoxygenQuickReference"/>
          <separator/>
@@ -547,8 +551,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="yankAfterCursor" value="Ctrl+K" title="Yank Line After Cursor" />
          <shortcut refid="pasteLastYank" value="Ctrl+Y" title="Insert Yanked Text" />
          <shortcut value="Ctrl+T" title="Transpose Letters" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut value="Alt+-" title="Insert Assignment Operator"/>
-         <shortcut value="Cmd+Shift+M" title="Insert Pipe Operator" />
+         <shortcut refid="insertAssignmentOperator" value="Alt+-" title="Insert Assignment Operator"/>
+         <shortcut refid="insertPipeOperator" value="Cmd+Shift+M" title="Insert Pipe Operator" />
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
          <shortcut refid="insertSnippet" value="Shift+Tab" title="Insert Snippet"/>
@@ -560,7 +564,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findFromSelection" value="Meta+E" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findFromSelection" value="Ctrl+F3" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="findReplace" value="Meta+F"/>
-         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="emacs"/>
+         <shortcut refid="findReplace" value="Ctrl+F" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="vim,emacs"/>
          <shortcut refid="findNext" value="Meta+G" if="!org.rstudio.core.client.BrowseCap.isWindows()"/>
          <shortcut refid="findNext" value="Ctrl+G" if="!org.rstudio.core.client.BrowseCap.isWindows()" disableModes="emacs"/>
          <shortcut refid="findNext" value="F3" if="org.rstudio.core.client.BrowseCap.isWindows()"/>
@@ -618,19 +622,20 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="switchToTab" value="Ctrl+X B" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="switchToTab" value="Ctrl+X B" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim"/>
          <shortcut refid="switchToTab" value="Ctrl+Shift+."/>
-         <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+Alt+Right" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
          <shortcut refid="nextTab" value="Ctrl+PageDown" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
-         <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
-         <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
-         <shortcut refid="previousTab" value="Ctrl+X Left" disableModes="default,vim"/>
-         <shortcut refid="previousTab" value="Ctrl+F11"/>
          <shortcut refid="nextTab" value="Ctrl+X Right" disableModes="default,vim"/>
          <shortcut refid="nextTab" value="Ctrl+F12"/>
+         <shortcut refid="nextTab" value="Ctrl+Tab" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="previousTab" value="Ctrl+Alt+Left" if="!org.rstudio.core.client.BrowseCap.isLinux()"/>
+         <shortcut refid="previousTab" value="Ctrl+F11"/>
+         <shortcut refid="previousTab" value="Ctrl+PageUp" if="org.rstudio.core.client.BrowseCap.isLinux()"/>
+         <shortcut refid="previousTab" value="Ctrl+X Left" disableModes="default,vim"/>
+         <shortcut refid="previousTab" value="Ctrl+Shift+Tab" if="org.rstudio.studio.client.application.Desktop.isDesktop()"/>
+         <shortcut refid="firstTab" value="Ctrl+Alt+Shift+Left"/>
          <shortcut refid="firstTab" value="Ctrl+Shift+F11"/>
+         <shortcut refid="lastTab" value="Ctrl+Alt+Shift+Right"/>
          <shortcut refid="lastTab" value="Ctrl+Shift+F12"/>
-
       </shortcutgroup>
       <shortcutgroup name="Files">
       
@@ -993,14 +998,14 @@ well as menu structures (for main menu and popup menus).
    
    <cmd id="openProjectInNewWindow"
         label="Open Project with New R Session"
-        menuLabel="Open Project in New _Session..."
+        menuLabel="Open Project in New Session..."
         buttonLabel=""
         desc="Open project in a new R session"
         windowMode="main"/>
    
    <cmd id="shareProject"
         label="Share Project..."
-        menuLabel="_Share Project..."
+        menuLabel="Share Project..."
         buttonLabel=""
         desc="Share this project with others"
         windowMode="main"/>
@@ -1427,6 +1432,66 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Insert Chunk"
         desc="Insert a new code chunk"
         context="editor"/>
+
+   <cmd id="insertChunkR"
+        menuLabel="R"
+        desc="Insert a new R chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkBash"
+        menuLabel="Bash"
+        desc="Insert a new Bash chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkPython"
+        menuLabel="Python"
+        desc="Insert a new Python chunk"
+        context="editor"/>
+
+   <cmd id="insertChunkRCPP"
+        menuLabel="Rcpp"
+        desc="Insert a new Rcpp chunk"
+        context="editor"/>
+        
+   <cmd id="insertChunkStan"
+        menuLabel="Stan"
+        desc="Insert a new Stan chunk"
+        context="editor"/>
+        
+   <cmd id="insertChunkSQL"
+        menuLabel="SQL"
+        desc="Insert a new SQL chunk"
+        context="editor"/>
+
+   <cmd id="switchToChunkR"
+        menuLabel="R"
+        desc="Switch chunk to R"
+        context="editor"/>
+
+   <cmd id="switchToChunkBash"
+        menuLabel="Bash"
+        desc="Switch chunk to Bash"
+        context="editor"/>
+
+   <cmd id="switchToChunkPython"
+        menuLabel="Python"
+        desc="Switch chunk to Python"
+        context="editor"/>
+
+   <cmd id="switchToChunkRCPP"
+        menuLabel="Rcpp"
+        desc="Switch chunk to Rcpp"
+        context="editor"/>
+        
+   <cmd id="switchToChunkStan"
+        menuLabel="Stan"
+        desc="Switch chunk to Stan"
+        context="editor"/>
+        
+   <cmd id="switchToChunkSQL"
+        menuLabel="SQL"
+        desc="Switch chunk to SQL"
+        context="editor"/>
         
    <cmd id="insertSection"
         menuLabel="_Insert Section..."
@@ -1706,15 +1771,33 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Knit _with Parameters..."
         desc="Knit the document with a set of custom parameters"/>
         
+    <cmd id="clearKnitrCache"
+        menuLabel="Clear Knitr Cache..."
+        desc="Clear the knitr cache for the current document"/>
+        
+   <cmd id="clearPrerenderedOutput"
+        menuLabel="Clear Prerendered Output..."
+        desc="Clear the prerendered output for the current document"/>
+        
    <cmd id="notebookExpandAllOutput"
         buttonLabel=""
         menuLabel="Expand All Output"
         desc="Expand all code chunk output in the current file"/>
         
+   <cmd id="notebookToggleExpansion"
+        buttonLabel=""
+        menuLabel="Toggle Chunk Output Expansion"
+        desc="Expand or collapse the output of the current notebook chunk"/>
+
    <cmd id="notebookCollapseAllOutput"
         buttonLabel=""
         menuLabel="Collapse All Output"
         desc="Collapse all code chunk output in the current file"/>
+
+   <cmd id="notebookClearOutput"
+        buttonLabel=""
+        menuLabel="Clear Output"
+        desc="Clear the output of the current notebook chunk" />
 
    <cmd id="notebookClearAllOutput"
         buttonLabel=""
@@ -2285,6 +2368,35 @@ well as menu structures (for main menu and popup menus).
         desc="Execute shell commands(s)"
         windowMode="main"/>
         
+   <cmd id="newTerminal"
+        label="New Terminal"
+        menuLabel="New Terminal"
+        desc="Execute shell commands(s)"
+        windowMode="main"/>
+
+   <cmd id="activateTerminal"
+        label="Move Focus to Terminal"
+        menuLabel="Move Focus to Terminal"
+        windowMode="main"/>
+        
+   <cmd id="renameTerminal"
+        label="Rename Current Terminal"
+        menuLabel="Rename Current Terminal"
+        desc="Change terminal session name"
+        windowMode="main"/>
+
+   <cmd id="closeTerminal"
+        label="Close Current Terminal"
+        menuLabel="Close Current Terminal"
+        desc="Close terminal session"
+        windowMode="main"/>
+
+   <cmd id="clearTerminalScrollbackBuffer"
+        label="Clear Current Terminal"
+        menuLabel="Clear Current Terminal"
+        desc="Clear terminal scrollback buffer"
+        windowMode="main"/>
+
    <cmd id="addinsMru0" visible="false" rebindable="false"/>
    <cmd id="addinsMru1" visible="false" rebindable="false"/>
    <cmd id="addinsMru2" visible="false" rebindable="false"/>
@@ -2627,6 +2739,14 @@ well as menu structures (for main menu and popup menus).
         label="Paste Last Yank"
         context="editor"/>
         
+   <cmd id="insertAssignmentOperator"
+        label="Insert Assignment Operator"
+        context="editor"/>
+        
+   <cmd id="insertPipeOperator"
+        label="Insert Pipe Operator"
+        context="editor"/>
+        
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 
@@ -2795,31 +2915,38 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
    
     <cmd id="removeConnection"
-        menuLabel="Remove..."
+        menuLabel="Remove Connection..."
         buttonLabel=""
-        desc="Remove a connection"
+        desc="Remove connection from the connection history"
         windowMode="main"/>        
-          
-    <cmd id="connectConnection"
-         buttonLabel="Connect"
-         desc="Establish a connection"
-         windowMode="main"/>
-   
+            
     <cmd id="disconnectConnection"
          menuLabel="Disconnect"
-         buttonLabel="Disconnect"
          desc="Disconect from a connection"
+         windowMode="main"/>
+       
+    <cmd id="refreshConnection"
+         menuLabel="Refresh"
+         desc="Refresh data"
          windowMode="main"/>
          
     <cmd id="sparkLog"
          menuLabel="Spark Log"
+         buttonLabel="Log"
          desc="View the log for the Spark connection"
          windowMode="main"/> 
          
      <cmd id="sparkUI"
-         menuLabel="Spark UI"
+         menuLabel="SparkUI"
+         buttonLabel = "SparkUI"
          desc="View the browser UI for the Spark connection"
          windowMode="main"/> 
+     
+     <cmd id="sparkHelp"
+         menuLabel="Using Spark with RStudio"
+         buttonLabel=""
+         desc="Help on using Spark with RStudio"
+         windowMode="main"/>
      
         
 </commands>

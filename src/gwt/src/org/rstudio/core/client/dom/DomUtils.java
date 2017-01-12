@@ -42,6 +42,7 @@ import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
 
@@ -1007,6 +1008,18 @@ public class DomUtils
    {
       return getCharacterWidth(ele.getClientWidth(), ele.getOffsetWidth(), 
             style);
+   }
+   
+   public static void toggleParentVisibility(Element el, boolean visible, ElementPredicate predicate)
+   {
+      Element parentEl = el.getParentElement();
+      if (parentEl == null)
+         return;
+      
+      if (predicate != null && !predicate.test(parentEl))
+         return;
+      
+      toggleClass(parentEl, ThemeStyles.INSTANCE.displayNone(), !visible);
    }
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;

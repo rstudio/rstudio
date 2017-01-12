@@ -1,7 +1,7 @@
 /*
- * SessionRAddins.cpp.in
+ * SessionRAddins.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
 using namespace rstudio::core;
 
@@ -307,216 +308,77 @@ AddinRegistry& addinRegistry()
    return *s_pCurrentRegistry;
 }
 
-class AddinIndexer : public boost::noncopyable
+class AddinWorker : public ppe::Worker
 {
-public:
-   
-   AddinIndexer()
+   void onIndexingStarted()
    {
-      clear();
+      pRegistry_ = boost::make_shared<AddinRegistry>();
    }
-
-   void start(const std::vector<FilePath>& libPaths)
+   
+   void onWork(const std::string& pkgName, const FilePath& addinPath)
    {
-      // reset instance data
-      clear();
-
-      // prime work list
-      std::vector<FilePath> pkgPaths;
-      BOOST_FOREACH(const FilePath& libPath, libPaths)
+      pRegistry_->add(pkgName, addinPath);
+   }
+   
+   void onIndexingCompleted(json::Object* pPayload)
+   {
+      // finalize by indexing current package
+      if (isDevtoolsLoadAllActive())
       {
-         if (!libPath.exists())
-            continue;
-         
-         pkgPaths.clear();
-         Error error = libPath.children(&pkgPaths);
-         if (error)
-            LOG_ERROR(error);
-         children_.insert(
-                  children_.end(),
-                  pkgPaths.begin(),
-                  pkgPaths.end());
+         FilePath pkgPath = projects::projectContext().buildTargetPath();
+         FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
+         if (addinPath.exists())
+         {
+            std::string pkgName = projects::projectContext().packageInfo().name();
+            pRegistry_->add(pkgName, addinPath);
+         }
+      }
+
+      // update the addin registry
+      updateAddinRegistry(pRegistry_);
+
+      // handle pending continuations
+      json::Object registryJson = addinRegistry().toJson();
+      BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
+      {
+         json::JsonRpcResponse response;
+         response.setResult(registryJson);
+         continuation(Success(), &response);
       }
       
-      n_ = children_.size();
+      // provide registry as json
+      (*pPayload)["addin_registry"] = registryJson;
+
+      // reset
+      continuations_.clear();
+      pRegistry_.reset();
    }
 
+public:
+   
+   AddinWorker() : ppe::Worker("rstudio/addins.dcf") {}
+   
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
    {
       continuations_.push_back(continuation);
    }
 
-   bool running()
-   {
-      return index_ != n_;
-   }
-   
-   bool work()
-   {
-      const FilePath& pkgPath = children_[index_];
-      
-      // std::cout << "Job " << index_ + 1 << " of " << n_ << "\n";
-      // std::cout << "Package: '" << pkgPath.absolutePath() << "'\n";
-      // ::usleep(10000);
-      
-      FilePath addinPath = pkgPath.childPath("rstudio/addins.dcf");
-      if (!addinPath.exists())
-      {
-         ++index_;
-         return maybeFinishRunning();
-      }
-      
-      std::string pkgName = pkgPath.filename();
-      pRegistry_->add(pkgName, addinPath);
-      
-      ++index_;
-      return maybeFinishRunning();
-   }
-
 private:
-
-   // reset all instance data
-   void clear()
-   {
-      children_.clear();
-      n_ = 0;
-      index_ = 0;
-      pRegistry_ = boost::make_shared<AddinRegistry>();
-      continuations_.clear();
-   }
-
-   // check for still running, if we aren't still running then complete
-   // our work and return false, otherwise return true
-   bool maybeFinishRunning()
-   {
-      if (!running())
-      {
-         // finalize by indexing current package
-         if (isDevtoolsLoadAllActive())
-         {
-            FilePath pkgPath = projects::projectContext().buildTargetPath();
-            FilePath addinPath = pkgPath.childPath("inst/rstudio/addins.dcf");
-            if (addinPath.exists())
-            {
-               std::string pkgName = projects::projectContext().packageInfo().name();
-               pRegistry_->add(pkgName, addinPath);
-            }
-         }
-         
-         // update the addin registry
-         updateAddinRegistry(pRegistry_);
-
-         // handle pending continuations
-         json::Object registryJson = addinRegistry().toJson();
-         BOOST_FOREACH(json::JsonRpcFunctionContinuation continuation, continuations_)
-         {
-            json::JsonRpcResponse response;
-            response.setResult(registryJson);
-            continuation(Success(), &response);
-         }
-
-         // clear instance data and return false
-         clear();
-         return false;
-      }
-      else
-      {
-         return true;
-      }
-   }
-   
-private:
-   std::vector<FilePath> children_;
-   std::size_t n_;
-   std::size_t index_;
    boost::shared_ptr<AddinRegistry> pRegistry_;
    std::vector<json::JsonRpcFunctionContinuation> continuations_;
 };
 
-AddinIndexer& addinIndexer()
+boost::shared_ptr<AddinWorker>& addinWorker()
 {
-   static AddinIndexer instance;
+   static boost::shared_ptr<AddinWorker> instance(new AddinWorker);
    return instance;
 }
 
 void indexLibraryPathsWithContinuation(
-                        json::JsonRpcFunctionContinuation continuation)
+      json::JsonRpcFunctionContinuation continuation)
 {
-   // get the libpaths
-   std::vector<FilePath> libPaths = module_context::getLibPaths();
-
-   // start if we arent' already running
-   if (!addinIndexer().running())
-   {
-      // start indexer
-      addinIndexer().start(libPaths);
-
-      // register continuation if provided
-      if (continuation)
-         addinIndexer().addContinuation(continuation);
-
-      // schedule work
-      module_context::scheduleIncrementalWork(
-               boost::posix_time::milliseconds(300),
-               boost::posix_time::milliseconds(20),
-               boost::bind(&AddinIndexer::work, &addinIndexer()),
-               false);
-   }
-   else
-   {
-      // register continuation if provided
-      if (continuation)
-         addinIndexer().addContinuation(continuation);
-   }
-}
-
-void indexLibraryPaths()
-{
-   indexLibraryPathsWithContinuation(json::JsonRpcFunctionContinuation());
-}
-
-void onDeferredInit(bool)
-{
-   // re-index
-   indexLibraryPaths();
-}
-
-// re-index on package library mutating commands (however don't do so
-// if the packages pane is disabled)
-void onConsoleInput(const std::string& input)
-{
-   // check for packages pane disabled
-   if (module_context::disablePackages())
-      return;
-
-   // initialize commands if necessary
-   static std::vector<std::string> commands;
-   if (commands.empty())
-   {
-      commands.push_back("install.packages");
-      commands.push_back("remove.packages");
-      commands.push_back("devtools::install_github");
-      commands.push_back("install_github");
-      commands.push_back("devtools::load_all");
-      commands.push_back("load_all");
-   }
-
-   // check for package library mutating command
-   std::string trimmedInput = boost::algorithm::trim_copy(input);
-   BOOST_FOREACH(const std::string& command, commands)
-   {
-      if (boost::algorithm::starts_with(trimmedInput, command))
-      {
-         // we need to give R a chance to actually process the package library
-         // mutating command before we update the index. schedule delayed work
-         // with idleOnly = true so that it waits until the user has returned
-         // to the R prompt
-         module_context::scheduleDelayedWork(boost::posix_time::seconds(1),
-                                             indexLibraryPaths,
-                                             true); // idle only
-         return;
-      }
-   }
+   if (continuation)
+      addinWorker()->addContinuation(continuation);
 }
 
 void getRAddins(const json::JsonRpcRequest& request,
@@ -619,9 +481,9 @@ Error initialize()
    
    // load cached registry
    loadAddinRegistry();
-
-   events().onDeferredInit.connect(onDeferredInit);
-   events().onConsoleInput.connect(onConsoleInput);
+   
+   // register worker
+   ppe::indexer().addWorker(addinWorker());
    
    ExecBlock initBlock;
    initBlock.addFunctions()

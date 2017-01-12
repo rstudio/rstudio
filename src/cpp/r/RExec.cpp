@@ -22,6 +22,7 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RSourceManager.hpp>
 #include <r/RInterface.hpp>
+#include <r/RCntxt.hpp>
 #include <r/ROptions.hpp>
 
 #include <R_ext/Parse.h>
@@ -101,15 +102,20 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
    }
 }
 
+
 // evaluate expressions without altering the error handler (use with caution--
 // a user-supplied error handler may be invoked if the expression raises
 // an error!)
+enum EvalType {
+   EvalTry,    // use R_tryEval
+   EvalDirect  // use Rf_eval directly
+};
 Error evaluateExpressionsUnsafe(SEXP expr,
                                 SEXP env,
                                 SEXP* pSEXP,
-                                sexp::Protect* pProtect)
+                                sexp::Protect* pProtect,
+                                EvalType evalType)
 {
-
    int er=0;
    int i=0,l;
    
@@ -121,7 +127,10 @@ Error evaluateExpressionsUnsafe(SEXP expr,
       l = LENGTH(expr);
       while (i<l) 
       {
-         *pSEXP = R_tryEval(VECTOR_ELT(expr, i), env, &er);
+         if (evalType == EvalTry)
+            *pSEXP = R_tryEval(VECTOR_ELT(expr, i), env, &er);
+         else
+            *pSEXP = Rf_eval(VECTOR_ELT(expr, i), env);
          i++;
       }
    } 
@@ -129,7 +138,10 @@ Error evaluateExpressionsUnsafe(SEXP expr,
    else
    {
       DisableDebugScope disableStepInto(R_GlobalEnv);
-      *pSEXP = R_tryEval(expr, R_GlobalEnv, &er);
+      if (evalType == EvalTry)
+         *pSEXP = R_tryEval(expr, R_GlobalEnv, &er);
+      else
+         *pSEXP = Rf_eval(expr, R_GlobalEnv);
    }
    
    // protect the result
@@ -160,7 +172,7 @@ Error evaluateExpressions(SEXP expr,
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
 
-   return evaluateExpressionsUnsafe(expr, env, pSEXP, pProtect);
+   return evaluateExpressionsUnsafe(expr, env, pSEXP, pProtect, EvalTry);
 }
 
 Error evaluateExpressions(SEXP expr, SEXP* pSEXP, sexp::Protect* pProtect)
@@ -224,6 +236,26 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
       return Success();
    }
 }
+
+Error executeStringUnsafe(const std::string& str,
+                          SEXP envirSEXP,
+                          SEXP* pSEXP, 
+                          sexp::Protect* pProtect)
+{
+   SEXP parsedSEXP = R_NilValue;
+   Error error = r::exec::parseString(str, &parsedSEXP, pProtect);
+   if (error)
+      return error;
+   
+   return evaluateExpressionsUnsafe(parsedSEXP, envirSEXP, pSEXP, pProtect, EvalDirect);
+}
+
+Error executeStringUnsafe(const std::string& str,
+                          SEXP* pSEXP, 
+                          sexp::Protect* pProtect)
+{
+   return executeStringUnsafe(str, R_GlobalEnv, pSEXP, pProtect);
+}
   
 Error executeString(const std::string& str)
 {
@@ -275,8 +307,7 @@ Error evaluateString(const std::string& str,
    
 bool atTopLevelContext() 
 {
-   return getGlobalContext() != NULL &&
-          getGlobalContext()->callflag == CTXT_TOPLEVEL;
+   return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
 }
 
 RFunction::RFunction(SEXP functionSEXP)
@@ -377,7 +408,8 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
    // call the function
    Error error = safely ?
             evaluateExpressions(callSEXP, evalNS, pResultSEXP, pProtect) :
-            evaluateExpressionsUnsafe(callSEXP, evalNS, pResultSEXP, pProtect);
+            evaluateExpressionsUnsafe(callSEXP, evalNS, pResultSEXP, pProtect,
+                  EvalTry);
    if (error)
       return error;
    

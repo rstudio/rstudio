@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabaseSupervisor.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@
 #ifndef SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 #define SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 
+#define kSessionSourceDatabasePrefix "sources"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -28,11 +30,17 @@ namespace session {
 namespace source_database {
 namespace supervisor {
 
-core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
+core::Error attachToSourceDatabase();
 
 core::Error saveMostRecentDocuments();
 
 core::Error detachFromSourceDatabase();
+
+void suspendSourceDatabase(int status);
+
+void resumeSourceDatabase();
+
+core::FilePath sessionDirPath();
 
 } // namespace supervisor
 } // namespace source_database

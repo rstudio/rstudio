@@ -1,0 +1,120 @@
+/*
+ * ShellSecureInput.java
+ *
+ * Copyright (C) 2009-16 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+package org.rstudio.studio.client.common.shell;
+
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSerializationHandler;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
+import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
+import org.rstudio.studio.client.common.crypto.RSAEncrypt;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import com.google.inject.Inject;
+
+/**
+ * Prepare a string for secure transmission.
+ * On desktop, this is a no-op.
+ * For client/server, the string will be encrypted.
+ */
+public class ShellSecureInput implements SessionSerializationHandler
+{
+   public ShellSecureInput()
+   {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      eventBus_.addHandler(SessionSerializationEvent.TYPE, this);
+   }
+   
+   @Inject
+   private void initialize(CryptoServerOperations server,
+                           EventBus events)
+   {
+      server_ = server;
+      eventBus_ = events;
+   }
+   
+   /**
+    * Secure a string for transmission.
+    *  
+    * @param input   the string to secure
+    * @param onReady invoked with string after it has been secured
+    * @param onError invoked with an error message if operation failed
+    */
+   public void secureString(final String input, 
+                            final CommandWithArg<String> onReady,
+                            final CommandWithArg<String> onError)
+   {
+      if (Desktop.isDesktop())
+      {
+         onReady.execute(input);
+      }
+      else if (publicKeyInfo_ != null)
+      {
+         RSAEncrypt.encrypt_ServerOnly(publicKeyInfo_, input, onReady);
+      }
+      else
+      {
+         server_.getPublicKey(new ServerRequestCallback<PublicKeyInfo>() {
+
+            @Override
+            public void onResponseReceived(PublicKeyInfo publicKeyInfo)
+            {
+               publicKeyInfo_ = publicKeyInfo;
+               RSAEncrypt.encrypt_ServerOnly(publicKeyInfo_, 
+                                             input, 
+                                             onReady);
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               onError.execute(error.getUserMessage());
+            }
+         });
+      }
+   }
+   
+   /**
+    * Release public key so next secureString request will establish new 
+    * encryption credentials.
+    */
+   public void releasePublicKey()
+   {
+      publicKeyInfo_ = null;
+   }
+   
+   @Override
+   public void onSessionSerialization(SessionSerializationEvent event)
+   {
+      switch(event.getAction().getType())
+      {
+      case SessionSerializationAction.SUSPEND_SESSION:
+         releasePublicKey();
+         break;
+      }
+   }
+   
+   private PublicKeyInfo publicKeyInfo_ = null;
+   
+   // Injected ----
+   private CryptoServerOperations server_;
+   private EventBus eventBus_;
+
+}

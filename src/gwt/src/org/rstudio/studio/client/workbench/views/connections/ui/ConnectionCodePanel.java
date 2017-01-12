@@ -16,9 +16,9 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
@@ -35,16 +35,22 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-public class ConnectionCodePanel extends Composite
+public class ConnectionCodePanel extends Composite implements RequiresResize
 {
    public ConnectionCodePanel()
    {
+      this(true);
+   }
+   
+   public ConnectionCodePanel(boolean connectViaUI)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      VerticalPanel container = new VerticalPanel();
-      container.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);      
+      container_ = new VerticalPanel();
+      container_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);      
       HorizontalPanel codeHeaderPanel = new HorizontalPanel();
       codeHeaderPanel.addStyleName(RES.styles().codePanelHeader());
       codeHeaderPanel.setWidth("100%");
@@ -57,12 +63,6 @@ public class ConnectionCodePanel extends Composite
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
       connectVia_ = new ListBox();
-      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
-      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
-      if (uiPrefs_.enableRNotebooks().getValue())
-         connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
-      connectVia_.addItem("Copy to Clipboard", 
-                          ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       updateConnectViaUI_ = new Command() {
          @Override
          public void execute()
@@ -82,6 +82,14 @@ public class ConnectionCodePanel extends Composite
             }
          }
       };
+      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
+      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
+      connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
+      if (BrowseCap.INSTANCE.canCopyToClipboard())
+      {
+         connectVia_.addItem("Copy to Clipboard", 
+                             ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
+      }
       updateConnectViaUI_.execute();
       addConnectViaChangeHandler(new ChangeHandler() {
          @Override
@@ -90,42 +98,19 @@ public class ConnectionCodePanel extends Composite
             updateConnectViaUI_.execute();
          }
       });
-     
       connectPanel.add(connectVia_);
       codeHeaderPanel.add(connectPanel);
       codeHeaderPanel.setCellHorizontalAlignment(
             connectPanel, HasHorizontalAlignment.ALIGN_RIGHT);
-      container.add(codeHeaderPanel);
+      if (connectViaUI)
+         container_.add(codeHeaderPanel);
      
-      
-      codeViewer_ = new AceEditorWidget(false);
-      codeViewer_.addStyleName(RES.styles().codeViewer());
-      codeViewer_.getEditor().getSession().setEditorMode(
-            EditorLanguage.LANG_R.getParserName(), false);
-      codeViewer_.getEditor().getSession().setUseWrapMode(true);
-      codeViewer_.getEditor().getRenderer().setShowGutter(false);
-      codeViewer_.getEditor().setReadOnly(true);
-      codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
-         @Override
-         public void onCursorChanged(CursorChangedEvent event)
-         {
-            EditSession session = codeViewer_.getEditor().getSession();
-            String selectedCode = session.getTextRange(session.getSelection().getRange());
-            if (!settingCode_ && selectedCode.trim().equals(session.getValue().trim())) 
-            {
-               setConnectVia(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
-            }
-         }
-      });
-      container.add(codeViewer_);
-      
-      initWidget(container);
+      initWidget(container_);
    }
    
    @Inject
-   public void initialize(UIPrefs uiPrefs)
+   public void initialize()
    {
-      uiPrefs_ = uiPrefs;
    }
    
    public boolean setConnectVia(String connectVia)
@@ -154,27 +139,72 @@ public class ConnectionCodePanel extends Composite
    public void setCode(String code, String connectVia)
    {
       settingCode_ = true;
+      
+      // clear existing code viewer
+      if (codeViewer_ != null)
+      {
+         codeViewer_.removeFromParent();
+         codeViewer_ = null;
+      }
+      
+      // create new code viewer
+      codeViewer_ = new AceEditorWidget(false);
+      codeViewer_.addStyleName(RES.styles().codeViewer());
+      codeViewer_.getEditor().getSession().setEditorMode(
+            EditorLanguage.LANG_R.getParserName(), false);
+      codeViewer_.getEditor().getSession().setUseWrapMode(true);
+      codeViewer_.getEditor().getRenderer().setShowGutter(false);
+      codeViewer_.getEditor().setReadOnly(false);
+      codeViewer_.addCursorChangedHandler(new CursorChangedHandler() {
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
+         {
+            EditSession session = codeViewer_.getEditor().getSession();
+            String selectedCode = session.getTextRange(session.getSelection().getRange());
+            if (!settingCode_ && selectedCode.trim().equals(session.getValue().trim())) 
+            {
+               setConnectVia(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
+            }
+         }
+      });
       codeViewer_.setCode(code);
+      container_.add(codeViewer_);
+      
+      // update connectVia
       if (connectVia != null)
       {
          setConnectVia(connectVia);
          updateConnectViaUI_.execute();
       }
-      codeViewer_.forceResize();
+      onResize();
       settingCode_ = false;
+   }
+   
+   @Override
+   public void onResize()
+   {
+      if (codeViewer_ != null)
+      {
+         codeViewer_.forceResize();
+         codeViewer_.getEditor().resize();
+         codeViewer_.forceCursorChange();
+      }
    }
    
    public String getCode()
    {
-      return codeViewer_.getEditor().getSession().getValue();
+      if (codeViewer_ != null)
+         return codeViewer_.getEditor().getSession().getValue();
+      else
+         return "";
    }
    
    
+   private VerticalPanel container_;
    private ListBox connectVia_;
    private AceEditorWidget codeViewer_;
-   private UIPrefs uiPrefs_;
    private boolean settingCode_ = false;
    private final Command updateConnectViaUI_;
    
-   private static NewSparkConnectionDialog.Resources RES = NewSparkConnectionDialog.RES;
+   private static NewConnectionShinyHost.Resources RES = NewConnectionShinyHost.RES;
 }

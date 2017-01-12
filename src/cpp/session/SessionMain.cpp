@@ -90,6 +90,7 @@
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionClientEventService.hpp>
 #include <session/RVersionSettings.hpp>
 
 #include "SessionAddins.hpp"
@@ -107,7 +108,9 @@
 #include "SessionSuspend.hpp"
 
 #include <session/SessionRUtil.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 
+#include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
 #include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
@@ -158,7 +161,6 @@
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
-
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
 
@@ -234,7 +236,7 @@ void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   rstudio::r::session::RSuspendOptions options;
+   rstudio::r::session::RSuspendOptions options(EX_CONTINUE);
    Error error = json::readObjectParam(
                                request.params, 0,
                                "save_minimal", &(options.saveMinimal),
@@ -389,6 +391,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::lists::initialize)
       (modules::path::initialize)
       (modules::limits::initialize)
+      (modules::ppe::initialize)
       (modules::ask_pass::initialize)
       (modules::agreement::initialize)
       (modules::console::initialize)
@@ -436,6 +439,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::snippets::initialize)
       (modules::user_commands::initialize)
       (modules::r_addins::initialize)
+      (modules::projects::templates::initialize)
+      (modules::mathjax::initialize)
+      (modules::rstudioapi::initialize)
 
       // workers
       (workers::web_request::initialize)

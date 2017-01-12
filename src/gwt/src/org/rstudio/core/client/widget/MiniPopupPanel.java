@@ -14,7 +14,11 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -35,19 +39,47 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    public MiniPopupPanel()
    {
       super();
-      commonInit();
+      commonInit(true);
    }
 
    public MiniPopupPanel(boolean autoHide)
    {
       super(autoHide);
-      commonInit();
+      commonInit(true);
    }
 
    public MiniPopupPanel(boolean autoHide, boolean modal)
    {
       super(autoHide, modal);
-      commonInit();
+      commonInit(true);
+   }
+   
+   public MiniPopupPanel(boolean autoHide, boolean modal, boolean useStyleSheet)
+   {
+      super(autoHide, modal);
+      commonInit(useStyleSheet);
+   }
+   
+   public void positionNearRange(DocDisplay display, Range range)
+   {
+      Rectangle bounds = display.getRangeBounds(range);
+      Point center = bounds.center();
+      
+      int pageX = center.getX() - (getOffsetWidth() / 2);
+
+      // prefer displaying popup below associated text, but place above text
+      // if it won't fit below
+      int pageY = bounds.getBottom() + 10;
+      if (pageY + getOffsetHeight() > display.getBounds().getBottom())
+      {
+         pageY = bounds.getTop() - 10 - getOffsetHeight();
+      }
+      
+      // avoid leaking off left side of page
+      pageX = Math.max(20, pageX);
+      pageY = Math.max(20, pageY);
+      
+      setPopupPosition(pageX, pageY);
    }
    
    @Override
@@ -64,7 +96,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
       super.hide();
    }
    
-   private void commonInit()
+   private void commonInit(boolean useStyleSheet)
    {
       escapeHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
       {
@@ -81,7 +113,11 @@ public class MiniPopupPanel extends DecoratedPopupPanel
             }
          }
       });
-      addStyleName(RES.styles().popupPanel());
+      
+      if (useStyleSheet)
+      {
+         addStyleName(RES.styles().popupPanel());
+      }
    }
    
    private void addDragHandler()

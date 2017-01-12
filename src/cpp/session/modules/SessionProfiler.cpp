@@ -48,8 +48,9 @@ std::string profilesCacheDir()
 
 SEXP rs_profilesPath()
 {
-	r::sexp::Protect rProtect;
-	return r::sexp::create(profilesCacheDir(), &rProtect);
+   r::sexp::Protect rProtect;
+   std::string cacheDir = core::string_utils::utf8ToSystem(profilesCacheDir());
+   return r::sexp::create(cacheDir, &rProtect);
 }
 
 } // anonymous namespace

@@ -79,7 +79,8 @@ EmbeddedPackage embeddedPackageInfo(const std::string& name)
    BOOST_FOREACH(const FilePath& child, children)
    {
       boost::smatch match;
-      if (boost::regex_match(child.filename(), match, re))
+      std::string filename = child.filename();
+      if (boost::regex_match(filename, match, re))
       {
          EmbeddedPackage pkg;
          pkg.name = name;
@@ -404,7 +405,10 @@ Error installDependencies(const json::JsonRpcRequest& request,
             args,
             options,
             "Installing Packages",
-            true,
+            "" /*title*/,
+            console_process::kNoTerminal,
+            false /*allowRestart*/,
+            true /*dialog*/,
             console_process::InteractionNever);
 
    // return console process

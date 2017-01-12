@@ -1,0 +1,109 @@
+FROM stevenolen/centos:7-i686
+
+# no epel-release for centos7 32-bit.
+# we will install R from source.
+#RUN set -x \
+#    && yum install epel-release -y
+
+RUN set -x \
+    && linux32 yum install -y \
+       ant \
+       boost-devel \
+       bzip2-devel \
+       cmake \
+       fakeroot \
+       gcc \
+       gcc-c++ \
+       gcc-gfortran \
+       git \
+       gstreamer-devel \
+       gstreamer-plugins-base-devel \
+       java-1.6.0-openjdk  \
+       libffi \
+       libgfortran \
+       libuuid-devel \
+       libX11-devel \
+       libXt-devel \
+       make \
+       openssl-devel \
+       pam-devel \
+       pango-devel \
+       readline-devel \
+       rpmdevtools \
+       sharutils \
+       sudo \
+       wget \
+       xml-commons-apis \
+       zlib-devel
+
+# sudo defaults to requiretty on centos7
+RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
+
+## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
+## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
+COPY dependencies/common/install-boost /tmp/
+RUN bash /tmp/install-boost || bash /tmp/install-boost
+
+# install cmake
+COPY package/linux/install-dependencies /tmp/
+RUN bash /tmp/install-dependencies
+
+RUN wget http://ftp.gnu.org/gnu/wget/wget-1.16.tar.gz \
+    && yum -y remove wget \
+    && tar -xzvf wget-1.16.tar.gz \
+    && cd wget-1.16 \
+    && ./configure --with-ssl=openssl --with-libssl-prefix=/usr/lib/openssl --prefix=/usr \
+    && make && make install \
+    && cd ..
+
+RUN wget http://zlib.net/zlib-1.2.8.tar.gz \
+    && tar xvf zlib-1.2.8.tar.gz \
+    && cd zlib-1.2.8 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make && linux32 make install \
+    && cd ..
+
+RUN wget http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz \
+    && tar xvf bzip2-1.0.6.tar.gz \
+    && cd bzip2-1.0.6 \
+    && linux32 make -f Makefile-libbz2_so \
+    && linux32 make clean \
+    && linux32 make \
+    && linux32 make install \
+    && cd ..
+
+RUN wget http://tukaani.org/xz/xz-5.2.2.tar.gz \
+    && tar xvf xz-5.2.2.tar.gz \
+    && cd xz-5.2.2 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make -j3 \
+    && linux32 make install \
+    && cd ..
+
+RUN wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.38.tar.gz \
+    && tar xvf pcre-8.38.tar.gz \
+    && cd pcre-8.38 \
+    && linux32 ./configure --prefix=/usr/local/ --enable-utf8 \
+    && linux32 make && linux32 make install \
+    && cd ..
+
+RUN wget https://curl.haxx.se/download/curl-7.47.1.tar.gz \
+    && tar xvf curl-7.47.1.tar.gz \
+    && cd curl-7.47.1 \
+    && linux32 ./configure --prefix=/usr/local/ \
+    && linux32 make -j3 \
+    && linux32 make install \
+    && cd ..
+
+RUN wget https://cran.rstudio.com/src/base/R-3/R-3.3.2.tar.gz \
+    && tar xvf R-3.3.2.tar.gz \
+    && cd R-3.3.2 \
+    && linux32 ./configure --prefix=/opt/R/3.3.2 --enable-R-shlib \
+    && linux32 make && linux32 make install \
+    && ln -s /opt/R/3.3.2/bin/R /usr/local/bin/R
+
+# fakeroot is only in epel-release as well. compile from the src rpm
+RUN wget http://dl.fedoraproject.org/pub/epel/7/SRPMS/f/fakeroot-1.18.4-2.el7.src.rpm \
+    && linux32 rpmbuild --rebuild fakeroot-1.18.4-2.el7.src.rpm \
+    && rpm -ivh /root/rpmbuild/RPMS/i686/fakeroot-libs-1.18.4-2.el7.centos.i686.rpm \
+    && rpm -ivh /root/rpmbuild/RPMS/i686/fakeroot-1.18.4-2.el7.centos.i686.rpm

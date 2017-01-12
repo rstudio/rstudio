@@ -1,7 +1,7 @@
 /*
  * ToolbarPopupMenu.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,10 +22,13 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
@@ -80,6 +83,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addItem(menuItem);
    }
    
+   public void addItem(SafeHtml html, MenuBar popup)
+   {
+      menuBar_.addItem(html, popup);
+   }
+   
    public void insertItem(MenuItem menuItem, int beforeIndex)
    {
      ScheduledCommand command = menuItem.getScheduledCommand() ;
@@ -108,6 +116,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       menuBar_.addSeparator();
    }
    
+   public void addSeparator(MenuItemSeparator separator)
+   {
+      menuBar_.addSeparator(separator);
+   }
+   
    public void addSeparator(String label)
    {
       menuBar_.addSeparator(new LabelledMenuSeparator(label));
@@ -126,6 +139,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void focus()
    {
       menuBar_.focus();
+   }
+   
+   public void setAutoHideRedundantSeparators(boolean value)
+   {
+      menuBar_.setAutoHideRedundantSeparators(value);
    }
 
    public void getDynamicPopupMenu(DynamicPopupMenuCallback callback)

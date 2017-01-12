@@ -14,11 +14,15 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import org.rstudio.core.client.js.JavaScriptSerializable;
+import org.rstudio.studio.client.application.events.CrossWindowEvent;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+@JavaScriptSerializable
 public class ChunkChangeEvent 
-             extends GwtEvent<ChunkChangeEvent.Handler>
+             extends CrossWindowEvent<ChunkChangeEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
@@ -28,10 +32,21 @@ public class ChunkChangeEvent
    public static final GwtEvent.Type<ChunkChangeEvent.Handler> TYPE =
       new GwtEvent.Type<ChunkChangeEvent.Handler>();
    
-   public ChunkChangeEvent(String docId, String chunkId, int row, int type)
+   public ChunkChangeEvent()
+   {
+      docId_ = null;
+      chunkId_ = null;
+      requestId_ = null;
+      row_ = 0;
+      type_ = 0;
+   }
+
+   public ChunkChangeEvent(String docId, String chunkId, String requestId,
+         int row, int type)
    {
       docId_ = docId;
       chunkId_ = chunkId;
+      requestId_ = requestId;
       row_ = row;
       type_ = type;
    }
@@ -56,6 +71,11 @@ public class ChunkChangeEvent
       return type_;
    }
    
+   public String getRequestId()
+   {
+      return requestId_;
+   }
+   
    @Override
    protected void dispatch(ChunkChangeEvent.Handler handler)
    {
@@ -68,8 +88,15 @@ public class ChunkChangeEvent
       return TYPE;
    }
    
+   @Override
+   public boolean forward()
+   {
+      return false;
+   }
+   
    private String docId_;
    private String chunkId_;
+   private String requestId_;
    private int row_;
    private int type_;
    

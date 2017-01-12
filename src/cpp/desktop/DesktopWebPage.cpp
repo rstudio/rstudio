@@ -15,6 +15,8 @@
 
 #include "DesktopWebPage.hpp"
 
+#include <boost/algorithm/string.hpp>
+
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
@@ -266,6 +268,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
          // to view the URL
          desktop::openUrl(url);
       }
+      else if (boost::algorithm::ends_with(host, ".youtube.com") ||
+            boost::algorithm::ends_with(host, ".vimeo.com")   ||
+            boost::algorithm::ends_with(host, ".c9.ms"))
+      {
+         navigated_ = true;
+         return true;
+      }
 
       if (!navigated_)
          this->view()->window()->deleteLater();
@@ -385,5 +394,20 @@ void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)
    shinyDialogUrl_ = shinyDialogUrl;
 }
 
+void WebPage::triggerAction(WebAction action, bool checked)
+{
+   // swallow copy events when the selection is empty
+   if (action == QWebPage::Copy || action == QWebPage::Cut)
+   {
+      QString code = QString::fromUtf8("window.desktopHooks.isSelectionEmpty()");
+      bool emptySelection = mainFrame()->evaluateJavaScript(code).toBool();
+      if (emptySelection)
+         return;
+   }
+
+   // delegate to base
+   QWebPage::triggerAction(action, checked);
 }
-}
+
+} // namespace desktop
+} // namespace rstudio

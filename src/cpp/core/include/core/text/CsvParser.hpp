@@ -138,6 +138,19 @@ std::pair<std::vector<std::string>, InputIterator> parseCsvLine(
          std::vector<std::string>(), begin);
 }
 
+template <typename InputIterator>
+InputIterator parseCsvLine(InputIterator begin,
+                           InputIterator end,
+                           bool allowMissingEOL,
+                           std::vector<std::string>* pParsedCsv)
+{
+   std::pair<std::vector<std::string>, InputIterator> parsed =
+          parseCsvLine(begin, end, allowMissingEOL);
+   *pParsedCsv = parsed.first;
+   return parsed.second;
+}
+
+
 // Encodes a vector of string values to a line of RFC4180 CSV.
 //
 // Note that it's the caller's responsibility to add a terminating newline.

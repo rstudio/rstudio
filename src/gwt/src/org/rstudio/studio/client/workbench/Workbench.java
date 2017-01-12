@@ -49,6 +49,7 @@ import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.projects.ProjectOpener;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.server.Server;
@@ -66,6 +67,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
@@ -101,15 +103,16 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
-                    ChooseFile chooseFile,   // required to force gin to create
-                    AskPassManager askPass,  // required to force gin to create
-                    PDFViewer pdfViewer,     // required to force gin to create
-                    HTMLPreview htmlPreview, // required to force gin to create
-                    ProfilerPresenter prof,  // required to force gin to create
-                    ShinyApplication sApp,   // required to force gin to create
-                    DependencyManager dm,    // required to force gin to create
-                    ApplicationVisibility av,// required to force gin to create
-                    RmdOutput rmdOutput)     // required to force gin to create    
+                    ChooseFile chooseFile,                    // force gin to create
+                    AskPassManager askPass,                   // force gin to create
+                    PDFViewer pdfViewer,                      // force gin to create
+                    HTMLPreview htmlPreview,                  // force gin to create
+                    ProfilerPresenter prof,                   // force gin to create
+                    ShinyApplication sApp,                    // force gin to create
+                    DependencyManager dm,                     // force gin to create
+                    ApplicationVisibility av,                 // force gin to create
+                    RmdOutput rmdOutput,                      // force gin to create    
+                    ProjectTemplateRegistryProvider provider) // force gin to create
   {
       view_ = view;
       workbenchContext_ = workbenchContext;
@@ -395,8 +398,8 @@ public class Workbench implements BusyHandler,
          final ProgressIndicator indicator = new GlobalProgressDelayer(
                globalDisplay_, 500, "Starting shell...").getIndicator();
          
-         server_.startShellDialog(new ServerRequestCallback<ConsoleProcess>() {
-
+         server_.startShellDialog(new ServerRequestCallback<ConsoleProcess>() 
+         {
             @Override
             public void onResponseReceived(ConsoleProcess proc)
             {
@@ -413,6 +416,12 @@ public class Workbench implements BusyHandler,
       }
    }
    
+   @Handler
+   public void onNewTerminal()
+   {
+      eventBus_.fireEvent(new CreateTerminalEvent());
+   }
+      
    @Handler
    public void onBrowseAddins()
    {

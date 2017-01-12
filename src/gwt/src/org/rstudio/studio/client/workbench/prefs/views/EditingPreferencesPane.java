@@ -132,8 +132,7 @@ public class EditingPreferencesPane extends PreferencesPane
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(checkboxPref("Always save R scripts before sourcing", prefs.saveBeforeSourcing()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      
-    
+      editingPanel.add(checkboxPref("Execute all lines in a statement", prefs_.executeMultiLineStatements()));
       
       Label snippetsLabel = headerLabel("Snippets");
       snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);

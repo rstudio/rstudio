@@ -17,6 +17,7 @@
 
 #include <iostream>
 
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
@@ -33,6 +34,8 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+const char* const kSmartTerm = "xterm-256color";
+const char* const kDumbTerm = "dumb";
 
 Error runProgram(const std::string& executable,
                  const std::vector<std::string>& args,
@@ -124,6 +127,17 @@ Error ProcessSupervisor::runCommand(const std::string& command,
    return runChild(pChild, &(pImpl_->children), callbacks);
 }
 
+Error ProcessSupervisor::runTerminal(const ProcessOptions& options,
+                                     const ProcessCallbacks& callbacks)
+{
+   // create the child
+   boost::shared_ptr<AsyncChildProcess> pChild(
+                                 new AsyncChildProcess(options));
+
+   // run the child
+   return runChild(pChild, &(pImpl_->children), callbacks);
+}
+
 namespace {
 
 // class which implements all of the callbacks
@@ -182,6 +196,8 @@ struct ChildCallbacks
       onCompleted(result);
    }
 
+   void onHasSubprocs(bool hasSubprocs) {}
+
    std::string input;
    std::string stdOut;
    std::string stdErr;
@@ -215,6 +231,9 @@ ProcessCallbacks createProcessCallbacks(
    cb.onExit = bind(&ChildCallbacks::onExit, pCC, _1);
    cb.onError = bind(&ChildCallbacks::onError, pCC, _1, _2);
 
+   // Not implemented for generic processes
+   cb.onHasSubprocs = NULL;
+
    // return it
    return cb;
 }
@@ -227,7 +246,7 @@ Error ProcessSupervisor::runProgram(
             const ProcessOptions& options,
             const boost::function<void(const ProcessResult&)>& onCompleted)
 {
-   // create proces callbacks
+   // create process callbacks
    ProcessCallbacks cb = createProcessCallbacks(
             input, onCompleted, boost::function<void(const Error&)>());
 
@@ -261,6 +280,20 @@ Error ProcessSupervisor::runCommand(
 bool ProcessSupervisor::hasRunningChildren()
 {
    return !pImpl_->children.empty();
+}
+
+namespace {
+
+bool has_childProcess(const boost::shared_ptr<AsyncChildProcess>& childProc)
+{
+   return childProc->hasSubprocess();
+}
+
+} // anonymous namespace
+
+bool ProcessSupervisor::hasActiveChildren()
+{
+   return boost::algorithm::any_of(pImpl_->children, has_childProcess);
 }
 
 bool ProcessSupervisor::poll()

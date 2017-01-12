@@ -31,6 +31,7 @@ import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.SaveAction;
+import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.Server;
@@ -207,6 +208,11 @@ public class DesktopHooks
    String getSumatraPdfExePath()
    {
       return session_.getSessionInfo().getSumatraPdfExePath();
+   }
+   
+   boolean isSelectionEmpty()
+   {
+      return DesktopApplicationHeader.isSelectionEmpty();
    }
 
    private final Commands commands_;

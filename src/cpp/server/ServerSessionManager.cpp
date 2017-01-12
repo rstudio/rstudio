@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,6 +47,8 @@ namespace server {
 
 namespace {
 
+static std::string s_launcherToken;
+
 core::system::ProcessConfig sessionProcessConfig(
          r_util::SessionContext context,
          const core::system::Options& extraArgs = core::system::Options())
@@ -78,6 +80,11 @@ core::system::ProcessConfig sessionProcessConfig(
       args.push_back(std::make_pair("-" kScopeSessionOptionShort,
                                     context.scope.id()));
    }
+
+   // create launch token if we haven't already
+   if (s_launcherToken.empty())
+      s_launcherToken = core::system::generateShortenedUuid();
+   args.push_back(std::make_pair("--launcher-token", s_launcherToken));
 
    // allow session timeout to be overridden via environment variable
    std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
@@ -164,10 +171,11 @@ SessionManager::SessionManager()
 {
    // set default session launcher
    sessionLaunchFunction_ = boost::bind(&SessionManager::launchAndTrackSession,
-                                           this, _1);
+                                           this, _1, _2);
 }
 
-Error SessionManager::launchSession(const r_util::SessionContext& context)
+Error SessionManager::launchSession(boost::asio::io_service& ioService,
+      const r_util::SessionContext& context)
 {
    using namespace boost::posix_time;
    LOCK_MUTEX(launchesMutex_)
@@ -212,7 +220,7 @@ Error SessionManager::launchSession(const r_util::SessionContext& context)
    }
 
    // launch the session
-   Error error = sessionLaunchFunction_(profile);
+   Error error = sessionLaunchFunction_(ioService, profile);
    if (error)
    {
       removePendingLaunch(context);
@@ -237,6 +245,7 @@ void setProcessConfigFilter(const core::system::ProcessConfigFilter& filter)
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
 Error SessionManager::launchAndTrackSession(
+                           boost::asio::io_service&,
                            const core::r_util::SessionLaunchProfile& profile)
 {
    // if we are root then assume the identity of the user

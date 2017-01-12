@@ -19,13 +19,28 @@
 
 #include <string>
 
+#include <core/json/Json.hpp>
+
+#define kChunkOutputType     "output_type"
+#define kChunkOutputValue    "output_val"
+#define kChunkOutputOrdinal  "output_ordinal"
+#define kChunkOutputMetadata "output_metadata"
+#define kChunkUrl            "url"
+#define kChunkId             "chunk_id"
+#define kChunkDocId          "doc_id"
+
 #define kChunkOutputPath   "chunk_output"
 
-#define kChunkOutputNone  0
-#define kChunkOutputText  1
-#define kChunkOutputPlot  2
-#define kChunkOutputHtml  3
-#define kChunkOutputError 4
+enum ChunkOutputType
+{
+   ChunkOutputNone    = 0,
+   ChunkOutputText    = 1,
+   ChunkOutputPlot    = 2,
+   ChunkOutputHtml    = 3,
+   ChunkOutputError   = 4,
+   ChunkOutputOrdinal = 5,
+   ChunkOutputData    = 6
+};
 
 #define kChunkConsoleInput  0
 #define kChunkConsoleOutput 1
@@ -56,12 +71,12 @@ enum ChunkOutputContext
 struct OutputPair
 {
    OutputPair() :
-      outputType(kChunkOutputNone), ordinal(1)
+      outputType(ChunkOutputNone), ordinal(1)
    {}
-   OutputPair(unsigned type, unsigned ord):
+   OutputPair(ChunkOutputType type, unsigned ord):
       outputType(type), ordinal(ord) 
    {}
-   unsigned outputType;
+   ChunkOutputType outputType;
    unsigned ordinal;
 };
 
@@ -92,7 +107,7 @@ core::FilePath chunkOutputFile(const std::string& docId,
 
 core::FilePath chunkOutputFile(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId,
-      unsigned outputType);
+      ChunkOutputType outputType);
 
 core::Error cleanChunkOutput(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
@@ -106,7 +121,11 @@ core::Error appendConsoleOutput(int chunkConsoleOutputType,
 // send chunk output to client
 void enqueueChunkOutput(const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId, 
-      int outputType, const core::FilePath& path);
+      unsigned ordinal, ChunkOutputType outputType, const core::FilePath& path);
+void enqueueChunkOutput(const std::string& docId,
+      const std::string& chunkId, const std::string& nbCtxId, 
+      unsigned ordinal, ChunkOutputType outputType, const core::FilePath& path,
+      const core::json::Value& metadata);
 core::Error enqueueChunkOutput(
       const std::string& docPath, const std::string& docId,
       const std::string& chunkId, const std::string& nbCtxId,

@@ -72,6 +72,22 @@ public class AceEditorCommandDispatcher
             ExecutionPolicy.FOCUSED);
    }
    
+   @Handler
+   public void onInsertAssignmentOperator()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.INSERT_ASSIGNMENT_OPERATOR,
+            ExecutionPolicy.FOCUSED);
+   }
+   
+   @Handler
+   public void onInsertPipeOperator()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.INSERT_PIPE_OPERATOR,
+            ExecutionPolicy.FOCUSED);
+   }
+   
    // Private methods ----
    
    private void fireEvent(CommandType type, ExecutionPolicy policy)

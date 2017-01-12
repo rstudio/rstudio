@@ -32,6 +32,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 
 // The version identifier for the cache format. Changing this invalidates old
 // caches, and should be done only when making breaking changes to the 
@@ -150,8 +151,10 @@ Error notebookContentMatches(const FilePath& nbPath, const FilePath& rmdPath,
 {
    // extract content from notebook
    std::string nbRmdContents;
-   Error error = r::exec::RFunction(".rs.extractRmdFromNotebook", 
-         nbPath.absolutePath()).call(&nbRmdContents);
+   r::exec::RFunction extractRmdFromNotebook(
+            ".rs.extractRmdFromNotebook",
+            string_utils::utf8ToSystem(nbPath.absolutePath()));
+   Error error = extractRmdFromNotebook.call(&nbRmdContents);
    if (error) 
       return error;
    if (pContents)
@@ -186,22 +189,69 @@ Error removeStaleSavedChunks(FilePath& docPath, FilePath& cachePath)
       return Success();
 
    // extract the set of chunk IDs from the definition files
-   json::Value oldDefs;
-   json::Value newDefs;
-   error = getChunkDefs(docPath, kSavedCtx, NULL, &oldDefs);
+   json::Array oldDefs;
+   json::Array newDefs;
+   error = getChunkValue(docPath, kSavedCtx, kChunkDefs, &oldDefs);
    if (error)
       return error;
-   error = getChunkDefs(docPath, notebookCtxId(), NULL, &newDefs);
+   error = getChunkValue(docPath, notebookCtxId(), kChunkDefs, &newDefs);
    if (error)
       return error;
 
-   // ensure we got the arrays we expected
-   if (oldDefs.type() != json::ArrayType ||
-       newDefs.type() != json::ArrayType)
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-
-   cleanChunks(cachePath, oldDefs.get_array(), newDefs.get_array());
+   cleanChunks(cachePath, oldDefs, newDefs);
    return Success();
+}
+
+void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // ignore if doc is unsaved (no path)
+   if (pDoc->path().empty())
+      return;
+
+   // check for a contextual (uncommitted) chunk definitions file
+   FilePath chunkDefsFile = chunkDefinitionsPath(pDoc->path(), pDoc->id(),
+         notebookCtxId());
+   if (!chunkDefsFile.exists())
+      return;
+
+   // if the document's contents match what's on disk, commit the chunk
+   // definition file to the saved branch
+   bool matches = false;
+   Error error = pDoc->contentsMatchDisk(&matches);
+   if (error)
+      LOG_ERROR(error);
+   if (matches)
+   {
+      FilePath target = chunkDefinitionsPath(
+               pDoc->path(), pDoc->id(), kSavedCtx);
+
+      // only perform the copy if the saved branch is stale (older than the
+      // uncomitted branch)
+      if (target.lastWriteTime() < chunkDefsFile.lastWriteTime())
+      {
+         // remove the old chunk definition file to make way for the new one 
+         error = target.remove();
+         if (error)
+         {
+            // can't remove the old definition file, so leave it alone
+            LOG_ERROR(error);
+         }
+         else
+         {
+            error = chunkDefsFile.copy(target);
+            if (error)
+            {
+               // removed the old file, but could not copy the new one; this
+               // should never happen. ideally we'd back up the old file and
+               // restore it if we can't copy the new one, but since restoring
+               // the backup and copying the new file are effectively the same
+               // operation it's unlikely to offer any true improvements in
+               // robustness.
+               LOG_ERROR(error);
+            }
+         }
+      }
+   }
 }
 
 void onDocRemoved(const std::string& docId, const std::string& docPath)
@@ -284,8 +334,9 @@ void onDocAdded(const std::string& id)
    // file
    if (!cachePath.exists() && notebookPath.exists())
    {
-      error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
-            notebookPath.absolutePath()).call();
+      error = r::exec::RFunction(
+               ".rs.hydrateCacheFromNotebook",
+               string_utils::utf8ToSystem(notebookPath.absolutePath())).call();
       if (error)
          LOG_ERROR(error);
       return;
@@ -338,8 +389,10 @@ void onDocAdded(const std::string& id)
          return;
       }
 
-      error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
-            notebookPath.absolutePath()).call();
+      error = r::exec::RFunction(
+               ".rs.hydrateCacheFromNotebook", 
+               string_utils::utf8ToSystem(notebookPath.absolutePath())).call();
+      
       if (error)
          LOG_ERROR(error);
    }
@@ -447,10 +500,12 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
       return error;
    }
    
+   SEXP resultSEXP = R_NilValue;
+   r::sexp::Protect protect;
    r::exec::RFunction createNotebook(".rs.createNotebookFromCache");
-   createNotebook.addParam(rmdPath);
-   createNotebook.addParam(outputPath);
-   error = createNotebook.call();
+   createNotebook.addParam(string_utils::utf8ToSystem(rmdPath));
+   createNotebook.addParam(string_utils::utf8ToSystem(outputPath));
+   error = createNotebook.call(&resultSEXP, &protect);
    if (error)
    {
       LOG_ERROR(error);
@@ -466,6 +521,14 @@ Error createNotebookFromCache(const json::JsonRpcRequest& request,
    if (chunkDefsFile.exists() && 
        chunkDefsFile.lastWriteTime() < outputFile.lastWriteTime())
       chunkDefsFile.setLastWriteTime(outputFile.lastWriteTime());
+
+   // convert the result into JSON for the client
+   json::Value result;
+   error = r::json::jsonValueFromList(resultSEXP, &result);
+   if (error)
+      LOG_ERROR(error);
+   else
+      pResponse->setResult(result);
    
    return Success();
 }
@@ -536,8 +599,10 @@ Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
    }
 
    // perform the cache hydration
-   error = r::exec::RFunction(".rs.hydrateCacheFromNotebook", 
-         nbPath.absolutePath(), cacheFolder.absolutePath()).call();
+   error = r::exec::RFunction(
+            ".rs.hydrateCacheFromNotebook",
+            string_utils::utf8ToSystem(nbPath.absolutePath()),
+            string_utils::utf8ToSystem(cacheFolder.absolutePath())).call();
    if (error)
       return error;
 
@@ -604,6 +669,7 @@ Error initCache()
    using namespace module_context;
 
    source_database::events().onDocRenamed.connect(onDocRenamed);
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
    source_database::events().onDocRemoved.connect(onDocRemoved);
    source_database::events().onDocAdded.connect(onDocAdded);
 

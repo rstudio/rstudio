@@ -156,6 +156,10 @@ public:
 
    std::string authRequiredUserGroup() const { return authRequiredUserGroup_; }
 
+   std::string defaultWorkingDir() const { return defaultWorkingDir_.c_str(); }
+
+   std::string defaultProjectDir() const { return defaultProjectDir_.c_str(); }
+
    bool showHelpHome() const { return showHelpHome_; }
 
    bool showUserHomePage() const { return showUserHomePage_; }
@@ -260,6 +264,11 @@ public:
    core::FilePath sumatraPath() const
    {
       return core::FilePath(sumatraPath_.c_str());
+   }
+
+   core::FilePath winutilsPath() const
+   {
+      return core::FilePath(winutilsPath_.c_str());
    }
    
    core::FilePath hunspellDictionariesPath() const
@@ -456,6 +465,11 @@ public:
       return standalone_;
    }
 
+   std::string launcherToken() const
+   {
+      return launcherToken_;
+   }
+
    std::string getOverlayOption(const std::string& name)
    {
       return overlayOptions_[name];
@@ -516,6 +530,8 @@ private:
    bool standalone_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
+   std::string defaultWorkingDir_;
+   std::string defaultProjectDir_;
    bool showHelpHome_;
    bool showUserHomePage_;
 
@@ -547,6 +563,7 @@ private:
    std::string gnugrepPath_;
    std::string msysSshPath_;
    std::string sumatraPath_;
+   std::string winutilsPath_;
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
    std::string pandocPath_;
@@ -577,6 +594,7 @@ private:
    bool projectSharingEnabled_;
    std::string userHomePath_;
    std::string userScratchPath_;   
+   std::string launcherToken_;
 
    // overrides
    std::string initialWorkingDirOverride_;

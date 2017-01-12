@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,11 @@ class ActiveSession : boost::noncopyable
 private:
    friend class ActiveSessions;
    ActiveSession() {}
+
+   explicit ActiveSession(const std::string& id) : id_(id) 
+   {
+   }
+
    explicit ActiveSession(const std::string& id, const FilePath& scratchPath)
       : id_(id), scratchPath_(scratchPath)
    {
@@ -85,6 +90,29 @@ public:
    {
       if (!empty())
          writeProperty("working-dir", workingDir);
+   }
+
+   bool initial() const
+   {
+      if (!empty())
+      {
+         std::string value = readProperty("initial");
+         if (!value.empty())
+            return safe_convert::stringTo<bool>(value, false);
+         else
+            return false;
+      }
+      else
+         return false;
+   }
+
+   void setInitial(bool initial)
+   {
+      if (!empty())
+      {
+         std::string value = safe_convert::numberToString(initial);
+         writeProperty("initial", value);
+      }
    }
 
    double lastUsed() const
@@ -293,6 +321,14 @@ public:
 
    core::Error create(const std::string& project,
                       const std::string& working,
+                      std::string* pId) const
+   {
+      return create(project, working, false, pId);
+   }
+
+   core::Error create(const std::string& project,
+                      const std::string& working,
+                      bool initial,
                       std::string* pId) const;
 
    std::vector<boost::shared_ptr<ActiveSession> > list(
@@ -306,7 +342,7 @@ public:
 
    FilePath storagePath() const { return storagePath_; }
 
-   static boost::shared_ptr<ActiveSession> emptySession();
+   static boost::shared_ptr<ActiveSession> emptySession(const std::string& id);
 
 private:
    core::FilePath storagePath_;

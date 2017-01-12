@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -154,11 +155,8 @@ public class Tokenizer extends JavaScriptObject
       
    }-*/;
    
-   public final ArrayList<Token> tokenize(String line)
+   public final List<Token> tokenize(String line)
    {
-      ArrayList<Token> tokens =
-            new ArrayList<Token>(Arrays.asList(doTokenize(line)));
-      
-      return tokens;
+      return new ArrayList<Token>(Arrays.asList(doTokenize(line)));
    }
 }

@@ -32,8 +32,8 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
-#include <core/BoostLamda.hpp>
 
+#include <core/BoostLamda.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/ShellUtils.hpp>
@@ -83,6 +83,7 @@ namespace {
 
 // git bin dir which we detect at startup. note that if the git bin
 // is already in the path then this will be empty
+std::vector<std::string> s_branches;
 std::string s_gitExePath;
 uint64_t s_gitVersion;
 const uint64_t GIT_1_7_2 = ((uint64_t)1 << 48) |
@@ -316,6 +317,9 @@ protected:
                                      args.args(),
                                      options,
                                      caption,
+                                     "" /*title*/,
+                                     kNoTerminal,
+                                     false /*allowRestart*/,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);
@@ -323,6 +327,9 @@ protected:
       *ppCP = ConsoleProcess::create(git() << args.args(),
                                      options,
                                      caption,
+                                     "" /*title*/,
+                                     kNoTerminal,
+                                     false /*allowRestart*/,
                                      dialog,
                                      console_process::InteractionNever,
                                      console_process::kDefaultMaxOutputLines);
@@ -413,8 +420,21 @@ public:
          file.status = line.substr(0, 2);
 
          std::string filePath = line.substr(3);
+
+         // git status --porcelain will quote paths that contain special
+         // characters (e.g. spaces on Windows). strip those characters
+         // when encountered
+         std::string::size_type n = filePath.size();
+         if (n >= 2 && filePath[0] == '"' && filePath[n - 1] == '"')
+         {
+            filePath = filePath.substr(1, n - 2);
+            boost::algorithm::replace_all(filePath, "\\\"", "\"");
+         }
+
+         // remove trailing slashes
          if (filePath.length() > 1 && filePath[filePath.length() - 1] == '/')
             filePath = filePath.substr(0, filePath.size() - 1);
+
          file.path = root_.childPath(string_utils::systemToUtf8(filePath));
 
          files.push_back(file);
@@ -567,13 +587,46 @@ public:
          pBranches->push_back(line.substr(2));
       }
 
+      s_branches = *pBranches;
       return Success();
    }
 
    core::Error checkout(const std::string& id,
                         boost::shared_ptr<ConsoleProcess>* ppCP)
    {
-      return createConsoleProc(ShellArgs() << "checkout" << id << "--",
+      ShellArgs args;
+      if (id.find("remotes/") == 0)
+      {
+         std::vector<std::string> splat = core::algorithm::split(id, "/");
+         if (splat.size() > 2)
+         {
+            std::string localBranch = core::algorithm::join(splat.begin() + 2, splat.end(), "/");
+            std::string remoteBranch = core::algorithm::join(splat.begin() + 1, splat.end(), "/");
+            
+            // if we don't have a local copy of this branch, then
+            // check out a local copy of branch, tracking remote;
+            // otherwise just check out our local copy
+            if (core::algorithm::contains(s_branches, localBranch))
+            {
+               args << "checkout" << localBranch << "--";
+            }
+            else
+            {
+               args << "checkout" << "-b" << localBranch << remoteBranch << "--";
+            }
+         }
+         else
+         {
+            // shouldn't happen, but provide valid shell command regardless
+            args << "checkout" << id << "--";
+         }
+      }
+      else
+      {
+         args << "checkout" << id << "--";
+      }
+      
+      return createConsoleProc(args,
                                "Git Checkout " + id,
                                true,
                                ppCP);
@@ -2635,7 +2688,8 @@ bool isGitInstalled()
 
    // special handling for mavericks for case where there is /usr/bin/git
    // but it's the fake on installed by osx
-   if (module_context::isOSXMavericks() &&
+   if ((s_gitExePath.empty() || s_gitExePath == "/usr/bin/git") &&
+       module_context::isOSXMavericks() &&
        !module_context::hasOSXMavericksDeveloperTools() &&
        whichGitExe().empty())
    {
@@ -2654,6 +2708,11 @@ bool isGitInstalled()
 bool isGitEnabled()
 {
    return !s_git_.root().empty();
+}
+
+bool isWithinGitRoot(const core::FilePath& filePath)
+{
+   return isGitEnabled() && filePath.isWithin(s_git_.root());
 }
 
 FilePath detectedGitExePath()

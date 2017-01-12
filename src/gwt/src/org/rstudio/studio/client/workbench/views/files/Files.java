@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
 import org.rstudio.studio.client.workbench.views.files.events.*;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
@@ -111,6 +112,10 @@ public class Files
       void showHtmlFileChoice(FileSystemItem file, 
                               Command onEdit, 
                               Command onBrowse);
+
+      void showDataImportFileChoice(FileSystemItem file, 
+                                    Command onView, 
+                                    Command onImport);
    }
 
    @Inject
@@ -126,7 +131,8 @@ public class Files
                 Provider<FileExport> pFileExport,
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
-                WorkbenchContext workbenchContext)
+                WorkbenchContext workbenchContext,
+                DataImportPresenter dataImportPresenter)
    {
       super(view);
       view_ = view ;
@@ -143,6 +149,7 @@ public class Files
       pFilesCopy_ = pFilesCopy;
       pFilesUpload_ = pFilesUpload;
       pFileExport_ = pFileExport;
+      dataImportPresenter_ = dataImportPresenter;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
 
@@ -581,7 +588,7 @@ public class Files
 
    private void navigateToFile(final FileSystemItem file)
    {
-      String ext = file.getExtension().toLowerCase();
+      final String ext = file.getExtension().toLowerCase();
       if (ext.equals(".htm") || ext.equals(".html") || ext.equals(".nb.html"))
       {
          view_.showHtmlFileChoice(
@@ -600,6 +607,38 @@ public class Files
                public void execute()
                {
                   showFileInBrowser(file);                  
+               }
+            });
+      }
+      else if (ext.equals(".csv") ||
+               ext.equals(".xls") || ext.equals(".xlsx") ||
+               ext.equals(".sav") || ext.equals(".dta") || ext.equals("por") ||
+               ext.equals(".sas") || ext.equals(".stata"))
+      {
+         view_.showDataImportFileChoice(
+            file,
+            new Command() {
+
+               @Override
+               public void execute()
+               {
+                  fileTypeRegistry_.openFile(file);
+               }
+            },
+            new Command() {
+
+               @Override
+               public void execute()
+               {
+                  if (ext.equals(".csv")) {
+                     dataImportPresenter_.openImportDatasetFromCSV(file.getPath());
+                  }
+                  else if (ext.equals(".xls") || ext.equals(".xlsx")) {
+                     dataImportPresenter_.openImportDatasetFromXLS(file.getPath());
+                  }
+                  else {
+                     dataImportPresenter_.openImportDatasetFromSAV(file.getPath());
+                  }
                }
             });
       }
@@ -651,4 +690,5 @@ public class Files
    private static final String KEY_PATH = "path";
    private static final String KEY_SORT_ORDER = "sortOrder";
    private JsArray<ColumnSortInfo> columnSortOrder_ = null;
+   private DataImportPresenter dataImportPresenter_;
 }

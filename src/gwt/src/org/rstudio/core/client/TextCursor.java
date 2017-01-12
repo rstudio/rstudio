@@ -14,6 +14,9 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
+
 public class TextCursor
 {
    public TextCursor(String data, int index)
@@ -149,7 +152,7 @@ public class TextCursor
    
    private boolean fwdToCharacter__noskip(char ch)
    {
-      int idx = data_.indexOf(ch, index_ + 1);
+      int idx = data_.indexOf(ch, index_);
       if (idx == -1) return false;
       index_ = idx;
       return true;
@@ -160,7 +163,65 @@ public class TextCursor
       return data_.indexOf(ch, index_ + 1);
    }
    
-   public String getData() { return data_; }
+   public char peek()
+   {
+      return peek(0);
+   }
+   
+   public char peek(int offset)
+   {
+      int index = index_ + offset;
+      if (index < 0 || index >= n_)
+         return '\0';
+      return data_.charAt(index);
+   }
+   
+   public boolean consume(char expected)
+   {
+      boolean matches = data_.charAt(index_) == expected;
+      index_ += matches ? 1 : 0;
+      return matches;
+   }
+   
+   public boolean consumeUntil(char expected)
+   {
+      int index = data_.indexOf(expected, index_);
+      if (index != -1)
+      {
+         index_ = index;
+         return true;
+      }
+      return false;
+   }
+   
+   public boolean consumeUntil(String expected)
+   {
+      int index = data_.indexOf(expected, index_);
+      if (index != -1)
+      {
+         index_ = index;
+         return true;
+      }
+      return false;
+   }
+   
+   public boolean consumeUntilRegex(String regex)
+   {
+      Pattern pattern = Pattern.create(regex);
+      Match match = pattern.match(data_, index_);
+      if (match == null)
+         return false;
+      
+      index_ = match.getIndex();
+      return true;
+   }
+   
+   public String getData()
+   {
+      return data_;
+   }
+   
+   public void setIndex(int index) { index_ = index; }
    public int getIndex() { return index_; }
    
    public boolean isLeftBracket()
@@ -173,6 +234,16 @@ public class TextCursor
    {
       char ch = data_.charAt(index_);
       return ch == '}' || ch == ']' || ch == ')';
+   }
+   
+   public boolean isSingleQuote()
+   {
+      return data_.charAt(index_) == '\'';
+   }
+   
+   public boolean isDoubleQuote()
+   {
+      return data_.charAt(index_) == '"';
    }
    
    private char complement(char ch)

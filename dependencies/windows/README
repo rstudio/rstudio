@@ -6,38 +6,42 @@ Building RStudio requires installations of a number of applications
 (including R). These applications include:
 
 R:         http://www.r-project.org/
+Rtools:    http://cran.r-project.org/bin/windows/Rtools/
 CMake:     http://www.cmake.org/ (choose "Add to system path" during install)
 Java:      http://www.oracle.com/technetwork/java/javase/downloads
 Ant:       http://code.google.com/p/winant
 NSIS:      http://nsis.sourceforge.net
+Qt:        http://www.qt.io/
 
-Installing QT
+Installing Qt
 =============================================================================
 
-Qt installation involves both the MinGW compiler as well as version Qt 5.4
-of the Qt Framework. You can install both of these components using the
-installer at this URL:
+RStudio currently builds against Qt 5.4.1 on Windows. You can download it here:
 
-http://download.qt-project.org/official_releases/qt/5.4/5.4.0/qt-opensource-windows-x86-mingw491_opengl-5.4.0.exe
+http://download.qt.io/official_releases/qt/5.4/5.4.1/qt-opensource-windows-x86-mingw491_opengl-5.4.1.exe
 
-Note that Mingw 4.9.1 is not installed by default so you need to be sure to
-select it under Tools in the installer target customization UI.
+
+Installing Rtools
+=============================================================================
+
+RStudio currently builds against the MinGW toolchains packaged with Rtools 3.3.
+You can download this at:
+
+https://cran.r-project.org/bin/windows/Rtools/Rtools33.exe
+
+Install this into the default location, at C:\Rtools, to ensure that RStudio's
+CMake configuration scripts automatically discover the associated tools.
 
 
 Update System Path
 =============================================================================
 
-Building RStudio requires that the CMake, Qt, and MingGW executables be
-accessible via the system path (note that CMake should already be accessible
-via the CMake installer if the "Add to system path" option was chosen during
-installation). For Qt and MinGW you should ensure that the following
-additional directories are available on the path:
+Building RStudio requires that the CMake executables are accessible via the
+system path  (note that CMake should already be accessible via the CMake
+installer if the "Add to system path" option was chosen during installation).
 
-C:\Qt\Qt5.4.0\5.4\mingw491_32\bin
-C:\Qt\Qt5.4.0\Tools\mingw491_32\bin
-
-Finally, you should also ensure that your R installation's bin
-directory is on the system path. For example:
+You should also ensure that your R installation's bin directory is on the
+system path. For example:
 
 C:\Program Files\R\R-2.15.1\bin\i386
 
@@ -45,49 +49,22 @@ C:\Program Files\R\R-2.15.1\bin\i386
 Satisfy Additional Dependencies
 =============================================================================
 
-Additional dependencies (boost, mingw64, GWT, and gin) can be satisfied by
+Additional dependencies (boost, GWT, and gin) can be satisfied by
 running the following script:
 
 install-dependencies.cmd
 
-NOTE: How to upgrade boost-1.50-win-gcc491.zip
+
+Installing Boost
 =============================================================================
 
-boost-1.50-win-gcc491.zip is a prepackaged set of boost 1.50 windows headers and
-binaries (32 and 64 bit) built for MinGW 4.9.1 To upgrade to either a new
-boost or MinGW version you should download the appropriate boost windows
-source archive, boostrap the boost build system (note that this
-requires MSFT Visual C++) then follow the instructions below 
+RStudio provides an R script that automatically downloads and builds Boost.
+Find this script at:
 
-Win32
----------
+https://www.github.com/rstudio/rstudio/tree/master/dependencies/windows/install-boost/install-boost.R
 
-(ensure 32 bit mingw64 is in the path)
-
-bjam --prefix=C:\boost32 toolset=gcc address-model=32 ^
- --with-date_time --with-filesystem --with-iostreams ^
- --with-program_options --with-regex --with-signals ^
- --with-system --with-thread --with-chrono ^
- variant=debug,release link=static threading=multi ^
- define=BOOST_USE_WINDOWS_H ^
- install
-
-Win64
---------- 
-
-(ensure 64 bit mingw64 is in the path) 
-
-bjam --prefix=C:\boost64 toolset=gcc address-model=64 ^
-     --with-date_time --with-filesystem --with-iostreams ^
-     --with-program_options --with-regex --with-signals ^ 
-     --with-system --with-thread --with-chrono ^ 
-     variant=debug,release link=static threading=multi ^ 
-     define=BOOST_USE_WINDOWS_H ^
-     install
-
-After this you can create a new boost-<ver>-win-gcc<ver>.zip 
-archive using the contents of the C:\boost32 and C:\boost64 
-directories.
+Running this script currently produces a packaged zipfile of Boost 1.50 (32bit
+and 64bit), built using the MinGW toolchain provided as part of Rtools 3.3.
 
 
 NOTE: Getting boost to work with mingw64

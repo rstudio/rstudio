@@ -892,6 +892,7 @@ private:
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
                ext == ".json" || ext == ".tex" ||
+               ext == ".scala" ||
                filename == "DESCRIPTION" ||
                filename == "NAMESPACE" ||
                filename == "README" ||
@@ -903,6 +904,8 @@ private:
                filename == "cleanup.win" ||
                filename == "Makevars" ||
                filename == "Makevars.win" ||
+               filename == "LICENSE" ||
+               filename == "LICENCE" ||
                filePath.hasTextMimeType());
    }
 

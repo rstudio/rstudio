@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,10 +24,13 @@
 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 
+#define BOOST_NO_CXX11_SCOPED_ENUMS
+#include <boost/filesystem.hpp>
+#undef BOOST_NO_CXX11_SCOPED_ENUMS
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
@@ -680,7 +683,7 @@ Error FilePath::removeIfExists() const
       return Success();
 }
 
-Error FilePath::move(const FilePath& targetPath) const
+Error FilePath::move(const FilePath& targetPath, MoveType type) const
 {
    try
    {
@@ -689,6 +692,13 @@ Error FilePath::move(const FilePath& targetPath) const
    }
    catch(const boost::filesystem::filesystem_error& e)
    {
+      if (type == MoveCrossDevice &&
+          e.code() == boost::system::errc::cross_device_link)
+      {
+         // this error implies that we're trying to move a file from one 
+         // device to another; in this case, fall back to copy/delete
+         return moveIndirect(targetPath);
+      }
       Error error(e.code(), ERROR_LOCATION) ;
       addErrorProperties(pImpl_->path, &error) ;
       error.addProperty("target-path", targetPath.absolutePath()) ;
@@ -696,6 +706,27 @@ Error FilePath::move(const FilePath& targetPath) const
    }
 }
 
+Error FilePath::moveIndirect(const FilePath& targetPath) const 
+{
+   // when target is a directory, moving has the effect of moving *into* the
+   // directory (rather than *replacing* it); simulate that behavior here
+   FilePath target = targetPath.isDirectory() ?
+      targetPath.complete(filename()) : targetPath;
+
+   // copy the file or directory to the new location
+   Error error = isDirectory() ? 
+      copyDirectoryRecursive(target) : copy(target);
+   if (error)
+      return error;
+
+   // delete the original copy of the file or directory (not considered a fatal
+   // error)
+   error = remove();
+   if (error)
+      LOG_ERROR(error);
+
+   return Success();
+}
 
 Error FilePath::copy(const FilePath& targetPath) const
 {

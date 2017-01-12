@@ -1,0 +1,51 @@
+@CHARSET "UTF-8";
+
+@external gwt-Label;
+@external gwt-Image;
+@external macintosh;
+
+.infoPanel {
+  width: 500px;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  color: #4d4d4d;
+}
+
+.infoPanel .gwt-Image {
+  margin-right: 4px;
+}
+
+.helpLink {
+  margin-top: 6px;
+}
+
+.codeGrid {
+  margin-top: 9px;
+  margin-bottom: 10px;
+}
+
+.leftLabel {
+  margin-right: 4px;
+}
+
+.codeViewer {
+  border: 1px solid #BBB !important;
+  background-color: #FFF;
+  width: 100% !important;
+  height: 65px !important;
+  font-size: 9pt;
+}
+
+.dialogCodePanel {
+  width: 500px !important;
+}
+
+.macintosh .codeViewer {
+  font-size: 8pt;
+}
+
+.codePanelHeader {
+   margin-bottom: 4px;
+}
+
+

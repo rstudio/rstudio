@@ -88,6 +88,8 @@ import org.rstudio.studio.client.packrat.model.PackratStatus;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.projects.model.ProjectUserRole;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -95,6 +97,9 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
+import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
+import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
@@ -104,6 +109,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
@@ -140,9 +146,9 @@ import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
-import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
-import org.rstudio.studio.client.workbench.views.connections.model.NewSparkConnectionContext;
+import org.rstudio.studio.client.workbench.views.connections.model.Field;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -464,12 +470,56 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
+
    
-   public void startShellDialog(
-                    ServerRequestCallback<ConsoleProcess> requestCallback)
+   public void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, 
-                  START_SHELL_DIALOG,  
+      invokeStartShellDialog(ConsoleProcess.TerminalType.DUMB, true /*modal*/,
+                             80, 1, null /*handle*/, null /*caption*/, null /*title*/, 
+                             ConsoleProcessInfo.SEQUENCE_NO_TERMINAL,
+                             false /*allowProcessRestart*/,
+                             false /*reportChildCount*/,
+                             requestCallback);
+   }
+   
+   public void startTerminal(int cols, int rows,
+                             String handle, String caption, String title, int sequence,
+                             ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM, false /*modal*/,
+                             cols, rows, handle, caption, title, sequence,
+                             true /*allowProcessRestart*/,
+                             true /*reportChildCount*/,
+                             requestCallback);
+   }
+   
+   private void invokeStartShellDialog(
+                     ConsoleProcess.TerminalType terminalType,
+                     boolean isModalDialog,
+                     int cols, int rows,
+                     String terminalHandle,
+                     String caption,
+                     String title,
+                     int sequence,
+                     boolean allowProcessRestart,
+                     boolean reportChildCount,
+                     ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(terminalType.toString()));
+      params.set(1, new JSONNumber(cols));
+      params.set(2, new JSONNumber(rows));
+      params.set(3, JSONBoolean.getInstance(isModalDialog));
+      params.set(4, new JSONString(StringUtil.notNull(terminalHandle)));
+      params.set(5, new JSONString(StringUtil.notNull(caption)));
+      params.set(6, new JSONString(StringUtil.notNull(title)));
+      params.set(7, new JSONNumber(sequence));
+      params.set(8, JSONBoolean.getInstance(allowProcessRestart));
+      params.set(9, JSONBoolean.getInstance(reportChildCount));
+
+      sendRequest(RPC_SCOPE,
+                  START_SHELL_DIALOG,
+                  params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
    
@@ -601,6 +651,58 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROCESS_WRITE_STDIN, params, requestCallback);
    }
 
+   @Override
+   public void processSetShellSize(String handle,
+                                   int width,
+                                   int height,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONNumber(width));
+      params.set(2,  new JSONNumber(height));
+      sendRequest(RPC_SCOPE, PROCESS_SET_SIZE, params, requestCallback);
+   }
+   
+   @Override
+   public void processSetCaption(String handle,
+                                 String caption,
+                                 ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(caption));
+      sendRequest(RPC_SCOPE, PROCESS_SET_CAPTION, params, requestCallback);
+   }
+
+   @Override
+   public void processSetTitle(String handle,
+                               String title,
+                               ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(title));
+      sendRequest(RPC_SCOPE, PROCESS_SET_TITLE, params, requestCallback);
+   }
+
+   @Override
+   public void processEraseBuffer(String handle,
+                                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_ERASE_BUFFER, params, requestCallback);   
+   }
+
+   @Override
+   public void processGetBuffer(String handle,
+                                  ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(handle)));
+      sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER, params, requestCallback);   
+   }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
    {
@@ -736,11 +838,13 @@ public class RemoteServer implements Server
    
    public void getArgs(String name,
                        String source,
+                       String helpHandler,
                        ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(name));
       params.set(1, new JSONString(source));
+      params.set(2,  new JSONString(StringUtil.notNull(helpHandler)));
       sendRequest(
             RPC_SCOPE,
             GET_ARGS,
@@ -998,6 +1102,29 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
    
+   public void getCustomHelp(String helpHandler,
+                             String topic, 
+                             String source,
+                             ServerRequestCallback<HelpInfo.Custom> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(helpHandler));
+      params.set(1, new JSONString(topic));
+      params.set(2, new JSONString(source));
+      sendRequest(RPC_SCOPE, GET_CUSTOM_HELP, params, requestCallback);
+   }
+   
+   public void getCustomParameterHelp(String helpHandler,
+                                      String source,
+                                      ServerRequestCallback<HelpInfo.Custom> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(helpHandler));
+      params.set(1, new JSONString(source));
+      sendRequest(RPC_SCOPE, GET_CUSTOM_PARAMETER_HELP, params, requestCallback);
+   }
+
+   
    public void showHelpTopic(String what, String from, int type)
    {
       JSONArray params = new JSONArray() ;
@@ -1011,6 +1138,20 @@ public class RemoteServer implements Server
                   SHOW_HELP_TOPIC,
                   params,
                   null) ;
+   }
+   
+   public void showCustomHelpTopic(String helpHandler, 
+                                   String topic, 
+                                   String source)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(helpHandler));
+      params.set(1, new JSONString(topic));
+      params.set(2, new JSONString(source));
+      sendRequest(RPC_SCOPE, 
+                  SHOW_CUSTOM_HELP_TOPIC, 
+                  params, 
+                  null);
    }
    
    public void search(String query, 
@@ -1480,6 +1621,7 @@ public class RemoteServer implements Server
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              NewShinyAppOptions newShinyAppOptions,
+                             ProjectTemplateOptions projectTemplateOptions,
                              ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -1488,7 +1630,25 @@ public class RemoteServer implements Server
                new JSONObject(newPackageOptions) : JSONNull.getInstance());
       params.set(2, newShinyAppOptions != null ?
             new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
+      params.set(3, projectTemplateOptions != null ?
+            new JSONObject(projectTemplateOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
+   }
+   
+   public void getProjectTemplateRegistry(
+         ServerRequestCallback<ProjectTemplateRegistry> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PROJECT_TEMPLATE_REGISTRY, requestCallback);
+   }
+   
+   public void executeProjectTemplate(String pkgName,
+                                      String pkgBinding,
+                                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(pkgName));
+      params.set(1, new JSONString(pkgBinding));
+      sendRequest(RPC_SCOPE, EXECUTE_PROJECT_TEMPLATE, params, requestCallback);
    }
    
    public void packageSkeleton(String packageName,
@@ -3914,26 +4074,17 @@ public class RemoteServer implements Server
    @Override
    public void publishContent(
          RSConnectPublishSource source, String account, 
-         String server, String appName, 
+         String server, String appName, String appTitle,
          RSConnectPublishSettings settings,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(source.getDeployDir()));
-      params.set(1, JSONUtils.toJSONStringArray(settings.getDeployFiles()));
-      params.set(2, new JSONString(source.isDocument() ||
-            source.isSingleFileShiny() ? source.getDeployFileName() : ""));
-      params.set(3, new JSONString(source.isDocument() && source.getSourceFile() != null ? 
-            source.getSourceFile() : ""));
-      params.set(4, new JSONString(account));
-      params.set(5, new JSONString(server));
-      params.set(6, new JSONString(appName));
-      params.set(7, new JSONString(source.getContentCategory() == null ? "" :
-            source.getContentCategory()));
-      params.set(8, JSONUtils.toJSONStringArray(settings.getAdditionalFiles()));
-      params.set(9, JSONUtils.toJSONStringArray(settings.getIgnoredFiles()));
-      params.set(10, JSONBoolean.getInstance(settings.getAsMultiple()));
-      params.set(11, JSONBoolean.getInstance(settings.getAsStatic()));
+      params.set(0, new JSONObject(source.toJso()));
+      params.set(1, new JSONObject(settings.toJso()));
+      params.set(2, new JSONString(account));
+      params.set(3, new JSONString(server));
+      params.set(4, new JSONString(appName));
+      params.set(5, new JSONString(StringUtil.notNull(appTitle)));
       sendRequest(RPC_SCOPE,
             RSCONNECT_PUBLISH,
             params,
@@ -4055,6 +4206,18 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void generateAppName(String title, String appPath, String accountName,
+         ServerRequestCallback<RSConnectAppName> resultCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(title));
+      params.set(1, new JSONString(StringUtil.isNullOrEmpty(appPath) ? 
+            "" : appPath));
+      params.set(2, new JSONString(accountName));
+      sendRequest(RPC_SCOPE, "generate_app_name", params, resultCallback);
+   }
+
+   @Override
    public void getEditPublishedDocs(String appPath,
          ServerRequestCallback<JsArrayString> resultCallback)
    {
@@ -4075,7 +4238,7 @@ public class RemoteServer implements Server
    @Override
    public void renderRmd(String file, int line, String format, String encoding,
                          String paramsFile, boolean asTempfile, int type,
-                         String existingOutputFile,
+                         String existingOutputFile, String workingDir,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4087,6 +4250,7 @@ public class RemoteServer implements Server
       params.set(5, JSONBoolean.getInstance(asTempfile));
       params.set(6, new JSONNumber(type));
       params.set(7, new JSONString(StringUtil.notNull(existingOutputFile)));
+      params.set(8, new JSONString(StringUtil.notNull(workingDir)));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,
@@ -4205,14 +4369,15 @@ public class RemoteServer implements Server
    
    @Override
    public void refreshChunkOutput(String docPath, String docId, 
-         String contextId, String requestId, 
-         ServerRequestCallback<Void> requestCallback)
+         String contextId, String requestId, String chunkId,
+         ServerRequestCallback<NotebookDocQueue> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docPath == null ? "" : docPath));
       params.set(1, new JSONString(docId));
       params.set(2, new JSONString(contextId));
       params.set(3, new JSONString(requestId));
+      params.set(4, new JSONString(chunkId));
       sendRequest(RPC_SCOPE,
             "refresh_chunk_output",
             params,
@@ -4242,8 +4407,8 @@ public class RemoteServer implements Server
    
    @Override
    public void createNotebookFromCache(String rmdPath,
-                                       String outputPath,
-                                       ServerRequestCallback<Void> requestCallback)
+               String outputPath,
+               ServerRequestCallback<NotebookCreateResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(rmdPath));
@@ -4253,13 +4418,36 @@ public class RemoteServer implements Server
 
    @Override
    public void replayNotebookPlots(String docId, String initialChunkId,
-         int pixelWidth, ServerRequestCallback<Boolean> requestCallback)
+         int pixelWidth, int pixelHeight, ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docId));
       params.set(1, new JSONString(initialChunkId));
       params.set(2, new JSONNumber(pixelWidth));
+      params.set(3, new JSONNumber(pixelHeight));
       sendRequest(RPC_SCOPE, "replay_notebook_plots", params, requestCallback);
+   }
+
+   @Override
+   public void replayNotebookChunkPlots(String docId, String chunkId,
+         int pixelWidth, int pixelHeight, ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      params.set(2, new JSONNumber(pixelWidth));
+      params.set(3, new JSONNumber(pixelHeight));
+      sendRequest(RPC_SCOPE, "replay_notebook_chunk_plots", params, requestCallback);
+   }
+
+   @Override
+   public void cleanReplayNotebookChunkPlots(String docId, String chunkId,
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(chunkId));
+      sendRequest(RPC_SCOPE, "clean_replay_notebook_chunk_plots", params, requestCallback);
    }
    
    @Override
@@ -4279,6 +4467,26 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(code));
       params.set(5, new JSONObject(options));
       sendRequest(RPC_SCOPE, "execute_alternate_engine_chunk", params, requestCallback);
+   }
+   
+   public void executeNotebookChunks(NotebookDocQueue queue, 
+         ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(queue));
+      sendRequest(RPC_SCOPE, "execute_notebook_chunks", params, 
+            requestCallback);
+   }
+   
+   public void updateNotebookExecQueue(NotebookQueueUnit unit, int op, 
+         String beforeChunkId, ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(unit));
+      params.set(1, new JSONNumber(op));
+      params.set(2, new JSONString(beforeChunkId));
+      sendRequest(RPC_SCOPE, "update_notebook_exec_queue", params, 
+            requestCallback);
    }
    
    @Override
@@ -4668,27 +4876,57 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_CONNECTION, id, callback);
    }
    
-   public void getDisconnectCode(Connection connection, 
+   public void getDisconnectCode(ConnectionId connectionId, 
                                  ServerRequestCallback<String> callback)
    {
-      sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connection, callback);
+      sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connectionId, callback);
    }
    
-   
-   public void showSparkLog(Connection connection, 
+   @Override
+   public void connectionExecuteAction(ConnectionId connection, 
+                            String action,
                             ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, SHOW_SPARK_LOG, connection, callback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connection));
+      params.set(1, new JSONString(action));
+      sendRequest(RPC_SCOPE, CONNECTION_EXECUTE_ACTION, params, callback);
    }
    
-   public void showSparkUI(Connection connection, 
-                           ServerRequestCallback<Void> callback)
+   @Override
+   public void connectionListTables(
+                              ConnectionId connectionId,
+                              ServerRequestCallback<JsArrayString> callback)
    {
-      sendRequest(RPC_SCOPE, SHOW_SPARK_UI, connection, callback);
+      sendRequest(RPC_SCOPE, CONNECTION_LIST_TABLES, connectionId, callback);
+      
+   }
+
+   @Override
+   public void connectionListFields(
+                              ConnectionId connectionId, 
+                              String table,
+                              ServerRequestCallback<JsArray<Field>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connectionId));
+      params.set(1, new JSONString(table));
+      sendRequest(RPC_SCOPE, CONNECTION_LIST_FIELDS, params, callback);
    }
    
-   public void getNewSparkConnectionContext(
-         ServerRequestCallback<NewSparkConnectionContext> callback)
+   @Override
+   public void connectionPreviewTable(ConnectionId connectionId,
+                                      String table,
+                                      ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(connectionId));
+      params.set(1, new JSONString(table));
+      sendRequest(RPC_SCOPE, CONNECTION_PREVIEW_TABLE, params, callback);
+   }
+   
+   public void getNewConnectionContext(
+         ServerRequestCallback<NewConnectionContext> callback)
    {
       sendRequest(RPC_SCOPE, GET_NEW_SPARK_CONNECTION_CONTEXT, callback);
    }
@@ -4704,6 +4942,35 @@ public class RemoteServer implements Server
                   INSTALL_SPARK,
                   params,
                   new ConsoleProcessCallbackAdapter(callback));
+   }
+
+   @Override
+   public void defaultSqlConnectionName(ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, SQL_CHUNK_DEFAULT_CONNECTION, params, requestCallback);
+   }
+
+   @Override
+   public void launchEmbeddedShinyConnectionUI(String packageName, 
+                                               String connectionName,
+                                               ServerRequestCallback<RResult<Void>> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      params.set(1, new JSONString(connectionName));
+      sendRequest(RPC_SCOPE, LAUNCH_EMBEDDED_SHINY_CONNECTION_UI, params, callback);
+   }
+
+   @Override
+   public void showDialogCompleted(String prompt,
+                                   boolean ok,
+                                   ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, prompt == null ? JSONNull.getInstance() : new JSONString(prompt));
+      params.set(1, JSONBoolean.getInstance(ok));
+      sendRequest(RPC_SCOPE, RSTUDIOAPI_SHOW_DIALOG_COMPLETED, params, true, callback);
    }
 
    private String clientId_;
@@ -4772,6 +5039,11 @@ public class RemoteServer implements Server
    private static final String PROCESS_INTERRUPT = "process_interrupt";
    private static final String PROCESS_REAP = "process_reap";
    private static final String PROCESS_WRITE_STDIN = "process_write_stdin";
+   private static final String PROCESS_SET_SIZE = "process_set_size";
+   private static final String PROCESS_SET_CAPTION = "process_set_caption";
+   private static final String PROCESS_SET_TITLE = "process_set_title";
+   private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
+   private static final String PROCESS_GET_BUFFER = "process_get_buffer";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";
@@ -4797,6 +5069,9 @@ public class RemoteServer implements Server
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
    private static final String SEARCH = "search" ;
+   private static final String GET_CUSTOM_HELP = "get_custom_help";
+   private static final String GET_CUSTOM_PARAMETER_HELP = "get_custom_parameter_help";
+   private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic" ;
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";
@@ -4831,6 +5106,8 @@ public class RemoteServer implements Server
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
    private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
+   private static final String GET_PROJECT_TEMPLATE_REGISTRY = "get_project_template_registry";
+   private static final String EXECUTE_PROJECT_TEMPLATE = "execute_project_template";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";
    private static final String WRITE_PROJECT_OPTIONS = "write_project_options";
    private static final String WRITE_PROJECT_VCS_OPTIONS = "write_project_vcs_options";
@@ -5071,8 +5348,15 @@ public class RemoteServer implements Server
    
    private static final String REMOVE_CONNECTION = "remove_connection";
    private static final String GET_DISCONNECT_CODE = "get_disconnect_code";
-   private static final String SHOW_SPARK_LOG = "show_spark_log";
-   private static final String SHOW_SPARK_UI = "show_spark_ui";
-   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_spark_connection_context";
+   private static final String CONNECTION_EXECUTE_ACTION = "connection_execute_action";
+   private static final String CONNECTION_LIST_TABLES = "connection_list_tables";
+   private static final String CONNECTION_LIST_FIELDS = "connection_list_fields";
+   private static final String CONNECTION_PREVIEW_TABLE = "connection_preview_table";
+   private static final String GET_NEW_SPARK_CONNECTION_CONTEXT = "get_new_connection_context";
    private static final String INSTALL_SPARK = "install_spark";
+
+   private static final String SQL_CHUNK_DEFAULT_CONNECTION = "default_sql_connection_name";
+
+   private static final String LAUNCH_EMBEDDED_SHINY_CONNECTION_UI = "launch_embedded_shiny_connection_ui";
+   private static final String RSTUDIOAPI_SHOW_DIALOG_COMPLETED = "rstudioapi_show_dialog_completed";
 }

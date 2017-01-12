@@ -7,7 +7,7 @@ cd /rstudio/dependencies/linux
 LINUX_SYS=debian
 if [ -f /etc/redhat-release ]; then
     LINUX_SYS=yum
-else
+fi
 
 ./install-dependencies-$LINUX_SYS
 
@@ -31,4 +31,10 @@ cd /rstudio/vagrant
 mkdir -p /home/vagrant/rstudio-build
 cd /home/vagrant/rstudio-build
 cmake ~/rstudio/src/cpp -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
+# add compile commands to rdm index 
+rcpath=$(which rc)
+if [ -x "$rcpath" ]; then
+   $rcpath -J /home/vagrant/rstudio-build
+fi
 

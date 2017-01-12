@@ -19,6 +19,18 @@
         }
         .modelButton {
         }
+        .optionsLeftBlock {
+            display: -ms-flexbox;
+            display: -webkit-flex;
+            display: flex;
+
+            -webkit-flex-direction: row;
+            -ms-flex-direction: row;
+            flex-direction: row;
+        }
+        .optionsRightBlock {
+            margin-left: auto;
+        }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
         <g:Label text="Import Options:" styleName="{style.optionsLabel}"/>
@@ -32,8 +44,13 @@
                 <rsdi:DataImportFileChooser ui:field="fileChooser_"/>
             </div>
             <div class="{style.optionsRow} {style.formatRow}">
-                <div class="{style.optionLabel} {style.formatLabel}">Format:</div>
-                <g:ListBox ui:field="formatListBox_" styleName="{style.formatListBox}"/>
+                <div class="{style.optionsLeftBlock}">
+                    <div class="{style.optionLabel} {style.formatLabel}">Format:</div>
+                    <g:ListBox ui:field="formatListBox_" styleName="{style.formatListBox}"/>
+                </div>
+                <div class="{style.optionsRightBlock}">
+                    <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
+                </div>
             </div>
         </div>
     </g:HTMLPanel>

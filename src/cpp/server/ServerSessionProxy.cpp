@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 #include <map>
 
 #include <boost/regex.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -70,9 +71,11 @@ namespace session_proxy {
    
 namespace {
 
-Error launchSessionRecovery(const http::Request& request,
-                            bool firstAttempt,
-                            const r_util::SessionContext& context)
+Error launchSessionRecovery(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const http::Request& request,
+      bool firstAttempt,
+      const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
    // session then return session unavilable error
@@ -97,18 +100,21 @@ Error launchSessionRecovery(const http::Request& request,
 
    // attempt to launch the session only if this is the first recovery attempt
    if (firstAttempt)
-      return sessionManager().launchSession(context);
+      return sessionManager().launchSession(ptrConnection->ioService(), 
+            context);
    else
       return Success();
 }
 
-http::ConnectionRetryProfile sessionRetryProfile(const r_util::SessionContext& context)
+http::ConnectionRetryProfile sessionRetryProfile(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      const r_util::SessionContext& context)
 {
    http::ConnectionRetryProfile retryProfile;
    retryProfile.retryInterval = boost::posix_time::milliseconds(25);
    retryProfile.maxWait = boost::posix_time::seconds(10);
    retryProfile.recoveryFunction = boost::bind(launchSessionRecovery,
-                                               _1, _2, context);
+                                               ptrConnection, _1, _2, context);
    return retryProfile;
 }
 
@@ -169,10 +175,19 @@ public:
 private:
    // detect when we've got the whole response and force a response and a
    // close of the socket (this is because the current version of httpuv
-   // expects a close from the client end of the socket)
+   // expects a close from the client end of the socket). however, don't
+   // do this for Jetty (as it often doesn't send a Content-Length header)
    virtual bool stopReadingAndRespond()
    {
-      return response_.body().length() >= response_.contentLength();
+      std::string server = response_.headerValue("Server");
+      if (boost::algorithm::contains(server, "Jetty"))
+      {
+         return false;
+      }
+      else
+      {
+         return response_.body().length() >= response_.contentLength();
+      }
    }
 
    // ensure that we don't close the connection when a websockets
@@ -215,6 +230,42 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
 
    // replace the header (no-op if both of the above tests fail)
    pResponse->replaceHeader(headerName, address);
+}
+
+bool isSparkUIResponse(const http::Response& response)
+{
+   using namespace boost::algorithm;
+   return contains(response.headerValue("Server"), "Jetty") &&
+          contains(response.body(), "<img src=\"/static/spark-logo") &&
+          contains(response.body(), "<div class=\"navbar navbar-static-top\">");
+}
+
+void sendSparkUIResponse(
+      const http::Response& response,
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection)
+{
+   std::string path = ptrConnection->request().path();
+   size_t slashes = std::count(path.begin(), path.end(), '/');
+   size_t up = slashes >= 4 ? (slashes - 3) : 0;
+   std::vector<std::string> dirs;
+   for (size_t i=0; i<up; i++)
+      dirs.push_back("..");
+   std::string prefix = boost::algorithm::join(dirs, "/");
+
+   http::Response fixedResponse;
+   fixedResponse.assign(response);
+   std::string body = response.body();
+   boost::algorithm::replace_all(body,
+                              "href=\"/",
+                              "href=\"" + prefix + "/");
+   boost::algorithm::replace_all(body,
+                                 "<script src=\"/",
+                                 "<script src=\"" + prefix + "/");
+   boost::algorithm::replace_all(body,
+                                 "<img src=\"/",
+                                 "<img src=\"" + prefix + "/");
+   fixedResponse.setBody(body);
+   ptrConnection->writeResponse(fixedResponse);
 }
 
 void handleLocalhostResponse(
@@ -275,7 +326,17 @@ void handleLocalhostResponse(
       }
       else
       {
-         ptrConnection->writeResponse(response);
+         // fixup bad SparkUI URLs in responses (they use paths hard
+         // coded to the root "/" and we are proxying them behind
+         // a "/p/<port>/" URL)
+         if (isSparkUIResponse(response))
+         {         
+            sendSparkUIResponse(response, ptrConnection);
+         }
+         else
+         {
+            ptrConnection->writeResponse(response);
+         }
       }
    }
 }
@@ -609,7 +670,7 @@ void proxyContentRequest(
    proxyRequest(context,
                 ptrConnection,
                 boost::bind(handleContentError, ptrConnection, context, _1),
-                sessionRetryProfile(context));
+                sessionRetryProfile(ptrConnection, context));
 }
 
 void proxyRpcRequest(
@@ -632,7 +693,7 @@ void proxyRpcRequest(
    proxyRequest(context,
                 ptrConnection,
                 boost::bind(handleRpcError, ptrConnection, context, _1),
-                sessionRetryProfile(context));
+                sessionRetryProfile(ptrConnection, context));
 }
    
 void proxyEventsRequest(
@@ -703,6 +764,11 @@ void proxyLocalhostRequest(
    // true for our use case
    //request.removeHeader("TE");
    //request.removeHeader("Transfer-Encoding");
+
+   // we had trouble with sending jetty accept-encoding of gzip
+   // (it returns content w/o a Content-Length which foilis our
+   // decoding code)
+   request.removeHeader("Accept-Encoding");
 
    // specify closing of the connection after the request unless this is
    // an attempt to upgrade to websockets

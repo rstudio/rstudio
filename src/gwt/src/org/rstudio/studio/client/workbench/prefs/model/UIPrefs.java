@@ -44,7 +44,8 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
                   PrefsServerOperations server,
                   SatelliteManager satelliteManager)
    {
-      super(session.getSessionInfo().getUiPrefs(),
+      super(session.getSessionInfo(),
+            session.getSessionInfo().getUiPrefs(),
             session.getSessionInfo().getProjectUIPrefs());
       
       session_ = session;
@@ -94,6 +95,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
       {
          // get prefs accessor
          UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
+                                                   session_.getSessionInfo(),
                                                    e.getUIPrefs(), 
                                                    JsObject.createJsObject());
          
@@ -458,6 +460,7 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
       {
          // get prefs accessor
          UIPrefsAccessor newUiPrefs = new UIPrefsAccessor(
+                                                   session_.getSessionInfo(),
                                                    JsObject.createJsObject(),
                                                    e.getUIPrefs());
          

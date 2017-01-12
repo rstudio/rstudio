@@ -20,7 +20,7 @@ import com.google.gwt.core.client.JsArray;
 public class LineWidgetManager extends JavaScriptObject
 {
    protected LineWidgetManager() {}
-
+   
    public native final void addLineWidget(LineWidget widget) /*-{
       this.addLineWidget(widget);
    }-*/;
@@ -31,11 +31,13 @@ public class LineWidgetManager extends JavaScriptObject
    
    public native final void removeAllLineWidgets() /*-{
       var lineWidgetsByRow = this.session.lineWidgets;
-      var self = this;
-      lineWidgetsByRow.forEach(function(w, i) {
-         if (w) 
-            self.removeLineWidget(w);
-      });
+      if (lineWidgetsByRow) {
+         var self = this;
+         lineWidgetsByRow.forEach(function(w, i) {
+            if (w) 
+               self.removeLineWidget(w);
+         });
+      }
    }-*/;
    
    public native final void onWidgetChanged(LineWidget widget) /*-{
@@ -60,4 +62,17 @@ public class LineWidgetManager extends JavaScriptObject
       else
          return null;
    }-*/;
+   
+   public native final boolean hasLineWidgets() /*-{
+      return this.session.lineWidgets && this.session.lineWidgets.length > 0;
+   }-*/;
+
+   public final void syncLineWidgetHeights()
+   {
+      JsArray<LineWidget> widgets = getLineWidgets();
+      for (int i = 0; i < widgets.length(); i++)
+      {
+         onWidgetChanged(widgets.get(i));
+      }
+   }
 }

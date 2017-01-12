@@ -54,6 +54,24 @@ oop.inherits(RStudioEditor, Editor);
          else if (this.$surroundSelection === "quotes_and_brackets")
             candidates = ["'", "\"", "(", "{", "["];
 
+         // in markdown documents, allow '_', '*' to surround selection
+         do
+         {
+            var mode = this.session.$mode;
+            if (/\/markdown$/.test(mode.$id))
+            {
+               candidates.push("*", "_");
+               break;
+            }
+
+            var position = this.getCursorPosition();
+            if (mode.getLanguageMode && mode.getLanguageMode(position) === "Markdown")
+            {
+               candidates.push("*", "_");
+               break;
+            }
+         } while (false);
+
          if (Utils.contains(candidates, text))
          {
             var lhs = text;

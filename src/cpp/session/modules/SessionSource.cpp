@@ -75,15 +75,15 @@ void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                                    .onDetectSourceExtendedType(pDoc);
 
    // amend with chunk definitions if an R Markdown document
-   json::Value chunkDefs;
+   json::Object notebook;
    if (pDoc->isRMarkdownDocument())
    {
-      Error error = rmarkdown::notebook::getChunkDefs(pDoc->path(), pDoc->id(),
-            NULL, &chunkDefs);
+      Error error = rmarkdown::notebook::getChunkValues(
+            pDoc->path(), pDoc->id(), &notebook);
       if (error)
          LOG_ERROR(error);
    }
-   (*pDocJson)["chunk_definitions"] = chunkDefs;
+   (*pDocJson)["notebook"] = notebook;
 }
 
 void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)
@@ -110,11 +110,11 @@ int numSourceDocuments()
 
 // wrap source_database::put for situations where there are new contents
 // (so we can index the contents)
-Error sourceDatabasePutWithUpdatedContents(
-                              boost::shared_ptr<SourceDocument> pDoc)
+Error sourceDatabasePutWithUpdatedContents(boost::shared_ptr<SourceDocument> pDoc,
+                                           bool writeContents = true)
 {
    // write the file to the database
-   Error error = source_database::put(pDoc);
+   Error error = source_database::put(pDoc, writeContents);
    if (error)
       return error ;
 
@@ -295,10 +295,8 @@ Error saveDocumentCore(const std::string& contents,
    bool hasChunkOutput = json::isType<json::Array>(jsonChunkOutput);
    if (hasChunkOutput && pDoc->isRMarkdownDocument())
    {
-      time_t docTime = pDoc->dirty() ? std::time(NULL) : 
-                                       pDoc->lastKnownWriteTime();
-      error = rmarkdown::notebook::setChunkDefs(pDoc->path(), pDoc->id(),
-            docTime, jsonChunkOutput.get_array());
+      error = rmarkdown::notebook::setChunkDefs(pDoc, 
+            jsonChunkOutput.get_array());
       if (error)
          LOG_ERROR(error);
    }
@@ -395,15 +393,17 @@ Error saveDocument(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, pDoc);
    if (error)
-      return error ;
+      return error;
    
+   // check if the document contents have changed
+   bool hasChanges = contents != pDoc->contents();
    error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
                             jsonFoldSpec, jsonChunkOutput, pDoc);
    if (error)
       return error;
    
    // write to the source_database
-   error = sourceDatabasePutWithUpdatedContents(pDoc);
+   error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
    if (error)
       return error;
 
@@ -478,13 +478,16 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       contents.erase(rangeBegin, rangeEnd);
       contents.insert(rangeBegin, replacement.begin(), replacement.end());
       
+      // track if we're updating the document contents
+      bool hasChanges = contents != pDoc->contents();
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
                                jsonFoldSpec, jsonChunkOutput, pDoc);
       if (error)
          return error;
       
-      // write to the source_database
-      error = sourceDatabasePutWithUpdatedContents(pDoc);
+      // write to the source database (don't worry about writing document
+      // contents if those have not changed)
+      error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
       if (error)
          return error;
 
@@ -668,13 +671,13 @@ Error modifyDocumentProperties(const json::JsonRpcRequest& request,
 
    // get the doc
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   error = source_database::get(id, pDoc);
+   error = source_database::get(id, false, pDoc);
    if (error)
       return error ;
 
    // edit properties and write the document
    pDoc->editProperties(properties);
-   return source_database::put(pDoc);
+   return source_database::put(pDoc, false);
 }
 
 Error getDocumentProperties(const json::JsonRpcRequest& request,

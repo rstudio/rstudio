@@ -2,7 +2,7 @@
 
 # indirection to ensure correct 'nodejs' executable
 # is discovered / used
-if test -n `which nodejs`; then
+if test -n "`which nodejs`"; then
     NODEJS=nodejs
 else
     NODEJS=node

@@ -1,7 +1,7 @@
 /*
  * ConnectionHistory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,7 +62,7 @@ Error ConnectionHistory::initialize()
 {
    // register to be notified when connections are changed
    connectionsDir_ = module_context::registerMonitoredUserScratchDir(
-            "connections",
+            "connection_history",
             boost::bind(&ConnectionHistory::onConnectionsChanged, this));
 
    return Success();
@@ -147,7 +147,7 @@ void ConnectionHistory::onConnectionsChanged()
    module_context::enqueClientEvent(event);
 }
 
-const char* const kConnectionListFile = "connection_list";
+const char* const kConnectionListFile = "connection-history-database.json";
 
 Error ConnectionHistory::readConnections(json::Array* pConnections)
 {

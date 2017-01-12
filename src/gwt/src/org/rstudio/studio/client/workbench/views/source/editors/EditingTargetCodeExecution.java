@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -26,9 +27,11 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 
 import com.google.inject.Inject;
 
@@ -39,9 +42,9 @@ public class EditingTargetCodeExecution
       String extractCode(DocDisplay docDisplay, Range range);
    }
    
-   public EditingTargetCodeExecution(DocDisplay docDisplay, String docId)
+   public EditingTargetCodeExecution(DocDisplay display, String docId)
    {
-      this(docDisplay, docId, new CodeExtractor() {
+      this(null, display, docId, new CodeExtractor() {
          @Override
          public String extractCode(DocDisplay docDisplay, Range range)
          {
@@ -50,13 +53,17 @@ public class EditingTargetCodeExecution
       });
    }
    
-   public EditingTargetCodeExecution(DocDisplay docDisplay,
+   public EditingTargetCodeExecution(TextEditingTarget target,
+                                     DocDisplay display,
                                      String docId,
                                      CodeExtractor codeExtractor)
    {
-      docDisplay_ = docDisplay;
+      target_ = target;
+      docDisplay_ = display;
       codeExtractor_ = codeExtractor;
       docId_ = docId;
+      inlineChunkExecutor_ = new EditingTargetInlineChunkExecution(
+            display, docId);
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -81,15 +88,63 @@ public class EditingTargetCodeExecution
          boolean moveCursorAfter,
          String functionWrapper,
          boolean onlyUseConsole)
-   {  
+   {
+      // when executing LaTeX in R Markdown, show a popup preview
+      if (executeLatex(false))
+         return;
+      
+      // when executing inline R code, show a popup preview
+      if (executeInlineChunk())
+         return;
+      
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)
       {
-         int row = docDisplay_.getSelectionStart().getRow();
-         selectionRange = Range.fromPoints(
-               Position.create(row, 0),
-               Position.create(row, docDisplay_.getLength(row)));
+         boolean isRoxygen = isRoxygenLine(docDisplay_.getCurrentLine());
+         if (isRoxygen)
+         {
+            int row = docDisplay_.getSelectionStart().getRow();
+            selectionRange = Range.fromPoints(
+                  Position.create(row, 0),
+                  Position.create(row, docDisplay_.getLength(row)));
+         }
+         else
+         {
+            Scope scope = docDisplay_.getCurrentChunk();
+            if (scope == null)
+            {
+               if (prefs_.executeMultiLineStatements().getValue())
+               {
+                  // no scope to guard region, check the document itself to find
+                  // the region to execute
+                  selectionRange = docDisplay_.getMultiLineExpr(
+                        docDisplay_.getCursorPosition(), 1,
+                        docDisplay_.getRowCount());
+               }
+               else
+               {
+                  // single-line execution
+                  int row = docDisplay_.getSelectionStart().getRow();
+                  selectionRange = Range.fromPoints(
+                        Position.create(row, 0),
+                        Position.create(row, docDisplay_.getLength(row)));
+               }
+            }
+            else
+            {
+               // inside a chunk, always execute multiple lines (bounded by the
+               // chunk)
+               selectionRange = docDisplay_.getMultiLineExpr(
+                     docDisplay_.getCursorPosition(),
+                     scope.getBodyStart().getRow(),
+                     scope.getEnd().getRow() - 1);
+            }
+         }
+         
+         // if we failed to discover a range, bail
+         if (selectionRange == null)
+            return;
          
          // make it harder to step off the end of a chunk
          InsertChunkInfo insert = docDisplay_.getInsertChunkInfo();
@@ -97,8 +152,7 @@ public class EditingTargetCodeExecution
          {
             // get the selection we're about to execute; if it's the same as
             // the last line of the chunk template, don't run it
-            String code = codeExtractor_.extractCode(docDisplay_, 
-                  selectionRange);
+            String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
             String[] chunkLines = insert.getValue().split("\n");
             if (!StringUtil.isNullOrEmpty(code) &&
                 chunkLines.length > 0 &&
@@ -112,6 +166,8 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
+         docDisplay_.setCursorPosition(Position.create(
+               selectionRange.getEnd().getRow(), 0));
          if (!docDisplay_.moveSelectionToNextLine(true))
             docDisplay_.moveSelectionToBlankLine();
          docDisplay_.scrollCursorIntoViewIfNecessary(3);
@@ -185,7 +241,7 @@ public class EditingTargetCodeExecution
          if (scope != null)
          {
             events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
-                  scope, code));
+                  scope, range));
             return;
          }
       }
@@ -225,7 +281,7 @@ public class EditingTargetCodeExecution
             else
             {
                events_.fireEvent(new SendToChunkConsoleEvent(docId_, 
-                     scope, code));
+                     scope, lastExecutedCode_.getRange()));
             }
          }
       }
@@ -287,12 +343,48 @@ public class EditingTargetCodeExecution
       return (trimmedLine.length() == 0) || trimmedLine.startsWith("#'");
    }
    
-   private EventBus events_;
-   private UIPrefs prefs_;
+   private boolean executeLatex(boolean background)
+   {
+      // need a suitable editing target to render LaTeX chunks
+      if (target_ == null)
+         return false;
+      
+      Range range = MathJaxUtil.getLatexRange(docDisplay_);
+      if (range == null)
+         return false;
+      target_.renderLatex(range, background);
+      return true;
+   }
+   
+   private boolean executeInlineChunk()
+   {
+      if (!docDisplay_.getSelection().isEmpty())
+         return false;
+      
+      Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
+      if (token == null || !token.hasType("inline_r_chunk"))
+         return false;
+      
+      // construct range to execute, trimming off the "`r ...`" boundaries
+      int row = docDisplay_.getCursorPosition().getRow();
+      int startColumn = token.getColumn() + 3;
+      int endColumn   = token.getColumn() + token.getValue().length() - 1;
+      Range range = Range.create(row, startColumn, row, endColumn);
+      
+      inlineChunkExecutor_.execute(range);
+      return true;
+   }
+   
    private final DocDisplay docDisplay_;
+   private final TextEditingTarget target_;
    private final CodeExtractor codeExtractor_;
    private final String docId_;
+   private final EditingTargetInlineChunkExecution inlineChunkExecutor_;
    private AnchoredSelection lastExecutedCode_;
+   
+   // Injected ----
+   private EventBus events_;
+   private UIPrefs prefs_;
    private Commands commands_;
 }
 

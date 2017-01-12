@@ -124,8 +124,16 @@ void FileLock::initialize(FilePath locksConfPath)
 void FileLock::initialize(const Settings& settings)
 {
    // default lock type
-   FileLock::s_defaultType = stringToLockType(settings.get("lock-type", kLockTypeLinkBased));
-   
+   FileLock::s_defaultType = stringToLockType(settings.get("lock-type",
+#ifdef _WIN32
+      // default lock type to advisory on Windows (link-based locks are not
+      // supported on Windows)
+      kLockTypeAdvisory
+#else
+      kLockTypeLinkBased
+#endif
+   ));
+
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
    FileLock::s_timeoutInterval = boost::posix_time::seconds(timeoutInterval);

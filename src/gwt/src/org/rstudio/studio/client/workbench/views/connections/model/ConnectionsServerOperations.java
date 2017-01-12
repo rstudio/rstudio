@@ -18,24 +18,41 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.crypto.CryptoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.remote.RResult;
+
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public interface ConnectionsServerOperations extends CryptoServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
  
-   void getDisconnectCode(Connection connection, 
+   void getDisconnectCode(ConnectionId connectionId, 
                           ServerRequestCallback<String> callback);
    
-   void showSparkLog(Connection connection, 
-                     ServerRequestCallback<Void> callback);
+   void connectionExecuteAction(ConnectionId connectionId, 
+                                String action,
+                                ServerRequestCallback<Void> callback);
    
-   void showSparkUI(Connection connection, 
-                    ServerRequestCallback<Void> callback);
+   void connectionListTables(ConnectionId connectionId,
+                             ServerRequestCallback<JsArrayString> callback);
    
-   void getNewSparkConnectionContext(
-            ServerRequestCallback<NewSparkConnectionContext> callback);
+   void connectionListFields(ConnectionId connectionId,
+                             String table,
+                             ServerRequestCallback<JsArray<Field>> callback);
+   
+   void connectionPreviewTable(ConnectionId connectionId,
+                               String table,
+                               ServerRequestCallback<Void> callback);
+   
+   void getNewConnectionContext(
+            ServerRequestCallback<NewConnectionContext> callback);
    
    void installSpark(String sparkVersion,
                      String hadoopVersion,
                      ServerRequestCallback<ConsoleProcess> callback);
+
+   void launchEmbeddedShinyConnectionUI(String packageName,
+                                        String connectionName,
+                                        ServerRequestCallback<RResult<Void>> serverRequestCallback);
 }

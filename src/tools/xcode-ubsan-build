@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+: ${ASANFLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize=float-divide-by-zero"}
+: ${CC="clang-4.0"}
+: ${CXX="clang++-4.0"}
+: ${BUILD_DIR="xcode-ubsan-build"}
+: ${R_HOME="$(R RHOME)"}
+: ${R_INCL="${R_HOME}/include"}
+: ${R_LIBS="${R_HOME}/lib"}
+: ${R_DOCS="${R_HOME}/doc"}
+
+# NOTE: We run 'cmake' allowing for the default Xcode toolchain to be
+# discovered, but we then override CC and CXX during the actual build to ensure
+# that our custom-set compiler is used. (This allows us to access the newer
+# sanitizers released with newer versions of clang)
+mkdir -p "${BUILD_DIR}"
+cd "${BUILD_DIR}"
+cmake ../cpp -GXcode                 \
+    -DLIBR_HOME="${R_HOME}"          \
+    -DLIBR_INCLUDE_DIRS="${R_INCL}"  \
+    -DLIBR_DOC_DIR="${R_DOCS}"       \
+    -DRSTUDIO_USE_LIBCXX="Yes"       \
+    -DRSTUDIO_USE_SYSTEM_BOOST="Yes" \
+    -DRSTUDIO_BOOST_VERSION="1.56.0" \
+    "$@"
+cmake ../cpp -DLIBR_LIBRARIES="${R_LIBS}/libR.dylib"
+cd ..
+
+export CC="${CC}"
+export CXX="${CXX}"
+export CFLAGS="${ASANFLAGS}"
+export CXXFLAGS="${ASANFLAGS}"
+export LDFLAGS="-fsanitize=address,undefined"
+
+cmake --build "${BUILD_DIR}"
+

@@ -138,7 +138,7 @@
    {
       .rs.enqueClientEvent("rprof_stopped");
    }
-})
+}, namespace = TRUE)
 
 .rs.addFunction("profilePrint", function(x)
 {

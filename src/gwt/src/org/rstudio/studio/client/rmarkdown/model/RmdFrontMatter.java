@@ -162,5 +162,6 @@ public class RmdFrontMatter extends JavaScriptObject
 
    public final static String DEFAULT_FORMAT = "default";
    public final static String SHINY_RUNTIME = "shiny";
+   public final static String SHINY_PRERENDERED_RUNTIME = "shiny_prerendered";
    public final static String FRONTMATTER_SEPARATOR = "---\n";
 }

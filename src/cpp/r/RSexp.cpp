@@ -178,7 +178,9 @@ SEXP asEnvironment(std::string name)
    if (name == "base")
       return R_BaseEnv;
    
-   name = "package:" + name;
+   // prefix with 'package:' if no prefix specified yet
+   if (name.find(":") == std::string::npos)
+      name = "package:" + name;
    
    SEXP envSEXP = ENCLOS(R_GlobalEnv);
    while (envSEXP != R_EmptyEnv)
@@ -300,6 +302,110 @@ void listEnvironment(SEXP env,
                   "Unexpected R_UnboundValue returned from R_lsInternal");
       }
    }
+}
+
+namespace {
+
+Error asPrimitiveEnvironment(SEXP envirSEXP,
+                             SEXP* pTargetSEXP,
+                             Protect* pProtect)
+{
+   // fast-case: no need to call back into R
+   if (TYPEOF(envirSEXP) == ENVSXP)
+   {
+      pProtect->add(*pTargetSEXP = envirSEXP);
+      return Success();
+   }
+   
+   // for non-S4 objects, we can just return an error (false) early
+   if (TYPEOF(envirSEXP) != S4SXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   // use R function to convert
+   Error error = RFunction("base:::as.environment")
+         .addParam(envirSEXP)
+         .call(pTargetSEXP, pProtect);
+   
+   if (error)
+      return error;
+   
+   // ensure that we actually succeeded in producing a primitive environment
+   if (pTargetSEXP == NULL  ||
+       *pTargetSEXP == NULL ||
+       !isPrimitiveEnvironment(*pTargetSEXP))
+   {
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   }
+   
+   // we have a primitive environment; all is well
+   return Success();
+}
+
+bool hasActiveBindingImpl(const std::string& name,
+                          SEXP envirSEXP,
+                          std::set<SEXP>* pVisitedObjects)
+{
+   Error error;
+   Protect protect;
+   
+   // ensure we have an environment
+   if (!isEnvironment(envirSEXP))
+      return false;
+   
+   // sanity check that we are working with a primitive environment
+   // (required to convert S4 objects that subclass 'environment' into
+   // a 'raw' R environment object)
+   error = asPrimitiveEnvironment(envirSEXP, &envirSEXP, &protect);
+   if (error)
+      return false;
+   
+   // check for active binding
+   if (isActiveBinding(name, envirSEXP))
+      return true;
+   
+   // resolve the object (discover in that frame)
+   SEXP nameSEXP = Rf_install(name.c_str());
+   SEXP varSEXP = Rf_findVarInFrame(envirSEXP, nameSEXP);
+   
+   // check for special values
+   if (varSEXP == R_UnboundValue || varSEXP == R_MissingArg)
+      return false;
+   
+   // ensure we're working with a primitive R environment
+   if (!isEnvironment(varSEXP))
+      return false;
+   
+   error = asPrimitiveEnvironment(varSEXP, &varSEXP, &protect);
+   if (error)
+      return false;
+   
+   // avoid cycles
+   if (pVisitedObjects->count(varSEXP)) return false;
+   pVisitedObjects->insert(varSEXP);
+   
+   // list the bindings in this object
+   SEXP bindingsSEXP;
+   protect.add(bindingsSEXP = R_lsInternal(varSEXP, TRUE));
+   
+   // iterate over items and search for active bindings
+   for (int i = 0, n = Rf_length(bindingsSEXP); i < n; ++i)
+   {
+      const char* binding = CHAR(STRING_ELT(bindingsSEXP, i));
+      if (hasActiveBindingImpl(binding, varSEXP, pVisitedObjects))
+         return true;
+   }
+   
+   // no child binding has active binding; return false
+   return false;
+}
+
+} // end anonymous namespace
+
+bool hasActiveBinding(const std::string& name, const SEXP envirSEXP)
+{
+   // avoid cycles when searching recursively
+   std::set<SEXP> visitedObjects;
+   return hasActiveBindingImpl(name, envirSEXP, &visitedObjects);
 }
 
 bool isActiveBinding(const std::string& name, const SEXP env)
@@ -455,6 +561,33 @@ bool isNull(SEXP object)
    return Rf_isNull(object) == TRUE;
 }
 
+bool isPrimitiveEnvironment(SEXP object)
+{
+   return TYPEOF(object) == ENVSXP;
+}
+
+bool isEnvironment(SEXP object)
+{
+   // detect primitive environments (fast path)
+   if (isPrimitiveEnvironment(object))
+      return true;
+   
+   // call back to R to detect objects subclassing environment
+   if (TYPEOF(object) == S4SXP)
+   {
+      bool result = false;
+      Error error = RFunction("base:::is.environment")
+            .addParam(object)
+            .call(&result);
+
+      if (error)
+         LOG_ERROR(error);
+      
+      return result;
+   }
+   
+   return false;
+}
 
 SEXP getNames(SEXP sexp)
 {
@@ -1457,7 +1590,7 @@ core::Error extractFunctionInfo(
    // the formals take as entries in that character vector). However, it does
    // not distinguish between the case of having no default value, and an
    // empty string as a default value, so we handle that specially.
-   SEXP defaultValues;
+   SEXP defaultValues = R_NilValue;
    if (extractDefaultArguments)
       protect.add(defaultValues = Rf_coerceVector(formals, STRSXP));
    

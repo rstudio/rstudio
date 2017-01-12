@@ -15,7 +15,6 @@
 
 #include "SessionRMarkdown.hpp"
 #include "SessionRmdNotebook.hpp"
-#include "NotebookCache.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
 
@@ -38,6 +37,9 @@
 #include <r/ROptions.hpp>
 #include <r/RUtil.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RCntxtUtils.hpp>
+
+#include <core/r_util/RProjectFile.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -46,7 +48,6 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "RMarkdownPresentation.hpp"
-#include "SessionExecuteChunkOperation.hpp"
 
 #define kRmdOutput "rmd_output"
 #define kRmdOutputLocation "/" kRmdOutput "/"
@@ -233,13 +234,15 @@ public:
                                               bool sourceNavigation,
                                               bool asTempfile,
                                               bool asShiny,
-                                              std::string existingOutputFile)
+                                              const std::string& existingOutputFile,
+                                              const std::string& workingDir)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
-      pRender->start(format, encoding, paramsFile, asTempfile, existingOutputFile);
+      pRender->start(format, encoding, paramsFile, asTempfile, 
+                     existingOutputFile, workingDir);
       return pRender;
    }
 
@@ -273,6 +276,18 @@ public:
       }
    }
 
+   std::string getRuntime(const FilePath& targetFile)
+   {
+      std::string runtime;
+      Error error = r::exec::RFunction(
+         ".rs.getRmdRuntime",
+         string_utils::utf8ToSystem(targetFile.absolutePath())).call(
+                                                               &runtime);
+      if (error)
+         LOG_ERROR(error);
+      return runtime;
+   }
+
 private:
    RenderRmd(const FilePath& targetFile, int sourceLine, bool sourceNavigation,
              bool asShiny) :
@@ -288,7 +303,8 @@ private:
               const std::string& encoding,
               const std::string& paramsFile,
               bool asTempfile,
-              std::string existingOutputFile)
+              const std::string& existingOutputFile,
+              const std::string& workingDir)
    {
       Error error;
       json::Object dataJson;
@@ -342,6 +358,13 @@ private:
          renderOptions += ", params = readRDS('" + paramsFile + "')";
       }
 
+      // use the stated working directory if specified
+      if (!workingDir.empty())
+      {
+         renderOptions += ", knit_root_dir = '" + 
+                          string_utils::utf8ToSystem(workingDir) + "'";
+      }
+
       // output to a temporary directory if specified (no need to do this
       // for Shiny since it already renders to a temporary dir)
       if (asTempfile && !isShiny_)
@@ -366,45 +389,8 @@ private:
          extraParams += "dir = '" + string_utils::utf8ToSystem(
                      targetFile_.parent().absolutePath()) + "', ";
 
-         std::string rsIFramePath("rsiframe.js");
-
-#ifndef __APPLE__
-         // on Qt platforms, rsiframe.js needs to have its origin specified
-         // explicitly; Qt 5.4 disables document.referrer
-         if (session::options().programMode() == kSessionProgramModeDesktop)
-         {
-             rsIFramePath += "?origin=" +
-                     session::options().wwwAddress() + ":" +
-                     session::options().wwwPort();
-         }
-#endif
-
-         std::string extraDependencies("htmltools::htmlDependency("
-                     "name = 'rstudio-iframe', "
-                     "version = '0.1', "
-                     "src = '" +
-                         session::options().rResourcesPath().absolutePath() +
-                     "', "
-                     "script = '" + rsIFramePath + "')");
-
-         std::string outputOptions("extra_dependencies = list(" + 
-               extraDependencies + ")");
-
-#ifndef __APPLE__
-         // on Qt platforms, use local MathJax: it contains a patch that allows
-         // math to render immediately (otherwise it fails to load due to 
-         // timeouts waiting for font variants to load)
-         if (session::options().programMode() == kSessionProgramModeDesktop) 
-         {
-            outputOptions += ", mathjax = 'local'";
-         }
-#endif
-
-         // inject the RStudio IFrame helper script (for syncing scroll position
-         // and anchor information cross-domain), and wrap the other render
-         // options discovered so far in the render_args parameter
-         renderOptions = "render_args = list(" + renderOptions + ", "
-               "output_options = list(" + outputOptions + "))";
+         // provide render_args in render_args parameter
+         renderOptions = "render_args = list(" + renderOptions + ")";
       }
 
       // render command
@@ -431,7 +417,13 @@ private:
       allOutput_.clear();
       if (existingOutputFile.empty())
       {
-         async_r::AsyncRProcess::start(cmd.c_str(), environment, targetFile_.parent(),
+         // launch the R session in the document's directory by default, unless
+         // a working directory was supplied
+         FilePath working = targetFile_.parent();
+         if (!workingDir.empty())
+            working = module_context::resolveAliasedPath(workingDir);
+
+         async_r::AsyncRProcess::start(cmd.c_str(), environment, working,
                                        async_r::R_PROCESS_NO_RDATA);
       }
       else
@@ -499,6 +491,9 @@ private:
                getPresentationDetails(sourceLine_, &startedJson);
 
                startedJson["url"] = url + targetFile_.filename();
+
+               startedJson["runtime"] = getRuntime(targetFile_);
+
                module_context::enqueClientEvent(ClientEvent(
                            client_events::kRmdShinyDocStarted,
                            startedJson));
@@ -577,16 +572,25 @@ private:
       resultJson["is_shiny_document"] = isShiny_;
       resultJson["has_shiny_content"] = hasShinyContent_;
 
-      // for HTML documents, check to see whether they've been published
+      resultJson["runtime"] = getRuntime(targetFile_);
+
+      json::Value websiteDir;
       if (outputFile_.extensionLowerCase() == ".html")
       {
+         // check for previous publishing
          resultJson["rpubs_published"] =
                !module_context::previousRpubsUploadId(outputFile_).empty();
+
+         // check to see if this is a website directory
+         if (r_util::isWebsiteDirectory(targetFile_.parent()))
+            websiteDir = createAliasedPath(targetFile_.parent());
       }
       else
       {
          resultJson["rpubs_published"] = false;
       }
+
+      resultJson["website_dir"] = websiteDir;
 
       resultJson["force_maximize"] = forceMaximize;
 
@@ -909,7 +913,8 @@ void doRenderRmd(const std::string& file,
                  bool sourceNavigation,
                  bool asTempfile,
                  bool asShiny,
-                 std::string existingOutputFile,
+                 const std::string& existingOutputFile,
+                 const std::string& workingDir,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -928,7 +933,8 @@ void doRenderRmd(const std::string& file,
                sourceNavigation,
                asTempfile,
                asShiny,
-               existingOutputFile);
+               existingOutputFile,
+               workingDir);
       pResponse->setResult(true);
    }
 }
@@ -937,7 +943,8 @@ Error renderRmd(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    int line = -1, type = kRenderTypeStatic;
-   std::string file, format, encoding, paramsFile, existingOutputFile;
+   std::string file, format, encoding, paramsFile, existingOutputFile,
+               workingDir;
    bool asTempfile = false;
    Error error = json::readParams(request.params,
                                   &file,
@@ -947,7 +954,8 @@ Error renderRmd(const json::JsonRpcRequest& request,
                                   &paramsFile,
                                   &asTempfile,
                                   &type,
-                                  &existingOutputFile);
+                                  &existingOutputFile,
+                                  &workingDir);
    if (error)
       return error;
 
@@ -977,6 +985,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       resultJson["output_url"] = assignOutputUrl(outputFile.absolutePath());
       resultJson["output_format"] = outputFormat;
       resultJson["is_shiny_document"] = false;
+      resultJson["website_dir"] = json::Value();
       resultJson["has_shiny_content"] = false;
       resultJson["rpubs_published"] =
             !module_context::previousRpubsUploadId(outputFile).empty();
@@ -989,7 +998,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       // not a notebook, do render work
       doRenderRmd(file, line, format, encoding, paramsFile,
                   true, asTempfile, type == kRenderTypeShiny, existingOutputFile, 
-                  pResponse);
+                  workingDir, pResponse);
    }
 
    return Success();
@@ -1010,7 +1019,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
       return error;
 
    doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
-               false, false, false, "", pResponse);
+               false, false, false, "", "", pResponse);
 
    return Success();
 }
@@ -1195,8 +1204,6 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
 Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
                                   json::JsonRpcResponse* pResponse)
 {
@@ -1206,32 +1213,17 @@ Error prepareForRmdChunkExecution(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // get document contents
-   using namespace source_database;
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   error = source_database::get(id, pDoc);
+   error = evaluateRmdParams(id);
    if (error)
    {
       LOG_ERROR(error);
       return error;
    }
 
-   // evaluate params if we can
-   if (module_context::isPackageVersionInstalled("knitr", "1.10"))
-   {
-      error = r::exec::RFunction(".rs.evaluateRmdParams", pDoc->contents())
-                                                                      .call();
-      if (error)
-      {
-         LOG_ERROR(error);
-         return error;
-      }
-   }
-
    // indicate to the client whether R currently has executing code on the
    // stack
    json::Object result;
-   result["state"] = r::getGlobalContext()->nextcontext == NULL ?
+   result["state"] = r::context::globalContext().nextcontext() ?
       RExecutionReady : RExecutionBusy;
    pResponse->setResult(result);
 
@@ -1324,369 +1316,6 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    return Success();
 }
 
-class ChunkExecCompletedScope
-{
-public:
-   ChunkExecCompletedScope(const std::string& docId,
-                           const std::string& chunkId)
-      : docId_(docId), chunkId_(chunkId)
-   {
-   }
-   
-   ~ChunkExecCompletedScope()
-   {
-      notebook::events().onChunkExecCompleted(
-               docId_,
-               chunkId_,
-               notebook::notebookCtxId());
-   }
-   
-private:
-   std::string docId_;
-   std::string chunkId_;
-};
-
-void chunkConsoleOutputHandler(module_context::ConsoleOutputType type,
-                               const std::string& output,
-                               const FilePath& targetPath)
-{
-   using namespace module_context;
-   
-   Error error = notebook::appendConsoleOutput(
-            type == ConsoleOutputNormal ? kChunkConsoleOutput : kChunkConsoleError,
-            output,
-            targetPath);
-   if (error)
-      LOG_ERROR(error);
-}
-
-Error prepareCacheConsoleOutputFile(const std::string& docId,
-                                    const std::string& chunkId,
-                                    const std::string& nbCtxId,
-                                    FilePath* pChunkOutputFile)
-{
-   // forward declare error
-   Error error;
-   
-   // prepare chunk directory
-   FilePath cachePath = notebook::chunkOutputPath(
-            docId,
-            chunkId,
-            notebook::ContextExact);
-   
-   error = cachePath.removeIfExists();
-   if (error)
-      return error;
-   
-   error = cachePath.ensureDirectory();
-   if (error)
-      return error;
-   
-   // prepare cache console output file
-   *pChunkOutputFile =
-         notebook::chunkOutputFile(docId, chunkId, nbCtxId, kChunkOutputText);
-   
-   return Success();
-}
-
-Error executeRcppEngineChunk(const std::string& docId,
-                             const std::string& chunkId,
-                             const std::string& nbCtxId,
-                             const std::string& code,
-                             const std::map<std::string, std::string>& options,
-                             json::JsonRpcResponse* pResponse)
-{
-   // forward declare error
-   Error error;
-   
-   // always ensure we emit a 'execution complete' event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
-   
-   // prepare cache output file (use tempfile on failure)
-   FilePath targetPath = module_context::tempFile("rcpp-cache", "");
-   error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
-   if (error)
-      LOG_ERROR(error);
-   
-   // capture console output, error
-   boost::signals::scoped_connection consoleHandler =
-         module_context::events().onConsoleOutput.connect(
-            boost::bind(chunkConsoleOutputHandler,
-                        _1,
-                        _2,
-                        targetPath));
-
-   // call Rcpp::sourceCpp on code
-   std::string escaped = boost::regex_replace(
-            code,
-            boost::regex("(\\\\|\")"),
-            "\\\\$1");
-   
-   std::string execCode =
-         "Rcpp::sourceCpp(code = \"" + escaped + "\")";
-   
-   // write input code to cache
-   error = notebook::appendConsoleOutput(
-            kChunkConsoleInput,
-            code,
-            targetPath);
-   if (error)
-      LOG_ERROR(error);
-   
-   // execute code (output captured on success; on failure we
-   // explicitly forward the error message returned)
-   error = r::exec::executeString(execCode);
-   if (error)
-   {
-      chunkConsoleOutputHandler(module_context::ConsoleOutputError,
-                                r::endUserErrorMessage(error),
-                                targetPath);
-   }
-
-   // forward success / failure to chunk
-   notebook::enqueueChunkOutput(
-            docId,
-            chunkId,
-            nbCtxId,
-            kChunkOutputText,
-            targetPath);
-   
-   return error;
-}
-
-void reportChunkExecutionError(const std::string& docId,
-                               const std::string& chunkId,
-                               const std::string& nbCtxId,
-                               const std::string& message,
-                               const FilePath& targetPath)
-{
-   // emit chunk error
-   chunkConsoleOutputHandler(
-            module_context::ConsoleOutputError,
-            message,
-            targetPath);
-   
-   // forward failure to chunk
-   notebook::enqueueChunkOutput(
-            docId,
-            chunkId,
-            nbCtxId,
-            kChunkOutputText,
-            targetPath);
-}
-
-void reportStanExecutionError(const std::string& docId,
-                              const std::string& chunkId,
-                              const std::string& nbCtxId,
-                              const FilePath& targetPath)
-{
-   std::string message =
-         "engine.opts$x must be a character string providing a "
-         "name for the returned `stanmodel` object";
-   reportChunkExecutionError(docId, chunkId, nbCtxId, message, targetPath);
-}
-
-
-Error executeStanEngineChunk(const std::string& docId,
-                             const std::string& chunkId,
-                             const std::string& nbCtxId,
-                             const std::string& code,
-                             const std::map<std::string, std::string>& options,
-                             json::JsonRpcResponse* pResponse)
-{
-   // forward-declare error
-   Error error;
-   
-   // ensure we always emit an execution complete event on exit
-   ChunkExecCompletedScope execScope(docId, chunkId);
-   
-   // prepare console output file -- use tempfile on failure
-   FilePath targetPath = module_context::tempFile("stan-cache-", "");
-   error = prepareCacheConsoleOutputFile(docId, chunkId, nbCtxId, &targetPath);
-   if (error)
-      LOG_ERROR(error);
-   
-   // capture console output, error
-   boost::signals::scoped_connection consoleHandler =
-         module_context::events().onConsoleOutput.connect(
-            boost::bind(chunkConsoleOutputHandler,
-                        _1,
-                        _2,
-                        targetPath)); 
-   
-   // write code to file
-   FilePath tempFile = module_context::tempFile("stan-", ".stan");
-   error = writeStringToFile(tempFile, code);
-   if (error)
-   {
-      reportChunkExecutionError(
-               docId,
-               chunkId,
-               nbCtxId,
-               r::endUserErrorMessage(error),
-               targetPath);
-      LOG_ERROR(error);
-      return Success();
-   }
-   RemoveOnExitScope removeOnExitScope(tempFile, ERROR_LOCATION);
-   
-   // ensure existence of 'engine.opts' with 'x' parameter
-   if (!options.count("engine.opts"))
-   {
-      reportStanExecutionError(docId, chunkId, nbCtxId, targetPath);
-      return Success();
-   }
-   
-   // evaluate engine options (so we can pass them through to stan call)
-   r::sexp::Protect protect;
-   SEXP engineOptsSEXP = R_NilValue;
-   error = r::exec::evaluateString(
-            options.at("engine.opts"),
-            &engineOptsSEXP,
-            &protect);
-   
-   if (error)
-   {
-      reportStanExecutionError(docId, chunkId, nbCtxId, targetPath);
-      return Success();
-   }
-   
-   // construct call to 'stan_model'
-   r::exec::RFunction fStanEngine("rstan:::stan_model");
-   std::vector<std::string> engineOptsNames;
-   error = r::sexp::getNames(engineOptsSEXP, &engineOptsNames);
-   if (error)
-   {
-      reportStanExecutionError(docId, chunkId, nbCtxId, targetPath);
-      return Success();
-   }
-   
-   // build parameters
-   std::string modelName;
-   for (std::size_t i = 0, n = r::sexp::length(engineOptsSEXP); i < n; ++i)
-   {
-      // skip 'x' engine option (this is the variable we wish to assign to
-      // after evaluating the stan model)
-      if (engineOptsNames[i] == "x")
-      {
-         modelName = r::sexp::asString(VECTOR_ELT(engineOptsSEXP, i));
-         continue;
-      }
-      
-      fStanEngine.addParam(
-               engineOptsNames[i],
-               VECTOR_ELT(engineOptsSEXP, i));
-   }
-   
-   // if no model name was set, return error message
-   if (modelName.empty())
-   {
-      reportStanExecutionError(docId, chunkId, nbCtxId, targetPath);
-      return Success();
-   }
-   
-   // if the 'file' option was not set, set it explicitly
-   if (!core::algorithm::contains(engineOptsNames, "file"))
-      fStanEngine.addParam("file", tempFile.absolutePath());
-   
-   // evaluate stan_model call
-   SEXP stanModelSEXP = R_NilValue;
-   error = fStanEngine.call(&stanModelSEXP, &protect);
-   if (error)
-   {
-      std::string msg = r::endUserErrorMessage(error);
-      reportChunkExecutionError(docId, chunkId, nbCtxId, msg, targetPath);
-      return Success();
-   }
-   
-   // assign in global env on success
-   if (stanModelSEXP != R_NilValue)
-   {
-      r::exec::RFunction assign("base:::assign");
-      assign.addParam("x", modelName);
-      assign.addParam("value", stanModelSEXP);
-      error = assign.call();
-      if (error)
-      {
-         std::string msg = r::endUserErrorMessage(error);
-         reportChunkExecutionError(docId, chunkId, nbCtxId, msg, targetPath);
-         LOG_ERROR(error);
-         return Success();
-      }
-   }
-   
-   // forward success / failure to chunk
-   notebook::enqueueChunkOutput(
-            docId,
-            chunkId,
-            notebook::notebookCtxId(),
-            kChunkOutputText,
-            targetPath);
-   
-   return Success();
-}
-
-Error executeAlternateEngineChunk(const json::JsonRpcRequest& request,
-                                  json::JsonRpcResponse* pResponse)
-{
-   std::string docId, chunkId, engine, code;
-   int commitMode;
-   json::Object jsonChunkOptions;
-   Error error = json::readParams(request.params,
-                                  &docId,
-                                  &chunkId,
-                                  &commitMode,
-                                  &engine,
-                                  &code,
-                                  &jsonChunkOptions);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   // read json chunk options
-   std::map<std::string, std::string> options;
-   for (json::Object::const_iterator it = jsonChunkOptions.begin();
-        it != jsonChunkOptions.end();
-        ++it)
-   {
-      options[it->first] = it->second.get_str();
-   }
-   
-   // choose appropriate notebook context to write to -- if this is a saved
-   // Rmd, we'll write directly to the saved context
-   std::string nbCtxId = 
-       static_cast<notebook::CommitMode>(commitMode) == notebook::ModeCommitted ?
-         kSavedCtx : notebook::notebookCtxId();
-
-   // handle Rcpp specially
-   if (engine == "Rcpp")
-      return executeRcppEngineChunk(docId, chunkId, nbCtxId, code, options, pResponse);
-   else if (engine == "stan")
-      return executeStanEngineChunk(docId, chunkId, nbCtxId, code, options, pResponse);
-   
-   notebook::runChunk(docId, chunkId, nbCtxId, engine, code);
-   return Success();
-}
-
-Error interruptChunk(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
-{
-   std::string docId, chunkId;
-   Error error = json::readParams(request.params,
-                                  &docId,
-                                  &chunkId);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-   
-   notebook::interruptChunk(docId, chunkId);
-   return Success();
-}
-
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1721,12 +1350,36 @@ void onResume(const Settings&)
 
 } // anonymous namespace
 
+Error evaluateRmdParams(const std::string& docId)
+{
+   // get document contents
+   using namespace source_database;
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   Error error = source_database::get(docId, pDoc);
+   if (error)
+      return error;
+
+   // evaluate params if we can
+   if (module_context::isPackageVersionInstalled("knitr", "1.10"))
+   {
+      error = r::exec::RFunction(".rs.evaluateRmdParams", pDoc->contents())
+                                .call();
+      if (error)
+         return error;
+   }
+   return Success();
+}
+
 bool knitParamsAvailable()
 {
    return module_context::isPackageVersionInstalled("rmarkdown", "0.7.3") &&
           module_context::isPackageVersionInstalled("knitr", "1.10.18");
 }
 
+bool knitWorkingDirAvailable()
+{
+   return module_context::isPackageVersionInstalled("rmarkdown", "1.1.9017");
+}
 
 bool rmarkdownPackageAvailable()
 {
@@ -1786,8 +1439,6 @@ Error initialize()
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
-      (bind(registerRpcMethod, "execute_alternate_engine_chunk", executeAlternateEngineChunk))
-      (bind(registerRpcMethod, "interrupt_chunk", interruptChunk))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 

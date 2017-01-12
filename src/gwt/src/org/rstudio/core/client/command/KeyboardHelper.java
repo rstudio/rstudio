@@ -69,8 +69,9 @@ public class KeyboardHelper
       case KeyCodes.KEY_WIN_KEY_FF_LINUX:
       case KeyCodes.KEY_WIN_KEY_RIGHT:
       case KeyCodes.KEY_WIN_KEY_LEFT_META:
-      case 93: // Right meta key
          return true;
+      case KeyCodes.KEY_CONTEXT_MENU: // right meta on macOS
+         return !BrowseCap.isWindows();
       default:
          return false;
       }
@@ -111,6 +112,7 @@ public class KeyboardHelper
       map[19] = "Pause";
       map[20] = "CapsLock";
       map[27] = "Escape";
+      map[32] = "Space";
       map[33] = "PageUp";
       map[34] = "PageDown";
       map[35] = "End";

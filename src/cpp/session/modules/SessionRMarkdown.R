@@ -34,11 +34,30 @@
    })
 })
 
+.rs.addFunction("isREADME", function(file) {
+  identical(tools::file_path_sans_ext(basename(file)), "README")
+})
+
 .rs.addFunction("updateRMarkdownPackage", function(archive) 
 {
   pkgDir <- find.package("rmarkdown")
   .rs.forceUnloadPackage("rmarkdown")
   .Call("rs_installPackage",  archive, dirname(pkgDir))
+})
+
+.rs.addFunction("getRmdRuntime", function(file) {
+   lines <- readLines(file, warn = FALSE)
+
+   yamlFrontMatter <- tryCatch(
+     rmarkdown:::parse_yaml_front_matter(lines),
+     error=function(e) {
+        list()
+     })
+
+   if (!is.null(yamlFrontMatter$runtime))
+      yamlFrontMatter$runtime
+    else
+      ""
 })
 
 .rs.addFunction("getCustomRenderFunction", function(file) {
@@ -50,10 +69,10 @@
        list()
     })
 
-  if (is.character(yamlFrontMatter$knit))
-    yamlFrontMatter$knit[[1]]
-  else if (!is.null(yamlFrontMatter$runtime) && 
-           identical(yamlFrontMatter$runtime, "shiny")) {
+  if (is.character(yamlFrontMatter[["knit"]]))
+    yamlFrontMatter[["knit"]][[1]]
+  else if (!is.null(yamlFrontMatter$runtime) &&
+           grepl('^shiny', yamlFrontMatter$runtime)) {
     # use run as a wrapper for render when the doc requires the Shiny runtime,
     # and outputs HTML. 
     tryCatch({
@@ -73,13 +92,18 @@
      })
   }
   else {
-    # return render_site if we are in a website
-    siteGenerator <- tryCatch(rmarkdown::site_generator(file),
-                              error = function(e) NULL)
-    if (!is.null(siteGenerator))
-      "rmarkdown::render_site"
-    else
-      ""
+    # return render_site if we are in a website and this isn't a README
+    if (!.rs.isREADME(file)) {
+       siteGenerator <- tryCatch(rmarkdown::site_generator(file),
+                                 error = function(e) NULL)
+       if (!is.null(siteGenerator))
+         "rmarkdown::render_site"
+       else
+         ""
+    }
+    else {
+       ""
+    }
   }
 })
 
@@ -137,6 +161,9 @@
       params <- list()
       for (param in knitParams)
          params[[param$name]] <- param$value
+      
+      # mark as knit_params_list (so other routines know we generated it)
+      class(params) <- "knit_param_list"
 
       # inject into global environment
       assign("params", params, envir = globalenv())

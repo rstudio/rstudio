@@ -15,16 +15,16 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -57,6 +57,13 @@ public class TextEditingTargetChunks
    {
       if (target_.getDocDisplay().getModeId() == "mode/rmarkdown")
          syncWidgets();
+   }
+
+   @Override
+   public void onLineWidgetAdded(LineWidget widget)
+   {
+      // no action necessary; this just lets us know that a chunk toolbar has
+      // been attached to the DOM
    }
 
    @Override
@@ -100,9 +107,12 @@ public class TextEditingTargetChunks
    private void initialize(UIPrefs prefs, AceThemes themes)
    {
       themes_ = themes;
+      prefs_ = prefs;
+      
       dark_ = themes_.isDark(themes_.getEffectiveThemeName(
             prefs.theme().getValue()));
-      prefs.theme().addValueChangeHandler(new ValueChangeHandler<String>()
+      
+      prefs_.theme().addValueChangeHandler(new ValueChangeHandler<String>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<String> theme)
@@ -124,6 +134,21 @@ public class TextEditingTargetChunks
             }
          }
       });
+      
+      prefs_.showInlineToolbarForRCodeChunks().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            lastRow_ = 0;
+            boolean showToolbars = event.getValue();
+            
+            if (showToolbars)
+               syncWidgets();
+            else
+               removeAllToolbars();
+         }
+      });
    }
    
    private void removeAllToolbars()
@@ -135,6 +160,11 @@ public class TextEditingTargetChunks
    
    private void syncWidgets()
    {
+      // bail early if we don't want to render inline toolbars
+      boolean showInlineToolbars = prefs_.showInlineToolbarForRCodeChunks().getValue();
+      if (!showInlineToolbars)
+         return;
+      
       Scope currentScope = target_.getDocDisplay().getCurrentScope();
       if (initialized_ && currentScope != null && 
           lastRow_ == currentScope.getPreamble().getRow())
@@ -211,14 +241,11 @@ public class TextEditingTargetChunks
       String header = target_.getDocDisplay().getLine(row);
       
       // parse contents
-      Map<String, String> options = new HashMap<String, String>();
-      TextEditingTargetNotebook.parseChunkOptions(header, options);
+      Map<String, String> options = 
+            RMarkdownChunkHeaderParser.parse(header);
       
       // check runnable engine
-      String engine = options.containsKey("engine")
-            ? options.get("engine")
-            : "r";
-            
+      String engine = StringUtil.stringValue(options.get("engine"));
       return isExecutableKnitrEngine(engine);
    }
    
@@ -226,9 +253,9 @@ public class TextEditingTargetChunks
    {
       // TODO: only enable non-R engine work for notebooks for now
       if (!target_.getDocDisplay().showChunkOutputInline())
-         return engine.equals("r");
+         return engine.equalsIgnoreCase("r");
       
-      return RE_RUNNABLE_ENGINES.indexOf(engine + "|") != -1;
+      return RE_RUNNABLE_ENGINES.indexOf(engine.toLowerCase() + "|") != -1;
    }
    
    private final TextEditingTarget target_;
@@ -236,13 +263,15 @@ public class TextEditingTargetChunks
    
    private boolean dark_;
    private boolean initialized_;
+   
    private AceThemes themes_;
+   private UIPrefs prefs_;
 
    private int lastRow_;
    
    // runnable engines within the R Notebook mode
    private static final String RE_RUNNABLE_ENGINES =
-         "r|Rscript|Rcpp|python|ruby|perl|bash|sh|stan|";
+         "r|rscript|rcpp|python|ruby|perl|bash|sh|stan|sql|";
    
    // renderPass_ need only be unique from one pass through the scope tree to
    // the next; we wrap it at 255 to avoid the possibility of overflow

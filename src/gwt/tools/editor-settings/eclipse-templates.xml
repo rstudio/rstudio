@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><templates><template autoinsert="true" context="java" deleted="false" description="Boilerplate for a GWT event." enabled="true" name="GWTEvent">/*
+ * ${event}Event.java
+ *
+ * Copyright (C) 2009-16 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+package ${enclosing_package};
+
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+
+public class ${event}Event extends GwtEvent&lt;${event}Event.Handler&gt;
+{
+   ${cursor}
+   
+   // Boilerplate ----
+   
+   public interface Handler extends EventHandler
+   {
+      void on${event}(${event}Event event);
+   }
+   
+   @Override
+   public Type&lt;Handler&gt; getAssociatedType()
+   {
+      return TYPE;
+   }
+
+   @Override
+   protected void dispatch(Handler handler)
+   {
+      handler.on${event}(this);
+   }
+
+   public static final Type&lt;Handler&gt; TYPE = new Type&lt;Handler&gt;();
+}
+</template><template autoinsert="true" context="java" deleted="false" description="Boilerplate for GWT resouces + styles" enabled="true" name="GWTResources">${:import(com.google.gwt.resources.client.CssResource,
+          com.google.gwt.resources.client.ClientBundle,
+          com.google.gwt.core.client.GWT)}
+
+public interface Styles extends CssResource
+{
+}
+
+public interface Resources extends ClientBundle
+{
+   @Source("${primary_type_name}.css")
+   Styles styles();
+}
+
+private static Resources RES = GWT.create(Resources.class);
+static { RES.styles().ensureInjected(); }
+</template></templates>

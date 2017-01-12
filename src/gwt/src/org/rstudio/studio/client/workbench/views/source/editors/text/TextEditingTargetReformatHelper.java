@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Stack;
 
 import org.rstudio.core.client.Mutable;
@@ -45,14 +46,14 @@ public class TextEditingTargetReformatHelper
    
    class SimpleTokenCursor {
       
-      public SimpleTokenCursor(ArrayList<Token> tokens)
+      public SimpleTokenCursor(List<Token> tokens)
       {
          this(tokens, 0, tokens.size());
       }
       
-      private SimpleTokenCursor(ArrayList<Token> tokens,
-                          int offset,
-                          int n)
+      private SimpleTokenCursor(List<Token> tokens,
+                                int offset,
+                                int n)
       {
          complements_ = new HashMap<String, String>();
          
@@ -71,10 +72,10 @@ public class TextEditingTargetReformatHelper
          n_ = n;
       }
       
-      private SimpleTokenCursor(ArrayList<Token> tokens,
-                          int offset,
-                          int n,
-                          HashMap<String, String> complements)
+      private SimpleTokenCursor(List<Token> tokens,
+                                int offset,
+                                int n,
+                                HashMap<String, String> complements)
       {
          tokens_ = tokens;
          offset_ = offset;
@@ -553,7 +554,7 @@ public class TextEditingTargetReformatHelper
          return offset_ == ((SimpleTokenCursor) object).offset_;
       }
       
-      private final ArrayList<Token> tokens_;
+      private final List<Token> tokens_;
       private int offset_;
       private int n_;
       private HashMap<String, String> complements_;
@@ -1092,7 +1093,7 @@ public class TextEditingTargetReformatHelper
          // Tokenize the selection and walk through and replace
          // TODO: Enable for other modes?
          Tokenizer tokenizer = Tokenizer.createRTokenizer();
-         ArrayList<Token> tokens = tokenizer.tokenize(selectionText);
+         List<Token> tokens = tokenizer.tokenize(selectionText);
          
          SimpleTokenCursor cursor = new SimpleTokenCursor(tokens);
          

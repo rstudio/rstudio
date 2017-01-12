@@ -222,6 +222,13 @@ void ChildProcess::init(const std::string& command,
    options_ = options;
 }
 
+// initialize for an interactive terminal
+void ChildProcess::init(const ProcessOptions& options)
+{
+    std::string command = options_.consoleIoPath + " cmd.exe";
+    init(command, options);
+}
+
 ChildProcess::~ChildProcess()
 {
 }
@@ -266,6 +273,11 @@ Error ChildProcess::terminate()
       return systemError(::GetLastError(), ERROR_LOCATION);
    else
       return Success();
+}
+
+bool ChildProcess::hasSubprocess() const
+{
+   return true;
 }
 
 namespace {
@@ -541,6 +553,12 @@ AsyncChildProcess::AsyncChildProcess(const std::string& command,
    init(command, options);
 }
 
+AsyncChildProcess::AsyncChildProcess(const ProcessOptions& options)
+      : ChildProcess(), pAsyncImpl_(new AsyncImpl())
+{
+   init(options);
+}
+
 AsyncChildProcess::~AsyncChildProcess()
 {
 }
@@ -551,6 +569,10 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
+bool AsyncChildProcess::hasSubprocess() const
+{
+   return true;
+}
 
 void AsyncChildProcess::poll()
 {

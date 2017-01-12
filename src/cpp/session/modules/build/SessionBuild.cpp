@@ -953,11 +953,18 @@ private:
       cmd << "--vanilla";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
-
+      
+#ifdef _WIN32
+# define kBuildCommandBackslashes "\\\\"
+#else
+# define kBuildCommandBackslashes "\\\\\\\\"
+#endif
+      
       boost::format fmt(
-         "setwd('%1%'); "
-         "invisible(lapply(list.files(pattern = '\\\\.[rR]$'), function(x) { "
-         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x))) "
+         "setwd('%1%');"
+         "files <- list.files(pattern = '" kBuildCommandBackslashes ".[rR]$');"
+         "invisible(lapply(files, function(x) {"
+         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x)))"
          "}))"
       );
 
@@ -1153,7 +1160,12 @@ private:
          boost::format fmt("rmarkdown::render_site(%1%)");
          std::string format;
          if (options_.websiteOutputFormat != "all")
-            format = "output_format = '" + options_.websiteOutputFormat + "'";
+            format = "output_format = '" + options_.websiteOutputFormat + "', ";
+
+         format += ("encoding = '" +
+                    projects::projectContext().defaultEncoding() +
+                    "'");
+
          command = boost::str(fmt % format);
       }
       else if (type == "clean-all")

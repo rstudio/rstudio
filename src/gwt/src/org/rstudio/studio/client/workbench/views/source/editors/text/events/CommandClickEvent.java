@@ -14,16 +14,37 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.events;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent;
+
 public class CommandClickEvent extends GwtEvent<CommandClickEvent.Handler>
 {
+   public CommandClickEvent(AceClickEvent event)
+   {
+      event_ = event;
+   }
+   
+   public AceClickEvent getEvent()
+   {
+      return event_;
+   }
+   
+   public NativeEvent getNativeEvent()
+   {
+      return event_.getNativeEvent();
+   }
+   
+   private final AceClickEvent event_;
+   
+   // Boilerplate ----
+   
    public interface Handler extends EventHandler
    {
       void onCommandClick(CommandClickEvent event);
    }
-
    
    public static final Type<Handler> TYPE = new Type<Handler>();
 

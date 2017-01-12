@@ -1,7 +1,7 @@
 /*
  * SessionRSConnect.cpp
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/r_util/RProjectFile.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -29,6 +30,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionUserSettings.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 #define kFinishedMarker "Deployment completed: "
 #define kRSConnectFolder "rsconnect/"
@@ -84,12 +86,14 @@ public:
          const std::string& sourceDoc,
          const std::string& account,
          const std::string& server,
-         const std::string& app,
+         const std::string& appName,
+         const std::string& appTitle,
          const std::string& contentCategory,
          const json::Array& additionalFilesList,
          const json::Array& ignoredFilesList,
          bool asMultiple,
          bool asStatic,
+         bool diagnostics,
          boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
@@ -119,9 +123,9 @@ public:
             false);
 
       // if an R Markdown document or HTML document is being deployed, mark it
-      // as the primary file 
+      // as the primary file, unless deploying a website
       std::string primaryDoc;
-      if (!file.empty())
+      if (!file.empty() && contentCategory != "site")
       {
          FilePath docFile = module_context::resolveAliasedPath(file);
          std::string extension = docFile.extensionLowerCase();
@@ -147,7 +151,9 @@ public:
                 string_utils::singleQuotedStrEscape(sourceDoc) + "', ") + 
              "account = '" + string_utils::singleQuotedStrEscape(account) + "',"
              "server = '" + string_utils::singleQuotedStrEscape(server) + "', "
-             "appName = '" + string_utils::singleQuotedStrEscape(app) + "', " + 
+             "appName = '" + string_utils::singleQuotedStrEscape(appName) + "', " + 
+             (appTitle.empty() ? "" : "appTitle = '" + 
+                string_utils::singleQuotedStrEscape(appTitle) + "', ") + 
              (contentCategory.empty() ? "" : "contentCategory = '" + 
                 contentCategory + "', ") +
              "launch.browser = function (url) { "
@@ -161,7 +167,9 @@ public:
                     additionalFiles + "'") + 
                  (ignoredFiles.empty() ? "" : ", ignoredFiles = '" + 
                     ignoredFiles + "'") + 
-             "))}";
+             ")" + 
+             (diagnostics ? ", logLevel = 'verbose'" : "") + 
+             ")}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       *pDeployOut = pDeploy;
@@ -244,15 +252,32 @@ boost::shared_ptr<RSConnectPublish> s_pRSConnectPublish_;
 Error rsconnectPublish(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   json::Array sourceFiles, additionalFiles, ignoredFiles;
-   std::string sourceDir, sourceFile, sourceDoc, account, server, appName,
-               contentCategory;
-   bool asMultiple = false, asStatic = false;
-   Error error = json::readParams(request.params, &sourceDir, &sourceFiles,
-                                   &sourceFile, &sourceDoc, &account, &server, 
-                                   &appName, &contentCategory, 
-                                   &additionalFiles, &ignoredFiles, 
-                                   &asMultiple, &asStatic);
+   json::Object source, settings;
+   std::string account, server, appName, appTitle;
+   Error error = json::readParams(request.params, &source, &settings,
+                                   &account, &server, 
+                                   &appName, &appTitle);
+   if (error)
+      return error;
+
+   // read publish source information
+   std::string sourceDir, sourceDoc, sourceFile, contentCategory;
+   error = json::readObject(source, "deploy_dir",       &sourceDir,
+                                    "deploy_file",      &sourceFile,
+                                    "source_file",      &sourceDoc,
+                                    "content_category", &contentCategory);
+   if (error)
+      return error;
+
+   // read publish settings
+   bool asMultiple = false, asStatic = false, diagnostics = false;
+   json::Array deployFiles, additionalFiles, ignoredFiles;
+   error = json::readObject(settings, "deploy_files",     &deployFiles,
+                                      "additional_files", &additionalFiles,
+                                      "ignored_files",    &ignoredFiles,
+                                      "as_multiple",      &asMultiple, 
+                                      "as_static",        &asStatic,
+                                      "show_diagnostics", &diagnostics);
    if (error)
       return error;
 
@@ -263,13 +288,13 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
    }
    else
    {
-      error = RSConnectPublish::create(sourceDir, sourceFiles, 
+      error = RSConnectPublish::create(sourceDir, deployFiles, 
                                        sourceFile, sourceDoc, 
-                                       account, server, appName, 
+                                       account, server, appName, appTitle,
                                        contentCategory,
                                        additionalFiles,
                                        ignoredFiles, asMultiple,
-                                       asStatic,
+                                       asStatic, diagnostics,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;
@@ -371,26 +396,59 @@ Error getEditPublishedDocs(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-
-void onDeferredInit(bool)
+Error getRmdPublishDetails(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
 {
-   // automatically enable RSConnect UI if there are configured accounts
-   if (!userSettings().enableRSConnectUI())
+   std::string target;
+   Error error = json::readParams(request.params, &target);
+
+   // look up the source document in the database to see if we know its
+   // encoding
+   std::string encoding("unknown");
+   std::string id;
+   source_database::getId(target, &id);
+   if (!id.empty())
    {
-      bool hasAccount = false;
-      Error error = r::exec::RFunction(".rs.hasConnectAccount").call(&hasAccount);
+      boost::shared_ptr<source_database::SourceDocument> pDoc(
+               new source_database::SourceDocument());
+      error = source_database::get(id, pDoc);
       if (error)
          LOG_ERROR(error);
-
-      if (hasAccount)
-      {
-         error = r::exec::RFunction(".rs.enableRStudioConnectUI", true).call();
-         if (error)
-            LOG_ERROR(error);
-      }
+      else
+         encoding = pDoc->encoding();
    }
+
+   // extract publish details we can discover with R
+   r::sexp::Protect protect;
+   SEXP sexpDetails;
+   error = r::exec::RFunction(".rs.getRmdPublishDetails",
+                              target, encoding).call(&sexpDetails, &protect);
+   if (error)
+      return error;
+
+   // extract JSON object from result
+   json::Value resultVal;
+   error = r::json::jsonValueFromList(sexpDetails, &resultVal);
+   if (resultVal.type() != json::ObjectType)
+      return Error(json::errc::ParseError, ERROR_LOCATION);
+   json::Object result = resultVal.get_obj();
+
+   // augment with website project information
+   FilePath path = module_context::resolveAliasedPath(target);
+   std::string websiteDir;
+   if (path.exists() && (path.hasExtensionLowerCase(".rmd") || 
+                         path.hasExtensionLowerCase(".md")))
+   {
+      if (r_util::isWebsiteDirectory(path.parent()))
+         websiteDir = path.parent().absolutePath();
+   }
+   result["website_dir"] = websiteDir;
+
+   pResponse->setResult(result);
+      
+   return Success();
 }
+
 
 } // anonymous namespace
 
@@ -399,13 +457,12 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   events().onDeferredInit.connect(onDeferredInit);
-
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_rsconnect_deployments", rsconnectDeployments))
       (bind(registerRpcMethod, "rsconnect_publish", rsconnectPublish))
       (bind(registerRpcMethod, "get_edit_published_docs", getEditPublishedDocs))
+      (bind(registerRpcMethod, "get_rmd_publish_details", getRmdPublishDetails))
       (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();

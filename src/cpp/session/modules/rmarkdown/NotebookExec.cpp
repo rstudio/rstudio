@@ -19,7 +19,10 @@
 #include "NotebookPlots.hpp"
 #include "NotebookHtmlWidgets.hpp"
 #include "NotebookCache.hpp"
+#include "NotebookData.hpp"
 #include "NotebookErrors.hpp"
+#include "NotebookWorkingDir.hpp"
+#include "NotebookConditions.hpp"
 
 #include <boost/foreach.hpp>
 
@@ -30,7 +33,6 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
-#include <session/SessionSourceDatabase.hpp>
 
 #include <iostream>
 
@@ -45,11 +47,13 @@ namespace notebook {
 namespace {
 
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
-   const std::string& nbCtxId, int outputType)
+   const std::string& nbCtxId, ChunkOutputType outputType, unsigned *pOrdinal)
 {
    OutputPair pair = lastChunkOutput(docId, chunkId, nbCtxId);
    pair.ordinal++;
    pair.outputType = outputType;
+   if (pOrdinal)
+      *pOrdinal = pair.ordinal;
    FilePath target = chunkOutputFile(docId, chunkId, nbCtxId, pair);
    updateLastChunkOutput(docId, chunkId, pair);
    return target;
@@ -59,26 +63,20 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 
 ChunkExecContext::ChunkExecContext(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
-      ExecScope execScope, const json::Object& options, int pixelWidth, 
-      int charWidth):
+      ExecScope execScope, const core::FilePath& workingDir, 
+      const ChunkOptions& options, int pixelWidth, int charWidth):
    docId_(docId), 
    chunkId_(chunkId),
    nbCtxId_(nbCtxId),
-   prevWorkingDir_(""),
+   workingDir_(workingDir),
    options_(options),
    pixelWidth_(pixelWidth),
    charWidth_(charWidth),
    prevCharWidth_(0),
    execScope_(execScope),
-   connected_(false),
-   hasOutput_(false)
+   hasOutput_(false),
+   hasErrors_(false)
 {
-}
-
-ChunkExecContext::~ChunkExecContext()
-{
-   if (connected_)
-      disconnect();
 }
 
 std::string ChunkExecContext::chunkId()
@@ -91,9 +89,9 @@ std::string ChunkExecContext::docId()
    return docId_;
 }
 
-bool ChunkExecContext::connected()
+const ChunkOptions& ChunkExecContext::options() 
 {
-   return connected_;
+   return options_;
 }
 
 void ChunkExecContext::connect()
@@ -114,41 +112,66 @@ void ChunkExecContext::connect()
    if (execScope_ == ExecScopeChunk)
       initializeOutput();
 
+   // capture conditions
+   boost::shared_ptr<ConditionCapture> pConditionCapture = 
+      boost::make_shared<ConditionCapture>();
+   pConditionCapture->connect();
+   captures_.push_back(pConditionCapture);
+   connections_.push_back(events().onCondition.connect(
+         boost::bind(&ChunkExecContext::onCondition, this, _1, _2)));
+
    // extract knitr figure options if present
-   double figWidth = 0;
-   double figHeight = 0;
-   json::readObject(options_, "fig.width",  &figWidth);
-   json::readObject(options_, "fig.height", &figHeight);
+   double figWidth = options_.getOverlayOption("fig.width", 0.0);
+   double figHeight = options_.getOverlayOption("fig.height", 0.0);
+   
+   // if 'fig.asp' is set, then use that to override 'fig.height'
+   double figAsp = options_.getOverlayOption("fig.asp", 0.0);
+   if (figAsp != 0.0)
+   {
+      // if figWidth is unset, default to 7.0
+      if (figWidth == 0.0)
+         figWidth = 7.0;
+      
+      figHeight = figWidth * figAsp;
+   }
 
    // begin capturing plots 
    connections_.push_back(events().onPlotOutput.connect(
          boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, 
-                     kChunkOutputPlot)));
+                     _3, ChunkOutputPlot, _4)));
+
+   boost::shared_ptr<PlotCapture> pPlotCapture = 
+      boost::make_shared<PlotCapture>();
+   captures_.push_back(pPlotCapture);
 
    if (figWidth > 0 || figHeight > 0)
    {
       // user specified plot size, use it
-      error = beginPlotCapture(figHeight, figWidth, PlotSizeManual, 
-                               outputPath_);
+      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_, 
+            figHeight, figWidth, PlotSizeManual, outputPath_);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
-      error = beginPlotCapture(0, pixelWidth_, PlotSizeAutomatic, 
-                               outputPath_);
+      error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_,
+            0, pixelWidth_, PlotSizeAutomatic, outputPath_);
    }
    if (error)
       LOG_ERROR(error);
 
    // begin capturing HTML input
    connections_.push_back(events().onHtmlOutput.connect(
-         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2,
-                     kChunkOutputHtml)));
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+                     ChunkOutputHtml, 0)));
 
-   error = beginWidgetCapture(
+   boost::shared_ptr<HtmlCapture> pHtmlCapture = 
+      boost::make_shared<HtmlCapture>();
+   captures_.push_back(pHtmlCapture);
+
+   error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
             outputPath_.parent().complete(kChunkLibDir),
-            options_);
+            options_.chunkOptions());
    if (error)
       LOG_ERROR(error);
 
@@ -160,7 +183,11 @@ void ChunkExecContext::connect()
    if (!error)
    {
       prevWarn_.set(warnSEXP);
-      error = r::options::setOption<int>("warn", 1);
+
+      // default warning setting is 1 (log immediately), but if the warning
+      // option is set to FALSE, we want to set it to -1 (ignore warnings)
+      bool warning = options_.getOverlayOption("warning", true);
+      error = r::options::setOption<int>("warn", warning ? 1 : -1);
       if (error)
          LOG_ERROR(error);
    }
@@ -169,53 +196,103 @@ void ChunkExecContext::connect()
    prevCharWidth_ = r::options::getOptionWidth();
    r::options::setOptionWidth(charWidth_);
 
-   // reset working directory to doc path, if it has one
-   std::string docPath;
-   source_database::getPath(docId_, &docPath);
-   if (!docPath.empty())
-   {
-      FilePath targetDir = module_context::resolveAliasedPath(docPath).parent();
-      FilePath currentDir = FilePath::safeCurrentPath(targetDir);
-      if (currentDir != targetDir)
-      {
-         error = FilePath::makeCurrent(targetDir.absolutePath());
-         if (error)
-            LOG_ERROR(error);
-         else
-            prevWorkingDir_ = currentDir.absolutePath();
-      }
-   }
+   boost::shared_ptr<DirCapture> pDirCapture = boost::make_shared<DirCapture>();
+   error = pDirCapture->connectDir(docId_, workingDir_);
+   if (error)
+      LOG_ERROR(error);
+   else
+      captures_.push_back(pDirCapture);
 
    // begin capturing errors
+   boost::shared_ptr<ErrorCapture> pErrorCapture = 
+      boost::make_shared<ErrorCapture>();
+   pErrorCapture->connect();
+   captures_.push_back(pErrorCapture);
+
    connections_.push_back(events().onErrorOutput.connect(
          boost::bind(&ChunkExecContext::onError, this, _1)));
-   beginErrorCapture();
 
    // begin capturing console text
-   connections_.push_back(module_context::events().onConsolePrompt.connect(
-         boost::bind(&ChunkExecContext::onConsolePrompt, this, _1)));
    connections_.push_back(module_context::events().onConsoleOutput.connect(
          boost::bind(&ChunkExecContext::onConsoleOutput, this, _1, _2)));
    connections_.push_back(module_context::events().onConsoleInput.connect(
          boost::bind(&ChunkExecContext::onConsoleInput, this, _1)));
 
-   connected_ = true;
+   // begin capturing data
+   connections_.push_back(events().onDataOutput.connect(
+         boost::bind(&ChunkExecContext::onFileOutput, this, _1, _2, _3, 
+                     ChunkOutputData, 0)));
+
+   boost::shared_ptr<DataCapture> pDataCapture = 
+      boost::make_shared<DataCapture>();
+   captures_.push_back(pDataCapture);
+
+   error = pDataCapture->connectDataCapture(
+            outputPath_,
+            options_.mergedOptions());
+   if (error)
+      LOG_ERROR(error);
+
+   NotebookCapture::connect();
 }
 
-void ChunkExecContext::onConsolePrompt(const std::string& )
+bool ChunkExecContext::onCondition(Condition condition,
+      const std::string& message)
 {
-   if (connected_)
-      disconnect();
+   // skip if the user has asked us to suppress this kind of condition
+   if (condition == ConditionMessage && 
+       !options_.getOverlayOption("message", true))
+   {
+      return false;
+   }
+   if (condition == ConditionWarning && 
+       !options_.getOverlayOption("warning", true))
+   {
+      return false;
+   }
+
+   // give each capturing module a chance to handle the condition
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      if (pCapture->onCondition(condition, message))
+         return true;
+   }
+
+   // none of them did; treat it as ordinary output
+   onConsoleOutput(module_context::ConsoleOutputError, message);
+   module_context::enqueClientEvent(
+      ClientEvent(client_events::kConsoleWriteError, message));
+
+   return true;
 }
 
 void ChunkExecContext::onFileOutput(const FilePath& file, 
-      const FilePath& metadata, int outputType)
+      const FilePath& sidecar, const core::json::Value& metadata, 
+      ChunkOutputType outputType, unsigned ordinal)
 {
    // set up folder to receive output if necessary
    initializeOutput();
 
    // put the file in sequence inside the host directory
-   FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType);
+   FilePath target;
+   if (ordinal == 0)
+   {
+      // unspecified ordinal, generate one
+      target = getNextOutputFile(docId_, chunkId_, nbCtxId_, outputType,
+            &ordinal);
+   }
+   else
+   {
+      // known ordinal, use it (this can occur for out of sequence events, such
+      // as plots)
+      OutputPair pair(outputType, ordinal);
+      target = chunkOutputFile(docId_, chunkId_, nbCtxId_, pair);
+   }
+
+   // preserve original extension; some output types, such as plots, don't
+   // have a canonical extension
+   target = target.parent().complete(target.stem() + file.extension());
+
    Error error = file.move(target);
    if (error)
    {
@@ -239,14 +316,24 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
          LOG_ERROR(error);
    }
 
-   // if output metadata was provided, write it out
-   if (!metadata.empty())
+   // if output sidecar file was provided, write it out
+   if (!sidecar.empty())
    {
-      metadata.move(target.parent().complete(
-               target.stem() + metadata.extension()));
+      sidecar.move(target.parent().complete(
+               target.stem() + sidecar.extension()));
    }
 
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, outputType, target);
+   // serialize metadata if provided
+   if (!metadata.is_null())
+   {
+      std::ostringstream oss;
+      json::write(metadata, oss);
+      error = writeStringToFile(target.parent().complete(
+               target.stem() + ".metadata"), oss.str());
+   }
+
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target,
+         metadata);
 }
 
 void ChunkExecContext::onError(const core::json::Object& err)
@@ -254,9 +341,13 @@ void ChunkExecContext::onError(const core::json::Object& err)
    // set up folder to receive output if necessary
    initializeOutput();
 
+   // mark error state
+   hasErrors_ = true;
+
    // write the error to a file 
+   unsigned ordinal;
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
-         kChunkOutputError);
+         ChunkOutputError, &ordinal);
    boost::shared_ptr<std::ostream> pOfs;
    Error error = target.open_w(&pOfs, true);
    if (error)
@@ -270,7 +361,7 @@ void ChunkExecContext::onError(const core::json::Object& err)
    pOfs.reset();
 
    // send to client
-   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, kChunkOutputError, 
+   enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, ChunkOutputError, 
                       target);
 }
 
@@ -301,7 +392,7 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
 
    // determine output filename and ensure it exists
    FilePath outputCsv = chunkOutputFile(docId_, chunkId_, nbCtxId_, 
-         kChunkOutputText);
+         ChunkOutputText);
    Error error = outputCsv.ensureFile();
    if (error)
    {
@@ -327,6 +418,12 @@ void ChunkExecContext::disconnect()
 {
    Error error;
 
+   // clean up capturing modules (includes plots, errors, and HTML widgets)
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      pCapture->disconnect();
+   }
+
    // clean up staging folder
    error = outputPath_.removeIfExists();
    if (error)
@@ -343,21 +440,13 @@ void ChunkExecContext::disconnect()
          LOG_ERROR(error);
    }
 
-   // restore working directory, if we saved one
-   if (!prevWorkingDir_.empty())
-   {
-      error = FilePath::makeCurrent(prevWorkingDir_);
-      if (error)
-         LOG_ERROR(error);
-   }
-
    // unhook all our event handlers
    BOOST_FOREACH(const boost::signals::connection connection, connections_) 
    {
       connection.disconnect();
    }
 
-   connected_ = false;
+   NotebookCapture::disconnect();
 
    events().onChunkExecCompleted(docId_, chunkId_, nbCtxId_);
 }
@@ -397,9 +486,23 @@ void ChunkExecContext::initializeOutput()
    hasOutput_ = true;
 }
 
+bool ChunkExecContext::hasErrors()
+{
+   return hasErrors_;
+}
+
 ExecScope ChunkExecContext::execScope()
 {
    return execScope_;
+}
+
+void ChunkExecContext::onExprComplete()
+{
+   // notify capturing submodules
+   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   {
+      pCapture->onExprComplete();
+   }
 }
 
 } // namespace notebook

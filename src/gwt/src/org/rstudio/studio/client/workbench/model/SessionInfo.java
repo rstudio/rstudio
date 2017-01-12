@@ -221,7 +221,11 @@ public class SessionInfo extends JavaScriptObject
    public final native String getDefaultWorkingDir() /*-{
       return this.default_working_dir;
    }-*/;
-    
+   
+   public final native String getDefaultProjectDir() /*-{
+      return this.default_project_dir;
+   }-*/;
+
    public final native String getActiveProjectFile() /*-{
       return this.active_project_file;
    }-*/;
@@ -400,6 +404,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native boolean getKnitParamsAvailable()  /*-{
       return this.knit_params_available;
+   }-*/;
+   
+   public final native boolean getKnitWorkingDirAvailable() /*-{
+      return this.knit_working_dir_available;
    }-*/;
    
    public final native boolean getClangAvailable() /*-{

@@ -17,6 +17,11 @@ package org.rstudio.core.client;
 // A utility class primarily used for creating mutable integers etc.
 public class Mutable<T>
 {
+   public Mutable()
+   {
+      data_ = null;
+   }
+   
    public Mutable(T data)
    {
       data_ = data;

@@ -71,7 +71,7 @@
             padding-right: 5px;
         }
         .skipTextBox {
-            width: 50px;
+            max-width: 50px;
             text-align: right;
             padding-left: 5px;
             padding-right: 5px;
@@ -84,6 +84,12 @@
         }
         input:disabled+label {
             color: #999;
+        }
+        .localeListBox {
+            width: 50px;
+            text-align: right;
+            padding-left: 5px;
+            padding-right: 5px;
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
@@ -114,6 +120,11 @@
                         <g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
                     </td>
                 </tr>
+                <tr class="{style.optionsRow}">
+                    <td colspan="2">
+                        <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
+                    </td>
+                </tr>
             </table>
             <table class="{style.optionsColumn}">
                 <tr class="{style.optionsRow}">
@@ -129,9 +140,11 @@
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
-                    <td>Encoding:</td>
+                    <td>Locale:</td>
                     <td>
-                        <g:ListBox ui:field="localeListBox_" styleName="{style.optionsListBox}" />
+                        <g:Button ui:field="localeButton_" styleName="{style.optionsListBox}">
+                            Configure...
+                        </g:Button>
                     </td>
                 </tr>
             </table>

@@ -1,7 +1,7 @@
 /*
  * ServerOptions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -104,6 +104,11 @@ public:
       return std::string(wwwLocalPath_.c_str()); 
    }
 
+   std::string wwwFrameOrigin() const
+   {
+      return std::string(wwwFrameOrigin_.c_str());
+   }
+
    core::FilePath wwwSymbolMapsPath() const
    {
       return core::FilePath(wwwSymbolMapsPath_.c_str());
@@ -148,6 +153,11 @@ public:
    bool authEncryptPassword()
    {
       return authEncryptPassword_;
+   }
+
+   std::string authLoginPageHtml()
+   {
+      return authLoginPageHtml_;
    }
 
    std::string authRequiredUserGroup()
@@ -252,6 +262,7 @@ private:
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;
    std::string wwwSymbolMapsPath_;
+   std::string wwwFrameOrigin_;
    bool wwwUseEmulatedStack_;
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
@@ -260,6 +271,7 @@ private:
    bool authValidateUsers_;
    int authStaySignedInDays_;
    bool authEncryptPassword_;
+   std::string authLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;

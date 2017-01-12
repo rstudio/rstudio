@@ -207,8 +207,13 @@ core::Error registerPostbackHandler(
                               const PostbackHandlerFunction& handlerFunction,
                               std::string* pShellCommand); 
                         
-// register an rpc method
+// register an async rpc method
 core::Error registerAsyncRpcMethod(
+                              const std::string& name,
+                              const core::json::JsonRpcAsyncFunction& function);
+
+// register an idle-only async rpc method
+core::Error registerIdleOnlyAsyncRpcMethod(
                               const std::string& name,
                               const core::json::JsonRpcAsyncFunction& function);
 
@@ -319,6 +324,7 @@ struct Events : boost::noncopyable
                                              onActiveConsoleChanged;
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
+   boost::signal<void()>                     onUserInterrupt;
    boost::signal<void (ChangeSource)>        onDetectChanges;
    boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
    boost::signal<void(bool)>                 onDeferredInit;

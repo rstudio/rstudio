@@ -27,7 +27,6 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
@@ -45,6 +44,7 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.common.TimedProgressIndicator;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -125,14 +125,26 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
+      boolean busy = workbenchContext_.isServerBusy() || workbenchContext_.isTerminalBusy();
+      String msg = null;
+      if (busy)
+      {
+         if (workbenchContext_.isServerBusy() && !workbenchContext_.isTerminalBusy())
+            msg = "The R session is currently busy.";
+         else if (workbenchContext_.isServerBusy() && workbenchContext_.isTerminalBusy())
+            msg = "The R session and the terminal are currently busy.";
+         else 
+            msg = "The terminal is currently busy.";
+      }
+
       eventBus_.fireEvent(new QuitInitiatedEvent());
       
-      if (workbenchContext_.isServerBusy() && !forceSaveAll)
+      if (busy && !forceSaveAll)
       {
          globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
                caption, 
-               "The R session is currently busy. Are you sure you want to quit?", 
+               msg + " Are you sure you want to quit?",
                new Operation() {
                   @Override
                   public void execute()
@@ -161,7 +173,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
    }
    
-     
    private void handleUnsavedChanges(String caption, 
                                      boolean forceSaveAll,
                                      QuitContext quitContext)
@@ -464,19 +475,31 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    @Override
    public void onSuspendAndRestart(final SuspendAndRestartEvent event)
    {
+      // Ignore nested restarts once restart starts
+      if (suspendingAndRestarting_) return;
+      
       // set restart pending for desktop
       setPendinqQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
-      ProgressIndicator progress = new GlobalProgressDelayer(
-                                             globalDisplay_,
-                                             200,
-                                             "Restarting R...").getIndicator();
-                                       
+      final TimedProgressIndicator progress = new TimedProgressIndicator(
+            globalDisplay_.getProgressIndicator("Error"));
+      progress.onTimedProgress("Restarting R", 1000);
+      
+      final Operation onRestartComplete = new Operation() {
+         @Override
+         public void execute()
+         {
+            suspendingAndRestarting_ = false;
+            progress.onCompleted();
+         }
+      };
+
       // perform the suspend and restart
+      suspendingAndRestarting_ = true;
       eventBus_.fireEvent(
                   new RestartStatusEvent(RestartStatusEvent.RESTART_INITIATED));
       server_.suspendForRestart(event.getSuspendOptions(),
-                                new VoidServerRequestCallback(progress) {
+                                new VoidServerRequestCallback() {
          @Override 
          protected void onSuccess()
          { 
@@ -486,6 +509,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                @Override
                public void execute()
                {
+                  onRestartComplete.execute();
+                  
                   eventBus_.fireEvent(new RestartStatusEvent(
                                     RestartStatusEvent.RESTART_COMPLETED));
                   
@@ -496,6 +521,8 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          @Override
          protected void onFailure()
          {
+            onRestartComplete.execute();
+            
             eventBus_.fireEvent(
                new RestartStatusEvent(RestartStatusEvent.RESTART_COMPLETED));
             
@@ -774,4 +801,6 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    private final SourceShim sourceShim_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
+
+   private boolean suspendingAndRestarting_ = false;
 }

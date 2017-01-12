@@ -158,6 +158,16 @@ const int kConnectionUpdated = 139;
 const int kEnableConnections = 140;
 const int kConnectionListChanged = 141;
 const int kActiveConnectionsChanged = 142;
+const int kConnectionOpened = 143;
+const int kNotebookRangeExecuted = 144;
+const int kChunkExecStateChanged = 145;
+const int kNavigateShinyFrame = 146;
+const int kUpdateNewConnectionDialog = 147;
+const int kProjectTemplateRegistryUpdated = 148;
+const int kTerminalSubprocs = 149;
+const int kPackageExtensionIndexingCompleted = 150;
+const int kRStudioAPIShowDialog = 151;
+const int kRStudioAPIShowDialogCompleted = 152;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -433,6 +443,26 @@ std::string ClientEvent::typeName() const
          return "connection_list_changed";
       case client_events::kActiveConnectionsChanged:
          return "active_connections_changed";
+      case client_events::kConnectionOpened:
+         return "connection_opened";
+      case client_events::kNotebookRangeExecuted:
+         return "notebook_range_executed";
+      case client_events::kChunkExecStateChanged:
+         return "chunk_exec_state_changed";
+      case client_events::kNavigateShinyFrame:
+         return "navigate_shiny_frame";
+      case client_events::kUpdateNewConnectionDialog:
+         return "update_new_connection_dialog";
+      case client_events::kProjectTemplateRegistryUpdated:
+         return "project_template_registry_updated";
+      case client_events::kTerminalSubprocs:
+         return "terminal_subprocs";
+      case client_events::kPackageExtensionIndexingCompleted:
+         return "package_extension_indexing_completed";
+      case client_events::kRStudioAPIShowDialog:
+         return "rstudioapi_show_dialog";
+      case client_events::kRStudioAPIShowDialogCompleted:
+         return "rstudioapi_show_dialog_completed";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

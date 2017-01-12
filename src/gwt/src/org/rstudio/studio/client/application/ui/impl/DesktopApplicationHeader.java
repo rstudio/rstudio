@@ -52,6 +52,8 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderEvent;
 import org.rstudio.studio.client.workbench.views.files.events.ShowFolderHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -214,6 +216,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCutDummy()
    {
+      if (isSelectionEmpty()) return;
       fireEditEvent(EditEvent.TYPE_CUT);
       Desktop.getFrame().clipboardCut();
    }
@@ -221,6 +224,7 @@ public class DesktopApplicationHeader implements ApplicationHeader
    @Handler
    void onCopyDummy()
    {
+      if (isSelectionEmpty()) return;
       fireEditEvent(EditEvent.TYPE_COPY);
       Desktop.getFrame().clipboardCopy();
    }
@@ -368,6 +372,25 @@ public class DesktopApplicationHeader implements ApplicationHeader
                               "No Update Available", 
                               "You're using the newest version of RStudio.");
       }
+   }
+   
+   public static boolean isSelectionEmpty()
+   {
+      Element activeElement = DomUtils.getActiveElement();
+      AceEditorNative editor = AceEditorNative.getEditor(activeElement);
+      if (editor != null)
+      {
+         Selection selection = editor.getSession().getSelection();
+         return selection.isEmpty();
+      }
+      
+      // NOTE: we currently use this for managing copy + paste
+      // behaviors, but copy + paste seems to do the right thing
+      // regardless of whether the user has highlighted some text
+      // or not _outside_ of an Ace instance, and we can't always
+      // detect if the document has a selection (e.g. if an iframe
+      // has focus)
+      return false;
    }
    
    private static boolean isFocusInAceInstance()

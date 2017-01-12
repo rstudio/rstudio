@@ -75,6 +75,9 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(newButton);
       addLeftSeparator();
       
+      addLeftWidget(commands.newProject().createToolbarButton());
+      addLeftSeparator();
+      
       // open button + mru
       addLeftWidget(commands.openSourceDoc().createToolbarButton());
       

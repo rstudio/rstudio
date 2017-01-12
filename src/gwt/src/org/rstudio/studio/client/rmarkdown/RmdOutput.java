@@ -241,7 +241,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
            null,
            false,
            RmdOutput.TYPE_STATIC,
-           event.getOutputFile());
+           event.getOutputFile(),
+           null);
       events_.fireEvent(renderEvent);
    }
    
@@ -263,6 +264,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.asTempfile(),
                               event.getType(),
                               event.getExistingOutputFile(),
+                              event.getWorkingDir(),
                   new SimpleRequestCallback<Boolean>() {
                        @Override 
                        public void onError(ServerError error)
@@ -282,7 +284,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       if (shinyDoc_ != null &&
           event.getSourceFile().equals(shinyDoc_.getFile()) &&
           !shinyDoc_.getFormat().getFormatName().endsWith(
-                RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
+                RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX) &&
+          (result_ == null || "shiny".equals(result_.getRuntime())))
       {
          final RmdRenderResult result = 
                RmdRenderResult.createFromShinyDoc(shinyDoc_);
@@ -303,7 +306,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
           outputFrame_ == null || 
           outputFrame_.getWindowObject() == null ||
           outputFrame_.getWindowObject().isClosed() ||
-          outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath())
+          outputFrame_.getPreviewParams().getTargetFile() != event.getDocPath() ||
+          !outputFrame_.getPreviewParams().getOutputFile().endsWith(".nb.html"))
         return;
       
       // redisplay the result
@@ -405,6 +409,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             null,
             false,
             RmdOutput.TYPE_STATIC,
+            null,
             null);
        events_.fireEvent(renderEvent);
    }
@@ -491,6 +496,16 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       if (shinyDoc_ != null)
       {
+         // if we already have this up in the viewer pane, cache the scroll
+         // position (we don't need to do this for the satellite since it
+         // caches scroll position when it closes)
+         if (result_ != null && 
+             outputFrame_.getViewerType() == RMD_VIEWER_TYPE_PANE)
+         {
+            cacheDocPosition(result_, outputFrame_.getScrollPosition(), 
+                  outputFrame_.getAnchor());
+         }
+
          // there is a Shiny doc running; we'll need to terminate it before 
          // we can render this document
          outputFrame_.closeOutputFrame(false);
@@ -523,7 +538,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
             null, result.getTargetEncoding(), null, false, 
-            RmdOutput.TYPE_SHINY, null));
+            RmdOutput.TYPE_SHINY, null, null));
    }
    
    private void displayRenderResult(final RmdRenderResult result)

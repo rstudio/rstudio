@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClic
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDocumentChangeEventNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseEventNative;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceMouseMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AnchoredRange;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidgetManager;
@@ -101,6 +102,7 @@ public class AceEditorWidget extends Composite
       editor_.setPrintMarginColumn(0);
       editor_.setHighlightActiveLine(false);
       editor_.setHighlightGutterLine(false);
+      editor_.setFixedWidthGutter(true);
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
@@ -227,6 +229,18 @@ public class AceEditorWidget extends Composite
                      public void execute(String text)
                      {
                         fireEvent(new PasteEvent(text));
+                     }
+                  }));
+      
+      aceEventHandlers_.add(AceEditorNative.addEventListener(
+                  editor_,
+                  "mousemove",
+                  new CommandWithArg<AceMouseEventNative>()
+                  {
+                     @Override
+                     public void execute(AceMouseEventNative event)
+                     {
+                        fireEvent(new AceMouseMoveEvent(event));
                      }
                   }));
       
@@ -475,6 +489,21 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, BlurEvent.getType());
    }
+   
+   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
+   {
+      return addDomHandler(handler, MouseDownEvent.getType());
+   }
+   
+   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
+   {
+      return addDomHandler(handler, MouseMoveEvent.getType());
+   }
+   
+   public HandlerRegistration addMouseUpHandler(MouseUpHandler handler)
+   {
+      return addDomHandler(handler, MouseUpEvent.getType());
+   }
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
@@ -534,6 +563,11 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addPasteHandler(PasteEvent.Handler handler)
    {
       return addHandler(handler, PasteEvent.TYPE);
+   }
+   
+   public HandlerRegistration addAceMouseMoveHandler(AceMouseMoveEvent.Handler handler)
+   {
+      return addHandler(handler, AceMouseMoveEvent.TYPE);
    }
 
    public HandlerRegistration addAceClickHandler(AceClickEvent.Handler handler)

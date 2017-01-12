@@ -22,6 +22,10 @@ public class JsObject extends JavaScriptObject
    public static native JsObject createJsObject() /*-{
       return {};
    }-*/;
+   
+   public static native JsObject fromJavaScriptObject(JavaScriptObject o) /*-{
+      return o;
+   }-*/;
 
    protected JsObject() {}
 
@@ -138,6 +142,10 @@ public class JsObject extends JavaScriptObject
    }
 
    public final native void _setBoolean(String key, boolean value) /*-{
+      this[key] = value;
+   }-*/;
+   
+   public final native void setJsArrayString(String key, JsArrayString value) /*-{
       this[key] = value;
    }-*/;
 

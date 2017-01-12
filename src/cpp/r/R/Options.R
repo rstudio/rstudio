@@ -82,6 +82,11 @@ options(pager = .rs.pager)
 # never allow graphical menus
 options(menu.graphics = FALSE)
 
+# set max print to 1000 if not already set
+if (is.null(getOption("max.print")) || (getOption("max.print") == 99999)) {
+   options(max.print = 1000)
+}
+
 # set max print so that the DOM won't go haywire showing large datasets
 if (getOption("max.print", 10000) > 10000) {
    options(max.print = 10000)

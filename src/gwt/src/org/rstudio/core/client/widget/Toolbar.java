@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,7 +24,11 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.DomUtils.ElementPredicate;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -132,6 +137,9 @@ public class Toolbar extends Composite
             new ChildWidgetList(leftToolbarPanel_));
       new ToolbarSeparatorManager().manageSeparators(
             new ChildWidgetList(rightToolbarPanel_));
+      
+      updateStyles(leftToolbarPanel_);
+      updateStyles(rightToolbarPanel_);
    }
 
    public void invalidateSeparators()
@@ -144,6 +152,34 @@ public class Toolbar extends Composite
             public void execute()
             {
                manageSeparators();
+            }
+         });
+      }
+   }
+   
+   private void updateStyles(HorizontalPanel panel)
+   {
+      if (BrowseCap.isSafari())
+         updateStylesSafari(panel);
+   }
+   
+   // This is used to work around a button sizing issue on Safari where
+   // TD elements with a child element having 'display: none' might
+   // still take up some space, thereby messing with the layout
+   // when the DOM has a number of TD elements with undisplayed
+   // contents.
+   private void updateStylesSafari(HorizontalPanel panel)
+   {
+      for (int i = 0; i < panel.getWidgetCount(); i++)
+      {
+         Widget widget = panel.getWidget(i);
+         boolean visible = widget.isVisible();
+         DomUtils.toggleParentVisibility(widget.getElement(), visible, new ElementPredicate()
+         {
+            @Override
+            public boolean test(Element el)
+            {
+               return el.getTagName().toLowerCase().equals("td");
             }
          });
       }

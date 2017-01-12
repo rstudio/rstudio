@@ -100,7 +100,7 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics(prefix))
 })
 
-.rs.addFunction("getHelpFromObject", function(object, envir)
+.rs.addFunction("getHelpFromObject", function(object, envir, name = NULL)
 {
    # Try to find the associated namespace of the object
    namespace <- NULL
@@ -194,10 +194,17 @@ options(help_type = "html")
       object <- objects[[i]]
       objectName <- objectNames[[i]]
       
+      # use the function name seen in the
+      # source document if provided
+      sigName <- if (is.null(name))
+         objectName
+      else
+         name
+      
       # Get the associated signature for functions
       signature <- NULL
       if (is.function(object))
-         signature <- sub("function ", objectName, .rs.getSignature(object))
+         signature <- sub("function ", sigName, .rs.getSignature(object))
       
       result <- .rs.getHelp(topic = objectName, package = namespace, sig = signature)
       if (length(result))
@@ -283,6 +290,49 @@ options(help_type = "html")
       return()
 })
 
+.rs.addJsonRpcHandler("get_custom_help", function(helpHandler, topic, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   results <- helpHandlerFunc("completion", topic, source)
+   if (!is.null(results))
+      results$description <- .rs.markdownToHTML(results$description)
+     
+   results 
+})
+
+.rs.addJsonRpcHandler("get_custom_parameter_help", function(helpHandler, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   results <- helpHandlerFunc("parameter", NULL, source)
+   if (!is.null(results)) {
+      results$arg_descriptions <- sapply(results$arg_descriptions, 
+                                         .rs.markdownToHTML)
+   }
+   
+   results
+})
+
+.rs.addJsonRpcHandler("show_custom_help_topic", function(helpHandler, topic, source) {
+   
+   helpHandlerFunc <- tryCatch(eval(parse(text = helpHandler)), 
+                               error = function(e) NULL)
+   if (!is.function(helpHandlerFunc))
+      return()
+   
+   url <- helpHandlerFunc("url", topic, source)
+   if (!is.null(url) && nzchar(url)) # handlers return "" for no help topic
+      utils::browseURL(url)
+})
+
+
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
    # If 'src' is the name of something on the searchpath, get that object
@@ -292,7 +342,7 @@ options(help_type = "html")
    {
       object <- tryCatch(get(name, pos = pos), error = function(e) NULL)
       if (!is.null(object))
-         return(.rs.getHelpFromObject(object, envir))
+         return(.rs.getHelpFromObject(object, envir, name))
    }
    
    # Otherwise, check to see if there is an object 'src' in the global env
@@ -302,7 +352,7 @@ options(help_type = "html")
    {
       object <- tryCatch(eval(call("$", container, name)), error = function(e) NULL)
       if (!is.null(object))
-         return(.rs.getHelpFromObject(object, envir))
+         return(.rs.getHelpFromObject(object, envir, name))
    }
    
    # Otherwise, try to get help in the vanilla way
@@ -323,7 +373,7 @@ options(help_type = "html")
    {
       object <- .rs.getAnywhere(functionName, envir)
       if (!is.null(object))
-         return(.rs.getHelpFromObject(object, envir))
+         return(.rs.getHelpFromObject(object, envir, functionName))
    }
    else
    {
@@ -333,7 +383,7 @@ options(help_type = "html")
       {
          object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
          if (!is.null(object))
-            return(.rs.getHelpFromObject(object, envir))
+            return(.rs.getHelpFromObject(object, envir, functionName))
       }
    }
    
@@ -382,7 +432,7 @@ options(help_type = "html")
          object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
          if (is.null(object))
             return(NULL)
-         return(.rs.getHelpFromObject(object, envir))
+         return(.rs.getHelpFromObject(object, envir, topic))
       }
    }
    

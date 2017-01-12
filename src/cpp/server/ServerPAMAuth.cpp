@@ -1,7 +1,7 @@
 /*
  * ServerPAMAuth.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
@@ -31,6 +32,7 @@
 
 #include <monitor/MonitorClient.hpp>
 
+#include <server/auth/ServerCSRFToken.hpp>
 #include <server/auth/ServerValidateUser.hpp>
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
@@ -85,6 +87,8 @@ const char * const kErrorMessage = "errorMessage";
 const char * const kFormAction = "formAction";
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
+
+const char * const kLoginPageHtml = "loginPageHtml";
 
 enum ErrorType 
 {
@@ -244,12 +248,19 @@ void signIn(const http::Request& request,
 
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
+   // include custom login page html
+   variables[kLoginPageHtml] = server::options().authLoginPageHtml();
+
    // get the path to the JS file
    Options& options = server::options();
    FilePath wwwPath(options.wwwLocalPath());
    FilePath signInPath = wwwPath.complete("templates/encrypted-sign-in.htm");
 
    text::TemplateFilter filter(variables);
+
+   // don't allow sign-in page to be framed by other domains (clickjacking
+   // defense)
+   pResponse->setFrameOptionHeaders(options.wwwFrameOrigin());
 
    pResponse->setFile(signInPath, request, filter);
    pResponse->setContentType("text/html");
@@ -287,6 +298,9 @@ void setSignInCookies(const core::http::Request& request,
                             expiry,
                             "/",
                             pResponse);
+
+   // add cross site request forgery detection cookie
+   auth::csrf::setCSRFTokenCookie(request, pResponse);
 }
 
 void doSignIn(const http::Request& request,
@@ -365,6 +379,13 @@ void doSignIn(const http::Request& request,
    }
    else
    {
+      // register failed login with monitor
+      using namespace monitor;
+      client().logEvent(Event(kAuthScope,
+                              kAuthLoginFailedEvent,
+                              "",
+                              username));
+
       pResponse->setMovedTemporarily(
             request,
             applicationSignInURL(request,
@@ -376,6 +397,10 @@ void doSignIn(const http::Request& request,
 void signOut(const http::Request& request,
              http::Response* pResponse)
 {
+   // validate sign-out request
+   if (!auth::csrf::validateCSRFForm(request, pResponse))
+      return;
+
    // register logout with monitor if we have the username
    std::string userIdentifier = getUserIdentifier(request);
    if (!userIdentifier.empty())

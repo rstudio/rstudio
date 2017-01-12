@@ -49,12 +49,17 @@ import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
+import org.rstudio.studio.client.projects.events.PackageExtensionIndexingCompletedEvent;
+import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
+import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -97,6 +102,7 @@ public class Packages
       extends BasePresenter
       implements PackageStatusChangedHandler,
                  DeferredInitCompletedEvent.Handler,
+                 PackageExtensionIndexingCompletedEvent.Handler,
                  PackagesDisplayObserver
 {
    public interface Binder extends CommandBinder<Commands, Packages> {}
@@ -151,6 +157,7 @@ public class Packages
       binder.bind(commands, this);
       
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
+      events.addHandler(PackageExtensionIndexingCompletedEvent.TYPE, this);
       
       // make the install options persistent
       new JSObjectStateValue("packages-pane", "installOptions", ClientState.PROJECT_PERSISTENT,
@@ -1281,6 +1288,22 @@ public class Packages
 
       for (int i = 0; i < actions.length(); i++)
          pkgNames.add(actions.get(i).getPackage());
+   }
+   
+   @Override
+   public void onPackageExtensionIndexingCompleted(PackageExtensionIndexingCompletedEvent event)
+   {
+      PackageExtensionIndexingCompletedEvent.Data data = event.getData();
+      
+      // update addins
+      RAddins addinRegistry = data.getAddinsRegistry();
+      if (addinRegistry != null)
+         events_.fireEvent(new AddinRegistryUpdatedEvent(addinRegistry));
+      
+      // update project templates
+      ProjectTemplateRegistry ptRegistry = data.getProjectTemplateRegistry();
+      if (ptRegistry != null)
+         events_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(ptRegistry));
    }
       
    private final Display view_;

@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import com.google.gwt.user.client.Timer;
@@ -107,6 +108,17 @@ public class WorkbenchContext
          public void onRVersionsChanged(RVersionsChangedEvent event)
          {
             rVersionsInfo_ = event.getRVersionsInfo();
+         }
+      });
+      
+      // track busy terminals
+      eventBus.addHandler(TerminalBusyEvent.TYPE,
+                          new TerminalBusyEvent.Handler()
+      {
+         @Override
+         public void onTerminalBusy(TerminalBusyEvent event)
+         {
+            isTerminalBusy_ = event.isBusy();
          }
       });
    }
@@ -211,6 +223,11 @@ public class WorkbenchContext
       return isServerBusy_;
    }
    
+   public boolean isTerminalBusy()
+   {
+      return isTerminalBusy_;
+   }
+   
    public boolean isRestartInProgress()
    {
       return isRestartInProgress_;
@@ -245,6 +262,7 @@ public class WorkbenchContext
    }
    
    private boolean isServerBusy_ = false;
+   private boolean isTerminalBusy_ = false;
    private boolean isRestartInProgress_ = false;
    private boolean isBuildInProgress_ = false;
    private FileSystemItem currentWorkingDir_ = FileSystemItem.home();

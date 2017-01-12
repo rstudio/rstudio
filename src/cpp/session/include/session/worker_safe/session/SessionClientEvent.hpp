@@ -159,6 +159,16 @@ extern const int kConnectionUpdated;
 extern const int kEnableConnections;
 extern const int kConnectionListChanged;
 extern const int kActiveConnectionsChanged;
+extern const int kConnectionOpened;
+extern const int kNotebookRangeExecuted;
+extern const int kChunkExecStateChanged;
+extern const int kNavigateShinyFrame;
+extern const int kUpdateNewConnectionDialog;
+extern const int kProjectTemplateRegistryUpdated;
+extern const int kTerminalSubprocs;
+extern const int kPackageExtensionIndexingCompleted;
+extern const int kRStudioAPIShowDialog;
+extern const int kRStudioAPIShowDialogCompleted;
 }
    
 class ClientEvent

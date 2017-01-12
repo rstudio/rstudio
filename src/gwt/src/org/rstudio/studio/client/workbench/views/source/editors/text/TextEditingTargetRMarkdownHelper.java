@@ -72,6 +72,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
@@ -274,7 +275,38 @@ public class TextEditingTargetRMarkdownHelper
                                              null,
                                              false,
                                              RmdOutput.TYPE_STATIC,
-                                             null));
+                                             null,
+                                             getKnitWorkingDir(sourceDoc)));
+   }
+   
+   public String getKnitWorkingDir(DocUpdateSentinel sourceDoc)
+   {
+      // shortcut if we don't support manually specified working directories
+      if (!session_.getSessionInfo().getKnitWorkingDirAvailable())
+         return null;
+      
+      // compute desired working directory type
+      String workingDirType = sourceDoc.getProperty(
+            RenderRmdEvent.WORKING_DIR_PROP,
+            prefs_.knitWorkingDir().getValue());
+
+      String workingDir = null;
+      if (workingDirType == UIPrefsAccessor.KNIT_DIR_PROJECT)
+      {
+         // get the project directory, but if we don't have one (e.g. no
+         // project) use the default working directory for the session
+         FileSystemItem projectDir = 
+               session_.getSessionInfo().getActiveProjectDir();
+         if (projectDir != null)
+            workingDir = projectDir.getPath();
+         if (StringUtil.isNullOrEmpty(workingDir))
+            workingDir = session_.getSessionInfo().getDefaultWorkingDir();
+      }
+      else if (workingDirType == UIPrefsAccessor.KNIT_DIR_CURRENT)
+      {
+         workingDir = workbenchContext_.getCurrentWorkingDir().getPath();
+      }
+      return workingDir;
    }
    
    public void renderRMarkdown(final String sourceFile, 
@@ -284,7 +316,8 @@ public class TextEditingTargetRMarkdownHelper
                                final String paramsFile,
                                final boolean asTempfile,
                                final int type,
-                               final boolean asShiny)
+                               final boolean asShiny,
+                               final String workingDir)
    {
       withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
                               "R Notebook" :
@@ -302,7 +335,8 @@ public class TextEditingTargetRMarkdownHelper
                                                    paramsFile,
                                                    asTempfile,
                                                    type,
-                                                   null));
+                                                   null,
+                                                   workingDir));
          }
       });
    }
@@ -509,7 +543,17 @@ public class TextEditingTargetRMarkdownHelper
       return null;
    }
    
+   public boolean isRuntimeShinyPrerendered(String yaml)
+   {
+      return getRuntime(yaml).equals(RmdFrontMatter.SHINY_PRERENDERED_RUNTIME);
+   }
+   
    public boolean isRuntimeShiny(String yaml)
+   {
+      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME);
+   }
+   
+   private String getRuntime(String yaml)
    {
       // This is in the editor load path, so guard against exceptions and log
       // any we find without bringing down the editor. 
@@ -518,16 +562,15 @@ public class TextEditingTargetRMarkdownHelper
          YamlTree tree = new YamlTree(yaml);
          
          if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
-            return false;
+            return "";
          
-         return tree.getKeyValue(
-             RmdFrontMatter.RUNTIME_KEY).equals(RmdFrontMatter.SHINY_RUNTIME);
+         return tree.getKeyValue(RmdFrontMatter.RUNTIME_KEY);
       }
       catch (Exception e)
       {
          Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
       }
-      return false;
+      return "";
    }
    
    public String getCustomKnit(String yaml)

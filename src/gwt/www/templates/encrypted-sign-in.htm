@@ -189,7 +189,8 @@ function submitRealForm() {
                 name='password' 
                 value='' 
                 id='password' 
-                size='45'/><br />
+                size='45'
+                autocomplete='off' /><br />
       </p>
       <p style="display: #staySignedInDisplay#;">
          <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
@@ -214,6 +215,11 @@ function submitRealForm() {
    <input type="hidden" name="clientPath" id="clientPath" value=""/>
    <input id="package" type="hidden" name="v" value=""/>
 </form>
+
+<div id="login-html">
+#!loginPageHtml#
+</div>
+
 
 <script type="text/javascript">
 document.getElementById('username').focus();

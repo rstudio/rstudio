@@ -20,12 +20,20 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FadeOutAnimation extends Animation
 {
+   public FadeOutAnimation(Widget widget, Command callback)
+   {
+      List<Widget> widgets = new ArrayList<Widget>();
+      widgets.add(widget);
+      widgets_ = widgets;
+      callback_ = callback;
+   }
    public FadeOutAnimation(ArrayList<Widget> widgets, Command callback)
    {
-      this.widgets_ = widgets;
+      widgets_ = widgets;
       callback_ = callback;
    }
 
@@ -33,7 +41,7 @@ public class FadeOutAnimation extends Animation
    protected void onUpdate(double progress)
    {
       for (Widget w : widgets_)
-         w.getElement().getStyle().setOpacity(1.0-progress);
+         w.getElement().getStyle().setOpacity(1.0 - progress);
    }
 
    @Override
@@ -49,6 +57,6 @@ public class FadeOutAnimation extends Animation
          callback_.execute();
    }
 
-   private ArrayList<Widget> widgets_;
+   private final List<Widget> widgets_;
    private final Command callback_;
 }

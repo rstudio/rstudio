@@ -27,8 +27,10 @@
 #include <boost/iostreams/filter/gzip.hpp>
 #endif
 
+#include <core/BrowserUtils.hpp>
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
+#include <core/FileUtils.hpp>
 
 #include "Message.hpp"
 #include "Request.hpp"
@@ -67,7 +69,7 @@ enum Code {
    GatewayTimeout = 504 
 };
 } 
-    
+
 class NullOutputFilter : public boost::iostreams::multichar_output_filter 
 {   
 public:
@@ -112,6 +114,8 @@ public:
    void setCacheForeverHeaders();
    void setPrivateCacheForeverHeaders();
    void setNoCacheHeaders();
+
+   void setFrameOptionHeaders(const std::string& options);
    
    void setBrowserCompatible(const Request& request);
 
@@ -167,7 +171,8 @@ public:
    template <typename Filter>
    Error setBody(std::istream& is, 
                  const Filter& filter, 
-                 std::streamsize buffSize = 128) 
+                 std::streamsize buffSize = 128,
+                 bool padding = false)
    {
       try
       {
@@ -200,6 +205,12 @@ public:
          
          // set body 
          body_ = bodyStream.str();
+
+         if (padding && body_.length() < 1024)
+         {
+            body_ = body_ + std::string(1024 - body_.length(), ' ');
+         }
+
          setContentLength(body_.length());
          
          // return success
@@ -223,7 +234,8 @@ public:
    template <typename Filter>
    Error setBody(const FilePath& filePath, 
                  const Filter& filter,
-                 std::streamsize buffSize = 128)
+                 std::streamsize buffSize = 128,
+                 bool padding = false)
    {
       // open the file
       boost::shared_ptr<std::istream> pIfs;
@@ -234,7 +246,7 @@ public:
       // send the file from its stream
       try
       {
-         return setBody(*pIfs, filter, buffSize);
+         return setBody(*pIfs, filter, buffSize, padding);
       }
       catch(const std::exception& e)
       {
@@ -272,9 +284,12 @@ public:
       // gzip if possible
       if (request.acceptsEncoding(kGzipEncoding))
          setContentEncoding(kGzipEncoding);
-      
-      // set body from file
-      Error error = setBody(filePath, filter);
+
+      bool padding =
+          browser_utils::isQt(request.headerValue("User-Agent")) &&
+          filePath.mimeContentType() == "text/html";
+
+      Error error = setBody(filePath, filter, 128, padding);
       if (error)
          setError(status::InternalServerError, error.code().message());
    }

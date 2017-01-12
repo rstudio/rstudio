@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -332,7 +332,7 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
 // contents
 json::Value makeDataItem(SEXP dataSEXP, const std::string& caption, 
                          const std::string& objName, const std::string& envName, 
-                         const std::string& cacheKey)
+                         const std::string& cacheKey, int preview)
 {
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS); 
@@ -350,12 +350,13 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
       http::util::urlEncode(cacheKey, true);
+   dataItem["preview"] = preview;
 
    return dataItem;
 }
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
-                 SEXP cacheKeySEXP)
+                 SEXP cacheKeySEXP, SEXP previewSEXP)
 {    
    try
    {
@@ -384,8 +385,10 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       
       // attempt to cast to a data frame
       SEXP dataFrameSEXP = R_NilValue;
-      Error error = r::exec::RFunction("as.data.frame", dataSEXP).call(
-            &dataFrameSEXP, &protect);
+      r::exec::RFunction asDataFrame("as.data.frame");
+      asDataFrame.addParam("x", dataSEXP);
+      asDataFrame.addParam("optional", true);  // don't require column names
+      Error error = asDataFrame.call(&dataFrameSEXP, &protect);
       if (error) 
       {
          // caught below
@@ -400,9 +403,11 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
          // caught below
          throw r::exec::RErrorException("Could not coerce object to data frame.");
       }
-           
+
+      int preview = r::sexp::asLogical(previewSEXP) ? 1 : 0;
+
       json::Value dataItem = makeDataItem(dataSEXP, 
-            r::sexp::asString(captionSEXP), objName, envName, cacheKey);
+            r::sexp::asString(captionSEXP), objName, envName, cacheKey, preview);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -950,7 +955,7 @@ Error initialize()
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_viewData" ;
    methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 5;
+   methodDef.numArgs = 6;
    r::routines::addCallMethod(methodDef);
 
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);

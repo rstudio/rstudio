@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench;
 
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 
@@ -39,14 +38,14 @@ public class MainWindowObject<T>
    
    public final void set(T value)
    {
-      JavaScriptObject rstudioObject = getRStudioObject(getMainWindow());
+      JavaScriptObject rstudioObject = getRStudioObject(getRStudioMainWindow());
       setImpl(key_, value, rstudioObject);
    }
    
    @SuppressWarnings("unchecked")
    public final T get()
    {
-      JavaScriptObject rstudioObject = getRStudioObject(getMainWindow());
+      JavaScriptObject rstudioObject = getRStudioObject(getRStudioMainWindow());
       if (!hasImpl(key_, rstudioObject))
          return provider_.defaultValue();
       
@@ -76,16 +75,14 @@ public class MainWindowObject<T>
       return object.hasOwnProperty(key);
    }-*/;
    
-   private static final native Window getMainWindow() /*-{
-      var wnd = $wnd;
-      while (wnd.opener != null)
-         wnd = wnd.opener;
-      return wnd;
+   private static final native Window getRStudioMainWindow() /*-{
+      for (var wnd = $wnd; wnd != null; wnd = wnd.opener)
+         if (!!wnd.$RStudio)
+            return wnd;
+      return $wnd;
    }-*/;
    
    private static final native JavaScriptObject getRStudioObject(Window wnd) /*-{
-      if (wnd.$RStudio == null)
-         wnd.$RStudio = {};
       return wnd.$RStudio;
    }-*/;
    

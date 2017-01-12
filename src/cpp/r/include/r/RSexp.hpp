@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,6 +77,7 @@ SEXP getNames(SEXP sexp);
 bool setNames(SEXP sexp, const std::vector<std::string>& names);
 
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
+bool hasActiveBinding(const std::string&, const SEXP);
 bool isActiveBinding(const std::string&, const SEXP);
 
 // function introspection
@@ -89,6 +90,8 @@ bool isList(SEXP object);
 bool isMatrix(SEXP object);
 bool isDataFrame(SEXP object);   
 bool isNull(SEXP object);
+bool isEnvironment(SEXP object);
+bool isPrimitiveEnvironment(SEXP object);
 
 // type coercions
 std::string asString(SEXP object);
@@ -218,6 +221,19 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
 }
 
+template <typename T>
+core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
+{
+   SEXP attrib = getAttrib(object, name); 
+   if (attrib == R_NilValue) 
+   {
+      core::Error error(r::errc::AttributeNotFoundError, ERROR_LOCATION);
+      error.addProperty("attribute", name);
+      return error;
+   }
+
+   return extract(attrib, pValue);
+}
 
 // protect R expressions
 class Protect : boost::noncopyable

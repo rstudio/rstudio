@@ -42,10 +42,24 @@ public class RmdChunkOutputUnit extends JavaScriptObject
       return this.output_val;
    }-*/;
    
+   public final native int getOrdinal() /*-{
+      return this.output_ordinal;
+   }-*/;
+
+   public final native JavaScriptObject getOuputObject() /*-{
+      return this.output_val;
+   }-*/;
+   
+   public final native JavaScriptObject getMetadata() /*-{
+      return this.output_metadata || {};
+   }-*/;
+   
    // symmetric with server-side enumeration
-   public final static int TYPE_NONE  = 0;
-   public final static int TYPE_TEXT  = 1; 
-   public final static int TYPE_PLOT  = 2;
-   public final static int TYPE_HTML  = 3;
-   public final static int TYPE_ERROR = 4;
+   public final static int TYPE_NONE    = 0;
+   public final static int TYPE_TEXT    = 1; 
+   public final static int TYPE_PLOT    = 2;
+   public final static int TYPE_HTML    = 3;
+   public final static int TYPE_ERROR   = 4;
+   public final static int TYPE_ORDINAL = 5;
+   public final static int TYPE_DATA    = 6;
 }

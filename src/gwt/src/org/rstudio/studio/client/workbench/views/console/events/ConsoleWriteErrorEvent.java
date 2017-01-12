@@ -22,7 +22,7 @@ public class ConsoleWriteErrorEvent extends GwtEvent<ConsoleWriteErrorHandler>
 {
    public static final GwtEvent.Type<ConsoleWriteErrorHandler> TYPE =
       new GwtEvent.Type<ConsoleWriteErrorHandler>();
-    
+      
    public ConsoleWriteErrorEvent(ConsoleText error)
    {
       error_ = error;

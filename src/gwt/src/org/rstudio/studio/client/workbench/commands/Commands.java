@@ -61,6 +61,18 @@ public abstract class
    public abstract AppCommand executeCurrentSection();
    public abstract AppCommand executeLastCode();
    public abstract AppCommand insertChunk();
+   public abstract AppCommand insertChunkR();
+   public abstract AppCommand insertChunkBash();
+   public abstract AppCommand insertChunkPython();
+   public abstract AppCommand insertChunkRCPP();
+   public abstract AppCommand insertChunkStan(); 
+   public abstract AppCommand insertChunkSQL();
+   public abstract AppCommand switchToChunkR();
+   public abstract AppCommand switchToChunkBash();
+   public abstract AppCommand switchToChunkPython();
+   public abstract AppCommand switchToChunkRCPP();
+   public abstract AppCommand switchToChunkStan(); 
+   public abstract AppCommand switchToChunkSQL();
    public abstract AppCommand insertSection();
    public abstract AppCommand executePreviousChunks();
    public abstract AppCommand executeSubsequentChunks();
@@ -131,9 +143,13 @@ public abstract class
    public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
    public abstract AppCommand knitWithParameters();
+   public abstract AppCommand clearKnitrCache();
+   public abstract AppCommand clearPrerenderedOutput();
    public abstract AppCommand notebookExpandAllOutput();
    public abstract AppCommand notebookCollapseAllOutput();
+   public abstract AppCommand notebookClearOutput();
    public abstract AppCommand notebookClearAllOutput();
+   public abstract AppCommand notebookToggleExpansion();
    public abstract AppCommand renameInScope();
    public abstract AppCommand insertRoxygenSkeleton();
    public abstract AppCommand insertSnippet();
@@ -141,9 +157,12 @@ public abstract class
    public abstract AppCommand yankBeforeCursor();
    public abstract AppCommand yankAfterCursor();
    public abstract AppCommand pasteLastYank();
+   public abstract AppCommand insertAssignmentOperator();
+   public abstract AppCommand insertPipeOperator();
  
    // Projects
    public abstract AppCommand newProject();
+   public abstract AppCommand newProjectFromTemplate();
    public abstract AppCommand openProject();
    public abstract AppCommand openProjectInNewWindow();
    public abstract AppCommand shareProject();
@@ -349,7 +368,14 @@ public abstract class
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
-
+   
+   // Terminal
+   public abstract AppCommand newTerminal();
+   public abstract AppCommand activateTerminal();
+   public abstract AppCommand renameTerminal();
+   public abstract AppCommand closeTerminal();
+   public abstract AppCommand clearTerminalScrollbackBuffer();
+   
    // Help
    public abstract AppCommand helpBack();
    public abstract AppCommand helpForward();
@@ -419,10 +445,8 @@ public abstract class
    // Connections
    public abstract AppCommand newConnection();
    public abstract AppCommand removeConnection();
-   public abstract AppCommand connectConnection();
    public abstract AppCommand disconnectConnection();
-   public abstract AppCommand sparkLog();
-   public abstract AppCommand sparkUI();
+   public abstract AppCommand refreshConnection();
    
    // Clipboard placeholders
    public abstract AppCommand undoDummy();

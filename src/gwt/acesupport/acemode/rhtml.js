@@ -46,11 +46,13 @@ var Mode = function(suppressHighlighting, session) {
    this.$r_outdent = new RMatchingBraceOutdent(this.codeModel);
    
    this.foldingRules = this.codeModel;
-   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(
-         session,
-         /^<!--\s*begin.rcode\s*(?:.*)/,
-         /^\s*end.rcode\s*-->/
-   );
+   this.$sweaveBackgroundHighlighter = new BackgroundHighlighter(session, [
+      {
+         // r code chunks
+         begin : /^<!--\s*begin.rcode\s*(?:.*)/,
+         end   : /^\s*end.rcode\s*-->/
+      }
+   ]);
 };
 oop.inherits(Mode, HtmlMode);
 

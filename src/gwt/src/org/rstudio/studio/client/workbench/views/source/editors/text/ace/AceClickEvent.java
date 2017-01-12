@@ -22,7 +22,7 @@ public class AceClickEvent extends GwtEvent<AceClickEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onClick(AceClickEvent event);
+      void onAceClick(AceClickEvent event);
    }
 
    public AceClickEvent(AceMouseEventNative event)
@@ -59,7 +59,7 @@ public class AceClickEvent extends GwtEvent<AceClickEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onClick(this);
+      handler.onAceClick(this);
    }
 
    private final AceMouseEventNative event_;

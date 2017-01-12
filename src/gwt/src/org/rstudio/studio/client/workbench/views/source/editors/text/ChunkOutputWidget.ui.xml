@@ -6,7 +6,17 @@
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.Resources"/>
 
    <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget.ChunkStyle">
-   .clear, .expand
+   .fullsize
+   {
+      padding: 0;
+   }
+   
+   .baresize
+   {
+      padding-top: 5px;
+   }
+
+   .clear, .expand, .popout
    {
       position: absolute;
       top: 2px;
@@ -15,16 +25,45 @@
       z-index: 25;
    }
    
+   .baresize .clear, .baresize .expand, .baresize .popout
+   {
+      top: 7px;
+   }
+
+   .fullsize .clear, .fullsize .expand, .fullsize .popout
+   {
+      display: none;
+   }
+   
    .clear
    {
       right: 12px;
       padding: 5px;
    }
    
+   .noclear .clear
+   {
+      display: none;
+   }
+   
    .expand 
    {
       right: 35px;
       transition: transform 400ms ease, -webkit-transform 400ms ease;
+   }
+   
+   .noclear .expand
+   {
+      right: 12px;
+   }
+
+   .popout 
+   {
+      right: 58px;
+      width: 14px;
+      height: 14px;
+      top: 0px;
+      opacity: 0.7;
    }
    
    .collapsed .expand
@@ -43,11 +82,28 @@
       right: 48px;
    }
 
+   .overflowY .popout
+   {
+      right: 71px;
+   }
+
    .frame
    {
       border: 1px solid #e5e5e5;
       padding-top: 10px;
       overflow: hidden;
+   }
+
+   .fullsize .frame
+   {
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      position: absolute;
+      padding: 10px;
+      padding-bottom: 20px;
+      border-width: 0;
    }
    
    .outer
@@ -59,10 +115,20 @@
    .root
    {
       position: relative;
-      overflow: auto;
-      max-height: 630px;
       transition: opacity 400ms ease;
       margin: 10px;
+   }
+
+   .fullsize .root
+   {
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
+
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
    }
    
    .root pre 
@@ -125,6 +191,10 @@
       <g:HTMLPanel styleName="{style.expander}"
                ui:field="expander_"></g:HTMLPanel>
       <g:HTMLPanel ui:field="frame_" styleName="{style.frame}">
+        <g:Image styleName="{style.popout}" 
+                 resource="{res.popoutIcon}"
+                 title="Show in New Window"
+                 ui:field="popout_"></g:Image>
         <g:Image styleName="{style.clear}"
                  ui:field="clear_"
                  resource="{res.removeChunkIcon}"
@@ -133,8 +203,8 @@
                  resource="{res.collapseChunkIcon}"
                  title="Expand/Collapse Output"
                  ui:field="expand_"></g:Image>
-        <g:HTMLPanel styleName="{style.root}" ui:field="root_">
-        </g:HTMLPanel>
+        <g:SimplePanel styleName="{style.root}" ui:field="root_">
+        </g:SimplePanel>
       </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

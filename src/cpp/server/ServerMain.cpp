@@ -102,7 +102,8 @@ http::UriHandlerFunction blockingFileHandler()
                                    mainPageFilter,
                                    initJs,
                                    options.gwtPrefix(),
-                                   options.wwwUseEmulatedStack());
+                                   options.wwwUseEmulatedStack(),
+                                   options.wwwFrameOrigin());
 }
 
 //
@@ -171,6 +172,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/agreement", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/presentation", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/pdf_js", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/mathjax", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
@@ -185,6 +187,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/grid_resource", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/chunk_output", secureAsyncHttpHandler(proxyContentRequest, true)); 
    uri_handlers::add("/profiles", secureAsyncHttpHandler(proxyContentRequest, true));
+   uri_handlers::add("/rmd_data", secureAsyncHttpHandler(proxyContentRequest, true));
 
    // proxy localhost if requested
    if (server::options().wwwProxyLocalhost())

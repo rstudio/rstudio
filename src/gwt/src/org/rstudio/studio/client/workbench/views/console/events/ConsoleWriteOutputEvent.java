@@ -22,7 +22,7 @@ public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
 {
    public static final GwtEvent.Type<ConsoleWriteOutputHandler> TYPE =
       new GwtEvent.Type<ConsoleWriteOutputHandler>();
-    
+   
    public ConsoleWriteOutputEvent(ConsoleText output)
    {
       output_ = output;

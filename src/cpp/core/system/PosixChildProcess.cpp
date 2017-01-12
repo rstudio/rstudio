@@ -239,6 +239,24 @@ void ChildProcess::init(const std::string& command,
    init("/bin/sh", args, options);
 }
 
+// Initialize for an interactive terminal; directly launches via
+// "env" instead of launching "env" via "bin/sh". On Linux,
+// the latter left two processes running; "sh" as the parent
+// of "bash", which messed up counting child processes of the shell.
+void ChildProcess::init(const ProcessOptions& options)
+{
+   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   {
+      LOG_ERROR_MESSAGE(
+               "stdOutFile/stdErrFile options cannot be used with interactive terminal");
+   }
+
+   std::vector<std::string> args;
+   args.push_back("bash");
+   args.push_back("--norc");
+   init("/usr/bin/env", args, options);
+}
+
 ChildProcess::~ChildProcess()
 {
 }
@@ -356,6 +374,11 @@ Error ChildProcess::terminate()
    }
 }
 
+bool ChildProcess::hasSubprocess() const
+{
+   // base class doesn't support subprocess-checking; override to implement
+   return true;
+}
 
 Error ChildProcess::run()
 {  
@@ -486,9 +509,22 @@ Error ChildProcess::run()
             ERROR_LOCATION);
          if (!error)
          {
-            // specify raw mode (but don't ignore signals -- this is done
-            // so we can send Ctrl-C for interrupts)
-            ::cfmakeraw(&termp);
+            if (!options_.smartTerminal)
+            {
+               // Specify raw mode; not doing this for terminal (versus dumb
+               // shell) because on Linux, it broke things like "passwd"
+               // command's ability to collect passwords).
+               ::cfmakeraw(&termp);
+            }
+            else
+            {
+               // for smart terminals we need to echo back the user input
+               termp.c_lflag |= ECHO;
+               termp.c_oflag |= OPOST|ONLCR;
+            }
+
+            // Don't ignore signals -- this is done
+            // so we can send Ctrl-C for interrupts
             termp.c_lflag |= ISIG;
 
             // set attribs
@@ -653,14 +689,86 @@ struct AsyncChildProcess::AsyncImpl
       : calledOnStarted_(false),
         finishedStdout_(false),
         finishedStderr_(false),
-        exited_(false)
+        exited_(false),
+        checkSubProc_(boost::posix_time::not_a_date_time),
+        hasSubprocess_(true)
    {
    }
-
    bool calledOnStarted_;
    bool finishedStdout_;
    bool finishedStderr_;
    bool exited_;
+
+   // when we next check subprocess count
+   boost::posix_time::ptime checkSubProc_;
+
+   // result of last subprocess check
+   bool hasSubprocess_;
+
+   void initTimers(bool reportHasSubprocs)
+   {
+      if (exited_)
+      {
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+         return;
+      }
+
+      if (reportHasSubprocs && checkSubProc_.is_not_a_date_time())
+      {
+         checkSubProc_ = now() + boost::posix_time::seconds(1);
+      }
+   }
+
+   bool checkChildCount()
+   {
+      if (checkSubProc_.is_not_a_date_time())
+         return false;
+
+      bool fCheck = now() > checkSubProc_;
+
+      if (fCheck)
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+      return fCheck;
+   }
+
+   bool computeHasSubProcess(pid_t pid)
+   {
+      // TODO (gary) the 'pgrep' approach should be Mac-only; for Linux we
+      // should be using /proc to compute child process counts. See
+      // PosixChildProcessTracker.cpp.
+
+// #ifdef __APPLE__
+
+      // pgrep -P ppid returns 0 if there are matches, non-zero
+      // otherwise
+      shell_utils::ShellCommand cmd("pgrep");
+      cmd << "-P" << pid;
+
+      core::system::ProcessOptions options;
+      options.detachSession = true;
+
+      core::system::ProcessResult result;
+      Error error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
+                         options,
+                         &result);
+      if (error)
+      {
+         // err on the side of assuming child processes, so we don't kill
+         // a job unintentionally
+         LOG_ERROR(error);
+         return true;
+      }
+
+      return result.exitStatus == 0;
+// #else // !__APPLE__
+      // TODO (gary) Linux subprocess detection using procfs
+// #endif
+   }
+
+   static boost::posix_time::ptime now()
+   {
+      return boost::posix_time::microsec_clock::universal_time();
+   }
 };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
@@ -671,7 +779,7 @@ AsyncChildProcess::AsyncChildProcess(const std::string& exe,
    init(exe, args, options);
    if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
    {
-      LOG_ERROR_MESSAGE(
+      LOG_WARNING_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with runProgram");
    }
 }
@@ -681,6 +789,12 @@ AsyncChildProcess::AsyncChildProcess(const std::string& command,
       : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
    init(command, options);
+}
+
+AsyncChildProcess::AsyncChildProcess(const ProcessOptions& options)
+      : ChildProcess(), pAsyncImpl_(new AsyncImpl())
+{
+   init(options);
 }
 
 AsyncChildProcess::~AsyncChildProcess()
@@ -700,6 +814,10 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
+bool AsyncChildProcess::hasSubprocess() const
+{
+   return pAsyncImpl_->hasSubprocess_;
+}
 
 void AsyncChildProcess::poll()
 {
@@ -720,7 +838,6 @@ void AsyncChildProcess::poll()
          callbacks_.onStarted(*this);
       pAsyncImpl_->calledOnStarted_ = true;
    }
-
    // call onContinue
    if (callbacks_.onContinue)
    {
@@ -774,7 +891,6 @@ void AsyncChildProcess::poll()
       }
    }
 
-
    // Check for exited. Note that this method specifies WNOHANG
    // so we don't block forever waiting for a process the exit. We may
    // not be able to reap the child due to an error (typically ECHILD,
@@ -813,6 +929,17 @@ void AsyncChildProcess::poll()
       // EINTR and ECHILD, and EINTR is handled internally by posixCall)
       if (result == -1 && errno != ECHILD && errno != ENOENT)
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
+   }
+
+   // Perform optional periodic operations
+   pAsyncImpl_->initTimers(options().reportHasSubprocs);
+   if (pAsyncImpl_->checkChildCount())
+   {
+      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->pid);
+      if (callbacks_.onHasSubprocs)
+      {
+         callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);
+      }
    }
 }
 

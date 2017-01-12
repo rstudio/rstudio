@@ -18,12 +18,14 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputSize;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 
@@ -53,8 +55,9 @@ public class ChunkOutputUi
       boolean hasOutput = widget != null;
       if (widget == null) 
       {
-         widget = new ChunkOutputWidget(def.getChunkId(), def.getOptions(), 
-                                        def.getExpansionState(), this);
+         widget = new ChunkOutputWidget(docId_, def.getChunkId(), 
+               def.getOptions(), def.getExpansionState(), true, this, 
+               ChunkOutputSize.Default);
       }
       else
       {
@@ -153,13 +156,13 @@ public class ChunkOutputUi
       // we want to be sure the user can see the row beneath the output 
       // (this is just a convenient way to determine whether the entire 
       // output is visible)
-      int targetRow = getCurrentRow() + 1;
+      int targetRow = Math.min(display_.getRowCount() - 1, getCurrentRow() + 1);
       
       // if the chunk has no visible output yet, just make sure it's not too
       // close to the bottom of the screen
       if (!outputWidget_.isVisible())
       {
-         targetRow = Math.min(display_.getRowCount(), targetRow + 1);
+         targetRow = Math.min(display_.getRowCount() - 1, targetRow + 1);
       }
       
       // if the chunk and output are already taking up the whole viewport, don't
@@ -186,14 +189,31 @@ public class ChunkOutputUi
    }
 
    @Override
-   public void onOutputHeightChanged(int outputHeight, boolean ensureVisible)
+   public void onOutputHeightChanged(ChunkOutputWidget widget,
+                                     int outputHeight,
+                                     boolean ensureVisible)
    {
+      // don't process if we aren't attached 
+      if (!attached_)
+         return;
+      
+      // if ensuring visible, also ensure that the associated code is unfolded
+      if (ensureVisible)
+      {
+         Scope scope = getScope();
+         if (scope != null)
+         {
+            display_.unfold(Range.fromPoints(scope.getPreamble(), 
+                                             scope.getEnd()));
+         }
+      }
+
       int height = 
-            outputWidget_.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
+            widget.getExpansionState() == ChunkOutputWidget.COLLAPSED ?
                CHUNK_COLLAPSED_HEIGHT :
-               Math.max(MIN_CHUNK_HEIGHT, 
-                 Math.min(outputHeight, MAX_CHUNK_HEIGHT));
-      outputWidget_.getElement().getStyle().setHeight(height, Unit.PX);
+               Math.max(MIN_CHUNK_HEIGHT, outputHeight);
+
+      widget.getElement().getStyle().setHeight(height, Unit.PX);
       display_.onLineWidgetChanged(lineWidget_.getLineWidget());
       
       // if we need to ensure that this output is visible, wait for the event
@@ -205,10 +225,10 @@ public class ChunkOutputUi
    }
 
    @Override
-   public void onOutputRemoved()
+   public void onOutputRemoved(ChunkOutputWidget widget)
    {
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(
-              new ChunkChangeEvent(docId_, chunkId_, 0, 
+              new ChunkChangeEvent(docId_, chunkId_, "", 0, 
                                    ChunkChangeEvent.CHANGE_REMOVE));
    }
 
@@ -243,7 +263,8 @@ public class ChunkOutputUi
    public final static int CHUNK_COLLAPSED_HEIGHT = 15;
    public final static int MAX_CHUNK_HEIGHT = 650;
    
-   public final static int MAX_PLOT_WIDTH = 650;
+   public final static int MIN_PLOT_WIDTH = 400;
+   public final static int MAX_PLOT_WIDTH = 700;
    public final static int MAX_HTMLWIDGET_WIDTH = 800;
    
    public final static double OUTPUT_ASPECT = 1.618;

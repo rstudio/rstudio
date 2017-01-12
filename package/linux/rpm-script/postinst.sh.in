@@ -33,17 +33,27 @@ mkdir -p /var/lib/rstudio-server/proxy
 # suspend all sessions
 rstudio-server force-suspend-all
 
-# alias libcrypto.so.0.9.8 to libcrypto.so.6 for compatiblity with
-# rpms built on redhat 5
+# create openssl softlinks based off SuSE version 
 if test -f /etc/SuSE-release
 then
-  if test -d /usr/lib64
+  if test -d /usr/lib64 || test -d /lib64
   then
-     ln -s /usr/lib64/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
-     ln -s /usr/lib64/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
+    architecture_dir='lib64'
   else
-     ln -s -f /usr/lib/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
-     ln -s -f /usr/lib/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
+    architecture_dir='lib'
+  fi
+
+  compare_versions() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+  version_number=$(cat /etc/SuSE-release | grep "VERSION" | sed 's/[^0-9,.]*//g')
+
+  # verify if release version number is greater than 11
+  if compare_versions $version_number 11
+  then
+    ln -s -f /$architecture_dir/libssl.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
+    ln -s -f /$architecture_dir/libcrypto.so.1.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
+  else
+    ln -s -f /usr/$architecture_dir/libssl.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
+    ln -s -f /usr/$architecture_dir/libcrypto.so.0.9.8 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
   fi
 fi
 

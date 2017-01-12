@@ -206,7 +206,11 @@ var Unicode = require("ace/unicode").packages;
       if (typeof complements === "undefined")
          complements = $complements;
 
-      return complements[string];
+      var complement = complements[string];
+      if (typeof complement === "undefined")
+         return string;
+
+      return complement;
    };
 
    this.stripEnclosingQuotes = function(string)

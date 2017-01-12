@@ -1,0 +1,76 @@
+
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+
+.cellTreeWidget {
+}
+
+.cellTreeEmptyMessage {
+  text-align: center;
+  font-style: normal;
+  margin-top: 50px;
+  color: #888;
+  outline: none;
+  cursor: default;
+}
+
+
+.cellTreeItem {
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+.cellTreeItemImage {
+  
+}
+
+.cellTreeItemImageValue {
+}
+
+.cellTreeItemValue {
+  font-family: fixedWidthFont;
+  padding-right: 0px;
+  cursor: default;
+}
+
+.cellTreeOpenItem {
+  
+}
+.cellTreeTopItem {
+  font-weight: normal;
+  margin-top: 0;
+  padding: 2px 0px 2px 6px !important;
+}
+.cellTreeTopItemImage {
+  
+}
+.cellTreeTopItemImageValue {
+  border-bottom: none;
+}
+
+.cellTreeKeyboardSelectedItem {
+  background: white;
+}
+
+.fieldName {
+  float: left;
+  margin-right: 7px;
+}
+
+.fieldType {
+  color: #707070;
+}
+
+@sprite .tableViewDataset {
+   gwt-image: 'zoomDataset';
+   background-position: right center; 
+   float: right;
+   width: 35px;
+   cursor: pointer;
+}
+
+
+
+
+
+
+

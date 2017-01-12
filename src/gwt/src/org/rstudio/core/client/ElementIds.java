@@ -25,4 +25,5 @@ public class ElementIds
    public final static String POPUP_COMPLETIONS = "popup_completions";
    public final static String SHELL_WIDGET = "shell_widget";
    public final static String SOURCE_TEXT_EDITOR = "source_text_editor";
+   public final static String XTERM_WIDGET = "xterm_widget";
 }

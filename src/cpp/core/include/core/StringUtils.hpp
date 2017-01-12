@@ -75,7 +75,9 @@ std::string getExtension(std::string const& str);
 
 std::string utf8ToSystem(const std::string& str,
                          bool escapeInvalidChars=false);
+
 std::string systemToUtf8(const std::string& str);
+std::string systemToUtf8(const std::string& str, int codepage);
 
 std::string toLower(const std::string& str);
 std::string textToHtml(const std::string& str);

@@ -24,6 +24,10 @@
 
 #include <r/RSexp.hpp>
 
+#include "NotebookCapture.hpp"
+#include "NotebookOutput.hpp"
+#include "NotebookChunkOptions.hpp"
+
 #define kStagingSuffix "_t"
 
 namespace rstudio {
@@ -39,45 +43,51 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-class ChunkExecContext
+class ChunkExecContext : public NotebookCapture
 {
 public:
    // initialize a new execution context
    ChunkExecContext(const std::string& docId, const std::string& chunkId,
          const std::string& nbCtxId, ExecScope execScope, 
-         const core::json::Object& options, int pixelWidth, int charWidth);
-   ~ChunkExecContext();
-
-   // connect or disconnect the execution context to events
-   void connect();
-   void disconnect();
+         const core::FilePath& workingDir, const ChunkOptions& options, 
+         int pixelWidth, int charWidth);
 
    // return execution context from events
    std::string chunkId();
    std::string docId();
-   bool connected();
    ExecScope execScope();
+   const ChunkOptions& options();
 
    // inject console input manually
    void onConsoleInput(const std::string& input);
+
+   // invoked to indicate that an expression has finished evaluating
+   void onExprComplete();
+
+   bool hasErrors();
+
+   void connect();
+   void disconnect();
 
 private:
    void onConsoleOutput(module_context::ConsoleOutputType type, 
          const std::string& output);
    void onConsoleText(int type, const std::string& output, bool truncate);
    void onConsolePrompt(const std::string&);
-   void onFileOutput(const core::FilePath& file, const core::FilePath& metadata,
-         int outputType);
+   void onFileOutput(const core::FilePath& file, const core::FilePath& sidecar,
+        const core::json::Value& metadata, ChunkOutputType outputType, 
+        unsigned ordinal);
    void onError(const core::json::Object& err);
+   bool onCondition(Condition condition, const std::string &message);
    void initializeOutput();
 
    std::string docId_;
    std::string chunkId_;
    std::string nbCtxId_;
-   std::string prevWorkingDir_;
    std::string pendingInput_;
    core::FilePath outputPath_;
-   core::json::Object options_;
+   core::FilePath workingDir_;
+   ChunkOptions options_;
 
    int pixelWidth_;
    int charWidth_;
@@ -85,9 +95,10 @@ private:
    ExecScope execScope_;
    r::sexp::PreservedSEXP prevWarn_;
 
-   bool connected_;
    bool hasOutput_;
+   bool hasErrors_;
 
+   std::vector<boost::shared_ptr<NotebookCapture> > captures_;
    std::vector<boost::signals::connection> connections_;
 };
 

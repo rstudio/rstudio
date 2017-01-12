@@ -24,50 +24,66 @@
 namespace rstudio {
 namespace monitor {
 
-std::ostream& operator<<(std::ostream& ostr, const Event& event)
+std::string eventScopeAndIdAsString(const Event& event)
 {
+   std::string scope;
    switch(event.scope())
    {
       case kAuthScope:
-         ostr << "auth";
+         scope = "auth";
          break;
       case kSessionScope:
-         ostr << "session";
+         scope = "session";
          break;
       default:
-         ostr << "<unknown>";
+         scope = "<unknown>";
          break;
    }
-   ostr << " ";
 
+   std::string id;
    switch(event.id())
    {
       case kAuthLoginEvent:
-         ostr << "login";
+         id = "login";
          break;
       case kAuthLogoutEvent:
-         ostr << "logout";
+         id = "logout";
+         break;
+      case kAuthLoginFailedEvent:
+         id = "login_failed";
          break;
       case kSessionStartEvent:
-         ostr << "start";
+         id = "start";
          break;
       case kSessionSuicideEvent:
-         ostr << "suicide";
+         id = "suicide";
          break;
       case kSessionSuspendEvent:
-         ostr << "suspend";
+         id = "suspend";
          break;
       case kSessionQuitEvent:
-         ostr << "quit";
+         id = "quit";
          break;
       case kSessionExitEvent:
-         ostr << "exit";
+         id = "exit";
+         break;
+      case kSessionAdminSuspend:
+         id = "admin_suspend";
+         break;
+      case kSessionAdminTerminate:
+         id = "admin_terminate";
          break;
       default:
-         ostr << "<unknown>";
+         id = "<unknown>";
          break;
    }
 
+   return scope + "_" + id;
+}
+
+std::ostream& operator<<(std::ostream& ostr, const Event& event)
+{
+   ostr << eventScopeAndIdAsString(event);
    ostr << " - ";
    ostr << event.username() << " [" << event.pid() << "] - ";
    ostr << core::http::util::httpDate(event.timestamp());

@@ -350,6 +350,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.shrinkSelection());
       dynamicCommands_.add(commands.toggleDocumentOutline());
       dynamicCommands_.add(commands.knitWithParameters());
+      dynamicCommands_.add(commands.clearKnitrCache());
       dynamicCommands_.add(commands.goToNextSection());
       dynamicCommands_.add(commands.goToPrevSection());
       dynamicCommands_.add(commands.goToNextChunk());
@@ -361,20 +362,13 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.restartRRunAllChunks());
       dynamicCommands_.add(commands.notebookCollapseAllOutput());
       dynamicCommands_.add(commands.notebookExpandAllOutput());
+      dynamicCommands_.add(commands.notebookClearOutput());
       dynamicCommands_.add(commands.notebookClearAllOutput());
+      dynamicCommands_.add(commands.notebookToggleExpansion());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
          command.setEnabled(false);
-      }
-      
-      // feature flag for notebook -- this will eventually go away
-      // and these commands will always be enabled
-      if (!uiPrefs_.enableRNotebooks().getValue() &&
-          !uiPrefs_.showRmdChunkOutputInline().getValue())
-      {
-         commands.newRNotebook().setEnabled(false);
-         commands.newRNotebook().setVisible(false);
       }
 
       // fake shortcuts for commands which we handle at a lower level
@@ -827,20 +821,30 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            EditingTarget editor = addTab(doc, true, OPEN_REPLAY);
+            final EditingTarget editor = addTab(doc, true, OPEN_REPLAY);
             
             // if this is a source window, check to see if it was opened to
             // pop out a particular doc, and restore that doc's position if so
             if (!SourceWindowManager.isMainSourceWindow())
             {
-               SourceWindow sourceWindow = 
+               final SourceWindow sourceWindow = 
                      RStudioGinjector.INSTANCE.getSourceWindow();
                if (sourceWindow.getInitialDocId() == doc.getId() &&
                    sourceWindow.getInitialSourcePosition() != null)
                {
-                  editor.restorePosition(
-                        sourceWindow.getInitialSourcePosition());
-                  editor.ensureCursorVisible();
+                  // restore position deferred; restoring it immediately after
+                  // instantiating the editor causes inaccurate scroll position
+                  // reads elsewhere
+                  Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        editor.restorePosition(
+                              sourceWindow.getInitialSourcePosition());
+                        editor.ensureCursorVisible();
+                     }
+                  });
                }
             }
          }
@@ -1072,21 +1076,29 @@ public class Source implements InsertSourceHandler,
    public void onNewRNotebook()
    {
       dependencyManager_.withRMarkdown("R Notebook",
-         "Create R Notebook", new Command() {
-         @Override
-         public void execute()
+         "Create R Notebook", new CommandWithArg<Boolean>()
          {
-            String basename = "r_markdown_notebook";
-            if (BrowseCap.isMacintosh())
-               basename += "_osx";
+            @Override
+            public void execute(Boolean succeeded)
+            {
+               if (!succeeded)
+               {
+                  globalDisplay_.showErrorMessage("Notebook Creation Failed", 
+                        "One or more packages required for R Notebook " +
+                        "creation were not installed.");
+                  return;
+               }
+               String basename = "r_markdown_notebook";
+               if (BrowseCap.isMacintosh())
+                  basename += "_osx";
 
-            newSourceDocWithTemplate(
-                  FileTypeRegistry.RMARKDOWN,
-                  "",
-                  basename + ".Rmd",
-                  Position.create(3, 0));
-         }
-      });
+               newSourceDocWithTemplate(
+                     FileTypeRegistry.RMARKDOWN,
+                     "",
+                     basename + ".Rmd",
+                     Position.create(3, 0));
+            }
+         });
    }
    
    @Handler
@@ -1862,19 +1874,28 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               EditingTarget target = addTab(doc, e.getPos());
+               final EditingTarget target = addTab(doc, e.getPos());
                
-               // if we know the source position, restore it
-               if (e.getParams() != null &&
-                   e.getParams().getSourcePosition() != null)
+               // restore position deferred; restoring it immediately after
+               // instantiating the editor causes inaccurate scroll position
+               // reads elsewhere
+               Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
                {
-                  target.restorePosition(e.getParams().getSourcePosition());
-                  target.ensureCursorVisible();
-               }
-               
-               // if there was a collab session, resume it
-               if (collabParams != null)
-                  target.beginCollabSession(e.getCollabParams());
+                  @Override
+                  public void execute()
+                  {
+                     // if we know the source position, restore it
+                     if (e.getParams() != null &&
+                         e.getParams().getSourcePosition() != null)
+                     {
+                        target.restorePosition(e.getParams().getSourcePosition());
+                        target.ensureCursorVisible();
+                     }
+                     // if there was a collab session, resume it
+                     if (collabParams != null)
+                        target.beginCollabSession(e.getCollabParams());
+                  }
+               });
             }
 
             @Override
@@ -2457,14 +2478,14 @@ public class Source implements InsertSourceHandler,
    }
    
     
-   public void onOpenSourceFile(OpenSourceFileEvent event)
+   public void onOpenSourceFile(final OpenSourceFileEvent event)
    {
       doOpenSourceFile(event.getFile(),
-                       event.getFileType(),
-                       event.getPosition(),
-                       null, 
-                       event.getNavigationMethod(),
-                       false);
+                     event.getFileType(),
+                     event.getPosition(),
+                     null, 
+                     event.getNavigationMethod(),
+                     false);
    }
    
    

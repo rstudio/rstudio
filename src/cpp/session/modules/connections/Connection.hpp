@@ -1,7 +1,7 @@
 /*
  * Connection.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,10 +27,14 @@ namespace connections {
    
 struct ConnectionId
 {
+   ConnectionId() {}
+
    ConnectionId(const std::string& type, const std::string& host)
       : type(type), host(host)
    {
    }
+
+   bool empty() const { return type.empty(); }
 
    std::string type;
    std::string host;
@@ -46,30 +50,53 @@ struct ConnectionId
    }
 };
 
+struct ConnectionAction
+{
+   ConnectionAction() {}
+   ConnectionAction(const std::string& name, const std::string& icon)
+      : name(name), icon(icon)
+   {
+   }
+
+   std::string name;
+   std::string icon;
+};
+
 struct Connection
 {
+   Connection() {}
    Connection(const ConnectionId& id,
-              const std::string& finder,
               const std::string& connectCode,
-              const std::string& disconnectCode,
+              const std::string& displayName,
+              const std::string& icon,
+              const std::vector<ConnectionAction>& actions,
               double lastUsed)
       : id(id),
-        finder(finder),
         connectCode(connectCode),
-        disconnectCode(disconnectCode),
+        displayName(displayName),
+        icon(icon),
+        actions(actions),
         lastUsed(lastUsed)
    {
    }
 
+   bool empty() const { return id.empty(); }
+
    ConnectionId id;
-   std::string finder;
    std::string connectCode;
-   std::string disconnectCode;
+   std::string displayName;
+   std::string icon;
+   std::vector<ConnectionAction> actions;
    double lastUsed;
 };
 
 core::json::Object connectionIdJson(const ConnectionId& id);
 core::json::Object connectionJson(const Connection& connection);
+
+core::Error connectionFromJson(const core::json::Object& connectionJson,
+                               Connection* pConnection);
+core::Error connectionIdFromJson(const core::json::Object& connectionIdJson,
+                               ConnectionId* pConnectionId);
 
 bool hasConnectionId(const ConnectionId& id,
                      const core::json::Object& connectionJson);

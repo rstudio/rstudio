@@ -492,23 +492,21 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         switch (keycode)
+         // bail on modifier keys
+         if (KeyboardHelper.isModifierKey(keycode))
+            return false;
+         
+         // allow emacs-style navigation of popup entries
+         if (modifier == KeyboardShortcut.CTRL)
          {
-         // chrome on ubuntu now sends this before every keydown
-         // so we need to explicitly ignore it. see:
-         // https://github.com/ivaynberg/select2/issues/2482
-         case KeyCodes.KEY_WIN_IME: 
-            return false ;
-            
-         case KeyCodes.KEY_SHIFT:
-         case KeyCodes.KEY_CTRL:
-         case KeyCodes.KEY_ALT:
-         case KeyCodes.KEY_MAC_FF_META:
-         case KeyCodes.KEY_WIN_KEY_LEFT_META:
-            return false ; // bare modifiers should do nothing
+            switch (keycode)
+            {
+            case KeyCodes.KEY_P: return popup_.selectPrev();
+            case KeyCodes.KEY_N: return popup_.selectNext();
+            }
          }
          
-         if (modifier == KeyboardShortcut.NONE)
+         else if (modifier == KeyboardShortcut.NONE)
          {
             if (keycode == KeyCodes.KEY_ESCAPE)
             {
@@ -1091,7 +1089,8 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isLineInRoxygenComment(String line)
    {
-      return line.matches("^\\s*#+'\\s*[^\\s].*");
+      Pattern pattern = Pattern.create("^\\s*#+'");
+      return pattern.test(line);
    }
    
    private boolean isLineInComment(String line)
@@ -1144,6 +1143,11 @@ public class RCompletionManager implements CompletionManager
       // we erroneously capture '-' as part of the token name. This is awkward
       // but is effectively a bandaid until the autocompletion revamp.
       if (context.getToken().startsWith("-"))
+         context.setToken(context.getToken().substring(1));
+      
+      // fix up roxygen autocompletion for case where '@' is snug against
+      // the comment marker
+      if (context.getToken().equals("'@"))
          context.setToken(context.getToken().substring(1));
       
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
@@ -1419,8 +1423,7 @@ public class RCompletionManager implements CompletionManager
       
       // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
-         return new AutocompletionContext(
-               token, AutocompletionContext.TYPE_ROXYGEN);
+         return new AutocompletionContext(token, AutocompletionContext.TYPE_ROXYGEN);
       
       // If the token has '$' or '@', add in the autocompletion context --
       // note that we still need parent contexts to give more information
@@ -2082,7 +2085,9 @@ public class RCompletionManager implements CompletionManager
             editor.moveCursorLeft();
          
          if (RCompletionType.isFunctionType(qualifiedName.type))
-            sigTipManager_.displayToolTip(qualifiedName.name, qualifiedName.source);
+            sigTipManager_.displayToolTip(qualifiedName.name, 
+                                          qualifiedName.source,
+                                          qualifiedName.helpHandler);
       }
       
       private final Invalidation.Token invalidationToken_ ;

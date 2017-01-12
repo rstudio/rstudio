@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -72,6 +75,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 public class RSConnectDeploy extends Composite
+                             implements AppNameTextbox.Host
 {
    private static RSConnectDeployUiBinder uiBinder = GWT
          .create(RSConnectDeployUiBinder.class);
@@ -143,7 +147,6 @@ public class RSConnectDeploy extends Composite
          asMultipleRmd_ = fromPrevious.getAsMultiple();
          asStatic_ = fromPrevious.getAsStatic();
       }
-      
       
       // inject dependencies 
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -242,8 +245,6 @@ public class RSConnectDeploy extends Composite
          }
       });
       
-      
-      
       // If we're loading a previous deployment, hide new app name fields
       if (fromPrevious_ != null)
       {
@@ -269,6 +270,7 @@ public class RSConnectDeploy extends Composite
       prefs_ = prefs;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
             !asStatic_);
+      appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
       // previous deployment if we have one
@@ -292,6 +294,9 @@ public class RSConnectDeploy extends Composite
                {
                   accountList_.selectAccount(preferred);
                }
+               
+               // validate the app name now that we have an account selected
+               appName_.validateAppName();
             }
          }
       });
@@ -315,6 +320,12 @@ public class RSConnectDeploy extends Composite
                else if (!existing)
                   appName_.validateAppName();
             }
+            else
+            {
+               // re-validate app name as different accounts have different 
+               // name restrictions
+               appName_.validateAppName();
+            }
          }
       });
    }
@@ -323,18 +334,6 @@ public class RSConnectDeploy extends Composite
    {
       dir = StringUtil.shortPathName(FileSystemItem.createDir(dir), 250);
       deployLabel_.setText(dir);
-   }
-   
-   public void setUnsanitizedAppName(String unsanitizedName)
-   {
-      // make the name into a valid URL slug
-      String sanitized = new String(unsanitizedName);
-      sanitized = sanitized.trim();
-      sanitized = sanitized.replaceAll("[^a-zA-Z0-9\\-]", "_");
-      if (sanitized.length() > 64)
-         sanitized = sanitized.substring(0, 64);
-
-      appName_.setText(sanitized);
    }
    
    public void setDefaultAccount(RSConnectAccount account)
@@ -360,11 +359,6 @@ public class RSConnectDeploy extends Composite
    public ArrayList<String> getIgnoredFileList()
    {
       return getCheckedFileList(false);
-   }
-   
-   public String getNewAppName()
-   {
-      return appName_.getText();
    }
    
    public void showAppInfo(RSConnectApplicationInfo info)
@@ -451,10 +445,12 @@ public class RSConnectDeploy extends Composite
          }
       }
       
+      String appTitle = appName_.getTitle();
+      
       // if we're redeploying to the same account, use the previous app name;
       // otherwise, read the new name the user's entered
       String appName = isUpdate() ?
-            fromPrevious_.getName() : getNewAppName();
+            fromPrevious_.getName() : appName_.getName();
             
       // if this was new content, set this account as the default to use for 
       // new content
@@ -465,9 +461,10 @@ public class RSConnectDeploy extends Composite
          prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
          prefs_.writeUIPrefs();
       }
-            
+      
       return new RSConnectPublishResult(
             appName, 
+            isUpdate() ? null : appTitle,
             getSelectedAccount(), 
             source_,
             new RSConnectPublishSettings(deployFiles, 
@@ -481,8 +478,9 @@ public class RSConnectDeploy extends Composite
    public void validateResult(final OperationWithInput<Boolean> onComplete)
    {
       // if the name isn't valid to begin with, we know the result immediately
-      if (!appName_.validateAppName())
+      if (!appName_.isValid())
       {
+         appName_.validateAppName();
          onComplete.execute(false);
          focus();
          return;
@@ -494,7 +492,7 @@ public class RSConnectDeploy extends Composite
          onComplete.execute(true);
       }
       
-      checkForExistingApp(getSelectedAccount(), getNewAppName(), 
+      checkForExistingApp(getSelectedAccount(), appName_.getName(), 
             new OperationWithInput<Boolean>()
             {
                @Override
@@ -507,6 +505,50 @@ public class RSConnectDeploy extends Composite
             });
    }
    
+   public void setUnsanitizedAppName(String name)
+   {
+      appName_.setTitle(name);
+      appName_.validateAppName();
+   }
+
+   @Override
+   public boolean supportsTitle()
+   {
+      if (getSelectedAccount() == null)
+         return true;
+      else
+         return !getSelectedAccount().isCloudAccount();
+   }
+
+   @Override
+   public void generateAppName(String title,
+         final CommandWithArg<RSConnectAppName> result)
+   {
+      // don't generate a name if no source or account is present (we'll
+      // generate one once the source has been acquired)
+      if (source_ == null || getSelectedAccount() == null)
+         return;
+      
+      server_.generateAppName(title, 
+            source_.getDeployKey(), 
+            getSelectedAccount().getName(), 
+            new ServerRequestCallback<RSConnectAppName>()
+            {
+               @Override
+               public void onResponseReceived(RSConnectAppName name)
+               {
+                  result.execute(name);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  result.execute(null);
+               }
+            });
+   }
+
    // Private methods --------------------------------------------------------
    
    private void setFileList(ArrayList<String> files,
@@ -588,7 +630,7 @@ public class RSConnectDeploy extends Composite
       if (fromPrevious_ != null)
       {
          appProgressName_.setText(fromPrevious_.getName());
-         appExistingName_.setText(fromPrevious_.getName());
+         appExistingName_.setText(fromPrevious_.getDisplayName());
          appProgressPanel_.setVisible(true);
          appInfoPanel_.setVisible(true);
 
@@ -726,7 +768,8 @@ public class RSConnectDeploy extends Composite
       
       // if this is a self-contained document, we don't need to scrape it for
       // dependencies; just inject it directly into the list.
-      if (source_.isSelfContained())
+      if (source_.isSelfContained() && source_.isStatic() && 
+          !source_.isWebsiteRmd())
       {
          ArrayList<String> files = new ArrayList<String>();
          FileSystemItem selfContained = FileSystemItem.createFile(
@@ -737,9 +780,19 @@ public class RSConnectDeploy extends Composite
          return;
       }
 
-      // read the parent directory if we're "deploying" a .R file
+      // ternery operator maps to appropriate files to list for deployment:
+      // website code    - website code directory 
+      // static website  - website build directory
+      // document        - R Markdown document
+      // non-document    - Shiny app directory
       final String fileSource = source_.isDocument() ? 
-            source_.getDeployFile() : source_.getDeployDir();
+            source_.isWebsiteRmd() ? 
+                  source_.isStatic() ? 
+                     source_.getDeployDir() :
+                     source_.getWebsiteDir() :
+                  source_.getDeployFile() : 
+            source_.getDeployDir();
+
       indicator.onProgress("Collecting files...");
       server_.getDeploymentFiles(
             fileSource,
@@ -774,9 +827,10 @@ public class RSConnectDeploy extends Composite
                                  fromPrevious_.getAdditionalFiles() : null, 
                            fromPrevious_ != null ? 
                                  fromPrevious_.getIgnoredFiles() : null);
-                     setPrimaryFile(
-                           FileSystemItem.createFile(
-                                 source_.getDeployFile()).getName());
+                     if (!source_.isWebsiteRmd())
+                        setPrimaryFile(
+                              FileSystemItem.createFile(
+                                    source_.getDeployFile()).getName());
                   }
                   
                   Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -896,7 +950,8 @@ public class RSConnectDeploy extends Composite
    {
       // If this is a self-contained file, don't show the file list; instead, 
       // show the description of what we're about to publish
-      if (source_.isSelfContained()) 
+      if (source_.isSelfContained() && source_.isStatic() && 
+          !source_.isWebsiteRmd()) 
       {
          filePanel_.setVisible(false);
          descriptionPanel_.setVisible(true);
@@ -920,25 +975,32 @@ public class RSConnectDeploy extends Composite
       
       // if the app name textbox isn't populated, derive from the filename
       // (for apps and documents--other content types use temporary filenames)
-      if (appName_.getText().isEmpty() && 
-            contentType_ == RSConnect.CONTENT_TYPE_APP || 
-            contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
-            contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
+      if (appName_.getTitle().isEmpty())
       {
-         // set the app name to the filename
-         String appName = 
-               FilePathUtils.fileNameSansExtension(source_.getSourceFile());
-
-         // if this is a document with the name "index", guess the directory
-         // as the content name rather than the file
-         if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
-             appName.toLowerCase().equals("index"))
+         if (contentType_ == RSConnect.CONTENT_TYPE_APP || 
+             contentType_ == RSConnect.CONTENT_TYPE_APP_SINGLE || 
+             contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
          {
-            appName = FilePathUtils.fileNameSansExtension(
-                  source_.getDeployDir());
-         }
+            // set the app name to the filename
+            String appTitle = 
+                  FilePathUtils.fileNameSansExtension(source_.getSourceFile());
 
-         setUnsanitizedAppName(appName);
+            // if this is a document with the name "index", guess the directory
+            // as the content name rather than the file
+            if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
+                appTitle.toLowerCase().equals("index"))
+            {
+               appTitle = FilePathUtils.fileNameSansExtension(
+                     source_.getDeployDir());
+            }
+
+            setUnsanitizedAppName(appTitle);
+         }
+         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+         {
+            setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
+                  source_.getWebsiteDir()));
+         }
       }
       
       ImageResource illustration = null;
@@ -1041,7 +1103,7 @@ public class RSConnectDeploy extends Composite
       // that was removed
       appName_.setVisible(true);
       if (fromPrevious_ != null)
-         appName_.setText(fromPrevious_.getName());
+         appName_.setDetails(fromPrevious_.getTitle(), fromPrevious_.getName());
       appInfoPanel_.setVisible(false);
       newAppPanel_.setVisible(true);
 
@@ -1071,7 +1133,6 @@ public class RSConnectDeploy extends Composite
    @UiField Anchor addAccountAnchor_;
    @UiField Anchor createNewAnchor_;
    @UiField Anchor urlAnchor_;
-   @UiField AppNameTextbox appName_;
    @UiField Grid mainGrid_;
    @UiField HTMLPanel appDetailsPanel_;
    @UiField HTMLPanel appInfoPanel_;
@@ -1090,7 +1151,10 @@ public class RSConnectDeploy extends Composite
    @UiField VerticalPanel fileListPanel_;
    @UiField VerticalPanel filePanel_;
    @UiField VerticalPanel descriptionPanel_;
+   
+   // provided fields
    @UiField(provided=true) RSConnectAccountList accountList_;
+   @UiField(provided=true) AppNameTextbox appName_;
    
    private ArrayList<CheckBox> fileChecks_;
    private ArrayList<String> filesAddedManually_ = 

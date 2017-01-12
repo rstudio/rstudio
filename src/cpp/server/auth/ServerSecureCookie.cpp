@@ -1,7 +1,7 @@
 /*
  * ServerSecureCookie.cpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -100,7 +100,9 @@ http::Cookie createSecureCookie(
                        name,
                        signedCookieValue,
                        path,
-                       true);
+                       true, // HTTP only
+                       // secure if delivered via SSL
+                       options().getOverlayOption("ssl-enabled") == "1");
 }
 
 } // anonymous namespace

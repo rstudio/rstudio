@@ -64,7 +64,34 @@
             return (paste("\"", optionValue, "\"", sep = ""))
          },
          "locale" = {
-            return (paste(ns, "locale(encoding=\"", optionValue, "\")", sep = ""))
+            localeDefaults <- formals(readr::locale)
+
+            localeOrNull <- function(paramName, jsonName) {
+               if (!identical(localeDefaults[[paramName]], optionValue[[jsonName]])) {
+                  if (typeof(localeDefaults[[paramName]]) == "character") {
+                     paste(paramName, " = \"", optionValue[[jsonName]], "\"", sep = "")
+                  }
+                  else {
+                     paste(paramName, " = ", optionValue[[jsonName]])
+                  }
+               }
+               else NULL
+            }
+
+            return (paste(
+               ns, 
+               "locale(",
+               paste(c(
+                  localeOrNull("date_names", "dateName"),
+                  localeOrNull("date_format", "dateFormat"),
+                  localeOrNull("time_format", "timeFormat"),
+                  localeOrNull("decimal_mark", "decimalMark"),
+                  localeOrNull("grouping_mark", "groupingMark"),
+                  localeOrNull("tz", "tz"),
+                  localeOrNull("encoding", "encoding"),
+                  localeOrNull("asciify", "asciify")
+               ), collapse = ", "),
+               ")", sep = ""))
          },
          "columnDefinitionsReadR" = {
             colParams <- c()
@@ -305,10 +332,10 @@
          {
             if (identical(localFile, NULL))
             {
-               localFile <- tempfile(
+               localFile <- normalizePath(tempfile(
                   tmpdir = dirname(tempdir()),
                   fileext = resourceExtension
-               )
+               ), mustWork = FALSE, winslash = "/")
             }
 
             cacheDataCode <- append(
@@ -396,8 +423,10 @@
       "statistics" = function() {
          # load parameters
          options <- list()
-         options[["path"]] <- cacheOrFileFromOptions(dataImportOptions)
-         options[["b7dat"]] <- cacheOrFileFromOptions(dataImportOptions)
+
+         # current version of haven uses "path", next version uses "file" or "data_file"
+         options[["path"]] <- options[["file"]] <- cacheOrFileFromOptions(dataImportOptions)
+         options[["b7dat"]] <- options[["data_file"]] <- cacheOrFileFromOptions(dataImportOptions)
          options[["b7cat"]] <- cacheOrFileFromOptions(dataImportOptions, "modelLocation")
 
          havenFunction <- switch(dataImportOptions$format,
@@ -410,8 +439,8 @@
 
          # set special parameter types
          optionTypes <- list()
-         optionTypes[["path"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
-         optionTypes[["b7dat"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
+         optionTypes[["path"]] <- optionTypes[["file"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
+         optionTypes[["b7dat"]] <- optionTypes[["data_file"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions)
          optionTypes[["b7cat"]] <- cacheTypeOrFileTypeFromOptions(dataImportOptions, "modelLocation")
 
          return(list(
@@ -455,7 +484,7 @@
    dataName <- dataImportOptions$dataName
    if (identical(dataName, NULL) || identical(dataName, ""))
    {
-      dataName <- tolower(.rs.assemble_data_import_name(dataImportOptions))
+      dataName <- .rs.assemble_data_import_name(dataImportOptions)
       if (is.null(dataName) || identical(dataName, ""))
       {
          dataName <- "dataset"
@@ -539,7 +568,10 @@
    importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
-   importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
+   
+   if (dataImportOptions$openDataViewer) {
+      importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
+   }
 
    importInfo$importCode <- paste(
       lapply(
@@ -570,7 +602,11 @@
       dataImportOptions$canCacheData <- dataImportOptions$mode == "xls"
       dataImportOptions$cacheDataWorkingDir <- dataImportOptions$mode == "xls"
 
-      return (.rs.assemble_data_import(dataImportOptions))
+      result <- .rs.assemble_data_import(dataImportOptions)
+      Encoding(result$importCode) <- "UTF-8"
+      Encoding(result$previewCode) <- "UTF-8"
+      
+      return (result)
    }, error = function(e) {
       return(list(error = e))
    })
@@ -579,6 +615,8 @@
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
    tryCatch({
+      Encoding(dataImportOptions$importLocation) <- "UTF-8"
+     
       beforeImportFromOptions <- list(
          "text" = function() {
             # while previewing data, always return a column even if it will be skipped
@@ -653,6 +691,16 @@
          }
       )
 
+      parsingErrorsFromMode <- function(mode, data) {
+         modeFunc <- list(
+            "text" = function(data) {
+               length(readr::problems(data)$row)
+            }
+         )
+
+         if (identical(modeFunc[[mode]], NULL)) 0 else modeFunc[[mode]](data)
+      }
+
       if (dataImportOptions$mode %in% names(beforeImportFromOptions))
       {
          beforeImportFromOptions[[dataImportOptions$mode]]()
@@ -670,7 +718,7 @@
          columns <- .rs.describeCols(data, maxCols, maxFactors)
       }
       
-      parsingErrors <-length(readr::problems(data)$row)
+      parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
 
       cnames <- names(data)
       size <- nrow(data)

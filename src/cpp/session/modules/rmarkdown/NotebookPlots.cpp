@@ -15,6 +15,7 @@
 
 #include "SessionRmdNotebook.hpp"
 #include "NotebookPlots.hpp"
+#include "NotebookOutput.hpp"
 #include "../SessionPlots.hpp"
 
 #include <boost/format.hpp>
@@ -30,6 +31,8 @@
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/session/RGraphics.hpp>
+#include <r/ROptions.hpp>
+#include <r/RRoutines.hpp>
 
 #define kPlotPrefix "_rs_chunk_plot_"
 #define kGoldenRatio 1.618
@@ -43,46 +46,55 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-class PlotState
-{
-public:
-   PlotState(const FilePath& folder, PlotSizeBehavior sizeBehavior):
-      plotFolder(folder),
-      hasPlots(false),
-      sizeBehavior(sizeBehavior)
-   {
-   }
-
-   FilePath plotFolder;
-   bool hasPlots;
-   PlotSizeBehavior sizeBehavior;
-   FilePath snapshotFile;
-   r::sexp::PreservedSEXP sexpMargins;
-   boost::signals::connection onConsolePrompt;
-   boost::signals::connection onBeforeNewPlot;
-   boost::signals::connection onBeforeNewGridPage;
-   boost::signals::connection onNewPlot;
-};
-
 bool isPlotPath(const FilePath& path)
 {
    return path.hasExtensionLowerCase(".png") &&
           string_utils::isPrefixOf(path.stem(), kPlotPrefix);
 }
 
-void processPlots(bool ignoreEmpty,
-                  boost::shared_ptr<PlotState> pPlotState)
+SEXP rs_recordExternalPlot(SEXP plotFilesSEXP)
+{
+   std::vector<std::string> plotFiles;
+   if (r::sexp::fillVectorString(plotFilesSEXP, &plotFiles))
+   {
+      BOOST_FOREACH(const std::string& plotFile, plotFiles)
+      {
+         if (plotFile.empty())
+            continue;
+         FilePath plot = module_context::resolveAliasedPath(plotFile);
+         if (!plot.exists())
+            continue;
+         events().onPlotOutput(plot, FilePath(), json::Value(), 0);
+      }
+   }
+   return R_NilValue;
+}
+
+} // anonymous namespace
+
+PlotCapture::PlotCapture() :
+   hasPlots_(false),
+   plotPending_(false),
+   lastOrdinal_(0)
+{
+}
+
+PlotCapture::~PlotCapture()
+{
+}
+
+void PlotCapture::processPlots(bool ignoreEmpty)
 {
    // ensure plot folder exists
-   if (!pPlotState->plotFolder.exists())
+   if (!plotFolder_.exists())
       return;
 
    // collect plots from the folder
    std::vector<FilePath> folderContents;
-   Error error = pPlotState->plotFolder.children(&folderContents);
+   Error error = plotFolder_.children(&folderContents);
    if (error)
       LOG_ERROR(error);
-
+   
    BOOST_FOREACH(const FilePath& path, folderContents)
    {
       if (isPlotPath(path))
@@ -92,17 +104,29 @@ void processPlots(bool ignoreEmpty,
          if (ignoreEmpty && path.size() == 0)
             continue;
 
-         // it's possible for a PNG to get written that has no content 
-         // (on Windows in particular closing the PNG device always generates
-         // a PNG) so make sure we have something to write 
-         if (pPlotState->hasPlots)
-         {
-            // emit the plot and the snapshot file
-            events().onPlotOutput(path, pPlotState->snapshotFile);
+         // record height/width along with plot
+         json::Object metadata;
+         metadata["height"] = height_;
+         metadata["width"] = width_;
+         metadata["size_behavior"] = static_cast<int>(sizeBehavior_);
 
-            // we've consumed the snapshot file, so clear it
-            pPlotState->snapshotFile = FilePath();
+         // use cached conditions if we have them; otherwise, check accumulator
+         if (conditions_.empty())
+         {
+            metadata["conditions"] = endConditionCapture();
          }
+         else
+         {
+            metadata["conditions"] = conditions_.front();
+            conditions_.pop_front();
+         }
+
+         // emit the plot and the snapshot file
+         events().onPlotOutput(path, snapshotFile_, metadata, lastOrdinal_);
+
+         // we've consumed the snapshot file, so clear it
+         snapshotFile_ = FilePath();
+         lastOrdinal_ = 0;
 
          // clean up the plot so it isn't emitted twice
          error = path.removeIfExists();
@@ -112,93 +136,153 @@ void processPlots(bool ignoreEmpty,
    }
 }
 
-void saveSnapshot(boost::shared_ptr<PlotState> pPlotState)
+void PlotCapture::saveSnapshot()
 {
+   // no work to do if we don't have a display list to write
+   if (lastPlot_.isNil())
+      return;
+
    // if there's a plot on the device, write its display list before it's
    // cleared for the next page
-   FilePath outputFile = pPlotState->plotFolder.complete(
+   FilePath outputFile = plotFolder_.complete(
          core::system::generateUuid(false) + kDisplayListExt);
-   Error error = r::exec::RFunction(".rs.saveGraphics", 
-         outputFile.absolutePath()).call();
 
-   // if there's already an unconsumed display list, remove it, since this
-   // display list replaces it
-   if (!pPlotState->snapshotFile.empty())
+   Error error = r::exec::RFunction(
+         ".rs.saveNotebookGraphics",
+         lastPlot_.get(),
+         string_utils::utf8ToSystem(outputFile.absolutePath())).call();
+   
+   if (error)
+      LOG_ERROR(error);
+   else
+      snapshotFile_ = outputFile;
+
+   // clear the display list now that it's been written
+   lastPlot_.releaseNow();
+}
+
+void PlotCapture::onExprComplete()
+{
+   r::sexp::Protect protect;
+
+   // no action if no plots were created in this chunk
+   if (!hasPlots_)
+      return;
+
+   // no action if nothing on device list (implies no graphics output)
+   if (!isGraphicsDeviceActive())
+      return;
+
+   // finish capturing the conditions, if any
+   if (capturingConditions())
+      conditions_.push_back(endConditionCapture());
+   
+   // if we were expecting a new plot to be produced by the previous
+   // expression, process the plot folder
+   if (plotPending_)
    {
-      error = pPlotState->snapshotFile.removeIfExists();
-      if (error) 
-         LOG_ERROR(error);
-      else
-         pPlotState->snapshotFile = FilePath();
+      plotPending_ = false;
+      processPlots(true);
    }
 
+   // check the current state of the graphics device against the last known
+   // state
+   SEXP plot = R_NilValue;
+   Error error = r::exec::RFunction("recordPlot").call(&plot, &protect);
    if (error)
    {
       LOG_ERROR(error);
+      return;
    }
-   else
+
+   // detect changes and save last state
+   bool unchanged = false;
+   if (!lastPlot_.isNil())
+      r::exec::RFunction("identical", plot, lastPlot_.get()).call(&unchanged);
+   lastPlot_.set(plot);
+
+   // if the state changed, reserve an ordinal at this position
+   if (!unchanged)
    {
-      pPlotState->snapshotFile = outputFile;
+      OutputPair pair = lastChunkOutput(docId_, chunkId_, nbCtxId_);
+      lastOrdinal_ = ++pair.ordinal;
+      pair.outputType = ChunkOutputPlot;
+      updateLastChunkOutput(docId_, chunkId_, pair);
+
+      // notify the client so it can create a placeholder
+      json::Object unit;
+      unit[kChunkOutputType]    = static_cast<int>(ChunkOutputOrdinal);
+      unit[kChunkOutputValue]   = static_cast<int>(lastOrdinal_);
+      unit[kChunkOutputOrdinal] = static_cast<int>(lastOrdinal_);
+      json::Object placeholder;
+      placeholder[kChunkId]         = chunkId_;
+      placeholder[kChunkDocId]      = docId_;
+      placeholder[kChunkOutputPath] = unit;
+
+      module_context::enqueClientEvent(ClientEvent(
+               client_events::kChunkOutput, placeholder));
    }
+
 }
 
-void removeGraphicsDevice(boost::shared_ptr<PlotState> pPlotState)
+void PlotCapture::removeGraphicsDevice()
 {
    // take a snapshot of the last plot's display list before we turn off the
    // device (if we haven't emitted it yet)
-   if (pPlotState->hasPlots && 
-       pPlotState->sizeBehavior == PlotSizeAutomatic &&
-       pPlotState->snapshotFile.empty())
-      saveSnapshot(pPlotState);
+   if (hasPlots_ && 
+       sizeBehavior_ == PlotSizeAutomatic &&
+       snapshotFile_.empty())
+      saveSnapshot();
 
-   // restore the figure margins
-   Error error = r::exec::RFunction("par", pPlotState->sexpMargins).call();
-   if (error)
-      LOG_ERROR(error);
-
-   // turn off the graphics device -- this has the side effect of writing the
-   // device's remaining output to files
-   error = r::exec::RFunction("dev.off").call();
-   if (error)
-      LOG_ERROR(error);
-
-   processPlots(false, pPlotState);
-}
-
-void onBeforeNewPlot(boost::shared_ptr<PlotState> pPlotState)
-{
-   if (pPlotState->hasPlots &&
-       pPlotState->sizeBehavior == PlotSizeAutomatic)
+   // turn off the graphics device, if it was ever turned on -- this has the
+   // side effect of writing the device's remaining output to files
+   if (isGraphicsDeviceActive())
    {
-      saveSnapshot(pPlotState);
+      Error error = r::exec::RFunction("dev.off").call();
+      if (error)
+         LOG_ERROR(error);
+
+      // some operations may trigger the graphics device without actually
+      // writing a plot; ignore these
+      if (hasPlots_)
+         processPlots(false);
    }
-   pPlotState->hasPlots = true;
+   hasPlots_ = false;
 }
 
-void onNewPlot(boost::shared_ptr<PlotState> pPlotState)
+void PlotCapture::onBeforeNewPlot()
 {
-   pPlotState->hasPlots = true;
-   processPlots(true, pPlotState);
+   if (!lastPlot_.isNil())
+   {
+      // save the snapshot of the plot to disk
+      if (sizeBehavior_ == PlotSizeAutomatic)
+         saveSnapshot();
+   }
+   beginConditionCapture();
+   plotPending_ = true;
+   hasPlots_ = true;
 }
 
-void onConsolePrompt(boost::shared_ptr<PlotState> pPlotState,
-                     const std::string& )
+void PlotCapture::onNewPlot()
 {
-   removeGraphicsDevice(pPlotState);
-   pPlotState->onConsolePrompt.disconnect();
-   pPlotState->onNewPlot.disconnect();
-   pPlotState->onBeforeNewPlot.disconnect();
-   pPlotState->onBeforeNewGridPage.disconnect();
+   beginConditionCapture();
+   hasPlots_ = true;
+   processPlots(true);
 }
-
-} // anonymous namespace
 
 // begins capturing plot output
-core::Error beginPlotCapture(double height, double width, 
-                             PlotSizeBehavior sizeBehavior,
-                             const FilePath& plotFolder)
+core::Error PlotCapture::connectPlots(const std::string& docId, 
+      const std::string& chunkId, const std::string& nbCtxId, 
+      double height, double width, PlotSizeBehavior sizeBehavior,
+      const FilePath& plotFolder)
 {
+   // save identifiers
+   docId_ = docId;
+   chunkId_ = chunkId;
+   nbCtxId_ = nbCtxId;
+
    // clean up any stale plots from the folder
+   plotFolder_ = plotFolder;
    std::vector<FilePath> folderContents;
    Error error = plotFolder.children(&folderContents);
    if (error)
@@ -223,94 +307,100 @@ core::Error beginPlotCapture(double height, double width,
       height = width / kGoldenRatio;
    else if (height > 0 && width == 0)
       width = height * kGoldenRatio;
+   width_ = width;
+   height_ = height;
+   sizeBehavior_ = sizeBehavior;
 
-   // create state accumulator
-   boost::shared_ptr<PlotState> pPlotState = boost::make_shared<PlotState>(
-         plotFolder, sizeBehavior);
+   // save old device option
+   deviceOption_.set(r::options::getOption("device"));
 
-   // save old figure parameters
-   r::exec::RFunction par("par");
-   par.addParam("no.readonly", true);
-   r::sexp::Protect protect;
-   SEXP sexpMargins;
-   error = par.call(&sexpMargins, &protect);
+   // set option for notebook graphics device (must succeed)
+   error = setGraphicsOption();
    if (error)
-      LOG_ERROR(error);
+      return error;
 
-   // preserve until chunk is finished executing
-   pPlotState->sexpMargins.set(sexpMargins);
+   onBeforeNewPlot_ = plots::events().onBeforeNewPlot.connect(
+         boost::bind(&PlotCapture::onBeforeNewPlot, this));
+   
+   onBeforeNewGridPage_ = plots::events().onBeforeNewGridPage.connect(
+         boost::bind(&PlotCapture::onBeforeNewPlot, this));
+
+   onNewPlot_ = plots::events().onNewPlot.connect(
+         boost::bind(&PlotCapture::onNewPlot, this));
+
+   NotebookCapture::connect();
+   return Success();
+}
+
+void PlotCapture::disconnect()
+{
+   if (connected())
+   {
+      // remove the graphics device if we created it
+      removeGraphicsDevice();
+
+      // restore the graphics device option
+      r::options::setOption("device", deviceOption_.get());
+
+      onNewPlot_.disconnect();
+      onBeforeNewPlot_.disconnect();
+      onBeforeNewGridPage_.disconnect();
+   }
+   NotebookCapture::disconnect();
+}
+
+core::Error PlotCapture::setGraphicsOption()
+{
+   Error error;
 
    // create the notebook graphics device
-   r::exec::RFunction createDevice(".rs.createNotebookGraphicsDevice");
+   r::exec::RFunction setOption(".rs.setNotebookGraphicsOption");
 
    // the folder in which to place the rendered plots (this is a sibling of the
    // main chunk output folder)
-   createDevice.addParam(
-         plotFolder.absolutePath() + "/" kPlotPrefix "%03d.png");
+   setOption.addParam(
+            string_utils::utf8ToSystem(plotFolder_.absolutePath()) +
+            "/" kPlotPrefix "%03d.png");
 
    // device dimensions
-   createDevice.addParam(height);
-   createDevice.addParam(width); 
+   setOption.addParam(height_);
+   setOption.addParam(width_); 
 
    // sizing behavior drives units -- user specified units are in inches but
    // we use pixels when scaling automatically
-   createDevice.addParam(sizeBehavior == PlotSizeManual ? "in" : "px");
+   setOption.addParam(sizeBehavior_ == PlotSizeManual ? "in" : "px");
 
-   // devie parameters
-   createDevice.addParam(r::session::graphics::device::devicePixelRatio());
-   createDevice.addParam(r::session::graphics::extraBitmapParams());
-   error = createDevice.call();
-   if (error)
-   {
-      // this is fatal; without a graphics device we can't capture plots
-      return error;
-   }
+   // device parameters
+   setOption.addParam(r::session::graphics::device::devicePixelRatio());
 
-   // if sizing automatically, turn on display list recording so we can do
-   // intelligent resizing later
-   if (sizeBehavior == PlotSizeAutomatic)
-   {
-      r::exec::RFunction devControl("dev.control");
-      devControl.addParam("displaylist", "enable");
-      error = devControl.call();
-      if (error)
-      {
-         // non-fatal since we'll do best-effort resizing in the absence of
-         // display lists
-         LOG_ERROR(error);
-      }
-   }
+   // other args (OS dependent)
+   setOption.addParam(r::session::graphics::extraBitmapParams());
 
-   // set notebook-friendly figure margins 
-   error = r::exec::RFunction(".rs.setNotebookMargins").call();
+   return setOption.call();
+}
+
+bool PlotCapture::isGraphicsDeviceActive()
+{
+   r::sexp::Protect protect;
+   SEXP devlist = R_NilValue;
+   Error error = r::exec::RFunction("dev.list").call(&devlist, &protect);
    if (error)
       LOG_ERROR(error);
-   
-   // complete the capture on the next console prompt
-   pPlotState->onConsolePrompt = module_context::events().onConsolePrompt.connect(
-         boost::bind(onConsolePrompt, pPlotState, _1));
-
-   pPlotState->onBeforeNewPlot = plots::events().onBeforeNewPlot.connect(
-         boost::bind(onBeforeNewPlot, pPlotState));
-   
-   pPlotState->onBeforeNewGridPage = plots::events().onBeforeNewGridPage.connect(
-         boost::bind(onBeforeNewPlot, pPlotState));
-
-   pPlotState->onNewPlot = plots::events().onNewPlot.connect(
-         boost::bind(onNewPlot, pPlotState));
-
-   return Success();
+   if (r::sexp::isNull(devlist))
+      return false;
+   return true;
 }
 
 core::Error initPlots()
 {
+   RS_REGISTER_CALL_METHOD(rs_recordExternalPlot, 1);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (boost::bind(module_context::sourceModuleRFile, "NotebookPlots.R"));
 
    return initBlock.execute();
 }
-
 
 } // namespace notebook
 } // namespace rmarkdown

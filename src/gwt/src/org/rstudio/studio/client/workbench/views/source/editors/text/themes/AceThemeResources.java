@@ -61,6 +61,9 @@ public interface AceThemeResources extends ClientBundle
    @Source("kr_theme.css")
    StaticDataResource kr_theme();
 
+   @Source("material.css")
+   StaticDataResource material();
+
    @Source("merbivore_soft.css")
    StaticDataResource merbivore_soft();
 

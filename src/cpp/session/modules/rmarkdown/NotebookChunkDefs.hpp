@@ -17,22 +17,52 @@
 #define SESSION_NOTEBOOK_CHUNK_DEFS_HPP
 
 #include <core/json/Json.hpp>
+#include <core/json/JsonRpc.hpp>
+
+#include <core/Error.hpp>
+#include <core/FilePath.hpp>
+#include <core/FileSerializer.hpp>
+
 #include <ctime>
+
+#include <session/SessionSourceDatabase.hpp>
+
+#include "NotebookCache.hpp"
+#include "SessionRmdNotebook.hpp"
 
 #define kNotebookChunkDefFilename "chunks.json"
 
-namespace rstudio {
-namespace core {
-   class FilePath;
-   class Error;
-}
-}
+#define kChunkDefs           "chunk_definitions"
+#define kChunkDocWriteTime   "doc_write_time"
+#define kChunkId             "chunk_id"
+#define kChunkDefaultOptions "default_chunk_options"
+#define kChunkWorkingDir     "working_dir"
+#define kChunkExternals      "external_chunks"
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
 namespace notebook {
+
+core::Error getChunkJson(const core::FilePath& defs, core::json::Object *pJson);
+
+namespace {
+
+template <typename T>
+core::Error getChunkDefsValue(const core::FilePath& defs, 
+      const std::string& key, T* pValue)
+{
+   // read the defs file 
+   core::json::Object defContents;
+   core::Error error = getChunkJson(defs, &defContents);
+   if (error)
+      return error;
+
+   // extract the chunk definitions
+   return core::json::readObject(defContents, key, pValue);
+}
+} // anonymous namespace
 
 void cleanChunks(const core::FilePath& cacheDir,
                  const core::json::Array &oldDefs, 
@@ -44,22 +74,89 @@ core::FilePath chunkDefinitionsPath(const core::FilePath& docPath,
 core::FilePath chunkDefinitionsPath(const std::string& docPath,
       const std::string& docId, const std::string& nbCtxId);
 
-core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
-      std::time_t *pDocTime, core::json::Value* pDefs);
+core::FilePath chunkDefinitionsPath(const std::string& docPath, 
+      const std::string docId);
 
-core::Error getChunkDefs(const std::string& docPath, const std::string& docId, 
-      const std::string& nbCtxId, std::time_t *pDocTime, 
-      core::json::Value* pDefs);
-
-core::Error getChunkDefs(const core::FilePath& docPath, 
-      const std::string& nbCtxId, std::time_t *pDocTime, 
-      core::json::Value* pDefs);
-
-core::Error setChunkDefs(const std::string& docPath, const std::string& docId, 
-      std::time_t docTime, const core::json::Array& defs);
+core::Error setChunkDefs(
+      boost::shared_ptr<source_database::SourceDocument> pDoc, 
+      const core::json::Array& defs);
 
 void extractChunkIds(const core::json::Array& chunkOutputs, 
                      std::vector<std::string> *pIds);
+
+template<typename T>
+core::Error getChunkValue(const core::FilePath& docPath, 
+                          const std::string& nbCtxId, const std::string& key, 
+                          T* pValue)
+{
+   core::FilePath defs = chunkDefinitionsPath(docPath, nbCtxId);
+   if (!defs.exists())
+      return core::Success();
+
+   return getChunkDefsValue(defs, key, pValue);
+}
+
+template<typename T>
+core::Error getChunkValue(const std::string& docPath, const std::string& docId,
+                          const std::string& nbCtxId, const std::string& key,
+                          T *pValue)
+{
+   core::FilePath defs = chunkDefinitionsPath(docPath, docId, nbCtxId);
+   if (!defs.exists())
+      return core::Success();
+
+   return getChunkDefsValue(defs, key, pValue);
+}
+
+template<typename T>
+core::Error getChunkValue(const std::string& docPath, const std::string& docId,
+                          const std::string& key, T *pValue)
+{
+   // try local context first
+   core::FilePath defs = chunkDefinitionsPath(docPath, docId);
+   if (!defs.exists())
+   {
+      return core::Success();
+   }
+   return getChunkDefsValue(defs, key, pValue);
+}
+
+core::Error getChunkValues(const std::string& docPath, const std::string& docId, 
+      core::json::Object* pValues);
+
+template<typename T>
+core::Error setChunkValue(const std::string& docPath, 
+                          const std::string& docId,
+                          const std::string& key, T value)
+{
+   // find the file path to write 
+   core::Error error;
+   core::FilePath defFile = chunkDefinitionsPath(docPath, docId);
+   if (!defFile.exists())
+   {
+      defFile = chunkDefinitionsPath(docPath, docId, notebookCtxId());
+      error = defFile.parent().ensureDirectory();
+      if (error)
+         return error;
+   }
+
+   // extract existing definitions if we have them
+   core::json::Object defs;
+   if (defFile.exists())
+   {
+      error = getChunkJson(defFile, &defs);
+      if (error)
+         return error;
+   }
+
+   // update key and write out new contents
+   defs[key] = value;
+   std::ostringstream oss;
+   core::json::write(defs, oss);
+   return core::writeStringToFile(defFile, oss.str());
+}
+
+core::Error initChunkDefs();
 
 } // namespace notebook
 } // namespace rmarkdown

@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -183,7 +183,7 @@ if (UNIX)
    
          set(CORE_SYSTEM_LIBRARIES
             ${CORE_SYSTEM_LIBRARIES}
-            -lssl -lcrypto)
+            -L/usr/local/opt/openssl/lib -lssl -lcrypto)
    
          set(CORE_INCLUDE_DIRS
             ${CORE_INCLUDE_DIRS}
@@ -230,6 +230,7 @@ if (UNIX)
       system/PosixShellUtils.cpp
       system/PosixSystem.cpp
       system/PosixUser.cpp
+      system/PosixGroup.cpp
       system/PosixChildProcess.cpp
    )
 

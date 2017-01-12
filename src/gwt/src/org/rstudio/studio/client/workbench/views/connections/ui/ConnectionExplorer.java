@@ -15,135 +15,151 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import org.rstudio.core.client.theme.RStudioDataGridResources;
-import org.rstudio.core.client.theme.RStudioDataGridStyle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.ProgressSpinner;
+import org.rstudio.core.client.widget.SimplePanelWithProgress;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
-import com.google.gwt.cell.client.ImageResourceCell;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
-import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
-public class ConnectionExplorer extends Composite
+public class ConnectionExplorer extends Composite implements RequiresResize
 {
    public ConnectionExplorer()
    {
-      // create data grid
-      keyProvider_ = new ProvidesKey<String>() {
-         @Override
-         public Object getKey(String object)
-         {
-            return object.hashCode();
-         }
-      };
-      dataGrid_ = new DataGrid<String>(1000, RES, keyProvider_);
-      dataGrid_.setSize("100%", "100%");
+      RStudioGinjector.INSTANCE.injectMembers(this);
       
-      // add type column
-      typeColumn_ = new Column<String, ImageResource>(new ImageResourceCell()) {
-         @Override
-         public ImageResource getValue(String object)
-         {
-            return RES.table();
-         }
-      };
-         
-      dataGrid_.addColumn(typeColumn_, new TextHeader(""));
-      dataGrid_.setColumnWidth(typeColumn_, 20, Unit.PX);
-            
-      // add name column
-      nameColumn_ = new TextColumn<String>() {
-         @Override
-         public String getValue(String object)
-         {
-            return object;
-         }
-      };      
-      dataGrid_.addColumn(nameColumn_, new TextHeader("Name"));
-      dataGrid_.setColumnWidth(nameColumn_, 80, Unit.PCT);
-    
-      // data provider
-      dataProvider_ = new ListDataProvider<String>();
-      dataProvider_.addDataDisplay(dataGrid_);
-      
-      int codePanelHeight = 125;
-      codePanel_ = new ConnectionCodePanel();
+      // code/connecti panel
+      int codePanelHeight = 80;
+      disconnectedUI_ = new VerticalPanel();
+      disconnectedUI_.setWidth("100%");
+      disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+      codePanel_ = new ConnectionCodePanel(false);
       codePanel_.addStyleName(ThemeStyles.INSTANCE.secondaryToolbarPanel());
       codePanel_.getElement().getStyle().setPadding(8, Unit.PX);
-      codePanel_.setHeight(codePanelHeight + "px");
+      codePanel_.setHeight((codePanelHeight-5) + "px");
       codePanel_.setWidth("100%");
+      disconnectedUI_.add(codePanel_);
+      Label label = new Label("(Not connected)");
+      Style labelStyle = label.getElement().getStyle();
+      labelStyle.setColor("#888");
+      labelStyle.setMarginTop(25, Unit.PX);
+      labelStyle.setTextAlign(TextAlign.CENTER);
+      disconnectedUI_.add(label);
+      disconnectedUI_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       
-      dockPanel_ = new DockLayoutPanel(Unit.PX);
-      dockPanel_.addNorth(codePanel_, codePanelHeight);
-      dockPanel_.add(dataGrid_);
-     
+  
+      // table browser panel
+      tableBrowser_ = new TableBrowser();
+      
+      // container panel to enable switching between connected/disconnected
+      ProgressSpinner spin = new ProgressSpinner(ProgressSpinner.COLOR_BLACK);
+      spin.getElement().getStyle().setWidth(32, Unit.PX);
+      spin.getElement().getStyle().setHeight(32, Unit.PX);
+      containerPanel_ = new SimplePanelWithProgress(spin, 50);
+      
       setConnected(false);
       
-      initWidget(dockPanel_);
+      initWidget(containerPanel_);
+      
+      eventBus_.addHandler(ConsoleBusyEvent.TYPE, new ConsoleBusyEvent.Handler()
+      {
+         @Override
+         public void onConsoleBusy(ConsoleBusyEvent event)
+         {
+            // clear progress on console becoming unblocked
+            if (!event.isBusy() && containerPanel_.isProgressShowing())
+            {
+               showActivePanel();
+               updateTableBrowser();
+            }
+         }
+      });
    }
    
-   
-   public void addItem(String item)
+   @Inject
+   public void initialize(EventBus eventBus)
    {
-      dataProvider_.getList().add(item);
+      eventBus_ = eventBus;
+   }
+   
+   public void showConnectionProgress()
+   {
+      containerPanel_.showProgress(50); 
    }
    
    public void setConnection(Connection connection, String connectVia)
    {
+      connection_ = connection;
       codePanel_.setCode(connection.getConnectCode(), connectVia);
+      updateTableBrowser();
    }
    
    public void setConnected(boolean connected)
    {
-      // always clear the list
-      dataProvider_.getList().clear();
-      
-     
-      dockPanel_.setWidgetHidden(codePanel_, connected);
+      activePanel_ = connected ? tableBrowser_ : disconnectedUI_;
+      showActivePanel();
+      if (!connected)
+         tableBrowser_.clear();
+   }
+   
+   public String getConnectCode()
+   {
+      return codePanel_.getCode();
    }
    
    public String getConnectVia()
    {
       return codePanel_.getConnectVia();
    }
-  
-   private final DataGrid<String> dataGrid_; 
+   
+   public void updateTableBrowser()
+   {
+      updateTableBrowser("");
+   }
+   
+   public void updateTableBrowser(String hint)
+   {   
+      tableBrowser_.update(connection_, hint);
+   }
+   
  
-   private final Column<String, ImageResource> typeColumn_;
-   private final TextColumn<String> nameColumn_;
   
-   private final ProvidesKey<String> keyProvider_;
-   private final ListDataProvider<String> dataProvider_;
+   @Override
+   public void onResize()
+   {
+      containerPanel_.onResize();
+      codePanel_.onResize();
+      
+   }
+   
+   private void showActivePanel()
+   {
+      containerPanel_.setWidget(activePanel_);
+      containerPanel_.onResize();
+   }
    
    private final ConnectionCodePanel codePanel_;
-      
-   private final DockLayoutPanel dockPanel_;
    
-   // Resources, etc ----
-   public interface Resources extends RStudioDataGridResources
-   {
-      @Source({RStudioDataGridStyle.RSTUDIO_DEFAULT_CSS, "ConnectionExplorerDataGridStyle.css"})
-      Styles dataGridStyle();
-        
-      ImageResource table();
-   }
+   private final VerticalPanel disconnectedUI_;
+   private final TableBrowser tableBrowser_;
+  
+   private Widget activePanel_;
    
-   public interface Styles extends RStudioDataGridStyle
-   {
-   }
+   private final SimplePanelWithProgress containerPanel_;
    
-   private static final Resources RES = GWT.create(Resources.class);
+   private Connection connection_ = null;
    
-   static {
-      RES.dataGridStyle().ensureInjected();
-   }
+   private EventBus eventBus_;
 }

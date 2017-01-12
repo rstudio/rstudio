@@ -264,37 +264,42 @@ private:
                         json::Array* pMatchOn,
                         json::Array* pMatchOff)
    {
-      using namespace boost;
-
+      // initialize some state
       std::string decodedLine;
-
-      std::string::iterator inputPos = pContent->begin();
-
-      smatch match;
-      while (regex_search(std::string(inputPos, pContent->end()), match,
-                          regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
+      std::size_t nUtf8CharactersProcessed = 0;
+      
+      const char* inputPos = pContent->c_str();
+      const char* end = inputPos + pContent->size();
+      
+      boost::cmatch match;
+      while (boost::regex_search(inputPos, match, boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?")))
       {
-         std::string match1 = match[1];
-
-         decodedLine.append(decode(
-               std::string(inputPos, inputPos + match.position())));
-
+         // decode the current match, and append it
+         std::string matchedString(inputPos, inputPos + match.position());
+         std::string decoded = decode(matchedString);
+         
+         // append and update
+         decodedLine.append(decoded);
          inputPos += match.position() + match.length();
-
-         size_t charSize;
-         Error error = string_utils::utf8Distance(decodedLine.begin(),
-                                                  decodedLine.end(),
+         
+         // count the number of UTF-8 characters processed
+         std::size_t charSize;
+         Error error = string_utils::utf8Distance(decoded.begin(),
+                                                  decoded.end(),
                                                   &charSize);
          if (error)
-            charSize = decodedLine.size();
+            charSize = decoded.size();
+         nUtf8CharactersProcessed += charSize;
 
-         if (match1 == "01")
-            pMatchOn->push_back(static_cast<int>(charSize));
+         // update the match state
+         if (match[1] == "01")
+            pMatchOn->push_back(static_cast<int>(nUtf8CharactersProcessed));
          else
-            pMatchOff->push_back(static_cast<int>(charSize));
+            pMatchOff->push_back(static_cast<int>(nUtf8CharactersProcessed));
       }
-      if (inputPos != pContent->end())
-         decodedLine.append(decode(std::string(inputPos, pContent->end())));
+      
+      if (inputPos != end)
+         decodedLine.append(decode(std::string(inputPos, end)));
 
       if (decodedLine.size() > 300)
       {
@@ -345,6 +350,8 @@ private:
             if (file.find("/packrat/lib/") != std::string::npos)
                continue;
             if (file.find("/packrat/src/") != std::string::npos)
+               continue;
+            if (file.find("/.Rhistory") != std::string::npos)
                continue;
 
             if (!websiteOutputDir.empty() &&

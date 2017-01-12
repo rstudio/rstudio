@@ -61,5 +61,5 @@
 
 .rs.addFunction("readLines", function(filePath)
 {
-   .Call("rs_readLines", .rs.normalizePath(filePath, mustWork = TRUE))
+   .Call("rs_readLines", path.expand(filePath))
 })

@@ -1,7 +1,7 @@
 /*
  * SessionLauncher.mm
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,6 +48,8 @@ namespace rstudio {
 namespace desktop {
    
 namespace {
+
+static std::string s_launcherToken;
          
 Error launchProcess(
        std::string absPath,
@@ -329,7 +331,7 @@ void SessionLauncher::buildLaunchContext(std::string* pHost,
    {
       // explicitly pass "none" so that rsession doesn't read an
       // /etc/rstudio/rsession.conf file which may be sitting around
-      // from a previous configuratin or install
+      // from a previous configuration or install
       pArgList->push_back("none");
    }
    
@@ -338,6 +340,12 @@ void SessionLauncher::buildLaunchContext(std::string* pHost,
 
    pArgList->push_back("--www-port");
    pArgList->push_back(*pPort);
+   
+   // create launch token if we haven't already
+   pArgList->push_back("--launcher-token");
+   if (s_launcherToken.empty())
+      s_launcherToken = core::system::generateShortenedUuid();
+   pArgList->push_back(s_launcherToken);
    
    if (desktop::options().runDiagnostics())
    {

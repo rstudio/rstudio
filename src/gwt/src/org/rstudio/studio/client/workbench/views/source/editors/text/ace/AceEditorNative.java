@@ -72,6 +72,10 @@ public class AceEditorNative extends JavaScriptObject {
    public native final void setHighlightGutterLine(boolean highlight) /*-{
       this.setHighlightGutterLine(highlight);
    }-*/;
+   
+   public native final void setFixedWidthGutter(boolean value) /*-{
+      this.renderer.setOption("fixedWidthGutter", value);
+   }-*/;
 
    public native final void setHighlightSelectedWord(boolean highlight) /*-{
       this.setHighlightSelectedWord(highlight);
@@ -428,6 +432,11 @@ public class AceEditorNative extends JavaScriptObject {
       return this.commands;
    }-*/;
    
+   public final void tokenizeDocument()
+   {
+      tokenizeUpToRow(getSession().getLength() - 1);
+   }
+   
    public final void retokenizeDocument()
    {
       resetTokenizer();
@@ -551,6 +560,10 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final native boolean isEmacsModeOn() /*-{
       return this.$emacsModeHandler != null;
+   }-*/;
+   
+   public final native void clearEmacsMark() /*-{
+      this.pushEmacsMark(null);
    }-*/;
    
    // Get the underlying Ace instance associated with a DOM element.

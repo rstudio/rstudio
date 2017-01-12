@@ -14,40 +14,38 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.rstudio.core.client.ColorUtil;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.ImageElementEx;
-import org.rstudio.core.client.js.JsArrayEx;
-import org.rstudio.core.client.widget.FixedRatioWidget;
-import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.Value;
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
-import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
+import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookPlotMetadata;
+import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
@@ -67,15 +65,15 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputWidget extends Composite
                                implements ConsoleWriteOutputHandler,
                                           ConsoleWriteErrorHandler,
-                                          ConsolePromptHandler,
                                           RestartStatusEvent.Handler,
                                           InterruptStatusEvent.Handler,
-                                          ConsoleError.Observer
+                                          ChunkOutputPresenter.Host
 {
 
    private static ChunkOutputWidgetUiBinder uiBinder = GWT
@@ -97,6 +95,9 @@ public class ChunkOutputWidget extends Composite
 
       @Source("RemoveChunkIcon.png")
       ImageResource removeChunkIcon();
+
+      @Source("PopoutChunkIcon.png")
+      ImageResource popoutIcon();
    }
    
    public interface ChunkStyle extends CssResource
@@ -105,25 +106,48 @@ public class ChunkOutputWidget extends Composite
       String collapsed();
       String spinner();
       String pendingResize();
+      String fullsize();
+      String baresize();
+      String noclear();
    }
 
-   public ChunkOutputWidget(String chunkId, RmdChunkOptions options, 
-         int expansionState, ChunkOutputHost host)
+   public ChunkOutputWidget(String documentId, String chunkId, 
+         RmdChunkOptions options, int expansionState, boolean canClose, 
+         ChunkOutputHost host, ChunkOutputSize chunkOutputSize)
    {
+      documentId_ = documentId;
       chunkId_ = chunkId;
       host_ = host;
-      queuedError_ = "";
       options_ = options;
+      chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<Integer>(expansionState);
       applyCachedEditorStyle();
       if (expansionState_.getValue() == COLLAPSED)
          setCollapsedStyles();
+
+      ChunkDataWidget.injectPagedTableResources();
       
-      frame_.getElement().getStyle().setHeight(
-            expansionState_.getValue() == COLLAPSED ? 
-                  ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
-                  ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+      if (chunkOutputSize_ == ChunkOutputSize.Default)
+      {
+         frame_.getElement().getStyle().setHeight(
+               expansionState_.getValue() == COLLAPSED ? 
+                     ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT :
+                     ChunkOutputUi.MIN_CHUNK_HEIGHT, Unit.PX);
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Full)
+      {
+         addStyleName(style.fullsize());
+      }
+      else if (chunkOutputSize_ == ChunkOutputSize.Bare)
+      {
+         addStyleName(style.baresize());
+      }
+      if (!canClose)
+         addStyleName(style.noclear());
+
+      // create the initial output stream and attach it to the frame
+      attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -134,8 +158,7 @@ public class ChunkOutputWidget extends Composite
             switch(DOM.eventGetType(evt))
             {
             case Event.ONCLICK:
-               destroyConsole();
-               host_.onOutputRemoved();
+               host_.onOutputRemoved(ChunkOutputWidget.this);
                break;
             };
          }
@@ -155,65 +178,58 @@ public class ChunkOutputWidget extends Composite
          }
       };
 
+      EventListener popoutChunkEvent = new EventListener()
+      {
+         @Override
+         public void onBrowserEvent(Event evt)
+         {
+            switch(DOM.eventGetType(evt))
+            {
+            case Event.ONCLICK:
+               popoutChunk();
+               break;
+            };
+         }
+      };
+
       DOM.sinkEvents(expander_.getElement(), Event.ONCLICK);
       DOM.setEventListener(expander_.getElement(), toggleExpansion);
       
       DOM.sinkEvents(expand_.getElement(), Event.ONCLICK);
       DOM.setEventListener(expand_.getElement(), toggleExpansion);
+
+      DOM.sinkEvents(popout_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(popout_.getElement(), popoutChunkEvent);
       
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(RestartStatusEvent.TYPE, this);
       events.addHandler(InterruptStatusEvent.TYPE, this);
+
+      chunkWindowManager_ = RStudioGinjector.INSTANCE.getChunkWindowManager();
    }
    
    // Public methods ----------------------------------------------------------
-   
-   public void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
-         boolean ensureVisible)
-   {
-      // no-op for empty console objects (avoid initializing output when we have
-      // nothing to show)
-      if (unit.getType() == RmdChunkOutputUnit.TYPE_TEXT && 
-          unit.getArray().length() < 1)
-         return;
-      
-      initializeOutput(unit.getType());
-      switch(unit.getType())
-      {
-      case RmdChunkOutputUnit.TYPE_TEXT:
-         showConsoleOutput(unit.getArray());
-         break;
-      case RmdChunkOutputUnit.TYPE_HTML:
-         showHtmlOutput(unit.getString(), ensureVisible);
-         break;
-      case RmdChunkOutputUnit.TYPE_PLOT:
-         showPlotOutput(unit.getString(), ensureVisible);
-         break;
-      case RmdChunkOutputUnit.TYPE_ERROR:
-         // override visibility flag when there's an error in batch mode
-         if (!options_.error() && mode == TextEditingTargetNotebook.MODE_BATCH)
-            ensureVisible = true;
-         showErrorOutput(unit.getUnhandledError(), ensureVisible);
-         break;
-      }
-   }
-   
+
    public int getExpansionState()
    {
       return expansionState_.getValue();
    }
    
-   public boolean needsHeightSync()
-   {
-      return needsHeightSync_;
-   }
-   
    public void setExpansionState(int state)
    {
+      setExpansionState(state, null);
+   }
+   
+   public void setExpansionState(int state, CommandWithArg<Boolean> onTransitionCompleted)
+   {
       if (state == expansionState_.getValue())
+      {
+         if (onTransitionCompleted != null)
+            onTransitionCompleted.execute(false);
          return;
-      else
-         toggleExpansionState(false);
+      }
+      
+      toggleExpansionState(false, onTransitionCompleted);
    }
    
    public int getState()
@@ -237,7 +253,7 @@ public class ChunkOutputWidget extends Composite
    }
     
    public void showChunkOutput(RmdChunkOutput output, int mode, int scope,
-         boolean ensureVisible)
+         boolean complete, boolean ensureVisible)
    {
       if (output.getType() == RmdChunkOutput.TYPE_MULTIPLE_UNIT)
       {
@@ -251,29 +267,44 @@ public class ChunkOutputWidget extends Composite
          // each
          for (int i = 0; i < units.length(); i++)
          {
-            showChunkOutputUnit(units.get(i), mode, ensureVisible);
+            showChunkOutputUnit(units.get(i), mode, output.isReplay(), 
+                  ensureVisible);
          }
 
-         // ensure the output is visible if requested
-         onOutputFinished(ensureVisible, scope);
+         // if complete, wrap everything up; if not (could happen for partial
+         // replay) just sync up the height
+         if (complete)
+            onOutputFinished(ensureVisible, scope);
+         else
+            syncHeight(true, ensureVisible);
       }
       else if (output.getType() == RmdChunkOutput.TYPE_SINGLE_UNIT)
       {
-         showChunkOutputUnit(output.getUnit(), mode, ensureVisible);
+         showChunkOutputUnit(output.getUnit(), mode, output.isReplay(), 
+               ensureVisible);
       }
+   }
+
+   @Override
+   public void notifyHeightChanged()
+   {
+      syncHeight(true, false);
    }
    
    public void syncHeight(final boolean scrollToBottom, 
                           final boolean ensureVisible)
    {
       // special behavior for chunks which don't have output included by 
-      // default
-      if (!options_.include() && !hasErrors_)
+      // default: hide unless chunk includes errors or is not being run as 
+      // a unit
+      if (!options_.include() && 
+          !hasErrors_ && 
+          execScope_ == NotebookQueueUnit.EXEC_SCOPE_CHUNK)
       {
          if (isVisible())
          {
             setVisible(false);
-            host_.onOutputHeightChanged(0, ensureVisible);
+            host_.onOutputHeightChanged(this, 0, ensureVisible);
          }
          return;
       }
@@ -281,36 +312,16 @@ public class ChunkOutputWidget extends Composite
       // don't sync if not visible and no output yet
       if (!isVisible() && (state_ == CHUNK_EMPTY || state_ == CHUNK_PRE_OUTPUT))
          return;
-      
-      // don't sync if Ace hasn't positioned us yet
-      if (StringUtil.isNullOrEmpty(getElement().getStyle().getTop()))
-      {
-         needsHeightSync_ = true;
-         return;
-      }
 
       setVisible(true);
       
-      if (root_.getElement().getScrollHeight() == 0 && 
-          root_.getElement().getFirstChildElement() != null)
-      {
-         // if we have no height but we do have content, mark ourselves as 
-         // requiring a sync
-         needsHeightSync_ = true;
-      }
-      else
-      {
-         needsHeightSync_ = false;
-      }
       // clamp chunk height to min/max (the +19 is the sum of the vertical
       // padding on the element)
       int height = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
       if (expansionState_.getValue() == EXPANDED)
       {
-         int contentHeight = root_.getElement().getScrollHeight() + 19;
-         height = Math.min(
-               Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight), 
-               ChunkOutputUi.MAX_CHUNK_HEIGHT);
+         int contentHeight = root_.getElement().getOffsetHeight() + 19;
+         height = Math.max(ChunkOutputUi.MIN_CHUNK_HEIGHT, contentHeight);
 
          // if we have renders pending, don't shrink until they're loaded 
          if (pendingRenders_ > 0 && height < renderedHeight_)
@@ -326,23 +337,27 @@ public class ChunkOutputWidget extends Composite
       renderedHeight_ = height;
       if (scrollToBottom)
          root_.getElement().setScrollTop(root_.getElement().getScrollHeight());
-      frame_.getElement().getStyle().setHeight(height, Unit.PX);
+      
+      if (chunkOutputSize_ != ChunkOutputSize.Full)
+         frame_.getElement().getStyle().setHeight(height, Unit.PX);
          
       // allocate some extra space so the cursor doesn't touch the output frame
-      host_.onOutputHeightChanged(height + 7, ensureVisible);
+      host_.onOutputHeightChanged(this, height + 7, ensureVisible);
    }
    
    public static boolean isEditorStyleCached()
    {
-      return s_backgroundColor != null &&
-             s_color != null &&
-             s_outlineColor != null;
+      return s_colors != null;
+   }
+   
+   public static EditorThemeListener.Colors getEditorColors()
+   {
+      return s_colors;
    }
    
    public void onOutputFinished(boolean ensureVisible, int execScope)
    {
-      // flush any remaining queued errors
-      flushQueuedErrors(ensureVisible);
+      presenter_.completeOutput();
       
       if (state_ != CHUNK_PRE_OUTPUT)
       {
@@ -350,25 +365,23 @@ public class ChunkOutputWidget extends Composite
          // it
          syncHeight(true, ensureVisible);
       }
-      else if (execScope == TextEditingTargetNotebook.SCOPE_CHUNK)
+      else if (execScope == NotebookQueueUnit.EXEC_SCOPE_CHUNK)
       {
          // if executing the whole chunk but no output was received, clean up
          // any prior output and hide the output
-         root_.clear();
-         if (vconsole_ != null)
-            vconsole_.clear();
+         presenter_.clearOutput();
          renderedHeight_ = 0;
          setVisible(false);
-         host_.onOutputHeightChanged(0, ensureVisible);
+         host_.onOutputHeightChanged(this, 0, ensureVisible);
       }
 
-      state_ = root_.getWidgetCount() == 0 ? CHUNK_EMPTY : CHUNK_READY;
-      lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+      state_ = presenter_.hasOutput() ? CHUNK_READY : CHUNK_EMPTY;
       setOverflowStyle();
       showReadyState();
+      unregisterConsoleEvents();
    }
 
-   public void setCodeExecuting(boolean entireChunk, int mode)
+   public void setCodeExecuting(int mode, int scope)
    {
       // expand if currently collapsed
       if (expansionState_.getValue() == COLLAPSED)
@@ -384,28 +397,51 @@ public class ChunkOutputWidget extends Composite
       // clean error state
       hasErrors_ = false;
 
+      // if we already had output, clear it
+      if (state_ == CHUNK_READY)
+      {
+         presenter_.clearOutput();
+         attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
+      }
+
       registerConsoleEvents();
       state_ = CHUNK_PRE_OUTPUT;
-      execMode_ = mode;
+
+      execScope_ = scope;
       showBusyState();
    }
    
-   public static void cacheEditorStyle(Element editorContainer, 
-         Style editorStyle)
-   {
-      s_backgroundColor = editorStyle.getBackgroundColor();
-      s_color = editorStyle.getColor();
-      
+   public static void cacheEditorStyle(
+      String foregroundColor,
+      String backgroundColor,
+      String aceEditorColor)
+   {      
       // use a muted version of the text color for the outline
-      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(
-            DomUtils.extractCssValue("ace_editor", "color"));
+      ColorUtil.RGBColor text = ColorUtil.RGBColor.fromCss(aceEditorColor);
       
       // dark themes require a slightly more pronounced color
       ColorUtil.RGBColor outline = new ColorUtil.RGBColor(
             text.red(), text.green(), text.blue(),
             text.isDark() ? 0.12: 0.18);
 
-      s_outlineColor = outline.asRgb();
+      String border = outline.asRgb();
+      
+      // highlight color used in data chunks
+      ColorUtil.RGBColor highlight = new ColorUtil.RGBColor(
+            text.red(), text.green(), text.blue(), 0.02);
+      
+      // synthesize a surface color by blending the keyword color with the 
+      // background
+      JsArrayString classes = JsArrayString.createArray().cast();
+      classes.push("ace_editor");
+      classes.push("ace_keyword");
+      ColorUtil.RGBColor surface = ColorUtil.RGBColor.fromCss(
+            DomUtils.extractCssValue(classes, "color"));
+      surface = surface.mixedWith(
+            ColorUtil.RGBColor.fromCss(backgroundColor), 0.02, 1);
+      
+      s_colors = new EditorThemeListener.Colors(foregroundColor, backgroundColor, border,
+            highlight.asRgb(), surface.asRgb());
    }
    
    public void showServerError(ServerError error)
@@ -423,20 +459,13 @@ public class ChunkOutputWidget extends Composite
       if (!isEditorStyleCached())
          return;
       Style frameStyle = frame_.getElement().getStyle();
-      frameStyle.setBorderColor(s_outlineColor);
+      frameStyle.setBorderColor(s_colors.border);
 
-      // apply the style to any frames in the output
-      for (Widget w: root_)
-      {
-         if (w instanceof ChunkOutputFrame)
-         {
-            ChunkOutputFrame frame = (ChunkOutputFrame)w;
-            Style bodyStyle = frame.getDocument().getBody().getStyle();
-            bodyStyle.setColor(s_color);
-         }
-      }
-      getElement().getStyle().setBackgroundColor(s_backgroundColor);
-      frame_.getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      getElement().getStyle().setBackgroundColor(s_colors.background);
+      frame_.getElement().getStyle().setBackgroundColor(s_colors.background);
+
+      if (presenter_ != null)
+         presenter_.onEditorThemeChanged(s_colors);
    }
    
    public boolean hasErrors()
@@ -446,75 +475,27 @@ public class ChunkOutputWidget extends Composite
    
    public boolean hasPlots()
    {
-      for (Widget w: root_)
-      {
-         if (w instanceof FixedRatioWidget && 
-             ((FixedRatioWidget)w).getWidget() instanceof Image)
-         {
-            return true;
-         }
-      }
-      return false;
+      return presenter_.hasPlots();
+   }
+   
+   public void updatePlot(String url)
+   {
+      presenter_.updatePlot(url, style.pendingResize());
    }
 
    public void setPlotPending(boolean pending)
    {
-      for (Widget w: root_)
-      {
-         if (w instanceof FixedRatioWidget && 
-             ((FixedRatioWidget)w).getWidget() instanceof Image)
-         {
-            if (pending)
-               w.addStyleName(style.pendingResize());
-            else
-               w.removeStyleName(style.pendingResize());
-         }
-      }
-   }
-   
-   public void updatePlot(String plotUrl)
-   {
-      String plotFile = FilePathUtils.friendlyFileName(plotUrl);
-      
-      for (Widget w: root_)
-      {
-         if (w instanceof FixedRatioWidget)
-         {
-            // extract the wrapped plot
-            FixedRatioWidget fixedFrame = (FixedRatioWidget)w;
-            if (!(fixedFrame.getWidget() instanceof Image))
-               continue;
-            Image plot = (Image)fixedFrame.getWidget();
-            
-            // get the existing URL and strip off the query string 
-            String url = plot.getUrl();
-            int idx = url.lastIndexOf('?');
-            if (idx > 0)
-               url = url.substring(0, idx);
-            
-            // verify that the plot being refreshed is the same one this widget
-            // contains
-            if (FilePathUtils.friendlyFileName(url) != plotFile)
-               continue;
-            
-            w.removeStyleName(style.pendingResize());
-            
-            // sync height (etc) when render is complete, but don't scroll to 
-            // this point
-            DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
-                  false));
-
-            // the only purpose of this resize counter is to ensure that the
-            // plot URL changes when its geometry does (it's not consumed by
-            // the server)
-            plot.setUrl(plotUrl + "?resize=" + resizeCounter_++);
-         }
-      }
+      presenter_.setPlotPending(pending, style.pendingResize());
    }
    
    public void setHost(ChunkOutputHost host)
    {
       host_ = host;
+   }
+
+   public void onResize()
+   {
+      presenter_.onResize();
    }
    
    // Event handlers ----------------------------------------------------------
@@ -525,11 +506,8 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
 
-      // flush any queued errors 
-      flushQueuedErrors(false);
-
-      renderConsoleOutput(event.getOutput(), classOfOutput(CONSOLE_OUTPUT),
-            execMode_ == TextEditingTargetNotebook.MODE_SINGLE);
+      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
+      presenter_.showConsoleText(event.getOutput());
    }
    
    @Override
@@ -538,17 +516,8 @@ public class ChunkOutputWidget extends Composite
       if (event.getConsole() != chunkId_)
          return;
       
-      // queue the error -- we don't emit errors right away since a more 
-      // detailed error event may be forthcoming
-      queuedError_ += event.getError();
-   }
-   
-   @Override
-   public void onConsolePrompt(ConsolePromptEvent event)
-   {
-      // stop listening to the console once the prompt appears, but don't 
-      // clear up output until we receive the output finished event
-      unregisterConsoleEvents();
+      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
+      presenter_.showConsoleError(event.getError());
    }
    
    @Override
@@ -561,7 +530,7 @@ public class ChunkOutputWidget extends Composite
       // as though the server told us it's done
       if (state_ != CHUNK_READY)
       {
-         onOutputFinished(false, TextEditingTargetNotebook.SCOPE_PARTIAL);
+         onOutputFinished(false, NotebookQueueUnit.EXEC_SCOPE_PARTIAL);
       }
    }
 
@@ -573,145 +542,88 @@ public class ChunkOutputWidget extends Composite
       
       completeInterrupt();
    }
-
-   @Override
-   public void onErrorBoxResize()
+   
+   public void setRootWidget(Widget widget)
    {
-      syncHeight(true, true);
+      root_.setWidget(widget);
    }
 
-   @Override
-   public void runCommandWithDebug(String command)
+   public void hideSatellitePopup()
    {
-      // Not implemented
+      popout_.setVisible(false);
+      hideSatellitePopup_ = true;
+   }
+   
+   public HTMLPanel getFrame()
+   {
+      return frame_;
    }
 
    // Private methods ---------------------------------------------------------
 
-   private String classOfOutput(int type)
+   private void showChunkOutputUnit(RmdChunkOutputUnit unit, int mode,
+         boolean replay, boolean ensureVisible)
    {
-      if (type == CONSOLE_ERROR)
-        return RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
-      else if (type == CONSOLE_INPUT)
-        return "ace_keyword";
-      return null;
-   }
-   
-   private void showConsoleOutput(JsArray<JsArrayEx> output)
-   {
-      for (int i = 0; i < output.length(); i++)
-      {
-         // the first element is the output, and the second is the text; if we
-         // don't have at least 2 elements, it's not a valid entry
-         if (output.get(i).length() < 2)
-            continue;
-
-         int outputType = output.get(i).getInt(0);
-         String outputText = output.get(i).getString(1);
-         
-         // we don't currently render input as output
-         if (outputType == CONSOLE_INPUT)
-            continue;
-         
-         if (outputType == CONSOLE_ERROR)
-         {
-            queuedError_ += outputText;
-         }
-         else
-         {
-            // release any queued errors
-            if (!queuedError_.isEmpty())
-            {
-               vconsole_.submit(queuedError_, classOfOutput(CONSOLE_ERROR));
-               queuedError_ = "";
-            }
-
-            vconsole_.submit(outputText, classOfOutput(outputType));
-         }
-      }
-      vconsole_.redraw(console_.getElement());
-      setOverflowStyle();
-   }
-   
-   private void completeUnitRender(boolean ensureVisible)
-   {
-      syncHeight(true, ensureVisible);
-   }
-   
-   private void showErrorOutput(UnhandledError err, final boolean ensureVisible)
-   {
-      hasErrors_ = true;
-      
-      // if there's only one error frame, it's not worth showing dedicated 
-      // error UX
-      if (err.getErrorFrames() != null &&
-          err.getErrorFrames().length() < 2)
-      {
-         flushQueuedErrors(ensureVisible);
+      // no-op for empty console objects (avoid initializing output when we have
+      // nothing to show)
+      if (unit.getType() == RmdChunkOutputUnit.TYPE_TEXT && 
+          unit.getArray().length() < 1)
          return;
-      }
-
-      int idx = queuedError_.indexOf(err.getErrorMessage());
-      if (idx >= 0)
-      {
-         // emit any messages queued prior to the error
-         if (idx > 0)
-         {
-            renderConsoleOutput(queuedError_.substring(0, idx), 
-                  classOfOutput(CONSOLE_ERROR),
-                  ensureVisible);
-            initializeOutput(RmdChunkOutputUnit.TYPE_ERROR);
-         }
-         // leave messages following the error in the queue
-         queuedError_ = queuedError_.substring(
-               idx + err.getErrorMessage().length());
-      }
-      else
-      {
-         // flush any irrelevant messages from the stream
-         flushQueuedErrors(ensureVisible);
-      }
       
-      UIPrefs prefs =  RStudioGinjector.INSTANCE.getUIPrefs();
-      ConsoleError error = new ConsoleError(err, prefs.getThemeErrorClass(), 
-            this, null);
-      error.setTracebackVisible(prefs.autoExpandErrorTracebacks().getValue());
+      // prepare for rendering this output type (except for ordinals, which
+      // are not visible)
+      if (unit.getType() != RmdChunkOutputUnit.TYPE_ORDINAL)
+         initializeOutput(unit.getType());
 
-      root_.add(error);
-      flushQueuedErrors(ensureVisible);
-      completeUnitRender(ensureVisible);
-   }
-   
-   private void showPlotOutput(String url, final boolean ensureVisible)
-   {
-      // flush any queued errors
-      flushQueuedErrors(ensureVisible);
-
-      final Image plot = new Image();
-      
-      if (isFixedSizePlotUrl(url))
+      switch(unit.getType())
       {
-         // if the plot is of fixed size, emit it directly, but make it
-         // initially invisible until we get sizing information (as we may 
-         // have to downsample)
-         plot.setVisible(false);
-         root_.add(plot);
+      case RmdChunkOutputUnit.TYPE_TEXT:
+         presenter_.showConsoleOutput(unit.getArray());
+         break;
+      case RmdChunkOutputUnit.TYPE_HTML:
+         final RenderTimer widgetTimer = new RenderTimer();
+         presenter_.showHtmlOutput(unit.getString(), 
+               (NotebookHtmlMetadata)unit.getMetadata().cast(), 
+               unit.getOrdinal(),
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     widgetTimer.cancel();
+                  }
+               });
+         break;
+      case RmdChunkOutputUnit.TYPE_PLOT:
+         final RenderTimer plotTimer = new RenderTimer();
+         presenter_.showPlotOutput(unit.getString(), 
+               (NotebookPlotMetadata)unit.getMetadata().cast(), 
+               unit.getOrdinal(), 
+               new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     plotTimer.cancel();
+                  }
+               });
+         break;
+      case RmdChunkOutputUnit.TYPE_ERROR:
+         // override visibility flag when there's an error in batch mode
+         if (!replay && !options_.error() && 
+             mode == NotebookQueueUnit.EXEC_MODE_BATCH)
+            ensureVisible = true;
+         hasErrors_ = true;
+         presenter_.showErrorOutput(unit.getUnhandledError());
+         break;
+      case RmdChunkOutputUnit.TYPE_ORDINAL:
+         // used to reserve a plot placeholder 
+         presenter_.showOrdinalOutput(unit.getOrdinal());
+         break;
+      case RmdChunkOutputUnit.TYPE_DATA:
+         presenter_.showDataOutput(unit.getOuputObject(), 
+               (NotebookFrameMetadata)unit.getMetadata().cast(),
+               unit.getOrdinal());
+         break;
       }
-      else
-      {
-         // if we can scale the plot, scale it
-         FixedRatioWidget fixedFrame = new FixedRatioWidget(plot, 
-                     ChunkOutputUi.OUTPUT_ASPECT, 
-                     ChunkOutputUi.MAX_PLOT_WIDTH);
-
-         root_.add(fixedFrame);
-      }
-  
-      DOM.sinkEvents(plot.getElement(), Event.ONLOAD);
-      DOM.setEventListener(plot.getElement(), createPlotListener(plot, 
-            ensureVisible));
-
-      plot.setUrl(url);
    }
    
    private class RenderTimer extends Timer
@@ -740,124 +652,11 @@ public class ChunkOutputWidget extends Composite
       }
    };
    
-   private void showHtmlOutput(String url, final boolean ensureVisible)
-   {
-      // flush any queued errors
-      flushQueuedErrors(ensureVisible);
-      
-      // amend the URL to cause any contained widget to use the RStudio viewer
-      // sizing policy
-      if (url.indexOf('?') > 0)
-         url += "&";
-      else
-         url += "?";
-      url += "viewer_pane=1";
-
-      final ChunkOutputFrame frame = new ChunkOutputFrame();
-      final FixedRatioWidget fixedFrame = new FixedRatioWidget(frame, 
-                  ChunkOutputUi.OUTPUT_ASPECT, 
-                  ChunkOutputUi.MAX_HTMLWIDGET_WIDTH);
-
-      root_.add(fixedFrame);
-
-      final Timer renderTimeout = new RenderTimer();
-
-      frame.loadUrl(url, new Command() 
-      {
-         @Override
-         public void execute()
-         {
-            Element body = frame.getDocument().getBody();
-            Style bodyStyle = body.getStyle();
-            
-            bodyStyle.setPadding(0, Unit.PX);
-            bodyStyle.setMargin(0, Unit.PX);
-            bodyStyle.setColor(s_color);
-            
-            renderTimeout.cancel();
-            completeUnitRender(ensureVisible);
-         };
-      });
-   }
-   
-   private void renderConsoleOutput(String text, String clazz, 
-         boolean ensureVisible)
-   {
-      initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-      vconsole_.submitAndRender(text, clazz,
-            console_.getElement());
-      syncHeight(true, ensureVisible);
-   }
-   
-   private void initializeOutput(int outputType)
-   {
-      if (state_ == CHUNK_PRE_OUTPUT)
-      {
-         // if no output has been emitted yet, clean up all existing output
-         if (vconsole_ != null)
-            vconsole_.clear();
-         root_.clear();
-         hasErrors_ = false;
-         lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
-         state_ = CHUNK_POST_OUTPUT;
-      }
-      if (state_ == CHUNK_POST_OUTPUT)
-      {
-         if (lastOutputType_ == outputType)
-            return;
-         if (outputType == RmdChunkOutputUnit.TYPE_TEXT)
-         {
-            // if switching to textual output, allocate a new virtual console
-            initConsole();
-         }
-         else if (lastOutputType_ == RmdChunkOutputUnit.TYPE_TEXT)
-         {
-            // if switching from textual input, clear the text accumulator
-            if (vconsole_ != null)
-               vconsole_.clear();
-            console_ = null;
-         }
-      }
-      lastOutputType_ = outputType;
-   }
-
-   private void initConsole()
-   {
-      if (vconsole_ == null)
-         vconsole_ = new VirtualConsole();
-      else
-         vconsole_.clear();
-      if (console_ == null)
-      {
-         console_ = new PreWidget();
-         console_.getElement().removeAttribute("tabIndex");
-         console_.getElement().getStyle().setMarginTop(0, Unit.PX);
-         console_.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
-      }
-      else
-      {
-         console_.getElement().setInnerHTML("");
-      }
-
-      // attach the console
-      root_.add(console_);
-   }
-   
-   private void destroyConsole()
-   {
-      if (vconsole_ != null)
-         vconsole_.clear();
-      if (console_ != null)
-         console_.removeFromParent();
-      console_ = null;
-   }
-   
    private void registerConsoleEvents()
    {
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.addHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.addHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.addHandler(ConsolePromptEvent.TYPE, this);
    }
 
    private void unregisterConsoleEvents()
@@ -865,7 +664,6 @@ public class ChunkOutputWidget extends Composite
       EventBus events = RStudioGinjector.INSTANCE.getEventBus();
       events.removeHandler(ConsoleWriteOutputEvent.TYPE, this);
       events.removeHandler(ConsoleWriteErrorEvent.TYPE, this);
-      events.removeHandler(ConsolePromptEvent.TYPE, this);
    }
    
    private void showBusyState()
@@ -878,7 +676,7 @@ public class ChunkOutputWidget extends Composite
       }
       // create a black or white spinner as appropriate
       ColorUtil.RGBColor bgColor = 
-            ColorUtil.RGBColor.fromCss(s_backgroundColor);
+            ColorUtil.RGBColor.fromCss(s_colors.background);
       spinner_ = new ProgressSpinner(
             bgColor.isDark() ? ProgressSpinner.COLOR_WHITE :
                                ProgressSpinner.COLOR_BLACK);
@@ -890,11 +688,16 @@ public class ChunkOutputWidget extends Composite
 
       clear_.setVisible(false);
       expand_.setVisible(false);
+      popout_.setVisible(false);
    }
 
    private void showReadyState()
    {
-      getElement().getStyle().setBackgroundColor(s_backgroundColor);
+      if (getElement() != null && getElement().getStyle() != null && s_colors != null)
+      {
+         getElement().getStyle().setBackgroundColor(s_colors.background);
+      }
+
       if (spinner_ != null)
       {
          spinner_.removeFromParent();
@@ -905,8 +708,12 @@ public class ChunkOutputWidget extends Composite
       if (expansionState_.getValue() == EXPANDED)
          root_.getElement().getStyle().setOpacity(1);
 
-      clear_.setVisible(true);
-      expand_.setVisible(true);
+      if (chunkOutputSize_ != ChunkOutputSize.Full && !hideSatellitePopup_)
+      {
+         clear_.setVisible(true);
+         expand_.setVisible(true);
+         popout_.setVisible(true);
+      }
    }
    
    private void setOverflowStyle()
@@ -937,8 +744,23 @@ public class ChunkOutputWidget extends Composite
       }
       showReadyState();
    }
+
+   private void popoutChunk()
+   {
+      chunkWindowManager_.openChunkWindow(
+         documentId_,
+         chunkId_,
+         new Size(getElement().getOffsetWidth(), getElement().getOffsetHeight())
+      );
+   }
    
    private void toggleExpansionState(final boolean ensureVisible)
+   {
+      toggleExpansionState(ensureVisible, null);
+   }
+   
+   private void toggleExpansionState(final boolean ensureVisible,
+                                     final CommandWithArg<Boolean> onTransitionCompleted)
    {
       // don't permit toggling state while we're animating a new state
       // (no simple way to gracefully reverse direction) 
@@ -956,9 +778,10 @@ public class ChunkOutputWidget extends Composite
             @Override
             public void run()
             {
-               renderedHeight_ = 
-                     ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
-               host_.onOutputHeightChanged(renderedHeight_, ensureVisible);
+               renderedHeight_ = ChunkOutputUi.CHUNK_COLLAPSED_HEIGHT;
+               host_.onOutputHeightChanged(ChunkOutputWidget.this, renderedHeight_, ensureVisible);
+               if (onTransitionCompleted != null)
+                  onTransitionCompleted.execute(true);
             }
             
          };
@@ -974,7 +797,10 @@ public class ChunkOutputWidget extends Composite
             @Override
             public void run()
             {
+               syncHeight(true, ensureVisible);
                frame_.getElement().getStyle().clearProperty("transition");
+               if (onTransitionCompleted != null)
+                  onTransitionCompleted.execute(true);
             }
          };
       }
@@ -997,82 +823,111 @@ public class ChunkOutputWidget extends Composite
       root_.getElement().getStyle().clearOpacity();
    }
    
-   private void flushQueuedErrors(boolean ensureVisible)
+   private void attachPresenter(ChunkOutputPresenter presenter)
    {
-      if (!queuedError_.isEmpty())
+      if (root_.getWidget() != null)
+         root_.remove(root_.getWidget());
+      presenter_ = presenter;
+      root_.add(presenter.asWidget());
+   }
+   
+   private void initializeOutput(int type)
+   {
+      if (state_ == CHUNK_PRE_OUTPUT)
       {
-         initializeOutput(RmdChunkOutputUnit.TYPE_TEXT);
-         renderConsoleOutput(queuedError_, classOfOutput(CONSOLE_ERROR), 
-               ensureVisible);
-         queuedError_ = "";
+         hasErrors_ = false;
+         state_ = CHUNK_POST_OUTPUT;
       }
-   }
-   
-   private EventListener createPlotListener(final Image plot, 
-         final boolean ensureVisible)
-   {
-      final Timer renderTimeout = new RenderTimer();
-      return new EventListener()
+      else if (state_ == CHUNK_POST_OUTPUT &&
+               presenter_ instanceof ChunkOutputStream &&
+               (isBlockType(type) || 
+                isBlockType(type) != isBlockType(lastOutputType_)))
       {
-         @Override
-         public void onBrowserEvent(Event event)
+         // we switch to gallery mode when we have either two block-type
+         // outputs (e.g. two plots), or a block-type output combined with 
+         // non-block output (e.g. a plot and some text)
+         final ChunkOutputStream stream = (ChunkOutputStream)presenter_;
+         final ChunkOutputGallery gallery = new ChunkOutputGallery(this, 
+               chunkOutputSize_);
+
+         attachPresenter(gallery);
+         
+         // extract all the pages from the stream and populate the gallery
+         List<ChunkOutputPage> pages = stream.extractPages();
+         int ordinal = stream.getContentOrdinal();
+         if (ordinal > 0)
          {
-            if (DOM.eventGetType(event) != Event.ONLOAD)
-               return;
-            
-            // if the image is of fixed size, just clamp its width to the editor
-            // surface while preserving its aspect ratio
-            if (isFixedSizePlotUrl(plot.getUrl()))
-            {
-               ImageElementEx img = plot.getElement().cast();
-               img.getStyle().setProperty("height", "auto");
-               img.getStyle().setProperty("maxWidth", "100%");
-            }
-               
-            plot.setVisible(true);
-            
-            renderTimeout.cancel();
-            completeUnitRender(ensureVisible);
+            // add the stream itself if there's still anything left in it
+            pages.add(new ChunkConsolePage(ordinal, stream, chunkOutputSize_));
          }
-      };
+         
+         // ensure page ordering is correct
+         Collections.sort(pages, new Comparator<ChunkOutputPage>()
+         {
+            @Override
+            public int compare(ChunkOutputPage o1, ChunkOutputPage o2)
+            {
+               return o1.ordinal() - o2.ordinal();
+            }
+         });
+         
+         for (ChunkOutputPage page: pages)
+         {
+            gallery.addPage(page);
+         }
+         
+         syncHeight(false, false);
+      }
+      
+      lastOutputType_ = type;
    }
    
-   private boolean isFixedSizePlotUrl(String url)
+   private boolean isBlockType(int type)
    {
-      return url.contains("fixed_size=1");
+      switch (type)
+      {
+      case RmdChunkOutputUnit.TYPE_PLOT:
+      case RmdChunkOutputUnit.TYPE_DATA:
+      case RmdChunkOutputUnit.TYPE_HTML:
+          return true;
+      case RmdChunkOutputUnit.TYPE_TEXT:
+      case RmdChunkOutputUnit.TYPE_ERROR:
+      case RmdChunkOutputUnit.TYPE_ORDINAL:
+         return false;
+      }
+      return true;
    }
    
    @UiField Image clear_;
    @UiField Image expand_;
-   @UiField HTMLPanel root_;
+   @UiField Image popout_;
+   @UiField SimplePanel root_;
    @UiField ChunkStyle style;
    @UiField HTMLPanel frame_;
    @UiField HTMLPanel expander_;
-   
-   private PreWidget console_;
-   private VirtualConsole vconsole_;
+
    private ProgressSpinner spinner_;
-   private String queuedError_;
    private RmdChunkOptions options_;
    private ChunkOutputHost host_;
+   private ChunkOutputPresenter presenter_;
+   private ChunkWindowManager chunkWindowManager_;
+   private ChunkOutputSize chunkOutputSize_;
    
    private int state_ = CHUNK_EMPTY;
-   private int execMode_ = TextEditingTargetNotebook.MODE_SINGLE;
-   private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
+   private int execScope_ = NotebookQueueUnit.EXEC_SCOPE_CHUNK;
    private int renderedHeight_ = 0;
    private int pendingRenders_ = 0;
+   private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private boolean hasErrors_ = false;
-   private int resizeCounter_ = 0;
-   private boolean needsHeightSync_ = false;
+   private boolean hideSatellitePopup_ = false;
    
    private Timer collapseTimer_ = null;
+   private final String documentId_;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
 
-   private static String s_outlineColor    = null;
-   private static String s_backgroundColor = null;
-   private static String s_color           = null;
-   
+   private static EditorThemeListener.Colors s_colors;
+
    public final static int EXPANDED   = 0;
    public final static int COLLAPSED  = 1;
 
@@ -1082,8 +937,4 @@ public class ChunkOutputWidget extends Composite
    public final static int CHUNK_READY       = 2;
    public final static int CHUNK_PRE_OUTPUT  = 3;
    public final static int CHUNK_POST_OUTPUT = 4;
-   
-   public final static int CONSOLE_INPUT  = 0;
-   public final static int CONSOLE_OUTPUT = 1;
-   public final static int CONSOLE_ERROR  = 2;
 }

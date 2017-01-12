@@ -67,7 +67,15 @@ public class DocPropMenuItem extends CheckableMenuItem
    public void onInvoked()
    {
       HashMap<String, String> props = new HashMap<String, String>();
-      props.put(propName_, targetValue_);
+      String target = targetValue_;
+      
+      // toggle behavior for boolean values: if our target was true but the
+      // prop is already set to true, set it to false
+      if (target == DocUpdateSentinel.PROPERTY_TRUE &&
+          docUpdate_.getBoolProperty(propName_, default_))
+         target = DocUpdateSentinel.PROPERTY_FALSE;
+
+      props.put(propName_, target);
       docUpdate_.modifyProperties(props, new ProgressIndicator()
       {
          @Override

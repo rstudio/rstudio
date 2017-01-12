@@ -26,6 +26,8 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+#include <r/RSexp.hpp>
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -73,6 +75,7 @@ public:
                                   bool allowSubstChars = true);
 
    core::Error updateDirty();
+   core::Error contentsMatchDisk(bool* pMatches);
 
    // set dirty
    void setDirty(bool dirty)
@@ -139,9 +142,11 @@ public:
    }
 
    core::Error readFromJson(core::json::Object* pDocJson);
-   void writeToJson(core::json::Object* pDocJson) const;
+   void writeToJson(core::json::Object* pDocJson, bool includeContents = true) const;
 
-   core::Error writeToFile(const core::FilePath& filePath) const;
+   core::Error writeToFile(const core::FilePath& filePath, bool writeContents = true) const;
+
+   SEXP toRObject(r::sexp::Protect* pProtect, bool includeContents = true) const;
 
 private:
    void editProperty(const core::json::Object::value_type& property);
@@ -182,10 +187,11 @@ bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
 
 core::FilePath path();
 core::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
+core::Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceDocument> pDoc);
 core::Error getDurableProperties(const std::string& path,
                                  core::json::Object* pProperties);
 core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
-core::Error put(boost::shared_ptr<SourceDocument> pDoc);
+core::Error put(boost::shared_ptr<SourceDocument> pDoc, bool writeContents = true);
 core::Error remove(const std::string& id);
 core::Error removeAll();
 core::Error getPath(const std::string& id, std::string* pPath);

@@ -1,0 +1,162 @@
+.pagedtable {
+  overflow: auto;
+  padding-left: 8px;
+  padding-right: 8px;
+
+  font-family: "Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif;
+}
+
+.pagedtable-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.pagedtable table {
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.pagedtable th {
+  padding: 0 6px 3px 6px;
+  border: none;
+  border-bottom: 1px solid #dddddd;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  min-width: 27px;
+}
+
+.pagedtable-empty-columns th {
+  display: none;
+}
+
+.pagedtable th.pagedtable-padding-col {
+  width: 20%;
+}
+
+.pagedtable td {
+  padding: 2px 6px 2px 6px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pagedtable tr.even {
+}
+
+.pagedtable tr:first-child td {
+  padding-top: 2px;
+}
+
+.pagedtable tr:last-child td {
+  border-bottom: 0;
+}
+
+.pagedtable a {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.pagedtable-index-nav {
+  cursor: pointer;
+  padding: 0 5px 6px 5px;
+  float: right;
+  color: #999;
+}
+
+.pagedtable-index-nav-disabled {
+  cursor: default;
+  text-decoration: none;
+  color: #ddd;
+}
+
+a.pagedtable-index-nav-disabled:hover {
+  text-decoration: none;
+  color: #ddd;
+}
+
+.pagedtable-indexes {
+  cursor: pointer;
+  float: right;
+}
+
+a.pagedtable-index-current {
+  cursor: default;
+  text-decoration: none;
+  color: #999;
+  border: solid 1px #E9E9E9;
+  border-radius: 3px;
+  background-color: #FBFBFB;
+}
+
+.pagedtable-index {
+  width: 30px;
+  display: inline-block;
+  text-align: center;
+  color: #999;
+}
+
+.pagedtable-index-separator-left {
+  display: inline-block;
+  color: #999;
+  font-size: 9px;
+  padding: 0 0 0 0;
+  cursor: default;
+}
+
+.pagedtable-index-separator-right {
+  display: inline-block;
+  color: #999;
+  font-size: 9px;
+  padding: 0 4px 0 0;
+  cursor: default;
+}
+
+.pagedtable-footer {
+  padding-top: 9px;
+  padding-bottom: 5px;
+  max-height: 18px;
+  overflow: hidden;
+}
+
+.pagedtable-not-empty .pagedtable-footer {
+  border-top: 1px solid #dddddd;
+}
+
+.pagedtable-info {
+  overflow: hidden;
+  max-height: 20px;
+  color: #999;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pagedtable-header-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pagedtable-header-type {
+  opacity: 0.5;
+  font-weight: 400;
+  margin-top: -3px;
+  font-size: 11px;
+}
+
+.pagedtable-expand .pagedtable-header-type {
+  margin-top: 0px;
+}
+
+.pagedtable-na-cell {
+  font-style: italic;
+  opacity: 0.3;
+}

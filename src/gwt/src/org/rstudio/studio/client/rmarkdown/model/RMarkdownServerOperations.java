@@ -29,7 +29,7 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
        
    void renderRmd(String file, int line, String format, String encoding,
                   String paramsFile, boolean asTempfile, int type,
-                  String existingOutputFile,
+                  String existingOutputFile, String workingDir,
                   ServerRequestCallback<Boolean> requestCallback);
    
    void renderRmdSource(String source,
@@ -72,18 +72,31 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                 ServerRequestCallback<RmdOutputInfo> resultCallback);
    
    void refreshChunkOutput(String docPath, String docId, String contextId,
-                           String requestId, 
-                           ServerRequestCallback<Void> requestCallback);
+                           String requestId, String chunkId,
+                           ServerRequestCallback<NotebookDocQueue> requestCallback);
    
    void setChunkConsole(String docId, String chunkId, int commitMode, 
                         int execMode, int execScope, String options, 
                         int pixelWidth, int characterWidth, 
                         ServerRequestCallback<RmdChunkOptions> requestCallback);
    
-   void createNotebookFromCache(String rmdPath, String outputPath, ServerRequestCallback<Void> requestCallback);
+   void createNotebookFromCache(String rmdPath, String outputPath, 
+         ServerRequestCallback<NotebookCreateResult> requestCallback);
    
    void replayNotebookPlots(String docId, String initialChunkId, int pixelWidth, 
-         ServerRequestCallback<Boolean> requestCallback);
+         int pixelHeight, ServerRequestCallback<String> requestCallback);
+
+   void replayNotebookChunkPlots(String docId, String chunkId, int pixelWidth, 
+         int pixelHeight, ServerRequestCallback<String> requestCallback);
+
+   void cleanReplayNotebookChunkPlots(String docId, String chunkId, 
+         ServerRequestCallback<Void> requestCallback);
+   
+   void executeNotebookChunks(NotebookDocQueue queue, 
+         ServerRequestCallback<Void> requestCallback);
+   
+   void updateNotebookExecQueue(NotebookQueueUnit unit, int op, 
+         String beforeChunkId, ServerRequestCallback<Void> requestCallback);
    
    void executeAlternateEngineChunk(String docId,
                                     String chunkId,

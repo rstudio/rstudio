@@ -448,6 +448,43 @@ core::Error readParams(const json::Array& params,
 
    return readParam(params, 11, pValue12) ;
 }
+
+template <typename T1, typename T2, typename T3, typename T4, typename T5,
+typename T6, typename T7, typename T8, typename T9, typename T10, typename T11,
+typename T12, typename T13>
+core::Error readParams(const json::Array& params,
+                       T1* pValue1,
+                       T2* pValue2,
+                       T3* pValue3,
+                       T4* pValue4,
+                       T5* pValue5,
+                       T6* pValue6,
+                       T7* pValue7,
+                       T8* pValue8,
+                       T9* pValue9,
+                       T10* pValue10,
+                       T11* pValue11,
+                       T12* pValue12,
+                       T13* pValue13)
+{
+   core::Error error = readParams(params,
+                                  pValue1,
+                                  pValue2,
+                                  pValue3,
+                                  pValue4,
+                                  pValue5,
+                                  pValue6,
+                                  pValue7,
+                                  pValue8,
+                                  pValue9,
+                                  pValue10,
+                                  pValue11,
+                                  pValue12) ;
+   if (error)
+      return error ;
+
+   return readParam(params, 12, pValue13) ;
+}
 namespace errors {
 
 inline Error paramMissing(const std::string& name,
@@ -492,6 +529,41 @@ core::Error readObject(const json::Object& object,
    *pValue = it->second.get_value<T>();
 
    return Success() ;
+}
+
+inline core::Error readObject(const json::Object& object,
+                              const std::string& name,
+                              json::Array* pArray)
+{
+   return readObject<json::Array>(object, name, pArray);
+}
+
+template <typename T>
+core::Error readObject(
+      const json::Object& object,
+      const std::string& name,
+      std::vector<T>* pVector)
+{
+   core::Error error;
+   
+   json::Array array;
+   error = readObject(object, name, &array);
+   if (error)
+      return error;
+   
+   for (std::size_t i = 0, n = array.size(); i < n; ++i)
+   {
+      const json::Value& el = array[i];
+      if (!isType<T>(el))
+         return errors::typeMismatch(
+                  el,
+                  json::asJsonType(T()),
+                  ERROR_LOCATION);
+      
+      pVector->push_back(el.get_value<T>());
+   }
+   
+   return Success();
 }
 
 template <typename T>

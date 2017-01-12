@@ -24,6 +24,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
 
 #include <core/Exec.hpp>
 
@@ -39,21 +40,15 @@ namespace notebook {
 
 namespace {
 
-SEXP rs_recordHtmlWidget(SEXP htmlFileSEXP, SEXP depFileSEXP)
+SEXP rs_recordHtmlWidget(SEXP htmlFileSEXP, SEXP depFileSEXP, SEXP metadata)
 {
-   events().onHtmlOutput(FilePath(r::sexp::safeAsString(htmlFileSEXP)), 
-                         FilePath(r::sexp::safeAsString(depFileSEXP)));
-   return R_NilValue;
-}
-
-void onConsolePrompt(const std::string&)
-{
-   // stop capturing HTML widgets when the prompt returns
-   Error error = r::exec::RFunction(".rs.releaseHtmlCapture").call();
+   json::Value meta;
+   Error error = r::json::jsonValueFromObject(metadata, &meta);
    if (error)
       LOG_ERROR(error);
-
-   module_context::events().onConsolePrompt.disconnect(onConsolePrompt);
+   events().onHtmlOutput(FilePath(r::sexp::safeAsString(htmlFileSEXP)), 
+                         FilePath(r::sexp::safeAsString(depFileSEXP)), meta);
+   return R_NilValue;
 }
 
 bool moveLibFile(const FilePath& from, const FilePath& to, 
@@ -73,27 +68,39 @@ bool moveLibFile(const FilePath& from, const FilePath& to,
 
 } // anonymous namespace
 
-core::Error beginWidgetCapture(
+// provide default constructor/destructor
+HtmlCapture::HtmlCapture()
+{
+}
+
+HtmlCapture::~HtmlCapture()
+{
+}
+
+void HtmlCapture::disconnect()
+{
+   // stop capturing HTML widgets when the prompt returns
+   Error error = r::exec::RFunction(".rs.releaseHtmlCapture").call();
+   if (error)
+      LOG_ERROR(error);
+   
+   NotebookCapture::disconnect();
+}
+
+core::Error HtmlCapture::connectHtmlCapture(
               const core::FilePath& outputFolder,
               const core::FilePath& libraryFolder,
               const json::Object& chunkOptions)
 {
-   Error error = r::exec::RFunction(".rs.initHtmlCapture", 
-         outputFolder.absolutePath(),
-         outputFolder.complete(kChunkLibDir).absolutePath(),
+   return r::exec::RFunction(".rs.initHtmlCapture", 
+         string_utils::utf8ToSystem(outputFolder.absolutePath()),
+         string_utils::utf8ToSystem(outputFolder.complete(kChunkLibDir).absolutePath()),
          chunkOptions).call();
-   if (error)
-      return error;
-
-
-   module_context::events().onConsolePrompt.connect(onConsolePrompt);
-
-   return Success();
 }
 
 core::Error initHtmlWidgets()
 {
-   RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 2);
+   RS_REGISTER_CALL_METHOD(rs_recordHtmlWidget, 3);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

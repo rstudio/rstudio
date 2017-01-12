@@ -149,7 +149,7 @@ public class FileTypeRegistry
          null, false);
    
    public static final TextFileType YAML =
-         new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yaml",
+         new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yml",
                           ICONS.iconYaml(), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
 

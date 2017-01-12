@@ -118,8 +118,8 @@ public class RSConnectAccountWizard
       return pages;
    }
    
-   public static final String SERVICE_NAME =  "RStudio Connect (Beta)";
+   public static final String SERVICE_NAME =  "RStudio Connect";
    public static final String SERVICE_DESCRIPTION = 
-     "RStudio Connect is a new server product from RStudio " +
+     "RStudio Connect is a server product from RStudio " +
      "for secure sharing of applications, reports, and plots.";
 }

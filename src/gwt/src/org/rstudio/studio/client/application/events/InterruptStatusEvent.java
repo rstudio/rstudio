@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.core.client.js.JavaScriptSerializable;
 
-public class InterruptStatusEvent extends GwtEvent<InterruptStatusEvent.Handler>
+import com.google.gwt.event.shared.EventHandler;
+
+@JavaScriptSerializable
+public class InterruptStatusEvent extends CrossWindowEvent<InterruptStatusEvent.Handler>
 {
    public final static int INTERRUPT_INITIATED = 0;
    public final static int INTERRUPT_COMPLETED = 1;
@@ -25,6 +27,11 @@ public class InterruptStatusEvent extends GwtEvent<InterruptStatusEvent.Handler>
    public interface Handler extends EventHandler
    {
       void onInterruptStatus(InterruptStatusEvent event);
+   }
+
+   public InterruptStatusEvent()
+   {
+      status_ = -1;
    }
 
    public InterruptStatusEvent(int status)

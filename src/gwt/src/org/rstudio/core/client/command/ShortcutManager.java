@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,6 +67,7 @@ public class ShortcutManager implements NativePreviewHandler,
    private ShortcutManager()
    {
       keyBuffer_ = new KeySequence();
+      ignoredKeys_ = new IgnoredKeysMap<KeyCombination>();
       keyTimer_ = new Timer()
       {
          @Override
@@ -416,7 +418,37 @@ public class ShortcutManager implements NativePreviewHandler,
          return false;
       }
       
-      KeyCombination keyCombination = new KeyCombination(event);
+      int keyCode = event.getKeyCode();
+      int modifier = KeyboardShortcut.getModifierValue(event);
+      
+      // Convert Firefox hyphen key code to 'normal' hyphen keycode
+      // since we have code wired to that expectation
+      if (keyCode == 173)
+         keyCode = 189;
+      
+      KeyCombination keyCombination = new KeyCombination(keyCode, modifier);
+      
+      // Disable 'Ctrl+F' keybinding when Ace editor in Vim mode
+      // is focused.
+      if (keyCombination.getKeyCode() == KeyCodes.KEY_F &&
+          keyCombination.getModifier() == KeyboardShortcut.CTRL)
+      {
+         Element target = Element.as(event.getEventTarget());
+         AceEditorNative editor = AceEditorNative.getEditor(target);
+         if (editor != null && editor.isVimModeOn())
+         {
+            keyBuffer_.clear();
+            return false;
+         }
+      }
+
+      // Bail if this is an ignored key combination.
+      if (isIgnoredKeyCombination(keyCombination))
+      {
+         keyBuffer_.clear();
+         return false;
+      }
+      
       keyBuffer_.add(keyCombination);
       
       // Loop through all active key maps, and attempt to find an active
@@ -546,6 +578,14 @@ public class ShortcutManager implements NativePreviewHandler,
       
       if (isSaveQuitKey && isSaveQuitModifier)
          event.preventDefault();
+      
+      // Prevent 'Ctrl+Shift+B' (toggle bookmarks)
+      boolean isToggleBookmarksModifier = BrowseCap.isMacintosh()
+            ? modifiers == (KeyboardShortcut.SHIFT | KeyboardShortcut.META)
+            : modifiers == (KeyboardShortcut.SHIFT | KeyboardShortcut.CTRL);
+      
+      if (keyCode == KeyCodes.KEY_B && isToggleBookmarksModifier)
+         event.preventDefault();
    }
    
    public KeyMap getKeyMap(KeyMapType type)
@@ -553,10 +593,71 @@ public class ShortcutManager implements NativePreviewHandler,
       return keyMaps_.get(type);
    }
    
+   private static class IgnoredKeysMap<T>
+   {
+      public IgnoredKeysMap()
+      {
+         ignoredKeys_ = new HashMap<Integer, Set<T>>();
+         count_ = 0;
+      }
+      
+      public Handle addIgnoredKeys(T keys)
+      {
+         Set<T> keySet = new HashSet<T>();
+         keySet.add(keys);
+         return addIgnoredKeys(keySet);
+      }
+      
+      public Handle addIgnoredKeys(Set<T> keySet)
+      {
+         final Integer index = count_++;
+         ignoredKeys_.put(index, keySet);
+         return new Handle()
+         {
+            @Override
+            public void close()
+            {
+               ignoredKeys_.remove(index);
+            }
+         };
+      }
+      
+      public boolean isIgnoredKeyCombination(T keys)
+      {
+         for (Map.Entry<Integer, Set<T>> entry : ignoredKeys_.entrySet())
+         {
+            Set<T> keySet = entry.getValue();
+            if (keySet.contains(keys))
+               return true;
+         }
+         
+         return false;
+      }
+      
+      private final Map<Integer, Set<T>> ignoredKeys_;
+      private Integer count_;
+   }
+   
+   public final Handle addIgnoredKeys(KeyCombination keys)
+   {
+      return ignoredKeys_.addIgnoredKeys(keys);
+   }
+   
+   public final Handle addIgnoredKeys(Set<KeyCombination> keys)
+   {
+      return ignoredKeys_.addIgnoredKeys(keys);
+   }
+   
+   public final boolean isIgnoredKeyCombination(KeyCombination keys)
+   {
+      return ignoredKeys_.isIgnoredKeyCombination(keys);
+   }
+   
    private int disableCount_ = 0;
    private int editorMode_ = KeyboardShortcut.MODE_DEFAULT;
    
    private final KeySequence keyBuffer_;
+   private final IgnoredKeysMap<KeyCombination> ignoredKeys_;
    private final Timer keyTimer_;
    private int activeEditEventType_ = EditEvent.TYPE_NONE;
    

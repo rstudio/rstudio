@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.files;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
@@ -35,6 +37,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -236,6 +239,32 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        });
    }
 
+   @Override
+   public void showDataImportFileChoice(FileSystemItem file, 
+                                  Command onView,
+                                  Command onImport)
+   {
+       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+       
+       String editLabel = AppCommand.formatMenuLabel(
+          commands_.renameFile().getImageResource(), "View File", null);
+       String importLabel = AppCommand.formatMenuLabel(
+          StandardIcons.INSTANCE.import_dataset(), 
+          "Import Dataset...", 
+          null);
+       
+       menu.addItem(new MenuItem(editLabel, true, onView));
+       menu.addItem(new MenuItem(importLabel, true, onImport));
+       
+       menu.setPopupPositionAndShow(new PositionCallback() {
+          @Override
+          public void setPosition(int offsetWidth, int offsetHeight)
+          {
+             Event event = Event.getCurrentEvent();
+             PopupPositioner.setPopupPosition(menu, event.getClientX(), event.getClientY());
+          }
+       });
+   }
    
    @Override 
    protected Widget createMainWidget()
@@ -248,6 +277,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());
       dockPanel.add(filesList_);
+      
       // return container
       return dockPanel;
    }
@@ -263,7 +293,14 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       }
       else
       {
-         filesList_.redraw();
+         Scheduler.get().scheduleDeferred(new ScheduledCommand()
+         {
+            @Override
+            public void execute()
+            {
+               filesList_.redraw();
+            }
+         });
       }
    }
 

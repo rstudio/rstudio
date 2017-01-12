@@ -41,9 +41,41 @@
       box-shadow: 0 0 3px rgb(160, 160, 160);
    }
 
+   .chunkType
+   {
+      display: inline-block;
+      color: #C7C7C7;
+      font-size: 10px;
+      vertical-align: top;
+      text-align: center;
+      margin-right: 6px;
+      display: none
+   }
+
+   .chunkTypeLabel
+   {
+      float: left;
+   }
+
+   .dropDownArrow
+   {
+      border-right: 3px solid transparent;
+      border-left: 3px solid transparent;
+      border-top: 4px solid #c5c6c5;
+      vertical-align: top;
+      margin-right: 0;
+      margin-top: 2px;
+      float: left;
+   }
    </ui:style>
    <g:HTMLPanel styleName="{style.wrapper}">
      <g:FlowPanel styleName="{style.toolbar}">
+        <g:HTMLPanel ui:field="chunkTypePanel_" styleName="{style.button} {style.chunkType}">
+          <g:Label ui:field="chunkTypeLabel_"
+                   styleName="{style.chunkTypeLabel} "
+                   title="Change Chunk Type"/>
+          <g:HTMLPanel styleName="{style.dropDownArrow}"></g:HTMLPanel>
+        </g:HTMLPanel>
         <g:Image styleName="{style.button}" title="Modify Chunk Options"
                  ui:field="options_"></g:Image>
         <g:Image styleName="{style.prevButton}" ui:field="runPrevious_"></g:Image>

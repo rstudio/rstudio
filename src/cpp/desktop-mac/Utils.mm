@@ -98,6 +98,7 @@ void initializeSystemPrefs()
    [defaults setBool:YES forKey: @"WebKitWebGLEnabled"];
    [defaults setBool:YES forKey: @"WebKitDeveloperExtras"];
    [defaults setBool:YES forKey: @"WebKitJavaScriptCanAccessClipboard"];
+   [defaults setBool:NO forKey: @"NSFunctionBarAPIEnabled"];
 }
  
 // PORT: from DesktopUtils.cpp

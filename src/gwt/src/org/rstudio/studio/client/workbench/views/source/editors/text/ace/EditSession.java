@@ -122,6 +122,14 @@ public class EditSession extends JavaScriptObject
    public native final int getScreenLength() /*-{
       return this.getScreenLength();
    }-*/;
+   
+   public native final void setScrollTop(int top) /*-{
+      this.setScrollTop(top);
+   }-*/;
+
+   public native final int getScrollTop() /*-{
+      return this.getScrollTop();
+   }-*/;
 
    public native final UndoManager getUndoManager() /*-{
       return this.getUndoManager();
@@ -185,6 +193,14 @@ public class EditSession extends JavaScriptObject
                                      boolean inFront) /*-{
       return this.addMarker(range, clazz, type, inFront);
    }-*/;
+   
+   public native final int addMarker(Range range,
+                                     String clazz,
+                                     JavaScriptObject renderer,
+                                     boolean inFront)
+   /*-{
+      return this.addMarker(range, clazz, renderer, inFront);
+   }-*/;
 
    public native final void removeMarker(int markerId) /*-{
       this.removeMarker(markerId);
@@ -222,13 +238,20 @@ public class EditSession extends JavaScriptObject
       return this.getMarkers(true)[id];
    }-*/;
    
+   public final AnchoredRange createAnchoredRange(Position start, Position end)
+   {
+      return createAnchoredRange(start, end, true);
+   }
+   
    public final native AnchoredRange createAnchoredRange(Position start,
-                                                         Position end) /*-{
+                                                         Position end,
+                                                         boolean insertRight)
+   /*-{
       var Range = $wnd.require("ace/range").Range;
       var result = new Range();
       result.start = this.doc.createAnchor(start.row, start.column);
       result.end = this.doc.createAnchor(end.row, end.column);
-      result.end.$insertRight = true;
+      result.end.$insertRight = insertRight;
       return result;
    }-*/;
    
@@ -243,8 +266,16 @@ public class EditSession extends JavaScriptObject
       return getTokenAt(position.getRow(), position.getColumn());
    }
    
+   public native final JsArray<Token> getTokens(int row) /*-{
+      return this.getTokens(row);
+   }-*/;
+   
    public native final Token getTokenAt(int row, int column) /*-{
-      return this.getTokenAt(row, column);
+      var token = this.getTokenAt(row, column);
+      if (token == null)
+         return null;
+      token.column = token.start;
+      return token;
    }-*/;
    
    public native final void setFoldStyle(String style) /*-{

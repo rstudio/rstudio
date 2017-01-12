@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.dependencies;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWith2Args;
@@ -35,6 +36,8 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.dependencies.model.DependencyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
@@ -43,8 +46,34 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class DependencyManager implements InstallShinyEvent.Handler
+public class DependencyManager implements InstallShinyEvent.Handler,
+                                          PackageStateChangedHandler
 {
+   class DependencyRequest
+   {
+      DependencyRequest(
+            String progressCaptionIn,
+            String userActionIn,
+            CommandWith2Args<String,Command> userPromptIn,
+            Dependency[] dependenciesIn,
+            boolean silentEmbeddedUpdateIn,
+            CommandWithArg<Boolean> onCompleteIn)
+      {
+         progressCaption = progressCaptionIn;
+         userAction = userActionIn;
+         userPrompt = userPromptIn;
+         dependencies = dependenciesIn;
+         silentEmbeddedUpdate = silentEmbeddedUpdateIn;
+         onComplete = onCompleteIn;
+      }
+      String progressCaption;
+      String userAction;
+      CommandWith2Args<String,Command> userPrompt;
+      Dependency[] dependencies;
+      boolean silentEmbeddedUpdate;
+      CommandWithArg<Boolean> onComplete;
+   }
+   
    @Inject
    public DependencyManager(GlobalDisplay globalDisplay,
                             DependencyServerOperations server,
@@ -52,8 +81,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
    {
       globalDisplay_ = globalDisplay;
       server_ = server;
+      satisfied_ = new ArrayList<Dependency>();
+      requestQueue_ = new LinkedList<DependencyRequest>();
       
       eventBus.addHandler(InstallShinyEvent.TYPE, this);
+      eventBus.addHandler(PackageStateChangedEvent.TYPE, this);
    }
    
    public void withDependencies(String progressCaption,
@@ -90,7 +122,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          "Packrat",
          userAction,
          new Dependency[] {
-            Dependency.cranPackage("packrat", "0.4.7", true)
+            Dependency.cranPackage("packrat", "0.4.8-1", true)
          },
          false,
          new CommandWithArg<Boolean>()
@@ -119,8 +151,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       if (requiresRmarkdown)
          deps.addAll(rmarkdownDependencies());
-      deps.add(Dependency.cranPackage("packrat", "0.4.7", true));
-      deps.add(Dependency.cranPackage("rsconnect", "0.4.3", true));
+      deps.add(Dependency.cranPackage("packrat", "0.4.8-1", true));
+      deps.add(Dependency.embeddedPackage("rsconnect"));
       
       withDependencies(
         "Publishing",
@@ -140,11 +172,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withRMarkdown(String progressCaption, String userAction, 
          final Command command)
    {
-     withDependencies(   
+     withDependencies(
         progressCaption,
         userAction, 
         rmarkdownDependenciesArray(), 
-        true, // we want to update to the embedded versoin if needed
+        true, // we want to update to the embedded version if needed
         new CommandWithArg<Boolean>()
         {
          @Override
@@ -157,6 +189,17 @@ public class DependencyManager implements InstallShinyEvent.Handler
      );
    }
    
+   public void withRMarkdown(String progressCaption, String userAction, 
+         final CommandWithArg<Boolean> command)
+   {
+     withDependencies(
+        progressCaption,
+        userAction, 
+        rmarkdownDependenciesArray(), 
+        true, 
+        command);
+   }
+
    public static List<Dependency> rmarkdownDependencies()
    {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
@@ -168,12 +211,13 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("stringr", "0.6"));
       deps.add(Dependency.cranPackage("yaml", "2.1.5"));
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
-      deps.add(Dependency.cranPackage("htmltools", "0.2.4"));
+      deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
       deps.add(Dependency.cranPackage("caTools", "1.14"));
       deps.add(Dependency.cranPackage("bitops", "1.0-6"));
-      deps.add(Dependency.cranPackage("knitr", "1.13", true));
+      deps.add(Dependency.cranPackage("knitr", "1.14", true));
       deps.add(Dependency.cranPackage("jsonlite", "0.9.19"));
       deps.add(Dependency.cranPackage("base64enc", "0.1-3"));
+      deps.add(Dependency.cranPackage("rprojroot", "1.0"));
       deps.add(Dependency.embeddedPackage("rmarkdown"));
       return deps;
    }
@@ -213,9 +257,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
        withDependencies(
           "Checking installed packages",
           userPrompt,
-          shinyDependenciesArray(
-              "0.11.0", // shiny version
-              "0.2.6"), // htmltools version
+          shinyDependenciesArray(),
           true,
           new CommandWithArg<Boolean>()
           {
@@ -232,9 +274,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withShinyAddins(final Command command)
    {
       // define dependencies
-      ArrayList<Dependency> deps = shinyDependencies(
-                                    "0.13", // shiny version
-                                    "0.3"); // htmltools version
+      ArrayList<Dependency> deps = shinyDependencies(); // htmltools version
       deps.add(Dependency.cranPackage("miniUI", "0.1.1", true));
       deps.add(Dependency.cranPackage("rstudioapi", "0.5", true));
       
@@ -255,16 +295,13 @@ public class DependencyManager implements InstallShinyEvent.Handler
      );
    }
    
-   private Dependency[] shinyDependenciesArray(String shinyVersion,
-                                               String htmltoolsVersion)
+   private Dependency[] shinyDependenciesArray()
    {
-      ArrayList<Dependency> deps = shinyDependencies(shinyVersion,
-                                                     htmltoolsVersion);
+      ArrayList<Dependency> deps = shinyDependencies();
       return deps.toArray(new Dependency[deps.size()]);
    }
 
-   private ArrayList<Dependency> shinyDependencies(String shinyVersion,
-         String htmltoolsVersion)
+   private ArrayList<Dependency> shinyDependencies()
          {
       ArrayList<Dependency> deps = new ArrayList<Dependency>();
       deps.add(Dependency.cranPackage("Rcpp", "0.11.5"));
@@ -274,8 +311,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
       deps.add(Dependency.cranPackage("xtable", "1.7"));
       deps.add(Dependency.cranPackage("digest", "0.6"));
       deps.add(Dependency.cranPackage("R6", "2.0"));
-      deps.add(Dependency.cranPackage("htmltools", htmltoolsVersion));
-      deps.add(Dependency.cranPackage("shiny", shinyVersion, true));
+      deps.add(Dependency.cranPackage("sourcetools", "0.1.5"));
+      deps.add(Dependency.cranPackage("htmltools", "0.3.5"));
+      deps.add(Dependency.cranPackage("shiny", "0.13", true));
       return deps;
          }
    
@@ -286,6 +324,16 @@ public class DependencyManager implements InstallShinyEvent.Handler
                 new Command() { public void execute() {}});
    }
    
+   @Override
+   public void onPackageStateChanged(PackageStateChangedEvent event)
+   {
+      // when the package state changes, clear the dependency cache -- this
+      // is extremely conservative as it's unlikely most (or any) of the
+      // packages have been invalidated, but it's safe to do so since it'll
+      // just cause us to hit the server once more to verify
+      satisfied_.clear();
+   }
+
    public void withDataImportCSV(String userAction, final Command command)
    {
      withDependencies(
@@ -581,21 +629,72 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                  final boolean silentEmbeddedUpdate,
                                  final CommandWithArg<Boolean> onComplete)
    {
-      // convert dependencies to JsArray
-      JsArray<Dependency> deps = JsArray.createArray().cast();
-      deps.setLength(dependencies.length);
-      for (int i = 0; i<deps.length(); i++)
-         deps.set(i, dependencies[i]);
+      // add the request to the queue rather than processing it right away; 
+      // this frees us of the burden of trying to de-dupe requests for the
+      // same packages which may occur simultaneously (since we also cache 
+      // results, all such duplicate requests will return simultaneously, fed
+      // by a single RPC)
+      requestQueue_.add(new DependencyRequest(progressCaption, userAction, 
+            userPrompt, dependencies, silentEmbeddedUpdate, 
+            new CommandWithArg<Boolean>()
+            {
+               @Override
+               public void execute(Boolean arg)
+               {
+                  // complete the user action, if any
+                  onComplete.execute(arg);
+
+                  // process the next request in the queue
+                  processingQueue_ = false;
+                  processRequestQueue();
+               }
+            }));
+      processRequestQueue();
+   }
+   
+   private void processRequestQueue()
+   {
+      if (processingQueue_ == true || requestQueue_.isEmpty())
+         return;
+      processingQueue_ = true;
+      processDependencyRequest(requestQueue_.pop());
+   }
+   
+   private void processDependencyRequest(final DependencyRequest req)
+   {
+      // convert dependencies to JsArray, excluding satisfied dependencies
+      final JsArray<Dependency> deps = JsArray.createArray().cast();
+      for (int i = 0; i < req.dependencies.length; i++)
+      {
+         boolean satisfied = false;
+         for (Dependency d: satisfied_)
+         {
+            if (req.dependencies[i].isEqualTo(d))
+            {
+               satisfied = true;
+               break;
+            }
+         }
+         if (!satisfied)
+            deps.push(req.dependencies[i]);
+      }
       
+      // if no unsatisfied dependencies were found, we're done already
+      if (deps.length() == 0)
+      {
+         req.onComplete.execute(true);
+         return;
+      }
+
       // create progress indicator
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
             250,
-            progressCaption + "...").getIndicator();
+            req.progressCaption + "...").getIndicator();
       
       // query for unsatisfied dependencies
       server_.unsatisfiedDependencies(
-            deps, silentEmbeddedUpdate, 
+            deps, req.silentEmbeddedUpdate, 
             new ServerRequestCallback<JsArray<Dependency>>() {
 
          @Override
@@ -603,11 +702,12 @@ public class DependencyManager implements InstallShinyEvent.Handler
                               final JsArray<Dependency> unsatisfiedDeps)
          {
             progress.onCompleted();
+            updateSatisfied(deps, unsatisfiedDeps);
             
             // if we've satisfied all dependencies then execute the command
             if (unsatisfiedDeps.length() == 0)
             {
-               onComplete.execute(true);
+               req.onComplete.execute(true);
                return;
             }
             
@@ -632,12 +732,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
             if (!unsatisfiedVersions.isEmpty())
             {
                // error if we can't satisfy requirements
-               globalDisplay_.showErrorMessage(userAction, 
+               globalDisplay_.showErrorMessage(
+                     StringUtil.isNullOrEmpty(req.userAction) ?
+                           "Packages Not Found" : req.userAction, 
                      "Required package versions could not be found:\n\n" +
                      unsatisfiedVersions + "\n" +
                      "Check that getOption(\"repos\") refers to a CRAN " + 
                      "repository that contains the needed package versions.");
-               onComplete.execute(false);
+               req.onComplete.execute(false);
             }
             else
             {
@@ -648,10 +750,10 @@ public class DependencyManager implements InstallShinyEvent.Handler
                   @Override
                   public void execute(Boolean confirmed)
                   {
-                     // bail if 
+                     // bail if user didn't confirm
                      if (!confirmed)
                      {
-                        onComplete.execute(false);
+                        req.onComplete.execute(false);
                         return;
                      }
 
@@ -667,14 +769,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
                      }
                      installDependencies(
                            newArray, 
-                           silentEmbeddedUpdate, 
-                           onComplete);
+                           req.silentEmbeddedUpdate, 
+                           req.onComplete);
                   }
                };
                
-               if (userPrompt != null)
+               if (req.userPrompt != null)
                {
-                  userPrompt.execute(describeDepPkgs(unsatisfiedDeps), 
+                  req.userPrompt.execute(describeDepPkgs(unsatisfiedDeps), 
                          new Command()
                          {
                            @Override
@@ -686,7 +788,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                }
                else
                {
-                  confirmPackageInstallation(userAction, 
+                  confirmPackageInstallation(req.userAction, 
                                              unsatisfiedDeps,
                                              installCommand);
                }
@@ -697,7 +799,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
          public void onError(ServerError error)
          {
             progress.onError(error.getUserMessage());
-            onComplete.execute(false);
+            req.onComplete.execute(false);
          }
       });
       
@@ -821,7 +923,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       }
       else
       {
-         onComplete.execute(true);
+         onComplete.execute(false);
       }
    }
    
@@ -836,24 +938,80 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withUnsatisfiedDependencies(final Dependency dependency,
                                            final ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
+      // determine if already satisfied
+      for (Dependency d: satisfied_)
+      {
+         if (d.isEqualTo(dependency))
+         {
+            JsArray<Dependency> empty = JsArray.createArray().cast();
+            requestCallback.onResponseReceived(empty);
+            return;
+         }
+      }
+
       List<Dependency> dependencies = new ArrayList<Dependency>();
       dependencies.add(dependency);
       withUnsatisfiedDependencies(dependencies, requestCallback);
    }
    
-   public void withUnsatisfiedDependencies(final List<Dependency> dependencies,
+   private void withUnsatisfiedDependencies(final List<Dependency> dependencies,
                                            final ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
-      JsArray<Dependency> jsDependencies = JsArray.createArray(dependencies.size()).cast();
+      final JsArray<Dependency> jsDependencies = 
+            JsArray.createArray(dependencies.size()).cast();
       for (int i = 0; i < dependencies.size(); i++)
          jsDependencies.set(i, dependencies.get(i));
       
       server_.unsatisfiedDependencies(
             jsDependencies,
             false,
-            requestCallback);
+            new ServerRequestCallback<JsArray<Dependency>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<Dependency> unsatisfied)
+               {
+                  updateSatisfied(jsDependencies, unsatisfied);
+                  requestCallback.onResponseReceived(unsatisfied);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  requestCallback.onError(error);
+               }
+            });
    }
    
+   /**
+    * Updates the cache of satisfied dependencies.
+    * 
+    * @param all The dependencies that were requested
+    * @param unsatisfied The dependencies that were not satisfied
+    */
+   private void updateSatisfied(JsArray<Dependency> all, 
+                                JsArray<Dependency> unsatisfied)
+   {
+      for (int i = 0; i < all.length(); i++)
+      {
+         boolean satisfied = true;
+         for (int j = 0; j < unsatisfied.length(); j++)
+         {
+            if (unsatisfied.get(j).isEqualTo(all.get(i)))
+            {
+               satisfied = false;
+               break;
+            }
+         }
+         if (satisfied)
+         {
+            satisfied_.add(all.get(i));
+         }
+      }
+   }
+   
+   private boolean processingQueue_ = false;
+   private final LinkedList<DependencyRequest> requestQueue_;
    private final GlobalDisplay globalDisplay_;
    private final DependencyServerOperations server_;
+   private final ArrayList<Dependency> satisfied_;
 }

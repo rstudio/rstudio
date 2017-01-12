@@ -46,27 +46,55 @@ typedef struct SEXPREC *SEXP;
 
 #endif
 
-#ifdef _WIN32
-// on Windows platforms, use a manual definition of sigjmp_buf that corresponds
-// to how R lays out the structure in memory
-
-namespace {
-
-typedef struct
-{
-  jmp_buf buf;
-  int sigmask;
-  int savedmask;
-}
-sigjmp_buf[1];
-
-} // anonymous namespace
-#endif
-
-typedef struct RCNTXT {
-    struct RCNTXT *nextcontext;
+typedef struct RCNTXT_33 {
+    struct RCNTXT_33 *nextcontext;
     int callflag;
+#ifdef _WIN32
+    struct
+    {
+      jmp_buf buf;
+      int sigmask;
+      int savedmask;
+    } cjumpbuf;
+#else
     sigjmp_buf cjmpbuf;
+#endif
+    int cstacktop;
+    int evaldepth;
+    SEXP promargs;
+    SEXP callfun;
+    SEXP sysparent;
+    SEXP call;
+    SEXP cloenv;
+    SEXP conexit;
+    void (*cend)(void *);
+    void *cenddata;
+    void *vmax;
+    int intsusp;
+    int gcenabled;
+    SEXP handlerstack;
+    SEXP restartstack;
+    struct RPRSTACK *prstack;
+    SEXP *nodestack;
+#ifdef BC_INT_STACK
+    IStackval *intstack;
+#endif
+    SEXP srcref;
+} RCNTXT_33;
+
+typedef struct RCNTXT_32 {
+    struct RCNTXT_32 *nextcontext;
+    int callflag;
+#ifdef _WIN32
+    struct
+    {
+      jmp_buf buf;
+      int sigmask;
+      int savedmask;
+    } cjumpbuf;
+#else
+    sigjmp_buf cjmpbuf;
+#endif
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -87,7 +115,7 @@ typedef struct RCNTXT {
     IStackval *intstack;
 #endif
     SEXP srcref;
-} RCNTXT, *context;
+} RCNTXT_32;
 
 enum {
     CTXT_TOPLEVEL = 0,
@@ -106,9 +134,9 @@ enum {
 namespace rstudio {
 namespace r {
 
-inline RCNTXT* getGlobalContext()
+inline void* getGlobalContext()
 {
-   return static_cast<RCNTXT*>(R_GlobalContext);
+   return R_GlobalContext;
 }
 
 } // namespace r

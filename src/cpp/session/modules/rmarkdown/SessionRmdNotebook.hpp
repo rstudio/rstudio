@@ -50,7 +50,9 @@ enum ExecScope
    // an entire chunk is being executed
    ExecScopeChunk   = 0,
    // a section of a chunk is being executed (e.g. via Ctrl+Enter)
-   ExecScopePartial = 1
+   ExecScopePartial = 1,
+   // an inline R chunk is being executed
+   ExecScopeInline  = 2
 };
 
 enum CommitMode
@@ -59,6 +61,12 @@ enum CommitMode
    ModeCommitted   = 0,
    // changes should held for commit until save
    ModeUncommitted = 1
+};
+
+enum Condition
+{
+   ConditionMessage = 0,
+   ConditionWarning = 1
 };
 
 core::Error initialize();
@@ -77,9 +85,16 @@ struct Events : boost::noncopyable
                 const std::string&)>
                 onChunkConsoleOutput;
 
-   boost::signal<void(const core::FilePath&, const core::FilePath&)> onPlotOutput;
-   boost::signal<void(const core::FilePath&, const core::FilePath&)> onHtmlOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&, 
+                      const core::json::Value& metadata, unsigned ordinal)> 
+                         onPlotOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&,
+                      const core::json::Value& metadata)> onHtmlOutput;
    boost::signal<void(const core::json::Object&)> onErrorOutput;
+   boost::signal<void(const core::FilePath&, const core::FilePath&,
+                      const core::json::Value& metadata)> onDataOutput;
+   boost::signal<void(Condition condition, const std::string& message)> 
+                         onCondition;
 };
 
 Events& events();

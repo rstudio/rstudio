@@ -18,6 +18,11 @@
 #define SESSION_NOTEBOOK_PLOTS_HPP
 
 #include <boost/function.hpp>
+#include <boost/signals/connection.hpp>
+#include <core/FilePath.hpp>
+#include <r/RSexp.hpp>
+
+#include "NotebookCapture.hpp"
 
 #define kDisplayListExt ".snapshot"
 
@@ -36,13 +41,55 @@ namespace notebook {
 
 enum PlotSizeBehavior
 {
-   PlotSizeAutomatic,
-   PlotSizeManual
+   PlotSizeAutomatic = 0,
+   PlotSizeManual    = 1
 };
 
-core::Error beginPlotCapture(double height, double width, 
-      PlotSizeBehavior sizeBehavior, 
+class PlotCapture : public NotebookCapture
+{
+public:
+   PlotCapture();
+   ~PlotCapture();
+   core::Error connectPlots(const std::string& docId, 
+      const std::string& chunkId, const std::string& nbCtxId, 
+      double height, double width, PlotSizeBehavior sizeBehavior,
       const core::FilePath& plotFolder);
+   void disconnect();
+   void onExprComplete();
+private:
+   core::Error setGraphicsOption();
+   void processPlots(bool ignoreEmpty);
+   void removeGraphicsDevice();
+   void onNewPlot();
+   void saveSnapshot();
+   void onBeforeNewPlot();
+   bool isGraphicsDeviceActive();
+
+   core::FilePath plotFolder_;
+   bool hasPlots_;
+   bool plotPending_;
+   PlotSizeBehavior sizeBehavior_;
+   core::FilePath snapshotFile_;
+
+   std::string docId_;
+   std::string chunkId_;
+   std::string nbCtxId_;
+
+   r::sexp::PreservedSEXP deviceOption_;
+   r::sexp::PreservedSEXP lastPlot_;
+
+   unsigned lastOrdinal_;
+
+   boost::signals::connection onBeforeNewPlot_;
+   boost::signals::connection onBeforeNewGridPage_;
+   boost::signals::connection onNewPlot_;
+
+   double width_;
+   double height_;
+
+   std::list<core::json::Value> conditions_;
+};
+
 
 core::Error initPlots();
 

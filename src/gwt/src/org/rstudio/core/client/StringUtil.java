@@ -1046,9 +1046,39 @@ public class StringUtil
       return id;
    }
    
+   public static String ensureQuoted(String string)
+   {
+      String[] quotes = new String[] { "\"", "'", "`" };
+      for (String quote : quotes)
+         if (string.startsWith(quote) && string.endsWith(quote))
+            return string;
+      
+      return "\"" + string.replaceAll("\"", "\\\\\"") + "\"";
+   }
+   
+   public static String stringValue(String string)
+   {
+      String[] quotes = new String[] { "\"", "'", "`" };
+      for (String quote : quotes)
+      {
+         if (string.startsWith(quote) && string.endsWith(quote))
+         {
+            String substring = string.substring(1, string.length() - 1);
+            return substring.replaceAll("\\\\" + quote, quote);
+         }
+      }
+      
+      return string;
+   }
+   
    public static final native String encodeURI(String string) /*-{
       return $wnd.encodeURI(string);
    }-*/;
+   
+   public static final native String encodeURIComponent(String string) /*-{
+      return $wnd.encodeURIComponent(string);
+   }-*/;
+   
    
    public static final native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");

@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -17,9 +17,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -33,40 +34,55 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.cellview.client.TextHeader;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.LayoutPanel;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
+import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ImageButtonColumn;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.RStudioDataGridResources;
 import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.Base64ImageCell;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SearchWidget;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent.Handler;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.PerformConnectionEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionAction;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
+import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 
-public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresenter.Display
+public class ConnectionsPane extends WorkbenchPane 
+                             implements ConnectionsPresenter.Display
 {
    @Inject
-   public ConnectionsPane(Commands commands)
+   public ConnectionsPane(Commands commands, EventBus eventBus)
    {
       // initialize
       super("Connections");
       commands_ = commands;
+      eventBus_ = eventBus;
       
       // create main panel
       mainPanel_ = new LayoutPanel();
@@ -79,14 +95,30 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             return connection.hashCode();
          }
       };
-      connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
       
-      // add type column
-      typeColumn_ = new Column<Connection, ImageResource>(new ImageResourceCell()) {
+      selectionModel_ = new SingleSelectionModel<Connection>();
+      connectionsDataGrid_ = new DataGrid<Connection>(1000, RES, keyProvider_);
+      connectionsDataGrid_.setSelectionModel(selectionModel_);
+      selectionModel_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+      {
          @Override
-         public ImageResource getValue(Connection object)
+         public void onSelectionChange(SelectionChangeEvent event)
          {
-            return RES.spark();
+            Connection selectedConnection = selectionModel_.getSelectedObject();
+            if (selectedConnection != null)
+               fireEvent(new ExploreConnectionEvent(selectedConnection));  
+         }
+      });
+       
+      // add type column; this is a package-provided image we scale to 16x16 
+      typeColumn_ = new Column<Connection, String>(new Base64ImageCell(16, 16))
+      {
+         @Override
+         public String getValue(Connection connection)
+         {
+            if (StringUtil.isNullOrEmpty(connection.getIconData()))
+               return null;
+            return connection.getIconData();
          }
       };
          
@@ -98,10 +130,10 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
          @Override
          public String getValue(Connection connection)
          {
-            return connection.getHost();
+            return connection.getDisplayName();
          }
       };      
-      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Server"));
+      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Connection"));
       connectionsDataGrid_.setColumnWidth(hostColumn_, 50, Unit.PCT);
       
       // add status column
@@ -116,6 +148,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
                return "";
          }
       };
+      statusColumn_.setCellStyleNames(RES.dataGridStyle().statusColumn());
       connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
       connectionsDataGrid_.setColumnWidth(statusColumn_, 75, Unit.PX);
       
@@ -155,16 +188,6 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       // create connection explorer, add it, and hide it
       connectionExplorer_ = new ConnectionExplorer();
       connectionExplorer_.setSize("100%", "100%");
-      connectionExplorer_.setConnected(commands_.disconnectConnection().isVisible());
-      commands_.disconnectConnection().addVisibleChangedHandler(
-            new VisibleChangedHandler() {
-
-         @Override
-         public void onVisibleChanged(AppCommand command)
-         {
-            connectionExplorer_.setConnected(command.isVisible());
-         }   
-      });
       
       mainPanel_.add(connectionExplorer_);
       mainPanel_.setWidgetTopBottom(connectionExplorer_, 0, Unit.PX, 0, Unit.PX);
@@ -172,6 +195,8 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
   
       // create widget
       ensureWidget();
+      
+      setSecondaryToolbarVisible(false);
    }
    
    @Override
@@ -184,13 +209,19 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    @Override
    public void setActiveConnections(List<ConnectionId> connections)
    {
+      // update active connection
       activeConnections_ = connections;
       sortConnections();
-      connectionsDataGrid_.redraw();
+      
+      // redraw the data grid
+      connectionsDataGrid_.redraw();  
+      
+      // update explored connection
+      connectionExplorer_.setConnected(exploredConnection_ != null &&
+                                       isConnected(exploredConnection_.getId()));
    }
   
-   @Override
-   public boolean isConnected(ConnectionId id)
+   private boolean isConnected(ConnectionId id)
    {
       for (int i=0; i<activeConnections_.size(); i++)
          if (activeConnections_.get(i).equalTo(id))
@@ -217,39 +248,82 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    {
       return addHandler(handler, ExploreConnectionEvent.TYPE);
    }
+
+   @Override
+   public HandlerRegistration addExecuteConnectionActionHandler(Handler handler)
+   {
+      return addHandler(handler, ExecuteConnectionActionEvent.TYPE);
+   }
    
    @Override
    public void showConnectionExplorer(final Connection connection, 
                                       String connectVia)
    {
-      connectionExplorer_.setConnection(connection, connectVia);
+      selectionModel_.clear();
       
-      animate(connectionsDataGrid_,
+      setConnection(connection, connectVia);
+      
+      installConnectionExplorerToolbar(connection);
+      
+      transitionMainPanel(
+              connectionsDataGrid_,
               connectionExplorer_,
+              true,
               true,
               new Command() {
                @Override
                public void execute()
                {
-                  installConnectionExplorerToolbar(connection);
+                  connectionExplorer_.onResize();
                }
       });
    }
    
    @Override
-   public void showConnectionsList()
+   public void setExploredConnection(Connection connection)
    {
-      animate(connectionExplorer_,
+      setConnection(connection, connectionExplorer_.getConnectVia());
+   }
+   
+   private void setConnection(Connection connection, String connectVia)
+   {
+      exploredConnection_ = connection;
+      
+      if (exploredConnection_ != null) 
+      {
+         connectionExplorer_.setConnection(connection, connectVia);
+         connectionExplorer_.setConnected(isConnected(connection.getId()));
+      }
+   }
+   
+   @Override
+   public void updateExploredConnection(String hint)
+   {
+      connectionExplorer_.updateTableBrowser(hint);
+   }
+   
+   @Override
+   public void showConnectionsList(boolean animate)
+   {
+      exploredConnection_ = null;
+ 
+      installConnectionsToolbar();
+      
+      transitionMainPanel(
+              connectionExplorer_,
               connectionsDataGrid_,
               false,
+              animate,
               new Command() {
                 @Override
                 public void execute()
                 {
-                   installConnectionsToolbar();
+                   
+                  
                 }
              });
    }
+   
    
    @Override
    public HasClickHandlers backToConnectionsButton()
@@ -263,30 +337,28 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       return connectionExplorer_.getConnectVia();
    }
    
-   
    @Override
-   public void addToConnectionExplorer(String item)
+   public String getConnectCode()
    {
-      connectionExplorer_.addItem(item);
+      return connectionExplorer_.getConnectCode();
    }
    
+   @Override
+   public void showConnectionProgress()
+   {
+      connectionExplorer_.showConnectionProgress();
+   }
+   
+   @Override
+   public void onResize()
+   {
+      connectionExplorer_.onResize();
+   }
    
    @Override
    protected Toolbar createMainToolbar()
    {
       toolbar_ = new Toolbar();
-      
-      ToolbarPopupMenu actionsMenu = new ToolbarPopupMenu();
-      actionsMenu.addItem(commands_.sparkLog().createMenuItem(false));
-      actionsMenu.addItem(commands_.sparkUI().createMenuItem(false));
-      actionsMenu.addSeparator();
-      actionsMenu.addItem(commands_.removeConnection().createMenuItem(false));
-      
-      actionsMenuButton_ = new ToolbarButton(
-            "",
-            StandardIcons.INSTANCE.more_actions(),
-            actionsMenu);
-
    
       searchWidget_ = new SearchWidget(new SuggestOracle() {
          @Override
@@ -301,12 +373,60 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       
       backToConnectionsButton_ = new ToolbarButton(
             commands_.helpBack().getImageResource(), (ClickHandler)null);
-      connectionName_ = new ToolbarLabel();
-      connectionName_.getElement().getStyle().setMarginRight(8, Unit.PX);
+      backToConnectionsButton_.setTitle("View all connections");
+       
+      // connect meuu
+      ToolbarPopupMenu connectMenu = new ToolbarPopupMenu();
+      connectMenu.addItem(connectMenuItem(
+            commands_.historySendToConsole().getImageResource(),
+            "R Console",
+            ConnectionOptions.CONNECT_R_CONSOLE));
+      connectMenu.addSeparator();
+      connectMenu.addItem(connectMenuItem(
+            commands_.newSourceDoc().getImageResource(),
+            "New R Script",
+            ConnectionOptions.CONNECT_NEW_R_SCRIPT));
+      connectMenu.addItem(connectMenuItem(
+         commands_.newRNotebook().getImageResource(),
+         "New R Notebook",
+            ConnectionOptions.CONNECT_NEW_R_NOTEBOOK));
+      if (BrowseCap.INSTANCE.canCopyToClipboard())
+      {
+         connectMenu.addSeparator();
+         connectMenu.addItem(connectMenuItem(
+               commands_.copyPlotToClipboard().getImageResource(),
+               "Copy to Clipboard",
+               ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
+      }
+      connectMenuButton_ = new ToolbarButton(
+            "Connect", 
+            commands_.newConnection().getImageResource(), 
+            connectMenu);
+      
+      // manage connect menu visibility
+      connectMenuButton_.setVisible(!commands_.disconnectConnection().isVisible());
+      commands_.disconnectConnection().addVisibleChangedHandler(
+                                       new VisibleChangedHandler() {
+         @Override
+         public void onVisibleChanged(AppCommand command)
+         {
+            connectMenuButton_.setVisible(
+                  !commands_.disconnectConnection().isVisible());
+         }  
+      });
           
       installConnectionsToolbar();
       
       return toolbar_;
+   }
+   
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      secondaryToolbar_ = new SecondaryToolbar();
+      secondaryToolbar_.addLeftWidget(connectionName_ = new ToolbarLabel());
+      
+      return secondaryToolbar_;
    }
    
    @Override 
@@ -322,9 +442,32 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       connectionsDataGrid_.redraw();
    }
    
-   private void animate(final Widget from,
+   private MenuItem connectMenuItem(ImageResource icon, 
+         String text, 
+         final String connectVia)
+   {
+      return new MenuItem(
+            AppCommand.formatMenuLabel(icon, text, null),
+            true,
+            new Scheduler.ScheduledCommand() {
+
+               @Override
+               public void execute()
+               {
+                  eventBus_.fireEvent(
+                        new PerformConnectionEvent(
+                              connectVia, 
+                              connectionExplorer_.getConnectCode()));    
+               }
+            });
+   }
+
+   
+   private void transitionMainPanel(
+                        final Widget from,
                         final Widget to,
                         boolean rightToLeft,
+                        boolean animate,
                         final Command onComplete)
    {
       assert from != to;
@@ -346,19 +489,40 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
             0, Unit.PX,
             width, Unit.PX);
 
-      mainPanel_.animate(300, new AnimationCallback()
-      {
-         public void onAnimationComplete()
+      to.setVisible(true);
+      from.setVisible(true);
+      
+      final Command completeLayout = new Command() {
+
+         @Override
+         public void execute()
          {
             mainPanel_.setWidgetLeftRight(to, 0, Unit.PX, 0, Unit.PX);
+            from.setVisible(false);
             mainPanel_.forceLayout();
             onComplete.execute();
          }
-
-         public void onLayout(Layer layer, double progress)
+         
+      };
+      
+      if (animate)
+      {
+         mainPanel_.animate(300, new AnimationCallback()
          {
-         }
-      });
+            public void onAnimationComplete()
+            {
+               completeLayout.execute();
+            }
+   
+            public void onLayout(Layer layer, double progress)
+            {
+            }
+         });
+      }
+      else
+      {
+         completeLayout.execute();
+      }
    }
    
    private void installConnectionsToolbar()
@@ -366,27 +530,74 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       toolbar_.removeAllWidgets();
       
       toolbar_.addLeftWidget(commands_.newConnection().createToolbarButton());
+      
+      toolbar_.addLeftSeparator();
         
       toolbar_.addRightWidget(searchWidget_);
+      
+      setSecondaryToolbarVisible(false);
    }
    
-   private void installConnectionExplorerToolbar(Connection connection)
+   private void installConnectionExplorerToolbar(final Connection connection)
    {
       toolbar_.removeAllWidgets();
-      
      
       toolbar_.addLeftWidget(backToConnectionsButton_);
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(connectionName_);
+
+      toolbar_.addLeftWidget(connectMenuButton_);
+      
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.connectConnection().createToolbarButton());
+      
+      if (isConnected(connection.getId()) && connection.getActions() != null)
+      {
+         // if we have any actions, create a toolbar button for each one
+         for (int i = 0; i < connection.getActions().length(); i++)
+         {
+            final ConnectionAction action = connection.getActions().get(i);
+
+            // use the supplied base64 icon data if it was provided
+            Image icon = StringUtil.isNullOrEmpty(action.getIconData()) ?
+                  null :
+                  new Image(action.getIconData());
+            
+            // force to 20x18
+            if (icon != null)
+            {
+               icon.setWidth("20px");
+               icon.setHeight("18px");
+            }
+             
+            ToolbarButton button = new ToolbarButton(action.getName(), 
+                  icon, // left image
+                  null, // right image
+                  // invoke the action when the button is clicked
+                  new ClickHandler()
+                  {
+                     @Override
+                     public void onClick(ClickEvent arg0)
+                     {
+                        fireEvent(new ExecuteConnectionActionEvent(
+                              connection.getId(), action.getName()));
+                     }
+                  });
+            
+            // move the toolbar button up 5px to account for missing icon if
+            // none was supplied
+            if (StringUtil.isNullOrEmpty(action.getIconData()))
+               button.getElement().getStyle().setMarginTop(-5, Unit.PX);
+            toolbar_.addLeftWidget(button);
+            toolbar_.addLeftSeparator();
+         }
+      }
+
       toolbar_.addLeftWidget(commands_.disconnectConnection().createToolbarButton());
-      toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(actionsMenuButton_);
-     
       
-      connectionName_.setText(connection.getHost());
+      toolbar_.addRightWidget(commands_.removeConnection().createToolbarButton());
+      toolbar_.addRightWidget(commands_.refreshConnection().createToolbarButton());
       
+      connectionName_.setText(connection.getDisplayName());
+      setSecondaryToolbarVisible(true);
    }
    
    private void sortConnections()
@@ -406,7 +617,7 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
           else if (conn2Connected && !conn1Connected)
              return 1;
           else
-             return Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
+             return -1 * Double.compare(conn1.getLastUsed(), conn2.getLastUsed());
        }       
     });
    }
@@ -415,9 +626,12 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    private Toolbar toolbar_;
    private final LayoutPanel mainPanel_;
    private final DataGrid<Connection> connectionsDataGrid_; 
+   private final SingleSelectionModel<Connection> selectionModel_;
    private final ConnectionExplorer connectionExplorer_;
    
-   private final Column<Connection, ImageResource> typeColumn_;
+   private Connection exploredConnection_ = null;
+   
+   private final Column<Connection, String> typeColumn_;
    private final TextColumn<Connection> hostColumn_;
    private final TextColumn<Connection> statusColumn_;
   
@@ -427,10 +641,13 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
    
    private SearchWidget searchWidget_;
    private ToolbarButton backToConnectionsButton_;
+   private ToolbarButton connectMenuButton_;
+   
+   private SecondaryToolbar secondaryToolbar_;
    private ToolbarLabel connectionName_;
-   private ToolbarButton actionsMenuButton_;
    
    private final Commands commands_;
+   private final EventBus eventBus_;
    
    // Resources, etc ----
    public interface Resources extends RStudioDataGridResources
@@ -439,12 +656,11 @@ public class ConnectionsPane extends WorkbenchPane implements ConnectionsPresent
       Styles dataGridStyle();
         
       ImageResource connectionExploreButton();
-      
-      ImageResource spark();
    }
    
    public interface Styles extends RStudioDataGridStyle
    {
+      String statusColumn();
    }
    
    private static final Resources RES = GWT.create(Resources.class);

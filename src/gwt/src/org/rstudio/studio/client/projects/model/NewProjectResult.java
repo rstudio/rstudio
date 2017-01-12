@@ -25,7 +25,8 @@ public class NewProjectResult
                            String newDefaultProjectLocation,
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions,
-                           NewShinyAppOptions newShinyAppOptions)
+                           NewShinyAppOptions newShinyAppOptions,
+                           ProjectTemplateOptions projectTemplateOptions)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
@@ -35,6 +36,7 @@ public class NewProjectResult
       vcsCloneOptions_ = vcsCloneOptions;
       newPackageOptions_ = newPackageOptions;
       newShinyAppOptions_ = newShinyAppOptions;
+      projectTemplateOptions_ = projectTemplateOptions;
    }
    
    public String getProjectFile()
@@ -91,6 +93,11 @@ public class NewProjectResult
    {
       return newShinyAppOptions_;
    }
+   
+   public ProjectTemplateOptions getProjectTemplateOptions()
+   {
+      return projectTemplateOptions_;
+   }
 
    private final boolean createGitRepo_;
    private final boolean usePackrat_;
@@ -101,4 +108,5 @@ public class NewProjectResult
    private final VcsCloneOptions vcsCloneOptions_;
    private final NewPackageOptions newPackageOptions_;
    private final NewShinyAppOptions newShinyAppOptions_;
+   private final ProjectTemplateOptions projectTemplateOptions_;
 }

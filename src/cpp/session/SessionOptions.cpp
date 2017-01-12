@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,23 @@ namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
 const char* const kDefaultRsclangPath = "bin/rsclang";
+
+void ensureDefaultDirectory(std::string* pDirectory,
+                            const std::string& userHomePath)
+{
+   if (*pDirectory != "~")
+   {
+      FilePath dir = FilePath::resolveAliasedPath(*pDirectory,
+                                                  FilePath(userHomePath));
+      Error error = dir.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         *pDirectory = "~";
+      }
+   }
+}
+
 } // anonymous namespace
 
 Options& options()
@@ -175,6 +192,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("session-save-action-default",
        value<std::string>(&saveActionDefault)->default_value(""),
          "default save action (yes, no, or ask)")
+      ("session-default-working-dir",
+       value<std::string>(&defaultWorkingDir_)->default_value("~"),
+       "default working directory for new sessions")
+      ("session-default-new-project-dir",
+       value<std::string>(&defaultProjectDir_)->default_value("~"),
+       "default directory for new projects")
       ("show-help-home",
        value<bool>(&showHelpHome_)->default_value(false),
          "show help home page at startup");
@@ -293,11 +316,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-sumatra-path",
        value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),
        "Path to SumatraPDF (windows-only)")
+      ("external-winutils-path",
+       value<std::string>(&winutilsPath_)->default_value("bin/winutils"),
+       "Path to Hadoop Winutils (windows-only)")
       ("external-hunspell-dictionaries-path",
        value<std::string>(&hunspellDictionariesPath_)->default_value("resources/dictionaries"),
        "Path to hunspell dictionaries")
       ("external-mathjax-path",
-        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-23"),
+        value<std::string>(&mathjaxPath_)->default_value("resources/mathjax-26"),
         "Path to mathjax library")
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
@@ -326,7 +352,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        "active project" )
       (kScopeSessionOption "," kScopeSessionOptionShort,
         value<std::string>(&scopeId)->default_value(""),
-       "session scope id");
+       "session scope id")
+      ("launcher-token",
+       value<std::string>(&launcherToken_)->default_value(""),
+       "token identifying session launcher");
 
    // overlay options
    options_description overlay("overlay");
@@ -430,6 +459,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    if (standalone())
       core::system::setenv("HOME", userHomePath_);
 
+   // ensure that default working dir and default project dir exist
+   ensureDefaultDirectory(&defaultWorkingDir_, userHomePath_);
+   ensureDefaultDirectory(&defaultProjectDir_, userHomePath_);
+
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
       timeoutMinutes_ = 0;
@@ -466,6 +499,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath_, &gnugrepPath_);
    resolvePath(resourcePath_, &msysSshPath_);
    resolvePath(resourcePath_, &sumatraPath_);
+   resolvePath(resourcePath_, &winutilsPath_);
 #endif
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);

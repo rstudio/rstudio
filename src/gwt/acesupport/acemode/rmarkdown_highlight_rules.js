@@ -30,6 +30,7 @@ var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightR
 var YamlHighlightRules = require("ace/mode/yaml_highlight_rules").YamlHighlightRules;
 var ShHighlightRules = require("ace/mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
+var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var Utils = require("mode/utils");
 
 function makeDateRegex()
@@ -128,10 +129,17 @@ var RMarkdownHighlightRules = function() {
        ["start", "listblock", "allowBlock"]
    );
 
-   // Embed YAML highlight rules, but ensure that they can only be
-   // found at the start of a document. We do this by moving all of the
-   // start rules to a second '$start' state, and ensuring that YAML headers
-   // can only be encountered in the initial 'start' state.
+   // Embed sql highlighting rules
+   Utils.embedRules(
+       this,
+       SqlHighlightRules,
+       "sql",
+       this.$reSqlChunkStartString,
+       this.$reChunkEndString,
+       ["start", "listblock", "allowBlock"]
+   );
+
+   // ensure that YAML highlight rules only start of document
    this.$rules["$start"] = this.$rules["start"].slice();
    for (var key in this.$rules)
    {
@@ -142,7 +150,16 @@ var RMarkdownHighlightRules = function() {
             stateRules[i].next = "$start";
       }
    }
-   
+
+   // escape eagerly from 'start' to '$start' state
+   var startRules = this.$rules["start"];
+   for (var i = 0; i < startRules.length; i++)
+   {
+      if (startRules[i].next == null)
+         startRules[i].next = "$start";
+   }
+
+   // Embed YAML highlighting rules
    Utils.embedRules(
       this,
       YamlHighlightRules,
@@ -155,39 +172,31 @@ var RMarkdownHighlightRules = function() {
       token: ["string"],
       regex: makeDateRegex()
    });
-
 };
 oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
 
 (function() {
 
+   function engineRegex(engine) {
+      return "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(?:.*)engine\\s*\\=\\s*['\"]" + engine + "['\"](?:.*)\\}\\s*$|" +
+         "^(?:[ ]{4})?`{3,}\\s*\\{" + engine + "\\b(?:.*)\\}\\s*$";
+   }
+
    this.$reRChunkStartString =
       "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(.*)\\}\\s*$";
 
-   this.$reCppChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]\\b(?:.*)engine\\s*\\=\\s*['\"]Rcpp['\"](?:.*)\\}\\s*$|" +
-      "^(?:[ ]{4})?`{3,}\\s*\\{[Rr]cpp\\b(?:.*)\\}\\s*$";
-
-   this.$reMarkdownChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{\\s*block\\b(?:.*)\\}\\s*$";
-
-   this.$rePerlChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{perl\\b(?:.*)\\}\\s*$";
-
-   this.$rePythonChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{python\\b(?:.*)\\}\\s*$";
-
-   this.$reRubyChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{ruby\\b(?:.*)\\}\\s*$";
-
-   this.$reShChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{(?:bash|sh)\\b(?:.*)\\}\\s*$";
-
-   this.$reStanChunkStartString =
-      "^(?:[ ]{4})?`{3,}\\s*\\{stan\\b(?:.*)\\}\\s*$";
-
    this.$reChunkEndString =
       "^(?:[ ]{4})?`{3,}\\s*$";
+
+   this.$reCppChunkStartString      = engineRegex("[Rr]cpp");
+   this.$reMarkdownChunkStartString = engineRegex("block");
+   this.$rePerlChunkStartString     = engineRegex("perl");
+   this.$rePythonChunkStartString   = engineRegex("python");
+   this.$reRubyChunkStartString     = engineRegex("ruby");
+   this.$reShChunkStartString       = engineRegex("(?:bash|sh)");
+   this.$reStanChunkStartString     = engineRegex("stan");
+   this.$reSqlChunkStartString      = engineRegex("sql");
+   
    
 }).call(RMarkdownHighlightRules.prototype);
 

@@ -1,0 +1,52 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+<ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
+<ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ChunkConditionBar.ConditionStyle">
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+
+.icon
+{
+  margin-right: 5px;
+  margin-left: 2px;
+  margin-top: 2px;
+}
+
+.contents
+{
+  font-size: 13px;
+  font-family: proportionalFont;
+}
+
+.panel
+{
+  box-sizing: border-box;
+  width: 100%;
+  padding: 4px;
+  border-radius: 3px;
+}
+
+.host
+{
+  box-sizing: border-box;
+  margin-bottom: 5px;
+  margin-top: 5px;
+  margin-left: 7px;
+  margin-right: 7px;
+}
+</ui:style>
+<g:HTMLPanel styleName="{style.host}">
+  <g:VerticalPanel styleName="{style.panel}" ui:field="panel_">
+     <g:HorizontalPanel visible="false" ui:field="messageBar_">
+       <g:Image styleName="{style.icon}" resource="{res.infoSmall}"></g:Image>
+       <g:VerticalPanel styleName="{style.contents}" ui:field="messages_">
+       </g:VerticalPanel>
+     </g:HorizontalPanel>
+     <g:HorizontalPanel visible="false" ui:field="warningBar_">
+       <g:Image styleName="{style.icon}" resource="{res.warningSmall}"></g:Image>
+       <g:VerticalPanel styleName="{style.contents}" ui:field="warnings_">
+       </g:VerticalPanel>
+     </g:HorizontalPanel>
+  </g:VerticalPanel>
+</g:HTMLPanel>
+</ui:UiBinder> 

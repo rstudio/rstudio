@@ -25,14 +25,20 @@ public class RmdRenderPendingEvent extends GwtEvent<RmdRenderPendingEvent.Handle
       void onRmdRenderPending(RmdRenderPendingEvent event);
    }
 
-   public RmdRenderPendingEvent()
+   public RmdRenderPendingEvent(String docId)
    {
+      docId_ = docId;
    }
     
    @Override
    public Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+   
+   public String getDocId()
+   {
+      return docId_;
    }
 
    @Override
@@ -41,5 +47,7 @@ public class RmdRenderPendingEvent extends GwtEvent<RmdRenderPendingEvent.Handle
       handler.onRmdRenderPending(this);
    }
 
+   public final String docId_;
+   
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

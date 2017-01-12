@@ -71,6 +71,7 @@ std::string ActiveSession::readProperty(const std::string& name) const
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
+                             bool initial,
                              std::string* pId) const
 {
    // generate a new id (loop until we find a unique one)
@@ -93,6 +94,7 @@ Error ActiveSessions::create(const std::string& project,
    ActiveSession activeSession(id, dir);
    activeSession.setProject(project);
    activeSession.setWorkingDir(workingDir);
+   activeSession.setInitial(initial);
    activeSession.setLastUsed();
    activeSession.setRunning(false);
 
@@ -195,13 +197,14 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
                                                                 scratchPath));
    else
-      return emptySession();
+      return emptySession(id);
 }
 
 
-boost::shared_ptr<ActiveSession> ActiveSessions::emptySession()
+boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(
+      const std::string& id)
 {
-   return boost::shared_ptr<ActiveSession>(new ActiveSession());
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
 

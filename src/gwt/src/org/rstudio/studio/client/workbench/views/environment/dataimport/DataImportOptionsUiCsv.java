@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -22,10 +23,13 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -41,6 +45,8 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    private final String escapeBoth_ = "both";
    private final String escapeBackslash_ = "backslash";
    private final String escapeDouble_ = "double";
+
+   private DataImportOptionsCsvLocale localeInfo_ = null;
    
    interface DataImportOptionsCsvUiBinder extends UiBinder<HTMLPanel, DataImportOptionsUiCsv> {}
 
@@ -52,6 +58,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    public DataImportOptionsUiCsv()
    {
       super();
+
       mainPanel_ = uiBinder.createAndBindUi(this);
       
       initWidget(mainPanel_);
@@ -89,10 +96,11 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
             isDoubleValue(escapeListBox_.getSelectedValue()),
             columnNamesCheckBox_.getValue().booleanValue(),
             trimSpacesCheckBox_.getValue().booleanValue(),
-            !localeListBox_.getSelectedValue().isEmpty() ? localeListBox_.getSelectedValue() : null,
+            localeInfo_,
             !naListBox_.getSelectedValue().isEmpty() ? naListBox_.getSelectedValue() : null,
             !commentListBox_.getSelectedValue().isEmpty() ? commentListBox_.getSelectedValue() : null,
-            Integer.parseInt(skipTextBox_.getText()));
+            Integer.parseInt(skipTextBox_.getText()),
+            openDataViewerCheckBox_.getValue().booleanValue());
    }
    
    @Override
@@ -113,6 +121,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       
       columnNamesCheckBox_.setValue(true);
       trimSpacesCheckBox_.setValue(true);
+      openDataViewerCheckBox_.setValue(true);
       
       escapeListBox_.addItem("None", "");
       escapeListBox_.addItem("Backslash", escapeBackslash_);
@@ -148,20 +157,6 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       commentListBox_.addItem("\"", "\"");
       commentListBox_.addItem("\\", "\\");
       commentListBox_.addItem("*>", "*>");
-      
-      localeListBox_.addItem("Default", "");
-      localeListBox_.addItem("ASCII", "ASCII");
-      localeListBox_.addItem("UTF-16", "UTF-16");
-      localeListBox_.addItem("UTF-16BE", "UTF-16BE");
-      localeListBox_.addItem("UTF-16LE", "UTF-16LE");
-      localeListBox_.addItem("UTF-32", "UTF-32");
-      localeListBox_.addItem("UTF-32BE", "UTF-32BE");
-      localeListBox_.addItem("UTF-32LE", "UTF-32LE");
-      localeListBox_.addItem("UTF-7", "UTF-7");
-      localeListBox_.addItem("UTF-8", "UTF-8");
-      localeListBox_.addItem("UTF-8-MAC", "UTF-8-MAC");
-      localeListBox_.addItem("UTF8", "UTF8");
-      localeListBox_.addItem("UTF8-MAC", "UTF8-MAC");
      
       updateEnabled();
    }
@@ -170,7 +165,6 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    {
       ValueChangeHandler<String> valueChangeHandler = new ValueChangeHandler<String>()
       {
-         
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
@@ -207,10 +201,28 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       escapeListBox_.addChangeHandler(changeHandler);
       columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       trimSpacesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
-      localeListBox_.addChangeHandler(changeHandler);
+      openDataViewerCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
       naListBox_.addChangeHandler(changeHandler);
       commentListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
+      
+      localeButton_.addClickHandler(new ClickHandler() {
+         public void onClick(ClickEvent event) {
+            new DataImportOptionsUiCsvLocale(
+               new OperationWithInput<DataImportOptionsCsvLocale>() {
+                  @Override
+                  public void execute(final DataImportOptionsCsvLocale result)
+                  {
+                     localeInfo_ = result;
+                     
+                     updateEnabled();
+                     triggerChange();
+                  }
+               },
+               localeInfo_
+            ).showModal();
+         }
+      });
    }
    
    void updateEnabled()
@@ -239,7 +251,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    ListBox quotesListBox_;
    
    @UiField
-   ListBox localeListBox_;
+   Button localeButton_;
    
    @UiField
    ListBox naListBox_;
@@ -255,4 +267,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    
    @UiField
    CheckBox trimSpacesCheckBox_;
+
+   @UiField
+   CheckBox openDataViewerCheckBox_;
 }

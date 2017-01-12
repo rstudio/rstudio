@@ -18,7 +18,10 @@ package org.rstudio.studio.client.application;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.FormElement;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -26,6 +29,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -41,6 +45,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
@@ -251,7 +256,23 @@ public class Application implements ApplicationEventHandlers
     
    public void onLogoutRequested(LogoutRequestedEvent event)
    {
-      navigateWindowTo("auth-sign-out");
+      cleanupWorkbench();
+      
+      // create an invisible form to host the sign-out process
+      FormElement form = DocumentEx.get().createFormElement();
+      form.setMethod("POST");
+      form.setAction(absoluteUrl("auth-sign-out", true));
+      form.getStyle().setDisplay(Display.NONE);
+      
+      // read the CSRF token from the cookie and place it in the form
+      InputElement csrfToken = DocumentEx.get().createHiddenInputElement();
+      csrfToken.setName(CSRF_TOKEN_FIELD);
+      csrfToken.setValue(Cookies.getCookie(CSRF_TOKEN_FIELD));
+      form.appendChild(csrfToken);
+      
+      // append the form to the document and submit it
+      DocumentEx.get().getBody().appendChild(form);
+      form.submit();
    }
    
    @Handler
@@ -662,7 +683,13 @@ public class Application implements ApplicationEventHandlers
    private void navigateWindowTo(String relativeUrl, boolean includeContext)
    {
       cleanupWorkbench();
-    
+
+      // navigate window
+      Window.Location.replace(absoluteUrl(relativeUrl, includeContext));
+   }
+   
+   private String absoluteUrl(String relativeUrl, boolean includeContext)
+   {
       // ensure there is no session context if requested
       String url = includeContext ? 
             GWT.getHostPageBaseURL() :
@@ -670,9 +697,8 @@ public class Application implements ApplicationEventHandlers
             
       // add relative URL
       url += relativeUrl;
-     
-      // navigate window
-      Window.Location.replace(url);
+
+      return url;
    }
    
    private void initializeWorkbench()
@@ -697,6 +723,13 @@ public class Application implements ApplicationEventHandlers
       if (!sessionInfo.getAllowShell())
       {
          commands_.showShellDialog().remove();
+      }
+      
+      // TODO (gary) temporary feature gate, switch to getAllowShell
+      if (!uiPrefs_.get().enableXTerm().getValue())
+      {
+         commands_.newTerminal().remove();
+         commands_.activateTerminal().remove();
       }
       if (!sessionInfo.getAllowPackageInstallation())
       {
@@ -939,6 +972,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationQuit> pApplicationQuit_;
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<AceThemes> pAceThemes_;
+   
+   private final String CSRF_TOKEN_FIELD = "csrf-token";
 
    private ClientStateUpdater clientStateUpdaterInstance_;
 }

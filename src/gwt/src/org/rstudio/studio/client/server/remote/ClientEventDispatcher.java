@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
+import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
@@ -57,12 +58,17 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.PackageExtensionIndexingCompletedEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
+import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
+import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
+import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshFinishedEvent;
 import org.rstudio.studio.client.rmarkdown.events.ChunkPlotRefreshedEvent;
+import org.rstudio.studio.client.rmarkdown.events.NotebookRangeExecutedEvent;
 import org.rstudio.studio.client.rmarkdown.events.PreviewRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.ShinyGadgetDialogEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdChunkOutputEvent;
@@ -85,6 +91,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
+import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
@@ -100,8 +107,10 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedE
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.EnableConnectionsEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.console.events.*;
@@ -154,6 +163,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -827,6 +837,51 @@ public class ClientEventDispatcher
          {
             JsArray<ConnectionId> connections = event.getData();
             eventBus_.fireEvent(new ActiveConnectionsChangedEvent(connections));
+         }
+         else if (type.equals(ClientEvent.ConnectionOpened))
+         {
+            Connection connection = event.getData();
+            eventBus_.fireEvent(new ConnectionOpenedEvent(connection));
+         }
+         else if (type.equals(ClientEvent.NotebookRangeExecuted))
+         {
+            NotebookRangeExecutedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new NotebookRangeExecutedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ChunkExecStateChanged))
+         {
+            ChunkExecStateChangedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ChunkExecStateChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.NavigateShinyFrame))
+         {
+            ShinyFrameNavigatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new ShinyFrameNavigatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.UpdateNewConnectionDialog))
+         {
+            NewConnectionDialogUpdatedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new NewConnectionDialogUpdatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ProjectTemplateRegistryUpdated))
+         {
+            ProjectTemplateRegistry data = event.getData();
+            eventBus_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(data));
+         }
+         else if (type.equals(ClientEvent.TerminalSubProcs))
+         {
+            TerminalSubprocEvent.Data data = event.getData();
+            eventBus_.fireEvent(new TerminalSubprocEvent(data));
+         }
+         else if (type.equals(ClientEvent.PackageExtensionIndexingCompleted))
+         {
+            PackageExtensionIndexingCompletedEvent.Data data = event.getData();
+            eventBus_.fireEvent(new PackageExtensionIndexingCompletedEvent(data));
+         }
+         else if (type.equals(ClientEvent.RStudioAPIShowDialog))
+         {
+            RStudioAPIShowDialogEvent.Data data = event.getData();
+            eventBus_.fireEvent(new RStudioAPIShowDialogEvent(data));
          }
          else
          {
