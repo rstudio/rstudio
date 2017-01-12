@@ -14,7 +14,6 @@
  */
 
 #include "SessionClientInit.hpp"
-#include "SessionClientEventService.hpp"
 #include "SessionInit.hpp"
 #include "SessionSuspend.hpp"
 #include "SessionHttpMethods.hpp"
@@ -53,6 +52,7 @@
 #include <core/system/Environment.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionClientEventService.hpp>
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>

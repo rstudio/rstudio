@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,7 +98,6 @@
 #include "SessionModuleContextInternal.hpp"
 
 #include "SessionClientEventQueue.hpp"
-#include "SessionClientEventService.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionDirs.hpp"
@@ -161,8 +160,9 @@
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
-#include "modules/SessionProjectTemplate.hpp"
-#incldue "modules/SessionMathjax.hpp"
+#include "modules/mathjax/SessionMathjax.hpp"
+
+#include <session/SessionProjectTemplate.hpp>
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -345,7 +345,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    module_context::registerWaitForMethod(kChooseFileCompleted);
    module_context::registerWaitForMethod(kUserPromptCompleted);
    module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
-   module_context::registerWaitForMethod(kRStudioAPIShowDialog);
+   module_context::registerWaitForMethod(kRStudioAPIShowDialogMethod);
 
    // execute core initialization functions
    using boost::bind;
