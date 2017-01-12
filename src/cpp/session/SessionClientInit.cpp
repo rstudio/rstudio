@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -188,6 +188,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    std::string defaultWorkingDir = module_context::createAliasedPath(
                                           dirs::getDefaultWorkingDirectory());
    sessionInfo["default_working_dir"] = defaultWorkingDir;
+
+   // default project dir
+   sessionInfo["default_project_dir"] = options.defaultProjectDir();
 
    // active project file
    if (projects::projectContext().hasProject())
