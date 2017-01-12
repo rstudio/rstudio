@@ -50,18 +50,21 @@ FilePath getInitialWorkingDirectory()
    // check for working dir in project none
    else if (options().sessionScope().isProjectNone())
    {
-		// see if the active session has a working dir
+      // if this is the initial session then use the default working directory
+      // (reset initial to false so this is one shot thing)
       using namespace module_context;
-      std::string sessionWorkingDir = activeSession().workingDir();
-      if (!sessionWorkingDir.empty())
+      if (activeSession().initial())
       {
-         FilePath workingDirPath = resolveAliasedPath(sessionWorkingDir);
-         if (workingDirPath.exists())
-            return workingDirPath;
+         activeSession().setInitial(false);
+         return getDefaultWorkingDirectory();
       }
 
-      // otherwise return default working dir
-      return getDefaultWorkingDirectory();
+      FilePath workingDirPath = module_context::resolveAliasedPath(
+                      module_context::activeSession().workingDir());
+      if (workingDirPath.exists())
+         return workingDirPath;
+      else
+         return getDefaultWorkingDirectory();
    }
 
    // see if there is an override from the environment (perhaps based
