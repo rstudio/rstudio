@@ -161,6 +161,9 @@
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
+#include "modules/SessionProjectTemplate.hpp"
+#incldue "modules/SessionMathjax.hpp"
+
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
 
