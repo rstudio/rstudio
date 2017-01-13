@@ -14,6 +14,7 @@
  */
 
 #include <cstdlib>
+#include <signal.h>
 
 #include "SessionSuspend.hpp"
 #include "SessionConsoleInput.hpp"

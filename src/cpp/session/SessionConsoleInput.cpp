@@ -13,6 +13,8 @@
  *
  */
 
+#include <signal.h>
+
 #include "SessionConsoleInput.hpp"
 #include "SessionClientEventQueue.hpp"
 #include "SessionFork.hpp"
