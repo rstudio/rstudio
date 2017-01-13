@@ -828,6 +828,12 @@ private:
       args.push_back("--vanilla");
       args.push_back("-e");
       args.push_back(command);
+      
+      // forward R_LIBS so the child process has access to the same libraries
+      // we do
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&pkgOptions.environment, "R_LIBS", libPaths);
 
       // run it
       module_context::processSupervisor().runProgram(
