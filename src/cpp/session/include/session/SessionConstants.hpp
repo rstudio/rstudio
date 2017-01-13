@@ -1,7 +1,7 @@
 /*
  * SessionConstants.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,6 +79,19 @@
 #define kReuseSessionsForProjectLinksSettings "reuseSessionsForProjectLinks"
 
 #define kRStudioNoTransformRedirect "X-RStudio-NoTransformRedirect"
+
+// json rpc methods we handle (the rest are delegated to the HttpServer)
+const char * const kClientInit = "client_init" ;
+const char * const kEditCompleted = "edit_completed";
+const char * const kChooseFileCompleted = "choose_file_completed";
+const char * const kLocatorCompleted = "locator_completed";
+const char * const kUserPromptCompleted = "user_prompt_completed";
+const char * const kHandleUnsavedChangesCompleted = "handle_unsaved_changes_completed";
+const char * const kQuitSession = "quit_session" ;   
+const char * const kSuspendSession = "suspend_session";
+const char * const kInterrupt = "interrupt";
+const char * const kConsoleInput = "console_input";
+const char * const kRStudioAPIShowDialogMethod = "rstudio_api_show_dialog";
 
 #endif // SESSION_CONSTANTS_HPP
 
