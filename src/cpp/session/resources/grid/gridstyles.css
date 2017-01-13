@@ -1,7 +1,7 @@
 /*
  * gridstyles.css
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -221,6 +221,10 @@ table.dataTable thead .sorting_asc {
     background: url("datatables/images/sort_asc.png") no-repeat right top;
 }
 
+table.dataTable thead th div {
+    margin-right: 10px;
+}
+
 th:focus {
     outline: none;
 }
@@ -278,10 +282,30 @@ th:focus {
 }
 
 .numberCell, .textCell {
-    max-width: 300px; 
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    position: relative;
+}
+
+.autoSize .numberCell, .autoSize .textCell {
+    max-width: 300px; 
+}
+
+.manualSize .numberCell, .manualSize .textCell {
+    max-width: 100%;
+}
+
+.manualSize, .autoSize {
+    table-layout: fixed;
+}
+
+#rsGridData.manualSize {
+    display: table;
+}
+
+.cell {
+    position: relative;
 }
 
 .searchMatch {
@@ -330,7 +354,6 @@ table.dataTable thead th.columnClickable {
 
 table.dataTable thead th.columnClickable div {
     padding-right: 15px;
-
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -355,3 +378,14 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
 .disabledColumn {
     background-color: #f7f8f9;
 }
+
+.resizer {
+    position: absolute;
+    height: 23px;   
+    top: -4px;
+    right: -7px;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 5;
+}
+
