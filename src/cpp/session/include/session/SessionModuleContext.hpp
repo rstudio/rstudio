@@ -1,7 +1,8 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
+
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -221,6 +222,7 @@ core::Error registerIdleOnlyAsyncRpcMethod(
 core::Error registerRpcMethod(const std::string& name,
                               const core::json::JsonRpcFunction& function);
 
+void registerRpcMethod(const core::json::JsonRpcAsyncMethod& method);
 
 core::Error executeAsync(const core::json::JsonRpcFunction& function,
                          const core::json::JsonRpcRequest& request,
@@ -835,6 +837,8 @@ std::string websiteOutputDir();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
+
+void onBackgroundProcessing(bool isIdle);
 
 } // namespace module_context
 } // namespace session

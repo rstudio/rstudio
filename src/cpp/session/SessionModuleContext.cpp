@@ -701,6 +701,24 @@ bool isPackagePosixMakefile(const FilePath& srcPath)
            filename == "Makefile.in");
 }
 
+void performIdleOnlyAsyncRpcMethod(
+      const core::json::JsonRpcRequest& request,
+      const core::json::JsonRpcFunctionContinuation& continuation,
+      const core::json::JsonRpcAsyncFunction& function)
+{
+   if (request.isBackgroundConnection)
+   {
+      module_context::scheduleDelayedWork(
+          boost::posix_time::milliseconds(100),
+          boost::bind(function, request, continuation),
+          true);
+   }
+   else
+   {
+      function(request, continuation);
+   }
+}
+
 } // anonymous namespeace
 
 void scheduleDelayedWork(const boost::posix_time::time_duration& period,
@@ -731,6 +749,16 @@ void onBackgroundProcessing(bool isIdle)
    executeScheduledCommands(&s_scheduledCommands);
    if (isIdle)
       executeScheduledCommands(&s_idleScheduledCommands);
+}
+
+
+Error registerIdleOnlyAsyncRpcMethod(
+                             const std::string& name,
+                             const core::json::JsonRpcAsyncFunction& function)
+{
+   return registerAsyncRpcMethod(name,
+                                 boost::bind(performIdleOnlyAsyncRpcMethod,
+                                                _1, _2, function));
 }
 
 core::string_utils::LineEnding lineEndings(const core::FilePath& srcFile)
