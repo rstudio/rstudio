@@ -1,4 +1,4 @@
-<project name="doc" default="all" basedir=".">
+<project name="doc" default="all" basedir="." xmlns:if="ant:if">
   <property name="gwt.root" location=".." />
   <property name="project.tail" value="doc" />
   <import file="${gwt.root}/common.ant.xml" />
@@ -81,6 +81,7 @@
     <property file="${gwt.root}/build/out/packages.properties" />
     <java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
       <jvmarg value="-Xmx1024m" />
+      <arg value="-Xdoclint:none" if:true="${isJava8}" />
       <arg value="-noindex" />
       <arg value="-notree" />
       <arg value="-quiet" />
