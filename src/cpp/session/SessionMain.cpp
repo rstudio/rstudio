@@ -160,7 +160,7 @@
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
-#include "modules/mathjax/SessionMathjax.hpp"
+#include "modules/mathjax/SessionMathJax.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
