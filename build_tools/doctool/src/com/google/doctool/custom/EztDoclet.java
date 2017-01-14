@@ -43,7 +43,7 @@ public class EztDoclet {
 
   private static EztDoclet EZT_DOCLET;
 
-  private static final String JAVADOC_URL = "http://java.sun.com/javase/6/docs/api/";
+  private static final String JAVADOC_URL = "https://docs.oracle.com/javase/8/docs/api/";
 
   public static int optionLength(String option) {
     if (option.equals(OPT_EZTFILE)) {
@@ -128,7 +128,7 @@ public class EztDoclet {
       pw.println("</ol>\n");
 
       for (PackageDoc pack : root.specifiedPackages()) {
-        pw.format("<h1 id=\"Package_%s\">Package %s</h1>\n",
+        pw.format("<h2 id=\"Package_%s\">Package %s</h2>\n",
             pack.name().replace('.', '_'), pack.name());
         pw.println("<dl>");
 
