@@ -139,7 +139,7 @@ public class JreDocTool {
     args.add("-quiet");
 
     args.add("-source");
-    args.add("1.5");
+    args.add("1.8");
 
     args.add("-doclet");
     args.add(EztDoclet.class.getName());
