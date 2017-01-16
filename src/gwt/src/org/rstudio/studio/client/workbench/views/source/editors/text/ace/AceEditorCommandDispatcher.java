@@ -88,6 +88,32 @@ public class AceEditorCommandDispatcher
             ExecutionPolicy.FOCUSED);
    }
    
+   @Handler
+   public void onJumpToMatching()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.JUMP_TO_MATCHING,
+            ExecutionPolicy.FOCUSED);
+   }
+   
+   @Handler
+   public void onSelectToMatching()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.SELECT_TO_MATCHING,
+            ExecutionPolicy.FOCUSED);
+   }
+   
+   @Handler
+   public void onExpandToMatching()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.EXPAND_TO_MATCHING,
+            ExecutionPolicy.FOCUSED);
+   }
+   
+   
+   
    // Private methods ----
    
    private void fireEvent(CommandType type, ExecutionPolicy policy)

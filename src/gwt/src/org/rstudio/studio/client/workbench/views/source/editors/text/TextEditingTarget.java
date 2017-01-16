@@ -3085,27 +3085,6 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onJumpToMatching()
-   {
-      docDisplay_.jumpToMatching();
-      docDisplay_.ensureCursorVisible();
-   }
-   
-   @Handler
-   void onSelectToMatching()
-   {
-      docDisplay_.selectToMatching();
-      docDisplay_.ensureCursorVisible();
-   }
-   
-   @Handler
-   void onExpandToMatching()
-   {
-      docDisplay_.expandToMatching();
-      docDisplay_.ensureCursorVisible();
-   }
-   
-   @Handler
    void onSplitIntoLines()
    {
       docDisplay_.splitIntoLines();
