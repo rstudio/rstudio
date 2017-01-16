@@ -17,9 +17,9 @@
 
 #include "SessionConsoleInput.hpp"
 #include "SessionClientEventQueue.hpp"
-#include "SessionFork.hpp"
 #include "SessionInit.hpp"
 #include "SessionHttpMethods.hpp"
+#include "SessionMainProcess.hpp"
 
 #include "modules/SessionConsole.hpp"
 
@@ -85,7 +85,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 
 bool canSuspend(const std::string& prompt)
 {
-   return !fork::haveActiveChildren() && 
+   return !main_process::haveActiveChildren() && 
           modules::connections::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
@@ -157,7 +157,7 @@ bool rConsoleRead(const std::string& prompt,
                   rstudio::r::session::RConsoleInput* pConsoleInput)
 {
    // this is an invalid state in a forked (multicore) process
-   if (fork::wasForked())
+   if (main_process::wasForked())
    {
       LOG_WARNING_MESSAGE("rConsoleRead called in forked processs");
       return false;

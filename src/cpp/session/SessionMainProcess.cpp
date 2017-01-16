@@ -1,7 +1,7 @@
 /*
- * SessionFork.cpp
+ * SessionMainProcess.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionFork.hpp" 
+#include "SessionMainProcess.hpp" 
 #include "modules/SessionAuthoring.hpp"
 
 #include <core/BoostThread.hpp>
@@ -23,7 +23,7 @@
 
 namespace rstudio {
 namespace session {
-namespace fork {
+namespace main_process {
 namespace {
 
 // fork state
@@ -86,8 +86,8 @@ bool haveActiveChildren()
           modules::authoring::hasRunningChildren();
 }
 
-} // namespace rstudio
+} // namespace main_process
 } // namespace session
-} // namespace fork
+} // namespace rstudio
 
 

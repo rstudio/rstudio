@@ -1,7 +1,7 @@
 /*
- * SessionFork.hpp
+ * SessionMainProcess.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,19 +13,19 @@
  *
  */
 
-#ifndef SESSION_FORK_HPP
-#define SESSION_FORK_HPP
+#ifndef SESSION_MAIN_PROCESS_HPP
+#define SESSION_MAIN_PROCESS_HPP
 
 namespace rstudio {
 namespace session {
-namespace fork {
+namespace main_process {
 
 void setupForkHandlers();
 bool wasForked();
 bool haveActiveChildren();
 void initThreadId();
 
-} // namespace fork
+} // namespace main_process
 } // namespace session
 } // namespace rstudio
 
