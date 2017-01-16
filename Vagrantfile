@@ -90,6 +90,19 @@ Vagrant.configure(2) do |config|
     end
   end
 
+  config.vm.define "license-server", autostart: false do |v|
+    v.vm.box = "minimal/trusty64"
+    v.vm.network "private_network", ip: "192.168.55.105"
+    v.vm.provision :shell, path: "vagrant/provision-license-server.sh"
+
+    # modest resources; this box only needs to deliver licenses
+    v.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--usb", "off"]
+      vb.memory = "512"
+      vb.cpus = "1"
+    end
+  end
+
   # less generous resources (and a box that supports hyperv) on hyper-v
   config.vm.provider "hyperv" do |hv|
     hv.vm.box = "ericmann/trusty64"
