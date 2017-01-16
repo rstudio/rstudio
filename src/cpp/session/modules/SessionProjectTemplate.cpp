@@ -83,14 +83,6 @@ void reportErrorsToConsole(const std::vector<Error>& errors,
    }
 }
 
-void reportErrorsToConsole(const Error& error,
-                           const FilePath& resourcePath)
-{
-   std::vector<Error> errors;
-   errors.push_back(error);
-   reportErrorsToConsole(errors, resourcePath);
-}
-
 } // end anonymous namespace
 
 namespace errors {
