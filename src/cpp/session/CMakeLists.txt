@@ -66,12 +66,12 @@ set (SESSION_SOURCE_FILES
    SessionConsoleProcess.cpp
    SessionContentUrls.cpp
    SessionDirs.cpp
-   SessionFork.cpp
    SessionRpc.cpp
    SessionHttpMethods.cpp
    SessionInit.cpp
    SessionMain.cpp
    SessionMainOverlay.cpp
+   SessionMainProcess.cpp
    SessionModuleContext.cpp
    SessionOptions.cpp
    SessionOptionsOverlay.cpp

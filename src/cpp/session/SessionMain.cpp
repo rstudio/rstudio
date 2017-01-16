@@ -101,9 +101,9 @@
 #include "SessionClientInit.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionDirs.hpp"
-#include "SessionFork.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionInit.hpp"
+#include "SessionMainProcess.hpp"
 #include "SessionSuspend.hpp"
 
 #include <session/SessionRUtil.hpp>
@@ -160,7 +160,7 @@
 #include "modules/SessionSnippets.hpp"
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
-#include "modules/mathjax/SessionMathjax.hpp"
+#include "modules/mathjax/SessionMathJax.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -547,7 +547,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    activeSession().beginSession(rVersion(), rHomeDir());
 
    // setup fork handlers
-   fork::setupForkHandlers();
+   main_process::setupForkHandlers();
 
    // success!
    return Success();
@@ -674,7 +674,7 @@ FilePath rChooseFile(bool newFile)
 
 void rBusy(bool busy)
 {
-   if (fork::wasForked())
+   if (main_process::wasForked())
       return;
 
    // screen out busy = true events that occur when R isn't busy
@@ -687,7 +687,7 @@ void rBusy(bool busy)
       
 void rConsoleWrite(const std::string& output, int otype)   
 {
-   if (fork::wasForked())
+   if (main_process::wasForked())
       return;
 
    int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
@@ -906,7 +906,7 @@ bool rHandleUnsavedChanges()
 
 void rQuit()
 {   
-   if (fork::wasForked())
+   if (main_process::wasForked())
       return;
 
    // log to monitor
@@ -942,7 +942,7 @@ void rQuit()
 // override suicide on windows)
 void rSuicide(const std::string& message)
 {
-   if (fork::wasForked())
+   if (main_process::wasForked())
       return;
 
    // log to monitor
@@ -981,7 +981,7 @@ void rCleanup(bool terminatedNormally)
    try
    {
       // bail completely if we were forked
-      if (fork::wasForked())
+      if (main_process::wasForked())
          return;
 
       // note that we didn't abend
@@ -1451,7 +1451,7 @@ int main (int argc, char * const argv[])
 
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
-      fork::initThreadId();
+      main_process::initThreadId();
 
       // ensure LANG and UTF-8 character set
 #ifndef _WIN32

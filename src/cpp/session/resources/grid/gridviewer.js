@@ -3,7 +3,7 @@
 /*
  * gridviewer.js
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,6 +68,9 @@ var columnsPopup = null;
 // Active column properties
 var activeColumnInfo = {
 };
+
+// manually adjusted widths of each column
+var manualWidths = [];
 
 var isHeaderWidthMismatched = function() {
   // find the elements to measure (they may not exist)
@@ -187,18 +190,26 @@ var renderCellContents = function(data, type, row, meta) {
   return escapeHtml(data);
 };
 
+var renderCellClass = function (data, type, row, meta, clazz) {
+  var title = null;
+  if (typeof(data) === "string") 
+     title = data.replace(/\"/g, "&quot;");
+  return '<div class="cell">' + 
+         '<div class="' + clazz + '" ' + 
+         (title !== null ? 'title="' + title + '"' : '') +
+         '>' + 
+         renderCellContents(data, type, row, meta) + '</div>' +
+         '<div class="resizer" data-col="' + meta.col + '" /></div>';
+};
+
 // render a number cell
 var renderNumberCell = function(data, type, row, meta) {
-  return '<div class="numberCell">' + 
-         renderCellContents(data, type, row, meta) + 
-         '</div>';
+  return renderCellClass(data, type, row, meta, "numberCell");
 };
 
 // render a text cell
 var renderTextCell = function(data, type, row, meta) {
-  return '<div class="textCell" title="' + escapeHtml(data) + '">' + 
-         renderCellContents(data, type, row, meta) + 
-         '</div>';
+  return renderCellClass(data, type, row, meta, "textCell");
 };
 
 // restores scroll information lost on tab switch
@@ -305,10 +316,28 @@ var preDrawCallback = function() {
 
 var postDrawCallback = function() {
   var indicator = $(".DTS_Loading");
-  if (indicator)  {
+  if (indicator) {
       indicator.removeClass("showLoading");
   }
 
+  // re-apply manual column sizes to the cells in the first row
+  var bcols = $(".dataTables_scrollBody #data_cols th");
+  var hcols = $(".dataTables_scrollHead #data_cols th");
+  var delta = 0;
+  for (var i = 0; i < cols.length; i++) {
+     if (typeof(manualWidths[i]) === "undefined")
+        continue;
+     var col = bcols.eq(i);
+     delta += manualWidths[i] - col.width();
+     col.width(manualWidths[i]);
+     hcols.eq(i).width(manualWidths[i]);
+  }
+
+  // adjust table if some column sizes differed from their natural size
+  if (delta !== 0) {
+     $("#rsGridData").width($("#rsGridData").width() + delta);
+  }
+  
   // Check to see whether the header widths are out of sync after drawing --
   // unfortunately this is a possibility since DataTables doesn't know the
   // width of the table until after the draw is complete. If the widths don't
@@ -554,7 +583,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       document.body.appendChild(popup);
 
       // compute position
-      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top)
+      var top = $(ele).offset().top + (!popupInfo ? 20 : popupInfo.top);
       var left = $(ele).offset().left + (!popupInfo ? -4 : popupInfo.left);
       if (popupInfo && popupInfo.width) {
         $(popup).width(popupInfo.width(ele));
@@ -751,7 +780,7 @@ var parseLocationUrl = function() {
   }
 
   return parsedLocation;
-}
+};
 
 var initDataTableLoad = function(result) {
   table = $("#rsGridData").DataTable();
@@ -768,12 +797,12 @@ var initDataTableLoad = function(result) {
   });
 
   // trigger post-init actions
-  for (actionName in postInitActions) {
+  for (var actionName in postInitActions) {
     if (postInitActions[actionName]) {
       postInitActions[actionName]();
     }
   }
-}
+};
 
 var initDataTable = function(resCols, data) {
   if (resCols.error) {
@@ -850,7 +879,7 @@ var initDataTable = function(resCols, data) {
       }];
   }
   else {
-    // Create an empty array of data tto be use as a map in the callback
+    // Create an empty array of data to be use as a map in the callback
     dataTableData = [];
     if (data.length > 0) {
       for (i = 0; i < data[0].length; i++) {
@@ -868,7 +897,7 @@ var initDataTable = function(resCols, data) {
         "sClass": className,
         "visible": (!rowNumbers && idx === 0) ? false : true,
         "data": function (row, type, set, meta) {
-          return (meta.col == 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
+          return (meta.col === 0 ? meta.row : (data ? data[meta.col-1][meta.row] : null));
         },
         "width": "4em",
         "render": e.col_type === "numeric" ? renderNumberCell : renderTextCell
@@ -936,7 +965,119 @@ var loadDataFromUrl = function(callback) {
         }
       }
     }); 
-}
+};
+
+var addResizeHandlers = function(ele) {
+   var col = null;            // the column currently being resized
+   var initX = null;          // the initial X position of the resize
+   var initColWidth = null;   // the initial width of the column
+   var initTableWidth = null; // the initial width of the table
+   var boundsExceeded = 0;
+   var minColWidth = 40;
+
+   var applyDelta = function(delta) {
+      var colWidth = initColWidth + delta;
+
+      // don't allow resizing beneath minimum size
+      if (delta < 0 && colWidth < minColWidth) {
+         boundsExceeded += delta;
+         return;
+      }
+
+      // if positive delta, consume exceeded bounds before returning to resize
+      // mode
+      if (delta > 0 && boundsExceeded < 0) {
+         boundsExceeded += delta;
+         if (boundsExceeded < 0) {
+            // didn't consume all bounds
+            return;
+         } else {
+            // consumed all bounds; resize remaining portion of motion
+            delta = boundsExceeded;
+            colWidth = initColWidth + delta;
+         }
+      }
+
+      // resize the column in the given direction
+      $(".dataTables_scrollHeadInner table").width(initTableWidth + delta);
+
+      var grid = $("#rsGridData");
+      if (grid.hasClass("autoSize")) {
+         // if the data table is still in auto size mode, we need to switch it 
+         // to fixed layout
+         
+         // observe and manually apply column widths in preparation for 
+         // transition to a fixed layout
+         var head = $(".dataTables_scrollHead #data_cols th");
+         var body = $(".dataTables_scrollBody #data_cols th");
+         for (var i = 0; i < Math.min(head.length, body.length); i++) {
+            var thHead = head.eq(i), thBody = body.eq(i);
+            thHead.width(thHead.width());
+            thBody.width(thBody.width());
+            manualWidths[i] = thBody.width();
+         }
+         
+         // switch table out of auto size mode and into manual size mode
+         grid.addClass("manualSize");
+         grid.removeClass("autoSize");
+      }
+
+      // adjust header width and width of first column
+      $("#data_cols th:nth-child(" + col + ")").width(colWidth);
+      grid.width(initTableWidth + delta);
+
+      // record manual width for re-apply on redraw
+      manualWidths[col - (rowNumbers ? 1 : 0)] = colWidth;
+   };
+
+   var endResize = function() {
+      // end the resize operation
+      $("#rsGridData td:nth-child(" + col + ")").css(
+         "border-right-color", "");
+      col = null;
+   };
+
+   $(ele).on("mousedown", function(evt) {
+      var original = evt.originalEvent;
+      if (original.target.className === "resizer") {
+         // when the mouse is clicked on the resizer, enter resize mode; figure
+         // out which column we're targeting and set up the initial sizes
+         col = parseInt(original.target.getAttribute("data-col"));
+
+         // account for row names column
+         if (rowNumbers)
+            col++;
+
+         initX = original.clientX;
+         initColWidth = $("#data_cols th:nth-child(" + col + ")").width();
+         initTableWidth = $("#rsGridData").width();
+         boundsExceeded = 0;
+         $("#rsGridData td:nth-child(" + col + ")").css(
+            "border-right-color", "#A0A0FF");
+      }
+   });
+   $(ele).on("mousemove", function(evt) {
+      if (col !== null) {
+         // if we have an active resize column, resize it by the amount given
+         var original = evt.originalEvent;
+         applyDelta(original.clientX - initX);
+      }
+   });
+   $(ele).on("mouseup", function(evt) {
+      if (col !== null) {
+         // end resizing if active
+         endResize();
+      }
+   });
+   $(ele).on("mouseleave", function(evt) {
+      if (col !== null) {
+         // the mouse left; treat this as a cancel (since leaving means we 
+         // won't get a corresponding mouseup)
+         applyDelta(0);
+         endResize();
+      }
+   });
+}; 
 
 // bootstrapping: 
 // 1. clean up state (we re-bootstrap whenever table structure changes)
@@ -977,12 +1118,13 @@ var bootstrap = function(data) {
   // this point)
   var newEle = document.createElement("table");
   newEle.id = "rsGridData";
-  newEle.className = "dataTable";
+  newEle.className = "dataTable autoSize";
   newEle.setAttribute("cellspacing", "0");
   newEle.innerHTML = "<thead>" +
                      "    <tr id='data_cols'>" +
                      "    </tr>" +
                      "</thead>";  
+  addResizeHandlers(newEle);
 
   if (!data) {
     loadDataFromUrl(function(result) {
@@ -1042,7 +1184,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
       dismissActivePopup(true);
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
-    var colIdx = i + (rowNumbers ? 0 : 1)
+    var colIdx = i + (rowNumbers ? 0 : 1);
     var col = cols[colIdx];
     var th = thead.children[i];
     if (visible) {
@@ -1071,12 +1213,12 @@ window.setFilterUIVisible = function(visible) {
     }
 
     return null;
-  }
+  };
 
   var hideFilterUI = function() {
     // clear all the filter data
     table.columns().search("");
-  }
+  };
 
   return setHeaderUIVisible(visible, setFilterUIVisiblePerColumn, hideFilterUI);
 };
@@ -1085,11 +1227,11 @@ window.setFilterUIVisible = function(visible) {
 window.setColumnDefinitionsUIVisible = function(visible, onColOpen, onColDismiss) {
   var setColumnDefinitionsUIVisiblePerColumn = function(th, col, i) {
     return createColumnTypesUI(th, i, col);
-  }
+  };
 
   var hideColumnTypeUI = function(thead) {
     $(".columnTypeWrapper").remove();
-  }
+  };
 
   onColumnOpen = onColOpen ? onColOpen : onColumnOpen;
   onColumnDismiss = onColDismiss ? onColDismiss : onColumnDismiss;
@@ -1161,7 +1303,7 @@ window.onDeactivate = function() {
 
 window.setData = function(data) {
   bootstrap(data);
-}
+};
 
 window.setOption = function(option, value) {
   switch (option)
@@ -1179,11 +1321,11 @@ window.setOption = function(option, value) {
       rowNumbers = value === "true" ? true : false;
       break;
   }
-}
+};
 
 window.getActiveColumn = function() {
   return activeColumnInfo;
-}
+};
 
 var parsedLocation = parseLocationUrl();
 var dataMode = parsedLocation && parsedLocation.dataSource ? parsedLocation.dataSource : "server";

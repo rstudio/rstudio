@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
-#include "SessionFork.hpp"
+#include "SessionMainProcess.hpp"
 #include "SessionSuspend.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
@@ -218,7 +218,7 @@ void polledEventHandler()
    // some other parallel computing package that uses fork. in this
    // case be defensive by shutting down as many things as we can
    // which might cause mischief in the child process
-   if (fork::wasForked())
+   if (main_process::wasForked())
    {
       // no more polled events
       rstudio::r::session::event_loop::permanentlyDisablePolledEventHandler();
@@ -357,7 +357,7 @@ bool waitForMethod(const std::string& method,
                    const boost::function<bool()>& allowSuspend,
                    core::json::JsonRpcRequest* pRequest)
 {
-   if (fork::wasForked())
+   if (main_process::wasForked())
    {
       LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
       return false;
@@ -397,7 +397,7 @@ bool waitForMethod(const std::string& method,
 
       // if we have at least one async process running then this counts
       // as "activity" and resets the timeout timer
-      if(fork::haveActiveChildren())
+      if (main_process::haveActiveChildren())
          timeoutTime = timeoutTimeFromNow();
 
       // look for a connection (waiting for the specified interval)
