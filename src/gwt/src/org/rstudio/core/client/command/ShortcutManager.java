@@ -464,12 +464,12 @@ public class ShortcutManager implements NativePreviewHandler,
          {
             keyBuffer_.clear();
 
-            // Workbench and Addin commands are processed normally when focus
-            // is in terminal; others are passed through to the terminal.
             if (XTermWidget.isXTerm(Element.as(event.getEventTarget())) &&
                   (binding.getContext() != AppCommand.Context.Workbench &&
-                     binding.getContext() != AppCommand.Context.Addin))
+                   binding.getContext() != AppCommand.Context.Addin &&
+                   binding.getContext() != AppCommand.Context.PackageDevelopment))
             {
+               // Let terminal see the keyboard input and don't execute command.
                return false;
             }
             event.stopPropagation();
