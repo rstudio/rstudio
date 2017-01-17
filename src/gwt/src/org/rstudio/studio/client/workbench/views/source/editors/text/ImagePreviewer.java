@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOu
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -48,6 +49,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -205,6 +208,7 @@ public class ImagePreviewer
       
       // construct placeholder for image
       final SimplePanel container = new SimplePanel();
+      container.addStyleName(RES.styles().container());
       final Label noImageLabel = new Label("(No image at path " + href + ")");
       
       // resize command (used by various routines that need to respond
@@ -238,6 +242,7 @@ public class ImagePreviewer
       // construct our image
       String srcPath = imgSrcPathFromHref(sentinel, href);
       final Image image = new Image(srcPath);
+      image.addStyleName(RES.styles().image());
       
       // parse and inject attributes
       Map<String, String> parsedAttributes = HTMLAttributesParser.parseAttributes(attributes);
@@ -553,4 +558,20 @@ public class ImagePreviewer
 
    private static final String LINE_WIDGET_TYPE = "image-preview" ;
    private static int IMAGE_ID = 0;
+   
+   interface Styles extends CssResource
+   {
+      String container();
+      String image();
+   }
+   
+   interface Resources extends ClientBundle
+   {
+      @Source("ImagePreviewer.css")
+      Styles styles();
+   }
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   static { RES.styles().ensureInjected(); }
+   
 }
