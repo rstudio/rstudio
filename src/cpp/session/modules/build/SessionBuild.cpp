@@ -286,6 +286,14 @@ private:
       else if (config.buildType == r_util::kBuildTypeWebsite)
       {
          options.workingDir = buildTargetPath;
+         
+         // pass along R_LIBS
+         core::system::Options environment;
+         std::string rLibs = module_context::libPathsString();
+         if (!rLibs.empty())
+            core::system::setenv(&environment, "R_LIBS", rLibs);
+         options.environment = environment;
+         
          executeWebsiteBuild(type, subType, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeCustom)
