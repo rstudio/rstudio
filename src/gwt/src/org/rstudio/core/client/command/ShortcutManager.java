@@ -41,7 +41,6 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
-import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -444,8 +443,7 @@ public class ShortcutManager implements NativePreviewHandler,
       }
 
       // Bail if this is an ignored key combination.
-      if (isIgnoredKeyCombination(keyCombination) || 
-            XTermWidget.isXTerm(Element.as(event.getEventTarget())))
+      if (isIgnoredKeyCombination(keyCombination))
       {
          keyBuffer_.clear();
          return false;
