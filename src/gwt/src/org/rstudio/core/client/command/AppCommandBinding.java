@@ -1,7 +1,7 @@
 /*
  * AppCommandBinding.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.command;
 
+import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
 
 public class AppCommandBinding implements CommandBinding
@@ -54,6 +55,12 @@ public class AppCommandBinding implements CommandBinding
    public boolean isUserDefinedBinding()
    {
       return custom_;
+   }
+
+   @Override
+   public Context getContext()
+   {
+      return command_.getContext();
    }
 
    private final AppCommand command_;

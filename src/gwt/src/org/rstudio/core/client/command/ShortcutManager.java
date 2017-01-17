@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -462,6 +463,15 @@ public class ShortcutManager implements NativePreviewHandler,
          if (binding != null)
          {
             keyBuffer_.clear();
+
+            // Workbench and Addin commands are processed normally when focus
+            // is in terminal; others are passed through to the terminal.
+            if (XTermWidget.isXTerm(Element.as(event.getEventTarget())) &&
+                  (binding.getContext() != AppCommand.Context.Workbench &&
+                     binding.getContext() != AppCommand.Context.Addin))
+            {
+               return false;
+            }
             event.stopPropagation();
             binding.execute();
             return true;
