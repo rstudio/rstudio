@@ -34,7 +34,11 @@ public interface WizardResources extends ClientBundle
       String wizardPageSelector();
       String wizardPageSelectorItem();
       String wizardPageSelectorItemFirst();
+      String wizardPageSelectorItemLabel();
       String wizardPageSelectorItemLast();
+      String wizardPageSelectorItemLeftIcon();
+      String wizardPageSelectorItemRightArrow();
+      String wizardPageSelectorItemSize();
       String wizardPageBackground();
       String wizardBackButton();
    }

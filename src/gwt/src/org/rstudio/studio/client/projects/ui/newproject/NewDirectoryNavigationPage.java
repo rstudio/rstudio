@@ -149,11 +149,10 @@ public class NewDirectoryNavigationPage
          
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          panel.addStyleName(styles.wizardPageSelectorItem());
-         
-         panel.setSize("100%", "24px");
+         panel.addStyleName(styles.wizardPageSelectorItemSize());
          
          Image rightArrow = new Image(WizardResources.INSTANCE.wizardDisclosureArrow());
-         rightArrow.addStyleName(RES.styles().rightArrow());
+         rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
          panel.addEast(rightArrow, 28);
          
          if (page.getImage() == null)
@@ -163,15 +162,15 @@ public class NewDirectoryNavigationPage
          else
          {
             Image icon = new Image(page.getImage());
-            icon.addStyleName(RES.styles().leftIcon());
+            icon.addStyleName(styles.wizardPageSelectorItemLeftIcon());
             panel.addWest(icon, 28);
          }
          
          Label mainLabel = new Label(page.getTitle());
-         mainLabel.addStyleName(RES.styles().label());
+         mainLabel.addStyleName(styles.wizardPageSelectorItemLabel());
          mainLabel.getElement().setAttribute("title", page.getSubTitle());
          panel.add(mainLabel);
-         
+
          panel.addDomHandler(handler, ClickEvent.getType());
          
          initWidget(panel);
@@ -180,9 +179,6 @@ public class NewDirectoryNavigationPage
    
    public interface Styles extends CssResource
    {
-      String leftIcon();
-      String rightArrow();
-      String label();
    }
 
    public interface Resources extends ClientBundle

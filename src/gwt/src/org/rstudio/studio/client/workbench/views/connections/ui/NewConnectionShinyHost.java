@@ -106,8 +106,6 @@ public class NewConnectionShinyHost extends Composite
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       initWidget(createWidget());
-      
-      // setOkButtonCaption("Connect");
            
       HelpLink helpLink = new HelpLink(
             "Using Spark with RStudio",
@@ -159,25 +157,6 @@ public class NewConnectionShinyHost extends Composite
       // add the code panel     
       codePanel_ = new ConnectionCodePanel();
       codePanel_.addStyleName(RES.styles().dialogCodePanel());
-      final Command updateOKButtonCommand = new Command() {
-         @Override
-         public void execute()
-         {
-            // if (codePanel_.getConnectVia().equals(ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD))
-            //   setOkButtonCaption("Copy");
-            //else
-            //   setOkButtonCaption("Connect");
-         }
-      };
-
-      updateOKButtonCommand.execute();
-      codePanel_.addConnectViaChangeHandler(new ChangeHandler() {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            updateOKButtonCommand.execute();
-         }
-      });
       
       final Command updateCodeCommand = new Command() {
          @Override
