@@ -53,12 +53,24 @@ then
   RSTUDIO_PACKAGE_BUILD_SLES=1
 fi
 
+# use system Boost on Ubuntu
+RSTUDIO_USE_SYSTEM_BOOST="No"
+if [ -x "$(command -v lsb_release)" ]
+then
+  VERSION="$(lsb_release -si)"
+  if [ -n "$(echo $VERSION | grep Ubuntu)" ]
+  then
+    RSTUDIO_USE_SYSTEM_BOOST="Yes"
+  fi
+fi
+
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 rm -f CMakeCache.txt
 rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
+      -DRSTUDIO_USE_SYSTEM_BOOST=$RSTUDIO_USE_SYSTEM_BOOST \
       -DRSTUDIO_PACKAGE_BUILD=1 \
       -DRSTUDIO_PACKAGE_BUILD_SLES=$RSTUDIO_PACKAGE_BUILD_SLES \
       -DCMAKE_INSTALL_PREFIX=/usr/lib/$INSTALL_DIR \
