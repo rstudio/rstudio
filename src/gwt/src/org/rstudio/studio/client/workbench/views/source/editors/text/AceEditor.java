@@ -445,6 +445,9 @@ public class AceEditor implements DocDisplay,
                   case PASTE_LAST_YANK:            pasteLastYank();            break;
                   case INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
                   case INSERT_PIPE_OPERATOR:       insertPipeOperator();       break;
+                  case JUMP_TO_MATCHING:           jumpToMatching();           break;
+                  case SELECT_TO_MATCHING:         selectToMatching();         break;
+                  case EXPAND_TO_MATCHING:         expandToMatching();         break;
                   }
                }
             });
