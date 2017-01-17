@@ -51,6 +51,14 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
 
       RStudioGinjector.INSTANCE.injectMembers(this); 
    }
+
+   @Override
+   protected void onPageActivated(
+                     WizardPage<NewConnectionContext, ConnectionOptions> page,
+                     boolean okButtonVisible)
+   {
+      updateHelpLink(page.getHelpLink());
+   }
    
    private static WizardPage<NewConnectionContext, ConnectionOptions>
       createFirstPage(NewConnectionContext input)

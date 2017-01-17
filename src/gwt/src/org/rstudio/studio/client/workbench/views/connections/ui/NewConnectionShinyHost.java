@@ -106,13 +106,6 @@ public class NewConnectionShinyHost extends Composite
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       initWidget(createWidget());
-           
-      HelpLink helpLink = new HelpLink(
-            "Using Spark with RStudio",
-            "using_spark",
-            false);
-      helpLink.addStyleName(RES.styles().helpLink());
-      // addLeftWidget(helpLink);
    }
 
    private void showError(String errorMessage)

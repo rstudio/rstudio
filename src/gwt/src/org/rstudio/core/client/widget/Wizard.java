@@ -120,7 +120,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       addActionButton(nextButton_);
    }
 
-   public void updateHelpLink(String caption, String link, boolean isRStudioLink) {
+   public void updateHelpLink(HelpLink helpLink) {
       if (helpLink_ == null) {
          WizardResources.Styles styles = WizardResources.INSTANCE.styles();
 
@@ -132,8 +132,8 @@ public class Wizard<I,T> extends ModalDialog<T>
          addLeftWidget(helpLink_);
       }
 
-      helpLink_.setCaption(caption);
-      helpLink_.setLink(link, isRStudioLink);
+      helpLink_.setCaption(helpLink.getCaption());
+      helpLink_.setLink(helpLink.getLink(), helpLink.isRStudioLink());
    }
 
    @Override

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
@@ -65,6 +66,15 @@ public class NewConnectionShinyPage
    @Override
    protected void initialize(NewConnectionContext initData)
    {
+   }
+
+   @Override
+   public HelpLink getHelpLink()
+   {
+      return new HelpLink(
+         "Using Spark with RStudio",
+         "using_spark",
+         false);
    }
 
    @Override

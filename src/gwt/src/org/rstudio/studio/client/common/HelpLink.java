@@ -74,6 +74,11 @@ public class HelpLink extends Composite
    {
       helpLink_.setText(caption);
    }
+
+   public String getCaption()
+   {
+      return helpLink_.getText();
+   }
    
    public void setLink(String link)
    {
@@ -85,6 +90,16 @@ public class HelpLink extends Composite
    {
       link_ = link;
       isRStudioLink_ = isRStudioLink;
+   }
+
+   public String getLink()
+   {
+      return link_;
+   }
+
+   public boolean isRStudioLink()
+   {
+      return isRStudioLink_;
    }
    
    public void setWithVersionInfo(boolean withVersionInfo)
