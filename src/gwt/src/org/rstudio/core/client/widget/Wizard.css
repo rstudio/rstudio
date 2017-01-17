@@ -60,22 +60,22 @@
 
 .wizardPageSelectorItemSize {
    width: 100%;
-   height: 38px;
+   height: 34px;
 }
 
 .wizardPageSelectorItemLeftIcon {
    max-width: 20px;
    max-height: 20px;
    margin-left: 10px;
-   margin-top: 10px;
+   margin-top: 8px;
 }
 
 .wizardPageSelectorItemRightArrow {
-   margin-top: 12px;
+   margin-top: 10px;
 }
 
 .wizardPageSelectorItemLabel {
-   margin-top: 12px;
+   margin-top: 10px;
    margin-left: 8px;
    white-space: nowrap;
 }

@@ -151,8 +151,6 @@ public class NewDirectoryNavigationPage
          panel.addStyleName(styles.wizardPageSelectorItem());
          panel.addStyleName(styles.wizardPageSelectorItemSize());
          
-         panel.setSize("100%", "38px");
-         
          Image rightArrow = new Image(WizardResources.INSTANCE.wizardDisclosureArrow());
          rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
          panel.addEast(rightArrow, 28);
