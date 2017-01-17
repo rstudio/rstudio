@@ -1,7 +1,7 @@
 /*
  * XTermWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermThemeResour
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -61,7 +62,8 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().getStyle().setBackgroundColor("#111");
       getElement().getStyle().setColor("#fafafa");
       getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
-      
+      getElement().addClassName(XTERM_CLASS);
+
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       terminal_ = XTermNative.createTerminal(getElement(), true);
@@ -255,6 +257,17 @@ public class XTermWidget extends Widget implements RequiresResize,
          terminal_.blur(); 
    }
   
+   public static boolean isXTerm(Element el)
+   {
+      while (el != null)
+      {
+         if (el.hasClassName(XTERM_CLASS))
+            return true;
+         el = el.getParentElement();
+      }
+      return false;
+   }
+   
    private static final ExternalJavaScriptLoader getLoader(StaticDataResource release,
                                                            StaticDataResource debug)
    {
@@ -321,5 +334,6 @@ public class XTermWidget extends Widget implements RequiresResize,
 
    private int previousRows_ = -1;
    private int previousCols_ = -1;
+   private final static String XTERM_CLASS = "xterm-rstudio";
 
 }

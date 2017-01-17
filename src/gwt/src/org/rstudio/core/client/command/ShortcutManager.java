@@ -1,7 +1,7 @@
 /*
  * ShortcutManager.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,7 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -462,6 +463,15 @@ public class ShortcutManager implements NativePreviewHandler,
          if (binding != null)
          {
             keyBuffer_.clear();
+
+            if (XTermWidget.isXTerm(Element.as(event.getEventTarget())) &&
+                  (binding.getContext() != AppCommand.Context.Workbench &&
+                   binding.getContext() != AppCommand.Context.Addin &&
+                   binding.getContext() != AppCommand.Context.PackageDevelopment))
+            {
+               // Let terminal see the keyboard input and don't execute command.
+               return false;
+            }
             event.stopPropagation();
             binding.execute();
             return true;

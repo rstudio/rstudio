@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,6 +51,7 @@ namespace {
 } // anonymous namespace
 
 const int kDefaultMaxOutputLines = 500;
+const int kDefaultTerminalMaxOutputLines = 1000; // xterm.js scrollback constant
 const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 void saveConsoleProcesses(bool terminatedNormally = true);
 #define kConsoleIndex "INDEX"
@@ -203,6 +204,9 @@ void ConsoleProcess::commonInit()
 
 std::string ConsoleProcess::bufferedOutput() const
 {
+   if (options_.smartTerminal)
+      return "";
+
    boost::circular_buffer<char>::const_iterator pos =
          std::find(outputBuffer_.begin(), outputBuffer_.end(), '\n');
 
@@ -599,49 +603,13 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    else
       pProc->exitCode_.reset(exitCode.get_int());
 
-   // Newly added in v1.1
-   Error error = json::readObject(
-                     obj,
-                     "terminal_sequence", &pProc->terminalSequence_);
-   if (error)
-   {
-      // Possibly unarchiving a pre 1.1 session; ensure defaults are set
-      // and continue
-      pProc->terminalSequence_ = kNoTerminal;
-      return pProc;
-   }
-
-   // Newly added during work-in-progress on 1.1
-   // TODO (gary) could flatten this to a single readObject before release
-   error = json::readObject(obj,
-                            "allow_restart", &pProc->allowRestart_,
-                            "started", &pProc->started_);
-   if (error)
-   {
-      // Possibly unarchiving 1.1 work-in-progress session; match
-      // previous behavior and continue
-      if (pProc->terminalSequence_ != kNoTerminal)
-      {
-         pProc->allowRestart_ = true;
-         pProc->started_ = false;
-      }
-      return pProc;
-   }
-   
-   // More work-in-progress on 1.1
-   // TODO (gary) could flatten this to a single readObject before release
-   error = json::readObject(obj, "title", &pProc->title_);
-   if (error)
-   {
-      pProc->title_.clear();
-   }
-
-   // Yet-more work-in-progress on 1.1
-   error = json::readObject(obj, "childProcs", &pProc->childProcs_);
-   if (error)
-   {
-      pProc->childProcs_ = true;
-   }
+   // Newly added in v1.1; 1.1 is reading/writing this to a different place
+   // than pre 1.1, so don't worry about mismatched json.
+   pProc->terminalSequence_ = obj["terminal_sequence"].get_int();
+   pProc->allowRestart_ = obj["allow_restart"].get_bool();
+   pProc->started_ = obj["started"].get_bool();
+   pProc->title_ = obj["title"].get_str();
+   pProc->childProcs_ = obj["childProcs"].get_bool();
 
    return pProc;
 }

@@ -1,7 +1,7 @@
 /*
  * AddinCommandBinding.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.command;
 
+import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -50,6 +51,12 @@ public class AddinCommandBinding implements CommandBinding
       return true;
    }
    
+   @Override
+   public Context getContext()
+   {
+      return AppCommand.Context.Addin;
+   }
+
    private final RAddin addin_;
    private final AddinExecutor executor_;
 }
