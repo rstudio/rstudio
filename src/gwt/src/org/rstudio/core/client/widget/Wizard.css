@@ -58,6 +58,27 @@
    background: #DAE7F6;	
 }
 
+.wizardPageSelectorItemSize {
+   width: 100%;
+   height: 38px;
+}
+
+.wizardPageSelectorItemLeftIcon {
+   max-width: 20px;
+   max-height: 20px;
+   margin-left: 4px;
+   margin-top: 10px;
+}
+
+.wizardPageSelectorItemRightArrow {
+   margin-top: 12px;
+}
+
+.wizardPageSelectorItemLabel {
+   margin-top: 12px;
+   white-space: nowrap;
+}
+
 @sprite .wizardPageBackground {
    gwt-image: 'wizardPageBackground';
 }

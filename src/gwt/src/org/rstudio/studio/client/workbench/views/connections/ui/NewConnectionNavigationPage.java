@@ -138,11 +138,10 @@ public class NewConnectionNavigationPage
          
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          panel.addStyleName(styles.wizardPageSelectorItem());
-         
-         panel.setSize("100%", "38px");
+         panel.addStyleName(styles.wizardPageSelectorItemSize());
          
          Image rightArrow = new Image(WizardResources.INSTANCE.wizardDisclosureArrow());
-         rightArrow.addStyleName(RES.styles().rightArrow());
+         rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
          panel.addEast(rightArrow, 28);
          
          if (page.getImage() == null)
@@ -152,12 +151,12 @@ public class NewConnectionNavigationPage
          else
          {
             Image icon = new Image(page.getImage());
-            icon.addStyleName(RES.styles().leftIcon());
+            icon.addStyleName(styles.wizardPageSelectorItemLeftIcon());
             panel.addWest(icon, 28);
          }
          
          Label mainLabel = new Label(page.getTitle());
-         mainLabel.addStyleName(RES.styles().label());
+         mainLabel.addStyleName(WizardResources.INSTANCE.styles().wizardPageSelectorItemLabel());
          mainLabel.getElement().setAttribute("title", page.getSubTitle());
          panel.add(mainLabel);
          
@@ -166,12 +165,9 @@ public class NewConnectionNavigationPage
          initWidget(panel);
       }
    }
-   
-   public interface Styles extends CssResource
+
+    public interface Styles extends CssResource
    {
-      String leftIcon();
-      String rightArrow();
-      String label();
    }
    
    public interface Resources extends ClientBundle
