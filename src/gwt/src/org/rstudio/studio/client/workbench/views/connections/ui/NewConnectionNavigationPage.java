@@ -139,7 +139,7 @@ public class NewConnectionNavigationPage
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          panel.addStyleName(styles.wizardPageSelectorItem());
          
-         panel.setSize("100%", "48px");
+         panel.setSize("100%", "38px");
          
          Image rightArrow = new Image(WizardResources.INSTANCE.wizardDisclosureArrow());
          rightArrow.addStyleName(RES.styles().rightArrow());
