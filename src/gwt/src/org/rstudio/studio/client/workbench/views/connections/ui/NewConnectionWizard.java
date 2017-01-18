@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -50,6 +51,21 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
       );
 
       RStudioGinjector.INSTANCE.injectMembers(this); 
+   }
+
+   @Override
+   protected void onPageActivated(
+                     WizardPage<NewConnectionContext, ConnectionOptions> page,
+                     boolean okButtonVisible)
+   {
+      updateHelpLink(page.getHelpLink());
+   }
+
+   @Override
+   protected void onPageDeactivated(
+                     WizardPage<NewConnectionContext, ConnectionOptions> page)
+   {
+      updateHelpLink(null);
    }
    
    private static WizardPage<NewConnectionContext, ConnectionOptions>

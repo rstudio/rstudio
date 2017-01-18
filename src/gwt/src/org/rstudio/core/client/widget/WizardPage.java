@@ -16,6 +16,8 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import org.rstudio.studio.client.common.HelpLink;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -137,6 +139,11 @@ public abstract class WizardPage<I,T> extends Composite
    
    public void onWizardClosing()
    {
+   }
+
+   public HelpLink getHelpLink()
+   {
+      return null;
    }
    
    abstract protected Widget createWidget();

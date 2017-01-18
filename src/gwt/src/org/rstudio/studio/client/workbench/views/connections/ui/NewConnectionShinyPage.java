@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
@@ -65,6 +67,19 @@ public class NewConnectionShinyPage
    @Override
    protected void initialize(NewConnectionContext initData)
    {
+   }
+
+   @Override
+   public HelpLink getHelpLink()
+   {
+      if (StringUtil.isNullOrEmpty(info_.getHelp()))
+         return null;
+
+      return new HelpLink(
+         "Using " + info_.getName(),
+         info_.getHelp(),
+         false,
+         false);
    }
 
    @Override
