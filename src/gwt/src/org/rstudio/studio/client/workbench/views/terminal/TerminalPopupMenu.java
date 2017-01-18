@@ -1,7 +1,7 @@
 /*
  * ActiveTerminalToolbarButton.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -94,9 +94,11 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          addItem(commands_.renameTerminal().createMenuItem(false));
          addItem(commands_.clearTerminalScrollbackBuffer().createMenuItem(false));
          addSeparator();
+         addItem(commands_.previousTerminal().createMenuItem(false));
+         addItem(commands_.nextTerminal().createMenuItem(false));
+         addSeparator();
          addItem(commands_.closeTerminal().createMenuItem(false));
       }
-
 
       callback.onPopupMenu(this);
    }
@@ -144,6 +146,56 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    public String getActiveTerminalHandle()
    {
       return activeTerminalHandle_;
+   }
+
+   /**
+    * Switch to previous terminal tab.
+    */
+   public void previousTerminal()
+   {
+      if (terminals_.terminalCount() > 0 && activeTerminalHandle_ != null)
+      {
+         String prevHandle = null;
+         for (final String handle : terminals_)
+         {
+            if (activeTerminalHandle_.equals(handle))
+            {
+               if (prevHandle == null)
+               {
+                  return;
+               }
+               eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle));
+               return;
+            }
+            else
+            {
+               prevHandle = handle;
+            }
+         }
+      }
+   }
+
+   /**
+    * Switch to next terminal tab.
+    */
+   public void nextTerminal()
+   {
+      if (terminals_.terminalCount() > 0 && activeTerminalHandle_ != null)
+      {
+         boolean foundCurrent = false;
+         for (final String handle : terminals_)
+         {
+            if (foundCurrent == true)
+            {
+               eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+               return;
+            }
+            if (activeTerminalHandle_.equals(handle))
+            {
+               foundCurrent = true;
+            }
+         }
+      }
    }
 
    private String trimCaption(String caption)
