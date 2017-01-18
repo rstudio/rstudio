@@ -287,7 +287,11 @@ public abstract class ModalDialogBase extends DialogBox
    {
       leftButtonPanel_.add(widget);
    }
-   
+
+   protected void removeLeftWidget(Widget widget)
+   {
+      leftButtonPanel_.remove(widget);
+   }
 
    protected void addButton(ThemedButton button)
    {

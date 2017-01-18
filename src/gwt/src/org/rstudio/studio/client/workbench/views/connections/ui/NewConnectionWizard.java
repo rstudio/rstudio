@@ -58,8 +58,14 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
                      WizardPage<NewConnectionContext, ConnectionOptions> page,
                      boolean okButtonVisible)
    {
-      HelpLink helpLink = page.getHelpLink();
-      if (helpLink != null) updateHelpLink(helpLink);
+      updateHelpLink(page.getHelpLink());
+   }
+
+   @Override
+   protected void onPageDeactivated(
+                     WizardPage<NewConnectionContext, ConnectionOptions> page)
+   {
+      updateHelpLink(null);
    }
    
    private static WizardPage<NewConnectionContext, ConnectionOptions>

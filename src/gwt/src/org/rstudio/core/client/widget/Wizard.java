@@ -121,6 +121,12 @@ public class Wizard<I,T> extends ModalDialog<T>
    }
 
    public void updateHelpLink(HelpLink helpLink) {
+      if (helpLink == null) {
+         if (helpLink_ != null) removeLeftWidget(helpLink_);
+         helpLink_ = null;
+         return;
+      }
+
       if (helpLink_ == null) {
          WizardResources.Styles styles = WizardResources.INSTANCE.styles();
 
@@ -469,6 +475,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       activeParentNavigationPage_ = null;
       
+      onPageDeactivated(activePage_);
       activePage_.onDeactivate(new Operation() {
          public void execute() {
             animate(activePage_, toWidget, false, new Command() {
@@ -505,7 +512,10 @@ public class Wizard<I,T> extends ModalDialog<T>
    protected void onPageActivated(WizardPage<I,T> page, boolean okButtonVisible)
    {
    }
-    
+
+   protected void onPageDeactivated(WizardPage<I,T> page)
+   {
+   }
 
    protected void onSelectorActivated()
    {
