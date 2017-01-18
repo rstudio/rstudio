@@ -432,5 +432,5 @@
     any(class(get(objName, envir = globalenv())) %in% dbiClassNames)
   }, ls(envir = globalenv()))
 
-  if (length(dbiObjectNames) > 0) .rs.scalar(dbiObjectNames[[1]]) else null
+  if (length(dbiObjectNames) > 0) .rs.scalar(dbiObjectNames[[1]]) else NULL
 })
