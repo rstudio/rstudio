@@ -375,7 +375,9 @@ public abstract class
    public abstract AppCommand renameTerminal();
    public abstract AppCommand closeTerminal();
    public abstract AppCommand clearTerminalScrollbackBuffer();
-   
+   public abstract AppCommand previousTerminal();
+   public abstract AppCommand nextTerminal();
+    
    // Help
    public abstract AppCommand helpBack();
    public abstract AppCommand helpForward();

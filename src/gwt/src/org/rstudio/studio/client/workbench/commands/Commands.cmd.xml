@@ -2397,6 +2397,18 @@ well as menu structures (for main menu and popup menus).
         desc="Clear terminal scrollback buffer"
         windowMode="main"/>
 
+   <cmd id="previousTerminal"
+        label="Previous Terminal"
+        menuLabel="Previous Terminal"
+        desc="Show previous terminal"
+        windowMode="main"/>
+
+   <cmd id="nextTerminal"
+        label="Next Terminal"
+        menuLabel="Next Terminal"
+        desc="Show next terminal"
+        windowMode="main"/>
+
    <cmd id="addinsMru0" visible="false" rebindable="false"/>
    <cmd id="addinsMru1" visible="false" rebindable="false"/>
    <cmd id="addinsMru2" visible="false" rebindable="false"/>

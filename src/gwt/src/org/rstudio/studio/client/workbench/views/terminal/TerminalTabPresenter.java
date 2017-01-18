@@ -1,7 +1,7 @@
 /*
  * TerminalTabPresenter.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,15 +83,10 @@ public class TerminalTabPresenter extends BusyPresenter
        */
       void terminateAllTerminals();
 
-      /**
-       * Rename (change caption) of current terminal.
-       */
       void renameTerminal();
-
-      /**
-       * Clear terminal buffer.
-       */
       void clearTerminalScrollbackBuffer();
+      void previousTerminal();
+      void nextTerminal();
    }
 
    @Inject
@@ -136,6 +131,18 @@ public class TerminalTabPresenter extends BusyPresenter
    public void onClearTerminalScrollbackBuffer()
    {
       view_.clearTerminalScrollbackBuffer();
+   }
+
+   @Handler
+   public void onPreviousTerminal()
+   {
+      view_.previousTerminal();
+   }
+
+   @Handler
+   public void onNextTerminal()
+   {
+      view_.nextTerminal();
    }
 
    public void initialize()

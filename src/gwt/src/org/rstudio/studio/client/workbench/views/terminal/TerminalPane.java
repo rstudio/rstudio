@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,6 @@ public class TerminalPane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
-
 
       activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
       toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
@@ -330,6 +329,18 @@ public class TerminalPane extends WorkbenchPane
       }
 
       visibleTerminal.clearBuffer();
+   }
+
+   @Override
+   public void previousTerminal()
+   {
+      activeTerminalToolbarButton_.previousTerminal();
+   }
+
+   @Override
+   public void nextTerminal()
+   {
+      activeTerminalToolbarButton_.nextTerminal();
    }
 
    /**
