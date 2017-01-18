@@ -165,6 +165,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
                   return;
                }
                eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle));
+               return;
             }
             else
             {
@@ -187,6 +188,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             if (foundCurrent == true)
             {
                eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
+               return;
             }
             if (activeTerminalHandle_.equals(handle))
             {
