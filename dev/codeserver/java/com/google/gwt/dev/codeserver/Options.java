@@ -22,6 +22,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.util.arg.ArgHandlerBindAddress;
 import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
+import com.google.gwt.dev.util.arg.ArgHandlerFilterJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerGenerateJsInteropExports;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
@@ -43,6 +44,7 @@ import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.util.regexfilter.WhitelistRegexFilter;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
@@ -86,6 +88,7 @@ public class Options {
   private boolean failOnError = false;
   private int compileTestRecompiles = 0;
   private boolean generateJsInteropExports = false;
+  private WhitelistRegexFilter jsInteropExportFilter = new WhitelistRegexFilter();
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
   private boolean closureFormattedOutput = false;
@@ -305,6 +308,10 @@ public class Options {
     return generateJsInteropExports;
   }
 
+  WhitelistRegexFilter getJsInteropExportFilter() {
+    return jsInteropExportFilter;
+  }
+
   JsOutputOption getOutput() {
     if (output == null) {
       return isIncrementalCompileEnabled() ? JsOutputOption.OBFUSCATED : JsOutputOption.PRETTY;
@@ -411,17 +418,23 @@ public class Options {
           Options.this.logLevel = logLevel;
         }
       }));
-      registerHandler(new ArgHandlerGenerateJsInteropExports(new OptionGenerateJsInteropExports() {
-        @Override
-        public boolean shouldGenerateJsInteropExports() {
-          return Options.this.generateJsInteropExports;
-        }
-
-        @Override
-        public void setGenerateJsInteropExports(boolean generateExports) {
-          Options.this.generateJsInteropExports = generateExports;
-        }
-      }));
+      OptionGenerateJsInteropExports optionGenerateJsInteropExport =
+          new OptionGenerateJsInteropExports() {
+            @Override
+            public boolean shouldGenerateJsInteropExports() {
+              return Options.this.generateJsInteropExports;
+            }
+            @Override
+            public void setGenerateJsInteropExports(boolean generateExports) {
+              Options.this.generateJsInteropExports = generateExports;
+            }
+            @Override
+            public WhitelistRegexFilter getJsInteropExportFilter() {
+              return Options.this.jsInteropExportFilter;
+            }
+          };
+      registerHandler(new ArgHandlerGenerateJsInteropExports(optionGenerateJsInteropExport));
+      registerHandler(new ArgHandlerFilterJsInteropExports(optionGenerateJsInteropExport));
       registerHandler(new ArgHandlerMethodNameDisplayMode(new OptionMethodNameDisplayMode() {
         @Override
         public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {

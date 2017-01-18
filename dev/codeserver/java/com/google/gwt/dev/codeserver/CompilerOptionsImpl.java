@@ -26,6 +26,7 @@ import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.util.regexfilter.WhitelistRegexFilter;
 
 import java.io.File;
 import java.util.List;
@@ -42,6 +43,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final List<String> moduleNames;
   private final SourceLevel sourceLevel;
   private final boolean generateJsInteropExports;
+  private final WhitelistRegexFilter jsInteropExportFilter;
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
   private final ListMultimap<String, String> properties;
   private final boolean closureFormattedOutput;
@@ -55,6 +57,8 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.failOnError = options.isFailOnError();
     this.logLevel = options.getLogLevel();
     this.generateJsInteropExports = options.shouldGenerateJsInteropExports();
+    this.jsInteropExportFilter = new WhitelistRegexFilter();
+    this.jsInteropExportFilter.addAll(options.getJsInteropExportFilter());
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
     this.properties = LinkedListMultimap.create(options.getProperties());
     this.closureFormattedOutput = options.isClosureFormattedOutput();
@@ -94,6 +98,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean shouldGenerateJsInteropExports() {
     return generateJsInteropExports;
+  }
+
+  @Override
+  public WhitelistRegexFilter getJsInteropExportFilter() {
+    return jsInteropExportFilter;
   }
 
   /**

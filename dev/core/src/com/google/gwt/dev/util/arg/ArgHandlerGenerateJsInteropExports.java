@@ -28,7 +28,8 @@ public class ArgHandlerGenerateJsInteropExports extends ArgHandlerFlag {
   }
   @Override
   public String getPurposeSnippet() {
-    return "Generate exports for JsInterop purposes";
+    return "Generate exports for JsInterop purposes."
+        + " If no -includeJsInteropExport/-excludeJsInteropExport provided, generates all exports.";
   }
 
   @Override

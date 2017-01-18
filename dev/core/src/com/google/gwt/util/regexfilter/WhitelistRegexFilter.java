@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Google Inc.
+ * Copyright 2016 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.util.arg;
-
-import com.google.gwt.util.regexfilter.WhitelistRegexFilter;
+package com.google.gwt.util.regexfilter;
 
 /**
- * An option to enable/disable/filter JsInterop export generation.
+ * A {@link RegexFilter} for whitelisting.
  */
-public interface OptionGenerateJsInteropExports {
+public class WhitelistRegexFilter extends RegexFilter {
+  @Override
+  protected boolean acceptByDefault() {
+    return false;
+  }
 
-  boolean shouldGenerateJsInteropExports();
+  @Override
+  protected boolean entriesArePositiveByDefault() {
+    return true;
+  }
 
-  void setGenerateJsInteropExports(boolean generateExports);
-
-  WhitelistRegexFilter getJsInteropExportFilter();
+  @Override
+  public String toString() {
+    return "WhitelistRegexFilter(" + getValues() + ")";
+  }
 }

@@ -168,7 +168,13 @@ public class SuperDevListener implements CodeServerListener {
     if (options.shouldGenerateJsInteropExports()) {
       args.add("-generateJsInteropExports");
     }
-
+    for (String regex : options.getJsInteropExportFilter().getValues()) {
+      if (regex.startsWith("-")) {
+        args.add("-excludeJsInteropExports " + regex.substring(1));
+      } else {
+        args.add("-includeJsInteropExports " + regex);
+      }
+    }
     if (!options.isIncrementalCompileEnabled()) {
       args.add("-noincremental");
     }

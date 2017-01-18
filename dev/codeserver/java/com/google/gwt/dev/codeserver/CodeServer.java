@@ -121,12 +121,10 @@ public class CodeServer {
         baseCacheDir,
         ImmutableMap.of(
             "style", options.getOutput().name(),
-            "closureFormattedOutput",
-                Boolean.valueOf(options.isClosureFormattedOutput()).toString(),
-            "generateJsInteropExports",
-                Boolean.valueOf(options.shouldGenerateJsInteropExports()).toString(),
-            "methodDisplayMode", options.getMethodNameDisplayMode().name())
-    );
+            "closureFormattedOutput", String.valueOf(options.isClosureFormattedOutput()),
+            "generateJsInteropExports", String.valueOf(options.shouldGenerateJsInteropExports()),
+            "exportFilters", options.getJsInteropExportFilter().toString(),
+            "methodDisplayMode", options.getMethodNameDisplayMode().name()));
   }
 
   /**

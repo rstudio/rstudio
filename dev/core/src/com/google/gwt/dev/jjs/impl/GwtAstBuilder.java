@@ -68,6 +68,7 @@ import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
+import com.google.gwt.dev.jjs.ast.JMember;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -122,6 +123,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.util.regexfilter.WhitelistRegexFilter;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
@@ -2990,7 +2992,7 @@ public class GwtAstBuilder {
       type.addMethod(method);
       // This method is declared in a native JsType, make sure JsInfo is populated correctly, by
       // applying the JsType rules.
-      JsInteropUtil.maybeSetJsInteropProperties(method, generateJsInteropExports);
+      JsInteropUtil.maybeSetJsInteropProperties(method, shouldExport(method));
       assert (method.getJsMemberType() == JsMemberType.METHOD);
     }
 
@@ -3844,6 +3846,8 @@ public class GwtAstBuilder {
 
   private boolean generateJsInteropExports;
 
+  private WhitelistRegexFilter jsInteropExportFilter;
+
   /**
    * Externalized class and method form for Exceptions.safeClose() to provide support
    * for try-with-resources.
@@ -3897,8 +3901,15 @@ public class GwtAstBuilder {
     this.jsniMethods = jsniMethods;
     this.compilerContext = compilerContext;
     this.generateJsInteropExports = compilerContext.getOptions().shouldGenerateJsInteropExports();
+    this.jsInteropExportFilter = compilerContext.getOptions().getJsInteropExportFilter();
     this.newTypes = Lists.newArrayList();
     this.curCud = new CudInfo(cud);
+  }
+
+  private boolean shouldExport(JMember member) {
+    return generateJsInteropExports
+        && (jsInteropExportFilter.isEmpty()
+            || jsInteropExportFilter.isIncluded(member.getQualifiedName()));
   }
 
   /**
@@ -3969,7 +3980,7 @@ public class GwtAstBuilder {
               getFieldDisposition(binding), AccessModifier.fromFieldBinding(binding));
     }
     enclosingType.addField(field);
-    JsInteropUtil.maybeSetJsInteropProperties(field, generateJsInteropExports, x.annotations);
+    JsInteropUtil.maybeSetJsInteropProperties(field, shouldExport(field), x.annotations);
     processSuppressedWarnings(field, x.annotations);
     typeMap.setField(binding, field);
   }
@@ -4149,7 +4160,7 @@ public class GwtAstBuilder {
     maybeAddMethodSpecialization(x, method);
     maybeSetInliningMode(x, method);
     maybeSetHasNoSideEffects(x, method);
-    JsInteropUtil.maybeSetJsInteropProperties(method, generateJsInteropExports, x.annotations);
+    JsInteropUtil.maybeSetJsInteropProperties(method, shouldExport(method), x.annotations);
     processSuppressedWarnings(method, x.annotations);
   }
 
@@ -4255,7 +4266,7 @@ public class GwtAstBuilder {
     JMethod method = typeMap.createMethod(info, binding, paramNames);
     assert !method.isExternal();
     method.setBody(new JMethodBody(info));
-    JsInteropUtil.maybeSetJsInteropProperties(method, generateJsInteropExports);
+    JsInteropUtil.maybeSetJsInteropProperties(method, shouldExport(method));
     typeMap.setMethod(binding, method);
     return method;
   }
