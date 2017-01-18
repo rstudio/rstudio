@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
@@ -71,9 +72,13 @@ public class NewConnectionShinyPage
    @Override
    public HelpLink getHelpLink()
    {
+      if (StringUtil.isNullOrEmpty(info_.getHelp()))
+         return null;
+
       return new HelpLink(
          "Using " + info_.getName(),
          info_.getHelp(),
+         false,
          false);
    }
 

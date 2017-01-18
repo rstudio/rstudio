@@ -175,7 +175,8 @@ options(connectionObserver = list(
          package = .rs.scalar(con$package),
          name = .rs.scalar(con$name),
          type = .rs.scalar("Shiny"),
-         newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = "")
+         newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
+         help = .rs.scalar(con$help)
       )
    })
 

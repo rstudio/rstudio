@@ -33,17 +33,25 @@ public class HelpLink extends Composite
       this("", "", true);
    }
    
-   public HelpLink(String caption, String rstudioLink)
+   public HelpLink(String caption, String link)
    {
-      this(caption, rstudioLink, true);
+      this(caption, link, true);
+   }
+   
+   public HelpLink(String caption,
+                   String link,
+                   final boolean withVersionInf)
+   {
+      this(caption, link, true, true);
    }
 
    public HelpLink(String caption, 
-                   String rstudioLink, 
-                   final boolean withVersionInfo)
+                   String link, 
+                   final boolean withVersionInfo,
+                   boolean isRStudioLink)
    {
-      link_ = rstudioLink;
-      isRStudioLink_ = true;
+      link_ = link;
+      isRStudioLink_ = isRStudioLink;
       withVersionInfo_ = withVersionInfo;
 
       HorizontalPanel helpPanel = new HorizontalPanel();
@@ -56,12 +64,12 @@ public class HelpLink extends Composite
          public void onClick(ClickEvent event)
          {
             if (isRStudioLink_) {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
+               RStudioGinjector.INSTANCE.getGlobalDisplay().openRStudioLink(
                   link_,
-                                                         withVersionInfo_);
+                  withVersionInfo_);
             }
             else {
-               
+               RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(link_);
             }
          }  
       });

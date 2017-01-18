@@ -83,6 +83,7 @@ public:
       
       object["name"] = name_;
       object["package"] = package_;
+      object["shinyapp"] = shinyapp_;
       object["help"] = help_;
       
       return object;
