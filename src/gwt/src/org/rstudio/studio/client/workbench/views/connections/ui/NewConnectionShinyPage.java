@@ -72,8 +72,8 @@ public class NewConnectionShinyPage
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Using Spark with RStudio",
-         "using_spark",
+         "Using " + info_.getName(),
+         info_.getHelp(),
          false);
    }
 
