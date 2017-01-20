@@ -159,6 +159,7 @@ public class RecompilerTest extends TestCase {
 
   public void testIncrementalRecompile_compileErrorDoesntCorruptMinimalRebuildCache()
       throws UnableToCompleteException, IOException, InterruptedException {
+    String moduleName = "com.foo.SimpleModule";
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
@@ -166,7 +167,7 @@ public class RecompilerTest extends TestCase {
     // Setup options to perform a per-file compile and compile the given module.
     Options options = new Options();
     options.parseArgs(new String[] {
-        "-incremental", "-src", sourcePath.getAbsolutePath(), "com.foo.SimpleModule"});
+        "-incremental", "-src", sourcePath.getAbsolutePath(), moduleName});
 
     // Prepare the basic resources in the test application.
     List<MockResource> originalResources = Lists.newArrayList(simpleModuleResource,
@@ -175,11 +176,12 @@ public class RecompilerTest extends TestCase {
     writeResourcesTo(originalResources, sourcePath);
 
     File baseCacheDir = Files.createTempDir();
-    UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
+    UnitCache unitCache = UnitCacheSingleton.get(
+        logger, null, baseCacheDir, new CompilerOptionsImpl(options));
     MinimalRebuildCacheManager minimalRebuildCacheManager =
         new MinimalRebuildCacheManager(logger, baseCacheDir, ImmutableMap.<String, String>of());
     Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
-        "com.foo.SimpleModule", options, unitCache, minimalRebuildCacheManager);
+        moduleName, options, unitCache, minimalRebuildCacheManager);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
     OutboxTable outboxTable = new OutboxTable();
     outboxTable.addOutbox(outbox);
@@ -205,6 +207,7 @@ public class RecompilerTest extends TestCase {
 
   public void testIncrementalRecompile_modulePropertyEditsWork() throws UnableToCompleteException,
       IOException, InterruptedException {
+    String moduleName = "com.foo.PropertyModule";
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
@@ -212,7 +215,7 @@ public class RecompilerTest extends TestCase {
     // Setup options to perform a per-file compile and compile the given module.
     Options options = new Options();
     options.parseArgs(new String[] {
-        "-incremental", "-src", sourcePath.getAbsolutePath(), "com.foo.PropertyModule"});
+        "-incremental", "-src", sourcePath.getAbsolutePath(), moduleName});
 
     // Prepare the basic resources in the test application.
     List<MockResource> originalResources = Lists.newArrayList(propertyIsFooModuleResource,
@@ -221,11 +224,12 @@ public class RecompilerTest extends TestCase {
     writeResourcesTo(originalResources, sourcePath);
 
     File baseCacheDir = Files.createTempDir();
-    UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
+    UnitCache unitCache = UnitCacheSingleton.get(
+        logger, null, baseCacheDir, new CompilerOptionsImpl(options));
     MinimalRebuildCacheManager minimalRebuildCacheManager =
         new MinimalRebuildCacheManager(logger, baseCacheDir, ImmutableMap.<String, String>of());
     Recompiler recompiler = new Recompiler(OutboxDir.create(Files.createTempDir(), logger), null,
-        "com.foo.PropertyModule", options, unitCache, minimalRebuildCacheManager);
+        moduleName, options, unitCache, minimalRebuildCacheManager);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
     OutboxTable outboxTable = new OutboxTable();
     outboxTable.addOutbox(outbox);

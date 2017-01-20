@@ -99,8 +99,11 @@ class PersistentUnitCache extends MemoryUnitCache {
 
   private Semaphore cleanupInProgress = new Semaphore(1);
   private AtomicInteger newUnitsSinceLastCleanup = new AtomicInteger();
+  private final String relevantOptionsHash;
 
-  PersistentUnitCache(final TreeLogger logger, File parentDir) throws UnableToCompleteException {
+  PersistentUnitCache(final TreeLogger logger, File parentDir, String relevantOptionsHash)
+      throws UnableToCompleteException {
+    this.relevantOptionsHash = relevantOptionsHash;
     this.backgroundService = new BackgroundService(logger, parentDir, this);
   }
 
@@ -272,7 +275,8 @@ class PersistentUnitCache extends MemoryUnitCache {
     BackgroundService(TreeLogger logger, File parentDir, final PersistentUnitCache cacheToLoad)
         throws UnableToCompleteException {
       this.logger = logger;
-      this.cacheDir = new PersistentUnitCacheDir(logger, parentDir);
+      this.cacheDir =
+          new PersistentUnitCacheDir(logger, parentDir, cacheToLoad.relevantOptionsHash);
       this.cacheToLoad = cacheToLoad;
 
       start();

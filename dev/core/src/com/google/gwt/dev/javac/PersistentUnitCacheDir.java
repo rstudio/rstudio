@@ -50,10 +50,11 @@ class PersistentUnitCacheDir {
   private static final String CACHE_FILE_PREFIX = "gwt-unitCache-";
 
   static final String CURRENT_VERSION_CACHE_FILE_PREFIX =
-      CACHE_FILE_PREFIX + CompilerVersion.getHash() + "-";
+      CACHE_FILE_PREFIX + CompilerVersion.getHash();
 
   private final TreeLogger logger;
   private final File dir;
+  private final String filePrefix;
 
   // Non-null when a a cache file is open for writing. (Always true in normal operation.)
   private OpenFile openFile;
@@ -62,8 +63,10 @@ class PersistentUnitCacheDir {
    * Finds the child directory where the cache files will be stored and opens a new cache
    * file for appending.
    */
-  PersistentUnitCacheDir(TreeLogger logger, File parentDir) throws UnableToCompleteException {
+  PersistentUnitCacheDir(TreeLogger logger, File parentDir, String cacheFilePrefix)
+      throws UnableToCompleteException {
     this.logger = logger;
+    this.filePrefix = CURRENT_VERSION_CACHE_FILE_PREFIX + "-" + cacheFilePrefix + "-";
 
     /*
      * We must canonicalize the path here, otherwise we might set cacheDirectory
@@ -96,7 +99,7 @@ class PersistentUnitCacheDir {
 
     logger.log(TreeLogger.TRACE, "Persistent unit cache dir set to: " + dir.getAbsolutePath());
 
-    openFile = new OpenFile(logger, createEmptyCacheFile(logger, dir));
+    openFile = new OpenFile(logger, createEmptyCacheFile(logger, dir, filePrefix));
   }
 
   /**
@@ -110,7 +113,7 @@ class PersistentUnitCacheDir {
    * Returns the number of files written to the cache directory and closed.
    */
   synchronized int getClosedCacheFileCount() {
-    return selectClosedFiles(listFiles(CURRENT_VERSION_CACHE_FILE_PREFIX)).size();
+    return selectClosedFiles(listFiles(filePrefix)).size();
   }
 
   /**
@@ -124,7 +127,7 @@ class PersistentUnitCacheDir {
           + getPath());
     }
     try {
-      List<File> files = selectClosedFiles(listFiles(CURRENT_VERSION_CACHE_FILE_PREFIX));
+      List<File> files = selectClosedFiles(listFiles(filePrefix));
       for (File cacheFile : files) {
         loadOrDeleteCacheFile(cacheFile, destination);
       }
@@ -162,7 +165,7 @@ class PersistentUnitCacheDir {
       openFile.close(logger);
       openFile = null;
     }
-    openFile = new OpenFile(logger, createEmptyCacheFile(logger, dir));
+    openFile = new OpenFile(logger, createEmptyCacheFile(logger, dir, filePrefix));
   }
 
   /**
@@ -311,14 +314,13 @@ class PersistentUnitCacheDir {
   /**
    * Creates a new, empty file with a name based on the current system time.
    */
-  private static File createEmptyCacheFile(TreeLogger logger, File dir)
+  private static File createEmptyCacheFile(TreeLogger logger, File dir, String filePrefix)
       throws UnableToCompleteException {
     File newFile = null;
     long timestamp = System.currentTimeMillis();
     try {
       do {
-        newFile = new File(dir, CURRENT_VERSION_CACHE_FILE_PREFIX +
-            String.format("%016X", timestamp++));
+        newFile = new File(dir, filePrefix + String.format("%016X", timestamp++));
       } while (!newFile.createNewFile());
     } catch (IOException ex) {
       logger.log(TreeLogger.WARN, "Can't create new cache log file "

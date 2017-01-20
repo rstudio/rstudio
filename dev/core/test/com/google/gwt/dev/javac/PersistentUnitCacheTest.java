@@ -24,7 +24,6 @@ import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 import junit.framework.TestCase;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -54,6 +53,8 @@ public class PersistentUnitCacheTest extends TestCase {
 
   private TreeLogger logger;
   private File lastParentDir = null;
+  private String hash1 = "HASH1";
+  private String hash2 = "HASH2";
 
   @Override
   protected void setUp() throws Exception {
@@ -90,7 +91,7 @@ public class PersistentUnitCacheTest extends TestCase {
     assertTrue(fileInTheWay.exists());
     fileInTheWay.deleteOnExit();
     try {
-      new PersistentUnitCache(logger, fileInTheWay);
+      new PersistentUnitCache(logger, fileInTheWay, hash1);
       fail("Expected an exception to be thrown");
     } catch (UnableToCompleteException expected) {
     }
@@ -115,7 +116,7 @@ public class PersistentUnitCacheTest extends TestCase {
     assertTrue(baseDir.exists());
     assertTrue(baseDir.delete());
     File parentDir = lastParentDir = new File(baseDir, "sHoUlDnOtExi57");
-    new PersistentUnitCache(logger, parentDir);
+    new PersistentUnitCache(logger, parentDir, hash1);
     assertTrue(parentDir.isDirectory());
   }
 
@@ -125,7 +126,7 @@ public class PersistentUnitCacheTest extends TestCase {
     File parentDir = lastParentDir = File.createTempFile("persistentCacheTest", "");
     File unitCacheDir = mkCacheDir(parentDir);
 
-    PersistentUnitCache cache = new PersistentUnitCache(logger, parentDir);
+    PersistentUnitCache cache = new PersistentUnitCache(logger, parentDir, hash1);
 
     MockCompilationUnit foo1 = new MockCompilationUnit("com.example.Foo", "Foo: source1");
     cache.add(foo1);
@@ -172,7 +173,7 @@ public class PersistentUnitCacheTest extends TestCase {
 
     // Fire up the cache again. It should be pre-populated.
     // Search by type name
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = new PersistentUnitCache(logger, parentDir, hash1);
     result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
@@ -204,7 +205,7 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, 1);
 
     // Fire up the cache again. (Creates a second file in the background.)
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = new PersistentUnitCache(logger, parentDir, hash1);
 
     // keep making more files
     MockCompilationUnit lastUnit = null;
@@ -221,7 +222,7 @@ public class PersistentUnitCacheTest extends TestCase {
     }
 
     // One last check, we should load the last unit added to the cache.
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = new PersistentUnitCache(logger, parentDir, hash1);
     result = cache.find(lastUnit.getContentId());
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
@@ -262,13 +263,55 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, 1);
 
     // Fire up the cache on this one coalesced file.
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = new PersistentUnitCache(logger, parentDir, hash1);
 
     // Verify that we can still find the content that was coalesced.
     assertNotNull(cache.find("com/example/Foo.java"));
     assertNotNull(cache.find("com/example/Bar.java"));
     assertNotNull(cache.find("com/example/Baz.java"));
     assertNotNull(cache.find("com/example/Qux.java"));
+
+    cache.shutdown();
+
+    // There should be a single file in the cache dir.
+    assertNumCacheFiles(unitCacheDir, 1);
+
+    cache = new PersistentUnitCache(logger, parentDir, hash2);
+    // A different hash implies a new cache.
+    assertNull(cache.find("com/example/Foo.java"));
+    assertNull(cache.find("com/example/Bar.java"));
+    assertNull(cache.find("com/example/Baz.java"));
+    assertNull(cache.find("com/example/Qux.java"));
+
+    cache.internalAdd(
+        new MockCompilationUnit("com.example.Hash2", "Foo Source")).get();
+
+    assertNotNull(cache.find("com/example/Hash2.java"));
+
+    cache.shutdown();
+
+    // There should be a single file in the cache dir.
+    assertNumCacheFiles(unitCacheDir, 2);
+
+    cache = new PersistentUnitCache(logger, parentDir, hash1);
+    // Verify that we can still find the content with the original hash.
+    assertNotNull(cache.find("com/example/Foo.java"));
+    assertNotNull(cache.find("com/example/Bar.java"));
+    assertNotNull(cache.find("com/example/Baz.java"));
+    assertNotNull(cache.find("com/example/Qux.java"));
+    assertNull(cache.find("com/example/Hash2.java"));
+
+    cache.shutdown();
+
+    cache = new PersistentUnitCache(logger, parentDir, hash2);
+    // A different hash implies a new cache.
+    assertNull(cache.find("com/example/Foo.java"));
+    assertNull(cache.find("com/example/Bar.java"));
+    assertNull(cache.find("com/example/Baz.java"));
+    assertNull(cache.find("com/example/Qux.java"));
+    assertNotNull(cache.find("com/example/Hash2.java"));
+
+    cache.shutdown();
   }
 
   private void assertNumCacheFiles(File unitCacheDir, int expected) {
@@ -290,7 +333,7 @@ public class PersistentUnitCacheTest extends TestCase {
   }
 
   private void checkInvalidObjectInCache(Object toSerialize) throws IOException,
-      FileNotFoundException, UnableToCompleteException, InterruptedException, ExecutionException {
+      UnableToCompleteException, InterruptedException, ExecutionException {
     File parentDir = lastParentDir = File.createTempFile("PersistentUnitTest-CNF", "");
     File unitCacheDir = mkCacheDir(parentDir);
 
@@ -299,14 +342,14 @@ public class PersistentUnitCacheTest extends TestCase {
      * object in it.
      */
     File errorFile = new File(unitCacheDir,
-        PersistentUnitCacheDir.CURRENT_VERSION_CACHE_FILE_PREFIX + "12345");
+        PersistentUnitCacheDir.CURRENT_VERSION_CACHE_FILE_PREFIX + "-"  + hash1 + "-" + "12345");
     ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(errorFile));
     os.writeObject(toSerialize);
     os.close();
 
     assertNumCacheFiles(unitCacheDir, 1);
 
-    PersistentUnitCache cache = new PersistentUnitCache(logger, parentDir);
+    PersistentUnitCache cache = new PersistentUnitCache(logger, parentDir, hash1);
     cache.cleanup(logger);
     cache.shutdown();
 

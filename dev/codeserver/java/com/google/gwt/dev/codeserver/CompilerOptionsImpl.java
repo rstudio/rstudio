@@ -49,6 +49,10 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final boolean closureFormattedOutput;
   private final JsOutputOption output;
 
+  CompilerOptionsImpl(Options options) {
+    this(null, null, options);
+  }
+
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
     this.incremental = options.isIncrementalCompileEnabled();

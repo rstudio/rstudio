@@ -18,6 +18,11 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.util.tools.shared.Md5Utils;
+import com.google.gwt.util.tools.shared.StringUtils;
+
 import java.io.File;
 
 /**
@@ -47,6 +52,15 @@ public class UnitCacheSingleton {
     instance.clear();
   }
 
+  public static String getRelevantOptionsHash(JJSOptions options) {
+    return StringUtils.toHexString(
+        Md5Utils.getMd5Digest(
+            Joiner.on('-').join(
+                options.getJsInteropExportFilter(),
+                options.shouldGenerateJsInteropExports()
+        ).getBytes()));
+  }
+
   /**
    * If the cache is enabled, instantiates the cache and begins loading units
    * into memory in a background thread. If the cache is not enabled, it clears
@@ -57,8 +71,9 @@ public class UnitCacheSingleton {
    * <p>
    * The specified cache dir parameter is optional.
    */
-  public static synchronized UnitCache get(TreeLogger logger, File specifiedCacheDir) {
-    return get(logger, specifiedCacheDir, null);
+  public static synchronized UnitCache get(
+      TreeLogger logger, File specifiedCacheDir, JJSOptions options) {
+    return get(logger, specifiedCacheDir, null, options);
   }
 
   /**
@@ -72,7 +87,7 @@ public class UnitCacheSingleton {
    * Both specified and fallback cache dir parameters are optional.
    */
   public static synchronized UnitCache get(TreeLogger logger, File specifiedCacheDir,
-      File fallbackCacheDir) {
+      File fallbackCacheDir, JJSOptions options) {
     assert logger != null;
     if (instance == null) {
       String propertyCachePath = System.getProperty(GWT_PERSISTENTUNITCACHEDIR);
@@ -95,7 +110,8 @@ public class UnitCacheSingleton {
 
         if (actualCacheDir != null) {
           try {
-            return instance = new PersistentUnitCache(logger, actualCacheDir);
+            return instance =
+                new PersistentUnitCache(logger, actualCacheDir, getRelevantOptionsHash(options));
           } catch (UnableToCompleteException ignored) {
           }
         }

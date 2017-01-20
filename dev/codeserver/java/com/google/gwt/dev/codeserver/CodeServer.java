@@ -68,7 +68,9 @@ public class CodeServer {
       try {
         File baseCacheDir =
             DiskCachingUtil.computePreferredCacheDir(options.getModuleNames(), logger);
-        UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
+        UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir,
+            new CompilerOptionsImpl(options));
+
         MinimalRebuildCacheManager minimalRebuildCacheManager =
             createMinimalRebuildCacheManager(logger, options, baseCacheDir);
 
@@ -141,7 +143,8 @@ public class CodeServer {
     TreeLogger startupLogger = topLogger.branch(Type.INFO, "Super Dev Mode starting up");
     File baseCacheDir =
         DiskCachingUtil.computePreferredCacheDir(options.getModuleNames(), startupLogger);
-    UnitCache unitCache = UnitCacheSingleton.get(startupLogger, null, baseCacheDir);
+    UnitCache unitCache = UnitCacheSingleton.get(
+        startupLogger, null, baseCacheDir, new CompilerOptionsImpl(options));
     MinimalRebuildCacheManager minimalRebuildCacheManager =
         createMinimalRebuildCacheManager(topLogger, options, baseCacheDir);
     OutboxTable outboxTable =
