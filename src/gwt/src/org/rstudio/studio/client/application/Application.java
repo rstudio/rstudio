@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -720,17 +720,31 @@ public class Application implements ApplicationEventHandlers
 
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
-      if (!sessionInfo.getAllowShell())
+      
+      // TODO (gary) temporary windows-only logic for Shell/Terminal; remove
+      // once terminal is ready on all platforms
+      if (BrowseCap.isWindowsDesktop())
+      {
+         if (!uiPrefs_.get().enableXTerm().getValue())
+         {
+            commands_.newTerminal().remove();
+            commands_.activateTerminal().remove();
+         }
+         else
+         {
+            commands_.showShellDialog().remove();
+         }
+      }
+      else
       {
          commands_.showShellDialog().remove();
+         if (!sessionInfo.getAllowShell())
+         {
+            commands_.newTerminal().remove();
+            commands_.activateTerminal().remove();
+         }
       }
-      
-      // TODO (gary) temporary feature gate, switch to getAllowShell
-      if (!uiPrefs_.get().enableXTerm().getValue())
-      {
-         commands_.newTerminal().remove();
-         commands_.activateTerminal().remove();
-      }
+
       if (!sessionInfo.getAllowPackageInstallation())
       {
          commands_.installPackage().remove();
