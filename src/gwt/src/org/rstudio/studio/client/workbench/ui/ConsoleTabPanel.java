@@ -1,7 +1,7 @@
 /*
  * ConsoleTabPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.ui;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
@@ -258,7 +259,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       terminalTabVisible_ = uiPrefs_.showTerminalTab().getValue();
 
       // TODO (gary) this is a temporary feature gate
-      if (terminalTabVisible_ && !uiPrefs_.enableXTerm().getValue())
+      if (terminalTabVisible_ && BrowseCap.isWindowsDesktop() && 
+            !uiPrefs_.enableXTerm().getValue())
       {
          terminalTabVisible_ = false;
       }
