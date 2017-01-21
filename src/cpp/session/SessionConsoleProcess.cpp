@@ -1075,14 +1075,17 @@ core::json::Array processesAsJson()
    return procInfos;
 }
 
-std::string serializeConsoleProcs()
+std::string serializeConsoleProcs(bool suspend = false)
 {
    json::Array array;
    for (ProcTable::const_iterator it = s_procs.begin();
         it != s_procs.end();
         it++)
    {
-      it->second->onSuspend();
+      if (suspend)
+      {
+         it->second->onSuspend();
+      }
       array.push_back(it->second->toJson());
    }
 
@@ -1162,6 +1165,15 @@ void saveConsoleProcesses(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
+void onSuspend(core::Settings* pSettings)
+{
+   serializeConsoleProcs(true /*suspend*/);
+}
+
+void onResume(const core::Settings& /*settings*/)
+{
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -1175,6 +1187,8 @@ Error initialize()
    s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
 
    events().onShutdown.connect(saveConsoleProcesses);
+   addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
+
    loadConsoleProcesses();
 
    // install rpc methods
