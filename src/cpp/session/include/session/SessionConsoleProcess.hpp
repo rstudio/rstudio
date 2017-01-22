@@ -25,10 +25,6 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <core/system/Process.hpp>
-#include <core/Log.hpp>
-
-#include <core/FileSerializer.hpp>
-#include <core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {

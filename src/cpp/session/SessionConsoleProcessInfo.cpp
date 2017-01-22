@@ -32,16 +32,11 @@ const int kDefaultTerminalMaxOutputLines = 1000; // xterm.js scrollback constant
 const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 
 ConsoleProcessInfo::ConsoleProcessInfo()
-   :
-     terminalSequence_(kNoTerminal),
-     allowRestart_(false),
-     dialog_(false),
-     interactionMode_(InteractionNever),
+   : terminalSequence_(kNoTerminal), allowRestart_(false),
+     dialog_(false), interactionMode_(InteractionNever),
      maxOutputLines_(kDefaultMaxOutputLines),
-     showOnOutput_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE),
-     started_(true),
-     childProcs_(true)
+     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
+     started_(true), childProcs_(true)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -57,19 +52,11 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          bool dialog,
          InteractionMode mode,
          int maxOutputLines)
-   :
-     caption_(caption),
-     title_(title),
-     handle_(handle),
-     terminalSequence_(terminalSequence),
-     allowRestart_(allowRestart),
-     dialog_(dialog),
-     interactionMode_(mode),
-     maxOutputLines_(maxOutputLines),
-     showOnOutput_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE),
-     started_(false),
-     childProcs_(true)
+   : caption_(caption), title_(title), handle_(handle),
+     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
+     dialog_(dialog), interactionMode_(mode), maxOutputLines_(maxOutputLines),
+     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
+     started_(false), childProcs_(true)
 {
 }
 

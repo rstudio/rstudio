@@ -25,6 +25,7 @@
 #include <core/Exec.hpp>
 #include <core/SafeConvert.hpp>
 #include <core/Settings.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <core/system/Environment.hpp>
 
