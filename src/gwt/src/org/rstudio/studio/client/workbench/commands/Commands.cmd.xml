@@ -603,6 +603,7 @@ well as menu structures (for main menu and popup menus).
          
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
+         <shortcut refid="activateTerminal" value="Ctrl+Shift+T"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
          <shortcut refid="activateHistory" value="Ctrl+4"/>
          <shortcut refid="activateFiles" value="Ctrl+5"/>
@@ -729,6 +730,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showOptions" value="Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="projectOptions" value="Shift+Meta+," if="org.rstudio.core.client.BrowseCap.isMacintosh()"/> 
          <shortcut refid="goToHelp" value="Ctrl+C Ctrl+V" disableModes="default,vim"/>
+         <shortcut refid="newTerminal" value="Alt+Shift+T"/>
       </shortcutgroup>
       <shortcutgroup name="Console">
          <shortcut refid="consoleClear" value="Ctrl+L" disableModes="emacs"/>
