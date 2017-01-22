@@ -15,6 +15,8 @@
 #ifndef SESSION_CONSOLE_PROCESS_HPP
 #define SESSION_CONSOLE_PROCESS_HPP
 
+#include <session/SessionConsoleProcessInfo.hpp>
+
 #include <queue>
 
 #include <boost/regex.hpp>
@@ -38,60 +40,25 @@ namespace rstudio {
 namespace session {
 namespace console_process {
 
-enum InteractionMode
-{
-   InteractionNever = 0,
-   InteractionPossible = 1,
-   InteractionAlways = 2
-};
-
-extern const int kDefaultMaxOutputLines;
-extern const int kDefaultTerminalMaxOutputLines;
-extern const int kNoTerminal;
-
 class ConsoleProcess : boost::noncopyable,
                        public boost::enable_shared_from_this<ConsoleProcess>
 {
 private:
    // This constructor is only for resurrecting orphaned processes (i.e. for
    // suspend/resume scenarios)
-   ConsoleProcess();
+   ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    ConsoleProcess(
          const std::string& command,
          const core::system::ProcessOptions& options,
-         const std::string& caption,
-         const std::string& title,
-         int terminalSequence,
-         bool allowRestart,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines);
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
   
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
          const core::system::ProcessOptions& options,
-         const std::string& caption,
-         const std::string& title,
-         int terminalSequence,
-         bool allowRestart,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines);
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
    
-   ConsoleProcess(
-         const std::string& command,
-         const core::system::ProcessOptions& options,
-         const std::string& caption,
-         const std::string& title,
-         int terminalSequence,
-         bool allowRestart,
-         const std::string& handle,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines);
-
    void regexInit();
    void commonInit();
 
@@ -120,36 +87,17 @@ public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
          core::system::ProcessOptions options,
-         const std::string& caption,
-         const std::string& title,
-         int terminalSequence,
-         bool allowRestart,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines);
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& program,
          const std::vector<std::string>& args,
          core::system::ProcessOptions options,
-         const std::string& caption,
-         const std::string& title,
-         int terminalSequence,
-         bool allowRestart,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines);
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
 
    static boost::shared_ptr<ConsoleProcess> createTerminalProcess(
          core::system::ProcessOptions options,
-         const std::string& caption,
-         const std::string& title,
-         const std::string& terminalHandle,
-         const int terminalSequence,
-         bool allowRestart,
-         bool dialog,
-         InteractionMode mode,
-         int maxOutputLines = kDefaultMaxOutputLines);
+         boost::shared_ptr<ConsoleProcessInfo> procInfo);
    
    virtual ~ConsoleProcess() {}
 
@@ -162,25 +110,24 @@ public:
 
    boost::signal<void(int)>& onExit() { return onExit_; }
 
-   std::string handle() const { return handle_; }
-   InteractionMode interactionMode() const { return interactionMode_; }
+   std::string handle() const { return procInfo_->getHandle(); }
+   InteractionMode interactionMode() const { return procInfo_->getInteractionMode(); }
 
    core::Error start();
    void enqueInput(const Input& input);
    void interrupt();
    void resize(int cols, int rows);
    void onSuspend();
-   bool isStarted() { return started_; }
-   void setCaption(std::string& caption) { caption_ = caption; }
-   void setTitle(std::string& title) { title_ = title; }
+   bool isStarted() { return procInfo_->isStarted(); }
+   void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
+   void setTitle(std::string& title) { procInfo_->setTitle(title); }
    void deleteLogFile() const;
    std::string getSavedBuffer() const;
 
-   void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
+   void setShowOnOutput(bool showOnOutput) { procInfo_->setShowOnOutput(showOnOutput); }
 
    core::json::Object toJson() const;
-   static boost::shared_ptr<ConsoleProcess> fromJson(
-                                              core::json::Object& obj);
+   static boost::shared_ptr<ConsoleProcess> fromJson( core::json::Object& obj);
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
@@ -205,19 +152,7 @@ private:
    std::string program_;
    std::vector<std::string> args_;
    core::system::ProcessOptions options_;
-
-   std::string caption_;
-   std::string title_;
-   bool dialog_;
-   bool showOnOutput_;
-   InteractionMode interactionMode_;
-   int maxOutputLines_;
-
-   // The handle that the client can use to refer to this process
-   std::string handle_;
-
-   // Whether the process has been successfully started
-   bool started_;
+   boost::shared_ptr<ConsoleProcessInfo> procInfo_;
 
    // Whether the process should be stopped
    bool interrupt_;
@@ -226,28 +161,11 @@ private:
    int newCols_; // -1 = no change
    int newRows_; // -1 = no change
 
-   // The sequence number of the associated terminal; used to control display
-   // order of terminal tabs; constant 'kNoTerminal' indicates a non-terminal
-   int terminalSequence_;
-   
-   // Whether a ConsoleProcess object should start a new process on resume after
-   // its process has been killed by a suspend.
-   bool allowRestart_;
-
-   // Does this process have child processes?
-   bool childProcs_;
-
    // Has client been notified of state of childProcs_ at least once?
    bool childProcsSent_;
 
    // Pending input (writes or ptyInterrupts)
    std::queue<Input> inputQueue_;
-
-   // Buffer output in case client disconnects/reconnects and needs
-   // to recover some history
-   boost::circular_buffer<char> outputBuffer_;
-
-   boost::optional<int> exitCode_;
 
    boost::function<bool(const std::string&, Input*)> onPrompt_;
    boost::signal<void(int)> onExit_;

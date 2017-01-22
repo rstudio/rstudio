@@ -28,7 +28,7 @@ namespace core {
 
 namespace rstudio {
 namespace session {
-namespace console_process_info {
+namespace console_process {
 
 enum InteractionMode
 {
@@ -65,59 +65,61 @@ public:
    virtual ~ConsoleProcessInfo() {}
 
    // Caption is shown on terminal tabs, e.g. Terminal 1
-   void setCaption(std::string& caption);
+   void setCaption(std::string& caption) { caption_ = caption; }
    std::string getCaption() const { return caption_; }
 
    // Title is set by terminal escape sequence, typically to show current dir
-   void setTitle(std::string& title);
+   void setTitle(std::string& title) { title_ = title; }
    std::string getTitle() const { return title_; }
 
    // Handle client uses to refer to this process
-   void setHandle(std::string& handle);
+   void ensureHandle();
    std::string getHandle() const { return handle_; }
 
    // Sequence number of the associated terminal; used to control display
    // order of terminal tabs; constant 'kNoTerminal' indicates a non-terminal
-   void setTerminalSequence(int sequence);
+   void setTerminalSequence(int sequence) { terminalSequence_ = sequence; }
    int getTerminalSequence() const { return terminalSequence_; }
 
    // Whether a ConsoleProcess object should start a new process on resume after
    // its process has been killed by a suspend.
-   void setAllowRestart(bool allowRestart);
+   void setAllowRestart(bool allowRestart) { allowRestart_ = allowRestart; }
    bool getAllowRestart() const { return allowRestart_; }
 
    // Whether process is being associate with a dialog
    // TODO (gary) review if we still need this
-   void setDialog(bool dialog);
+   void setDialog(bool dialog) { dialog_ = dialog; }
    bool getDialog() const { return dialog_; }
 
-   void setInteractionMode(InteractionMode mode);
+   void setInteractionMode(InteractionMode mode) { interactionMode_ = mode; }
    InteractionMode getInteractionMode() const { return interactionMode_; }
 
-   void setMaxOutputLines(int maxOutputLines);
+   void setMaxOutputLines(int maxOutputLines) { maxOutputLines_ = maxOutputLines; }
    int getMaxOutputLines() const { return maxOutputLines_; }
 
-   void setShowOnOutput(bool showOnOutput);
+   void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
    int getShowOnOutput() const { return showOnOutput_; }
 
    // Buffer output in case client disconnects/reconnects and needs
-   // to recover some history. Used for modal dialog shell, not terminal
-   // tabs.
+   // to recover some history. Not used for terminal tabs.
    void appendToOutputBuffer(const std::string &str);
+   void appendToOutputBuffer(char ch);
    std::string bufferedOutput() const;
 
    // Has the process exited, and what was the exit code?
-   void clearExitCode();
    void setExitCode(int exitCode);
    boost::optional<int> getExitCode() const { return exitCode_; }
 
    // Whether the process has been successfully started
-   void setIsStarted(bool started);
+   void setIsStarted(bool started) { started_ = started; }
    bool isStarted() const { return started_; }
 
    // Does this process have child processes?
-   void setHasChildProcs(bool hasChildProcs);
+   void setHasChildProcs(bool hasChildProcs) { childProcs_ = hasChildProcs; }
    bool getHasChildProcs() const { return childProcs_; }
+
+   void onSuspend();
+
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 
@@ -137,7 +139,7 @@ private:
    bool childProcs_;
 };
 
-} // namespace console_process_info
+} // namespace console_process
 } // namespace session
 } // namespace rstudio
 

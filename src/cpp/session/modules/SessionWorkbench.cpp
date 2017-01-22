@@ -963,19 +963,16 @@ Error startShellDialog(const json::JsonRpcRequest& request,
 
    if (termCaption.empty())
       termCaption = "Shell";
-   
+
+   boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
+         boost::make_shared<ConsoleProcessInfo>(
+            termCaption, termTitle, termHandle, termSequence, allowRestart,
+            isModalDialog, InteractionAlways,
+            console_process::kDefaultTerminalMaxOutputLines);
+
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =
-               ConsoleProcess::createTerminalProcess(
-                                      options,
-                                      termCaption,
-                                      termTitle,
-                                      termHandle,
-                                      termSequence,
-                                      allowRestart,
-                                      isModalDialog,
-                                      InteractionAlways,
-                                      console_process::kDefaultTerminalMaxOutputLines);
+               ConsoleProcess::createTerminalProcess(options, ptrProcInfo);
 
    ptrProc->onExit().connect(boost::bind(
                               &source_control::enqueueRefreshEvent));

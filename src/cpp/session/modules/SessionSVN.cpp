@@ -267,17 +267,13 @@ core::Error createConsoleProc(const ShellArgs& args,
    if (!outputFile.empty())
       options.stdOutFile = outputFile;
 
-   // create the process
    using namespace session::console_process;
-   *ppCP = ConsoleProcess::create(command,
-                                  options,
-                                  caption,
-                                  "" /*title*/,
-                                  kNoTerminal,
-                                  false /*allowRestart*/,
-                                  dialog,
-                                  InteractionPossible,
-                                  kDefaultMaxOutputLines);
+   boost::shared_ptr<ConsoleProcessInfo> pCPI = boost::make_shared<ConsoleProcessInfo>(
+            caption, "" /*title*/, "" /*handle*/, kNoTerminal,
+            false /*allowRestart*/, dialog, InteractionPossible);
+
+   // create the process
+   *ppCP = ConsoleProcess::create(command, options, pCPI);
 
    if (enqueueRefreshOnExit)
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));

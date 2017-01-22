@@ -398,18 +398,23 @@ Error installDependencies(const json::JsonRpcRequest& request,
    args.push_back("-e");
    args.push_back(cmd);
 
+   boost::shared_ptr<console_process::ConsoleProcessInfo> pCPI =
+         boost::make_shared<console_process::ConsoleProcessInfo>(
+            "Installing Packages",
+            "" /*title*/,
+            "" /*handle*/,
+            console_process::kNoTerminal,
+            false /*allowRestart*/,
+            true /*dialog*/,
+            console_process::InteractionNever);
+
    // create and execute console process
    boost::shared_ptr<console_process::ConsoleProcess> pCP;
    pCP = console_process::ConsoleProcess::create(
             string_utils::utf8ToSystem(rProgramPath.absolutePath()),
             args,
             options,
-            "Installing Packages",
-            "" /*title*/,
-            console_process::kNoTerminal,
-            false /*allowRestart*/,
-            true /*dialog*/,
-            console_process::InteractionNever);
+            pCPI);
 
    // return console process
    pResponse->setResult(pCP->toJson());

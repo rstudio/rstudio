@@ -15,11 +15,13 @@
 
 #include <session/SessionConsoleProcessInfo.hpp>
 
+#include <core/system/System.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace console_process_info {
+namespace console_process {
 
 namespace {
    const size_t OUTPUT_BUFFER_SIZE = 8192;
@@ -71,54 +73,10 @@ ConsoleProcessInfo::ConsoleProcessInfo(
 {
 }
 
-void ConsoleProcessInfo::setCaption(std::string& caption)
+void ConsoleProcessInfo::ensureHandle()
 {
-   caption_ = caption;
-}
-
-void ConsoleProcessInfo::setTitle(std::string& title)
-{
-   title_ = title;
-}
-
-void ConsoleProcessInfo::setHandle(std::string& handle)
-{
-   handle_ = handle;
-}
-
-void ConsoleProcessInfo::setTerminalSequence(int sequence)
-{
-   terminalSequence_ = sequence;
-}
-
-void ConsoleProcessInfo::setAllowRestart(bool allowRestart)
-{
-   allowRestart_ = allowRestart;
-}
-
-void ConsoleProcessInfo::setDialog(bool dialog)
-{
-   dialog_ = dialog;
-}
-
-void ConsoleProcessInfo::setInteractionMode(InteractionMode mode)
-{
-   interactionMode_ = mode;
-}
-
-void ConsoleProcessInfo::setMaxOutputLines(int maxOutputLines)
-{
-   maxOutputLines_ = maxOutputLines;
-}
-
-void ConsoleProcessInfo::setShowOnOutput(bool showOnOutput)
-{
-   showOnOutput_ = showOnOutput;
-}
-
-void ConsoleProcessInfo::clearExitCode()
-{
-   exitCode_.reset();
+   if (handle_.empty())
+      handle_ = core::system::generateUuid(false);
 }
 
 void ConsoleProcessInfo::setExitCode(int exitCode)
@@ -126,14 +84,14 @@ void ConsoleProcessInfo::setExitCode(int exitCode)
    exitCode_.reset(exitCode);
 }
 
-void ConsoleProcessInfo::setIsStarted(bool started)
-{
-   started_ = started;
-}
-
 void ConsoleProcessInfo::appendToOutputBuffer(const std::string &str)
 {
    std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+}
+
+void ConsoleProcessInfo::appendToOutputBuffer(char ch)
+{
+   outputBuffer_.push_back(ch);
 }
 
 std::string ConsoleProcessInfo::bufferedOutput() const
@@ -147,6 +105,12 @@ std::string ConsoleProcessInfo::bufferedOutput() const
    std::copy(pos, outputBuffer_.end(), std::back_inserter(result));
    // Will be empty if the buffer was overflowed by a single line
    return result;
+}
+
+void ConsoleProcessInfo::onSuspend()
+{
+   if (started_ && allowRestart_)
+      started_ = false;
 }
 
 core::json::Object ConsoleProcessInfo::toJson() const

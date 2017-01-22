@@ -312,27 +312,15 @@ protected:
       else if (!workingDir.get().empty())
          options.workingDir = workingDir.get();
 
+      boost::shared_ptr<ConsoleProcessInfo> pCPI =
+            boost::make_shared<ConsoleProcessInfo>(
+               caption, "" /*title*/, "" /*handle*/, kNoTerminal,
+               false /*allowRestart*/, dialog, console_process::InteractionNever);
+
 #ifdef _WIN32
-      *ppCP = ConsoleProcess::create(gitBin(),
-                                     args.args(),
-                                     options,
-                                     caption,
-                                     "" /*title*/,
-                                     kNoTerminal,
-                                     false /*allowRestart*/,
-                                     dialog,
-                                     console_process::InteractionNever,
-                                     console_process::kDefaultMaxOutputLines);
+      *ppCP = ConsoleProcess::create(gitBin(), args.args(), options, pCPI);
 #else
-      *ppCP = ConsoleProcess::create(git() << args.args(),
-                                     options,
-                                     caption,
-                                     "" /*title*/,
-                                     kNoTerminal,
-                                     false /*allowRestart*/,
-                                     dialog,
-                                     console_process::InteractionNever,
-                                     console_process::kDefaultMaxOutputLines);
+      *ppCP = ConsoleProcess::create(git() << args.args(), options, pCPI);
 #endif
 
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));

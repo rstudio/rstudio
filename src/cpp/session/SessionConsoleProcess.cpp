@@ -36,6 +36,8 @@
 #include <core/system/Crypto.hpp>
 #endif
 
+#define kConsoleIndex "INDEX"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -43,89 +45,40 @@ namespace session {
 namespace console_process {
 
 namespace {
-   const size_t OUTPUT_BUFFER_SIZE = 8192;
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
    FilePath s_consoleProcPath;
    FilePath s_consoleProcIndexPath;
 } // anonymous namespace
 
-const int kDefaultMaxOutputLines = 500;
-const int kDefaultTerminalMaxOutputLines = 1000; // xterm.js scrollback constant
-const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 void saveConsoleProcesses(bool terminatedNormally = true);
-#define kConsoleIndex "INDEX"
 
-ConsoleProcess::ConsoleProcess()
-   : dialog_(false), showOnOutput_(false), interactionMode_(InteractionNever),
-     maxOutputLines_(kDefaultMaxOutputLines), started_(true),
-     interrupt_(false), newCols_(-1), newRows_(-1), terminalSequence_(0),
-     allowRestart_(false), childProcs_(true), childProcsSent_(false),
-     outputBuffer_(OUTPUT_BUFFER_SIZE)
+ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
+   : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
+     childProcsSent_(false)
 {
    regexInit();
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
-   outputBuffer_.push_back('\n');
+   procInfo_->appendToOutputBuffer('\n');
 }
    
 ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
-                               const std::string& caption,
-                               const std::string& title,
-                               int terminalSequence,
-                               bool allowRestart,
-                               bool dialog,
-                               InteractionMode interactionMode,
-                               int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), title_(title),
-     dialog_(dialog), showOnOutput_(false),
-     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), childProcsSent_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+                               boost::shared_ptr<ConsoleProcessInfo> procInfo)
+   : command_(command), options_(options), procInfo_(procInfo),
+     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false)
 {
    commonInit();
 }
-
    
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
                                const core::system::ProcessOptions& options,
-                               const std::string& caption,
-                               const std::string& title,
-                               int terminalSequence,
-                               bool allowRestart,
-                               bool dialog,
-                               InteractionMode interactionMode,
-                               int maxOutputLines)
-   : program_(program), args_(args), options_(options), caption_(caption), title_(title),
-     dialog_(dialog), showOnOutput_(false),
-     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     started_(false),  interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), childProcsSent_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
-{
-   commonInit();
-}
-
-ConsoleProcess::ConsoleProcess(const std::string& command,
-                               const core::system::ProcessOptions& options,
-                               const std::string& caption,
-                               const std::string& title,
-                               int terminalSequence,
-                               bool allowRestart,
-                               const std::string& handle,
-                               bool dialog,
-                               InteractionMode interactionMode,
-                               int maxOutputLines)
-   : command_(command), options_(options), caption_(caption), title_(title),
-     dialog_(dialog), showOnOutput_(false),
-     interactionMode_(interactionMode), maxOutputLines_(maxOutputLines),
-     handle_(handle), started_(false), interrupt_(false), newCols_(-1), newRows_(-1),
-     terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     childProcs_(true), childProcsSent_(false), outputBuffer_(OUTPUT_BUFFER_SIZE)
+                               boost::shared_ptr<ConsoleProcessInfo> procInfo)
+   : program_(program), args_(args), options_(options), procInfo_(procInfo),
+     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false)
 {
    commonInit();
 }
@@ -139,9 +92,7 @@ void ConsoleProcess::regexInit()
 void ConsoleProcess::commonInit()
 {
    regexInit();
-
-   if (handle_.empty())
-      handle_ = core::system::generateUuid(false);
+   procInfo_->ensureHandle();
 
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
@@ -199,7 +150,7 @@ void ConsoleProcess::commonInit()
 
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
-   outputBuffer_.push_back('\n');
+   procInfo_->appendToOutputBuffer('\n');
 }
 
 std::string ConsoleProcess::bufferedOutput() const
@@ -207,15 +158,7 @@ std::string ConsoleProcess::bufferedOutput() const
    if (options_.smartTerminal)
       return "";
 
-   boost::circular_buffer<char>::const_iterator pos =
-         std::find(outputBuffer_.begin(), outputBuffer_.end(), '\n');
-
-   std::string result;
-   if (pos != outputBuffer_.end())
-      pos++;
-   std::copy(pos, outputBuffer_.end(), std::back_inserter(result));
-   // Will be empty if the buffer was overflowed by a single line
-   return result;
+   return procInfo_->bufferedOutput();
 }
 
 void ConsoleProcess::setPromptHandler(
@@ -226,7 +169,7 @@ void ConsoleProcess::setPromptHandler(
 
 Error ConsoleProcess::start()
 {
-   if (started_)
+   if (procInfo_->isStarted())
       return Success();
 
    Error error;
@@ -246,7 +189,7 @@ Error ConsoleProcess::start()
                           options_, createProcessCallbacks());
    }
    if (!error)
-      started_ = true;
+      procInfo_->setIsStarted(true);
    return error;
 }
 
@@ -330,7 +273,7 @@ Error ConsoleProcess::getLogFilePath(FilePath* pFile) const
       return error;
    }
 
-   *pFile = s_consoleProcPath.complete(handle_);
+   *pFile = s_consoleProcPath.complete(procInfo_->getHandle());
    return Success();
 }
 
@@ -380,9 +323,9 @@ void ConsoleProcess::appendToOutputBuffer(const std::string &str)
 {
    // For modal console procs, store terminal output directly in the
    // ConsoleProcInfo INDEX
-   if (terminalSequence_ == kNoTerminal)
+   if (procInfo_->getTerminalSequence() == kNoTerminal)
    {
-      std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+      procInfo_->appendToOutputBuffer(str);
       return;
    }
 
@@ -411,10 +354,10 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
    // truncate it to the amount that the client can show. Too much
    // output can overwhelm the client, making it unresponsive.
    std::string trimmedOutput = output;
-   string_utils::trimLeadingLines(maxOutputLines_, &trimmedOutput);
+   string_utils::trimLeadingLines(procInfo_->getMaxOutputLines(), &trimmedOutput);
 
    json::Object data;
-   data["handle"] = handle_;
+   data["handle"] = handle();
    data["error"] = error;
    data["output"] = trimmedOutput;
    module_context::enqueClientEvent(
@@ -503,7 +446,7 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 
    // enque a prompt event
    json::Object data;
-   data["handle"] = handle_;
+   data["handle"] = handle();
    data["prompt"] = prompt;
    module_context::enqueClientEvent(
          ClientEvent(client_events::kConsoleProcessPrompt, data));
@@ -511,16 +454,15 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 
 void ConsoleProcess::onSuspend()
 {
-   if (started_ && allowRestart_)
-      started_ = false;
+   procInfo_->onSuspend();
 }
 
 void ConsoleProcess::onExit(int exitCode)
 {
-   exitCode_.reset(exitCode);
+   procInfo_->setExitCode(exitCode);
 
    json::Object data;
-   data["handle"] = handle_;
+   data["handle"] = handle();
    data["exitCode"] = exitCode;
    module_context::enqueClientEvent(
          ClientEvent(client_events::kConsoleProcessExit, data));
@@ -530,13 +472,13 @@ void ConsoleProcess::onExit(int exitCode)
 
 void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
 {
-   if (hasSubprocs != childProcs_ || !childProcsSent_)
+   if (hasSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
    {
-      childProcs_ = hasSubprocs;
+      procInfo_->setHasChildProcs(hasSubprocs);
 
       json::Object subProcs;
-      subProcs["handle"]   = handle_;
-      subProcs["subprocs"] = childProcs_;
+      subProcs["handle"] = handle();
+      subProcs["subprocs"] = procInfo_->getHasChildProcs();
       module_context::enqueClientEvent(
             ClientEvent(client_events::kTerminalSubprocs, subProcs));
       childProcsSent_ = true;
@@ -545,72 +487,14 @@ void ConsoleProcess::onHasSubprocs(bool hasSubprocs)
 
 core::json::Object ConsoleProcess::toJson() const
 {
-   json::Object result;
-   result["handle"] = handle_;
-   result["caption"] = caption_;
-   result["dialog"] = dialog_;
-   result["show_on_output"] = showOnOutput_;
-   result["interaction_mode"] = static_cast<int>(interactionMode_);
-   result["max_output_lines"] = maxOutputLines_;
-   result["buffered_output"] = bufferedOutput();
-   if (exitCode_)
-      result["exit_code"] = *exitCode_;
-   else
-      result["exit_code"] = json::Value();
-
-   // newly added in v1.1
-   result["terminal_sequence"] = terminalSequence_;
-   result["allow_restart"] = allowRestart_;
-   result["started"] = started_;
-   result["title"] = title_;
-   result["childProcs"] = childProcs_;
-
-   return result;
+   return procInfo_->toJson();
 }
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
                                              core::json::Object &obj)
 {
-   boost::shared_ptr<ConsoleProcess> pProc(new ConsoleProcess());
-   pProc->handle_ = obj["handle"].get_str();
-   pProc->caption_ = obj["caption"].get_str();
-   pProc->dialog_ = obj["dialog"].get_bool();
-
-   json::Value showOnOutput = obj["show_on_output"];
-   if (!showOnOutput.is_null())
-      pProc->showOnOutput_ = showOnOutput.get_bool();
-   else
-      pProc->showOnOutput_ = false;
-
-   json::Value mode = obj["interaction_mode"];
-   if (!mode.is_null())
-      pProc->interactionMode_ = static_cast<InteractionMode>(mode.get_int());
-   else
-      pProc->interactionMode_ = InteractionNever;
-
-   json::Value maxLines = obj["max_output_lines"];
-   if (!maxLines.is_null())
-      pProc->maxOutputLines_ = maxLines.get_int();
-   else
-      pProc->maxOutputLines_ = kDefaultMaxOutputLines;
-
-   std::string bufferedOutput = obj["buffered_output"].get_str();
-   std::copy(bufferedOutput.begin(), bufferedOutput.end(),
-             std::back_inserter(pProc->outputBuffer_));
-   json::Value exitCode = obj["exit_code"];
-   if (exitCode.is_null())
-      pProc->exitCode_.reset();
-   else
-      pProc->exitCode_.reset(exitCode.get_int());
-
-   // Newly added in v1.1; 1.1 is reading/writing this to a different place
-   // than pre 1.1, so don't worry about mismatched json.
-   pProc->terminalSequence_ = obj["terminal_sequence"].get_int();
-   pProc->allowRestart_ = obj["allow_restart"].get_bool();
-   pProc->started_ = obj["started"].get_bool();
-   pProc->title_ = obj["title"].get_str();
-   pProc->childProcs_ = obj["childProcs"].get_bool();
-
+   boost::shared_ptr<ConsoleProcessInfo> pProcInfo(ConsoleProcessInfo::fromJson(obj));
+   boost::shared_ptr<ConsoleProcess> pProc(new ConsoleProcess(pProcInfo));
    return pProc;
 }
 
@@ -850,25 +734,11 @@ Error procGetBuffer(const json::JsonRpcRequest& request,
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
       core::system::ProcessOptions options,
-      const std::string& caption,
-      const std::string& title,
-      int terminalSequence,
-      bool allowRestart,
-      bool dialog,
-      InteractionMode interactionMode,
-      int maxOutputLines)
+      boost::shared_ptr<ConsoleProcessInfo> procInfo)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(command,
-                            options,
-                            caption,
-                            title,
-                            terminalSequence,
-                            allowRestart,
-                            dialog,
-                            interactionMode,
-                            maxOutputLines));
+         new ConsoleProcess(command, options, procInfo));
    s_procs[ptrProc->handle()] = ptrProc;
    saveConsoleProcesses();
    return ptrProc;
@@ -878,26 +748,11 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& program,
       const std::vector<std::string>& args,
       core::system::ProcessOptions options,
-      const std::string& caption,
-      const std::string& title,
-      int terminalSequence,
-      bool allowRestart,
-      bool dialog,
-      InteractionMode interactionMode,
-      int maxOutputLines)
+      boost::shared_ptr<ConsoleProcessInfo> procInfo)
 {
    options.terminateChildren = true;
    boost::shared_ptr<ConsoleProcess> ptrProc(
-         new ConsoleProcess(program,
-                            args,
-                            options,
-                            caption,
-                            title,
-                            terminalSequence,
-                            allowRestart,
-                            dialog,
-                            interactionMode,
-                            maxOutputLines));
+         new ConsoleProcess(program, args, options, procInfo));
    s_procs[ptrProc->handle()] = ptrProc;
    saveConsoleProcesses();
    return ptrProc;
@@ -907,20 +762,13 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
 // previously used handle
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       core::system::ProcessOptions options,
-      const std::string& caption,
-      const std::string& title,
-      const std::string& terminalHandle,
-      int terminalSequence,
-      bool allowRestart,
-      bool dialog,
-      InteractionMode interactionMode,
-      int maxOutputLines)
+      boost::shared_ptr<ConsoleProcessInfo> procInfo)
 {
    std::string command;
-   if (allowRestart && !terminalHandle.empty())
+   if (procInfo->getAllowRestart() && !procInfo->getHandle().empty())
    {
       // return existing ConsoleProcess if it is still running
-      ProcTable::const_iterator pos = s_procs.find(terminalHandle);
+      ProcTable::const_iterator pos = s_procs.find(procInfo->getHandle());
       if (pos != s_procs.end() && pos->second->isStarted())
       {
          // Jiggle the size of the pseudo-terminal, this will force the app
@@ -934,17 +782,14 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::createTerminalProcess(
       // Create new process with previously used handle
       options.terminateChildren = true;
       boost::shared_ptr<ConsoleProcess> ptrProc(
-            new ConsoleProcess(command, options, caption, title, terminalSequence,
-                               allowRestart, terminalHandle, dialog,
-                               interactionMode, maxOutputLines));
+            new ConsoleProcess(command, options, procInfo));
       s_procs[ptrProc->handle()] = ptrProc;
       saveConsoleProcesses();
       return ptrProc;
    }
    
    // otherwise create a new one
-   return create(command, options, caption, title, terminalSequence,
-                 allowRestart, dialog, interactionMode, maxOutputLines);
+   return create(command, options, procInfo);
 }
 
 void PasswordManager::attach(
