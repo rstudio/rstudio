@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionCodePanel;
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionExplorer;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowser;
 import org.rstudio.studio.client.workbench.views.connections.ui.TableBrowserModel;
@@ -217,6 +218,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TerminalList terminalList);
    void injectMembers(NewConnectionWizard newConnectionWizard);
    void injectMembers(RStudioAPI rstudioAPI);
+   void injectMembers(NewConnectionSnippetHost newConnectionSnippetHost);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

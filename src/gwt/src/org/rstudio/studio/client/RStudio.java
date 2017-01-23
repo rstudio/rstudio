@@ -290,7 +290,6 @@ public class RStudio implements EntryPoint
       LocalRepositoriesWidget.ensureStylesInjected();
       CppCompletionResources.INSTANCE.styles().ensureInjected();
       RSConnectDeploy.RESOURCES.style().ensureInjected();
-      NewConnectionShinyHost.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

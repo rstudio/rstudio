@@ -187,8 +187,8 @@ options(connectionObserver = list(
          list(
             package = .rs.scalar(NULL),
             name = .rs.scalar(driver),
-            type = .rs.scalar("ODBC"),
-            newConnection = paste(
+            type = .rs.scalar("Snippet"),
+            snippet = paste(
                "library(DBI)\n",
                "con <- dbConnect(odbc::odbc(), .connection_string = \"Driver={",
                driver,

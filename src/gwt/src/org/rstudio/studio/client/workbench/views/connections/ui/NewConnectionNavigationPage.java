@@ -77,6 +77,9 @@ public class NewConnectionNavigationPage
          if (connectionInfo.getType() == "Shiny") {
             pages.add(new NewConnectionShinyPage(connectionInfo));
          }
+         else if (connectionInfo.getType() == "Snippet") {
+            pages.add(new NewConnectionSnippetPage(connectionInfo));
+         }
       }
 
       return pages;
