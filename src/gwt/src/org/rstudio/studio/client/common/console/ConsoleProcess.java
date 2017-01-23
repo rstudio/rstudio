@@ -1,7 +1,7 @@
 /*
  * ConsoleProcess.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -219,29 +219,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                                                eventBus_,
                                                                procInfo));
       }
-      
-      public ConsoleProgressDialog showConsoleProgressDialog(
-                                                ConsoleProcessInfo procInfo)
-      {
-         ConsoleProcess proc = new ConsoleProcess(server_,
-                                                  eventBus_,
-                                                  procInfo);
 
-         ConsoleProgressDialog dlg = new ConsoleProgressDialog(
-               procInfo.getCaption(),
-               proc,
-               procInfo.getBufferedOutput(),
-               procInfo.getExitCode(),
-               cryptoServer_);
-
-         if (procInfo.getShowOnOutput())
-            dlg.showOnOutput();
-         else
-            dlg.showModal();
-         
-         return dlg;
-      }
-      
       /**
        * Terminate and reap a process
        * @param handle process to kill and reap
