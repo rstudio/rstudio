@@ -83,7 +83,7 @@ public class ShortcutInfoPanel extends Composite
             new String[] { "Tabs", "Panes", "Files" },
             new String[] { "Source Navigation", "Execute" },
             new String[] { "Source Editor", "Debug" }, 
-            new String[] { "Source Control", "Build", "Console", "Other" }
+            new String[] { "Source Control", "Build", "Console", "Terminal", "Other" }
       };
       int pctWidth = 100 / groupNames.length;
       sb.appendHtmlConstant("<table width='100%'><tr>");
