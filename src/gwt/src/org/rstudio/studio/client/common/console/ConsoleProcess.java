@@ -61,7 +61,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                    final SatelliteManager satelliteManager)
       {
          server_ = server;
-         cryptoServer_ = cryptoServer;
          eventBus_ = eventBus;
 
          eventBus_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
@@ -264,7 +263,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       }
       
       private final ConsoleServerOperations server_;
-      private final CryptoServerOperations cryptoServer_;
       private final EventBus eventBus_;
    }
 
