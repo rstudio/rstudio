@@ -51,6 +51,7 @@ public class NewConnectionSnippetHost extends Composite
 
    public void onDeactivate(Operation operation)
    {
+      operation.execute();
    }
    
    public NewConnectionSnippetHost()
@@ -67,7 +68,9 @@ public class NewConnectionSnippetHost extends Composite
    
    private void initialize(final Operation operation, final NewConnectionInfo info)
    {
-      // codePanel_.setCode(info.getSnippet(), "");
+      ConnectionCodePanel superCodePanel = codePanel_;
+      superCodePanel.setCode(info.getSnippet(), "");
+      operation.execute();
    }
    
    private Widget createWidget()
