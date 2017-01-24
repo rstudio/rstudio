@@ -188,11 +188,13 @@ options(connectionObserver = list(
             package = .rs.scalar(NULL),
             name = .rs.scalar(driver),
             type = .rs.scalar("Snippet"),
-            snippet = paste(
-               "library(DBI)\n",
-               "con <- dbConnect(odbc::odbc(), .connection_string = \"Driver={",
-               driver,
-               "};\")"),
+            snippet = .rs.scalar(
+               paste(
+                  "library(DBI)\n",
+                  "con <- dbConnect(odbc::odbc(), .connection_string = \"Driver={",
+                  driver,
+                  "};\")",
+                  sep = "")),
             help = .rs.scalar(NULL)
          )
       }))
