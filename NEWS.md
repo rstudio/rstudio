@@ -4,6 +4,10 @@
 
 * Add support for all file encodings supported by R
 
+### R Markdown
+
+* Added option to specify the working directory when executing R Markdown chunks
+
 ### R Notebooks
 
 * Fixed an issue where non-R chunk output could become duplicated
