@@ -119,51 +119,56 @@ public class ApplicationInterrupt
    public void interruptRNoDebug(final InterruptHandler handler) {
       final int originalDebugType = errorManager_.getErrorHandlerType();
       
-      errorManager_.setDebugSessionHandlerType(
-         ErrorHandlerType.ERRORS_MESSAGE,
-         new ServerRequestCallback<Void>()
-         {
-            @Override
-            public void onResponseReceived(Void v)
+      if (originalDebugType != ErrorHandlerType.ERRORS_BREAK) {
+         interruptR(handler);
+      }
+      else {
+         errorManager_.setDebugSessionHandlerType(
+            ErrorHandlerType.ERRORS_MESSAGE,
+            new ServerRequestCallback<Void>()
             {
-               interruptR(new InterruptHandler() {
-                  @Override
-                  public void onInterruptFinished()
-                  {
-                     errorManager_.setDebugSessionHandlerType(
-                        originalDebugType,
-                        new ServerRequestCallback<Void>()
-                        {
-                           @Override
-                           public void onResponseReceived(Void v)
+               @Override
+               public void onResponseReceived(Void v)
+               {
+                  interruptR(new InterruptHandler() {
+                     @Override
+                     public void onInterruptFinished()
+                     {
+                        errorManager_.setDebugSessionHandlerType(
+                           originalDebugType,
+                           new ServerRequestCallback<Void>()
                            {
-                              interruptR(new InterruptHandler() {
-                                 @Override
-                                 public void onInterruptFinished()
-                                 {
-                                    handler.onInterruptFinished();
-                                 }
-                              });
+                              @Override
+                              public void onResponseReceived(Void v)
+                              {
+                                 interruptR(new InterruptHandler() {
+                                    @Override
+                                    public void onInterruptFinished()
+                                    {
+                                       handler.onInterruptFinished();
+                                    }
+                                 });
+                              }
+                            
+                              @Override
+                              public void onError(ServerError error)
+                              {
+                                 Debug.log(error.getMessage());
+                              }
                            }
-                         
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.log(error.getMessage());
-                           }
-                        }
-                     );
-                  }
-               });
+                        );
+                     }
+                  });
+               }
+             
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.log(error.getMessage());
+               }
             }
-          
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.log(error.getMessage());
-            }
-         }
-      );
+         );
+      }
    }
    
    @Handler
