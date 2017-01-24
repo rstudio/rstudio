@@ -60,11 +60,6 @@ public class NewConnectionSnippetHost extends Composite
       
       initWidget(createWidget());
    }
-
-   private void showError(String errorMessage)
-   {
-      globalDisplay_.showErrorMessage("Error", errorMessage);
-   }
    
    private void initialize(final Operation operation, final NewConnectionInfo info)
    {
