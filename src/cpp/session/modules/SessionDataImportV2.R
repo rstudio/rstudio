@@ -358,7 +358,7 @@
                cacheUrlName,
                ", ",
                cacheVariableName,
-               ")",
+               ", method = \"curl\")",
                sep = ""
             )
          ))
