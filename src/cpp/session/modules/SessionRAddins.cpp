@@ -385,7 +385,7 @@ void getRAddins(const json::JsonRpcRequest& request,
                 const json::JsonRpcFunctionContinuation& continuation)
 {
    // read params
-   bool reindex;
+   bool reindex = false;
    Error error = json::readParams(request.params, &reindex);
    if (error)
    {
