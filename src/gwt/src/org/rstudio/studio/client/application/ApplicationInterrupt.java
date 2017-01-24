@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.application;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -25,7 +26,12 @@ import org.rstudio.studio.client.application.events.InterruptStatusEvent;
 import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.ErrorManager;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -51,13 +57,15 @@ public class ApplicationInterrupt
                                ApplicationServerOperations server,
                                Provider<WorkbenchContext> pWorkbenchContext,
                                Commands commands,
-                               Binder binder)
+                               Binder binder,
+                               ErrorManager errorManager)
    {
       // save references
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       server_ = server;
       pWorkbenchContext_ = pWorkbenchContext;
+      errorManager_ = errorManager;
       
       // bind to commands
       binder.bind(commands, this);
@@ -106,6 +114,56 @@ public class ApplicationInterrupt
             showInterruptUnresponsiveDialog();
          }
       }
+   }
+   
+   public void interruptRNoDebug(final InterruptHandler handler) {
+      final int originalDebugType = errorManager_.getErrorHandlerType();
+      
+      errorManager_.setDebugSessionHandlerType(
+         ErrorHandlerType.ERRORS_MESSAGE,
+         new ServerRequestCallback<Void>()
+         {
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               interruptR(new InterruptHandler() {
+                  @Override
+                  public void onInterruptFinished()
+                  {
+                     errorManager_.setDebugSessionHandlerType(
+                        originalDebugType,
+                        new ServerRequestCallback<Void>()
+                        {
+                           @Override
+                           public void onResponseReceived(Void v)
+                           {
+                              interruptR(new InterruptHandler() {
+                                 @Override
+                                 public void onInterruptFinished()
+                                 {
+                                    handler.onInterruptFinished();
+                                 }
+                              });
+                           }
+                         
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.log(error.getMessage());
+                           }
+                        }
+                     );
+                  }
+               });
+            }
+          
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.log(error.getMessage());
+            }
+         }
+      );
    }
    
    @Handler
@@ -206,6 +264,7 @@ public class ApplicationInterrupt
    private final EventBus eventBus_;
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final ApplicationServerOperations server_;
+   private final ErrorManager errorManager_;
    
    private final static String TERMINATION_CONSEQUENCE_MSG = 
       "Terminating R will cause your R session to immediately abort. " +

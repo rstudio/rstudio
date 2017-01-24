@@ -27,8 +27,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.common.debugging.ErrorManager;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -58,47 +56,29 @@ public class NewConnectionShinyHost extends Composite
                                                NewConnectionDialogUpdatedEvent.Handler
 {
    @Inject
-   private void initialize(EventBus events,
+   private void initialize(UIPrefs uiPrefs,
+                           EventBus events,
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
                            Commands commands,
-                           ApplicationInterrupt applicationInterrupt,
-                           ErrorManager errorManager)
+                           ApplicationInterrupt applicationInterrupt)
    {
+      uiPrefs_ = uiPrefs;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
       commands_ = commands;
       applicationInterrupt_ = applicationInterrupt;
-      errorManager_ = errorManager;
-
-      originalDebugType_ = errorManager_.getErrorHandlerType();
    }
 
-   public void onBeforeActivate(final Operation operation, final NewConnectionInfo info)
+   public void onBeforeActivate(Operation operation, NewConnectionInfo info)
    {
       events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
       events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
       
-      errorManager_.setDebugSessionHandlerType(
-         ErrorHandlerType.ERRORS_MESSAGE,
-         new ServerRequestCallback<Void>()
-         {
-            @Override
-            public void onResponseReceived(Void v)
-            {
                initialize(operation, info);
             }
           
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.log(error.getMessage());
-            }
-         }
-      );
-   }
-   
    public void onActivate(ProgressIndicator indicator)
    {
    }
@@ -106,28 +86,12 @@ public class NewConnectionShinyHost extends Composite
    private void terminateShinyApp(final Operation operation)
    {
       if (commands_.interruptR().isEnabled())
-         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
+         applicationInterrupt_.interruptRNoDebug(new ApplicationInterrupt.InterruptHandler()
          {
             @Override
             public void onInterruptFinished()
             {
-               errorManager_.setDebugSessionHandlerType(
-                     originalDebugType_,
-                  new ServerRequestCallback<Void>()
-                  {
-                     @Override
-                     public void onResponseReceived(Void v)
-                     {
-                        operation.execute();
-                     }
-                   
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.log(error.getMessage());
-                     }
-                  }
-               );
+               operation.execute();
             }
          });
    }
@@ -259,12 +223,11 @@ public class NewConnectionShinyHost extends Composite
    
    private ConnectionCodePanel codePanel_;
      
+   private UIPrefs uiPrefs_;
    private EventBus events_;
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;
    private Commands commands_;
    private ApplicationInterrupt applicationInterrupt_;
-   private ErrorManager errorManager_;
-   private int originalDebugType_;
 }
