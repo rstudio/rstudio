@@ -354,11 +354,11 @@
          cacheDataCode <- append(cacheDataCode, list(
             paste(
                downloadCondition,
-               "download.file(",
+               "curl::curl_download(",
                cacheUrlName,
                ", ",
                cacheVariableName,
-               ", method = \"curl\")",
+               ")",
                sep = ""
             )
          ))
