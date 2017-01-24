@@ -45,6 +45,10 @@ import java.lang.annotation.Target;
  * members are considered {@link JsProperty}/{@link JsMethod}/{@link JsConstructor} unless they are
  * explicitly marked with {@link JsOverlay}.
  *
+ * <p> For native interfaces with no particular JavaScript type associated with them (e.g.
+ * structural types) it is recommeded to use {@code namespace = JsPackage.GLOBAL} and
+ * {@code name = '?'}.
+ *
  * <p><b>Instanceof and Castability:</b>
  *
  * <p>If the JsType is native, the generated code will try to mimic Javascript semantics.

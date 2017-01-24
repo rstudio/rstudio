@@ -1184,7 +1184,14 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "   @JsMethod(namespace = JsPackage.GLOBAL, name = \"a.b\") static void o() {}",
         "   @JsProperty(namespace = JsPackage.GLOBAL, name = \"a.c\") static int q;",
         "}",
-        "@JsType(namespace=JsPackage.GLOBAL, name = \"a.b.d\") public static class OtherBuggy {",
+        "@JsType(namespace = JsPackage.GLOBAL, name = \"a.b.d\") public static class OtherBuggy {",
+        "}",
+        "@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = \"*\")",
+        "public static class BadGlobalStar {",
+        "}",
+        "@JsType(namespace = JsPackage.GLOBAL, name = \"?\") public interface BadGlobalWildcard {",
+        "}",
+        "@JsType(isNative = true, namespace = \"a.b\", name = \"*\") public interface BadStar {",
         "}"
         );
 
@@ -1195,7 +1202,11 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "Line 10: 'int EntryPoint.Buggy.n' cannot have an empty name.",
         "Line 11: 'void EntryPoint.Buggy.o()' has invalid name 'a.b'.",
         "Line 12: 'int EntryPoint.Buggy.q' has invalid name 'a.c'.",
-        "Line 14: 'EntryPoint.OtherBuggy' has invalid name 'a.b.d'.");
+        "Line 14: 'EntryPoint.OtherBuggy' has invalid name 'a.b.d'.",
+        "Line 17: '*' can only be used as a name for native interfaces in the global namespace.",
+        "Line 19: '?' can only be used as a name for native interfaces in the global namespace.",
+        "Line 21: '*' can only be used as a name for native interfaces in the global namespace."
+        );
   }
 
   public void testJsNameInvalidNamespacesFails() {
@@ -1249,7 +1260,14 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "   @JsMethod(namespace = \"<window>\", name = \"a.h\") static native void q();",
         "   @JsMethod(namespace = \"<window>\", name = \"a.i\") static native void getR();",
         "   @JsProperty(namespace = \"<window>\", name = \"a.j\") public static int s;",
-        "}");
+        "}",
+        "@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = \"*\")",
+        "public interface Star {",
+        "}",
+        "@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = \"?\")",
+        "public interface Wildcard {",
+        "}"
+    );
 
     assertBuggySucceeds();
   }
@@ -1346,7 +1364,8 @@ public class JsInteropRestrictionCheckerTest extends OptimizerTestBase {
         "}",
         "static final class JsFunctionMultipleInterfaces implements Function, Cloneable {",
         "  public int getFoo() { return 0; }",
-        "}");
+        "}"
+        );
 
     assertBuggyFails(
         "Line 14: JsFunction implementation member 'int EntryPoint.Buggy.getFoo()' "

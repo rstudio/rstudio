@@ -124,4 +124,30 @@ public class JsTypeSpecialTypesTest extends GWTTestCase {
     assertNotNull((Object) nativeObject);
     assertTrue(nativeObject instanceof Object);
   }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "*")
+  interface Star {
+  }
+
+  public void testStar() {
+    Object object = new Object();
+
+    assertNotNull((Star) object);
+
+    object = Double.valueOf(3.0);
+    assertNotNull((Star) object);
+  }
+
+  @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "?")
+  interface Wildcard {
+  }
+
+  public void testWildcard() {
+    Object object = new Object();
+
+    assertNotNull((Wildcard) object);
+
+    object = Double.valueOf(3.0);
+    assertNotNull((Wildcard) object);
+  }
 }
