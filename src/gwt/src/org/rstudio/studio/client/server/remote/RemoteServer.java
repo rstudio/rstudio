@@ -471,17 +471,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_TERMINAL_OPTIONS, requestCallback);
    }
 
-   
-   public void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback)
-   {
-      invokeStartShellDialog(ConsoleProcess.TerminalType.DUMB, true /*modal*/,
-                             80, 1, null /*handle*/, null /*caption*/, null /*title*/, 
-                             ConsoleProcessInfo.SEQUENCE_NO_TERMINAL,
-                             false /*allowProcessRestart*/,
-                             false /*reportChildCount*/,
-                             requestCallback);
-   }
-   
    public void startTerminal(int cols, int rows,
                              String handle, String caption, String title, int sequence,
                              ServerRequestCallback<ConsoleProcess> requestCallback)

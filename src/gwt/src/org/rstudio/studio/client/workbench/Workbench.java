@@ -380,40 +380,17 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
-      if (Desktop.isDesktop())
+      // TODO (gary) this goes away once terminal is turned on for Windows
+      server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
       {
-         server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
+         @Override
+         public void onResponseReceived(TerminalOptions options)
          {
-            @Override
-            public void onResponseReceived(TerminalOptions options)
-            {
-               Desktop.getFrame().openTerminal(options.getTerminalPath(),
-                                               options.getWorkingDirectory(),
-                                               options.getExtraPathEntries());
-            }
-         });
-      }
-      else
-      {
-         final ProgressIndicator indicator = new GlobalProgressDelayer(
-               globalDisplay_, 500, "Starting shell...").getIndicator();
-         
-         server_.startShellDialog(new ServerRequestCallback<ConsoleProcess>() 
-         {
-            @Override
-            public void onResponseReceived(ConsoleProcess proc)
-            {
-               indicator.onCompleted();
-               new ConsoleProgressDialog(proc, server_).showModal();
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               indicator.onError(error.getUserMessage());
-            }
-         });
-      }
+            Desktop.getFrame().openTerminal(options.getTerminalPath(),
+                  options.getWorkingDirectory(),
+                  options.getExtraPathEntries());
+         }
+      });
    }
    
    @Handler

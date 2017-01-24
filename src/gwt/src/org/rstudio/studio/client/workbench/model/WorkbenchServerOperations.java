@@ -120,9 +120,6 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
    void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback);
    
-   
-   void startShellDialog(ServerRequestCallback<ConsoleProcess> requestCallback);
-    
    /**
     * Start a terminal session
     * 
