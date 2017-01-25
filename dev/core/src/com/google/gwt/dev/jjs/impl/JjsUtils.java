@@ -73,11 +73,13 @@ import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * General utilities related to Java AST manipulation.
@@ -566,6 +568,30 @@ public class JjsUtils {
       return call;
     }
     return null;
+  }
+
+  /**
+   * Gets all the supertypes of {@code type}.
+   */
+
+  public static Set<JDeclaredType> getSupertypes(JDeclaredType type) {
+    Set<JDeclaredType> superTypes = Sets.newHashSet();
+    addAllSuperTypes(type, superTypes);
+    return superTypes;
+  }
+
+  /**
+   * Adds all the supertypes of {@code type} to {@code types}.
+   */
+  public static void addAllSuperTypes(JDeclaredType type, Set<JDeclaredType> types) {
+    if (type.getSuperClass() != null) {
+      types.add(type.getSuperClass());
+      addAllSuperTypes(type.getSuperClass(), types);
+    }
+    for (JInterfaceType interfaceType : type.getImplements()) {
+      types.add(interfaceType);
+      addAllSuperTypes(interfaceType, types);
+    }
   }
 
   /**

@@ -17,7 +17,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -49,7 +48,7 @@ public class JsniRestrictionChecker extends AbstractRestrictionChecker {
       throws UnableToCompleteException {
     final Set<JDeclaredType> typesRequiringTrampolineDispatch = Sets.newHashSet();
     for (JDeclaredType type : program.getRepresentedAsNativeTypes()) {
-      collectAllSuperTypes(type, typesRequiringTrampolineDispatch);
+      JjsUtils.addAllSuperTypes(type, typesRequiringTrampolineDispatch);
     }
     new JVisitor() {
       @Override
@@ -149,17 +148,6 @@ public class JsniRestrictionChecker extends AbstractRestrictionChecker {
     boolean hasErrors = reportErrorsAndWarnings(logger);
     if (hasErrors) {
       throw new UnableToCompleteException();
-    }
-  }
-
-  private static void collectAllSuperTypes(JDeclaredType type, Set<JDeclaredType> allSuperTypes) {
-    if (type.getSuperClass() != null) {
-      allSuperTypes.add(type.getSuperClass());
-      collectAllSuperTypes(type.getSuperClass(), allSuperTypes);
-    }
-    for (JInterfaceType interfaceType : type.getImplements()) {
-      allSuperTypes.add(interfaceType);
-      collectAllSuperTypes(interfaceType, allSuperTypes);
     }
   }
 

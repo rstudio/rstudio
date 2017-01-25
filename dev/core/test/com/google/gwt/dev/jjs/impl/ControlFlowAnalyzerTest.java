@@ -61,7 +61,7 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
       Set<JType> expectedSet = Sets.newHashSet();
       for (String expectedType : expectedTypes) {
         JType type = findType(program, expectedType);
-        assertNotNull(type);
+        assertNotNull("Type " + expectedType + " not instantiated.", type);
         expectedSet.add(type);
       }
       assertEquals(expectedSet, cfa.getInstantiatedTypes());
@@ -264,8 +264,9 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
     );
     analyzeSnippet("Test.field.hashCode();").assertOnlyInstantiatedTypes(
         "JsoIntf", "SingleJso", "JavaScriptObject", "Object",
-        // These are all live because of the method Test.toString can be referenced externally.
-        "String", "Comparable", "CharSequence", "Serializable");
+        // These are all live because of the method Test.toString and equals can be referenced
+        // externally
+        "String", "Comparable", "CharSequence", "Serializable", "Boolean", "Number", "Double");
 
     addOrReplaceResource("test.Test",
         "package test;",
@@ -277,8 +278,42 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
     );
     analyzeSnippet("Test.field.hashCode();").assertOnlyInstantiatedTypes(
         "JsoIntf", "SingleJso", "JavaScriptObject", "Object",
-        // These are all live because of the method Test.toString can be referenced externally.
+        // These are all live because of the method Test.toString and equals can be referenced
+        // externally
+        "String", "Comparable", "CharSequence", "Serializable", "Boolean", "Number", "Double");
+  }
+
+  /**
+   * Tests that the JavaScriptObject type gets rescued in the three specific
+   * circumstances where values can pass from JS into Java.
+   */
+  public void testRescueRepresentedAsNative() throws Exception {
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsMethod;",
+        "public class Test {",
+        "  @JsMethod",
+        "  public static native Object getObject();",
+        "  @JsMethod",
+        "  public static native Number getNumber();",
+        "  @JsMethod",
+        "  public static native Comparable getComparable();",
+        "  @JsMethod",
+        "  public static native Double getDouble();",
+        "}"
+    );
+
+    addSnippetImport("test.Test");
+
+    analyzeSnippet("Test.getObject();").assertOnlyInstantiatedTypes(
+        "Object", "Boolean", "Number", "Double",
         "String", "Comparable", "CharSequence", "Serializable");
+    analyzeSnippet("Test.getNumber();").assertOnlyInstantiatedTypes(
+        "Object", "Number", "Double", "Serializable");
+    analyzeSnippet("Test.getComparable();").assertOnlyInstantiatedTypes(
+        "Object", "String", "Comparable", "CharSequence", "Serializable");
+    analyzeSnippet("Test.getDouble();").assertOnlyInstantiatedTypes(
+        "Object", "Number", "Double", "Serializable");
   }
 
   private void addOrReplaceResource(String qualifiedTypeName, final String... source) {
