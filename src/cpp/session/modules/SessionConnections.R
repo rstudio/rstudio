@@ -162,17 +162,17 @@ options(connectionObserver = list(
 
 .rs.addFunction("connectionReadSnippets", function() {
    snippetsPath <- getOption("connections-path", "/etc/rstudio/connections/")
+   snippetsFiles <- list()
 
-   if (!dir.exists(snippetsPath)) {
+   if (!is.null(getOption("connections-path")) && !dir.exists(snippetsPath)) {
       warning(
-         "Path '",
-         snippetsPath,
-         "' does not exist. ",
-         "To customize connections code, configure the connections-path ",
-         "option appropiately.")
+         "Path '", snippetsPath, "' does not exist. ",
+         "Configure the connections-path option appropiately.")
    }
-
-   snippetsFiles <- list.files(snippetsPath)
+   
+   if (!is.null(snippetsPath)) {
+      snippetsFiles <- list.files(snippetsPath)
+   }
 
    snippets <- lapply(snippetsFiles, function(file) {
       fullPath <- file.path(snippetsPath, file)
@@ -187,19 +187,40 @@ options(connectionObserver = list(
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
    rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
 
+   snippets <- .rs.connectionReadSnippets()
+
    connectionList <- lapply(rawConnections, function(con) {
       ns <- asNamespace(con$package)
-      if (nchar(con$shinyapp) == 0 || !exists(con$shinyapp, envir = ns, mode="function")) {
-         warning(
-            "The function \"", con$shinyapp, "\" does not exist. ",
-            "Check the ShinyApp DCF field in the ", con$package, " package.")
+
+      connectionType <- if (nchar(con$shinyapp) == 0) "Snippet" else "Shiny"
+      snippetFile <- file.path("rstudio", "connections", paste(con$name, ".R", sep = ""))
+      snippet <- ""
+
+      if (nchar(con$shinyapp) == 0) {
+         snippetPath <- system.file(snippetFile, package = con$package)
+         if (!file.exists(snippetPath)) {
+            warning(
+               "The file \"", con$name, ".R\" does not exist under \"rstudio/connections\" for ",
+               "package \"", con$package , "\".")
+         }
+         else {
+            snippet <- paste(readLines(snippetPath), collapse = "\n")
+         }
+      }
+      else {
+         if (!exists(con$shinyapp, envir = ns, mode="function")) {
+            warning(
+               "The function \"", con$shinyapp, "\" does not exist. ",
+               "Check the ShinyApp DCF field in the ", con$package, " package.")
+         }
       }
 
       list(
          package = .rs.scalar(con$package),
          name = .rs.scalar(con$name),
-         type = .rs.scalar("Shiny"),
+         type = .rs.scalar(connectionType),
          newConnection = paste(con$package, "::", .rs.scalar(con$shinyapp), "()", sep = ""),
+         snippet = .rs.scalar(snippet),
          help = .rs.scalar(con$help)
       )
    })
@@ -208,20 +229,21 @@ options(connectionObserver = list(
        exists("list_drivers", envir = asNamespace("odbc"))) {
       listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
       connectionList <- c(connectionList, lapply(listDrivers(), function(driver) {
+         snippet <- snippets[[driver]]
+
+         if (is.null(snippet)) {
+            snippet <- paste(
+               "library(DBI)\n",
+               "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
+               "Driver={${1:driver=", driver, "}};${2:other}\")",
+               sep = "")
+         }
+
          list(
             package = .rs.scalar(NULL),
             name = .rs.scalar(driver),
             type = .rs.scalar("Snippet"),
-            snippet = .rs.scalar(
-               paste(
-                  "library(DBI)\n",
-                  "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-                  "Driver={${1:driver}};${2:other}\")",
-                  sep = "")),
-            values = list(
-               driver = driver,
-               other = ""
-            )
+            snippet = .rs.scalar(snippet),
             help = .rs.scalar(NULL)
          )
       }))
