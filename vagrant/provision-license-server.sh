@@ -12,6 +12,9 @@ sudo dpkg -i "rsp-license-server-1.0.0-x86_64.deb"
 # friendly settings
 sudo cp /rstudio/vagrant/rsp-license-server.conf /etc/rsp-license-server.conf
 
+# automatically configure the primary machine to use floating licensing
+ssh -i /rstudio/vagrant/vagrant_key_rsa -o StrictHostKeyChecking=no vagrant@192.168.55.101 "sudo /rstudio/vagrant/provision-license-client.sh" 
+
 # the service needs to be activated before it can be started; run these
 # commands after the VM is provisioned:
 # 

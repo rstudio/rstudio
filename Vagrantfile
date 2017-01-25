@@ -90,6 +90,9 @@ Vagrant.configure(2) do |config|
     end
   end
 
+  # define license server box -- supplies floating licenses. will autoconfigure
+  # the primary box if it's up and running; otherwise, run
+  # provision-license-client.sh on servers to connect them
   config.vm.define "license-server", autostart: false do |v|
     v.vm.box = "minimal/trusty64"
     v.vm.network "private_network", ip: "192.168.55.105"
