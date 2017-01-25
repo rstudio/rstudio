@@ -100,17 +100,13 @@ public class NewConnectionSnippetHost extends Composite
    public interface Styles extends CssResource
    {
       String helpLink();
-      String codeViewer();
       String codeGrid();
-      String codePanelHeader();
       String dialogCodePanel();
-      String infoPanel();
-      String leftLabel();
    }
 
    public interface Resources extends ClientBundle
    {
-      @Source("NewConnectionShinyHost.css")
+      @Source("NewConnectionSnippetHost.css")
       Styles styles();
    }
    

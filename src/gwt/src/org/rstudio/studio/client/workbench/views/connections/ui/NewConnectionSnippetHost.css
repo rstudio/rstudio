@@ -1,0 +1,18 @@
+@CHARSET "UTF-8";
+
+@external gwt-Label;
+@external gwt-Image;
+@external macintosh;
+
+.helpLink {
+  margin-top: 6px;
+}
+
+.codeGrid {
+  margin-top: 9px;
+  margin-bottom: 10px;
+}
+
+.dialogCodePanel {
+  width: 500px !important;
+}

@@ -264,6 +264,7 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       }
       
       private final ConsoleServerOperations server_;
+      private final CryptoServerOperations cryptoServer_;
       private final EventBus eventBus_;
    }
 
