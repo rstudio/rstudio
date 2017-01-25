@@ -28,6 +28,11 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,9 +40,8 @@ import com.google.inject.Inject;
 public class NewConnectionSnippetHost extends Composite
 {
    @Inject
-   private void initialize(GlobalDisplay globalDisplay)
+   private void initialize()
    {
-      globalDisplay_ = globalDisplay;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -65,12 +69,45 @@ public class NewConnectionSnippetHost extends Composite
    {
       ConnectionCodePanel superCodePanel = codePanel_;
       superCodePanel.setCode(info.getSnippet(), "");
+      
+      parametersPanel_.clear();
+      parametersPanel_.add(createParameterizedUI(info));
+      
       operation.execute();
+   }
+   
+   private Grid createParameterizedUI(final NewConnectionInfo info)
+   {
+      final Grid connGrid = new Grid(2, 2);
+      connGrid.addStyleName(RES.styles().grid());
+
+      Label connDriverLabel = new Label("Driver:");
+      connDriverLabel.addStyleName(RES.styles().label());
+      connGrid.setWidget(0, 0, connDriverLabel);
+      TextBox connDriverText = new TextBox();
+      connDriverText.setText("{SQLite}");
+      connDriverText.addStyleName(RES.styles().driverTextbox());
+      connGrid.setWidget(0, 1, connDriverText);
+
+      Label connOtherLabel = new Label("Other:");
+      connOtherLabel.addStyleName(RES.styles().label());
+      connGrid.setWidget(1, 0, connOtherLabel);
+      TextArea connOtherTextArea = new TextArea();
+      connOtherTextArea.setVisibleLines(6);
+      connOtherTextArea.getElement().setAttribute("spellcheck", "false");
+      connOtherTextArea.addStyleName(RES.styles().textarea());
+      connGrid.getRowFormatter().setVerticalAlign(1, HasVerticalAlignment.ALIGN_TOP);
+      connGrid.setWidget(1, 1, connOtherTextArea);
+
+      return connGrid;
    }
    
    private Widget createWidget()
    {
-      VerticalPanel container = new VerticalPanel();         
+      VerticalPanel container = new VerticalPanel();
+
+      parametersPanel_ = new VerticalPanel();
+      container.add(parametersPanel_);        
       
       // add the code panel     
       codePanel_ = new ConnectionCodePanel();
@@ -102,6 +139,12 @@ public class NewConnectionSnippetHost extends Composite
       String helpLink();
       String codeGrid();
       String dialogCodePanel();
+      
+      String label();
+      String grid();
+      String textbox();
+      String driverTextbox();
+      String textarea();
    }
 
    public interface Resources extends ClientBundle
@@ -117,5 +160,5 @@ public class NewConnectionSnippetHost extends Composite
    }
    
    private ConnectionCodePanel codePanel_;
-   private GlobalDisplay globalDisplay_;
+   private VerticalPanel parametersPanel_;
 }

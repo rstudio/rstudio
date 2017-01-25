@@ -4,6 +4,14 @@
 @external gwt-Image;
 @external macintosh;
 
+.grid {
+  margin-bottom: 5px;
+}
+
+td.grid {
+  vertical-align: top;
+}
+
 .helpLink {
   margin-top: 6px;
 }
@@ -15,4 +23,22 @@
 
 .dialogCodePanel {
   width: 500px !important;
+}
+
+.label {
+  width: 150px;
+}
+
+.driverTextbox {
+  padding-left: 5px;
+  width: 150px;
+}
+
+.textbox {
+  width: 330px;
+}
+
+.textarea {
+  width: 330px;
+  resize: none;
 }
