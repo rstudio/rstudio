@@ -160,6 +160,30 @@ options(connectionObserver = list(
    NULL
 })
 
+.rs.addFunction("connectionReadSnippets", function() {
+   snippetsPath <- getOption("connections-path", "/etc/rstudio/connections/")
+
+   if (!dir.exists(snippetsPath)) {
+      warning(
+         "Path '",
+         snippetsPath,
+         "' does not exist. ",
+         "To customize connections code, configure the connections-path ",
+         "option appropiately.")
+   }
+
+   snippetsFiles <- list.files(snippetsPath)
+
+   snippets <- lapply(snippetsFiles, function(file) {
+      fullPath <- file.path(snippetsPath, file)
+      paste(readLines(fullPath), collapse = "\n")
+   })
+
+   names(snippets) <- tools::file_path_sans_ext(snippetsFiles)
+
+   snippets
+})
+
 .rs.addJsonRpcHandler("get_new_connection_context", function() {
    rawConnections <- .rs.fromJSON(.Call("rs_availableConnections"))
 
@@ -191,10 +215,13 @@ options(connectionObserver = list(
             snippet = .rs.scalar(
                paste(
                   "library(DBI)\n",
-                  "con <- dbConnect(odbc::odbc(), .connection_string = \"Driver={",
-                  driver,
-                  "};\")",
+                  "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
+                  "Driver={${1:driver}};${2:other}\")",
                   sep = "")),
+            values = list(
+               driver = driver,
+               other = ""
+            )
             help = .rs.scalar(NULL)
          )
       }))
