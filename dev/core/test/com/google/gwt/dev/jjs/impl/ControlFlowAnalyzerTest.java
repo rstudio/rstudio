@@ -105,87 +105,27 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
    * circumstances where values can pass from JS into Java.
    */
   public void testRescueJavaScriptObjectFromJsni() throws Exception {
-      sourceOracle.addOrReplace(new MockJavaResource("test.JsoIntf") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "import com.google.gwt.core.client.JavaScriptObject;",
-            "public interface JsoIntf {",
-            "  public int getAny();",
-            "}");
-      }
-    });
-
-      sourceOracle.addOrReplace(new MockJavaResource("test.UpRefIntf") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "import com.google.gwt.core.client.JavaScriptObject;",
-            "public interface UpRefIntf {",
-            "  public int getFoo();",
-            "}");
-      }
-    });
-
-     sourceOracle.addOrReplace(new MockJavaResource("test.NonImplementor") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "import com.google.gwt.core.client.JavaScriptObject;",
-            "public class NonImplementor extends JavaScriptObject {",
-            "  protected NonImplementor() {}",
-            "  final public native int getFoo() /*-{ return 0; }-*/;",
-            "}");
-      }
-    });
-
-     sourceOracle.addOrReplace(new MockJavaResource("test.VirtualUpRef") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "import com.google.gwt.core.client.JavaScriptObject;",
-            "final public class VirtualUpRef extends NonImplementor implements UpRefIntf {",
-            "  protected VirtualUpRef() {}",
-            "  public static native VirtualUpRef create() /*-{ return  {}; }-*/;",
-            "}");
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("test.SingleJso") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "import com.google.gwt.core.client.JavaScriptObject;",
-            "final public class SingleJso extends JavaScriptObject implements JsoIntf {",
-            "  protected SingleJso() {}",
-            "  public native int getAny() /*-{ return 1; }-*/;",
-            "  public static native JsoIntf returnsJsoIntf() /*-{ return {}; }-*/;",
-            "  public static native SingleJso returnsJso() /*-{ return {}; }-*/;",
-            "}");
-      }
-    });
-
-    sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "import com.google.gwt.core.client.JavaScriptObject;",
-            "public class Foo {",
-            "  public static native JavaScriptObject returnsJso() /*-{ return {}; }-*/;",
-            "  public static native void assignsJsoField() /*-{ @test.Foo::jsoField = {}; }-*/;",
-            "  public static native void readsJsoField() /*-{ var x = @test.Foo::jsoField; }-*/;",
-            "  public static native void passesJsoParam() /*-{ @test.Foo::calledFromJsni(Lcom/google/gwt/core/client/JavaScriptObject;)({}); }-*/;",
-            "  private static JavaScriptObject jsoField = null;",
-            "  private static void calledFromJsni(JavaScriptObject arg) { }",
-            "}");
-      }
-    });
+    addJsoResources();
+    addOrReplaceResource("test.VirtualUpRef",
+        "package test;",
+        "import com.google.gwt.core.client.JavaScriptObject;",
+        "final public class VirtualUpRef extends NonImplementor implements UpRefIntf {",
+        "  protected VirtualUpRef() {}",
+        "  public static native VirtualUpRef create() /*-{ return  {}; }-*/;",
+        "}");
+    addOrReplaceResource("test.Foo",
+        "package test;",
+        "import com.google.gwt.core.client.JavaScriptObject;",
+        "public class Foo {",
+        "  public static native JavaScriptObject returnsJso() /*-{ return {}; }-*/;",
+        "  public static native void assignsJsoField() /*-{ @test.Foo::jsoField = {}; }-*/;",
+        "  public static native void readsJsoField() /*-{ var x = @test.Foo::jsoField; }-*/;",
+        "  public static native void passesJsoParam() /*-{ @test.Foo::calledFromJsni(Lcom/google/gwt/core/client/JavaScriptObject;)({}); }-*/;",
+        "  private static JavaScriptObject jsoField = null;",
+        "  private static void calledFromJsni(JavaScriptObject arg) { }",
+        "  public static native JsoIntf returnsJsoIntf() /*-{ return {}; }-*/;",
+        "  public static native SingleJso returnsSingleJso() /*-{ return {}; }-*/;",
+        "}");
     addSnippetImport("test.Foo");
 
     analyzeSnippet("").assertOnlyInstantiatedTypes(Empty.STRINGS);
@@ -207,11 +147,11 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
         "JavaScriptObject", "Object");
 
     // Returning a JSO subType instantiates it
-    analyzeSnippet("SingleJso.returnsJso();").assertOnlyInstantiatedTypes(
+    analyzeSnippet("Foo.returnsSingleJso();").assertOnlyInstantiatedTypes(
         "SingleJso", "JavaScriptObject", "Object", "JsoIntf");
 
     // Returning a JSO SingleJsoImpl instantiates it and the implementor
-    analyzeSnippet("SingleJso.returnsJsoIntf();").assertOnlyInstantiatedTypes(
+    analyzeSnippet("Foo.returnsJsoIntf();").assertOnlyInstantiatedTypes(
         "SingleJso", "JavaScriptObject", "Object", "JsoIntf");
 
     // A virtual upref should still be rescued
@@ -235,17 +175,11 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
    * instantiated in JSNI.
    */
   public void testRescueArraysFromJSNI() throws Exception {
-    sourceOracle.addOrReplace(new MockJavaResource("test.Foo") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on("\n").join(
-            "package test;",
-            "public class Foo {",
-            "  public static native int[] create_array() /*-{ return {}; }-*/;",
-            "  public static native int[][] create_2d_array() /*-{ return {}; }-*/;",
-            "}");
-      }
-    });
+    addOrReplaceResource("test.Foo",
+        "package test;", "public class Foo {",
+        "  public static native int[] create_array() /*-{ return {}; }-*/;",
+        "  public static native int[][] create_2d_array() /*-{ return {}; }-*/;",
+        "}");
     addSnippetImport("test.Foo");
 
     analyzeSnippet("").assertOnlyInstantiatedTypes(Empty.STRINGS);
@@ -259,6 +193,133 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
         "int[][]", "Object[]", "Object");
   }
 
+  public void testRescueJavaScriptObjectReturnedFromExternallyImplementedMethod() throws Exception {
+    addJsoResources();
+    addSnippetImport("test.Test");
+
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsMethod;",
+        "public class Test {",
+        "  @JsMethod",
+        "  public static native JsoIntf returnsJsoInterface();",
+        "}"
+    );
+    analyzeSnippet("Test.returnsJsoInterface();").assertOnlyInstantiatedTypes(
+        "JsoIntf", "SingleJso", "JavaScriptObject", "Object");
+
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsMethod;",
+        "public class Test {",
+        "  @JsMethod",
+        "  public static native SingleJso returnsJso();",
+        "}"
+    );
+    analyzeSnippet("Test.returnsJso();").assertOnlyInstantiatedTypes(
+        "JsoIntf", "SingleJso", "JavaScriptObject", "Object");
+  }
+
+  public void testRescueJavaScriptObjectParameterToJsInteropEntryPoint() throws Exception {
+    addJsoResources();
+    addSnippetImport("test.Test");
+
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsMethod;",
+        "public class Test {",
+        "  public static void receivesJsoInterface(JsoIntf i) {};",
+        "}"
+    );
+    analyzeSnippet("Test.receivesJsoInterface(null);").assertOnlyInstantiatedTypes(
+        Empty.STRINGS);
+
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsMethod;",
+        "public class Test {",
+        "  @JsMethod",
+        "  public static void receivesJsoInterface(JsoIntf i) {};",
+        "}"
+    );
+    analyzeSnippet("Test.receivesJsoInterface(null);").assertOnlyInstantiatedTypes(
+        "JsoIntf", "SingleJso", "JavaScriptObject", "Object");
+  }
+
+    /**
+     * Tests that the JavaScriptObject type gets rescued in the three specific
+     * circumstances where values can pass from JS into Java.
+     */
+  public void testRescueJavaScriptObjectReturnedFromFieldReference() throws Exception {
+    addJsoResources();
+    addSnippetImport("test.Test");
+
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsType;",
+        "@JsType(isNative = true)",
+        "public class Test {",
+        "  public static JsoIntf field;",
+        "}"
+    );
+    analyzeSnippet("Test.field.hashCode();").assertOnlyInstantiatedTypes(
+        "JsoIntf", "SingleJso", "JavaScriptObject", "Object",
+        // These are all live because of the method Test.toString can be referenced externally.
+        "String", "Comparable", "CharSequence", "Serializable");
+
+    addOrReplaceResource("test.Test",
+        "package test;",
+        "import jsinterop.annotations.JsType;",
+        "@JsType(isNative = true)",
+        "public class Test {",
+        "  public static SingleJso field;",
+        "}"
+    );
+    analyzeSnippet("Test.field.hashCode();").assertOnlyInstantiatedTypes(
+        "JsoIntf", "SingleJso", "JavaScriptObject", "Object",
+        // These are all live because of the method Test.toString can be referenced externally.
+        "String", "Comparable", "CharSequence", "Serializable");
+  }
+
+  private void addOrReplaceResource(String qualifiedTypeName, final String... source) {
+    sourceOracle.addOrReplace(
+        new MockJavaResource(qualifiedTypeName) {
+          @Override
+          public CharSequence getContent() {
+            return Joiner.on("\n").join(source);
+          }
+        });
+    }
+
+  private void addJsoResources() {
+    addOrReplaceResource("test.JsoIntf",
+        "package test;",
+        "import com.google.gwt.core.client.JavaScriptObject;",
+        "public interface JsoIntf {",
+        "  public int getAny();",
+        "}");
+    addOrReplaceResource("test.UpRefIntf",
+        "package test;",
+        "import com.google.gwt.core.client.JavaScriptObject;",
+        "public interface UpRefIntf {",
+        "  public int getFoo();",
+        "}");
+    addOrReplaceResource("test.NonImplementor",
+        "package test;",
+        "import com.google.gwt.core.client.JavaScriptObject;",
+        "public class NonImplementor extends JavaScriptObject {",
+        "  protected NonImplementor() {}",
+        "  final public native int getFoo() /*-{ return 0; }-*/;",
+        "}");
+    addOrReplaceResource("test.SingleJso",
+        "package test;",
+        "import com.google.gwt.core.client.JavaScriptObject;",
+        "final public class SingleJso extends JavaScriptObject implements JsoIntf {",
+        "  protected SingleJso() {}",
+        "  public native int getAny() /*-{ return 1; }-*/;",
+        "}");
+  }
+
   private Result analyzeSnippet(String codeSnippet)
       throws UnableToCompleteException {
     JProgram program = compileSnippet("void", codeSnippet, true);
@@ -266,4 +327,5 @@ public class ControlFlowAnalyzerTest extends JJSTestBase {
     cfa.traverseFrom(findMainMethod(program));
     return new Result(program, cfa);
   }
+
 }

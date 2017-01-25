@@ -376,7 +376,7 @@ public class ControlFlowAnalyzer {
         }
       }
 
-      if (argsToRescueIfParameterRead == null || method.canBePolymorphic()
+      if (argumentsToRescueIfParameterRead == null || method.canBePolymorphic()
           || call instanceof JsniMethodRef) {
         return true;
       }
@@ -619,7 +619,7 @@ public class ControlFlowAnalyzer {
         if (dependencyRecorder != null) {
           curMethodStack.remove(curMethodStack.size() - 1);
         }
-        if (method.isJsniMethod()) {
+        if (method.isJsniMethod() || method.canBeImplementedExternally()) {
           // Returning from this method passes a value from JavaScript into Java.
           maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
         }
@@ -627,6 +627,9 @@ public class ControlFlowAnalyzer {
           for (JParameter param : method.getParams()) {
             // Parameters in JsExport, JsType, JsFunction methods should not be pruned in order to
             // keep the API intact.
+            if (method.canBeReferencedExternally()) {
+              maybeRescueJavaScriptObjectPassingIntoJava(param.getType());
+            }
             rescue(param);
             if (param.isVarargs()) {
               assert method.isJsMethodVarargs();
@@ -720,47 +723,54 @@ public class ControlFlowAnalyzer {
         // Already rescued.
         return;
       }
-      membersToRescueIfTypeIsInstantiated.remove(var);
-      if (var == getClassField) {
-        rescueClassLiteralsIfGetClassIsLive();
-      }
 
-      if (isStaticFieldInitializedToLiteral(var)) {
-        /*
-         * Rescue literal initializers when the field is rescued, not when
-         * the static initializer runs. This allows fields initialized to
-         * string literals to only need the string literals when the field
-         * itself becomes live.
-         *
-         * NOTE: needs to be in sync with {@link JTypeOracle.CheckClinitVistior}.
-         */
-        accept(((JField) var).getLiteralInitializer());
-      } else if (var instanceof JField
-          && (program.getTypeClassLiteralHolder().equals(((JField) var).getEnclosingType()))) {
-        /*
-         * Rescue just slightly less than what would normally be rescued for
-         * a field reference to the literal's field. Rescue the field
-         * itself, and its initializer, but do NOT rescue the whole
-         * enclosing class. That would pull in the clinit of that class,
-         * which has initializers for all the class literals, which in turn
-         * have all of the strings of all of the class names.
-         *
-         * This work is done in rescue() to allow JSNI references to class
-         * literals (via the @Foo::class syntax) to correctly rescue class
-         * literal initializers.
-         *
-         * TODO: Model ClassLiteral access a different way to avoid special
-         * handling. See
-         *  Pruner.transformToNullFieldRef()/transformToNullMethodCall().
-         */
+      if (var instanceof JField) {
         JField field = (JField) var;
-        accept(field.getInitializer());
-        referencedTypes.add(field.getEnclosingType());
-        liveFieldsAndMethods.add(field.getEnclosingType().getClinitMethod());
-      } else if (argsToRescueIfParameterRead != null && var instanceof JParameter) {
-        List<JExpression> list = argsToRescueIfParameterRead.removeAll(var);
-        for (JExpression arg : list) {
-          this.accept(arg);
+
+        membersToRescueIfTypeIsInstantiated.remove(field);
+
+        if (field.canBeReferencedExternally() || field.canBeImplementedExternally()) {
+          maybeRescueJavaScriptObjectPassingIntoJava(field.getType());
+        }
+
+        if (field == getClassField) {
+          rescueClassLiteralsIfGetClassIsLive();
+        }
+
+        if (isStaticFieldInitializedToLiteral(field)) {
+          /*
+           * Rescue literal initializers when the field is rescued, not when
+           * the static initializer runs. This allows fields initialized to
+           * string literals to only need the string literals when the field
+           * itself becomes live.
+           *
+           * NOTE: needs to be in sync with {@link JTypeOracle.CheckClinitVistior}.
+           */
+          accept(field.getLiteralInitializer());
+        } else if (program.getTypeClassLiteralHolder().equals(field.getEnclosingType())) {
+          /*
+           * Rescue just slightly less than what would normally be rescued for
+           * a field reference to the literal's field. Rescue the field
+           * itself, and its initializer, but do NOT rescue the whole
+           * enclosing class. That would pull in the clinit of that class,
+           * which has initializers for all the class literals, which in turn
+           * have all of the strings of all of the class names.
+           *
+           * This work is done in rescue() to allow JSNI references to class
+           * literals (via the @Foo::class syntax) to correctly rescue class
+           * literal initializers.
+           *
+           * TODO: Model ClassLiteral access a different way to avoid special
+           * handling. See
+           *  Pruner.transformToNullFieldRef()/transformToNullMethodCall().
+           */
+          accept(field.getInitializer());
+          referencedTypes.add(field.getEnclosingType());
+          liveFieldsAndMethods.add(field.getEnclosingType().getClinitMethod());
+        }
+      } else if (var instanceof JParameter && argumentsToRescueIfParameterRead != null) {
+        for (JExpression arg : argumentsToRescueIfParameterRead.removeAll(var)) {
+          accept(arg);
         }
       }
     }
@@ -786,7 +796,7 @@ public class ControlFlowAnalyzer {
           this.accept(arg);
           continue;
         }
-        argsToRescueIfParameterRead.put(param, arg);
+        argumentsToRescueIfParameterRead.put(param, arg);
       }
       // Visit any "extra" arguments that exceed the param list.
       for (int c = args.size(); i < c; ++i) {
@@ -894,7 +904,7 @@ public class ControlFlowAnalyzer {
    * read, we will need to rescue the associated arguments. See comments in
    * {@link #rescueArgumentsIfParametersCanBeRead}.
    */
-  private ListMultimap<JParameter, JExpression> argsToRescueIfParameterRead;
+  private ListMultimap<JParameter, JExpression> argumentsToRescueIfParameterRead;
 
   private final JMethod asyncFragmentOnLoad;
 
@@ -940,9 +950,9 @@ public class ControlFlowAnalyzer {
     liveStrings = Sets.newHashSet(cfa.liveStrings);
     membersToRescueIfTypeIsInstantiated =
         Sets.newHashSet(cfa.membersToRescueIfTypeIsInstantiated);
-    if (cfa.argsToRescueIfParameterRead != null) {
-      argsToRescueIfParameterRead =
-          ArrayListMultimap.create(cfa.argsToRescueIfParameterRead);
+    if (cfa.argumentsToRescueIfParameterRead != null) {
+      argumentsToRescueIfParameterRead =
+          ArrayListMultimap.create(cfa.argumentsToRescueIfParameterRead);
     }
     rescuer = new RescueVisitor();
   }
@@ -1001,8 +1011,8 @@ public class ControlFlowAnalyzer {
   }
 
   public void setForPruning() {
-    assert argsToRescueIfParameterRead == null;
-    argsToRescueIfParameterRead = ArrayListMultimap.create();
+    assert argumentsToRescueIfParameterRead == null;
+    argumentsToRescueIfParameterRead = ArrayListMultimap.create();
   }
 
   /**
