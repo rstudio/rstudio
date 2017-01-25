@@ -40,7 +40,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
@@ -68,7 +67,6 @@ import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
-import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -380,40 +378,17 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
-      if (Desktop.isDesktop())
+      // TODO (gary) this goes away once terminal is turned on for Windows
+      server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
       {
-         server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
+         @Override
+         public void onResponseReceived(TerminalOptions options)
          {
-            @Override
-            public void onResponseReceived(TerminalOptions options)
-            {
-               Desktop.getFrame().openTerminal(options.getTerminalPath(),
-                                               options.getWorkingDirectory(),
-                                               options.getExtraPathEntries());
-            }
-         });
-      }
-      else
-      {
-         final ProgressIndicator indicator = new GlobalProgressDelayer(
-               globalDisplay_, 500, "Starting shell...").getIndicator();
-         
-         server_.startShellDialog(new ServerRequestCallback<ConsoleProcess>() 
-         {
-            @Override
-            public void onResponseReceived(ConsoleProcess proc)
-            {
-               indicator.onCompleted();
-               new ConsoleProgressDialog(proc, server_).showModal();
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               indicator.onError(error.getUserMessage());
-            }
-         });
-      }
+            Desktop.getFrame().openTerminal(options.getTerminalPath(),
+                  options.getWorkingDirectory(),
+                  options.getExtraPathEntries());
+         }
+      });
    }
    
    @Handler

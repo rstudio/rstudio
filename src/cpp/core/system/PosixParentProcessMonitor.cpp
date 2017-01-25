@@ -53,7 +53,7 @@ void exitHandler()
    {
       // write to child (don't bother with checking error as there may
       // be one in the case that the child is already gone)
-      ::write(s_writeOnExit.at(i), "done", 4);
+      (void)::write(s_writeOnExit.at(i), "done", 4);
    }
 }
 
