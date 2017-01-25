@@ -354,7 +354,7 @@
          cacheDataCode <- append(cacheDataCode, list(
             paste(
                downloadCondition,
-               "download.file(",
+               if (.rs.isPackageInstalled("curl")) "curl::curl_download(" else "download.file(",
                cacheUrlName,
                ", ",
                cacheVariableName,
