@@ -1,7 +1,7 @@
 /*
  * SessionWorkbench.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -917,11 +917,13 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    core::system::setenv(&shellEnv, "TERM", smartTerm ? core::system::kSmartTerm :
                                                        core::system::kDumbTerm);
 
-   // set prompt
-   std::string path = module_context::createAliasedPath(
-                                 module_context::safeCurrentPath());
-   std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
-   core::system::setenv(&shellEnv, "PS1", prompt);
+   if (!smartTerm)
+   {
+      std::string path = module_context::createAliasedPath(
+               module_context::safeCurrentPath());
+      std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
+      core::system::setenv(&shellEnv, "PS1", prompt);
+   }
 
    // set xterm title to show current working directory after each command
    if (smartTerm)
@@ -1107,7 +1109,7 @@ Error initialize()
 }
 
 
-} // namepsace workbench
+} // namespace workbench
 } // namespace modules
 } // namesapce session
 } // namespace rstudio
