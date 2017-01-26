@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
@@ -122,7 +123,7 @@ public class NewConnectionSnippetHost extends Composite
    
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
-      ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
+      final ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
       int visibleRows = snippetParts.size();
       int visibleParams = snippetParts.size();
       
@@ -205,6 +206,15 @@ public class NewConnectionSnippetHost extends Composite
                   @Override
                   public void onClick(ClickEvent arg0)
                   {
+                     new NewConnectionSnippetDialog(
+                        new OperationWithInput<ArrayList<NewConnectionSnippetParts>>() {
+                           @Override
+                           public void execute(final ArrayList<NewConnectionSnippetParts> result)
+                           {
+                           }
+                        },
+                        snippetParts
+                     ).showModal();
                   }
                });
             
