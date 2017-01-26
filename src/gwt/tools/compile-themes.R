@@ -207,6 +207,63 @@ applyFixups.twilight <- function(content, parsed) {
 
 applyFixups.vibrant_ink <- applyFixups.tomorrow_night_eighties
 
+create_terminal_cursor_rules <- function(isDark) {
+   termCursorBgColorFirst <-  "#333"
+   termCursorBgColorSecond <- "#CCC"
+   if (isDark) {
+      termCursorBgColorFirst <-  "#CCC"
+      termCursorBgColorSecond <- "#1e1e1e"
+   }
+   
+   sprintf(paste(sep = "\n",
+                 ".terminal .terminal-cursor {",
+                 "   background-color: %s;",
+                 "   color: %s;",
+                 "}",
+                 ".terminal:not(.focus) .terminal-cursor {",
+                 "  outline: 1px solid %s;",
+                 "  outline-offset: -1px;",
+                 "  background-color: transparent;",
+                 "}",
+                 "@keyframes blink-cursor {",
+                 "  0%% {",
+                 "    background-color: %s;",
+                 "    color: %s;",
+                 "  }",
+                 "  50%% {",
+                 "    background-color: transparent;",
+                 "    color: %s;",
+                 "  }",
+                 "}"),
+           termCursorBgColorFirst,
+           termCursorBgColorSecond,
+           termCursorBgColorFirst,
+           termCursorBgColorFirst,
+           termCursorBgColorSecond,
+           termCursorBgColorFirst)
+}
+
+create_terminal_rule <- function(background, foreground) {
+   sprintf(paste(sep = "\n",
+                 ".terminal {",
+                 "  background-color: %s;",
+                 "  color: %s;",
+                 "  font-feature-settings: \"liga\" 0;",
+                 "  position: relative;",
+                 "}"),
+           background, foreground)
+}
+
+create_terminal_viewport_rule <- function(background) {
+   sprintf(paste(sep = "\n",
+                 ".terminal .xterm-viewport {",
+                 "  /* On OS X this is required in order for the scroll bar to appear fully opaque */",
+                 "  background-color: %s;",
+                 "  overflow-y: scroll;",
+                 "}"),
+           background)
+}
+
 ## Get the set of all theme .css files
 outDir <- "../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes"
 themeDir <- "ace/lib/ace/theme"
@@ -431,8 +488,15 @@ for (file in themeFiles) {
    # Apply other custom fixups
    content <- applyFixups(content, fileName, parsed)
    
+   # Apply terminal-specifics
+   content <- c(content,
+                create_terminal_rule(background, foreground)) 
+   content <- c(content,
+                create_terminal_cursor_rules(isDark))
+   content <- c(content,
+                create_terminal_viewport_rule(background))
+   
    ## Phew! Write it out.
    outputPath <- file.path(outDir, basename(file))
    cat(content, file = outputPath, sep = "\n")
-   
 }

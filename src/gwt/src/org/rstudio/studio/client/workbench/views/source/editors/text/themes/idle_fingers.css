@@ -140,3 +140,33 @@
 .ace_keyword.ace_operator {
   color: #6892B2 !important;
 }
+.terminal {
+  background-color: #323232;
+  color: #ffffff;
+  font-feature-settings: "liga" 0;
+  position: relative;
+}
+.terminal .terminal-cursor {
+   background-color: #CCC;
+   color: #1e1e1e;
+}
+.terminal:not(.focus) .terminal-cursor {
+  outline: 1px solid #CCC;
+  outline-offset: -1px;
+  background-color: transparent;
+}
+@keyframes blink-cursor {
+  0% {
+    background-color: #CCC;
+    color: #1e1e1e;
+  }
+  50% {
+    background-color: transparent;
+    color: #CCC;
+  }
+}
+.terminal .xterm-viewport {
+  /* On OS X this is required in order for the scroll bar to appear fully opaque */
+  background-color: #323232;
+  overflow-y: scroll;
+}

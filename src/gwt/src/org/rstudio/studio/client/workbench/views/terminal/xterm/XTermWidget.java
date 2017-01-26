@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
@@ -59,10 +58,10 @@ public class XTermWidget extends Widget implements RequiresResize,
       setElement(Document.get().createDivElement());
       getElement().setTabIndex(0);
       getElement().getStyle().setMargin(0, Unit.PX);
-      getElement().getStyle().setBackgroundColor("#111");
-      getElement().getStyle().setColor("#fafafa");
       getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       getElement().addClassName(XTERM_CLASS);
+      addStyleName("ace_editor");
+      addStyleName("ace_scroller");
 
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
@@ -156,8 +155,6 @@ public class XTermWidget extends Widget implements RequiresResize,
                terminalReady();
             }
          });
-
-         ElementIds.assignElementId(this.getElement(), ElementIds.XTERM_WIDGET);
       }
    }
    
