@@ -55,4 +55,13 @@
 .secondTextbox {
    padding-left: 5px;
    width: 84px;
+   border: solid 1px #999;
+   height: 17px;
+}
+
+.buttonTextbox {
+   padding-left: 5px;
+   width: 300px;
+   border: solid 1px #999;
+   height: 17px;
 }

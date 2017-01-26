@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -117,19 +118,22 @@ public class NewConnectionSnippetHost extends Composite
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
       ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
-      int visibleParams = Math.min(snippetParts.size(), 4);
+      int visibleRows = snippetParts.size();
+      int visibleParams = snippetParts.size();
       
       // If we have a field that shares the first row, usually port:
       boolean hasSecondaryHeaderField = false;
       if (visibleParams >= 2 && snippetParts.get(0).getOrder() == snippetParts.get(1).getOrder()) {
-         visibleParams ++;
+         visibleRows --;
          hasSecondaryHeaderField = true;
       }
 
-      final Grid connGrid = new Grid(visibleParams, 4);
+      visibleRows = Math.min(visibleRows, 4);
+
+      final Grid connGrid = new Grid(visibleRows, 5);
       connGrid.addStyleName(RES.styles().grid());
 
-      for (int idxParams = 0, idxRow = 0; idxParams < visibleParams; idxParams++, idxRow++) {
+      for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {
          String key = snippetParts.get(idxParams).getKey();
          Label label = new Label(key + ":");
          label.addStyleName(RES.styles().label());
@@ -140,8 +144,11 @@ public class NewConnectionSnippetHost extends Composite
          
          if (idxRow == 0 && hasSecondaryHeaderField) {
             textboxStyle = RES.styles().firstTextbox();
-         } else {
+         } else if (idxRow < visibleRows - 1) {
+            connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "4");
+         } else if (idxRow == visibleRows - 1) {
             connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "3");
+            textboxStyle = RES.styles().buttonTextbox();
          }
 
          if (key.toLowerCase() == "password") {
@@ -176,6 +183,11 @@ public class NewConnectionSnippetHost extends Composite
             secondTextbox.setText(snippetParts.get(idxParams).getValue());
             secondTextbox.addStyleName(RES.styles().secondTextbox());
             connGrid.setWidget(idxRow, 3, secondTextbox);
+         }
+
+         if (idxRow == visibleRows - 1) {
+            PushButton pushButton = new PushButton();
+            connGrid.setWidget(idxRow, 4, pushButton);
          }
       }
 
@@ -231,6 +243,7 @@ public class NewConnectionSnippetHost extends Composite
       String firstTextbox();
       String secondLabel();
       String secondTextbox();
+      String buttonTextbox();
    }
 
    public interface Resources extends ClientBundle
