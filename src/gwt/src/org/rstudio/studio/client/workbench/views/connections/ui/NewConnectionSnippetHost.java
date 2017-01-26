@@ -117,36 +117,65 @@ public class NewConnectionSnippetHost extends Composite
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
       ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
-      int visibleParams = Math.min(snippetParts.size(), 5);
+      int visibleParams = Math.min(snippetParts.size(), 4);
+      
+      // If we have a field that shares the first row, usually port:
+      boolean hasSecondaryHeaderField = false;
+      if (visibleParams >= 2 && snippetParts.get(0).getOrder() == snippetParts.get(1).getOrder()) {
+         visibleParams ++;
+         hasSecondaryHeaderField = true;
+      }
 
-      final Grid connGrid = new Grid(visibleParams, 2);
+      final Grid connGrid = new Grid(visibleParams, 4);
       connGrid.addStyleName(RES.styles().grid());
 
-
-      for (int i = 0; i < visibleParams; i++) {
-         String key = snippetParts.get(i).getKey();
+      for (int idxParams = 0, idxRow = 0; idxParams < visibleParams; idxParams++, idxRow++) {
+         String key = snippetParts.get(idxParams).getKey();
          Label label = new Label(key + ":");
          label.addStyleName(RES.styles().label());
-         connGrid.setWidget(i, 0, label);
-         connGrid.getRowFormatter().setVerticalAlign(i, HasVerticalAlignment.ALIGN_TOP);
+         connGrid.setWidget(idxRow, 0, label);
+         connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
+         
+         String textboxStyle = RES.styles().textbox();
+         
+         if (idxRow == 0 && hasSecondaryHeaderField) {
+            textboxStyle = RES.styles().firstTextbox();
+         } else {
+            connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "3");
+         }
 
          if (key.toLowerCase() == "password") {
             PasswordTextBox password = new PasswordTextBox();
-            password.setText(snippetParts.get(i).getValue());
-            password.addStyleName(RES.styles().textbox());
-            connGrid.setWidget(i, 1, password);
+            password.setText(snippetParts.get(idxParams).getValue());
+            password.addStyleName(textboxStyle);
+            connGrid.setWidget(idxRow, 1, password);
          }
          else if (key.toLowerCase() == "parameters") {
             TextArea textarea = new TextArea();
             textarea.setVisibleLines(6);
             textarea.addStyleName(RES.styles().textarea());
-            connGrid.setWidget(i, 1, textarea);
+            connGrid.setWidget(idxRow, 1, textarea);
          }
          else {
             TextBox textbox = new TextBox();
-            textbox.setText(snippetParts.get(i).getValue());
-            textbox.addStyleName(RES.styles().textbox());
-            connGrid.setWidget(i, 1, textbox);
+            textbox.setText(snippetParts.get(idxParams).getValue());
+            textbox.addStyleName(textboxStyle);
+            connGrid.setWidget(idxRow, 1, textbox);
+         }
+         
+         if (idxRow == 0 && hasSecondaryHeaderField) {
+            idxParams++;
+            
+            String secondKey = snippetParts.get(idxParams).getKey();
+            Label secondLabel = new Label(secondKey + ":");
+            secondLabel.addStyleName(RES.styles().secondLabel());
+            connGrid.setWidget(idxRow, 2, secondLabel);
+            connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
+            
+            TextBox secondTextbox = new TextBox();
+            secondTextbox.setText(snippetParts.get(idxParams).getValue());
+            secondTextbox.addStyleName(RES.styles().secondTextbox());
+            connGrid.setWidget(idxRow, 3, secondTextbox);
          }
       }
 
@@ -198,6 +227,10 @@ public class NewConnectionSnippetHost extends Composite
       String textarea();
 
       String parametersPanel();
+      
+      String firstTextbox();
+      String secondLabel();
+      String secondTextbox();
    }
 
    public interface Resources extends ClientBundle

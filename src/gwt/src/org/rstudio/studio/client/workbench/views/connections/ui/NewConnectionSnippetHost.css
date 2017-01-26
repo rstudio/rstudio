@@ -41,3 +41,18 @@
   width: 330px;
   resize: none;
 }
+
+.firstTextbox {
+   padding-left: 5px;
+   width: 180px;
+}
+
+.secondLabel {
+   width: 50px;
+   text-align: right;
+}
+
+.secondTextbox {
+   padding-left: 5px;
+   width: 84px;
+}
