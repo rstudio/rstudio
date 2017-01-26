@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -124,14 +125,24 @@ public class NewConnectionSnippetHost extends Composite
 
 
       for (int i = 0; i < snippetParts.size(); i++) {
-         Label label = new Label(snippetParts.get(i).getKey() + ":");
+         String key = snippetParts.get(i).getKey();
+         Label label = new Label(key + ":");
          label.addStyleName(RES.styles().label());
          connGrid.setWidget(i, 0, label);
+         connGrid.getRowFormatter().setVerticalAlign(i, HasVerticalAlignment.ALIGN_TOP);
 
-         TextBox textbox = new TextBox();
-         textbox.setText(snippetParts.get(i).getValue());
-         textbox.addStyleName(RES.styles().textbox());
-         connGrid.setWidget(i, 1, textbox);
+         if (key.toLowerCase() == "password") {
+            PasswordTextBox password = new PasswordTextBox();
+            password.setText(snippetParts.get(i).getValue());
+            password.addStyleName(RES.styles().textbox());
+            connGrid.setWidget(i, 1, password);
+         }
+         else {
+            TextBox textbox = new TextBox();
+            textbox.setText(snippetParts.get(i).getValue());
+            textbox.addStyleName(RES.styles().textbox());
+            connGrid.setWidget(i, 1, textbox);
+         }
       }
 
       return connGrid;
@@ -140,8 +151,9 @@ public class NewConnectionSnippetHost extends Composite
    private Widget createWidget()
    {
       VerticalPanel container = new VerticalPanel();
-
+      
       parametersPanel_ = new VerticalPanel();
+      parametersPanel_.addStyleName(RES.styles().parametersPanel());
       container.add(parametersPanel_);        
       
       // add the code panel     
@@ -178,8 +190,9 @@ public class NewConnectionSnippetHost extends Composite
       String label();
       String grid();
       String textbox();
-      String driverTextbox();
       String textarea();
+
+      String parametersPanel();
    }
 
    public interface Resources extends ClientBundle

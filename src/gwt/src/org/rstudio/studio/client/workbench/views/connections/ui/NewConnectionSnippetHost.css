@@ -6,10 +6,11 @@
 
 .grid {
   margin-bottom: 5px;
+  vertical-align: top;
 }
 
-td.grid {
-  vertical-align: top;
+.parametersPanel {
+  min-height: 120px;
 }
 
 .helpLink {
@@ -29,12 +30,8 @@ td.grid {
   width: 150px;
 }
 
-.driverTextbox {
-  padding-left: 5px;
-  width: 150px;
-}
-
 .textbox {
+  padding-left: 5px;
   width: 330px;
 }
 

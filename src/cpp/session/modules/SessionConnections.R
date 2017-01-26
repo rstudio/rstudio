@@ -228,14 +228,14 @@ options(connectionObserver = list(
    if (.rs.isPackageInstalled("odbc") &&
        exists("list_drivers", envir = asNamespace("odbc"))) {
       listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
-      connectionList <- c(connectionList, lapply(listDrivers(), function(driver) {
+      connectionList <- c(connectionList, lapply(listDrivers()$name, function(driver) {
          snippet <- snippets[[driver]]
 
          if (is.null(snippet)) {
             snippet <- paste(
                "library(DBI)\n",
                "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-               "Driver={${1:driver=", driver, "}};${2:other}\")",
+               "Driver={", driver, "};${1:Parameters}\")",
                sep = "")
          }
 
