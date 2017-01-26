@@ -25,8 +25,11 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
+import org.rstudio.studio.client.workbench.views.connections.res.NewConnectionSnippetHostResources;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
@@ -34,6 +37,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PushButton;
@@ -67,6 +71,7 @@ public class NewConnectionSnippetHost extends Composite
    public NewConnectionSnippetHost()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      newConnectionSnippetHostResources_ = GWT.create(NewConnectionSnippetHostResources.class);
       
       initWidget(createWidget());
    }
@@ -133,6 +138,12 @@ public class NewConnectionSnippetHost extends Composite
       final Grid connGrid = new Grid(visibleRows, 5);
       connGrid.addStyleName(RES.styles().grid());
 
+      connGrid.getCellFormatter().setWidth(0, 0, "150px");
+      connGrid.getCellFormatter().setWidth(0, 1, "180px");
+      connGrid.getCellFormatter().setWidth(0, 2, "50px");
+      connGrid.getCellFormatter().setWidth(0, 3, "54px");
+      connGrid.getCellFormatter().setWidth(0, 4, "30px");
+
       for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {
          String key = snippetParts.get(idxParams).getKey();
          Label label = new Label(key + ":");
@@ -183,11 +194,21 @@ public class NewConnectionSnippetHost extends Composite
             secondTextbox.setText(snippetParts.get(idxParams).getValue());
             secondTextbox.addStyleName(RES.styles().secondTextbox());
             connGrid.setWidget(idxRow, 3, secondTextbox);
+            connGrid.getCellFormatter().getElement(idxRow, 3).setAttribute("colspan", "2");
          }
 
          if (idxRow == visibleRows - 1) {
-            PushButton pushButton = new PushButton();
-            connGrid.setWidget(idxRow, 4, pushButton);
+            PushButton pushButton = new PushButton(
+               new Image(newConnectionSnippetHostResources_.configImage()),
+               new ClickHandler()
+               {
+                  @Override
+                  public void onClick(ClickEvent arg0)
+                  {
+                  }
+               });
+
+            connGrid.setWidget(idxRow, 2, pushButton);
          }
       }
 
@@ -260,4 +281,5 @@ public class NewConnectionSnippetHost extends Composite
    
    private ConnectionCodePanel codePanel_;
    private VerticalPanel parametersPanel_;
+   private NewConnectionSnippetHostResources newConnectionSnippetHostResources_;
 }
