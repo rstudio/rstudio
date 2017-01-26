@@ -65,3 +65,9 @@
    border: solid 1px #999;
    height: 17px;
 }
+
+.settingsButton {
+   margin-left: 3px;
+   margin-top: 2px;
+   cursor: pointer;
+}

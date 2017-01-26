@@ -207,7 +207,9 @@ public class NewConnectionSnippetHost extends Composite
                   {
                   }
                });
-
+            
+            pushButton.addStyleName(RES.styles().settingsButton());
+            pushButton.setWidth("20px");
             connGrid.setWidget(idxRow, 2, pushButton);
          }
       }
@@ -265,6 +267,8 @@ public class NewConnectionSnippetHost extends Composite
       String secondLabel();
       String secondTextbox();
       String buttonTextbox();
+
+      String settingsButton();
    }
 
    public interface Resources extends ClientBundle
