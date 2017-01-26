@@ -1111,6 +1111,6 @@ Error initialize()
 
 } // namespace workbench
 } // namespace modules
-} // namesapce session
+} // namespace session
 } // namespace rstudio
 
