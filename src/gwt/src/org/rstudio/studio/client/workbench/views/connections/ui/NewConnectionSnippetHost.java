@@ -23,7 +23,6 @@ import java.util.Comparator;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
@@ -35,7 +34,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
@@ -119,12 +117,13 @@ public class NewConnectionSnippetHost extends Composite
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
       ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
+      int visibleParams = Math.min(snippetParts.size(), 5);
 
-      final Grid connGrid = new Grid(snippetParts.size(), 2);
+      final Grid connGrid = new Grid(visibleParams, 2);
       connGrid.addStyleName(RES.styles().grid());
 
 
-      for (int i = 0; i < snippetParts.size(); i++) {
+      for (int i = 0; i < visibleParams; i++) {
          String key = snippetParts.get(i).getKey();
          Label label = new Label(key + ":");
          label.addStyleName(RES.styles().label());
@@ -136,6 +135,12 @@ public class NewConnectionSnippetHost extends Composite
             password.setText(snippetParts.get(i).getValue());
             password.addStyleName(RES.styles().textbox());
             connGrid.setWidget(i, 1, password);
+         }
+         else if (key.toLowerCase() == "parameters") {
+            TextArea textarea = new TextArea();
+            textarea.setVisibleLines(6);
+            textarea.addStyleName(RES.styles().textarea());
+            connGrid.setWidget(i, 1, textarea);
          }
          else {
             TextBox textbox = new TextBox();
