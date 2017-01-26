@@ -16,6 +16,10 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -24,6 +28,8 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.regexp.shared.MatchResult;
+import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
@@ -75,29 +81,58 @@ public class NewConnectionSnippetHost extends Composite
       
       operation.execute();
    }
+
+   private ArrayList<NewConnectionSnippetParts> parseSnippet(String input) {
+      ArrayList<NewConnectionSnippetParts> parts = new ArrayList<NewConnectionSnippetParts>();
+      String pattern = "\\$\\{([0-9]+):([^=}]+)(=([^}]+))?\\}";
+
+      RegExp regExp = RegExp.compile(pattern, "g");
+
+      for (MatchResult matcher = regExp.exec(input); matcher != null; matcher = regExp.exec(input)) {
+         if (matcher.getGroupCount() >= 2) {
+            int order = 0;
+            try {
+               order = Integer.parseInt(matcher.getGroup(1));
+            } catch (NumberFormatException e) {
+            }
+
+            String key = matcher.getGroup(2);
+            String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
+
+            parts.add(new NewConnectionSnippetParts(order, key, value));
+         }
+      }
+
+      Collections.sort(parts, new Comparator<NewConnectionSnippetParts>()
+      {
+         @Override
+         public int compare(NewConnectionSnippetParts p1, NewConnectionSnippetParts p2)
+         {
+            return p1.getOrder() == p2.getOrder() ? 0 : p1.getOrder() < p2.getOrder() ? -1 : 1;
+         }
+      });
+
+      return parts;
+   }
    
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
-      final Grid connGrid = new Grid(2, 2);
+      ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
+
+      final Grid connGrid = new Grid(snippetParts.size(), 2);
       connGrid.addStyleName(RES.styles().grid());
 
-      Label connDriverLabel = new Label("Driver:");
-      connDriverLabel.addStyleName(RES.styles().label());
-      connGrid.setWidget(0, 0, connDriverLabel);
-      TextBox connDriverText = new TextBox();
-      connDriverText.setText("{SQLite}");
-      connDriverText.addStyleName(RES.styles().driverTextbox());
-      connGrid.setWidget(0, 1, connDriverText);
 
-      Label connOtherLabel = new Label("Other:");
-      connOtherLabel.addStyleName(RES.styles().label());
-      connGrid.setWidget(1, 0, connOtherLabel);
-      TextArea connOtherTextArea = new TextArea();
-      connOtherTextArea.setVisibleLines(6);
-      connOtherTextArea.getElement().setAttribute("spellcheck", "false");
-      connOtherTextArea.addStyleName(RES.styles().textarea());
-      connGrid.getRowFormatter().setVerticalAlign(1, HasVerticalAlignment.ALIGN_TOP);
-      connGrid.setWidget(1, 1, connOtherTextArea);
+      for (int i = 0; i < snippetParts.size(); i++) {
+         Label label = new Label(snippetParts.get(i).getKey() + ":");
+         label.addStyleName(RES.styles().label());
+         connGrid.setWidget(i, 0, label);
+
+         TextBox textbox = new TextBox();
+         textbox.setText(snippetParts.get(i).getValue());
+         textbox.addStyleName(RES.styles().textbox());
+         connGrid.setWidget(i, 1, textbox);
+      }
 
       return connGrid;
    }

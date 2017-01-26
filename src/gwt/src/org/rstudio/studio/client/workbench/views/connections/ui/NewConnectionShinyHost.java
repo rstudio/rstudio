@@ -32,7 +32,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -53,14 +52,12 @@ public class NewConnectionShinyHost extends Composite
                                                NewConnectionDialogUpdatedEvent.Handler
 {
    @Inject
-   private void initialize(UIPrefs uiPrefs,
-                           EventBus events,
+   private void initialize(EventBus events,
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
                            Commands commands,
                            ApplicationInterrupt applicationInterrupt)
    {
-      uiPrefs_ = uiPrefs;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
@@ -220,7 +217,6 @@ public class NewConnectionShinyHost extends Composite
    
    private ConnectionCodePanel codePanel_;
      
-   private UIPrefs uiPrefs_;
    private EventBus events_;
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
