@@ -52,7 +52,7 @@ fi
 mv ./xterm.js ./xterm.js.orig
 
 # add ace classes to terminal so it picks up editor styles
-sed $'s/this\.element\.classList\.add(\'xterm\');/&\\\nthis.element.classList.add(\\\'ace_editor\\\', \\\'ace_scroller\\\');/' < ./xterm.js.orig > ./xterm.js
+sed $'s/this\.element\.classList\.add(\'xterm\');/&\\\nthis.element.classList.add(\\\'ace_editor\\\');/' < ./xterm.js.orig > ./xterm.js
 
 # Done with pre-build tweaks
 cd ..
