@@ -156,8 +156,8 @@ public class NewConnectionSnippetHost extends Composite
 
       connGrid.getCellFormatter().setWidth(0, 0, "150px");
       connGrid.getCellFormatter().setWidth(0, 1, "180px");
-      connGrid.getCellFormatter().setWidth(0, 2, "50px");
-      connGrid.getCellFormatter().setWidth(0, 3, "54px");
+      connGrid.getCellFormatter().setWidth(0, 2, "60px");
+      connGrid.getCellFormatter().setWidth(0, 3, "44px");
       connGrid.getCellFormatter().setWidth(0, 4, "30px");
 
       for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {

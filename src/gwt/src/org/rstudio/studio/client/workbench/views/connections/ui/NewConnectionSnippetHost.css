@@ -5,46 +5,50 @@
 @external macintosh;
 
 .grid {
-  margin-bottom: 5px;
-  vertical-align: top;
+   margin-bottom: 5px;
+   vertical-align: top;
 }
 
 .gridRow {
-  height: 25px;
+   height: 25px;
 }
 
 .parametersPanel {
-  min-height: 120px;
+   min-height: 120px;
 }
 
 .helpLink {
-  margin-top: 6px;
+   margin-top: 6px;
 }
 
 .codeGrid {
-  margin-top: 9px;
-  margin-bottom: 10px;
+   margin-top: 9px;
+   margin-bottom: 10px;
 }
 
 .dialogCodePanel {
-  width: 500px !important;
+   width: 500px !important;
 }
 
 .label {
-  width: 150px;
-  margin-top: 2px;
+   width: 150px;
+   margin-top: 2px;
+
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
 }
 
 .textbox {
-  padding-left: 5px;
-  width: 330px;
-  border: solid 1px #999;
-  height: 17px;
+   padding-left: 5px;
+   width: 330px;
+   border: solid 1px #999;
+   height: 17px;
 }
 
 .textarea {
-  width: 330px;
-  resize: none;
+   width: 330px;
+   resize: none;
 }
 
 .firstTextbox {
@@ -53,14 +57,18 @@
 }
 
 .secondLabel {
-   width: 50px;
+   width: 60px;
    text-align: right;
    margin-top: 2px;
+
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
 }
 
 .secondTextbox {
    padding-left: 5px;
-   width: 84px;
+   width: 74px;
    border: solid 1px #999;
    height: 17px;
 }
