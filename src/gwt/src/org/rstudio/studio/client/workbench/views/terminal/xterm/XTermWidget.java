@@ -20,6 +20,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
@@ -61,11 +62,12 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       getElement().addClassName(XTERM_CLASS);
       addStyleName("ace_editor");
-      addStyleName("ace_scroller");
 
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
       terminal_ = XTermNative.createTerminal(getElement(), true);
+      terminal_.addClass("ace_editor");
+      terminal_.addClass(FontSizer.getNormalFontSizeClass());
 
       // Handle keystrokes from the xterm and dispatch them
       addDataEventHandler(new CommandWithArg<String>()
