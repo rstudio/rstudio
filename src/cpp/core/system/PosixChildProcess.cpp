@@ -1,7 +1,7 @@
 /*
  * PosixChildProcess.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -253,7 +253,10 @@ void ChildProcess::init(const ProcessOptions& options)
 
    std::vector<std::string> args;
    args.push_back("bash");
-   args.push_back("--norc");
+   if (!options.smartTerminal)
+      args.push_back("--norc"); // don't read .bashrc for interactive shell
+   else
+      args.push_back("-l"); // act like a login shell
    init("/usr/bin/env", args, options);
 }
 
