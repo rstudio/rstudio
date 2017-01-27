@@ -52,7 +52,7 @@ namespace {
    FilePath s_consoleProcIndexPath;
 } // anonymous namespace
 
-void saveConsoleProcesses(bool terminatedNormally = true);
+void saveConsoleProcesses();
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
@@ -921,23 +921,29 @@ core::json::Array processesAsJson()
    return procInfos;
 }
 
-std::string serializeConsoleProcs(bool suspend = false)
+std::string serializeConsoleProcs()
 {
    json::Array array;
    for (ProcTable::const_iterator it = s_procs.begin();
         it != s_procs.end();
         it++)
    {
-      if (suspend)
-      {
-         it->second->onSuspend();
-      }
       array.push_back(it->second->toJson());
    }
 
    std::ostringstream ostr;
    json::write(array, ostr);
    return ostr.str();
+}
+   
+void markConsoleProcsSuspended()
+{
+   for (ProcTable::const_iterator it = s_procs.begin();
+        it != s_procs.end();
+        it++)
+   {
+      it->second->onSuspend();
+   }
 }
 
 void deserializeConsoleProcs(const std::string& jsonStr)
@@ -1001,19 +1007,26 @@ void loadConsoleProcesses()
    }
 }
 
-void saveConsoleProcesses(bool terminatedNormally)
+void saveConsoleProcessesAtShutdown(bool terminatedNormally)
 {
    if (!terminatedNormally)
       return;
+   markConsoleProcsSuspended();
+   saveConsoleProcesses();
+}
+
+void saveConsoleProcesses()
+{
    Error error = rstudio::core::writeStringToFile(s_consoleProcIndexPath,
                                                   serializeConsoleProcs());
    if (error)
       LOG_ERROR(error);
 }
-
+   
 void onSuspend(core::Settings* pSettings)
 {
-   serializeConsoleProcs(true /*suspend*/);
+   markConsoleProcsSuspended();
+   serializeConsoleProcs();
 }
 
 void onResume(const core::Settings& /*settings*/)
@@ -1032,7 +1045,7 @@ Error initialize()
       return error;
    s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
 
-   events().onShutdown.connect(saveConsoleProcesses);
+   events().onShutdown.connect(saveConsoleProcessesAtShutdown);
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
 
    loadConsoleProcesses();
