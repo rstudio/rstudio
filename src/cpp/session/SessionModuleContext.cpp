@@ -376,6 +376,29 @@ SEXP rs_markdownToHTML(SEXP contentSEXP)
    return r::sexp::create(htmlContent, &rProtect);
 }
 
+SEXP rs_setPersistentValue(SEXP nameSEXP, SEXP valueSEXP)
+{
+   std::string name = r::sexp::safeAsString(nameSEXP);
+   std::string value = r::sexp::safeAsString(valueSEXP);
+   persistentState().settings().set(name, value);
+   return R_NilValue;
+}
+
+SEXP rs_getPersistentValue(SEXP nameSEXP)
+{
+   std::string name = r::sexp::safeAsString(nameSEXP);
+   if (persistentState().settings().contains(name))
+   {
+      std::string value = persistentState().settings().get(name);
+      r::sexp::Protect rProtect;
+      return r::sexp::create(value, &rProtect);
+   }
+   else
+   {
+      return R_NilValue;
+   }
+}
+
 } // anonymous namespace
 
 
@@ -2336,6 +2359,10 @@ Error initialize()
    methodDef17.numArgs = 1;
    r::routines::addCallMethod(methodDef17);
    
+   // register persistent value functions
+   RS_REGISTER_CALL_METHOD(rs_setPersistentValue, 2);
+   RS_REGISTER_CALL_METHOD(rs_getPersistentValue, 1);
+
    // register rs_isRScriptInPackageBuildTarget
    r::routines::registerCallMethod(
             "rs_isRScriptInPackageBuildTarget",
