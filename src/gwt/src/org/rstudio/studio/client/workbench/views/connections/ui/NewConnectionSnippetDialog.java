@@ -29,6 +29,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -78,7 +79,10 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
    @Override
    protected Widget createMainWidget()
    {
-      final Grid connGrid = new Grid(initialConfig_.size(), 2);
+      SimplePanel wrapper = new SimplePanel();
+      wrapper.setStyleName(RES.styles().wrapper());
+      
+      Grid connGrid = new Grid(initialConfig_.size(), 2);
       connGrid.addStyleName(RES.styles().grid());
 
       for (int idxParams = 0; idxParams < initialConfig_.size(); idxParams++) {
@@ -94,7 +98,9 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
          connGrid.setWidget(idxParams, 1, textbox);
       }
       
-      return connGrid;
+      wrapper.add(connGrid);
+      
+      return wrapper;
    }
    
    @Override
@@ -108,6 +114,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
       String grid();
       String label();
       String textbox();
+      String wrapper();
    }
 
    public interface Resources extends ClientBundle

@@ -26,3 +26,8 @@
    border: solid 1px #999;
    height: 17px;
 }
+
+.wrapper {
+   max-height: 400px;
+   overflow-x: scroll;
+}
