@@ -125,16 +125,23 @@ public class NewConnectionSnippetHost extends Composite
    {
       final ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
       int visibleRows = snippetParts.size();
-      int visibleParams = snippetParts.size();
+      int visibleParams = Math.min(visibleRows, 4);
       
       // If we have a field that shares the first row, usually port:
       boolean hasSecondaryHeaderField = false;
       if (visibleParams >= 2 && snippetParts.get(0).getOrder() == snippetParts.get(1).getOrder()) {
          visibleRows --;
+         visibleParams ++;
          hasSecondaryHeaderField = true;
       }
 
       visibleRows = Math.min(visibleRows, 4);
+
+      final ArrayList<NewConnectionSnippetParts> primarySnippetParts = 
+            new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(0, visibleParams));
+
+      final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
+            new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
 
       final Grid connGrid = new Grid(visibleRows, 5);
       connGrid.addStyleName(RES.styles().grid());
@@ -146,6 +153,8 @@ public class NewConnectionSnippetHost extends Composite
       connGrid.getCellFormatter().setWidth(0, 4, "30px");
 
       for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {
+         connGrid.getRowFormatter().setStyleName(idxRow, RES.styles().gridRow());
+         
          String key = snippetParts.get(idxParams).getKey();
          Label label = new Label(key + ":");
          label.addStyleName(RES.styles().label());
@@ -153,14 +162,15 @@ public class NewConnectionSnippetHost extends Composite
          connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
          
          String textboxStyle = RES.styles().textbox();
+         boolean showConfigButton = secondarySnippetParts.size() > 0 && idxRow == visibleRows - 1;
          
          if (idxRow == 0 && hasSecondaryHeaderField) {
             textboxStyle = RES.styles().firstTextbox();
-         } else if (idxRow < visibleRows - 1) {
-            connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "4");
-         } else if (idxRow == visibleRows - 1) {
+         } else if (showConfigButton) {
             connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "3");
             textboxStyle = RES.styles().buttonTextbox();
+         } else {
+            connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "4");
          }
 
          if (key.toLowerCase() == "password") {
@@ -198,7 +208,7 @@ public class NewConnectionSnippetHost extends Composite
             connGrid.getCellFormatter().getElement(idxRow, 3).setAttribute("colspan", "2");
          }
 
-         if (idxRow == visibleRows - 1) {
+         if (showConfigButton) {
             PushButton pushButton = new PushButton(
                new Image(newConnectionSnippetHostResources_.configImage()),
                new ClickHandler()
@@ -213,7 +223,7 @@ public class NewConnectionSnippetHost extends Composite
                            {
                            }
                         },
-                        snippetParts,
+                        secondarySnippetParts,
                         info
                      ).showModal();
                   }
@@ -267,8 +277,10 @@ public class NewConnectionSnippetHost extends Composite
       String codeGrid();
       String dialogCodePanel();
       
-      String label();
       String grid();
+      String gridRow();
+      
+      String label();
       String textbox();
       String textarea();
 

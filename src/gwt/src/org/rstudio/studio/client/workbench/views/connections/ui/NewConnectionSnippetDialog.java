@@ -64,13 +64,15 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
 
       setOkButtonCaption("Configure");
 
-      HelpLink helpLink = new HelpLink(
-         "Using " + newConnectionInfo_.getName(),
-         newConnectionInfo_.getHelp(),
-         false,
-         false);
+      if (newConnectionInfo_.getHelp() != null) {
+         HelpLink helpLink = new HelpLink(
+            "Using " + newConnectionInfo_.getName(),
+            newConnectionInfo_.getHelp(),
+            false,
+            false);
 
-      addLeftWidget(helpLink);   
+         addLeftWidget(helpLink);
+      }
    }
    
    @Override
@@ -78,9 +80,6 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
    {
       final Grid connGrid = new Grid(initialConfig_.size(), 2);
       connGrid.addStyleName(RES.styles().grid());
-
-      //connGrid.getCellFormatter().setWidth(0, 0, "150px");
-      //connGrid.getCellFormatter().setWidth(0, 1, "180px");
 
       for (int idxParams = 0; idxParams < initialConfig_.size(); idxParams++) {
          String key = initialConfig_.get(idxParams).getKey();

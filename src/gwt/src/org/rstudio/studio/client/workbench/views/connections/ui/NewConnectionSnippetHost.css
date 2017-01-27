@@ -9,6 +9,10 @@
   vertical-align: top;
 }
 
+.gridRow {
+  height: 25px;
+}
+
 .parametersPanel {
   min-height: 120px;
 }
@@ -28,6 +32,7 @@
 
 .label {
   width: 150px;
+  margin-top: 2px;
 }
 
 .textbox {
@@ -50,6 +55,7 @@
 .secondLabel {
    width: 50px;
    text-align: right;
+   margin-top: 2px;
 }
 
 .secondTextbox {
