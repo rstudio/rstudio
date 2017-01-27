@@ -23,6 +23,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -75,24 +77,21 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
    protected Widget createMainWidget()
    {
       final Grid connGrid = new Grid(initialConfig_.size(), 2);
-      //connGrid.addStyleName(RES.styles().grid());
+      connGrid.addStyleName(RES.styles().grid());
 
-      connGrid.getCellFormatter().setWidth(0, 0, "150px");
-      connGrid.getCellFormatter().setWidth(0, 1, "180px");
+      //connGrid.getCellFormatter().setWidth(0, 0, "150px");
+      //connGrid.getCellFormatter().setWidth(0, 1, "180px");
 
       for (int idxParams = 0; idxParams < initialConfig_.size(); idxParams++) {
          String key = initialConfig_.get(idxParams).getKey();
          Label label = new Label(key + ":");
-         // label.addStyleName(RES.styles().label());
+         label.addStyleName(RES.styles().label());
          connGrid.setWidget(idxParams, 0, label);
          connGrid.getRowFormatter().setVerticalAlign(idxParams, HasVerticalAlignment.ALIGN_TOP);
          
-         // String textboxStyle = RES.styles().textbox();
-         
-
          TextBox textbox = new TextBox();
          textbox.setText(initialConfig_.get(idxParams).getValue());
-         // textbox.addStyleName(textboxStyle);
+         textbox.addStyleName(RES.styles().textbox());
          connGrid.setWidget(idxParams, 1, textbox);
       }
       
@@ -103,6 +102,25 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
    protected ArrayList<NewConnectionSnippetParts> collectInput()
    {
       return initialConfig_;
+   }
+
+   public interface Styles extends CssResource
+   {
+      String grid();
+      String label();
+      String textbox();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("NewConnectionSnippetDialog.css")
+      Styles styles();
+   }
+   
+   public static Resources RES = GWT.create(Resources.class);
+   public static void ensureStylesInjected() 
+   {
+      RES.styles().ensureInjected();
    }
    
    private NewConnectionInfo newConnectionInfo_;

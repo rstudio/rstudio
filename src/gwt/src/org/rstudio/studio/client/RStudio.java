@@ -75,6 +75,7 @@ import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetDialog;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.files.ui.FilesListDataGridResources;
@@ -292,6 +293,7 @@ public class RStudio implements EntryPoint
       RSConnectDeploy.RESOURCES.style().ensureInjected();
       NewConnectionShinyHost.ensureStylesInjected();
       NewConnectionSnippetHost.ensureStylesInjected();
+      NewConnectionSnippetDialog.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");
