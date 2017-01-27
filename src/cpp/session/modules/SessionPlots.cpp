@@ -828,6 +828,23 @@ SEXP rs_emitBeforeNewGridPage()
    return R_NilValue;
 }
 
+SEXP rs_savePlotAsImage(SEXP fileSEXP,
+                        SEXP formatSEXP,
+                        SEXP widthSEXP,
+                        SEXP heightSEXP)
+{
+   FilePath filePath(r::sexp::safeAsString(fileSEXP));
+   std::string format = r::sexp::safeAsString(formatSEXP);
+   int width = r::sexp::asInteger(widthSEXP);
+   int height = r::sexp::asInteger(heightSEXP);
+
+   r::session::graphics::Display& display = r::session::graphics::display();
+   if (display.hasOutput())
+      display.savePlotAsImage(filePath, format, width, height);
+
+   return R_NilValue;
+}
+
 
 } // anonymous namespace  
    
@@ -871,6 +888,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewPlot, 0);
    RS_REGISTER_CALL_METHOD(rs_emitBeforeNewGridPage, 0);
    RS_REGISTER_CALL_METHOD(rs_emitNewPlot, 0);
+   RS_REGISTER_CALL_METHOD(rs_savePlotAsImage, 4);
 
    // connect to onShowManipulator
    using namespace rstudio::r::session;
