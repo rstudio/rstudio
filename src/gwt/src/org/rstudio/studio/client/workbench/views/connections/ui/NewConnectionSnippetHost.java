@@ -19,6 +19,7 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +32,8 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 import org.rstudio.studio.client.workbench.views.connections.res.NewConnectionSnippetHostResources;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.regexp.shared.MatchResult;
@@ -46,6 +49,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -159,7 +163,7 @@ public class NewConnectionSnippetHost extends Composite
       for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {
          connGrid.getRowFormatter().setStyleName(idxRow, RES.styles().gridRow());
          
-         String key = snippetParts.get(idxParams).getKey();
+         final String key = snippetParts.get(idxParams).getKey();
          Label label = new Label(key + ":");
          label.addStyleName(RES.styles().label());
          connGrid.setWidget(idxRow, 0, label);
@@ -176,40 +180,66 @@ public class NewConnectionSnippetHost extends Composite
          } else {
             connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "4");
          }
+         
+         final TextBoxBase textboxBase;
 
          if (key.toLowerCase() == "password") {
             PasswordTextBox password = new PasswordTextBox();
             password.setText(snippetParts.get(idxParams).getValue());
             password.addStyleName(textboxStyle);
             connGrid.setWidget(idxRow, 1, password);
+            textboxBase = password;
          }
          else if (key.toLowerCase() == "parameters") {
             TextArea textarea = new TextArea();
             textarea.setVisibleLines(7);
             textarea.addStyleName(RES.styles().textarea());
             connGrid.setWidget(idxRow, 1, textarea);
+            textboxBase = textarea;
          }
          else {
             TextBox textbox = new TextBox();
             textbox.setText(snippetParts.get(idxParams).getValue());
             textbox.addStyleName(textboxStyle);
-            connGrid.setWidget(idxRow, 1, textbox);
+            textboxBase = textbox;
          }
+         
+         connGrid.setWidget(idxRow, 1, textboxBase);
+         
+         textboxBase.addChangeHandler(new ChangeHandler()
+         {
+            @Override
+            public void onChange(ChangeEvent arg0)
+            {
+               partsKeyValues_.put(key, textboxBase.getValue());
+               updateCodePanel();
+            }
+         });
          
          if (idxRow == 0 && hasSecondaryHeaderField) {
             idxParams++;
             
-            String secondKey = snippetParts.get(idxParams).getKey();
+            final String secondKey = snippetParts.get(idxParams).getKey();
             Label secondLabel = new Label(secondKey + ":");
             secondLabel.addStyleName(RES.styles().secondLabel());
             connGrid.setWidget(idxRow, 2, secondLabel);
             connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
             
-            TextBox secondTextbox = new TextBox();
+            final TextBox secondTextbox = new TextBox();
             secondTextbox.setText(snippetParts.get(idxParams).getValue());
             secondTextbox.addStyleName(RES.styles().secondTextbox());
             connGrid.setWidget(idxRow, 3, secondTextbox);
             connGrid.getCellFormatter().getElement(idxRow, 3).setAttribute("colspan", "2");
+            
+            secondTextbox.addChangeHandler(new ChangeHandler()
+            {
+               @Override
+               public void onChange(ChangeEvent arg0)
+               {
+                  partsKeyValues_.put(secondKey, secondTextbox.getValue());
+                  updateCodePanel();
+               }
+            });
          }
 
          if (showConfigButton) {
@@ -258,6 +288,10 @@ public class NewConnectionSnippetHost extends Composite
             String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
 
             builder.append(input.substring(inputIndex, matcher.getIndex()));
+            
+            if (partsKeyValues_.containsKey(key)) {
+               value = partsKeyValues_.get(key);
+            }
             
             if (value != null) {
                builder.append(value);
@@ -346,4 +380,5 @@ public class NewConnectionSnippetHost extends Composite
 
    NewConnectionInfo info_;
    ArrayList<NewConnectionSnippetParts> snippetParts_;
+   HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
 }
