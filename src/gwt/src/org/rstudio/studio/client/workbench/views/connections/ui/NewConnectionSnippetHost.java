@@ -19,6 +19,8 @@ package org.rstudio.studio.client.workbench.views.connections.ui;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -79,11 +81,13 @@ public class NewConnectionSnippetHost extends Composite
    
    private void initialize(final Operation operation, final NewConnectionInfo info)
    {
-      ConnectionCodePanel superCodePanel = codePanel_;
-      superCodePanel.setCode(info.getSnippet(), "");
+      info_ = info;
       
       parametersPanel_.clear();
       parametersPanel_.add(createParameterizedUI(info));
+
+      snippetParts_ = parseSnippet(info.getSnippet());
+      updateCodePanel();
       
       operation.execute();
    }
@@ -181,7 +185,7 @@ public class NewConnectionSnippetHost extends Composite
          }
          else if (key.toLowerCase() == "parameters") {
             TextArea textarea = new TextArea();
-            textarea.setVisibleLines(6);
+            textarea.setVisibleLines(7);
             textarea.addStyleName(RES.styles().textarea());
             connGrid.setWidget(idxRow, 1, textarea);
          }
@@ -236,6 +240,36 @@ public class NewConnectionSnippetHost extends Composite
       }
 
       return connGrid;
+   }
+
+   private void updateCodePanel()
+   {
+      String input = info_.getSnippet();
+      
+      String pattern = "\\$\\{([0-9]+):([^=}]+)(=([^}]+))?\\}";
+      RegExp regExp = RegExp.compile(pattern, "g");
+      
+      StringBuilder builder = new StringBuilder();     
+      int inputIndex = 0;
+
+      for (MatchResult matcher = regExp.exec(input); matcher != null; matcher = regExp.exec(input)) {
+         if (matcher.getGroupCount() >= 2) {
+            String key = matcher.getGroup(2);
+            String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
+
+            builder.append(input.substring(inputIndex, matcher.getIndex()));
+            
+            if (value != null) {
+               builder.append(value);
+            }
+            
+            inputIndex = matcher.getIndex() + matcher.getGroup(0).length();
+         }
+      }
+      
+      builder.append(input.substring(inputIndex, input.length()));
+      
+      codePanel_.setCode(builder.toString(), "");
    }
    
    private Widget createWidget()
@@ -309,4 +343,7 @@ public class NewConnectionSnippetHost extends Composite
    private ConnectionCodePanel codePanel_;
    private VerticalPanel parametersPanel_;
    private NewConnectionSnippetHostResources newConnectionSnippetHostResources_;
+
+   NewConnectionInfo info_;
+   ArrayList<NewConnectionSnippetParts> snippetParts_;
 }
