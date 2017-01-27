@@ -213,7 +213,8 @@ public class NewConnectionSnippetHost extends Composite
                            {
                            }
                         },
-                        snippetParts
+                        snippetParts,
+                        info
                      ).showModal();
                   }
                });

@@ -21,8 +21,13 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -40,10 +45,12 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
    
    public NewConnectionSnippetDialog(
       OperationWithInput<ArrayList<NewConnectionSnippetParts>> operation,
-      ArrayList<NewConnectionSnippetParts> config)
+      ArrayList<NewConnectionSnippetParts> config,
+      NewConnectionInfo newConnectionInfo)
    {
       super("Configure Connection", operation);
       initialConfig_ = config;
+      newConnectionInfo_ = newConnectionInfo;
 
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
@@ -56,18 +63,40 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
       setOkButtonCaption("Configure");
 
       HelpLink helpLink = new HelpLink(
-         "TBD",
-         "TBD",
+         "Using " + newConnectionInfo_.getName(),
+         newConnectionInfo_.getHelp(),
+         false,
          false);
+
       addLeftWidget(helpLink);   
    }
    
    @Override
    protected Widget createMainWidget()
    {
-      widget_ = new VerticalPanel();
+      final Grid connGrid = new Grid(initialConfig_.size(), 2);
+      //connGrid.addStyleName(RES.styles().grid());
+
+      connGrid.getCellFormatter().setWidth(0, 0, "150px");
+      connGrid.getCellFormatter().setWidth(0, 1, "180px");
+
+      for (int idxParams = 0; idxParams < initialConfig_.size(); idxParams++) {
+         String key = initialConfig_.get(idxParams).getKey();
+         Label label = new Label(key + ":");
+         // label.addStyleName(RES.styles().label());
+         connGrid.setWidget(idxParams, 0, label);
+         connGrid.getRowFormatter().setVerticalAlign(idxParams, HasVerticalAlignment.ALIGN_TOP);
+         
+         // String textboxStyle = RES.styles().textbox();
+         
+
+         TextBox textbox = new TextBox();
+         textbox.setText(initialConfig_.get(idxParams).getValue());
+         // textbox.addStyleName(textboxStyle);
+         connGrid.setWidget(idxParams, 1, textbox);
+      }
       
-      return widget_;
+      return connGrid;
    }
    
    @Override
@@ -76,6 +105,6 @@ public class NewConnectionSnippetDialog extends ModalDialog<ArrayList<NewConnect
       return initialConfig_;
    }
    
-   private Widget widget_;
+   private NewConnectionInfo newConnectionInfo_;
    private ArrayList<NewConnectionSnippetParts> initialConfig_;
 }
