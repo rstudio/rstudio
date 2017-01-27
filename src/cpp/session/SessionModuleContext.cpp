@@ -376,9 +376,14 @@ SEXP rs_markdownToHTML(SEXP contentSEXP)
    return r::sexp::create(htmlContent, &rProtect);
 }
 
+inline std::string persistantValueName(SEXP nameSEXP)
+{
+   return "rstudioapi_persistent_values_" + r::sexp::safeAsString(nameSEXP);
+}
+
 SEXP rs_setPersistentValue(SEXP nameSEXP, SEXP valueSEXP)
 {
-   std::string name = r::sexp::safeAsString(nameSEXP);
+   std::string name = persistantValueName(nameSEXP);
    std::string value = r::sexp::safeAsString(valueSEXP);
    persistentState().settings().set(name, value);
    return R_NilValue;
@@ -386,7 +391,7 @@ SEXP rs_setPersistentValue(SEXP nameSEXP, SEXP valueSEXP)
 
 SEXP rs_getPersistentValue(SEXP nameSEXP)
 {
-   std::string name = r::sexp::safeAsString(nameSEXP);
+   std::string name = persistantValueName(nameSEXP);
    if (persistentState().settings().contains(name))
    {
       std::string value = persistentState().settings().get(name);
