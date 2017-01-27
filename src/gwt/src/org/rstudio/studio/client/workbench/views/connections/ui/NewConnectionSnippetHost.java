@@ -251,10 +251,14 @@ public class NewConnectionSnippetHost extends Composite
                   public void onClick(ClickEvent arg0)
                   {
                      new NewConnectionSnippetDialog(
-                        new OperationWithInput<ArrayList<NewConnectionSnippetParts>>() {
+                        new OperationWithInput<HashMap<String, String>>() {
                            @Override
-                           public void execute(final ArrayList<NewConnectionSnippetParts> result)
+                           public void execute(final HashMap<String, String> result)
                            {
+                              for(String key : result.keySet()) {
+                                 partsKeyValues_.put(key, result.get(key));
+                              }
+                              updateCodePanel();
                            }
                         },
                         secondarySnippetParts,
