@@ -367,3 +367,14 @@
       cancel = cancel,
       url = NULL)
 })
+
+.rs.addApiFunction("setPersistentValue", function(name, value) {
+   invisible(.Call("rs_setPersistentValue", name, value))
+})
+
+.rs.addApiFunction("getPersistentValue", function(name) {
+   .Call("rs_getPersistentValue", name)
+})
+
+
+
