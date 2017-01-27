@@ -973,7 +973,6 @@ Terminal.prototype.open = function (parent) {
     this.element = this.document.createElement('div');
     this.element.classList.add('terminal');
     this.element.classList.add('xterm');
-    this.element.classList.add('ace_editor');
     this.element.classList.add('xterm-theme-' + this.theme);
     this.element.style.height;
     this.element.setAttribute('tabindex', 0);

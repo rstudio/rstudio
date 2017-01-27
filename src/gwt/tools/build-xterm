@@ -24,39 +24,6 @@ git clean -dfx
 # xterm version 2.2.0
 git checkout 8a146b5
 
-# Check that files are where we expect them before tweaking
-if [ ! -d "./src" ]; then
-    echo "Error: location of xterm sources not found. Aborting.";
-    exit 1;
-fi
-
-if [ ! -f "./src/xterm.js" ]; then
-    echo "Error: xterm.js source file not found in src directory. Aborting.";
-    exit 1;
-fi
-
-if [ ! -f "./src/xterm.css" ]; then
-    echo "Error: xterm.css source file not found in src directory. Aborting.";
-    exit 1;
-fi
-
-cd src
-
-# Check that the patterns we expect to find are still there
-grep -q this\.element\.classList\.add\(\'xterm\'\) ./xterm.js
-if [ $? -ne 0 ]; then
-    echo "Error: couldn't find expected text in xterm.js. Aborting.";
-    exit 1;
-fi
-
-mv ./xterm.js ./xterm.js.orig
-
-# add ace classes to terminal so it picks up editor styles
-sed $'s/this\.element\.classList\.add(\'xterm\');/&\\\nthis.element.classList.add(\\\'ace_editor\\\');/' < ./xterm.js.orig > ./xterm.js
-
-# Done with pre-build tweaks
-cd ..
-
 # install and build via Babel
 npm install --only=dev
 npm run build 
@@ -81,9 +48,6 @@ minify () {
 
 minify ${XTERM_BUILD_DIR}/xterm.js ${XTERM_TARGET_DIR}/xterm.js
 minify ${XTERM_ADDONS_DIR}/fit/fit.js ${XTERM_TARGET_DIR}/fit.js
-
-mv ./src/xterm.js ./src/xterm.mod.js
-mv ./src/xterm.js.orig ./src/xterm.js
 
 echo "Tweaking CSS"
 cd src
