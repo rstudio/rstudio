@@ -46,6 +46,22 @@
   invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))     
 })
 
+
+.rs.addApiFunction("savePlotAsImage", function(
+                   file, 
+                   format = c("png", "jpeg", "bmp", "tiff", "emf", "svg", "eps"),
+                   width,
+                   height) {
+   
+   file <- path.expand(file)
+   format <- match.arg(format)
+   if (!is.numeric(width))
+      stop("width argument mut be numeric", call. = FALSE)
+   if (!is.numeric(height))
+      stop("height argument mut be numeric", call. = FALSE)
+   invisible(.Call("rs_savePlotAsImage", file, format, width, height))
+})
+
 .rs.addApiFunction("sourceMarkers", function(name, 
                                              markers, 
                                              basePath = NULL,
@@ -351,3 +367,14 @@
       cancel = cancel,
       url = NULL)
 })
+
+.rs.addApiFunction("setPersistentValue", function(name, value) {
+   invisible(.Call("rs_setPersistentValue", name, value))
+})
+
+.rs.addApiFunction("getPersistentValue", function(name) {
+   .Call("rs_getPersistentValue", name)
+})
+
+
+
