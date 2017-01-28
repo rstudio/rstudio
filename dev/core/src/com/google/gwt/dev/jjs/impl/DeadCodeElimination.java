@@ -202,10 +202,10 @@ public class DeadCodeElimination {
 
       switch (op) {
         case AND:
-          maybeReplaceMe(x, Simplifier.and(x), ctx);
+          maybeReplaceMe(x, Simplifier.simplifyAnd(x), ctx);
           break;
         case OR:
-          maybeReplaceMe(x, Simplifier.or(x), ctx);
+          maybeReplaceMe(x, Simplifier.simplifyOr(x), ctx);
           break;
         case BIT_XOR:
           simplifyXor(lhs, rhs, ctx);
@@ -315,12 +315,12 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      maybeReplaceMe(x, Simplifier.cast(x), ctx);
+      maybeReplaceMe(x, Simplifier.simplifyCast(x), ctx);
     }
 
     @Override
     public void endVisit(JConditional x, Context ctx) {
-      maybeReplaceMe(x, Simplifier.conditional(x), ctx);
+      maybeReplaceMe(x, Simplifier.simplifyConditional(x), ctx);
     }
 
     @Override
@@ -340,7 +340,7 @@ public class DeadCodeElimination {
 
         // If false, replace do with do's body
         if (!booleanLiteral.getValue()) {
-          if (Simplifier.isEmpty(x.getBody())) {
+          if (JjsUtils.isEmptyBlock(x.getBody())) {
             ctx.removeMe();
           } else { // Unless it contains break/continue statements
             FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
@@ -429,7 +429,8 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
-      maybeReplaceMe(x, Simplifier.ifStatement(x, getCurrentMethod()), ctx);
+      JType methodReturnType = getCurrentMethod() != null ? getCurrentMethod().getType() : null;
+      maybeReplaceMe(x, Simplifier.simplifyIfStatement(x, methodReturnType), ctx);
     }
 
     /**
@@ -651,7 +652,7 @@ public class DeadCodeElimination {
       }
 
       if (x.getOp() == JUnaryOperator.NOT) {
-        maybeReplaceMe(x, Simplifier.not(x), ctx);
+        maybeReplaceMe(x, Simplifier.simplifyNot(x), ctx);
         return;
       } else if (x.getOp() == JUnaryOperator.NEG) {
         maybeReplaceMe(x, simplifyNegate(x, x.getArg()), ctx);
@@ -708,9 +709,9 @@ public class DeadCodeElimination {
       }
 
       // Compute properties regarding the state of this try statement
-      boolean noTry = Simplifier.isEmpty(x.getTryBlock());
+      boolean noTry = JjsUtils.isEmptyBlock(x.getTryBlock());
       boolean noCatch = catchClauses.size() == 0;
-      boolean noFinally = Simplifier.isEmpty(x.getFinallyBlock());
+      boolean noFinally = JjsUtils.isEmptyBlock(x.getFinallyBlock());
 
       if (noTry) {
         // 2) Prune try statements with no body.

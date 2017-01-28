@@ -453,6 +453,16 @@ public class JjsUtils {
           .put(JStringLiteral.class, LiteralTranslators.STRING_LITERAL_TRANSLATOR)
           .build();
 
+  /**
+   * Return true if the statement is an empty block.
+   */
+  public static boolean isEmptyBlock(JStatement stmt) {
+    if (stmt == null) {
+      return true;
+    }
+    return (stmt instanceof JBlock && ((JBlock) stmt).getStatements().isEmpty());
+  }
+
   private enum LiteralTranslators {
     BOOLEAN_LITERAL_TRANSLATOR() {
       @Override

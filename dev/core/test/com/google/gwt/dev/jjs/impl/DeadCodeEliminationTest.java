@@ -310,6 +310,39 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         "} while (false);");
   }
 
+  public void testNegationOptimizations() throws Exception {
+    optimize("boolean", "int a = 0; return !(a < 2);").intoString(
+        "int a = 0;",
+        "return a >= 2;");
+    optimize("boolean", "double a = 0; return !(a < 2);").intoString(
+    "double a = 0;",
+        "return !(a < 2);");
+    optimize("boolean", "float a = 0; return !(a == 2);").intoString(
+        "float a = 0;",
+        "return !(a == 2);");
+    optimize("void", "float a = 0; if (a == 2) {} else {a=3;}").intoString(
+    "float a = 0;",
+        "if (a == 2);",
+        "else {",
+        "  a = 3;",
+        "}");
+    optimize("void", "int a = 0; if (a == 2) {} else {a=3;}").intoString(
+        "int a = 0;",
+        "if (a == 2);",
+        "else {",
+        "  a = 3;",
+        "}");
+    optimize("void", "float a = 0; if (!(a == 2)) {} else {a=3;}").intoString(
+        "float a = 0;",
+        "if (!(a == 2));",
+        "else {",
+        "  a = 3;",
+        "}");
+    optimize("boolean", "int a = 0; return !(a == 2) ? false : a==3;").intoString(
+        "int a = 0;",
+        "return a == 2 && a == 3;");
+  }
+
   public void testMultiExpressionOptimization() throws Exception {
     runMethodInliner = true;
     addSnippetClassDecl(

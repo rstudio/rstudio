@@ -1208,6 +1208,12 @@ public class CompilerTest extends GWTTestCase {
 
     assertTrue(!!TRUE);
     assertFalse(!!FALSE);
+
+    double nan = Math.random() == 0 ? Double.NaN : Double.NaN;
+    assertFalse(nan == (0.0 / 0.0));
+    assertTrue(!(nan > 0));
+    assertTrue(!(nan < 0));
+    assertFalse(!!(nan > 0));
   }
 
   public void testNullFlow() {
