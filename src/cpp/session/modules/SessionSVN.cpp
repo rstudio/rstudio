@@ -1,7 +1,7 @@
 /*
  * SessionSVN.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -244,7 +244,6 @@ core::Error createConsoleProc(const ShellArgs& args,
                               const boost::optional<FilePath>& workingDir,
                               const std::string& caption,
                               bool requiresSsh,
-                              bool dialog,
                               bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
@@ -270,7 +269,7 @@ core::Error createConsoleProc(const ShellArgs& args,
    using namespace session::console_process;
    boost::shared_ptr<ConsoleProcessInfo> pCPI = boost::make_shared<ConsoleProcessInfo>(
             caption, "" /*title*/, "" /*handle*/, kNoTerminal,
-            false /*allowRestart*/, dialog, InteractionPossible);
+            false /*allowRestart*/, InteractionPossible);
 
    // create the process
    *ppCP = ConsoleProcess::create(command, options, pCPI);
@@ -284,7 +283,6 @@ core::Error createConsoleProc(const ShellArgs& args,
 core::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
                               bool requiresSsh,
-                              bool dialog,
                               bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
@@ -293,7 +291,6 @@ core::Error createConsoleProc(const ShellArgs& args,
                             boost::optional<FilePath>(),
                             caption,
                             requiresSsh,
-                            dialog,
                             enqueueRefreshOnExit,
                             ppCP);
 }
@@ -347,7 +344,6 @@ void runSvnAsync(const ShellArgs& args,
                                    boost::optional<FilePath>(),
                                    caption,
                                    s_isSvnSshRepository,
-                                   true,
                                    enqueueRefreshOnExit,
                                    &pCP);
    if (error)
@@ -993,7 +989,6 @@ Error svnUpdate(const json::JsonRpcRequest& request,
                                    "SVN Update",
                                    s_isSvnSshRepository,
                                    true,
-                                   true,
                                    &pCP);
    if (error)
       return error;
@@ -1064,7 +1059,6 @@ Error svnCommit(const json::JsonRpcRequest& request,
    error = createConsoleProc(args,
                              "SVN Commit",
                              s_isSvnSshRepository,
-                             true,
                              true,
                              &pCP);
    if (error)
@@ -1730,7 +1724,6 @@ Error checkout(const std::string& url,
                                    parentPath,
                                    "SVN Checkout",
                                    requiresSsh,
-                                   true,
                                    true,
                                    ppCP);
 

@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -475,7 +475,7 @@ public class RemoteServer implements Server
                              String handle, String caption, String title, int sequence,
                              ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM, false /*modal*/,
+      invokeStartShellDialog(ConsoleProcess.TerminalType.XTERM,
                              cols, rows, handle, caption, title, sequence,
                              true /*allowProcessRestart*/,
                              true /*reportChildCount*/,
@@ -484,7 +484,6 @@ public class RemoteServer implements Server
    
    private void invokeStartShellDialog(
                      ConsoleProcess.TerminalType terminalType,
-                     boolean isModalDialog,
                      int cols, int rows,
                      String terminalHandle,
                      String caption,
@@ -498,13 +497,12 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(terminalType.toString()));
       params.set(1, new JSONNumber(cols));
       params.set(2, new JSONNumber(rows));
-      params.set(3, JSONBoolean.getInstance(isModalDialog));
-      params.set(4, new JSONString(StringUtil.notNull(terminalHandle)));
-      params.set(5, new JSONString(StringUtil.notNull(caption)));
-      params.set(6, new JSONString(StringUtil.notNull(title)));
-      params.set(7, new JSONNumber(sequence));
-      params.set(8, JSONBoolean.getInstance(allowProcessRestart));
-      params.set(9, JSONBoolean.getInstance(reportChildCount));
+      params.set(3, new JSONString(StringUtil.notNull(terminalHandle)));
+      params.set(4, new JSONString(StringUtil.notNull(caption)));
+      params.set(5, new JSONString(StringUtil.notNull(title)));
+      params.set(6, new JSONNumber(sequence));
+      params.set(7, JSONBoolean.getInstance(allowProcessRestart));
+      params.set(8, JSONBoolean.getInstance(reportChildCount));
 
       sendRequest(RPC_SCOPE,
                   START_SHELL_DIALOG,

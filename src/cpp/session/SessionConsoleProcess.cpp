@@ -37,7 +37,11 @@
 #include <core/system/Crypto.hpp>
 #endif
 
-#define kConsoleIndex "INDEX"
+// Change this if you need to rev the persisted ConsoleProcessInfo object in
+// an incompatible way. History of previously opened tabs will be lost, so
+// mainly a mechanism during pre-release, but could implement an auto-upgrade
+// if it becomes necessary after release.
+#define kConsoleIndex "INDEX001"
 
 using namespace rstudio::core;
 
@@ -56,7 +60,7 @@ void saveConsoleProcesses();
 
 ConsoleProcess::ConsoleProcess(boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : procInfo_(procInfo), interrupt_(false), newCols_(-1), newRows_(-1),
-     childProcsSent_(false)
+     childProcsSent_(false), started_(false)
 {
    regexInit();
 
@@ -69,7 +73,8 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : command_(command), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false)
+     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false),
+     started_(false)
 {
    commonInit();
 }
@@ -79,7 +84,8 @@ ConsoleProcess::ConsoleProcess(const std::string& program,
                                const core::system::ProcessOptions& options,
                                boost::shared_ptr<ConsoleProcessInfo> procInfo)
    : program_(program), args_(args), options_(options), procInfo_(procInfo),
-     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false)
+     interrupt_(false), newCols_(-1), newRows_(-1), childProcsSent_(false),
+     started_(false)
 {
    commonInit();
 }
@@ -170,7 +176,7 @@ void ConsoleProcess::setPromptHandler(
 
 Error ConsoleProcess::start()
 {
-   if (procInfo_->isStarted())
+   if (started_)
       return Success();
 
    Error error;
@@ -190,7 +196,7 @@ Error ConsoleProcess::start()
                           options_, createProcessCallbacks());
    }
    if (!error)
-      procInfo_->setIsStarted(true);
+      started_ = true;
    return error;
 }
 
@@ -451,11 +457,6 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
    data["prompt"] = prompt;
    module_context::enqueClientEvent(
          ClientEvent(client_events::kConsoleProcessPrompt, data));
-}
-
-void ConsoleProcess::onSuspend()
-{
-   procInfo_->onSuspend();
 }
 
 void ConsoleProcess::onExit(int exitCode)
@@ -936,16 +937,6 @@ std::string serializeConsoleProcs()
    return ostr.str();
 }
    
-void markConsoleProcsSuspended()
-{
-   for (ProcTable::const_iterator it = s_procs.begin();
-        it != s_procs.end();
-        it++)
-   {
-      it->second->onSuspend();
-   }
-}
-
 void deserializeConsoleProcs(const std::string& jsonStr)
 {
    if (jsonStr.empty())
@@ -993,7 +984,7 @@ void loadConsoleProcesses()
    }
    BOOST_FOREACH(const FilePath& child, children)
    {
-      // Don't erase the INDEX or any subfolders
+      // Don't erase the INDEXnnn or any subfolders
       if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
          continue;
 
@@ -1011,7 +1002,6 @@ void saveConsoleProcessesAtShutdown(bool terminatedNormally)
 {
    if (!terminatedNormally)
       return;
-   markConsoleProcsSuspended();
    saveConsoleProcesses();
 }
 
@@ -1023,9 +1013,8 @@ void saveConsoleProcesses()
       LOG_ERROR(error);
 }
    
-void onSuspend(core::Settings* pSettings)
+void onSuspend(core::Settings* /*pSettings*/)
 {
-   markConsoleProcsSuspended();
    serializeConsoleProcs();
 }
 

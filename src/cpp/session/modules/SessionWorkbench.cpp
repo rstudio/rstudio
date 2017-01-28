@@ -867,9 +867,6 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    // initial size of the pseudo-terminal
    int cols, rows;
    
-   // is terminal hosted in a modal dialog? (false means modeless, e.g. a tab)
-   bool isModalDialog;
-   
    // terminal handle (empty string if starting a new terminal)
    std::string termHandle;
    
@@ -892,7 +889,6 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                                   &term,
                                   &cols,
                                   &rows,
-                                  &isModalDialog,
                                   &termHandle,
                                   &termCaption,
                                   &termTitle,
@@ -969,8 +965,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    boost::shared_ptr<ConsoleProcessInfo> ptrProcInfo =
          boost::make_shared<ConsoleProcessInfo>(
             termCaption, termTitle, termHandle, termSequence, allowRestart,
-            isModalDialog, InteractionAlways,
-            console_process::kDefaultTerminalMaxOutputLines);
+            InteractionAlways, console_process::kDefaultTerminalMaxOutputLines);
 
    // run process
    boost::shared_ptr<ConsoleProcess> ptrProc =

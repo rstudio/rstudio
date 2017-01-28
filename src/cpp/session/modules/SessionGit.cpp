@@ -1,7 +1,7 @@
 /*
  * SessionGit.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -297,7 +297,6 @@ protected:
 
    core::Error createConsoleProc(const ShellArgs& args,
                                  const std::string& caption,
-                                 bool dialog,
                                  boost::shared_ptr<ConsoleProcess>* ppCP,
                                  const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
    {
@@ -315,7 +314,7 @@ protected:
       boost::shared_ptr<ConsoleProcessInfo> pCPI =
             boost::make_shared<ConsoleProcessInfo>(
                caption, "" /*title*/, "" /*handle*/, kNoTerminal,
-               false /*allowRestart*/, dialog, console_process::InteractionNever);
+               false /*allowRestart*/, console_process::InteractionNever);
 
 #ifdef _WIN32
       *ppCP = ConsoleProcess::create(gitBin(), args.args(), options, pCPI);
@@ -616,7 +615,6 @@ public:
       
       return createConsoleProc(args,
                                "Git Checkout " + id,
-                               true,
                                ppCP);
    }
 
@@ -696,7 +694,6 @@ public:
 
       return createConsoleProc(args,
                                "Git Commit",
-                               true,
                                ppCP);
    }
 
@@ -710,7 +707,6 @@ public:
       return
             createConsoleProc(ShellArgs() << "clone" << "--progress" << url << dirName,
                               "Clone Repository",
-                              true,
                               ppCP,
                               boost::optional<FilePath>(parentPath));
    }
@@ -785,13 +781,13 @@ public:
          args << remote << merge;
       }
 
-      return createConsoleProc(args, "Git Push", true, ppCP);
+      return createConsoleProc(args, "Git Push", ppCP);
    }
 
    core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       return createConsoleProc(ShellArgs() << "pull",
-                               "Git Pull", true, ppCP);
+                               "Git Pull", ppCP);
    }
 
    core::Error doDiffFile(const FilePath& filePath,

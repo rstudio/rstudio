@@ -33,10 +33,8 @@ const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 
 ConsoleProcessInfo::ConsoleProcessInfo()
    : terminalSequence_(kNoTerminal), allowRestart_(false),
-     dialog_(false), interactionMode_(InteractionNever),
-     maxOutputLines_(kDefaultMaxOutputLines),
-     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
-     started_(true), childProcs_(true)
+     interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
+     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -49,21 +47,19 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& handle,
          const int terminalSequence,
          bool allowRestart,
-         bool dialog,
          InteractionMode mode,
          int maxOutputLines)
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
-     dialog_(dialog), interactionMode_(mode), maxOutputLines_(maxOutputLines),
-     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE),
-     started_(false), childProcs_(true)
+     interactionMode_(mode), maxOutputLines_(maxOutputLines),
+     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true)
 {
 }
 
 void ConsoleProcessInfo::ensureHandle()
 {
    if (handle_.empty())
-      handle_ = core::system::generateUuid(false);
+      handle_ = core::system::generateShortenedUuid();
 }
 
 void ConsoleProcessInfo::setExitCode(int exitCode)
@@ -94,18 +90,11 @@ std::string ConsoleProcessInfo::bufferedOutput() const
    return result;
 }
 
-void ConsoleProcessInfo::onSuspend()
-{
-   if (started_ && allowRestart_)
-      started_ = false;
-}
-
 core::json::Object ConsoleProcessInfo::toJson() const
 {
    json::Object result;
    result["handle"] = handle_;
    result["caption"] = caption_;
-   result["dialog"] = dialog_;
    result["show_on_output"] = showOnOutput_;
    result["interaction_mode"] = static_cast<int>(interactionMode_);
    result["max_output_lines"] = maxOutputLines_;
@@ -118,7 +107,6 @@ core::json::Object ConsoleProcessInfo::toJson() const
    // newly added in v1.1
    result["terminal_sequence"] = terminalSequence_;
    result["allow_restart"] = allowRestart_;
-   result["started"] = started_;
    result["title"] = title_;
    result["childProcs"] = childProcs_;
 
@@ -130,7 +118,6 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    boost::shared_ptr<ConsoleProcessInfo> pProc(new ConsoleProcessInfo());
    pProc->handle_ = obj["handle"].get_str();
    pProc->caption_ = obj["caption"].get_str();
-   pProc->dialog_ = obj["dialog"].get_bool();
 
    json::Value showOnOutput = obj["show_on_output"];
    if (!showOnOutput.is_null())
@@ -159,11 +146,8 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    else
       pProc->exitCode_.reset(exitCode.get_int());
 
-   // Newly added in v1.1; 1.1 is reading/writing this to a different place
-   // than pre 1.1, so don't worry about mismatched json.
    pProc->terminalSequence_ = obj["terminal_sequence"].get_int();
    pProc->allowRestart_ = obj["allow_restart"].get_bool();
-   pProc->started_ = obj["started"].get_bool();
    pProc->title_ = obj["title"].get_str();
    pProc->childProcs_ = obj["childProcs"].get_bool();
 

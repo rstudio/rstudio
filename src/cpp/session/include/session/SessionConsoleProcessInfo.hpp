@@ -58,7 +58,6 @@ public:
          const std::string& handle,
          const int terminalSequence,
          bool allowRestart,
-         bool dialog,
          InteractionMode mode,
          int maxOutputLines = kDefaultMaxOutputLines);
 
@@ -86,11 +85,6 @@ public:
    void setAllowRestart(bool allowRestart) { allowRestart_ = allowRestart; }
    bool getAllowRestart() const { return allowRestart_; }
 
-   // Whether process is being associate with a dialog
-   // TODO (gary) review if we still need this
-   void setDialog(bool dialog) { dialog_ = dialog; }
-   bool getDialog() const { return dialog_; }
-
    void setInteractionMode(InteractionMode mode) { interactionMode_ = mode; }
    InteractionMode getInteractionMode() const { return interactionMode_; }
 
@@ -110,10 +104,6 @@ public:
    void setExitCode(int exitCode);
    boost::optional<int> getExitCode() const { return exitCode_; }
 
-   // Whether the process has been successfully started
-   void setIsStarted(bool started) { started_ = started; }
-   bool isStarted() const { return started_; }
-
    // Does this process have child processes?
    void setHasChildProcs(bool hasChildProcs) { childProcs_ = hasChildProcs; }
    bool getHasChildProcs() const { return childProcs_; }
@@ -129,13 +119,11 @@ private:
    std::string handle_;
    int terminalSequence_;
    bool allowRestart_;
-   bool dialog_;
    InteractionMode interactionMode_;
    int maxOutputLines_;
    bool showOnOutput_;
    boost::circular_buffer<char> outputBuffer_;
    boost::optional<int> exitCode_;
-   bool started_;
    bool childProcs_;
 };
 

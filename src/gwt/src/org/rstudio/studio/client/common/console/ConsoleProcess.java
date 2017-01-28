@@ -89,7 +89,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                            public void onResponseReceived(
                                  final ConsoleProcess cproc)
                            {
-                              assert(proc.isDialog());
                               // first determine whether to create and/or
                               // show the dialog immediately
                               boolean createDialog = false;
