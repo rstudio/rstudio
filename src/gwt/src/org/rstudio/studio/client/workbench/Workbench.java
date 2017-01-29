@@ -378,7 +378,6 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
-      // TODO (gary) this goes away once terminal is turned on for Windows
       server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
       {
          @Override

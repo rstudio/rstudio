@@ -720,29 +720,24 @@ public class Application implements ApplicationEventHandlers
 
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
-      
+
+      if (!Desktop.isDesktop())
+      {
+         // Shell command only works on desktop IDEs
+         commands_.showShellDialog().remove();
+      }
+
       // TODO (gary) temporary windows-only logic for Shell/Terminal; remove
       // once terminal is ready on all platforms
-      if (BrowseCap.isWindowsDesktop())
+      if (BrowseCap.isWindowsDesktop() && !uiPrefs_.get().enableXTerm().getValue())
       {
-         if (!uiPrefs_.get().enableXTerm().getValue())
-         {
-            commands_.newTerminal().remove();
-            commands_.activateTerminal().remove();
-         }
-         else
-         {
-            commands_.showShellDialog().remove();
-         }
+         removeTerminalCommands();
       }
-      else
+
+      if (!sessionInfo.getAllowShell())
       {
          commands_.showShellDialog().remove();
-         if (!sessionInfo.getAllowShell())
-         {
-            commands_.newTerminal().remove();
-            commands_.activateTerminal().remove();
-         }
+         removeTerminalCommands();
       }
 
       if (!sessionInfo.getAllowPackageInstallation())
@@ -971,6 +966,17 @@ public class Application implements ApplicationEventHandlers
       navigateWindowTo("auth-sign-in");
    }
    
+   private void removeTerminalCommands()
+   {
+      commands_.newTerminal().remove();
+      commands_.activateTerminal().remove();
+      commands_.renameTerminal().remove();
+      commands_.closeTerminal().remove();
+      commands_.clearTerminalScrollbackBuffer().remove();
+      commands_.previousTerminal().remove();
+      commands_.nextTerminal().remove();
+   }
+
    private final ApplicationView view_ ;
    private final GlobalDisplay globalDisplay_ ;
    private final EventBus events_;
