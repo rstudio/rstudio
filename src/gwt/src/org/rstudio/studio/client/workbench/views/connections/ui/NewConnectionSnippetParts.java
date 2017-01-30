@@ -16,10 +16,14 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 public class NewConnectionSnippetParts {
-   public NewConnectionSnippetParts(int order, String key, String value) {
+   public NewConnectionSnippetParts(int order,
+                                    String key,
+                                    String value,
+                                    String connStringField) {
       order_ = order;
       key_ = key;
       value_ = value;
+      connStringField_ = connStringField;
    }
 
    public int getOrder() {
@@ -33,8 +37,13 @@ public class NewConnectionSnippetParts {
    public String getValue() {
       return value_;
    }
+   
+   public String getConnStringField() {
+      return connStringField_;
+   }
 
    private int order_;
    private String key_;
    private String value_;
+   private String connStringField_;
 }

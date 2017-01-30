@@ -95,7 +95,7 @@ public class NewConnectionSnippetHost extends Composite
 
    private ArrayList<NewConnectionSnippetParts> parseSnippet(String input) {
       ArrayList<NewConnectionSnippetParts> parts = new ArrayList<NewConnectionSnippetParts>();
-      String pattern = "\\$\\{([0-9]+):([^=}]+)(=([^}]+))?\\}";
+      String pattern = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]+))?(:([^}]+))?\\}";
 
       RegExp regExp = RegExp.compile(pattern, "g");
 
@@ -109,8 +109,9 @@ public class NewConnectionSnippetHost extends Composite
 
             String key = matcher.getGroup(2);
             String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
+            String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : "";
 
-            parts.add(new NewConnectionSnippetParts(order, key, value));
+            parts.add(new NewConnectionSnippetParts(order, key, value, connStringField));
          }
       }
 
@@ -266,7 +267,7 @@ public class NewConnectionSnippetHost extends Composite
    {
       String input = info_.getSnippet();
       
-      String pattern = "\\$\\{([0-9]+):([^=}]+)(=([^}]+))?\\}";
+      String pattern = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]+))?(:([^}]+))?\\}";
       RegExp regExp = RegExp.compile(pattern, "g");
       
       StringBuilder builder = new StringBuilder();     
@@ -276,6 +277,7 @@ public class NewConnectionSnippetHost extends Composite
          if (matcher.getGroupCount() >= 2) {
             String key = matcher.getGroup(2);
             String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
+            String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : "";
 
             builder.append(input.substring(inputIndex, matcher.getIndex()));
             
@@ -284,7 +286,16 @@ public class NewConnectionSnippetHost extends Composite
             }
             
             if (value != null) {
+               if (connStringField != "") {
+                  builder.append(connStringField);
+                  builder.append("=");
+               }
+               
                builder.append(value);
+               
+               if (connStringField != "") {
+                  builder.append(";");
+               }
             }
             
             inputIndex = matcher.getIndex() + matcher.getGroup(0).length();
