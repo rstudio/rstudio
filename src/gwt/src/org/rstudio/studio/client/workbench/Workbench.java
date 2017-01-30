@@ -67,6 +67,7 @@ import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -378,17 +379,23 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onShowShellDialog()
    {
-      // TODO (gary) this goes away once terminal is turned on for Windows
-      server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
+      if (Desktop.isDesktop())
       {
-         @Override
-         public void onResponseReceived(TerminalOptions options)
+         server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
          {
-            Desktop.getFrame().openTerminal(options.getTerminalPath(),
-                  options.getWorkingDirectory(),
-                  options.getExtraPathEntries());
-         }
-      });
+            @Override
+            public void onResponseReceived(TerminalOptions options)
+            {
+               Desktop.getFrame().openTerminal(options.getTerminalPath(),
+                     options.getWorkingDirectory(),
+                     options.getExtraPathEntries());
+            }
+         });
+      }
+      else
+      {
+         onNewTerminal();
+      }
    }
    
    @Handler

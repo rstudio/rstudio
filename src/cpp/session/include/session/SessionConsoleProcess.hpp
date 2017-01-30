@@ -114,7 +114,7 @@ public:
    void interrupt();
    void resize(int cols, int rows);
    void onSuspend();
-   bool isStarted() { return procInfo_->isStarted(); }
+   bool isStarted() { return started_; }
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    void deleteLogFile() const;
@@ -169,6 +169,9 @@ private:
    // regex for prompt detection
    boost::regex controlCharsPattern_;
    boost::regex promptPattern_;
+
+   // is the underlying process started?
+   bool started_;
 };
 
 

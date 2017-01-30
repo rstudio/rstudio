@@ -1,7 +1,7 @@
 /*
  * ConsoleProcessInfo.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,10 +33,6 @@ public class ConsoleProcessInfo extends JavaScriptObject
       return this.caption;
    }-*/;
 
-   public final native boolean isDialog() /*-{
-      return this.dialog;
-   }-*/;
-   
    public final native boolean getShowOnOutput() /*-{
       return this.show_on_output;
    }-*/;
@@ -65,10 +61,6 @@ public class ConsoleProcessInfo extends JavaScriptObject
 
    public final native boolean getAllowRestart() /*-{
       return this.allow_restart;
-   }-*/;
-
-   public final native boolean getStarted() /*-{
-      return this.started;
    }-*/;
 
    public final native String getTitle() /*-{

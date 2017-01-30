@@ -1,7 +1,7 @@
 /*
  * SessionDependencies.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -405,7 +405,6 @@ Error installDependencies(const json::JsonRpcRequest& request,
             "" /*handle*/,
             console_process::kNoTerminal,
             false /*allowRestart*/,
-            true /*dialog*/,
             console_process::InteractionNever);
 
    // create and execute console process
