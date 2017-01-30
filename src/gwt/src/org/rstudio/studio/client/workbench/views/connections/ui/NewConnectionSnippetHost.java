@@ -108,8 +108,11 @@ public class NewConnectionSnippetHost extends Composite
             }
 
             String key = matcher.getGroup(2);
-            String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
-            String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : "";
+            String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : null;
+            String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : null;
+            
+            value = value.replaceAll("\\$colon\\$", ":");
+            value = value.replaceAll("\\$equal\\$", "=");
 
             parts.add(new NewConnectionSnippetParts(order, key, value, connStringField));
          }
@@ -276,8 +279,11 @@ public class NewConnectionSnippetHost extends Composite
       for (MatchResult matcher = regExp.exec(input); matcher != null; matcher = regExp.exec(input)) {
          if (matcher.getGroupCount() >= 2) {
             String key = matcher.getGroup(2);
-            String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : "";
-            String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : "";
+            String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : null;
+            String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : null;
+            
+            value = value.replaceAll("\\$colon\\$", ":");
+            value = value.replaceAll("\\$equal\\$", "=");
 
             builder.append(input.substring(inputIndex, matcher.getIndex()));
             
@@ -286,14 +292,14 @@ public class NewConnectionSnippetHost extends Composite
             }
             
             if (value != null) {
-               if (connStringField != "") {
+               if (connStringField != null) {
                   builder.append(connStringField);
                   builder.append("=");
                }
                
                builder.append(value);
                
-               if (connStringField != "") {
+               if (connStringField != null) {
                   builder.append(";");
                }
             }
