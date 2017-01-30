@@ -111,8 +111,10 @@ public class NewConnectionSnippetHost extends Composite
             String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : null;
             String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : null;
             
-            value = value.replaceAll("\\$colon\\$", ":");
-            value = value.replaceAll("\\$equal\\$", "=");
+            if (value != null) {
+               value = value.replaceAll("\\$colon\\$", ":");
+               value = value.replaceAll("\\$equal\\$", "=");
+            }
 
             parts.add(new NewConnectionSnippetParts(order, key, value, connStringField));
          }
@@ -282,8 +284,10 @@ public class NewConnectionSnippetHost extends Composite
             String value = matcher.getGroupCount() >= 4 ? matcher.getGroup(4) : null;
             String connStringField = matcher.getGroupCount() >= 6 ? matcher.getGroup(6) : null;
             
-            value = value.replaceAll("\\$colon\\$", ":");
-            value = value.replaceAll("\\$equal\\$", "=");
+            if (value != null) {
+               value = value.replaceAll("\\$colon\\$", ":");
+               value = value.replaceAll("\\$equal\\$", "=");
+            }
 
             builder.append(input.substring(inputIndex, matcher.getIndex()));
             
