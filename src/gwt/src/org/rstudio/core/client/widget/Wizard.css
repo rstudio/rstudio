@@ -27,6 +27,9 @@
    height: 244px;
    margin-left: -10px;
    margin-right: -13px;
+
+   border-top: solid 1px #dadadb;
+   border-bottom: solid 1px #dadadb;
 }
 
 .wizardPageSelector {
@@ -78,10 +81,6 @@
    margin-top: 10px;
    margin-left: 8px;
    white-space: nowrap;
-}
-
-@sprite .wizardPageBackground {
-   gwt-image: 'wizardPageBackground';
 }
 
 .helpLink {

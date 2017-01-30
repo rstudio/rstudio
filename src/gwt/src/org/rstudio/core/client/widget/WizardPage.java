@@ -85,7 +85,6 @@ public abstract class WizardPage<I,T> extends Composite
          
          
          initWidget(layoutPanel);
-         addStyleName(styles.wizardPageBackground());  
       }
    }
    
