@@ -721,12 +721,6 @@ public class Application implements ApplicationEventHandlers
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
 
-      if (!Desktop.isDesktop())
-      {
-         // Shell command only works on desktop IDEs
-         commands_.showShellDialog().remove();
-      }
-
       // TODO (gary) temporary windows-only logic for Shell/Terminal; remove
       // once terminal is ready on all platforms
       if (BrowseCap.isWindowsDesktop() && !uiPrefs_.get().enableXTerm().getValue())

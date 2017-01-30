@@ -59,7 +59,6 @@ public class GitPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
-      moreMenu.addItem(commands_.newTerminal().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar();
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
