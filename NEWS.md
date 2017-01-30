@@ -16,8 +16,12 @@
 ### Miscellaneous
 
 * Added support for custom, user-provided project templates
-* macOS: fixed 'crash on wake' issue with late-2016 Macbooks
 * Implement support for changing editor tabs with the mouse wheel
 * Add option to knit in current working directory or project directory
 * 'Insert assignment operator' shortcut now works on Firefox
+
+### Bug Fixes
+
+* Fixed an issue where dragging tabs out multiple times could revert contents to older version
+* macOS: fixed 'crash on wake' issue with late-2016 Macbooks
 
