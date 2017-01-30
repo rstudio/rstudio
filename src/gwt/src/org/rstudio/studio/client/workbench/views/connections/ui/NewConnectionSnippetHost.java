@@ -20,12 +20,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
@@ -43,10 +42,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
-import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
@@ -129,11 +126,13 @@ public class NewConnectionSnippetHost extends Composite
       return parts;
    }
    
+   private static int maxRows_ = 4;
+   
    private Grid createParameterizedUI(final NewConnectionInfo info)
    {
       final ArrayList<NewConnectionSnippetParts> snippetParts = parseSnippet(info.getSnippet());
       int visibleRows = snippetParts.size();
-      int visibleParams = Math.min(visibleRows, 4);
+      int visibleParams = Math.min(visibleRows, maxRows_);
       
       // If we have a field that shares the first row, usually port:
       boolean hasSecondaryHeaderField = false;
@@ -143,22 +142,18 @@ public class NewConnectionSnippetHost extends Composite
          hasSecondaryHeaderField = true;
       }
 
-      visibleRows = Math.min(visibleRows, 4);
-
-      final ArrayList<NewConnectionSnippetParts> primarySnippetParts = 
-            new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(0, visibleParams));
+      visibleRows = Math.min(visibleRows, maxRows_);
 
       final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
             new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
 
-      final Grid connGrid = new Grid(visibleRows, 5);
+      final Grid connGrid = new Grid(visibleRows + 1, 4);
       connGrid.addStyleName(RES.styles().grid());
 
       connGrid.getCellFormatter().setWidth(0, 0, "150px");
       connGrid.getCellFormatter().setWidth(0, 1, "180px");
       connGrid.getCellFormatter().setWidth(0, 2, "60px");
-      connGrid.getCellFormatter().setWidth(0, 3, "44px");
-      connGrid.getCellFormatter().setWidth(0, 4, "30px");
+      connGrid.getCellFormatter().setWidth(0, 3, "74px");
 
       for (int idxParams = 0, idxRow = 0; idxRow < visibleRows; idxParams++, idxRow++) {
          connGrid.getRowFormatter().setStyleName(idxRow, RES.styles().gridRow());
@@ -170,13 +165,9 @@ public class NewConnectionSnippetHost extends Composite
          connGrid.getRowFormatter().setVerticalAlign(idxRow, HasVerticalAlignment.ALIGN_TOP);
          
          String textboxStyle = RES.styles().textbox();
-         boolean showConfigButton = secondarySnippetParts.size() > 0 && idxRow == visibleRows - 1;
-         
+
          if (idxRow == 0 && hasSecondaryHeaderField) {
             textboxStyle = RES.styles().firstTextbox();
-         } else if (showConfigButton) {
-            connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "3");
-            textboxStyle = RES.styles().buttonTextbox();
          } else {
             connGrid.getCellFormatter().getElement(idxRow, 1).setAttribute("colspan", "4");
          }
@@ -241,36 +232,31 @@ public class NewConnectionSnippetHost extends Composite
                }
             });
          }
+      }
 
-         if (showConfigButton) {
-            PushButton pushButton = new PushButton(
-               new Image(newConnectionSnippetHostResources_.configImage()),
-               new ClickHandler()
-               {
-                  @Override
-                  public void onClick(ClickEvent arg0)
-                  {
-                     new NewConnectionSnippetDialog(
-                        new OperationWithInput<HashMap<String, String>>() {
-                           @Override
-                           public void execute(final HashMap<String, String> result)
-                           {
-                              for(String key : result.keySet()) {
-                                 partsKeyValues_.put(key, result.get(key));
-                              }
-                              updateCodePanel();
-                           }
-                        },
-                        secondarySnippetParts,
-                        info
-                     ).showModal();
-                  }
-               });
-            
-            pushButton.addStyleName(RES.styles().settingsButton());
-            pushButton.setWidth("20px");
-            connGrid.setWidget(idxRow, 2, pushButton);
-         }
+      if (true) {
+         ThemedButton pushButton = new ThemedButton("Advanced...", new ClickHandler() {
+            public void onClick(ClickEvent event) {
+               new NewConnectionSnippetDialog(
+                  new OperationWithInput<HashMap<String, String>>() {
+                     @Override
+                     public void execute(final HashMap<String, String> result)
+                     {
+                        for(String key : result.keySet()) {
+                           partsKeyValues_.put(key, result.get(key));
+                        }
+                        updateCodePanel();
+                     }
+                  },
+                  secondarySnippetParts,
+                  info
+               ).showModal();
+            }
+         });
+
+         connGrid.getRowFormatter().setStyleName(visibleRows, RES.styles().lastRow());
+         connGrid.getCellFormatter().getElement(visibleRows, 1).setAttribute("colspan", "4");
+         connGrid.setWidget(visibleRows, 1, pushButton);
       }
 
       return connGrid;
@@ -364,6 +350,8 @@ public class NewConnectionSnippetHost extends Composite
       String buttonTextbox();
 
       String settingsButton();
+      
+      String lastRow();
    }
 
    public interface Resources extends ClientBundle

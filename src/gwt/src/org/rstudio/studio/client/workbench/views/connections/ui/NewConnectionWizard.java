@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
@@ -26,6 +28,9 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 
 public class NewConnectionWizard extends Wizard<NewConnectionContext, ConnectionOptions>
@@ -66,10 +71,42 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    {
       updateHelpLink(null);
    }
+
+   @Override
+   protected ArrayList<String> getWizardBodyStyles()
+   {
+      ArrayList<String> classes = new ArrayList<String>();
+      classes.add(RES.styles().wizardBodyPanel());
+      return classes;
+   }
+
+   @Override
+   protected String getMainWidgetStyle()
+   {
+      return RES.styles().mainWidget();
+   }
    
    private static WizardPage<NewConnectionContext, ConnectionOptions>
       createFirstPage(NewConnectionContext input)
    {
       return new NewConnectionNavigationPage("New Connection", "OK", null, input);
+   }
+
+   public interface Styles extends CssResource
+   {
+      String mainWidget();
+      String wizardBodyPanel();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("NewConnectionWizard.css")
+      Styles styles();
+   }
+   
+   public static Resources RES = GWT.create(Resources.class);
+   public static void ensureStylesInjected() 
+   {
+      RES.styles().ensureInjected();
    }
 }
