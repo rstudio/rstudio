@@ -225,19 +225,31 @@ options(connectionObserver = list(
       )
    })
 
+   connectionList <- c(connectionList, lapply(names(snippets), function(snippetName) {
+      snippet <- snippets[[snippetName]]
+
+      list(
+         package = .rs.scalar(NULL),
+         name = .rs.scalar(snippetName),
+         type = .rs.scalar("Snippet"),
+         snippet = .rs.scalar(snippet),
+         help = .rs.scalar(NULL)
+      )
+   }))
+
    if (.rs.isPackageInstalled("odbc") &&
        exists("list_drivers", envir = asNamespace("odbc"))) {
       listDrivers <- get("list_drivers", envir = asNamespace("odbc"))
-      connectionList <- c(connectionList, lapply(listDrivers()$name, function(driver) {
-         snippet <- snippets[[driver]]
 
-         if (is.null(snippet)) {
-            snippet <- paste(
-               "library(DBI)\n",
-               "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
-               "Driver={", driver, "};${1:Parameters}\")",
-               sep = "")
-         }
+      driversNoSnippet <- Filter(function(e) { !(e %in% names(snippets)) }, listDrivers()$name)
+
+
+      connectionList <- c(connectionList, lapply(driversNoSnippet, function(driver) {
+         snippet <- paste(
+            "library(DBI)\n",
+            "con <- dbConnect(odbc::odbc(), .connection_string = \"", 
+            "Driver={", driver, "};${1:Parameters}\")",
+            sep = "")
 
          list(
             package = .rs.scalar(NULL),
