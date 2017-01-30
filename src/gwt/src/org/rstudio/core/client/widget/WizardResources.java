@@ -40,6 +40,7 @@ public interface WizardResources extends ClientBundle
       String wizardPageSelectorItemLeftIcon();
       String wizardPageSelectorItemRightArrow();
       String wizardPageSelectorItemSize();
+      String wizardPageBackground();
       String wizardBackButton();
    }
    
@@ -58,6 +59,9 @@ public interface WizardResources extends ClientBundle
    
    @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
    ImageResource wizardPageSelectorBackgroundLast();
+   
+   @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+   ImageResource wizardPageBackground();
    
    static WizardResources INSTANCE = 
                         (WizardResources)GWT.create(WizardResources.class);
