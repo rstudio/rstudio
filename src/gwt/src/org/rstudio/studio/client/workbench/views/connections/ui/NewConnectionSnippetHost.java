@@ -148,12 +148,13 @@ public class NewConnectionSnippetHost extends Composite
          hasSecondaryHeaderField = true;
       }
 
+      boolean showAdvancedButton = visibleRows > maxRows_;
       visibleRows = Math.min(visibleRows, maxRows_);
 
       final ArrayList<NewConnectionSnippetParts> secondarySnippetParts = 
             new ArrayList<NewConnectionSnippetParts>(snippetParts.subList(visibleParams, snippetParts.size()));
 
-      final Grid connGrid = new Grid(visibleRows + 1, 4);
+      final Grid connGrid = new Grid(visibleRows + (showAdvancedButton ? 1 : 0), 4);
       connGrid.addStyleName(RES.styles().grid());
 
       connGrid.getCellFormatter().setWidth(0, 0, "150px");
@@ -240,7 +241,7 @@ public class NewConnectionSnippetHost extends Composite
          }
       }
 
-      if (true) {
+      if (showAdvancedButton) {
          ThemedButton pushButton = new ThemedButton("Advanced...", new ClickHandler() {
             public void onClick(ClickEvent event) {
                new NewConnectionSnippetDialog(
