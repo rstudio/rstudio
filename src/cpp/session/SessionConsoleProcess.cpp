@@ -15,19 +15,9 @@
 
 #include <session/SessionConsoleProcess.hpp>
 
-#include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/json/JsonRpc.hpp>
-#include <core/system/Process.hpp>
-#include <core/system/ShellUtils.hpp>
 #include <core/Exec.hpp>
-#include <core/SafeConvert.hpp>
-#include <core/Settings.hpp>
-#include <core/FileSerializer.hpp>
-
-#include <core/system/Environment.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -36,12 +26,6 @@
 #ifdef RSTUDIO_SERVER
 #include <core/system/Crypto.hpp>
 #endif
-
-// Change this if you need to rev the persisted ConsoleProcessInfo object in
-// an incompatible way. History of previously opened tabs will be lost, so
-// mainly a mechanism during pre-release, but could implement an auto-upgrade
-// if it becomes necessary after release.
-#define kConsoleIndex "INDEX001"
 
 using namespace rstudio::core;
 
@@ -52,8 +36,6 @@ namespace console_process {
 namespace {
    typedef std::map<std::string, boost::shared_ptr<ConsoleProcess> > ProcTable;
    ProcTable s_procs;
-   FilePath s_consoleProcPath;
-   FilePath s_consoleProcIndexPath;
 } // anonymous namespace
 
 void saveConsoleProcesses();
@@ -237,7 +219,7 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
             LOG_ERROR(error);
 
          if (input.echoInput)
-            appendToOutputBuffer("^C");
+            procInfo_->appendToOutputBuffer("^C");
       }
 
       // text input
@@ -254,9 +236,9 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
          if (!options_.smartTerminal) // smart terminal does echo via pty
          {
             if (input.echoInput)
-               appendToOutputBuffer(inputText);
+               procInfo_->appendToOutputBuffer(inputText);
             else
-               appendToOutputBuffer("\n");
+               procInfo_->appendToOutputBuffer("\n");
          }
       }
    }
@@ -272,90 +254,20 @@ bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
    return true;
 }
 
-Error ConsoleProcess::getLogFilePath(FilePath* pFile) const
-{
-   Error error = s_consoleProcPath.ensureDirectory();
-   if (error)
-   {
-      return error;
-   }
-
-   *pFile = s_consoleProcPath.complete(procInfo_->getHandle());
-   return Success();
-}
-
 void ConsoleProcess::deleteLogFile() const
 {
-   FilePath log;
-   Error error = getLogFilePath(&log);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   error = log.removeIfExists();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+   procInfo_->deleteLogFile();
 }
 
 std::string ConsoleProcess::getSavedBuffer() const
 {
-   std::string content;
-   FilePath log;
-   Error error = getLogFilePath(&log);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return content;
-   }
-
-   if (!log.exists())
-   {
-      return "";
-   }
-
-   error = core::readStringFromFile(log, &content);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return content;
-   }
-   return content;
-}
-
-void ConsoleProcess::appendToOutputBuffer(const std::string &str)
-{
-   // For modal console procs, store terminal output directly in the
-   // ConsoleProcInfo INDEX
-   if (procInfo_->getTerminalSequence() == kNoTerminal)
-   {
-      procInfo_->appendToOutputBuffer(str);
-      return;
-   }
-
-   // For terminal tabs, store in a separate file.
-   FilePath log;
-   Error error = getLogFilePath(&log);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
-   error = rstudio::core::appendToFile(log, str);
-   if (error)
-   {
-      LOG_ERROR(error);
-   }
+   return procInfo_->getSavedBuffer();
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
 {
    // copy to output buffer
-   appendToOutputBuffer(output);
+   procInfo_->appendToOutputBuffer(output);
 
    // If there's more output than the client can even show, then
    // truncate it to the amount that the client can show. Too much
@@ -959,43 +871,19 @@ void deserializeConsoleProcs(const std::string& jsonStr)
    }
 }
 
+bool isKnownProcHandle(const std::string& handle)
+{
+   ProcTable::const_iterator pos = s_procs.find(handle);
+   return pos != s_procs.end();
+}
+
 void loadConsoleProcesses()
 {
-   if (!s_consoleProcIndexPath.exists())
+   std::string contents = ConsoleProcessInfo::loadConsoleProcessMetadata();
+   if (contents.empty())
       return;
-
-   std::string contents;
-   Error error = rstudio::core::readStringFromFile(s_consoleProcIndexPath, &contents);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-
    deserializeConsoleProcs(contents);
-
-   // Delete orphaned buffer files
-   std::vector<FilePath> children;
-   error = s_consoleProcPath.children(&children);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   BOOST_FOREACH(const FilePath& child, children)
-   {
-      // Don't erase the INDEXnnn or any subfolders
-      if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
-         continue;
-
-      ProcTable::const_iterator pos = s_procs.find(child.filename());
-      if (pos == s_procs.end())
-      {
-         error = child.remove();
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
+   ConsoleProcessInfo::deleteOrphanedLogs(isKnownProcHandle);
 }
 
 void saveConsoleProcessesAtShutdown(bool terminatedNormally)
@@ -1007,10 +895,7 @@ void saveConsoleProcessesAtShutdown(bool terminatedNormally)
 
 void saveConsoleProcesses()
 {
-   Error error = rstudio::core::writeStringToFile(s_consoleProcIndexPath,
-                                                  serializeConsoleProcs());
-   if (error)
-      LOG_ERROR(error);
+   ConsoleProcessInfo::saveConsoleProcesses(serializeConsoleProcs());
 }
    
 void onSuspend(core::Settings* /*pSettings*/)
@@ -1026,13 +911,6 @@ Error initialize()
 {
    using boost::bind;
    using namespace module_context;
-
-   // storage for session-scoped console/terminal metadata
-   s_consoleProcPath = module_context::scopedScratchPath().complete("console");
-   Error error = s_consoleProcPath.ensureDirectory();
-   if (error)
-      return error;
-   s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
 
    events().onShutdown.connect(saveConsoleProcessesAtShutdown);
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));

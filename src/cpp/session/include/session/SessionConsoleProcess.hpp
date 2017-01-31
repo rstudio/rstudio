@@ -134,13 +134,11 @@ private:
    void onHasSubprocs(bool hasSubProcs);
 
    std::string bufferedOutput() const;
-   void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
    void handleConsolePrompt(core::system::ProcessOperations& ops,
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,
                            const std::string& output);
-   core::Error getLogFilePath(core::FilePath* file) const;
 
 private:
    // Command and options that will be used when start() is called
