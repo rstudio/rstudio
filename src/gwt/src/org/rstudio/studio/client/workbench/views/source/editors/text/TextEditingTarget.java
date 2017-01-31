@@ -3105,6 +3105,28 @@ public class TextEditingTarget implements
          doCommentUncomment("<!--", "-->");
    }
    
+   /**
+    * Push the current contents and state of the text editor into the local
+    * copy of the source database
+    */
+   public void syncLocalSourceDb() 
+   {
+      SourceWindowManager manager =
+            RStudioGinjector.INSTANCE.getSourceWindowManager();
+      JsArray<SourceDocument> docs = manager.getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         if (docs.get(i).getId() == getId())
+         {
+            docs.get(i).getNotebookDoc().setChunkDefs(
+                  docDisplay_.getChunkDefs());
+            docs.get(i).setContents(docDisplay_.getCode());
+            docs.get(i).setDirty(dirtyState_.getValue());
+            break;
+         }
+      }
+   }
+
    @Handler
    void onPopoutDoc()
    {
@@ -3117,23 +3139,9 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               // push the new doc state into the source database that the 
-               // new window will inherit
-               SourceWindowManager manager =
-                     RStudioGinjector.INSTANCE.getSourceWindowManager();
-               JsArray<SourceDocument> docs = manager.getSourceDocs();
-               for (int i = 0; i < docs.length(); i++)
-               {
-                  if (docs.get(i).getId() == getId())
-                  {
-                     docs.get(i).getNotebookDoc().setChunkDefs(
-                           docDisplay_.getChunkDefs());
-                     docs.get(i).setContents(docDisplay_.getCode());
-                     docs.get(i).setDirty(dirtyState_.getValue());
-                     break;
-                  }
-               }
-               
+               // push the new doc state into the local source database
+               syncLocalSourceDb();
+
                // fire popout event (this triggers a close in the current window
                // and the creation of a new window with the doc)
                events_.fireEvent(new PopoutDocEvent(getId(), 

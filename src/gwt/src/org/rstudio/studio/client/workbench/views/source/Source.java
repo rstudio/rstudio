@@ -1966,6 +1966,7 @@ public class Source implements InsertSourceHandler,
                   @Override
                   public void execute()
                   {
+                     textEditor.syncLocalSourceDb();
                      events_.fireEvent(new PopoutDocEvent(event, 
                            textEditor.currentPosition()));
                   }
