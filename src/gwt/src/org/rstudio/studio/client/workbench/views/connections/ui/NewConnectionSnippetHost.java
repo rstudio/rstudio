@@ -180,14 +180,7 @@ public class NewConnectionSnippetHost extends Composite
          
          final TextBoxBase textboxBase;
 
-         if (key.toLowerCase() == "password") {
-            PasswordTextBox password = new PasswordTextBox();
-            password.setText(snippetParts.get(idxParams).getValue());
-            password.addStyleName(textboxStyle);
-            connGrid.setWidget(idxRow, 1, password);
-            textboxBase = password;
-         }
-         else if (key.toLowerCase() == "parameters") {
+         if (key.toLowerCase() == "parameters") {
             TextArea textarea = new TextArea();
             textarea.setVisibleLines(7);
             textarea.addStyleName(RES.styles().textarea());
