@@ -85,8 +85,14 @@ public abstract class WizardPage<I,T> extends Composite
          
          
          initWidget(layoutPanel);
-         addStyleName(styles.wizardPageBackground());  
+         addStyleName(getWizardPageBackgroundStyle());  
       }
+   }
+
+   protected String getWizardPageBackgroundStyle()
+   {
+      WizardResources.Styles styles = WizardResources.INSTANCE.styles();
+      return styles.wizardPageBackground();
    }
    
    public String getTitle()

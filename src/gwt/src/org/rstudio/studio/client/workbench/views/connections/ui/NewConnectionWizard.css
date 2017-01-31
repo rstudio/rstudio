@@ -10,7 +10,8 @@
    height: 274px;
    margin-left: -10px;
    margin-right: -13px;
+}
 
-   border-top: solid 1px #dadadb;
-   border-bottom: solid 1px #dadadb;
+@sprite .newConnectionWizardBackground {
+   gwt-image: 'newConnectionWizardBackground';
 }

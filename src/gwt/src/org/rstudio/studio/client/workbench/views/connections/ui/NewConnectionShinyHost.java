@@ -137,7 +137,7 @@ public class NewConnectionShinyHost extends Composite
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();
-      frame_.setSize("100%", "145px");
+      frame_.setSize("100%", "140px");
 
       container.add(frame_);      
       

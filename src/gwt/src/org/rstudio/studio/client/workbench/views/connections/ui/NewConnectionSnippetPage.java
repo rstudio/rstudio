@@ -87,6 +87,12 @@ public class NewConnectionSnippetPage
    {
       return contents_.collectInput();
    }
+
+   @Override
+   protected String getWizardPageBackgroundStyle()
+   {
+      return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
+   }
    
    private NewConnectionSnippetHost contents_;
    private NewConnectionInfo info_;

@@ -87,6 +87,12 @@ public class NewConnectionShinyPage
    {
       return contents_.collectInput();
    }
+
+   @Override
+   protected String getWizardPageBackgroundStyle()
+   {
+      return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
+   }
    
    private NewConnectionShinyHost contents_;
    private NewConnectionInfo info_;
