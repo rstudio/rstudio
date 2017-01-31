@@ -823,24 +823,29 @@
                                                  excludeBaseClasses = FALSE,
                                                  envir = parent.frame())
 {
-   classes <- class(object)
+   classAndSuper <- function(cl)
+   {
+      # selectSuperClasses throws and error if the class is unknown
+      super <- tryCatch(methods::selectSuperClasses(cl),
+                        error = function(e) NULL)
+      c(cl, super)
+   }
+   
+   # interleave super classes after the corresponding original classes
+   classes <- unlist(lapply(class(object), classAndSuper), recursive = TRUE)
+   # either remove or add an explicit (=non-mode) list/environment class
+   classes <-
+      if (excludeBaseClasses)
+         setdiff(classes, c("list", "environment"))
+      else
+         c(classes, mode(object))
+   
    for (class in classes)
    {
-      if (excludeBaseClasses && class %in% c("list", "environment"))
-         next
-      
       method <- utils::getS3method(".DollarNames", class, optional = TRUE)
       if (!is.null(method))
          return(method)
    }
-   
-   ## S4 objects might still 'be' data.frames or lists or environments under
-   ## the hood; in such a case their 'formal' class can 'mask' the underlying
-   ## S3 class / type, so explicitly check that as well.
-   if (is.list(object) && !excludeBaseClasses)
-      return(utils:::.DollarNames.list)
-   else if (is.environment(object) && !excludeBaseClasses)
-      return(utils:::.DollarNames.environment)
    
    NULL
 })
