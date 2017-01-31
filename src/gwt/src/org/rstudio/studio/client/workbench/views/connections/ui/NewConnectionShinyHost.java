@@ -16,6 +16,9 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
@@ -26,6 +29,7 @@ import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -80,14 +84,18 @@ public class NewConnectionShinyHost extends Composite
    private void terminateShinyApp(final Operation operation)
    {
       if (commands_.interruptR().isEnabled())
-         applicationInterrupt_.interruptRNoDebug(new ApplicationInterrupt.InterruptHandler()
+      {
+         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
          {
             @Override
             public void onInterruptFinished()
             {
                operation.execute();
             }
-         });
+         },
+         Arrays.asList(new Integer(ErrorHandlerType.ERRORS_BREAK)),
+         ErrorHandlerType.ERRORS_MESSAGE);
+      }
    }
 
    public void onDeactivate(Operation operation)

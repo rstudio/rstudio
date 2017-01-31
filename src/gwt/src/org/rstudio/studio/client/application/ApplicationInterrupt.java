@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.application;
 
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -115,16 +117,18 @@ public class ApplicationInterrupt
          }
       }
    }
-   
-   public void interruptRNoDebug(final InterruptHandler handler) {
+
+   public void interruptR(final InterruptHandler handler,
+                          List<Integer> errorHandlerTypes,
+                          int replacedWithHandlerType) {
       final int originalDebugType = errorManager_.getErrorHandlerType();
       
-      if (originalDebugType != ErrorHandlerType.ERRORS_BREAK) {
+      if (!errorHandlerTypes.contains(originalDebugType)) {
          interruptR(handler);
       }
       else {
          errorManager_.setDebugSessionHandlerType(
-            ErrorHandlerType.ERRORS_MESSAGE,
+               replacedWithHandlerType,
             new ServerRequestCallback<Void>()
             {
                @Override
