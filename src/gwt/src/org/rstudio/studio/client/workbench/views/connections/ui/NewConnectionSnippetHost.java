@@ -241,7 +241,7 @@ public class NewConnectionSnippetHost extends Composite
       }
 
       if (showAdvancedButton) {
-         ThemedButton pushButton = new ThemedButton("Advanced...", new ClickHandler() {
+         ThemedButton pushButton = new ThemedButton("Advanced Options...", new ClickHandler() {
             public void onClick(ClickEvent event) {
                new NewConnectionSnippetDialog(
                   new OperationWithInput<HashMap<String, String>>() {

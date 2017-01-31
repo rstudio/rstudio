@@ -54,7 +54,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
       ArrayList<NewConnectionSnippetParts> config,
       NewConnectionInfo newConnectionInfo)
    {
-      super("Configure Connection", operation);
+      super("Advanced Options", operation);
       initialConfig_ = config;
       newConnectionInfo_ = newConnectionInfo;
 
