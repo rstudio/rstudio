@@ -95,9 +95,8 @@ public class NewConnectionSnippetHost extends Composite
 
    private ArrayList<NewConnectionSnippetParts> parseSnippet(String input) {
       ArrayList<NewConnectionSnippetParts> parts = new ArrayList<NewConnectionSnippetParts>();
-      String pattern = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]+))?(:([^}]+))?\\}";
 
-      RegExp regExp = RegExp.compile(pattern, "g");
+      RegExp regExp = RegExp.compile(pattern_, "g");
 
       for (MatchResult matcher = regExp.exec(input); matcher != null; matcher = regExp.exec(input)) {
          if (matcher.getGroupCount() >= 2) {
@@ -125,7 +124,7 @@ public class NewConnectionSnippetHost extends Composite
          @Override
          public int compare(NewConnectionSnippetParts p1, NewConnectionSnippetParts p2)
          {
-            return p1.getOrder() == p2.getOrder() ? 0 : p1.getOrder() < p2.getOrder() ? -1 : 1;
+            return p1.getOrder() - p2.getOrder();
          }
       });
 
@@ -272,9 +271,7 @@ public class NewConnectionSnippetHost extends Composite
    private void updateCodePanel()
    {
       String input = info_.getSnippet();
-      
-      String pattern = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]+))?(:([^}]+))?\\}";
-      RegExp regExp = RegExp.compile(pattern, "g");
+      RegExp regExp = RegExp.compile(pattern_, "g");
       
       StringBuilder builder = new StringBuilder();     
       int inputIndex = 0;
@@ -395,4 +392,6 @@ public class NewConnectionSnippetHost extends Composite
    NewConnectionInfo info_;
    ArrayList<NewConnectionSnippetParts> snippetParts_;
    HashMap<String, String> partsKeyValues_ = new HashMap<String, String>();
+
+   static final String pattern_ = "\\$\\{([0-9]+):([^:=}]+)(=([^:}]+))?(:([^}]+))?\\}";
 }

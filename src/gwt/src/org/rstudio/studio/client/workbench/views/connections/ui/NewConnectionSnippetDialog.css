@@ -1,9 +1,3 @@
-@CHARSET "UTF-8";
-
-@external gwt-Label;
-@external gwt-Image;
-@external macintosh;
-
 .grid {
    margin-bottom: 5px;
    vertical-align: top;

@@ -167,7 +167,7 @@ options(connectionObserver = list(
    if (!is.null(getOption("connections-path")) && !dir.exists(snippetsPath)) {
       warning(
          "Path '", snippetsPath, "' does not exist. ",
-         "Configure the connections-path option appropiately.")
+         "Configure the connections-path option appropriately.")
    }
    
    if (!is.null(snippetsPath)) {

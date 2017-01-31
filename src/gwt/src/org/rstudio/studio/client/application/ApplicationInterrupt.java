@@ -128,7 +128,7 @@ public class ApplicationInterrupt
       }
       else {
          errorManager_.setDebugSessionHandlerType(
-               replacedWithHandlerType,
+            replacedWithHandlerType,
             new ServerRequestCallback<Void>()
             {
                @Override
@@ -145,13 +145,7 @@ public class ApplicationInterrupt
                               @Override
                               public void onResponseReceived(Void v)
                               {
-                                 interruptR(new InterruptHandler() {
-                                    @Override
-                                    public void onInterruptFinished()
-                                    {
-                                       handler.onInterruptFinished();
-                                    }
-                                 });
+                                 handler.onInterruptFinished();
                               }
                             
                               @Override
