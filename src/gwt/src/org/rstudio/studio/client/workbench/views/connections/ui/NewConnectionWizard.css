@@ -1,0 +1,15 @@
+.mainWidget {
+   width: 510px;
+   height: 330px;
+}
+
+.wizardBodyPanel {
+   width: 533px; 
+   height: 274px;
+   margin-left: -10px;
+   margin-right: -13px;
+}
+
+@sprite .newConnectionWizardBackground {
+   gwt-image: 'newConnectionWizardBackground';
+}

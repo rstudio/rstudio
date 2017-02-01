@@ -160,7 +160,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       WizardResources.Styles styles = res.styles();
       
       VerticalPanel mainWidget = new VerticalPanel();
-      mainWidget.addStyleName(styles.mainWidget());
+      mainWidget.addStyleName(getMainWidgetStyle());
       
       headerPanel_ = new LayoutPanel();
       headerPanel_.addStyleName(styles.headerPanel());
@@ -524,6 +524,11 @@ public class Wizard<I,T> extends ModalDialog<T>
    protected T ammendInput(T input)
    {
       return input;
+   }
+
+   protected String getMainWidgetStyle()
+   {
+      return WizardResources.INSTANCE.styles().mainWidget();
    }
     
    protected ArrayList<String> getWizardBodyStyles()

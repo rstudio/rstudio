@@ -15,18 +15,25 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.inject.Inject;
 
 public class NewConnectionWizard extends Wizard<NewConnectionContext, ConnectionOptions>
@@ -67,10 +74,46 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    {
       updateHelpLink(null);
    }
+
+   @Override
+   protected ArrayList<String> getWizardBodyStyles()
+   {
+      ArrayList<String> classes = new ArrayList<String>();
+      classes.add(RES.styles().wizardBodyPanel());
+      return classes;
+   }
+
+   @Override
+   protected String getMainWidgetStyle()
+   {
+      return RES.styles().mainWidget();
+   }
    
    private static WizardPage<NewConnectionContext, ConnectionOptions>
       createFirstPage(NewConnectionContext input)
    {
       return new NewConnectionNavigationPage("New Connection", "OK", null, input);
+   }
+
+   public interface Styles extends CssResource
+   {
+      String mainWidget();
+      String wizardBodyPanel();
+      String newConnectionWizardBackground();
+   }
+
+   public interface Resources extends ClientBundle
+   {
+      @Source("NewConnectionWizard.css")
+      Styles styles();
+
+      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
+      ImageResource newConnectionWizardBackground();
+   }
+   
+   public static Resources RES = GWT.create(Resources.class);
+   public static void ensureStylesInjected() 
+   {
+      RES.styles().ensureInjected();
    }
 }

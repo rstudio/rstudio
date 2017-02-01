@@ -35,4 +35,7 @@ public interface ShinyServerOperations
                String shinyFile,
                String extendedType,
                ServerRequestCallback<ShinyRunCmd> requestCallback);
+
+   void stopShinyApp(
+               ServerRequestCallback<Void> requestCallback);
 }

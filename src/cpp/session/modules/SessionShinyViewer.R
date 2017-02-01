@@ -51,3 +51,7 @@
    list(viewerType = .rs.scalar(.rs.getShinyViewerType()))
 })
 
+.rs.addJsonRpcHandler("stop_shiny_app", function()
+{
+   shiny::stopApp()
+})

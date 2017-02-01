@@ -32,6 +32,8 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.ImageResource.ImageOptions;
+import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -76,6 +78,9 @@ public class NewConnectionNavigationPage
       for(NewConnectionInfo connectionInfo: context.getConnectionsList()) {
          if (connectionInfo.getType() == "Shiny") {
             pages.add(new NewConnectionShinyPage(connectionInfo));
+         }
+         else if (connectionInfo.getType() == "Snippet") {
+            pages.add(new NewConnectionSnippetPage(connectionInfo));
          }
       }
 
@@ -166,7 +171,7 @@ public class NewConnectionNavigationPage
       }
    }
 
-    public interface Styles extends CssResource
+   public interface Styles extends CssResource
    {
    }
    
@@ -174,6 +179,12 @@ public class NewConnectionNavigationPage
    {
       @Source("NewConnectionNavigationPage.css")
       Styles styles();
+   }
+
+   @Override
+   protected String getWizardPageBackgroundStyle()
+   {
+      return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
    }
 
    private static Resources RES = GWT.create(Resources.class);
