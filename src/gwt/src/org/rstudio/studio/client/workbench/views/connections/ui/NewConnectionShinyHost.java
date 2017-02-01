@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
+import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -60,13 +61,15 @@ public class NewConnectionShinyHost extends Composite
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
                            Commands commands,
-                           ApplicationInterrupt applicationInterrupt)
+                           ApplicationInterrupt applicationInterrupt,
+                           ShinyServerOperations shinyServer)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
       commands_ = commands;
       applicationInterrupt_ = applicationInterrupt;
+      shinyServer_ = shinyServer;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -74,8 +77,8 @@ public class NewConnectionShinyHost extends Composite
       events_.addHandler(ShinyFrameNavigatedEvent.TYPE, this);
       events_.addHandler(NewConnectionDialogUpdatedEvent.TYPE, this);
       
-               initialize(operation, info);
-            }
+      initialize(operation, info);
+   }
           
    public void onActivate(ProgressIndicator indicator)
    {
@@ -83,19 +86,18 @@ public class NewConnectionShinyHost extends Composite
 
    private void terminateShinyApp(final Operation operation)
    {
-      if (commands_.interruptR().isEnabled())
+      shinyServer_.stopShinyApp(new ServerRequestCallback<Void>()
       {
-         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
+         public void onResponseReceived(Void v)
          {
-            @Override
-            public void onInterruptFinished()
-            {
-               operation.execute();
-            }
-         },
-         Arrays.asList(new Integer(ErrorHandlerType.ERRORS_BREAK)),
-         ErrorHandlerType.ERRORS_MESSAGE);
-      }
+            operation.execute();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
    }
 
    public void onDeactivate(Operation operation)
@@ -231,4 +233,5 @@ public class NewConnectionShinyHost extends Composite
    private ConnectionsServerOperations server_;
    private Commands commands_;
    private ApplicationInterrupt applicationInterrupt_;
+   private ShinyServerOperations shinyServer_;
 }
