@@ -289,6 +289,7 @@ private:
          
          // pass along R_LIBS
          core::system::Options environment;
+         core::system::environment(&environment);
          std::string rLibs = module_context::libPathsString();
          if (!rLibs.empty())
             core::system::setenv(&environment, "R_LIBS", rLibs);

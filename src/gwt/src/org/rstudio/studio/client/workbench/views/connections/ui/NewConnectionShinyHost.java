@@ -16,6 +16,9 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
@@ -26,22 +29,20 @@ import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
+import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
@@ -56,19 +57,19 @@ public class NewConnectionShinyHost extends Composite
                                                NewConnectionDialogUpdatedEvent.Handler
 {
    @Inject
-   private void initialize(UIPrefs uiPrefs,
-                           EventBus events,
+   private void initialize(EventBus events,
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
                            Commands commands,
-                           ApplicationInterrupt applicationInterrupt)
+                           ApplicationInterrupt applicationInterrupt,
+                           ShinyServerOperations shinyServer)
    {
-      uiPrefs_ = uiPrefs;
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
       commands_ = commands;
       applicationInterrupt_ = applicationInterrupt;
+      shinyServer_ = shinyServer;
    }
 
    public void onBeforeActivate(Operation operation, NewConnectionInfo info)
@@ -78,22 +79,25 @@ public class NewConnectionShinyHost extends Composite
       
       initialize(operation, info);
    }
-   
+          
    public void onActivate(ProgressIndicator indicator)
    {
    }
 
    private void terminateShinyApp(final Operation operation)
    {
-      if (commands_.interruptR().isEnabled())
-         applicationInterrupt_.interruptR(new ApplicationInterrupt.InterruptHandler()
+      shinyServer_.stopShinyApp(new ServerRequestCallback<Void>()
+      {
+         public void onResponseReceived(Void v)
          {
-            @Override
-            public void onInterruptFinished()
-            {
-               operation.execute();
-            }
-         });
+            operation.execute();
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+         }
+      });
    }
 
    public void onDeactivate(Operation operation)
@@ -143,7 +147,7 @@ public class NewConnectionShinyHost extends Composite
       
       // create iframe for miniUI
       frame_ = new RStudioFrame();
-      frame_.setSize("100%", "125px");
+      frame_.setSize("100%", "140px");
 
       container.add(frame_);      
       
@@ -223,11 +227,11 @@ public class NewConnectionShinyHost extends Composite
    
    private ConnectionCodePanel codePanel_;
      
-   private UIPrefs uiPrefs_;
    private EventBus events_;
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;
    private Commands commands_;
    private ApplicationInterrupt applicationInterrupt_;
+   private ShinyServerOperations shinyServer_;
 }

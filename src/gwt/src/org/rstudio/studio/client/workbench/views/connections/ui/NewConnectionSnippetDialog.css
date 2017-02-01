@@ -1,0 +1,27 @@
+.grid {
+   margin-bottom: 5px;
+   vertical-align: top;
+}
+
+.label {
+   min-width: 50px;
+   max-width: 200px;
+   padding-right: 20px;
+   margin-top: 2px;
+
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.textbox {
+   padding-left: 5px;
+   width: 200px;
+   border: solid 1px #999;
+   height: 17px;
+}
+
+.wrapper {
+   max-height: 400px;
+   overflow-y: scroll;
+}

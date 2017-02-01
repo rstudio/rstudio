@@ -1,0 +1,85 @@
+.grid {
+   margin-bottom: 5px;
+   vertical-align: top;
+}
+
+.gridRow {
+   height: 25px;
+}
+
+.parametersPanel {
+   min-height: 145px;
+}
+
+.helpLink {
+   margin-top: 6px;
+}
+
+.codeGrid {
+   margin-top: 9px;
+   margin-bottom: 10px;
+}
+
+.dialogCodePanel {
+   width: 500px !important;
+}
+
+.label {
+   width: 150px;
+   margin-top: 2px;
+
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.textbox {
+   padding-left: 5px;
+   width: 330px;
+   border: solid 1px #999;
+   height: 17px;
+}
+
+.textarea {
+   width: 330px;
+   resize: none;
+}
+
+.firstTextbox {
+   padding-left: 5px;
+   width: 180px;
+}
+
+.secondLabel {
+   width: 60px;
+   text-align: right;
+   margin-top: 2px;
+
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.secondTextbox {
+   padding-left: 5px;
+   width: 74px;
+   border: solid 1px #999;
+   height: 17px;
+}
+
+.buttonTextbox {
+   padding-left: 5px;
+   width: 300px;
+   border: solid 1px #999;
+   height: 17px;
+}
+
+.settingsButton {
+   margin-left: 3px;
+   margin-top: 2px;
+   cursor: pointer;
+}
+
+.lastRow {
+   text-align: right;
+}

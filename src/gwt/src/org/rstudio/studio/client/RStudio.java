@@ -53,7 +53,6 @@ import org.rstudio.studio.client.application.ui.support.SupportPopupMenu;
 import org.rstudio.studio.client.common.StudioResources;
 import org.rstudio.studio.client.common.mirrors.ChooseMirrorDialog;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
-import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerListResources;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
@@ -76,6 +75,9 @@ import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionShinyHost;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetDialog;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionSnippetHost;
+import org.rstudio.studio.client.workbench.views.connections.ui.NewConnectionWizard;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.files.ui.FilesListDataGridResources;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane;
@@ -291,6 +293,9 @@ public class RStudio implements EntryPoint
       CppCompletionResources.INSTANCE.styles().ensureInjected();
       RSConnectDeploy.RESOURCES.style().ensureInjected();
       NewConnectionShinyHost.ensureStylesInjected();
+      NewConnectionSnippetHost.ensureStylesInjected();
+      NewConnectionSnippetDialog.ensureStylesInjected();
+      NewConnectionWizard.ensureStylesInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

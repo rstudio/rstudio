@@ -156,13 +156,13 @@ public class ErrorManager
          }
       });
    }
-   
-   // Private methods ---------------------------------------------------------
-   
-   private int getErrorHandlerType()
+
+   public int getErrorHandlerType()
    {
       return errorManagerState_.getErrorHandlerType();
    }
+   
+   // Private methods ---------------------------------------------------------
 
    private void setErrorManagementTypeCommand(int type)
    {

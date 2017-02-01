@@ -1,7 +1,7 @@
 /*
- * NewConnectionShinyPage.java
+ * NewConnectionSnippetPage.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,10 +25,10 @@ import org.rstudio.studio.client.workbench.views.connections.model.NewConnection
 
 import com.google.gwt.user.client.ui.Widget;
 
-public class NewConnectionShinyPage 
+public class NewConnectionSnippetPage 
    extends WizardPage<NewConnectionContext, ConnectionOptions>
 {
-   public NewConnectionShinyPage(NewConnectionInfo info)
+   public NewConnectionSnippetPage(NewConnectionInfo info)
    {
       super(info.getName(), "", info.getName() + " Connection", null, null);
       info_ = info;
@@ -59,7 +59,7 @@ public class NewConnectionShinyPage
    @Override
    protected Widget createWidget()
    {
-      contents_ = new NewConnectionShinyHost();
+      contents_ = new NewConnectionSnippetHost();
 
       return contents_;
    }
@@ -94,6 +94,6 @@ public class NewConnectionShinyPage
       return NewConnectionWizard.RES.styles().newConnectionWizardBackground();
    }
    
-   private NewConnectionShinyHost contents_;
+   private NewConnectionSnippetHost contents_;
    private NewConnectionInfo info_;
 }
