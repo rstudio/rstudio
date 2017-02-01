@@ -332,7 +332,7 @@
   )
 })
 
-.rs.addFunction("showDialog", function(title, message, url = "") {
+.rs.addApiFunction("showDialog", function(title, message, url = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
@@ -344,7 +344,15 @@
       url = url)
 })
 
-.rs.addFunction("showPrompt", function(title, message, default = "") {
+.rs.addApiFunction("updateDialog", function(...)
+{
+   scalarValues <- lapply(list(...), .rs.scalar)
+   .rs.enqueClientEvent("update_new_connection_dialog", scalarValues)
+
+   invisible(NULL)
+})
+
+.rs.addApiFunction("showPrompt", function(title, message, default = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
@@ -356,7 +364,7 @@
       url = NULL)
 })
 
-.rs.addFunction("showQuestion", function(title, message, ok = "", cancel = "") {
+.rs.addApiFunction("showQuestion", function(title, message, ok = "", cancel = "") {
    .Call("rs_showDialog",
       title = title,
       message = message,
@@ -366,6 +374,15 @@
       ok = ok,
       cancel = cancel,
       url = NULL)
+})
+
+.rs.addApiFunction("writePreference", function(name, value) {
+  .rs.writeUiPref(paste("rstudioapi", name, sep = "_"), value)
+})
+
+.rs.addApiFunction("readPreference", function(name, default = NULL) {
+  value <- .rs.readUiPref(paste("rstudioapi", name, sep = "_"))
+  if (is.null(value)) default else value
 })
 
 .rs.addApiFunction("setPersistentValue", function(name, value) {
