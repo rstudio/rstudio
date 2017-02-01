@@ -99,6 +99,8 @@ public:
    void appendToOutputBuffer(const std::string &str);
    void appendToOutputBuffer(char ch);
    std::string bufferedOutput() const;
+   std::string getSavedBuffer();
+   void deleteLogFile() const;
 
    // Has the process exited, and what was the exit code?
    void setExitCode(int exitCode);
@@ -112,6 +114,10 @@ public:
 
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
+
+   static std::string loadConsoleProcessMetadata();
+   static void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
+   static void saveConsoleProcesses(const std::string& metadata);
 
 private:
    std::string caption_;

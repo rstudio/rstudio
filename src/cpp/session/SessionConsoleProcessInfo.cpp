@@ -17,6 +17,8 @@
 
 #include <core/system/System.hpp>
 
+#include <session/SessionConsoleProcessPersist.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -69,12 +71,26 @@ void ConsoleProcessInfo::setExitCode(int exitCode)
 
 void ConsoleProcessInfo::appendToOutputBuffer(const std::string &str)
 {
-   std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+   // For modal console procs, store terminal output directly in the
+   // ConsoleProcInfo INDEX
+   if (getTerminalSequence() == kNoTerminal)
+   {
+      std::copy(str.begin(), str.end(), std::back_inserter(outputBuffer_));
+      return;
+   }
+
+   // For terminal tabs, store in a separate file.
+   console_persist::appendToOutputBuffer(handle_, str);
 }
 
 void ConsoleProcessInfo::appendToOutputBuffer(char ch)
 {
    outputBuffer_.push_back(ch);
+}
+
+std::string ConsoleProcessInfo::getSavedBuffer()
+{
+   return console_persist::getSavedBuffer(handle_);
 }
 
 std::string ConsoleProcessInfo::bufferedOutput() const
@@ -88,6 +104,11 @@ std::string ConsoleProcessInfo::bufferedOutput() const
    std::copy(pos, outputBuffer_.end(), std::back_inserter(result));
    // Will be empty if the buffer was overflowed by a single line
    return result;
+}
+
+void ConsoleProcessInfo::deleteLogFile() const
+{
+   console_persist::deleteLogFile(handle_);
 }
 
 core::json::Object ConsoleProcessInfo::toJson() const
@@ -152,6 +173,21 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(core::json::O
    pProc->childProcs_ = obj["childProcs"].get_bool();
 
    return pProc;
+}
+
+std::string ConsoleProcessInfo::loadConsoleProcessMetadata()
+{
+   return console_persist::loadConsoleProcessMetadata();
+}
+
+void ConsoleProcessInfo::deleteOrphanedLogs(bool (*validHandle)(const std::string&))
+{
+   console_persist::deleteOrphanedLogs(validHandle);
+}
+
+void ConsoleProcessInfo::saveConsoleProcesses(const std::string& metadata)
+{
+   console_persist::saveConsoleProcesses(metadata);
 }
 
 } // namespace console_process_info
