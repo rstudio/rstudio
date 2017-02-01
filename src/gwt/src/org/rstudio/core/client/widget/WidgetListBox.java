@@ -119,7 +119,7 @@ public class WidgetListBox<T extends Widget>
             {
                setSelectedIndex(selectedIdx_+1, true);
             }
-            else if (event.getNativeKeyCode() == KeyCodes.KEY_UP &
+            else if (event.getNativeKeyCode() == KeyCodes.KEY_UP &&
                 selectedIdx_ > 0)
             {
                setSelectedIndex(selectedIdx_-1, true);
