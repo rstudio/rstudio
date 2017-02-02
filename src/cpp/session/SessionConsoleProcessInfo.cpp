@@ -16,6 +16,7 @@
 #include <session/SessionConsoleProcessInfo.hpp>
 
 #include <core/system/System.hpp>
+#include <core/text/TermBufferParser.hpp>
 
 #include <session/SessionConsoleProcessPersist.hpp>
 
@@ -36,7 +37,8 @@ const int kNoTerminal = 0; // terminal sequence number for a non-terminal
 ConsoleProcessInfo::ConsoleProcessInfo()
    : terminalSequence_(kNoTerminal), allowRestart_(false),
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
-     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true)
+     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true),
+     altBufferActive_(false)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -54,7 +56,8 @@ ConsoleProcessInfo::ConsoleProcessInfo(
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
-     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true)
+     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true),
+     altBufferActive_(false)
 {
 }
 
@@ -79,8 +82,12 @@ void ConsoleProcessInfo::appendToOutputBuffer(const std::string &str)
       return;
    }
 
-   // For terminal tabs, store in a separate file.
-   console_persist::appendToOutputBuffer(handle_, str);
+   // For terminal tabs, store in a separate file, first removing any
+   // output targeting the alternate terminal buffer.
+   std::string mainBufferStr =
+         core::text::stripSecondaryBuffer(&altBufferActive_, str);
+
+   console_persist::appendToOutputBuffer(handle_, mainBufferStr);
 }
 
 void ConsoleProcessInfo::appendToOutputBuffer(char ch)

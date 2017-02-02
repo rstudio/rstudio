@@ -119,6 +119,7 @@ set (CORE_SOURCE_FILES
    tex/TexSynctex.cpp
    text/DcfParser.cpp
    text/TemplateFilter.cpp
+   text/TermBufferParser.cpp
 )
 
 # UNIX specific
