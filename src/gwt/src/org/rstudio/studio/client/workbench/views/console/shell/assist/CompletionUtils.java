@@ -17,8 +17,6 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
@@ -28,48 +26,5 @@ public class CompletionUtils
    {
       return (event.getKeyCode() == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
             || (event.getKeyCode() == KeyCodes.KEY_SPACE && modifier == KeyboardShortcut.CTRL);
-   }
-
-   public static boolean handleEncloseSelection(InputEditorDisplay input, 
-                                                char c)
-   {
-      if (!input.isSelectionCollapsed())
-      {
-         switch(c)
-         {
-         case '"':
-         case '\'':
-            encloseSelection(input, c, c);
-            return true;
-         case '(':
-            encloseSelection(input, '(', ')');
-            return true;
-         case '{':
-            encloseSelection(input, '{', '}');
-            return true;
-         case '[':
-            encloseSelection(input, '[', ']');
-            return true;  
-         default:
-            return false;
-         }
-      }
-      else
-      {
-         return false;
-      }
-   }
-   
-   
-   
-   private static void encloseSelection(InputEditorDisplay input,
-                                        char beginChar, 
-                                        char endChar) 
-   {
-      StringBuilder builder = new StringBuilder();
-      builder.append(beginChar);
-      builder.append(input.getSelectionValue());
-      builder.append(endChar);
-      input.replaceSelection(builder.toString(), true);
    }
 }
