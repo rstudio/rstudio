@@ -535,19 +535,33 @@
       return()
 
    pieces <- strsplit(token, ':{2,3}')[[1]]
-
-   if (length(pieces) > 1)
-      print(help(pieces[2], package=pieces[1], help_type='html'))
-   else {
-      # try custom help handler, otherwise fall through to default handler
-      helpUrl <- .rs.getCustomHelpUrl(token)
-      if (!is.null(helpUrl)) {
-         if (nzchar(helpUrl)) # handlers return "" to indicate no help available
-            utils::browseURL(helpUrl)
-      } else {
-         print(help(pieces[1], help_type='html', try.all.packages=TRUE))
-      }
+   
+   # use devtools shim for help if available
+   if ("devtools_shims" %in% search() &&
+       "devtools" %in% loadedNamespaces() &&
+       exists("shim_help", envir = asNamespace("devtools")))
+   {
+      help <- devtools:::shim_help
    }
+   else
+   {
+      help <- utils::help
+   }
+
+   capture.output(suppressMessages({
+      if (length(pieces) > 1) {
+         print(help(pieces[2], package = pieces[1], help_type = 'html'))
+      } else {
+         # try custom help handler, otherwise fall through to default handler
+         helpUrl <- .rs.getCustomHelpUrl(token)
+         if (!is.null(helpUrl)) {
+            if (nzchar(helpUrl)) # handlers return "" to indicate no help available
+               utils::browseURL(helpUrl)
+         } else {
+            print(help(pieces[1], help_type = 'html', try.all.packages = TRUE))
+         }
+      }
+   }))
 })
 
 .rs.addFunction("findCustomHelpContext", function(token, handler) {
