@@ -122,6 +122,8 @@ public abstract class
    public abstract AppCommand jumpToMatching();
    public abstract AppCommand selectToMatching();
    public abstract AppCommand expandToMatching();
+   public abstract AppCommand addCursorAbove();
+   public abstract AppCommand addCursorBelow();
    public abstract AppCommand splitIntoLines();
    public abstract AppCommand toggleDocumentOutline();
    public abstract AppCommand expandSelection();

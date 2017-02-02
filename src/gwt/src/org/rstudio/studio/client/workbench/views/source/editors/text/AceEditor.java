@@ -448,6 +448,8 @@ public class AceEditor implements DocDisplay,
                   case JUMP_TO_MATCHING:           jumpToMatching();           break;
                   case SELECT_TO_MATCHING:         selectToMatching();         break;
                   case EXPAND_TO_MATCHING:         expandToMatching();         break;
+                  case ADD_CURSOR_ABOVE:           addCursorAbove();           break;
+                  case ADD_CURSOR_BELOW:           addCursorBelow();           break;
                   }
                }
             });
@@ -2422,6 +2424,18 @@ public class AceEditor implements DocDisplay,
    public void expandToMatching()
    {
       widget_.getEditor().jumpToMatching(true, true);
+   }
+   
+   @Override
+   public void addCursorAbove()
+   {
+      widget_.getEditor().execCommand("addCursorAbove");
+   }
+   
+   @Override
+   public void addCursorBelow()
+   {
+      widget_.getEditor().execCommand("addCursorBelow");
    }
 
    @Override
