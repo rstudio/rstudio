@@ -95,7 +95,7 @@ public:
    int getShowOnOutput() const { return showOnOutput_; }
 
    // Buffer output in case client disconnects/reconnects and needs
-   // to recover some history. Not used for terminal tabs.
+   // to recover some history.
    void appendToOutputBuffer(const std::string &str);
    void appendToOutputBuffer(char ch);
    std::string bufferedOutput() const;
@@ -131,6 +131,7 @@ private:
    boost::circular_buffer<char> outputBuffer_;
    boost::optional<int> exitCode_;
    bool childProcs_;
+   bool altBufferActive_;
 };
 
 } // namespace console_process
