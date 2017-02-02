@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.connections.res;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
 public interface NewConnectionSnippetHostResources extends ClientBundle

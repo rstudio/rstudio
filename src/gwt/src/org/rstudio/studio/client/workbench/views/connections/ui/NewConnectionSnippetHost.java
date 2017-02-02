@@ -43,7 +43,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
@@ -380,6 +379,8 @@ public class NewConnectionSnippetHost extends Composite
    
    private ConnectionCodePanel codePanel_;
    private VerticalPanel parametersPanel_;
+   
+   @SuppressWarnings("unused")
    private NewConnectionSnippetHostResources newConnectionSnippetHostResources_;
 
    NewConnectionInfo info_;

@@ -3,7 +3,6 @@ package org.rstudio.studio.client.projects.model;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeUri;
 
-@SuppressWarnings("deprecation")
 public class ProjectTemplateIconImageResource implements ImageResource
 {
    public ProjectTemplateIconImageResource(String name, String data)

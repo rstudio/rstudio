@@ -29,7 +29,6 @@ import org.rstudio.studio.client.application.events.ReloadEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
