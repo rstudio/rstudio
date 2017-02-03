@@ -185,7 +185,7 @@
             # if it's a list, recurse
             tick_sub(val)
          }
-         else if (is.character(val)) 
+         else if (is.character(val) && length(val) == 1) 
          {
             # if it's a character value, check to see if it's a backtick
             # expression
