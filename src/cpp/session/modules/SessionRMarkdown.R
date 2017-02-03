@@ -172,7 +172,47 @@
 
 .rs.addJsonRpcHandler("convert_to_yaml", function(input)
 {
-   yaml <- yaml::as.yaml(input)
+   # the yaml package doesn't treat string values kindly if they're surrounded
+   # by backticks, so we will need to replace those with UUIDs we can sub out
+   # later
+   exprs <- list()
+   tick_sub <- function(x) 
+   {
+      lapply(x, function(val) 
+      {
+         if (is.list(val)) 
+         {
+            # if it's a list, recurse
+            tick_sub(val)
+         }
+         else if (is.character(val) && length(val) == 1) 
+         {
+            # if it's a character value, check to see if it's a backtick
+            # expression
+            if (identical(substr(val, 1, 1), "`") &&
+                identical(substr(val, nchar(val), nchar(val)), "`")) 
+            {
+               # replace the backtick expression with an identifier
+               key <- .Call("rs_generateShortUuid")
+               exprs[[key]] <<- val
+               key
+            } 
+            else 
+            {
+               # leave other character expressions as-is
+               val
+            }
+         } 
+         else 
+         {
+            # leave non-character values alone
+            val
+         }
+      })
+   }
+   
+   # substitute ticks and convert to yaml
+   yaml <- yaml::as.yaml(tick_sub(input))
 
    # the yaml package produces UTF-8 output strings, but doesn't mark them
    # as such, which leads to trouble (in particular: on Windows the string
@@ -180,6 +220,10 @@
    # see: https://github.com/viking/r-yaml/issues/6
    if (Encoding(yaml) == "unknown")
       Encoding(yaml) <- "UTF-8"
+
+   # put the backticked expressions back
+   for (key in names(exprs)) 
+      yaml <- sub(key, exprs[[key]], yaml, fixed = TRUE)
 
    list(yaml = .rs.scalar(yaml))
 })
