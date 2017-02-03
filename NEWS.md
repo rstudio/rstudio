@@ -13,6 +13,12 @@
 * Fixed an issue where non-R chunk output could become duplicated
 * 'Rename in Scope' now works within R chunks
 
+### Terminal
+
+* New Terminal tab for fluid shell interaction within the IDE
+* Support for xterm emulation including color output and full-screen console apps
+* Support for multiple terminals, each with persistent scrollback buffer
+
 ### Miscellaneous
 
 * Added support for custom, user-provided project templates
@@ -24,4 +30,5 @@
 
 * Fixed an issue where dragging tabs out multiple times could revert contents to older version
 * macOS: fixed 'crash on wake' issue with late-2016 Macbooks
+* Fixed mangling of YAML header string values containing backticks 
 
