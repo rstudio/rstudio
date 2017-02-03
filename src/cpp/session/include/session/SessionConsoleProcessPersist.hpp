@@ -37,7 +37,7 @@ std::string loadConsoleProcessMetadata();
 void saveConsoleProcesses(const std::string& metadata);
 
 // Get the saved buffer for the given ConsoleProcess
-std::string getSavedBuffer(const std::string& handle);
+std::string getSavedBuffer(const std::string& handle, int maxLines);
 
 // Add to the saved buffer for the given ConsoleProcess
 void appendToOutputBuffer(const std::string& handle, const std::string& buffer);

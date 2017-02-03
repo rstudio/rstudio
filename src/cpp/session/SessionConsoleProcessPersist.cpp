@@ -31,8 +31,13 @@ namespace console_persist {
 #define kConsoleIndex "INDEX001"
 
 // Change this constant if incompatible/version specific changes need to be
-// made to ConsoleProcess/terminal persistence, e.g. "console01".
-#define kConsoleDir "console"
+// made to ConsoleProcess/terminal persistence, e.g. "console02". Ideally
+// this will be rare to never once we ship.
+//
+// 2017/02/03 - console -> console01
+//                Reset state to eliminate previously saved buffers that
+//                haven't had their alt-buffer stripped during save.
+#define kConsoleDir "console01"
 
 namespace {
 
@@ -80,14 +85,6 @@ Error getLogFilePath(const std::string& handle, FilePath* pFile)
    return Success();
 }
 
-std::string removeAlternateBuffer(const std::string& strInput)
-{
-   // TODO (gary) - placeholder for work-in-progress, leaving as a
-   // no-op for now
-
-   return strInput;
-}
-
 } // anonymous namespace
 
 std::string loadConsoleProcessMetadata()
@@ -114,7 +111,7 @@ void saveConsoleProcesses(const std::string& metadata)
       LOG_ERROR(error);
 }
 
-std::string getSavedBuffer(const std::string& handle)
+std::string getSavedBuffer(const std::string& handle, int maxLines)
 {
    std::string content;
    FilePath log;
@@ -138,7 +135,19 @@ std::string getSavedBuffer(const std::string& handle)
       return content;
    }
 
-   return removeAlternateBuffer(content);
+   // Trim the buffer based on maxLines. Otherwise it can grow without
+   // bound until the terminal is closed or cleared.
+   std::string trimmedOutput = content;
+   if (string_utils::trimLeadingLines(maxLines, &trimmedOutput))
+   {
+      error = core::writeStringToFile(log, trimmedOutput);
+      if (error)
+      {
+          LOG_ERROR(error);
+          return content;
+      }
+   }
+   return trimmedOutput;
 }
 
 void appendToOutputBuffer(const std::string& handle, const std::string& buffer)

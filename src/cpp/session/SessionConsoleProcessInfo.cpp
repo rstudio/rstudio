@@ -85,7 +85,7 @@ void ConsoleProcessInfo::appendToOutputBuffer(const std::string &str)
    // For terminal tabs, store in a separate file, first removing any
    // output targeting the alternate terminal buffer.
    std::string mainBufferStr =
-         core::text::stripSecondaryBuffer(&altBufferActive_, str);
+         core::text::stripSecondaryBuffer(str, &altBufferActive_);
 
    console_persist::appendToOutputBuffer(handle_, mainBufferStr);
 }
@@ -97,7 +97,7 @@ void ConsoleProcessInfo::appendToOutputBuffer(char ch)
 
 std::string ConsoleProcessInfo::getSavedBuffer()
 {
-   return console_persist::getSavedBuffer(handle_);
+   return console_persist::getSavedBuffer(handle_, maxOutputLines_);
 }
 
 std::string ConsoleProcessInfo::bufferedOutput() const

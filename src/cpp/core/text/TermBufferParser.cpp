@@ -181,7 +181,7 @@ struct ParseMetadata
 
 } // anonymous namespace
 
-std::string stripSecondaryBuffer(bool* pAltBufferActive, const std::string& strInput)
+std::string stripSecondaryBuffer(const std::string& strInput, bool* pAltBufferActive)
 {
    // XTerm.js supported alt-buffer start sequences:
    //

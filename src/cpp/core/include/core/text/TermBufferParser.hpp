@@ -36,8 +36,8 @@ namespace text {
 // pass in true, then it is assumed the start of the buffer is already in alt-mode.
 //
 std::string stripSecondaryBuffer(
-      bool* pAltModeActive, // (optional in/out) is string "in" alt-buffer mode?
-      const std::string& str); // string to parse
+      const std::string& str, // string to parse
+      bool* pAltModeActive); // (optional in/out) is string "in" alt-buffer mode?
 
 } // namespace text
 } // namespace core
