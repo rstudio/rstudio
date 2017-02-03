@@ -112,6 +112,21 @@ public class AceEditorCommandDispatcher
             ExecutionPolicy.FOCUSED);
    }
    
+   @Handler
+   public void onAddCursorAbove()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.ADD_CURSOR_ABOVE,
+            ExecutionPolicy.FOCUSED);
+   }
+   
+   @Handler
+   public void onAddCursorBelow()
+   {
+      fireEvent(
+            AceEditorCommandEvent.CommandType.ADD_CURSOR_BELOW,
+            ExecutionPolicy.FOCUSED);
+   }
    
    
    // Private methods ----

@@ -1,7 +1,7 @@
 /*
  * ServerProcessSupervisor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,6 +78,22 @@ Error runProgram(
    onCompleted(result);
    return Success();
 }
+
+core::Error runProgram(
+  const std::string& executable,
+  const std::vector<std::string>& args,
+  const core::system::ProcessOptions& options,
+  const core::system::ProcessCallbacks& cb)
+{
+   LOCK_MUTEX(s_mutex)
+   {
+      return processSupervisor().runProgram(
+            executable, args, options, cb);
+   }
+   END_LOCK_MUTEX
+   return Success();
+}
+
 
 Error initialize()
 {

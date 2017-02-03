@@ -302,10 +302,6 @@ public class CppCompletionManager implements CompletionManager
       {
          return rCompletionManager_.previewKeyPress(c);
       }
-      else if (CompletionUtils.handleEncloseSelection(docDisplay_, c))
-      {
-         return true;
-      }
       else
       {
          // don't do implicit completions if the user has set completion to manual

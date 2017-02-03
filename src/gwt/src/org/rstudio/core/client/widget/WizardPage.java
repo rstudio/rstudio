@@ -56,8 +56,6 @@ public abstract class WizardPage<I,T> extends Composite
       }
       else
       {
-         WizardResources.Styles styles = WizardResources.INSTANCE.styles();
-         
          LayoutPanel layoutPanel = new LayoutPanel();
          
          if (largeImage_ != null)

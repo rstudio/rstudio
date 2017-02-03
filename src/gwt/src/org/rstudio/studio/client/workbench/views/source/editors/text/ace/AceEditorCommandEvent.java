@@ -29,7 +29,9 @@ public class AceEditorCommandEvent extends GwtEvent<AceEditorCommandEvent.Handle
       INSERT_PIPE_OPERATOR,
       JUMP_TO_MATCHING,
       SELECT_TO_MATCHING,
-      EXPAND_TO_MATCHING
+      EXPAND_TO_MATCHING,
+      ADD_CURSOR_ABOVE,
+      ADD_CURSOR_BELOW
    }
    
    public static enum ExecutionPolicy

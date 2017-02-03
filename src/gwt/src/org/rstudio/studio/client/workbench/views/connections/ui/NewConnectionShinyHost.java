@@ -16,27 +16,21 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationInterrupt;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -60,15 +54,11 @@ public class NewConnectionShinyHost extends Composite
    private void initialize(EventBus events,
                            GlobalDisplay globalDisplay,
                            ConnectionsServerOperations server,
-                           Commands commands,
-                           ApplicationInterrupt applicationInterrupt,
                            ShinyServerOperations shinyServer)
    {
       events_ = events;
       globalDisplay_ = globalDisplay;
       server_ = server;
-      commands_ = commands;
-      applicationInterrupt_ = applicationInterrupt;
       shinyServer_ = shinyServer;
    }
 
@@ -231,7 +221,5 @@ public class NewConnectionShinyHost extends Composite
    private RStudioFrame frame_;
    private GlobalDisplay globalDisplay_;
    private ConnectionsServerOperations server_;
-   private Commands commands_;
-   private ApplicationInterrupt applicationInterrupt_;
    private ShinyServerOperations shinyServer_;
 }

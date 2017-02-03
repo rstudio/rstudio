@@ -593,5 +593,9 @@ public class AceEditorNative extends JavaScriptObject {
       }
    }-*/;
    
+   public final native void execCommand(String commandName) /*-{
+      this.execCommand(commandName);
+   }-*/;
+   
    private static boolean uiPrefsSynced_ = false;
 }

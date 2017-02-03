@@ -74,6 +74,11 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             next  : "rd-start"
          },
          {
+            token : ["comment", "comment.keyword.operator", "comment"],
+            regex : "(#+'?\\s*)(TODO|FIXME)\\b(.*)$",
+            next  : "start"
+         },
+         {
             token : "comment",
             regex : "#.*$",
             next  : "start"

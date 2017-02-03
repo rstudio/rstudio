@@ -1,7 +1,7 @@
 /*
  * ServerProcessSupervisor.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,12 @@ core::Error runProgram(
   const std::string& input,
   const core::system::ProcessOptions& options,
   const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
+
+core::Error runProgram(
+  const std::string& executable,
+  const std::vector<std::string>& args,
+  const core::system::ProcessOptions& options,
+  const core::system::ProcessCallbacks& cb);
 
 core::Error initialize();
 
