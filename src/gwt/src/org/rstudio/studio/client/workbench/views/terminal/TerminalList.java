@@ -23,7 +23,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 
@@ -376,15 +375,6 @@ public class TerminalList implements Iterable<String>,
       return maxNum + 1;
    }
 
-   private ShellSecureInput getSecureInput()
-   {
-      if (secureInput_ == null)
-      {
-         secureInput_ = new ShellSecureInput();  
-      }
-      return secureInput_;
-   }
-
    private void startTerminal(int sequence,
                              String terminalHandle,
                              String caption,
@@ -392,8 +382,7 @@ public class TerminalList implements Iterable<String>,
                              boolean hasChildProcs)
    {
       TerminalSession newSession = new TerminalSession(
-            getSecureInput(), sequence, terminalHandle, caption, title,
-            hasChildProcs);
+            sequence, terminalHandle, caption, title, hasChildProcs);
       newSession.connect();
       updateTerminalBusyStatus();
    }
@@ -428,7 +417,6 @@ public class TerminalList implements Iterable<String>,
     */
    private LinkedHashMap<String, TerminalMetadata> terminals_ = 
                 new LinkedHashMap<String, TerminalMetadata>();
-   private ShellSecureInput secureInput_;
 
    // Injected ----  
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
