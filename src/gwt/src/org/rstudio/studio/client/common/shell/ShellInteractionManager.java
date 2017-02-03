@@ -1,7 +1,7 @@
 /*
  * ShellInteractionManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,6 @@ public class ShellInteractionManager implements ShellOutputWriter
                                   CommandWithArg<ShellInput> inputHandler)
    {
       display_ = display;
-      secureInput_ = new ShellSecureInput(); 
       input_ = display_.getInputEditorDisplay();
       historyManager_ = new CommandLineHistory(input_);
       inputHandler_ = inputHandler;
@@ -122,22 +121,7 @@ public class ShellInteractionManager implements ShellOutputWriter
             outputPrefixToSuppress_ = commandEntry;
       }
 
-      // encrypt the input and return it
-      secureInput_.secureString(input, 
-         new CommandWithArg<String>() {
-            @Override
-            public void execute(String arg) // success
-            {
-               onInputReady.execute(ShellInput.create(arg, echoInput));
-            }
-         },
-         new CommandWithArg<String>() {
-            @Override
-            public void execute(String errorMessage) // failure
-            {
-               consoleWriteError(errorMessage);
-            }
-         });
+      onInputReady.execute(ShellInput.create(input, echoInput));
    }
  
    private void navigateHistory(int offset)
@@ -282,7 +266,6 @@ public class ShellInteractionManager implements ShellOutputWriter
    private final CommandLineHistory historyManager_;
    
    private final CommandWithArg<ShellInput> inputHandler_;
-   private final ShellSecureInput secureInput_;
    
    /* Hack to fix echoing problems on Windows.
     * For echoed input like username, Windows always echoes input back to the

@@ -53,7 +53,6 @@ import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.rstudioapi.RStudioAPI;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
@@ -214,7 +213,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DataImportFileChooser dataImportFileChooser);
    void injectMembers(ProjectTemplateRegistryProvider provider);
    void injectMembers(TerminalSession widget);
-   void injectMembers(ShellSecureInput userInputEncryption);
    void injectMembers(TerminalPopupMenu menu);
    void injectMembers(TerminalList terminalList);
    void injectMembers(NewConnectionWizard newConnectionWizard);

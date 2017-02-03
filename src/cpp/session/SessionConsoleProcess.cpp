@@ -506,21 +506,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    ProcTable::const_iterator pos = s_procs.find(handle);
    if (pos != s_procs.end())
    {
-#ifdef RSTUDIO_SERVER
-      if (session::options().programMode() == kSessionProgramModeServer)
-      {
-         if (!input.interrupt)
-         {
-            error = core::system::crypto::rsaPrivateDecrypt(input.text,
-                                                            &input.text);
-            if (error)
-               return error;
-         }
-      }
-#endif
-
       pos->second->enqueInput(input);
-
       return Success();
    }
    else

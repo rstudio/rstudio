@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -29,7 +28,6 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.shell.ShellInput;
-import org.rstudio.studio.client.common.shell.ShellSecureInput;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -63,21 +61,18 @@ public class TerminalSession extends XTermWidget
 {
    /**
     * 
-    * @param secureInput securely send user input to server
     * @param sequence number used as part of default terminal title
     * @param handle terminal handle if reattaching, null if new terminal
     * @param caption terminal caption if reattaching, null if new terminal
     * @param title widget title
     */
-   public TerminalSession(final ShellSecureInput secureInput, 
-                          int sequence,
+   public TerminalSession(int sequence,
                           String handle,
                           String caption,
                           String title,
                           boolean hasChildProcs)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      secureInput_ = secureInput;
       sequence_ = sequence;
       terminalHandle_ = handle;
       hasChildProcs_ = hasChildProcs;
@@ -237,23 +232,24 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
-    * Send user input to the server, breaking down into chunks small
-    * enough for the encryption.
+    * Send user input to the server, breaking down into chunks. We do this
+    * for when a large amount of text is pasted into the terminal; we don't
+    * want to overwhelm the RPC.
     * @param userInput string to send
     */
    private void sendUserInput()
    {
-      final int MAXENCRYPT = 117;
+      final int MAXCHUNK = 128;
       String userInput;
 
       if (inputQueue_.length() == 0)
       {
          return;
       }
-      if (inputQueue_.length() > MAXENCRYPT)
+      if (inputQueue_.length() > MAXCHUNK)
       {
-         userInput = inputQueue_.substring(0, MAXENCRYPT);
-         inputQueue_.delete(0,  MAXENCRYPT);
+         userInput = inputQueue_.substring(0, MAXCHUNK);
+         inputQueue_.delete(0,  MAXCHUNK);
       }
       else
       {
@@ -261,37 +257,22 @@ public class TerminalSession extends XTermWidget
          inputQueue_.setLength(0);
       }
 
-      secureInput_.secureString(userInput, new CommandWithArg<String>() 
-      {
-         @Override
-         public void execute(String arg) // success
-         {
-            consoleProcess_.writeStandardInput(
-                  ShellInput.create(arg,  true /* echo input*/), 
-                  new VoidServerRequestCallback() {
+      consoleProcess_.writeStandardInput(
+    		  ShellInput.create(userInput,  true /* echo input*/), 
+    		  new VoidServerRequestCallback() {
 
-                     @Override
-                     public void onResponseReceived(Void response)
-                     {
-                        sendUserInput();
-                     }
+    			  @Override
+    			  public void onResponseReceived(Void response)
+    			  {
+    				  sendUserInput();
+    			  }
 
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        writeln(error.getUserMessage());
-                     }
-                  });
-         }
-      },
-      new CommandWithArg<String>()
-      {
-         @Override
-         public void execute(String errorMessage) // failure
-         {
-            writeln(errorMessage); 
-         }
-      });
+    			  @Override
+    			  public void onError(ServerError error)
+    			  {
+    				  writeln(error.getUserMessage());
+    			  }
+    		  });
    }
 
    @Override
@@ -543,7 +524,6 @@ public class TerminalSession extends XTermWidget
       newTerminal_ = isNew;
    }
 
-   private final ShellSecureInput secureInput_;
    private HandlerRegistrations registrations_ = new HandlerRegistrations();
    private HandlerRegistration terminalInputHandler_;
    private ConsoleProcess consoleProcess_;
