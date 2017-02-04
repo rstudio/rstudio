@@ -34,7 +34,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    SECTION("Empty input")
    {
       std::string input;
-      std::string newStr = core::text::stripSecondaryBuffer(NULL, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, NULL);
       CHECK(newStr.empty());
    }
 
@@ -42,7 +42,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input;
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(altMode == true);
    }
 
@@ -50,7 +50,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input;
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(altMode == false);
    }
 
@@ -58,7 +58,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "Hello World!\nHow are you today?";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -66,7 +66,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "\033";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -74,7 +74,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "\033\033\033\033\033";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -82,7 +82,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "Hello World!\nHow \033[000l are you today?";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -90,7 +90,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "Hello. How\033[?000l are you today?";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -98,7 +98,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "Hello. How\033[?x047h are you today?";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -106,7 +106,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "\033[?Hello World!\nHow \033[000l are you today?\033 Great!";
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(input.compare(newStr) == 0);
    }
 
@@ -114,7 +114,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
    {
       std::string input = "None of this should be returned!";
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.empty());
       CHECK(altMode == true);
    }
@@ -128,7 +128,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       input.append(pStart3);
       input.append("The end.");
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.empty());
       CHECK(altMode == true);
    }
@@ -142,7 +142,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.compare(expect) == 0);
       CHECK(altMode == false);
    }
@@ -156,7 +156,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.compare(expect) == 0);
       CHECK(altMode == false);
    }
@@ -170,7 +170,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.compare(expect) == 0);
       CHECK(altMode == false);
    }
@@ -185,7 +185,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.compare(expect) == 0);
       CHECK(altMode == false);
    }
@@ -202,7 +202,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.compare(expect) == 0);
       CHECK(altMode == false);
    }
@@ -218,7 +218,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.compare(expect) == 0);
       CHECK(altMode == false);
    }
@@ -228,7 +228,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string input = "Once upon a time.";
       input.append(pEnd3);
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(newStr.empty());
       CHECK(altMode == false);
    }
@@ -240,7 +240,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       input.append("Once upon a time.");
       std::string expect("Once upon a time.");
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(expect.compare(newStr) == 0);
       CHECK(altMode == false);
    }
@@ -254,7 +254,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("There was a cat.");
 
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(expect.compare(newStr) == 0);
       CHECK(altMode == false);
    }
@@ -272,7 +272,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("There was a cat. The end.");
 
       bool altMode = true;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(expect.compare(newStr) == 0);
       CHECK(altMode == false);
    }
@@ -292,7 +292,7 @@ TEST_CASE("Terminal Buffer Mode Parsing")
       std::string expect("Once upon a time. There was a cat. Meow.");
 
       bool altMode = false;
-      std::string newStr = core::text::stripSecondaryBuffer(&altMode, input);
+      std::string newStr = core::text::stripSecondaryBuffer(input, &altMode);
       CHECK(expect.compare(newStr) == 0);
       CHECK(altMode == false);
    }
