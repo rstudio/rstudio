@@ -821,7 +821,25 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !windowManager_.isSourceWindowOpen(docWindowId)))
          {
-            final EditingTarget editor = addTab(doc, true, OPEN_REPLAY);
+            // attempt to add a tab for the current doc; try/catch this since
+            // we don't want to allow one failure to prevent all docs from
+            // opening
+            EditingTarget sourceEditor = null;
+            try
+            {
+               sourceEditor = addTab(doc, true, OPEN_REPLAY);
+            }
+            catch (Exception e)
+            {
+               Debug.logException(e);
+            }
+            
+            // if we couldn't add the tab for this doc, just continue to the
+            // next one
+            if (sourceEditor == null)
+               continue;
+
+            final EditingTarget editor = sourceEditor;
             
             // if this is a source window, check to see if it was opened to
             // pop out a particular doc, and restore that doc's position if so
