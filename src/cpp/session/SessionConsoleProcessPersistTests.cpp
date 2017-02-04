@@ -16,6 +16,7 @@
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
+#include <sstream>
 
 namespace rstudio {
 namespace session {
@@ -24,7 +25,19 @@ namespace tests {
 
 const std::string handle1("unit-test01");
 const std::string handle2("unit-test02");
+const std::string bogusHandle1("unit-test03");
+const std::string bogusHandle2("unit-test04");
+
 const size_t maxLines = 1000;
+
+namespace {
+
+bool testHandle(const std::string& handle)
+{
+   return !handle.compare(handle1) || !handle.compare(handle2);
+}
+
+} // anonymous namespace
 
 // These tests are running against an actual session, so try to save and
 // restore the Console persistence metadata so local client usage isn't
@@ -75,7 +88,22 @@ TEST_CASE("ConsoleProcess Persistence")
    SECTION("Try to load a non-existent buffer")
    {
       std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
+      CHECK(loaded.empty());
+   }
 
+   SECTION("Verify that a deleted buffer is empty")
+   {
+      std::string orig = console_persist::getSavedBuffer(handle1, maxLines);
+      CHECK(orig.empty());
+
+      orig = "Once upon a time";
+      console_persist::appendToOutputBuffer(handle1, orig);
+
+      std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
+      CHECK(loaded.compare(orig) == 0);
+
+      console_persist::deleteLogFile(handle1);
+      loaded = console_persist::getSavedBuffer(handle1, maxLines);
       CHECK(loaded.empty());
    }
 
@@ -87,18 +115,67 @@ TEST_CASE("ConsoleProcess Persistence")
       CHECK(loaded.compare(orig) == 0);
    }
 
+   SECTION("Write and load a buffer with one newline")
+   {
+      std::string orig("hello how are you?\n");
+      console_persist::appendToOutputBuffer(handle1, orig);
+      std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
+      CHECK(loaded.compare(orig) == 0);
+   }
 
-/*
-// Add to the saved buffer for the given ConsoleProcess
-void appendToOutputBuffer(const std::string& handle, const std::string& buffer);
+   SECTION("Write and load several lines")
+   {
+      std::string orig("hello how are you?\nthat is good\nhave a nice day");
+      console_persist::appendToOutputBuffer(handle1, orig);
+      std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
+      CHECK(loaded.compare(orig) == 0);
+   }
 
-// Delete the persisted saved buffer for the given ConsoleProcess
-void deleteLogFile(const std::string& handle);
+   SECTION("Write more lines than maxLines then read it")
+   {
+      std::stringstream ss;
+      std::stringstream ss_expect;
+      ss_expect << '\n';
+      for (size_t i = 0; i < maxLines * 2; i++)
+      {
+         ss << i << '\n';
+         if (i >= maxLines)
+            ss_expect << i << '\n';
+      }
+      std::string expect = ss_expect.str();
+      std::string orig = ss.str();
+      console_persist::appendToOutputBuffer(handle2, orig);
+      std::string loaded = console_persist::getSavedBuffer(handle2, maxLines);
+      CHECK(loaded.compare(expect) == 0);
+   }
 
-// Clean up ConsoleProcess buffer cache
-// Takes a function to see if a given handle represents a known process.
-void deleteOrphanedLogs(bool (*validHandle)(const std::string&));
-*/
+   SECTION("Delete unknown log files")
+   {
+      std::string orig1("hello how are you?\nthat is good\nhave a nice day");
+      std::string orig2("beware of ferret");
+      std::string bogus1("doom");
+      std::string bogus2("once upon a time");
+
+      console_persist::appendToOutputBuffer(handle1, orig1);
+      console_persist::appendToOutputBuffer(handle2, orig2);
+      console_persist::appendToOutputBuffer(bogusHandle1, bogus1);
+      console_persist::appendToOutputBuffer(bogusHandle2, bogus2);
+
+      std::string loaded = console_persist::getSavedBuffer(bogusHandle1, maxLines);
+      CHECK(loaded.compare(bogus1) == 0);
+      loaded = console_persist::getSavedBuffer(bogusHandle2, maxLines);
+      CHECK(loaded.compare(bogus2) == 0);
+
+      console_persist::deleteOrphanedLogs(testHandle);
+      loaded = console_persist::getSavedBuffer(bogusHandle1, maxLines);
+      CHECK(loaded.empty());
+      loaded = console_persist::getSavedBuffer(bogusHandle2, maxLines);
+      CHECK(loaded.empty());
+      loaded = console_persist::getSavedBuffer(handle1, maxLines);
+      CHECK(loaded.compare(orig1) == 0);
+      loaded = console_persist::getSavedBuffer(handle2, maxLines);
+      CHECK(loaded.compare(orig2) == 0);
+   }
 }
 
 } // end namespace tests
