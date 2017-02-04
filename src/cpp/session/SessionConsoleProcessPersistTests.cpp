@@ -37,8 +37,6 @@ bool testHandle(const std::string& handle)
    return !handle.compare(handle1) || !handle.compare(handle2);
 }
 
-} // anonymous namespace
-
 // These tests are running against an actual session, so try to save and
 // restore the Console persistence metadata so local client usage isn't
 // impacted by running the tests.
@@ -62,6 +60,8 @@ public:
 private:
    std::string origMetadata_;
 };
+
+} // anonymous namespace
 
 TEST_CASE("ConsoleProcess Persistence")
 {
