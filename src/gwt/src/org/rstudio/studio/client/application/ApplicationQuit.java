@@ -703,24 +703,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                String switchToProject = new String(switchToProject_);
                if (Desktop.isDesktop())
                {
-                  if (Desktop.getFrame().isCocoa() && 
-                      switchToProject_ != null)
-                  {
-                     // on Cocoa there's an ugly intermittent crash that occurs 
-                     // when we reload, so exit this instance and start a new
-                     // one when switching projects
-                     Desktop.getFrame().setPendingProject(switchToProject_);
-                     
-                     // Since we're going to be starting a new process we don't
-                     // want to pass a switchToProject argument to quitSession
-                     switchToProject = null;
-                  }
-                  else
-                  {
-                     Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
-                              DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
-                              DesktopFrame.PENDING_QUIT_AND_EXIT);
-                  }
+                  Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
+                           DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
+                           DesktopFrame.PENDING_QUIT_AND_EXIT);
                }
                
                server_.quitSession(

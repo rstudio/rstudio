@@ -1052,12 +1052,6 @@ enum RS_NSActivityOptions : uint64_t
    [[MainFrameController instance] setWindowTitle: title];
 }
 
-- (void) setPendingProject: (NSString*) projectPath
-{
-   [self setPendingQuit: 1];
-   [[MainFrameController instance] setPendingProject: projectPath];
-}
- 
 - (NSString*) filterText: (NSString*) text
 {
    // Normalize NFD Unicode text. I couldn't reproduce the behavior that made this
@@ -1217,9 +1211,7 @@ enum RS_NSActivityOptions : uint64_t
       return @"undo";
    else if (sel == @selector(redo:))
       return @"redo";
-   else if (sel == @selector(setPendingProject:))
-      return @"setPendingProject";
-      
+   
    return nil;
 }
 

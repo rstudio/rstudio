@@ -1,7 +1,7 @@
 /*
  * MainFrameController.mm
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -197,12 +197,6 @@ bool setWindowGeometry(NSWindow* window, NSString* geometry)
    [[self window] setTitle: title];
 }
 
-- (void) setPendingProject: (NSString*) path
-{
-   pendingProject_ = [path retain];
-}
-
-
 // whenever the list of running applications changes then check to see
 // whether we should show project name labels on our dock tile (do it
 // if there is more than one instance of RStudio active)
@@ -285,13 +279,6 @@ std::string jsEscape(std::string str)
 - (void) quit
 {
    quitConfirmed_ = YES;
-   if (pendingProject_ != nil)
-   {
-      [gwtCallbacks_ openProjectInOverlaidNewWindow: pendingProject_];
-      [pendingProject_ release];
-      pendingProject_ = nil;
-      [NSThread sleepForTimeInterval:1.0f];
-   }
    [[self window] performClose: self];
 }
 
