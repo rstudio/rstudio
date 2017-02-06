@@ -48,7 +48,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          {
             refreshActiveTerminal();
          }
-      });   
+      });
    }
 
    @Inject
@@ -136,8 +136,12 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    public void setActiveTerminal(String caption, String handle)
    {
       activeTerminalHandle_ = handle;
-      toolbarButton_.setText(addBusyIndicator(trimCaption(caption), 
-            terminals_.getHasSubprocs(handle)));
+      String trimmed = trimCaption(caption);
+      if (handle != null)
+      {
+         trimmed = addBusyIndicator(trimmed, terminals_.getHasSubprocs(handle));
+      }
+      toolbarButton_.setText(trimmed);
    }
 
    /**
