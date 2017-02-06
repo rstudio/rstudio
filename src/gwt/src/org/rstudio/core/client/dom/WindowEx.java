@@ -62,6 +62,10 @@ public class WindowEx extends JavaScriptObject
       }
    }-*/;
    
+   public final native String getSelectedText() /*-{
+      return this.getSelection().toString();
+   }-*/;
+   
    public final native boolean find(String term, 
                                     boolean matchCase,
                                     boolean searchUpward,

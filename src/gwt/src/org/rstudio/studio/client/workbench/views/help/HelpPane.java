@@ -37,6 +37,8 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import elemental.events.KeyboardEvent.KeyCode;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -55,10 +57,12 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.Help.LinkMenu;
 import org.rstudio.studio.client.workbench.views.help.events.HelpNavigateEvent;
 import org.rstudio.studio.client.workbench.views.help.events.HelpNavigateHandler;
@@ -71,13 +75,15 @@ public class HelpPane extends WorkbenchPane
    @Inject
    public HelpPane(Provider<HelpSearch> searchProvider,
                    GlobalDisplay globalDisplay,
-                   Commands commands)
+                   Commands commands,
+                   EventBus events)
    {
       super("Help") ;
       
       searchProvider_ = searchProvider ;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      events_ = events;
     
       MenuItem clear = commands.clearHelpHistory().createMenuItem(false);
       history_ = new ToolbarLinkMenu(12, true, null, new MenuItem[] { clear }) ;
@@ -192,17 +198,35 @@ public class HelpPane extends WorkbenchPane
    { 
       // determine whether this key-combination means we should focus find
       int mod = KeyboardShortcut.getModifierValue(e);
-      if ((mod == (BrowseCap.hasMetaKey() ? KeyboardShortcut.META
-                                          : KeyboardShortcut.CTRL)) &&
-           e.getKeyCode() == 'F')
+      if (mod == (BrowseCap.hasMetaKey() ? KeyboardShortcut.META
+                                         : KeyboardShortcut.CTRL))
       {
-         e.preventDefault();
-         e.stopPropagation();
-         WindowEx.get().focus();
-         findTextBox_.focus();
-         findTextBox_.selectAll();
-         return;
+         if (e.getKeyCode() == 'F')
+         {
+            e.preventDefault();
+            e.stopPropagation();
+            WindowEx.get().focus();
+            findTextBox_.focus();
+            findTextBox_.selectAll();
+            return;
+         }
+         else if (e.getKeyCode() == KeyCode.ENTER)
+         {
+            // extract the selected code, if any
+            String code = frame_.getWindow().getSelectedText();
+            if (code.isEmpty())
+               return;
+            
+            // send it to the console
+            events_.fireEvent(new SendToConsoleEvent(
+                  code, 
+                  true, // execute
+                  false // focus
+                  ));
+            return;
+         }
       }
+      
       
       // don't let backspace perform browser back
       DomUtils.preventBackspaceCausingBrowserBack(e);
@@ -687,6 +711,7 @@ public class HelpPane extends WorkbenchPane
    private final Provider<HelpSearch> searchProvider_ ;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
+   private final EventBus events_;
    private boolean navigated_;
    private boolean initialized_;
    private String targetUrl_;
