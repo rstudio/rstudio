@@ -25,6 +25,8 @@
 * Implement support for changing editor tabs with the mouse wheel
 * Add option to knit in current working directory or project directory
 * 'Insert assignment operator' shortcut now works on Firefox
+* Cmd/Ctrl+Enter in Help pane now sends selected example code to console
+* View(vignette(...)) now opens editor with vignette source
 
 ### Bug Fixes
 
