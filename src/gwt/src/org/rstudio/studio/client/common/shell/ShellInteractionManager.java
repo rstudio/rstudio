@@ -203,8 +203,9 @@ public class ShellInteractionManager implements ShellOutputWriter
          int keyCode = event.getNativeKeyCode();
          int modifiers = KeyboardShortcut.getModifierValue(
                                                 event.getNativeEvent());
-         
-         if (historyEnabled_ && event.isUpArrow() && modifiers == 0)
+         if (historyEnabled_ && 
+               ((event.isUpArrow() && modifiers == 0) ||
+                (keyCode == 'P'    && modifiers == KeyboardShortcut.CTRL)))
          {
             InputEditorDisplay input = display_.getInputEditorDisplay();
             if (input.getCurrentLineNum() == 0)
@@ -215,7 +216,9 @@ public class ShellInteractionManager implements ShellOutputWriter
                navigateHistory(-1);
             }
          }
-         else if (historyEnabled_ && event.isDownArrow() && modifiers == 0)
+         else if (historyEnabled_ && 
+               ((event.isDownArrow() && modifiers == 0) ||
+                (keyCode == 'N'      && modifiers == KeyboardShortcut.CTRL)))
          {
             InputEditorDisplay input = display_.getInputEditorDisplay();
             if (input.getCurrentLineNum() == input.getCurrentLineCount() - 1)
