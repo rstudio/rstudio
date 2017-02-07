@@ -235,7 +235,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
     */
    private String addBusyIndicator(String caption, boolean busy)
    {
-      if (busy == true)
+      if (busy)
          return caption + " (busy)";
       else
          return caption;
