@@ -1,7 +1,7 @@
 /*
  * gridstyles.css
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -304,7 +304,7 @@ th:focus {
     display: table;
 }
 
-.cell {
+.cell, .headerCell {
     position: relative;
 }
 
@@ -383,9 +383,16 @@ table.dataTable thead th.columnClickable .columnTypeHeader {
     position: absolute;
     height: 23px;   
     top: -4px;
-    right: -7px;
     width: 5px;
     cursor: ew-resize;
     z-index: 5;
+}
+
+.cell .resizer {
+    right: -7px;
+}
+
+.headerCell .resizer {
+    right: -28px;
 }
 
