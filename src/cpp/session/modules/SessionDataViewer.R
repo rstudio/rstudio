@@ -585,6 +585,11 @@
      invisible(.Call("rs_viewFunction", x, title, namespace))
      return(invisible(NULL))
    }
+   else if (inherits(x, "vignette"))
+   {
+     file.edit(file.path(x$Dir, x$File))
+     return(invisible(NULL))
+   }
 
    # test for coercion to data frame--the goal of this expression is just to
    # raise an error early if the object can't be made into a frame; don't

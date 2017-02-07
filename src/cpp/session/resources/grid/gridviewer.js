@@ -875,7 +875,7 @@ var initDataTable = function(resCols, data) {
         "targets": 0,
         "sClass": "first-child",
         "width": "4em",
-        "orderable": false
+        "orderable": true
       }];
   }
   else {

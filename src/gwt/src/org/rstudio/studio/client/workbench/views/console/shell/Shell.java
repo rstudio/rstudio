@@ -504,7 +504,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
          int modifiers = KeyboardShortcut.getModifierValue(event.getNativeEvent());
 
-         if (event.isUpArrow() && modifiers == 0)
+         if ((event.isUpArrow() && modifiers == 0) ||
+             (keyCode == 'P'    && modifiers == KeyboardShortcut.CTRL))
          {
             if ((input_.getCurrentLineNum() == 0) || input_.isCursorAtEnd())
             {
@@ -514,7 +515,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                navigateHistory(-1);
             }
          }
-         else if (event.isDownArrow() && modifiers == 0)
+         else if ((event.isDownArrow() && modifiers == 0) ||
+                  (keyCode == 'N'      && modifiers == KeyboardShortcut.CTRL))
          {
             if ((input_.getCurrentLineNum() == input_.getCurrentLineCount() - 1)
                 || input_.isCursorAtEnd())
