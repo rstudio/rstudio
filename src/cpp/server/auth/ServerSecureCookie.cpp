@@ -236,6 +236,9 @@ void remove(const http::Request& request,
    // expire delete
    cookie.setExpiresDelete();
 
+   // secure cookies are set http only, so clear them that way
+   cookie.setHttpOnly();
+
    // add to response
    pResponse->addCookie(cookie);
 }
