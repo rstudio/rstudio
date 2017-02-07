@@ -312,12 +312,4 @@ options(connectionObserver = list(
    .rs.success()
 })
 
-.rs.addFunction("updateNewConnectionDialog", function(code)
-{
-   .rs.enqueClientEvent("update_new_connection_dialog", list(
-      "code" = .rs.scalar(code)
-   ))
-
-   NULL
-})
 
