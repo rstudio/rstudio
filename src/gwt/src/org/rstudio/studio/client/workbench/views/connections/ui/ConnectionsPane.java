@@ -66,7 +66,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
-import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent.Handler;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
@@ -78,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOpt
 
 public class ConnectionsPane extends WorkbenchPane 
                              implements ConnectionsPresenter.Display,
-                                        ConnectionOpenedEvent.Handler,
                                         ActiveConnectionsChangedEvent.Handler
 {
    @Inject
@@ -89,8 +87,7 @@ public class ConnectionsPane extends WorkbenchPane
       commands_ = commands;
       eventBus_ = eventBus;
 
-      // track connection events to update the toolbar
-      eventBus_.addHandler(ConnectionOpenedEvent.TYPE, this);
+      // track activation events to update the toolbar
       eventBus_.addHandler(ActiveConnectionsChangedEvent.TYPE, this);
       
       // create main panel
@@ -689,11 +686,7 @@ public class ConnectionsPane extends WorkbenchPane
       }
       
       sortConnections();
-   }
-
-   @Override
-   public void onConnectionOpened(ConnectionOpenedEvent event)
-   {
-      installConnectionExplorerToolbar(event.getConnection());
+      
+      installConnectionExplorerToolbar(exploredConnection_);
    }
 }
