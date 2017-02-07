@@ -1061,6 +1061,11 @@ var addResizeHandlers = function(ele) {
          if (rowNumbers)
             col++;
 
+         // disable propagation of clicks from the resizer to the outer cell
+         $(original.target).on("click", function(evt) {
+            return false;
+         });
+
          initX = original.clientX;
          initColWidth = $("#data_cols th:nth-child(" + col + ")").width();
          initTableWidth = $("#rsGridData").width();
