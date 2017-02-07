@@ -65,12 +65,6 @@ public class TerminalTabPresenter extends BusyPresenter
       void repopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
       /**
-       * @return Are any terminals busy such that showing a progress 
-       * indicator makes sense.
-       */
-      boolean busyTerminals();
-
-      /**
        * @return Are any terminals active (a terminal whose shell has any
        * subprocesses is considered active and should not silently killed).
        */

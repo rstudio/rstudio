@@ -110,8 +110,6 @@ public:
    void setHasChildProcs(bool hasChildProcs) { childProcs_ = hasChildProcs; }
    bool getHasChildProcs() const { return childProcs_; }
 
-   void onSuspend();
-
    core::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcessInfo> fromJson(core::json::Object& obj);
 

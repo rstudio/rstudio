@@ -1,7 +1,7 @@
 /*
  * TerminalSession.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermWidget;
@@ -56,8 +55,7 @@ public class TerminalSession extends XTermWidget
                                         ResizeTerminalEvent.Handler,
                                         TerminalDataInputEvent.Handler,
                                         XTermTitleEvent.Handler,
-                                        SessionSerializationHandler,
-                                        TerminalSubprocEvent.Handler
+                                        SessionSerializationHandler
 {
    /**
     * 
@@ -131,7 +129,6 @@ public class TerminalSession extends XTermWidget
             addHandlerRegistration(addResizeTerminalHandler(TerminalSession.this));
             addHandlerRegistration(addXTermTitleHandler(TerminalSession.this));
             addHandlerRegistration(eventBus_.addHandler(SessionSerializationEvent.TYPE, TerminalSession.this));
-            addHandlerRegistration(eventBus_.addHandler(TerminalSubprocEvent.TYPE, TerminalSession.this));
 
             // We keep this handler connected after a terminal disconnect so
             // user input can wake up a suspended session
@@ -421,6 +418,16 @@ public class TerminalSession extends XTermWidget
    }
 
    /**
+    * Set state of hasChildProcs flag
+    * @param hasChildProcs new state for flag
+    */
+   public void setHasChildProcs(boolean hasChildProcs)
+   {
+      hasChildProcs_ = hasChildProcs;
+   }
+
+
+   /**
     * The sequence number of the terminal, used in creation of the default
     * title, e.g. "Terminal 3".
     * @return The sequence number that was passed to the constructor.
@@ -457,12 +464,6 @@ public class TerminalSession extends XTermWidget
          disconnect();
          break;
       }
-   }
-
-   @Override
-   public void onTerminalSubprocs(TerminalSubprocEvent event)
-   {
-      hasChildProcs_ = event.hasSubprocs();
    }
 
    /**

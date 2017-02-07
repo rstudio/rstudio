@@ -34,9 +34,10 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStoppedEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalTitleEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -63,7 +64,8 @@ public class TerminalPane extends WorkbenchPane
                                      TerminalSessionStoppedEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
-                                     SessionSerializationHandler
+                                     SessionSerializationHandler,
+                                     TerminalSubprocEvent.Handler
 {
    @Inject
    protected TerminalPane(EventBus events,
@@ -79,6 +81,8 @@ public class TerminalPane extends WorkbenchPane
       events_.addHandler(SwitchToTerminalEvent.TYPE, this);
       events_.addHandler(TerminalTitleEvent.TYPE, this);
       events_.addHandler(SessionSerializationEvent.TYPE, this);
+      events_.addHandler(TerminalSubprocEvent.TYPE, this);
+
       ensureWidget();
    }
 
@@ -245,15 +249,6 @@ public class TerminalPane extends WorkbenchPane
       // not running anything, it is fair game for being killed via a
       // session suspend.
       return terminals_.haveSubprocs();
-   }
-
-   @Override
-   public boolean busyTerminals()
-   {
-      // TODO (gary) implement busy detection, ideally treating long-running
-      // non-interactive programs as "busy" but not full-screen programs like
-      // text editors, tmux, etc.
-      return false;
    }
 
    @Override
@@ -599,6 +594,16 @@ public class TerminalPane extends WorkbenchPane
             terminal.connect();
          }
       });
+   }
+
+   @Override
+   public void onTerminalSubprocs(TerminalSubprocEvent event)
+   {
+      TerminalSession terminal = loadedTerminalWithHandle(event.getHandle());
+      if (terminal != null)
+      {
+         terminal.setHasChildProcs(event.hasSubprocs());
+      }
    }
 
    private DeckLayoutPanel terminalSessionsPanel_;

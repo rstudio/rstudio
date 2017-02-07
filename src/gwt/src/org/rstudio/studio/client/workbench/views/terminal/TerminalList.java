@@ -1,7 +1,7 @@
 /*
  * TerminalList.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,6 @@ import com.google.inject.Provider;
  */
 public class TerminalList implements Iterable<String>,
                                      TerminalSubprocEvent.Handler
-
 {
    private static class TerminalMetadata
    {

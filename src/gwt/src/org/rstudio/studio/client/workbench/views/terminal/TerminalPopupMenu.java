@@ -1,5 +1,5 @@
 /*
- * ActiveTerminalToolbarButton.java
+ * TerminalPopupMenu.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -23,6 +23,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.TerminalBusyEvent;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -38,6 +39,16 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       terminals_ = terminals;
+
+      eventBus_.addHandler(TerminalBusyEvent.TYPE,
+                          new TerminalBusyEvent.Handler()
+      {
+         @Override
+         public void onTerminalBusy(TerminalBusyEvent event)
+         {
+            refreshActiveTerminal();
+         }
+      });
    }
 
    @Inject
@@ -76,10 +87,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
             }
 
             // visual indicator that terminal has processes running
-            if (terminals_.getHasSubprocs(handle))
-            {
-               caption = caption + "*";
-            }
+            caption = addBusyIndicator(caption, terminals_.getHasSubprocs(handle));
 
             String menuHtml = AppCommand.formatMenuLabel(
                   null,              /*icon*/
@@ -127,11 +135,33 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
     */
    public void setActiveTerminal(String caption, String handle)
    {
-      activeTerminalCaption_ = caption;
       activeTerminalHandle_ = handle;
-      toolbarButton_.setText(trimCaption(activeTerminalCaption_));
+      String trimmed = trimCaption(caption);
+      if (handle != null)
+      {
+         trimmed = addBusyIndicator(trimmed, terminals_.getHasSubprocs(handle));
+      }
+      toolbarButton_.setText(trimmed);
    }
-   
+
+   /**
+    * Refresh caption of active terminal based on busy status.
+    * @param caption caption of the active terminal
+    * @param handle handle of the active terminal
+    */
+   private void refreshActiveTerminal()
+   {
+      if (toolbarButton_ == null || activeTerminalHandle_ == null)
+         return;
+      
+      String caption = terminals_.getCaption(activeTerminalHandle_);
+      if (caption == null)
+         return;
+      
+      toolbarButton_.setText(addBusyIndicator(trimCaption(caption), 
+            terminals_.getHasSubprocs(activeTerminalHandle_)));
+   }
+    
    /**
     * set state to indicate no active terminals
     */
@@ -197,6 +227,19 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          }
       }
    }
+   
+   /**
+    * Add indicator of busy status to a caption.
+    * @param caption
+    * @return Caption with busy indicator added.
+    */
+   private String addBusyIndicator(String caption, boolean busy)
+   {
+      if (busy == true)
+         return caption + " (busy)";
+      else
+         return caption;
+   }
 
    private String trimCaption(String caption)
    {
@@ -214,7 +257,6 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private ToolbarButton toolbarButton_;
    private Commands commands_;
    private EventBus eventBus_;
-   private String activeTerminalCaption_;
    private String activeTerminalHandle_;
    private TerminalList terminals_;
 }
