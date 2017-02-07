@@ -1,7 +1,7 @@
 /*
  * ConsolePane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -105,6 +105,7 @@ public class ConsolePane extends WorkbenchPane
 
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
+      toolbar.addRightWidget(commands_.consoleClear().createToolbarButton());
       
       return toolbar;
    }
