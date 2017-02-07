@@ -673,7 +673,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return input_.addKeyPressHandler(handler) ;
    }
    
-   
+   @Override
+   public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
+   {
+      return input_.addCapturingKeyUpHandler(handler);
+   }
+
+   @Override
+   public HandlerRegistration addKeyUpHandler(KeyUpHandler handler)
+   {
+      return input_.addKeyUpHandler(handler);
+   }
+
    public int getCharacterWidth()
    {
       return DomUtils.getCharacterWidth(getElement(), styles_.console());

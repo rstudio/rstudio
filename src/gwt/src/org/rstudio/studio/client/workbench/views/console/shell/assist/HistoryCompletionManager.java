@@ -1,7 +1,7 @@
 /*
  * HistoryCompletionManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import org.rstudio.core.client.Invalidation;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyDownPreviewHandler;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyPressPreviewHandler;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -36,11 +38,20 @@ import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOper
 public class HistoryCompletionManager implements KeyDownPreviewHandler,
                                                  KeyPressPreviewHandler
 {
+   public enum PopupMode
+   {
+      PopupNone,          // popup is not showing
+      PopupNoResults,     // popup is showing but with no results
+      PopupIncremental,   // popup is showing incremental infix search
+      PopupPrefix         // popup is showing prefix search
+   };
+
    public HistoryCompletionManager(InputEditorDisplay input,
                                    HistoryServerOperations server)
    {
       input_ = input;
       server_ = server;
+      mode_ = PopupMode.PopupNone;
    }
 
    public boolean previewKeyDown(NativeEvent event)
@@ -51,6 +62,11 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
              && (event.getCtrlKey() || event.getMetaKey()))
          {
             beginSuggest();
+            return true;
+         }
+         else if (event.getKeyCode() == KeyCodes.KEY_R && event.getCtrlKey())
+         {
+            beginSearch();
             return true;
          }
       }
@@ -71,7 +87,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          }
          else if (event.getKeyCode() == KeyCodes.KEY_ENTER)
          {
-            input_.setText(popup_.getSelectedValue());
+            input_.setText(popup_.getSelectedValue().getHistory());
             dismiss();
             return true;
          }
@@ -103,7 +119,9 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             return true ;
          }
 
-         dismiss();
+         if (mode_ != PopupMode.PopupIncremental)
+            dismiss();
+
          return false;
       }
 
@@ -116,82 +134,156 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       {
          popup_.hide();
          popup_ = null;
+         mode_ = PopupMode.PopupNone;
       }
    }
 
-   private void beginSuggest()
+   public void beginSuggest()
    {
-      historyRequestInvalidation_.invalidate();
-      final Token token = historyRequestInvalidation_.getInvalidationToken();
-
-      String value = input_.getText();
       server_.searchHistoryArchiveByPrefix(
-            value, 20, true,
-            new SimpleRequestCallback<RpcObjectList<HistoryEntry>>()
-            {
-               @Override
-               public void onResponseReceived(RpcObjectList<HistoryEntry> resp)
-               {
-                  if (token.isInvalid())
-                     return;
-
-                  if (resp.length() == 0)
-                  {
-                     popup_ = new CompletionListPopupPanel(new String[0]);
-                     popup_.setText("(No matching commands)");
-                  }
-                  else
-                  {
-                     String[] entries = new String[resp.length()];
-                     for (int i = 0; i < entries.length; i++)
-                        entries[i] = resp.get(entries.length - i - 1).getCommand();
-                     popup_ = new CompletionListPopupPanel(entries);
-                  }
-
-                  popup_.setMaxWidth(input_.getBounds().getWidth());
-                  popup_.setPopupPositionAndShow(new PositionCallback()
-                  {
-                     public void setPosition(int offsetWidth, int offsetHeight)
-                     {
-                        Rectangle bounds = input_.getBounds();
-
-                        int top = bounds.getTop() - offsetHeight;
-                        if (top < 20)
-                           top = bounds.getBottom();
-
-                        popup_.selectLast();
-                        popup_.setPopupPosition(bounds.getLeft() - 6, top);
-                     }
-                  });
-
-                  popup_.addSelectionCommitHandler(new SelectionCommitHandler<String>()
-                  {
-                     public void onSelectionCommit(SelectionCommitEvent<String> e)
-                     {
-                        input_.setText(e.getSelectedItem());
-                        dismiss();
-                     }
-                  });
-                  
-                  popup_.addCloseHandler(new CloseHandler<PopupPanel>() {
-
-                     @Override
-                     public void onClose(CloseEvent<PopupPanel> event)
-                     {
-                        popup_ = null;          
-                     }
-                     
-                  });
-               }
-            });
+            input_.getText(), 20, true, 
+            new HistoryCallback(input_.getText(), PopupMode.PopupPrefix));
+   }
+   
+   public void beginSearch()
+   {
+      server_.searchHistoryArchive(
+            input_.getText(), 20, 
+            new HistoryCallback(input_.getText(), PopupMode.PopupIncremental));
    }
 
    public boolean previewKeyPress(char charCode)
    {
       return false;
    }
+   
+   public PopupMode getMode()
+   {
+      return mode_;
+   }
 
-   private CompletionListPopupPanel popup_;
+   private class HistoryCallback 
+           extends SimpleRequestCallback<RpcObjectList<HistoryEntry>>
+   {
+      public HistoryCallback(String text, PopupMode desiredMode)
+      {
+         historyRequestInvalidation_.invalidate();
+         token_ = historyRequestInvalidation_.getInvalidationToken();
+         text_ = text;
+         desiredMode_ = desiredMode;
+      }
+
+      @Override
+      public void onResponseReceived(RpcObjectList<HistoryEntry> resp)
+      {
+         if (token_.isInvalid())
+            return;
+         
+         if (mode_ != PopupMode.PopupNone)
+            dismiss();
+
+         if (resp.length() == 0)
+         {
+            popup_ = new CompletionListPopupPanel<HistoryMatch>(
+                  new HistoryMatch[0]);
+            popup_.setText("(No matching commands)");
+            mode_ = PopupMode.PopupNoResults;
+         }
+         else
+         {
+            HistoryMatch[] entries = new HistoryMatch[resp.length()];
+            for (int i = 0; i < entries.length; i++)
+               entries[i] = new HistoryMatch(resp.get(i).getCommand(), text_);
+            popup_ = new CompletionListPopupPanel<HistoryMatch>(entries);
+            mode_ = desiredMode_;
+         }
+
+         popup_.setMaxWidth(input_.getBounds().getWidth());
+         popup_.setPopupPositionAndShow(new PositionCallback()
+         {
+            public void setPosition(int offsetWidth, int offsetHeight)
+            {
+               Rectangle bounds = input_.getBounds();
+
+               int top = bounds.getTop() - offsetHeight;
+               if (top < 20)
+                  top = bounds.getBottom();
+
+               popup_.selectLast();
+               popup_.setPopupPosition(bounds.getLeft() - 6, top);
+            }
+         });
+
+         popup_.addSelectionCommitHandler(
+               new SelectionCommitHandler<HistoryMatch>()
+         {
+            public void onSelectionCommit(SelectionCommitEvent<HistoryMatch> e)
+            {
+               input_.setText(e.getSelectedItem().getHistory());
+               dismiss();
+            }
+         });
+         
+         popup_.addCloseHandler(new CloseHandler<PopupPanel>() {
+
+            @Override
+            public void onClose(CloseEvent<PopupPanel> event)
+            {
+               popup_ = null;
+            }
+            
+         });
+      }
+
+      private final PopupMode desiredMode_;
+      private final Token token_;
+      private final String text_;
+   }
+   
+   private class HistoryMatch
+   {
+      public HistoryMatch(String history, String match)
+      {
+         history_ = history;
+         match_ = match;
+      }
+      
+      public String toString()
+      {
+         int idx = history_.indexOf(match_);
+         if (idx >= 0)
+         {
+            // if we can find the match, highlight it
+            return
+               SafeHtmlUtils.htmlEscape(
+                     history_.substring(0, idx)) +
+               "<span class=\"" + 
+               ConsoleResources.INSTANCE.consoleStyles().searchMatch() +
+               "\">" +
+               SafeHtmlUtils.htmlEscape(
+                     history_.substring(idx, 
+                                          idx + match_.length())) +
+               "</span>" +
+               SafeHtmlUtils.htmlEscape(
+                     history_.substring(idx + match_.length(), 
+                                          history_.length()));
+         }
+
+         // if we can't, just escape
+         return SafeHtmlUtils.htmlEscape(match_);
+      }
+      
+      public String getHistory()
+      {
+         return history_;
+      }
+      
+      private final String history_;
+      private final String match_;
+   }
+   
+   private CompletionListPopupPanel<HistoryMatch> popup_;
+   private PopupMode mode_;
    private final InputEditorDisplay input_;
    private final HistoryServerOperations server_;
    private final Invalidation historyRequestInvalidation_ = new Invalidation();

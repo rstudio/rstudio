@@ -20,23 +20,23 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 
-public class CompletionListPopupPanel extends ThemedPopupPanel
-   implements HasSelectionCommitHandlers<String>
+public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
+   implements HasSelectionCommitHandlers<TItem>
 {
-   public CompletionListPopupPanel(String[] entries)
+   public CompletionListPopupPanel(TItem[] entries)
    {
       super(true);
-      list_ = new CompletionList<String>(entries, 10, false, true);
+      list_ = new CompletionList<TItem>(entries, 10, true, true);
       setWidget(list_);
    }
 
    public HandlerRegistration addSelectionCommitHandler(
-         SelectionCommitHandler<String> handler)
+         SelectionCommitHandler<TItem> handler)
    {
       return list_.addSelectionCommitHandler(handler);
    }
 
-   public String getSelectedValue()
+   public TItem getSelectedValue()
    {
       if (list_ == null || !list_.isAttached())
          return null ;
@@ -86,5 +86,5 @@ public class CompletionListPopupPanel extends ThemedPopupPanel
       setWidget(html);
    }
 
-   private final CompletionList<String> list_;
+   private final CompletionList<TItem> list_;
 }
