@@ -252,15 +252,6 @@ public class TerminalPane extends WorkbenchPane
    }
 
    @Override
-   public boolean busyTerminals()
-   {
-      // TODO (gary) implement busy detection, ideally treating long-running
-      // non-interactive programs as "busy" but not full-screen programs like
-      // text editors, tmux, etc.
-      return false;
-   }
-
-   @Override
    public void terminateAllTerminals()
    {
       // kill any terminal server processes, and remove them from the server-
