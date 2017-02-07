@@ -1129,7 +1129,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
 
 .rs.addFunction("downloadFileExtraWithCurlArgs", function() {
-   newArgs <- "-L -f"
+   newArgs <- "-L -f -g"
    curArgs <- getOption("download.file.extra")
    if (!is.null(curArgs) && !grepl(newArgs, curArgs, fixed = TRUE))
       curArgs <- paste(newArgs, curArgs)
