@@ -730,10 +730,14 @@ var createFilterPopup = function() {
 var createHeader = function(idx, col) {
   var th = document.createElement("th");
 
+  // wrapper for cell contents
+  var interior = document.createElement("div");
+  interior.className = "headerCell";
+
   // add the title
   var title = document.createElement("div");
   title.textContent = col.col_name;
-  th.appendChild(title);
+  interior.appendChild(title);
   th.title = "column " + idx + ": " + col.col_type;
   if (col.col_type === "numeric") {
     th.title += " with range " + col.col_min + " - " + col.col_max;
@@ -751,8 +755,16 @@ var createHeader = function(idx, col) {
     label.className = "colLabel";  
     label.textContent = col.col_label;
     label.title = col.col_label;
-    th.appendChild(label);
+    interior.appendChild(label);
   }
+
+  // add a grabber for resizing
+  var resizer = document.createElement("div");
+  resizer.className = "resizer";
+  resizer.setAttribute("data-col", idx);
+  interior.appendChild(resizer);
+
+  th.appendChild(interior);
 
   return th;
 };
@@ -831,6 +843,7 @@ var initDataTable = function(resCols, data) {
       textCols.push(j);
     }
   }
+  addResizeHandlers(thead);
   var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
   var dataTableAjax = null;
@@ -1048,12 +1061,18 @@ var addResizeHandlers = function(ele) {
          if (rowNumbers)
             col++;
 
+         // disable propagation of clicks from the resizer to the outer cell
+         $(original.target).on("click", function(evt) {
+            return false;
+         });
+
          initX = original.clientX;
          initColWidth = $("#data_cols th:nth-child(" + col + ")").width();
          initTableWidth = $("#rsGridData").width();
          boundsExceeded = 0;
          $("#rsGridData td:nth-child(" + col + ")").css(
             "border-right-color", "#A0A0FF");
+         evt.preventDefault();
       }
    });
    $(ele).on("mousemove", function(evt) {
@@ -1061,12 +1080,20 @@ var addResizeHandlers = function(ele) {
          // if we have an active resize column, resize it by the amount given
          var original = evt.originalEvent;
          applyDelta(original.clientX - initX);
+         evt.preventDefault();
+      }
+   });
+   $(ele).on("click", function(evt) {
+      if (col !== null) {
+         // ignore clicks while resizing
+         evt.preventDefault();
       }
    });
    $(ele).on("mouseup", function(evt) {
       if (col !== null) {
          // end resizing if active
          endResize();
+         evt.preventDefault();
       }
    });
    $(ele).on("mouseleave", function(evt) {
@@ -1149,7 +1176,7 @@ var bootstrap = function(data) {
             var eWithNumber = e;
             eWithNumber[""] = idx + 1;
             return eWithNumber;
-          })
+          });
         }
         else {
           data.data = [
