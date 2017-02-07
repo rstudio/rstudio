@@ -527,7 +527,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                navigateHistory(1);
             }
          }
-         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
+         else if (keyCode == KeyCodes.KEY_ENTER && (
+                     modifiers == 0 ||
+                     modifiers == KeyboardShortcut.CTRL ||
+                     modifiers == KeyboardShortcut.META))
          {
             event.preventDefault();
             event.stopPropagation();
