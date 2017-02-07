@@ -26,7 +26,6 @@ import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChange
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 
 public class ConsoleTabPanel extends WorkbenchTabPanel
@@ -46,14 +44,12 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
                           UIPrefs uiPrefs,
-                          Session session,
-                          Commands commands)
+                          Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
       consoleInterruptProfiler_ = consoleInterruptProfiler;
       uiPrefs_ = uiPrefs;
       session_ = session;
-      commands_ = commands;
    }
    
    public ConsoleTabPanel(final PrimaryWindowFrame owner,
@@ -329,11 +325,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                   consoleInterruptProfiler_.getWidth(),
                   consoleInterruptProfiler_.getHeight(),
                   1);
-            ImageResource clearImage = commands_.consoleClear().getImageResource();
-            owner_.setContextButton(commands_.consoleClear().createToolbarButton(),
-                                    clearImage.getWidth(),
-                                    clearImage.getHeight(),
-                                    2);
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
             consolePane_.setVisible(true);
@@ -344,7 +335,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             owner_.setFillWidget(this);
             owner_.setContextButton(null, 0, 0, 0);
             owner_.setContextButton(null, 0, 0, 1);
-            owner_.setContextButton(null, 0, 0, 2);
          }
       }
    }
@@ -371,5 +361,4 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean consoleOnly_;
    private UIPrefs uiPrefs_;
    private Session session_;
-   private Commands commands_;
 }

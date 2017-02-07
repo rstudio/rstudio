@@ -22,6 +22,7 @@ import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.XTermTitleEvent;
@@ -57,11 +58,11 @@ public class XTermWidget extends Widget implements RequiresResize,
    {
       // Create an element to hold the terminal widget
       setElement(Document.get().createDivElement());
+      setStyleName(ConsoleResources.INSTANCE.consoleStyles().console());
       getElement().setTabIndex(0);
       getElement().getStyle().setMargin(0, Unit.PX);
       getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       getElement().addClassName(XTERM_CLASS);
-      addStyleName("ace_editor");
 
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());

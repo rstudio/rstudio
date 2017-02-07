@@ -31,7 +31,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.terminal.events.SwitchToTerminalEvent;
@@ -71,13 +70,11 @@ public class TerminalPane extends WorkbenchPane
    @Inject
    protected TerminalPane(EventBus events,
                           GlobalDisplay globalDisplay,
-                          Commands commands,
                           WorkbenchServerOperations server)
    {
       super("Terminal");
       events_ = events;
       globalDisplay_ = globalDisplay;
-      commands_ = commands;
       server_ = server;
       events_.addHandler(TerminalSessionStartedEvent.TYPE, this);
       events_.addHandler(TerminalSessionStoppedEvent.TYPE, this);
@@ -107,7 +104,6 @@ public class TerminalPane extends WorkbenchPane
       terminalTitle_ = new Label();
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
-      toolbar.addRightWidget(commands_.clearTerminalScrollbackBuffer().createToolbarButton());
       return toolbar;
    }
 
@@ -619,6 +615,5 @@ public class TerminalPane extends WorkbenchPane
    // Injected ----  
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private Commands commands_;
    private WorkbenchServerOperations server_;
 }

@@ -1075,6 +1075,21 @@ assign(x = ".rs.acCompletionTypes",
          {
             allNames <- dollarNamesMethod(object)
             
+            # rJava will include closing parentheses as part of the
+            # completion list -- clean those up and use them to infer
+            # symbol types
+            if ("rJava" %in% loadedNamespaces() &&
+                identical(environment(dollarNamesMethod), asNamespace("rJava")))
+            {
+               types <- ifelse(
+                  grepl("[()]$", allNames),
+                  .rs.acCompletionTypes$FUNCTION,
+                  .rs.acCompletionTypes$UNKNOWN
+               )
+               allNames <- gsub("[()]*$", "", allNames)
+               attr(allNames, "types") <- types
+            }
+            
             # check for custom helpHandler
             helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
          }
