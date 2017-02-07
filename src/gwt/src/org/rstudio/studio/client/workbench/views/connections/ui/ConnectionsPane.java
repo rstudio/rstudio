@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -64,6 +65,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
+import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
+import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent.Handler;
 import org.rstudio.studio.client.workbench.views.connections.events.ExploreConnectionEvent;
@@ -74,7 +77,9 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 
 public class ConnectionsPane extends WorkbenchPane 
-                             implements ConnectionsPresenter.Display
+                             implements ConnectionsPresenter.Display,
+                                        ConnectionOpenedEvent.Handler,
+                                        ActiveConnectionsChangedEvent.Handler
 {
    @Inject
    public ConnectionsPane(Commands commands, EventBus eventBus)
@@ -83,6 +88,10 @@ public class ConnectionsPane extends WorkbenchPane
       super("Connections");
       commands_ = commands;
       eventBus_ = eventBus;
+
+      // track connection events to update the toolbar
+      eventBus_.addHandler(ConnectionOpenedEvent.TYPE, this);
+      eventBus_.addHandler(ActiveConnectionsChangedEvent.TYPE, this);
       
       // create main panel
       mainPanel_ = new LayoutPanel();
@@ -667,5 +676,24 @@ public class ConnectionsPane extends WorkbenchPane
    
    static {
       RES.dataGridStyle().ensureInjected();
+   }
+
+   @Override
+   public void onActiveConnectionsChanged(ActiveConnectionsChangedEvent event)
+   {
+      activeConnections_.clear();
+      
+      JsArray<ConnectionId> connections = event.getActiveConnections();
+      for (int idxConn = 0; idxConn < connections.length(); idxConn++) {
+         activeConnections_.add(connections.get(idxConn));
+      }
+      
+      sortConnections();
+   }
+
+   @Override
+   public void onConnectionOpened(ConnectionOpenedEvent event)
+   {
+      installConnectionExplorerToolbar(event.getConnection());
    }
 }
