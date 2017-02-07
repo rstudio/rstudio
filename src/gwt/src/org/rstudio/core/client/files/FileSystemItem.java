@@ -74,6 +74,7 @@ public class FileSystemItem extends JavaScriptObject
       return getNameFromPath(getRawPath());
    }
 
+   // NOTE: returns extension with '.' prefix.
    public final String getExtension()
    {
       return getExtensionFromPath(getName());
