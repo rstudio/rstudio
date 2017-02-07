@@ -38,6 +38,11 @@ extern "C" void Rf_mainloop(void);
 extern "C" void* R_GlobalContext;
 
 typedef struct SEXPREC *SEXP;
+typedef struct sigjmp_buf {
+   jmp_buf buf;
+   int sigmask;
+   int savedmask;
+} sigjmp_buf;
 
 #else
 
@@ -49,16 +54,7 @@ typedef struct SEXPREC *SEXP;
 typedef struct RCNTXT_33 {
     struct RCNTXT_33 *nextcontext;
     int callflag;
-#ifdef _WIN32
-    struct
-    {
-      jmp_buf buf;
-      int sigmask;
-      int savedmask;
-    } cjumpbuf;
-#else
     sigjmp_buf cjmpbuf;
-#endif
     int cstacktop;
     int evaldepth;
     SEXP promargs;
@@ -85,16 +81,7 @@ typedef struct RCNTXT_33 {
 typedef struct RCNTXT_32 {
     struct RCNTXT_32 *nextcontext;
     int callflag;
-#ifdef _WIN32
-    struct
-    {
-      jmp_buf buf;
-      int sigmask;
-      int savedmask;
-    } cjumpbuf;
-#else
     sigjmp_buf cjmpbuf;
-#endif
     int cstacktop;
     int evaldepth;
     SEXP promargs;
