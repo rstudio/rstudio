@@ -3063,7 +3063,7 @@ public class AceEditor implements DocDisplay,
       for (int i = tokens.length() - 1; i >= 0; i--)
       {
          Token t = tokens.get(i);
-         if (t.hasType("text", "comment"))
+         if (t.hasType("text", "comment", "virtual-comment"))
             continue;
          if (t.getType()  == "keyword.operator" ||
              t.getType()  == "keyword.operator.infix" ||
@@ -3078,7 +3078,7 @@ public class AceEditor implements DocDisplay,
    {
       JsArray<Token> tokens = getSession().getTokens(row);
       for (int i = 0, n = tokens.length(); i < n; i++)
-         if (!tokens.get(i).hasType("text", "comment"))
+         if (!tokens.get(i).hasType("text", "comment", "virtual-comment"))
             return false;
       return true;
    }
@@ -3117,7 +3117,7 @@ public class AceEditor implements DocDisplay,
       for (int i = 0; i < n; i++)
       {
          Token token = tokens.get(n - i - 1);
-         if (token.hasType("comment", "text"))
+         if (token.hasType("text", "comment", "virtual-comment"))
             continue;
          
          String tokenValue = token.getValue();
