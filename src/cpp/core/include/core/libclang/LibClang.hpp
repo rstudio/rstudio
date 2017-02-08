@@ -42,34 +42,34 @@ namespace libclang {
 
 struct LibraryVersion
 {
-   LibraryVersion() : major_(0), minor_(0), patch_(0) {}
-   LibraryVersion(int major, int minor, int patch)
-      : major_(major), minor_(minor), patch_(patch)
+   LibraryVersion() : versionMajor_(0), versionMinor_(0), versionPatch_(0) {}
+   LibraryVersion(int versionMajor, int versionMinor, int versionPatch)
+      : versionMajor_(versionMajor), versionMinor_(versionMinor), versionPatch_(versionPatch)
    {
    }
 
 
-   bool empty() const { return major_ == 0; }
+   bool empty() const { return versionMajor_ == 0; }
 
-   int major() const { return major_; }
-   int minor() const { return minor_; }
-   int patch() const { return patch_; }
+   int versionMajor() const { return versionMajor_; }
+   int versionMinor() const { return versionMinor_; }
+   int versionPatch() const { return versionPatch_; }
 
    bool operator<(const LibraryVersion& other) const
    {
-      if (major_ == other.major_ && minor_ == other.minor_)
-         return patch_ < other.patch_;
-      else if (major_ == other.major_)
-         return minor_ < other.minor_;
+      if (versionMajor_ == other.versionMajor_ && versionMinor_ == other.versionMinor_)
+         return versionPatch_ < other.versionPatch_;
+      else if (versionMajor_ == other.versionMajor_)
+         return versionMinor_ < other.versionMinor_;
       else
-         return major_ < other.major_;
+         return versionMajor_ < other.versionMajor_;
    }
 
    bool operator==(const LibraryVersion& other) const
    {
-      return major_ == other.major_ &&
-             minor_ == other.minor_ &&
-             patch_ == other.patch_;
+      return versionMajor_ == other.versionMajor_ &&
+             versionMinor_ == other.versionMinor_ &&
+             versionPatch_ == other.versionPatch_;
    }
 
    bool operator!=(const LibraryVersion& other) const
@@ -80,13 +80,13 @@ struct LibraryVersion
    std::string asString() const
    {
       boost::format fmt("%1%.%2%.%3%");
-      return boost::str(fmt % major_ % minor_ % patch_);
+      return boost::str(fmt % versionMajor_ % versionMinor_ % versionPatch_);
    }
 
 private:
-   const int major_;
-   const int minor_;
-   const int patch_;
+   const int versionMajor_;
+   const int versionMinor_;
+   const int versionPatch_;
 };
 
 
