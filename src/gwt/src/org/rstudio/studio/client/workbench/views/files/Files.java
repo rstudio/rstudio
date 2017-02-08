@@ -102,6 +102,12 @@ public class Files
             FileSystemItem initialDir,
             ProgressOperationWithInput<FileSystemItem> operation);
       
+      void showFilePicker(
+            String title,
+            RemoteFileSystemContext context,
+            FileSystemItem initialFile,
+            ProgressOperationWithInput<FileSystemItem> operation);
+      
       void showFileUpload(
                      String targetURL,
                      FileSystemItem targetDirectory, 
@@ -349,6 +355,46 @@ public class Files
                                     {
                                        view_.selectNone();
                                     }});
+   }
+   
+   @Handler
+   void onCopyFileTo()
+   {
+      final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
+      
+      // validate selection size
+      if (selectedFiles.size() == 0)
+         return;
+
+      if (selectedFiles.size() > 1)
+      {
+         globalDisplay_.showErrorMessage(
+                           "Multiple Items Selected", 
+                           "Please select a single file or folder to copy");
+         return;
+      }
+
+      view_.showFilePicker(
+                        "Choose Destination", 
+                        fileSystemContext_,
+                        currentPath_,
+                        new ProgressOperationWithInput<FileSystemItem>() {
+
+         public void execute(final FileSystemItem targetFile,
+                             final ProgressIndicator progress)
+         {
+            server_.copyFile(selectedFiles.get(0),
+                 targetFile,
+                 false,
+                 new VoidServerRequestCallback(progress) {
+                     @Override
+                     protected void onSuccess()
+                     {
+                        view_.selectNone();
+                     }
+                  });
+         }
+      });
    }
    
    
