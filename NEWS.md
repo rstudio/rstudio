@@ -29,10 +29,13 @@
 * View(vignette(...)) now opens editor with vignette source
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
 * Ctrl+R to search console history incrementally (like readline)
+* New "Copy To" command in Files pane to copy and rename in one step
+* Server Pro: Add option to disable file uploads
 
 ### Bug Fixes
 
 * Fixed an issue where dragging tabs out multiple times could revert contents to older version
 * macOS: fixed 'crash on wake' issue with late-2016 Macbooks
 * Fixed mangling of YAML header string values containing backticks 
+* File downloads from the internal browser are now saved correctly on Linux and Windows
 

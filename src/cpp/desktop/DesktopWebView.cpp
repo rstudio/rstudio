@@ -94,7 +94,7 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
    if (pReply && pReply->hasRawHeader("content-disposition"))
    {
       QString headerValue = QString::fromUtf8(pReply->rawHeader("content-disposition"));
-      QRegExp regexp(QString::fromUtf8("filename=(.+)"), Qt::CaseInsensitive);
+      QRegExp regexp(QString::fromUtf8("filename=\"?([^\"]+)\"?"), Qt::CaseInsensitive);
       if (regexp.indexIn(headerValue) >= 0)
       {
          defaultFileName = regexp.cap(1);
@@ -221,7 +221,14 @@ void WebView::unsupportedContent(QNetworkReply* pReply)
       else
       {
          // DownloadHelper frees itself when downloading is done
-         pDownloadHelper = new DownloadHelper(pReply, fileName);
+         if (pReply->isFinished())
+         {
+            DownloadHelper::handleDownload(pReply, fileName);
+         }
+         else
+         {
+            pDownloadHelper = new DownloadHelper(pReply, fileName);
+         }
       }
    }
 

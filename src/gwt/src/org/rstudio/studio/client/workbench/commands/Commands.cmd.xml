@@ -1856,6 +1856,13 @@ well as menu structures (for main menu and popup menus).
         desc="Copy selected file or folder"
         rebindable="false"/>
         
+   <cmd id="copyFileTo"
+        label="Copy Files To..."
+        menuLabel="Copy To..."
+        buttonLabel="Copy To"
+        desc="Copy selected file or folder to another folder"
+        rebindable="false"/>
+        
    <cmd id="moveFiles"
         label="Move Files..."
         menuLabel="Move..."

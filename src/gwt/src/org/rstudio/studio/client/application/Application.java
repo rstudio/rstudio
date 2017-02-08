@@ -747,6 +747,10 @@ public class Application implements ApplicationEventHandlers
       {
          commands_.exportFiles().remove();
       }
+      if (!sessionInfo.getAllowFileUploads())
+      {
+         commands_.uploadFile().remove();
+      }
       
       // disable external publishing if requested
       if (!SessionUtils.showExternalPublishUi(session_, uiPrefs_.get()))

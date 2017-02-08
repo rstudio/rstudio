@@ -301,6 +301,11 @@ public:
       return allowOverlay() || allowFileDownloads_;
    }
 
+   bool allowFileUploads() const
+   {
+      return allowOverlay() || allowFileUploads_;
+   }
+
    bool allowShell() const
    {
       return allowOverlay() || allowShell_;
@@ -574,6 +579,7 @@ private:
    core::FilePath resourcePath_;
 
    bool allowFileDownloads_;
+   bool allowFileUploads_;
    bool allowShell_;
    bool allowPackageInstallation_;
    bool allowVcs_;

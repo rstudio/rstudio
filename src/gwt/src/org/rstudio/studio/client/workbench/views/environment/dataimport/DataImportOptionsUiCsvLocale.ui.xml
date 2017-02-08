@@ -21,6 +21,9 @@
       td.spacedCell {
         padding-left: 10px;
       }
+      .listBox {
+        width: 90px;
+      }
    </ui:style>
 
    <g:HTMLPanel styleName="{style.dialog}">
@@ -36,7 +39,7 @@
                 <g:Label text="Encoding:" />
             </td>
             <td>
-                <g:ListBox ui:field="encoding_" />
+                <g:ListBox styleName="{style.listBox}" ui:field="encoding_" />
             </td>
          </tr>
          <tr>

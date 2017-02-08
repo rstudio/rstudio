@@ -223,6 +223,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("allow-file-downloads",
          value<bool>(&allowFileDownloads_)->default_value(true),
          "allow file downloads from the files pane")
+      ("allow-file-uploads",
+         value<bool>(&allowFileUploads_)->default_value(true),
+         "allow file uploads from the files pane")
       ("allow-remove-public-folder",
          value<bool>(&allowRemovePublicFolder_)->default_value(true),
          "allow removal of the user public folder")

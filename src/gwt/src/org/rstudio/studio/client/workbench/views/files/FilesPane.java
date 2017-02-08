@@ -183,6 +183,19 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                                 operation);
    }
    
+   public void showFilePicker(
+         String caption,
+         RemoteFileSystemContext fileSystemContext,
+         FileSystemItem initialFile,
+         ProgressOperationWithInput<FileSystemItem> operation)
+   {
+      fileDialogs_.saveFile(caption, 
+            fileSystemContext, 
+            initialFile, 
+            initialFile.getExtension(), false, 
+            operation);
+   }
+   
    public void showFileUpload(
                      String targetURL,
                      FileSystemItem targetDirectory, 

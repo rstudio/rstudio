@@ -204,6 +204,7 @@ public abstract class
    public abstract AppCommand newFolder();
    public abstract AppCommand uploadFile();
    public abstract AppCommand copyFile();
+   public abstract AppCommand copyFileTo();
    public abstract AppCommand moveFiles();
    public abstract AppCommand exportFiles();
    public abstract AppCommand renameFile();

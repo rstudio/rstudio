@@ -374,10 +374,16 @@
       "text" = function() {
          functionName <- ""
          functionReference <- readr::read_delim
-         if (is.null(dataImportOptions$delimiter) || identical(dataImportOptions$delimiter, ","))
+         if (is.null(dataImportOptions$delimiter)
+            || identical(dataImportOptions$delimiter, ","))
          {
             functionName <- "read_csv"
             functionReference <- readr::read_csv
+         }
+         else if (identical(dataImportOptions$delimiter, " "))
+         {
+            functionName <- "read_table"
+            functionReference <- readr::read_table
          }
          else
          {
