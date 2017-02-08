@@ -28,6 +28,7 @@
 * Cmd/Ctrl+Enter in Help pane now sends selected example code to console
 * View(vignette(...)) now opens editor with vignette source
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
+* Ctrl+R to search console history incrementally (like readline)
 
 ### Bug Fixes
 
