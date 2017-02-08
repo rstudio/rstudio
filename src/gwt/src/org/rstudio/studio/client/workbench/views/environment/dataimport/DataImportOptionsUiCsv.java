@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
@@ -53,6 +54,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    HTMLPanel mainPanel_;
    
    SourceServerOperations sourceServer_;
+   GlobalDisplay globalDisplay_;
    
    @Inject
    public DataImportOptionsUiCsv()
@@ -69,9 +71,11 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    }
    
    @Inject
-   private void initialize(SourceServerOperations sourceServer)
+   private void initialize(SourceServerOperations sourceServer,
+                           GlobalDisplay globalDisplay)
    {
       sourceServer_ = sourceServer;
+      globalDisplay_ = globalDisplay;
       
       initDefaults();
    }
@@ -132,6 +136,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       delimiterListBox_.addItem("Semicolon", ";");
       delimiterListBox_.addItem("Tab", "\t");
       delimiterListBox_.addItem("Whitespace", " ");
+      delimiterListBox_.addItem("Other...", "other");
       
       quotesListBox_.addItem("Default", "");
       quotesListBox_.addItem("Single (')", "'");
@@ -175,12 +180,55 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       
       ChangeHandler changeHandler = new ChangeHandler()
       {
-         
          @Override
          public void onChange(ChangeEvent arg0)
          {
             updateEnabled();
             triggerChange();
+         }
+      };
+
+      ChangeHandler delimChangeHandler = new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent arg0)
+         {
+            if (delimiterListBox_.getSelectedValue() == "other")
+            {
+               globalDisplay_.promptForText(
+                  "Other Delimiter",
+                  "Please enter a single character custom delimiter.",
+                  "",
+                  new OperationWithInput<String>()
+                  {
+                     @Override
+                     public void execute(final String otherDelimiter)
+                     {
+                        if (otherDelimiter.length() != 1) {
+                           globalDisplay_.showErrorMessage("Incorrect Delimiter", "The specified delimiter is not valid.");
+                        }
+
+                        for (int idxDelimiter = 0; idxDelimiter < delimiterListBox_.getItemCount(); idxDelimiter++) {
+                           if (delimiterListBox_.getValue(idxDelimiter) == otherDelimiter) {
+                              delimiterListBox_.setSelectedIndex(idxDelimiter);
+                              return;
+                           }
+                        }
+
+                        int selectedIndex = delimiterListBox_.getSelectedIndex();
+                        delimiterListBox_.insertItem(otherDelimiter, otherDelimiter, selectedIndex - 1);
+                        delimiterListBox_.setSelectedIndex(selectedIndex - 1);
+
+                        updateEnabled();
+                        triggerChange();
+                     }
+                  }
+               );        
+            }
+            else {
+               updateEnabled();
+               triggerChange();
+            }
          }
       };
       
@@ -196,7 +244,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       };
       
       nameTextBox_.addValueChangeHandler(valueChangeHandler);
-      delimiterListBox_.addChangeHandler(changeHandler);
+      delimiterListBox_.addChangeHandler(delimChangeHandler);
       quotesListBox_.addChangeHandler(changeHandler);
       escapeListBox_.addChangeHandler(changeHandler);
       columnNamesCheckBox_.addValueChangeHandler(booleanValueChangeHandler);
@@ -226,7 +274,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    }
    
    void updateEnabled()
-   {
+   { 
       if (delimiterListBox_.getSelectedValue() == ",")
       {
          trimSpacesCheckBox_.setEnabled(true);
