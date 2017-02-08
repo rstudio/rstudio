@@ -928,7 +928,7 @@ public class Packages
             new Operation() { public void execute()
             {
                events_.fireEvent(new SuspendAndRestartEvent(
-                      SuspendOptions.createSaveAll(true), installCmd));  
+                      SuspendOptions.createSaveAll(false, true), installCmd));  
                   
             }},
             new Operation() { public void execute()

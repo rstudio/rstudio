@@ -48,7 +48,7 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
                                  String afterRestartCommand)
    {
       if (suspendOptions == null)
-         suspendOptions = SuspendOptions.createSaveAll(false);
+         suspendOptions = SuspendOptions.createSaveAll(true, false);
       suspendOptions_ = suspendOptions;
       afterRestartCommand_ = afterRestartCommand;
    }

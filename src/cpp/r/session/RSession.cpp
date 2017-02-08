@@ -213,6 +213,7 @@ bool saveSessionState(const RSuspendOptions& options,
       return r::session::state::save(suspendedSessionPath,
                                      s_options.serverMode,
                                      options.excludePackages,
+                                     options.saveWorkspace,
                                      disableSaveCompression);
    }
 }

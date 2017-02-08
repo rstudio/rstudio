@@ -226,17 +226,20 @@ void attachEnvironmentData(const FilePath& dataFilePath,
 } // anonymous namespace
    
 
-Error save(const FilePath& statePath)
+Error save(const FilePath& statePath, bool saveWorkspace)
 {
-   // save the global environment
-   FilePath environmentFile = statePath.complete(kEnvironmentFile);
-   Error error = saveGlobalEnvironmentToFile(environmentFile);
-   if (error)
-      return error;
+   // save the global environment if requested
+   if (saveWorkspace)
+   {
+      FilePath environmentFile = statePath.complete(kEnvironmentFile);
+      Error error = saveGlobalEnvironmentToFile(environmentFile);
+      if (error)
+         return error;
+   }
    
    // reset the contents of the search path dir
    FilePath searchPathDir = statePath.complete(kSearchPathDir);
-   error = searchPathDir.resetDirectory();
+   Error error = searchPathDir.resetDirectory();
    if (error)
       return error ;
    

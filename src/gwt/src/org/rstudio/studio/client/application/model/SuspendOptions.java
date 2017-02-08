@@ -22,9 +22,10 @@ public class SuspendOptions extends JavaScriptObject
    {  
    }
    
-   public static final SuspendOptions createSaveAll(boolean excludePackages) 
+   public static final SuspendOptions createSaveAll(boolean saveWorkspace,
+                                                    boolean excludePackages)
    {
-      return create(false, false, excludePackages);
+      return create(false, saveWorkspace, excludePackages);
    }
    
    public static final SuspendOptions createSaveMinimal(boolean saveWorkspace) 
@@ -43,7 +44,7 @@ public class SuspendOptions extends JavaScriptObject
    }-*/;
    
    /*
-    * Indidates that only a minimal amount of session state should be 
+    * Indicates that only a minimal amount of session state should be 
     * saved (e.g. working directory and up-arrow history). 
     * 
     * If this option is true then the save_workspace option will be 
@@ -56,9 +57,6 @@ public class SuspendOptions extends JavaScriptObject
       return this.save_minimal;
    }-*/;
 
-   /*
-    * This option is only consulted if save_minimal is true
-    */
    public native final boolean getSaveWorkspace() /*-{
       return this.save_workspace;
    }-*/;
