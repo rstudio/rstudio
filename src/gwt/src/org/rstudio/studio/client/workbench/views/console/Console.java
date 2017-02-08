@@ -1,7 +1,7 @@
 /*
  * Console.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,6 +47,7 @@ public class Console
       void focus();
       void ensureCursorVisible();
       IsWidget getConsoleInterruptButton();
+      IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
       void setDebugMode(boolean debugMode);
       void setProfilerMode(boolean profilerMode);
@@ -77,10 +78,18 @@ public class Console
          public void onBusy(BusyEvent event)
          {
             if (event.isBusy())
+            {
                interruptFadeInHelper_.beginShow();
+               clearFadeInHelper_.hide();
+            }
+            else
+               clearFadeInHelper_.beginShow();
          }
       });
       
+      clearFadeInHelper_ = new DelayFadeInHelper(
+            view_.getConsoleClearButton().asWidget());
+
       profilerFadeInHelper_ = new DelayFadeInHelper(
             view_.getProfilerInterruptButton().asWidget());
       events.addHandler(RprofEvent.TYPE, new RprofEvent.Handler()
@@ -183,6 +192,7 @@ public class Console
    }
 
    private final DelayFadeInHelper interruptFadeInHelper_;
+   private final DelayFadeInHelper clearFadeInHelper_;
    private final DelayFadeInHelper profilerFadeInHelper_;
    private final EventBus events_;
    private final Display view_;
