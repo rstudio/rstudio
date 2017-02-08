@@ -15,7 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -195,30 +199,54 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
          {
             if (delimiterListBox_.getSelectedValue() == "other")
             {
-               globalDisplay_.promptForText(
+               globalDisplay_.promptForTextWithOption(
                   "Other Delimiter",
                   "Please enter a single character custom delimiter.",
                   "",
-                  new OperationWithInput<String>()
+                  false,
+                  "",
+                  false,
+                  new ProgressOperationWithInput<PromptWithOptionResult>()
                   {
-                     @Override
-                     public void execute(final String otherDelimiter)
+                     private void dismissAndUpdate(ProgressIndicator indicator)
                      {
+                        indicator.onCompleted();
+
+                        updateEnabled();
+                        triggerChange();  
+                     }
+
+                     @Override
+                     public void execute(PromptWithOptionResult result,
+                                         ProgressIndicator indicator)
+                     {
+                        String otherDelimiter = result.input;
+                        
                         if (otherDelimiter.length() != 1) {
                            globalDisplay_.showErrorMessage("Incorrect Delimiter", "The specified delimiter is not valid.");
                         }
-
-                        for (int idxDelimiter = 0; idxDelimiter < delimiterListBox_.getItemCount(); idxDelimiter++) {
-                           if (delimiterListBox_.getValue(idxDelimiter) == otherDelimiter) {
-                              delimiterListBox_.setSelectedIndex(idxDelimiter);
-                              return;
+                        else {
+                           for (int idxDelimiter = 0; idxDelimiter < delimiterListBox_.getItemCount(); idxDelimiter++) {
+                              if (delimiterListBox_.getValue(idxDelimiter) == otherDelimiter) {
+                                 delimiterListBox_.setSelectedIndex(idxDelimiter);
+                                 dismissAndUpdate(indicator);
+                                 return;
+                              }
                            }
+
+                           int selectedIndex = delimiterListBox_.getSelectedIndex();
+                           delimiterListBox_.insertItem("Character " + otherDelimiter, otherDelimiter, selectedIndex - 1);
+                           delimiterListBox_.setSelectedIndex(selectedIndex - 1);
+                           
+                           dismissAndUpdate(indicator);
                         }
-
-                        int selectedIndex = delimiterListBox_.getSelectedIndex();
-                        delimiterListBox_.insertItem("Character " + otherDelimiter, otherDelimiter, selectedIndex - 1);
-                        delimiterListBox_.setSelectedIndex(selectedIndex - 1);
-
+                     }
+                  },
+                  new Operation() {
+                     @Override
+                     public void execute()
+                     {
+                        delimiterListBox_.setSelectedIndex(0);
                         updateEnabled();
                         triggerChange();
                      }
