@@ -315,6 +315,7 @@ core::Error runChunk(const std::string& docId,
    options.terminateChildren = true;
    
    core::system::Options env;
+   core::system::environment(env);
    
    // if we're using python in a virtual environment, then
    // set the VIRTUAL_ENV + PATH environment variables appropriately
