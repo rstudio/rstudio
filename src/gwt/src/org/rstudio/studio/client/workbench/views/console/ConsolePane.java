@@ -32,7 +32,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 
 public class ConsolePane extends WorkbenchPane
@@ -55,17 +54,6 @@ public class ConsolePane extends WorkbenchPane
       // is always created during startup
       ensureWidget();
 
-      // only show one of the clear button and interrupt button at a time;
-      // the interrupt button deals with this on its own
-      events.addHandler(ConsoleBusyEvent.TYPE, new ConsoleBusyEvent.Handler()
-      {
-         @Override
-         public void onConsoleBusy(ConsoleBusyEvent event)
-         {
-            consoleClearButton_.setVisible(!event.isBusy());
-         }
-      });
-      
       new Console(this, events, commands);
    }
 
@@ -91,6 +79,12 @@ public class ConsolePane extends WorkbenchPane
       return consoleInterruptButton_;
    }
    
+   @Override
+   public IsWidget getConsoleClearButton()
+   {
+      return consoleClearButton_;
+   }
+
    @Override
    public IsWidget getProfilerInterruptButton()
    {

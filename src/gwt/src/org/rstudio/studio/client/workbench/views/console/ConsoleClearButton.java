@@ -1,5 +1,5 @@
 /*
- * ConsoleInterruptButton.java
+ * ConsoleClearButton.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -24,17 +24,12 @@ import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.NotebookQueueState;
 
-public class ConsoleInterruptButton extends Composite
+public class ConsoleClearButton extends Composite
 {
    @Inject
-   public ConsoleInterruptButton(final EventBus events,
+   public ConsoleClearButton(final EventBus events,
                                  Commands commands)
    {
       fadeInHelper_ = new DelayFadeInHelper(this);
@@ -45,9 +40,8 @@ public class ConsoleInterruptButton extends Composite
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
 
       commands_ = commands;
-      ImageResource icon = commands_.interruptR().getImageResource();
-      ToolbarButton button = new ToolbarButton(icon,
-                                               commands.interruptR());
+      ImageResource icon = commands_.consoleClear().getImageResource();
+      ToolbarButton button = new ToolbarButton(icon, commands.consoleClear());
       width_ = icon.getWidth() + 6;
       height_ = icon.getHeight();
       panel.setWidget(button);
@@ -55,46 +49,15 @@ public class ConsoleInterruptButton extends Composite
       initWidget(panel);
       setVisible(false);
 
-      events.addHandler(BusyEvent.TYPE, new BusyHandler()
-      {
-         public void onBusy(BusyEvent event)
-         {
-            if (event.isBusy())
-               events.fireEvent(new ConsoleBusyEvent(true));
-         }
-      });
-      
       events.addHandler(ConsoleBusyEvent.TYPE, new ConsoleBusyEvent.Handler()
       {
          @Override
          public void onConsoleBusy(ConsoleBusyEvent event)
          {
-            if (event.isBusy())
+            if (!event.isBusy())
                fadeInHelper_.beginShow();
             else
                fadeInHelper_.hide();
-            commands_.interruptR().setEnabled(event.isBusy());
-         }
-      });
-
-      /*
-      JJ says:
-      It is possible that the client could miss the busy = false event (if the
-      client goes out of network coverage and then the server suspends before
-      it can come back into coverage). For this reason I think that the icon's
-      controller logic should subscribe to the ConsolePromptEvent and clear it
-      whenever a prompt occurs.
-      */
-      events.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
-      {
-         public void onConsolePrompt(ConsolePromptEvent event)
-         {
-            // if any notebook is currently feeding the console, wait for it
-            // to complete
-            if (NotebookQueueState.anyQueuesExecuting())
-               return;
-            
-            events.fireEvent(new ConsoleBusyEvent(false));
          }
       });
    }

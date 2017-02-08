@@ -26,9 +26,9 @@ import org.rstudio.core.client.theme.PrimaryWindowFrame;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -37,7 +37,6 @@ import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChange
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 
 public class ConsoleTabPanel extends WorkbenchTabPanel
@@ -45,15 +44,15 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    @Inject
    public void initialize(ConsoleInterruptButton consoleInterrupt,
                           ConsoleInterruptProfilerButton consoleInterruptProfiler,
+                          ConsoleClearButton consoleClearButton,
                           UIPrefs uiPrefs,
-                          Session session,
-                          Commands commands)
+                          Session session)
    {
       consoleInterrupt_ = consoleInterrupt;
       consoleInterruptProfiler_ = consoleInterruptProfiler;
+      consoleClearButton_ = consoleClearButton;
       uiPrefs_ = uiPrefs;
       session_ = session;
-      commands_ = commands;
    }
    
    public ConsoleTabPanel(final PrimaryWindowFrame owner,
@@ -83,9 +82,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      consoleClearButton_ = commands_.consoleClear().createToolbarButton();
-      consoleInterrupt_.setConsoleClearButton(consoleClearButton_);
-
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
          @Override
@@ -332,10 +328,9 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                   consoleInterruptProfiler_.getWidth(),
                   consoleInterruptProfiler_.getHeight(),
                   1);
-            ImageResource clearImage = commands_.consoleClear().getImageResource();
             owner_.setContextButton(consoleClearButton_,
-                                    clearImage.getWidth(),
-                                    clearImage.getHeight(),
+                                    consoleClearButton_.getWidth(),
+                                    consoleClearButton_.getHeight(),
                                     2);
             consolePane_.onBeforeSelected();
             consolePane_.onSelected();
@@ -369,11 +364,10 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean terminalTabVisible_;
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
-   private ToolbarButton consoleClearButton_;
+   private ConsoleClearButton consoleClearButton_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;
    private UIPrefs uiPrefs_;
    private Session session_;
-   private Commands commands_;
 }
