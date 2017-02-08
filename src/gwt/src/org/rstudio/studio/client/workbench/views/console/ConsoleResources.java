@@ -42,6 +42,7 @@ public interface ConsoleResources extends ClientBundle
       String paramInfoDesc();
       String promptFullHelp();
       String error();
+      String searchMatch();
       String selected();
       String paddedOutput();
       String packageName();

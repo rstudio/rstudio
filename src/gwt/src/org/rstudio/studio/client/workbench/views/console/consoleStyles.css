@@ -89,6 +89,10 @@
    background-color: rgb(146, 193, 240);
 }
 
+.searchMatch {
+   background-color: rgb(190, 230, 255);
+}
+
 .functionInfo, .paramInfoName {
    padding: 2px 2px 2px 3px;
 
@@ -149,6 +153,8 @@
 	font-style: italic;
 	color: #888888;
 }
+
+
 
 .ace_tooltip {
 	max-width: 400px;
