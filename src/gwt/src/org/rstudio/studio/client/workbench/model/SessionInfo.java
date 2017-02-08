@@ -354,6 +354,10 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_file_download;
    }-*/;
    
+   public final native boolean getAllowFileUploads() /*-{
+      return this.allow_file_upload;
+   }-*/;
+   
    public final native boolean getAllowRemovePublicFolder() /*-{
       return this.allow_remove_public_folder;
    }-*/;

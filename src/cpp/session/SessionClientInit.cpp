@@ -312,6 +312,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_pkg_install"] = options.allowPackageInstallation();
    sessionInfo["allow_shell"] = options.allowShell();
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
+   sessionInfo["allow_file_upload"] = options.allowFileUploads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
 
    // publishing may be disabled globally or just for external services, and

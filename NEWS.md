@@ -30,6 +30,7 @@
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
 * Ctrl+R to search console history incrementally (like readline)
 * New "Copy To" command in Files pane to copy and rename in one step
+* Server Pro: Add option to disable file uploads
 
 ### Bug Fixes
 
