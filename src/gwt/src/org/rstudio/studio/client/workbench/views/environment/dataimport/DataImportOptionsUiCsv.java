@@ -52,6 +52,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    private final String escapeDouble_ = "double";
 
    private DataImportOptionsCsvLocale localeInfo_ = null;
+   private int lastDelimiterListBoxIndex_ = 0;
    
    interface DataImportOptionsCsvUiBinder extends UiBinder<HTMLPanel, DataImportOptionsUiCsv> {}
 
@@ -201,15 +202,18 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
             {
                globalDisplay_.promptForTextWithOption(
                   "Other Delimiter",
-                  "Please enter a single character custom delimiter.",
+                  "Please enter a single character delimiter.",
                   "",
                   false,
                   "",
                   false,
                   new ProgressOperationWithInput<PromptWithOptionResult>()
                   {
-                     private void dismissAndUpdate(ProgressIndicator indicator)
+                     private void dismissAndUpdate(ProgressIndicator indicator, int newSelectIndex)
                      {
+                        lastDelimiterListBoxIndex_ = newSelectIndex;
+                        delimiterListBox_.setSelectedIndex(newSelectIndex);
+
                         indicator.onCompleted();
 
                         updateEnabled();
@@ -228,17 +232,15 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                         else {
                            for (int idxDelimiter = 0; idxDelimiter < delimiterListBox_.getItemCount(); idxDelimiter++) {
                               if (delimiterListBox_.getValue(idxDelimiter) == otherDelimiter) {
-                                 delimiterListBox_.setSelectedIndex(idxDelimiter);
-                                 dismissAndUpdate(indicator);
+                                 dismissAndUpdate(indicator, idxDelimiter);
                                  return;
                               }
                            }
 
                            int selectedIndex = delimiterListBox_.getSelectedIndex();
                            delimiterListBox_.insertItem("Character " + otherDelimiter, otherDelimiter, selectedIndex - 1);
-                           delimiterListBox_.setSelectedIndex(selectedIndex - 1);
                            
-                           dismissAndUpdate(indicator);
+                           dismissAndUpdate(indicator, selectedIndex - 1);
                         }
                      }
                   },
@@ -246,7 +248,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                      @Override
                      public void execute()
                      {
-                        delimiterListBox_.setSelectedIndex(0);
+                        delimiterListBox_.setSelectedIndex(lastDelimiterListBoxIndex_);
                         updateEnabled();
                         triggerChange();
                      }
@@ -254,6 +256,8 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                );        
             }
             else {
+               lastDelimiterListBoxIndex_ = delimiterListBox_.getSelectedIndex();
+
                updateEnabled();
                triggerChange();
             }
