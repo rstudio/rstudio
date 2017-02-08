@@ -108,7 +108,7 @@ public class ConsoleInterruptButton extends Composite
    {
       return height_;
    }
-   
+
    private final DelayFadeInHelper fadeInHelper_;
    private final int width_;
    private final int height_;

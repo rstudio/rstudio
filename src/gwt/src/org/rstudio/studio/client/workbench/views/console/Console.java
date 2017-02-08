@@ -86,7 +86,7 @@ public class Console
                clearFadeInHelper_.beginShow();
          }
       });
-
+      
       clearFadeInHelper_ = new DelayFadeInHelper(
             view_.getConsoleClearButton().asWidget());
 

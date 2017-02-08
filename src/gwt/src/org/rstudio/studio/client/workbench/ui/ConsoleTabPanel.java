@@ -81,7 +81,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       terminalTab_ = terminalTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
-      
+
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
          @Override

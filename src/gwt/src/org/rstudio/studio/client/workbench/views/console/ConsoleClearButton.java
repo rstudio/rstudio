@@ -29,8 +29,7 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent
 public class ConsoleClearButton extends Composite
 {
    @Inject
-   public ConsoleClearButton(final EventBus events,
-                                 Commands commands)
+   public ConsoleClearButton(final EventBus events, Commands commands)
    {
       fadeInHelper_ = new DelayFadeInHelper(this);
 
