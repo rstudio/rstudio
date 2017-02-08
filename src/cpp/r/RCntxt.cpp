@@ -1,7 +1,7 @@
 /*
  * RCntxt.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,9 @@ RCntxt::RCntxt(void *rawCntxt)
 {
    if (rawCntxt == NULL)
       return;
+   else if (contextVersion() == RVersion34)
+      pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_34> >(
+                                   static_cast<RCNTXT_34*>(rawCntxt));
    else if (contextVersion() == RVersion33)
       pCntxt_ = boost::make_shared<RIntCntxt<RCNTXT_33> >(
                                    static_cast<RCNTXT_33*>(rawCntxt));
@@ -108,12 +111,24 @@ SEXP RCntxt::originalFunctionCall() const
 
 Error RCntxt::fileName(std::string* pFileName) const
 {
-   if (srcref() && TYPEOF(srcref()) != NILSXP)
+   // skip over bytecode srcrefs
+   RCntxt context = *this;
+   SEXP ref = context.srcref();
+   while (ref && isByteCodeSrcRef(ref))
+   {
+      context = context.nextcontext();
+      if (context.isNull())
+         break;
+      ref = context.srcref();
+   }
+   
+   if (ref && TYPEOF(ref) != NILSXP)
    {
       r::sexp::Protect protect;
       SEXP fileName;
-      Error error = r::exec::RFunction(".rs.sourceFileFromRef", srcref())
-                    .call(&fileName, &protect);
+      Error error = r::exec::RFunction(".rs.sourceFileFromRef")
+            .addParam(ref)
+            .call(&fileName, &protect);
       if (error)
           return error;
 

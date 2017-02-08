@@ -28,7 +28,8 @@ namespace context {
 // represents the version of the memory layout of the RCNTXT structure
 enum RCntxtVersion
 {
-   RVersion33, // R 3.3.0 and above
+   RVersion34, // R 3.4 and above
+   RVersion33, // R 3.3 (all versions)
    RVersion32, // R 3.2.5 and below
    RVersionUnknown 
 };
@@ -46,6 +47,9 @@ RCntxt firstFunctionContext();
 RCntxt getFunctionContext(const int depth, 
                           int* pFoundDepth = NULL,
                           SEXP* pEnvironment = NULL);
+
+bool isByteCodeContext(const RCntxt& cntxt);
+bool isByteCodeSrcRef(SEXP srcref);
 
 } // namespace context
 } // namespace r

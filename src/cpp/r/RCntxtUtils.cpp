@@ -13,6 +13,8 @@
  *
  */
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
@@ -23,7 +25,6 @@ namespace rstudio {
 namespace r {
 namespace context {
 
-
 RCntxtVersion contextVersion()
 {
    // cache the context version (we look this up constantly to figure out the
@@ -32,11 +33,13 @@ RCntxtVersion contextVersion()
 
    if (s_rCntxtVersion == RVersionUnknown)
    {
-      // currently there are only two known memory layouts for the R context
-      // structure (see RCntxtVersion enum)
-      s_rCntxtVersion = r::util::hasRequiredVersion("3.3") ? 
-         RVersion33 : 
-         RVersion32;
+      // use current R version to divine the memory layout 
+      if (r::util::hasRequiredVersion("3.4"))
+         s_rCntxtVersion = RVersion34;
+      else if (r::util::hasRequiredVersion("3.3"))
+         s_rCntxtVersion = RVersion33;
+      else 
+         s_rCntxtVersion = RVersion32;
    }
    return s_rCntxtVersion;
 }
@@ -153,6 +156,18 @@ bool inDebugHiddenContext()
       }
    }
    return false;
+}
+
+bool isByteCodeContext(const RCntxt& cntxt)
+{
+   return isByteCodeSrcRef(cntxt.srcref());
+}
+
+bool isByteCodeSrcRef(SEXP srcref)
+{
+   return srcref &&
+         TYPEOF(srcref) == SYMSXP &&
+         ::strcmp(CHAR(PRINTNAME(srcref)), "<in-bc-interp>") == 0;
 }
 
 } // namespace context
