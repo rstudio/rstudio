@@ -216,7 +216,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                         }
 
                         int selectedIndex = delimiterListBox_.getSelectedIndex();
-                        delimiterListBox_.insertItem(otherDelimiter, otherDelimiter, selectedIndex - 1);
+                        delimiterListBox_.insertItem("Character " + otherDelimiter, otherDelimiter, selectedIndex - 1);
                         delimiterListBox_.setSelectedIndex(selectedIndex - 1);
 
                         updateEnabled();
