@@ -49,7 +49,10 @@ core::shell_utils::ShellCommand shellCommandForEngine(
    // determine engine path -- respect chunk option 'engine.path' if supplied
    std::string enginePath = engine;
    if (options.count("engine.path"))
-      enginePath = options.at("engine.path");
+   {
+      std::string path = options.at("engine.path");
+      enginePath = module_context::resolveAliasedPath(path).absolutePath();
+   }
    
    ShellCommand command(enginePath);
    
@@ -310,6 +313,49 @@ core::Error runChunk(const std::string& docId,
    // generate process options
    core::system::ProcessOptions options;
    options.terminateChildren = true;
+   
+   core::system::Options env;
+   
+   // if we're using python in a virtual environment, then
+   // set the VIRTUAL_ENV + PATH environment variables appropriately
+   if (engine == "python")
+   {
+      // determine engine path -- respect chunk option 'engine.path' if supplied
+      FilePath enginePath;
+      if (chunkOptions.count("engine.path"))
+      {
+         enginePath = module_context::resolveAliasedPath(chunkOptions.at("engine.path"));
+      }
+      else
+      {
+         core::system::realPath(engine, &enginePath);
+      }
+      
+      // if we discovered the engine path, then look for an 'activate' script
+      // in the same directory -- if it exists, this is a virtual env
+      if (enginePath.exists())
+      {
+         FilePath activatePath = enginePath.parent().childPath("activate");
+         if (activatePath.exists())
+         {
+            FilePath binPath = enginePath.parent();
+            FilePath venvPath = binPath.parent();
+            core::system::setenv(&env, "VIRTUAL_ENV", venvPath.absolutePath());
+
+#ifdef _WIN32
+            std::string kPathSeparator = ";";
+#else
+            std::string kPathSeparator = ":";
+#endif
+
+            std::string PATH = core::system::getenv("PATH");
+            PATH = binPath.absolutePath() + kPathSeparator + PATH;
+            core::system::setenv(&env, "PATH", PATH);
+         }
+      }
+   }
+   
+   options.environment = env;
    
    // run it
    error = module_context::processSupervisor().runCommand(
