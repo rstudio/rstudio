@@ -82,6 +82,9 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       terminalTab_ = terminalTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      consoleClearButton_ = commands_.consoleClear().createToolbarButton();
+      consoleInterrupt_.setConsoleClearButton(consoleClearButton_);
 
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
@@ -330,7 +333,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                   consoleInterruptProfiler_.getHeight(),
                   1);
             ImageResource clearImage = commands_.consoleClear().getImageResource();
-            owner_.setContextButton(commands_.consoleClear().createToolbarButton(),
+            owner_.setContextButton(consoleClearButton_,
                                     clearImage.getWidth(),
                                     clearImage.getHeight(),
                                     2);
@@ -366,6 +369,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean terminalTabVisible_;
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
+   private ToolbarButton consoleClearButton_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;

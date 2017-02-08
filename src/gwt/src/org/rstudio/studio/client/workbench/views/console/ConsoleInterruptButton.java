@@ -1,7 +1,7 @@
 /*
  * ConsoleInterruptButton.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,9 +70,17 @@ public class ConsoleInterruptButton extends Composite
          public void onConsoleBusy(ConsoleBusyEvent event)
          {
             if (event.isBusy())
+            {
+               if (consoleClearButton_ != null)
+                  consoleClearButton_.setVisible(false);
                fadeInHelper_.beginShow();
+            }
             else
+            {
                fadeInHelper_.hide();
+               if (consoleClearButton_ != null)
+                  consoleClearButton_.setVisible(true);
+            }
             commands_.interruptR().setEnabled(event.isBusy());
          }
       });
@@ -83,7 +91,7 @@ public class ConsoleInterruptButton extends Composite
       client goes out of network coverage and then the server suspends before
       it can come back into coverage). For this reason I think that the icon's
       controller logic should subscribe to the ConsolePromptEvent and clear it
-      whenenver a prompt occurs.
+      whenever a prompt occurs.
       */
       events.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
       {
@@ -108,9 +116,15 @@ public class ConsoleInterruptButton extends Composite
    {
       return height_;
    }
+   
+   public void setConsoleClearButton(ToolbarButton button)
+   {
+      consoleClearButton_ = button;
+   }
 
    private final DelayFadeInHelper fadeInHelper_;
    private final int width_;
    private final int height_;
    private final Commands commands_;
+   private ToolbarButton consoleClearButton_;
 }
