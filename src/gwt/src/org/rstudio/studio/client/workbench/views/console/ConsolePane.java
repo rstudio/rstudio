@@ -1,7 +1,7 @@
 /*
  * ConsolePane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,6 +80,12 @@ public class ConsolePane extends WorkbenchPane
    }
    
    @Override
+   public IsWidget getConsoleClearButton()
+   {
+      return consoleClearButton_;
+   }
+
+   @Override
    public IsWidget getProfilerInterruptButton()
    {
       return profilerInterruptButton_;
@@ -99,12 +105,15 @@ public class ConsolePane extends WorkbenchPane
       toolbar.addLeftWidget(workingDir_);
       toolbar.addLeftWidget(commands_.goToWorkingDir().createToolbarButton());
       consoleInterruptButton_ = commands_.interruptR().createToolbarButton();
+      consoleClearButton_ = commands_.consoleClear().createToolbarButton();
+      consoleClearButton_.setVisible(false);
       
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
 
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
+      toolbar.addRightWidget(consoleClearButton_);
       
       return toolbar;
    }
@@ -201,6 +210,7 @@ public class ConsolePane extends WorkbenchPane
    private Session session_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
+   private ToolbarButton consoleClearButton_;
    private Image profilerInterruptButton_;
    private boolean debugMode_;
    private boolean profilerMode_;

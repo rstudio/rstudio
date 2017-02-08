@@ -343,12 +343,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             regex : "@@"
          },
          {
-            token : ["keyword", "comment"],
+            token : ["keyword.virtual-comment", "comment"],
             regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
             next  : "rd-highlight"
          },
          {
-            token : "keyword",
+            token : "keyword.virtual-comment",
             regex : "@(?!@)[^ ]*"
          },
          {
@@ -371,7 +371,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       // highlight terms after certain roxygen tags
       this.$rules["rd-highlight"] = [
          {
-            token : "identifier.support.function",
+            token : "identifier.support.function.virtual-comment",
             regex : "[a-zA-Z0-9._-]+"
          },
          {

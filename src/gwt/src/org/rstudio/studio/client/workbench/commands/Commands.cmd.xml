@@ -1999,9 +1999,11 @@ well as menu structures (for main menu and popup menus).
         context="vcs"/>
         
    <cmd id="consoleClear"
+        buttonLabel=""
         label="Clear Console"
         menuLabel="Cle_ar Console"
-        windowMode="main"/>
+        windowMode="main"
+        desc="Clear Console"/>
         
    <cmd id="interruptR"
         label="Interrupt R Session"
@@ -2415,9 +2417,10 @@ well as menu structures (for main menu and popup menus).
         desc="Close terminal session"/>
 
    <cmd id="clearTerminalScrollbackBuffer"
+        buttonLabel=""
         label="Clear Current Terminal"
         menuLabel="Clear Current Terminal"
-        desc="Clear terminal scrollback buffer"/>
+        desc="Clear terminal"/>
 
    <cmd id="previousTerminal"
         label="Previous Terminal"

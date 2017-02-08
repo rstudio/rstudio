@@ -1,7 +1,7 @@
 /*
  * Shell.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -136,11 +137,13 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       keyDownPreviewHandlers_ = new ArrayList<KeyDownPreviewHandler>() ;
       keyPressPreviewHandlers_ = new ArrayList<KeyPressPreviewHandler>() ;
 
-      InputKeyDownHandler handler = new InputKeyDownHandler() ;
+      InputKeyHandler handler = new InputKeyHandler() ;
+
       // This needs to be a capturing key down handler or else Ace will have
       // handled the event before we had a chance to prevent it
-      view_.addCapturingKeyDownHandler(handler) ;
-      view_.addKeyPressHandler(handler) ;
+      view_.addCapturingKeyDownHandler(handler);
+      view_.addKeyPressHandler(handler);
+      view_.addCapturingKeyUpHandler(handler);
       
       eventBus.addHandler(ConsoleHistoryAddedEvent.TYPE, this);
       eventBus.addHandler(ConsoleInputEvent.TYPE, this); 
@@ -170,8 +173,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;
       
-      addKeyDownPreviewHandler(new HistoryCompletionManager(
-            view_.getInputEditorDisplay(), server));
+      historyCompletion_ = new HistoryCompletionManager(
+            view_.getInputEditorDisplay(), server);
+      addKeyDownPreviewHandler(historyCompletion_);
       
       // we need to explicitly connect a paste handler on Desktop
       // to ensure the completion popup is dismissed in shell on paste
@@ -482,14 +486,26 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          historyManager_.addToHistory(event.getCode());
    }
 
-   private final class InputKeyDownHandler implements KeyDownHandler,
-                                                      KeyPressHandler
+   private final class InputKeyHandler implements KeyDownHandler,
+                                                  KeyPressHandler,
+                                                  KeyUpHandler
    {
       public void onKeyDown(KeyDownEvent event)
       {
          int keyCode = event.getNativeKeyCode();
+         
+         // typically we allow all the handlers to process the key; however,
+         // this behavior is suppressed when we're incrementally searching the
+         // history so we don't stack two kinds of completion popups
+         ArrayList<KeyDownPreviewHandler> handlers = keyDownPreviewHandlers_;
+         if (historyCompletion_.getMode() == 
+               HistoryCompletionManager.PopupMode.PopupIncremental)
+         {
+            handlers = new ArrayList<KeyDownPreviewHandler>();
+            handlers.add(historyCompletion_);
+         }
 
-         for (KeyDownPreviewHandler handler : keyDownPreviewHandlers_)
+         for (KeyDownPreviewHandler handler : handlers)
          {
             if (handler.previewKeyDown(event.getNativeEvent()))
             {
@@ -527,7 +543,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                navigateHistory(1);
             }
          }
-         else if (keyCode == KeyCodes.KEY_ENTER && modifiers == 0)
+         else if (keyCode == KeyCodes.KEY_ENTER && (
+                     modifiers == 0 ||
+                     modifiers == KeyboardShortcut.CTRL ||
+                     modifiers == KeyboardShortcut.META))
          {
             event.preventDefault();
             event.stopPropagation();
@@ -602,7 +621,18 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
       public void onKeyPress(KeyPressEvent event)
       {
-         for (KeyPressPreviewHandler handler : keyPressPreviewHandlers_)
+         // typically we allow all the handlers to process the key; however,
+         // this behavior is suppressed when we're incrementally searching the
+         // history so we don't stack two kinds of completion popups
+         ArrayList<KeyPressPreviewHandler> handlers = keyPressPreviewHandlers_;
+         if (historyCompletion_.getMode() == 
+               HistoryCompletionManager.PopupMode.PopupIncremental)
+         {
+            handlers = new ArrayList<KeyPressPreviewHandler>();
+            handlers.add(historyCompletion_);
+         }
+
+         for (KeyPressPreviewHandler handler : handlers)
          {
             if (handler.previewKeyPress(event.getCharCode()))
             {
@@ -610,6 +640,20 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                event.stopPropagation() ;
                return;
             }
+         }
+      }
+
+      @Override
+      public void onKeyUp(KeyUpEvent event)
+      {
+         if (event.isAnyModifierKeyDown())
+            return;
+         if (KeyCodeEvent.isArrow(event.getNativeKeyCode()))
+            return;
+         if (historyCompletion_.getMode() == 
+               HistoryCompletionManager.PopupMode.PopupIncremental)
+         {
+            historyCompletion_.beginSearch();
          }
       }
 
@@ -684,6 +728,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private final InputEditorDisplay input_ ;
    private final ArrayList<KeyDownPreviewHandler> keyDownPreviewHandlers_ ;
    private final ArrayList<KeyPressPreviewHandler> keyPressPreviewHandlers_ ;
+   private final HistoryCompletionManager historyCompletion_;
+   
    // indicates whether the next command should be added to history
    private boolean addToHistory_ ;
    private String lastPromptText_ ;

@@ -423,7 +423,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    row.names(updates) <- NULL
    
    # see which ones are from CRAN and add a news column for them
-   cranRep <- getOption("repos")["CRAN"]
+   # NOTE: defend against length-one repos with no name set
+   repos <- getOption("repos")
+   if ("CRAN" %in% names(repos))
+      cranRep <- repos["CRAN"]
+   else
+      cranRep <- c(CRAN = repos[[1]])
    cranRepLen <- nchar(cranRep)
    isFromCRAN <- cranRep == substr(updates$Repository, 1, cranRepLen)
    newsURL <- character(nrow(updates))

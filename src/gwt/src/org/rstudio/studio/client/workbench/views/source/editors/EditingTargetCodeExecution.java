@@ -101,10 +101,10 @@ public class EditingTargetCodeExecution
       boolean noSelection = selectionRange.isEmpty();
       if (noSelection)
       {
-         boolean isRoxygen = isRoxygenLine(docDisplay_.getCurrentLine());
-         if (isRoxygen)
+         // don't do multiline execution within Roxygen examples
+         int row = docDisplay_.getSelectionStart().getRow();
+         if (isRoxygenExampleRow(row))
          {
-            int row = docDisplay_.getSelectionStart().getRow();
             selectionRange = Range.fromPoints(
                   Position.create(row, 0),
                   Position.create(row, docDisplay_.getLength(row)));
@@ -125,7 +125,6 @@ public class EditingTargetCodeExecution
                else
                {
                   // single-line execution
-                  int row = docDisplay_.getSelectionStart().getRow();
                   selectionRange = Range.fromPoints(
                         Position.create(row, 0),
                         Position.create(row, docDisplay_.getLength(row)));
@@ -302,6 +301,23 @@ public class EditingTargetCodeExecution
       }
    }
    
+   private boolean isRoxygenExampleRow(int row)
+   {
+      // walk back until we find '@examples' or a non-roxygen line
+      for (int i = row; i >= 0; i--)
+      {
+         String line = docDisplay_.getLine(i);
+         
+         if (!isRoxygenLine(line))
+            return false;
+         
+         if (line.matches("^\\s*#+'\\s*@example.*$"))
+            return true;
+      }
+      
+      return false;
+   }
+   
    private boolean isRoxygenExampleRange(Range range)
    {
       // ensure all of the lines in the selection are within roxygen
@@ -312,7 +328,7 @@ public class EditingTargetCodeExecution
       if (range.getEnd().getColumn() == 0)
          selEndRow = Math.max(selEndRow-1, selStartRow);
       
-      for (int i=selStartRow; i<=selEndRow; i++)
+      for (int i = selStartRow; i <= selEndRow; i++)
       {
          if (!isRoxygenLine(docDisplay_.getLine(i)))
             return false;
