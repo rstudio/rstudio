@@ -3214,7 +3214,15 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listFilesFuzzy", function(directory, token)
 {
-   result <- as.character(.Call("rs_listFilesFuzzy", directory, token))
+   # eliminate trailing slashes
+   if (!identical(directory, "/"))
+      directory <- gsub("/+$", "", directory) else "/"
+   
+   # call compiled routine for listed files
+   result <- .Call("rs_listFilesFuzzy", directory, token)
+   
+   # mark as UTF-8 and return
+   result <- as.character(result)
    Encoding(result) <- "UTF-8"
    result
 })
