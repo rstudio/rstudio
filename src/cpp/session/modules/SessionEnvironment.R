@@ -66,7 +66,7 @@
          else
            return (.rs.valueFromStr(val))
       }
-      else if (is(val, "tensorflow.builtin.object")) {
+      else if (is(val, "python.builtin.object")) {
          return (.rs.valueFromStr(val))
       }
       else
