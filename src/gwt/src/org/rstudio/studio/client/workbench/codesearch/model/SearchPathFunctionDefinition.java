@@ -1,7 +1,7 @@
 /*
  * SearchPathFunctionDefinition.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,4 +58,6 @@ public class SearchPathFunctionDefinition extends JavaScriptObject
    public final native boolean isActiveDebugCode() /*-{
       return this.active_debug_code ? true : false;
    }-*/;
+   
+   public final static String OBJECT_TYPE = "search_path_function";
 }

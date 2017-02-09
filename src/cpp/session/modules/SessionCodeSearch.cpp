@@ -1675,6 +1675,15 @@ bool namespaceIsPackage(const std::string& namespaceName,
    }
 }
 
+bool findData(const std::string& name)
+{
+   std::string found;
+   Error error = r::exec::RFunction(".rs.findGlobalData", name).call(&found);
+   if (error)
+      LOG_ERROR(error);
+   return !found.empty();
+}
+
 bool findFunction(const std::string& name,
                   const std::string& fromWhere,
                   std::string* pNamespaceName)
@@ -2110,20 +2119,21 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
 
    // default return value is null function name (indicating no results)
    json::Object defJson;
-   defJson["function_name"] = json::Value();
+   defJson["name"] = json::Value();
 
    // if there was a package then we go straight to the search path
    if (!token.package.empty())
    {
-      defJson["function_name"] = token.name;
-      defJson["search_path_definition"] = createFunctionDefinition(token);
+      defJson["name"] = token.name;
+      defJson["type"] = "search_path_function";
+      defJson["data"] = createFunctionDefinition(token);
    }
 
    // if we got a name token then search the code
    else if (!token.name.empty())
    {
       // discovered a token so we have at least a function name to return
-      defJson["function_name"] = token.name;
+      defJson["name"] = token.name;
 
       // find in source database then in project index
       std::set<std::string> contexts;
@@ -2136,15 +2146,19 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
       if (found)
       {
          // return full path to file
+         json::Object fileDef;
          FilePath srcFilePath = module_context::resolveAliasedPath(
                                                       sourceItem.context());
-         defJson["file"] = module_context::createFileSystemItem(srcFilePath);
+         fileDef["file"] = module_context::createFileSystemItem(srcFilePath);
 
          // return location in file
          json::Object posJson;
          posJson["line"] = sourceItem.line();
          posJson["column"] = sourceItem.column();
-         defJson["position"] = posJson;
+         fileDef["position"] = posJson;
+
+         defJson["type"] = "file_function";
+         defJson["data"] = fileDef;
       }
       // didn't find the file, check the search path
       else
@@ -2153,9 +2167,14 @@ Error getFunctionDefinition(const json::JsonRpcRequest& request,
          std::string namespaceName;
          if (findFunction(token.name, "", &namespaceName))
          {
-            defJson["search_path_definition"] =
-                              createFunctionDefinition(token.name,
+            defJson["type"] = "search_path_function";
+            defJson["data"] = createFunctionDefinition(token.name,
                                                        namespaceName);
+         }
+         else if (findData(token.name))
+         {
+            defJson["type"] = "data";
+            defJson["data"] = "";
          }
       }
    }

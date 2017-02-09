@@ -707,3 +707,13 @@
   assign(cacheKey, obj, .rs.WorkingDataEnv)
 })
 
+.rs.addFunction("findGlobalData", function(name)
+{
+  if (exists(name, envir = globalenv()))
+  {
+    if (inherits(get(name, envir = globalenv()), "data.frame"))
+       return(name)
+  }
+  invisible(NULL)
+})
+

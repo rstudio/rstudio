@@ -37,8 +37,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import elemental.events.KeyboardEvent.KeyCode;
-
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -210,7 +208,7 @@ public class HelpPane extends WorkbenchPane
             findTextBox_.selectAll();
             return;
          }
-         else if (e.getKeyCode() == KeyCode.ENTER)
+         else if (e.getKeyCode() == KeyCodes.KEY_ENTER)
          {
             // extract the selected code, if any
             String code = frame_.getWindow().getSelectedText();

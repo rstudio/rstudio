@@ -27,27 +27,18 @@ public interface CodeSearchServerOperations
          int maxResults,
          ServerRequestCallback<CodeSearchResults> requestCallback);
    
-   /*
-    * Get the definition of the specified function (if known).
+   /**
+    * Get the definition of the specified object (if known).
     * We pass a line and pos rather than a function name because that is
     * the level of fidelity we have in the editor -- we use R on the server
-    * to sort out the name of the token to lookup. Fields in the
-    * FunctionDefinition will be as follows on return
-    *     - getFunctionName     -- the parsed token from line/pos or
-    *                              null if no token could be parsed
-    *                              
-    *     - getFile/getPosition -- file location if one of the files we
-    *                              are managing has the definition, else null
-    *                             
-    *     - getSearchPathFunctionDefinition 
-    *                           -- name/namespace/code if the function was
-    *                              found on the search path, else null. this
-    *                              is mutually exclusive with getFile
+    * to sort out the name of the token to lookup. Possible return types 
+    * include functions defined on the search path, functions in the source
+    * index, and data frames.
     */
-   void getFunctionDefinition(
+   void getObjectDefinition(
          String line, 
          int pos,
-         ServerRequestCallback<FunctionDefinition> requestCallback);
+         ServerRequestCallback<ObjectDefinition> requestCallback);
 
     /* 
      * Find the passed function in the search path (searching starting

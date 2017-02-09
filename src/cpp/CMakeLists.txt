@@ -42,7 +42,8 @@ if(UNIX)
    add_definitions(-Wall -pthread)
 
    if(APPLE)
-      add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs)
+      add_definitions(-Wno-unknown-warning-option -Wsign-compare -Wno-unused-local-typedefs
+                      -Wno-deprecated-declarations)
    endif()
 
    # workaround boost bug (https://svn.boost.org/trac/boost/ticket/4568)
