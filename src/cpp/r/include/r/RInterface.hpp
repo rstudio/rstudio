@@ -46,8 +46,51 @@ typedef struct SEXPREC *SEXP;
 
 #endif
 
-typedef struct RCNTXT_33 {
-    struct RCNTXT_33 *nextcontext;
+typedef struct RCNTXT_333 {
+    struct RCNTXT_333 *nextcontext;
+    int callflag;
+#ifdef _WIN32
+    struct
+    {
+      jmp_buf buf;
+      int sigmask;
+      int savedmask;
+    } cjumpbuf;
+#else
+    sigjmp_buf cjmpbuf;
+#endif
+    int cstacktop;
+    int evaldepth;
+    SEXP promargs;
+    SEXP callfun;
+    SEXP sysparent;
+    SEXP call;
+    SEXP cloenv;
+    SEXP conexit;
+    void (*cend)(void *);
+    void *cenddata;
+    void *vmax;
+    int intsusp;
+    int gcenabled;
+    int bcintactive;
+    SEXP bcbody;
+    void *bcpc;
+    SEXP handlerstack;
+    SEXP restartstack;
+    struct RPRSTACK *prstack;
+    SEXP *nodestack;
+#ifdef BC_INT_STACK
+    IStackval *intstack;
+#endif
+    SEXP srcref;
+    int browserfinish;
+    SEXP returnValue;
+    struct RCNTXT_333 *jumptarget;
+    int jumpmask;
+} RCNTXT_333;
+
+typedef struct RCNTXT_330 {
+    struct RCNTXT_330 *nextcontext;
     int callflag;
 #ifdef _WIN32
     struct
@@ -80,7 +123,11 @@ typedef struct RCNTXT_33 {
     IStackval *intstack;
 #endif
     SEXP srcref;
-} RCNTXT_33;
+    int browserfinish;
+    SEXP returnValue;
+    struct RCNTXT_330 *jumptarget;
+    int jumpmask;
+} RCNTXT_330;
 
 typedef struct RCNTXT_32 {
     struct RCNTXT_32 *nextcontext;
