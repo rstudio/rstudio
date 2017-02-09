@@ -524,6 +524,10 @@ Error ChildProcess::run()
                // for smart terminals we need to echo back the user input
                termp.c_lflag |= ECHO;
                termp.c_oflag |= OPOST|ONLCR;
+
+               // Turn off XON/XOFF flow control so Ctrl+S can be used by
+               // the shell command-line editing instead of suspending output.
+               termp.c_iflag &= ~(IXON|IXOFF);
             }
 
             // Don't ignore signals -- this is done

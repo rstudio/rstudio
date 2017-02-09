@@ -469,15 +469,23 @@ public class ShortcutManager implements NativePreviewHandler,
 
             if (XTermWidget.isXTerm(Element.as(event.getEventTarget())))
             {
-               // special case; we expect users will try to use Ctrl+L to
-               // clear the terminal, and don't want that to actually
-               // clear the currently hidden console instead
                if (binding.getId() == "consoleClear")
                {
+                  // special case; we expect users will try to use Ctrl+L to
+                  // clear the terminal, and don't want that to actually
+                  // clear the currently hidden console instead
                   event.stopPropagation();
                   commands_.clearTerminalScrollbackBuffer().execute();
                   return false;
                }
+               else if (binding.getId() == "closeSourceDoc")
+               {
+                  // special case: Ctrl+W is usually bound to closeSourceDoc, 
+                  // but this key sequence is frequently used in bash to kill 
+                  // the word behind the cursor; so we'll ignore this command 
+                  // when focus is in the terminal and let terminal see keys
+                  return false;
+               } 
                if (binding.getContext() != AppCommand.Context.Workbench &&
                      binding.getContext() != AppCommand.Context.Addin &&
                      binding.getContext() != AppCommand.Context.PackageDevelopment)
