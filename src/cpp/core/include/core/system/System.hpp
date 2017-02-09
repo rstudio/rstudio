@@ -60,6 +60,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath);
 bool realPathsEqual(const FilePath& a, const FilePath& b);
 
 void addToSystemPath(const FilePath& path, bool prepend = false);
+void addToSystemPath(Options* pEnvironment, const FilePath& path, bool prepend = false);
 
 #ifndef _WIN32
 Error closeAllFileDescriptors();

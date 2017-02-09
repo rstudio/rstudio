@@ -342,16 +342,7 @@ core::Error runChunk(const std::string& docId,
             FilePath binPath = enginePath.parent();
             FilePath venvPath = binPath.parent();
             core::system::setenv(&env, "VIRTUAL_ENV", venvPath.absolutePath());
-
-#ifdef _WIN32
-            std::string kPathSeparator = ";";
-#else
-            std::string kPathSeparator = ":";
-#endif
-
-            std::string PATH = core::system::getenv("PATH");
-            PATH = binPath.absolutePath() + kPathSeparator + PATH;
-            core::system::setenv(&env, "PATH", PATH);
+            core::system::addToPath(&env, binPath.absolutePath(), true);
          }
       }
    }

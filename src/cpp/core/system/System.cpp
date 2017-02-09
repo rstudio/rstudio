@@ -53,14 +53,22 @@ bool realPathsEqual(const FilePath& a, const FilePath& b)
    return aReal == bReal;
 }
 
-void addToSystemPath(const FilePath& path, bool prepend)
+void addToSystemPath(const FilePath &path, bool prepend)
 {
-   std::string systemPath = system::getenv("PATH");
+   core::system::Options environment;
+   system::setenv(&environment, "PATH", system::getenv("PATH"));
+   addToSystemPath(&environment, path, prepend);
+   system::setenv("PATH", system::getenv(environment, "PATH"));
+}
+
+void addToSystemPath(Options* pEnvironment, const FilePath& path, bool prepend)
+{
+   std::string systemPath = system::getenv(*pEnvironment, "PATH");
    if (prepend)
       systemPath = path.absolutePath() + kPathSeparator + systemPath;
    else
       systemPath = systemPath + kPathSeparator + path.absolutePath();
-   system::setenv("PATH", systemPath);
+   system::setenv(pEnvironment, "PATH", systemPath);
 }
 
 
