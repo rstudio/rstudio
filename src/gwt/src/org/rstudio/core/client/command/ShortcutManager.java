@@ -474,6 +474,7 @@ public class ShortcutManager implements NativePreviewHandler,
                // clear the currently hidden console instead
                if (binding.getId() == "consoleClear")
                {
+                  event.stopPropagation();
                   commands_.clearTerminalScrollbackBuffer().execute();
                   return false;
                }
