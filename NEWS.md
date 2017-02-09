@@ -30,6 +30,7 @@
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
 * Ctrl+R to search console history incrementally (like readline)
 * New "Copy To" command in Files pane to copy and rename in one step
+* Debugger support for R 3.3.3 and above
 * Server Pro: Add option to disable file uploads
 
 ### Bug Fixes
