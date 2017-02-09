@@ -132,7 +132,7 @@ import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
-import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Agreement;
@@ -537,10 +537,10 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SEARCH_CODE, params, requestCallback);
    }
    
-   public void getFunctionDefinition(
+   public void getObjectDefinition(
          String line, 
          int pos,
-         ServerRequestCallback<FunctionDefinition> requestCallback)
+         ServerRequestCallback<ObjectDefinition> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(line));

@@ -54,10 +54,14 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.DataDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -354,18 +358,18 @@ public class RCompletionManager implements CompletionManager
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             globalDisplay_, 1000, "Searching for function definition...");
       
-      server_.getFunctionDefinition(
+      server_.getObjectDefinition(
          lineWithPos.getLine(),
          lineWithPos.getPosition(), 
-         new ServerRequestCallback<FunctionDefinition>() {
+         new ServerRequestCallback<ObjectDefinition>() {
             @Override
-            public void onResponseReceived(FunctionDefinition def)
+            public void onResponseReceived(ObjectDefinition def)
             {
                 // dismiss progress
                 progress.dismiss();
                     
                 // if we got a hit
-                if (def.getFunctionName() != null)
+                if (def.getObjectName() != null)
                 {   
                    // search locally if a function navigator was provided
                    if (navigableSourceEditor_ != null)
@@ -373,7 +377,7 @@ public class RCompletionManager implements CompletionManager
                       // try to search for the function locally
                       SourcePosition position = 
                          navigableSourceEditor_.findFunctionPositionFromCursor(
-                                                         def.getFunctionName());
+                                                         def.getObjectName());
                       if (position != null)
                       {
                          navigableSourceEditor_.navigateToPosition(position, 
@@ -386,21 +390,33 @@ public class RCompletionManager implements CompletionManager
                    // if we didn't satisfy the request using a function
                    // navigator and we got a file back from the server then
                    // navigate to the file/loc
-                   if (def.getFile() != null)
+                   if (def.getObjectType() == 
+                         FileFunctionDefinition.OBJECT_TYPE)
                    {  
-                      fileTypeRegistry_.editFile(def.getFile(), 
-                                                 def.getPosition());
+                      FileFunctionDefinition fileDef = 
+                            def.getObjectData().cast();
+                      fileTypeRegistry_.editFile(fileDef.getFile(), 
+                                                 fileDef.getPosition());
                    }
                    
                    // if we didn't get a file back see if we got a 
                    // search path definition
-                   else if (def.getSearchPathFunctionDefinition() != null)
+                   else if (def.getObjectType() ==
+                              SearchPathFunctionDefinition.OBJECT_TYPE)
                    {
-                      eventBus_.fireEvent(new CodeBrowserNavigationEvent(
-                                     def.getSearchPathFunctionDefinition()));
-                      
+                      SearchPathFunctionDefinition searchDef = 
+                            def.getObjectData().cast();
+                      eventBus_.fireEvent(
+                            new CodeBrowserNavigationEvent(searchDef));
                    }
-               }
+                   
+                   // finally, check to see if it's a data frame
+                   else if (def.getObjectType() == DataDefinition.OBJECT_TYPE)
+                   {
+                      eventBus_.fireEvent(new SendToConsoleEvent(
+                            "View(" + def.getObjectName() + ")", true, false));
+                   }
+                }
             }
 
             @Override
