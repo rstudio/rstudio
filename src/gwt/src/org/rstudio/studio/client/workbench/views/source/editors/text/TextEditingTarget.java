@@ -4955,32 +4955,37 @@ public class TextEditingTarget implements
       final int type = isShinyDoc() ? RmdOutput.TYPE_SHINY:
                                       isRmdNotebook() ? RmdOutput.TYPE_NOTEBOOK:
                                                         RmdOutput.TYPE_STATIC;
-      
-      final Command command = new Command()
+      final Command renderCommand = new Command() 
       {
          @Override
          public void execute()
          {
-            saveThenExecute(null, new Command() {
-               @Override
-               public void execute()
-               {
-                  boolean asTempfile = isPackageDocumentationFile();
+            boolean asTempfile = isPackageDocumentationFile();
 
-                  rmarkdownHelper_.renderRMarkdown(
-                        docUpdateSentinel_.getPath(),
-                        docDisplay_.getCursorPosition().getRow() + 1,
-                        null,
-                        docUpdateSentinel_.getEncoding(),
-                        paramsFile,
-                        asTempfile,
-                        type,
-                        false,
-                        rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_));
-               }
-            });  
+            rmarkdownHelper_.renderRMarkdown(
+                  docUpdateSentinel_.getPath(),
+                  docDisplay_.getCursorPosition().getRow() + 1,
+                  null,
+                  docUpdateSentinel_.getEncoding(),
+                  paramsFile,
+                  asTempfile,
+                  type,
+                  false,
+                  rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_));
          }
+      };  
+
+      final Command saveCommand = new Command()
+      {
+         @Override
+         public void execute()
+         {
+            saveThenExecute(null, renderCommand);}
       };
+      
+      // save before rendering if the document is dirty; otherwise render
+      // directly
+      Command command = dirtyState_.getValue() ? saveCommand : renderCommand;
       
       if (isRmdNotebook())
          dependencyManager_.withRMarkdown("Creating R Notebooks", command);
