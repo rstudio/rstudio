@@ -4980,7 +4980,8 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            saveThenExecute(null, renderCommand);}
+            saveThenExecute(null, renderCommand);
+         }
       };
       
       // save before rendering if the document is dirty; otherwise render
