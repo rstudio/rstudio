@@ -12,6 +12,7 @@
 
 * Fixed an issue where non-R chunk output could become duplicated
 * 'Rename in Scope' now works within R chunks
+* Python chunks now respect virtualenv if present
 
 ### Terminal
 
