@@ -1,7 +1,7 @@
 /*
- * FunctionDefinition.java
+ * FileFunctionDefinition.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,39 +19,19 @@ import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class FunctionDefinition extends JavaScriptObject
+public class FileFunctionDefinition extends JavaScriptObject
 {
-   protected FunctionDefinition()
+   protected FileFunctionDefinition()
    {
-      
    }
 
-   /*
-    *  Name of function -- can be null if no function token could be
-    *  ascertained from the line and pos passed to the server
-    */
-   public final native String getFunctionName() /*-{
-      return this.function_name;
-   }-*/;
-  
-   /*
-    *  File position where the definition of the function is. Can be null
-    *  if no indexed file defining the function was found
-    */
    public final native FileSystemItem getFile() /*-{
       return this.file;
    }-*/;
+
    public final native FilePosition getPosition()/*-{
       return this.position;
    }-*/;
    
-   /*
-    *  A definition of the function from the current search path. Can be null
-    *  if the function was found in an indexed file
-    */
-   public final native SearchPathFunctionDefinition 
-                                 getSearchPathFunctionDefinition() /*-{
-      return this.search_path_definition;
-   }-*/;
-   
+   public final static String OBJECT_TYPE = "file_function";
 }

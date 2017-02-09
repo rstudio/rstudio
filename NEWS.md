@@ -12,6 +12,7 @@
 
 * Fixed an issue where non-R chunk output could become duplicated
 * 'Rename in Scope' now works within R chunks
+* Python chunks now respect virtualenv if present
 
 ### Terminal
 
@@ -31,6 +32,7 @@
 * Ctrl+R to search console history incrementally (like readline)
 * New "Copy To" command in Files pane to copy and rename in one step
 * Debugger support for R 3.3.3 and above
+* F2 in source editor opens data frame under cursor in a new tab
 * Server Pro: Add option to disable file uploads
 
 ### Bug Fixes
