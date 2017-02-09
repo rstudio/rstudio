@@ -34,8 +34,11 @@ import java.lang.annotation.Target;
  * being parsed and loaded for Development Mode. This is done under certain
  * circumstances as an optimization to avoid loading very large jsni methods
  * which are only executed in Production Mode.
+ *
+ * @deprecated since hosted/dev mode is deprecated and has no other uses.
  */
 @Documented
 @Target({ElementType.TYPE, ElementType.METHOD})
+@Deprecated
 public @interface GwtScriptOnly {
 }
