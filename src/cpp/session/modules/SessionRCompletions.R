@@ -3211,3 +3211,10 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.scalar(newSnippet)
 })
+
+.rs.addFunction("listFilesFuzzy", function(directory, token)
+{
+   result <- as.character(.Call("rs_listFilesFuzzy", directory, token))
+   Encoding(result) <- "UTF-8"
+   result
+})

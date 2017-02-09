@@ -475,6 +475,39 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
    return resultSEXP;
 }
 
+SEXP rs_listFilesFuzzy(SEXP pathSEXP, SEXP tokenSEXP)
+{
+   Error error;
+   std::string path  = r::sexp::asString(pathSEXP);
+   std::string token = r::sexp::asString(tokenSEXP);
+   
+   if (path.empty())
+      return R_NilValue;
+   
+   FilePath directory = module_context::resolveAliasedPath(path);
+   if (!directory.exists())
+      return R_NilValue;
+   
+   // list files
+   std::vector<FilePath> children;
+   error = directory.children(&children);
+   if (error)
+      return R_NilValue;
+   
+   // return full absolute paths
+   std::vector<std::string> paths;
+   BOOST_FOREACH(const FilePath& child, children)
+   {
+      // keep only fuzzy matches on the relative path
+      std::string relPath = child.relativePath(directory);
+      if (string_utils::isSubsequence(relPath, token, true))
+         paths.push_back(child.absolutePath());
+   }
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(paths, &protect);
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -487,6 +520,7 @@ Error initialize() {
    RS_REGISTER_CALL_METHOD(rs_getInferredCompletions, 1);
    RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 1);
    RS_REGISTER_CALL_METHOD(rs_getKnitParamsForDocument, 1);
+   RS_REGISTER_CALL_METHOD(rs_listFilesFuzzy, 2);
    
    using boost::bind;
    using namespace module_context;
