@@ -22,19 +22,153 @@ var $colorFunctionCalls = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
-   function include(/*...*/) {
-      var result = new Array(arguments.length);
-      for (var i = 0; i < arguments.length; i++) {
-         result[i] = {include: arguments[i]};
+   function include(rules) {
+      var result = new Array(rules.length);
+      for (var i = 0; i < rules.length; i++) {
+         result[i] = {include: rules[i]};
       }
       return result;
    }
 
    var oop = require("ace/lib/oop");
    var lang = require("ace/lib/lang");
-   var TextHighlightRules = require("ace/mode/text_highlight_rules")
-         .TextHighlightRules;
-   var TexHighlightRules = require("mode/tex_highlight_rules").TexHighlightRules;
+   var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+   var Utils = require("mode/utils");
+
+   var reLhsBracket = "[[({]";
+   var reRhsBracket = "[\\])}]";
+
+   var RoxygenHighlightRules = function()
+   {
+      var rules = {};
+
+
+      rules["start"] = [
+         {
+            // escaped '@' sign
+            token : "comment",
+            regex : "@@"
+         },
+         {
+            // latex-style keyword
+            token : "keyword",
+            regex : "\\\\[a-zA-Z0-9]+"
+         },
+         {
+            // roxygen tag accepting a parameter
+            token : ["keyword", "comment"],
+            regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
+            next  : "rd-highlight"
+         },
+         {
+            // generic roxygen tag
+            token : "keyword",
+            regex : "@(?!@)[^ ]*"
+         },
+         {
+            // markdown link with =
+            token : ["paren.keyword.operator", "comment"],
+            regex : "(\\[)(=)",
+            next  : "markdown-link"
+         },
+         {
+            // markdown link
+            token : "paren.keyword.operator",
+            regex : "\\[",
+            next  : "markdown-link"
+         },
+         {
+            // markdown: `code`
+            token : ["support.function", "support.function", "support.function"],
+            regex : "(`+)(.*?[^`])(\\1)"
+         },
+         {
+            // markdown: __strong__
+            token: ["comment", "constant.language.boolean"],
+            regex: "(\\s+|^)(__.+?__)\\b"
+         },
+         {
+            // markdown: _emphasis_
+            token: ["comment", "constant.language.boolean"],
+            regex: "(\\s+|^)(_(?=[^_])(?:(?:\\\\.)|(?:[^_\\\\]))*?_)\\b"
+         },
+         {
+            // markdown: **strong**
+            token: ["constant.numeric"],
+            regex: "([*][*].+?[*][*])"
+         },
+         {
+            // markdown: *emphasis*
+            token: ["constant.numeric"],
+            regex: "([*](?=[^*])(?:(?:\\\\.)|(?:[^*\\\\]))*?[*])"
+         },
+         {
+            // highlight brackets
+            token : "paren.keyword.operator",
+            regex : "(?:" + reLhsBracket + "|" + reRhsBracket + ")"
+         },
+         {
+            defaultToken: "comment"
+         }
+      ];
+
+      rules["highlight"] = [
+         {
+            // highlight non-comma tokens
+            token : "identifier.support.function",
+            regex : "[^ ,]+"
+         },
+         {
+            // don't highlight commas (e.g. @param a,b,c)
+            token : "comment",
+            regex : ","
+         },
+         {
+            // escape this state and eat whitespace
+            token : "comment",
+            regex : "\\s*",
+            next  : "start"
+         }
+      ];
+
+      rules["markdown-link"] = [
+         {
+            // escape when we find a ']'
+            token : "paren.keyword.operator",
+            regex : "\\]",
+            next  : "start"
+         },
+         {
+            // package qualifier: 'pkg::'
+            token : ["identifier.support.class", "comment"],
+            regex : "([a-zA-Z0-9_.]+)(:{1,3})"
+         },
+         {
+            // quoted function or object
+            token : "support.function",
+            regex : "`.*?`"
+         },
+         {
+            // non-parens
+            token : "support.function",
+            regex : "[^{}()[\\]]+"
+         },
+         {
+            // brackets
+            token : "paren.keyword.operator",
+            regex : "(?:" + reLhsBracket + "|" + reRhsBracket + ")"
+         },
+         {
+            defaultToken: "comment"
+         }
+      ];
+
+
+      this.$rules = rules;
+      this.normalizeRules();
+   };
+
+   oop.inherits(RoxygenHighlightRules, TextHighlightRules);
 
    var RHighlightRules = function()
    {
@@ -241,7 +375,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             // to be colored distinctly from regular text
             token : "paren.keyword.operator",
             merge : false,
-            regex : "[[({]",
+            regex : reLhsBracket,
             next  : "start"
          },
          {
@@ -250,7 +384,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             // to be colored distinctly from regular text
             token : "paren.keyword.operator",
             merge : false,
-            regex : "[\\])}]",
+            regex : reRhsBracket,
             next  : "start"
          },
          {
@@ -283,19 +417,19 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       ];
 
       // Construct rules from previously defined blocks.
-      rules["start"] = include(
+      rules["start"] = include([
          "#comment", "#string", "#number",
          "#package-access", "#quoted-identifier",
          "#function-call-or-keyword", "#keyword-or-identifier",
          "#operator", "#text"
-      );
+      ]);
 
-      rules["afterDollar"] = include(
+      rules["afterDollar"] = include([
          "#comment", "#string", "#number",
          "#quoted-identifier",
          "#function-call", "#keyword-or-identifier",
          "#operator", "#text"
-      );
+      ]);
 
       rules["qqstring"] = [
          {
@@ -325,65 +459,27 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
       this.$rules = rules;
 
-      // Embed 'Rd' comment rules, for Roxygen.
-      var rdRules = new TexHighlightRules("comment").getRules();
+      // Embed Roxygen highlight Roxygen highlight rules
+      var rdRules = new RoxygenHighlightRules().getRules();
 
-      // Make all embedded TeX virtual-comment so they don't interfere with
-      // auto-indent.
-      for (var i = 0; i < rdRules["start"].length; i++) {
-         rdRules["start"][i].token += ".virtual-comment";
+      // Add 'virtual-comment' to embedded rules
+      for (var state in rdRules) {
+         var rules = rdRules[state];
+         for (var i = 0; i < rules.length; i++) {
+            if (Utils.isArray(rules[i].token)) {
+               for (var j = 0; j < rules[i].token.length; j++)
+                  rules[i].token[j] += ".virtual-comment";
+            } else {
+               rules[i].token += ".virtual-comment";
+            }
+         }
       }
 
-      this.addRules(rdRules, "rd-");
-
-      // embed our own roxygen highlight rules
-      var rdStartRulesBefore = [
-         {
-            token : "comment",
-            regex : "@@"
-         },
-         {
-            token : ["keyword.virtual-comment", "comment"],
-            regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
-            next  : "rd-highlight"
-         },
-         {
-            token : "keyword.virtual-comment",
-            regex : "@(?!@)[^ ]*"
-         },
-         {
-            token : "comment",
-            regex : "^",
-            next  : "start"
-         }
-      ];
-
-      var rdStartRulesAfter = [
-         {
-            token : "comment",
-            regex : "[^%\\\\[({\\])}]+"
-         }
-      ];
-
-      this.$rules["rd-start"] =
-         rdStartRulesBefore.concat(this.$rules["rd-start"]).concat(rdStartRulesAfter);
-
-      // highlight terms after certain roxygen tags
-      this.$rules["rd-highlight"] = [
-         {
-            token : "identifier.support.function.virtual-comment",
-            regex : "[a-zA-Z0-9._-]+"
-         },
-         {
-            token : "comment",
-            regex : ","
-         },
-         {
-            token : "comment",
-            regex : "\\s*",
-            next  : "rd-start"
-         }
-      ];
+      this.embedRules(rdRules, "rd-", [{
+         token : "text",
+         regex : "^",
+         next  : "start"
+      }]);
 
       this.normalizeRules();
 
