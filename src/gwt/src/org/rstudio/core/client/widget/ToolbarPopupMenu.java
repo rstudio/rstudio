@@ -34,6 +34,8 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
 
@@ -95,6 +97,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void addItem(MenuItem menuItem, MenuBar popup)
    {
       menuBar_.addItem(SafeHtmlUtils.fromTrustedString(menuItem.getHTML()), popup);
+   }
+   
+   public void addItem(AppCommand command, MenuBar popup)
+   {
+      if (command.isEnabled())
+         addItem(command.createMenuItem(false), popup);
    }
    
    public void setAutoOpen(boolean autoOpen)

@@ -817,6 +817,7 @@ public class Application implements ApplicationEventHandlers
       }
       else
       {
+         commands_.importDatasetFromCsv().remove();
          commands_.importDatasetFromCsvUsingBase().remove();
          commands_.importDatasetFromCsvUsingReadr().remove();
          commands_.importDatasetFromSAV().remove();
