@@ -498,6 +498,11 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    return Success();
 }
 
+Error realPath(const std::string& path, FilePath* pRealPath)
+{
+   return realPath(FilePath(path), pRealPath);
+}
+
 bool isHiddenFile(const FilePath& filePath)
 {
    return isHiddenFile(filePath.absolutePath());
