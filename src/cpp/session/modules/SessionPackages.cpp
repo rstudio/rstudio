@@ -475,6 +475,7 @@ void detectLibPathsChanges()
       }
       else if (libPaths != s_lastLibPaths)
       {
+         module_context::events().onLibPathsChanged(libPaths);
          enquePackageStateChanged();
          s_lastLibPaths = libPaths;
       }

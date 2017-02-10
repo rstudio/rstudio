@@ -42,6 +42,23 @@ oop.inherits(RStudioEditor, Editor);
 
 (function() {
 
+   this.$highlightBrackets = function() {
+      // Clear an existing highlight
+      if (this.session.$bracketHighlight) {
+         this.session.removeMarker(this.session.$bracketHighlight);
+         this.session.$bracketHighlight = null;
+      }
+
+      // don't highlight if we have a selection (avoid a situation
+      // where the highlighted bracket could appear to be part of
+      // the user's current selection)
+      if (!this.session.selection.isEmpty())
+         return;
+
+      // delegate to base
+      Editor.prototype.$highlightBrackets.call(this);
+   };
+
    // Custom insert to handle enclosing of selection
    this.insert = function(text, pasted)
    {

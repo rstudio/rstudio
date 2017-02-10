@@ -66,10 +66,31 @@
 
 
 
-.terminal.focus .terminal-cursor.blinking {
-    animation: blink-cursor 1.2s infinite step-end;
+.terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar).focus.xterm-cursor-blink .terminal-cursor {
+    animation: xterm-cursor-blink 1.2s infinite step-end;
 }
 
+
+.terminal.xterm-cursor-style-bar .terminal-cursor,
+.terminal.xterm-cursor-style-underline .terminal-cursor {
+    position: relative;
+}
+.terminal.xterm-cursor-style-bar .terminal-cursor::before {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+}
+.terminal.xterm-cursor-style-underline .terminal-cursor::before {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+}
+.terminal.xterm-cursor-style-bar.focus.xterm-cursor-blink .terminal-cursor::before,
+.terminal.xterm-cursor-style-underline.focus.xterm-cursor-blink .terminal-cursor::before {
+    animation: xterm-cursor-non-bar-blink 1.2s infinite step-end;
+}
 
 .terminal .composition-view {
     background: #000;
@@ -84,6 +105,10 @@
     display: block;
 }
 
+
+.terminal .xterm-wide-char {
+    display: inline-block;
+}
 
 .terminal .xterm-rows {
     position: absolute;

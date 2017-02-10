@@ -3,6 +3,7 @@
 ### Data Import
 
 * Add support for all file encodings supported by R
+* Restore text import dialog from previous releases (uses only base R functions)
 
 ### R Markdown
 
@@ -10,9 +11,9 @@
 
 ### R Notebooks
 
-* Fixed an issue where non-R chunk output could become duplicated
-* 'Rename in Scope' now works within R chunks
 * Python chunks now respect virtualenv if present
+* 'Rename in Scope' now works within R chunks
+* Fixed an issue where non-R chunk output could become duplicated
 
 ### Terminal
 
@@ -25,7 +26,6 @@
 * Added support for custom, user-provided project templates
 * Implement support for changing editor tabs with the mouse wheel
 * Add option to knit in current working directory or project directory
-* 'Insert assignment operator' shortcut now works on Firefox
 * Cmd/Ctrl+Enter in Help pane now sends selected example code to console
 * View(vignette(...)) now opens editor with vignette source
 * Ctrl+P/Ctrl+N to visit previous/next console history line (like readline)
@@ -33,7 +33,10 @@
 * New "Copy To" command in Files pane to copy and rename in one step
 * Debugger support for R 3.3.3 and above
 * F2 in source editor opens data frame under cursor in a new tab
+* Highlight markdown inside ROxygen comments
 * Server Pro: Add option to disable file uploads
+* Server Pro: Upgrade to TurboActivate 4.0; improves licensing
+* Server Pro: Add support for floating (lease-based) licenses
 
 ### Bug Fixes
 
@@ -41,4 +44,6 @@
 * macOS: fixed 'crash on wake' issue with late-2016 Macbooks
 * Fixed mangling of YAML header string values containing backticks 
 * File downloads from the internal browser are now saved correctly on Linux and Windows
+* Rendering or running an R Markdown document no longer saves it unnecessarily
+* 'Insert assignment operator' shortcut now works on Firefox
 

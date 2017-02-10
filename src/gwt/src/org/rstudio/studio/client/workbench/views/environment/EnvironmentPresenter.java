@@ -480,10 +480,15 @@ public class EnvironmentPresenter extends BasePresenter
               });
    }
 
-   void onImportDatasetFromCSV()
+   void onImportDatasetFromCsvUsingReadr()
    {
       view_.bringToFront();
       dataImportPresenter_.openImportDatasetFromCSV("");
+   }
+
+   void onImportDatasetFromCsvUsingBase()
+   {
+      onImportDatasetFromFile();
    }
    
    void onImportDatasetFromSAV()

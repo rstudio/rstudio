@@ -39,6 +39,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionCodeSearch.hpp"
+#include "SessionLibPathsIndexer.hpp"
 
 using namespace rstudio::core;
 
@@ -475,6 +476,21 @@ SEXP rs_getKnitParamsForDocument(SEXP documentIdSEXP)
    return resultSEXP;
 }
 
+SEXP rs_listIndexedPackages()
+{
+   std::vector<std::string> pkgNames;
+   
+   const std::vector<FilePath>& pkgPaths = libpaths::getInstalledPackages();
+   pkgNames.reserve(pkgPaths.size());
+   BOOST_FOREACH(const FilePath& pkgPath, pkgPaths)
+   {
+      pkgNames.push_back(pkgPath.absolutePath());
+   }
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(pkgNames, &protect);
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -487,6 +503,7 @@ Error initialize() {
    RS_REGISTER_CALL_METHOD(rs_getInferredCompletions, 1);
    RS_REGISTER_CALL_METHOD(rs_getNAMESPACEImportedSymbols, 1);
    RS_REGISTER_CALL_METHOD(rs_getKnitParamsForDocument, 1);
+   RS_REGISTER_CALL_METHOD(rs_listIndexedPackages, 0);
    
    using boost::bind;
    using namespace module_context;

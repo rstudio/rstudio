@@ -227,8 +227,14 @@ void onConsoleInput(const std::string& input)
                   boost::posix_time::seconds(1),
                   boost::bind(reindex),
                   true);
+         return;
       }
    }
+}
+
+void onLibPathsChanged(const std::vector<std::string>& libPaths)
+{
+   reindex();
 }
 
 } // end anonymous namespace
@@ -240,6 +246,7 @@ Error initialize()
    
    events().onDeferredInit.connect(onDeferredInit);
    events().onConsoleInput.connect(onConsoleInput);
+   events().onLibPathsChanged.connect(onLibPathsChanged);
    
    return Success();
 }

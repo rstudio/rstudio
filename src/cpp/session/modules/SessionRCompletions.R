@@ -1298,15 +1298,17 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("listIndexedPackages", function()
+{
+   .Call("rs_listIndexedPackages")
+})
+
 .rs.addFunction("getCompletionsPackages", function(token,
                                                    appendColons = FALSE,
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
-   # List all directories within the .libPaths()
-   allPackages <- Reduce(union, lapply(.libPaths(), function(libPath) {
-      .rs.listDirs(libPath, full.names = FALSE, recursive = FALSE)
-   }))
+   allPackages <- basename(.rs.listIndexedPackages())
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")

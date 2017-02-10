@@ -161,6 +161,7 @@
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
+#include "modules/SessionLibPathsIndexer.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -446,6 +447,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
       (modules::rstudioapi::initialize)
+      (modules::libpaths::initialize)
 
       // workers
       (workers::web_request::initialize)

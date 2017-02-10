@@ -216,7 +216,7 @@ create_terminal_cursor_rules <- function(isDark) {
    }
    
    sprintf(paste(sep = "\n",
-                 ".terminal .terminal-cursor {",
+                 ".terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor {",
                  "   background-color: %s;",
                  "   color: %s;",
                  "}",
@@ -225,7 +225,7 @@ create_terminal_cursor_rules <- function(isDark) {
                  "  outline-offset: -1px;",
                  "  background-color: transparent;",
                  "}",
-                 "@keyframes blink-cursor {",
+                 "@keyframes xterm-cursor-blink {",
                  "  0%% {",
                  "    background-color: %s;",
                  "    color: %s;",
@@ -234,12 +234,36 @@ create_terminal_cursor_rules <- function(isDark) {
                  "    background-color: transparent;",
                  "    color: %s;",
                  "  }",
+                 "}",
+                 ".terminal.xterm-cursor-style-bar .terminal-cursor::before,",
+                 ".terminal.xterm-cursor-style-underline .terminal-cursor::before {",
+                 "   content: \"\";",
+                 "   display: block;",
+                 "   position: absolute;",
+                 "   background-color: %s;",
+                 "}",
+                 "@keyframes xterm-cursor-non-bar-blink {",
+                 "   0%% { background-color: %s; }",
+                 "   50%% { background-color: transparent; }",
                  "}"),
+           
+           # .terminal:not(.xterm-cursor-style-underline):not(.xterm-cursor-style-bar) .terminal-cursor
+           termCursorBgColorFirst,
+           termCursorBgColorSecond,
+           
+           # .terminal:not(.focus) .terminal-cursor
+           termCursorBgColorFirst,
+           
+           # @keyframes xterm-cursor-blink
            termCursorBgColorFirst,
            termCursorBgColorSecond,
            termCursorBgColorFirst,
+   
+           # .terminal.xterm-cursor-style-bar .terminal-cursor::before
+           # .terminal.xterm-cursor-style-underline .terminal-cursor::before
            termCursorBgColorFirst,
-           termCursorBgColorSecond,
+           
+           # @keyframes xterm-cursor-non-bar-blink
            termCursorBgColorFirst)
 }
 

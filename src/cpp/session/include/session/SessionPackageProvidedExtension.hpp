@@ -52,6 +52,11 @@ public:
    virtual ~Worker() {}
    
 public:
+   
+   Worker()
+   {
+   }
+
    Worker(const std::string& resourcePath)
       : resourcePath_(resourcePath)
    {
