@@ -102,10 +102,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="shareProject"/>
          <separator/>
          <menu label="_Import Dataset">
-            <menu id="importCsvMenu" label="From CSV">
-               <cmd refid="importDatasetFromCsvUsingBase"/>
-               <cmd refid="importDatasetFromCsvUsingReadr"/>
-            </menu>
+            <cmd refid="importDatasetFromCsvUsingBase"/>
+            <cmd refid="importDatasetFromCsvUsingReadr"/>
             <cmd refid="importDatasetFromFile"/>
             <cmd refid="importDatasetFromURL"/>
             <separator/>
@@ -2270,13 +2268,13 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="importDatasetFromCsvUsingReadr"
-        label="Using Readr..."
-        menuLabel="Using _Readr..."
+        label="Import CSV (readr)..."
+        menuLabel="Import CSV (_readr)..."
         windowMode="main"/>
 
    <cmd id="importDatasetFromCsvUsingBase"
-        label="Using Base..."
-        menuLabel="Using _Base..."
+        label="Import CSV (base)..."
+        menuLabel="Import CSV (_base)..."
         windowMode="main"/>
 
    <cmd id="importDatasetFromSAV"

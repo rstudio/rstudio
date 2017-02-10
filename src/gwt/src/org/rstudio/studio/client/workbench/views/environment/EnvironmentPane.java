@@ -417,14 +417,11 @@ public class EnvironmentPane extends WorkbenchPane
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.setAutoOpen(true);
-      
-      ToolbarPopupMenu importCsvMenu = new ToolbarPopupMenu(menu);
-      importCsvMenu.addItem(commands_.importDatasetFromCsvUsingBase().createMenuItem(false));
-      importCsvMenu.addItem(commands_.importDatasetFromCsvUsingReadr().createMenuItem(false));
    
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
-      menu.addItem(commands_.importDatasetFromCsv(), importCsvMenu);
+      menu.addItem(commands_.importDatasetFromCsvUsingBase().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromCsvUsingReadr().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.importDatasetFromXLS().createMenuItem(false));
       menu.addSeparator();
