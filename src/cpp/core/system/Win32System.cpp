@@ -498,11 +498,9 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
    return Success();
 }
 
-// TODO (review) this is a stopgap to get Windows compiling again!
 Error realPath(const std::string& path, FilePath* pRealPath)
 {
-   *pRealPath = FilePath(path);
-   return Success();
+   return realPath(FilePath(path), pRealPath);
 }
 
 bool isHiddenFile(const FilePath& filePath)
