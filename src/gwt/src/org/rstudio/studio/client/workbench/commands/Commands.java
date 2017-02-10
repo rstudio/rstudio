@@ -306,7 +306,9 @@ public abstract class
    public abstract AppCommand loadWorkspace();
    public abstract AppCommand importDatasetFromFile();
    public abstract AppCommand importDatasetFromURL();
-   public abstract AppCommand importDatasetFromCSV();
+   public abstract AppCommand importDatasetFromCsv();
+   public abstract AppCommand importDatasetFromCsvUsingReadr();
+   public abstract AppCommand importDatasetFromCsvUsingBase();
    public abstract AppCommand importDatasetFromSAV();
    public abstract AppCommand importDatasetFromSAS();
    public abstract AppCommand importDatasetFromStata();

@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
@@ -30,6 +31,8 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.BaseMenuBar;
 
@@ -49,6 +52,12 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       super(true);
       add(wrapMenuBar(menuBar_ = createMenuBar()));
+   }
+   
+   public ToolbarPopupMenu(ToolbarPopupMenu parent)
+   {
+      this();
+      parent_ = parent;
    }
 
    protected ToolbarMenuBar createMenuBar()
@@ -86,6 +95,22 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void addItem(SafeHtml html, MenuBar popup)
    {
       menuBar_.addItem(html, popup);
+   }
+   
+   public void addItem(MenuItem menuItem, final ToolbarPopupMenu popup)
+   {
+      menuBar_.addItem(SafeHtmlUtils.fromTrustedString(menuItem.getHTML()), popup.menuBar_);
+   }
+   
+   public void addItem(AppCommand command, ToolbarPopupMenu popup)
+   {
+      if (command.isEnabled())
+         addItem(command.createMenuItem(false), popup);
+   }
+   
+   public void setAutoOpen(boolean autoOpen)
+   {
+      menuBar_.setAutoOpen(autoOpen);
    }
    
    public void insertItem(MenuItem menuItem, int beforeIndex)
@@ -161,6 +186,7 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       {
          Scheduler.get().scheduleFinally(coreCommand_);
          hide();
+         if (parent_ != null) parent_.hide();
       }
    
       private ScheduledCommand coreCommand_;
@@ -300,5 +326,6 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private HandlerRegistration nativePreviewReg_;
    }
    
-   protected ToolbarMenuBar menuBar_ ;
+   protected ToolbarMenuBar menuBar_;
+   private ToolbarPopupMenu parent_;
 }

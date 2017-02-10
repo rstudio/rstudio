@@ -55,6 +55,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -415,10 +416,12 @@ public class EnvironmentPane extends WorkbenchPane
    private Widget createImportMenu()
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
-      
-      menu.addItem(commands_.importDatasetFromCSV().createMenuItem(false));
+      menu.setAutoOpen(true);
+   
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromCsvUsingBase().createMenuItem(false));
+      menu.addItem(commands_.importDatasetFromCsvUsingReadr().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands_.importDatasetFromXLS().createMenuItem(false));
       menu.addSeparator();
