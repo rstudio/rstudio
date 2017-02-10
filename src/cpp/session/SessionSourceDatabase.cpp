@@ -816,6 +816,41 @@ Error getId(const FilePath& path, std::string* pId)
    return getId(module_context::createAliasedPath(FileInfo(path)), pId);
 }
 
+Error rename(const FilePath& from, const FilePath& to)
+{
+   // ensure the destination exists
+   if (!to.exists())
+      return Success();
+
+   // ensure the file is in the source database
+   std::string id;
+   Error error = getId(from, &id);
+   if (error)
+   {
+      // rename of a file not in the sdb is a no-op
+      return Success();
+   }
+
+   // find the file in the sdb and update it with the new path
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+   error = source_database::get(id, pDoc);
+   if (error)
+      return error;
+   error = pDoc->setPathAndContents(
+         module_context::createAliasedPath(FileInfo(to)));
+   if (error)
+      return error;
+   error = source_database::put(pDoc);
+   if (error)
+      return error;
+
+   // success! fire event for other modules to pick up
+   events().onDocRenamed(
+         module_context::createAliasedPath(FileInfo(from)), pDoc);
+
+   return error;
+}
+
 namespace {
 
 void onQuit()

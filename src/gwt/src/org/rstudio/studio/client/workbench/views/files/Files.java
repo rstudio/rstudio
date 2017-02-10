@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
 
 import java.util.ArrayList;
 
@@ -500,11 +501,10 @@ public class Files
             progress.onProgress("Renaming file...");
 
             String path = file.getParentPath().completePath(input);
-            FileSystemItem target ;
-            if (file.isDirectory())
-               target = FileSystemItem.createDir(path);
-            else
-               target = FileSystemItem.createFile(path);
+            final FileSystemItem target =
+               file.isDirectory() ?
+                  FileSystemItem.createDir(path) :
+                  FileSystemItem.createFile(path);
               
             // clear selection
             view_.selectNone();
@@ -517,6 +517,18 @@ public class Files
             server_.renameFile(file, 
                                target, 
                                new VoidServerRequestCallback(progress) {
+                                 @Override
+                                 protected void onSuccess()
+                                 {
+                                    // if we were successful, let editor know
+                                    if (!file.isDirectory())
+                                    {
+                                       eventBus_.fireEvent(
+                                             new SourcePathChangedEvent(
+                                                   file.getPath(), 
+                                                   target.getPath()));
+                                    }
+                                 }
                                  @Override
                                  protected void onFailure()
                                  {
