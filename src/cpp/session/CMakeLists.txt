@@ -113,6 +113,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionHistory.cpp
    modules/SessionHistoryArchive.cpp
    modules/SessionHTMLPreview.cpp
+   modules/SessionLibPathsIndexer.cpp
    modules/SessionLimits.cpp
    modules/SessionLists.cpp
    modules/SessionMarkers.cpp
