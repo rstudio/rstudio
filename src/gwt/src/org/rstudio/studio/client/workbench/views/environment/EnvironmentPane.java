@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -56,8 +55,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -421,7 +418,7 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.setAutoOpen(true);
       
-      MenuBar importCsvMenu = new MenuBar(true);
+      ToolbarPopupMenu importCsvMenu = new ToolbarPopupMenu(menu);
       importCsvMenu.addItem(commands_.importDatasetFromCsvUsingBase().createMenuItem(false));
       importCsvMenu.addItem(commands_.importDatasetFromCsvUsingReadr().createMenuItem(false));
    
