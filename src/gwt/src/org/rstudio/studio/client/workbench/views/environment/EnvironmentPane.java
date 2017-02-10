@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
@@ -55,6 +56,9 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -415,8 +419,13 @@ public class EnvironmentPane extends WorkbenchPane
    private Widget createImportMenu()
    {
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
+      menu.setAutoOpen(true);
       
-      menu.addItem(commands_.importDatasetFromCSV().createMenuItem(false));
+      MenuBar importCsvMenu = new MenuBar(true);
+      importCsvMenu.addItem(commands_.importDatasetFromCsvUsingBase().createMenuItem(false));
+      importCsvMenu.addItem(commands_.importDatasetFromCsvUsingReadr().createMenuItem(false));
+   
+      menu.addItem(commands_.importDatasetFromCsv().createMenuItem(false), importCsvMenu);
       menu.addItem(commands_.importDatasetFromFile().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromURL().createMenuItem(false));
       menu.addSeparator();

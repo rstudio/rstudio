@@ -21,11 +21,15 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
@@ -86,6 +90,16 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void addItem(SafeHtml html, MenuBar popup)
    {
       menuBar_.addItem(html, popup);
+   }
+   
+   public void addItem(MenuItem menuItem, MenuBar popup)
+   {
+      menuBar_.addItem(SafeHtmlUtils.fromTrustedString(menuItem.getHTML()), popup);
+   }
+   
+   public void setAutoOpen(boolean autoOpen)
+   {
+      menuBar_.setAutoOpen(autoOpen);
    }
    
    public void insertItem(MenuItem menuItem, int beforeIndex)

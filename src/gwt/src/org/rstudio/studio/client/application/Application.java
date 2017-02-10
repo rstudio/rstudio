@@ -772,7 +772,7 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromFile().remove();
          commands_.importDatasetFromURL().remove();
          
-         commands_.importDatasetFromCSV().setVisible(false);
+         commands_.importDatasetFromCsvUsingReadr().setVisible(false);
          commands_.importDatasetFromSAV().setVisible(false);
          commands_.importDatasetFromSAS().setVisible(false);
          commands_.importDatasetFromStata().setVisible(false);
@@ -785,7 +785,7 @@ public class Application implements ApplicationEventHandlers
             String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
             if (ApplicationUtils.compareVersions(rVersion, "3.0.2") >= 0)
             {
-               commands_.importDatasetFromCSV().setVisible(true);
+               commands_.importDatasetFromCsvUsingReadr().setVisible(true);
             }
             if (ApplicationUtils.compareVersions(rVersion, "3.1.0") >= 0)
             {
@@ -817,7 +817,8 @@ public class Application implements ApplicationEventHandlers
       }
       else
       {
-         commands_.importDatasetFromCSV().remove();
+         commands_.importDatasetFromCsvUsingBase().remove();
+         commands_.importDatasetFromCsvUsingReadr().remove();
          commands_.importDatasetFromSAV().remove();
          commands_.importDatasetFromSAS().remove();
          commands_.importDatasetFromStata().remove();

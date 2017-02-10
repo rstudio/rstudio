@@ -46,7 +46,9 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
       @Handler
       public abstract void onImportDatasetFromURL();
       @Handler
-      public abstract void onImportDatasetFromCSV();
+      public abstract void onImportDatasetFromCsvUsingReadr();
+      @Handler
+      public abstract void onImportDatasetFromCsvUsingBase();
       @Handler
       public abstract void onImportDatasetFromSAV();
       @Handler
