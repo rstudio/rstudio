@@ -44,6 +44,8 @@ public:
     void setExtraOption(bool extraOption);
     bool extraOption();
 
+    void done(int r);
+
 private:
     Ui::InputDialog *ui;
     QPushButton* pOK_;

@@ -14,6 +14,7 @@
  */
 
 #include "DesktopInputDialog.hpp"
+#include "DesktopUtils.hpp"
 #include "ui_DesktopInputDialog.h"
 
 #include <QPushButton>
@@ -101,4 +102,19 @@ void InputDialog::setExtraOption(bool extraOption)
 bool InputDialog::extraOption()
 {
    return ui->extraOption->checkState() == Qt::Checked;
+}
+
+void InputDialog::done(int r)
+{
+   if (QDialog::Accepted == r) // ok was pressed
+   {
+      if (ui->lineEdit->text().size() == 0)
+      {
+         rstudio::desktop::showWarning(this,
+                     QString::fromUtf8("Error"),
+                     QString::fromUtf8("You must enter a value."));
+         return;
+       }
+   }
+   QDialog::done(r);
 }
