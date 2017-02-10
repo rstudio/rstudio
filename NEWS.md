@@ -34,6 +34,7 @@
 * Debugger support for R 3.3.3 and above
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
+* Improve performance of autocompletion for installed packages
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -46,4 +47,5 @@
 * File downloads from the internal browser are now saved correctly on Linux and Windows
 * Rendering or running an R Markdown document no longer saves it unnecessarily
 * 'Insert assignment operator' shortcut now works on Firefox
+* Fix hang when replacing a misspelled word with word and punctuation
 
