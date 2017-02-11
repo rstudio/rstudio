@@ -18,6 +18,7 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
 import org.rstudio.studio.client.common.vcs.AskPassManager;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -32,9 +33,10 @@ public class VCSApplication extends SatelliteApplication
                          Satellite satellite,
                          Provider<AceThemes> pAceThemes,
                          ApplicationUncaughtExceptionHandler uncaughtExHandler,
-                         AskPassManager askPassManager) // force gin to create
+                         AskPassManager askPassManager, // force gin to create
+                         Commands commands)
    {
-      super(NAME, view, satellite, pAceThemes, uncaughtExHandler);
+      super(NAME, view, satellite, pAceThemes, uncaughtExHandler, commands);
    }
 
    public final static String NAME = "review_changes";

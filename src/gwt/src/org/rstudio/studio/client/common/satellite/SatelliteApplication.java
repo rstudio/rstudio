@@ -14,14 +14,24 @@
  */
 package org.rstudio.studio.client.common.satellite;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
+import org.rstudio.studio.client.application.ui.RequestLogVisualization;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 public class SatelliteApplication
@@ -35,23 +45,55 @@ public class SatelliteApplication
                         SatelliteApplicationView view,
                         Satellite satellite,
                         Provider<AceThemes> pAceThemes,
-                        ApplicationUncaughtExceptionHandler uncaughtExHandler)
+                        ApplicationUncaughtExceptionHandler uncaughtExHandler,
+                        Commands commands)
    {
-      initialize(name, view, satellite, pAceThemes, uncaughtExHandler);
+      initialize(name, view, satellite, pAceThemes, uncaughtExHandler, commands);
    }
-
+   
    public void initialize(
                         String name,
                         SatelliteApplicationView view,
                         Satellite satellite,
                         Provider<AceThemes> pAceThemes,
-                        ApplicationUncaughtExceptionHandler uncaughtExHandler)
+                        ApplicationUncaughtExceptionHandler uncaughtExHandler,
+                        Commands commands)
    {
       name_ = name;
       view_ = view;
       satellite_ = satellite;
       pAceThemes_ = pAceThemes;
       uncaughtExHandler_ = uncaughtExHandler;
+      
+      commands.showRequestLog().addHandler(new CommandHandler()
+      {
+         public void onCommand(AppCommand command)
+         {
+            GWT.runAsync(new RunAsyncCallback()
+            {
+               public void onFailure(Throwable reason)
+               {
+                  Window.alert(reason.toString());
+               }
+
+               public void onSuccess()
+               {
+                  final RequestLogVisualization viz = new RequestLogVisualization();
+                  final RootLayoutPanel root = RootLayoutPanel.get();
+                  root.add(viz);
+                  root.setWidgetTopBottom(viz, 10, Unit.PX, 10, Unit.PX);
+                  root.setWidgetLeftRight(viz, 10, Unit.PX, 10, Unit.PX);
+                  viz.addCloseHandler(new CloseHandler<RequestLogVisualization>()
+                  {
+                     public void onClose(CloseEvent<RequestLogVisualization> event)
+                     {
+                        root.remove(viz);
+                     }
+                  });
+               }
+            });
+         }
+      });
    }
    
 

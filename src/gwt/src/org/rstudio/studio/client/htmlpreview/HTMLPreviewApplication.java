@@ -18,6 +18,7 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -33,8 +34,9 @@ public class HTMLPreviewApplication extends SatelliteApplication
    public HTMLPreviewApplication(HTMLPreviewApplicationView view,
                                  Satellite satellite,
                                  Provider<AceThemes> pAceThemes,
-                                 ApplicationUncaughtExceptionHandler exHandler)
+                                 ApplicationUncaughtExceptionHandler exHandler,
+                                 Commands commands)
    {
-      super(NAME, view, satellite, pAceThemes, exHandler);
+      super(NAME, view, satellite, pAceThemes, exHandler, commands);
    }
 }
