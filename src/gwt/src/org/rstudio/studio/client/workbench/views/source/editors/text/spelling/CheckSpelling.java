@@ -199,8 +199,7 @@ public class CheckSpelling
    private void doReplacement(String replacement)
    {
       docDisplay_.replaceSelection(replacement);
-      // Spell check what we just replaced
-      currentPos_ = docDisplay_.getSelectionStart();
+      currentPos_ = docDisplay_.getSelectionEnd();
    }
 
    private void findNextMisspelling()
