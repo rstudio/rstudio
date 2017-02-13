@@ -23,6 +23,7 @@ import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 
@@ -41,8 +42,9 @@ import java.util.ArrayList;
 //  - setGlassEnabled()
 //  - Animations
 //  - DialogBox.setText()
+//  - Styles
 
-public abstract class ModalDialogBase2 extends Composite
+public abstract class ModalDialogBase2 extends DecoratedPopupPanel
 {
    protected ModalDialogBase2()
    {
@@ -51,8 +53,8 @@ public abstract class ModalDialogBase2 extends Composite
 
    protected ModalDialogBase2(SimplePanel containerPanel)
    {
-      addStyleDependentName("ModalDialog");
-
+      super(false);
+      
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
       bottomPanel_ = new HorizontalPanel();
@@ -70,11 +72,12 @@ public abstract class ModalDialogBase2 extends Composite
       if (containerPanel_ != null)
       {
          containerPanel_.setWidget(mainPanel_);
-         addLeftWidget(containerPanel_);
+         setWidget(containerPanel_);
       }
       else
       {
-         addLeftWidget(mainPanel_);
+         mainPanel_.getElement().setId("Foo111");
+         setWidget(mainPanel_);
       }
 
       addDomHandler(new KeyDownHandler()
@@ -137,6 +140,12 @@ public abstract class ModalDialogBase2 extends Composite
       enterDisabled_ = enterDisabled;
    }
 
+   @Override
+   public void show()
+   {
+      super.show();
+   }
+
    public void showModal()
    {
       if (mainWidget_ == null)
@@ -153,19 +162,11 @@ public abstract class ModalDialogBase2 extends Composite
       if (originallyActiveElement_ != null)
          originallyActiveElement_.blur();
 
-      // position the dialog
-      positionAndShowDialog(new Command() {
-         @Override
-         public void execute()
-         {
-            // defer shown notification to allow all elements to render
-            // before attempting to interact w/ them programmatically (e.g. setFocus)
-            Timer timer = new Timer() {
-               public void run() {
-                  onDialogShown();
-               }
-            };
-            timer.schedule(100);
+      setPopupPositionAndShow(new PopupPanel.PositionCallback(){
+         public void setPosition(int offsetWidth, int offsetHeight) {
+            int left = (Window.getClientWidth() - offsetWidth) / 3;
+            int top = (Window.getClientHeight() - offsetHeight) / 3;
+            setPopupPosition(left, top);
          }
       });
    }
