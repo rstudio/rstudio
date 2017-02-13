@@ -52,6 +52,8 @@
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
 
+#define kMaxBuildOutputSize 1000
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -1621,14 +1623,21 @@ BuildContext s_suspendBuildContext;
 void writeBuildContext(const BuildContext& buildContext,
                        core::Settings* pSettings)
 {
+   using namespace core::algorithm;
+   
+   // collect outputs
+   json::Array outputs = tail(buildContext.outputs, kMaxBuildOutputSize);
    std::ostringstream ostr;
-   json::write(buildContext.outputs, ostr);
+   json::write(outputs, ostr);
    pSettings->set("build-last-outputs", ostr.str());
 
+   // collect errors
+   json::Array errors = tail(buildContext.errors, kMaxBuildOutputSize);
    std::ostringstream ostrErrors;
-   json::write(buildContext.errors, ostrErrors);
+   json::write(errors, ostrErrors);
    pSettings->set("build-last-errors", ostrErrors.str());
 
+   // collect build dir
    pSettings->set("build-last-errors-base-dir", buildContext.errorsBaseDir);
 }
 
@@ -1655,6 +1664,8 @@ void onSuspend(core::Settings* pSettings)
 
 void onResume(const core::Settings& settings)
 {
+   using namespace core::algorithm;
+   
    std::string buildLastOutputs = settings.get("build-last-outputs");
    if (!buildLastOutputs.empty())
    {
@@ -1662,7 +1673,8 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastOutputs, &outputsJson) &&
           json::isType<json::Array>(outputsJson))
       {
-         s_suspendBuildContext.outputs = outputsJson.get_array();
+         s_suspendBuildContext.outputs =
+               tail(outputsJson.get_array(), kMaxBuildOutputSize);
       }
    }
 
@@ -1674,7 +1686,8 @@ void onResume(const core::Settings& settings)
       if (json::parse(buildLastErrors, &errorsJson) &&
           json::isType<json::Array>(errorsJson))
       {
-         s_suspendBuildContext.errors = errorsJson.get_array();
+         s_suspendBuildContext.errors =
+               tail(errorsJson.get_array(), kMaxBuildOutputSize);
       }
    }
 }

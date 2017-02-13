@@ -245,6 +245,42 @@ inline std::string join(Iterator begin, Iterator end, const std::string& delim)
    return result;
 }
 
+template <typename T>
+inline T head(const T& object, int n)
+{
+   if (n < 0)
+   {
+      n = -n;
+      if (n >= object.size())
+         return object;
+      return T(object.begin(), object.end() - n);
+   }
+   else
+   {
+      if (n >= object.size())
+         return object;
+      return T(object.begin(), object.begin() + n);
+   }
+}
+
+template <typename T>
+inline T tail(const T& object, int n)
+{
+   if (n < 0)
+   {
+      n = -n;
+      if (n >= object.size())
+         return object;
+      return T(object.begin() + n, object.end());
+   }
+   else
+   {
+      if (n >= object.size())
+         return object;
+      return T(object.end() - n, object.end());
+   }
+}
+
 } // namespace algorithm
 } // namespace core
 } // namespace rstudio
