@@ -195,6 +195,7 @@ set (SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookQueueUnit.cpp
    modules/rmarkdown/NotebookWorkingDir.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
+   modules/rmarkdown/RMarkdownTemplates.cpp
    modules/shiny/SessionShiny.cpp
    modules/tex/SessionCompilePdf.cpp
    modules/tex/SessionCompilePdfSupervisor.cpp

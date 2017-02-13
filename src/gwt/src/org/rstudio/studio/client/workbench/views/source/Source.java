@@ -86,7 +86,6 @@ import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
-import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -1468,45 +1467,30 @@ public class Source implements InsertSourceHandler,
    
    private void newRMarkdownV2Doc()
    {
-      rmarkdown_.withRMarkdownPackage(
-         "Creating R Markdown documents",
-         false,
-         new CommandWithArg<RMarkdownContext>(){
-
+      rmarkdown_.showNewRMarkdownDialog(
+         new OperationWithInput<NewRMarkdownDialog.Result>()
+         {
             @Override
-            public void execute(RMarkdownContext context)
+            public void execute(final NewRMarkdownDialog.Result result)
             {
-               new NewRMarkdownDialog(
-                  context,
-                  workbenchContext_,
-                  uiPrefs_.documentAuthor().getGlobalValue(),
-                  new OperationWithInput<NewRMarkdownDialog.Result>()
+               if (result.isNewDocument())
+               {
+                  NewRMarkdownDialog.RmdNewDocument doc = 
+                        result.getNewDocument();
+                  String author = doc.getAuthor();
+                  if (author.length() > 0)
                   {
-                     @Override
-                     public void execute(final NewRMarkdownDialog.Result result)
-                     {
-                        if (result.isNewDocument())
-                        {
-                           NewRMarkdownDialog.RmdNewDocument doc = 
-                                 result.getNewDocument();
-                           String author = doc.getAuthor();
-                           if (author.length() > 0)
-                           {
-                              uiPrefs_.documentAuthor().setGlobalValue(author);
-                              uiPrefs_.writeUIPrefs();
-                           }
-                           newRMarkdownV2Doc(doc);
-                        }
-                        else
-                        {
-                           newDocFromRmdTemplate(result);
-                        }
-                     }
+                     uiPrefs_.documentAuthor().setGlobalValue(author);
+                     uiPrefs_.writeUIPrefs();
                   }
-               ).showModal();
+                  newRMarkdownV2Doc(doc);
+               }
+               else
+               {
+                  newDocFromRmdTemplate(result);
+               }
             }
-         }
-      );
+         });
    }
    
    private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)

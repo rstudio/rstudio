@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -671,99 +671,6 @@ private:
 
 boost::shared_ptr<RenderRmd> s_pCurrentRender_;
 
-// This class's job is to asynchronously read template locations from the R
-// Markdown package, and emit each template as a client event. This should
-// generally be fast (a few milliseconds); we use this asynchronous
-// implementation in case the file system is slow (e.g. slow or remote disk)
-// or there are many thousands of packages (e.g. all of CRAN).
-class DiscoverTemplates : public async_r::AsyncRProcess
-{
-public:
-   static boost::shared_ptr<DiscoverTemplates> create()
-   {
-      boost::shared_ptr<DiscoverTemplates> pDiscover(new DiscoverTemplates());
-      pDiscover->start("rmarkdown:::list_template_dirs()", FilePath(),
-                       async_r::R_PROCESS_VANILLA);
-      return pDiscover;
-   }
-
-private:
-   void onStdout(const std::string& output)
-   {
-      r::sexp::Protect protect;
-      Error error;
-
-      // the output vector may contain more than one path if paths are returned
-      // very quickly, so split it into lines and emit a client event for
-      // each line
-      std::vector<std::string> paths;
-      boost::algorithm::split(paths, output,
-                              boost::algorithm::is_any_of("\n\r"));
-      BOOST_FOREACH(std::string& path, paths)
-      {
-         if (path.empty())
-            continue;
-
-         // record the template's path (absolute for the filesystem)
-         json::Object dataJson;
-
-         std::string name;
-         std::string description;
-         std::string createDir = "default";
-         std::string package;
-
-         // if the template's owning package is known, emit that
-         size_t pipePos = path.find_first_of('|');
-         if (pipePos != std::string::npos)
-         {
-            package = path.substr(0, pipePos);
-
-            // remove package name from string, leaving just the path segment
-            path = path.substr(pipePos + 1, path.length() - pipePos);
-         }
-
-         SEXP templateDetails;
-         error = r::exec::RFunction(
-            ".rs.getTemplateDetails",string_utils::utf8ToSystem(path))
-            .call(&templateDetails, &protect);
-
-         // .rs.getTemplateDetails may return null if the template is not
-         // well-formed
-         if (error || TYPEOF(templateDetails) == NILSXP)
-            continue;
-
-         r::sexp::getNamedListElement(templateDetails,
-                                      "name", &name);
-         r::sexp::getNamedListElement(templateDetails,
-                                      "description", &description);
-
-         bool createDirFlag = false;
-         error = r::sexp::getNamedListElement(templateDetails,
-                                              "create_dir",
-                                              &createDirFlag);
-         createDir = createDirFlag ? "true" : "false";
-
-         dataJson["package_name"] = package;
-         dataJson["path"] = path;
-         dataJson["name"] = name;
-         dataJson["description"] = description;
-         dataJson["create_dir"] = createDir;
-
-         // emit to the client
-         ClientEvent event(client_events::kRmdTemplateDiscovered, dataJson);
-         module_context::enqueClientEvent(event);
-      }
-   }
-
-   void onCompleted(int exitStatus)
-   {
-      module_context::enqueClientEvent(
-               ClientEvent(client_events::kRmdTemplateDiscoveryCompleted));
-   }
-};
-
-boost::shared_ptr<DiscoverTemplates> s_pTemplateDiscovery_;
-
 // replaces references to MathJax with references to our built-in resource
 // handler.
 // in:  script src = "http://foo/bar/Mathjax.js?abc=123"
@@ -1132,23 +1039,6 @@ void handleRmdOutputRequest(const http::Request& request,
 }
 
 
-Error discoverRmdTemplates(const json::JsonRpcRequest&,
-                           json::JsonRpcResponse* pResponse)
-{
-   if (s_pTemplateDiscovery_ &&
-       s_pTemplateDiscovery_->isRunning())
-   {
-      pResponse->setResult(false);
-   }
-   else
-   {
-      s_pTemplateDiscovery_ = DiscoverTemplates::create();
-      pResponse->setResult(true);
-   }
-
-   return Success();
-}
-
 Error createRmdFromTemplate(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
@@ -1434,7 +1324,6 @@ Error initialize()
       (bind(registerRpcMethod, "render_rmd", renderRmd))
       (bind(registerRpcMethod, "render_rmd_source", renderRmdSource))
       (bind(registerRpcMethod, "terminate_render_rmd", terminateRenderRmd))
-      (bind(registerRpcMethod, "discover_rmd_templates", discoverRmdTemplates))
       (bind(registerRpcMethod, "create_rmd_from_template", createRmdFromTemplate))
       (bind(registerRpcMethod, "get_rmd_template", getRmdTemplate))
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
