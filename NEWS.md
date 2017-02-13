@@ -50,4 +50,4 @@
 * Fix hang when replacing a misspelled word with word and punctuation
 * Editor now responds correctly when renaming an open file using the Files pane
 * Fixed an issue that could cause the data viewer cache to contain orphaned entries
-
+* Fixed highlighting of Markdown text within Markdown blockquote
