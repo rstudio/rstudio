@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -450,6 +450,30 @@ public class Source implements InsertSourceHandler,
          public void onSourceFileSaved(SourceFileSavedEvent event)
          {
             pMruList_.get().add(event.getPath());
+         }
+      });
+      
+      events.addHandler(SourcePathChangedEvent.TYPE, 
+            new SourcePathChangedEvent.Handler()
+      {
+         
+         @Override
+         public void onSourcePathChanged(final SourcePathChangedEvent event)
+         {
+            
+            inEditorForPath(event.getFrom(), 
+                            new OperationWithInput<EditingTarget>()
+            {
+               @Override
+               public void execute(EditingTarget input)
+               {
+                  FileSystemItem toPath = 
+                        FileSystemItem.createFile(event.getTo());
+                  input.getName().setValue(toPath.getName(), true);
+                  events_.fireEvent(new SourceFileSavedEvent(
+                        input.getId(), event.getTo()));
+               }
+            });
          }
       });
             

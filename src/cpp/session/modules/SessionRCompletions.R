@@ -598,7 +598,22 @@ assign(x = ".rs.acCompletionTypes",
          
       }
       
-      ## Base case
+      # Resolve formals from a classGeneratorFunction based
+      # on its slots
+      if (is.null(formals) &&
+          inherits(object, "classGeneratorFunction"))
+      {
+         try(silent = TRUE, {
+            class <- object@className
+            defn <- getClass(class)
+            slots <- defn@slots
+            formals <- list(
+               formals = names(slots),
+               methods = rep(class, length(slots))
+            )
+         })
+      }
+      
       # Resolve formals from the function itself
       if (is.null(formals))
       {
@@ -662,7 +677,8 @@ assign(x = ".rs.acCompletionTypes",
       argCompletions <- .rs.getCompletionsArgument(
          token = token,
          activeArg = activeArg,
-         functionCall = functionCall
+         functionCall = functionCall,
+         envir = envir
       )
       
       # If the active argument was 'formula' and we were able
@@ -1309,6 +1325,9 @@ assign(x = ".rs.acCompletionTypes",
                                                    quote = !appendColons)
 {
    allPackages <- basename(.rs.listIndexedPackages())
+   
+   # In case indexing is disabled, include any loaded namespaces by default
+   allPackages <- union(allPackages, loadedNamespaces())
    
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")

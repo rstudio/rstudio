@@ -198,6 +198,7 @@ core::Error getPath(const std::string& id, std::string* pPath);
 core::Error getPath(const std::string& id, core::FilePath* pPath);
 core::Error getId(const std::string& path, std::string* pId);
 core::Error getId(const core::FilePath& path, std::string* pId);
+core::Error rename(const core::FilePath& from, const core::FilePath& to);
 
 // source database events
 struct Events : boost::noncopyable
