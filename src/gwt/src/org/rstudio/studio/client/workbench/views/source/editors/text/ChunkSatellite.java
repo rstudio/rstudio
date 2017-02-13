@@ -19,6 +19,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -38,9 +39,10 @@ public class ChunkSatellite extends SatelliteApplication
    public void initialize(ChunkSatelliteView view,
                           Satellite satellite,
                           Provider<AceThemes> pAceThemes,
-                          ApplicationUncaughtExceptionHandler exHandler)
+                          ApplicationUncaughtExceptionHandler exHandler,
+                          Commands commands)
    {
-      initialize(name_, view, satellite, pAceThemes, exHandler);
+      initialize(name_, view, satellite, pAceThemes, exHandler, commands);
    }
    
    private final String name_;
