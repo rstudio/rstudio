@@ -187,15 +187,23 @@ namespace {
 
 void reindex()
 {
-   if (module_context::disablePackages())
-      return;
-   
    indexer().start();
+}
+
+void reindexDeferred()
+{
+   module_context::scheduleDelayedWork(
+            boost::posix_time::seconds(1),
+            boost::bind(reindex),
+            true);
 }
 
 void onDeferredInit(bool)
 {
-   reindex();
+   if (module_context::disablePackages())
+      return;
+   
+   reindexDeferred();
 }
 
 void onConsoleInput(const std::string& input)
@@ -219,22 +227,17 @@ void onConsoleInput(const std::string& input)
    {
       if (boost::algorithm::starts_with(inputTrimmed, command))
       {
-         // we need to give R a chance to actually process the package library
-         // mutating command before we update the index. schedule delayed work
-         // with idleOnly = true so that it waits until the user has returned
-         // to the R prompt
-         module_context::scheduleDelayedWork(
-                  boost::posix_time::seconds(1),
-                  boost::bind(reindex),
-                  true);
-         return;
+         return reindexDeferred();
       }
    }
 }
 
 void onLibPathsChanged(const std::vector<std::string>& libPaths)
 {
-   reindex();
+   if (module_context::disablePackages())
+      return;
+   
+   reindexDeferred();
 }
 
 } // end anonymous namespace

@@ -1310,6 +1310,9 @@ assign(x = ".rs.acCompletionTypes",
 {
    allPackages <- basename(.rs.listIndexedPackages())
    
+   # In case indexing is disabled, include any loaded namespaces by default
+   allPackages <- union(allPackages, loadedNamespaces())
+   
    # Not sure why 'DESCRIPTION' might show up here, but let's take it out
    allPackages <- setdiff(allPackages, "DESCRIPTION")
    

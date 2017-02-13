@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixD
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIterator;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
@@ -2164,6 +2165,20 @@ public class RCompletionManager implements CompletionManager
       if (currentToken == null)
          return "";
       
+      // If the user has inserted some spaces, the cursor might now lie
+      // on a 'text' token. In that case, find the previous token and
+      // use that for completion.
+      String suffix = "";
+      if (currentToken.getValue().trim().isEmpty())
+      {
+         suffix = currentToken.getValue();
+         TokenIterator it = editor.createTokenIterator();
+         it.moveToPosition(cursorPos);
+         Token token = it.stepBackward();
+         if (token != null)
+            currentToken = token;
+      }
+      
       // Exclude non-string and non-identifier tokens.
       if (currentToken.hasType("operator", "comment", "numeric", "text", "punctuation"))
          return "";
@@ -2172,7 +2187,7 @@ public class RCompletionManager implements CompletionManager
       
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
       
-      return subsetted;
+      return subsetted + suffix;
    }
    
    private GlobalDisplay globalDisplay_;

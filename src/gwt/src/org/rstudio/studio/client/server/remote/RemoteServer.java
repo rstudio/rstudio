@@ -27,6 +27,9 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsArrayEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.jsonrpc.RequestLog;
+import org.rstudio.core.client.jsonrpc.RequestLogEntry;
+import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
@@ -3027,6 +3030,15 @@ public class RemoteServer implements Server
                                boolean redactLog,
                                final ServerRequestCallback<T> requestCallback)
    {
+      JSONObject request = new JSONObject();
+      request.put("method", new JSONString(method));
+      if (params != null)
+         request.put("params", params);  
+      
+      final RequestLogEntry requestLogEntry = RequestLog.log(
+         Integer.toString(Random.nextInt()),
+         redactLog ? "[REDACTED]": request.toString());
+
       sendRequestViaMainWorkbench(
             scope, 
             method, 
@@ -3036,6 +3048,10 @@ public class RemoteServer implements Server
                @Override
                public void onResponseReceived(RpcResponse response)
                {
+                  String responseText = response.toString();
+                  requestLogEntry.logResponse(ResponseType.Normal,
+                                              responseText);
+
                   if (response.getError() != null)
                   {
                      RpcError error = response.getError();
