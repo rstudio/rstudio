@@ -817,6 +817,7 @@ private:
    bool rExecute(const std::string& command,
                  const FilePath& workingDir,
                  core::system::ProcessOptions pkgOptions,
+                 bool vanilla,
                  const core::system::ProcessCallbacks& cb)
    {
       // Find the path to R
@@ -834,7 +835,8 @@ private:
       // build args
       std::vector<std::string> args;
       args.push_back("--slave");
-      args.push_back("--vanilla");
+      if (vanilla)
+         args.push_back("--vanilla");
       args.push_back("-e");
       args.push_back(command);
 
@@ -853,7 +855,7 @@ private:
                         core::system::ProcessOptions pkgOptions,
                         const core::system::ProcessCallbacks& cb)
    {
-      if (!rExecute(command, packagePath, pkgOptions, cb))
+      if (!rExecute(command, packagePath, pkgOptions, true /* --vanilla */, cb))
          return false;
 
       usedDevtools_ = true;
@@ -1178,7 +1180,7 @@ private:
 
       // execute command
       enqueCommandString(command);
-      rExecute(command, websitePath, options, cb);
+      rExecute(command, websitePath, options, false /* --vanilla */, cb);
    }
 
    void showWebsitePreview(const FilePath& websitePath)
