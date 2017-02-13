@@ -58,6 +58,7 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionSourceDatabase.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -440,6 +441,11 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    Error renameError = sourcePath.move(destPath);
    if (renameError)
       return renameError ;
+
+   // propagate rename to source database (non fatal if this fails)
+    error = source_database::rename(sourcePath, destPath);
+    if (error)
+       LOG_ERROR(error);
    
    return Success() ;
 }
