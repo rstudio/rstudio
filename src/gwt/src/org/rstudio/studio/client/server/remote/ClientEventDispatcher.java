@@ -78,11 +78,8 @@ import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveredEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
-import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
@@ -611,15 +608,6 @@ public class ClientEventDispatcher
          {
             RmdRenderResult result = event.getData();
             eventBus_.fireEvent(new RmdRenderCompletedEvent(result));
-         }
-         else if (type.equals(ClientEvent.RmdTemplateDiscovered))
-         {
-            RmdDiscoveredTemplate template = event.getData();
-            eventBus_.fireEvent(new RmdTemplateDiscoveredEvent(template));
-         }
-         else if (type.equals(ClientEvent.RmdTemplateDiscoveryCompleted))
-         {
-            eventBus_.fireEvent(new RmdTemplateDiscoveryCompletedEvent());
          }
          else if (type.equals(ClientEvent.RmdShinyDocStarted))
          {

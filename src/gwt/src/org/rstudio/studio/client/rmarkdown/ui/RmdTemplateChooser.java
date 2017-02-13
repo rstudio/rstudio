@@ -1,7 +1,7 @@
 /*
  * RmdTemplateChooser.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,16 +19,17 @@ import java.util.ArrayList;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
-import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdDocumentTemplate;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -51,9 +52,10 @@ public class RmdTemplateChooser extends Composite
    {
    }
 
-   public RmdTemplateChooser()
+   public RmdTemplateChooser(RMarkdownServerOperations server)
    {
       initWidget(uiBinder.createAndBindUi(this));
+      server_ = server;
       listTemplates_.setItemPadding(2, Unit.PX);
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
@@ -75,30 +77,40 @@ public class RmdTemplateChooser extends Composite
          return;
       
       progressPanel_.showProgress(250);
-      discovery_ = RStudioGinjector.INSTANCE.getRmdTemplateDiscovery();
-      discovery_.discoverTemplates(
-         new OperationWithInput<RmdDiscoveredTemplate>()
+      server_.getRmdTemplates(
+            new ServerRequestCallback<JsArray<RmdDocumentTemplate>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<RmdDocumentTemplate> templates)
          {
-            @Override
-            public void execute(RmdDiscoveredTemplate template)
+            for (int i = 0; i < templates.length(); i++)
             {
+               final RmdDocumentTemplate template = templates.get(i);
+
+               String preferredTemplate = RStudioGinjector.INSTANCE.getUIPrefs()
+                     .rmdPreferredTemplatePath().getValue();
+
                // create a template list item from the template; add it at the
                // end if it isn't the user's preferred template
                listTemplates_.addItem(new RmdDiscoveredTemplateItem(template), 
-                     !template.getPath().equals(
-                           discovery_.getRmdPreferredTemplatePath()));
+                     !template.getPath().equals(preferredTemplate));
                templates_.add(template);
             }
-         },
-         new Operation()
+
+            state_ = STATE_POPULATED;
+            completeDiscovery();
+         }
+
+         @Override
+         public void onError(ServerError error)
          {
-            @Override
-            public void execute()
-            {
-               state_ = STATE_POPULATED;
-               completeDiscovery();
-            }
-         });
+            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                  "R Markdown Templates Not Found",
+                  "An error occurred while looking for R Markdown templates. " + 
+                  error.getMessage());
+            
+         }
+      });
       state_ = STATE_POPULATING;
    }
    
@@ -159,7 +171,7 @@ public class RmdTemplateChooser extends Composite
          // templates found -- enable creation UI
          progressPanel_.setWidget(listTemplates_);
          templateOptionsPanel_.setVisible(true);
-         RmdDiscoveredTemplate template = 
+         RmdDocumentTemplate template = 
                listTemplates_.getItemAtIdx(0).getTemplate();
          if (template != null)
          {
@@ -195,10 +207,11 @@ public class RmdTemplateChooser extends Composite
       return false;
    }
    
-   private RmdTemplateDiscovery discovery_;
    private int state_;
-   private ArrayList<RmdDiscoveredTemplate> templates_ = 
-         new ArrayList<RmdDiscoveredTemplate>();
+   private ArrayList<RmdDocumentTemplate> templates_ = 
+         new ArrayList<RmdDocumentTemplate>();
+   
+   private final RMarkdownServerOperations server_;
    
    @UiField WidgetListBox<RmdDiscoveredTemplateItem> listTemplates_;
    @UiField TextBox txtName_;
