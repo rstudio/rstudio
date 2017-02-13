@@ -14,15 +14,18 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ClientBundle.Source;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
@@ -44,7 +47,7 @@ import java.util.ArrayList;
 //  - DialogBox.setText()
 //  - Styles
 
-public abstract class ModalDialogBase2 extends DecoratedPopupPanel
+public abstract class ModalDialogBase2 extends PopupPanel
 {
    protected ModalDialogBase2()
    {
@@ -57,6 +60,8 @@ public abstract class ModalDialogBase2 extends DecoratedPopupPanel
       
       // main panel used to host UI
       mainPanel_ = new VerticalPanel();
+      mainPanel_.addStyleName(RES.styles().mainPanel());
+
       bottomPanel_ = new HorizontalPanel();
       bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
       bottomPanel_.setWidth("100%");
@@ -164,8 +169,8 @@ public abstract class ModalDialogBase2 extends DecoratedPopupPanel
 
       setPopupPositionAndShow(new PopupPanel.PositionCallback(){
          public void setPosition(int offsetWidth, int offsetHeight) {
-            int left = (Window.getClientWidth() - offsetWidth) / 3;
-            int top = (Window.getClientHeight() - offsetHeight) / 3;
+            int left = (Window.getClientWidth() - offsetWidth) / 2;
+            int top = (Window.getClientHeight() - offsetHeight) / 2;
             setPopupPosition(left, top);
          }
       });
@@ -493,6 +498,24 @@ public abstract class ModalDialogBase2 extends DecoratedPopupPanel
    
    public void setText(String text)
    {
+   }
+
+   // Styles ------------------------------------------
+   
+   public interface Styles extends CssResource
+   {
+      String mainPanel();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("ModalDialogBase2.css")
+      Styles styles();
+   }
+   
+   private static Resources RES = GWT.create(Resources.class);
+   static {
+      RES.styles().ensureInjected();
    }
 
    private Handle shortcutDisableHandle_;
