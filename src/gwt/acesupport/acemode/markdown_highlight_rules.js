@@ -193,12 +193,14 @@ var MarkdownHighlightRules = function() {
             token : "support.function",
             regex : "^\\s*```\\s*\\S*(?:{.*?\\})?\\s*$",
             next  : "githubblock"
+        }, { // ioslides-style bullet
+            token : "string.blockquote",
+            regex : "^\\s*>\\s*(?=[-])"
         }, { // block quote
             token : "string.blockquote",
-            regex : "^\\s*>\\s*(?:[*+-]|\\d+\\.)?\\s+",
+            regex : "^\\s*>\\s*",
             next  : "blockquote"
-        },
-        { // reference
+        }, { // reference
             token : ["text", "constant", "text", "url", "string", "text"],
             regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
         }, { // link by reference
@@ -323,17 +325,46 @@ var MarkdownHighlightRules = function() {
             defaultToken : "text" //do not use markup.list to allow stling leading `*` differntly
         }],
 
-        "blockquote" : [ { // Blockquotes only escape on blank lines.
+        "blockquote" : [{ // Blockquotes only escape on blank lines.
             token : "empty_line",
             regex : "^\\s*$",
             next  : "start"
-        }, { // block quote
-            token : "string.blockquote",
-            regex : "^\\s*>\\s*(?:[*+-]|\\d+\\.)?\\s+",
-            next  : "blockquote"
         }, {
-            include : "basic", noEscape: true
+            token : "constant.language.escape",
+            regex : /\\[\\`*_{}\[\]()#+\-.!]/
+        }, { // inline r code
+            token : "support.function.inline_r_chunk",
+            regex : "`r (?:.*?[^`])`"
+        }, { // code span `
+            token : ["support.function", "support.function", "support.function"],
+            regex : "(`+)(.*?[^`])(\\1)"
+        }, { // reference
+            token : ["text", "constant", "text", "url", "string", "text"],
+            regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
+        }, { // link by reference
+            token : ["text", "keyword", "text", "constant", "text"],
+            regex : "(\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
+        }, { // link by url
+            token : ["text", "keyword", "text", "markup.href", "string", "text"],
+            regex : "(\\[)(" +                                    // [
+                escaped("]") +                                    // link text
+                ")(\\]\\()"+                                      // ](
+                '((?:[^\\)\\s\\\\]|\\\\.|\\s(?=[^"]))*)' +        // href
+                '(\\s*"' +  escaped('"') + '"\\s*)?' +            // "title"
+                "(\\))"                                           // )
         }, {
+            token : ["text", "keyword", "text"],
+            regex : "(<)("+
+                "(?:https?|ftp|dict):[^'\">\\s]+"+
+                "|"+
+                "(?:mailto:)?[-.\\w]+\\@[-a-z0-9]+(?:\\.[-a-z0-9]+)*\\.[a-z]+"+
+                ")(>)"
+        },
+            strongStars,
+            strongUnderscore,
+            emphasisStars,
+            emphasisUnderscore,
+        {
             defaultToken : "string.blockquote"
         }],
 
