@@ -175,6 +175,9 @@ private:
 
 boost::shared_ptr<ReplayPlots> s_pPlotReplayer;
 
+typedef std::map<std::string, boost::shared_ptr<ReplayPlots> > ReplayPlotsMap;
+ReplayPlotsMap s_pPlotReplayerForChunkId;
+
 Error replayPlotOutput(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
@@ -192,7 +195,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
    // abort and restart with the new pixel width?)
    if (s_pPlotReplayer && s_pPlotReplayer->isRunning())
    {
-      pResponse->setResult(false);
+      pResponse->setResult("");
       return Success();
    }
 
@@ -263,12 +266,18 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // do nothing if we're already replaying plots (consider: maybe better to
-   // abort and restart with the new pixel width?)
-   if (s_pPlotReplayer && s_pPlotReplayer->isRunning())
+   ReplayPlotsMap::iterator it = s_pPlotReplayerForChunkId.find(docId + chunkId);
+   if (it != s_pPlotReplayerForChunkId.end())
    {
-      pResponse->setResult(false);
-      return Success();
+      boost::shared_ptr<ReplayPlots> pReplayPlots = it->second;
+      
+      // do nothing if we're already replaying plots (consider: maybe better to
+      // abort and restart with the new pixel width?)
+      if (pReplayPlots->isRunning())
+      {
+         pResponse->setResult("");
+         return Success();
+      }
    }
 
    // extract the list of chunks to replay
@@ -299,7 +308,7 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
          snapshotFiles.push_back(content);
    }
 
-   s_pPlotReplayer = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, false, snapshotFiles);
+   s_pPlotReplayerForChunkId[docId + chunkId] = ReplayPlots::create(docId, replayId, pixelWidth, pixelHeight, false, snapshotFiles);
    pResponse->setResult(replayId);
 
    return Success();
