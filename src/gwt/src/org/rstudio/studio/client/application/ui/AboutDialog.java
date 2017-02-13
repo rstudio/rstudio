@@ -14,7 +14,7 @@
  */
 
 package org.rstudio.studio.client.application.ui;
-import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ModalDialogBase2;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.model.ProductInfo;
 
@@ -22,7 +22,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
 
-public class AboutDialog extends ModalDialogBase
+public class AboutDialog extends ModalDialogBase2
 {
    public AboutDialog(ProductInfo info)
    {
