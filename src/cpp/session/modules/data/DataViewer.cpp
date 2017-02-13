@@ -918,10 +918,6 @@ void onClientInit()
       // not fatal, log and continue
       LOG_ERROR(error);
    }
-   else
-   {
-      module_context::events().onPermissionsChanged(cacheDir);
-   }
 #endif
 }
 
