@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 #include <sstream>
 
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -299,7 +300,7 @@ std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
-   return module_context::scopedScratchPath().childPath(kViewerCacheDir)
+   return module_context::sessionScratchPath().childPath(kViewerCacheDir)
       .absolutePath();
 }
 
@@ -945,6 +946,59 @@ void onDocPendingRemove(
       LOG_ERROR(error);
 }
 
+void onDeferredInit(bool newSession)
+{
+   // get all the cache keys in the source database
+   std::vector<boost::shared_ptr<source_database::SourceDocument> > docs;
+   Error error = source_database::list(&docs);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::vector<std::string> sourceKeys;
+   BOOST_FOREACH(boost::shared_ptr<source_database::SourceDocument> pDoc, docs)
+   {
+      std::string key = pDoc->getProperty("cacheKey");
+      if (!key.empty())
+         sourceKeys.push_back(key);
+   }
+   
+   // get all the cache keys in the cache
+   FilePath cache(viewerCacheDir());
+   std::vector<FilePath> cacheFiles;
+   error = cache.children(&cacheFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::vector<std::string> cacheKeys;
+   BOOST_FOREACH(const FilePath& cacheFile, cacheFiles)
+   {
+      cacheKeys.push_back(cacheFile.stem());
+   }
+
+   // sort each set of keys (so we can diff the sets below)
+   std::sort(sourceKeys.begin(), sourceKeys.end());
+   std::sort(cacheKeys.begin(), cacheKeys.end());
+
+   std::vector<std::string> orphanKeys;
+   std::set_difference(cacheKeys.begin(), cacheKeys.end(),
+                       sourceKeys.begin(), sourceKeys.end(),
+                       std::back_inserter(orphanKeys));
+
+   // remove each key no longer bound to a source file
+   BOOST_FOREACH(const std::string& orphanKey, orphanKeys)
+   {
+      error = cache.complete(orphanKey + ".Rdata").removeIfExists();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -963,6 +1017,7 @@ Error initialize()
    module_context::events().onShutdown.connect(onShutdown);
    module_context::events().onDetectChanges.connect(onDetectChanges);
    module_context::events().onClientInit.connect(onClientInit);
+   module_context::events().onDeferredInit.connect(onDeferredInit);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
