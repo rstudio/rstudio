@@ -1,14 +1,14 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'>
 
-   <ui:with field='resThemes' type='org.rstudio.core.client.theme.res.ThemeStyles'/>
+   <ui:with field='resThemes' type='org.rstudio.core.client.theme.res.ThemeResources'/>
    <ui:with field="resLocal"
             type="org.rstudio.core.client.widget.ModalDialogBase2.Resources"/>
 
    <g:VerticalPanel ui:field="mainPanel_" styleName="{resLocal.styles.mainPanel}">
       <g:HorizontalPanel
          ui:field="bottomPanel_"
-         styleName="{resThemes.dialogBottomPanel}"
+         styleName="{resThemes.themeStyles.dialogBottomPanel}"
          width="100%">
          <g:HorizontalPanel ui:field="buttonPanel_">
             <g:HorizontalPanel ui:field="leftButtonPanel_">
