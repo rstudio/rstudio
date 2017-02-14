@@ -8,7 +8,7 @@
    <g:VerticalPanel ui:field="mainPanel_" styleName="{resLocal.styles.mainPanel}">
       <g:HorizontalPanel
          ui:field="bottomPanel_"
-         styleName="{resThemes.styles.dialogBottomPanel}"
+         styleName="{resThemes.dialogBottomPanel}"
          width="100%">
          <g:HorizontalPanel ui:field="buttonPanel_">
             <g:HorizontalPanel ui:field="leftButtonPanel_">

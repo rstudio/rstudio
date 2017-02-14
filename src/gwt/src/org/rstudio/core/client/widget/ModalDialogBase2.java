@@ -25,6 +25,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiTemplate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
@@ -488,7 +489,8 @@ public abstract class ModalDialogBase2 extends PopupPanel
    {
    }
 
-   interface Binder extends UiBinder<Element, ModalDialogBase2>
+   @UiTemplate("ModalDialogBase2.ui.xml")
+   interface Binder extends UiBinder<Widget, ModalDialogBase2>
    {}
    
    public interface Styles extends CssResource
