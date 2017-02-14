@@ -1032,10 +1032,9 @@ public class TextEditingTargetWidget
             }
             else if (!RmdEditorOptions.getBool(
                   YamlFrontMatter.getFrontMatter(editor_), 
-                  RmdEditorOptions.KNIT_BEFORE_PUBLISH, true))
+                  RmdEditorOptions.PUBLISH_OUTPUT, true))
             {
-               // it's also possible to mark a local document as non-static
-               // in order to avoid the requirement for pre-render
+               // don't publish as static if explicitly asked not to
                isStatic = false;
             }
             publishButton_.setRmd(publishPath, isStatic);

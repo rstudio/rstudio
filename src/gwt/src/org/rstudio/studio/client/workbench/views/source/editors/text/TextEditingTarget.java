@@ -2586,6 +2586,9 @@ public class TextEditingTarget implements
       if (extendedType.equals(SourceDocument.XT_RMARKDOWN))
          updateRmdFormatList();
       extendedType_ = extendedType;
+
+      // extended type can affect publish options
+      syncPublishPath(docUpdateSentinel_.getPath());
    }
 
    @Override

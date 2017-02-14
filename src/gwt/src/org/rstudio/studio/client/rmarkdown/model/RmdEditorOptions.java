@@ -58,5 +58,5 @@ public class RmdEditorOptions
    
    private static String EDITOR_OPTION_KEY = "editor_options";
    
-   public static String KNIT_BEFORE_PUBLISH = "knit_before_publish";
+   public static String PUBLISH_OUTPUT = "publish_output";
 }
