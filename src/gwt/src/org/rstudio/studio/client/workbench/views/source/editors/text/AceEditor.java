@@ -3508,6 +3508,19 @@ public class AceEditor implements DocDisplay,
       widget_.setDragEnabled(enabled);
    }
    
+   @Override
+   public boolean isSnippetsTabStopManagerActive()
+   {
+      return isSnippetsTabStopManagerActiveImpl(widget_.getEditor());
+   }
+   
+   private static final native
+   boolean isSnippetsTabStopManagerActiveImpl(AceEditorNative editor)
+   /*-{
+      return editor.tabstopManager != null;
+   }-*/;
+   
+   @Override
    public boolean onInsertSnippet()
    {
       return snippets_.onInsertSnippet();

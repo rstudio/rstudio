@@ -25,6 +25,7 @@
 
 * Added support for custom, user-provided project templates
 * Implement support for changing editor tabs with the mouse wheel
+* Snippets can now be inserted in the R console
 * Add option to knit in current working directory or project directory
 * Cmd/Ctrl+Enter in Help pane now sends selected example code to console
 * View(vignette(...)) now opens editor with vignette source
