@@ -57,6 +57,8 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
+import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
@@ -1021,7 +1023,22 @@ public class TextEditingTargetWidget
          }
          else if (type == SourceDocument.XT_RMARKDOWN)
          {
-            publishButton_.setRmd(publishPath, !isShiny_);
+            // assume static by default
+            boolean isStatic = true;
+            if (isShiny_)
+            {
+               // Shiny documents cannot be static
+               isStatic = false;
+            }
+            else if (!RmdEditorOptions.getBool(
+                  YamlFrontMatter.getFrontMatter(editor_), 
+                  RmdEditorOptions.KNIT_BEFORE_PUBLISH, true))
+            {
+               // it's also possible to mark a local document as non-static
+               // in order to avoid the requirement for pre-render
+               isStatic = false;
+            }
+            publishButton_.setRmd(publishPath, isStatic);
          }
          else 
          {
