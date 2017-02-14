@@ -4973,6 +4973,8 @@ public class TextEditingTarget implements
          public void execute()
          {
             boolean asTempfile = isPackageDocumentationFile();
+            String viewerType = RmdEditorOptions.getString(
+                  getRmdFrontMatter(), RmdEditorOptions.PREVIEW_IN, null);
 
             rmarkdownHelper_.renderRMarkdown(
                   docUpdateSentinel_.getPath(),
@@ -4983,7 +4985,8 @@ public class TextEditingTarget implements
                   asTempfile,
                   type,
                   false,
-                  rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_));
+                  rmarkdownHelper_.getKnitWorkingDir(docUpdateSentinel_),
+                  viewerType);
          }
       };  
 
@@ -5246,7 +5249,7 @@ public class TextEditingTarget implements
             @Override
             public void execute()
             {
-               rmarkdownHelper_.renderNotebookv2(docUpdateSentinel_);
+               rmarkdownHelper_.renderNotebookv2(docUpdateSentinel_, null);
             }
          });
       }

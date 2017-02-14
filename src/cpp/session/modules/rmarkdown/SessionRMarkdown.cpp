@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -235,14 +235,15 @@ public:
                                               bool asTempfile,
                                               bool asShiny,
                                               const std::string& existingOutputFile,
-                                              const std::string& workingDir)
+                                              const std::string& workingDir,
+                                              const std::string& viewerType)
    {
       boost::shared_ptr<RenderRmd> pRender(new RenderRmd(targetFile,
                                                          sourceLine,
                                                          sourceNavigation,
                                                          asShiny));
       pRender->start(format, encoding, paramsFile, asTempfile, 
-                     existingOutputFile, workingDir);
+                     existingOutputFile, workingDir, viewerType);
       return pRender;
    }
 
@@ -304,7 +305,8 @@ private:
               const std::string& paramsFile,
               bool asTempfile,
               const std::string& existingOutputFile,
-              const std::string& workingDir)
+              const std::string& workingDir,
+              const std::string& viewerType)
    {
       Error error;
       json::Object dataJson;
@@ -314,8 +316,9 @@ private:
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
       module_context::enqueClientEvent(event);
 
-      // save encoding
+      // save encoding and viewer type
       encoding_ = encoding;
+      viewerType_ = viewerType;
 
       std::string renderFunc;
       if (isShiny_)
@@ -592,7 +595,9 @@ private:
 
       resultJson["website_dir"] = websiteDir;
 
+      // view options
       resultJson["force_maximize"] = forceMaximize;
+      resultJson["viewer_type"] = viewerType_;
 
       // allow for format specific additions to the result json
       std::string formatName =  outputFormat_["format_name"].get_str();
@@ -663,6 +668,7 @@ private:
    int sourceLine_;
    FilePath outputFile_;
    std::string encoding_;
+   std::string viewerType_;
    bool sourceNavigation_;
    json::Object outputFormat_;
    std::vector<module_context::SourceMarker> knitrErrors_;
@@ -915,6 +921,7 @@ void doRenderRmd(const std::string& file,
                  bool asShiny,
                  const std::string& existingOutputFile,
                  const std::string& workingDir,
+                 const std::string& viewerType,
                  json::JsonRpcResponse* pResponse)
 {
    if (s_pCurrentRender_ &&
@@ -934,7 +941,8 @@ void doRenderRmd(const std::string& file,
                asTempfile,
                asShiny,
                existingOutputFile,
-               workingDir);
+               workingDir,
+               viewerType);
       pResponse->setResult(true);
    }
 }
@@ -944,7 +952,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
 {
    int line = -1, type = kRenderTypeStatic;
    std::string file, format, encoding, paramsFile, existingOutputFile,
-               workingDir;
+               workingDir, viewerType;
    bool asTempfile = false;
    Error error = json::readParams(request.params,
                                   &file,
@@ -955,7 +963,8 @@ Error renderRmd(const json::JsonRpcRequest& request,
                                   &asTempfile,
                                   &type,
                                   &existingOutputFile,
-                                  &workingDir);
+                                  &workingDir,
+                                  &viewerType);
    if (error)
       return error;
 
@@ -990,6 +999,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       resultJson["rpubs_published"] =
             !module_context::previousRpubsUploadId(outputFile).empty();
       resultJson["force_maximize"] = false;
+      resultJson["viewer_type"] = viewerType;
       ClientEvent event(client_events::kRmdRenderCompleted, resultJson);
       module_context::enqueClientEvent(event);
    }
@@ -998,7 +1008,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       // not a notebook, do render work
       doRenderRmd(file, line, format, encoding, paramsFile,
                   true, asTempfile, type == kRenderTypeShiny, existingOutputFile, 
-                  workingDir, pResponse);
+                  workingDir, viewerType, pResponse);
    }
 
    return Success();
@@ -1019,7 +1029,7 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
       return error;
 
    doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
-               false, false, false, "", "", pResponse);
+               false, false, false, "", "", "", pResponse);
 
    return Success();
 }

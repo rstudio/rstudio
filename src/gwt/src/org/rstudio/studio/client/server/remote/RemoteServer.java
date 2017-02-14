@@ -4242,6 +4242,7 @@ public class RemoteServer implements Server
    public void renderRmd(String file, int line, String format, String encoding,
                          String paramsFile, boolean asTempfile, int type,
                          String existingOutputFile, String workingDir,
+                         String viewerType,
          ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4254,6 +4255,7 @@ public class RemoteServer implements Server
       params.set(6, new JSONNumber(type));
       params.set(7, new JSONString(StringUtil.notNull(existingOutputFile)));
       params.set(8, new JSONString(StringUtil.notNull(workingDir)));
+      params.set(9, new JSONString(StringUtil.notNull(viewerType)));
       sendRequest(RPC_SCOPE,
             RENDER_RMD,
             params,
