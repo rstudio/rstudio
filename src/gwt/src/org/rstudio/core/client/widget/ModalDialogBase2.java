@@ -22,8 +22,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ClientBundle.Source;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
@@ -35,7 +36,6 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
-import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import java.util.ArrayList;
@@ -58,19 +58,8 @@ public abstract class ModalDialogBase2 extends PopupPanel
    {
       super(false);
       
-      // main panel used to host UI
-      mainPanel_ = new VerticalPanel();
-      mainPanel_.addStyleName(RES.styles().mainPanel());
-
-      bottomPanel_ = new HorizontalPanel();
-      bottomPanel_.setStyleName(ThemeStyles.INSTANCE.dialogBottomPanel());
-      bottomPanel_.setWidth("100%");
-      buttonPanel_ = new HorizontalPanel();
-      leftButtonPanel_ = new HorizontalPanel();
-      bottomPanel_.add(leftButtonPanel_);
-      bottomPanel_.add(buttonPanel_);
+      GWT.<Binder>create(Binder.class).createAndBindUi(this);
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
-      mainPanel_.add(bottomPanel_);
 
       // embed main panel in a custom container if specified
       containerPanel_ = containerPanel;
@@ -81,7 +70,6 @@ public abstract class ModalDialogBase2 extends PopupPanel
       }
       else
       {
-         mainPanel_.getElement().setId("Foo111");
          setWidget(mainPanel_);
       }
 
@@ -500,7 +488,8 @@ public abstract class ModalDialogBase2 extends PopupPanel
    {
    }
 
-   // Styles ------------------------------------------
+   interface Binder extends UiBinder<Element, ModalDialogBase2>
+   {}
    
    public interface Styles extends CssResource
    {
@@ -523,10 +512,20 @@ public abstract class ModalDialogBase2 extends PopupPanel
    private boolean escapeDisabled_ = false;
    private boolean enterDisabled_ = false;
    private SimplePanel containerPanel_;
-   private VerticalPanel mainPanel_;
-   private HorizontalPanel bottomPanel_;
-   private HorizontalPanel buttonPanel_;
-   private HorizontalPanel leftButtonPanel_;
+   
+   
+   @UiField
+   VerticalPanel mainPanel_;
+   
+   @UiField
+   HorizontalPanel bottomPanel_;
+   
+   @UiField
+   HorizontalPanel buttonPanel_;
+   
+   @UiField
+   HorizontalPanel leftButtonPanel_;
+   
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;
