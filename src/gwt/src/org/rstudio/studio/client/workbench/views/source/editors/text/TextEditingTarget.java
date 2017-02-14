@@ -95,6 +95,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -3713,14 +3714,22 @@ public class TextEditingTarget implements
          // update notebook-specific options
          if (isNotebook)
          {
-            // chunk output should always be inline in notebooks
-            String outputType = docUpdateSentinel_.getProperty(
-                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE);
-            if (outputType != TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE)
+            // if the user manually set the output to console in a notebook,
+            // respect that (even though it's weird)
+            String outputType = RmdEditorOptions.getString(
+                  YamlFrontMatter.getFrontMatter(docDisplay_),
+                  TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE, null);
+            if (outputType != TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE)
             {
-               docUpdateSentinel_.setProperty(
-                     TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-                     TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE);
+               // chunk output should always be inline in notebooks
+               outputType = docUpdateSentinel_.getProperty(
+                     TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE);
+               if (outputType != TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE)
+               {
+                  docUpdateSentinel_.setProperty(
+                        TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+                        TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE);
+               }
             }
             view_.setIsNotebookFormat();
          }
