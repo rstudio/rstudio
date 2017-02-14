@@ -151,6 +151,7 @@
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 #include "modules/presentation/SessionPresentation.hpp"
+#include "modules/rmarkdown/RMarkdownTemplates.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
 #include "modules/shiny/SessionShiny.hpp"
@@ -421,6 +422,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::viewer::initialize)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
+      (modules::rmarkdown::templates::initialize)
       (modules::rpubs::initialize)
       (modules::shiny::initialize)
       (modules::source::initialize)

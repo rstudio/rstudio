@@ -75,6 +75,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
@@ -1046,7 +1047,28 @@ public class TextEditingTargetRMarkdownHelper
          outputs.add(tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY));
       return outputs;
    }
-              
+   
+   public void showNewRMarkdownDialog(
+         final OperationWithInput<NewRMarkdownDialog.Result> onComplete)
+   {
+      withRMarkdownPackage(
+         "Creating R Markdown documents",
+         false,
+         new CommandWithArg<RMarkdownContext>()
+      {
+         @Override
+         public void execute(RMarkdownContext context)
+         {
+            new NewRMarkdownDialog(
+               server_,
+               context,
+               workbenchContext_,
+               prefs_.documentAuthor().getGlobalValue(), 
+               onComplete).showModal();
+         }
+      });
+}
+
    private void showKnitrPreviewWarning(WarningBarDisplay display,
                                         String feature, 
                                         String requiredVersion)

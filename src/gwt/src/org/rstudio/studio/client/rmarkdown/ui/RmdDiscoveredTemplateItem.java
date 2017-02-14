@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
-import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdDocumentTemplate;
 
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.Label;
 
 public class RmdDiscoveredTemplateItem extends Composite
 {
-   public RmdDiscoveredTemplateItem(RmdDiscoveredTemplate template)
+   public RmdDiscoveredTemplateItem(RmdDocumentTemplate template)
    {
       template_ = template;
       panel_ = new HTMLPanel("");
@@ -41,11 +41,11 @@ public class RmdDiscoveredTemplateItem extends Composite
       initWidget(panel_);
    }
    
-   public RmdDiscoveredTemplate getTemplate()
+   public RmdDocumentTemplate getTemplate()
    {
       return template_;
    }
    
    private HTMLPanel panel_;
-   private RmdDiscoveredTemplate template_;
+   private RmdDocumentTemplate template_;
 }
