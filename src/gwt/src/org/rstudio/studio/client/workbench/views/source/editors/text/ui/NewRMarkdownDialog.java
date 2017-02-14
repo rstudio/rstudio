@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
+import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -175,13 +176,17 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    }
 
    public NewRMarkdownDialog(
+         RMarkdownServerOperations server,
          RMarkdownContext context,
          WorkbenchContext workbench,
          String author,
          OperationWithInput<Result> operation)
    {
       super("New R Markdown", operation);
+      server_ = server;
       context_ = context;
+      templateChooser_ = new RmdTemplateChooser(server_);
+
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       formatOptions_ = new ArrayList<RadioButton>();
       style.ensureInjected();
@@ -433,7 +438,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField HTMLPanel templateFormatPanel_;
    @UiField HTMLPanel newTemplatePanel_;
    @UiField HTMLPanel existingTemplatePanel_;
-   @UiField RmdTemplateChooser templateChooser_;
+   @UiField(provided=true) RmdTemplateChooser templateChooser_;
    @UiField HTMLPanel shinyInfoPanel_;
    @UiField Label outputFormatLabel_;
 
@@ -444,6 +449,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
    @SuppressWarnings("unused")
    private final RMarkdownContext context_;
+   private final RMarkdownServerOperations server_;
    
    private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
    private final static String TEMPLATE_SHINY = "Shiny";

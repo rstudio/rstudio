@@ -1,7 +1,7 @@
 /*
- * RmdDiscoveredTemplate.java
+ * RmdDocumentTemplate.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,9 @@ package org.rstudio.studio.client.rmarkdown.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class RmdDiscoveredTemplate extends JavaScriptObject
+public class RmdDocumentTemplate extends JavaScriptObject
 {
-   protected RmdDiscoveredTemplate()
+   protected RmdDocumentTemplate()
    {
    }
    

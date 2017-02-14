@@ -106,6 +106,7 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
+import org.rstudio.studio.client.rmarkdown.model.RmdDocumentTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdExecutionState;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
@@ -4323,14 +4324,13 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void discoverRmdTemplates(
-         ServerRequestCallback<Boolean> requestCallback)
+   public void getRmdTemplates(
+         ServerRequestCallback<JsArray<RmdDocumentTemplate>> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-            DISCOVER_RMD_TEMPLATES,
+            GET_RMD_TEMPLATES,
             requestCallback);
    }
-
 
    @Override
    public void createRmdFromTemplate(String filePath, String templatePath,
@@ -5321,9 +5321,9 @@ public class RemoteServer implements Server
    private static final String TERMINATE_RENDER_RMD = "terminate_render_rmd";
    private static final String CONVERT_TO_YAML = "convert_to_yaml";
    private static final String CONVERT_FROM_YAML = "convert_from_yaml";
-   private static final String DISCOVER_RMD_TEMPLATES = "discover_rmd_templates";
    private static final String CREATE_RMD_FROM_TEMPLATE = "create_rmd_from_template";
    private static final String GET_RMD_TEMPLATE = "get_rmd_template";
+   private static final String GET_RMD_TEMPLATES = "get_rmd_templates";
    private static final String GET_RMD_OUTPUT_INFO = "get_rmd_output_info";
    
    private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";

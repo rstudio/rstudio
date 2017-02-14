@@ -21,6 +21,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
 public interface RMarkdownServerOperations extends CryptoServerOperations
 {
@@ -51,7 +52,8 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
    void convertFromYAML(String input, 
                         ServerRequestCallback<RmdYamlData> requestCallback);
 
-   void discoverRmdTemplates(ServerRequestCallback<Boolean> requestCallback);
+   void getRmdTemplates(
+          ServerRequestCallback<JsArray<RmdDocumentTemplate>> requestCallback);
    
    void createRmdFromTemplate(String filePath, 
                               String templatePath, 

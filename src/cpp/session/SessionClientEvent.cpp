@@ -351,10 +351,6 @@ std::string ClientEvent::typeName() const
          return "rmd_render_output";
       case client_events::kRmdRenderCompleted:
          return "rmd_render_completed";
-      case client_events::kRmdTemplateDiscovered:
-         return "rmd_template_discovered";
-      case client_events::kRmdTemplateDiscoveryCompleted:
-         return "rmd_template_discovery_completed";
       case client_events::kRmdShinyDocStarted:
          return "rmd_shiny_doc_started";
       case client_events::kRmdRSConnectDeploymentOutput:
