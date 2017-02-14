@@ -45,6 +45,8 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
+import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -159,6 +161,18 @@ public class TextEditingTargetNotebook
          }
       }));
       
+      // propagate output preference from YAML into doc preference
+      String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
+      if (!StringUtil.isNullOrEmpty(frontMatter))
+      {
+         String mode = RmdEditorOptions.getString(frontMatter,
+               CHUNK_OUTPUT_TYPE, null);
+         if (!StringUtil.isNullOrEmpty(mode))
+         {
+            docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, mode);
+         }
+      }
+      
       // listen for future changes to the preference and sync accordingly
       releaseOnDismiss.add(
          docUpdateSentinel_.addPropertyValueChangeHandler(CHUNK_OUTPUT_TYPE, 
@@ -167,6 +181,13 @@ public class TextEditingTargetNotebook
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
          {
+            // propagate to YAML
+            String yaml = RmdEditorOptions.set(
+                  YamlFrontMatter.getFrontMatter(docDisplay_), 
+                  CHUNK_OUTPUT_TYPE, event.getValue());
+            YamlFrontMatter.applyFrontMatter(docDisplay_, yaml);
+            
+            // change the output mode in the document
             changeOutputMode(event.getValue());
          }
       }));
