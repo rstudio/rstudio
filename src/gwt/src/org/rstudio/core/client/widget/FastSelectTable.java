@@ -233,41 +233,63 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       }
 
       sortSelectedRows();
-      int min = table_.getRows().getLength();
-      int max = -1;
-      if (selectedRows_.size() > 0)
-      {
-         min = selectedRows_.get(0).getRowIndex();
-         max = selectedRows_.get(selectedRows_.size() - 1).getRowIndex();
-      }
+      boolean clearSelection = modifiers != KeyboardShortcut.SHIFT;
 
       switch (event.getNativeKeyCode())
       {
          case KeyCodes.KEY_UP:
          {
-            Integer row = findNextValueRow(min, true);
-            if (row != null)
-            {
-               if (modifiers != KeyboardShortcut.SHIFT)
-                  clearSelection();
-               setSelectedPhysical(row, 1, true);
-               ensureRowVisible(row);
-            }
+            selectPreviousRow(clearSelection);
             break;
          }
          case KeyCodes.KEY_DOWN:
          {
-            Integer row = findNextValueRow(max, false);
-            if (row != null)
-            {
-               if (modifiers != KeyboardShortcut.SHIFT)
-                  clearSelection();
-               setSelectedPhysical(row, 1, true);
-               ensureRowVisible(row);
-            }
+            selectNextRow(clearSelection);
             break;
          }
       }
+   }
+   
+   private void selectPreviousRow(boolean clearSelection)
+   {
+      int min = selectedRows_.size() > 0
+            ? selectedRows_.get(0).getRowIndex()
+            : table_.getRows().getLength();
+            
+      Integer row = findNextValueRow(min, true);
+      if (row != null)
+      {
+         if (clearSelection)
+            clearSelection();
+         setSelectedPhysical(row, 1, true);
+         ensureRowVisible(row);
+      }
+   }
+   
+   public void selectPreviousRow()
+   {
+      selectPreviousRow(true);
+   }
+   
+   private void selectNextRow(boolean clearSelection)
+   {
+      int max = selectedRows_.size() > 0
+            ? selectedRows_.get(selectedRows_.size() - 1).getRowIndex()
+            : -1;
+            
+      Integer row = findNextValueRow(max, false);
+      if (row != null)
+      {
+         if (clearSelection)
+            clearSelection();
+         setSelectedPhysical(row, 1, true);
+         ensureRowVisible(row);
+      }
+   }
+   
+   public void selectNextRow()
+   {
+      selectNextRow(true);
    }
 
    private void ensureRowVisible(final int row)
