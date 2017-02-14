@@ -420,11 +420,26 @@ public class PaneManager
    @Handler
    public void onActivateConsole()
    {
-      LogicalWindow activeWindow = getActiveLogicalWindow();
-      if (activeWindow.equals(getConsoleLogicalWindow()))
-         consoleTabPanel_.selectNextTab();
+      // The console tab panel is initialized lazily -- while a console
+      // pane will always be available, the owning tab panel will only
+      // be constructed once a neighbor (e.g. the Terminal) has been
+      // created.
+      if (consoleTabPanel_.isEmpty())
+      {
+         consolePane_.focus();
+      }
       else
-         consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
+      {
+         LogicalWindow activeWindow = getActiveLogicalWindow();
+         if (getConsoleLogicalWindow().equals(activeWindow))
+         {
+            consoleTabPanel_.selectNextTab();
+         }
+         else
+         {
+            consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
+         }
+      }
    }
    
    @Handler

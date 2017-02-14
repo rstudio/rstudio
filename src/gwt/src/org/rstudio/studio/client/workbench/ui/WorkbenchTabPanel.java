@@ -242,6 +242,11 @@ class WorkbenchTabPanel
       }
    }
    
+   public boolean isEmpty()
+   {
+      return tabs_.isEmpty();
+   }
+   
    public WorkbenchTab getTab(int index)
    {
       return tabs_.get(index);
