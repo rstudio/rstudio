@@ -2137,6 +2137,16 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GIT_FULL_STATUS, requestCallback);
    }
+   
+   @Override
+   public void gitCreateBranch(String branch,
+                               ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(branch));
+      sendRequest(RPC_SCOPE, GIT_CREATE_BRANCH, params,
+            new ConsoleProcessCallbackAdapter(requestCallback));
+   }
 
    @Override
    public void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback)
@@ -5168,6 +5178,7 @@ public class RemoteServer implements Server
    private static final String GIT_UNSTAGE = "git_unstage";
    private static final String GIT_ALL_STATUS = "git_all_status";
    private static final String GIT_FULL_STATUS = "git_full_status";
+   private static final String GIT_CREATE_BRANCH = "git_create_branch";
    private static final String GIT_LIST_BRANCHES = "git_list_branches";
    private static final String GIT_CHECKOUT = "git_checkout";
    private static final String GIT_COMMIT = "git_commit";

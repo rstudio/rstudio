@@ -551,6 +551,15 @@ public:
          return Success();
       }
    }
+   
+   core::Error createBranch(const std::string& branch,
+                            boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      return createConsoleProc(
+               ShellArgs() << "checkout" << "-B" << branch,
+               "Git Checkout " + branch,
+               ppCP);
+   }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
                             boost::optional<size_t>* pActiveBranchIndex)
@@ -1417,6 +1426,28 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
       return error ;
 
    return s_git_.unstage(resolveAliasedPaths(paths, true, true));
+}
+
+Error vcsCreateBranch(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit scope;
+   
+   Error error;
+   std::string branch;
+   
+   error = json::readParams(request.params, &branch);
+   if (error)
+      return error;
+   
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.createBranch(branch, &pCP);
+   if (error)
+      return error;
+   
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
 }
 
 Error vcsListBranches(const json::JsonRpcRequest& request,
@@ -2953,6 +2984,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_revert", vcsRevert))
       (bind(registerRpcMethod, "git_stage", vcsStage))
       (bind(registerRpcMethod, "git_unstage", vcsUnstage))
+      (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch))
       (bind(registerRpcMethod, "git_list_branches", vcsListBranches))
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))

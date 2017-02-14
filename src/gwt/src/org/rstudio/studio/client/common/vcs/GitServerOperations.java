@@ -65,6 +65,9 @@ public interface GitServerOperations extends VCSServerOperations
    void gitFullStatus(
          ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);
 
+   void gitCreateBranch(String branch,
+                        ServerRequestCallback<ConsoleProcess> requestCallback);
+   
    void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
 
    void gitCheckout(String id,
