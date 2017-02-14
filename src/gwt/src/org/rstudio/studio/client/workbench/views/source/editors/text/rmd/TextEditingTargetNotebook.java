@@ -80,6 +80,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkContextChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveFileHandler;
 import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -160,18 +162,6 @@ public class TextEditingTargetNotebook
             }
          }
       }));
-      
-      // propagate output preference from YAML into doc preference
-      String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
-      if (!StringUtil.isNullOrEmpty(frontMatter))
-      {
-         String mode = RmdEditorOptions.getString(frontMatter,
-               CHUNK_OUTPUT_TYPE, null);
-         if (!StringUtil.isNullOrEmpty(mode))
-         {
-            docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, mode);
-         }
-      }
       
       // listen for future changes to the preference and sync accordingly
       releaseOnDismiss.add(
@@ -331,6 +321,33 @@ public class TextEditingTargetNotebook
             editingTarget_, editingDisplay_, docUpdateSentinel_, 
             server_, events_, dependencyManager);
       releaseOnDismiss_.add(docDisplay_.addSaveCompletedHandler(htmlRenderer_));
+      
+      // set up preference sync on save
+      releaseOnDismiss_.add(docDisplay_.addSaveCompletedHandler(
+            new SaveFileHandler()
+      {
+         @Override
+         public void onSaveFile(SaveFileEvent event)
+         {
+            // propagate output preference from YAML into doc preference
+            String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
+            if (!StringUtil.isNullOrEmpty(frontMatter))
+            {
+               // if the YAML mode was manually changed to be different than
+               // the doc mode, set the doc mode appropriately
+               String yamlMode = RmdEditorOptions.getString(frontMatter,
+                     CHUNK_OUTPUT_TYPE, null);
+               if (!StringUtil.isNullOrEmpty(yamlMode))
+               {
+                  String docMode = docUpdateSentinel_.getProperty(
+                        CHUNK_OUTPUT_TYPE, yamlMode);
+                  if (yamlMode != docMode)
+                     docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, 
+                           yamlMode);
+               }
+            }
+         }
+      }));
    }
    
    public void onActivate()
@@ -340,6 +357,18 @@ public class TextEditingTargetNotebook
       
       // listen for clicks on notebook progress UI
       registerProgressHandlers();
+
+      // propagate output preference from YAML into doc preference
+      String frontMatter = YamlFrontMatter.getFrontMatter(docDisplay_);
+      if (!StringUtil.isNullOrEmpty(frontMatter))
+      {
+         String mode = RmdEditorOptions.getString(frontMatter,
+               CHUNK_OUTPUT_TYPE, null);
+         if (!StringUtil.isNullOrEmpty(mode))
+         {
+            docUpdateSentinel_.setProperty(CHUNK_OUTPUT_TYPE, mode);
+         }
+      }
    }
    
    public void executeChunks(final String jobDesc, 

@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.rmarkdown.model;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-
 public class RmdEditorOptions
 {
    public static boolean getBool(String yaml, String option,
