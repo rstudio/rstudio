@@ -418,6 +418,42 @@ public class PaneManager
    }
    
    @Handler
+   public void onActivateConsolePane()
+   {
+      // The console tab panel is initialized lazily -- while a console
+      // pane will always be available, the owning tab panel will only
+      // be constructed once a neighbor (e.g. the Terminal) has been
+      // created.
+      if (consoleTabPanel_.isEmpty())
+      {
+         consolePane_.focus();
+      }
+      else
+      {
+         LogicalWindow activeWindow = getActiveLogicalWindow();
+         if (getConsoleLogicalWindow().equals(activeWindow))
+         {
+            consoleTabPanel_.selectNextTab();
+         }
+         else
+         {
+            consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
+         }
+      }
+   }
+   
+   @Handler
+   public void onLayoutZoomConsolePane()
+   {
+      if (consoleTabPanel_.isEmpty())
+         consolePane_.focus();
+      else
+         consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
+      
+      eventBus_.fireEvent(new ZoomPaneEvent("Console"));
+   }
+   
+   @Handler
    public void onLayoutZoomCurrentPane()
    {
       LogicalWindow activeWindow = getActiveLogicalWindow();
@@ -883,19 +919,19 @@ public class PaneManager
       LogicalWindow logicalWindow =
             new LogicalWindow(frame, new MinimizedWindowFrame("Console"));
 
-      @SuppressWarnings("unused")
-      ConsoleTabPanel consoleTabPanel = new ConsoleTabPanel(frame,
-                                                            logicalWindow,
-                                                            consolePane_,
-                                                            compilePdfTab_,
-                                                            findOutputTab_,
-                                                            sourceCppTab_,
-                                                            renderRmdTab_,
-                                                            deployContentTab_,
-                                                            markersTab_,
-                                                            terminalTab_,
-                                                            eventBus_,
-                                                            goToWorkingDirButton);
+      consoleTabPanel_ = new ConsoleTabPanel(
+            frame,
+            logicalWindow,
+            consolePane_,
+            compilePdfTab_,
+            findOutputTab_,
+            sourceCppTab_,
+            renderRmdTab_,
+            deployContentTab_,
+            markersTab_,
+            terminalTab_,
+            eventBus_,
+            goToWorkingDirButton);
       
       return logicalWindow;
    }
@@ -1154,6 +1190,7 @@ public class PaneManager
    private DualWindowLayoutPanel left_;
    private DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;
+   private ConsoleTabPanel consoleTabPanel_;
    private WorkbenchTabPanel tabSet1TabPanel_;
    private MinimizedModuleTabLayoutPanel tabSet1MinPanel_;
    private WorkbenchTabPanel tabSet2TabPanel_;

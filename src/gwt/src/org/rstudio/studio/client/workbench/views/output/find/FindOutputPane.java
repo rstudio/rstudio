@@ -166,6 +166,17 @@ public class FindOutputPane extends WorkbenchPane
       if (matchCount_ == 0)
          statusPanel_.setStatusText("(No results found)");
    }
+   
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      
+      table_.focus();
+      ArrayList<Integer> indices = table_.getSelectedRowIndexes();
+      if (indices.isEmpty())
+         table_.selectNextRow();
+   }
 
    @Override
    public void ensureVisible(boolean activate)
