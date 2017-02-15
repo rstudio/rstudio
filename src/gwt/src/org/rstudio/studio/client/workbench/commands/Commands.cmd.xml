@@ -1453,7 +1453,25 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Re-Run _Previous"
         desc="Re-run the previous code region"
         context="r"/>
-        
+
+   <cmd id="executeCurrentLine"
+        label="Execute Current Line"
+        menuLabel="Execute Current _Line"
+        desc="Execute the line which contains the cursor"
+        context="r"/>
+
+   <cmd id="executeCurrentStatement"
+        label="Execute Current Statement"
+        menuLabel="Execute Current _Statement"
+        desc="Execute the entire R statement which contains the cursor."
+        context="r"/>
+
+   <cmd id="executeCurrentParagraph"
+        label="Execute Current Paragraph"
+        menuLabel="Execute Current _Paragraph"
+        desc="Execute the current paragraph of code, delimited by blank lines."
+        context="r"/>
+
    <cmd id="insertChunk"
         menuLabel="_Insert Chunk"
         desc="Insert a new code chunk"
