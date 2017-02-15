@@ -6,8 +6,8 @@
 .resizeLeft {
    position: absolute;
    left: -4px;
-   top: 0;
-   bottom: 0;
+   top: 4px;
+   bottom: -4px;
    width: 8px;
    cursor: ew-resize;
 }
@@ -15,8 +15,8 @@
 .resizeRight {
    position: absolute;
    right: -4px;
-   top: 0;
-   bottom: 0;
+   top: 4px;
+   bottom: -4px;
    width: 8px;
    cursor: ew-resize;
 }
@@ -24,8 +24,8 @@
 .resizeTop {
    position: absolute;
    top: -4px;
-   left: 0;
-   right: 0;
+   left: 4px;
+   right: -4px;
    height: 8px;
    cursor: ns-resize;
 }
@@ -33,8 +33,44 @@
 .resizeBottom {
    position: absolute;
    bottom: -4px;
-   left: 0;
-   right: 0;
+   left: 4px;
+   right: -4px;
    height: 8px;
    cursor: ns-resize;
+}
+
+.resizeTopLeft {
+   position: absolute;
+   left: -4px;
+   top: -4px;
+   width: 8px;
+   height: 8px;
+   cursor: nwse-resize;
+}
+
+.resizeTopRight {
+   position: absolute;
+   right: -4px;
+   top: -4px;
+   width: 8px;
+   height: 8px;
+   cursor: nesw-resize;
+}
+
+.resizeBottomRight {
+   position: absolute;
+   bottom: -4px;
+   right: -4px;
+   width: 8px;
+   height: 8px;
+   cursor: nwse-resize;
+}
+
+.resizeBottomLeft {
+   position: absolute;
+   bottom: -4px;
+   left: -4px;
+   width: 8px;
+   height: 8px;
+   cursor: nesw-resize;
 }

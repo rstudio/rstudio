@@ -10,6 +10,10 @@
       <g:HTMLPanel styleName="{resLocal.styles.resizeRight}"></g:HTMLPanel>
       <g:HTMLPanel styleName="{resLocal.styles.resizeTop}"></g:HTMLPanel>
       <g:HTMLPanel styleName="{resLocal.styles.resizeBottom}"></g:HTMLPanel>
+      <g:HTMLPanel styleName="{resLocal.styles.resizeTopLeft}"></g:HTMLPanel>
+      <g:HTMLPanel styleName="{resLocal.styles.resizeTopRight}"></g:HTMLPanel>
+      <g:HTMLPanel styleName="{resLocal.styles.resizeBottomRight}"></g:HTMLPanel>
+      <g:HTMLPanel styleName="{resLocal.styles.resizeBottomLeft}"></g:HTMLPanel>
       <g:HorizontalPanel
          ui:field="bottomPanel_"
          styleName="{resThemes.themeStyles.dialogBottomPanel}"

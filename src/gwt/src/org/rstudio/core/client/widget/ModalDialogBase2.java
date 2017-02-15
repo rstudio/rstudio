@@ -500,6 +500,11 @@ public abstract class ModalDialogBase2 extends PopupPanel
       String resizeRight();
       String resizeTop();
       String resizeBottom();
+
+      String resizeTopLeft();
+      String resizeTopRight();
+      String resizeBottomRight();
+      String resizeBottomLeft();
    }
    
    public interface Resources extends ClientBundle
