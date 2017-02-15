@@ -63,12 +63,17 @@ public class TerminalSession extends XTermWidget
     * @param handle terminal handle if reattaching, null if new terminal
     * @param caption terminal caption if reattaching, null if new terminal
     * @param title widget title
+    * @param hasChildProcs does session have child processes
+    * @param cols number of columns in terminal
+    * @param rows number of rows in terminal
     */
    public TerminalSession(int sequence,
                           String handle,
                           String caption,
                           String title,
-                          boolean hasChildProcs)
+                          boolean hasChildProcs,
+                          int cols,
+                          int rows)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       sequence_ = sequence;
@@ -103,8 +108,8 @@ public class TerminalSession extends XTermWidget
       connecting_ = true;
       setNewTerminal(getHandle() == null);
 
-      server_.startTerminal(80, 25, getHandle(), getCaption(), getTitle(), getSequence(),
-                            new ServerRequestCallback<ConsoleProcess>()
+      server_.startTerminal(getCols(), getRows(), getHandle(), getCaption(), 
+            getTitle(), getSequence(), new ServerRequestCallback<ConsoleProcess>()
       {
          @Override
          public void onResponseReceived(ConsoleProcess consoleProcess)
@@ -198,8 +203,10 @@ public class TerminalSession extends XTermWidget
    @Override
    public void onResizeTerminal(ResizeTerminalEvent event)
    {
+      cols_ = event.getCols();
+      rows_ = event.getRows();
       consoleProcess_.resizeTerminal(
-            event.getCols(), event.getRows(),
+            cols_, rows_,
             new VoidServerRequestCallback() 
             {
                @Override
@@ -437,6 +444,16 @@ public class TerminalSession extends XTermWidget
       return sequence_;
    }
 
+   public int getCols()
+   {
+      return cols_;
+   }
+
+   public int getRows()
+   {
+      return rows_;
+   }
+
    /**
     * Forcibly terminate the process associated with this terminal session.
     */
@@ -537,6 +554,8 @@ public class TerminalSession extends XTermWidget
    private boolean connecting_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private boolean newTerminal_ = true;
+   private int cols_;
+   private int rows_;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 
