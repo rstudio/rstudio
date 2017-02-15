@@ -63,6 +63,7 @@ public class XTermWidget extends Widget implements RequiresResize,
       getElement().getStyle().setMargin(0, Unit.PX);
       getElement().addClassName(ThemeStyles.INSTANCE.selectableText());
       getElement().addClassName(XTERM_CLASS);
+      getElement().addClassName("ace_editor");
 
       // Create and attach the native terminal object to this Widget
       attachTheme(XTermThemeResources.INSTANCE.xtermcss());
