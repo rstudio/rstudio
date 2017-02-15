@@ -50,6 +50,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Sour
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFailedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SaveInitiatedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -396,6 +397,19 @@ public class DocUpdateSentinel
          return false;
       }
       
+
+      try
+      {
+         if (path != null)
+         {
+            // notify that a save is underway (for collaborative editing)
+            eventBus_.fireEvent(new SaveInitiatedEvent(path, getId()));
+         }
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
 
       server_.saveDocumentDiff(
             sourceDoc_.getId(),
