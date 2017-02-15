@@ -141,11 +141,57 @@ void emitOutputFinished(const std::string& docId, const std::string& chunkId,
    module_context::enqueClientEvent(event);
 }
 
+bool fixChunkFilename(int, const core::FilePath& path)
+{
+   std::string name = path.filename();
+   if (name.empty())
+      return true;
+   
+   // replace spaces at start of name with '0'
+   std::string transformed = name;
+   for (std::size_t i = 0, n = transformed.size(); i < n; ++i)
+   {
+      if (transformed[i] != ' ')
+         break;
+      
+      transformed[i] = '0';
+   }
+   
+   // rename file if we had to change it
+   if (transformed != name)
+   {
+      FilePath target = path.parent().childPath(transformed);
+      Error error = path.move(target);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   // return true to continue traversal
+   return true;
+}
+
 void onChunkExecCompleted(const std::string& docId, 
                           const std::string& chunkId,
                           const std::string& nbCtxId)
 {
    emitOutputFinished(docId, chunkId, ExecScopeChunk);
+}
+
+void onDeferredInit(bool)
+{
+   FilePath root = notebookCacheRoot();
+   root.ensureDirectory();
+   
+   // Fix up chunk entries in the cache that were generated
+   // with leading spaces on Windows
+   FilePath patchPath = root.complete("patch-chunk-names");
+   if (!patchPath.exists())
+   {
+      patchPath.ensureFile();
+      Error error = root.childrenRecursive(fixChunkFilename);
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 } // anonymous namespace
@@ -173,6 +219,8 @@ Error initialize()
    using namespace module_context;
 
    events().onChunkExecCompleted.connect(onChunkExecCompleted);
+   
+   module_context::events().onDeferredInit.connect(onDeferredInit);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

@@ -195,7 +195,8 @@ public class TextEditingTargetRMarkdownHelper
          });
    }
    
-   public void renderNotebookv2(final DocUpdateSentinel sourceDoc)
+   public void renderNotebookv2(final DocUpdateSentinel sourceDoc,
+         final String viewerType)
    { 
       withRMarkdownPackage("Compiling notebooks from R scripts",
                            false,
@@ -213,7 +214,7 @@ public class TextEditingTargetRMarkdownHelper
                         if (format == null)
                            renderNotebookv2WithDialog(sourceDoc);
                         else
-                           renderNotebookv2(sourceDoc, format);
+                           renderNotebookv2(sourceDoc, format, viewerType);
                      }
                });
             }
@@ -267,7 +268,7 @@ public class TextEditingTargetRMarkdownHelper
    }
    
    private void renderNotebookv2(final DocUpdateSentinel sourceDoc,
-                                 String format)
+                                 String format, String viewerType)
    {
       eventBus_.fireEvent(new RenderRmdEvent(sourceDoc.getPath(), 
                                              1, 
@@ -277,7 +278,8 @@ public class TextEditingTargetRMarkdownHelper
                                              false,
                                              RmdOutput.TYPE_STATIC,
                                              null,
-                                             getKnitWorkingDir(sourceDoc)));
+                                             getKnitWorkingDir(sourceDoc),
+                                             viewerType));
    }
    
    public String getKnitWorkingDir(DocUpdateSentinel sourceDoc)
@@ -318,7 +320,8 @@ public class TextEditingTargetRMarkdownHelper
                                final boolean asTempfile,
                                final int type,
                                final boolean asShiny,
-                               final String workingDir)
+                               final String workingDir,
+                               final String viewerType)
    {
       withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
                               "R Notebook" :
@@ -337,7 +340,8 @@ public class TextEditingTargetRMarkdownHelper
                                                    asTempfile,
                                                    type,
                                                    null,
-                                                   workingDir));
+                                                   workingDir,
+                                                   viewerType));
          }
       });
    }

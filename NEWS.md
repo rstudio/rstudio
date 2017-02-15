@@ -8,12 +8,15 @@
 ### R Markdown
 
 * Added option to specify the working directory when executing R Markdown chunks
+* Added option to set preview mode (in viewer, window, etc.) in YAML header
+* Added option to skip knitting before publishing in YAML header
 
 ### R Notebooks
 
 * Python chunks now respect virtualenv if present
 * 'Rename in Scope' now works within R chunks
 * Fixed an issue where non-R chunk output could become duplicated
+* Added option to set notebook mode in the document's YAML header
 
 ### Terminal
 
@@ -25,6 +28,7 @@
 
 * Added support for custom, user-provided project templates
 * Implement support for changing editor tabs with the mouse wheel
+* Snippets can now be inserted in the R console
 * Add option to knit in current working directory or project directory
 * Cmd/Ctrl+Enter in Help pane now sends selected example code to console
 * View(vignette(...)) now opens editor with vignette source
