@@ -418,7 +418,7 @@ public class PaneManager
    }
    
    @Handler
-   public void onActivateConsole()
+   public void onActivateConsolePane()
    {
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
@@ -443,7 +443,7 @@ public class PaneManager
    }
    
    @Handler
-   public void onLayoutZoomConsole()
+   public void onLayoutZoomConsolePane()
    {
       if (consoleTabPanel_.isEmpty())
          consolePane_.focus();

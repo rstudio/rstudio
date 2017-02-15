@@ -198,7 +198,10 @@ public abstract class
    public abstract AppCommand restartRRunAllChunks();
    public abstract AppCommand terminateR();
    public abstract AppCommand activateConsole();
+   public abstract AppCommand activateConsolePane();
    public abstract AppCommand layoutZoomConsole();
+   public abstract AppCommand layoutZoomConsolePane();
+   public abstract AppCommand activateConsolePanePane();
 
    // Files
    public abstract AppCommand newFolder();

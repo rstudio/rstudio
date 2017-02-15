@@ -1107,6 +1107,11 @@ well as menu structures (for main menu and popup menus).
         label="Move Focus to Source"
         menuLabel="Move Focus to Sou_rce"/>
         
+   <cmd id="activateConsolePane"
+        label="Move Focus to Console Pane"
+        menuLabel="Move Focus to Console Pane"
+        windowMode="main"/>
+        
    <cmd id="activateConsole"
         label="Move Focus to Console"
         menuLabel="Move Focus to _Console"
@@ -1176,6 +1181,12 @@ well as menu structures (for main menu and popup menus).
         checkable="true"
         label="Zoom Source"
         menuLabel="Zoom Sou_rce"/>
+        
+   <cmd id="layoutZoomConsolePane"
+        checkable="true"
+        label="Zoom Console Pane"
+        menuLabel="Zoom Console Pane"
+        windowMode="main"/>
         
    <cmd id="layoutZoomConsole"
         checkable="true"

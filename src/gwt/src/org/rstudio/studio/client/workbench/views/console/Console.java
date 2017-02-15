@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.FocusContext;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
+import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -140,6 +142,12 @@ public class Console
          }
       });
    }
+   
+   @Handler
+   void onActivateConsole()
+   {
+      activateConsole(true);
+   }
 
    private void activateConsole(boolean focusWindow)
    {
@@ -169,6 +177,13 @@ public class Console
             }
          }.schedule(100);
       }    
+   }
+   
+   @Handler
+   public void onLayoutZoomConsole()
+   {
+      onActivateConsole();
+      events_.fireEvent(new ZoomPaneEvent("Console"));
    }
    
    public Display getDisplay()
