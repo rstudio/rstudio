@@ -575,7 +575,7 @@ public:
    {
       return createConsoleProc(
                ShellArgs() << "checkout" << "-B" << branch,
-               "Git Checkout " + branch,
+               "Git Create Branch " + branch,
                ppCP);
    }
 
@@ -633,22 +633,22 @@ public:
             // otherwise just check out our local copy
             if (core::algorithm::contains(s_branches, localBranch))
             {
-               args << "checkout" << localBranch << "--";
+               args << "checkout" << localBranch;
             }
             else
             {
-               args << "checkout" << "-b" << localBranch << remoteBranch << "--";
+               args << "checkout" << "-b" << localBranch << remoteBranch;
             }
          }
          else
          {
             // shouldn't happen, but provide valid shell command regardless
-            args << "checkout" << id << "--";
+            args << "checkout" << id;
          }
       }
       else
       {
-         args << "checkout" << id << "--";
+         args << "checkout" << id;
       }
       
       return createConsoleProc(args,
