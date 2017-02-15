@@ -25,13 +25,16 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
+import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.CreateBranchDialog.Input;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
@@ -56,21 +59,41 @@ public class CreateBranchToolbarButton extends ToolbarButton
    @Override
    public void onClick(ClickEvent event)
    {
-      globalDisplay_.promptForText(
-            "Create Branch",
-            "Create a new branch:",
-            "",
-            new OperationWithInput<String>()
-            {
-               @Override
-               public void execute(String newBranch)
-               {
-                  onCreateBranch(newBranch);
-               }
-            });
+      gitServer_.gitListRemotes(new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString remotes)
+         {
+            onListRemotes(remotes);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
-   private void onCreateBranch(final String newBranch)
+   private void onListRemotes(final JsArrayString remotes)
+   {
+      // TODO: If we have no remote branch set up, should we instruct
+      // the user to first set up that remote?
+      CreateBranchDialog dialog = new CreateBranchDialog(
+            "New Branch",
+            remotes,
+            new OperationWithInput<CreateBranchDialog.Input>()
+            {
+               @Override
+               public void execute(Input input)
+               {
+                  onCreateBranch(input);
+               }
+            });
+      dialog.showModal();
+   }
+   
+   private void onCreateBranch(final Input input)
    {
       gitServer_.gitListBranches(
             new ServerRequestCallback<BranchesInfo>()
@@ -78,7 +101,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
                @Override
                public void onResponseReceived(BranchesInfo branchesInfo)
                {
-                  onBranchInfoReceived(newBranch, branchesInfo);
+                  onBranchInfoReceived(input, branchesInfo);
                }
                
                @Override
@@ -89,7 +112,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
             });
    }
    
-   private void onBranchInfoReceived(final String newBranch,
+   private void onBranchInfoReceived(final Input input,
                                      final BranchesInfo branchesInfo)
    {
       // If we have a branch of this name already, prompt the
@@ -99,7 +122,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       boolean hasBranch = false;
       for (String branch : JsUtil.asIterable(branchesInfo.getBranches()))
       {
-         if (branch.equals(newBranch))
+         if (branch.equals(input.getBranch()))
          {
             hasBranch = true;
             break;
@@ -109,7 +132,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       if (hasBranch)
       {
          String message =
-               "A branch named '" + newBranch + "' already exists. Would " +
+               "A branch named '" + input.getBranch() + "' already exists. Would " +
                "you like to check out that branch, or overwrite that branch?";
          
          List<String> labels = new ArrayList<String>();
@@ -122,7 +145,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
             @Override
             public void execute()
             {
-               onCheckout(newBranch);
+               onCheckout(input);
             }
          });
          operations.add(new Operation()
@@ -130,7 +153,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
             @Override
             public void execute()
             {
-               onCreate(newBranch);
+               onCreate(input);
             }
          });
          
@@ -144,20 +167,31 @@ public class CreateBranchToolbarButton extends ToolbarButton
       }
       else
       {
-         onCreate(newBranch);
+         onCreate(input);
       }
    }
    
-   private void onCreate(final String newBranch)
+   private void onCreate(final Input input)
    {
       gitServer_.gitCreateBranch(
-            newBranch,
+            input.getBranch(),
             new ServerRequestCallback<ConsoleProcess>()
             {
                @Override
                public void onResponseReceived(ConsoleProcess process)
                {
-                  showConsoleProcessDialog(process);
+                  final ConsoleProgressDialog dialog =
+                        new ConsoleProgressDialog(process, gitServer_);
+                  dialog.showModal();
+                  dialog.writePrompt("> git checkout -B '" + input.getBranch() + "'\n");
+                  process.addProcessExitHandler(new ProcessExitEvent.Handler()
+                  {
+                     @Override
+                     public void onProcessExit(ProcessExitEvent event)
+                     {
+                        onCreateBranchFinished(input, event, dialog);
+                     }
+                  });
                }
                
                @Override
@@ -169,10 +203,37 @@ public class CreateBranchToolbarButton extends ToolbarButton
             });
    }
    
-   private void onCheckout(final String newBranch)
+   private void onCreateBranchFinished(final Input input,
+                                       final ProcessExitEvent event,
+                                       final ConsoleProgressDialog dialog)
+   {
+      if (event.getExitCode() == 0 && input.getPush())
+      {
+         dialog.writePrompt("> git push -u " + input.getRemote() + " " + input.getBranch() + "\n");
+         gitServer_.gitPushBranch(
+               input.getBranch(),
+               input.getRemote(),
+               new ServerRequestCallback<ConsoleProcess>()
+               {
+                  @Override
+                  public void onResponseReceived(ConsoleProcess process)
+                  {
+                     dialog.attachToProcess(process);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+                  }
+               });
+      }
+   }
+   
+   private void onCheckout(final Input input)
    {
       gitServer_.gitCheckout(
-            newBranch,
+            input.getBranch(),
             new ServerRequestCallback<ConsoleProcess>()
             {
                @Override

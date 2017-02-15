@@ -76,8 +76,6 @@ public class ConsoleProgressDialog extends ProgressDialog
          throw new IllegalArgumentException(
                "Invalid combination of arguments to ConsoleProgressDialog");
       }
-
-      consoleProcess_ = consoleProcess;
       
       if (getInteractionMode() != ConsoleProcessInfo.INTERACTION_NEVER)
       {
@@ -94,14 +92,48 @@ public class ConsoleProgressDialog extends ProgressDialog
          display_.setReadOnly(true);
          outputWriter_ = display_;
       }
-
-      stopButton().addClickHandler(this);
       
       if (!StringUtil.isNullOrEmpty(initialOutput))
       {
          outputWriter_.consoleWriteOutput(initialOutput);
       }
 
+      if (exitCode != null)
+         setExitCode(exitCode);
+     
+      // interaction-always mode is a shell -- customize ui accordingly
+      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
+      {
+         stopButton().setText("Close");
+         
+         hideProgress();
+         
+         int height = Window.getClientHeight() - 150;
+         int width = Math.min(800, Window.getClientWidth() - 150);
+         Style style = display_.getShellWidget().getElement().getStyle();
+         style.setHeight(height, Unit.PX);
+         style.setWidth(width, Unit.PX);
+      }
+      
+      attachToProcess(consoleProcess);
+   }
+   
+   @Override
+   protected Widget createDisplayWidget(Object param)
+   {
+      display_ = new ConsoleProgressWidget();
+      display_.setMaxOutputLines(getMaxOutputLines());
+      display_.setSuppressPendingInput(true);
+      return display_.getShellWidget();
+   }
+   
+   public void attachToProcess(final ConsoleProcess consoleProcess)
+   {
+      consoleProcess_ = consoleProcess;
+      
+      stopButton().setText("Stop");
+      stopButton().addClickHandler(this);
+      
       if (consoleProcess != null)
       {
          addHandlerRegistration(consoleProcess.addConsolePromptHandler(this));
@@ -131,37 +163,10 @@ public class ConsoleProgressDialog extends ProgressDialog
          @Override
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
-            if (consoleProcess_ != null)
-               consoleProcess_.reap(new VoidServerRequestCallback());
+            if (consoleProcess != null)
+               consoleProcess.reap(new VoidServerRequestCallback());
          }
       });
-
-      if (exitCode != null)
-         setExitCode(exitCode);
-     
-      // interaction-always mode is a shell -- customize ui accordingly
-      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
-      {
-         stopButton().setText("Close");
-         
-         hideProgress();
-         
-         int height = Window.getClientHeight() - 150;
-         int width = Math.min(800, Window.getClientWidth() - 150);
-         Style style = display_.getShellWidget().getElement().getStyle();
-         style.setHeight(height, Unit.PX);
-         style.setWidth(width, Unit.PX);
-      }
-
-   }
-   
-   @Override
-   protected Widget createDisplayWidget(Object param)
-   {
-      display_ = new ConsoleProgressWidget();
-      display_.setMaxOutputLines(getMaxOutputLines());
-      display_.setSuppressPendingInput(true);
-      return display_.getShellWidget();
    }
 
    public ConsoleProcess getConsoleProcess()
@@ -187,19 +192,29 @@ public class ConsoleProgressDialog extends ProgressDialog
          return false;
       }
    }
+   
+   public void writeOutput(String output)
+   {
+      maybeShowOnOutput(output);
+      outputWriter_.consoleWriteOutput(output);
+   }
+   
+   public void writePrompt(String prompt)
+   {
+      maybeShowOnOutput(prompt);
+      outputWriter_.consoleWritePrompt(prompt);
+   }
 
    @Override
    public void onConsoleOutput(ConsoleOutputEvent event)
    {
-      maybeShowOnOutput(event.getOutput());
-      outputWriter_.consoleWriteOutput(event.getOutput());
+      writeOutput(event.getOutput());
    }
    
    @Override
    public void onConsolePrompt(ConsolePromptEvent event)
    {
-      maybeShowOnOutput(event.getPrompt());
-      outputWriter_.consoleWritePrompt(event.getPrompt());
+      writePrompt(event.getPrompt());
    }
 
    @Override
@@ -321,7 +336,7 @@ public class ConsoleProgressDialog extends ProgressDialog
    
    private boolean showOnOutput_ = false;
    
-   private final ConsoleProcess consoleProcess_;
+   private ConsoleProcess consoleProcess_;
  
    private final ShellOutputWriter outputWriter_;
   

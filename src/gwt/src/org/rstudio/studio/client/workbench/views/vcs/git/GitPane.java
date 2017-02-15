@@ -132,7 +132,6 @@ public class GitPane extends WorkbenchPane implements Display
       historyButton_.setText(width > 680 ? "History" : "");
       moreButton_.setText(width > 680 ? "More" : "");
       createBranchToolbarButton_.setText(width > 780 ? "Create Branch" : "");
-      
    }
 
    @Override

@@ -586,6 +586,17 @@ public:
       s_branches = *pBranches;
       return Success();
    }
+   
+   core::Error listRemotes(std::vector<std::string>* pRemotes)
+   {
+      std::string output;
+      Error error = runGit(ShellArgs() << "remote", &output);
+      if (error)
+         return error;
+      
+      *pRemotes = split(output);
+      return Success();
+   }
 
    core::Error checkout(const std::string& id,
                         boost::shared_ptr<ConsoleProcess>* ppCP)
@@ -791,6 +802,16 @@ public:
       }
 
       return createConsoleProc(args, "Git Push", ppCP);
+   }
+   
+   core::Error pushBranch(const std::string& branch,
+                          const std::string& remote,
+                          boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      return createConsoleProc(
+               ShellArgs() << "push" << "-u" << remote << branch,
+               "Git Push",
+               ppCP);
    }
 
    core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
@@ -1595,6 +1616,26 @@ Error vcsPush(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsPushBranch(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string branch, remote;
+   Error error = json::readParams(request.params, &branch, &remote);
+   if (error)
+      return error;
+   
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.pushBranch(branch, remote, &pCP);
+   if (error)
+      return error;
+
+   ask_pass::setActiveWindow(request.sourceWindow);
+
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
+}
+
 Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
@@ -1757,6 +1798,16 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsListRemotes(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::vector<std::string> remotes;
+   Error error = s_git_.listRemotes(&remotes);
+   if (error)
+      LOG_ERROR(error);
+   pResponse->setResult(json::toJsonArray(remotes));
+   return Success();
+}
 
 std::string getUpstream(const std::string& branch = std::string())
 {
@@ -2991,6 +3042,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_all_status", vcsAllStatus))
       (bind(registerRpcMethod, "git_commit", vcsCommit))
       (bind(registerRpcMethod, "git_push", vcsPush))
+      (bind(registerRpcMethod, "git_push_branch", vcsPushBranch))
       (bind(registerRpcMethod, "git_pull", vcsPull))
       (bind(registerRpcMethod, "git_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "git_apply_patch", vcsApplyPatch))
@@ -3004,6 +3056,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
       (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
       (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores))
+      (bind(registerRpcMethod, "git_list_remotes", vcsListRemotes))
       (bind(registerRpcMethod, "git_github_remote_url", vcsGithubRemoteUrl));
    error = initBlock.execute();
    if (error)
