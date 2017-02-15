@@ -612,7 +612,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="activateConsole" value="Alt+X" disableModes="default,vim"/>
          
          <shortcut refid="activateSource" value="Ctrl+1"/>
-         <shortcut refid="activateConsole"/>
          <shortcut refid="activateConsolePane" value="Ctrl+2"/>
          <shortcut refid="activateTerminal" value="Ctrl+Shift+T"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
