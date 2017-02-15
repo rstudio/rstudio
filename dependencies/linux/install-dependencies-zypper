@@ -18,29 +18,29 @@
 set -e
 
 # build/development tools
-sudo zypper --non-interactive in make
-sudo zypper --non-interactive in gcc
-sudo zypper --non-interactive in gcc-c++
-sudo zypper --non-interactive in gcc-fortran
-sudo zypper --non-interactive in build
-sudo zypper --non-interactive in cmake
+zypper --non-interactive in make
+zypper --non-interactive in gcc
+zypper --non-interactive in gcc-c++
+zypper --non-interactive in gcc-fortran
+zypper --non-interactive in build
+zypper --non-interactive in cmake
 
 # core system libraries
-sudo zypper --non-interactive in libbz2-devel
-sudo zypper --non-interactive in zlib-devel
-sudo zypper --non-interactive in libuuid-devel
-sudo zypper --non-interactive in libopenssl-devel
-sudo zypper --non-interactive in pam-devel
+zypper --non-interactive in libbz2-devel
+zypper --non-interactive in zlib-devel
+zypper --non-interactive in libuuid-devel
+zypper --non-interactive in libopenssl-devel
+zypper --non-interactive in pam-devel
 
 # boost
-sudo zypper --non-interactive in boost-devel
+zypper --non-interactive in boost-devel
 
 # pango cairo
-sudo zypper --non-interactive in pango-devel
+zypper --non-interactive in pango-devel
 
 # gwt prereqs
-sudo zypper --non-interactive in java-1_6_0-openjdk-devel
-sudo zypper --non-interactive in ant
+zypper --non-interactive in java-1_6_0-openjdk-devel
+zypper --non-interactive in ant
 
 # overlay
 if [ -e install-overlay-zypper ]
@@ -60,8 +60,8 @@ then
    ./install-qt-sdk
 
    # install headers needed by Qt 5 (GL, xslt)
-   sudo zypper --non-interactive in mesa-devel
-   sudo zypper --non-interactive in libxslt-devel
+   zypper --non-interactive in mesa-devel
+   zypper --non-interactive in libxslt-devel
 fi
 
 

@@ -18,39 +18,31 @@
 set -e
 
 # build/development tools
-sudo apt-get -y install build-essential
-sudo apt-get -y install pkg-config
-sudo apt-get -y install fakeroot
-sudo apt-get -y install cmake
+apt-get -y install build-essential pkg-config fakeroot cmake
 
 # core system libraries
-sudo apt-get -y install uuid-dev
-sudo apt-get -y install libssl-dev
-sudo apt-get -y install libbz2-dev
-sudo apt-get -y install zlib1g-dev
-sudo apt-get -y install libpam-dev
+apt-get -y install uuid-dev libssl-dev libbz2-dev zlib1g-dev libpam-dev
 
 # needed for QtWebKit >= 5
-sudo apt-get -y install libxslt1-dev
+apt-get -y install libxslt1-dev
 
 # app armor dependencies no longer included in ubuntu >= 11.10
-sudo apt-get -y install libapparmor1 
-sudo apt-get -y install apparmor-utils
+apt-get -y install libapparmor1 apparmor-utils
 
 # boost
 ## This version of libboost-all-dev is now 1.55.0.2 in the current stable version of debian (jessie) [2015-12-04].
 ## This is further along than the version installed by the install-boost script also run by install-dependencies-debian.
 ## So comment this out to ensure only one version of boost is installed here and it is supported by rstudio.
-#sudo apt-get -y install libboost-all-dev
+#apt-get -y install libboost-all-dev
 
 # pango cairo
-sudo apt-get -y install libpango1.0-dev
+apt-get -y install libpango1.0-dev
 
 # gwt prereqs
 ## openjdk-6-jdk is no longer available in the current stable version of debian [2015-12-04]
 ## Also, ant no longer depends on openjdk-6-jdk
-# sudo apt-get -y install openjdk-6-jdk 
-sudo apt-get -y install ant
+#apt-get -y install openjdk-6-jdk 
+apt-get -y install ant
 
 # overlay
 if [ -e install-overlay-debian ]
@@ -59,7 +51,7 @@ then
 fi
 
 # common
-sudo apt-get -y install unzip
+apt-get -y install unzip
 cd ../common
 ./install-common
 cd ../linux
@@ -69,14 +61,13 @@ if [ "$1" != "--exclude-qt-sdk" ]
 then
    # ubuntu server doesn't include gstreamer by default so ensure that these
    # libs are always available for desktop builds (required by QtWebKit 2.2)
-   sudo apt-get -y install libgstreamer0.10-0
-   sudo apt-get -y install libgstreamer-plugins-base0.10-0
+   apt-get -y install libgstreamer0.10-0 libgstreamer-plugins-base0.10-0
 
    # Ubuntu 12.04 doesn't include libjpeg62 (and it's required by Qt 4.8)
-   sudo apt-get -y install libjpeg62
+   apt-get -y install libjpeg62
 
    # Need the OpenGL development libraries to build QtGui
-   sudo apt-get -y install libgl1-mesa-dev
+   apt-get -y install libgl1-mesa-dev
 
    # install Qt 4.8 SDK (into a private /opt/RStudio-QtSDK directory so as to 
    # not conflict with any other installed versions of Qt on the system)

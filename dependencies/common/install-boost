@@ -43,19 +43,19 @@ then
    fi
    
    # remove existing boost installation
-   sudo rm -rf $BOOST_DIR
+   rm -rf $BOOST_DIR
   
    # untar source (remove existing)
-   sudo rm -rf $BOOST_BUILD_DIR
-   sudo mkdir -p $BOOST_BUILD_DIR
+   rm -rf $BOOST_BUILD_DIR
+   mkdir -p $BOOST_BUILD_DIR
    cd $BOOST_BUILD_DIR
-   sudo tar --bzip2 -xf ../$BOOST_TAR
+   tar --bzip2 -xf ../$BOOST_TAR
 
    # change to boost version folder
    cd $BOOST_VERSION
 
    # bootstrap boost
-   sudo ./bootstrap.sh  
+   ./bootstrap.sh  
    
    # special variation of build for osx
    if [ "$PLATFORM" == "Darwin" ]
@@ -70,15 +70,15 @@ then
         CXX_STDLIB_FLAGS=""
      fi
 
-     sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
+     ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR toolset=clang $CXX_STDLIB_FLAGS variant=release threading=multi link=static install
    else
-     sudo ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR variant=release install
+     ./bjam ${BOOST_BJAM_FLAGS} --prefix=$BOOST_DIR variant=release install
    fi
 
    # go back to the original install dir and remove build dir
    cd $INSTALL_DIR
-   sudo rm -rf $BOOST_TAR
-   sudo rm -rf $BOOST_BUILD_DIR
+   rm -rf $BOOST_TAR
+   rm -rf $BOOST_BUILD_DIR
 
 else
 
