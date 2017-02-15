@@ -60,7 +60,7 @@ public class RmdEditorOptions
    
    public static String PUBLISH_OUTPUT    = "publish_output";
 
-   public static String PREVIEW_IN        = "preview_in";
+   public static String PREVIEW_IN        = "preview";
    public static String PREVIEW_IN_WINDOW = "window";
    public static String PREVIEW_IN_VIEWER = "viewer";
    public static String PREVIEW_IN_NONE   = "none";
