@@ -138,7 +138,7 @@ public class EditingPreferencesPane extends PreferencesPane
             new String[] {
                "Current line",
                "Multi-line R statement",
-               "Paragraph separated by blank lines"
+               "Multiple consecutive R lines"
             },
             new String[] {
                UIPrefsAccessor.EXECUTE_LINE,
