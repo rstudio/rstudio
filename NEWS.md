@@ -57,4 +57,5 @@
 * Fixed an issue that could cause the data viewer cache to contain orphaned entries
 * Fixed highlighting of Markdown text within Markdown blockquote
 * Invoke R without --vanilla when building R Markdown websites
+* Fixed an issue in which R Markdown documents could get stuck in notebook mode
 
