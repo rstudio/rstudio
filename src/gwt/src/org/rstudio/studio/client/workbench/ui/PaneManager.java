@@ -445,7 +445,11 @@ public class PaneManager
    @Handler
    public void onLayoutZoomConsole()
    {
-      onActivateConsole();
+      if (consoleTabPanel_.isEmpty())
+         consolePane_.focus();
+      else
+         consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
+      
       eventBus_.fireEvent(new ZoomPaneEvent("Console"));
    }
    
