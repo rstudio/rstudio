@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -55,6 +56,35 @@ public abstract class ModalDialogBase2 extends PopupPanel
       this(null);
    }
 
+   private class MouseHandler implements MouseDownHandler, MouseUpHandler,
+      MouseOutHandler, MouseOverHandler, MouseMoveHandler {
+
+      @Override
+      public void onMouseDown(MouseDownEvent event) {
+         if (isResizeEvent(event.getNativeEvent())) {
+            // TODO: Start Dragging
+         }
+      }
+
+      @Override
+      public void onMouseMove(MouseMoveEvent event) {
+      }
+
+      @Override
+      public void onMouseUp(MouseUpEvent event) {
+      }
+
+      @Override
+      public void onMouseOver(MouseOverEvent arg0)
+      {
+      }
+
+      @Override
+      public void onMouseOut(MouseOutEvent arg0)
+      {
+      }
+   }
+
    protected ModalDialogBase2(SimplePanel containerPanel)
    {
       super(false);
@@ -74,6 +104,8 @@ public abstract class ModalDialogBase2 extends PopupPanel
          setWidget(mainPanel_);
       }
 
+      MouseHandler mouseHandler = new MouseHandler();
+
       addDomHandler(new KeyDownHandler()
       {
          public void onKeyDown(KeyDownEvent event)
@@ -83,6 +115,12 @@ public abstract class ModalDialogBase2 extends PopupPanel
             event.stopPropagation();
          }
       }, KeyDownEvent.getType());
+
+      addDomHandler(mouseHandler, MouseDownEvent.getType());
+      addDomHandler(mouseHandler, MouseUpEvent.getType());
+      addDomHandler(mouseHandler, MouseMoveEvent.getType());
+      addDomHandler(mouseHandler, MouseOverEvent.getType());
+      addDomHandler(mouseHandler, MouseOutEvent.getType());
    }
 
    protected void beginDragging(MouseDownEvent event)
@@ -489,6 +527,14 @@ public abstract class ModalDialogBase2 extends PopupPanel
    {
    }
 
+   private boolean isResizeEvent(NativeEvent event) {
+      EventTarget target = event.getEventTarget();
+      if (Element.is(target)) {
+         return Element.as(target) == resizeLeft_.getElement();
+      }
+      return false;
+   }
+
    @UiTemplate("ModalDialogBase2.ui.xml")
    interface Binder extends UiBinder<Widget, ModalDialogBase2>
    {}
@@ -536,6 +582,9 @@ public abstract class ModalDialogBase2 extends PopupPanel
    
    @UiField
    HorizontalPanel leftButtonPanel_;
+
+   @UiField
+   HTMLPanel resizeLeft_;
    
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;

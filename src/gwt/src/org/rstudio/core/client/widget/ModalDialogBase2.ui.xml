@@ -6,7 +6,7 @@
             type="org.rstudio.core.client.widget.ModalDialogBase2.Resources"/>
 
    <g:VerticalPanel ui:field="mainPanel_" styleName="{resLocal.styles.mainPanel}">
-      <g:HTMLPanel styleName="{resLocal.styles.resizeLeft}"></g:HTMLPanel>
+      <g:HTMLPanel ui:field="resizeLeft_" styleName="{resLocal.styles.resizeLeft}"></g:HTMLPanel>
       <g:HTMLPanel styleName="{resLocal.styles.resizeRight}"></g:HTMLPanel>
       <g:HTMLPanel styleName="{resLocal.styles.resizeTop}"></g:HTMLPanel>
       <g:HTMLPanel styleName="{resLocal.styles.resizeBottom}"></g:HTMLPanel>
