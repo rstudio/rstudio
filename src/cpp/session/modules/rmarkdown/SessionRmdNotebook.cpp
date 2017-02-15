@@ -179,12 +179,19 @@ void onChunkExecCompleted(const std::string& docId,
 
 void onDeferredInit(bool)
 {
+   FilePath root = notebookCacheRoot();
+   root.ensureDirectory();
+   
    // Fix up chunk entries in the cache that were generated
    // with leading spaces on Windows
-   FilePath root = notebookCacheRoot();
-   Error error = root.childrenRecursive(fixChunkFilename);
-   if (error)
-      LOG_ERROR(error);
+   FilePath patchPath = root.complete("patch-chunk-names");
+   if (!patchPath.exists())
+   {
+      patchPath.ensureFile();
+      Error error = root.childrenRecursive(fixChunkFilename);
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 } // anonymous namespace
