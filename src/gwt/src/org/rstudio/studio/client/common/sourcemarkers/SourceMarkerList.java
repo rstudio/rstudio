@@ -149,6 +149,12 @@ public class SourceMarkerList extends Composite
       }
    }
    
+   public void ensureSelection()
+   {
+      if (errorTable_.getSelectedRowIndexes().isEmpty())
+         selectFirstItem();
+   }
+   
    public void selectFirstItem()
    {
       if (errorTable_.getRowCount() > 0)

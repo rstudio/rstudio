@@ -714,6 +714,6 @@
     if (inherits(get(name, envir = globalenv()), "data.frame"))
        return(name)
   }
-  invisible(NULL)
+  invisible("")
 })
 
