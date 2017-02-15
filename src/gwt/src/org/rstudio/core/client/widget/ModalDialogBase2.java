@@ -496,6 +496,10 @@ public abstract class ModalDialogBase2 extends PopupPanel
    public interface Styles extends CssResource
    {
       String mainPanel();
+      String resizeLeft();
+      String resizeRight();
+      String resizeTop();
+      String resizeBottom();
    }
    
    public interface Resources extends ClientBundle

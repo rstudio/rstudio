@@ -2,3 +2,39 @@
    background-color: #f3f4f4;
    padding: 10px;
 }
+
+.resizeLeft {
+   position: absolute;
+   left: -4px;
+   top: 0;
+   bottom: 0;
+   width: 8px;
+   cursor: ew-resize;
+}
+
+.resizeRight {
+   position: absolute;
+   right: -4px;
+   top: 0;
+   bottom: 0;
+   width: 8px;
+   cursor: ew-resize;
+}
+
+.resizeTop {
+   position: absolute;
+   top: -4px;
+   left: 0;
+   right: 0;
+   height: 8px;
+   cursor: ns-resize;
+}
+
+.resizeBottom {
+   position: absolute;
+   bottom: -4px;
+   left: 0;
+   right: 0;
+   height: 8px;
+   cursor: ns-resize;
+}
