@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -114,12 +115,20 @@ public class EditingTargetCodeExecution
             Scope scope = docDisplay_.getCurrentChunk();
             if (scope == null)
             {
-               if (prefs_.executeMultiLineStatements().getValue())
+               if (prefs_.executionBehavior().getValue() == 
+                     UIPrefsAccessor.EXECUTE_STATEMENT)
                {
                   // no scope to guard region, check the document itself to find
                   // the region to execute
                   selectionRange = docDisplay_.getMultiLineExpr(
                         docDisplay_.getCursorPosition(), 1,
+                        docDisplay_.getRowCount());
+               }
+               else if (prefs_.executionBehavior().getValue() == 
+                     UIPrefsAccessor.EXECUTE_PARAGRAPH)
+               {
+                  selectionRange = docDisplay_.getParagraph(
+                        docDisplay_.getCursorPosition(), 1, 
                         docDisplay_.getRowCount());
                }
                else

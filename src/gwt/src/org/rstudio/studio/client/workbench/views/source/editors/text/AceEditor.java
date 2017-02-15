@@ -3130,6 +3130,36 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
+   public Range getParagraph(Position pos, int startRowLimit, int endRowLimit)
+   {
+      // assume start, end at current position
+      int startRow = pos.getRow();
+      int endRow   = pos.getRow();
+      
+      // walk backwards to beginning of paragraph
+      for (int i = pos.getRow() - 1; i >= startRowLimit; i--)
+      {
+         if (getLine(i).trim().isEmpty())
+         {
+            startRow = i + 1;
+            break;
+         }
+      }
+      
+      // walk forwards to end of paragraph
+      for (int j = pos.getRow() + 1; j <= endRowLimit; j++)
+      {
+         if (getLine(j).trim().isEmpty())
+         {
+            endRow = j - 1;
+            break;
+         }
+      }
+      
+      return Range.create(startRow, 0, endRow + 1, 0);
+   }
+
+   @Override
    public Range getMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)
    {
       if (!DocumentMode.isSelectionInRMode(this))
