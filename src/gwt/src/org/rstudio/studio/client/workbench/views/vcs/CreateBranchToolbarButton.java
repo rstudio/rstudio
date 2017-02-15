@@ -133,7 +133,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       {
          String message =
                "A branch named '" + input.getBranch() + "' already exists. Would " +
-               "you like to check out that branch, or overwrite that branch?";
+               "you like to check out that branch, or overwrite it?";
          
          List<String> labels = new ArrayList<String>();
          labels.add("Checkout");
@@ -183,7 +183,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
                   final ConsoleProgressDialog dialog =
                         new ConsoleProgressDialog(process, gitServer_);
                   dialog.showModal();
-                  dialog.writePrompt("> git checkout -B '" + input.getBranch() + "'\n");
+                  
                   process.addProcessExitHandler(new ProcessExitEvent.Handler()
                   {
                      @Override
@@ -209,7 +209,6 @@ public class CreateBranchToolbarButton extends ToolbarButton
    {
       if (event.getExitCode() == 0 && input.getPush())
       {
-         dialog.writePrompt("> git push -u " + input.getRemote() + " " + input.getBranch() + "\n");
          gitServer_.gitPushBranch(
                input.getBranch(),
                input.getRemote(),

@@ -16,8 +16,10 @@ package org.rstudio.studio.client.workbench.views.vcs;
 
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.VerticalSpacer;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
@@ -74,8 +76,8 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       setOkButtonCaption("Create");
       
       container_ = new VerticalPanel();
-      tbBranch_ = new TextBox();
-      tbRemote_ = new TextBox();
+      tbBranch_ = createTextBox();
+      tbRemote_ = createTextBox();
       cbPush_ = new CheckBox("Push branch to remote");
       
       final String remote = remotes.length() == 0 ? "origin" : remotes.get(0);
@@ -90,6 +92,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       grid.setWidget(1, 1, tbRemote_);
       
       container_.add(grid);
+      container_.add(new VerticalSpacer("12px"));
       container_.add(cbPush_);
    }
 
@@ -104,6 +107,17 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       super.showModal();
       tbBranch_.setFocus(true);
+   }
+   
+   private TextBox createTextBox()
+   {
+      TextBox textBox = new TextBox();
+      textBox.setWidth("200px");
+      textBox.getElement().getStyle().setPaddingLeft(3, Unit.PX);
+      textBox.getElement().getStyle().setPaddingRight(3, Unit.PX);
+      textBox.getElement().getStyle().setPaddingBottom(2, Unit.PX);
+      textBox.getElement().getStyle().setPaddingTop(2, Unit.PX);
+      return textBox;
    }
    
    private final VerticalPanel container_;

@@ -228,6 +228,23 @@ Error gitExec(const ShellArgs& args,
 #endif
 }
 
+std::string gitText(const ShellArgs& args)
+{
+   std::stringstream ss;
+   
+   ss << ">>> ";
+   
+   if (s_gitExePath.empty())
+      ss << "git ";
+   else
+      ss << s_gitExePath << " ";
+   
+   std::string arguments = core::algorithm::join(args, " ");
+   ss << arguments << "\n";
+   
+   return ss.str();
+}
+
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
 {
@@ -315,13 +332,14 @@ protected:
             boost::make_shared<ConsoleProcessInfo>(
                caption, "" /*title*/, "" /*handle*/, kNoTerminal,
                false /*allowRestart*/, console_process::InteractionNever);
-
+      
 #ifdef _WIN32
       *ppCP = ConsoleProcess::create(gitBin(), args.args(), options, pCPI);
 #else
       *ppCP = ConsoleProcess::create(git() << args.args(), options, pCPI);
 #endif
-
+      
+      (*ppCP)->enquePrompt(gitText(args));
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
 
       return Success();
