@@ -49,13 +49,17 @@ public class TerminalList implements Iterable<String>,
                                String caption,
                                String title,
                                int sequence,
-                               boolean childProcs)
+                               boolean childProcs,
+                               int cols,
+                               int rows)
       {
          handle_ = StringUtil.notNull(handle);
          caption_ = StringUtil.notNull(caption);
          title_ = StringUtil.notNull(title);
          sequence_ = sequence;
          childProcs_ = childProcs;
+         cols_ = cols;
+         rows_ = rows;
       }
 
       private TerminalMetadata(TerminalMetadata original,
@@ -65,7 +69,9 @@ public class TerminalList implements Iterable<String>,
               original.caption_,
               newTitle,
               original.sequence_,
-              original.childProcs_);
+              original.childProcs_,
+              original.cols_,
+              original.rows_);
       }
 
       private TerminalMetadata(ConsoleProcessInfo procInfo)
@@ -74,7 +80,10 @@ public class TerminalList implements Iterable<String>,
               procInfo.getCaption(),
               procInfo.getTitle(),
               procInfo.getTerminalSequence(),
-              procInfo.getHasChildProcs());
+              procInfo.getHasChildProcs(),
+              ConsoleProcessInfo.DEFAULT_COLS,
+              ConsoleProcessInfo.DEFAULT_ROWS
+              );
       }
 
       private TerminalMetadata(TerminalSession term)
@@ -83,7 +92,9 @@ public class TerminalList implements Iterable<String>,
               term.getCaption(),
               term.getTitle(),
               term.getSequence(),
-              term.getHasChildProcs());
+              term.getHasChildProcs(),
+              term.getCols(),
+              term.getRows());
       }
 
       /**
@@ -111,12 +122,17 @@ public class TerminalList implements Iterable<String>,
        * @return true if terminal shell has child processes
        */
       public boolean getChildProcs() { return childProcs_; }
+      
+      public int getCols() { return cols_; }
+      public int getRows() { return rows_; }
 
       private String handle_;
       private String caption_;
       private String title_;
       private int sequence_;
       private boolean childProcs_;
+      private int cols_;
+      private int rows_;
    }
 
    protected TerminalList() 
@@ -194,7 +210,9 @@ public class TerminalList implements Iterable<String>,
                current.caption_,
                current.title_,
                current.sequence_,
-               childProcs));
+               childProcs,
+               current.cols_,
+               current.rows_));
          return true;
       }
       return false;
@@ -291,7 +309,9 @@ public class TerminalList implements Iterable<String>,
                     null,  // handle
                     null,  // caption
                     null,  // title
-                    true); // childProcs
+                    true,  // childProcs
+                    ConsoleProcessInfo.DEFAULT_COLS,
+                    ConsoleProcessInfo.DEFAULT_ROWS);
    }
 
    /**
@@ -311,7 +331,9 @@ public class TerminalList implements Iterable<String>,
                     handle,
                     existing.getCaption(),
                     existing.getTitle(),
-                    existing.getChildProcs());
+                    existing.getChildProcs(),
+                    existing.getCols(),
+                    existing.getRows());
       return true;
    }
 
@@ -378,10 +400,12 @@ public class TerminalList implements Iterable<String>,
                              String terminalHandle,
                              String caption,
                              String title,
-                             boolean hasChildProcs)
+                             boolean hasChildProcs,
+                             int cols,
+                             int rows)
    {
       TerminalSession newSession = new TerminalSession(
-            sequence, terminalHandle, caption, title, hasChildProcs);
+            sequence, terminalHandle, caption, title, hasChildProcs, cols, rows);
       newSession.connect();
       updateTerminalBusyStatus();
    }

@@ -23,6 +23,9 @@ public class ConsoleProcessInfo extends JavaScriptObject
    public static final int INTERACTION_POSSIBLE = 1;
    public static final int INTERACTION_ALWAYS = 2;
    
+   public static final int DEFAULT_COLS = 80;
+   public static final int DEFAULT_ROWS = 25;
+   
    protected ConsoleProcessInfo() {}
 
    public final native String getHandle() /*-{
