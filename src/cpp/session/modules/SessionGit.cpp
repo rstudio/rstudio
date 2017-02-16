@@ -696,48 +696,53 @@ public:
                                ppCP);
    }
 
-   core::Error commit(std::string message, bool amend, bool signOff,
+   core::Error commit(std::string message,
+                      bool amend,
+                      bool signOff,
                       boost::shared_ptr<ConsoleProcess>* ppCP)
    {
-      bool alwaysUseUtf8 = s_gitVersion >= GIT_1_7_2;
-
-      if (!alwaysUseUtf8)
+      using namespace string_utils;
+      
+      // detect the active commit encoding for this project
+      std::string encoding;
+      int exitCode;
+      Error error = runGit(ShellArgs() << "config" << "i18n.commitencoding",
+                           &encoding,
+                           NULL,
+                           &exitCode);
+      
+      // normalize output (no config specified implies UTF-8 default)
+      encoding = toUpper(trimWhitespace(encoding));
+      if (encoding.empty())
+         encoding = "UTF-8";
+      
+      // convert from UTF-8 to user encoding if required
+      if (encoding != "UTF-8")
       {
-         std::string encoding;
-         int exitCode;
-         Error error = runGit(ShellArgs() << "config" << "i18n.commitencoding",
-                              &encoding,
-                              NULL,
-                              &exitCode);
-         if (!error)
+         error = r::util::iconvstr(message, "UTF-8", encoding, false, &message);
+         if (error)
          {
-            boost::algorithm::trim_right(encoding);
-            if (!encoding.empty() && encoding != "UTF-8")
-            {
-               error = r::util::iconvstr(message,
-                                         "UTF-8",
-                                         encoding,
-                                         false,
-                                         &message);
-               if (error)
-               {
-                  return systemError(boost::system::errc::illegal_byte_sequence,
-                                     "The commit message could not be encoded to " + encoding + ".\n\nYou can correct this by calling 'git config i18n.commitencoding UTF-8' and committing again.",
-                                     ERROR_LOCATION);
-               }
-            }
+            return systemError(
+                     boost::system::errc::illegal_byte_sequence,
+                     "The commit message could not be encoded to " + encoding +
+                     ".\n\n You can correct this by calling "
+                     "'git config i18n.commitencoding UTF-8' "
+                     "and committing again.",
+                     ERROR_LOCATION);
          }
       }
 
-      FilePath tempFile = module_context::tempFile("gitmsg", "txt");
+      // write commit message to file
+      FilePath tempFile = module_context::tempFile("git-commit-message-", "txt");
       boost::shared_ptr<std::ostream> pStream;
 
-      Error error = tempFile.open_w(&pStream);
+      error = tempFile.open_w(&pStream);
       if (error)
          return error;
 
       *pStream << message;
 
+      // append merge commit message when appropriate
       FilePath gitDir = root_.childPath(".git");
       if (gitDir.childPath("MERGE_HEAD").exists())
       {
@@ -758,10 +763,9 @@ public:
       pStream->flush();
       pStream.reset();  // release file handle
 
-      // Make sure we override i18n settings that may cause the commit message
-      // to be marked as using an encoding other than utf-8.
+      // override a user-specified default encoding if necessary
       ShellArgs args;
-      if (alwaysUseUtf8)
+      if (encoding != "UTF-8")
          args << "-c" << "i18n.commitencoding=utf-8";
       args << "commit" << "-F" << tempFile;
 

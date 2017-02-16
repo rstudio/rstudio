@@ -80,6 +80,7 @@ std::string systemToUtf8(const std::string& str);
 std::string systemToUtf8(const std::string& str, int codepage);
 
 std::string toLower(const std::string& str);
+std::string toUpper(const std::string& str);
 std::string textToHtml(const std::string& str);
 
 std::string htmlEscape(const std::string& str, bool isAttributeValue = false);
