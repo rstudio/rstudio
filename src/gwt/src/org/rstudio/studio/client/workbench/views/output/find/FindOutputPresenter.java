@@ -278,7 +278,7 @@ public class FindOutputPresenter extends BasePresenter
       }
       view_.setStopSearchButtonVisible(false);
    }
-
+   
    private String currentFindHandle_;
 
    private FindInFilesDialog.State dialogState_;

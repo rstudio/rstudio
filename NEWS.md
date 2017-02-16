@@ -41,6 +41,7 @@
 * Improve performance of autocompletion for installed packages
 * Add option to run multiple consecutive lines of R with Ctrl+Enter
 * Add commands to run a line, statement, or consecutive lines 
+* Add Clear Console button to top of Console pane
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
@@ -58,4 +59,5 @@
 * Fixed an issue that could cause the data viewer cache to contain orphaned entries
 * Fixed highlighting of Markdown text within Markdown blockquote
 * Invoke R without --vanilla when building R Markdown websites
+* Fixed an issue in which R Markdown documents could get stuck in notebook mode
 

@@ -221,6 +221,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             {
                input_.setText(e.getSelectedItem().getHistory());
                dismiss();
+               input_.setFocus(true);
             }
          });
          
