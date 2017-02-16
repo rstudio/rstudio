@@ -101,20 +101,6 @@ public class ConsoleProgressDialog extends ProgressDialog
       if (exitCode != null)
          setExitCode(exitCode);
      
-      // interaction-always mode is a shell -- customize ui accordingly
-      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
-      {
-         stopButton().setText("Close");
-         
-         hideProgress();
-         
-         int height = Window.getClientHeight() - 150;
-         int width = Math.min(800, Window.getClientWidth() - 150);
-         Style style = display_.getShellWidget().getElement().getStyle();
-         style.setHeight(height, Unit.PX);
-         style.setWidth(width, Unit.PX);
-      }
-      
       attachToProcess(consoleProcess);
    }
    
@@ -131,7 +117,24 @@ public class ConsoleProgressDialog extends ProgressDialog
    {
       consoleProcess_ = consoleProcess;
       
-      stopButton().setText("Stop");
+      // interaction-always mode is a shell -- customize ui accordingly
+      if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
+      {
+         hideProgress();
+         stopButton().setText("Close");
+         
+         int height = Window.getClientHeight() - 150;
+         int width = Math.min(800, Window.getClientWidth() - 150);
+         Style style = display_.getShellWidget().getElement().getStyle();
+         style.setHeight(height, Unit.PX);
+         style.setWidth(width, Unit.PX);
+      }
+      else
+      {
+         showProgress();
+         stopButton().setText("Stop");
+      }
+      
       stopButton().addClickHandler(this);
       
       if (consoleProcess != null)

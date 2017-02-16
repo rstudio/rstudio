@@ -575,7 +575,7 @@ public:
    {
       return createConsoleProc(
                ShellArgs() << "checkout" << "-B" << branch,
-               "Git Create Branch " + branch,
+               "Git Branch",
                ppCP);
    }
 
@@ -1472,8 +1472,6 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
 Error vcsCreateBranch(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   RefreshOnExit scope;
-   
    Error error;
    std::string branch;
    
@@ -1659,7 +1657,7 @@ Error vcsPushBranch(const json::JsonRpcRequest& request,
 Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-    boost::shared_ptr<ConsoleProcess> pCP;
+   boost::shared_ptr<ConsoleProcess> pCP;
    Error error = s_git_.pull(&pCP);
    if (error)
       return error;
