@@ -130,11 +130,11 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
       
-      pullButton_.setText(width > 600 ? "Pull" : "");
-      pushButton_.setText(width > 600 ? "Push" : "");
-      historyButton_.setText(width > 680 ? "History" : "");
-      moreButton_.setText(width > 680 ? "More" : "");
-      createBranchToolbarButton_.setText(width > 780 ? "Create Branch" : "");
+      pullButton_.setText(width > 550 ? "Pull" : "");
+      pushButton_.setText(width > 550 ? "Push" : "");
+      historyButton_.setText(width > 630 ? "History" : "");
+      moreButton_.setText(width > 630 ? "More" : "");
+      createBranchToolbarButton_.setText(width > 680 ? "New Branch" : "");
    }
 
    @Override
