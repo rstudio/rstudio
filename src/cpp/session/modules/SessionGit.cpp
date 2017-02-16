@@ -612,7 +612,9 @@ public:
       if (error)
          return error;
       
-      *pRemotes = split(output);
+      std::string trimmed = string_utils::trimWhitespace(output);
+      if (!trimmed.empty())
+         *pRemotes = split(trimmed);
       return Success();
    }
 
