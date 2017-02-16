@@ -39,7 +39,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
@@ -62,7 +62,7 @@ public class CompletionRequester
 {
    private CodeToolsServerOperations server_ ;
    private UIPrefs uiPrefs_;
-   private final NavigableSourceEditor editor_ ;
+   private final DocDisplay docDisplay_ ;
    private final SnippetHelper snippets_ ;
 
    private String cachedLinePrefix_ ;
@@ -71,11 +71,11 @@ public class CompletionRequester
    private RnwCompletionContext rnwContext_ ;
    
    public CompletionRequester(RnwCompletionContext rnwContext,
-                              NavigableSourceEditor editor,
+                              DocDisplay docDisplay,
                               SnippetHelper snippets)
    {
       rnwContext_ = rnwContext;
-      editor_ = editor;
+      docDisplay_ = docDisplay;
       snippets_ = snippets;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
@@ -318,11 +318,7 @@ public class CompletionRequester
    private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
    private boolean isTopLevelCompletionRequest()
    {
-      AceEditor editor = (AceEditor) editor_;
-      if (editor == null)
-         return false;
-      
-      String line = editor.getCurrentLineUpToCursor();
+      String line = docDisplay_.getCurrentLineUpToCursor();
       return !RE_EXTRACTION.test(line);
    }
    
@@ -470,7 +466,7 @@ public class CompletionRequester
          String token,
          ArrayList<QualifiedName> completions)
    {
-      AceEditor editor = (AceEditor) editor_;
+      AceEditor editor = (AceEditor) docDisplay_;
 
       // NOTE: this will be null in the console, so protect against that
       if (editor != null)
@@ -526,7 +522,7 @@ public class CompletionRequester
          ArrayList<QualifiedName> completions,
          String type)
    {
-      AceEditor editor = (AceEditor) editor_;
+      AceEditor editor = (AceEditor) docDisplay_;
 
       // NOTE: this will be null in the console, so protect against that
       if (editor != null)
@@ -558,7 +554,7 @@ public class CompletionRequester
          String token,
          ArrayList<QualifiedName> completions)
    {
-      AceEditor editor = (AceEditor) editor_;
+      AceEditor editor = (AceEditor) docDisplay_;
 
       if (editor != null)
       {

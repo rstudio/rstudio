@@ -200,9 +200,26 @@ public class YamlTree
       if (parentKey != null && !keyMap_.containsKey(parentKey))
          return;
       
-      String line = key + ": " + value;     
+      String line = key + ": " + value;
       YamlTreeNode parent = parentKey == null ? root_ : keyMap_.get(parentKey);
-      YamlTreeNode child = parentKey == null ? new YamlTreeNode(line) : 
+      
+      // check to see if we should be replacing a value rather than adding
+      YamlTreeNode child = null;
+      for (YamlTreeNode childNode: parent.children)
+      {
+         if (childNode.key == key)
+         {
+            // found an existing child node
+            child = childNode;
+            
+            // set its value to the one supplied by the caller and return
+            child.setValue(value);
+            return;
+         }
+      }
+      
+      // no existing value, create a wholly new node
+      child = parentKey == null ? new YamlTreeNode(line) : 
             new YamlTreeNode(parent.getIndent() + "  " + line);
       keyMap_.put(key, child);
       parent.addChild(child);
@@ -212,6 +229,24 @@ public class YamlTree
    {
       if (keyMap_.containsKey(key))
          return keyMap_.get(key).getValue();
+      return "";
+   }
+   
+   public String getChildValue(String parentKey, String childKey)
+   {
+      for (YamlTreeNode parent: root_.children)
+      {
+         if (parent.key == parentKey)
+         {
+            for (YamlTreeNode child: parent.children)
+            {
+               if (child.key == childKey)
+               {
+                  return child.getValue();
+               }
+            }
+         }
+      }
       return "";
    }
    

@@ -142,13 +142,13 @@ public class Console
          }
       });
    }
-
+   
    @Handler
    void onActivateConsole()
    {
       activateConsole(true);
    }
-   
+
    private void activateConsole(boolean focusWindow)
    {
       // ensure we don't leave focus in the console

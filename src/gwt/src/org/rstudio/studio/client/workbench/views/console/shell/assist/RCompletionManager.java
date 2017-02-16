@@ -146,7 +146,7 @@ public class RCompletionManager implements CompletionManager
       sigTipManager_ = new SignatureToolTipManager(docDisplay_);
       suggestTimer_ = new SuggestionTimer(this, uiPrefs_);
       snippets_ = new SnippetHelper((AceEditor) docDisplay, getSourceDocumentPath());
-      requester_ = new CompletionRequester(rnwContext, navigableSourceEditor, snippets_);
+      requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       
       handlers_.add(input_.addBlurHandler(new BlurHandler() {
@@ -438,6 +438,9 @@ public class RCompletionManager implements CompletionManager
       if (sigTipManager_.previewKeyDown(event))
          return true;
       
+      if (isDisabled())
+         return false;
+      
       /**
        * KEYS THAT MATTER
        *
@@ -709,6 +712,9 @@ public class RCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       suggestTimer_.cancel();
+      
+      if (isDisabled())
+         return false;
       
       if (popup_.isShowing())
       {
@@ -2188,6 +2194,16 @@ public class RCompletionManager implements CompletionManager
       String subsetted = tokenValue.substring(0, cursorPos.getColumn() - currentToken.getColumn());
       
       return subsetted + suffix;
+   }
+   
+   private boolean isDisabled()
+   {
+      // Disable the completion manager while a snippet tabstop
+      // manager is active
+      if (docDisplay_.isSnippetsTabStopManagerActive())
+         return true;
+      
+      return false;
    }
    
    private GlobalDisplay globalDisplay_;

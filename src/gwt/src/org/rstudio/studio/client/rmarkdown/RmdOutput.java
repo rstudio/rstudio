@@ -46,6 +46,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
@@ -242,6 +243,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
            false,
            RmdOutput.TYPE_STATIC,
            event.getOutputFile(),
+           null,
            null);
       events_.fireEvent(renderEvent);
    }
@@ -265,6 +267,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                               event.getType(),
                               event.getExistingOutputFile(),
                               event.getWorkingDir(),
+                              event.getViewerType(),
                   new SimpleRequestCallback<Boolean>() {
                        @Override 
                        public void onError(ServerError error)
@@ -410,6 +413,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             false,
             RmdOutput.TYPE_STATIC,
             null,
+            null, 
             null);
        events_.fireEvent(renderEvent);
    }
@@ -538,7 +542,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       events_.fireEvent(new RenderRmdEvent(
             result.getTargetFile(), result.getTargetLine(), 
             null, result.getTargetEncoding(), null, false, 
-            RmdOutput.TYPE_SHINY, null, null));
+            RmdOutput.TYPE_SHINY, null, null, result.getViewerType()));
    }
    
    private void displayRenderResult(final RmdRenderResult result)
@@ -661,12 +665,23 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       final RmdPreviewParams params = RmdPreviewParams.create(
             result, scrollPosition, anchor);
       
+      // get the default viewer type from prefs
+      int viewerType = prefs_.rmdViewerType().getValue();
+      
+      // apply override from result, if any
+      if (result.getViewerType() == RmdEditorOptions.PREVIEW_IN_VIEWER)
+         viewerType = RMD_VIEWER_TYPE_PANE;
+      else if (result.getViewerType() == RmdEditorOptions.PREVIEW_IN_WINDOW)
+         viewerType = RMD_VIEWER_TYPE_WINDOW;
+      else if (result.getViewerType() == RmdEditorOptions.PREVIEW_IN_NONE)
+         viewerType = RMD_VIEWER_TYPE_NONE;
+
       // don't host presentations in the viewer pane--ioslides doesn't scale
       // slides well without help
-      final int newViewerType = result.isHtmlPresentation() && 
-            prefs_.rmdViewerType().getValue() == RMD_VIEWER_TYPE_PANE ?
-                    RMD_VIEWER_TYPE_WINDOW : 
-                    prefs_.rmdViewerType().getValue();
+      if (result.isHtmlPresentation() && viewerType == RMD_VIEWER_TYPE_PANE)
+         viewerType = RMD_VIEWER_TYPE_WINDOW;
+      
+      final int newViewerType = viewerType;
       
       // if we're about to pop open a window but one of the publish buttons
       // is waiting for a render to complete, skip the preview entirely so 

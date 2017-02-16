@@ -181,7 +181,23 @@ class WorkbenchTabPanel
          }
       });
    }
-
+   
+   public void selectNextTab()
+   {
+      selectTabRelative(1);
+   }
+   
+   public void selectPreviousTab()
+   {
+      selectTabRelative(-1);
+   }
+   
+   public void selectTabRelative(int offset)
+   {
+      int index = (getSelectedIndex() + offset) % tabs_.size();
+      selectTab(index);
+   }
+   
    public void selectTab(int tabIndex)
    {
       if (tabPanel_.getSelectedIndex() == tabIndex)
@@ -226,9 +242,19 @@ class WorkbenchTabPanel
       }
    }
    
+   public boolean isEmpty()
+   {
+      return tabs_.isEmpty();
+   }
+   
    public WorkbenchTab getTab(int index)
    {
       return tabs_.get(index);
+   }
+   
+   public WorkbenchTab getSelectedTab()
+   {
+      return tabs_.get(getSelectedIndex());
    }
 
    public int getSelectedIndex()

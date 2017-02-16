@@ -111,6 +111,14 @@ public class MarkersOutputPane extends WorkbenchPane
       return clearButton_;
    }
    
+   @Override
+   public void onSelected()
+   {
+      super.onSelected();
+      markerList_.focus();
+      markerList_.ensureSelection();
+   }
+   
    private SourceMarkerList markerList_;
    private MarkerSetsToolbarButton markerSetsToolbarButton_;
    private ToolbarButton clearButton_;

@@ -81,6 +81,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
       return this.force_maximize;
    }-*/;
    
+   public native final String getViewerType() /*-{
+      return this.viewer_type;
+   }-*/;
+   
    public final boolean isHtml()
    {
       return getOutputFile().toLowerCase().endsWith(".html");
