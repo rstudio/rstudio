@@ -14,17 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.rstudio.core.client.Functional;
+import org.rstudio.core.client.Functional.Predicate;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.VerticalSpacer;
+import org.rstudio.studio.client.common.vcs.RemotesInfo;
 
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -71,24 +82,19 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    }
    
    public CreateBranchDialog(final String caption,
-                             final JsArrayString remotes,
-                             final OperationWithInput<Input> operation)
+                             final JsArray<RemotesInfo> remotesInfo,
+                             final OperationWithInput<CreateBranchDialog.Input> onCreateBranch,
+                             final OperationWithInput<AddRemoteDialog.Input> onAddRemote)
    {
-      super(caption, operation);
+      super(caption, onCreateBranch);
       
       setOkButtonCaption("Create");
       
       container_ = new VerticalPanel();
-      tbBranch_ = createTextBox();
+      tbBranch_ = textBox();
       tbBranch_.getElement().setAttribute("placeholder", "Branch name");
       
-      String[] remoteLabels = new String[remotes.length() + 1];
-      for (int i = 0; i < remotes.length(); i++)
-         remoteLabels[i] = remotes.get(i);
-      remoteLabels[remotes.length()] = REMOTE_NONE;
-      
-      sbRemote_ = new SelectWidget("Remote:", remoteLabels);
-      sbRemote_.setValue(remoteLabels[0]);
+      sbRemote_ = new SelectWidget("Remote:");
       sbRemote_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -98,22 +104,87 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
             cbPush_.setVisible(!isNone);
          }
       });
+      setRemotes(remotesInfo);
       
-      final String remote = remotes.length() == 0 ? "(None)" : remotes.get(0);
-      sbRemote_.setValue(remote);
+      btnAddRemote_ = new SmallButton("Add Remote...");
+      btnAddRemote_.getElement().getStyle().setMarginLeft(12, Unit.PX);
+      btnAddRemote_.getElement().getStyle().setMarginTop(1, Unit.PX);
+      btnAddRemote_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // Try to use the remote URL associated with the currently
+            // selected remote name if available.
+            String remoteUrl = null;
+            if (remotesInfo_ != null)
+            {
+               final String currentRemote = sbRemote_.getValue();
+               RemotesInfo info = Functional.find(remotesInfo_, new Predicate<RemotesInfo>()
+               {
+                  @Override
+                  public boolean test(RemotesInfo info)
+                  {
+                     return info.getRemote().equals(currentRemote);
+                  }
+               });
+
+               if (info != null)
+                  remoteUrl = info.getUrl();
+            }
+            
+            AddRemoteDialog dialog = new AddRemoteDialog(
+                  "Add Remote",
+                  remoteUrl,
+                  onAddRemote);
+            
+            dialog.showModal();
+         }
+      });
       
-      cbPush_ = new CheckBox("Push branch to remote");
+      cbPush_ = new CheckBox("Sync branch with remote");
       cbPush_.setVisible(!sbRemote_.getValue().equals(REMOTE_NONE));
       cbPush_.setValue(true);
       
       Grid grid = new Grid(1, 2);
       grid.setWidget(0, 0, new Label("Branch:"));
-      grid.setWidget(0, 1, tbBranch_);;
+      grid.setWidget(0, 1, tbBranch_);
+      
+      HorizontalPanel remotePanel = new HorizontalPanel();
+      remotePanel.add(sbRemote_);
+      remotePanel.add(btnAddRemote_);
       
       container_.add(grid);
       container_.add(new VerticalSpacer("6px"));
-      container_.add(sbRemote_);
+      container_.add(remotePanel);
       container_.add(cbPush_);
+   }
+   
+   public void setRemotes(JsArray<RemotesInfo> remotes)
+   {
+      setRemotes(null, remotes);
+   }
+   
+   public void setRemotes(String activeRemote,
+                          JsArray<RemotesInfo> remotesInfo)
+   {
+      remotesInfo_ = remotesInfo;
+      
+      List<String> remotes = new ArrayList<String>();
+      for (RemotesInfo info : JsUtil.asIterable(remotesInfo))
+         if (!remotes.contains(info.getRemote()))
+            remotes.add(info.getRemote());
+      
+      String[] choices = new String[remotes.size() + 1];
+      for (int i = 0; i < remotes.size(); i++)
+         choices[i] = remotes.get(i);
+      choices[remotes.size()] = REMOTE_NONE;
+      
+      if (activeRemote == null)
+         activeRemote = choices[0];
+      
+      sbRemote_.setChoices(choices);
+      sbRemote_.setValue(activeRemote);
    }
 
    @Override
@@ -129,10 +200,10 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       tbBranch_.setFocus(true);
    }
    
-   private TextBox createTextBox()
+   private TextBox textBox()
    {
       TextBox textBox = new TextBox();
-      textBox.setWidth("200px");
+      textBox.setWidth("220px");
       textBox.getElement().getStyle().setPaddingLeft(3, Unit.PX);
       textBox.getElement().getStyle().setPaddingRight(3, Unit.PX);
       textBox.getElement().getStyle().setPaddingBottom(2, Unit.PX);
@@ -140,9 +211,12 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       return textBox;
    }
    
+   private JsArray<RemotesInfo> remotesInfo_;
+   
    private final VerticalPanel container_;
    private final TextBox tbBranch_;
    private final SelectWidget sbRemote_;
+   private final SmallButton btnAddRemote_;
    private final CheckBox cbPush_;
    
    private static final String REMOTE_NONE = "(None)";

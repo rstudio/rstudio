@@ -29,12 +29,13 @@ import org.rstudio.studio.client.common.console.ProcessExitEvent;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.BranchesInfo;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
+import org.rstudio.studio.client.common.vcs.RemotesInfo;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.vcs.CreateBranchDialog.Input;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
@@ -59,10 +60,10 @@ public class CreateBranchToolbarButton extends ToolbarButton
    @Override
    public void onClick(ClickEvent event)
    {
-      gitServer_.gitListRemotes(new ServerRequestCallback<JsArrayString>()
+      gitServer_.gitListRemotes(new ServerRequestCallback<JsArray<RemotesInfo>>()
       {
          @Override
-         public void onResponseReceived(JsArrayString remotes)
+         public void onResponseReceived(JsArray<RemotesInfo> remotes)
          {
             onListRemotes(remotes);
          }
@@ -75,13 +76,9 @@ public class CreateBranchToolbarButton extends ToolbarButton
       });
    }
    
-   private void onListRemotes(final JsArrayString remotes)
+   private void onListRemotes(final JsArray<RemotesInfo> remotesInfo)
    {
-      // TODO: If we have no remote branch set up, should we instruct
-      // the user to first set up that remote?
-      CreateBranchDialog dialog = new CreateBranchDialog(
-            "New Branch",
-            remotes,
+      final OperationWithInput<CreateBranchDialog.Input> onCreateBranch =
             new OperationWithInput<CreateBranchDialog.Input>()
             {
                @Override
@@ -89,11 +86,50 @@ public class CreateBranchToolbarButton extends ToolbarButton
                {
                   onCreateBranch(input);
                }
-            });
-      dialog.showModal();
+            };
+            
+      final OperationWithInput<AddRemoteDialog.Input> onAddRemote =
+            new OperationWithInput<AddRemoteDialog.Input>()
+            {
+               @Override
+               public void execute(AddRemoteDialog.Input input)
+               {
+                  onAddRemote(input);
+               }
+            };
+            
+      createBranchDialog_ = new CreateBranchDialog(
+            "New Branch",
+            remotesInfo,
+            onCreateBranch,
+            onAddRemote);
+      
+      createBranchDialog_.showModal();
    }
    
-   private void onCreateBranch(final Input input)
+   private void onAddRemote(final AddRemoteDialog.Input input)
+   {
+      gitServer_.gitAddRemote(
+            input.getName(),
+            input.getUrl(),
+            new ServerRequestCallback<JsArray<RemotesInfo>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<RemotesInfo> remotesInfo)
+               {
+                  if (createBranchDialog_ != null)
+                     createBranchDialog_.setRemotes(input.getName(), remotesInfo);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   private void onCreateBranch(final CreateBranchDialog.Input input)
    {
       gitServer_.gitListBranches(
             new ServerRequestCallback<BranchesInfo>()
@@ -112,7 +148,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
             });
    }
    
-   private void onBranchInfoReceived(final Input input,
+   private void onBranchInfoReceived(final CreateBranchDialog.Input input,
                                      final BranchesInfo branchesInfo)
    {
       // If we have a branch of this name already, prompt the
@@ -132,8 +168,8 @@ public class CreateBranchToolbarButton extends ToolbarButton
       if (hasBranch)
       {
          String message =
-               "A branch named '" + input.getBranch() + "' already exists. Would " +
-               "you like to check out that branch, or overwrite it?";
+               "A local branch named '" + input.getBranch() + "' already exists. " +
+               "Would you like to check out that branch, or overwrite it?";
          
          List<String> labels = new ArrayList<String>();
          labels.add("Checkout");
@@ -171,7 +207,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       }
    }
    
-   private void onCreate(final Input input)
+   private void onCreate(final CreateBranchDialog.Input input)
    {
       gitServer_.gitCreateBranch(
             input.getBranch(),
@@ -203,7 +239,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
             });
    }
    
-   private void onCreateBranchFinished(final Input input,
+   private void onCreateBranchFinished(final CreateBranchDialog.Input input,
                                        final ProcessExitEvent event,
                                        final ConsoleProgressDialog dialog)
    {
@@ -229,7 +265,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
       }
    }
    
-   private void onCheckout(final Input input)
+   private void onCheckout(final CreateBranchDialog.Input input)
    {
       gitServer_.gitCheckout(
             input.getBranch(),
@@ -253,6 +289,8 @@ public class CreateBranchToolbarButton extends ToolbarButton
    {
       new ConsoleProgressDialog(process, gitServer_).showModal();
    }
+   
+   private CreateBranchDialog createBranchDialog_;
    
    private final GlobalDisplay globalDisplay_;
    private final GitServerOperations gitServer_;

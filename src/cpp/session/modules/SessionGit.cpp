@@ -33,6 +33,7 @@
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/BoostLamda.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Crypto.hpp>
@@ -605,17 +606,54 @@ public:
       return Success();
    }
    
-   core::Error listRemotes(std::vector<std::string>* pRemotes)
+   core::Error listRemotes(json::Array* pRemotes)
    {
       std::string output;
-      Error error = runGit(ShellArgs() << "remote", &output);
+      Error error = runGit(ShellArgs() << "remote" << "--verbose", &output);
       if (error)
          return error;
       
       std::string trimmed = string_utils::trimWhitespace(output);
-      if (!trimmed.empty())
-         *pRemotes = split(trimmed);
+      if (trimmed.empty())
+         return Success();
+      
+      boost::regex reSpaces("\\s+");
+      std::vector<std::string> splat = split(trimmed);
+      BOOST_FOREACH(const std::string& line, splat)
+      {
+         boost::smatch match;
+         if (!boost::regex_search(line, match, reSpaces))
+            continue;
+         
+         std::string remote = std::string(line.begin(), match[0].first);
+         std::string url = std::string(match[0].second, line.end());
+         std::string type = "(unknown)";
+         
+         if (boost::algorithm::ends_with(url, "(fetch)"))
+         {
+            url = url.substr(0, url.size() - strlen("(fetch)"));
+            type = "fetch";
+         }
+         else if (boost::algorithm::ends_with(url, "(push)"))
+         {
+            url = url.substr(0, url.size() - strlen("(push)"));
+            type = "push";
+         }
+         
+         json::Object objectJson;
+         objectJson["remote"] = string_utils::trimWhitespace(remote);
+         objectJson["url"] = string_utils::trimWhitespace(url);
+         objectJson["type"] = string_utils::trimWhitespace(type);
+         pRemotes->push_back(objectJson);
+      }
+
       return Success();
+   }
+   
+   core::Error addRemote(const std::string& name,
+                         const std::string& url)
+   {
+      return runGit(ShellArgs() << "remote" << "add" << name << url);
    }
 
    core::Error checkout(const std::string& id,
@@ -1819,12 +1857,30 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
 Error vcsListRemotes(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::vector<std::string> remotes;
-   Error error = s_git_.listRemotes(&remotes);
+   pResponse->setResult(json::Array());
+   
+   json::Array remotesJson;
+   Error error = s_git_.listRemotes(&remotesJson);
    if (error)
       LOG_ERROR(error);
-   pResponse->setResult(json::toJsonArray(remotes));
+   
+   pResponse->setResult(remotesJson);
    return Success();
+}
+
+Error vcsAddRemote(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   std::string name, url;
+   Error error = json::readParams(request.params, &name, &url);
+   if (error)
+      return error;
+   
+   error = s_git_.addRemote(name, url);
+   if (error)
+      return error;
+   
+   return vcsListRemotes(request, pResponse);
 }
 
 std::string getUpstream(const std::string& branch = std::string())
@@ -3075,6 +3131,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
       (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores))
       (bind(registerRpcMethod, "git_list_remotes", vcsListRemotes))
+      (bind(registerRpcMethod, "git_add_remote", vcsAddRemote))
       (bind(registerRpcMethod, "git_github_remote_url", vcsGithubRemoteUrl));
    error = initBlock.execute();
    if (error)

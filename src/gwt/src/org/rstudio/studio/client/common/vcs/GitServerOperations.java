@@ -15,8 +15,6 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -71,7 +69,11 @@ public interface GitServerOperations extends VCSServerOperations
    
    void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
    
-   void gitListRemotes(ServerRequestCallback<JsArrayString> requestCallback);
+   void gitListRemotes(ServerRequestCallback<JsArray<RemotesInfo>> requestCallback);
+   
+   void gitAddRemote(String name,
+                     String url,
+                     ServerRequestCallback<JsArray<RemotesInfo>> requestCallback);
 
    void gitCheckout(String id,
                     ServerRequestCallback<ConsoleProcess> requestCallback);
