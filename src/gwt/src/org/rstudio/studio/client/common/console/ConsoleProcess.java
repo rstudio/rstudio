@@ -337,11 +337,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       server_.processSetShellSize(procInfo_.getHandle(), cols, rows, requestCallback);
    }
 
-   public void eraseTerminalBuffer(ServerRequestCallback<Void> requestCallback)
-   {
-      server_.processEraseBuffer(procInfo_.getHandle(), requestCallback);
-   }
-
    public void getTerminalBuffer(ServerRequestCallback<String> requestCallback)
    {
       server_.processGetBuffer(procInfo_.getHandle(), requestCallback);
