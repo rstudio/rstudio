@@ -575,9 +575,13 @@ public class UIPrefsAccessor extends Prefs
       return bool("hide_console_on_chunk_execute", true);
    }
    
-   public PrefValue<Boolean> executeMultiLineStatements()
+   public static final String EXECUTE_LINE      = "line";
+   public static final String EXECUTE_STATEMENT = "statement";
+   public static final String EXECUTE_PARAGRAPH = "paragraph";
+   
+   public PrefValue<String> executionBehavior()
    {
-      return bool("execute_multi_line_statements", true);
+      return string("execution_behavior", EXECUTE_STATEMENT);
    }
    
    public PrefValue<Boolean> enableXTerm()

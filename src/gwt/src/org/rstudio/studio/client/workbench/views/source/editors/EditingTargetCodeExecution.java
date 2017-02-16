@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
 import org.rstudio.studio.client.rmarkdown.events.SendToChunkConsoleEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleExecutePendingInputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -111,34 +112,9 @@ public class EditingTargetCodeExecution
          }
          else
          {
-            Scope scope = docDisplay_.getCurrentChunk();
-            if (scope == null)
-            {
-               if (prefs_.executeMultiLineStatements().getValue())
-               {
-                  // no scope to guard region, check the document itself to find
-                  // the region to execute
-                  selectionRange = docDisplay_.getMultiLineExpr(
-                        docDisplay_.getCursorPosition(), 1,
-                        docDisplay_.getRowCount());
-               }
-               else
-               {
-                  // single-line execution
-                  selectionRange = Range.fromPoints(
-                        Position.create(row, 0),
-                        Position.create(row, docDisplay_.getLength(row)));
-               }
-            }
-            else
-            {
-               // inside a chunk, always execute multiple lines (bounded by the
-               // chunk)
-               selectionRange = docDisplay_.getMultiLineExpr(
-                     docDisplay_.getCursorPosition(),
-                     scope.getBodyStart().getRow(),
-                     scope.getEnd().getRow() - 1);
-            }
+            // if no selection, follow UI pref to see what to execute
+            selectionRange = getRangeFromBehavior(
+                  prefs_.executionBehavior().getValue());
          }
          
          // if we failed to discover a range, bail
@@ -165,11 +141,7 @@ public class EditingTargetCodeExecution
       // advance if there is no current selection
       if (noSelection && moveCursorAfter)
       {
-         docDisplay_.setCursorPosition(Position.create(
-               selectionRange.getEnd().getRow(), 0));
-         if (!docDisplay_.moveSelectionToNextLine(true))
-            docDisplay_.moveSelectionToBlankLine();
-         docDisplay_.scrollCursorIntoViewIfNecessary(3);
+         moveCursorAfterExecution(selectionRange);
       }
    }
    
@@ -255,6 +227,53 @@ public class EditingTargetCodeExecution
                                   code, 
                                   true, 
                                   prefs_.focusConsoleAfterExec().getValue()));
+   }
+   
+   public void executeBehavior(String executionBehavior)
+   {
+      Range range = getRangeFromBehavior(executionBehavior);
+      executeRange(range, null, false);
+      moveCursorAfterExecution(range);
+   }
+   
+   private Range getRangeFromBehavior(String executionBehavior)
+   {
+      Range range;
+      
+      // by default the range can encompass the whole document
+      int startRowLimit = 0;
+      int endRowLimit = docDisplay_.getRowCount();
+      
+      // limit range to chunk if we're inside one
+      Scope scope = docDisplay_.getCurrentChunk();
+      if (scope != null)
+      {
+        
+         startRowLimit = scope.getBodyStart().getRow();
+         endRowLimit = scope.getEnd().getRow() - 1;
+      }
+  
+      if (executionBehavior == UIPrefsAccessor.EXECUTE_STATEMENT)
+      {
+         // no scope to guard region, check the document itself to find
+         // the region to execute
+         range = docDisplay_.getMultiLineExpr(
+               docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);
+      }
+      else if (executionBehavior == UIPrefsAccessor.EXECUTE_PARAGRAPH)
+      {
+         range = docDisplay_.getParagraph(
+               docDisplay_.getCursorPosition(), startRowLimit, endRowLimit);
+      }
+      else
+      {
+         // single-line execution
+         int row = docDisplay_.getCursorPosition().getRow();
+         range = Range.fromPoints(
+               Position.create(row, 0),
+               Position.create(row, docDisplay_.getLength(row)));
+      }
+      return range;
    }
    
    public void executeLastCode()
@@ -389,6 +408,15 @@ public class EditingTargetCodeExecution
       
       inlineChunkExecutor_.execute(range);
       return true;
+   }
+   
+   private void moveCursorAfterExecution(Range selectionRange)
+   {
+      docDisplay_.setCursorPosition(Position.create(
+            selectionRange.getEnd().getRow(), 0));
+      if (!docDisplay_.moveSelectionToNextLine(true))
+         docDisplay_.moveSelectionToBlankLine();
+      docDisplay_.scrollCursorIntoViewIfNecessary(3);
    }
    
    private final DocDisplay docDisplay_;
