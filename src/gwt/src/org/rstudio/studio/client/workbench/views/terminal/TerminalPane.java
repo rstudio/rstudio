@@ -104,10 +104,21 @@ public class TerminalPane extends WorkbenchPane
       activeTerminalToolbarButton_ = new TerminalPopupMenu(terminals_);
       toolbar.addLeftWidget(activeTerminalToolbarButton_.getToolbarButton());
       toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.previousTerminal().createToolbarButton());
+      toolbar.addLeftWidget(commands_.nextTerminal().createToolbarButton());
+      toolbar.addLeftSeparator();
       terminalTitle_ = new Label();
       terminalTitle_.setStyleName(ThemeStyles.INSTANCE.subtitle());
       toolbar.addLeftWidget(terminalTitle_);
       toolbar.addRightWidget(commands_.clearTerminalScrollbackBuffer().createToolbarButton());
+
+      commands_.previousTerminal().setEnabled(false);
+      commands_.nextTerminal().setEnabled(false);
+      commands_.closeTerminal().setEnabled(false);
+      commands_.renameTerminal().setEnabled(false);
+      commands_.closeTerminal().setEnabled(false);
+      commands_.clearTerminalScrollbackBuffer().setEnabled(false);
+
       return toolbar;
    }
 
