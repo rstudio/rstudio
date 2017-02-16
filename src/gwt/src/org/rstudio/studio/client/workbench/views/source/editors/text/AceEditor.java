@@ -3128,35 +3128,40 @@ public class AceEditor implements DocDisplay,
       
       return false;
    }
+   
+   /**
+    * Finds the last non-empty line starting at the given line.
+    * 
+    * @param initial Row to start on
+    * @param limit Row at which to stop searching
+    * @return Index of last non-empty line, or limit line if no empty lines
+    *   were found.
+    */
+   private int findParagraphBoundary(int initial, int limit)
+   {
+      // no work to do if already at limit
+      if (initial == limit)
+         return initial;
+      
+      // walk towards limit
+      int delta = limit > initial ? 1 : -1;
+      for (int row = initial + delta; row != limit; row += delta)
+      {
+         if (getLine(row).trim().isEmpty())
+            return row - delta;
+      }
+      
+      // didn't find boundary
+      return limit;
+   }
 
    @Override
    public Range getParagraph(Position pos, int startRowLimit, int endRowLimit)
    {
-      // assume start, end at current position
-      int startRow = pos.getRow();
-      int endRow   = pos.getRow();
-      
-      // walk backwards to beginning of paragraph
-      for (int i = pos.getRow() - 1; i >= startRowLimit; i--)
-      {
-         if (getLine(i).trim().isEmpty())
-         {
-            startRow = i + 1;
-            break;
-         }
-      }
-      
-      // walk forwards to end of paragraph
-      for (int j = pos.getRow() + 1; j <= endRowLimit; j++)
-      {
-         if (getLine(j).trim().isEmpty())
-         {
-            endRow = j - 1;
-            break;
-         }
-      }
-      
-      return Range.create(startRow, 0, endRow + 1, 0);
+      // find upper and lower paragraph boundaries
+      return Range.create(
+            findParagraphBoundary(pos.getRow(), startRowLimit), 0,
+            findParagraphBoundary(pos.getRow(), endRowLimit)+ 1, 0);
    }
 
    @Override

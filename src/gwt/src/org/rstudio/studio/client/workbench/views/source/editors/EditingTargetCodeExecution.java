@@ -241,7 +241,7 @@ public class EditingTargetCodeExecution
       Range range;
       
       // by default the range can encompass the whole document
-      int startRowLimit = 1;
+      int startRowLimit = 0;
       int endRowLimit = docDisplay_.getRowCount();
       
       // limit range to chunk if we're inside one
