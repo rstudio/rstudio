@@ -184,6 +184,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // initial working directory
    std::string initialWorkingDir = module_context::createAliasedPath(
                                           dirs::getInitialWorkingDirectory());
+
+   // if we are on the home directory, use full dir to allow parent navigation.
+   if (initialWorkingDir == "~") {
+       initialWorkingDir = dirs::getInitialWorkingDirectory().absolutePath();
+   }
+
    sessionInfo["initial_working_dir"] = initialWorkingDir;
    std::string defaultWorkingDir = module_context::createAliasedPath(
                                           dirs::getDefaultWorkingDirectory());
