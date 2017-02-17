@@ -1,7 +1,7 @@
 /*
  * REnvironment.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
 
 Error rVersion(const FilePath& rHomePath,
                const FilePath& rScriptPath,
+               const std::string& ldLibraryPath,
                std::string* pVersion);
 
 void ensureLang();
