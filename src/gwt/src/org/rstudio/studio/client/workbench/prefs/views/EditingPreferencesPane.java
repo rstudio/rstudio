@@ -132,7 +132,23 @@ public class EditingPreferencesPane extends PreferencesPane
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(checkboxPref("Always save R scripts before sourcing", prefs.saveBeforeSourcing()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      editingPanel.add(checkboxPref("Execute all lines in a statement", prefs_.executeMultiLineStatements()));
+      
+      executionBehavior_ = new SelectWidget(
+            "Ctrl+Enter executes: ", 
+            new String[] {
+               "Current line",
+               "Multi-line R statement",
+               "Multiple consecutive R lines"
+            },
+            new String[] {
+               UIPrefsAccessor.EXECUTE_LINE,
+               UIPrefsAccessor.EXECUTE_STATEMENT,
+               UIPrefsAccessor.EXECUTE_PARAGRAPH
+            },
+            false,
+            true,
+            false);
+      editingPanel.add(executionBehavior_);
       
       Label snippetsLabel = headerLabel("Snippets");
       snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -454,6 +470,7 @@ public class EditingPreferencesPane extends PreferencesPane
       
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
+      executionBehavior_.setValue(prefs_.executionBehavior().getValue());
    }
    
    @Override
@@ -485,6 +502,7 @@ public class EditingPreferencesPane extends PreferencesPane
            
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
+      prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
       
       return reload;
    }
@@ -535,8 +553,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget editorMode_;
    private final SelectWidget foldMode_;
    private final SelectWidget delimiterSurroundWidget_;
+   private final SelectWidget executionBehavior_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
-   
-   
 }

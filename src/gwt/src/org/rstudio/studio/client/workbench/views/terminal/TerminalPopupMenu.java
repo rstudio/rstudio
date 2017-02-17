@@ -142,6 +142,15 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          trimmed = addBusyIndicator(trimmed, terminals_.getHasSubprocs(handle));
       }
       toolbarButton_.setText(trimmed);
+
+      // Update terminal commands based on current selection
+      boolean haveActiveTerminal = activeTerminalHandle_ != null;
+      commands_.closeTerminal().setEnabled(haveActiveTerminal);
+      commands_.renameTerminal().setEnabled(haveActiveTerminal);
+      commands_.clearTerminalScrollbackBuffer().setEnabled(haveActiveTerminal);
+
+      commands_.previousTerminal().setEnabled(getPreviousTerminalHandle() != null);
+      commands_.nextTerminal().setEnabled(getNextTerminalHandle() != null);
    }
 
    /**
@@ -153,7 +162,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       if (toolbarButton_ == null || activeTerminalHandle_ == null)
          return;
-      
+
       String caption = terminals_.getCaption(activeTerminalHandle_);
       if (caption == null)
          return;
@@ -183,25 +192,10 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
     */
    public void previousTerminal()
    {
-      if (terminals_.terminalCount() > 0 && activeTerminalHandle_ != null)
+      String prevHandle = getPreviousTerminalHandle();
+      if (prevHandle != null)
       {
-         String prevHandle = null;
-         for (final String handle : terminals_)
-         {
-            if (activeTerminalHandle_.equals(handle))
-            {
-               if (prevHandle == null)
-               {
-                  return;
-               }
-               eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle));
-               return;
-            }
-            else
-            {
-               prevHandle = handle;
-            }
-         }
+         eventBus_.fireEvent(new SwitchToTerminalEvent(prevHandle));
       }
    }
 
@@ -210,24 +204,13 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
     */
    public void nextTerminal()
    {
-      if (terminals_.terminalCount() > 0 && activeTerminalHandle_ != null)
+      String nextHandle = getNextTerminalHandle();
+      if (nextHandle != null)
       {
-         boolean foundCurrent = false;
-         for (final String handle : terminals_)
-         {
-            if (foundCurrent == true)
-            {
-               eventBus_.fireEvent(new SwitchToTerminalEvent(handle));
-               return;
-            }
-            if (activeTerminalHandle_.equals(handle))
-            {
-               foundCurrent = true;
-            }
-         }
+         eventBus_.fireEvent(new SwitchToTerminalEvent(nextHandle));
       }
    }
-   
+
    /**
     * Add indicator of busy status to a caption.
     * @param caption
@@ -252,6 +235,57 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
          caption = caption.substring(0, 31) + "...";
       }
       return caption;
+   }
+
+   /**
+    * @return handle of previous terminal or null if there is no previous
+    * terminal
+    */
+   private String getPreviousTerminalHandle()
+   {
+      if (terminals_.terminalCount() > 0 && activeTerminalHandle_ != null)
+      {
+         String prevHandle = null;
+         for (final String handle : terminals_)
+         {
+            if (activeTerminalHandle_.equals(handle))
+            {
+               if (prevHandle == null)
+               {
+                  return null;
+               }
+               return prevHandle;
+            }
+            else
+            {
+               prevHandle = handle;
+            }
+         }
+      }
+      return null;
+   }
+
+   /**
+    * @return handle of next terminal or null if no next terminal
+    */
+   private String getNextTerminalHandle()
+   {
+      if (terminals_.terminalCount() > 0 && activeTerminalHandle_ != null)
+      {
+         boolean foundCurrent = false;
+         for (final String handle : terminals_)
+         {
+            if (foundCurrent == true)
+            {
+               return handle;
+            }
+            if (activeTerminalHandle_.equals(handle))
+            {
+               foundCurrent = true;
+            }
+         }
+      }
+      return null;
    }
 
    private ToolbarButton toolbarButton_;

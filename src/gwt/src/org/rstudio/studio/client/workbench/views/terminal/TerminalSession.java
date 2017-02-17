@@ -102,7 +102,7 @@ public class TerminalSession extends XTermWidget
     */
    public void connect()
    {
-      if (connected_ || connecting_)
+      if (connected_ || connecting_ || terminating_)
          return;
 
       connecting_ = true;
@@ -326,10 +326,10 @@ public class TerminalSession extends XTermWidget
    public void clearBuffer()
    {
       clear();
-      if (consoleProcess_ != null)
-      {
-         consoleProcess_.eraseTerminalBuffer(new SimpleRequestCallback<Void>());
-      }
+      
+      // talk directly to the server so it will wake up if suspended and
+      // clear its buffer cache
+      server_.processEraseBuffer(getHandle(), new SimpleRequestCallback<Void>());
    }
 
    private int getInteractionMode()
@@ -459,17 +459,26 @@ public class TerminalSession extends XTermWidget
     */
    public void terminate()
    {
-      if (consoleProcess_ != null)
+      terminating_ = true;
+
+      // Talk directly to the server; this will wake it up if suspended so
+      // it can actually get rid of the process record.
+      server_.processInterrupt(getHandle(), new SimpleRequestCallback<Void>()
       {
-         consoleProcess_.interrupt(new SimpleRequestCallback<Void>()
+         @Override
+         public void onResponseReceived(Void response)
          {
-            @Override
-            public void onResponseReceived(Void response)
-            {
-               consoleProcess_.reap(new VoidServerRequestCallback());
-            }
-         });
-      }
+            server_.processReap(getHandle(), new VoidServerRequestCallback());
+
+            // Forcefully kill this session on the client instead of waiting 
+            // for the ProcessExitEvent which we won't get in some scenarios 
+            // such as issuing terminate while session was suspended, or if
+            // something is just plain busted and the session isn't accepting
+            // input.
+            unregisterHandlers();
+            eventBus_.fireEvent(new TerminalSessionStoppedEvent(TerminalSession.this));
+         }
+      });
    }
 
    @Override
@@ -552,6 +561,7 @@ public class TerminalSession extends XTermWidget
    private boolean hasChildProcs_;
    private boolean connected_;
    private boolean connecting_;
+   private boolean terminating_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private boolean newTerminal_ = true;
    private int cols_;

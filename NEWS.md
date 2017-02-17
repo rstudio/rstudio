@@ -39,6 +39,8 @@
 * F2 in source editor opens data frame under cursor in a new tab
 * Highlight markdown inside ROxygen comments
 * Improve performance of autocompletion for installed packages
+* Add option to run multiple consecutive lines of R with Ctrl+Enter
+* Add commands to run a line, statement, or consecutive lines 
 * Add Clear Console button to top of Console pane
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
