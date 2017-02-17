@@ -305,7 +305,8 @@ protected:
       if (pExitCode)
          *pExitCode = result.exitStatus;
 
-      if (result.exitStatus != EXIT_SUCCESS)
+      if (result.exitStatus != EXIT_SUCCESS &&
+          !result.stdErr.empty())
       {
          LOG_DEBUG_MESSAGE(result.stdErr);
       }
