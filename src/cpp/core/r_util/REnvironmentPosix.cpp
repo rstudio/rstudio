@@ -1,7 +1,7 @@
 /*
  * REnvironmentPosix.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -676,7 +676,8 @@ bool detectREnvironment(const FilePath& whichRScript,
    }
 #endif
 
-   Error error = rVersion(rHomePath, FilePath(*pRScriptPath), pVersion);
+   Error error = rVersion(rHomePath, FilePath(*pRScriptPath), ldLibraryPath, 
+         pVersion);
    if (error)
       LOG_ERROR(error);
 
@@ -737,13 +738,26 @@ std::string rLibraryPath(const FilePath& rHomePath,
 
 Error rVersion(const FilePath& rHomePath,
                const FilePath& rScriptPath,
+               const std::string& ldLibraryPath,
                std::string* pVersion)
 {
-   // determine the R version
+   // set R_HOME as provided
    core::system::ProcessOptions options;
    core::system::Options env;
    core::system::environment(&env);
    core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
+
+   // if additional LD_LIBRARY_PATH paths were supplied, provide those as well
+   if (!ldLibraryPath.empty())
+   {
+      std::string libPath = core::system::getenv(env, "LD_LIBRARY_PATH");
+      if (!libPath.empty())
+         libPath += ":";
+      libPath += ldLibraryPath;
+      core::system::setenv(&env, "LD_LIBRARY_PATH", libPath);
+   }
+
+   // determine the R version
    options.environment = env;
    core::system::ProcessResult result;
    Error error = core::system::runCommand(
@@ -771,7 +785,12 @@ Error rVersion(const FilePath& rHomePath,
          Error error = systemError(boost::system::errc::protocol_error,
                                    "Unable to parse version from R",
                                    ERROR_LOCATION);
+
+         // log the actual output returned by R
          error.addProperty("version-info", versionInfo);
+
+         // log any errors emitted by R
+         error.addProperty("r-error", result.stdErr);
          return error;
       }
    }
