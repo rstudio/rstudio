@@ -278,8 +278,8 @@ public class TextEditingTargetWidget
       clearMenu.addSeparator();
       clearMenu.addItem(commands_.clearPrerenderedOutput().createMenuItem(false));
       ImageResource clearIcon = ThemeResources.INSTANCE.clearOutput();
-      runDocumentMenuButton_ = new ToolbarButton("", clearIcon, clearMenu);
-      toolbar.addLeftWidget(runDocumentMenuButton_);
+      clearDocumentMenuButton_ = new ToolbarButton("", clearIcon, clearMenu);
+      toolbar.addLeftWidget(clearDocumentMenuButton_);
 
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
@@ -974,7 +974,7 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(StandardIcons.INSTANCE.run());
       
-      runDocumentMenuButton_.setVisible(isShinyPrerendered);
+      clearDocumentMenuButton_.setVisible(isShinyPrerendered);
       setKnitDocumentMenuVisible(isShinyPrerendered);
       
       isShiny_ = true;
@@ -985,7 +985,7 @@ public class TextEditingTargetWidget
    @Override
    public void setIsNotShinyFormat()
    {
-      runDocumentMenuButton_.setVisible(false);
+      clearDocumentMenuButton_.setVisible(false);
    }
    
    @Override
@@ -1284,7 +1284,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
-   private ToolbarButton runDocumentMenuButton_;
+   private ToolbarButton clearDocumentMenuButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;
