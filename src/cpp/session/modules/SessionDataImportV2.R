@@ -13,6 +13,27 @@
 #
 #
 
+.rs.addFunction("path_relative_to_working_dir", function(target)
+{
+   if (is.null(target))
+   {
+      target
+   }
+   else
+   {
+      currentPath <- paste(getwd(), .Platform$file.sep, sep = "")
+      fullPath <- path.expand(target)
+      if (identical(substr(fullPath, 0, nchar(currentPath)), currentPath))
+      {
+         substr(fullPath, nchar(currentPath) + 1, nchar(fullPath))
+      }
+      else
+      {
+         target
+      }
+   }
+})
+
 .rs.addFunction("assemble_data_import_name", function(dataImportOptions)
 {
    dataName <- dataImportOptions$dataName
@@ -262,6 +283,9 @@
 
 .rs.addFunction("assemble_data_import", function(dataImportOptions)
 {
+   dataImportOptions$importLocation <- .rs.path_relative_to_working_dir(dataImportOptions$importLocation)
+   dataImportOptions$modelLocation <- .rs.path_relative_to_working_dir(dataImportOptions$modelLocation)
+
    importInfo <- list()
 
    pathIsUrl <- function(path) {
@@ -620,6 +644,9 @@
 
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
+   dataImportOptions$importLocation <- .rs.path_relative_to_working_dir(dataImportOptions$importLocation)
+   dataImportOptions$modelLocation <- .rs.path_relative_to_working_dir(dataImportOptions$modelLocation)
+
    tryCatch({
       Encoding(dataImportOptions$importLocation) <- "UTF-8"
      
