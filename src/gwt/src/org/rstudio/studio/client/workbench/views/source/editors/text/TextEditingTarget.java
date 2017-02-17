@@ -3970,6 +3970,24 @@ public class TextEditingTarget implements
    {
       codeExecution_.executeSelection(true);
    }
+   
+   @Handler
+   void onExecuteCurrentLine()
+   {
+      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_LINE);
+   }
+
+   @Handler
+   void onExecuteCurrentStatement()
+   {
+      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_STATEMENT);
+   }
+
+   @Handler
+   void onExecuteCurrentParagraph()
+   {
+      codeExecution_.executeBehavior(UIPrefsAccessor.EXECUTE_PARAGRAPH);
+   }
 
    @Override
    public String extractCode(DocDisplay docDisplay, Range range)

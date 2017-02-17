@@ -3128,6 +3128,41 @@ public class AceEditor implements DocDisplay,
       
       return false;
    }
+   
+   /**
+    * Finds the last non-empty line starting at the given line.
+    * 
+    * @param initial Row to start on
+    * @param limit Row at which to stop searching
+    * @return Index of last non-empty line, or limit line if no empty lines
+    *   were found.
+    */
+   private int findParagraphBoundary(int initial, int limit)
+   {
+      // no work to do if already at limit
+      if (initial == limit)
+         return initial;
+      
+      // walk towards limit
+      int delta = limit > initial ? 1 : -1;
+      for (int row = initial + delta; row != limit; row += delta)
+      {
+         if (getLine(row).trim().isEmpty())
+            return row - delta;
+      }
+      
+      // didn't find boundary
+      return limit;
+   }
+
+   @Override
+   public Range getParagraph(Position pos, int startRowLimit, int endRowLimit)
+   {
+      // find upper and lower paragraph boundaries
+      return Range.create(
+            findParagraphBoundary(pos.getRow(), startRowLimit), 0,
+            findParagraphBoundary(pos.getRow(), endRowLimit)+ 1, 0);
+   }
 
    @Override
    public Range getMultiLineExpr(Position pos, int startRowLimit, int endRowLimit)

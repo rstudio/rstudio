@@ -343,6 +343,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    int getEndOfCurrentStatement();
 
    Range getMultiLineExpr(Position pos, int startRow, int endRow);
+   Range getParagraph(Position pos, int startRow, int endRow);
    
    void highlightDebugLocation(
          SourcePosition startPos,
