@@ -118,7 +118,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          @Override
          public void onKeyUp(KeyUpEvent event)
          {
-            enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
+            updateOkButtonEnabled();
          }
       });
    }
@@ -201,6 +201,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
       txtSearchPattern_.setFocus(true);
       txtSearchPattern_.selectAll();
+      updateOkButtonEnabled();
    }
    
    public void setSearchPattern(String searchPattern)
@@ -228,6 +229,11 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          listPresetFilePatterns_.setSelectedIndex(3);
       txtFilePattern_.setText(filePatterns);
       manageFilePattern();
+   }
+   
+   private void updateOkButtonEnabled()
+   {
+      enableOkButton(txtSearchPattern_.getText().trim().length() > 0);
    }
 
    @UiField
