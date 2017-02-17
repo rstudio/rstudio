@@ -61,4 +61,5 @@
 * Fixed highlighting of Markdown text within Markdown blockquote
 * Invoke R without --vanilla when building R Markdown websites
 * Fixed an issue in which R Markdown documents could get stuck in notebook mode
+* Fixed an issue preventing plain .md files from being published if not rendered
 

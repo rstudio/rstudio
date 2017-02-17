@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishButton.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
+import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
@@ -71,7 +72,8 @@ import com.google.inject.Provider;
 public class RSConnectPublishButton extends Composite
    implements RSConnectDeploymentCompletedEvent.Handler,
               RPubsUploadStatusEvent.Handler,
-              RmdRenderCompletedEvent.Handler
+              RmdRenderCompletedEvent.Handler,
+              HTMLPreviewCompletedEvent.Handler
 {
 
    class DeploymentPopupMenu extends ToolbarPopupMenu
@@ -175,6 +177,7 @@ public class RSConnectPublishButton extends Composite
       events_.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this);
       events_.addHandler(RPubsUploadStatusEvent.TYPE, this);
       events_.addHandler(RmdRenderCompletedEvent.TYPE, this);
+      events_.addHandler(HTMLPreviewCompletedEvent.TYPE, this);
    }
    
    @Override
@@ -343,13 +346,32 @@ public class RSConnectPublishButton extends Composite
    {
       // ensure we got a result--note that even a cancelled render generates an
       // event, but with an empty output file
-      if (rmdRenderPending_ && event.getResult() != null &&
-          !StringUtil.isNullOrEmpty(event.getResult().getOutputFile()))
+      if (event.getResult() == null || 
+          StringUtil.isNullOrEmpty(event.getResult().getOutputFile()))
+         return;
+      onPreRenderComplete(new RenderedDocPreview(event.getResult()), 
+            event.getResult().isWebsite());
+   }
+   
+   @Override
+   public void onHTMLPreviewCompleted(HTMLPreviewCompletedEvent event)
+   {
+      if (event.getResult() == null || StringUtil.isNullOrEmpty(
+            event.getResult().getHtmlFile()))
+         return;
+      onPreRenderComplete(new RenderedDocPreview(event.getResult()), false);
+   }
+   
+   private void onPreRenderComplete(RenderedDocPreview preview, 
+         boolean isWebsite)
+   {
+      // ensure we got a result--note that even a cancelled render generates an
+      // event, but with an empty output file
+      if (rmdRenderPending_ && 
+          !StringUtil.isNullOrEmpty(preview.getOutputFile()))
       {
-         RenderedDocPreview docPreview = 
-               new RenderedDocPreview(event.getResult());
-         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(docPreview,
-               event.getResult().isWebsite() ? 
+         events_.fireEvent(RSConnectActionEvent.DeployDocEvent(preview,
+               isWebsite ? 
                      RSConnect.CONTENT_TYPE_WEBSITE : 
                      RSConnect.CONTENT_TYPE_DOCUMENT,
                publishAfterRmdRender_));
@@ -836,7 +858,13 @@ public class RSConnectPublishButton extends Composite
             publishAfterRmdRender_ = previous;
             rmdRenderPending_ = true;
             anyRmdRenderPending_ = true;
-            commands_.knitDocument().execute();
+            if (commands_.knitDocument().isEnabled())
+               commands_.knitDocument().execute();
+            else if (commands_.previewHTML().isEnabled())
+               commands_.previewHTML().execute();
+            else
+               display_.showErrorMessage("Can't Render Document", 
+                     "RStudio cannot render " + target + " for publishing.");
          }
       };
       
