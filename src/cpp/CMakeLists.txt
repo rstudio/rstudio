@@ -191,6 +191,24 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+# winpty - pseudoterminal support on Windows
+if(WIN32)
+     if(RSTUDIO_SESSION_WIN64)
+        set(WINPTY_ARCH "64")
+     else()
+        set(WINPTY_ARCH "32")
+     endif()
+
+     set(WINPTY_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winpty-0.4.2-msys2-2.6.0/${WINPTY_ARCH}")
+     set(WINPTY_INCLUDEDIR "${WINPTY_ROOT}/include")
+     set(WINPTY_LIBRARYDIR "${WINPTY_ROOT}/lib")
+     list(APPEND WINPTY_LIBRARIES "${WINPTY_LIBRARYDIR}/winpty.a")
+
+     # add winpty as system include directory
+     include_directories(SYSTEM ${WINPTY_INCLUDEDIR})
+endif()
+
+
 # automatically build addins found in the addins subdirectory
 # (if another path wasn't already specified)
 if(NOT RSTUDIO_ADDINS_PATH)
