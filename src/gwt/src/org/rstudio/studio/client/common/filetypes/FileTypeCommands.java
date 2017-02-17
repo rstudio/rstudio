@@ -97,6 +97,7 @@ public class FileTypeCommands
       types.add(FileTypeRegistry.CPP);
       types.add(FileTypeRegistry.PYTHON);
       types.add(FileTypeRegistry.SQL);
+      types.add(FileTypeRegistry.STAN);
 
       
       return (TextFileType[])types.toArray(new TextFileType[0]);
