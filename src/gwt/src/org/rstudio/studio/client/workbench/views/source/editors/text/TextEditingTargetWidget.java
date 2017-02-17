@@ -273,12 +273,14 @@ public class TextEditingTargetWidget
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
       toolbar.addLeftWidget(rmdFormatButton_);
       
-      runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
-      addClearKnitrCacheMenu(runDocumentMenuButton_);
-      runDocumentMenuButton_.addSeparator();
-      runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
+      ToolbarPopupMenu clearMenu = new ToolbarPopupMenu();
+      addClearKnitrCacheMenu(null, clearMenu);
+      clearMenu.addSeparator();
+      clearMenu.addItem(commands_.clearPrerenderedOutput().createMenuItem(false));
+      ImageResource clearIcon = ThemeResources.INSTANCE.clearOutput();
+      runDocumentMenuButton_ = new ToolbarButton("", clearIcon, clearMenu);
       toolbar.addLeftWidget(runDocumentMenuButton_);
-      
+
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
       
@@ -917,7 +919,7 @@ public class TextEditingTargetWidget
          rmdFormatButton_.addMenuItem(knitDirMenu, "Knit Directory");
       }
       
-      addClearKnitrCacheMenu(rmdFormatButton_);
+      addClearKnitrCacheMenu(rmdFormatButton_, null);
           
       showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
             RmdOutput.TYPE_STATIC);
@@ -927,10 +929,13 @@ public class TextEditingTargetWidget
       isShiny_ = false;
    }
    
-   private void addClearKnitrCacheMenu(ToolbarPopupMenuButton menuButton)
+   private void addClearKnitrCacheMenu(ToolbarPopupMenuButton clearButton, ToolbarPopupMenu clearMenu)
    {
       final AppCommand clearKnitrCache = commands_.clearKnitrCache();
-      menuButton.addSeparator();
+      if (clearButton != null)
+         clearButton.addSeparator();
+      else 
+         clearMenu.addSeparator();
       ScheduledCommand cmd = new ScheduledCommand()
       {
          @Override
@@ -942,7 +947,11 @@ public class TextEditingTargetWidget
       MenuItem item = new MenuItem(clearKnitrCache.getMenuHTML(false),
                                    true,
                                    cmd); 
-      menuButton.addMenuItem(item, clearKnitrCache.getMenuLabel(false));
+      
+      if (clearButton != null)
+         clearButton.addMenuItem(item, clearKnitrCache.getMenuLabel(false));
+      else
+         clearMenu.addItem(item);
    }
    
    @Override
@@ -1275,7 +1284,7 @@ public class TextEditingTargetWidget
    private ToolbarButton rmdOptionsButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
    private ToolbarPopupMenuButton rmdFormatButton_;
-   private ToolbarPopupMenuButton runDocumentMenuButton_;
+   private ToolbarButton runDocumentMenuButton_;
    private RSConnectPublishButton publishButton_;
    private MenuItem rmdViewerPaneMenuItem_;
    private MenuItem rmdViewerWindowMenuItem_;

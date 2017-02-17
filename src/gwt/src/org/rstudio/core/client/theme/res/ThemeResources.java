@@ -225,4 +225,6 @@ public interface ThemeResources extends ClientBundle
    ImageResource menuCheck();
    
    ImageResource user();
+
+   ImageResource clearOutput();
 }
