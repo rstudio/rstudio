@@ -55,7 +55,7 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
                           OperationWithInput<Input> operation)
    {
       super(caption, operation);
-      setOkButtonCaption("Add Remote");
+      setOkButtonCaption("Add");
       
       container_ = new VerticalPanel();
       lblName_ = label("Remote Name:");
