@@ -356,14 +356,20 @@
   max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else as.numeric(options$max.print)
   max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
-  if (is.null(options$connection)) stop(
-    "The 'connection' option (DBI connection) is required for sql chunks."
-  )
+  if (is.null(options$connection)) {
+    chunkOptions <- get(".rs.knitr.chunkOptions", envir = .rs.toolsEnv())
+    conn <- chunkOptions$connection
 
-  conn <- get(options$connection, envir = globalenv())
-  if (is.null(conn)) stop(
-    "The 'connection' option must be a valid DBI connection."
-  )
+    if (is.null(conn))
+      stop("The 'connection' option (DBI connection) is required for sql chunks.")
+  }
+
+  if (is.character(options$connection)) {
+    conn <- get(options$connection, envir = globalenv())
+    if (is.null(conn)) stop(
+      "The 'connection' option must be a valid DBI connection."
+    )
+  }
 
   # Return char vector of sql interpolation param names
   varnames_from_sql <- function(conn, sql) {
