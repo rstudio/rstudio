@@ -621,6 +621,11 @@ public class UIPrefsAccessor extends Prefs
       return string("latex_preview_on_cursor_idle", LATEX_PREVIEW_SHOW_ALWAYS);
    }
    
+   public PrefValue<Boolean> wrapTabNavigation()
+   {
+      return bool("wrap_tab_navigation", false);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

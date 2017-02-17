@@ -199,6 +199,12 @@ public class GeneralPreferencesPane extends PreferencesPane
          add(chkTracebacks);
       }
       
+      CheckBox chkTabNavigation = checkboxPref(
+            "Wrap around when navigating to previous/next tab",
+            prefs_.wrapTabNavigation());
+      spaced(chkTabNavigation);
+      add(chkTabNavigation);
+      
       // provide check for updates option in desktop mode when not
       // already globally disabled
       if (Desktop.isDesktop() && 
