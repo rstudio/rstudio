@@ -164,8 +164,8 @@ var RMarkdownHighlightRules = function() {
       this,
       YamlHighlightRules,
       "yaml",
-      "---",
-      "(?:---|\\.\\.\\.)"
+      "^\\s*---\\s*$",
+      "^\\s*(?:---|\\.\\.\\.)\\s*$"
    );
 
    this.$rules["yaml-start"].unshift({

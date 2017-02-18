@@ -1,7 +1,7 @@
 #
 # SessionDataImportV2.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,28 @@
 #
 #
 
-.rs.addFunction("assemble_data_import_name", function(dataImportOptions)
+.rs.addFunction("pathRelativeToWorkingDir", function(target)
+{
+   if (is.null(target))
+   {
+      target
+   }
+   else
+   {
+      currentPath <- paste(getwd(), .Platform$file.sep, sep = "")
+      fullPath <- path.expand(target)
+      if (identical(substr(fullPath, 0, nchar(currentPath)), currentPath))
+      {
+         substr(fullPath, nchar(currentPath) + 1, nchar(fullPath))
+      }
+      else
+      {
+         target
+      }
+   }
+})
+
+.rs.addFunction("assembleDataImportName", function(dataImportOptions)
 {
    dataName <- dataImportOptions$dataName
 
@@ -37,7 +58,7 @@
    dataName
 })
 
-.rs.addFunction("assemble_data_import_parameters", function(params)
+.rs.addFunction("assembleDataImportParameters", function(params)
 {
    options <- params$options
    optionTypes <- params$optionTypes
@@ -260,8 +281,11 @@
    paste(parameters, collapse = ",")
 })
 
-.rs.addFunction("assemble_data_import", function(dataImportOptions)
+.rs.addFunction("assembleDataImport", function(dataImportOptions)
 {
+   dataImportOptions$importLocation <- .rs.pathRelativeToWorkingDir(dataImportOptions$importLocation)
+   dataImportOptions$modelLocation <- .rs.pathRelativeToWorkingDir(dataImportOptions$modelLocation)
+
    importInfo <- list()
 
    pathIsUrl <- function(path) {
@@ -490,7 +514,7 @@
    dataName <- dataImportOptions$dataName
    if (identical(dataName, NULL) || identical(dataName, ""))
    {
-      dataName <- .rs.assemble_data_import_name(dataImportOptions)
+      dataName <- .rs.assembleDataImportName(dataImportOptions)
       if (is.null(dataName) || identical(dataName, ""))
       {
          dataName <- "dataset"
@@ -536,9 +560,9 @@
       package = functionInfo$paramsPackage
    )
 
-   functionParameters <- .rs.assemble_data_import_parameters(paramOptions)
+   functionParameters <- .rs.assembleDataImportParameters(paramOptions)
    paramOptions$package <- NULL
-   functionParametersNoNs <- .rs.assemble_data_import_parameters(paramOptions)
+   functionParametersNoNs <- .rs.assembleDataImportParameters(paramOptions)
 
    previewCode <- paste(
       functionInfo$package,
@@ -608,7 +632,7 @@
       dataImportOptions$canCacheData <- dataImportOptions$mode == "xls"
       dataImportOptions$cacheDataWorkingDir <- dataImportOptions$mode == "xls"
 
-      result <- .rs.assemble_data_import(dataImportOptions)
+      result <- .rs.assembleDataImport(dataImportOptions)
       Encoding(result$importCode) <- "UTF-8"
       Encoding(result$previewCode) <- "UTF-8"
       
@@ -620,6 +644,9 @@
 
 .rs.addJsonRpcHandler("preview_data_import", function(dataImportOptions, maxCols = 100, maxFactors = 64)
 {
+   dataImportOptions$importLocation <- .rs.pathRelativeToWorkingDir(dataImportOptions$importLocation)
+   dataImportOptions$modelLocation <- .rs.pathRelativeToWorkingDir(dataImportOptions$modelLocation)
+
    tryCatch({
       Encoding(dataImportOptions$importLocation) <- "UTF-8"
      
@@ -713,7 +740,7 @@
       }
 
       dataImportOptions$canCacheData <- TRUE
-      importInfo <- .rs.assemble_data_import(dataImportOptions)
+      importInfo <- .rs.assembleDataImport(dataImportOptions)
 
       data <- suppressWarnings(
          eval(parse(text=importInfo$previewCode))
