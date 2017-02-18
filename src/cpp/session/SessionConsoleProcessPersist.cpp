@@ -200,7 +200,6 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
    BOOST_FOREACH(const FilePath& child, children)
    {
       // Don't erase the INDEXnnn or any subfolders
-      // TODO (gary) see comment on kConsoleIndex above
       if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
       {
          continue;
