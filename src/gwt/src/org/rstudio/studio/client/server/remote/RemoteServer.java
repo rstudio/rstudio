@@ -2994,7 +2994,9 @@ public class RemoteServer implements Server
                                         final String method,
                                         final JavaScriptObject params,
                                         final boolean redactLog,
-                                        final JavaScriptObject responseCallback)
+                                        final JavaScriptObject responseCallback,
+                                        final int retryCount,
+                                        final int retrySleep)
    {  
       // get the WindowEx from the sourceWindow
       final WindowEx srcWnd = sourceWindow.<WindowEx>cast();
