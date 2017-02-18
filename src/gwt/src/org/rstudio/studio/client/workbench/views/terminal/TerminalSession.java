@@ -262,21 +262,21 @@ public class TerminalSession extends XTermWidget
       }
 
       consoleProcess_.writeStandardInput(
-    		  ShellInput.create(userInput,  true /* echo input*/), 
-    		  new VoidServerRequestCallback() {
+            ShellInput.create(userInput,  true /* echo input*/), 
+            new VoidServerRequestCallback() {
 
-    			  @Override
-    			  public void onResponseReceived(Void response)
-    			  {
-    				  sendUserInput();
-    			  }
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  sendUserInput();
+               }
 
-    			  @Override
-    			  public void onError(ServerError error)
-    			  {
-    				  writeln(error.getUserMessage());
-    			  }
-    		  });
+               @Override
+               public void onError(ServerError error)
+               {
+                  writeln(error.getUserMessage());
+               }
+            });
    }
 
    @Override
