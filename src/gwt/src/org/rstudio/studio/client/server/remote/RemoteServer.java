@@ -202,6 +202,7 @@ import com.google.gwt.json.client.JSONNumber;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -2162,7 +2163,9 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
       sendRequest(RPC_SCOPE, GIT_COMMIT, params,
-                  new ConsoleProcessCallbackAdapter(requestCallback));
+                  new ConsoleProcessCallbackAdapter(requestCallback),
+                  3,
+                  10000);
    }
 
    private class ConsoleProcessCallbackAdapter
@@ -2569,13 +2572,22 @@ public class RemoteServer implements Server
       sendRequest(scope, method, params, requestCallback);
    }
 
-
    private <T> void sendRequest(final String scope,
                                 final String method,
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
    {
-      sendRequest(scope, method, params, false, requestCallback);
+      sendRequest(scope, method, params, false, requestCallback, 0, 0);
+   }
+
+   private <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final ServerRequestCallback<T> requestCallback,
+                                int retryCount,
+                                int retrySleep)
+   {
+      sendRequest(scope, method, params, false, requestCallback, retryCount, retrySleep);
    }
 
    private <T> void sendRequest(final String scope,
@@ -2584,17 +2596,27 @@ public class RemoteServer implements Server
                                 final boolean redactLog,
                                 final ServerRequestCallback<T> cb)
    {
+      sendRequest(scope, method, params, redactLog, cb, 1, 0);
+   }
+
+   private <T> void sendRequest(final String scope,
+                                final String method,
+                                final JSONArray params,
+                                final boolean redactLog,
+                                final ServerRequestCallback<T> cb,
+                                final int retryCount,
+                                final int retrySleep)
+   {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
       if (Satellite.isCurrentWindowSatellite())
       {
-         sendRequestViaMainWorkbench(scope, method, params, redactLog, cb);
-
+         sendRequestViaMainWorkbench(scope, method, params, redactLog, cb, retryCount, retrySleep);
       }
       // otherwise just a standard request with single retry
       else
       {
-         sendRequestWithRetry(scope, method, params, redactLog, cb); 
+         sendRequestWithRetry(scope, method, params, redactLog, cb, retryCount, retrySleep); 
       }
       
    }
@@ -2604,7 +2626,9 @@ public class RemoteServer implements Server
                                  final String method,
                                  final JSONArray params,
                                  final boolean redactLog,
-                                 final ServerRequestCallback<T> requestCallback)
+                                 final ServerRequestCallback<T> requestCallback,
+                                 final int retryCount,
+                                 final int retrySleep)
    {
       // retry handler (make the same call with the same params. ensure that
       // only one retry occurs by passing null as the retryHandler)
@@ -2612,14 +2636,33 @@ public class RemoteServer implements Server
 
          public void onRetry()
          {
-            // retry one time (passing null as last param ensures there
-            // is no retry handler installed)
-            sendRequest(scope,
-                        method, 
-                        params, 
-                        redactLog, 
-                        requestCallback, 
-                        null);
+            if (retryCount == 1) {
+               // retry one time (passing null as last param ensures there
+               // is no retry handler installed)
+               sendRequest(scope,
+                           method, 
+                           params, 
+                           redactLog, 
+                           requestCallback, 
+                           null);
+            } else {
+               Timer retryTimer = new Timer()
+               {
+                  @Override
+                  public void run()
+                  {
+                     sendRequest(scope,
+                           method, 
+                           params, 
+                           redactLog, 
+                           requestCallback, 
+                           retryCount - 1,
+                           retrySleep);
+                  }
+               };
+
+               retryTimer.schedule(retrySleep);
+            }
          }   
 
          public void onError(RpcError error)
@@ -2938,8 +2981,8 @@ public class RemoteServer implements Server
    private native void registerSatelliteCallback() /*-{
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
-         function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
+         function(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep) {
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;I;I;)(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep);
          }
       ); 
    }-*/;
@@ -3021,6 +3064,16 @@ public class RemoteServer implements Server
    private native String getSourceWindowName(JavaScriptObject sourceWindow) /*-{
       return sourceWindow.RStudioSatelliteName;
    }-*/;
+
+   private <T> void sendRequestViaMainWorkbench(
+                            String scope,
+                            String method,
+                            JSONArray params,
+                            boolean redactLog,
+                            final ServerRequestCallback<T> requestCallback)
+   {
+      sendRequestViaMainWorkbench(scope, method, params, redactLog, requestCallback, 0, 0);
+   }
    
    // call made from satellite -- this delegates to a native method which
    // sets up a javascript callback and then calls the main workbench
@@ -3029,7 +3082,9 @@ public class RemoteServer implements Server
                                String method,
                                JSONArray params,
                                boolean redactLog,
-                               final ServerRequestCallback<T> requestCallback)
+                               final ServerRequestCallback<T> requestCallback,
+                               final int retryCount,
+                               final int retrySleep)
    {
       JSONObject request = new JSONObject();
       request.put("method", new JSONString(method));
@@ -3065,7 +3120,10 @@ public class RemoteServer implements Server
                   }
                   
                }
-      });
+            },
+            retryCount,
+            retrySleep
+      );
    }
 
    // call from satellite to sendRemoteServerRequest method made available
@@ -3075,7 +3133,9 @@ public class RemoteServer implements Server
                                     String method,
                                     JavaScriptObject params,
                                     boolean redactLog,
-                                    RpcResponseHandler handler) /*-{
+                                    RpcResponseHandler handler,
+                                    int retryCount,
+                                    int retrySleep) /*-{
       
       var responseCallback = new Object();
       responseCallback.onResponse = $entry(function(response) {
@@ -3087,7 +3147,9 @@ public class RemoteServer implements Server
                                           method, 
                                           params, 
                                           redactLog,
-                                          responseCallback);
+                                          responseCallback,
+                                          retryCount,
+                                          retrySleep);
    }-*/;
 
    @Override
