@@ -272,6 +272,7 @@ else()
       system/Win32Environment.cpp
       system/Win32LibraryLoader.cpp
       system/Win32ParentProcessMonitor.cpp
+      system/Win32Pty.cpp
       system/Win32OutputCapture.cpp
       system/Win32ShellUtils.cpp
       system/Win32System.cpp

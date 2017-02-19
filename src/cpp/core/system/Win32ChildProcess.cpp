@@ -1,7 +1,7 @@
 /*
  * Win32ChildProcess.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 #include "ChildProcess.hpp"
+#include "Win32Pty.hpp"
 
 #include <iostream>
 
@@ -181,6 +182,7 @@ struct ChildProcess::Impl
    HANDLE hStdOutRead;
    HANDLE hStdErrRead;
    HANDLE hProcess;
+   WinPty pty_;
 
 private:
    CloseHandleOnExitScope closeStdIn_;
@@ -324,6 +326,20 @@ Error ChildProcess::run()
    //   http://support.microsoft.com/kb/315939
    static CriticalSection s_runCriticalSection;
    CriticalSection::Scope csScope(s_runCriticalSection);
+
+   // pseudoterminal mode: use winpty to emulate pseudoterminal
+   if (options_.pseudoterminal)
+   {
+      const UINT64 kAgentFlags = 0x0000;
+      const int kMouseMode = WINPTY_MOUSE_MODE_AUTO;
+      const int kCols = 80;
+      const int kRows = 25;
+      const DWORD kTimeoutMs = 500;
+      if (!pImpl_->pty_.startAgent(kAgentFlags, kCols, kRows, kMouseMode, kTimeoutMs))
+      {
+         return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+      }
+   }
 
    // Standard input pipe
    HANDLE hStdInRead;
