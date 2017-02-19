@@ -204,6 +204,7 @@ std::vector<RVersion> enumerateRVersions(
             std::string versionNumber = version.number();
             Error error = rVersion(rHomePath,
                                    rBinaryPath,
+                                   ldLibraryPath,
                                    &versionNumber);
             if (error)
                LOG_ERROR(error);

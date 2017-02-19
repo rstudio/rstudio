@@ -278,6 +278,7 @@ public class TextEditingTargetWidget
       runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
       toolbar.addLeftWidget(runDocumentMenuButton_);
+      runDocumentMenuButton_.setVisible(false);
       
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));

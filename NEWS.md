@@ -4,6 +4,7 @@
 
 * Add support for all file encodings supported by R
 * Restore text import dialog from previous releases (uses only base R functions)
+* Code generator in import dialog now creates a relative path to data file 
 
 ### R Markdown
 
@@ -60,4 +61,5 @@
 * Fixed highlighting of Markdown text within Markdown blockquote
 * Invoke R without --vanilla when building R Markdown websites
 * Fixed an issue in which R Markdown documents could get stuck in notebook mode
+* Fixed an issue preventing plain .md files from being published if not rendered
 

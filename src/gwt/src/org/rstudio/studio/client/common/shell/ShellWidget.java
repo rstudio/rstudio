@@ -140,6 +140,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
             }
          }
       });
+      input_.addFocusHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            scrollToBottom();
+         }
+      });
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
@@ -431,7 +439,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       boolean result = !trimExcess();
 
       resizeCommand_.nudge();
-
+      
       return result;
    }
 
