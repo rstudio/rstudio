@@ -2149,8 +2149,13 @@ public class RemoteServer implements Server
    public void gitCheckout(String id,
                            ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      sendRequest(RPC_SCOPE, GIT_CHECKOUT, id,
-                  new ConsoleProcessCallbackAdapter(requestCallback));
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+
+      sendRequest(RPC_SCOPE, GIT_CHECKOUT, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback),
+                  3,
+                  10000);
    }
 
    public void gitCommit(String message,
@@ -2163,7 +2168,7 @@ public class RemoteServer implements Server
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
       sendRequest(RPC_SCOPE, GIT_COMMIT, params,
-                  new ConsoleProcessCallbackAdapter(requestCallback),
+                  new ConsoleProcessCallbackAdapter(requestCallback));
                   3,
                   10000);
    }
@@ -2503,6 +2508,20 @@ public class RemoteServer implements Server
    {
       sendRequest(scope, method, new JSONArray(), requestCallback);
    }
+   
+   private <T> void sendRequest(String scope,
+                                String method,
+                                ServerRequestCallback<T> requestCallback,
+                                int retryCount,
+                                int retrySleep)
+   {
+      sendRequest(scope,
+                  method,
+                  new JSONArray(),
+                  requestCallback,
+                  retryCount,
+                  retrySleep);
+   }
 
    private <T> void sendRequest(String scope,
                                 String method,
@@ -2636,7 +2655,7 @@ public class RemoteServer implements Server
 
          public void onRetry()
          {
-            if (retryCount == 1) {
+            if (retryCount <= 1) {
                // retry one time (passing null as last param ensures there
                // is no retry handler installed)
                sendRequest(scope,
@@ -2982,7 +3001,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;I;I;)(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;II)(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep);
          }
       ); 
    }-*/;
@@ -3035,15 +3054,35 @@ public class RemoteServer implements Server
         
          public void onRetry()
          {
-            // retry one time (passing null as last param ensures there
-            // is no retry handler installed)
-            sendRequest(getSourceWindowName(sourceWindow),
-                        scope, 
-                        method, 
-                        jsonParams, 
-                        redactLog, 
-                        responseHandler, 
-                        null);
+            if (retryCount <= 1) {
+               // retry one time (passing null as last param ensures there
+               // is no retry handler installed)
+               sendRequest(getSourceWindowName(sourceWindow),
+                           scope, 
+                           method, 
+                           jsonParams, 
+                           redactLog, 
+                           responseHandler,
+                           null);
+            } else {
+               Timer retryTimer = new Timer()
+               {
+                  @Override
+                  public void run()
+                  {
+                     sendRemoteServerRequest(sourceWindow,
+                                             scope,
+                                             method,
+                                             params,
+                                             redactLog,
+                                             responseCallback,
+                                             retryCount - 1,
+                                             retrySleep);
+                  }
+               };
+
+               retryTimer.schedule(retrySleep);
+            }            
          }   
 
          public void onError(RpcError error)
