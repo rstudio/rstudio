@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.server.remote;
 
+import org.rstudio.core.client.jsonrpc.RpcResponse;
+
 class RetryConfig
 {
    public RetryConfig(int retryCount, int retrySleep)
@@ -37,6 +39,11 @@ class RetryConfig
 
    public void setSleep(int retrySleep) {
       retrySleep_ = retrySleep;
+   }
+   
+   public boolean needsRetry(RpcResponse response)
+   {
+      return false;
    }
    
    private int retryCount_;

@@ -2708,7 +2708,7 @@ public class RemoteServer implements Server
    // request from a satellite window
    private RpcRequest sendRequest(String sourceWindow,
                                   String scope, 
-                                  String method, 
+                                  final String method, 
                                   JSONArray params,
                                   boolean redactLog,
                                   final RpcResponseHandler responseHandler,
@@ -2762,9 +2762,11 @@ public class RemoteServer implements Server
             //   - handler was cancelled
             if (isDisconnected()) 
                  return;
+            
+            RetryConfig retryConfig = getRetryConfig(method);
                    
             // check for error
-            if (response.getError() != null)
+            if (response.getError() != null || retryConfig.needsRetry(response))
             {
                // ERROR: explicit error returned by server
                RpcError error = response.getError();
