@@ -46,6 +46,8 @@
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
+* Server Pro: Show the size of suspended sessions
+* Server Pro: Add user-defined session labels
 
 ### Bug Fixes
 
