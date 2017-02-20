@@ -224,6 +224,8 @@ public class RemoteServer implements Server
       eventBus_ = eventBus;
       serverAuth_ = new RemoteServerAuth(this);
       
+      initRetryConfig();
+      
       // define external event listener if we are the main window
       // (so we can forward to the satellites)
       ClientEventHandler externalListener = null;
@@ -2153,9 +2155,7 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(id));
 
       sendRequest(RPC_SCOPE, GIT_CHECKOUT, params,
-                  new ConsoleProcessCallbackAdapter(requestCallback),
-                  3,
-                  10000);
+                  new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
    public void gitCommit(String message,
@@ -2169,8 +2169,6 @@ public class RemoteServer implements Server
       params.set(2, JSONBoolean.getInstance(signOff));
       sendRequest(RPC_SCOPE, GIT_COMMIT, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
-                  3,
-                  10000);
    }
 
    private class ConsoleProcessCallbackAdapter
@@ -2508,20 +2506,6 @@ public class RemoteServer implements Server
    {
       sendRequest(scope, method, new JSONArray(), requestCallback);
    }
-   
-   private <T> void sendRequest(String scope,
-                                String method,
-                                ServerRequestCallback<T> requestCallback,
-                                int retryCount,
-                                int retrySleep)
-   {
-      sendRequest(scope,
-                  method,
-                  new JSONArray(),
-                  requestCallback,
-                  retryCount,
-                  retrySleep);
-   }
 
    private <T> void sendRequest(String scope,
                                 String method,
@@ -2596,17 +2580,7 @@ public class RemoteServer implements Server
                                 final JSONArray params,
                                 final ServerRequestCallback<T> requestCallback)
    {
-      sendRequest(scope, method, params, false, requestCallback, 0, 0);
-   }
-
-   private <T> void sendRequest(final String scope,
-                                final String method,
-                                final JSONArray params,
-                                final ServerRequestCallback<T> requestCallback,
-                                int retryCount,
-                                int retrySleep)
-   {
-      sendRequest(scope, method, params, false, requestCallback, retryCount, retrySleep);
+      sendRequest(scope, method, params, false, requestCallback);
    }
 
    private <T> void sendRequest(final String scope,
@@ -2615,27 +2589,17 @@ public class RemoteServer implements Server
                                 final boolean redactLog,
                                 final ServerRequestCallback<T> cb)
    {
-      sendRequest(scope, method, params, redactLog, cb, 1, 0);
-   }
-
-   private <T> void sendRequest(final String scope,
-                                final String method,
-                                final JSONArray params,
-                                final boolean redactLog,
-                                final ServerRequestCallback<T> cb,
-                                final int retryCount,
-                                final int retrySleep)
-   {
       // if this is a satellite window then we handle this by proxying
       // back through the main workbench window
       if (Satellite.isCurrentWindowSatellite())
       {
-         sendRequestViaMainWorkbench(scope, method, params, redactLog, cb, retryCount, retrySleep);
+         sendRequestViaMainWorkbench(scope, method, params, redactLog, cb);
       }
       // otherwise just a standard request with single retry
       else
       {
-         sendRequestWithRetry(scope, method, params, redactLog, cb, retryCount, retrySleep); 
+         int retryCount = getRetryConfig(method).getCount();
+         sendRequestWithRetry(scope, method, params, redactLog, cb, retryCount); 
       }
       
    }
@@ -2646,8 +2610,7 @@ public class RemoteServer implements Server
                                  final JSONArray params,
                                  final boolean redactLog,
                                  final ServerRequestCallback<T> requestCallback,
-                                 final int retryCount,
-                                 final int retrySleep)
+                                 final int retryCount)
    {
       // retry handler (make the same call with the same params. ensure that
       // only one retry occurs by passing null as the retryHandler)
@@ -2670,17 +2633,17 @@ public class RemoteServer implements Server
                   @Override
                   public void run()
                   {
-                     sendRequest(scope,
-                           method, 
-                           params, 
-                           redactLog, 
-                           requestCallback, 
-                           retryCount - 1,
-                           retrySleep);
+                     sendRequestWithRetry(scope,
+                                          method, 
+                                          params, 
+                                          redactLog, 
+                                          requestCallback, 
+                                          retryCount - 1);
                   }
                };
 
-               retryTimer.schedule(retrySleep);
+               RetryConfig retryConfig = getRetryConfig(method);
+               retryTimer.schedule(retryConfig.getSleep());
             }
          }   
 
@@ -3000,11 +2963,28 @@ public class RemoteServer implements Server
    private native void registerSatelliteCallback() /*-{
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
-         function(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;II)(sourceWindow, scope, method, params, redactLog, responseCallback, retryCount, retrySleep);
+         function(sourceWindow, scope, method, params, redactLog, responseCallback) {
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;II)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
+
+   private void sendRemoteServerRequest(final JavaScriptObject sourceWindow,
+                                        final String scope,
+                                        final String method,
+                                        final JavaScriptObject params,
+                                        final boolean redactLog,
+                                        final JavaScriptObject responseCallback)
+   {  
+      int retryCount = getRetryConfig(method).getCount();
+      sendRemoteServerRequest(sourceWindow,
+                              scope,
+                              method,
+                              params,
+                              redactLog,
+                              responseCallback,
+                              retryCount);
+   }
    
    // this code runs in the main workbench and implements the server request
    // and then calls back the satellite on the provided js responseCallback
@@ -3014,8 +2994,7 @@ public class RemoteServer implements Server
                                         final JavaScriptObject params,
                                         final boolean redactLog,
                                         final JavaScriptObject responseCallback,
-                                        final int retryCount,
-                                        final int retrySleep)
+                                        final int retryCount)
    {  
       // get the WindowEx from the sourceWindow
       final WindowEx srcWnd = sourceWindow.<WindowEx>cast();
@@ -3076,12 +3055,12 @@ public class RemoteServer implements Server
                                              params,
                                              redactLog,
                                              responseCallback,
-                                             retryCount - 1,
-                                             retrySleep);
+                                             retryCount - 1);
                   }
                };
 
-               retryTimer.schedule(retrySleep);
+               RetryConfig retryConfig = getRetryConfig(method);
+               retryTimer.schedule(retryConfig.getSleep());
             }            
          }   
 
@@ -3105,16 +3084,6 @@ public class RemoteServer implements Server
    private native String getSourceWindowName(JavaScriptObject sourceWindow) /*-{
       return sourceWindow.RStudioSatelliteName;
    }-*/;
-
-   private <T> void sendRequestViaMainWorkbench(
-                            String scope,
-                            String method,
-                            JSONArray params,
-                            boolean redactLog,
-                            final ServerRequestCallback<T> requestCallback)
-   {
-      sendRequestViaMainWorkbench(scope, method, params, redactLog, requestCallback, 0, 0);
-   }
    
    // call made from satellite -- this delegates to a native method which
    // sets up a javascript callback and then calls the main workbench
@@ -3123,9 +3092,7 @@ public class RemoteServer implements Server
                                String method,
                                JSONArray params,
                                boolean redactLog,
-                               final ServerRequestCallback<T> requestCallback,
-                               final int retryCount,
-                               final int retrySleep)
+                               final ServerRequestCallback<T> requestCallback)
    {
       JSONObject request = new JSONObject();
       request.put("method", new JSONString(method));
@@ -3161,9 +3128,7 @@ public class RemoteServer implements Server
                   }
                   
                }
-            },
-            retryCount,
-            retrySleep
+            }
       );
    }
 
@@ -3174,9 +3139,7 @@ public class RemoteServer implements Server
                                     String method,
                                     JavaScriptObject params,
                                     boolean redactLog,
-                                    RpcResponseHandler handler,
-                                    int retryCount,
-                                    int retrySleep) /*-{
+                                    RpcResponseHandler handler) /*-{
       
       var responseCallback = new Object();
       responseCallback.onResponse = $entry(function(response) {
@@ -3188,10 +3151,23 @@ public class RemoteServer implements Server
                                           method, 
                                           params, 
                                           redactLog,
-                                          responseCallback,
-                                          retryCount,
-                                          retrySleep);
+                                          responseCallback);
    }-*/;
+
+   private void initRetryConfig()
+   {
+      methodNameConfigMap_.put(GIT_CHECKOUT, new RetryConfig(3, 10000));
+   }
+   
+   private RetryConfig getRetryConfig(String method)
+   {
+      if (methodNameConfigMap_.containsKey(method)) {
+         return methodNameConfigMap_.get(method);
+      }
+      else {
+         return new RetryConfig(0, 0);
+      }
+   }
 
    @Override
    public void svnAdd(ArrayList<String> paths,
@@ -5100,6 +5076,8 @@ public class RemoteServer implements Server
 
    private final Session session_;
    private final EventBus eventBus_;
+   
+   private HashMap<String, RetryConfig> methodNameConfigMap_ = new HashMap<String, RetryConfig>();
 
    // url scopes
    private static final String RPC_SCOPE = "rpc";
