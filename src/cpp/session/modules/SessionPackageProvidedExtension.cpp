@@ -160,20 +160,21 @@ void Indexer::beginIndexing()
 void Indexer::endIndexing()
 {
    running_ = false;
+   payload_.clear();
    
-   json::Object payload;
    BOOST_FOREACH(boost::shared_ptr<Worker> pWorker, workers_)
    {
       try
       {
-         pWorker->onIndexingCompleted(&payload);
+         pWorker->onIndexingCompleted(&payload_);
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
    
    ClientEvent event(
             client_events::kPackageExtensionIndexingCompleted,
-            payload);
+            payload_);
+   
    module_context::enqueClientEvent(event);
 }
 

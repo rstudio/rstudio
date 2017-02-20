@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.compilepdf.model.CompilePdfState;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.projects.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
@@ -484,5 +485,10 @@ public class SessionInfo extends JavaScriptObject
    
    public final native RAddins getAddins() /*-{
       return this.r_addins;
+   }-*/;
+   
+   public final native PackageProvidedExtensions getPackageProvidedExtensions()
+   /*-{
+      return this.package_provided_extensions;
    }-*/;
 }
