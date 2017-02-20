@@ -36,7 +36,9 @@ std::string loadConsoleProcessMetadata();
 // Save the raw console process metadata for all known processes
 void saveConsoleProcesses(const std::string& metadata);
 
-// Get the saved buffer for the given ConsoleProcess
+// Get the saved buffer for the given ConsoleProcess. If maxLines > 0,
+// trims the saved buffer to the given number of lines and persists it,
+// then returns the trimmed buffer.
 std::string getSavedBuffer(const std::string& handle, int maxLines);
 
 // Add to the saved buffer for the given ConsoleProcess

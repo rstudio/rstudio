@@ -135,6 +135,9 @@ std::string getSavedBuffer(const std::string& handle, int maxLines)
       return content;
    }
 
+   if (maxLines < 1)
+      return content;
+
    // Trim the buffer based on maxLines. Otherwise it can grow without
    // bound until the terminal is closed or cleared.
    std::string trimmedOutput = content;

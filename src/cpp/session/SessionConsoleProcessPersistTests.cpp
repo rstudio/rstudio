@@ -149,6 +149,21 @@ TEST_CASE("ConsoleProcess Persistence")
       CHECK(loaded.compare(expect) == 0);
    }
 
+   SECTION("Write more lines than maxLines then read it without trimming")
+   {
+      std::stringstream ss;
+      std::stringstream ss_expect;
+      for (size_t i = 0; i < maxLines * 2; i++)
+      {
+         ss << i << '\n';
+      }
+      std::string expect = ss.str();
+      std::string orig = ss.str();
+      console_persist::appendToOutputBuffer(handle2, orig);
+      std::string loaded = console_persist::getSavedBuffer(handle2, 0);
+      CHECK(loaded.compare(expect) == 0);
+   }
+
    SECTION("Delete unknown log files")
    {
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");

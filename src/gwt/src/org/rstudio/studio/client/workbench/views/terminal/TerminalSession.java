@@ -33,6 +33,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.terminal.events.ResizeTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalDataInputEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSessionStartedEvent;
@@ -514,32 +515,42 @@ public class TerminalSession extends XTermWidget
       }
       else
       {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               onResize();
-               if (consoleProcess_ != null)
-               {
-                  consoleProcess_.getTerminalBuffer(new ServerRequestCallback<String>()
-                  {
-                     @Override
-                     public void onResponseReceived(String buffer)
-                     {
-                        write(buffer);
-                     }
+         fetchNextChunk(0);
+      }
+   }
 
-                     @Override
-                     public void onError(ServerError error)
+   private void fetchNextChunk(final int chunkToFetch)
+   {
+      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      {
+         @Override
+         public void execute()
+         {
+            onResize();
+            if (consoleProcess_ != null)
+            {
+               consoleProcess_.getTerminalBufferChunk(chunkToFetch,
+                     new ServerRequestCallback<ProcessBufferChunk>()
+               {
+                  @Override
+                  public void onResponseReceived(ProcessBufferChunk chunk)
+                  {
+                     write(chunk.getChunk());
+                     if (chunk.getMoreAvailable())
                      {
-                        writeError(error.getUserMessage());
+                        fetchNextChunk(chunk.getChunkNumber() + 1);
                      }
-                   });
-               }
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     writeError(error.getUserMessage());
+                  }
+               });
             }
-         });
-       }
+         }
+      });
    }
 
    /**

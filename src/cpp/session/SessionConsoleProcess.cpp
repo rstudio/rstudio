@@ -259,9 +259,9 @@ void ConsoleProcess::deleteLogFile() const
    procInfo_->deleteLogFile();
 }
 
-std::string ConsoleProcess::getSavedBuffer() const
+std::string ConsoleProcess::getSavedBufferChunk(int chunk, bool* pMoreAvailable) const
 {
-   return procInfo_->getSavedBuffer();
+   return procInfo_->getSavedBufferChunk(chunk, pMoreAvailable);
 }
 
 void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
@@ -607,26 +607,33 @@ Error procEraseBuffer(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error procGetBuffer(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error procGetBufferChunk(const json::JsonRpcRequest& request,
+                         json::JsonRpcResponse* pResponse)
 {
    std::string handle;
+   int requestedChunk;
 
    Error error = json::readParams(request.params,
-                                  &handle);
+                                  &handle,
+                                  &requestedChunk);
    if (error)
       return error;
+   if (requestedChunk < 0)
+      return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 
    ProcTable::const_iterator pos = s_procs.find(handle);
    if (pos == s_procs.end())
-   {
       return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-   }
 
-   // TODO (gary) throttle (or chunk) output to avoid overwhelming the
-   // client; e.g. we might return a flag/handle to allow client to know to make
-   // more of these calls until buffer has been completely fetched
-   pResponse->setResult(pos->second->getSavedBuffer());
+   json::Object result;
+   bool moreAvailable;
+   std::string chunkContent = pos->second->getSavedBufferChunk(
+            requestedChunk, &moreAvailable);
+
+   result["chunk"] = chunkContent;
+   result["chunk_number"] = requestedChunk;
+   result["more_available"] = moreAvailable;
+   pResponse->setResult(result);
 
    return Success();
 }
@@ -914,7 +921,7 @@ Error initialize()
       (bind(registerRpcMethod, "process_set_caption", procSetCaption))
       (bind(registerRpcMethod, "process_set_title", procSetTitle))
       (bind(registerRpcMethod, "process_erase_buffer", procEraseBuffer))
-      (bind(registerRpcMethod, "process_get_buffer", procGetBuffer));
+      (bind(registerRpcMethod, "process_get_buffer_chunk", procGetBufferChunk));
 
    return initBlock.execute();
 }
