@@ -1580,6 +1580,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void setSessionLabel(
+             String hostPageUrl,
+             ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, SET_SESSION_LABEL, hostPageUrl, callback);
+   }
+
+   @Override
    public void getAvailableRVersions(
          ServerRequestCallback<JsArray<RVersionSpec>> callback)
    {
@@ -5116,6 +5124,7 @@ public class RemoteServer implements Server
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";
    private static final String GET_ACTIVE_SESSIONS = "get_active_sessions";
+   private static final String SET_SESSION_LABEL = "set_session_label";
    private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
    private static final String GET_PROJECT_TEMPLATE_REGISTRY = "get_project_template_registry";

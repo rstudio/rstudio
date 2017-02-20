@@ -228,6 +228,20 @@ public:
       }
    }
 
+   std::string label()
+   {
+      if (!empty())
+         return readProperty("label");
+      else
+         return std::string();
+   }
+
+   void setLabel(const std::string& label)
+   {
+      if (!empty())
+         writeProperty("label", label);
+   }
+
    void beginSession(const std::string& rVersion,
                      const std::string& rVersionHome)
    {
@@ -241,6 +255,15 @@ public:
       setLastUsed();
       setRunning(false);
       setExecuting(false);
+   }
+
+   uintmax_t suspendSize()
+   {
+      FilePath suspendPath = scratchPath_.complete("suspended-session-data");
+      if (!suspendPath.exists())
+         return 0;
+
+      return suspendPath.sizeRecursive();
    }
 
    core::Error destroy()
