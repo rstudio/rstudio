@@ -27,7 +27,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
-
+   
    protected AceEditorNative() {}
 
    public native final EditSession getSession() /*-{
@@ -596,6 +596,23 @@ public class AceEditorNative extends JavaScriptObject {
    public final native void execCommand(String commandName) /*-{
       this.execCommand(commandName);
    }-*/;
+   
+   private static final native void initialize()
+   /*-{
+      // Remove the 'Return' keybinding associated with Emacs.
+      // We attach some custom behaviors to 'Return', and we
+      // don't want Emacs to override those behaviors.
+      // E.g. the 'Continue comment on newline insertion'
+      // preference.
+      var Emacs = $wnd.require("ace/keyboard/emacs");
+      var handler = Emacs.handler || {};
+      var bindings = handler.commandKeyBinding || {};
+      if (bindings.hasOwnProperty("return")) {
+         delete bindings["return"];
+      }
+   }-*/;
+   
+   static { initialize(); }
    
    private static boolean uiPrefsSynced_ = false;
 }
