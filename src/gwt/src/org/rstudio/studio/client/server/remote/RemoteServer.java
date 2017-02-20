@@ -78,6 +78,7 @@ import org.rstudio.studio.client.common.vcs.CreateKeyOptions;
 import org.rstudio.studio.client.common.vcs.CreateKeyResult;
 import org.rstudio.studio.client.common.vcs.DiffResult;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
+import org.rstudio.studio.client.common.vcs.RemotesInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
@@ -2145,11 +2146,38 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GIT_FULL_STATUS, requestCallback);
    }
+   
+   @Override
+   public void gitCreateBranch(String branch,
+                               ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(branch));
+      sendRequest(RPC_SCOPE, GIT_CREATE_BRANCH, params,
+            new ConsoleProcessCallbackAdapter(requestCallback));
+   }
 
    @Override
    public void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback)
    {
       sendRequest(RPC_SCOPE, GIT_LIST_BRANCHES, requestCallback);
+   }
+   
+   @Override
+   public void gitListRemotes(ServerRequestCallback<JsArray<RemotesInfo>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GIT_LIST_REMOTES, requestCallback);
+   }
+   
+   @Override
+   public void gitAddRemote(String name,
+                            String url,
+                            ServerRequestCallback<JsArray<RemotesInfo>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(name));
+      params.set(1, new JSONString(url));
+      sendRequest(RPC_SCOPE, GIT_ADD_REMOTE, params, requestCallback);
    }
 
    @Override
@@ -2203,6 +2231,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_PUSH,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
+   
+   public void gitPushBranch(String branch,
+                             String remote,
+                             ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(branch));
+      params.set(1, new JSONString(remote));
+      sendRequest(RPC_SCOPE, GIT_PUSH_BRANCH, params,
+                  new ConsoleProcessCallbackAdapter(requestCallback));
+   }
+   
 
    @Override
    public void vcsClone(VcsCloneOptions options,
@@ -5179,10 +5219,14 @@ public class RemoteServer implements Server
    private static final String GIT_UNSTAGE = "git_unstage";
    private static final String GIT_ALL_STATUS = "git_all_status";
    private static final String GIT_FULL_STATUS = "git_full_status";
+   private static final String GIT_CREATE_BRANCH = "git_create_branch";
    private static final String GIT_LIST_BRANCHES = "git_list_branches";
+   private static final String GIT_LIST_REMOTES = "git_list_remotes";
+   private static final String GIT_ADD_REMOTE = "git_add_remote";
    private static final String GIT_CHECKOUT = "git_checkout";
    private static final String GIT_COMMIT = "git_commit";
    private static final String GIT_PUSH = "git_push";
+   private static final String GIT_PUSH_BRANCH = "git_push_branch";
    private static final String GIT_PULL = "git_pull";
    private static final String ASKPASS_COMPLETED = "askpass_completed";
    private static final String CREATE_SSH_KEY = "create_ssh_key";

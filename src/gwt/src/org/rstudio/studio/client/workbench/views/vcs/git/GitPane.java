@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.CreateBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
 
 import java.util.ArrayList;
@@ -42,12 +43,14 @@ public class GitPane extends WorkbenchPane implements Display
    public GitPane(GitChangelistTablePresenter changelistTablePresenter,
                   Session session,
                   Commands commands,
-                  CheckoutBranchToolbarButton branchToolbarButton)
+                  CheckoutBranchToolbarButton switchBranchToolbarButton,
+                  CreateBranchToolbarButton createBranchToolbarButton)
    {
       super(session.getSessionInfo().getVcsName());
       commands_ = commands;
-      branchToolbarButton_ = branchToolbarButton;
-
+      switchBranchToolbarButton_ = switchBranchToolbarButton;
+      createBranchToolbarButton_ = createBranchToolbarButton;     
+      
       table_ = changelistTablePresenter.getView();
    }
 
@@ -76,7 +79,11 @@ public class GitPane extends WorkbenchPane implements Display
             StandardIcons.INSTANCE.more_actions(),
             moreMenu));
 
-      toolbar.addRightWidget(branchToolbarButton_);
+      toolbar.addRightWidget(createBranchToolbarButton_);
+      
+      toolbar.addRightSeparator();
+      
+      toolbar.addRightWidget(switchBranchToolbarButton_);
       
       toolbar.addRightSeparator();
       
@@ -123,11 +130,11 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
       
-      pullButton_.setText(width > 500 ? "Pull" : "");
-      pushButton_.setText(width > 500 ? "Push" : "");
-      historyButton_.setText(width > 580 ? "History" : "");
-      moreButton_.setText(width > 580 ? "More" : "");
-      
+      pullButton_.setText(width > 550 ? "Pull" : "");
+      pushButton_.setText(width > 550 ? "Push" : "");
+      historyButton_.setText(width > 630 ? "History" : "");
+      moreButton_.setText(width > 630 ? "More" : "");
+      createBranchToolbarButton_.setText(width > 680 ? "New Branch" : "");
    }
 
    @Override
@@ -205,6 +212,7 @@ public class GitPane extends WorkbenchPane implements Display
    private ToolbarButton pushButton_;
    
    private final Commands commands_;
-   private final CheckoutBranchToolbarButton branchToolbarButton_;
+   private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
+   private final CreateBranchToolbarButton createBranchToolbarButton_;
    private GitChangelistTable table_;
 }

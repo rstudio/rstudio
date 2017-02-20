@@ -29,7 +29,12 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class SelectWidget extends Composite
-{   
+{
+   public SelectWidget(String label)
+   {
+      this(label, null, false);
+   }
+   
    public SelectWidget(String label, String[] options)
    {
       this(label, options, false);
@@ -72,8 +77,15 @@ public class SelectWidget extends Composite
 
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(isMultipleSelect);
-      for (int i = 0; i < options.length; i++)
-         listBox_.addItem(options[i], values[i]);
+      if (options == null)
+      {
+         listBox_.addItem("(None)", "(None)");
+      }
+      else
+      {
+         for (int i = 0; i < options.length; i++)
+            listBox_.addItem(options[i], values[i]);
+      }
       
       Panel panel = null;
       if (horizontalLayout)

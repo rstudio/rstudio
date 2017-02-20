@@ -17,9 +17,18 @@ package org.rstudio.core.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+
 public class ListUtil
 {
    public interface FilterPredicate<T>
+   {
+      public boolean test(T object);
+   }
+   
+   public interface SearchPredicate<T>
    {
       public boolean test(T object);
    }
@@ -33,11 +42,35 @@ public class ListUtil
       return filtered;
    }
    
+   public static <T> T find(List<T> list, SearchPredicate<T> predicate)
+   {
+      for (T t : list)
+         if (predicate.test(t))
+            return t;
+      return null;
+   }
+   
    @SuppressWarnings("unchecked")
    public static <T> List<T> create(T... ts)
    {
       List<T> result = new ArrayList<T>(ts.length);
       for (T t : ts) result.add(t);
       return result;
+   }
+   
+   public static List<String> create(JsArrayString array)
+   {
+      List<String> list = new ArrayList<String>();
+      for (int i = 0, n = array.length(); i < n; i++)
+         list.add(array.get(i));
+      return list;
+   }
+   
+   public static <T extends JavaScriptObject> List<T> create(JsArray<T> array)
+   {
+      List<T> list = new ArrayList<T>();
+      for (int i = 0, n = array.length(); i < n; i++)
+         list.add(array.get(i));
+      return list;
    }
 }
