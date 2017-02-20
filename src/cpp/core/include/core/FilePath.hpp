@@ -1,7 +1,7 @@
 /*
  * FilePath.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -189,6 +189,9 @@ public:
    
    // recursively iterate over child paths
    Error childrenRecursive(RecursiveIterationFunction iterationFunction) const;
+
+   // total size of directory and all sub-directories, etc.
+   uintmax_t sizeRecursive() const;
 
    // make this path the system current directory
    Error makeCurrentPath(bool autoCreate = false) const ;
