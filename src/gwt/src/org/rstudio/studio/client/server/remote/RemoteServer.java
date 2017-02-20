@@ -2151,10 +2151,7 @@ public class RemoteServer implements Server
    public void gitCheckout(String id,
                            ServerRequestCallback<ConsoleProcess> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(id));
-
-      sendRequest(RPC_SCOPE, GIT_CHECKOUT, params,
+      sendRequest(RPC_SCOPE, GIT_CHECKOUT, id,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
 
@@ -2964,7 +2961,7 @@ public class RemoteServer implements Server
       var server = this;     
       $wnd.sendRemoteServerRequest = $entry(
          function(sourceWindow, scope, method, params, redactLog, responseCallback) {
-            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;II)(sourceWindow, scope, method, params, redactLog, responseCallback);
+            server.@org.rstudio.studio.client.server.remote.RemoteServer::sendRemoteServerRequest(Lcom/google/gwt/core/client/JavaScriptObject;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JavaScriptObject;ZLcom/google/gwt/core/client/JavaScriptObject;)(sourceWindow, scope, method, params, redactLog, responseCallback);
          }
       ); 
    }-*/;
