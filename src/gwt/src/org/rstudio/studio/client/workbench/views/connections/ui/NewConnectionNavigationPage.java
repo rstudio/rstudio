@@ -100,6 +100,7 @@ public class NewConnectionNavigationPage
          
          ScrollPanel scrollPanel = new ScrollPanel();
          scrollPanel.setSize("100%", "100%");
+         scrollPanel.addStyleName(RES.styles().wizardPageSelector());
          scrollPanel.addStyleName(styles.wizardPageSelector());
 
          VerticalPanel verticalPanel = new VerticalPanel();
@@ -171,6 +172,7 @@ public class NewConnectionNavigationPage
 
    public interface Styles extends CssResource
    {
+      String wizardPageSelector();
    }
    
    public interface Resources extends ClientBundle
