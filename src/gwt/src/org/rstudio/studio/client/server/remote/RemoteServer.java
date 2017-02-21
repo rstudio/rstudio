@@ -999,7 +999,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CHOOSE_FILE_COMPLETED, file, requestCallback);
    }
 
-
    public void getPackageState(
          boolean manual,
          ServerRequestCallback<PackageState> requestCallback)

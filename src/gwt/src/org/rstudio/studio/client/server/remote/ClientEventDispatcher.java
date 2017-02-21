@@ -56,9 +56,9 @@ import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
+import org.rstudio.studio.client.packages.events.PackageExtensionIndexingCompletedEvent;
 import org.rstudio.studio.client.projects.events.FollowUserEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
-import org.rstudio.studio.client.projects.events.PackageExtensionIndexingCompletedEvent;
 import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
@@ -138,6 +138,7 @@ import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCp
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.LoadedPackageUpdatesEvent;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStatusChangedEvent;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageState;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageStatus;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
@@ -863,7 +864,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.PackageExtensionIndexingCompleted))
          {
-            PackageExtensionIndexingCompletedEvent.Data data = event.getData();
+            PackageProvidedExtensions.Data data = event.getData();
             eventBus_.fireEvent(new PackageExtensionIndexingCompletedEvent(data));
          }
          else if (type.equals(ClientEvent.RStudioAPIShowDialog))

@@ -20,6 +20,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/text/DcfParser.hpp>
 
@@ -90,7 +91,7 @@ void Indexer::start()
             boost::posix_time::milliseconds(300),
             boost::posix_time::milliseconds(20),
             boost::bind(&Indexer::work, this),
-            false);
+            true);
 }
 
 bool Indexer::work()
@@ -160,20 +161,21 @@ void Indexer::beginIndexing()
 void Indexer::endIndexing()
 {
    running_ = false;
+   payload_.clear();
    
-   json::Object payload;
    BOOST_FOREACH(boost::shared_ptr<Worker> pWorker, workers_)
    {
       try
       {
-         pWorker->onIndexingCompleted(&payload);
+         pWorker->onIndexingCompleted(&payload_);
       }
       CATCH_UNEXPECTED_EXCEPTION
    }
    
    ClientEvent event(
             client_events::kPackageExtensionIndexingCompleted,
-            payload);
+            payload_);
+   
    module_context::enqueClientEvent(event);
 }
 
