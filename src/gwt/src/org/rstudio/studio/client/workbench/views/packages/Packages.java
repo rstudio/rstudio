@@ -51,6 +51,7 @@ import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.projects.events.PackageExtensionIndexingCompletedEvent;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
+import org.rstudio.studio.client.projects.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
@@ -61,6 +62,8 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -101,6 +104,7 @@ import java.util.TreeSet;
 public class Packages
       extends BasePresenter
       implements PackageStatusChangedHandler,
+                 SessionInitHandler,
                  DeferredInitCompletedEvent.Handler,
                  PackageExtensionIndexingCompletedEvent.Handler,
                  PackagesDisplayObserver
@@ -156,6 +160,7 @@ public class Packages
       session_ = session;
       binder.bind(commands, this);
       
+      events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(PackageStatusChangedEvent.TYPE, this);
       events.addHandler(PackageExtensionIndexingCompletedEvent.TYPE, this);
       
@@ -696,6 +701,12 @@ public class Packages
          setPackageState(newState);
       else
          updatePackageState(false, false);
+   }
+   
+   @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      updatePackageExtensions();
    }
    
    @Override
@@ -1293,19 +1304,30 @@ public class Packages
    @Override
    public void onPackageExtensionIndexingCompleted(PackageExtensionIndexingCompletedEvent event)
    {
-      PackageExtensionIndexingCompletedEvent.Data data = event.getData();
+      updatePackageExtensions(event.getExtensions());
+   }
+   
+   private void updatePackageExtensions()
+   {
+      updatePackageExtensions(null);
+   }
+   
+   private void updatePackageExtensions(PackageProvidedExtensions extensions)
+   {
+      if (extensions == null)
+         extensions = session_.getSessionInfo().getPackageProvidedExtensions();
       
       // update addins
-      RAddins addinRegistry = data.getAddinsRegistry();
+      RAddins addinRegistry = extensions.getAddinsRegistry();
       if (addinRegistry != null)
          events_.fireEvent(new AddinRegistryUpdatedEvent(addinRegistry));
       
       // update project templates
-      ProjectTemplateRegistry ptRegistry = data.getProjectTemplateRegistry();
+      ProjectTemplateRegistry ptRegistry = extensions.getProjectTemplateRegistry();
       if (ptRegistry != null)
          events_.fireEvent(new ProjectTemplateRegistryUpdatedEvent(ptRegistry));
    }
-      
+   
    private final Display view_;
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;

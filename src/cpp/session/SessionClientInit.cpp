@@ -56,6 +56,7 @@
 #include <session/SessionHttpConnection.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
@@ -370,6 +371,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["user_home_page_url"] = json::Value();
    
    sessionInfo["r_addins"] = modules::r_addins::addinRegistryAsJson();
+   sessionInfo["package_provided_extensions"] = modules::ppe::indexer().getPayload();
 
    sessionInfo["connections_enabled"] = modules::connections::connectionsEnabled();
    sessionInfo["activate_connections"] = modules::connections::activateConnections();
