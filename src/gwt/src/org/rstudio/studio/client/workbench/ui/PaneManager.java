@@ -401,7 +401,12 @@ public class PaneManager
          el = el.getParentElement();
          for (LogicalWindow window : panes_)
          {
-            if (el.equals(window.getActiveWidget().getElement()))
+            Widget activeWidget = window.getActiveWidget();
+            if (activeWidget == null)
+               continue;
+            
+            Element activeEl = activeWidget.getElement();
+            if (el.equals(activeEl))
             {
                targetWindow = window;
                break;
