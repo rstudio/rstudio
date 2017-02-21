@@ -26,18 +26,15 @@ namespace rstudio {
 namespace session {
 namespace console_process {
 
-namespace {
-   const size_t OUTPUT_BUFFER_SIZE = 8192;
-} // anonymous namespace
-
 const int kDefaultMaxOutputLines = 500;
 const int kDefaultTerminalMaxOutputLines = 1000; // xterm.js scrollback constant
 const int kNoTerminal = 0; // terminal sequence number for a non-terminal
+const size_t kOutputBufferSize = 8192;
 
 ConsoleProcessInfo::ConsoleProcessInfo()
    : terminalSequence_(kNoTerminal), allowRestart_(false),
      interactionMode_(InteractionNever), maxOutputLines_(kDefaultMaxOutputLines),
-     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true),
+     showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false)
 {
    // When we retrieve from outputBuffer, we only want complete lines. Add a
@@ -56,7 +53,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
    : caption_(caption), title_(title), handle_(handle),
      terminalSequence_(terminalSequence), allowRestart_(allowRestart),
      interactionMode_(mode), maxOutputLines_(maxOutputLines),
-     showOnOutput_(false), outputBuffer_(OUTPUT_BUFFER_SIZE), childProcs_(true),
+     showOnOutput_(false), outputBuffer_(kOutputBufferSize), childProcs_(true),
      altBufferActive_(false)
 {
 }
@@ -95,9 +92,40 @@ void ConsoleProcessInfo::appendToOutputBuffer(char ch)
    outputBuffer_.push_back(ch);
 }
 
-std::string ConsoleProcessInfo::getSavedBuffer()
+std::string ConsoleProcessInfo::getSavedBufferChunk(
+      int requestedChunk, bool* pMoreAvailable) const
 {
-   return console_persist::getSavedBuffer(handle_, maxOutputLines_);
+   // We read the entire buffer into memory to return a given chunk. This is
+   // ok for our current usage pattern, where the buffer-size is bounded
+   // to a certain number of lines and is infrequently reloaded (only upon
+   // browser refresh or reloading a session). If this pattern becomes
+   // more frequent and/or we support much larger buffers, we'd want to
+   // reconsider this implementation.
+
+   // Read buffer (trims to maxOutputLines_ when chunk zero is requested)
+   std::string buffer = console_persist::getSavedBuffer(
+            handle_,
+            requestedChunk == 0 ? 0 : maxOutputLines_);
+
+   *pMoreAvailable = false;
+
+   // Common case, entire buffer fits in chunk zero
+   if (requestedChunk == 0 && (buffer.length() <= kOutputBufferSize))
+      return buffer;
+
+   // Chunk requested past end of buffer?
+   if (requestedChunk * kOutputBufferSize >= buffer.length())
+      return std::string();
+
+   // Otherwise return substring for the chunk (substr doesn't mind if you ask
+   // for more characters than are available in the string, as long as the
+   // starting position is within the string)
+   std::string chunk = buffer.substr(
+            requestedChunk * kOutputBufferSize, kOutputBufferSize);
+   if (requestedChunk * kOutputBufferSize + chunk.length() < buffer.length())
+      *pMoreAvailable = true;
+
+   return chunk;
 }
 
 std::string ConsoleProcessInfo::bufferedOutput() const

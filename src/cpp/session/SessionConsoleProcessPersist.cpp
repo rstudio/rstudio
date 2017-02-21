@@ -135,6 +135,9 @@ std::string getSavedBuffer(const std::string& handle, int maxLines)
       return content;
    }
 
+   if (maxLines < 1)
+      return content;
+
    // Trim the buffer based on maxLines. Otherwise it can grow without
    // bound until the terminal is closed or cleared.
    std::string trimmedOutput = content;
@@ -200,7 +203,6 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
    BOOST_FOREACH(const FilePath& child, children)
    {
       // Don't erase the INDEXnnn or any subfolders
-      // TODO (gary) see comment on kConsoleIndex above
       if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
       {
          continue;

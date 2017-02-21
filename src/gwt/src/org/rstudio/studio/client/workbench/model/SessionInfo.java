@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -484,5 +485,9 @@ public class SessionInfo extends JavaScriptObject
    
    public final native RAddins getAddins() /*-{
       return this.r_addins;
+   }-*/;
+   
+   public final native PackageProvidedExtensions.Data getPackageProvidedExtensions() /*-{
+      return this.package_provided_extensions;
    }-*/;
 }

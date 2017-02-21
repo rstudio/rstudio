@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.core.client.JsArray;
@@ -337,9 +338,9 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
       server_.processSetShellSize(procInfo_.getHandle(), cols, rows, requestCallback);
    }
 
-   public void getTerminalBuffer(ServerRequestCallback<String> requestCallback)
+   public void getTerminalBufferChunk(int chunk, ServerRequestCallback<ProcessBufferChunk> requestCallback)
    {
-      server_.processGetBuffer(procInfo_.getHandle(), requestCallback);
+      server_.processGetBufferChunk(procInfo_.getHandle(), chunk, requestCallback);
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)

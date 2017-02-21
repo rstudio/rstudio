@@ -154,6 +154,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormat
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionId;
 import org.rstudio.studio.client.workbench.views.connections.model.Field;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
+import org.rstudio.studio.client.workbench.views.console.model.ProcessBufferChunk;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptions;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
@@ -688,12 +689,14 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void processGetBuffer(String handle,
-                                  ServerRequestCallback<String> requestCallback)
+   public void processGetBufferChunk(String handle,
+                                     int chunk,
+                                     ServerRequestCallback<ProcessBufferChunk> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(handle)));
-      sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER, params, requestCallback);   
+      params.set(1, new JSONNumber(chunk));
+      sendRequest(RPC_SCOPE, PROCESS_GET_BUFFER_CHUNK, params, requestCallback);
    }
 
    public void interrupt(ServerRequestCallback<Void> requestCallback)
@@ -995,7 +998,6 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, CHOOSE_FILE_COMPLETED, file, requestCallback);
    }
-
 
    public void getPackageState(
          boolean manual,
@@ -5103,7 +5105,7 @@ public class RemoteServer implements Server
    private static final String PROCESS_SET_CAPTION = "process_set_caption";
    private static final String PROCESS_SET_TITLE = "process_set_title";
    private static final String PROCESS_ERASE_BUFFER = "process_erase_buffer";
-   private static final String PROCESS_GET_BUFFER = "process_get_buffer";
+   private static final String PROCESS_GET_BUFFER_CHUNK = "process_get_buffer_chunk";
 
    private static final String REMOVE_ALL_OBJECTS = "remove_all_objects";
    private static final String REMOVE_OBJECTS = "remove_objects";
