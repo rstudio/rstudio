@@ -27,6 +27,8 @@ namespace session {
 namespace modules {
 namespace overlay {
 
+bool isSuspendable();
+
 core::Error initialize();
    
 } // namespace overlay

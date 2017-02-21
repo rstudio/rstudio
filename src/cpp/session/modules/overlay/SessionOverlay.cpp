@@ -29,6 +29,11 @@ Error initialize()
    return Success();
 }
 
+bool isSuspendable()
+{
+   return true;
+}
+
 } // namespace overlay
 } // namespace modules
 } // namespace session
