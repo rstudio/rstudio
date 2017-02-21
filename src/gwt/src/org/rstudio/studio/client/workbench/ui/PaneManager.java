@@ -436,12 +436,22 @@ public class PaneManager
       else
       {
          LogicalWindow activeWindow = getActiveLogicalWindow();
-         if (getConsoleLogicalWindow().equals(activeWindow))
+         LogicalWindow consoleWindow = getConsoleLogicalWindow();
+         
+         if (consoleWindow.equals(activeWindow))
          {
             consoleTabPanel_.selectNextTab();
          }
          else
          {
+            // Ensure that the console window is activated
+            if (consoleWindow.getState().equals(WindowState.MINIMIZE))
+            {
+               WindowStateChangeEvent event =
+                     new WindowStateChangeEvent(WindowState.NORMAL);
+               consoleWindow.onWindowStateChange(event);
+            }
+            
             consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
          }
       }
