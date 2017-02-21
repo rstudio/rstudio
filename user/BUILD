@@ -27,6 +27,26 @@ package(
 
 load("//third_party/java_src/gwt:build-macros.bzl", "AugmentedJar")
 
+JSINTEROP_SRCS = glob(["src/jsinterop/**/*.java"])
+
+# GWT JsInterop annotations in a separate library used by hybrid app projects
+java_library(
+    name = "gwt-jsinterop-annotations",
+    srcs = JSINTEROP_SRCS,
+    compatible_with = [
+        "//buildenv/target:android",
+        "//buildenv/target:appengine",
+    ],
+    constraints = [
+        "android",
+    ],
+)
+
+java_library(
+    name = "gwt-javaemul-annotations",
+    srcs = glob(["super/com/google/gwt/emul/javaemul/internal/annotations/*.java"]),
+)
+
 # The classes in gwt-user.jar that GWT applications can depend on.
 # We want the final output of this NOT to depend on gwt-dev,
 # though it is built with that dependency, because user code can and should
@@ -71,13 +91,15 @@ java_library(
             "**/EmulatedCharset.java",
             "**/HashCodes.java",  # relies on java8 only APIs
             "**/RunStyleSelenium.java",
-        ],
+        ] + JSINTEROP_SRCS,
     ),
     compatible_with = ["//buildenv/target:appengine"],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
     plugins = [
         "//java/com/google/devtools/build/buildjar/plugin/gwt",
     ],
     deps = [
+        ":gwt-jsinterop-annotations",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
         "//third_party/java_src/gwt/svn/tools:user_deps",
@@ -111,6 +133,7 @@ java_library(
         "src/com/google/gwt/user/server/Base64Utils.java",
     ],
     compatible_with = ["//buildenv/target:appengine"],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
     deps = [
         "//third_party/java_src/gwt/svn/trunk/dev:requestfactory-apt-deps",
     ],
@@ -415,19 +438,6 @@ java_library(
     gwtxml = "Gwt-dto-serializers.gwt.xml",
 )
 
-# GWT JsInterop annotations in a separate library used by hybrid app projects
-java_library(
-    name = "gwt-jsinterop-annotations",
-    srcs = glob(["src/jsinterop/**/*.java"]),
-    compatible_with = [
-        "//buildenv/target:android",
-        "//buildenv/target:appengine",
-    ],
-    constraints = [
-        "android",
-    ],
-)
-
 # Creates gwt-testing.jar, which contains GWTTestCase and its infrastructure.
 # (The jar depends on gwt-user.jar but the dependency isn't declared.
 # Instead we assume it will be added by a wrapper rule.)
@@ -485,8 +495,6 @@ AugmentedJar(
         exclude = [
             "test/**/super/**",
             "test/**/tck/**",
-            "test/**/java8/**",
-            "test/**/*Java8Suite.java",
             "**/RunStyleSeleniumTest.java",
         ],
     ),
@@ -497,6 +505,7 @@ AugmentedJar(
     ],
     # For build_deps we should use pre-jarjar dependencies (-bare)
     build_deps = [
+        ":gwt-jsinterop-annotations",
         ":gwt-user-bare",
         ":gwt-testing-bare",
         "//third_party/java_src/gwt/svn/tools:dev_deps",
@@ -521,6 +530,8 @@ AugmentedJar(
         "-Xep:SelfComparison:OFF",  # go/self-comparison-lsc
         "-Xep:SelfEquals:OFF",  # go/self-equals-lsc
         "-Xep:IdentityBinaryExpression:OFF",
+        "-Xep:LoopConditionChecker:OFF",
+        "-Xep:CollectionIncompatibleType:OFF",
     ],
     deps = [
         "//third_party/java/jsr305_annotations",
@@ -563,7 +574,6 @@ filegroup(
         exclude = [
             "test/**/ConstraintDefinitionsGwtSuite.java",
             "test/**/*JreSuite.java",
-            "test/**/*Java8Suite.java",
         ],
     ),
 )
@@ -588,7 +598,6 @@ filegroup(
             "test/**/RunAsyncSuite.java",
             "test/**/*JreSuite.java",
             "test/**/*JsInteropSuite.java",
-            "test/**/*Java8Suite.java",
         ],
     ),
 )
@@ -665,24 +674,6 @@ filegroup(
         [
             "test/com/google/gwt/emultest/**/*.java",
             "test/com/google/gwt/testing/TestUtils.java",
-            "test/org/apache/commons/**/*.java",
-        ],
-        exclude = [
-            "test/**/java8/**",
-            "test/**/*Java8Suite.java",
-        ],
-    ),
-    visibility = ["//third_party/java_src/j2cl:__subpackages__"],
-)
-
-filegroup(
-    name = "java8_emul_test",
-    srcs = [
-        "test/com/google/gwt/emultest/EmulJava8Suite.java",
-        "test/com/google/gwt/testing/TestUtils.java",
-    ] + glob(
-        [
-            "test/com/google/gwt/emultest/java8/**/*.java",
             "test/org/apache/commons/**/*.java",
         ],
     ),

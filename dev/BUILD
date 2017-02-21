@@ -128,6 +128,7 @@ java_library(
     name = "gwt-dev-bare",
     srcs = glob(["core/src/**/*.java"]),
     compatible_with = ["//buildenv/target:appengine"],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java/gson",
@@ -198,6 +199,7 @@ java_library(
         ],
     ),
     compatible_with = ["//buildenv/target:appengine"],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:OFF"],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java/gson",
@@ -246,7 +248,6 @@ Zip(
 java_library(
     name = "gwt-dev-interop-annotations",
     srcs = [
-        "core/super/com/google/gwt/core/client/GwtScriptOnly.java",
         "core/super/com/google/gwt/core/client/UnsafeNativeLong.java",
     ],
     compatible_with = [
@@ -291,6 +292,7 @@ java_library(
         "core/test/**/*.java",
     ]),
     javacopts = [
+        "-Xep:MissingCasesInEnumSwitch:OFF",
         "-Xep:SelfComparison:OFF",
         "-Xep:SelfEquals:OFF",
     ],
