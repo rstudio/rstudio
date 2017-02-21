@@ -63,7 +63,6 @@ import org.rstudio.studio.client.projects.events.ProjectAccessRevokedEvent;
 import org.rstudio.studio.client.projects.events.ProjectTemplateRegistryUpdatedEvent;
 import org.rstudio.studio.client.projects.events.ProjectUserChangedEvent;
 import org.rstudio.studio.client.projects.model.OpenProjectError;
-import org.rstudio.studio.client.projects.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistry;
 import org.rstudio.studio.client.projects.model.ProjectUser;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
@@ -864,7 +863,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.PackageExtensionIndexingCompleted))
          {
-            PackageProvidedExtensions data = event.getData();
+            PackageExtensionIndexingCompletedEvent.Data data = event.getData();
             eventBus_.fireEvent(new PackageExtensionIndexingCompletedEvent(data));
          }
          else if (type.equals(ClientEvent.RStudioAPIShowDialog))

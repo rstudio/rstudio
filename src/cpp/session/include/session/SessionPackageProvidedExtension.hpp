@@ -75,7 +75,6 @@ public:
    virtual ~Indexer() {}
    
 public:
-   core::json::Object getPayload() { return payload_; }
    void addWorker(boost::shared_ptr<Worker> pWorker);
    void removeWorker(boost::shared_ptr<Worker> pWorker);
    
@@ -91,7 +90,6 @@ private:
 private:
    std::vector<boost::shared_ptr<Worker> > workers_;
    std::vector<core::FilePath> pkgDirs_;
-   core::json::Object payload_;
    std::size_t index_;
    std::size_t n_;
    bool running_;
