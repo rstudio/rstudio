@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -151,10 +152,27 @@ public class CreateBranchToolbarButton extends ToolbarButton
    private void onBranchInfoReceived(final CreateBranchDialog.Input input,
                                      final BranchesInfo branchesInfo)
    {
-      // If we have a branch of this name already, prompt the
-      // user and ask whether they'd like to check out a
-      // new branch (overwriting the previous one) or if they'd
-      // like to just check out that branch.
+      // If we have a local branch of this name already, prompt the user and ask
+      // whether they'd like to check out a new branch (overwriting the previous
+      // one) or if they'd like to just check out that branch.
+      if (promptUserRegardingLocalBranchOfSameName(input, branchesInfo))
+         return;
+      
+      // If we have a remote branch of this name already, prompt the user and ask
+      // whether they'd like to pull and check out that branch, or generate their
+      // own.
+      if (promptUserRegardingRemoteBranchOfSameName(input, branchesInfo))
+         return;
+      
+      // We ascertained that creating a branch won't put the user out-of-sync with
+      // the declared remote -- go ahead with creation.
+      onCreate(input);
+   }
+   
+   private boolean promptUserRegardingLocalBranchOfSameName(
+         final CreateBranchDialog.Input input,
+         final BranchesInfo branchesInfo)
+   {
       boolean hasBranch = false;
       for (String branch : JsUtil.asIterable(branchesInfo.getBranches()))
       {
@@ -174,6 +192,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
          List<String> labels = new ArrayList<String>();
          labels.add("Checkout");
          labels.add("Overwrite");
+         labels.add("Cancel");
          
          List<Operation> operations = new ArrayList<Operation>();
          operations.add(new Operation()
@@ -192,19 +211,83 @@ public class CreateBranchToolbarButton extends ToolbarButton
                onCreate(input);
             }
          });
+         operations.add(new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               // no-op
+            }
+         });
+         
          
          globalDisplay_.showGenericDialog(
                MessageDialog.INFO,
-               "Branch Already Exists",
+               "Local Branch Already Exists",
+               message,
+               labels,
+               operations,
+               2);
+      }
+      
+      return hasBranch;
+   }
+   
+   private boolean promptUserRegardingRemoteBranchOfSameName(
+         final CreateBranchDialog.Input input,
+         final BranchesInfo branchesInfo)
+   {
+      final String targetBranch = "remotes/" + input.getRemote() + "/" + input.getBranch();
+      final String remoteBranch = Functional.find(
+            branchesInfo.getBranches(),
+            new Functional.Predicate<String>()
+            {
+               @Override
+               public boolean test(String branch)
+               {
+                  return branch.equals(targetBranch);
+               }
+            });
+      
+      if (remoteBranch != null)
+      {
+         String message =
+               "A remote branch named '" + input.getBranch() + "' already exists " +
+               "on the remote repository '" + input.getRemote() + "'. Would you like " +
+               "to check out that branch?";
+         
+         List<String> labels = new ArrayList<String>();
+         labels.add("Checkout");
+         labels.add("Cancel");
+         
+         List<Operation> operations = new ArrayList<Operation>();
+         operations.add(new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               onCheckoutRemote(input);
+            }
+         });
+         operations.add(new Operation()
+         {
+            @Override
+            public void execute()
+            {
+               // no-op
+            }
+         });
+         
+         globalDisplay_.showGenericDialog(
+               MessageDialog.INFO,
+               "Remote Branch Already Exists",
                message,
                labels,
                operations,
                1);
       }
-      else
-      {
-         onCreate(input);
-      }
+      
+      return remoteBranch != null;
    }
    
    private void onCreate(final CreateBranchDialog.Input input)
@@ -284,6 +367,28 @@ public class CreateBranchToolbarButton extends ToolbarButton
                }
             });
    }
+   
+   private void onCheckoutRemote(final CreateBranchDialog.Input input)
+   {
+      gitServer_.gitCheckoutRemote(
+            input.getBranch(),
+            input.getRemote(),
+            new ServerRequestCallback<ConsoleProcess>()
+            {
+               @Override
+               public void onResponseReceived(ConsoleProcess process)
+               {
+                  showConsoleProcessDialog(process);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
    
    private void showConsoleProcessDialog(ConsoleProcess process)
    {

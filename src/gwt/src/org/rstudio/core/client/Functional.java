@@ -18,6 +18,7 @@ import java.util.Collection;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class Functional
 {
@@ -37,6 +38,14 @@ public class Functional
    
    public static <T extends JavaScriptObject> T find(JsArray<T> array,
                                                      Predicate<T> predicate)
+   {
+      for (int i = 0, n = array.length(); i < n; i++)
+         if (predicate.test(array.get(i)))
+            return array.get(i);
+      return null;
+   }
+   
+   public static String find(JsArrayString array, Predicate<String> predicate)
    {
       for (int i = 0, n = array.length(); i < n; i++)
          if (predicate.test(array.get(i)))

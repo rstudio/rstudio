@@ -696,6 +696,19 @@ public:
                                "Git Checkout " + id,
                                ppCP);
    }
+   
+   core::Error checkoutRemote(const std::string& branch,
+                              const std::string& remote,
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      std::string localBranch  = branch;
+      std::string remoteBranch = remote + "/" + branch;
+      
+      return createConsoleProc(
+               ShellArgs() << "checkout" << "-b" << localBranch << remoteBranch,
+               "Git Checkout " + branch,
+               ppCP);
+   }
 
    core::Error commit(std::string message,
                       bool amend,
@@ -1577,6 +1590,27 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error vcsCheckoutRemote(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit scope;
+   
+   std::string branch, remote;
+   Error error = json::readParams(request.params, &branch, &remote);
+   if (error)
+      return error;
+   
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.checkoutRemote(branch, remote, &pCP);
+   if (error)
+      return error;
+   
+   pResponse->setResult(pCP->toJson());
+   
+   return Success();
+}
+
 
 Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
@@ -3117,6 +3151,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch))
       (bind(registerRpcMethod, "git_list_branches", vcsListBranches))
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
+      (bind(registerRpcMethod, "git_checkout_remote", vcsCheckoutRemote))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "git_all_status", vcsAllStatus))
       (bind(registerRpcMethod, "git_commit", vcsCommit))
