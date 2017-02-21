@@ -77,6 +77,10 @@ public interface GitServerOperations extends VCSServerOperations
 
    void gitCheckout(String id,
                     ServerRequestCallback<ConsoleProcess> requestCallback);
+   
+   void gitCheckoutRemote(String branch,
+                          String remote,
+                          ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void gitCommit(String message,
                   boolean amend,
