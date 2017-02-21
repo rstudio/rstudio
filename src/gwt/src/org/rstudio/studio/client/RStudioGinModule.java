@@ -177,6 +177,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.CompilePdfOut
 import org.rstudio.studio.client.workbench.views.packages.Packages;
 import org.rstudio.studio.client.workbench.views.packages.PackagesPane;
 import org.rstudio.studio.client.workbench.views.packages.PackagesTab;
+import org.rstudio.studio.client.workbench.views.packages.model.PackageProvidedExtensions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.Plots;
 import org.rstudio.studio.client.workbench.views.plots.PlotsPane;
@@ -277,6 +278,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DataImportPresenter.class).in(Singleton.class);
       bind(MathJaxLoader.class).asEagerSingleton();
       bind(ProjectTemplateRegistryProvider.class).in(Singleton.class);
+      bind(PackageProvidedExtensions.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
