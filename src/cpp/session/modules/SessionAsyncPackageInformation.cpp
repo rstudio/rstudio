@@ -185,10 +185,16 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
 
       if (splat[i].empty())
          continue;
-
+      
+      // The lines we wish to parse should be prefixed with
+      // the code '#!json: '.
+      if (!boost::algorithm::starts_with(splat[i], "#!json: "))
+         continue;
+      
+      std::string line = splat[i].substr(::strlen("#!json: "));
+      
       json::Value value;
-
-      if (!json::parse(splat[i], &value))
+      if (!json::parse(line, &value))
       {
          std::string subset;
          if (splat[i].length() > 60)

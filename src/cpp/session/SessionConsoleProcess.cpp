@@ -191,6 +191,27 @@ void ConsoleProcess::enqueInput(const Input& input)
    inputQueue_.push(input);
 }
 
+void ConsoleProcess::enqueOutput(const std::string& output,
+                                 bool error = false)
+{
+   enqueOutputEvent(output, error);
+}
+
+void ConsoleProcess::enquePromptEvent(const std::string& prompt)
+{
+   // enque a prompt event
+   json::Object data;
+   data["handle"] = handle();
+   data["prompt"] = prompt;
+   module_context::enqueClientEvent(
+         ClientEvent(client_events::kConsoleProcessPrompt, data));
+}
+
+void ConsoleProcess::enquePrompt(const std::string& prompt)
+{
+   enquePromptEvent(prompt);
+}
+
 void ConsoleProcess::interrupt()
 {
    interrupt_ = true;
@@ -364,15 +385,9 @@ void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
 
          return;
       }
-
    }
-
-   // enque a prompt event
-   json::Object data;
-   data["handle"] = handle();
-   data["prompt"] = prompt;
-   module_context::enqueClientEvent(
-         ClientEvent(client_events::kConsoleProcessPrompt, data));
+   
+   enquePromptEvent(prompt);
 }
 
 void ConsoleProcess::onExit(int exitCode)

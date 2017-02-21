@@ -1,7 +1,7 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/device/file_descriptor.hpp>
 
@@ -140,6 +141,13 @@ bool copySingleItem(const FilePath& from, const FilePath& to,
    if (error)
       LOG_ERROR(error);
 
+   return true;
+}
+
+bool addItemSize(const FilePath& item, boost::shared_ptr<int> pTotal)
+{
+   if (!item.isDirectory())
+      *pTotal = *pTotal + item.size();
    return true;
 }
 
@@ -837,6 +845,19 @@ Error FilePath::copyDirectoryRecursive(const FilePath& target) const
       return error;
 
    return childrenRecursive(boost::bind(copySingleItem, *this, target, _2));
+}
+
+uintmax_t FilePath::sizeRecursive() const
+{
+   // no work to do if we're not a directory
+   if (!isDirectory())
+      return size();
+
+   boost::shared_ptr<int> pTotal = boost::make_shared<int>(0);
+   Error error = childrenRecursive(boost::bind(addItemSize, _2, pTotal)); 
+   if (error)
+      LOG_ERROR(error);
+   return *pTotal;
 }
 
 Error FilePath::ensureFile() const

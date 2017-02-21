@@ -15,10 +15,10 @@
 
 #include <core/StringUtils.hpp>
 
+#include <algorithm>
 #include <map>
 #include <ostream>
 
-#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -311,6 +311,13 @@ std::string systemToUtf8(const std::string& str, int codepage)
 std::string systemToUtf8(const std::string& str)
 {
    return systemToUtf8(str, CP_ACP);
+}
+
+std::string toUpper(const std::string& str)
+{
+   std::string upper = str;
+   std::transform(upper.begin(), upper.end(), upper.begin(), ::toupper);
+   return upper;
 }
 
 std::string toLower(const std::string& str)

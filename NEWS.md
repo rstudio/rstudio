@@ -28,6 +28,7 @@
 ### Miscellaneous
 
 * Added support for custom, user-provided project templates
+* Add support for creating new Git branches and adding remotes
 * Implement support for changing editor tabs with the mouse wheel
 * Snippets can now be inserted in the R console
 * Add option to knit in current working directory or project directory
@@ -43,9 +44,12 @@
 * Add option to run multiple consecutive lines of R with Ctrl+Enter
 * Add commands to run a line, statement, or consecutive lines 
 * Add Clear Console button to top of Console pane
+* Add option to wrap around when navigating to previous or next editor tab
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
+* Server Pro: Show the size of suspended sessions
+* Server Pro: Add user-defined session labels
 
 ### Bug Fixes
 
