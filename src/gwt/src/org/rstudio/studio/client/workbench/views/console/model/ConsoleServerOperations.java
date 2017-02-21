@@ -54,8 +54,9 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
    void processEraseBuffer(String handle,
                            ServerRequestCallback<Void> requestCallback);
 
-   void processGetBuffer(String handle,
-                         ServerRequestCallback<String> requestCallback);
+   void processGetBufferChunk(String handle,
+                              int chunk,
+                              ServerRequestCallback<ProcessBufferChunk> requestCallback);
 
    /**
     * Set/update the caption of given process.

@@ -226,24 +226,96 @@ TEST_CASE("ConsoleProcessInfo")
       // failed run
       cpi.deleteLogFile();
 
-      // getSavedBuffer is the accessor for the terminal buffer cache
-      std::string loaded = cpi.getSavedBuffer();
+      // getSavedBufferChunk is the accessor for the terminal buffer cache
+      bool moreAvailable;
+      std::string loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
       CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
 
       std::string orig = "one\ntwo\nthree\nfour\nfive";
+      CHECK(orig.length() < kOutputBufferSize);
       cpi.appendToOutputBuffer(orig);
-      loaded = cpi.getSavedBuffer();
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
       CHECK_FALSE(loaded.compare(orig));
 
       std::string orig2 = "\nsix\nseven\neight\nnine\nten\n";
+      CHECK(orig.length() + orig2.length() < kOutputBufferSize);
       cpi.appendToOutputBuffer(orig2);
-      loaded = cpi.getSavedBuffer();
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
       orig.append(orig2);
+      CHECK_FALSE(moreAvailable);
       CHECK_FALSE(loaded.compare(orig));
 
       cpi.deleteLogFile();
-      loaded = cpi.getSavedBuffer();
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
       CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
+   }
+
+   SECTION("Persist and restore terminals with multiple chunks")
+   {
+      ConsoleProcessInfo cpi(caption, title, handle1, sequence,
+                             allowRestart, mode, maxLines);
+
+      // blow away anything that might have been left over from a previous
+      // failed run
+      cpi.deleteLogFile();
+
+      bool moreAvailable;
+      std::string loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
+
+      // fill buffer with less than one chunk
+      std::string firstChunk(kOutputBufferSize - 1, 'a');
+      CHECK(firstChunk.length() < kOutputBufferSize);
+      cpi.appendToOutputBuffer(firstChunk);
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
+      CHECK_FALSE(loaded.compare(firstChunk));
+
+      // pad to exactly one chunk
+      firstChunk += 'a';
+      CHECK(firstChunk.length() == kOutputBufferSize);
+      cpi.appendToOutputBuffer("a");
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
+      CHECK_FALSE(loaded.compare(firstChunk));
+
+      // add partial second chunk
+      std::string secondChunk(2, 'b');
+      CHECK(secondChunk.length() < kOutputBufferSize);
+      cpi.appendToOutputBuffer(secondChunk);
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(moreAvailable);
+      CHECK_FALSE(loaded.compare(firstChunk));
+      loaded = cpi.getSavedBufferChunk(1, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
+      CHECK_FALSE(loaded.compare(secondChunk));
+
+      // finish second chunk and add a single character as third chunk
+      std::string finishSecond(kOutputBufferSize - secondChunk.length(), 'b');
+      CHECK(finishSecond.length() + secondChunk.length() == kOutputBufferSize);
+      cpi.appendToOutputBuffer(finishSecond);
+
+      // try to read non-existent third chunk
+      std::string thirdChunk = cpi.getSavedBufferChunk(3, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
+      CHECK(thirdChunk.length() == 0);
+
+      // add a single character third chunk and read it
+      thirdChunk = "c";
+      cpi.appendToOutputBuffer(thirdChunk);
+      loaded = cpi.getSavedBufferChunk(2, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
+      CHECK_FALSE(loaded.compare(thirdChunk));
+
+      // cleanup
+      cpi.deleteLogFile();
+      loaded = cpi.getSavedBufferChunk(0, &moreAvailable);
+      CHECK(loaded.empty());
+      CHECK_FALSE(moreAvailable);
    }
 
    SECTION("Delete unknown log files")
@@ -254,22 +326,29 @@ TEST_CASE("ConsoleProcessInfo")
                              allowRestart, mode, maxLines);
 
       std::string orig1("hello how are you?\nthat is good\nhave a nice day");
+      CHECK(orig1.length() < kOutputBufferSize);
       std::string bogus1("doom");
+      CHECK(bogus1.length() < kOutputBufferSize);
 
       cpiGood.appendToOutputBuffer(orig1);
       cpiBad.appendToOutputBuffer(bogus1);
 
-      std::string loadedGood = cpiGood.getSavedBuffer();
+      bool moreAvailable;
+      std::string loadedGood = cpiGood.getSavedBufferChunk(0, &moreAvailable);
       CHECK_FALSE(loadedGood.compare(orig1));
-      std::string loadedBad = cpiBad.getSavedBuffer();
+      CHECK_FALSE(moreAvailable);
+      std::string loadedBad = cpiBad.getSavedBufferChunk(0, &moreAvailable);
       CHECK_FALSE(loadedBad.compare(bogus1));
+      CHECK_FALSE(moreAvailable);
 
       cpiGood.deleteOrphanedLogs(testHandle);
       cpiBad.deleteOrphanedLogs(testHandle);
 
-      loadedGood = cpiGood.getSavedBuffer();
+      loadedGood = cpiGood.getSavedBufferChunk(0, &moreAvailable);
       CHECK_FALSE(loadedGood.compare(orig1));
-      loadedBad = cpiBad.getSavedBuffer();
+      CHECK_FALSE(moreAvailable);
+      loadedBad = cpiBad.getSavedBufferChunk(0, &moreAvailable);
+      CHECK_FALSE(moreAvailable);
       CHECK(loadedBad.empty());
 
       cpiGood.deleteLogFile();

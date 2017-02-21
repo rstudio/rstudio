@@ -120,7 +120,10 @@ public:
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
    void setTitle(std::string& title) { procInfo_->setTitle(title); }
    void deleteLogFile() const;
-   std::string getSavedBuffer() const;
+
+   // Get the given (0-based) chunk of the saved buffer; if more is available
+   // after the requested chunk, *pMoreAvailable will be set to true
+   std::string getSavedBufferChunk(int chunk, bool* pMoreAvailable) const;
 
    void setShowOnOutput(bool showOnOutput) { procInfo_->setShowOnOutput(showOnOutput); }
 
