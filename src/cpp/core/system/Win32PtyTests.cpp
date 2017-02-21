@@ -20,6 +20,8 @@
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
+#include <core/system/System.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -29,39 +31,46 @@ TEST_CASE("Win32PtyTests")
 {
    WinPty pty;
 
-   const UINT64 kAgentFlags = 0x0000;
-   const int kMouseMode = WINPTY_MOUSE_MODE_AUTO;
    const int kCols = 80;
    const int kRows = 25;
-   const DWORD kTimeoutMs = 500;
+
+   std::vector <std::string> args;
+   ProcessOptions options;
+   options.cols = 80;
+   options.rows = 25;
+   options.pseudoterminal = core::system::Pseudoterminal(options.cols,
+                                                         options.rows);
 
    SECTION("Agent not running")
    {
-      CHECK_FALSE(pty.agentRunning());
+      CHECK_FALSE(pty.ptyRunning());
    }
 
-   SECTION("Stopping agent when not running is ok")
+   SECTION("Initialize")
    {
-      CHECK_FALSE(pty.agentRunning());
-      pty.stopAgent();
-      CHECK_FALSE(pty.agentRunning());
+      CHECK_FALSE(pty.ptyRunning());
+      pty.init("cmd.exe", args, options);
+      CHECK_FALSE(pty.ptyRunning());
    }
 
-   SECTION("Start agent")
+   SECTION("Start pty")
    {
-      CHECK_FALSE(pty.agentRunning());
-      pty.startAgent(kAgentFlags, kCols, kRows, kMouseMode, kTimeoutMs);
-      CHECK(pty.agentRunning());
+      HANDLE hInWrite;
+      HANDLE hOutRead;
+      HANDLE hErrRead;
+
+      pty.init("cmd.exe", args, options);
+      Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
+      CHECK(!err);
+      CHECK_FALSE(hInWrite == INVALID_HANDLE_VALUE);
+      CHECK_FALSE(hOutRead == INVALID_HANDLE_VALUE);
+      CHECK_FALSE(hErrRead == INVALID_HANDLE_VALUE);
+      ::CloseHandle(hInWrite);
+      ::CloseHandle(hOutRead);
+      ::CloseHandle(hErrRead);
    }
 
-   SECTION("Start and Stop agent")
-   {
-      pty.startAgent(kAgentFlags, kCols, kRows, kMouseMode, kTimeoutMs);
-      CHECK(pty.agentRunning());
-      pty.stopAgent();
-      CHECK_FALSE(pty.agentRunning());
    }
-}
 
 } // end namespace tests
 } // end namespace system

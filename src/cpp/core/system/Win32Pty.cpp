@@ -25,13 +25,20 @@ namespace system {
 
 namespace {
 
-// Build an error string with user-supplied message, and append
-// winpty error state, if any
-std::string buildErrMsg(const std::string& msg, winpty_error_ptr_t pErr)
+// Obtain text description of winpty error (can return empty string)
+std::string winptyErrorMsg(winpty_error_ptr_t pErr)
 {
+   if (!pErr)
+      return std::string();
+
+   LPCWSTR pErrMsg = winpty_error_msg(pErr);
+   if (!pErrMsg)
+      return std::string();
+
+   return string_utils::wideToUtf8(pErrMsg);
 }
 
-// Hold and release a winpty_error_ptr_t
+// Holder for winpty_error_ptr_t
 class WinPtyError : boost::noncopyable
 {
 public:
@@ -60,22 +67,14 @@ public:
    std::string errMsg(const std::string& msg) const
    {
       std::string newMsg(msg);
-
-      if (pErr_)
+      std::string ptyMsg(winptyErrorMsg(pErr_));
+      if (!ptyMsg.empty())
       {
-         LPCWSTR pErrMsg = winpty_error_msg(pErr_);
-         if (pErrMsg)
+         if (!newMsg.empty())
          {
-            std::string ptyMsg = string_utils::wideToUtf8(pErrMsg);
-            if (!ptyMsg.empty())
-            {
-               if (!newMsg.empty())
-               {
-                  newMsg += ": ";
-               }
-               newMsg += ptyMsg;
-            }
+            newMsg += ": ";
          }
+         newMsg += ptyMsg;
       }
       return newMsg;
    }
@@ -84,7 +83,7 @@ private:
    winpty_error_ptr_t pErr_;
 };
 
-// hold and release a winpty_config_t
+// Holder for winpty_config_t
 class WinPtyConfig : boost::noncopyable
 {
 public:
@@ -94,6 +93,20 @@ public:
                 DWORD timeoutMs)
       : pConfig_(NULL)
    {
+      // winpty DLL aborts if cols and/or rows are zero
+      if (cols <= 0 || rows <= 0)
+      {
+         LOG_ERROR_MESSAGE("WinPtyConfig:invalid cols/rows");
+         return;
+      }
+
+      // winpty DLL aborts if timeoutMs is zero
+      if (timeoutMs == 0)
+      {
+         LOG_ERROR_MESSAGE("WinPtyConfig::invalid timeoutMs");
+         return;
+      }
+
       pConfig_ = winpty_config_new(agentFlags, err_.ppErr());
       if (pConfig_)
       {
@@ -124,49 +137,207 @@ private:
      WinPtyError err_;
 };
 
+// Holder for winpty_spawn_config_t
+class WinPtySpawnConfig : boost::noncopyable
+{
+public:
+   WinPtySpawnConfig(
+         UINT64 spawnFlags,
+         const std::string& appName,
+         const std::string& cmdLine,
+         const std::string& cwd,
+         const std::string& env)
+      : pSpawnConfig_(NULL)
+   {
+      pSpawnConfig_ = winpty_spawn_config_new(
+            spawnFlags,
+            string_utils::utf8ToWide(appName, "WinPtySpawnConfig::appName").c_str(),
+            string_utils::utf8ToWide(cmdLine, "WinPtySpawnConfig::cmdLine").c_str(),
+            string_utils::utf8ToWide(cwd, "WinPtySpawnConfig::cwd").c_str(),
+            string_utils::utf8ToWide(env, "WinPtySpawnConfig::env").c_str(),
+            err_.ppErr());
+   }
+
+   virtual ~WinPtySpawnConfig()
+   {
+      if (pSpawnConfig_)
+         winpty_spawn_config_free(pSpawnConfig_);
+   }
+
+   const winpty_spawn_config_t* get() const
+   {
+      return pSpawnConfig_;
+   }
+
+   std::string errMsg(const std::string& msg) const
+   {
+      return err_.errMsg(msg);
+   }
+
+private:
+     winpty_spawn_config_t* pSpawnConfig_;
+     WinPtyError err_;
+};
+
 } // anonymous namespace
 
 WinPty::~WinPty()
 {
-   stopAgent();
+   stopPty();
 }
 
-bool WinPty::startAgent(UINT64 agentFlags,
-                        int cols, int rows,
-                        int mousemode,
-                        DWORD timeoutMs)
+void WinPty::init(
+      const std::string& exe,
+      const std::vector<std::string> args,
+      const ProcessOptions& options)
 {
-   if (pPty_)
-      return true;
+   exe_ = exe;
+   args_ = args;
+   options_ = options;
+}
 
-   WinPtyConfig ptyConfig(agentFlags, cols, rows, mousemode, timeoutMs);
+Error WinPty::runProcess()
+{
+   WinPtySpawnConfig spawnConfig(
+            WINPTY_SPAWN_FLAG_EXIT_AFTER_SHUTDOWN,
+            "Terminal",
+            exe_,
+            "",
+            "");
+   if (!spawnConfig.get())
+   {
+      return systemError(ERROR_INVALID_FLAGS,
+                         spawnConfig.errMsg("Failed to create pty spawn config"),
+                         ERROR_LOCATION);
+   }
+
+   return Success();
+}
+
+Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead)
+{
+   if (ptyRunning())
+      return systemError(ERROR_SERVICE_EXISTS,
+                         "WinPty already running",
+                         ERROR_LOCATION);
+
+   if (!options_.pseudoterminal)
+   {
+      return systemError(ERROR_INVALID_FLAGS,
+                         "Pseudoterminal dimensions not provided",
+                         ERROR_LOCATION);
+   }
+
+   UINT64 agentFlags = 0x00;
+   int mousemode = WINPTY_MOUSE_MODE_AUTO;
+   DWORD timeoutMs = 500;
+
+   WinPtyConfig ptyConfig(agentFlags,
+                          options_.pseudoterminal.get().cols,
+                          options_.pseudoterminal.get().rows,
+                          mousemode,
+                          timeoutMs);
    if (!ptyConfig.get())
    {
-      LOG_ERROR_MESSAGE(ptyConfig.errMsg("Failed to create pty config"));
-      return false;
+      return systemError(ERROR_INVALID_FLAGS,
+                         ptyConfig.errMsg("Failed to create pty config"),
+                         ERROR_LOCATION);
    }
 
-   WinPtyError err;
-   pPty_ = winpty_open(ptyConfig.get(), err.ppErr());
+   WinPtyError ptyerr;
+   pPty_ = winpty_open(ptyConfig.get(), ptyerr.ppErr());
    if (!pPty_)
    {
-      LOG_ERROR_MESSAGE(err.errMsg("Failed to open agent"));
-      return false;
+      return systemError(ERROR_SERVICE_NEVER_STARTED,
+                         ptyerr.errMsg("Failed to start pty"),
+                         ERROR_LOCATION);
    }
 
-   return true;
-}
-
-void WinPty::stopAgent()
-{
-   if (pPty_)
+   if (pStdInWrite && winpty_conin_name(pPty_))
    {
-      winpty_free(pPty_);
-      pPty_ = NULL;
+      *pStdInWrite = ::CreateFileW(winpty_conin_name(pPty_),
+                                   GENERIC_WRITE,
+                                   0 /*dwShareMode*/,
+                                   NULL /*lpSecurityAttributed*/,
+                                   OPEN_EXISTING,
+                                   0 /*dwFlagsAndAttributes*/,
+                                   NULL /*hTemplateFile*/);
+      if (*pStdInWrite == INVALID_HANDLE_VALUE)
+      {
+         DWORD err = ::GetLastError();
+         stopPty();
+         ::SetLastError(err);
+         return systemError(::GetLastError(),
+                            "Failed to connect to pty conin pipe",
+                            ERROR_LOCATION);
+      }
    }
+
+   if (pStdOutRead && winpty_conout_name(pPty_))
+   {
+      *pStdOutRead = ::CreateFileW(winpty_conout_name(pPty_),
+                                   GENERIC_READ,
+                                   0 /*dwShareMode*/,
+                                   NULL /*lpSecurityAttributed*/,
+                                   OPEN_EXISTING,
+                                   0 /*dwFlagsAndAttributes*/,
+                                   NULL /*hTemplateFile*/);
+      if (*pStdOutRead == INVALID_HANDLE_VALUE)
+      {
+         DWORD err = ::GetLastError();
+         if (pStdInWrite && *pStdInWrite != INVALID_HANDLE_VALUE)
+         {
+            ::CloseHandle(*pStdInWrite);
+            *pStdInWrite = INVALID_HANDLE_VALUE;
+         }
+         stopPty();
+         ::SetLastError(err);
+         return systemError(::GetLastError(),
+                            "Failed to connect to pty conout pipe",
+                            ERROR_LOCATION);
+      }
+   }
+   if (pStdErrRead && winpty_conerr_name(pPty_))
+   {
+      *pStdErrRead = ::CreateFileW(winpty_conerr_name(pPty_),
+                                   GENERIC_READ,
+                                   0 /*dwShareMode*/,
+                                   NULL /*lpSecurityAttributed*/,
+                                   OPEN_EXISTING,
+                                   0 /*dwFlagsAndAttributes*/,
+                                   NULL /*hTemplateFile*/);
+      if (*pStdOutRead == INVALID_HANDLE_VALUE)
+      {
+         DWORD err = ::GetLastError();
+         if (pStdInWrite && *pStdInWrite != INVALID_HANDLE_VALUE)
+         {
+            ::CloseHandle(*pStdInWrite);
+            *pStdInWrite = INVALID_HANDLE_VALUE;
+         }
+         if (pStdOutRead && *pStdOutRead != INVALID_HANDLE_VALUE)
+         {
+            ::CloseHandle(*pStdOutRead);
+            *pStdOutRead = INVALID_HANDLE_VALUE;
+         }
+         stopPty();
+         ::SetLastError(err);
+         return systemError(::GetLastError(),
+                            "Failed to connect to pty conerr pipe",
+                            ERROR_LOCATION);
+      }
+   }
+   return Success();
 }
 
-bool WinPty::agentRunning() const
+void WinPty::stopPty()
+{
+   if (!ptyRunning())
+      return;
+   winpty_free(pPty_);
+   pPty_ = NULL;
+}
+
+bool WinPty::ptyRunning() const
 {
    return pPty_ != NULL;
 }
@@ -174,4 +345,3 @@ bool WinPty::agentRunning() const
 } // namespace system
 } // namespace core
 } // namespace rstudio
-

@@ -64,7 +64,6 @@ std::string findOnPath(const std::string& exe,
    }
 }
 
-
 // resolve the passed command and arguments to the form required for a
 // call to CreateProcess (do path lookup if necessary and invoke the
 // command within a command processor if it is a batch file)
@@ -227,8 +226,8 @@ void ChildProcess::init(const std::string& command,
 // initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-    std::string command = options_.consoleIoPath + " cmd.exe";
-    init(command, options);
+   exe_ = findOnPath("cmd.exe");
+   options_ = options;
 }
 
 ChildProcess::~ChildProcess()
@@ -327,18 +326,21 @@ Error ChildProcess::run()
    static CriticalSection s_runCriticalSection;
    CriticalSection::Scope csScope(s_runCriticalSection);
 
-   // pseudoterminal mode: use winpty to emulate pseudoterminal
+   // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
-      const UINT64 kAgentFlags = 0x0000;
-      const int kMouseMode = WINPTY_MOUSE_MODE_AUTO;
-      const int kCols = 80;
-      const int kRows = 25;
-      const DWORD kTimeoutMs = 500;
-      if (!pImpl_->pty_.startAgent(kAgentFlags, kCols, kRows, kMouseMode, kTimeoutMs))
-      {
-         return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-      }
+      pImpl_->pty_.init(exe_, args_, options_);
+
+      error = pImpl_->pty_.startPty(
+               &pImpl_->hStdInWrite, &pImpl_->hStdOutRead, &pImpl_->hStdErrRead);
+      if (error)
+         return error;
+
+      error = pImpl_->pty_.runProcess();
+      if (error)
+         return error;
+
+      return Success();
    }
 
    // Standard input pipe

@@ -16,11 +16,15 @@
 #ifndef CORE_SYSTEM_WIN32PTY_HPP
 #define CORE_SYSTEM_WIN32PTY_HPP
 
-#include <winpty/winpty.h>
-
 #include <string>
 
 #include <boost/noncopyable.hpp>
+
+#include <core/system/Process.hpp>
+#include <core/Error.hpp>
+#include <core/Log.hpp>
+
+#include <winpty/winpty.h>
 
 namespace rstudio {
 namespace core {
@@ -38,21 +42,26 @@ public:
 
    virtual ~WinPty();
 
-   // Start the winpty agent process (safe to call if already running).
-   // Returns true if successful.
-   bool startAgent(UINT64 agentFlags,
-                   int cols, int rows,
-                   int mousemode,
-                   DWORD timeoutMs);
+   void init(const std::string& exe,
+             const std::vector<std::string> args,
+             const ProcessOptions& options);
 
-   // Stop the winpty agent process (safe to call if it is not running).
-   void stopAgent();
+   // Start the agent; caller is responsible for closing the returned HANDLEs
+   Error startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead);
+   bool ptyRunning() const;
 
-   // Is the agent currently running?
-   bool agentRunning() const;
+   // Start the process specified by init(); it will do I/O via the handles
+   // returned by startPty.
+   Error runProcess();
+
+private:
+   void stopPty();
 
 private:
    winpty_t *pPty_;
+   std::string exe_;
+   std::vector<std::string> args_;
+   ProcessOptions options_;
 };
 
 } // namespace system
