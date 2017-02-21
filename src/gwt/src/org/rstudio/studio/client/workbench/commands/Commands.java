@@ -89,12 +89,15 @@ public abstract class
    public abstract AppCommand markdownHelp();
    public abstract AppCommand openRStudioIDECheatSheet();
    public abstract AppCommand openDataVisualizationCheatSheet();
+   public abstract AppCommand openDataImportCheatSheet();
    public abstract AppCommand openPackageDevelopmentCheatSheet();
    public abstract AppCommand openDataWranglingCheatSheet();
+   public abstract AppCommand openDataTransformationCheatSheet();
    public abstract AppCommand openRMarkdownCheatSheet();
    public abstract AppCommand openRMarkdownReferenceGuide();
    public abstract AppCommand openShinyCheatSheet();
    public abstract AppCommand openRoxygenQuickReference();
+   public abstract AppCommand openSparklyrCheatSheet();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();

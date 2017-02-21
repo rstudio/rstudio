@@ -482,12 +482,13 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <menu label="_Cheatsheets">
             <cmd refid="openRStudioIDECheatSheet"/>'
-            <cmd refid="openDataWranglingCheatSheet"/>
+            <cmd refid="openDataTransformationCheatSheet"/>
             <cmd refid="openDataVisualizationCheatSheet"/>
+            <cmd refid="openPackageDevelopmentCheatSheet"/>
+            <cmd refid="openShinyCheatSheet"/>
+            <cmd refid="openSparklyrCheatSheet"/>
             <cmd refid="openRMarkdownCheatSheet"/>
             <cmd refid="openRMarkdownReferenceGuide"/>
-            <cmd refid="openShinyCheatSheet"/>
-            <cmd refid="openPackageDevelopmentCheatSheet"/>
          </menu>
          <separator/>
          <cmd refid="helpKeyboardShortcuts"/>
@@ -1764,10 +1765,25 @@ well as menu structures (for main menu and popup menus).
          menuLabel="Package Development with devtools"
          desc="Package development with devtools"
          context="help"/>
+         
+    <cmd id="openDataImportCheatSheet"
+         menuLabel="Import Data with readr"
+         desc="Import data with readr"
+         context="help"/>
 
     <cmd id="openDataWranglingCheatSheet"
          menuLabel="Data Manipulation with dplyr, tidyr"
          desc="Data manipulation with dplyr and tidyr"
+         context="help"/>
+         
+    <cmd id="openDataTransformationCheatSheet"
+          menuLabel="Data Transformation with dplyr"
+          desc="Data transformation with dplyr"
+          context="help"/>
+          
+    <cmd id="openSparklyrCheatSheet"
+         menuLabel="Interfacing Spark with sparklyr"
+         desc="Interfacing Apache Spark with sparklyr"
          context="help"/>
 
     <cmd id="openRMarkdownCheatSheet"
@@ -1781,8 +1797,8 @@ well as menu structures (for main menu and popup menus).
          context="help"/>
 
     <cmd id="openShinyCheatSheet"
-         menuLabel="Shiny Web Applications"
-         desc="Shiny web applications"
+         menuLabel="Web Applications with shiny"
+         desc="Build web applications with Shiny"
          context="help"/>
 
    <cmd id="knitDocument"

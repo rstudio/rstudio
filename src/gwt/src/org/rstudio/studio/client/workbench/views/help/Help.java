@@ -229,6 +229,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
       openCheatSheet("ide_cheat_sheet");
    }
    
+   void onOpenDataImportCheatSheet()
+   {
+      openCheatSheet("data_import_cheat_sheet");
+   }
+   
    void onOpenDataVisualizationCheatSheet()
    {
       openCheatSheet("data_visualization_cheat_sheet");
@@ -237,6 +242,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
    void onOpenPackageDevelopmentCheatSheet()
    {
       openCheatSheet("package_development_cheat_sheet");
+   }
+   
+   void onOpenDataTransformationCheatSheet()
+   {
+      openCheatSheet("data_transformation_cheat_sheet");
    }
    
    void onOpenDataWranglingCheatSheet()
@@ -257,6 +267,11 @@ public class Help extends BasePresenter implements ShowHelpHandler
    void onOpenShinyCheatSheet()
    {
       openCheatSheet("shiny_cheat_sheet");
+   }
+   
+   void onOpenSparklyrCheatSheet()
+   {
+      openCheatSheet("sparklyr_cheat_sheet");
    }
    
    private void openCheatSheet(String name)
