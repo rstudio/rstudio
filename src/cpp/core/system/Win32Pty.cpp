@@ -15,8 +15,9 @@
 
 #include "Win32Pty.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <core/Error.hpp>
-#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
@@ -94,18 +95,14 @@ public:
       : pConfig_(NULL)
    {
       // winpty DLL aborts if cols and/or rows are zero
-      if (cols <= 0 || rows <= 0)
-      {
-         LOG_ERROR_MESSAGE("WinPtyConfig:invalid cols/rows");
-         return;
-      }
+      if (cols < 1)
+         cols = 80;
+      if (rows < 1)
+         rows = 25;
 
       // winpty DLL aborts if timeoutMs is zero
       if (timeoutMs == 0)
-      {
-         LOG_ERROR_MESSAGE("WinPtyConfig::invalid timeoutMs");
-         return;
-      }
+         timeoutMs = 500;
 
       pConfig_ = winpty_config_new(agentFlags, err_.ppErr());
       if (pConfig_)
@@ -145,17 +142,37 @@ public:
          UINT64 spawnFlags,
          const std::string& appName,
          const std::string& cmdLine,
-         const std::string& cwd,
-         const std::string& env)
+         const ProcessOptions& options)
       : pSpawnConfig_(NULL)
    {
+      // Build wchar_t environment
+      LPCWSTR lpEnv = NULL;
+      std::vector<wchar_t> envBlock;
+      if (options.environment)
+      {
+         const Options& env = options.environment.get();
+         BOOST_FOREACH(const Option& envVar, env)
+         {
+            std::wstring key = string_utils::utf8ToWide(envVar.first);
+            std::wstring value = string_utils::utf8ToWide(envVar.second);
+            std::copy(key.begin(), key.end(), std::back_inserter(envBlock));
+            envBlock.push_back(L'=');
+            std::copy(value.begin(), value.end(), std::back_inserter(envBlock));
+            envBlock.push_back(L'\0');
+         }
+         envBlock.push_back(L'\0');
+         lpEnv = &envBlock[0];
+      }
+
+      std::wstring workingDir(options.workingDir.absolutePathW());
+
       pSpawnConfig_ = winpty_spawn_config_new(
-            spawnFlags,
-            string_utils::utf8ToWide(appName, "WinPtySpawnConfig::appName").c_str(),
-            string_utils::utf8ToWide(cmdLine, "WinPtySpawnConfig::cmdLine").c_str(),
-            string_utils::utf8ToWide(cwd, "WinPtySpawnConfig::cwd").c_str(),
-            string_utils::utf8ToWide(env, "WinPtySpawnConfig::env").c_str(),
-            err_.ppErr());
+               spawnFlags,
+               string_utils::utf8ToWide(appName, "WinPtySpawnConfig::appName").c_str(),
+               string_utils::utf8ToWide(cmdLine, "WinPtySpawnConfig::cmdLine").c_str(),
+               workingDir.c_str(),
+               lpEnv,
+               err_.ppErr());
    }
 
    virtual ~WinPtySpawnConfig()
@@ -196,18 +213,44 @@ void WinPty::init(
    options_ = options;
 }
 
-Error WinPty::runProcess()
+Error WinPty::runProcess(HANDLE* pProcess, HANDLE* pThread)
 {
+   if (pProcess)
+      *pProcess = INVALID_HANDLE_VALUE;
+   if (pThread)
+      *pThread = INVALID_HANDLE_VALUE;
+
+   if (!ptyRunning())
+   {
+      return systemError(ERROR_SERVICE_NOT_FOUND,
+                         "Pty not running",
+                         ERROR_LOCATION);
+   }
+
+   // TODO: combine args into one string
    WinPtySpawnConfig spawnConfig(
             WINPTY_SPAWN_FLAG_EXIT_AFTER_SHUTDOWN,
-            "Terminal",
-            exe_,
-            "",
-            "");
+            exe_ /*appName*/,
+            "" /*cmdline*/,
+            options_);
    if (!spawnConfig.get())
    {
       return systemError(ERROR_INVALID_FLAGS,
                          spawnConfig.errMsg("Failed to create pty spawn config"),
+                         ERROR_LOCATION);
+   }
+
+   DWORD createProcError;
+   WinPtyError err;
+   if (!winpty_spawn(pPty_,
+                     spawnConfig.get(),
+                     pProcess,
+                     pThread,
+                     &createProcError,
+                     err.ppErr()))
+   {
+      return systemError(createProcError,
+                         err.errMsg("runProcess"),
                          ERROR_LOCATION);
    }
 
@@ -216,12 +259,19 @@ Error WinPty::runProcess()
 
 Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead)
 {
+   if (pStdErrRead)
+      *pStdErrRead = INVALID_HANDLE_VALUE;
+   if (pStdInWrite)
+      *pStdInWrite = INVALID_HANDLE_VALUE;
+   if (pStdOutRead)
+      *pStdOutRead = INVALID_HANDLE_VALUE;
+
    if (ptyRunning())
       return systemError(ERROR_SERVICE_EXISTS,
                          "WinPty already running",
                          ERROR_LOCATION);
 
-   if (!options_.pseudoterminal)
+  if (!options_.pseudoterminal)
    {
       return systemError(ERROR_INVALID_FLAGS,
                          "Pseudoterminal dimensions not provided",
@@ -229,8 +279,12 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
    }
 
    UINT64 agentFlags = 0x00;
+
+   // TODO (gary) don't set this for Windows Vista or earlier
+   agentFlags |=WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION;
+
    int mousemode = WINPTY_MOUSE_MODE_AUTO;
-   DWORD timeoutMs = 500;
+   DWORD timeoutMs = 1000;
 
    WinPtyConfig ptyConfig(agentFlags,
                           options_.pseudoterminal.get().cols,
@@ -340,6 +394,32 @@ void WinPty::stopPty()
 bool WinPty::ptyRunning() const
 {
    return pPty_ != NULL;
+}
+
+Error WinPty::setSize(int cols, int rows)
+{
+   if (!ptyRunning())
+   {
+      return systemError(ERROR_SERVICE_NOT_FOUND,
+                         "Pty not running",
+                         ERROR_LOCATION);
+   }
+
+   if (cols < 1 || rows < 1)
+   {
+      return systemError(ERROR_INVALID_FLAGS,
+                         "Resize passed invalid terminal size",
+                         ERROR_LOCATION);
+   }
+
+   WinPtyError err;
+   if (!winpty_set_size(pPty_, cols, rows, err.ppErr()))
+   {
+      return systemError(ERROR_CAN_NOT_COMPLETE,
+                         err.errMsg("setSize"),
+                         ERROR_LOCATION);
+   }
+   return Success();
 }
 
 } // namespace system

@@ -226,7 +226,8 @@ void ChildProcess::init(const std::string& command,
 // initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-   exe_ = findOnPath("cmd.exe");
+   // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
+   exe_ = findOnPath("powershell.exe");
    options_ = options;
 }
 
@@ -258,7 +259,7 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
 Error ChildProcess::ptySetSize(int cols, int rows)
 {
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+   return pImpl_->pty_.setSize(cols, rows);
 }
 
 Error ChildProcess::ptyInterrupt()
@@ -336,7 +337,7 @@ Error ChildProcess::run()
       if (error)
          return error;
 
-      error = pImpl_->pty_.runProcess();
+      error = pImpl_->pty_.runProcess(&pImpl_->hProcess, NULL /*hThread*/);
       if (error)
          return error;
 
@@ -623,12 +624,16 @@ void AsyncChildProcess::poll()
       callbacks_.onStdout(*this, stdOut);
 
    // check stderr
-   std::string stdErr;
-   error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
-   if (error)
-      reportError(error);
-   if (!stdErr.empty() && callbacks_.onStderr)
-      callbacks_.onStderr(*this, stdErr);
+   // when using winpty, we don't use hStdErrRead
+   if (pImpl_->hStdErrRead != INVALID_HANDLE_VALUE)
+   {
+      std::string stdErr;
+      error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
+      if (error)
+         reportError(error);
+      if (!stdErr.empty() &&  callbacks_.onStderr)
+         callbacks_.onStderr(*this, stdErr);
+   }
 
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);

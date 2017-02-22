@@ -53,7 +53,7 @@ TEST_CASE("Win32PtyTests")
       CHECK_FALSE(pty.ptyRunning());
    }
 
-   SECTION("Start pty")
+   SECTION("Start pty and get handles")
    {
       HANDLE hInWrite;
       HANDLE hOutRead;
@@ -64,13 +64,12 @@ TEST_CASE("Win32PtyTests")
       CHECK(!err);
       CHECK_FALSE(hInWrite == INVALID_HANDLE_VALUE);
       CHECK_FALSE(hOutRead == INVALID_HANDLE_VALUE);
-      CHECK_FALSE(hErrRead == INVALID_HANDLE_VALUE);
+      CHECK(hErrRead == INVALID_HANDLE_VALUE);
       ::CloseHandle(hInWrite);
       ::CloseHandle(hOutRead);
-      ::CloseHandle(hErrRead);
    }
 
-   }
+}
 
 } // end namespace tests
 } // end namespace system

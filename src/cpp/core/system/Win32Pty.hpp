@@ -46,13 +46,24 @@ public:
              const std::vector<std::string> args,
              const ProcessOptions& options);
 
-   // Start the agent; caller is responsible for closing the returned HANDLEs
-   Error startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead);
+   // Start the pty and return HANDLEs. On success, caller is responsible for
+   // closing returned HANDLESs; on failure, all returned HANDLES will
+   // contain INVALID_HANDLE_VALUE.
+   Error startPty(
+         HANDLE* pStdInWrite /*OPTIONAL*/,
+         HANDLE* pStdOutRead /*OPTIONAL*/,
+         HANDLE* pStdErrRead /*OPTIONAL*/);
    bool ptyRunning() const;
 
    // Start the process specified by init(); it will do I/O via the handles
-   // returned by startPty.
-   Error runProcess();
+   // returned by startPty. On success, caller is responsible for closing
+   // returned HANDLEs; on failure, all returned HANDLEs will contain
+   // INVALID_HANDLE_VALUE.
+   Error runProcess(HANDLE* pProcess /*OPTIONAL*/,
+                    HANDLE* pThread /*OPTIONAL*/);
+
+   // Change the size of the pseudoterminal
+   Error setSize(int cols, int rows);
 
 private:
    void stopPty();
