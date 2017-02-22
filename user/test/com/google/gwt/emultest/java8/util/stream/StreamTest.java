@@ -291,34 +291,52 @@ public class StreamTest extends EmulTestBase {
   public void testAnyMatch() {
     // all
     assertTrue(Stream.of("a", "b").anyMatch(s -> true));
-
     // some
     assertTrue(Stream.of("a", "b").anyMatch(s -> s.equals("a")));
-
     // none
     assertFalse(Stream.of("a", "b").anyMatch(s -> false));
+
+    // With null values.
+    // all
+    assertTrue(Stream.of(null, "a", "b").anyMatch(s -> true));
+    // some
+    assertTrue(Stream.of(null, "a", "b").anyMatch(s ->  s == null));
+    // none
+    assertFalse(Stream.of(null, "a", "b").anyMatch(s -> false));
   }
 
   public void testAllMatch() {
     // all
     assertTrue(Stream.of("a", "b").allMatch(s -> true));
-
     // some
     assertFalse(Stream.of("a", "b").allMatch(s -> s.equals("a")));
-
     // none
     assertFalse(Stream.of("a", "b").allMatch(s -> false));
+
+    // With null values.
+    // all
+    assertTrue(Stream.of(null, "a", "b").allMatch(s -> true));
+    // some
+    assertFalse(Stream.of(null, "a", "b").allMatch(s -> s != null));
+    // none
+    assertFalse(Stream.of(null, "a", "b").allMatch(s -> false));
   }
 
   public void testNoneMatch() {
     // all
     assertFalse(Stream.of("a", "b").noneMatch(s -> true));
-
     // some
     assertFalse(Stream.of("a", "b").noneMatch(s -> s.equals("a")));
-
     // none
     assertTrue(Stream.of("a", "b").noneMatch(s -> false));
+
+    // With null values.
+    // all
+    assertFalse(Stream.of(null, "a", "b").noneMatch(s -> true));
+    // some
+    assertFalse(Stream.of(null, "a", "b").noneMatch(s -> s == null));
+    // none
+    assertTrue(Stream.of(null, "a", "b").noneMatch(s -> false));
   }
 
   public void testFlatMap() {

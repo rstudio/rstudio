@@ -609,9 +609,11 @@ final class StreamImpl<T> extends TerminatableStream<StreamImpl<T>> implements S
     return findFirst();
   }
 
+  private static final Consumer<Object> NULL_CONSUMER = value -> { };
+
   @Override
   public boolean anyMatch(Predicate<? super T> predicate) {
-    return filter(predicate).findFirst().isPresent();
+    return filter(predicate).spliterator().tryAdvance(NULL_CONSUMER);
   }
 
   @Override
