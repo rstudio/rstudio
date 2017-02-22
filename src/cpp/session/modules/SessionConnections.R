@@ -36,6 +36,7 @@
    .rs.validateParams(connection, 
        c("disconnect", "listObjects", "listColumns", "previewObject"),
        "function")
+   .rs.validateOdbcConnection(connection)
 })
 
 # create an environment which will host the known active connections
@@ -213,6 +214,18 @@ options(connectionObserver = list(
    }
 
    NULL
+})
+
+.rs.addFunction("validateOdbcConnection", function(connection) {
+   con <- .rs.findActiveConnection(connection$type, connection$host)
+   if (!is.null(con) && identical(class(con), "OdbcConnection")) {
+      if (.rs.isPackageInstalled("odbc") && exists("dbGetInfo", envir = asNamespace("odbc"))) {
+         dbGetInfo <- get("dbGetInfo", envir = asNamespace("odbc"))
+         info <- dbGetInfo(con)
+
+         if (grepl("Simba", info$drivername)) stop("This connection is not ssupported for this version of RStudio.")
+      }
+   }
 })
 
 .rs.addFunction("connectionReadSnippets", function() {
