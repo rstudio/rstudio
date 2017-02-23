@@ -22,8 +22,7 @@ import org.rstudio.studio.client.common.r.RTokenizerTests;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParserTest;
 
 @RunWith(Suite.class)
-@SuiteClasses({ RTokenizerTests.class,
-                UnifiedParserTest.class,
+@SuiteClasses({ RTokenizerTests.class
                 })
 public class RStudioUnitTestSuite 
 {

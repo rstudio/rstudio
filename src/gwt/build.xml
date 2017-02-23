@@ -38,7 +38,6 @@
    </path>
 
    <path id="unittest.class.path">
-      <pathelement location="bin"/>
       <fileset dir="lib/" includes="*.jar"/>
    </path>
 
@@ -225,12 +224,14 @@
       </javac>
    </target>
 
-   <target name="unittest" description="Runs JUnit unit tests">
+   <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
      <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
         <classpath>
-           <pathelement location="src"/>
-           <path refid="unittest.class.path"/>
+            <pathelement location="test"/>
+            <pathelement location="src"/>
         </classpath>
+        <classpath refid="project.class.path"/>
+        <classpath refid="unittest.class.path"/>
         <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
      </java>
    </target>
