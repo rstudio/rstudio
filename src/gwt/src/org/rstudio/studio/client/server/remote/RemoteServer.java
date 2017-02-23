@@ -2189,6 +2189,18 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GIT_CHECKOUT, id,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }
+   
+   @Override
+   public void gitCheckoutRemote(String branch,
+                                 String remote,
+                                 ServerRequestCallback<ConsoleProcess> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(branch));
+      params.set(1, new JSONString(remote));
+      sendRequest(RPC_SCOPE, GIT_CHECKOUT_REMOTE, params,
+            new ConsoleProcessCallbackAdapter(requestCallback));
+   }
 
    public void gitCommit(String message,
                          boolean amend,
@@ -5226,6 +5238,7 @@ public class RemoteServer implements Server
    private static final String GIT_LIST_REMOTES = "git_list_remotes";
    private static final String GIT_ADD_REMOTE = "git_add_remote";
    private static final String GIT_CHECKOUT = "git_checkout";
+   private static final String GIT_CHECKOUT_REMOTE = "git_checkout_remote";
    private static final String GIT_COMMIT = "git_commit";
    private static final String GIT_PUSH = "git_push";
    private static final String GIT_PUSH_BRANCH = "git_push_branch";

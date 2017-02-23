@@ -1,7 +1,7 @@
 /*
- * SessionOverlay.cpp
+ * RStudioUnitTestSuite.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,29 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client;
 
-#include "SessionOverlay.hpp"
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
 
-#include <core/Error.hpp>
+import org.rstudio.studio.client.common.r.RTokenizerTests;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParserTest;
 
-using namespace rstudio::core ;
-
-namespace rstudio {
-namespace session {  
-namespace modules {
-namespace overlay {
-
-Error initialize()
+@RunWith(Suite.class)
+@SuiteClasses({ RTokenizerTests.class,
+                UnifiedParserTest.class,
+                })
+public class RStudioUnitTestSuite 
 {
-   return Success();
-}
 
-bool isSuspendable()
-{
-   return true;
 }
-
-} // namespace overlay
-} // namespace modules
-} // namespace session
-} // namespace rstudio
