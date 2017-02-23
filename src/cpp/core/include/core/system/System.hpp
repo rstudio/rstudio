@@ -36,6 +36,7 @@ typedef pid_t PidType;
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
+#include <core/FilePath.hpp>
 
 #include <core/system/Types.hpp>
 
@@ -43,7 +44,6 @@ namespace rstudio {
 namespace core {
 
 class FileInfo;
-class FilePath;
 
 namespace system {
 
@@ -130,9 +130,11 @@ void safePosixCall(const boost::function<T()>& func,
 #ifdef _WIN32
 bool isWin64();
 bool isVistaOrLater();
+bool isWin7OrLater();
 Error makeFileHidden(const FilePath& path);
 Error copyMetafileToClipboard(const FilePath& path);
 void ensureLongPath(FilePath* pFilePath);
+FilePath expandComSpec();
 
 // close a handle then set it to NULL (so we can call this function
 // repeatedly without failure or other side effects)

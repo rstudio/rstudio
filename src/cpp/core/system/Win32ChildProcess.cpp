@@ -173,7 +173,8 @@ struct ChildProcess::Impl
         closeStdIn_(&hStdInWrite, ERROR_LOCATION),
         closeStdOut_(&hStdOutRead, ERROR_LOCATION),
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
-        closeProcess_(&hProcess, ERROR_LOCATION)
+        closeProcess_(&hProcess, ERROR_LOCATION),
+        ctrlC(0x03)
    {
    }
 
@@ -181,7 +182,8 @@ struct ChildProcess::Impl
    HANDLE hStdOutRead;
    HANDLE hStdErrRead;
    HANDLE hProcess;
-   WinPty pty_;
+   WinPty pty;
+   char ctrlC;
 
 private:
    CloseHandleOnExitScope closeStdIn_;
@@ -227,7 +229,11 @@ void ChildProcess::init(const std::string& command,
 void ChildProcess::init(const ProcessOptions& options)
 {
    // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
-   exe_ = findOnPath("powershell.exe");
+   FilePath cmd = expandComSpec();
+   if (!cmd.exists())
+      exe_ = findOnPath("cmd.exe");
+   else
+      exe_ = cmd.absolutePathNative();
    options_ = options;
 }
 
@@ -259,14 +265,21 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
 Error ChildProcess::ptySetSize(int cols, int rows)
 {
-   return pImpl_->pty_.setSize(cols, rows);
+   // verify we are dealing with a pseudoterminal
+   if (!options().pseudoterminal)
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   return pImpl_->pty.setSize(cols, rows);
 }
 
 Error ChildProcess::ptyInterrupt()
 {
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-}
+   // verify we are dealing with a pseudoterminal
+   if (!options().pseudoterminal)
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
+   return pImpl_->pty.interrupt();
+}
 
 Error ChildProcess::terminate()
 {
@@ -279,7 +292,8 @@ Error ChildProcess::terminate()
 
 bool ChildProcess::hasSubprocess() const
 {
-   return true;
+   // TODO (gary)
+   return false;
 }
 
 namespace {
@@ -330,14 +344,13 @@ Error ChildProcess::run()
    // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
    if (options_.pseudoterminal)
    {
-      pImpl_->pty_.init(exe_, args_, options_);
+      pImpl_->pty.init(exe_, args_, options_);
 
-      error = pImpl_->pty_.startPty(
-               &pImpl_->hStdInWrite, &pImpl_->hStdOutRead, &pImpl_->hStdErrRead);
+      error = pImpl_->pty.startPty(&pImpl_->hStdInWrite, &pImpl_->hStdOutRead);
       if (error)
          return error;
 
-      error = pImpl_->pty_.runProcess(&pImpl_->hProcess, NULL /*hThread*/);
+      error = pImpl_->pty.runProcess(&pImpl_->hProcess);
       if (error)
          return error;
 
@@ -625,7 +638,7 @@ void AsyncChildProcess::poll()
 
    // check stderr
    // when using winpty, we don't use hStdErrRead
-   if (pImpl_->hStdErrRead != INVALID_HANDLE_VALUE)
+   if (pImpl_->hStdErrRead)
    {
       std::string stdErr;
       error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);

@@ -62,13 +62,62 @@ TEST_CASE("Win32PtyTests")
       pty.init("cmd.exe", args, options);
       Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
       CHECK(!err);
-      CHECK_FALSE(hInWrite == INVALID_HANDLE_VALUE);
-      CHECK_FALSE(hOutRead == INVALID_HANDLE_VALUE);
-      CHECK(hErrRead == INVALID_HANDLE_VALUE);
-      ::CloseHandle(hInWrite);
-      ::CloseHandle(hOutRead);
+      CHECK(hInWrite);
+      CHECK(hOutRead);
+      CHECK_FALSE(hErrRead);
+      CHECK(::CloseHandle(hInWrite));
+      CHECK(::CloseHandle(hOutRead));
    }
 
+   SECTION("Start pty and a process")
+   {
+      HANDLE hInWrite;
+      HANDLE hOutRead;
+      HANDLE hErrRead;
+
+      FilePath cmd = expandComSpec();
+      CHECK(cmd.exists());
+      std::string exe = cmd.absolutePathNative();
+
+      pty.init(exe, args, options);
+      Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
+      CHECK(!err);
+      CHECK(hInWrite);
+      CHECK(hOutRead);
+      CHECK_FALSE(hErrRead);
+
+      HANDLE hProcess;
+      err = pty.runProcess(&hProcess);
+      CHECK(!err);
+      CHECK(hProcess);
+
+      CHECK(::CloseHandle(hInWrite));
+      CHECK(::CloseHandle(hOutRead));
+   }
+
+   SECTION("Start pty but fail to start process")
+   {
+      HANDLE hInWrite;
+      HANDLE hOutRead;
+      HANDLE hErrRead;
+
+      pty.init("C:\\NoWindows\\system08\\huhcmd.exe", args, options);
+      Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
+      CHECK(!err);
+      CHECK(hInWrite);
+      CHECK(hOutRead);
+      CHECK_FALSE(hErrRead);
+
+      HANDLE hProcess;
+      err = pty.runProcess(&hProcess);
+      CHECK(err);
+      CHECK_FALSE(hProcess);
+   }
+
+   SECTION("Capture output of a process")
+   {
+      CHECK(true);
+   }
 }
 
 } // end namespace tests

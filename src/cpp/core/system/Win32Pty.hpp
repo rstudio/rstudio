@@ -48,22 +48,23 @@ public:
 
    // Start the pty and return HANDLEs. On success, caller is responsible for
    // closing returned HANDLESs; on failure, all returned HANDLES will
-   // contain INVALID_HANDLE_VALUE.
+   // contain NULL.
    Error startPty(
-         HANDLE* pStdInWrite /*OPTIONAL*/,
-         HANDLE* pStdOutRead /*OPTIONAL*/,
-         HANDLE* pStdErrRead /*OPTIONAL*/);
+         HANDLE* pStdInWrite,
+         HANDLE* pStdOutRead,
+         HANDLE* pStdErrRead = NULL /*OPTIONAL*/);
    bool ptyRunning() const;
 
    // Start the process specified by init(); it will do I/O via the handles
    // returned by startPty. On success, caller is responsible for closing
-   // returned HANDLEs; on failure, all returned HANDLEs will contain
-   // INVALID_HANDLE_VALUE.
-   Error runProcess(HANDLE* pProcess /*OPTIONAL*/,
-                    HANDLE* pThread /*OPTIONAL*/);
+   // returned HANDLE. On failure, pProcess will contain NULL.
+   Error runProcess(HANDLE* pProcess = NULL /*OPTIONAL*/);
 
    // Change the size of the pseudoterminal
    Error setSize(int cols, int rows);
+
+   // Send interrupt (Ctrl+C)
+   Error interrupt();
 
 private:
    void stopPty();

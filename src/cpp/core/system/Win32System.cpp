@@ -242,6 +242,25 @@ bool isVistaOrLater()
    }
 }
 
+bool isWin7OrLater()
+{
+   OSVERSIONINFOA osVersion;
+   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
+   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+   if (::GetVersionExA(&osVersion))
+   {
+      // 6.0 Vista, 6.1 Win7, 6.2 Win8, 6.3 Win8.1, >6 is Win10+
+      return osVersion.dwMajorVersion > 6 ||
+             osVersion.dwMajorVersion == 6 && osVersion.dwMinorVersion > 0;
+   }
+   else
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return false;
+   }
+}
+
 std::string username()
 {
    return system::getenv("USERNAME");
@@ -805,6 +824,25 @@ void ensureLongPath(FilePath* pFilePath)
    {
       *pFilePath = FilePath(string_utils::systemToUtf8(buffer));
    }
+}
+
+FilePath expandComSpec()
+{
+   LPCWSTR lpSrc = L"%COMSPEC%";
+   DWORD requiredSize = ::ExpandEnvironmentStringsW(lpSrc, NULL, 0);
+   if (!requiredSize)
+      return FilePath();
+
+   std::vector<wchar_t> buffer;
+   buffer.reserve(requiredSize);
+   int result = ::ExpandEnvironmentStringsW(lpSrc,
+                                           &buffer[0],
+                                           buffer.capacity());
+
+   if (!result || result > buffer.capacity())
+      return FilePath();
+
+   return FilePath(&buffer[0]);
 }
 
 Error terminateProcess(PidType pid)

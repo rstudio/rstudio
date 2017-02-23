@@ -19,6 +19,7 @@
 
 #include <core/Error.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/System.hpp>
 
 namespace rstudio {
 namespace core {
@@ -213,16 +214,14 @@ void WinPty::init(
    options_ = options;
 }
 
-Error WinPty::runProcess(HANDLE* pProcess, HANDLE* pThread)
+Error WinPty::runProcess(HANDLE* pProcess)
 {
    if (pProcess)
-      *pProcess = INVALID_HANDLE_VALUE;
-   if (pThread)
-      *pThread = INVALID_HANDLE_VALUE;
+      *pProcess = NULL;
 
    if (!ptyRunning())
    {
-      return systemError(ERROR_SERVICE_NOT_FOUND,
+      return systemError(boost::system::errc::no_such_process,
                          "Pty not running",
                          ERROR_LOCATION);
    }
@@ -235,7 +234,7 @@ Error WinPty::runProcess(HANDLE* pProcess, HANDLE* pThread)
             options_);
    if (!spawnConfig.get())
    {
-      return systemError(ERROR_INVALID_FLAGS,
+      return systemError(boost::system::errc::invalid_argument,
                          spawnConfig.errMsg("Failed to create pty spawn config"),
                          ERROR_LOCATION);
    }
@@ -245,10 +244,12 @@ Error WinPty::runProcess(HANDLE* pProcess, HANDLE* pThread)
    if (!winpty_spawn(pPty_,
                      spawnConfig.get(),
                      pProcess,
-                     pThread,
+                     NULL /*pThread*/,
                      &createProcError,
                      err.ppErr()))
    {
+      if (pProcess)
+         pProcess = NULL;
       return systemError(createProcError,
                          err.errMsg("runProcess"),
                          ERROR_LOCATION);
@@ -259,29 +260,31 @@ Error WinPty::runProcess(HANDLE* pProcess, HANDLE* pThread)
 
 Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead)
 {
+   // We return NULL handles on error, for consistency with calling code. That
+   // requires changing error results from INVALID_HANDLE_VALUE to NULL.
    if (pStdErrRead)
-      *pStdErrRead = INVALID_HANDLE_VALUE;
+      *pStdErrRead = NULL;
    if (pStdInWrite)
-      *pStdInWrite = INVALID_HANDLE_VALUE;
+      *pStdInWrite = NULL;
    if (pStdOutRead)
-      *pStdOutRead = INVALID_HANDLE_VALUE;
+      *pStdOutRead = NULL;
 
    if (ptyRunning())
-      return systemError(ERROR_SERVICE_EXISTS,
+      return systemError(boost::system::errc::already_connected,
                          "WinPty already running",
                          ERROR_LOCATION);
 
   if (!options_.pseudoterminal)
    {
-      return systemError(ERROR_INVALID_FLAGS,
+      return systemError(boost::system::errc::invalid_argument,
                          "Pseudoterminal dimensions not provided",
                          ERROR_LOCATION);
    }
 
    UINT64 agentFlags = 0x00;
 
-   // TODO (gary) don't set this for Windows Vista or earlier
-   agentFlags |=WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION;
+   if (isWin7OrLater()) // See WinPty constant for details
+      agentFlags |= WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION;
 
    int mousemode = WINPTY_MOUSE_MODE_AUTO;
    DWORD timeoutMs = 1000;
@@ -293,7 +296,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                           timeoutMs);
    if (!ptyConfig.get())
    {
-      return systemError(ERROR_INVALID_FLAGS,
+      return systemError(boost::system::errc::invalid_argument,
                          ptyConfig.errMsg("Failed to create pty config"),
                          ERROR_LOCATION);
    }
@@ -302,7 +305,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
    pPty_ = winpty_open(ptyConfig.get(), ptyerr.ppErr());
    if (!pPty_)
    {
-      return systemError(ERROR_SERVICE_NEVER_STARTED,
+      return systemError(boost::system::errc::not_connected,
                          ptyerr.errMsg("Failed to start pty"),
                          ERROR_LOCATION);
    }
@@ -320,6 +323,7 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       {
          DWORD err = ::GetLastError();
          stopPty();
+         *pStdInWrite = NULL;
          ::SetLastError(err);
          return systemError(::GetLastError(),
                             "Failed to connect to pty conin pipe",
@@ -339,12 +343,13 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
          DWORD err = ::GetLastError();
-         if (pStdInWrite && *pStdInWrite != INVALID_HANDLE_VALUE)
+         if (pStdInWrite && *pStdInWrite)
          {
             ::CloseHandle(*pStdInWrite);
-            *pStdInWrite = INVALID_HANDLE_VALUE;
+            *pStdInWrite = NULL;
          }
          stopPty();
+         *pStdOutRead = NULL;
          ::SetLastError(err);
          return systemError(::GetLastError(),
                             "Failed to connect to pty conout pipe",
@@ -363,17 +368,18 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
          DWORD err = ::GetLastError();
-         if (pStdInWrite && *pStdInWrite != INVALID_HANDLE_VALUE)
+         if (pStdInWrite && *pStdInWrite)
          {
             ::CloseHandle(*pStdInWrite);
-            *pStdInWrite = INVALID_HANDLE_VALUE;
+            *pStdInWrite = NULL;
          }
-         if (pStdOutRead && *pStdOutRead != INVALID_HANDLE_VALUE)
+         if (pStdOutRead && *pStdOutRead)
          {
             ::CloseHandle(*pStdOutRead);
-            *pStdOutRead = INVALID_HANDLE_VALUE;
+            *pStdOutRead = NULL;
          }
          stopPty();
+         *pStdErrRead = NULL;
          ::SetLastError(err);
          return systemError(::GetLastError(),
                             "Failed to connect to pty conerr pipe",
@@ -419,6 +425,12 @@ Error WinPty::setSize(int cols, int rows)
                          err.errMsg("setSize"),
                          ERROR_LOCATION);
    }
+   return Success();
+}
+
+Error WinPty::interrupt()
+{
+  // TODO (gary)
    return Success();
 }
 
