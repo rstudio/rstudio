@@ -268,6 +268,9 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       *pStdInWrite = NULL;
    if (pStdOutRead)
       *pStdOutRead = NULL;
+   CloseHandleOnExitScope closeStdInWrite(pStdInWrite, ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdOutRead(pStdOutRead, ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdErrRead(pStdErrRead, ERROR_LOCATION);
 
    if (ptyRunning())
       return systemError(boost::system::errc::already_connected,
@@ -343,19 +346,14 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
          DWORD err = ::GetLastError();
-         if (pStdInWrite && *pStdInWrite)
-         {
-            ::CloseHandle(*pStdInWrite);
-            *pStdInWrite = NULL;
-         }
          stopPty();
          *pStdOutRead = NULL;
-         ::SetLastError(err);
-         return systemError(::GetLastError(),
+         return systemError(err,
                             "Failed to connect to pty conout pipe",
                             ERROR_LOCATION);
       }
    }
+
    if (pStdErrRead && winpty_conerr_name(pPty_))
    {
       *pStdErrRead = ::CreateFileW(winpty_conerr_name(pPty_),
@@ -368,24 +366,17 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       if (*pStdOutRead == INVALID_HANDLE_VALUE)
       {
          DWORD err = ::GetLastError();
-         if (pStdInWrite && *pStdInWrite)
-         {
-            ::CloseHandle(*pStdInWrite);
-            *pStdInWrite = NULL;
-         }
-         if (pStdOutRead && *pStdOutRead)
-         {
-            ::CloseHandle(*pStdOutRead);
-            *pStdOutRead = NULL;
-         }
          stopPty();
          *pStdErrRead = NULL;
-         ::SetLastError(err);
-         return systemError(::GetLastError(),
+         return systemError(err,
                             "Failed to connect to pty conerr pipe",
                             ERROR_LOCATION);
       }
    }
+
+   closeStdInWrite.detach();
+   closeStdOutRead.detach();
+   closeStdErrRead.detach();
    return Success();
 }
 

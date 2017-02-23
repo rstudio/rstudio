@@ -149,7 +149,7 @@ public:
    }
 
    virtual ~CloseHandleOnExitScope();
-
+   void detach() { pHandle_ = NULL; }
 private:
    HANDLE* pHandle_;
    ErrorLocation location_;
