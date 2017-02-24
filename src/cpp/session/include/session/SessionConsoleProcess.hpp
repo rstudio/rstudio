@@ -111,6 +111,8 @@ public:
 
    core::Error start();
    void enqueInput(const Input& input);
+   void enqueOutput(const std::string& output, bool error);
+   void enquePrompt(const std::string& prompt);
    void interrupt();
    void resize(int cols, int rows);
    void onSuspend();
@@ -138,6 +140,7 @@ private:
 
    std::string bufferedOutput() const;
    void enqueOutputEvent(const std::string& output, bool error);
+   void enquePromptEvent(const std::string& prompt);
    void handleConsolePrompt(core::system::ProcessOperations& ops,
                             const std::string& prompt);
    void maybeConsolePrompt(core::system::ProcessOperations& ops,

@@ -155,6 +155,11 @@ public abstract class ProgressDialog extends ModalDialogBase
       label_.setText(text);
    }
    
+   protected void showProgress()
+   {
+      progressAnim_.getElement().getStyle().setDisplay(Style.Display.INITIAL);
+   }
+   
    protected void hideProgress()
    {
       progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);

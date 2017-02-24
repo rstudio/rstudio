@@ -1164,108 +1164,114 @@
    options(rgl.useNULL = TRUE)
    on.exit(options(rgl.useNULL = rgl.useNULL), add = TRUE)
    
-   invisible(lapply(list(...), function(x) {
-      tryCatch({
-         
-         # Explicitly load the library, and do everything we can to hide any
-         # package startup messages (because we don't want to put non-JSON
-         # on stdout)
-         invisible(capture.output(suppressPackageStartupMessages(suppressWarnings({
-            
-            ## Don't load the package if a corresponding 00LOCK directory exists.
-            ## This gives partial protection against attempting to load a package
-            ## while another R process is attempting to modify the library directory.
-            has00LOCK <- FALSE
-            for (libPath in .libPaths())
-            {
-               globalLockPath <- file.path(libPath, "00LOCK")
-               pkgLockPath <- file.path(libPath, paste("00LOCK", basename(x), sep = "-"))
-               if (file.exists(globalLockPath) || file.exists(pkgLockPath))
-               {
-                  has00LOCK <- TRUE
-                  break
-               }
-            }
-            
-            success <- if (has00LOCK)
-               FALSE
-            else
-               library(x, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
-            
-         }))))
-         
-         if (!success)
-            return(.rs.emptyFunctionInfo())
-         
-         # Get the exported items in the NAMESPACE
-         # (for search path + `::` completions).
-         ns <- asNamespace(x)
-         exports <- getNamespaceExports(ns)
-         objects <- mget(exports, ns, inherits = TRUE)
-         isFunction <- vapply(objects, FUN.VALUE = logical(1), USE.NAMES = FALSE, is.function)
-         functions <- objects[isFunction]
-         
-         # Figure out the completion types for these objects
-         types <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
-         
-         # Find the functions, and generate information on each formal
-         # (does it have a default argument; is missingness handled; etc)
-         functionInfo <- lapply(functions, function(f) {
-            
-            formals <- formals(f)
-            if (!length(formals))
-               return(.rs.emptyFunctionInfo())
-            
-            formalNames <- names(formals)
-            hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
-               !identical(x, quote(expr =))
-            })
-            
-            # Record which symbols in the function body handle missingness,
-            # to check if missingness of default arguments is handled
-            missingEnv <- new.env(parent = emptyenv())
-            usedSymbolsEnv <- new.env(parent = emptyenv())
-            .rs.recursiveWalk(body(f), function(node) {
-               .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
-            })
-            
-            # Figure out which functions perform NSE. TODO: Figure out which
-            # arguments are actually involved in NSE.
-            performsNse <- as.integer(
-               .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
-            )
-            
-            formalInfo <- lapply(seq_along(formalNames), function(i) {
-               as.integer(c(
-                  hasDefault[[i]],
-                  formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
-                  exists(formalNames[[i]], envir = usedSymbolsEnv)
-               ))
-            })
-            
-            list(
-               formal_names = formalNames,
-               formal_info  = formalInfo,
-               performs_nse = I(performsNse)
-            )
-         })
-         
-         # Generate the output
-         output <- list(
-            package = I(x),
-            exports = exports,
-            types = types,
-            function_info = functionInfo
-         )
-         
-         # Write the JSON to stdout; parent processes
-         cat(.rs.toJSON(output), sep = "\n")
-         
-         # Return output for debug purposes
-         output
-         
-      }, error = function(e) NULL)
-   }))
+   packages <- list(...)
+   lapply(packages, function(package) {
+      tryCatch(
+         .rs.emitPackageInformation(package),
+         error = function(e) .rs.emptyFunctionInfo()
+      )
+   })
+})
+
+.rs.addFunction("emitPackageInformation", function(package)
+{
+   # Explicitly load the library, and do everything we can to hide any
+   # package startup messages (because we don't want to put non-JSON
+   # on stdout)
+   invisible(capture.output(suppressPackageStartupMessages(suppressWarnings({
+      
+      ## Don't load the package if a corresponding 00LOCK directory exists.
+      ## This gives partial protection against attempting to load a package
+      ## while another R process is attempting to modify the library directory.
+      has00LOCK <- FALSE
+      for (libPath in .libPaths())
+      {
+         globalLockPath <- file.path(libPath, "00LOCK")
+         pkgLockPath <- file.path(libPath, paste("00LOCK", basename(package), sep = "-"))
+         if (file.exists(globalLockPath) || file.exists(pkgLockPath))
+         {
+            has00LOCK <- TRUE
+            break
+         }
+      }
+      
+      success <- if (has00LOCK)
+         FALSE
+      else
+         library(package, character.only = TRUE, quietly = TRUE, logical.return = TRUE)
+      
+   }))))
+   
+   if (!success)
+      return(.rs.emptyFunctionInfo())
+   
+   # Get the exported items in the NAMESPACE
+   # (for search path + `::` completions).
+   ns <- asNamespace(package)
+   exports <- getNamespaceExports(ns)
+   objects <- mget(exports, ns, inherits = TRUE)
+   isFunction <- vapply(objects, FUN.VALUE = logical(1), USE.NAMES = FALSE, is.function)
+   functions <- objects[isFunction]
+   
+   # Figure out the completion types for these objects
+   types <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+   
+   # Find the functions, and generate information on each formal
+   # (does it have a default argument; is missingness handled; etc)
+   functionInfo <- lapply(functions, function(f) {
+      
+      formals <- formals(f)
+      if (!length(formals))
+         return(.rs.emptyFunctionInfo())
+      
+      formalNames <- names(formals)
+      hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
+         !identical(x, quote(expr = ))
+      })
+      
+      # Record which symbols in the function body handle missingness,
+      # to check if missingness of default arguments is handled
+      missingEnv <- new.env(parent = emptyenv())
+      usedSymbolsEnv <- new.env(parent = emptyenv())
+      .rs.recursiveWalk(body(f), function(node) {
+         .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
+      })
+      
+      # Figure out which functions perform NSE. TODO: Figure out which
+      # arguments are actually involved in NSE.
+      performsNse <- as.integer(
+         .rs.recursiveSearch(body(f), .rs.performsNonstandardEvaluation)
+      )
+      
+      formalInfo <- lapply(seq_along(formalNames), function(i) {
+         as.integer(c(
+            hasDefault[[i]],
+            formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
+            exists(formalNames[[i]], envir = usedSymbolsEnv)
+         ))
+      })
+      
+      list(
+         formal_names = formalNames,
+         formal_info  = formalInfo,
+         performs_nse = I(performsNse)
+      )
+   })
+   
+   # Generate the output
+   output <- list(
+      package = I(package),
+      exports = exports,
+      types = types,
+      function_info = functionInfo
+   )
+   
+   # Write the JSON to stdout; parent processes
+   json <- paste("#!json:", .rs.toJSON(output))
+   cat(json, sep = "\n")
+   
+   # Return output for debug purposes
+   invisible(output)
 })
 
 .rs.setVar("nse.primitives", c(

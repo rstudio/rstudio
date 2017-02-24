@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-
 <!--
 #
 # build.xml
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -36,6 +35,10 @@
       <pathelement location="bin"/>
       <fileset dir="lib/selenium/2.37.0" includes="*.jar"/>
       <fileset dir="lib/selenium/2.37.0/libs" includes="*.jar"/>
+   </path>
+
+   <path id="unittest.class.path">
+      <fileset dir="lib/" includes="*.jar"/>
    </path>
 
    <fileset id="acesupport.sources.fileset" dir="acesupport">
@@ -210,4 +213,26 @@
       </javac>
    </target>
 
+   <target name="build-unittests" description="Builds JUnit unit tests">
+       <javac srcdir="test" includes="org/rstudio/studio/client/**" encoding="utf-8"
+             destdir="bin"
+             source="1.5" target="1.5" nowarn="true" deprecation="true"
+             debug="true" debuglevel="lines,vars,source"
+             includeantruntime="false">
+         <classpath refid="unittest.class.path"/>
+         <classpath refid="project.class.path"/>
+      </javac>
+   </target>
+
+   <target name="unittest" description="Runs JUnit unit tests" depends="build-unittests">
+     <java failonerror="true" fork="true" classname="org.junit.runner.JUnitCore">
+        <classpath>
+            <pathelement location="test"/>
+            <pathelement location="src"/>
+        </classpath>
+        <classpath refid="project.class.path"/>
+        <classpath refid="unittest.class.path"/>
+        <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
+     </java>
+   </target>
 </project>

@@ -33,6 +33,7 @@
 #include <boost/optional.hpp>
 #include <boost/regex.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/BoostLamda.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Crypto.hpp>
@@ -228,6 +229,23 @@ Error gitExec(const ShellArgs& args,
 #endif
 }
 
+std::string gitText(const ShellArgs& args)
+{
+   std::stringstream ss;
+   
+   ss << ">>> ";
+   
+   if (s_gitExePath.empty())
+      ss << "git ";
+   else
+      ss << s_gitExePath << " ";
+   
+   std::string arguments = core::algorithm::join(args, " ");
+   ss << arguments << "\n";
+   
+   return ss.str();
+}
+
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
 {
@@ -287,7 +305,8 @@ protected:
       if (pExitCode)
          *pExitCode = result.exitStatus;
 
-      if (result.exitStatus != EXIT_SUCCESS)
+      if (result.exitStatus != EXIT_SUCCESS &&
+          !result.stdErr.empty())
       {
          LOG_DEBUG_MESSAGE(result.stdErr);
       }
@@ -315,13 +334,14 @@ protected:
             boost::make_shared<ConsoleProcessInfo>(
                caption, "" /*title*/, "" /*handle*/, kNoTerminal,
                false /*allowRestart*/, console_process::InteractionNever);
-
+      
 #ifdef _WIN32
       *ppCP = ConsoleProcess::create(gitBin(), args.args(), options, pCPI);
 #else
       *ppCP = ConsoleProcess::create(git() << args.args(), options, pCPI);
 #endif
-
+      
+      (*ppCP)->enquePrompt(gitText(args));
       (*ppCP)->onExit().connect(boost::bind(&enqueueRefreshEvent));
 
       return Success();
@@ -551,6 +571,15 @@ public:
          return Success();
       }
    }
+   
+   core::Error createBranch(const std::string& branch,
+                            boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      return createConsoleProc(
+               ShellArgs() << "checkout" << "-B" << branch,
+               "Git Branch",
+               ppCP);
+   }
 
    core::Error listBranches(std::vector<std::string>* pBranches,
                             boost::optional<size_t>* pActiveBranchIndex)
@@ -577,6 +606,56 @@ public:
       s_branches = *pBranches;
       return Success();
    }
+   
+   core::Error listRemotes(json::Array* pRemotes)
+   {
+      std::string output;
+      Error error = runGit(ShellArgs() << "remote" << "--verbose", &output);
+      if (error)
+         return error;
+      
+      std::string trimmed = string_utils::trimWhitespace(output);
+      if (trimmed.empty())
+         return Success();
+      
+      boost::regex reSpaces("\\s+");
+      std::vector<std::string> splat = split(trimmed);
+      BOOST_FOREACH(const std::string& line, splat)
+      {
+         boost::smatch match;
+         if (!boost::regex_search(line, match, reSpaces))
+            continue;
+         
+         std::string remote = std::string(line.begin(), match[0].first);
+         std::string url = std::string(match[0].second, line.end());
+         std::string type = "(unknown)";
+         
+         if (boost::algorithm::ends_with(url, "(fetch)"))
+         {
+            url = url.substr(0, url.size() - strlen("(fetch)"));
+            type = "fetch";
+         }
+         else if (boost::algorithm::ends_with(url, "(push)"))
+         {
+            url = url.substr(0, url.size() - strlen("(push)"));
+            type = "push";
+         }
+         
+         json::Object objectJson;
+         objectJson["remote"] = string_utils::trimWhitespace(remote);
+         objectJson["url"] = string_utils::trimWhitespace(url);
+         objectJson["type"] = string_utils::trimWhitespace(type);
+         pRemotes->push_back(objectJson);
+      }
+
+      return Success();
+   }
+   
+   core::Error addRemote(const std::string& name,
+                         const std::string& url)
+   {
+      return runGit(ShellArgs() << "remote" << "add" << name << url);
+   }
 
    core::Error checkout(const std::string& id,
                         boost::shared_ptr<ConsoleProcess>* ppCP)
@@ -595,71 +674,89 @@ public:
             // otherwise just check out our local copy
             if (core::algorithm::contains(s_branches, localBranch))
             {
-               args << "checkout" << localBranch << "--";
+               args << "checkout" << localBranch;
             }
             else
             {
-               args << "checkout" << "-b" << localBranch << remoteBranch << "--";
+               args << "checkout" << "-b" << localBranch << remoteBranch;
             }
          }
          else
          {
             // shouldn't happen, but provide valid shell command regardless
-            args << "checkout" << id << "--";
+            args << "checkout" << id;
          }
       }
       else
       {
-         args << "checkout" << id << "--";
+         args << "checkout" << id;
       }
       
       return createConsoleProc(args,
                                "Git Checkout " + id,
                                ppCP);
    }
+   
+   core::Error checkoutRemote(const std::string& branch,
+                              const std::string& remote,
+                              boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      std::string localBranch  = branch;
+      std::string remoteBranch = remote + "/" + branch;
+      
+      return createConsoleProc(
+               ShellArgs() << "checkout" << "-b" << localBranch << remoteBranch,
+               "Git Checkout " + branch,
+               ppCP);
+   }
 
-   core::Error commit(std::string message, bool amend, bool signOff,
+   core::Error commit(std::string message,
+                      bool amend,
+                      bool signOff,
                       boost::shared_ptr<ConsoleProcess>* ppCP)
    {
-      bool alwaysUseUtf8 = s_gitVersion >= GIT_1_7_2;
-
-      if (!alwaysUseUtf8)
+      using namespace string_utils;
+      
+      // detect the active commit encoding for this project
+      std::string encoding;
+      int exitCode;
+      Error error = runGit(ShellArgs() << "config" << "i18n.commitencoding",
+                           &encoding,
+                           NULL,
+                           &exitCode);
+      
+      // normalize output (no config specified implies UTF-8 default)
+      encoding = toUpper(trimWhitespace(encoding));
+      if (encoding.empty())
+         encoding = "UTF-8";
+      
+      // convert from UTF-8 to user encoding if required
+      if (encoding != "UTF-8")
       {
-         std::string encoding;
-         int exitCode;
-         Error error = runGit(ShellArgs() << "config" << "i18n.commitencoding",
-                              &encoding,
-                              NULL,
-                              &exitCode);
-         if (!error)
+         error = r::util::iconvstr(message, "UTF-8", encoding, false, &message);
+         if (error)
          {
-            boost::algorithm::trim_right(encoding);
-            if (!encoding.empty() && encoding != "UTF-8")
-            {
-               error = r::util::iconvstr(message,
-                                         "UTF-8",
-                                         encoding,
-                                         false,
-                                         &message);
-               if (error)
-               {
-                  return systemError(boost::system::errc::illegal_byte_sequence,
-                                     "The commit message could not be encoded to " + encoding + ".\n\nYou can correct this by calling 'git config i18n.commitencoding UTF-8' and committing again.",
-                                     ERROR_LOCATION);
-               }
-            }
+            return systemError(
+                     boost::system::errc::illegal_byte_sequence,
+                     "The commit message could not be encoded to " + encoding +
+                     ".\n\n You can correct this by calling "
+                     "'git config i18n.commitencoding UTF-8' "
+                     "and committing again.",
+                     ERROR_LOCATION);
          }
       }
 
-      FilePath tempFile = module_context::tempFile("gitmsg", "txt");
+      // write commit message to file
+      FilePath tempFile = module_context::tempFile("git-commit-message-", "txt");
       boost::shared_ptr<std::ostream> pStream;
 
-      Error error = tempFile.open_w(&pStream);
+      error = tempFile.open_w(&pStream);
       if (error)
          return error;
 
       *pStream << message;
 
+      // append merge commit message when appropriate
       FilePath gitDir = root_.childPath(".git");
       if (gitDir.childPath("MERGE_HEAD").exists())
       {
@@ -680,10 +777,9 @@ public:
       pStream->flush();
       pStream.reset();  // release file handle
 
-      // Make sure we override i18n settings that may cause the commit message
-      // to be marked as using an encoding other than utf-8.
+      // override a user-specified default encoding if necessary
       ShellArgs args;
-      if (alwaysUseUtf8)
+      if (encoding != "UTF-8")
          args << "-c" << "i18n.commitencoding=utf-8";
       args << "commit" << "-F" << tempFile;
 
@@ -782,6 +878,16 @@ public:
       }
 
       return createConsoleProc(args, "Git Push", ppCP);
+   }
+   
+   core::Error pushBranch(const std::string& branch,
+                          const std::string& remote,
+                          boost::shared_ptr<ConsoleProcess>* ppCP)
+   {
+      return createConsoleProc(
+               ShellArgs() << "push" << "-u" << remote << branch,
+               "Git Push",
+               ppCP);
    }
 
    core::Error pull(boost::shared_ptr<ConsoleProcess>* ppCP)
@@ -1419,6 +1525,26 @@ Error vcsUnstage(const json::JsonRpcRequest& request,
    return s_git_.unstage(resolveAliasedPaths(paths, true, true));
 }
 
+Error vcsCreateBranch(const json::JsonRpcRequest& request,
+                      json::JsonRpcResponse* pResponse)
+{
+   Error error;
+   std::string branch;
+   
+   error = json::readParams(request.params, &branch);
+   if (error)
+      return error;
+   
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.createBranch(branch, &pCP);
+   if (error)
+      return error;
+   
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
+}
+
 Error vcsListBranches(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -1464,6 +1590,27 @@ Error vcsCheckout(const json::JsonRpcRequest& request,
 
    return Success();
 }
+
+Error vcsCheckoutRemote(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   RefreshOnExit scope;
+   
+   std::string branch, remote;
+   Error error = json::readParams(request.params, &branch, &remote);
+   if (error)
+      return error;
+   
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.checkoutRemote(branch, remote, &pCP);
+   if (error)
+      return error;
+   
+   pResponse->setResult(pCP->toJson());
+   
+   return Success();
+}
+
 
 Error vcsFullStatus(const json::JsonRpcRequest&,
                     json::JsonRpcResponse* pResponse)
@@ -1564,10 +1711,30 @@ Error vcsPush(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsPushBranch(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   std::string branch, remote;
+   Error error = json::readParams(request.params, &branch, &remote);
+   if (error)
+      return error;
+   
+   boost::shared_ptr<ConsoleProcess> pCP;
+   error = s_git_.pushBranch(branch, remote, &pCP);
+   if (error)
+      return error;
+
+   ask_pass::setActiveWindow(request.sourceWindow);
+
+   pResponse->setResult(pCP->toJson());
+
+   return Success();
+}
+
 Error vcsPull(const json::JsonRpcRequest& request,
               json::JsonRpcResponse* pResponse)
 {
-    boost::shared_ptr<ConsoleProcess> pCP;
+   boost::shared_ptr<ConsoleProcess> pCP;
    Error error = s_git_.pull(&pCP);
    if (error)
       return error;
@@ -1726,6 +1893,34 @@ Error vcsSetIgnores(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error vcsListRemotes(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(json::Array());
+   
+   json::Array remotesJson;
+   Error error = s_git_.listRemotes(&remotesJson);
+   if (error)
+      LOG_ERROR(error);
+   
+   pResponse->setResult(remotesJson);
+   return Success();
+}
+
+Error vcsAddRemote(const json::JsonRpcRequest& request,
+                   json::JsonRpcResponse* pResponse)
+{
+   std::string name, url;
+   Error error = json::readParams(request.params, &name, &url);
+   if (error)
+      return error;
+   
+   error = s_git_.addRemote(name, url);
+   if (error)
+      return error;
+   
+   return vcsListRemotes(request, pResponse);
+}
 
 std::string getUpstream(const std::string& branch = std::string())
 {
@@ -2953,12 +3148,15 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_revert", vcsRevert))
       (bind(registerRpcMethod, "git_stage", vcsStage))
       (bind(registerRpcMethod, "git_unstage", vcsUnstage))
+      (bind(registerRpcMethod, "git_create_branch", vcsCreateBranch))
       (bind(registerRpcMethod, "git_list_branches", vcsListBranches))
       (bind(registerRpcMethod, "git_checkout", vcsCheckout))
+      (bind(registerRpcMethod, "git_checkout_remote", vcsCheckoutRemote))
       (bind(registerRpcMethod, "git_full_status", vcsFullStatus))
       (bind(registerRpcMethod, "git_all_status", vcsAllStatus))
       (bind(registerRpcMethod, "git_commit", vcsCommit))
       (bind(registerRpcMethod, "git_push", vcsPush))
+      (bind(registerRpcMethod, "git_push_branch", vcsPushBranch))
       (bind(registerRpcMethod, "git_pull", vcsPull))
       (bind(registerRpcMethod, "git_diff_file", vcsDiffFile))
       (bind(registerRpcMethod, "git_apply_patch", vcsApplyPatch))
@@ -2972,6 +3170,8 @@ core::Error initialize()
       (bind(registerRpcMethod, "git_init_repo", vcsInitRepo))
       (bind(registerRpcMethod, "git_get_ignores", vcsGetIgnores))
       (bind(registerRpcMethod, "git_set_ignores", vcsSetIgnores))
+      (bind(registerRpcMethod, "git_list_remotes", vcsListRemotes))
+      (bind(registerRpcMethod, "git_add_remote", vcsAddRemote))
       (bind(registerRpcMethod, "git_github_remote_url", vcsGithubRemoteUrl));
    error = initBlock.execute();
    if (error)

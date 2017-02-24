@@ -1,7 +1,7 @@
 /*
- * SessionOverlay.cpp
+ * RemotesInfo.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,29 +12,15 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.common.vcs;
 
-#include "SessionOverlay.hpp"
+import com.google.gwt.core.client.JavaScriptObject;
 
-#include <core/Error.hpp>
-
-using namespace rstudio::core ;
-
-namespace rstudio {
-namespace session {  
-namespace modules {
-namespace overlay {
-
-Error initialize()
+public class RemotesInfo extends JavaScriptObject
 {
-   return Success();
+   protected RemotesInfo() {}
+   
+   public final native String getRemote() /*-{ return this["remote"]; }-*/;
+   public final native String getUrl()    /*-{ return this["url"]; }-*/;
+   public final native String getType()   /*-{ return this["type"]; }-*/;
 }
-
-bool isSuspendable()
-{
-   return true;
-}
-
-} // namespace overlay
-} // namespace modules
-} // namespace session
-} // namespace rstudio

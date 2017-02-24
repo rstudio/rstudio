@@ -81,6 +81,7 @@ public:
 public:
    void start();
    bool running() { return running_; }
+   core::json::Object getPayload() { return payload_; }
    
 private:
    void beginIndexing();
@@ -90,6 +91,8 @@ private:
 private:
    std::vector<boost::shared_ptr<Worker> > workers_;
    std::vector<core::FilePath> pkgDirs_;
+   core::json::Object payload_;
+   
    std::size_t index_;
    std::size_t n_;
    bool running_;

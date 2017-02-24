@@ -28,11 +28,11 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Text;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -145,7 +145,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          @Override
          public void onFocus(FocusEvent event)
          {
-            resizeTimer_.run();
+            scrollToBottom();
          }
       });
 
@@ -177,10 +177,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       secondaryInputHandler.setInput(editor);
 
-      resizeTimer_ = new Timer()
+      resizeCommand_ = new TimeBufferedCommand(5)
       {
          @Override
-         public void run()
+         protected void performAction(boolean shouldSchedulePassive)
          {
             scrollPanel_.onContentSizeChanged();
             if (!DomUtils.selectionExists() && !scrollPanel_.isScrolledToBottom())
@@ -438,7 +438,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
       boolean result = !trimExcess();
 
-      resizeTimer_.schedule(5);
+      resizeCommand_.nudge();
       
       return result;
    }
@@ -757,7 +757,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final VerticalPanel verticalPanel_ ;
    protected final ClickableScrollPanel scrollPanel_ ;
    private ConsoleResources.ConsoleStyles styles_;
-   private final Timer resizeTimer_;
+   private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
    

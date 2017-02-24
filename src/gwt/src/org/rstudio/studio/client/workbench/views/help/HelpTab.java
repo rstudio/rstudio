@@ -41,11 +41,14 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       @Handler public abstract void onMarkdownHelp();
       @Handler public abstract void onOpenRStudioIDECheatSheet();
       @Handler public abstract void onOpenDataVisualizationCheatSheet();
+      @Handler public abstract void onOpenDataImportCheatSheet();
       @Handler public abstract void onOpenPackageDevelopmentCheatSheet();
       @Handler public abstract void onOpenDataWranglingCheatSheet();
+      @Handler public abstract void onOpenDataTransformationCheatSheet();
       @Handler public abstract void onOpenRMarkdownCheatSheet();
       @Handler public abstract void onOpenRMarkdownReferenceGuide();
       @Handler public abstract void onOpenShinyCheatSheet();
+      @Handler public abstract void onOpenSparklyrCheatSheet();
       @Handler public abstract void onOpenRoxygenQuickReference();
       @Handler public abstract void onProfileHelp();
       

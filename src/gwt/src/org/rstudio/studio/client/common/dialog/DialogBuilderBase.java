@@ -65,7 +65,7 @@ public abstract class DialogBuilderBase implements DialogBuilder
       defaultButton_ = index;
       return this;
    }
-
+   
    public abstract void showModal();
 
    protected final int type;

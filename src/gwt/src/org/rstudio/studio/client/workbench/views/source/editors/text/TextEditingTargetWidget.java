@@ -271,6 +271,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftWidget(knitDocumentButton_);
       toolbar.addLeftWidget(compilePdfButton_ = commands_.compilePDF().createToolbarButton());
       rmdFormatButton_ = new ToolbarPopupMenuButton(false, true);
+      rmdFormatButton_.getMenu().setAutoOpen(true);
       toolbar.addLeftWidget(rmdFormatButton_);
       
       runDocumentMenuButton_ = new ToolbarPopupMenuButton(false, true);
@@ -278,6 +279,7 @@ public class TextEditingTargetWidget
       runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(commands_.clearPrerenderedOutput().createMenuItem(false), "");     
       toolbar.addLeftWidget(runDocumentMenuButton_);
+      runDocumentMenuButton_.setVisible(false);
       
       ToolbarPopupMenu rmdOptionsMenu = new ToolbarPopupMenu();
       rmdOptionsMenu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));

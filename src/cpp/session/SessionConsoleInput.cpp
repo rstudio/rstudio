@@ -1,7 +1,7 @@
 /*
  * SessionConsoleInput.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include "modules/SessionConsole.hpp"
 
 #include "modules/connections/SessionConnections.hpp"
+#include "modules/overlay/SessionOverlay.hpp"
 
 #include <session/SessionModuleContext.hpp>
 
@@ -87,6 +88,7 @@ bool canSuspend(const std::string& prompt)
 {
    return !main_process::haveActiveChildren() && 
           modules::connections::isSuspendable() &&
+          modules::overlay::isSuspendable() &&
           rstudio::r::session::isSuspendable(prompt);
 }
 

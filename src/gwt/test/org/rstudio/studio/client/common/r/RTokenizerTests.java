@@ -1,7 +1,7 @@
 /*
  * RTokenizerTests.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,9 @@
  */
 package org.rstudio.studio.client.common.r;
 
-import junit.framework.Assert ;
+import junit.framework.Assert;
 
-import com.google.gwt.junit.client.GWTTestCase ;
+import com.google.gwt.junit.client.GWTTestCase;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 
@@ -25,7 +25,7 @@ public class RTokenizerTests extends GWTTestCase
    @Override
    public String getModuleName()
    {
-      return "org.rstudio.studio.RStudio" ;
+      return "org.rstudio.studio.RStudioTests";
    }
 
    public void testVoid()

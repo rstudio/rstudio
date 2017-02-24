@@ -8,6 +8,7 @@
    height: 274px;
    margin-left: -10px;
    margin-right: -13px;
+   border-top: 1px solid #dcdcdc;
 }
 
 @sprite .newConnectionWizardBackground {

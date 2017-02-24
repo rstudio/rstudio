@@ -1772,13 +1772,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onPreviousTab()
    {
-      switchToTab(-1, false);
+      switchToTab(-1, uiPrefs_.wrapTabNavigation().getValue());
    }
 
    @Handler
    public void onNextTab()
    {
-      switchToTab(1, false);
+      switchToTab(1, uiPrefs_.wrapTabNavigation().getValue());
    }
 
    @Handler

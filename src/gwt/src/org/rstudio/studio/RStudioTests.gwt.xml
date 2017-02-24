@@ -1,0 +1,3 @@
+<module rename-to="rstudio">
+   <inherits name="org.rstudio.studio.RStudio"/>
+</module>

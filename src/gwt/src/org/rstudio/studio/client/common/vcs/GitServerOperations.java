@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.core.client.JsArray;
-
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
@@ -65,10 +64,23 @@ public interface GitServerOperations extends VCSServerOperations
    void gitFullStatus(
          ServerRequestCallback<JsArray<StatusAndPathInfo>> requestCallback);
 
+   void gitCreateBranch(String branch,
+                        ServerRequestCallback<ConsoleProcess> requestCallback);
+   
    void gitListBranches(ServerRequestCallback<BranchesInfo> requestCallback);
+   
+   void gitListRemotes(ServerRequestCallback<JsArray<RemotesInfo>> requestCallback);
+   
+   void gitAddRemote(String name,
+                     String url,
+                     ServerRequestCallback<JsArray<RemotesInfo>> requestCallback);
 
    void gitCheckout(String id,
                     ServerRequestCallback<ConsoleProcess> requestCallback);
+   
+   void gitCheckoutRemote(String branch,
+                          String remote,
+                          ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void gitCommit(String message,
                   boolean amend,
@@ -120,6 +132,10 @@ public interface GitServerOperations extends VCSServerOperations
                       ServerRequestCallback<Void> requestCallback);
 
    void gitPush(ServerRequestCallback<ConsoleProcess> requestCallback);
+   
+   void gitPushBranch(String branch,
+                      String remote,
+                      ServerRequestCallback<ConsoleProcess> requestCallback);
 
    void gitPull(ServerRequestCallback<ConsoleProcess> requestCallback);
    

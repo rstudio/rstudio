@@ -401,7 +401,12 @@ public class PaneManager
          el = el.getParentElement();
          for (LogicalWindow window : panes_)
          {
-            if (el.equals(window.getActiveWidget().getElement()))
+            Widget activeWidget = window.getActiveWidget();
+            if (activeWidget == null)
+               continue;
+            
+            Element activeEl = activeWidget.getElement();
+            if (el.equals(activeEl))
             {
                targetWindow = window;
                break;
@@ -420,6 +425,15 @@ public class PaneManager
    @Handler
    public void onActivateConsolePane()
    {
+      // Ensure that the console window is activated
+      LogicalWindow consoleWindow = getConsoleLogicalWindow();
+      if (consoleWindow.getState().equals(WindowState.MINIMIZE))
+      {
+         WindowStateChangeEvent event =
+               new WindowStateChangeEvent(WindowState.NORMAL);
+         consoleWindow.onWindowStateChange(event);
+      }
+            
       // The console tab panel is initialized lazily -- while a console
       // pane will always be available, the owning tab panel will only
       // be constructed once a neighbor (e.g. the Terminal) has been
@@ -431,7 +445,7 @@ public class PaneManager
       else
       {
          LogicalWindow activeWindow = getActiveLogicalWindow();
-         if (getConsoleLogicalWindow().equals(activeWindow))
+         if (consoleWindow.equals(activeWindow))
          {
             consoleTabPanel_.selectNextTab();
          }
