@@ -541,15 +541,18 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                // if we don't have a project file then create it (can
                // occur when e.g. opening a project from a directory for
                // which we don't yet have a .Rproj file)
-               FilePath projFile = module_context::resolveAliasedPath(switchToProject);
-               if (projFile.parent().exists() && !projFile.exists())
+               if (switchToProject != kProjectNone)
                {
-                  Error error = r_util::writeProjectFile(
-                           projFile,
-                           projects::ProjectContext::buildDefaults(),
-                           projects::ProjectContext::defaultConfig());
-                  if (error)
-                     LOG_ERROR(error);
+                  FilePath projFile = module_context::resolveAliasedPath(switchToProject);
+                  if (projFile.parent().exists() && !projFile.exists())
+                  {
+                     Error error = r_util::writeProjectFile(
+                              projFile,
+                              projects::ProjectContext::buildDefaults(),
+                              projects::ProjectContext::defaultConfig());
+                     if (error)
+                        LOG_ERROR(error);
+                  }
                }
 
                if (options().switchProjectsWithUrl())
@@ -572,6 +575,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   {
                      // extract the directory (aliased)
                      using namespace module_context;
+                     FilePath projFile = module_context::resolveAliasedPath(switchToProject);
                      projDir = createAliasedPath(projFile.parent());
                      scope = r_util::SessionScope::fromProject(
                               projDir,
