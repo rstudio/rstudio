@@ -82,6 +82,10 @@ public class ProjectOpener
                      }
                   };
                   
+                  // null return values here imply a cancellation
+                  if (input == null)
+                     return;
+                  
                   if (input.isDirectory())
                   {
                      final String rprojPath = input.completePath(input.getName() + ".Rproj");

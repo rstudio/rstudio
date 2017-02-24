@@ -38,7 +38,7 @@ public class OpenFileDialog extends FileDialog
       if (canChooseDirectories_)
       {
          FileSystemItem item = browser_.getSelectedItem();
-         if (item.isDirectory())
+         if (item == null || item.isDirectory())
             return true;
       }
       
@@ -48,7 +48,10 @@ public class OpenFileDialog extends FileDialog
    @Override
    protected FileSystemItem getSelectedItem()
    {
-      return browser_.getSelectedItem();
+      FileSystemItem item = browser_.getSelectedItem();
+      if (item == null)
+         item = browser_.getCurrentDirectory();
+      return item;
    }
    
    protected final boolean canChooseDirectories_;
