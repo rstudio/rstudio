@@ -1000,8 +1000,22 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("setDefaultChunkOptions", function()
 {
-   # cache the current set of chunk options
+   # get the current set of chunk options
    chunkOptions <- knitr::opts_chunk$get()
+
+   # make sure global connection lists exists
+   if (!exists(".rs.knitr.chunkReferences", envir = .rs.toolsEnv()))
+      assign(".rs.knitr.chunkReferences", list(), envir = .rs.toolsEnv())
+   
+   # assign connection
+   chunkReferences <- get(".rs.knitr.chunkReferences", envir = .rs.toolsEnv())
+   if (!is.null(chunkOptions$connection) && !is.character(chunkOptions$connection)) {
+      idReference <- length(chunkReferences) + 1
+      chunkReferences[[idReference]] <- chunkOptions$connection
+      chunkOptions$connection <- idReference
+   }
+
+   # cache the current set of chunk options
    assign(".rs.knitr.chunkOptions", chunkOptions, envir = .rs.toolsEnv())
 
    # cache the set of external code
