@@ -21,7 +21,6 @@
 #include <windows.h>
 #include <Shlwapi.h>
 
-
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -292,8 +291,8 @@ Error ChildProcess::terminate()
 
 bool ChildProcess::hasSubprocess() const
 {
-   // TODO (gary)
-   return false;
+   // base class doesn't support subprocess-checking; override to implement
+   return true;
 }
 
 namespace {
@@ -563,12 +562,58 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
 struct AsyncChildProcess::AsyncImpl
 {
    AsyncImpl()
-      : calledOnStarted_(false)
+      : calledOnStarted_(false),
+        exited_(false),
+        checkSubProc_(boost::posix_time::not_a_date_time),
+        hasSubprocess_(true)
    {
    }
 
    bool calledOnStarted_;
-};
+   bool exited_;
+
+   // when we next check subprocess count
+   boost::posix_time::ptime checkSubProc_;
+
+   // result of last subprocess check
+   bool hasSubprocess_;
+
+   void initTimers(bool reportHasSubprocs)
+   {
+      if (exited_)
+      {
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+         return;
+      }
+
+      if (reportHasSubprocs && checkSubProc_.is_not_a_date_time())
+      {
+         checkSubProc_ = now() + boost::posix_time::seconds(1);
+      }
+   }
+
+   bool checkChildCount()
+   {
+      if (checkSubProc_.is_not_a_date_time())
+         return false;
+
+      bool fCheck = now() > checkSubProc_;
+
+      if (fCheck)
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+      return fCheck;
+   }
+
+   bool computeHasSubProcess(HANDLE hProcess)
+   {
+      return false;
+   }
+
+   static boost::posix_time::ptime now()
+   {
+      return boost::posix_time::microsec_clock::universal_time();
+   }
+ };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
                                      const std::vector<std::string>& args,
@@ -692,6 +737,21 @@ void AsyncChildProcess::poll()
       // call onExit
       if (callbacks_.onExit)
          callbacks_.onExit(exitStatus);
+
+      // set exited_ flag so that our exited function always
+      // returns the right value
+      pAsyncImpl_->exited_ = true;
+   }
+
+   // Perform optional periodic operations
+   pAsyncImpl_->initTimers(options().reportHasSubprocs);
+   if (pAsyncImpl_->checkChildCount())
+   {
+      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->hProcess);
+      if (callbacks_.onHasSubprocs)
+      {
+         callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);
+      }
    }
 }
 
