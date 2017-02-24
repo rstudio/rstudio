@@ -178,18 +178,19 @@ public class CellBrowser extends AbstractCellTree implements ProvidesResize, Req
   }
 
   interface Template extends SafeHtmlTemplates {
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\""
+    @Template("<div __idx=\"{0}\" class=\"{1}\""
         + " style=\"{2}position:relative;outline:none;\">{3}<div>{4}</div></div>")
     SafeHtml div(int idx, String classes, SafeStyles padding, SafeHtml imageHtml,
         SafeHtml cellContents);
 
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\""
+    @Template("<div __idx=\"{0}\" class=\"{1}\""
         + " style=\"{2}position:relative;outline:none;\" tabindex=\"{3}\">{4}<div>{5}</div></div>")
     SafeHtml divFocusable(int idx, String classes, SafeStyles padding, int tabIndex,
         SafeHtml imageHtml, SafeHtml cellContents);
 
-    @Template("<div onclick=\"\" __idx=\"{0}\" class=\"{1}\""
-        + " style=\"{2}position:relative;outline:none;\" tabindex=\"{3}\" accessKey=\"{4}\">{5}<div>{6}</div></div>")
+    @Template("<div __idx=\"{0}\" class=\"{1}\""
+        + " style=\"{2}position:relative;outline:none;\" tabindex=\"{3}\""
+        + " accessKey=\"{4}\">{5}<div>{6}</div></div>")
     SafeHtml divFocusableWithKey(int idx, String classes, SafeStyles padding, int tabIndex,
         char accessKey, SafeHtml imageHtml, SafeHtml cellContents);
 

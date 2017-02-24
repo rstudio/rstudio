@@ -442,7 +442,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
     @SafeHtmlTemplates.Template("<table><thead>{0}</thead></table>")
     SafeHtml thead(SafeHtml rowHtml);
 
-    @SafeHtmlTemplates.Template("<tr onclick=\"\" class=\"{0}\">{1}</tr>")
+    @SafeHtmlTemplates.Template("<tr class=\"{0}\">{1}</tr>")
     SafeHtml tr(String classes, SafeHtml contents);
   }
 
