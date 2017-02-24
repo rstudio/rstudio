@@ -356,12 +356,15 @@
   max.print <- if (is.null(options$max.print)) getOption("max.print", 1000) else as.numeric(options$max.print)
   max.print <- if (is.null(options$sql.max.print)) max.print else as.numeric(options$sql.max.print)
 
-  if (is.null(options$connection)) {
-    chunkOptions <- get(".rs.knitr.chunkOptions", envir = .rs.toolsEnv())
-    conn <- chunkOptions$connection
+  conn <- options$connection
+  
+  if (is.numeric(options$connection)) {
+    chunkReferences <- get(".rs.knitr.chunkReferences", envir = .rs.toolsEnv())
+    conn <- chunkReferences[[chunkOptions$connection]]
+  }
 
-    if (is.null(conn))
-      stop("The 'connection' option (DBI connection) is required for sql chunks.")
+  if (is.null(conn)) {
+    stop("The 'connection' option (DBI connection) is required for sql chunks.")
   }
 
   if (is.character(options$connection)) {
