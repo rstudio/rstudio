@@ -14,18 +14,19 @@
  */
 package org.rstudio.studio.client;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
-
 import org.rstudio.studio.client.common.r.RTokenizerTests;
-import org.rstudio.studio.client.workbench.views.vcs.common.diff.UnifiedParserTest;
 
-@RunWith(Suite.class)
-@SuiteClasses({ RTokenizerTests.class,
-                UnifiedParserTest.class,
-                })
-public class RStudioUnitTestSuite 
+import com.google.gwt.junit.tools.GWTTestSuite;
+
+import junit.framework.Test;
+
+public class RStudioUnitTestSuite extends GWTTestSuite
 {
-
+    public static Test suite()
+    {
+        GWTTestSuite suite = new GWTTestSuite("RStudio Unit Test Suite");
+        suite.addTestSuite(RTokenizerTests.class);
+        suite.addTestSuite(VirtualConsoleTests.class);
+        return suite;
+    }
 }

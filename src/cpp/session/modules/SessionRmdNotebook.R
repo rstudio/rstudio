@@ -492,6 +492,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("rnb.renderVerbatimConsoleInput", function(code, engine, indent)
 {
+   if (length(code) == 1)
+      code <- strsplit(code, "\n", fixed = TRUE)[[1]]
+   
    # remove indentation from code
    code <- substring(code, nchar(indent) + 1)
    
