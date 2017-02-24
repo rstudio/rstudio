@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -69,30 +70,44 @@ public class ProjectOpener
                public void execute(FileSystemItem input,
                                    final ProgressIndicator indicator)
                {
+                  final CommandWithArg<FileSystemItem> onProjectFileReady =
+                        new CommandWithArg<FileSystemItem>()
+                  {
+                     @Override
+                     public void execute(FileSystemItem item)
+                     {
+                        onCompleted.execute(
+                              new OpenProjectParams(item, null, false),
+                              indicator);
+                     }
+                  };
+                  
                   if (input.isDirectory())
                   {
-                     String rprojPath = input.completePath(input.getName() + ".Rproj");
-                     input = FileSystemItem.createFile(rprojPath);
-                  }
-                  
-                  final FileSystemItem projFile = input;
-                  server_.createProjectFile(
-                        projFile.getPath(),
-                        new ServerRequestCallback<Boolean>()
-                        {
-                           @Override
-                           public void onResponseReceived(Boolean success)
+                     final String rprojPath = input.completePath(input.getName() + ".Rproj");
+                     final FileSystemItem rprojFile = FileSystemItem.createFile(rprojPath);
+                     server_.createProjectFile(
+                           rprojFile.getPath(),
+                           new ServerRequestCallback<Boolean>()
                            {
-                              onCompleted.execute(new OpenProjectParams(projFile, null, false), 
-                                    indicator);
-                           }
+                              @Override
+                              public void onResponseReceived(Boolean success)
+                              {
+                                 onProjectFileReady.execute(rprojFile);
+                              }
 
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                           }
-                        });
+                              @Override
+                              public void onError(ServerError error)
+                              {
+                                 Debug.logError(error);
+                                 onProjectFileReady.execute(rprojFile);
+                              }
+                           });
+                  }
+                  else
+                  {
+                     onProjectFileReady.execute(input);
+                  }
                }
             });  
       }
