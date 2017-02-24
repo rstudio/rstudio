@@ -158,7 +158,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->home = const_cast<char*>(pUserHome->c_str());
 
    // more configuration
-   pRP->CharacterMode = RGui;
+   pRP->CharacterMode = LinkDLL;
    pRP->R_Slave = FALSE;
    pRP->R_Quiet = quiet ? TRUE : FALSE;
    pRP->R_Interactive = TRUE;
@@ -194,20 +194,8 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::GA_initapp(0, 0);
    ::readconsolecfg();
 
-   // Set CharacterMode to LinkDLL during main loop setup. The mode can't be
-   // RGui during setup_Rmainloop or calls to history functions (e.g. timestamp)
-   // which occur during .Rprofile execution will crash when R attempts to
-   // interact with the (non-existent) R gui console data structures. Note that
-   // there are no references to CharacterMode within setup_Rmainloop that we
-   // can see so the only side effect of this should be the disabling of the
-   // console history mechanism.
-   CharacterMode = LinkDLL;
-
    // setup main loop
    ::setup_Rmainloop();
-
-   // reset character mode to RGui
-   CharacterMode = RGui;
 
    // run main loop
    ::run_Rmainloop();
