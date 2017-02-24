@@ -23,9 +23,33 @@ public class OpenFileDialog extends FileDialog
    public OpenFileDialog(String title,
                          FileSystemContext context,
                          String filter,
+                         boolean canChooseDirectories,
                          ProgressOperationWithInput<FileSystemItem> operation)
    {
       super(title, null, "Open", false, false, false, context, filter, 
             operation);
+      
+      canChooseDirectories_ = canChooseDirectories;
    }
+   
+   @Override
+   public boolean shouldAccept()
+   {
+      if (canChooseDirectories_)
+      {
+         FileSystemItem item = browser_.getSelectedItem();
+         if (item.isDirectory())
+            return true;
+      }
+      
+      return super.shouldAccept();
+   }
+   
+   @Override
+   protected FileSystemItem getSelectedItem()
+   {
+      return browser_.getSelectedItem();
+   }
+   
+   protected final boolean canChooseDirectories_;
 }

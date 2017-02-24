@@ -30,6 +30,14 @@ public interface FileDialogs
                  FileSystemItem initialFilePath,
                  String filter,
                  ProgressOperationWithInput<FileSystemItem> operation);
+   
+   void openFile(String caption,
+                 FileSystemContext fsContext,
+                 FileSystemItem initialFilePath,
+                 String filter,
+                 boolean canChooseDirectories,
+                 ProgressOperationWithInput<FileSystemItem> operation);
+   
 
    void saveFile(String caption,
                  FileSystemContext fsContext,
