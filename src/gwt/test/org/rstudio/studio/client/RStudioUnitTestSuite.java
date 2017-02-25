@@ -26,7 +26,6 @@ public class RStudioUnitTestSuite extends GWTTestSuite
     {
         GWTTestSuite suite = new GWTTestSuite("RStudio Unit Test Suite");
         suite.addTestSuite(RTokenizerTests.class);
-        suite.addTestSuite(VirtualConsoleTests.class);
         return suite;
     }
 }
