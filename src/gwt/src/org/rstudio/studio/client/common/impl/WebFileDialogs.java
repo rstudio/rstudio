@@ -32,7 +32,7 @@ public class WebFileDialogs implements FileDialogs
                         FileSystemItem initialFilePath,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
-      openFile(caption, fsContext, initialFilePath, "", operation);
+      openFile(caption, fsContext, initialFilePath, "", false, operation);
    }
    
    public void openFile(String caption,
@@ -41,11 +41,23 @@ public class WebFileDialogs implements FileDialogs
                         String filter,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
+      openFile(caption, fsContext, initialFilePath, filter, false, operation);
+   }
+   
+   
+   public void openFile(String caption,
+                        FileSystemContext fsContext,
+                        FileSystemItem initialFilePath,
+                        String filter,
+                        boolean canChooseDirectories,
+                        ProgressOperationWithInput<FileSystemItem> operation)
+   {
       OpenFileDialog dialog = new OpenFileDialog(caption,
                                                  fsContext,
                                                  filter,
+                                                 canChooseDirectories,
                                                  operation);
-
+      
       dialog.setInvokeOperationEvenOnCancel(true);
 
       finishInit(fsContext, initialFilePath, dialog);

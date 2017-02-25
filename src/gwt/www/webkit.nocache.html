@@ -16,7 +16,7 @@
            desktop.collectPendingQuitRequest();
            desktop.workbenchInitialized();
            desktop.browseUrl("http://www.foo.bar");
-           document.write(desktop.getOpenFileName('caption', 'dir', 'filter'));
+           document.write(desktop.getOpenFileName('caption', 'dir', 'filter', false));
            document.write(desktop.getSaveFileName('caption', 'dir', 'cpp', true));
            desktop.undo();
            desktop.redo();

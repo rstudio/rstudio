@@ -236,6 +236,32 @@ Error createProject(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error createProjectFile(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   using namespace projects;
+   
+   std::string projFile;
+   Error error = json::readParams(request.params, &projFile);
+   if (error)
+      return error;
+   
+   FilePath projPath = module_context::resolveAliasedPath(projFile);
+   if (!projPath.exists())
+   {
+      Error error = r_util::writeProjectFile(
+               projPath,
+               ProjectContext::buildDefaults(),
+               ProjectContext::defaultConfig());
+      
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   pResponse->setResult(projPath.exists());
+   return Success();
+}
+
 json::Object projectConfigJson(const r_util::RProjectConfig& config)
 {
    json::Object configJson;
@@ -776,6 +802,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_new_project_context", getNewProjectContext))
       (bind(registerRpcMethod, "get_project_file_path", getProjectFilePath))
       (bind(registerRpcMethod, "create_project", createProject))
+      (bind(registerRpcMethod, "create_project_file", createProjectFile))
       (bind(registerRpcMethod, "read_project_options", readProjectOptions))
       (bind(registerRpcMethod, "write_project_options", writeProjectOptions))
       (bind(registerRpcMethod, "write_project_vcs_options", writeProjectVcsOptions))
