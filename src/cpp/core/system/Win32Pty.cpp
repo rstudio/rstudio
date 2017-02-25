@@ -20,6 +20,7 @@
 #include <core/Error.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
+#include <core/system/LibraryLoader.hpp>
 
 namespace rstudio {
 namespace core {
@@ -27,13 +28,122 @@ namespace system {
 
 namespace {
 
+#define LOAD_WINPTY_SYMBOL(name) \
+   error = core::system::loadSymbol(hMod, "winpty_" #name, (void**)&name); \
+   if (error) \
+   { \
+      Error unloadError = unload(); \
+      if (unloadError) \
+         LOG_ERROR(unloadError); \
+      return error; \
+      return error; \
+   }
+
+HMODULE hMod = NULL;
+
+winpty_result_t (*error_code)(winpty_error_ptr_t) = NULL;
+LPCWSTR (*error_msg)(winpty_error_ptr_t) = NULL;
+void (*error_free)(winpty_error_ptr_t) = NULL;
+
+winpty_config_t *(*config_new)(UINT64, winpty_error_ptr_t *) = NULL;
+void (*config_free)(winpty_config_t *) = NULL;
+void (*config_set_initial_size)(winpty_config_t *, int, int) = NULL;
+void (*config_set_mouse_mode)(winpty_config_t *, int) = NULL;
+void (*config_set_agent_timeout)(winpty_config_t *, DWORD) = NULL;
+
+winpty_t *(*open)(const winpty_config_t *, winpty_error_ptr_t *) = NULL;
+HANDLE (*agent_process)(winpty_t *) = NULL;
+
+LPCWSTR (*conin_name)(winpty_t *) = NULL;
+LPCWSTR (*conout_name)(winpty_t *) = NULL;
+LPCWSTR (*conerr_name)(winpty_t *) = NULL;
+
+winpty_spawn_config_t *(*spawn_config_new)(UINT64, LPCWSTR, LPCWSTR,
+                                           LPCWSTR, LPCWSTR,
+                                           winpty_error_ptr_t *) = NULL;
+void *(*spawn_config_free)(winpty_spawn_config_t *) = NULL;
+BOOL (*spawn)(winpty_t *, const winpty_spawn_config_t *, HANDLE *,
+              HANDLE *, DWORD *, winpty_error_ptr_t *) = NULL;
+
+BOOL (*set_size)(winpty_t *, int, int, winpty_error_ptr_t *) = NULL;
+void (*free)(winpty_t *) = NULL;
+
+Error unload()
+{
+   if (hMod != NULL)
+   {
+      error_code = NULL;
+      error_msg = NULL;
+      error_free = NULL;
+      config_new = NULL;
+      config_free = NULL;
+      config_set_initial_size = NULL;
+      config_set_mouse_mode = NULL;
+      config_set_agent_timeout = NULL;
+      open = NULL;
+      agent_process = NULL;
+      conin_name = NULL;
+      conout_name = NULL;
+      conerr_name = NULL;
+      spawn_config_new = NULL;
+      spawn_config_free = NULL;
+      spawn = NULL;
+      set_size = NULL;
+      free = NULL;
+
+      Error error = core::system::closeLibrary(hMod);
+      if (error)
+      {
+         return error;
+      }
+      else
+      {
+         hMod = NULL;
+         return Success();
+      }
+   }
+   else
+   {
+      return Success();
+   }
+}
+Error tryLoad(const std::string& libraryPath)
+{
+   // Once DLL is loaded we keep it loaded, i.e. no refcount/unload
+   if (hMod)
+      return Success();
+
+   Error error = core::system::loadLibrary(libraryPath, (void**)&hMod);
+   if (error)
+      return error;
+
+   LOAD_WINPTY_SYMBOL(error_code);
+   LOAD_WINPTY_SYMBOL(error_msg);
+   LOAD_WINPTY_SYMBOL(error_free);
+   LOAD_WINPTY_SYMBOL(config_new);
+   LOAD_WINPTY_SYMBOL(config_free);
+   LOAD_WINPTY_SYMBOL(config_set_initial_size);
+   LOAD_WINPTY_SYMBOL(config_set_mouse_mode);
+   LOAD_WINPTY_SYMBOL(config_set_agent_timeout);
+   LOAD_WINPTY_SYMBOL(open);
+   LOAD_WINPTY_SYMBOL(agent_process);
+   LOAD_WINPTY_SYMBOL(conin_name);
+   LOAD_WINPTY_SYMBOL(conout_name);
+   LOAD_WINPTY_SYMBOL(conerr_name);
+   LOAD_WINPTY_SYMBOL(spawn_config_new);
+   LOAD_WINPTY_SYMBOL(spawn_config_free);
+   LOAD_WINPTY_SYMBOL(spawn);
+   LOAD_WINPTY_SYMBOL(set_size);
+   LOAD_WINPTY_SYMBOL(free);
+}
+
 // Obtain text description of winpty error (can return empty string)
 std::string winptyErrorMsg(winpty_error_ptr_t pErr)
 {
-   if (!pErr)
+   if (!pErr || !error_msg)
       return std::string();
 
-   LPCWSTR pErrMsg = winpty_error_msg(pErr);
+   LPCWSTR pErrMsg = error_msg(pErr);
    if (!pErrMsg)
       return std::string();
 
@@ -50,17 +160,17 @@ public:
 
    virtual ~WinPtyError()
    {
-      if (pErr_)
-         winpty_error_free(pErr_);
+      if (pErr_ && error_free)
+         error_free(pErr_);
    }
 
    // Return ptr to our winpty_error_ptr_t, which is then passed to the
    // winpty functions so they can set an error condition.
    winpty_error_ptr_t* ppErr()
    {
-      if (pErr_)
+      if (pErr_ && error_free)
       {
-         winpty_error_free(pErr_);
+         error_free(pErr_);
          pErr_ = NULL;
       }
       return &pErr_;
@@ -105,19 +215,23 @@ public:
       if (timeoutMs == 0)
          timeoutMs = 500;
 
-      pConfig_ = winpty_config_new(agentFlags, err_.ppErr());
+      if (config_new)
+         pConfig_ = config_new(agentFlags, err_.ppErr());
       if (pConfig_)
       {
-         winpty_config_set_initial_size(pConfig_, cols, rows);
-         winpty_config_set_mouse_mode(pConfig_, mousemode);
-         winpty_config_set_agent_timeout(pConfig_, timeoutMs);
+         if (config_set_initial_size)
+            config_set_initial_size(pConfig_, cols, rows);
+         if (config_set_mouse_mode)
+            config_set_mouse_mode(pConfig_, mousemode);
+         if (config_set_agent_timeout)
+            config_set_agent_timeout(pConfig_, timeoutMs);
       }
    }
 
    virtual ~WinPtyConfig()
    {
-      if (pConfig_)
-         winpty_config_free(pConfig_);
+      if (pConfig_ && config_free)
+         config_free(pConfig_);
    }
 
    const winpty_config_t* get() const
@@ -167,19 +281,22 @@ public:
 
       std::wstring workingDir(options.workingDir.absolutePathW());
 
-      pSpawnConfig_ = winpty_spawn_config_new(
-               spawnFlags,
-               string_utils::utf8ToWide(appName, "WinPtySpawnConfig::appName").c_str(),
-               string_utils::utf8ToWide(cmdLine, "WinPtySpawnConfig::cmdLine").c_str(),
-               workingDir.c_str(),
-               lpEnv,
-               err_.ppErr());
+      if (spawn_config_new)
+      {
+         pSpawnConfig_ = spawn_config_new(
+                  spawnFlags,
+                  string_utils::utf8ToWide(appName, "WinPtySpawnConfig::appName").c_str(),
+                  string_utils::utf8ToWide(cmdLine, "WinPtySpawnConfig::cmdLine").c_str(),
+                  workingDir.c_str(),
+                  lpEnv,
+                  err_.ppErr());
+      }
    }
 
    virtual ~WinPtySpawnConfig()
    {
-      if (pSpawnConfig_)
-         winpty_spawn_config_free(pSpawnConfig_);
+      if (pSpawnConfig_ && spawn_config_free)
+         spawn_config_free(pSpawnConfig_);
    }
 
    const winpty_spawn_config_t* get() const
@@ -241,15 +358,20 @@ Error WinPty::runProcess(HANDLE* pProcess)
 
    DWORD createProcError;
    WinPtyError err;
-   if (!winpty_spawn(pPty_,
-                     spawnConfig.get(),
-                     pProcess,
-                     NULL /*pThread*/,
-                     &createProcError,
-                     err.ppErr()))
+   if (!spawn)
+   {
+      return systemError(boost::system::errc::function_not_supported,
+                         "spawn function not loaded", ERROR_LOCATION);
+   }
+   if (!spawn(pPty_,
+              spawnConfig.get(),
+              pProcess,
+              NULL /*pThread*/,
+              &createProcError,
+              err.ppErr()))
    {
       if (pProcess)
-         pProcess = NULL;
+         *pProcess = NULL;
       return systemError(createProcError,
                          err.errMsg("runProcess"),
                          ERROR_LOCATION);
@@ -271,6 +393,12 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
    CloseHandleOnExitScope closeStdInWrite(pStdInWrite, ERROR_LOCATION);
    CloseHandleOnExitScope closeStdOutRead(pStdOutRead, ERROR_LOCATION);
    CloseHandleOnExitScope closeStdErrRead(pStdErrRead, ERROR_LOCATION);
+
+   // TODO (gary) obtain this at runtime
+   //Error err = tryLoad("c:\\users\\gary\\rstudio\\dependencies\\windows\\winpty-0.4.2-msys2-2.6.0\\32\\bin\\winpty.dll");
+   Error err = tryLoad("winpty.dll");
+   if (err)
+      return err;
 
    if (ptyRunning())
       return systemError(boost::system::errc::already_connected,
@@ -305,7 +433,8 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
    }
 
    WinPtyError ptyerr;
-   pPty_ = winpty_open(ptyConfig.get(), ptyerr.ppErr());
+   if (open)
+      pPty_ = open(ptyConfig.get(), ptyerr.ppErr());
    if (!pPty_)
    {
       return systemError(boost::system::errc::not_connected,
@@ -313,9 +442,9 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
                          ERROR_LOCATION);
    }
 
-   if (pStdInWrite && winpty_conin_name(pPty_))
+   if (pStdInWrite && conin_name && conin_name(pPty_))
    {
-      *pStdInWrite = ::CreateFileW(winpty_conin_name(pPty_),
+      *pStdInWrite = ::CreateFileW(conin_name(pPty_),
                                    GENERIC_WRITE,
                                    0 /*dwShareMode*/,
                                    NULL /*lpSecurityAttributed*/,
@@ -334,9 +463,9 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       }
    }
 
-   if (pStdOutRead && winpty_conout_name(pPty_))
+   if (pStdOutRead && conout_name && conout_name(pPty_))
    {
-      *pStdOutRead = ::CreateFileW(winpty_conout_name(pPty_),
+      *pStdOutRead = ::CreateFileW(conout_name(pPty_),
                                    GENERIC_READ,
                                    0 /*dwShareMode*/,
                                    NULL /*lpSecurityAttributed*/,
@@ -354,9 +483,9 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       }
    }
 
-   if (pStdErrRead && winpty_conerr_name(pPty_))
+   if (pStdErrRead && conerr_name && conerr_name(pPty_))
    {
-      *pStdErrRead = ::CreateFileW(winpty_conerr_name(pPty_),
+      *pStdErrRead = ::CreateFileW(conerr_name(pPty_),
                                    GENERIC_READ,
                                    0 /*dwShareMode*/,
                                    NULL /*lpSecurityAttributed*/,
@@ -384,7 +513,8 @@ void WinPty::stopPty()
 {
    if (!ptyRunning())
       return;
-   winpty_free(pPty_);
+   if (free)
+      free(pPty_);
    pPty_ = NULL;
 }
 
@@ -410,7 +540,7 @@ Error WinPty::setSize(int cols, int rows)
    }
 
    WinPtyError err;
-   if (!winpty_set_size(pPty_, cols, rows, err.ppErr()))
+   if (!set_size || !set_size(pPty_, cols, rows, err.ppErr()))
    {
       return systemError(ERROR_CAN_NOT_COMPLETE,
                          err.errMsg("setSize"),

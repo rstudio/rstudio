@@ -313,7 +313,6 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 target_link_libraries(
    rstudio-core
    ${Boost_LIBRARIES}
-   ${WINPTY_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
 

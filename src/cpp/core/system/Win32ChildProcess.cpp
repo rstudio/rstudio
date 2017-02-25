@@ -606,6 +606,7 @@ struct AsyncChildProcess::AsyncImpl
 
    bool computeHasSubProcess(HANDLE hProcess)
    {
+      // TODO (gary) implement
       return false;
    }
 
