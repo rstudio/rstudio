@@ -361,12 +361,20 @@ void onHistoryAdd(const std::string& command)
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_timestamp(SEXP dateSEXP)
+SEXP rs_timestamp(SEXP stampSEXP, SEXP prefixSEXP, SEXP suffixSEXP, SEXP quietSEXP)
 {
-   boost::format fmt("##------ %1% ------##");
-   std::string ts = boost::str(fmt % r::sexp::safeAsString(dateSEXP));
+   std::string prefix = r::sexp::safeAsString(prefixSEXP);
+   
+   std::string suffix = r::sexp::safeAsString(prefixSEXP);
+
+   boost::format fmt(prefix + "%1%" + suffix);
+   std::string ts = boost::str(fmt % r::sexp::safeAsString(stampSEXP));
    r::session::consoleHistory().add(ts);
-   module_context::consoleWriteOutput(ts + "\n");
+
+   if (!r::sexp::asLogical(quietSEXP)) {
+      module_context::consoleWriteOutput(ts + "\n");
+   }
+
    return R_NilValue;
 }
 
