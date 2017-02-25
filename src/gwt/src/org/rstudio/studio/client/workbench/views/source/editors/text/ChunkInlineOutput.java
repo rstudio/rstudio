@@ -47,8 +47,8 @@ public class ChunkInlineOutput extends MiniPopupPanel
    {
       super(true, false, true);
       
-      vconsole_ = new VirtualConsole();
       console_ = new PreWidget();
+      vconsole_ = new VirtualConsole(console_.getElement());
       chunkId_ = chunkId;
       selection_ = selection;
       state_ = State.Queued;
@@ -92,15 +92,13 @@ public class ChunkInlineOutput extends MiniPopupPanel
    @Override
    public void onConsoleWriteOutput(ConsoleWriteOutputEvent event)
    {
-      vconsole_.submitAndRender(event.getOutput(), 
-            RES.styles().output(), console_.getElement());
+      vconsole_.submit(event.getOutput(), RES.styles().output());
    }
 
    @Override
    public void onConsoleWriteError(ConsoleWriteErrorEvent event)
    {
-      vconsole_.submitAndRender(event.getError(), 
-            RES.styles().error(), console_.getElement());
+      vconsole_.submit(event.getError(), RES.styles().error());
    }
 
    public interface Styles extends CssResource
