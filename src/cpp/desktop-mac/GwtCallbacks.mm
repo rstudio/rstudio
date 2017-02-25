@@ -156,8 +156,9 @@ private:
 
 
 - (NSString*) getOpenFileName: (NSString*) caption
-              dir: (NSString*) dir
-              filter: (NSString*) filter
+                          dir: (NSString*) dir
+                       filter: (NSString*) filter
+         canChooseDirectories: (Boolean) canChooseDirectories
 {
    dir = resolveAliasedPath(dir);
    
@@ -165,6 +166,8 @@ private:
    [open setTitle: caption];
    [open setDirectoryURL: [NSURL fileURLWithPath:
                            [dir stringByStandardizingPath]]];
+   [open setCanChooseDirectories: canChooseDirectories];
+   
    // If the filter was specified and looks like a filter string
    // (i.e. "R Projects (*.RProj)"), extract just the extension ("RProj") to
    // pass to the open dialog.
@@ -1141,7 +1144,7 @@ enum RS_NSActivityOptions : uint64_t
 {
    if (sel == @selector(browseUrl:))
       return @"browseUrl";
-   else if (sel == @selector(getOpenFileName:dir:filter:))
+   else if (sel == @selector(getOpenFileName:dir:filter:canChooseDirectories:))
       return @"getOpenFileName";
    else if (sel == @selector(getSaveFileName:dir:defaultExtension:forceDefaultExtension:))
       return @"getSaveFileName";
