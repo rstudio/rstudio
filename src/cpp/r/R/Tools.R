@@ -629,13 +629,18 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
   })
 
   # timestamp
-  .rs.registerReplaceHook("timestamp", "utils", function(original, ...)
+  .rs.registerReplaceHook("timestamp", "utils", function(
+    original,
+    stamp = date(),
+    prefix = "##------ ",
+    suffix = " ------##",
+    quiet = FALSE)
   {
     invisible(.Call("rs_timestamp",
-      stamp = date(),
-      prefix = "##------ ",
-      suffix = " ------##", 
-      quiet = FALSE))
+      stamp,
+      prefix,
+      suffix, 
+      quiet))
   }, namespace = TRUE)
 })
 
