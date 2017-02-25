@@ -18,6 +18,7 @@
 * 'Rename in Scope' now works within R chunks
 * Fixed an issue where non-R chunk output could become duplicated
 * Added option to set notebook mode in the document's YAML header
+* Allow setting default chunk connection option to raw connection object
 
 ### Terminal
 
@@ -45,6 +46,7 @@
 * Add commands to run a line, statement, or consecutive lines 
 * Add Clear Console button to top of Console pane
 * Add option to wrap around when navigating to previous or next editor tab
+* Allow opening directories as projects (Server and macOS only)
 * Server Pro: Add option to disable file uploads
 * Server Pro: Upgrade to TurboActivate 4.0; improves licensing
 * Server Pro: Add support for floating (lease-based) licenses
