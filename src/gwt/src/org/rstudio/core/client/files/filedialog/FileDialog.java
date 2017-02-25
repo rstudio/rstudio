@@ -15,6 +15,7 @@
 package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.event.logical.shared.SelectionEvent;
+
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;

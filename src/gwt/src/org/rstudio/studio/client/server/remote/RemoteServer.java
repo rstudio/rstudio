@@ -1637,6 +1637,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
    }
    
+   @Override
+   public void createProjectFile(String projectFile,
+                                 ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.notNull(projectFile)));
+      sendRequest(RPC_SCOPE, CREATE_PROJECT_FILE, params, requestCallback);
+   }
+   
    public void getProjectTemplateRegistry(
          ServerRequestCallback<ProjectTemplateRegistry> requestCallback)
    {
@@ -5181,6 +5190,7 @@ public class RemoteServer implements Server
    private static final String SET_SESSION_LABEL = "set_session_label";
    private static final String GET_AVAILABLE_R_VERSIONS = "get_available_r_versions";
    private static final String CREATE_PROJECT = "create_project";
+   private static final String CREATE_PROJECT_FILE = "create_project_file";
    private static final String GET_PROJECT_TEMPLATE_REGISTRY = "get_project_template_registry";
    private static final String EXECUTE_PROJECT_TEMPLATE = "execute_project_template";
    private static final String READ_PROJECT_OPTIONS = "read_project_options";

@@ -18,8 +18,11 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.projects.model.OpenProjectParams;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -48,6 +51,16 @@ public class OpenProjectDialog extends FileDialog
                         indicator);
                }
             });
+      
+      ThemedButton createButton = new ThemedButton("Create", new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            accept();
+         }
+      });
+      addButton(createButton);
       
       newSessionCheck_ = new CheckBox("Open in new session");
       newSessionCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()

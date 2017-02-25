@@ -168,6 +168,11 @@ public class FileBrowserWidget extends Composite
       return directory_.getSelectedItem();
    }
    
+   public FileSystemItem getCurrentDirectory()
+   {
+      return context_.pwdItem();
+   }
+   
    // Private methods ---------------------------------------------------------
 
    private Widget createTopWidget()

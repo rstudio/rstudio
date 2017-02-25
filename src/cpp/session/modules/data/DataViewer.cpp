@@ -964,11 +964,14 @@ void onDeferredInit(bool newSession)
    // get all the cache keys in the cache
    FilePath cache(viewerCacheDir());
    std::vector<FilePath> cacheFiles;
-   error = cache.children(&cacheFiles);
-   if (error)
+   if (cache.exists())
    {
-      LOG_ERROR(error);
-      return;
+      Error error = cache.children(&cacheFiles);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
    }
 
    std::vector<std::string> cacheKeys;
