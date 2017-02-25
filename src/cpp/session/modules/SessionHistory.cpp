@@ -393,7 +393,7 @@ Error initialize()
    R_CallMethodDef methodDef;
    methodDef.name = "rs_timestamp" ;
    methodDef.fun = (DL_FUNC) rs_timestamp;
-   methodDef.numArgs = 1;
+   methodDef.numArgs = 4;
    r::routines::addCallMethod(methodDef);
 
    // install handlers
