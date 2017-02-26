@@ -499,6 +499,14 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
 
+   # install winpty on windows
+   if(WIN32)
+      install(PROGRAMS "${WINPTY_BINDIR_32}/winpty.dll"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}")
+      install(PROGRAMS "${WINPTY_BINDIR_32}/winpty-agent.exe"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   endif()
+
    # install 64 bit binaries if we are on win64
    if(WIN32)
       if(NOT ("$ENV{PROGRAMW6432}" STREQUAL ""))
@@ -506,6 +514,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
          install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/x64"
                  USE_SOURCE_PERMISSIONS
                  DESTINATION  ${RSTUDIO_INSTALL_BIN})
+         install(PROGRAMS "${WINPTY_BINDIR_64}/winpty.dll"
+                 DESTINATION "${RSTUDIO_INSTALL_BIN}/x64")
+         install(PROGRAMS "${WINPTY_BINDIR_64}/winpty-agent.exe"
+                 DESTINATION "${RSTUDIO_INSTALL_BIN}/x64")
+
       endif()
    endif()
 
@@ -533,6 +546,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
 
    endif()
+
 endif()
 
 # # install 64-bit gcc runtime for session win64
