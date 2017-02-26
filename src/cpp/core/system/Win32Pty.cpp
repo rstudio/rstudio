@@ -343,7 +343,7 @@ Error WinPty::runProcess(HANDLE* pProcess)
                          ERROR_LOCATION);
    }
 
-   // TODO: combine args into one string
+   // TODO (gary): combine args into one string
    WinPtySpawnConfig spawnConfig(
             WINPTY_SPAWN_FLAG_EXIT_AFTER_SHUTDOWN,
             exe_ /*appName*/,

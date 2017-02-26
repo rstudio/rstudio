@@ -32,7 +32,7 @@ namespace system {
 
 // Wrapper class for winpty library (https://github.com/rprichard/winpty)
 // "A windows software package providing an interface similar to a Unix
-// pty-master for communicating with Windows console programs.
+// pty-master for communicating with Windows console programs."
 class WinPty : boost::noncopyable
 {
 public:
@@ -47,7 +47,7 @@ public:
              const ProcessOptions& options);
 
    // Start the pty and return HANDLEs. On success, caller is responsible for
-   // closing returned HANDLESs; on failure, all returned HANDLES will
+   // closing returned HANDLEs; on failure, all returned HANDLEs will
    // contain NULL.
    Error startPty(
          HANDLE* pStdInWrite,
