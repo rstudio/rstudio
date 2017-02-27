@@ -28,6 +28,9 @@ namespace system {
 
 namespace {
 
+// Load winpty.dll via LoadLibrary/GetProcAddress so it can be located
+// via run-time logic and isn't loaded until needed.
+
 #define LOAD_WINPTY_SYMBOL(name) \
    error = core::system::loadSymbol(hMod, "winpty_" #name, (void**)&name); \
    if (error) \
@@ -361,6 +364,8 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
 
    if (isWin7OrLater()) // See WinPty constant for details
       agentFlags |= WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION;
+   if (options_.pseudoterminal.get().plainText)
+      agentFlags |= WINPTY_FLAG_PLAIN_OUTPUT; // no ESC sequences
 
    int mousemode = WINPTY_MOUSE_MODE_AUTO;
    DWORD timeoutMs = 1000;
@@ -466,11 +471,30 @@ Error WinPty::runProcess(HANDLE* pProcess)
                          ERROR_LOCATION);
    }
 
-   // TODO (gary): combine args into one string
+   // process command line arguments (copy of approach done by non-pseudoterm
+   // code path in ChildProcess::run for Win32)
+   std::string cmdLine;
+   BOOST_FOREACH(std::string& arg, args_)
+   {
+      cmdLine.push_back(' ');
+
+      // This is kind of gross. Ideally we would be more deterministic
+      // than this.
+      bool quot = std::string::npos != arg.find(' ')
+            && std::string::npos == arg.find('"');
+
+      if (quot)
+         cmdLine.push_back('"');
+      std::copy(arg.begin(), arg.end(), std::back_inserter(cmdLine));
+      if (quot)
+         cmdLine.push_back('"');
+   }
+   cmdLine.push_back('\0');
+
    WinPtySpawnConfig spawnConfig(
-            WINPTY_SPAWN_FLAG_EXIT_AFTER_SHUTDOWN,
+            WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,
             exe_ /*appName*/,
-            "" /*cmdline*/,
+            cmdLine,
             options_);
    if (!spawnConfig.get())
    {

@@ -50,17 +50,20 @@ struct Pseudoterminal
    Pseudoterminal(
 #ifdef _WIN32
          const FilePath& winptyPath,
+         bool plainText,
 #endif
          int cols, int rows)
       :
 #ifdef _WIN32
         winptyPath(winptyPath),
+        plainText(plainText),
 #endif
         cols(cols), rows(rows)
    {
    }
 #ifdef _WIN32
    FilePath winptyPath;
+   bool plainText;
 #endif
    int cols;
    int rows;

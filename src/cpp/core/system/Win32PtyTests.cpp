@@ -27,6 +27,7 @@
 
 #include <core/system/System.hpp>
 #include <core/FilePath.hpp>
+#include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace core {
@@ -66,6 +67,34 @@ FilePath getWinPtyPath()
    return FilePath();
 }
 
+Error readPipe(HANDLE hPipe, std::string* pOutput)
+{
+   DWORD dwAvail = 0;
+   if (!::PeekNamedPipe(hPipe, NULL, 0, NULL, &dwAvail, NULL))
+   {
+      if (::GetLastError() == ERROR_BROKEN_PIPE)
+         return Success();
+      else
+         return systemError(::GetLastError(), ERROR_LOCATION);
+   }
+
+   // no data available
+   if (dwAvail == 0)
+      return Success();
+
+   // read data which is available
+   DWORD nBytesRead;
+   std::vector<CHAR> buffer(dwAvail, 0);
+   if (!::ReadFile(hPipe, &(buffer[0]), dwAvail, &nBytesRead, NULL))
+      return systemError(::GetLastError(), ERROR_LOCATION);
+
+   // append to output
+   pOutput->append(&(buffer[0]), nBytesRead);
+
+   // success
+   return Success();
+}
+
 } // anonymous namespace
 
 TEST_CASE("Win32PtyTests")
@@ -75,14 +104,25 @@ TEST_CASE("Win32PtyTests")
    const int kCols = 80;
    const int kRows = 25;
 
-   std::vector <std::string> args;
+   std::vector <std::string> emptyArgs;
+
    ProcessOptions options;
    options.cols = 80;
    options.rows = 25;
-   FilePath winptyPath;
-   options.pseudoterminal = core::system::Pseudoterminal(getWinPtyPath(),
-                                                         options.cols,
-                                                         options.rows);
+   options.pseudoterminal = core::system::Pseudoterminal(
+            getWinPtyPath(),
+            false /*plainText*/,
+            options.cols,
+            options.rows);
+
+   ProcessOptions plainOptions;
+   plainOptions.cols = 80;
+   plainOptions.rows = 25;
+   plainOptions.pseudoterminal = core::system::Pseudoterminal(
+            getWinPtyPath(),
+            true /*plainText*/,
+            plainOptions.cols,
+            plainOptions.rows);
 
    SECTION("Agent not running")
    {
@@ -92,7 +132,7 @@ TEST_CASE("Win32PtyTests")
    SECTION("Initialize")
    {
       CHECK_FALSE(pty.ptyRunning());
-      pty.init("cmd.exe", args, options);
+      pty.init("cmd.exe", emptyArgs, options);
       CHECK_FALSE(pty.ptyRunning());
    }
 
@@ -107,7 +147,7 @@ TEST_CASE("Win32PtyTests")
       HANDLE hOutRead;
       HANDLE hErrRead;
 
-      pty.init("cmd.exe", args, options);
+      pty.init("cmd.exe", emptyArgs, options);
       Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
       CHECK(!err);
       CHECK(hInWrite);
@@ -127,7 +167,7 @@ TEST_CASE("Win32PtyTests")
       CHECK(cmd.exists());
       std::string exe = cmd.absolutePathNative();
 
-      pty.init(exe, args, options);
+      pty.init(exe, emptyArgs, options);
       Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
       CHECK(!err);
       CHECK(hInWrite);
@@ -149,7 +189,7 @@ TEST_CASE("Win32PtyTests")
       HANDLE hOutRead;
       HANDLE hErrRead;
 
-      pty.init("C:\\NoWindows\\system08\\huhcmd.exe", args, options);
+      pty.init("C:\\NoWindows\\system08\\huhcmd.exe", emptyArgs, options);
       Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
       CHECK(!err);
       CHECK(hInWrite);
@@ -164,7 +204,47 @@ TEST_CASE("Win32PtyTests")
 
    SECTION("Capture output of a process")
    {
-      CHECK(true);
+      HANDLE hInWrite;
+      HANDLE hOutRead;
+      HANDLE hErrRead;
+      std::vector<std::string> args;
+
+      FilePath cmd = expandComSpec();
+      CHECK(cmd.exists());
+      std::string exe = cmd.absolutePathNative();
+
+      args.push_back("/S");
+      args.push_back("/C");
+      args.push_back("\"echo Hello!\"");
+
+      pty.init(exe, args, plainOptions);
+      Error err = pty.startPty(&hInWrite, &hOutRead, &hErrRead);
+      CHECK(!err);
+      CHECK(hInWrite);
+      CHECK(hOutRead);
+      CHECK_FALSE(hErrRead);
+
+      HANDLE hProcess;
+      err = pty.runProcess(&hProcess);
+      CHECK(!err);
+      CHECK(hProcess);
+
+      // Obnoxious, but need to give child some time to spin up
+      // and generate output.
+      std::string stdOut;
+      int tries = 10;
+      while (tries && stdOut.empty())
+      {
+         ::Sleep(100);
+         err = readPipe(hOutRead, &stdOut);
+         CHECK(!err);
+         tries--;
+      }
+
+      stdOut = string_utils::trimWhitespace(stdOut);
+      CHECK_FALSE(stdOut.compare("Hello!"));
+      CHECK(::CloseHandle(hInWrite));
+      CHECK(::CloseHandle(hOutRead));
    }
 }
 
