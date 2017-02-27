@@ -29,19 +29,18 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import com.google.inject.Inject;
-
 public class ProjectOpener
 {
    public final static int PROJECT_TYPE_FILE   = 0;
    public final static int PROJECT_TYPE_SHARED = 1;
    
-   @Inject
-   private void initialize(ProjectsServerOperations server)
+   private void initialize()
    {
-      server_ = server;
+      if (initialized_) return;
+      initialized_ = true;
+      server_ = RStudioGinjector.INSTANCE.getServer();
    }
-
+   
    public void showOpenProjectDialog(
                   FileSystemContext fsContext,
                   ProjectsServerOperations server,
@@ -50,7 +49,7 @@ public class ProjectOpener
                   boolean showNewSession,
                   final ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
-      RStudioGinjector.INSTANCE.injectMembers(this);
+      initialize();
       
       // use the default dialog on desktop mode or single-session mode
       FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
@@ -126,5 +125,6 @@ public class ProjectOpener
    }
    
    // Injected ----
+   private boolean initialized_;
    private ProjectsServerOperations server_;
 }
