@@ -16,6 +16,8 @@ package org.rstudio.studio.client;
 
 import org.rstudio.core.client.VirtualConsole;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.PreElement;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
@@ -38,5 +40,67 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       String backspace = VirtualConsole.consolify("bool\bk");
       Assert.assertEquals(backspace, "book");
+   }
+   
+   public void testCarriageReturn()
+   {
+      String cr = VirtualConsole.consolify("hello\rj");
+      Assert.assertEquals(cr, "jello");
+   }
+   
+   public void testSimpleColor()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("Error", "error");
+      Assert.assertEquals(ele.getInnerHTML(), 
+            "<span class=\"error\">Error</span>");
+   }
+   
+   public void testTwoColors()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("Output 1", "one");
+      vc.submit("Output 2", "two");
+      Assert.assertEquals(ele.getInnerHTML(), 
+            "<span class=\"one\">Output 1</span>" + 
+            "<span class=\"two\">Output 2</span>");
+   }
+   
+   public void testColorOverwrite()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("XXXX\r", "X");
+      vc.submit("YY", "Y");
+      Assert.assertEquals(ele.getInnerHTML(), 
+            "<span class=\"Y\">YY</span>" + 
+            "<span class=\"X\">XX</span>");
+   }
+   
+   public void testColorSplit()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("123456");
+      vc.submit("\b\b\b\bXX", "X");
+      Assert.assertEquals(ele.getInnerHTML(), 
+            "<span>12</span>" + 
+            "<span class=\"X\">XX</span>" + 
+            "<span>56</span>");
+   }
+   
+   public void testColorOverlap()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("123", "A");
+      vc.submit("456", "B");
+      vc.submit("\b\b\b\bXX", "X");
+      Assert.assertEquals(ele.getInnerHTML(), 
+            "<span class=\"A\">12</span>" + 
+            "<span class=\"X\">XX</span>" + 
+            "<span class=\"B\">56</span>");
    }
 }

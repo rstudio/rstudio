@@ -14,7 +14,9 @@
  */
 package org.rstudio.core.client;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -175,13 +177,13 @@ public class VirtualConsole
       int end = start + range.length;
       
       Entry<Integer, ClassRange> left = class_.floorEntry(start);
-      Entry<Integer, ClassRange> right = class_.ceilingEntry(end);
+      Entry<Integer, ClassRange> right = class_.floorEntry(end);
 
       // create a view into the map representing the ranges that this class
       // overlaps
       SortedMap<Integer, ClassRange> view = null;
       if (left != null && right != null)
-         view = class_.subMap(left.getKey(), right.getKey());
+         view = class_.subMap(left.getKey(), true, right.getKey(), true);
       else if (left == null && right != null)
          view = class_.tailMap(right.getKey(), true);
       else if (left != null && right == null)
@@ -200,7 +202,7 @@ public class VirtualConsole
       // overlapping ranges (we don't do this in place to avoid invalidating
       // iterators)
       Set<Integer> deletions = new TreeSet<Integer>();
-      Set<ClassRange> insertions = new HashSet<ClassRange>();
+      List<ClassRange> insertions = new ArrayList<ClassRange>();
       Map<Integer, Integer> moves = new TreeMap<Integer, Integer>();
 
       for (Entry<Integer, ClassRange> entry: view.entrySet())
@@ -217,6 +219,7 @@ public class VirtualConsole
             {
                // extend the original range
                overlap.appendRight(range.text(), delta);
+               range.clearText();
             }
             else
             {
@@ -227,23 +230,25 @@ public class VirtualConsole
                   parent_.insertAfter(range.element, overlap.element);
             }
          }
-         else if (start <= l && end <= r)
+         else if (start <= l && end <= r && end >= l)
          {
-            // overlapping on the right side
+            // overlapping on the right side of the new range
             int delta = end - l;
             if (matches)
             {
                // extend the original range
                overlap.appendLeft(range.text(), delta);
+               range.clearText();
                moves.put(l, start);
             }
             else
             {
-               // reduce the original range and add ours
-               insertions.add(range);
+               // reduce the original range and add ours (if not present)
                overlap.trimLeft(delta);
+               insertions.add(range);
                if (parent_ != null)
                   parent_.insertBefore(range.element, overlap.element);
+              
             }
          }
          else if (l > start && r < end)
@@ -264,9 +269,9 @@ public class VirtualConsole
             else
             {
                String text = overlap.text();
-               int delta = r - end;
+
                // trim the original range
-               overlap.trimLeft(start - l);
+               overlap.trimRight(overlap.length - (start - l));
                
                // insert the new range
                insertions.add(range);
@@ -275,12 +280,13 @@ public class VirtualConsole
                
                // add the new range
                ClassRange remainder = new ClassRange(
-                     end + 1,
-                     text.substring(text.length() - delta, text.length()),
-                     overlap.clazz);
+                     end,
+                     overlap.clazz,
+                     text.substring((text.length() - range.length), 
+                                    text.length()));
                insertions.add(remainder);
                if (parent_ != null)
-                  parent_.insertAfter(range.element, remainder.element);
+                  parent_.insertAfter(remainder.element, range.element);
             }
          }
       }
@@ -339,7 +345,8 @@ public class VirtualConsole
 
          // If we passed over any plain text on the way to this control
          // character, add it.
-         text(data.substring(tail, pos), clazz);
+         if (tail != pos)
+            text(data.substring(tail, pos), clazz);
 
          tail = pos + 1;
 
@@ -395,8 +402,7 @@ public class VirtualConsole
       {
          length -= delta;
          String text = element.getInnerText();
-         element.setInnerText(text.substring(text.length() - delta,
-               text.length()));
+         element.setInnerText(text.substring(0, text.length() - delta));
       }
       
       public void appendLeft(String content, int delta)
@@ -426,6 +432,11 @@ public class VirtualConsole
       public String text()
       {
          return element.getInnerText();
+      }
+      
+      public void clearText()
+      {
+         element.setInnerText("");
       }
 
       public String clazz;
