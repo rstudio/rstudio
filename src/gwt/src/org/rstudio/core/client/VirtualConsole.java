@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -69,7 +70,7 @@ public class VirtualConsole
    {
       if (cursor_ == 0)
          return;
-      output_.deleteCharAt(--cursor_);
+      cursor_--;
    }
 
    private void carriageReturn()
@@ -80,12 +81,12 @@ public class VirtualConsole
          cursor_--;
    }
 
-   private void newline()
+   private void newline(String clazz)
    {
       while (cursor_ < output_.length() && output_.charAt(cursor_) != '\n')
          cursor_++;
       // Now we're either at the end of the buffer, or on top of a '\n'
-      text("\n", null);
+      text("\n", clazz);
    }
 
    private void formfeed()
@@ -133,7 +134,36 @@ public class VirtualConsole
       console.submit(text);
       return console.toString();
    }
+   
+   /**
+    * Appends text to the end of the virtual console.
+    * 
+    * @param text The text to append
+    * @param clazz The content to append to the text.
+    */
+   private void appendText(String text, String clazz)
+   {
+      Entry <Integer, ClassRange> last = class_.lastEntry();
+      ClassRange range = last.getValue();
+      if (range.clazz == clazz)
+      {
+         // just append to the existing output stream
+         range.appendRight(text, 0);
+      }
+      else
+      {
+         // create a new output range with this class
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text);
+         parent_.appendChild(newRange.element);
+         class_.put(cursor_, newRange);
+      }
+   }
 
+   /**
+    * Inserts text which overlaps existing text in the virtual console.
+    * 
+    * @param range
+    */
    private void insertText(ClassRange range)
    {
       int start = range.start;
@@ -148,9 +178,9 @@ public class VirtualConsole
       if (left != null && right != null)
          view = class_.subMap(left.getKey(), right.getKey());
       else if (left == null && right != null)
-         view = class_.tailMap(right.getKey());
+         view = class_.tailMap(right.getKey(), true);
       else if (left != null && right == null)
-         view = class_.headMap(left.getKey());
+         view = class_.headMap(left.getKey(), true);
       
       // if no overlapping ranges exist, we can just create a new one
       if (view == null)
@@ -165,7 +195,7 @@ public class VirtualConsole
       // overlapping ranges (we don't do this in place to avoid invalidating
       // iterators)
       Set<Integer> deletions = new TreeSet<Integer>();
-      Set<ClassRange> insertions = new TreeSet<ClassRange>();
+      Set<ClassRange> insertions = new HashSet<ClassRange>();
       Map<Integer, Integer> moves = new TreeMap<Integer, Integer>();
 
       for (Entry<Integer, ClassRange> entry: view.entrySet())
@@ -174,9 +204,9 @@ public class VirtualConsole
          int l = entry.getKey();
          int r = l + overlap.length;
          boolean matches = range.clazz == overlap.clazz;
-         if (start >= l && end >= r) 
+         if (start >= l && start < r && end >= r) 
          {
-            // overlapping on the left side
+            // overlapping on the left side of the new range
             int delta = r - start;
             if (matches)
             {
@@ -272,15 +302,25 @@ public class VirtualConsole
    private void text(String text, String clazz)
    {
       int start = cursor_;
-      int end = Math.min(cursor_, output_.length());
+      int end = cursor_ + text.length();
+      
+      // real-time output if we have a parent
+      if (parent_ != null)
+      {
+         // short circuit common case in which we're just adding output
+         if (cursor_ == output_.length() && !class_.isEmpty())
+            appendText(text, clazz);
+         else
+            insertText(new ClassRange(start, clazz, text));
+      }
+
       output_.replace(start, end, text);
-      insertText(new ClassRange(start, clazz, text));
       cursor_ += text.length();
    }
    
    public void submit(String data, String clazz)
    {
-      if (CONTROL_SPECIAL.match(data, 0) == null)
+      if (CONTROL.match(data, 0) == null)
       {
          text(data, clazz);
          return;
@@ -307,7 +347,7 @@ public class VirtualConsole
                backspace();
                break;
             case '\n':
-               newline();
+               newline(clazz);
                break;
             case '\f':
                formfeed();
@@ -355,7 +395,7 @@ public class VirtualConsole
       
       public void appendLeft(String content, int delta)
       {
-         length += delta;
+         length += content.length() - delta;
          start -= delta;
          element.setInnerText(content + 
                element.getInnerText().substring(delta));
@@ -363,10 +403,10 @@ public class VirtualConsole
       
       public void appendRight(String content, int delta)
       {
-         length += delta;
-         String text = element.getInnerText();
-         element.setInnerText(text.substring(text.length() - delta,
-               text.length()) + content);
+         length += content.length() - delta;
+         String text = text();
+         element.setInnerText(text.substring(0,
+               text.length() - delta) + content);
       }
       
       public void overwrite(String content, int pos)
@@ -374,7 +414,7 @@ public class VirtualConsole
          String text = element.getInnerText();
          element.setInnerText(
                text.substring(0, pos) + content +
-               text.substring(pos + 1, text.length()));
+               text.substring(pos + content.length(), text.length()));
       }
       
       public String text()
@@ -389,7 +429,6 @@ public class VirtualConsole
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
-   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b\f]");
    
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<Integer, ClassRange>();
