@@ -20,6 +20,11 @@
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
+#include <iostream>
+#include <fstream>
+
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/system/System.hpp>
 #include <core/FilePath.hpp>
 
@@ -27,6 +32,41 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace tests {
+
+namespace {
+
+std::string ptyPath;
+
+FilePath getWinPtyPath()
+{
+   // Find the rdesktop-dev.conf, so we can find the external-winpty-path
+   // which gives us the absolute path to the winpty location. This assumes
+   // we are running the unit test from the root of the CPP build folder.
+   if (!ptyPath.empty())
+      return FilePath(ptyPath);
+
+#ifdef _WIN64
+   std::string suffix("/64/bin/winpty.dll");
+#else
+   std::string suffix("/32/bin/winpty.dll");
+#endif
+   std::string prefix("external-winpty-path=");
+   std::ifstream in("./conf/rdesktop-dev.conf");
+
+   std::string line;
+   while (std::getline(in, line))
+   {
+      if (boost::algorithm::starts_with(line, prefix))
+      {
+         ptyPath = line.substr(prefix.length());
+         ptyPath += suffix;
+         return FilePath(ptyPath);
+      }
+   }
+   return FilePath();
+}
+
+} // anonymous namespace
 
 TEST_CASE("Win32PtyTests")
 {
@@ -40,7 +80,7 @@ TEST_CASE("Win32PtyTests")
    options.cols = 80;
    options.rows = 25;
    FilePath winptyPath;
-   options.pseudoterminal = core::system::Pseudoterminal(winptyPath,
+   options.pseudoterminal = core::system::Pseudoterminal(getWinPtyPath(),
                                                          options.cols,
                                                          options.rows);
 
@@ -54,6 +94,11 @@ TEST_CASE("Win32PtyTests")
       CHECK_FALSE(pty.ptyRunning());
       pty.init("cmd.exe", args, options);
       CHECK_FALSE(pty.ptyRunning());
+   }
+
+   SECTION("Finding winpty.dll")
+   {
+      CHECK(getWinPtyPath().exists());
    }
 
    SECTION("Start pty and get handles")
