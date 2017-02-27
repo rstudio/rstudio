@@ -135,6 +135,11 @@ public class VirtualConsole
       return console.toString();
    }
    
+   public Element getParent()
+   {
+      return parent_;
+   }
+   
    /**
     * Appends text to the end of the virtual console.
     * 
@@ -362,7 +367,8 @@ public class VirtualConsole
       }
 
       // If there was any plain text after the last control character, add it
-      text(data.substring(tail), clazz);
+      if (tail < data.length())
+         text(data.substring(tail), clazz);
    }
    
    private class ClassRange
