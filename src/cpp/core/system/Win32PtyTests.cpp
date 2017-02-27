@@ -107,8 +107,8 @@ TEST_CASE("Win32PtyTests")
    std::vector <std::string> emptyArgs;
 
    ProcessOptions options;
-   options.cols = 80;
-   options.rows = 25;
+   options.cols = kCols;
+   options.rows = kRows;
    options.pseudoterminal = core::system::Pseudoterminal(
             getWinPtyPath(),
             false /*plainText*/,
@@ -116,8 +116,8 @@ TEST_CASE("Win32PtyTests")
             options.rows);
 
    ProcessOptions plainOptions;
-   plainOptions.cols = 80;
-   plainOptions.rows = 25;
+   plainOptions.cols = kCols;
+   plainOptions.rows = kRows;
    plainOptions.pseudoterminal = core::system::Pseudoterminal(
             getWinPtyPath(),
             true /*plainText*/,
@@ -179,6 +179,7 @@ TEST_CASE("Win32PtyTests")
       CHECK(!err);
       CHECK(hProcess);
 
+      CHECK(::CloseHandle(hProcess));
       CHECK(::CloseHandle(hInWrite));
       CHECK(::CloseHandle(hOutRead));
    }
@@ -200,6 +201,8 @@ TEST_CASE("Win32PtyTests")
       err = pty.runProcess(&hProcess);
       CHECK(err);
       CHECK_FALSE(hProcess);
+      CHECK(::CloseHandle(hInWrite));
+      CHECK(::CloseHandle(hOutRead));
    }
 
    SECTION("Capture output of a process")
@@ -243,6 +246,7 @@ TEST_CASE("Win32PtyTests")
 
       stdOut = string_utils::trimWhitespace(stdOut);
       CHECK_FALSE(stdOut.compare("Hello!"));
+      CHECK(::CloseHandle(hProcess));
       CHECK(::CloseHandle(hInWrite));
       CHECK(::CloseHandle(hOutRead));
    }
