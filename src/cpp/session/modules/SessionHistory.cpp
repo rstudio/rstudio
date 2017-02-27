@@ -364,11 +364,9 @@ void onHistoryAdd(const std::string& command)
 SEXP rs_timestamp(SEXP stampSEXP, SEXP prefixSEXP, SEXP suffixSEXP, SEXP quietSEXP)
 {
    std::string prefix = r::sexp::safeAsString(prefixSEXP);
-   
-   std::string suffix = r::sexp::safeAsString(prefixSEXP);
+   std::string suffix = r::sexp::safeAsString(suffixSEXP);
 
-   boost::format fmt(prefix + "%1%" + suffix);
-   std::string ts = boost::str(fmt % r::sexp::safeAsString(stampSEXP));
+   std::string ts = prefix + r::sexp::safeAsString(stampSEXP) + suffix;
    r::session::consoleHistory().add(ts);
 
    if (!r::sexp::asLogical(quietSEXP)) {
