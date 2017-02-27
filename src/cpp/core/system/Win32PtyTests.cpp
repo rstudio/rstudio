@@ -21,6 +21,7 @@
 #include <tests/TestThat.hpp>
 
 #include <core/system/System.hpp>
+#include <core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -38,7 +39,9 @@ TEST_CASE("Win32PtyTests")
    ProcessOptions options;
    options.cols = 80;
    options.rows = 25;
-   options.pseudoterminal = core::system::Pseudoterminal(options.cols,
+   FilePath winptyPath;
+   options.pseudoterminal = core::system::Pseudoterminal(winptyPath,
+                                                         options.cols,
                                                          options.rows);
 
    SECTION("Agent not running")

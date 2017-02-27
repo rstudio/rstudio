@@ -101,8 +101,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 
    // detect running in x64 directory and tweak resource path
 #ifdef _WIN32
+   bool is64 = false;
    if (resourcePath_.complete("x64").exists())
+   {
+      is64 = true;
       resourcePath_ = resourcePath_.parent();
+   }
 #endif
    
    // run tests flag
@@ -337,7 +341,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-libclang-headers-path",
         value<std::string>(&libclangHeadersPath_)->default_value(
                                        "resources/libclang/builtin-headers"),
-        "Path to libclang builtin headers");
+        "Path to libclang builtin headers")
+      ("external-winpty-path",
+        value<std::string>(&winptyPath_)->default_value("bin"),
+         "Path to winpty binaries");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -503,6 +510,27 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath_, &msysSshPath_);
    resolvePath(resourcePath_, &sumatraPath_);
    resolvePath(resourcePath_, &winutilsPath_);
+   resolvePath(resourcePath_, &winptyPath_);
+
+   // winpty.dll lives next to rsession.exe on a full install; otherwise
+   // it lives in a directory named 32 or 64
+   core::FilePath pty(winptyPath_);
+   std::string completion;
+   if (pty.isWithin(resourcePath_))
+   {
+      if (is64)
+         completion = "x64/winpty.dll";
+      else
+         completion = "winpty.dll";
+   }
+   else
+   {
+      if (is64)
+         completion = "64/bin/winpty.dll";
+      else
+         completion = "32/bin/winpty.dll";
+   }
+   winptyPath_ = pty.complete(completion).absolutePath();
 #endif
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);

@@ -107,13 +107,16 @@ Error unload()
       return Success();
    }
 }
-Error tryLoad(const std::string& libraryPath)
+
+Error tryLoad(const core::FilePath& libraryPath)
 {
    // Once DLL is loaded we keep it loaded, i.e. no refcount/unload
    if (hMod)
       return Success();
 
-   Error error = core::system::loadLibrary(libraryPath, (void**)&hMod);
+   Error error = core::system::loadLibrary(
+            libraryPath.absolutePath(),
+            (void**)&hMod);
    if (error)
       return error;
 
@@ -331,57 +334,12 @@ void WinPty::init(
    options_ = options;
 }
 
-Error WinPty::runProcess(HANDLE* pProcess)
-{
-   if (pProcess)
-      *pProcess = NULL;
-
-   if (!ptyRunning())
-   {
-      return systemError(boost::system::errc::no_such_process,
-                         "Pty not running",
-                         ERROR_LOCATION);
-   }
-
-   // TODO (gary): combine args into one string
-   WinPtySpawnConfig spawnConfig(
-            WINPTY_SPAWN_FLAG_EXIT_AFTER_SHUTDOWN,
-            exe_ /*appName*/,
-            "" /*cmdline*/,
-            options_);
-   if (!spawnConfig.get())
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         spawnConfig.errMsg("Failed to create pty spawn config"),
-                         ERROR_LOCATION);
-   }
-
-   DWORD createProcError;
-   WinPtyError err;
-   if (!spawn)
-   {
-      return systemError(boost::system::errc::function_not_supported,
-                         "spawn function not loaded", ERROR_LOCATION);
-   }
-   if (!spawn(pPty_,
-              spawnConfig.get(),
-              pProcess,
-              NULL /*pThread*/,
-              &createProcError,
-              err.ppErr()))
-   {
-      if (pProcess)
-         *pProcess = NULL;
-      return systemError(createProcError,
-                         err.errMsg("runProcess"),
-                         ERROR_LOCATION);
-   }
-
-   return Success();
-}
-
 Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErrRead)
 {
+   CloseHandleOnExitScope closeStdInWrite(pStdInWrite, ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdOutRead(pStdOutRead, ERROR_LOCATION);
+   CloseHandleOnExitScope closeStdErrRead(pStdErrRead, ERROR_LOCATION);
+
    // We return NULL handles on error, for consistency with calling code. That
    // requires changing error results from INVALID_HANDLE_VALUE to NULL.
    if (pStdErrRead)
@@ -390,13 +348,15 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       *pStdInWrite = NULL;
    if (pStdOutRead)
       *pStdOutRead = NULL;
-   CloseHandleOnExitScope closeStdInWrite(pStdInWrite, ERROR_LOCATION);
-   CloseHandleOnExitScope closeStdOutRead(pStdOutRead, ERROR_LOCATION);
-   CloseHandleOnExitScope closeStdErrRead(pStdErrRead, ERROR_LOCATION);
 
-   // TODO (gary) obtain this at runtime
-   //Error err = tryLoad("c:\\users\\gary\\rstudio\\dependencies\\windows\\winpty-0.4.2-msys2-2.6.0\\32\\bin\\winpty.dll");
-   Error err = tryLoad("winpty.dll");
+   if (!options_.pseudoterminal)
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         "Pseudoterminal options not provided",
+                         ERROR_LOCATION);
+   }
+
+   Error err = tryLoad(options_.pseudoterminal.get().winptyPath);
    if (err)
       return err;
 
@@ -404,13 +364,6 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
       return systemError(boost::system::errc::already_connected,
                          "WinPty already running",
                          ERROR_LOCATION);
-
-  if (!options_.pseudoterminal)
-   {
-      return systemError(boost::system::errc::invalid_argument,
-                         "Pseudoterminal dimensions not provided",
-                         ERROR_LOCATION);
-   }
 
    UINT64 agentFlags = 0x00;
 
@@ -506,6 +459,55 @@ Error WinPty::startPty(HANDLE* pStdInWrite, HANDLE* pStdOutRead, HANDLE* pStdErr
    closeStdInWrite.detach();
    closeStdOutRead.detach();
    closeStdErrRead.detach();
+   return Success();
+}
+
+Error WinPty::runProcess(HANDLE* pProcess)
+{
+   if (pProcess)
+      *pProcess = NULL;
+
+   if (!ptyRunning())
+   {
+      return systemError(boost::system::errc::no_such_process,
+                         "Pty not running",
+                         ERROR_LOCATION);
+   }
+
+   // TODO (gary): combine args into one string
+   WinPtySpawnConfig spawnConfig(
+            WINPTY_SPAWN_FLAG_EXIT_AFTER_SHUTDOWN,
+            exe_ /*appName*/,
+            "" /*cmdline*/,
+            options_);
+   if (!spawnConfig.get())
+   {
+      return systemError(boost::system::errc::invalid_argument,
+                         spawnConfig.errMsg("Failed to create pty spawn config"),
+                         ERROR_LOCATION);
+   }
+
+   DWORD createProcError;
+   WinPtyError err;
+   if (!spawn)
+   {
+      return systemError(boost::system::errc::function_not_supported,
+                         "spawn function not loaded", ERROR_LOCATION);
+   }
+   if (!spawn(pPty_,
+              spawnConfig.get(),
+              pProcess,
+              NULL /*pThread*/,
+              &createProcError,
+              err.ppErr()))
+   {
+      if (pProcess)
+         *pProcess = NULL;
+      return systemError(createProcError,
+                         err.errMsg("runProcess"),
+                         ERROR_LOCATION);
+   }
+
    return Success();
 }
 

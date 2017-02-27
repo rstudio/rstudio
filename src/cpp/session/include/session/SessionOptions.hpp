@@ -271,6 +271,11 @@ public:
       return core::FilePath(winutilsPath_.c_str());
    }
    
+   core::FilePath winptyPath() const
+   {
+      return core::FilePath(winptyPath_.c_str());
+   }
+
    core::FilePath hunspellDictionariesPath() const
    {
       return core::FilePath(hunspellDictionariesPath_.c_str());
@@ -574,6 +579,7 @@ private:
    std::string pandocPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
+   std::string winptyPath_;
 
    // root directory for locating resources
    core::FilePath resourcePath_;

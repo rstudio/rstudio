@@ -49,10 +49,9 @@ public:
    // Start the pty and return HANDLEs. On success, caller is responsible for
    // closing returned HANDLEs; on failure, all returned HANDLEs will
    // contain NULL.
-   Error startPty(
-         HANDLE* pStdInWrite,
-         HANDLE* pStdOutRead,
-         HANDLE* pStdErrRead = NULL /*OPTIONAL*/);
+   Error startPty(HANDLE* pStdInWrite,
+                  HANDLE* pStdOutRead,
+                  HANDLE* pStdErrRead = NULL /*OPTIONAL*/);
    bool ptyRunning() const;
 
    // Start the process specified by init(); it will do I/O via the handles

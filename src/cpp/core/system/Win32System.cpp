@@ -881,8 +881,7 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
       // A "null" handle can contain INVALID_HANDLE or NULL, depending
       // on the context. This is a painful inconsistency in Windows, see:
       // https://blogs.msdn.microsoft.com/oldnewthing/20040302-00/?p=40443
-      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE ||
-          !*pHandle_)
+      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE || *pHandle_ == NULL)
          return;
 
       Error error = closeHandle(pHandle_, location_);

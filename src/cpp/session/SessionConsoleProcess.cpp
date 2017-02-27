@@ -117,8 +117,10 @@ void ConsoleProcess::commonInit()
       else // terminal
       {
          // request a pseudoterminal if this is an interactive console process
-         options_.pseudoterminal = core::system::Pseudoterminal(options_.cols,
-                                                                options_.rows);
+         options_.pseudoterminal = core::system::Pseudoterminal(
+                  session::options().winptyPath(),
+                  options_.cols,
+                  options_.rows);
       }
 #else
       // request a pseudoterminal if this is an interactive console process

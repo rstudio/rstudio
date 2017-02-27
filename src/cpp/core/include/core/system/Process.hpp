@@ -47,11 +47,21 @@ extern const char* const kDumbTerm;
 // Struct for specifying pseudoterminal options
 struct Pseudoterminal
 {
-   Pseudoterminal(int cols, int rows)
-      : cols(cols), rows(rows)
+   Pseudoterminal(
+#ifdef _WIN32
+         const FilePath& winptyPath,
+#endif
+         int cols, int rows)
+      :
+#ifdef _WIN32
+        winptyPath(winptyPath),
+#endif
+        cols(cols), rows(rows)
    {
    }
-
+#ifdef _WIN32
+   FilePath winptyPath;
+#endif
    int cols;
    int rows;
 };
