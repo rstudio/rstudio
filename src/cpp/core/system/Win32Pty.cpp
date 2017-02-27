@@ -36,7 +36,6 @@ namespace {
       if (unloadError) \
          LOG_ERROR(unloadError); \
       return error; \
-      return error; \
    }
 
 HMODULE hMod = NULL;
@@ -70,42 +69,33 @@ void (*free)(winpty_t *) = NULL;
 
 Error unload()
 {
-   if (hMod != NULL)
-   {
-      error_code = NULL;
-      error_msg = NULL;
-      error_free = NULL;
-      config_new = NULL;
-      config_free = NULL;
-      config_set_initial_size = NULL;
-      config_set_mouse_mode = NULL;
-      config_set_agent_timeout = NULL;
-      open = NULL;
-      agent_process = NULL;
-      conin_name = NULL;
-      conout_name = NULL;
-      conerr_name = NULL;
-      spawn_config_new = NULL;
-      spawn_config_free = NULL;
-      spawn = NULL;
-      set_size = NULL;
-      free = NULL;
+   error_code = NULL;
+   error_msg = NULL;
+   error_free = NULL;
+   config_new = NULL;
+   config_free = NULL;
+   config_set_initial_size = NULL;
+   config_set_mouse_mode = NULL;
+   config_set_agent_timeout = NULL;
+   open = NULL;
+   agent_process = NULL;
+   conin_name = NULL;
+   conout_name = NULL;
+   conerr_name = NULL;
+   spawn_config_new = NULL;
+   spawn_config_free = NULL;
+   spawn = NULL;
+   set_size = NULL;
+   free = NULL;
 
-      Error error = core::system::closeLibrary(hMod);
-      if (error)
-      {
-         return error;
-      }
-      else
-      {
-         hMod = NULL;
-         return Success();
-      }
-   }
-   else
+   if (hMod)
    {
-      return Success();
+      Error error = core::system::closeLibrary(hMod);
+      hMod = NULL;
+      if (error)
+         return error;
    }
+   return Success();
 }
 
 Error tryLoad(const core::FilePath& libraryPath)
@@ -138,6 +128,8 @@ Error tryLoad(const core::FilePath& libraryPath)
    LOAD_WINPTY_SYMBOL(spawn);
    LOAD_WINPTY_SYMBOL(set_size);
    LOAD_WINPTY_SYMBOL(free);
+
+   return Success();
 }
 
 // Obtain text description of winpty error (can return empty string)
