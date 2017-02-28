@@ -1,7 +1,7 @@
 /*
  * SessionNamedPipeHttpConnectionListener.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -422,7 +422,7 @@ private:
          return systemError(::GetLastError(), ERROR_LOCATION);
       core::system::CloseHandleOnExitScope tokenScope(&hToken, ERROR_LOCATION);
 
-      // size of token groups structure (note that we exepct the error
+      // size of token groups structure (note that we expect the error
       // since we pass NULL for the token information buffer)
       DWORD tgSize = 0;
       BOOL res = ::GetTokenInformation(hToken, TokenGroups, NULL, 0, &tgSize);

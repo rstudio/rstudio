@@ -1,7 +1,7 @@
 /*
  * Win32System.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -234,6 +234,25 @@ bool isVistaOrLater()
    if (::GetVersionExA(&osVersion))
    {
       return osVersion.dwMajorVersion >= 6;
+   }
+   else
+   {
+      LOG_ERROR(systemError(::GetLastError(), ERROR_LOCATION));
+      return false;
+   }
+}
+
+bool isWin7OrLater()
+{
+   OSVERSIONINFOA osVersion;
+   ZeroMemory(&osVersion, sizeof(OSVERSIONINFOA));
+   osVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+
+   if (::GetVersionExA(&osVersion))
+   {
+      // 6.0 Vista, 6.1 Win7, 6.2 Win8, 6.3 Win8.1, >6 is Win10+
+      return osVersion.dwMajorVersion > 6 ||
+             osVersion.dwMajorVersion == 6 && osVersion.dwMinorVersion > 0;
    }
    else
    {
@@ -807,6 +826,25 @@ void ensureLongPath(FilePath* pFilePath)
    }
 }
 
+FilePath expandComSpec()
+{
+   LPCWSTR lpSrc = L"%COMSPEC%";
+   DWORD requiredSize = ::ExpandEnvironmentStringsW(lpSrc, NULL, 0);
+   if (!requiredSize)
+      return FilePath();
+
+   std::vector<wchar_t> buffer;
+   buffer.reserve(requiredSize);
+   int result = ::ExpandEnvironmentStringsW(lpSrc,
+                                           &buffer[0],
+                                           buffer.capacity());
+
+   if (!result || result > buffer.capacity())
+      return FilePath();
+
+   return FilePath(&buffer[0]);
+}
+
 Error terminateProcess(PidType pid)
 {
    HANDLE hProc = ::OpenProcess(PROCESS_TERMINATE, false, pid);
@@ -840,7 +878,10 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
 {
    try
    {
-      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE)
+      // A "null" handle can contain INVALID_HANDLE or NULL, depending
+      // on the context. This is a painful inconsistency in Windows, see:
+      // https://blogs.msdn.microsoft.com/oldnewthing/20040302-00/?p=40443
+      if (!pHandle_ || *pHandle_ == INVALID_HANDLE_VALUE || *pHandle_ == NULL)
          return;
 
       Error error = closeHandle(pHandle_, location_);

@@ -1,7 +1,7 @@
 /*
  * ChildProcess.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,13 +114,11 @@ public:
    Error run(const std::string& input, ProcessResult* pResult)
    {
       // sync child processes don't support pseudoterminal mode
-#ifndef _WIN32
       if (options().pseudoterminal)
       {
          return systemError(boost::system::errc::not_supported,
                             ERROR_LOCATION);
       }
-#endif
 
       // run the process
       Error error = ChildProcess::run();
