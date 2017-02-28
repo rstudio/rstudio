@@ -48,6 +48,12 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(cr, "jello");
    }
    
+   public void testNewlineCarrigeReturn()
+   {
+      String cr = VirtualConsole.consolify("L1\nL2\rL3");
+      Assert.assertEquals(cr, "L1\nL3");
+   }
+   
    public void testSimpleColor()
    {
       PreElement ele = Document.get().createPreElement();
@@ -102,5 +108,16 @@ public class VirtualConsoleTests extends GWTTestCase
             "<span class=\"A\">12</span>" + 
             "<span class=\"X\">XX</span>" + 
             "<span class=\"B\">56</span>");
+   }
+   
+   public void testFormFeed()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = new VirtualConsole(ele);
+      vc.submit("Sample1\n");
+      vc.submit("Sample2\n");
+      vc.submit("Sample3\f");
+      vc.submit("Sample4");
+      Assert.assertEquals(ele.getInnerHTML(), "<span>Sample4</span>");
    }
 }
