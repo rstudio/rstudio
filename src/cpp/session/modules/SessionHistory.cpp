@@ -361,21 +361,6 @@ void onHistoryAdd(const std::string& command)
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_timestamp(SEXP stampSEXP, SEXP prefixSEXP, SEXP suffixSEXP, SEXP quietSEXP)
-{
-   std::string prefix = r::sexp::safeAsString(prefixSEXP);
-   std::string suffix = r::sexp::safeAsString(suffixSEXP);
-
-   std::string ts = prefix + r::sexp::safeAsString(stampSEXP) + suffix;
-   r::session::consoleHistory().add(ts);
-
-   if (!r::sexp::asLogical(quietSEXP)) {
-      module_context::consoleWriteOutput(ts + "\n");
-   }
-
-   return R_NilValue;
-}
-
 } // anonymous namespace
    
    
@@ -386,13 +371,6 @@ Error initialize()
    
    // connect to console history add event
    r::session::consoleHistory().connectOnAdd(onHistoryAdd);   
-   
-   // register timestamp function
-   R_CallMethodDef methodDef;
-   methodDef.name = "rs_timestamp" ;
-   methodDef.fun = (DL_FUNC) rs_timestamp;
-   methodDef.numArgs = 4;
-   r::routines::addCallMethod(methodDef);
 
    // install handlers
    using boost::bind;

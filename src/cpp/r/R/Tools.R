@@ -636,11 +636,12 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
     suffix = " ------##",
     quiet = FALSE)
   {
-    invisible(.Call("rs_timestamp",
-      stamp,
-      prefix,
-      suffix, 
-      quiet))
+    stamp <- paste(prefix, stamp, suffix, sep = "")
+
+    if (!quiet)
+        cat(stamp, sep = "\n")
+
+    invisible(stamp)
   }, namespace = TRUE)
 })
 
