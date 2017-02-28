@@ -113,13 +113,16 @@ public class CompilePdfOutputPresenter extends BusyPresenter
       compileStarted(compilePdfState.getTargetFile());
       
       view_.showOutput(CompileOutput.create(CompileOutput.kNormal,
-                                            compilePdfState.getOutput()));
+                                            compilePdfState.getOutput()),
+                                            false);
       
       if (compilePdfState.getErrors().length() > 0)
          view_.showErrors(compilePdfState.getErrors());    
       
       if (!compilePdfState.isRunning())
          view_.compileCompleted();
+      
+      view_.scrollToBottom();
    }
 
    public void confirmClose(Command onConfirmed)
@@ -174,7 +177,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
    @Override
    public void onCompilePdfOutput(CompilePdfOutputEvent event)
    {
-      view_.showOutput(event.getOutput());
+      view_.showOutput(event.getOutput(), true);
    }
    
    @Override

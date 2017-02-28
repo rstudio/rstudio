@@ -130,7 +130,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
    @Override
    public void onRmdRenderOutput(RmdRenderOutputEvent event)
    {
-      view_.showOutput(event.getOutput());
+      view_.showOutput(event.getOutput(), true);
    }
    
    @Override
