@@ -525,7 +525,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       
       getName().setValue(getAndSetInitialName());
       
-      presenter_.attatch(doc_, view_);
+      presenter_.attach(doc_, view_);
    }
 
    public void onDismiss(int dismissType)
