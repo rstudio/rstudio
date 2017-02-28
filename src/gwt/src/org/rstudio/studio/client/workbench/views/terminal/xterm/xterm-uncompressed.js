@@ -1,5 +1,6 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Terminal = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.CHARSETS = {};
 exports.DEFAULT_CHARSET = exports.CHARSETS['B'];
 exports.CHARSETS['0'] = {
@@ -158,8 +159,11 @@ exports.CHARSETS['='] = {
     '~': 'û'
 };
 
+
+
 },{}],2:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var CompositionHelper = (function () {
     function CompositionHelper(textarea, compositionView, terminal) {
         this.textarea = textarea;
@@ -282,8 +286,11 @@ var CompositionHelper = (function () {
 }());
 exports.CompositionHelper = CompositionHelper;
 
+
+
 },{}],3:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var C0;
 (function (C0) {
     C0.NUL = '\x00';
@@ -323,8 +330,11 @@ var C0;
 })(C0 = exports.C0 || (exports.C0 = {}));
 ;
 
+
+
 },{}],4:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 ;
 var EventEmitter = (function () {
     function EventEmitter() {
@@ -378,8 +388,11 @@ var EventEmitter = (function () {
 }());
 exports.EventEmitter = EventEmitter;
 
+
+
 },{}],5:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var EscapeSequences_1 = require("./EscapeSequences");
 var Charsets_1 = require("./Charsets");
 var InputHandler = (function () {
@@ -1302,8 +1315,11 @@ var wcwidth = (function (opts) {
     return wcwidth;
 })({ nul: 0, control: 0 });
 
+
+
 },{"./Charsets":1,"./EscapeSequences":3}],6:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var EscapeSequences_1 = require("./EscapeSequences");
 var Charsets_1 = require("./Charsets");
 var normalStateHandler = {};
@@ -1775,8 +1791,11 @@ var Parser = (function () {
 }());
 exports.Parser = Parser;
 
+
+
 },{"./Charsets":1,"./EscapeSequences":3}],7:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var MAX_REFRESH_FRAME_SKIP = 5;
 var FLAGS;
 (function (FLAGS) {
@@ -1984,10 +2003,14 @@ function checkBoldBroken(document) {
     return w1 !== w2;
 }
 
+
+
 },{}],8:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Viewport = (function () {
     function Viewport(terminal, viewportElement, scrollArea, charMeasure) {
+        var _this = this;
         this.terminal = terminal;
         this.viewportElement = viewportElement;
         this.scrollArea = scrollArea;
@@ -1998,7 +2021,7 @@ var Viewport = (function () {
         this.terminal.on('scroll', this.syncScrollArea.bind(this));
         this.terminal.on('resize', this.syncScrollArea.bind(this));
         this.viewportElement.addEventListener('scroll', this.onScroll.bind(this));
-        this.syncScrollArea();
+        setTimeout(function () { return _this.syncScrollArea(); }, 0);
     }
     Viewport.prototype.refresh = function () {
         if (this.charMeasure.height > 0) {
@@ -2058,8 +2081,11 @@ var Viewport = (function () {
 }());
 exports.Viewport = Viewport;
 
+
+
 },{}],9:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function prepareTextForClipboard(text) {
     var space = String.fromCharCode(32), nonBreakingSpace = String.fromCharCode(160), allNonBreakingSpaces = new RegExp(nonBreakingSpace, 'g'), processedText = text.split('\n').map(function (line) {
         var processedLine = line.replace(/\s+$/g, '').replace(allNonBreakingSpaces, space);
@@ -2137,8 +2163,11 @@ function rightClickHandler(ev, term) {
 }
 exports.rightClickHandler = rightClickHandler;
 
+
+
 },{}],10:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Generic_1 = require("./Generic");
 var isNode = (typeof navigator === 'undefined') ? true : false;
 var userAgent = (isNode) ? 'node' : navigator.userAgent;
@@ -2150,15 +2179,21 @@ exports.isIpad = platform === 'iPad';
 exports.isIphone = platform === 'iPhone';
 exports.isMSWindows = Generic_1.contains(['Windows', 'Win16', 'Win32', 'WinCE'], platform);
 
+
+
 },{"./Generic":13}],11:[function(require,module,exports){
 "use strict";
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b)
-        if (b.hasOwnProperty(p))
-            d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
 var EventEmitter_js_1 = require("../EventEmitter.js");
 var CharMeasure = (function (_super) {
     __extends(CharMeasure, _super);
@@ -2211,8 +2246,11 @@ var CharMeasure = (function (_super) {
 }(EventEmitter_js_1.EventEmitter));
 exports.CharMeasure = CharMeasure;
 
+
+
 },{"../EventEmitter.js":4}],12:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var CircularList = (function () {
     function CircularList(maxLength) {
         this._array = new Array(maxLength);
@@ -2347,16 +2385,22 @@ var CircularList = (function () {
 }());
 exports.CircularList = CircularList;
 
+
+
 },{}],13:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function contains(arr, el) {
     return arr.indexOf(el) >= 0;
 }
 exports.contains = contains;
 ;
 
+
+
 },{}],14:[function(require,module,exports){
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var CompositionHelper_1 = require("./CompositionHelper");
 var EventEmitter_1 = require("./EventEmitter");
 var Viewport_1 = require("./Viewport");
@@ -3864,6 +3908,8 @@ Terminal.on = on;
 Terminal.off = off;
 Terminal.cancel = cancel;
 module.exports = Terminal;
+
+
 
 },{"./CompositionHelper":2,"./EscapeSequences":3,"./EventEmitter":4,"./InputHandler":5,"./Parser":6,"./Renderer":7,"./Viewport":8,"./handlers/Clipboard":9,"./utils/Browser":10,"./utils/CharMeasure":11,"./utils/CircularList":12}]},{},[14])(14)
 });
