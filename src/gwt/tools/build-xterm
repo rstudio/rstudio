@@ -21,8 +21,8 @@ fi
 cd xterm.js
 git clean -dfx
 
-# xterm version 2.3.1
-git checkout 639a2fd
+# xterm version 2.3.2
+git checkout 8fd4426
 
 # install and build via Babel
 npm install --only=dev

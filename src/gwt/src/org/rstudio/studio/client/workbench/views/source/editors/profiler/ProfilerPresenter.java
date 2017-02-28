@@ -137,7 +137,7 @@ public class ProfilerPresenter implements RprofEvent.Handler
       }
    }
 
-   public void attatch(SourceDocument doc, Display view)
+   public void attach(SourceDocument doc, Display view)
    {
    }
 

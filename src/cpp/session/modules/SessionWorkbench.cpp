@@ -898,11 +898,7 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-#ifndef _WIN32
    bool smartTerm = !term.compare("XTERM");
-#else
-   bool smartTerm = true;
-#endif
 
    // configure environment for shell
    core::system::Options shellEnv;
@@ -954,10 +950,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    options.environment = shellEnv;
    options.smartTerminal = smartTerm;
    options.reportHasSubprocs = reportHasSubprocs;
-#ifndef _WIN32
    options.cols = cols;
    options.rows = rows;
-#endif
 
    if (termCaption.empty())
       termCaption = "Shell";

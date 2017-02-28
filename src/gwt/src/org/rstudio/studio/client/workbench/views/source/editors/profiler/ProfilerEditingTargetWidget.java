@@ -18,6 +18,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -50,6 +51,10 @@ public class ProfilerEditingTargetWidget extends Composite
       panel.add(profilePage_);
       panel.setWidth("100%");
       panel.setHeight("100%");
+      
+      // needed for Firefox
+      if (BrowseCap.isFirefox())
+         profilePage_.getElement().getParentElement().setAttribute("height", "100%");
       
       initWidget(mainPanel);
    }
