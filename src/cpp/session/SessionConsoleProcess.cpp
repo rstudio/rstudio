@@ -91,13 +91,14 @@ void ConsoleProcess::commonInit()
 #ifdef _WIN32
       // NOTE: We use consoleio.exe here in order to make sure svn.exe password
       // prompting works properly
-      options_.createNewConsole = true;
 
       FilePath consoleIoPath = session::options().consoleIoPath();
 
       // if this is as runProgram then fixup the program and args
       if (!program_.empty())
       {
+         options_.createNewConsole = true;
+
          // build new args
          shell_utils::ShellArgs args;
          args << program_;
@@ -110,11 +111,17 @@ void ConsoleProcess::commonInit()
       // if this is a runCommand then prepend consoleio.exe to the command
       else if (!command_.empty())
       {
+         options_.createNewConsole = true;
          command_ = shell_utils::escape(consoleIoPath) + " " + command_;
       }
       else // terminal
       {
-         options_.consoleIoPath = shell_utils::escape(consoleIoPath);
+         // request a pseudoterminal if this is an interactive console process
+         options_.pseudoterminal = core::system::Pseudoterminal(
+                  session::options().winptyPath(),
+                  false /*plainText*/,
+                  options_.cols,
+                  options_.rows);
       }
 #else
       // request a pseudoterminal if this is an interactive console process

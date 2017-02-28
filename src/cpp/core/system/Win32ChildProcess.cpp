@@ -1,7 +1,7 @@
 /*
  * Win32ChildProcess.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,12 @@
  */
 
 #include "ChildProcess.hpp"
+#include "Win32Pty.hpp"
 
 #include <iostream>
 
 #include <windows.h>
 #include <Shlwapi.h>
-
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -62,7 +62,6 @@ std::string findOnPath(const std::string& exe,
       return std::string();
    }
 }
-
 
 // resolve the passed command and arguments to the form required for a
 // call to CreateProcess (do path lookup if necessary and invoke the
@@ -173,7 +172,8 @@ struct ChildProcess::Impl
         closeStdIn_(&hStdInWrite, ERROR_LOCATION),
         closeStdOut_(&hStdOutRead, ERROR_LOCATION),
         closeStdErr_(&hStdErrRead, ERROR_LOCATION),
-        closeProcess_(&hProcess, ERROR_LOCATION)
+        closeProcess_(&hProcess, ERROR_LOCATION),
+        ctrlC(0x03)
    {
    }
 
@@ -181,6 +181,8 @@ struct ChildProcess::Impl
    HANDLE hStdOutRead;
    HANDLE hStdErrRead;
    HANDLE hProcess;
+   WinPty pty;
+   char ctrlC;
 
 private:
    CloseHandleOnExitScope closeStdIn_;
@@ -225,8 +227,13 @@ void ChildProcess::init(const std::string& command,
 // initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-    std::string command = options_.consoleIoPath + " cmd.exe";
-    init(command, options);
+   // TODO (gary) runtime selection of cmd.exe vs. powershell.exe
+   FilePath cmd = expandComSpec();
+   if (!cmd.exists())
+      exe_ = findOnPath("cmd.exe");
+   else
+      exe_ = cmd.absolutePathNative();
+   options_ = options;
 }
 
 ChildProcess::~ChildProcess()
@@ -257,14 +264,21 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
 
 Error ChildProcess::ptySetSize(int cols, int rows)
 {
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+   // verify we are dealing with a pseudoterminal
+   if (!options().pseudoterminal)
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+
+   return pImpl_->pty.setSize(cols, rows);
 }
 
 Error ChildProcess::ptyInterrupt()
 {
-   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
-}
+   // verify we are dealing with a pseudoterminal
+   if (!options().pseudoterminal)
+      return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
+   return pImpl_->pty.interrupt();
+}
 
 Error ChildProcess::terminate()
 {
@@ -277,6 +291,7 @@ Error ChildProcess::terminate()
 
 bool ChildProcess::hasSubprocess() const
 {
+   // base class doesn't support subprocess-checking; override to implement
    return true;
 }
 
@@ -324,6 +339,22 @@ Error ChildProcess::run()
    //   http://support.microsoft.com/kb/315939
    static CriticalSection s_runCriticalSection;
    CriticalSection::Scope csScope(s_runCriticalSection);
+
+   // pseudoterminal mode: use winpty to emulate Posix pseudoterminal
+   if (options_.pseudoterminal)
+   {
+      pImpl_->pty.init(exe_, args_, options_);
+
+      error = pImpl_->pty.startPty(&pImpl_->hStdInWrite, &pImpl_->hStdOutRead);
+      if (error)
+         return error;
+
+      error = pImpl_->pty.runProcess(&pImpl_->hProcess);
+      if (error)
+         return error;
+
+      return Success();
+   }
 
    // Standard input pipe
    HANDLE hStdInRead;
@@ -531,12 +562,59 @@ Error SyncChildProcess::waitForExit(int* pExitStatus)
 struct AsyncChildProcess::AsyncImpl
 {
    AsyncImpl()
-      : calledOnStarted_(false)
+      : calledOnStarted_(false),
+        exited_(false),
+        checkSubProc_(boost::posix_time::not_a_date_time),
+        hasSubprocess_(true)
    {
    }
 
    bool calledOnStarted_;
-};
+   bool exited_;
+
+   // when we next check subprocess count
+   boost::posix_time::ptime checkSubProc_;
+
+   // result of last subprocess check
+   bool hasSubprocess_;
+
+   void initTimers(bool reportHasSubprocs)
+   {
+      if (exited_)
+      {
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+         return;
+      }
+
+      if (reportHasSubprocs && checkSubProc_.is_not_a_date_time())
+      {
+         checkSubProc_ = now() + boost::posix_time::seconds(1);
+      }
+   }
+
+   bool checkChildCount()
+   {
+      if (checkSubProc_.is_not_a_date_time())
+         return false;
+
+      bool fCheck = now() > checkSubProc_;
+
+      if (fCheck)
+         checkSubProc_ = boost::posix_time::not_a_date_time;
+      return fCheck;
+   }
+
+   bool computeHasSubProcess(HANDLE hProcess)
+   {
+      // TODO (gary) implement
+      return false;
+   }
+
+   static boost::posix_time::ptime now()
+   {
+      return boost::posix_time::microsec_clock::universal_time();
+   }
+ };
 
 AsyncChildProcess::AsyncChildProcess(const std::string& exe,
                                      const std::vector<std::string>& args,
@@ -605,12 +683,16 @@ void AsyncChildProcess::poll()
       callbacks_.onStdout(*this, stdOut);
 
    // check stderr
-   std::string stdErr;
-   error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
-   if (error)
-      reportError(error);
-   if (!stdErr.empty() && callbacks_.onStderr)
-      callbacks_.onStderr(*this, stdErr);
+   // when using winpty, we don't use hStdErrRead
+   if (pImpl_->hStdErrRead)
+   {
+      std::string stdErr;
+      error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
+      if (error)
+         reportError(error);
+      if (!stdErr.empty() &&  callbacks_.onStderr)
+         callbacks_.onStderr(*this, stdErr);
+   }
 
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);
@@ -656,6 +738,21 @@ void AsyncChildProcess::poll()
       // call onExit
       if (callbacks_.onExit)
          callbacks_.onExit(exitStatus);
+
+      // set exited_ flag so that our exited function always
+      // returns the right value
+      pAsyncImpl_->exited_ = true;
+   }
+
+   // Perform optional periodic operations
+   pAsyncImpl_->initTimers(options().reportHasSubprocs);
+   if (pAsyncImpl_->checkChildCount())
+   {
+      pAsyncImpl_->hasSubprocess_ = pAsyncImpl_->computeHasSubProcess(pImpl_->hProcess);
+      if (callbacks_.onHasSubprocs)
+      {
+         callbacks_.onHasSubprocs(pAsyncImpl_->hasSubprocess_);
+      }
    }
 }
 

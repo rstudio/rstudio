@@ -575,8 +575,8 @@ public class TerminalSession extends XTermWidget
    private boolean terminating_;
    private StringBuilder inputQueue_ = new StringBuilder();
    private boolean newTerminal_ = true;
-   private int cols_;
-   private int rows_;
+   private int cols_ = ConsoleProcessInfo.DEFAULT_COLS;
+   private int rows_ = ConsoleProcessInfo.DEFAULT_ROWS;;
 
    // Injected ---- 
    private WorkbenchServerOperations server_; 

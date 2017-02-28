@@ -1,7 +1,7 @@
 /*
  * Process.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,11 +47,24 @@ extern const char* const kDumbTerm;
 // Struct for specifying pseudoterminal options
 struct Pseudoterminal
 {
-   Pseudoterminal(int cols, int rows)
-      : cols(cols), rows(rows)
+   Pseudoterminal(
+#ifdef _WIN32
+         const FilePath& winptyPath,
+         bool plainText,
+#endif
+         int cols, int rows)
+      :
+#ifdef _WIN32
+        winptyPath(winptyPath),
+        plainText(plainText),
+#endif
+        cols(cols), rows(rows)
    {
    }
-
+#ifdef _WIN32
+   FilePath winptyPath;
+   bool plainText;
+#endif
    int cols;
    int rows;
 };
@@ -66,6 +79,8 @@ struct ProcessOptions
         detachProcess(false),
         createNewConsole(false),
         breakawayFromJob(false),
+        cols(80),
+        rows(25),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false)
 #else
@@ -102,16 +117,15 @@ struct ProcessOptions
 #ifndef _WIN32
    // Calls ::setsid after fork for POSIX (no effect on Windows)
    bool detachSession;
+#endif
 
    // attach the child process to pseudoterminal pipes
    boost::optional<Pseudoterminal> pseudoterminal;
-   
+
    // pseudoterminal size
    int cols;
    int rows;
    
-#endif
-
 #ifdef _WIN32
    // Creates the process with DETACHED_PROCESS
    bool detachProcess;

@@ -272,6 +272,7 @@ else()
       system/Win32Environment.cpp
       system/Win32LibraryLoader.cpp
       system/Win32ParentProcessMonitor.cpp
+      system/Win32Pty.cpp
       system/Win32OutputCapture.cpp
       system/Win32ShellUtils.cpp
       system/Win32System.cpp
@@ -312,7 +313,6 @@ add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
 target_link_libraries(
    rstudio-core
    ${Boost_LIBRARIES}
-   ${WINPTY_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
 )
 
