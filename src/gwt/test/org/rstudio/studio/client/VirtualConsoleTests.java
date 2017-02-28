@@ -33,25 +33,25 @@ public class VirtualConsoleTests extends GWTTestCase
    public void testSimpleText()
    {
       String simple = VirtualConsole.consolify("foo");
-      Assert.assertEquals(simple, "foo");
+      Assert.assertEquals("foo", simple);
    }
    
    public void testBackspace()
    {
       String backspace = VirtualConsole.consolify("bool\bk");
-      Assert.assertEquals(backspace, "book");
+      Assert.assertEquals("book", backspace);
    }
    
    public void testCarriageReturn()
    {
       String cr = VirtualConsole.consolify("hello\rj");
-      Assert.assertEquals(cr, "jello");
+      Assert.assertEquals("jello", cr);
    }
    
    public void testNewlineCarrigeReturn()
    {
       String cr = VirtualConsole.consolify("L1\nL2\rL3");
-      Assert.assertEquals(cr, "L1\nL3");
+      Assert.assertEquals("L1\nL3", cr);
    }
    
    public void testSimpleColor()
@@ -59,8 +59,9 @@ public class VirtualConsoleTests extends GWTTestCase
       PreElement ele = Document.get().createPreElement();
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit("Error", "error");
-      Assert.assertEquals(ele.getInnerHTML(), 
-            "<span class=\"error\">Error</span>");
+      Assert.assertEquals(
+            "<span class=\"error\">Error</span>", 
+            ele.getInnerHTML());
    }
    
    public void testTwoColors()
@@ -69,9 +70,10 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit("Output 1", "one");
       vc.submit("Output 2", "two");
-      Assert.assertEquals(ele.getInnerHTML(), 
+      Assert.assertEquals(
             "<span class=\"one\">Output 1</span>" + 
-            "<span class=\"two\">Output 2</span>");
+            "<span class=\"two\">Output 2</span>",
+            ele.getInnerHTML());
    }
    
    public void testColorOverwrite()
@@ -80,9 +82,10 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit("XXXX\r", "X");
       vc.submit("YY", "Y");
-      Assert.assertEquals(ele.getInnerHTML(), 
+      Assert.assertEquals(
             "<span class=\"Y\">YY</span>" + 
-            "<span class=\"X\">XX</span>");
+            "<span class=\"X\">XX</span>",
+            ele.getInnerHTML());
    }
    
    public void testColorSplit()
@@ -91,10 +94,11 @@ public class VirtualConsoleTests extends GWTTestCase
       VirtualConsole vc = new VirtualConsole(ele);
       vc.submit("123456");
       vc.submit("\b\b\b\bXX", "X");
-      Assert.assertEquals(ele.getInnerHTML(), 
+      Assert.assertEquals(
             "<span>12</span>" + 
             "<span class=\"X\">XX</span>" + 
-            "<span>56</span>");
+            "<span>56</span>",
+            ele.getInnerHTML());
    }
    
    public void testColorOverlap()
@@ -104,10 +108,11 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("123", "A");
       vc.submit("456", "B");
       vc.submit("\b\b\b\bXX", "X");
-      Assert.assertEquals(ele.getInnerHTML(), 
+      Assert.assertEquals(
             "<span class=\"A\">12</span>" + 
             "<span class=\"X\">XX</span>" + 
-            "<span class=\"B\">56</span>");
+            "<span class=\"B\">56</span>",
+            ele.getInnerHTML());
    }
    
    public void testFormFeed()
@@ -118,6 +123,6 @@ public class VirtualConsoleTests extends GWTTestCase
       vc.submit("Sample2\n");
       vc.submit("Sample3\f");
       vc.submit("Sample4");
-      Assert.assertEquals(ele.getInnerHTML(), "<span>Sample4</span>");
+      Assert.assertEquals("<span>Sample4</span>", ele.getInnerHTML());
    }
 }
