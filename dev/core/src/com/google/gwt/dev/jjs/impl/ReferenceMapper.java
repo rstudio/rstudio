@@ -142,6 +142,8 @@ public class ReferenceMapper {
       }
       return arrayType;
     } else {
+      assert binding.isClass() || binding.isInterface() || binding.isEnum()
+          : "Expecting a declared type binding but got " + binding;
       ReferenceBinding refBinding = (ReferenceBinding) binding;
       JDeclaredType declType = createType(refBinding);
       try {

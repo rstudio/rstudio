@@ -862,12 +862,12 @@ public class GwtAstBuilder {
         JExpression instance = pop(x.receiver);
         JExpression expr = createFieldRef(instance, info, fieldBinding);
         if (x.genericCast != null) {
-          JType castType = typeMap.get(x.genericCast);
+          JType[] castTypes = processCastType(x.genericCast);
           /*
            * Note, this may result in an invalid AST due to an LHS cast
            * operation. We fix this up in FixAssignmentsToUnboxOrCast.
            */
-          expr = maybeCast(castType, expr);
+          expr = maybeCast(castTypes, expr);
         }
         push(expr);
       } catch (Throwable e) {
@@ -1558,10 +1558,10 @@ public class GwtAstBuilder {
         methodCall.addArgs(arguments);
 
         if (x.valueCast != null) {
-          JType targetType = typeMap.get(x.valueCast);
+          JType[] targetTypes = processCastType(x.valueCast);
           push(isUncheckedGenericMethodCall(x)
-              ? maybeInsertUnsafeTypeCoersion(targetType, methodCall)
-              : maybeCast(targetType, methodCall));
+              ? maybeInsertUnsafeTypeCoersion(targetTypes[0], methodCall)
+              : maybeCast(targetTypes, methodCall));
         } else {
           push(methodCall);
         }
@@ -3070,12 +3070,18 @@ public class GwtAstBuilder {
       return original;
     }
 
+    private JExpression maybeCast(JType[] expected, JExpression expression) {
+      for (JType type : expected) {
+        expression = maybeCast(type, expression);
+      }
+      return expression;
+    }
+
     private JExpression maybeCast(JType expected, JExpression expression) {
       if (expected != expression.getType()) {
         // Must be a generic cast; insert a cast operation.
         return new JCastOperation(expression.getSourceInfo(), expected, expression);
       }
-
       return expression;
     }
 

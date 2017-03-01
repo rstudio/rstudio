@@ -362,6 +362,7 @@ public final class JdtUtil {
   }
 
   public static String signature(TypeBinding binding) {
+    assert !binding.isIntersectionType18() && !binding.isIntersectionType();
     if (binding.isBaseType()) {
       return String.valueOf(binding.sourceName());
     } else {
