@@ -626,6 +626,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("wrap_tab_navigation", false);
    }
    
+   public PrefValue<Boolean> useRetinaIcons()
+   {
+      return bool("use_retina_icons", true);
+   }
+   
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

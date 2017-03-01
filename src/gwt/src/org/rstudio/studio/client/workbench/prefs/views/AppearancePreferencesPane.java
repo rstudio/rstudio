@@ -18,7 +18,10 @@ import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -154,6 +157,20 @@ public class AppearancePreferencesPane extends PreferencesPane
       theme_.addStyleName(res.styles().themeChooser());
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));
+      
+      iconsResolution_ = new CheckBox("Use Retina Icons", false);
+      iconsResolution_.setValue(uiPrefs_.useRetinaIcons().getGlobalValue());
+
+      iconsResolution_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> arg0)
+         {
+            uiPrefs_.useRetinaIcons().setGlobalValue(iconsResolution_.getValue());
+         }
+      });
+      
+      leftPanel.add(iconsResolution_);
 
       FlowPanel previewPanel = new FlowPanel();
       previewPanel.setSize("100%", "100%");
@@ -241,6 +258,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private String initialFontFace_;
    private SelectWidget zoomLevel_;
    private String initialZoomLevel_;
+   private CheckBox iconsResolution_;
 
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +
