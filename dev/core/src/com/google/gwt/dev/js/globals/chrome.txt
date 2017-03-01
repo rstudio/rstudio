@@ -15,8 +15,10 @@ AudioListener
 AudioNode
 AudioParam
 AudioProcessingEvent
+AudioScheduledSourceNode
 AutocompleteErrorEvent
 BarProp
+BaseAudioContext
 BatteryManager
 BeforeInstallPromptEvent
 BeforeLoadEvent
@@ -73,6 +75,7 @@ ClipboardEvent
 CloseEvent
 Comment
 CompositionEvent
+ConstantSourceNode
 ConvolverNode
 CountQueuingStrategy
 Counter
@@ -120,6 +123,7 @@ Float32Array
 Float64Array
 FocusEvent
 FontFace
+FontFaceSetLoadEvent
 FormData
 Function
 GainNode
@@ -186,8 +190,8 @@ HTMLProgressElement
 HTMLQuoteElement
 HTMLScriptElement
 HTMLSelectElement
-HTMLSlotElement
 HTMLShadowElement
+HTMLSlotElement
 HTMLSourceElement
 HTMLSpanElement
 HTMLStyleElement
@@ -222,6 +226,7 @@ IIRFilterNode
 IdleDeadline
 Image
 ImageBitmap
+ImageBitmapRenderingContext
 ImageData
 Infinity
 InputDeviceCapabilities
@@ -245,6 +250,7 @@ MIDIOutputMap
 MIDIPort
 Math
 MediaController
+MediaDeviceInfo
 MediaDevices
 MediaElementAudioSourceNode
 MediaEncryptedEvent
@@ -264,6 +270,7 @@ MediaStreamAudioDestinationNode
 MediaStreamAudioSourceNode
 MediaStreamEvent
 MediaStreamTrack
+MediaStreamTrackEvent
 MessageChannel
 MessageEvent
 MessagePort
@@ -297,6 +304,7 @@ PerformanceEntry
 PerformanceMark
 PerformanceMeasure
 PerformanceNavigation
+PerformanceNavigationTiming
 PerformanceObserver
 PerformanceObserverEntryList
 PerformanceResourceTiming
@@ -307,6 +315,7 @@ PermissionStatus
 Permissions
 Plugin
 PluginArray
+PointerEvent
 PopStateEvent
 Presentation
 PresentationAvailability
@@ -323,7 +332,9 @@ PushSubscription
 PushSubscriptionOptions
 RGBColor
 RTCCertificate
+RTCDataChannel
 RTCIceCandidate
+RTCPeerConnection
 RTCSessionDescription
 RadioNodeList
 Range
@@ -335,6 +346,7 @@ Rect
 ReferenceError
 Reflect
 RegExp
+RemotePlayback
 Request
 Response
 SVGAElement
@@ -500,6 +512,7 @@ SourceBufferList
 SpeechInputEvent
 SpeechSynthesisEvent
 SpeechSynthesisUtterance
+StereoPannerNode
 Storage
 StorageEvent
 StorageManager
@@ -552,17 +565,24 @@ ValidityState
 WaveShaperNode
 WeakMap
 WeakSet
+WebAssembly
+WebGL2RenderingContext
 WebGLActiveInfo
 WebGLBuffer
 WebGLContextEvent
 WebGLFramebuffer
 WebGLProgram
+WebGLQuery
 WebGLRenderbuffer
 WebGLRenderingContext
+WebGLSampler
 WebGLShader
 WebGLShaderPrecisionFormat
+WebGLSync
 WebGLTexture
+WebGLTransformFeedback
 WebGLUniformLocation
+WebGLVertexArrayObject
 WebKitAnimationEvent
 WebKitCSSFilterRule
 WebKitCSSFilterValue
@@ -657,6 +677,7 @@ onanimationiteration
 onanimationstart
 onautocomplete
 onautocompleteerror
+onauxclick
 onbeforeunload
 onblur
 oncancel
@@ -683,6 +704,7 @@ onemptied
 onended
 onerror
 onfocus
+ongotpointercapture
 onhashchange
 oninput
 oninvalid
@@ -694,6 +716,7 @@ onload
 onloadeddata
 onloadedmetadata
 onloadstart
+onlostpointercapture
 onmessage
 onmousedown
 onmouseenter
@@ -710,6 +733,14 @@ onpageshow
 onpause
 onplay
 onplaying
+onpointercancel
+onpointerdown
+onpointerenter
+onpointerleave
+onpointermove
+onpointerout
+onpointerover
+onpointerup
 onpopstate
 onprogress
 onratechange
