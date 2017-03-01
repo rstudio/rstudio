@@ -639,7 +639,7 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
     stamp <- paste(prefix, stamp, suffix, sep = "")
 
     lapply(stamp, function(s) {
-      invisible(.Call("rs_timestamp", s)
+      invisible(.Call("rs_timestamp", s))
     })
 
     if (!quiet)
