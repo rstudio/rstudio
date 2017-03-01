@@ -1,7 +1,7 @@
 /*
  * CompileOutputBuffer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ public class CompileOutputBuffer extends Composite
    public CompileOutputBuffer()
    {
       output_ = new PreWidget();
+      virtualConsole_ = new VirtualConsole(output_.getElement());
       output_.setStylePrimaryName(
                         ConsoleResources.INSTANCE.consoleStyles().output());
       FontSizer.applyNormalFontSize(output_);
@@ -44,8 +45,6 @@ public class CompileOutputBuffer extends Composite
    public void append(String output)
    {
       virtualConsole_.submit(output);
-      output_.setText(virtualConsole_.toString()); 
-
       scrollPanel_.onContentSizeChanged();
    }
    
@@ -79,10 +78,10 @@ public class CompileOutputBuffer extends Composite
    public void clear()
    {
       output_.setText("");
-      virtualConsole_ = new VirtualConsole();
+      virtualConsole_ = new VirtualConsole(output_.getElement());
    }
  
    private PreWidget output_;
-   private VirtualConsole virtualConsole_ = new VirtualConsole();
+   private VirtualConsole virtualConsole_;
    private BottomScrollPanel scrollPanel_;
 }

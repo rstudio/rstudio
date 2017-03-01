@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,13 @@
 package org.rstudio.core.client;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -25,7 +32,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Text;
 import com.google.inject.Inject;
 
 /**
@@ -36,7 +42,13 @@ public class VirtualConsole
 {
    public VirtualConsole()
    {
+      this(null);
+   }
+   
+   public VirtualConsole(Element parent)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      parent_ = parent;
    }
    
    @Inject
@@ -45,142 +57,53 @@ public class VirtualConsole
       prefs_ = prefs;
    }
    
-   public boolean submit(String data)
+   public void submit(String data)
    {
-      return submit(data, null);
+      submit(data, null);
    }
-
-   // Adds the given data to the console. Returns true if the data can be 
-   // processed as an append-only operation, false if characters were 
-   // overwritten.
-   public boolean submit(String data, String className)
+   
+   public void clear()
    {
-      boolean appendOnly = true;
-      if (StringUtil.isNullOrEmpty(data))
-         return true;
-
-      if (CONTROL_SPECIAL.match(data, 0) == null)
-      {
-         text(data, className);
-         return true;
-      }
-
-      int tail = 0;
-      Match match = CONTROL.match(data, 0);
-      while (match != null)
-      {
-         int pos = match.getIndex();
-
-         // If we passed over any plain text on the way to this control
-         // character, add it.
-         text(data.substring(tail, pos), className);
-
-         tail = pos + 1;
-
-         switch (data.charAt(pos))
-         {
-            case '\r':
-               carriageReturn();
-               // the sequence \r\n or \n\r can be represented in an append-only
-               // way, so treat these cases as an append
-               appendOnly = 
-                     ((pos > 0 && data.charAt(pos - 1) == '\n') ||
-                      (tail < data.length() && data.charAt(tail) == '\n'));
-               break;
-            case '\b':
-               backspace();
-               appendOnly = false;
-               break;
-            case '\n':
-               newline();
-               break;
-            case '\f':
-               formfeed();
-               appendOnly = false;
-               break;
-            default:
-               assert false : "Unknown control char, please check regex";
-               text(data.charAt(pos) + "", className);
-               break;
-         }
-
-         match = match.nextMatch();
-      }
-
-      // If there was any plain text after the last control character, add it
-      text(data.substring(tail), className);
-      return appendOnly;
+      formfeed();
    }
 
    private void backspace()
    {
-      if (pos_ == 0)
+      if (cursor_ == 0)
          return;
-      o.deleteCharAt(--pos_);
+      cursor_--;
    }
 
    private void carriageReturn()
    {
-      if (pos_ == 0)
+      if (cursor_ == 0)
          return;
-      while (pos_ > 0 && o.charAt(pos_ - 1) != '\n')
-         pos_--;
-      // Now we're either at the beginning of the buffer, or just past a '\n'
+      while (cursor_ > 0 && output_.charAt(cursor_ - 1) != '\n')
+         cursor_--;
    }
 
-   private void newline()
+   private void newline(String clazz)
    {
-      while (pos_ < o.length() && o.charAt(pos_) != '\n')
-         pos_++;
+      while (cursor_ < output_.length() && output_.charAt(cursor_) != '\n')
+         cursor_++;
       // Now we're either at the end of the buffer, or on top of a '\n'
-      text("\n", null);
+      text("\n", clazz);
    }
 
    private void formfeed()
    {
-      o.setLength(0);
-      pos_ = 0;
-      charClass.clear();
+      output_.setLength(0);
+      cursor_ = 0;
+      class_.clear();
+      if (parent_ != null)
+         parent_.setInnerHTML("");
    }
 
-   private void text(String text, String className)
-   {
-      assert text.indexOf('\r') < 0 && text.indexOf('\b') < 0;
-
-      int endPos = pos_ + text.length();
-      
-      o.replace(pos_, endPos, text);
-      
-      // record the class of each character emitted
-      if (className != null) 
-      {
-         padCharClass(endPos);
-         for (int i = pos_; i < endPos; i++)
-         {
-            charClass.set(i, className);
-         }
-      }
-
-      pos_ = endPos;
-   }
-   
-   // ensures that the character class mapping buffer is at least 'len' 
-   // characters long (note that ensureCapacity just reallocs the underlying
-   // JavaScript array if necessary)
-   private void padCharClass(int len)
-   {
-      int curSize = charClass.size();
-      if (curSize >= len)
-         return;
-      charClass.ensureCapacity(len);
-      for (int i = 0; i < (len - curSize); i++)
-         charClass.add(null);
-   }
    
    @Override
    public String toString()
    {
-      String output = o.toString();
+      String output = output_.toString();
       
       int maxLength = prefs_.truncateLongLinesInConsoleHistory().getGlobalValue();
       if (maxLength == 0)
@@ -203,30 +126,7 @@ public class VirtualConsole
    
    public int getLength()
    {
-      return o.length();
-   }
-   
-   public void submitAndRender(String data, String clazz, Element parent)
-   {
-      if (!submit(data, clazz))
-      {
-         // output isn't append-only; redraw the whole thing
-         // (note that even this isn't technically necessary but control 
-         // characters are relatively infrequent and additional bookkeeping
-         // would be required to determine the invalidated range when 
-         // control characters are used)
-         redraw(parent);
-      }
-      else
-      {
-         // consolify just the data to be rendered
-         emitRange(consolify(data), clazz, parent);
-      }
-   }
-   
-   public void clear()
-   {
-      formfeed();
+      return output_.length();
    }
    
    public static String consolify(String text)
@@ -235,67 +135,322 @@ public class VirtualConsole
       console.submit(text);
       return console.toString();
    }
-
-   private void emitRange(String text, String clazz, Element parent)
+   
+   public Element getParent()
    {
-      if (StringUtil.isNullOrEmpty(text))
-         return;
-      Text textNode = Document.get().createTextNode(text);
-      if (clazz != null)
-      {
-         SpanElement span = Document.get().createSpanElement();
-         span.addClassName(clazz);
-         parent.appendChild(span);
-         parent = span;
-      }
-      parent.appendChild(textNode);
+      return parent_;
    }
    
-   public void redraw(Element parent)
+   /**
+    * Appends text to the end of the virtual console.
+    * 
+    * @param text The text to append
+    * @param clazz The content to append to the text.
+    */
+   private void appendText(String text, String clazz)
    {
-      // convert to a plain-text string
-      String plainText = toString();
-      int len = plainText.length();
-      String lastClass = null;
-      padCharClass(len);
-      
-      // clean existing content
-      parent.setInnerHTML("");
-      
-      // for performance reasons, we don't emit one character at a time;
-      // instead, we keep track of the string indices that correspond to
-      // contiguous runs of characters to emit into the stream
-      int accumulateBegin = 0;
-      int accumulateEnd = 0;
-
-      // iterate in lockstep over the plain-text string and character class
-      // assignment list; emit the appropriate tags when switching classes
-      for (int i = 0; i < len; i++)
+      Entry <Integer, ClassRange> last = class_.lastEntry();
+      ClassRange range = last.getValue();
+      if (range.clazz == clazz)
       {
-         if (!charClass.get(i).equals(lastClass))
-         {
-            emitRange(
-                  plainText.substring(accumulateBegin, accumulateEnd),
-                  lastClass, parent);
-            
-            // begin accumulating from the emitted point
-            accumulateBegin = accumulateEnd;
-         }
-         lastClass = charClass.get(i);
-         accumulateEnd = i;
+         // just append to the existing output stream
+         range.appendRight(text, 0);
+      }
+      else
+      {
+         // create a new output range with this class
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text);
+         parent_.appendChild(newRange.element);
+         class_.put(cursor_, newRange);
+      }
+   }
+
+   /**
+    * Inserts text which overlaps existing text in the virtual console.
+    * 
+    * @param range
+    */
+   private void insertText(ClassRange range)
+   {
+      int start = range.start;
+      int end = start + range.length;
+      
+      Entry<Integer, ClassRange> left = class_.floorEntry(start);
+      Entry<Integer, ClassRange> right = class_.floorEntry(end);
+
+      // create a view into the map representing the ranges that this class
+      // overlaps
+      SortedMap<Integer, ClassRange> view = null;
+      if (left != null && right != null)
+         view = class_.subMap(left.getKey(), true, right.getKey(), true);
+      else if (left == null && right != null)
+         view = class_.tailMap(right.getKey(), true);
+      else if (left != null && right == null)
+         view = class_.headMap(left.getKey(), true);
+      
+      // if no overlapping ranges exist, we can just create a new one
+      if (view == null)
+      {
+         class_.put(start, range);
+         if (parent_ != null)
+            parent_.appendChild(range.element);
+         return;
       }
 
-      // finishing up--emit accumulated text into stream
-      emitRange(
-            plainText.substring(accumulateBegin),
-            lastClass, parent);
-      return;
+      // accumulators for actions to take after we finish iterating over the
+      // overlapping ranges (we don't do this in place to avoid invalidating
+      // iterators)
+      Set<Integer> deletions = new TreeSet<Integer>();
+      List<ClassRange> insertions = new ArrayList<ClassRange>();
+      Map<Integer, Integer> moves = new TreeMap<Integer, Integer>();
+
+      for (Entry<Integer, ClassRange> entry: view.entrySet())
+      {
+         ClassRange overlap = entry.getValue();
+         int l = entry.getKey();
+         int r = l + overlap.length;
+         boolean matches = range.clazz == overlap.clazz;
+         if (start >= l && start < r && end >= r) 
+         {
+            // overlapping on the left side of the new range
+            int delta = r - start;
+            if (matches)
+            {
+               // extend the original range
+               overlap.appendRight(range.text(), delta);
+               range.clearText();
+            }
+            else
+            {
+               // reduce the original range and add ours
+               overlap.trimRight(delta);
+               insertions.add(range);
+               if (parent_ != null)
+                  parent_.insertAfter(range.element, overlap.element);
+            }
+         }
+         else if (start <= l && end <= r && end >= l)
+         {
+            // overlapping on the right side of the new range
+            int delta = end - l;
+            if (matches)
+            {
+               // extend the original range
+               overlap.appendLeft(range.text(), delta);
+               range.clearText();
+               moves.put(l, start);
+            }
+            else
+            {
+               // reduce the original range and add ours (if not present)
+               overlap.trimLeft(delta);
+               insertions.add(range);
+               if (parent_ != null)
+                  parent_.insertBefore(range.element, overlap.element);
+              
+            }
+         }
+         else if (l > start && r < end)
+         {
+            // this range is fully overwritten, just delete it
+            deletions.add(l);
+            if (parent_ != null)
+               parent_.removeChild(overlap.element);
+         }
+         else if (start > l && end < r)
+         {
+            // this range is fully contained
+            if (matches)
+            {
+               // just write over the existing text
+               overlap.overwrite(range.text(), start - l);
+            }
+            else
+            {
+               String text = overlap.text();
+
+               // trim the original range
+               overlap.trimRight(overlap.length - (start - l));
+               
+               // insert the new range
+               insertions.add(range);
+               if (parent_ != null)
+                  parent_.insertAfter(range.element, overlap.element);
+               
+               // add the new range
+               ClassRange remainder = new ClassRange(
+                     end,
+                     overlap.clazz,
+                     text.substring((text.length() - range.length), 
+                                    text.length()));
+               insertions.add(remainder);
+               if (parent_ != null)
+                  parent_.insertAfter(remainder.element, range.element);
+            }
+         }
+      }
+      
+      // process accumulated actions
+      for (Integer key: deletions)
+      {
+         class_.remove(key);
+      }
+      
+      for (Integer key: moves.keySet())
+      {
+         ClassRange moved = class_.get(key);
+         class_.remove(key);
+         class_.put(moves.get(key), moved);
+      }
+      
+      for (ClassRange val: insertions)
+      {
+         class_.put(val.start, val);
+      }
    }
-   private final StringBuilder o = new StringBuilder();
-   private final ArrayList<String> charClass = new ArrayList<String>();
-   private int pos_ = 0;
+   
+   private void text(String text, String clazz)
+   {
+      int start = cursor_;
+      int end = cursor_ + text.length();
+      
+      // real-time output if we have a parent
+      if (parent_ != null)
+      {
+         // short circuit common case in which we're just adding output
+         if (cursor_ == output_.length() && !class_.isEmpty())
+            appendText(text, clazz);
+         else
+            insertText(new ClassRange(start, clazz, text));
+      }
+
+      output_.replace(start, end, text);
+      cursor_ += text.length();
+   }
+   
+   public void submit(String data, String clazz)
+   {
+      if (CONTROL.match(data, 0) == null)
+      {
+         text(data, clazz);
+         return;
+      }
+
+      int tail = 0;
+      Match match = CONTROL.match(data, 0);
+      while (match != null)
+      {
+         int pos = match.getIndex();
+
+         // If we passed over any plain text on the way to this control
+         // character, add it.
+         if (tail != pos)
+            text(data.substring(tail, pos), clazz);
+
+         tail = pos + 1;
+
+         switch (data.charAt(pos))
+         {
+            case '\r':
+               carriageReturn();
+               break;
+            case '\b':
+               backspace();
+               break;
+            case '\n':
+               newline(clazz);
+               break;
+            case '\f':
+               formfeed();
+               break;
+            default:
+               assert false : "Unknown control char, please check regex";
+               text(data.charAt(pos) + "", clazz);
+               break;
+         }
+
+         match = match.nextMatch();
+      }
+
+      // If there was any plain text after the last control character, add it
+      if (tail < data.length())
+         text(data.substring(tail), clazz);
+   }
+   
+   private class ClassRange
+   {
+      public ClassRange(int pos, String className, String text)
+      {
+         clazz  = className;
+         start = pos;
+         length = text.length();
+         element = Document.get().createSpanElement();
+         if (className != null)
+            element.addClassName(clazz);
+         element.setInnerText(text);
+      }
+      
+      public void trimLeft(int delta)
+      {
+         length -= delta;
+         start += delta;
+         element.setInnerText(element.getInnerText().substring(delta));
+      }
+      
+      public void trimRight(int delta)
+      {
+         length -= delta;
+         String text = element.getInnerText();
+         element.setInnerText(text.substring(0, text.length() - delta));
+      }
+      
+      public void appendLeft(String content, int delta)
+      {
+         length += content.length() - delta;
+         start -= delta;
+         element.setInnerText(content + 
+               element.getInnerText().substring(delta));
+      }
+      
+      public void appendRight(String content, int delta)
+      {
+         length += content.length() - delta;
+         String text = text();
+         element.setInnerText(text.substring(0,
+               text.length() - delta) + content);
+      }
+      
+      public void overwrite(String content, int pos)
+      {
+         String text = element.getInnerText();
+         element.setInnerText(
+               text.substring(0, pos) + content +
+               text.substring(pos + content.length(), text.length()));
+      }
+      
+      public String text()
+      {
+         return element.getInnerText();
+      }
+      
+      public void clearText()
+      {
+         element.setInnerText("");
+      }
+
+      public String clazz;
+      public int length;
+      public int start;
+      public SpanElement element;
+   }
+
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
-   private static final Pattern CONTROL_SPECIAL = Pattern.create("[\r\b\f]");
+   
+   private final StringBuilder output_ = new StringBuilder();
+   private final TreeMap<Integer, ClassRange> class_ = new TreeMap<Integer, ClassRange>();
+   private final Element parent_;
+   
+   private int cursor_ = 0;
    
    // Injected ----
    private UIPrefs prefs_;

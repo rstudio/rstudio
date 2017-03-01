@@ -1,7 +1,7 @@
 /*
  * ShellWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,19 +16,6 @@ package org.rstudio.studio.client.common.shell;
 
 import java.util.Map;
 import java.util.TreeMap;
-
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Text;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -53,6 +40,31 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.N
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -339,6 +351,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       input_.setPasswordMode(!showInput);
       clearErrors_ = true;
+      
+      // make sure we're starting on a new line
+      if (virtualConsole_ != null)
+      {
+         Element child = Element.as(virtualConsole_.getParent().getLastChild());
+         if (!child.getInnerText().endsWith("\n"))
+            virtualConsole_.submit("\n");
+         // clear the virtual console so we start with a fresh slate
+         virtualConsole_ = null;
+      }
    }
 
    public void ensureInputVisible()
@@ -359,83 +381,34 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (text.indexOf('\f') >= 0)
          clearOutput();
 
-      Node node;
-      boolean isOutput = StringUtil.isNullOrEmpty(className)
-                         || className.equals(styles_.output());
-
-      if (isOutput && !addToTop && trailingOutput_ != null)
+      Element outEl = output_.getElement();
+      
+      if (addToTop)
       {
-         // Short-circuit the case where we're appending output to the
-         // bottom, and there's already some output there. We need to
-         // treat this differently in case the new output uses control
-         // characters to pound over parts of the previous output.
-
-         int oldLineCount = DomUtils.countLines(trailingOutput_, true);
-         trailingOutputConsole_.submit(text);
-         trailingOutput_.setNodeValue(
-               ensureNewLine(trailingOutputConsole_.toString()));
-         int newLineCount = DomUtils.countLines(trailingOutput_, true);
-         lines_ += newLineCount - oldLineCount;
+         SpanElement leading = Document.get().createSpanElement();
+         outEl.insertFirst(leading);
+         VirtualConsole console = new VirtualConsole(leading);
+         console.submit(text, className);
+         lines_ += DomUtils.countLines(leading, true);
       }
       else
       {
-         Element outEl = output_.getElement();
-
-         text = VirtualConsole.consolify(text);
-         if (isOutput)
+         // create trailing output console if it doesn't already exist 
+         if (virtualConsole_ == null)
          {
-            VirtualConsole console = new VirtualConsole();
-            console.submit(text);
-            String consoleSnapshot = console.toString();
-
-            // We use ensureNewLine to make sure that even if output
-            // doesn't end with \n, a prompt will appear on its own line.
-            // However, if we call ensureNewLine indiscriminantly (i.e.
-            // on an output that's going to be followed by another output)
-            // we can end up inserting newlines where they don't belong.
-            //
-            // It's safe to add a newline when we're appending output to
-            // the end of the console, because if the next append is also
-            // output, we'll use the contents of VirtualConsole and the
-            // newline we add here will be plowed over.
-            //
-            // If we're prepending output to the top of the console, then
-            // it's safe to add a newline if the next chunk (which is already
-            // there) is something besides output.
-            if (!addToTop ||
-                (!outEl.hasChildNodes()
-                 || outEl.getFirstChild().getNodeType() != Node.TEXT_NODE))
-            {
-               consoleSnapshot = ensureNewLine(consoleSnapshot);
-            }
-
-            node = Document.get().createTextNode(consoleSnapshot);
-            if (!addToTop)
-            {
-               trailingOutput_ = (Text) node;
-               trailingOutputConsole_ = console;
-            }
-         }
-         else
-         {
-            SpanElement span = Document.get().createSpanElement();
-            span.setClassName(className);
-            span.setInnerText(text);
-            node = span;
-            if (!addToTop)
-            {
-               trailingOutput_ = null;
-               trailingOutputConsole_ = null;
-            }
+            SpanElement trailing = Document.get().createSpanElement();
+            outEl.appendChild(trailing);
+            virtualConsole_ = new VirtualConsole(trailing);
          }
 
-         if (addToTop)
-            outEl.insertFirst(node);
-         else
-            outEl.appendChild(node);
-
-         lines_ += DomUtils.countLines(node, true);
+         int oldLineCount = DomUtils.countLinesRecursive(
+               virtualConsole_.getParent(), true);
+         virtualConsole_.submit(text, className);
+         int newLineCount = DomUtils.countLinesRecursive(
+               virtualConsole_.getParent(), true);
+         lines_ += newLineCount - oldLineCount;
       }
+
       boolean result = !trimExcess();
 
       resizeCommand_.nudge();
@@ -631,7 +604,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       lines_ = 0;
       cleared_ = true;
       trailingOutput_ = null;
-      trailingOutputConsole_ = null;
+      virtualConsole_ = null;
    }
    
    public InputEditorDisplay getInputEditorDisplay()
@@ -749,8 +722,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private PreWidget pendingInput_ ;
    // Save a reference to the most recent output text node in case the
    // next bit of output contains \b or \r control characters
-   private Text trailingOutput_ ;
-   private VirtualConsole trailingOutputConsole_ ;
+   private PreWidget trailingOutput_ ;
+   private VirtualConsole virtualConsole_ ;
    private final HTML prompt_ ;
    protected final AceEditor input_ ;
    private final DockPanel inputLine_ ;

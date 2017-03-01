@@ -66,7 +66,7 @@ public class BuildPresenter extends BasePresenter
    {
       void buildStarted();
       
-      void showOutput(CompileOutput output);
+      void showOutput(CompileOutput output, boolean tail);
       void scrollToBottom();
       
       void showErrors(String basePath,
@@ -128,7 +128,7 @@ public class BuildPresenter extends BasePresenter
          @Override
          public void onBuildOutput(BuildOutputEvent event)
          {
-            view_.showOutput(event.getOutput());
+            view_.showOutput(event.getOutput(), true);
          }
       });
       
@@ -235,7 +235,7 @@ public class BuildPresenter extends BasePresenter
       
       JsArray<CompileOutput> outputs = buildState.getOutputs();
       for (int i = 0; i<outputs.length(); i++)
-         view_.showOutput(outputs.get(i));
+         view_.showOutput(outputs.get(i), false);
       
       if (buildState.getErrors().length() > 0)
          view_.showErrors(buildState.getErrorsBaseDir(),
@@ -247,8 +247,8 @@ public class BuildPresenter extends BasePresenter
          view_.buildCompleted();
       else
          commands_.stopBuild().setEnabled(true);
-         
       
+      view_.scrollToBottom();
    }
    
    private void sendLoadCommandToConsole(String loadCommand)

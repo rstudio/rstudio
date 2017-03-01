@@ -115,7 +115,7 @@ public class CompilePanel extends Composite
       panel_.setWidget(outputDisplay_.asWidget());  
    }
    
-   public void showOutput(CompileOutput output)
+   public void showOutput(CompileOutput output, boolean scrollToBottom)
    {
       switch(output.getType())
       {

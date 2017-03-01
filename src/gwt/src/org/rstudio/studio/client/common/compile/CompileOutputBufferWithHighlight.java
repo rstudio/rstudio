@@ -38,6 +38,7 @@ public class CompileOutputBufferWithHighlight extends Composite
       output_.addStyleName("ace_line");
       output_.addStyleName(styles_.paddedOutput());
       FontSizer.applyNormalFontSize(output_);
+      console_ = new VirtualConsole(output_.getElement());
     
       scrollPanel_ = new BottomScrollPanel();
       scrollPanel_.setSize("100%", "100%");
@@ -82,7 +83,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    
    private void write(String output, String className)
    {
-      console_.submitAndRender(output, className, output_.getElement());
+      console_.submit(output, className);
       scrollPanel_.onContentSizeChanged();
    }
    
@@ -93,7 +94,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    }
  
    PreWidget output_;
-   VirtualConsole console_ = new VirtualConsole();
+   VirtualConsole console_;
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
 }

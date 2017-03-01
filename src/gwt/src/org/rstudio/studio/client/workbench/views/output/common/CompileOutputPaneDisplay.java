@@ -28,7 +28,7 @@ public interface CompileOutputPaneDisplay extends WorkbenchView, HasEnsureHidden
 {
    void ensureVisible(boolean activate);
    void compileStarted(String text);
-   void showOutput(CompileOutput output);
+   void showOutput(CompileOutput output, boolean scrollToBottom);
    void showErrors(JsArray<SourceMarker> errors);
    void clearAll();
    void compileCompleted();

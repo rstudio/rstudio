@@ -18,6 +18,8 @@ import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 
 /**
@@ -29,10 +31,15 @@ public class BottomScrollPanel extends ScrollPanel
 {
    public BottomScrollPanel()
    {
+      scrolling_ = false;
       addScrollHandler(new ScrollHandler()
       {
          public void onScroll(ScrollEvent event)
          {
+            // short circuit if we initiated this scroll
+            if (scrolling_)
+               return;
+            
             scrolledToBottom_ = 
              
              (getVerticalScrollPosition() == 
@@ -73,7 +80,16 @@ public class BottomScrollPanel extends ScrollPanel
    @Override
    public void scrollToBottom()
    {
-      DomUtils.scrollToBottom(getElement());
+      scrolling_ = true;
+      try
+      {
+         DomUtils.scrollToBottom(getElement());
+      }
+      catch(Exception e)
+      {
+         Debug.logException(e);
+      }
+      scrolling_ = false;
       scrolledToBottom_ = true;
    }
 
@@ -100,6 +116,7 @@ public class BottomScrollPanel extends ScrollPanel
    }
 
    private boolean scrolledToBottom_;
+   private boolean scrolling_;
    private Integer vScroll_;
    private int hScroll_;
 }

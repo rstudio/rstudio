@@ -229,6 +229,17 @@ public class DomUtils
             return 0;
       }
    }
+   
+   public static int countLinesRecursive(Node node, boolean pre)
+   {
+      int total = 0;
+      NodeList<Node> nodes = node.getChildNodes();
+      for (int i = 0; i < nodes.getLength(); i++)
+      {
+         total += countLinesRecursive(nodes.getItem(i), pre);
+      }
+      return total + countLines(node, pre);
+   }
 
    private static int countLinesInternal(Text textNode, boolean pre)
    {

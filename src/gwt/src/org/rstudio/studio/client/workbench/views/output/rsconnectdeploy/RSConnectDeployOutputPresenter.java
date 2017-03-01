@@ -85,7 +85,7 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
    @Override
    public void onRSConnectDeploymentOutput(RSConnectDeploymentOutputEvent event)
    {
-      view_.showOutput(event.getOutput());
+      view_.showOutput(event.getOutput(), true);
    }
    
    @Override

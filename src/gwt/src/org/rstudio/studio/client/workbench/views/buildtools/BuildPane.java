@@ -232,9 +232,9 @@ public class BuildPane extends WorkbenchPane
    }
 
    @Override
-   public void showOutput(CompileOutput output)
+   public void showOutput(CompileOutput output, boolean scrollToBottom)
    {
-      compilePanel_.showOutput(output);
+      compilePanel_.showOutput(output, scrollToBottom);
    }
    
    @Override

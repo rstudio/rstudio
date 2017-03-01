@@ -74,7 +74,7 @@ public class SourceCppOutputPane extends WorkbenchPane
       
       JsArray<CompileOutput> outputs = state.getOutputs();
       for (int i=0; i<outputs.length(); i++)
-         compilePanel_.showOutput(outputs.get(i));
+         compilePanel_.showOutput(outputs.get(i), false);
       
       if (state.getErrors().length() > 0)
       {
@@ -83,6 +83,7 @@ public class SourceCppOutputPane extends WorkbenchPane
                                   SourceMarkerList.AUTO_SELECT_FIRST,
                                   true);
       }
+      compilePanel_.scrollToBottom();
    }
     
    @Override
