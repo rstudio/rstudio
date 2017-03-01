@@ -452,13 +452,13 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
 })
 
 # replacing an internal R function
-.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal)
+.rs.addFunction( "registerReplaceHook", function(name, package, hook, keepOriginal, namespace = FALSE)
 {
    hookFactory <- function(original) function(...) .rs.callAs(name,
                                                              hook, 
                                                              original,
                                                              ...);
-   .rs.registerHook(name, package, hookFactory);
+   .rs.registerHook(name, package, hookFactory, namespace);
 })
 
 # notification that an internal R function was called
@@ -629,10 +629,24 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
   })
 
   # timestamp
-  .rs.registerReplaceHook("timestamp", "utils", function(original, ...)
+  .rs.registerReplaceHook("timestamp", "utils", function(
+    original,
+    stamp = date(),
+    prefix = "##------ ",
+    suffix = " ------##",
+    quiet = FALSE)
   {
-    invisible(.Call("rs_timestamp", date()))
-  })
+    stamp <- paste(prefix, stamp, suffix, sep = "")
+
+    lapply(stamp, function(s) {
+      invisible(.Call("rs_timestamp", s))
+    })
+
+    if (!quiet)
+        cat(stamp, sep = "\n")
+
+    invisible(stamp)
+  }, namespace = TRUE)
 })
 
 
