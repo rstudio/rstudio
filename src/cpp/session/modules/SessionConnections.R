@@ -1,7 +1,7 @@
 #
 # SessionConnections.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -71,7 +71,34 @@ options(connectionObserver = list(
          stop("listObjects must be a function returning a list of object types", 
               call. = FALSE)
       }
-      objectTypes <- listObjects()
+
+      # function to flatten the tree of object types for more convenient storage
+      promote <- function(name, l) {
+        if (length(l) == 0)
+          return(list())
+        if (is.null(l$contains)) {
+          # plain data
+          return(list(list(name = name,
+                      icon = l$icon,
+                      contains = "data")))
+        } else {
+          # subtypes
+          return(unlist(append(list(list(list(
+            name = name, 
+            icon = l$icon, 
+            contains = names(l$contains)))),
+            lapply(names(l$contains), function(name) {
+              promote(name, l$contains[[name]])
+            })), recursive = FALSE))
+        }
+        return(list())
+      }
+      
+      # apply tree flattener to provided object tree
+      objectTree <- listObjects()
+      objectTypes <- lapply(names(objectTree), function(name) {
+         promote(name, objectTree[[name]])
+      })
       
       # manufacture and validate object representing this connection
       connection <- list(
