@@ -78,10 +78,20 @@ json::Object connectionIdJson(const ConnectionId& id)
 json::Object connectionActionJson(const ConnectionAction& action) 
 {
    json::Object actionJson;
-   actionJson["name"] = action.name;
+   actionJson["name"]      = action.name;
    actionJson["icon_path"] = action.icon;
    actionJson["icon_data"] = base64IconData(action.icon);
    return actionJson;
+}
+
+json::Object connectionObjectTypeJson(const ConnectionObjectType& type) 
+{
+   json::Object objectTypeJson;
+   objectTypeJson["name"]      = type.name;
+   objectTypeJson["contains"]  = type.contains;
+   objectTypeJson["icon_path"] = type.icon;
+   objectTypeJson["icon_data"] = base64IconData(type.icon);
+   return objectTypeJson;
 }
 
 json::Object connectionJson(const Connection& connection)
@@ -91,6 +101,13 @@ json::Object connectionJson(const Connection& connection)
    BOOST_FOREACH(const ConnectionAction& action, connection.actions)
    {
       actions.push_back(connectionActionJson(action));
+   }
+
+   // form the object type array
+   json::Array objectTypes;
+   BOOST_FOREACH(const ConnectionObjectType& type, connection.objectTypes)
+   {
+      actions.push_back(connectionObjectTypeJson(type));
    }
 
    json::Object connectionJson;
@@ -113,6 +130,15 @@ Error actionFromJson(const json::Object& actionJson,
          "icon_path", &(pAction->icon));
 }
 
+Error objectTypeFromJson(const json::Object& objectTypeJson,
+                         ConnectionObjectType* pObjectType)
+{
+   return json::readObject(objectTypeJson,
+         "name", &(pObjectType->name),
+         "contains", &(pObjectType->contains),
+         "icon_path", &(pObjectType->icon));
+}
+
 Error connectionIdFromJson(const json::Object& connectionIdJson,
                            ConnectionId* pConnectionId)
 {
@@ -133,11 +159,13 @@ Error connectionFromJson(const json::Object& connectionJson,
 
    // read remaining fields
    json::Array actions;
+   json::Array objectTypes;
    error = json::readObject(
             connectionJson,
             "connect_code", &(pConnection->connectCode),
             "display_name", &(pConnection->displayName),
             "actions", &actions,
+            "object_types", &objectTypes,
             "icon_path", &(pConnection->icon),
             "last_used", &(pConnection->lastUsed));
 
@@ -158,6 +186,20 @@ Error connectionFromJson(const json::Object& connectionJson,
       pConnection->actions.push_back(act);
    }
 
+   // read each object type
+   BOOST_FOREACH(const json::Value& objectType, objectTypes) 
+   {
+      if (objectType.type() != json::ObjectType)
+         continue;
+      ConnectionObjectType type;
+      error = objectTypeFromJson(objectType.get_obj(), &type);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+      pConnection->objectTypes.push_back(type);
+   }
    return error;
 }
 

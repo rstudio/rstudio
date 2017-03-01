@@ -34,7 +34,7 @@
        "character")
    .rs.validateParams(connection, "icon", "character", optional = TRUE)
    .rs.validateParams(connection, 
-       c("disconnectCode", "listTables", "listColumns", "previewTable"),
+       c("disconnect", "listObjects", "listColumns", "previewObject"),
        "function")
 })
 
@@ -60,21 +60,33 @@ assign(".rs.activeConnections",
 
 options(connectionObserver = list(
    connectionOpened = function(type, host, displayName, icon = NULL, 
-                               connectCode, disconnectCode, listTables, 
-                               listColumns, previewTable, actions = NULL) {
+                               connectCode, disconnect, listObjectTypes,
+                               listObjects, listColumns, previewObject, 
+                               connectionObject, actions = NULL) {
 
+      # execute the object types function once to get the list of known 
+      # object types; this is presumed to be static over the lifetime of the
+      # connection
+      if (!inherits(listObjects, "function")) {
+         stop("listObjects must be a function returning a list of object types", 
+              call. = FALSE)
+      }
+      objectTypes <- listObjects()
+      
       # manufacture and validate object representing this connection
       connection <- list(
-         type           = type,
-         host           = host,
-         displayName    = displayName,
-         icon           = icon,
-         connectCode    = connectCode,
-         disconnectCode = disconnectCode,
-         listTables     = listTables,
-         listColumns    = listColumns,
-         previewTable   = previewTable,
-         actions        = actions
+         type             = type,            # the type of the connection
+         host             = host,            # the host being connected to
+         displayName      = displayName,     # the name to display 
+         icon             = icon,            # an icon representing the connection
+         connectCode      = connectCode,     # code to (re)establish connection
+         disconnect       = disconnect,      # function that disconnects
+         objectTypes      = objectTypes,     # list of object types known 
+         listObjects      = listObjects,     # list objects (all or in container)
+         listColumns      = listColumns,     # list columns of a data object
+         previewObject    = previewObject,   # preview an object
+         actions          = actions,         # list of actions possible on conn
+         connectionObject = connectionObject # raw connection object
       )
       class(connection) <- "rstudioConnection"
       .rs.validateConnection(connection)
@@ -109,12 +121,10 @@ options(connectionObserver = list(
    get(name, envir = globalenv())
 })
 
-.rs.addFunction("getDisconnectCode", function(type, host) {
+.rs.addFunction("connectionDisconnect", function(type, host) {
    connection <- .rs.findActiveConnection(type, host)
    if (!is.null(connection))
-      connection$disconnectCode()
-   else
-      ""
+      connection$disconnect()
 })
 
 .rs.addFunction("connectionListTables", function(type, host) {

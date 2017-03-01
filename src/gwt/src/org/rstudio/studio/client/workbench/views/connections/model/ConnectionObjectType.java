@@ -1,5 +1,5 @@
 /*
- * Connection.java
+ * ConnectionObjectType.java
  *
  * Copyright (C) 2009-16 by RStudio, Inc.
  *
@@ -16,40 +16,19 @@
 package org.rstudio.studio.client.workbench.views.connections.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class Connection extends JavaScriptObject
-{ 
-   protected Connection()
+public class ConnectionObjectType extends JavaScriptObject
+{
+   protected ConnectionObjectType()
    {
    }
    
-   public final native ConnectionId getId() /*-{
-      return this.id;
+   public final native String getName() /*-{
+      return this.name;
    }-*/;
    
-   public final native String getHost() /*-{
-      return this.id.host;
-   }-*/;
-   
-   public final native String getDisplayName() /*-{ 
-      return this.display_name;
-   }-*/;
-   
-   public final native String getConnectCode() /*-{
-      return this.connect_code;
-   }-*/;
-   
-   public final native JsArray<ConnectionObjectType> getObjectTypes() /*-{
-      return this.object_types;
-   }-*/;
-   
-   public final native JsArray<ConnectionAction> getActions() /*-{
-      return this.actions;
-   }-*/;
-   
-   public final native double getLastUsed() /*-{
-      return this.last_used;
+   public final native String getContains() /*-{
+      return this.contains;
    }-*/;
    
    public final native String getIconData() /*-{

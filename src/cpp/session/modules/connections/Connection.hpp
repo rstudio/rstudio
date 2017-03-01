@@ -62,6 +62,20 @@ struct ConnectionAction
    std::string icon;
 };
 
+struct ConnectionObjectType
+{
+   ConnectionObjectType() {}
+   ConnectionObjectType(const std::string& name, const std::string& contains,
+         const std::string& icon)
+      : name(name), contains(contains), icon(icon)
+   {
+   }
+
+   std::string name;
+   std::string contains;
+   std::string icon;
+};
+
 struct Connection
 {
    Connection() {}
@@ -70,12 +84,14 @@ struct Connection
               const std::string& displayName,
               const std::string& icon,
               const std::vector<ConnectionAction>& actions,
+              const std::vector<ConnectionObjectType>& objectTypes,
               double lastUsed)
       : id(id),
         connectCode(connectCode),
         displayName(displayName),
         icon(icon),
         actions(actions),
+        objectTypes(objectTypes),
         lastUsed(lastUsed)
    {
    }
@@ -87,6 +103,7 @@ struct Connection
    std::string displayName;
    std::string icon;
    std::vector<ConnectionAction> actions;
+   std::vector<ConnectionObjectType> objectTypes;
    double lastUsed;
 };
 

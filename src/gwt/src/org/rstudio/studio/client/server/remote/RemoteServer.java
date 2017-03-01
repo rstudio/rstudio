@@ -4952,8 +4952,8 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_CONNECTION, id, callback);
    }
    
-   public void getDisconnectCode(ConnectionId connectionId, 
-                                 ServerRequestCallback<String> callback)
+   public void connectionDisconnect(ConnectionId connectionId, 
+                                    ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, GET_DISCONNECT_CODE, connectionId, callback);
    }

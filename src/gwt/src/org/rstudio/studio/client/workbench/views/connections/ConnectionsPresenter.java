@@ -420,14 +420,8 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void execute()
          {
-            server_.getDisconnectCode(exploredConnection_.getId(), 
-                  new SimpleRequestCallback<String>() {
-               @Override
-               public void onResponseReceived(String disconnectCode)
-               {
-                  eventBus_.fireEvent(new SendToConsoleEvent(disconnectCode, true));
-               }
-          });  
+            server_.connectionDisconnect(exploredConnection_.getId(), 
+                  new VoidServerRequestCallback());
          }  
       };
       

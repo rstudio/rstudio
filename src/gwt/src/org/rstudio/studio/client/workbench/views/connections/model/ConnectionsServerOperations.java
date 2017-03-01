@@ -27,8 +27,8 @@ public interface ConnectionsServerOperations extends CryptoServerOperations
 {
    void removeConnection(ConnectionId id, ServerRequestCallback<Void> callback);
  
-   void getDisconnectCode(ConnectionId connectionId, 
-                          ServerRequestCallback<String> callback);
+   void connectionDisconnect(ConnectionId connectionId, 
+                             ServerRequestCallback<Void> callback);
    
    void connectionExecuteAction(ConnectionId connectionId, 
                                 String action,

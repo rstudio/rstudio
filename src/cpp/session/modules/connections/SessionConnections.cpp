@@ -104,9 +104,58 @@ SEXP rs_connectionOpened(SEXP connectionSEXP)
       }
    }
 
+   // extract object type
+   SEXP objectTypeList = R_NilValue;
+   error = r::sexp::getNamedListSEXP(connectionSEXP, "objectTypes",
+         &objectTypeList);
+   if (error)
+      LOG_ERROR(error);
+   std::vector<ConnectionObjectType> objectTypes;
+   if (!r::sexp::isNull(actionList))
+   {
+      std::vector<std::string> objectTypeNames;
+      error = r::sexp::getNames(actionList, &objectTypeNames);
+      if (error)
+         LOG_ERROR(error);
+      else
+      {
+         BOOST_FOREACH(const std::string& objectTypeName, objectTypeNames)
+         {
+            std::string icon;
+            std::string contains;
+            SEXP objectType;
+
+            error = r::sexp::getNamedListSEXP(objectTypeList, 
+                  objectTypeName, &objectType);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            error = r::sexp::getNamedListElement(objectType, "contains",
+                  &contains);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            error = r::sexp::getNamedListElement(objectType, "icon", &icon);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            objectTypes.push_back(ConnectionObjectType(objectTypeName, contains, 
+                     icon));
+         }
+      }
+   }
    // create connection object
    Connection connection(ConnectionId(type, host), connectCode, displayName,
-                         icon, actions, date_time::millisecondsSinceEpoch());
+                         icon, actions, objectTypes,
+                         date_time::millisecondsSinceEpoch());
 
    // update connection history
    connectionHistory().update(connection);
@@ -218,7 +267,7 @@ Error removeConnection(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getDisconnectCode(const json::JsonRpcRequest& request,
+Error connectionDisconnect(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    // read params
@@ -229,19 +278,16 @@ Error getDisconnectCode(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // call R function to determine disconnect code
-   r::exec::RFunction func(".rs.getDisconnectCode");
+   // call R function to perform disconnection
+   r::exec::RFunction func(".rs.connectionDisconnect");
    func.addParam(type);
    func.addParam(host);
-   std::string code;
-   error = func.call(&code);
+   error = func.call();
    if (error)
    {
       LOG_ERROR(error);
       return error;
    }
-
-   pResponse->setResult(code);
 
    return Success();
 }
@@ -581,7 +627,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "remove_connection", removeConnection))
-      (bind(registerRpcMethod, "get_disconnect_code", getDisconnectCode))
+      (bind(registerRpcMethod, "connection_disconnect", connectionDisconnect))
       (bind(registerRpcMethod, "connection_execute_action", connectionExecuteAction))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_tables", connectionListTables))
       (bind(registerIdleOnlyAsyncRpcMethod, "connection_list_fields", connectionListFields))
