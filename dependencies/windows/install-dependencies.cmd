@@ -12,6 +12,8 @@ set BOOST_GCC493_FILE=boost-1.50-win-rtools33-gcc493.zip
 set RTOOLS_FILE=Rtools33.exe
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.7.0.zip
+set SELENIUM_FILE=selenium-java-2.37.0.zip
+set SELENIUM_SERVER_FILE=selenium-server-standalone-2.37.0.jar
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
@@ -117,6 +119,26 @@ if not exist gwt\2.7.0 (
   mkdir gwt
   move gwt-2.7.0 gwt\2.7.0
   del "%GWT_FILE%"
+)
+
+if not exist selenium\2.37.0 (
+  wget %WGET_ARGS% "%BASEURL%%SELENIUM_FILE%"
+  echo Unzipping %SELENIUM_FILE%
+  unzip %UNZIP_ARGS% "%SELENIUM_FILE%"
+  mkdir selenium
+  move selenium-2.37.0 selenium\2.37.0
+  del "%SELENIUM_FILE%"
+)
+
+if not exist selenium\2.37.0\%SELENIUM_SERVER_FILE% (
+  wget %WGET_ARGS% "%BASEURL%%SELENIUM_SERVER_FILE%"
+  move %SELENIUM_SERVER_FILE% selenium\2.37.0
+)
+
+if not exist selenium\chromedriver\2.7 (
+  wget %WGET_ARGS% "%BASEURL%chromedriver-win.exe"
+  mkdir selenium\chromedriver\2.7
+  move chromedriver-win.exe selenium\chromedriver\2.7
 )
 
 if not exist %JUNIT_FILE% (

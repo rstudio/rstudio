@@ -509,8 +509,6 @@ public class TerminalSession extends XTermWidget
    {
       if (newTerminal_)
       {
-         writeln("Welcome to " + AnsiCode.ForeColor.LIGHTBLUE + "RStudio" +
-                 AnsiCode.DEFAULTCOLORS + " terminal.");
          setNewTerminal(false);
       }
       else

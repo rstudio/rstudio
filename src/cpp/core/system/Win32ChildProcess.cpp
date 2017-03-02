@@ -100,36 +100,6 @@ void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
    }
 }
 
-
-Error readPipeAvailableBytes(HANDLE hPipe, std::string* pOutput)
-{
-   // check for available bytes
-   DWORD dwAvail = 0;
-   if (!::PeekNamedPipe(hPipe, NULL, 0, NULL, &dwAvail, NULL))
-   {
-      if (::GetLastError() == ERROR_BROKEN_PIPE)
-         return Success();
-      else
-         return systemError(::GetLastError(), ERROR_LOCATION);
-   }
-
-   // no data available
-   if (dwAvail == 0)
-      return Success();
-
-   // read data which is available
-   DWORD nBytesRead;
-   std::vector<CHAR> buffer(dwAvail, 0);
-   if (!::ReadFile(hPipe, &(buffer[0]), dwAvail, &nBytesRead, NULL))
-      return systemError(::GetLastError(), ERROR_LOCATION);
-
-   // append to output
-   pOutput->append(&(buffer[0]), nBytesRead);
-
-   // success
-   return Success();
-}
-
 Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 {
    CHAR buff[256];
@@ -245,14 +215,23 @@ Error ChildProcess::writeToStdin(const std::string& input, bool eof)
    // write synchronously to the pipe
    if (!input.empty())
    {
-      DWORD dwWritten;
-      BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
-                                  input.data(),
-                                  input.length(),
-                                  &dwWritten,
-                                  NULL);
-      if (!bSuccess)
-         return systemError(::GetLastError(), ERROR_LOCATION);
+      if (options().pseudoterminal)
+      {
+         Error error = WinPty::writeToPty(pImpl_->hStdInWrite, input);
+         if (error)
+            return error;
+      }
+      else
+      {
+         DWORD dwWritten;
+         BOOL bSuccess = ::WriteFile(pImpl_->hStdInWrite,
+                                     input.data(),
+                                     input.length(),
+                                     &dwWritten,
+                                     NULL);
+         if (!bSuccess)
+            return systemError(::GetLastError(), ERROR_LOCATION);
+      }
    }
 
    // close pipe if requested
@@ -676,23 +655,11 @@ void AsyncChildProcess::poll()
 
    // check stdout
    std::string stdOut;
-   Error error = readPipeAvailableBytes(pImpl_->hStdOutRead, &stdOut);
+   Error error = WinPty::readFromPty(pImpl_->hStdOutRead, &stdOut);
    if (error)
       reportError(error);
    if (!stdOut.empty() && callbacks_.onStdout)
       callbacks_.onStdout(*this, stdOut);
-
-   // check stderr
-   // when using winpty, we don't use hStdErrRead
-   if (pImpl_->hStdErrRead)
-   {
-      std::string stdErr;
-      error = readPipeAvailableBytes(pImpl_->hStdErrRead, &stdErr);
-      if (error)
-         reportError(error);
-      if (!stdErr.empty() &&  callbacks_.onStderr)
-         callbacks_.onStderr(*this, stdErr);
-   }
 
    // check for process exit
    DWORD result = ::WaitForSingleObject(pImpl_->hProcess, 0);
