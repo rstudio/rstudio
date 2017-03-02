@@ -67,10 +67,13 @@ import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
+import org.rstudio.studio.client.workbench.model.BootInfo;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
@@ -158,7 +161,7 @@ public class RStudio implements EntryPoint
    
    private void delayLoadApplication(final Command dismissProgressAnimation)
    {
-      GWT.runAsync(new RunAsyncCallback()
+      final RunAsyncCallback runCallback = new RunAsyncCallback()
       {
          public void onFailure(Throwable reason)
          {
@@ -232,7 +235,23 @@ public class RStudio implements EntryPoint
                }
             });
          }
-      });
+      };
+
+      RStudioGinjector.INSTANCE.getServer().bootInit(
+         new ServerRequestCallback<BootInfo>() {
+            @Override
+            public void onResponseReceived(BootInfo sessionInfo)
+            {
+               GWT.runAsync(runCallback);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               GWT.runAsync(runCallback);
+            }
+         }
+      );
    }
    
    private void ensureStylesInjected()
