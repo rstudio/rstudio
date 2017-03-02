@@ -420,11 +420,18 @@ class CommandBundleGeneratorHelper
       {
          String commandId = method.getName();
 
-         String key = packageName_.replace('.', '/') + "/" + commandId + ".png";
-         if (resourceNames.contains(key))
+         String key = packageName_.replace('.', '/') + "/" + commandId;
+
+         if (resourceNames.contains(key + ".png"))
          {
             writer.println("ImageResource " + commandId + "();");
             iri.addImage(commandId);
+         }
+
+         if (resourceNames.contains(keyRetina + "2x.png"))
+         {
+            writer.println("ImageResource " + commandId + "2x();");
+            iri.addImage(commandId + "2x");
          }
       }
       writer.println("public static final " + className + " INSTANCE = " +
