@@ -65,6 +65,9 @@ public:
    // Send interrupt (Ctrl+C)
    Error interrupt();
 
+   static Error writeToPty(HANDLE hPipe, const std::string& input);
+   static Error readFromPty(HANDLE hPipe, std::string* pOutput);
+
 private:
    void stopPty();
 
