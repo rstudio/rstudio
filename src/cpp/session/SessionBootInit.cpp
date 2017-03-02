@@ -33,7 +33,7 @@ namespace boot_init {
 void handleBootInit(boost::shared_ptr<HttpConnection> ptrConnection)
 {
    json::Object bootInfo ;
-   bootInfo["use_retina_icons"] = true;
+   bootInfo["use_retina_icons"] = false;
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

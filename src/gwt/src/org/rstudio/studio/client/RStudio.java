@@ -22,7 +22,9 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.StyleInjector;
+import com.google.gwt.thirdparty.json.JSONArray;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
@@ -33,6 +35,10 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
+import org.rstudio.core.client.jsonrpc.RpcError;
+import org.rstudio.core.client.jsonrpc.RpcRequest;
+import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
+import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -74,6 +80,7 @@ import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.model.BootInfo;
+import org.rstudio.studio.client.workbench.model.BootInstance;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
@@ -237,21 +244,33 @@ public class RStudio implements EntryPoint
          }
       };
 
-      RStudioGinjector.INSTANCE.getServer().bootInit(
-         new ServerRequestCallback<BootInfo>() {
-            @Override
-            public void onResponseReceived(BootInfo sessionInfo)
-            {
-               GWT.runAsync(runCallback);
-            }
+      final String BOOT_INIT = "boot_init";
+      final String rserverURL = GWT.getHostPageBaseURL() + "rpc" /* RPC_SCOPE */ + "/" + BOOT_INIT;
+      com.google.gwt.json.client.JSONArray params = new com.google.gwt.json.client.JSONArray();
+      RpcRequest rpcRequest = new RpcRequest(rserverURL,      /* url */
+                                             BOOT_INIT,       /* method */
+                                             params,          /* params */
+                                             null,            /* kwparams */
+                                             false,           /* redactLog */
+                                             null,            /* sourceWindow */
+                                             null,            /* clientId */
+                                             "");             /* clientVersion */
 
-            @Override
-            public void onError(ServerError error)
-            {
-               GWT.runAsync(runCallback);
-            }
+      rpcRequest.send(new RpcRequestCallback() {
+         public void onError(RpcRequest request, RpcError error)
+         {
+            GWT.runAsync(runCallback);
          }
-      );
+
+         public void onResponseReceived(final RpcRequest request,
+                                        RpcResponse response)
+         {
+            BootInfo result = response.<BootInfo> getResult();
+            BootInstance.getInstance().setBootInfo(result);
+            
+            GWT.runAsync(runCallback);
+         }
+      });
    }
    
    private void ensureStylesInjected()

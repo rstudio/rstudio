@@ -301,26 +301,6 @@ public class RemoteServer implements Server
       sendRequest(LOG_SCOPE, LOG_EXCEPTION, e, requestCallback);
    }
 
-   public void bootInit(
-                   final ServerRequestCallback<BootInfo> requestCallback)
-   {      
-      // send boot request
-      sendRequest(RPC_SCOPE, 
-                  BOOT_INIT, 
-                  new ServerRequestCallback<BootInfo>() {
-
-         public void onResponseReceived(BootInfo bootInfo)
-         {
-            requestCallback.onResponseReceived(bootInfo);
-         }
-   
-         public void onError(ServerError error)
-         {
-            requestCallback.onError(error);
-         }
-      });
-   }
-    
    public void clientInit(
                      final ServerRequestCallback<SessionInfo> requestCallback)
    {      
@@ -5094,7 +5074,6 @@ public class RemoteServer implements Server
    private static final String FILE_SHOW = "file_show";
 
    // session methods
-   private static final String BOOT_INIT = "boot_init";
    private static final String CLIENT_INIT = "client_init";
    private static final String ACCEPT_AGREEMENT = "accept_agreement";
    private static final String SUSPEND_SESSION = "suspend_session";

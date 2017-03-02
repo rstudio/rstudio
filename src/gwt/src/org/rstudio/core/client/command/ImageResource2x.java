@@ -15,6 +15,7 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.model.BootInstance;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeUri;
@@ -31,10 +32,7 @@ public class ImageResource2x implements ImageResource
       ref_ = ref;
       ref2x_ = ref2x;
 
-      if (RStudioGinjector.INSTANCE != null &&
-          RStudioGinjector.INSTANCE.getSession() != null &&
-          RStudioGinjector.INSTANCE.getSession().getSessionInfo() != null)
-         useRetina_ = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getUseRetinaIcons();
+      useRetina_ = BootInstance.getInstance().getBootInfo().getUseRetinaIcons();
    }
 
    private boolean useRetina()

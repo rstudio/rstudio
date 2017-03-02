@@ -1,5 +1,5 @@
 /*
- * BootInfo.java
+ * BootInstance.java
  *
  * Copyright (C) 2009-17 by RStudio, Inc.
  *
@@ -14,15 +14,29 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+public class BootInstance {
+   private static BootInstance instance = null;
 
-public class BootInfo extends JavaScriptObject
-{
-   protected BootInfo()
-   {
+   protected BootInstance() {
    }
 
-   public final native boolean getUseRetinaIcons() /*-{
-      return typeof(this.use_retina_icons) !== "undefined" ? this.use_retina_icons : true;
-   }-*/;
+   public static BootInstance getInstance() {
+      if(instance == null) {
+         instance = new BootInstance();
+      }
+
+      return instance;
+   }
+
+   public BootInfo getBootInfo()
+   {
+      return bootInfo_;
+   }
+
+   public void setBootInfo(BootInfo bootInfo)
+   {
+      bootInfo_ = bootInfo;
+   }
+
+   BootInfo bootInfo_ = null;
 }
